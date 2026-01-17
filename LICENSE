@@ -1,21 +1,94 @@
-MIT License
+# 开源许可证
 
-Copyright (c) 2019 Sebastián Ramírez
+本项目基于 Apache License 2.0,并附加以下额外条件:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## 附加条件
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+### 1. 商业使用限制
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+在遵守 Apache License 2.0 的基础上,本项目的商业使用需满足以下条件。若不满足以下条件,必须从作者处获得书面商业授权:
+
+**a. 多租户 SaaS 服务限制**
+
+未经作者明确书面授权,您不得使用本项目源码运营多租户服务平台。
+
+- **租户定义**: 在本项目语境下,一个租户对应一个独立的用户账户或工作空间,该空间为每个租户的数据和配置提供隔离环境。
+- **禁止行为**: 搭建面向多个用户/客户的 SaaS 平台,每个用户/客户拥有独立账户或工作空间。
+- **允许行为**: 
+  - 企业内部单租户部署
+  - 为单一客户定制部署
+  - 个人学习和研究使用
+
+**b. 源码转售限制**
+
+您不得直接转售本项目的源代码,无论是否进行了修改。这包括但不限于:
+- 将源码作为商品单独出售
+- 将源码打包后以付费方式提供下载
+- 以"源码授权"名义收费
+
+**c. 版权信息保护**
+
+在使用本项目过程中,您不得移除、修改或隐藏本项目中的以下内容:
+- 版权声明(Copyright)
+- 作者署名
+- 许可证声明
+- 项目来源链接
+
+如果您的应用包含用户界面(UI),必须在适当位置保留或展示原作者信息。
+
+### 2. 允许的使用场景
+
+以下使用场景**无需**获得额外授权:
+
+- ✅ 个人学习和研究
+- ✅ 企业内部使用(单租户)
+- ✅ 为单一客户提供定制化部署服务
+- ✅ 作为其他应用的后端服务(单租户)
+- ✅ 修改代码用于自己的业务(单租户)
+- ✅ 开源项目集成(需保留版权信息)
+
+### 3. 商业授权
+
+如需获得商业授权以进行上述限制的商业活动,请联系:
+
+- **联系方式**: endearqb@gmail.com
+- **GitHub**: https://github.com/endearqb
+
+商业授权可以解除上述限制,允许您:
+- 运营多租户 SaaS 平台
+- 定制化的版权信息处理
+- 其他商业化需求
+
+### 4. 贡献者协议
+
+作为本项目的代码贡献者,您同意:
+
+a. 作者可以根据需要调整开源协议,使其更严格或更宽松
+b. 您贡献的代码可用于商业目的,包括但不限于作者的商业运营
+
+## Apache License 2.0
+
+除上述特定条件外,所有其他权利和限制遵循 Apache License 2.0。
+
+Apache License 2.0 完整文本请访问: http://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+**版权声明**
+
+Copyright © 2026 endearqb
+
+Licensed under the Apache License, Version 2.0 with additional conditions (the "License");
+you may not use this file except in compliance with the License.
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+---
+
+## 免责声明
+
+本软件按"原样"提供,不提供任何明示或暗示的保证,包括但不限于适销性、特定用途适用性和非侵权性的保证。在任何情况下,作者或版权持有人均不对任何索赔、损害或其他责任负责,无论是在合同诉讼、侵权行为还是其他方面。
