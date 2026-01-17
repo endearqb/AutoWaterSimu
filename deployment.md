@@ -1,4 +1,6 @@
-# FastAPI Project - Deployment
+# AutoWaterSimu - Deployment
+
+本文档说明如何在远程服务器上部署 AutoWaterSimu。
 
 You can deploy the project using Docker Compose to a remote server.
 
@@ -12,7 +14,7 @@ But you have to configure a couple things first. 🤓
 
 * Have a remote server ready and available.
 * Configure the DNS records of your domain to point to the IP of the server you just created.
-* Configure a wildcard subdomain for your domain, so that you can have multiple subdomains for different services, e.g. `*.fastapi-project.example.com`. This will be useful for accessing different components, like `dashboard.fastapi-project.example.com`, `api.fastapi-project.example.com`, `traefik.fastapi-project.example.com`, `adminer.fastapi-project.example.com`, etc. And also for `staging`, like `dashboard.staging.fastapi-project.example.com`, `adminer.staging.fastapi-project.example.com`, etc.
+* Configure a wildcard subdomain for your domain, so that you can have multiple subdomains for different services, e.g. `*.autowatersimu.example.com`. This will be useful for accessing different components, like `dashboard.autowatersimu.example.com`, `api.autowatersimu.example.com`, `traefik.autowatersimu.example.com`, `adminer.autowatersimu.example.com`, etc. And also for `staging`, like `dashboard.staging.autowatersimu.example.com`, `adminer.staging.autowatersimu.example.com`, etc.
 * Install and configure [Docker](https://docs.docker.com/engine/install/) on the remote server (Docker Engine, not Docker Desktop).
 
 ## Public Traefik
@@ -125,10 +127,10 @@ Set the `DOMAIN`, by default `localhost` (for development), but when deploying y
 export DOMAIN=fastapi-project.example.com
 ```
 
-You can set several variables, like:
+* You can set several variables, like:
 
-* `PROJECT_NAME`: The name of the project, used in the API for the docs and emails.
-* `STACK_NAME`: The name of the stack used for Docker Compose labels and project name, this should be different for `staging`, `production`, etc. You could use the same domain replacing dots with dashes, e.g. `fastapi-project-example-com` and `staging-fastapi-project-example-com`.
+* `PROJECT_NAME`: The name of the project, used in the API for the docs and emails. For this project you can use something like `AutoWaterSimu`.
+* `STACK_NAME`: The name of the stack used for Docker Compose labels and project name, this should be different for `staging`, `production`, etc. You could use the same domain replacing dots with dashes, e.g. `autowatersimu-example-com` and `staging-autowatersimu-example-com`.
 * `BACKEND_CORS_ORIGINS`: A list of allowed CORS origins separated by commas.
 * `SECRET_KEY`: The secret key for the FastAPI project, used to sign tokens.
 * `FIRST_SUPERUSER`: The email of the first superuser, this superuser will be the one that can create new users.
@@ -282,28 +284,22 @@ If you need to add extra environments you could use those as a starting point.
 
 ## URLs
 
-Replace `fastapi-project.example.com` with your domain.
+Replace `autowatersimu.example.com` with your domain.
 
 ### Main Traefik Dashboard
 
-Traefik UI: `https://traefik.fastapi-project.example.com`
+Traefik UI: `https://traefik.autowatersimu.example.com`
 
 ### Production
 
-Frontend: `https://dashboard.fastapi-project.example.com`
-
-Backend API docs: `https://api.fastapi-project.example.com/docs`
-
-Backend API base URL: `https://api.fastapi-project.example.com`
-
-Adminer: `https://adminer.fastapi-project.example.com`
+Frontend: `https://dashboard.autowatersimu.example.com`
+Backend API docs: `https://api.autowatersimu.example.com/docs`
+Backend API base URL: `https://api.autowatersimu.example.com`
+Adminer: `https://adminer.autowatersimu.example.com`
 
 ### Staging
 
-Frontend: `https://dashboard.staging.fastapi-project.example.com`
-
-Backend API docs: `https://api.staging.fastapi-project.example.com/docs`
-
-Backend API base URL: `https://api.staging.fastapi-project.example.com`
-
-Adminer: `https://adminer.staging.fastapi-project.example.com`
+Frontend: `https://dashboard.staging.autowatersimu.example.com`
+Backend API docs: `https://api.staging.autowatersimu.example.com/docs`
+Backend API base URL: `https://api.staging.autowatersimu.example.com`
+Adminer: `https://adminer.staging.autowatersimu.example.com`

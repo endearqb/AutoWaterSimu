@@ -1,6 +1,9 @@
 # IDE and Editor files
 .vscode/
 .idea/
+.trae/
+.vercel/
+my-full-stack.code-workspace
 *.swp
 *.swo
 *~

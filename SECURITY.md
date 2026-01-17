@@ -1,29 +1,33 @@
-# Security Policy
+# AutoWaterSimu 安全策略（Security Policy）
 
-Security is very important for this project and its community. 🔒
+安全性对于 AutoWaterSimu 和使用它的用户非常重要。
+下面是本项目的安全策略与漏洞反馈方式，方便你在发现问题时快速处理。
 
-Learn more about it below. 👇
+## 支持的版本
 
-## Versions
+- 默认只支持 **最新的 main 分支与最新发布版本**。
+- 推荐你为自己的部署编写自动化测试，并在确认测试通过后尽量保持依赖和项目版本更新，以获得最新的功能、缺陷修复和安全修复。
 
-The latest version or release is supported.
+## 漏洞报告方式（Reporting a Vulnerability）
 
-You are encouraged to write tests for your application and update your versions frequently after ensuring that your tests are passing. This way you will benefit from the latest features, bug fixes, and **security fixes**.
+如果你认为发现了安全漏洞，即使不完全确定，也非常欢迎你**尽快私下反馈**：
 
-## Reporting a Vulnerability
+- 邮件：**endearqb@gmail.com**
+- GitHub：<https://github.com/endearqb>
 
-If you think you found a vulnerability, and even if you are not sure about it, please report it right away by sending an email to: security@tiangolo.com. Please try to be as explicit as possible, describing all the steps and example code to reproduce the security issue.
+请尽量提供：
 
-I (the author, [@tiangolo](https://twitter.com/tiangolo)) will review it thoroughly and get back to you.
+- 复现步骤（越具体越好）
+- 相关配置说明（例如环境、版本信息）
+- 简短的影响说明（例如：是否可能导致数据泄露、权限提升等）
 
-## Public Discussions
+我会认真审查并尽快给出回复。如果确认是安全问题，会在修复后视情况在发布说明中致谢（如你愿意署名）。
 
-Please restrain from publicly discussing a potential security vulnerability. 🙊
+## 公开讨论（Public Discussions）
 
-It's better to discuss privately and try to find a solution first, to limit the potential impact as much as possible.
+- 在修复完成之前，请尽量**避免在公开渠道（Issue、论坛、社交媒体等）直接披露漏洞细节**，以免放大影响范围。
+- 安全相关内容优先通过邮件等私下渠道沟通，待修复后再视情况整理为公开文档或发布说明。
 
 ---
 
-Thanks for your help!
-
-The community and I thank you for that. 🙇
+感谢你为 AutoWaterSimu 的安全性做出的贡献！

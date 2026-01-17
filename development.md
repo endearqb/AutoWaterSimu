@@ -1,4 +1,6 @@
-# FastAPI Project - Development
+# AutoWaterSimu - Development
+
+本文档说明如何在本地和 Docker 中运行 AutoWaterSimu 的开发环境。
 
 ## Docker Compose
 
