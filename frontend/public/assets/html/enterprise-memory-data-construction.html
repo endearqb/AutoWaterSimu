@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成式AI行业趋势与市场研究信息图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F9FA; /* Neutral Light */
+            color: #343A40; /* Neutral Dark */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width, can be overridden by Tailwind */
+            margin-left: auto;
+            margin-right: auto;
+            /* height: 300px; Base height, use Tailwind for responsive heights e.g., h-72 sm:h-80 md:h-96 */
+            /* max-height: 400px; Base max-height */
+        }
+        .section-title {
+            font-size: 1.75rem; /* Equivalent to text-2xl or text-3xl */
+            font-weight: 700;
+            color: #00509E; /* Primary Color */
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .sub-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0079C2; /* Secondary Color */
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            padding: 1.5rem; /* p-6 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00509E; /* Primary */
+        }
+        .kpi-label {
+            font-size: 0.875rem;
+            color: #4A5568; /* Gray-700 */
+            margin-top: 0.25rem;
+        }
+        .flowchart-step {
+            background-color: #E0F2FE; /* Light blue for steps */
+            border: 1px solid #0079C2; /* Secondary color border */
+            color: #00509E; /* Primary color text */
+            padding: 0.75rem;
+            border-radius: 0.375rem; /* rounded-md */
+            text-align: center;
+            font-weight: 500;
+        }
+        .flowchart-arrow {
+            font-size: 1.5rem;
+            color: #0079C2; /* Secondary color */
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+            align-self: center;
+        }
+        /* Color Palette: "Oceanic Innovation"
+           Primary: #00509E (Deep Blue)
+           Secondary: #0079C2 (Medium Blue)
+           Accent: #FFC107 (Bright Yellow/Gold)
+           Neutral Light: #F8F9FA
+           Neutral Dark: #343A40
+           Chart Colors: #0079C2, #2FA4E7, #5BC0DE, #FFC107, #F0AD4E
+        */
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-[#00509E] text-white py-8 shadow-lg">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-4xl font-bold mb-2">生成式AI行业趋势与市场研究</h1>
+            <p class="text-lg">深入洞察企业“记忆数据”的构建与未来</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+
+        <section id="introduction" class="mb-12">
+            <h2 class="section-title">引言：生成式AI的市场崛起与“记忆数据”的价值</h2>
+            <div class="card">
+                <p class="text-lg mb-4 leading-relaxed">
+                    在当今信息爆炸的时代，企业面临着前所未有的数据管理和利用挑战。生成式人工智能（Generative AI）的崛起，正为企业信息和知识管理带来一场深刻的变革。它不仅仅是自动化内容创作的工具，更是一种能够提升生产力、优化决策过程、激发创新的强大力量。本报告中的“记忆数据”指企业在运营过程中积累的、不断演化的集体知识和信息资产，是企业智慧的沉淀，是决策和创新的基石。生成式AI为构建、组织、访问和智能利用这些“记忆数据”提供了前所未有的机遇。
+                </p>
+                <div class="grid md:grid-cols-2 gap-6 items-center">
+                    <div>
+                        <h3 class="sub-title text-center">生成式AI的核心优势</h3>
+                        <p class="text-center mb-4">生成式AI通过多种方式赋能企业，核心优势体现在以下几个方面：</p>
+                        <div class="chart-container h-72 md:h-80">
+                            <canvas id="benefitsChart"></canvas>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-600 text-center">上图展示了生成式AI为企业带来的主要益处构成，例如提升运营效率、辅助复杂决策及驱动业务创新。</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-gradient-to-r from-[#0079C2] to-[#00509E] p-8 rounded-lg shadow-xl text-white">
+                            <p class="text-xl font-semibold mb-2">“记忆数据”的变革</p>
+                            <p class="kpi-value">动态智能资产</p>
+                            <p class="kpi-label mt-2">生成式AI将静态、分散的信息孤岛转化为可操作的智能资产，驱动企业发展。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech-drivers" class="mb-12">
+            <h2 class="section-title">核心技术驱动力：推动行业发展的引擎</h2>
+            <div class="card">
+                <p class="text-lg mb-6 leading-relaxed">
+                    生成式AI能力的发挥依赖于一系列核心原理和关键技术。大型语言模型（LLMs）是其语言基础，而定制化、检索增强生成（RAG）和提示工程则是企业成功应用的关键。这三者协同工作，将通用AI转变为能够高效服务于企业的专业化资产。
+                </p>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <h3 class="sub-title text-center mb-4">生成式AI工作流程</h3>
+                         <div class="flex flex-col items-center space-y-4 md:space-y-0 md:flex-row md:justify-around p-4 bg-gray-50 rounded-lg">
+                            <div class="flowchart-step w-full md:w-auto">1. 训练 (Training)<p class="text-xs mt-1">海量数据学习</p></div>
+                            <div class="flowchart-arrow hidden md:block">&rarr;</div>
+                            <div class="flowchart-arrow md:hidden">&darr;</div>
+                            <div class="flowchart-step w-full md:w-auto">2. 调优 (Tuning)<p class="text-xs mt-1">微调与RLHF</p></div>
+                            <div class="flowchart-arrow hidden md:block">&rarr;</div>
+                            <div class="flowchart-arrow md:hidden">&darr;</div>
+                            <div class="flowchart-step w-full md:w-auto">3. 生成与迭代<p class="text-xs mt-1">应用与优化</p></div>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-600 text-center">上图展示了生成式AI从模型训练到实际应用并持续迭代优化的基本工作流程。</p>
+                    </div>
+                    <div>
+                        <h3 class="sub-title text-center mb-4">企业级GenAI关键能力</h3>
+                        <div class="chart-container h-80 md:h-96">
+                            <canvas id="capabilitiesChart"></canvas>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-600 text-center">此图表突出了企业成功部署生成式AI所需的关键能力，包括模型定制、RAG的应用、有效的提示工程以及负责任的AI实践。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications" class="mb-12">
+            <h2 class="section-title">主要应用领域与市场渗透：生成式AI的广泛影响</h2>
+            <div class="card">
+                <p class="text-lg mb-6 leading-relaxed">
+                    生成式AI正在文档管理、邮件沟通、工作记录和知识库构建等多个企业核心领域展现出巨大的应用潜力，极大地提升了运营效率和知识共享水平。例如，高露洁-棕榄公司利用RAG处理消费者研究数据，CarMax则使用GenAI总结客户评论。
+                </p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="sub-title text-center">文档生命周期管理革新</h3>
+                        <div class="chart-container h-80 md:h-96">
+                            <canvas id="documentLifecycleChart"></canvas>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 text-center">生成式AI在文档起草、摘要、数据提取和分类等环节带来显著效率提升（上图为概念展示）。</p>
+                    </div>
+                    <div>
+                        <h3 class="sub-title text-center">邮件沟通智能化</h3>
+                        <div class="flex flex-col items-center space-y-3 mt-4">
+                            <div class="flex items-center p-3 bg-sky-100 rounded-lg w-full max-w-md">
+                                <span class="text-2xl mr-3 text-[#0079C2]">📧</span>
+                                <div><strong>个性化内容创建:</strong> AI分析数据生成定制化邮件。</div>
+                            </div>
+                            <div class="flex items-center p-3 bg-sky-100 rounded-lg w-full max-w-md">
+                                <span class="text-2xl mr-3 text-[#0079C2]">✍️</span>
+                                <div><strong>智能起草与回复:</strong> 根据提示快速生成邮件，调整语气风格。</div>
+                            </div>
+                             <div class="flex items-center p-3 bg-sky-100 rounded-lg w-full max-w-md">
+                                <span class="text-2xl mr-3 text-[#0079C2]">🎯</span>
+                                <div><strong>精准主题行与CTA:</strong> AI优化主题行和行动号召，提升打开率。</div>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 text-center">AI赋能邮件沟通，实现规模化个性化，提升营销活动效果。</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h3 class="sub-title text-center mt-6">工作记录自动化与结构化</h3>
+                         <div class="flex flex-col items-center space-y-4 md:space-y-0 md:flex-row md:justify-around p-4 bg-gray-50 rounded-lg mt-4">
+                            <div class="flowchart-step w-full sm:w-auto">会议/聊天记录</div>
+                            <div class="flowchart-arrow hidden sm:block">&rarr;</div><div class="flowchart-arrow sm:hidden">&darr;</div>
+                            <div class="flowchart-step w-full sm:w-auto">AI自动转录</div>
+                            <div class="flowchart-arrow hidden sm:block">&rarr;</div><div class="flowchart-arrow sm:hidden">&darr;</div>
+                            <div class="flowchart-step w-full sm:w-auto">智能摘要与关键信息提取</div>
+                            <div class="flowchart-arrow hidden sm:block">&rarr;</div><div class="flowchart-arrow sm:hidden">&darr;</div>
+                            <div class="flowchart-step w-full sm:w-auto">结构化行动项与洞察</div>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 text-center">AI将非结构化的工作记录（如会议、聊天）转化为可分析的知识资产，如meeting.ai利用AI进行会议摘要，准确率高达97%。</p>
+                    </div>
+                     <div>
+                        <h3 class="sub-title text-center mt-6">智能知识库构建</h3>
+                        <div class="chart-container h-80 md:h-96">
+                            <canvas id="knowledgeBaseChart"></canvas>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 text-center">AI驱动的知识库整合RAG、向量数据库等技术，实现智能问答和知识发现。</p>
+                    </div>
+                     <div class="flex items-center justify-center mt-6">
+                        <div class="bg-white p-6 rounded-lg shadow-lg border border-[#0079C2] max-w-md">
+                            <h4 class="font-semibold text-lg text-[#00509E] mb-2">关键工具与平台示例</h4>
+                            <ul class="list-disc list-inside text-sm space-y-1">
+                                <li><strong>文档处理:</strong> Google Document AI, Copy.ai, Adobe Acrobat</li>
+                                <li><strong>邮件沟通:</strong> Adobe AI Assistant, Grammarly AI, Jasper</li>
+                                <li><strong>工作记录:</strong> Otter.ai, Fireflies.ai, Zoom AI Companion</li>
+                                <li><strong>知识库:</strong> Vertex AI Search, LangChain, The Drive AI</li>
+                            </ul>
+                            <p class="text-xs text-gray-500 mt-3">注：以上仅为部分示例，市场上有众多此类工具。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="opportunities-challenges" class="mb-12">
+            <h2 class="section-title">市场机遇与挑战：平衡增长与风险</h2>
+            <div class="card">
+                <p class="text-lg mb-6 leading-relaxed">
+                    生成式AI为企业带来巨大机遇的同时，也伴随着数据准确性、隐私安全、算法偏见和伦理等多方面的挑战。企业需制定周密的战略，通过技术、流程和政策相结合的方式，最大限度发挥其价值并有效管理潜在风险。
+                </p>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <h3 class="sub-title text-center">GenAI采纳的关键风险领域</h3>
+                        <div class="chart-container h-96 md:h-[500px]">
+                            <canvas id="risksChart"></canvas>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 text-center">企业在采纳生成式AI时面临的主要风险包括数据完整性、安全隐私、伦理合规及运营成本等。</p>
+                    </div>
+                    <div>
+                        <h3 class="sub-title text-center">核心风险缓解策略概览</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+                                <thead class="bg-[#0079C2] text-white">
+                                    <tr>
+                                        <th class="py-2 px-3 text-left text-sm font-semibold">风险类别</th>
+                                        <th class="py-2 px-3 text-left text-sm font-semibold">缓解措施举例</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="py-2 px-3 text-sm">数据完整性与准确性</td>
+                                        <td class="py-2 px-3 text-sm">数据清洗、RAG优化、人工审核</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-sm">安全与隐私</td>
+                                        <td class="py-2 px-3 text-sm">加密、访问控制、匿名化、合规</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-sm">伦理与合规</td>
+                                        <td class="py-2 px-3 text-sm">偏见检测、伦理审查、版权关注</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-sm">运营与成本</td>
+                                        <td class="py-2 px-3 text-sm">技能培训、成本规划、敏捷实施</td>
+                                    </tr>
+                                     <tr>
+                                        <td class="py-2 px-3 text-sm">环境与可访问性</td>
+                                        <td class="py-2 px-3 text-sm">节能模型、评估环境影响、确保工具可访问性</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 text-center">上表概述了针对主要风险类别的关键缓解策略，强调技术、流程和政策的结合。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="future-outlook" class="mb-12">
+            <h2 class="section-title">未来趋势展望：组织智能的下一波浪潮</h2>
+            <div class="card">
+                <p class="text-lg mb-6 leading-relaxed">
+                    生成式AI在企业信息和知识管理领域的应用仍处于快速发展阶段。智能体AI、多模态AI、增强的推理能力以及AI工具的民主化等新兴趋势，将进一步推动组织智能的演进，使“记忆数据”从被动知识库演变为主动参与工作流和决策的智能体系统。
+                </p>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <h3 class="sub-title text-center">高级GenAI能力增长预测</h3>
+                        <div class="chart-container h-80 md:h-96">
+                            <canvas id="futureTrendsChart"></canvas>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 text-center">上图概念性地展示了未来几年高级生成式AI能力（如智能体AI和多模态AI）的预期增长趋势。</p>
+                    </div>
+                    <div>
+                        <h3 class="sub-title text-center">关键未来趋势</h3>
+                        <ul class="space-y-3 mt-4">
+                            <li class="flex items-start p-3 bg-amber-50 rounded-lg border border-amber-300">
+                                <span class="text-xl mr-3 text-[#FFC107]">🤖</span>
+                                <div><strong>智能体AI (Agentic AI):</strong> AI从被动执行指令向主动完成复杂任务转变。</div>
+                            </li>
+                            <li class="flex items-start p-3 bg-amber-50 rounded-lg border border-amber-300">
+                                <span class="text-xl mr-3 text-[#FFC107]">🖼️</span>
+                                <div><strong>多模态AI (Multimodal AI):</strong> 处理和生成文本、图像、音视频等多种内容。</div>
+                            </li>
+                            <li class="flex items-start p-3 bg-amber-50 rounded-lg border border-amber-300">
+                                <span class="text-xl mr-3 text-[#FFC107]">💡</span>
+                                <div><strong>增强推理与减少幻觉:</strong> 提升逻辑推理能力，减少事实性错误。</div>
+                            </li>
+                            <li class="flex items-start p-3 bg-amber-50 rounded-lg border border-amber-300">
+                                <span class="text-xl mr-3 text-[#FFC107]">🧑‍💻</span>
+                                <div><strong>AI工具民主化:</strong> 低代码/无代码平台使AI更易用。</div>
+                            </li>
+                             <li class="flex items-start p-3 bg-amber-50 rounded-lg border border-amber-300">
+                                <span class="text-xl mr-3 text-[#FFC107]">🎯</span>
+                                <div><strong>超个性化 (Hyper-Personalization):</strong> 提供高度定制化的信息和服务。</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="conclusion" class="text-center py-10 bg-gradient-to-r from-[#00509E] to-[#0079C2] text-white rounded-lg shadow-xl">
+            <h2 class="text-3xl font-bold mb-4">结论：构建面向未来的AI驱动型企业</h2>
+            <p class="text-lg max-w-3xl mx-auto leading-relaxed px-4">
+                生成式AI为企业带来了革命性的机遇，其核心价值在于激活组织的“记忆数据”。通过战略性规划、技术整合与风险管理，企业可以将信息转化为智能，提升生产力，优化决策，赋能创新。未来，AI驱动的“记忆数据”将从被动知识库演变为主动智能伙伴，助力企业在复杂多变的商业环境中保持持续竞争力。
+            </p>
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="mt-8 bg-[#FFC107] text-[#343A40] font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-amber-400 transition duration-300">
+                返回顶部
+            </button>
+        </section>
+    </main>
+
+    <footer class="text-center py-6 mt-8 border-t border-gray-200">
+        <p class="text-sm text-gray-500">&copy; 2025 生成式AI市场研究信息图。基于深度研究报告分析。</p>
+    </footer>
+
+    <script>
+        const chartColors = ['#0079C2', '#2FA4E7', '#5BC0DE', '#FFC107', '#F0AD4E', '#343A40'];
+
+        function wrapLabel(str, maxWidth) {
+            if (typeof str !== 'string') { // Ensure str is a string
+                str = String(str);
+            }
+            if (str.length <= maxWidth) return str;
+            const words = str.split(' ');
+            let currentLine = '';
+            const lines = [];
+            for (const word of words) {
+                if ((currentLine + word).length > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = word + ' ';
+                } else {
+                    currentLine += word + ' ';
+                }
+            }
+            lines.push(currentLine.trim());
+            return lines;
+        }
+
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: { family: "'Noto Sans SC', sans-serif" }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            if (!item || !item.chart || !item.chart.data || !item.chart.data.labels || typeof item.dataIndex === 'undefined') {
+                                return '';
+                            }
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return String(label); // Ensure label is a string
+                            }
+                        }
+                    },
+                    bodyFont: { family: "'Noto Sans SC', sans-serif" },
+                    titleFont: { family: "'Noto Sans SC', sans-serif" }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        font: { family: "'Noto Sans SC', sans-serif" },
+                        callback: function(value, index, values) {
+                            const label = this.getLabelForValue(value);
+                            return wrapLabel(label, 10); 
+                        }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: { font: { family: "'Noto Sans SC', sans-serif" } },
+                    grid: { color: '#E5E7EB' } 
+                }
+            }
+        };
+        
+        const commonPieDonutOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                     labels: {
+                        font: { family: "'Noto Sans SC', sans-serif" },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map(function(label, i) {
+                                    const meta = chart.getDatasetMeta(0);
+                                    const style = meta.controller.getStyle(i);
+                                    let text = label;
+                                    if (Array.isArray(label)) {
+                                        text = label.join(' ');
+                                    } else {
+                                        text = String(text); // Ensure text is a string
+                                    }
+                                    
+                                    let wrappedLabelText = wrapLabel(text, 16);
+                                    if (Array.isArray(wrappedLabelText)) {
+                                        wrappedLabelText = wrappedLabelText.join('\n'); // Use \n for legend line breaks
+                                    }
+
+                                    return {
+                                        text: wrappedLabelText,
+                                        fillStyle: style.backgroundColor,
+                                        strokeStyle: style.borderColor,
+                                        lineWidth: style.borderWidth,
+                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: { 
+                    callbacks: {
+                        title: function(tooltipItems) { 
+                            const item = tooltipItems[0];
+                            if (!item || !item.chart || !item.chart.data || !item.chart.data.labels || typeof item.dataIndex === 'undefined') {
+                                return '';
+                            }
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            }
+                            return String(label); // Ensure label is a string
+                        },
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed + '%';
+                            }
+                            return label;
+                        }
+                    },
+                    bodyFont: { family: "'Noto Sans SC', sans-serif" },
+                    titleFont: { family: "'Noto Sans SC', sans-serif" }
+                }
+            }
+        };
+
+
+        // Chart 1: Benefits Chart (Donut)
+        const benefitsData = {
+            labels: [wrapLabel('提升生产力',16), wrapLabel('优化决策过程',16), wrapLabel('激发创新能力',16)],
+            datasets: [{
+                label: '核心优势',
+                data: [45, 30, 25],
+                backgroundColor: [chartColors[0], chartColors[1], chartColors[3]],
+                borderColor: '#FFFFFF',
+                borderWidth: 2
+            }]
+        };
+        new Chart(document.getElementById('benefitsChart'), {
+            type: 'doughnut',
+            data: benefitsData,
+            options: commonPieDonutOptions
+        });
+
+        // Chart 2: Capabilities Chart (Bar)
+        const capabilitiesData = {
+            labels: [wrapLabel('模型定制化',16), wrapLabel('检索增强生成 (RAG)',16), wrapLabel('提示工程',16), wrapLabel('负责任AI实践',16)],
+            datasets: [{
+                label: '重要性/采纳度 (概念)',
+                data: [85, 90, 75, 70],
+                backgroundColor: chartColors[0],
+                borderColor: chartColors[0],
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        };
+        new Chart(document.getElementById('capabilitiesChart'), {
+            type: 'bar',
+            data: capabilitiesData,
+            options: {...commonChartOptions, indexAxis: 'y' } 
+        });
+
+        // Chart 3: Document Lifecycle Chart (Bar)
+        const docLifecycleData = {
+            labels: [wrapLabel('文档起草效率',16), wrapLabel('自动摘要准确率',16), wrapLabel('数据提取速度',16), wrapLabel('智能分类效果',16)],
+            datasets: [{
+                label: '提升百分比 (概念)',
+                data: [60, 75, 80, 65],
+                backgroundColor: chartColors[1],
+                borderColor: chartColors[1],
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        };
+        new Chart(document.getElementById('documentLifecycleChart'), {
+            type: 'bar',
+            data: docLifecycleData,
+            options: commonChartOptions
+        });
+        
+        // Chart 4: Knowledge Base Chart (Pie)
+        const kbData = {
+            labels: [wrapLabel('检索增强生成 (RAG)',16), wrapLabel('向量数据库',16), wrapLabel('知识图谱应用',16), wrapLabel('结构化数据提取',16)],
+            datasets: [{
+                label: '技术构成 (概念)',
+                data: [40, 25, 20, 15],
+                backgroundColor: [chartColors[0], chartColors[1], chartColors[2], chartColors[3]],
+                borderColor: '#FFFFFF',
+                borderWidth: 2
+            }]
+        };
+        new Chart(document.getElementById('knowledgeBaseChart'), {
+            type: 'pie',
+            data: kbData,
+            options: commonPieDonutOptions
+        });
+
+
+        // Chart 5: Risks Chart (Bar)
+        const risksData = {
+            labels: [wrapLabel('数据完整性与准确性风险',16), wrapLabel('安全与隐私泄露风险',16), wrapLabel('伦理与合规性挑战',16), wrapLabel('运营与成本控制压力',16), wrapLabel('环境与可访问性问题',16)],
+            datasets: [{
+                label: '风险指数 (概念)',
+                data: [70, 85, 75, 60, 50],
+                backgroundColor: chartColors[4],
+                borderColor: chartColors[4],
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        };
+        new Chart(document.getElementById('risksChart'), {
+            type: 'bar',
+            data: risksData,
+            options: {...commonChartOptions, indexAxis: 'y' }
+        });
+
+        // Chart 6: Future Trends Chart (Line)
+        const futureTrendsData = {
+            labels: ['2024', '2025', '2026', '2027', '2028'],
+            datasets: [{
+                label: wrapLabel('智能体AI采纳率',16),
+                data: [20, 35, 55, 70, 85],
+                borderColor: chartColors[0],
+                backgroundColor: 'rgba(0, 121, 194, 0.1)',
+                fill: true,
+                tension: 0.3
+            }, {
+                label: wrapLabel('多模态AI应用广度',16),
+                data: [15, 30, 50, 65, 80],
+                borderColor: chartColors[3],
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        };
+        new Chart(document.getElementById('futureTrendsChart'), {
+            type: 'line',
+            data: futureTrendsData,
+            options: commonChartOptions
+        });
+
+    </script>
+</body>
+</html>

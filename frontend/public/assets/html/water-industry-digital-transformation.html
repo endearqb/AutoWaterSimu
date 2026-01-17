@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Chosen Palette: Calm Harmony (Warm Neutral, Calming Blue Accent) -->
+    <!-- Application Structure Plan: A single-page application with a fixed top navigation bar allowing users to switch between five thematic sections: Home, Digital Blueprint, Foundation of Data, Case Studies, and Future Outlook. This non-linear, dashboard-style structure was chosen over a simple scroll to better organize the diverse content from the 10 podcast outlines and encourage user-driven exploration. It allows users to dive into topics of interest (e.g., technology, data fundamentals, or real-world examples) without a prescribed order, enhancing usability and engagement with the complex subject matter. -->
+    <!-- Visualization & Content Choices:
+    - Home: Goal=Engage. Method=Animated counters for key stats (e.g., 17 years no shortage), HTML/CSS flow diagram for "Data->Insight". Interaction=Scroll-triggered animation. Justification=Creates an impactful first impression. Library=Vanilla JS.
+    - Blueprint: Goal=Organize. Method=Interactive HTML/CSS diagram for components, cards for technologies. Interaction=Click to reveal info. Justification=Visually deconstructs complex concepts. Library=Vanilla JS.
+    - Data Foundation: Goal=Explain. Method=HTML timeline for lifecycle, interactive buttons for metadata, Chart.js line chart for uncertainty. Interaction=Click to progress/reveal, toggle chart dataset. Justification=Makes abstract data concepts tangible. Library=Chart.js.
+    - Case Studies: Goal=Explore. Method=Grid of interactive cards opening modals. Interaction=Click-to-open. Justification=Provides an organized, browsable gallery of real-world proof points. Library=Vanilla JS.
+    - Future: Goal=Inform. Method=HTML/CSS accordion for challenges, diagram for Water-Wise framework. Interaction=Click-to-expand. Justification=Presents dense information in a digestible, structured format. Library=Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <title>水务行业的战略性数字化转型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            scroll-behavior: smooth;
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+        }
+        .nav-link.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .content-section {
+            display: none;
+            animation: fadeIn 0.8s;
+        }
+        .content-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .modal-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-blue-600">水务新声</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#" data-section="home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">首页</a>
+                        <a href="#" data-section="blueprint" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">数字化蓝图</a>
+                        <a href="#" data-section="foundation" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">数据的基石</a>
+                        <a href="#" data-section="cases" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">实践案例</a>
+                        <a href="#" data-section="future" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">未来展望</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#" data-section="home" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">首页</a>
+                <a href="#" data-section="blueprint" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">数字化蓝图</a>
+                <a href="#" data-section="foundation" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">数据的基石</a>
+                <a href="#" data-section="cases" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">实践案例</a>
+                <a href="#" data-section="future" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 border-b-2 border-transparent">未来展望</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        
+        <!-- Section: Home -->
+        <section id="home" class="content-section">
+            <div class="text-center px-4 py-16">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 leading-tight">
+                    水务新纪元<span class="text-blue-600">：数字化浪潮</span>
+                </h1>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-slate-600">
+                    一场深刻的革命正在重塑全球水务行业。从保障生命之源到应对气候变化，数字化不仅是技术的革新，更是关乎我们每个人未来的必然选择。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center px-4 mb-16">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-blue-600 text-5xl font-bold stat-counter" data-target="17">0</div>
+                    <p class="mt-2 text-slate-700 font-semibold">连续17年无缺水</p>
+                    <p class="text-sm text-slate-500">中国台湾台北市利用数字化技术成功应对干旱</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-blue-600 text-5xl font-bold"><span class="stat-counter" data-target="87">0</span>%</div>
+                    <p class="mt-2 text-slate-700 font-semibold">非法污泥处置减少</p>
+                    <p class="text-sm text-slate-500">乌干达坎帕拉通过GIS移动应用改善城市卫生</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-blue-600 text-5xl font-bold"><span class="stat-counter" data-target="97">0</span>%</div>
+                    <p class="mt-2 text-slate-700 font-semibold">误报警减少</p>
+                    <p class="text-sm text-slate-500">英国Wessex Water利用AI预测系统避免管道堵塞</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-16">
+                <h2 class="text-2xl font-bold text-center text-slate-800 mb-2">核心理念：从数据到智慧决策</h2>
+                <p class="text-center text-slate-600 mb-8">数字化转型的本质，是构建一条从原始数据到可执行洞察的价值链。</p>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="text-center p-4 rounded-lg bg-slate-100 w-full md:w-auto">
+                        <div class="text-5xl mb-2">📊</div>
+                        <h3 class="font-bold text-lg text-slate-900">数据</h3>
+                        <p class="text-sm text-slate-500">从仪表和传感器中获取原始信号</p>
+                    </div>
+                    <div class="text-4xl text-slate-300 font-light">&rarr;</div>
+                    <div class="text-center p-4 rounded-lg bg-slate-100 w-full md:w-auto">
+                        <div class="text-5xl mb-2">ℹ️</div>
+                        <h3 class="font-bold text-lg text-slate-900">信息</h3>
+                        <p class="text-sm text-slate-500">通过元数据赋予数据上下文和意义</p>
+                    </div>
+                    <div class="text-4xl text-slate-300 font-light">&rarr;</div>
+                    <div class="text-center p-4 rounded-lg bg-slate-100 w-full md:w-auto">
+                        <div class="text-5xl mb-2">💡</div>
+                        <h3 class="font-bold text-lg text-slate-900">见解</h3>
+                        <p class="text-sm text-slate-500">运用AI和模型发现隐藏的模式与规律</p>
+                    </div>
+                    <div class="text-4xl text-slate-300 font-light">&rarr;</div>
+                    <div class="text-center p-4 rounded-lg bg-slate-100 w-full md:w-auto">
+                        <div class="text-5xl mb-2">🚀</div>
+                        <h3 class="font-bold text-lg text-slate-900">行动</h3>
+                        <p class="text-sm text-slate-500">基于洞察进行预测、优化和智能决策</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Blueprint -->
+        <section id="blueprint" class="content-section">
+            <div class="text-center px-4 py-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">解构数字水务蓝图</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">数字水务是一个“物理-数据-应用”三位一体的复杂系统，由前沿技术驱动，并依赖一个开放协作的生态圈。</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-16">
+                <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">数字水务的三大组成要素</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <h4 class="font-bold text-lg">物理层：感知的基础</h4>
+                        <p class="text-slate-600 mt-2">现实世界的水务基础设施，是所有数据的来源。包括水泵、阀门、管道、水坝、水表等，它们是数字世界的“感官”。</p>
+                    </div>
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <h4 class="font-bold text-lg">数据层：信息的孤岛</h4>
+                        <p class="text-slate-600 mt-2">各类信息系统的集合，如SCADA、GIS、计费系统。这些系统往往独立运作，形成了亟待打通的“数据孤岛”。</p>
+                    </div>
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <h4 class="font-bold text-lg">应用层：价值的实现</h4>
+                        <p class="text-slate-600 mt-2">基于数据和模型实现的各种智能化解决方案，如流域监测、过程优化、预测性维护、数字用户参与等，是数字化转型的最终目的。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-16">
+                <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">赋能技术“全家桶”</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="card bg-white p-6 rounded-lg shadow">
+                        <div class="text-3xl mb-3">🛰️</div>
+                        <h4 class="font-bold text-lg">天眼：遥感与预测</h4>
+                        <p class="text-slate-600 mt-2 text-sm">利用卫星和无人机宏观监测水源地健康、水体污染和洪水风险，为水资源管理提供全局视野。</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow">
+                        <div class="text-3xl mb-3">🧠</div>
+                        <h4 class="font-bold text-lg">大脑：AI与机器学习</h4>
+                        <p class="text-slate-600 mt-2 text-sm">从海量数据中自动学习规律，用于预测爆管、优化能耗、识别图像缺陷，是解决“数据多，信息少”难题的关键。</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow">
+                        <div class="text-3xl mb-3">🎭</div>
+                        <h4 class="font-bold text-lg">化身：AR/VR与数字孪生</h4>
+                        <p class="text-slate-600 mt-2 text-sm">创建物理世界的虚拟镜像。AR辅助现场维修，VR用于安全培训，数字孪生则能模拟和预演系统在各种情景下的反应。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Foundation -->
+        <section id="foundation" class="content-section">
+            <div class="text-center px-4 py-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">夯实数据的基石</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">高质量、可信赖的数据是数字化转型的生命线。这需要我们科学管理仪表的整个生命周期，重视元数据的价值，并学会与不确定性共舞。</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-16">
+                <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">仪表的生命周期管理</h3>
+                <div class="relative">
+                    <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-200 hidden md:block"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                        <div class="md:text-right">
+                            <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mb-2 ml-auto mr-auto md:mr-0">1</div>
+                            <h4 class="font-bold">明确用途</h4>
+                            <p class="text-slate-600 text-sm">定义仪表是用于监管、控制还是计费？目标决定一切。</p>
+                        </div>
+                        <div></div>
+                        <div></div>
+                        <div>
+                            <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mb-2 ml-auto mr-auto md:ml-0">2</div>
+                            <h4 class="font-bold">科学选型</h4>
+                            <p class="text-slate-600 text-sm">根据场景、精度要求和成本，选择最合适的设备。</p>
+                        </div>
+                        <div class="md:text-right">
+                            <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mb-2 ml-auto mr-auto md:mr-0">3</div>
+                            <h4 class="font-bold">正确安装</h4>
+                            <p class="text-slate-600 text-sm">确保安装位置合理，并为未来维护留出空间。</p>
+                        </div>
+                        <div></div>
+                         <div></div>
+                        <div>
+                           <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mb-2 ml-auto mr-auto md:ml-0">4</div>
+                            <h4 class="font-bold">高效运维</h4>
+                            <p class="text-slate-600 text-sm">建立标准化的校准、清洁、验证流程，保障数据准确性。</p>
+                        </div>
+                         <div class="md:text-right">
+                            <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mb-2 ml-auto mr-auto md:mr-0">5</div>
+                            <h4 class="font-bold">评估更换</h4>
+                            <p class="text-slate-600 text-sm">在仪表寿命终期评估其效用，并规划更换方案。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+                 <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">数据的“身份证”：元数据</h3>
+                    <p class="text-center text-slate-600 mb-6">一个孤零零的数字毫无意义，元数据赋予其生命。</p>
+                    <div class="text-center bg-slate-100 p-6 rounded-lg">
+                        <span class="text-7xl font-bold text-slate-700" id="metadata-value">42.0</span>
+                        <div id="metadata-details" class="mt-4 text-left space-y-2 text-slate-600 text-sm h-24"></div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap justify-center gap-2">
+                        <button class="metadata-btn bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-3 rounded-full" data-meta="unit">单位?</button>
+                        <button class="metadata-btn bg-green-500 hover:bg-green-600 text-white text-xs py-1 px-3 rounded-full" data-meta="param">参数?</button>
+                        <button class="metadata-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-3 rounded-full" data-meta="time">时间?</button>
+                        <button class="metadata-btn bg-orange-500 hover:bg-orange-600 text-white text-xs py-1 px-3 rounded-full" data-meta="quality">质量?</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">与不确定性共舞</h3>
+                     <p class="text-center text-slate-600 mb-6">完美的预测不存在，但我们可以管理不确定性，做出更稳健的决策。</p>
+                    <div class="chart-container">
+                        <canvas id="uncertaintyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Cases -->
+        <section id="cases" class="content-section">
+            <div class="text-center px-4 py-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">全球实践案例</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">从非洲的城市卫生到欧洲的疫情防控，数字化工具正在全球范围内解决真实世界的问题。点击卡片查看详情。</p>
+            </div>
+            <div id="case-studies-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </section>
+        
+        <!-- Section: Future -->
+        <section id="future" class="content-section">
+            <div class="text-center px-4 py-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">路在何方：挑战与未来</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">数字化转型之路并非坦途，但它通向一个更智慧、更可持续、更公平的水未来。</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                 <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">当下的三大挑战</h3>
+                    <div id="challenges-accordion" class="space-y-4">
+                        <div>
+                            <button class="accordion-header w-full text-left font-semibold p-4 bg-slate-100 rounded-lg flex justify-between items-center hover:bg-slate-200 transition">
+                                <span>数据的挑战</span>
+                                <span class="accordion-icon transform rotate-0 transition-transform">&plus;</span>
+                            </button>
+                            <div class="accordion-content hidden p-4 text-slate-600 text-sm">
+                                “数据丰富，信息贫乏”的困境依然严峻。如何保障数据质量、打通数据孤岛、建立统一的元数据标准是数字化转型的基础前提。
+                            </div>
+                        </div>
+                         <div>
+                            <button class="accordion-header w-full text-left font-semibold p-4 bg-slate-100 rounded-lg flex justify-between items-center hover:bg-slate-200 transition">
+                                <span>网络安全的挑战</span>
+                                <span class="accordion-icon transform rotate-0 transition-transform">&plus;</span>
+                            </button>
+                            <div class="accordion-content hidden p-4 text-slate-600 text-sm">
+                                水务系统是国家关键基础设施，其数字化必然带来新的网络安全风险。如何在开放数据、促进创新的同时，确保系统和用户数据的绝对安全，是必须解决的难题。
+                            </div>
+                        </div>
+                         <div>
+                            <button class="accordion-header w-full text-left font-semibold p-4 bg-slate-100 rounded-lg flex justify-between items-center hover:bg-slate-200 transition">
+                                <span>遗留系统的挑战</span>
+                                <span class="accordion-icon transform rotate-0 transition-transform">&plus;</span>
+                            </button>
+                            <div class="accordion-content hidden p-4 text-slate-600 text-sm">
+                                大量服役数十年的老旧设备和系统难以与现代数字化技术兼容。全盘替换成本高昂，如何在新旧系统间平稳过渡、逐步升级，考验着水务企业的智慧和耐心。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                     <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">新一代水务人才的技能</h3>
+                     <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-3 mt-1">&#10004;</span>
+                            <div>
+                                <h4 class="font-semibold">数据科学能力</h4>
+                                <p class="text-sm text-slate-500">不再仅仅是工程知识，更需要理解数据分析、机器学习和建模。</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-3 mt-1">&#10004;</span>
+                            <div>
+                                <h4 class="font-semibold">系统性思维</h4>
+                                <p class="text-sm text-slate-500">能够理解水务系统与城市、能源、环境等其他系统的复杂关联。</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-3 mt-1">&#10004;</span>
+                            <div>
+                                <h4 class="font-semibold">跨学科协作</h4>
+                                <p class="text-sm text-slate-500">能与IT专家、政策制定者、社会学家等不同背景的人有效沟通合作。</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-3 mt-1">&#10004;</span>
+                            <div>
+                                <h4 class="font-semibold">终身学习心态</h4>
+                                <p class="text-sm text-slate-500">技术和工作方式在不断演进，持续学习是唯一不变的要求。</p>
+                            </div>
+                        </li>
+                     </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <!-- Modal Structure -->
+    <div id="case-study-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform scale-95">
+            <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+                <h3 id="modal-title" class="text-xl font-bold"></h3>
+                <button id="modal-close" class="text-slate-500 hover:text-slate-800">&times;</button>
+            </div>
+            <div id="modal-body" class="p-6">
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const sections = document.querySelectorAll('.content-section');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    function updateActiveSection(sectionId) {
+        sections.forEach(section => {
+            section.classList.toggle('active', section.id === sectionId);
+        });
+        navLinks.forEach(link => {
+            link.classList.toggle('active', link.dataset.section === sectionId);
+        });
+        if (!mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+        }
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const sectionId = e.target.dataset.section;
+            updateActiveSection(sectionId);
+            window.scrollTo(0,0);
+        });
+    });
+
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    updateActiveSection('home');
+
+    function animateCounters() {
+        const counters = document.querySelectorAll('.stat-counter');
+        const speed = 200; 
+
+        counters.forEach(counter => {
+            const updateCount = () => {
+                const target = +counter.getAttribute('data-target');
+                const count = +counter.innerText;
+                const inc = target / speed;
+
+                if (count < target) {
+                    counter.innerText = Math.ceil(count + inc);
+                    setTimeout(updateCount, 10);
+                } else {
+                    counter.innerText = target;
+                }
+            };
+            updateCount();
+        });
+    }
+    
+    let animated = false;
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !animated) {
+                animateCounters();
+                animated = true;
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    const countersSection = document.querySelector('.stat-counter');
+    if (countersSection) {
+        observer.observe(countersSection.parentElement);
+    }
+    
+    const metadataDetails = document.getElementById('metadata-details');
+    const metadataButtons = document.querySelectorAll('.metadata-btn');
+    const metadata = {
+        unit: { text: "<strong>单位:</strong> L/s (升/秒)", added: false },
+        param: { text: "<strong>参数:</strong> 污水处理厂进水流量", added: false },
+        time: { text: "<strong>时间:</strong> 2025-06-24 09:45", added: false },
+        quality: { text: "<strong>质量:</strong> 可靠 (已通过验证)", added: false },
+    };
+
+    metadataButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const metaKey = button.dataset.meta;
+            if (!metadata[metaKey].added) {
+                const p = document.createElement('p');
+                p.innerHTML = metadata[metaKey].text;
+                metadataDetails.appendChild(p);
+                metadata[metaKey].added = true;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+                button.disabled = true;
+            }
+        });
+    });
+    
+    let uncertaintyChartInstance;
+    function createUncertaintyChart() {
+        const ctx = document.getElementById('uncertaintyChart').getContext('2d');
+        if (uncertaintyChartInstance) {
+            uncertaintyChartInstance.destroy();
+        }
+        uncertaintyChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                datasets: [
+                    {
+                        label: '预测需水量',
+                        data: [120, 130, 125, 140, 150, 145, 135],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        pointBackgroundColor: '#2563eb',
+                        fill: '+1'
+                    },
+                    {
+                        label: '不确定性范围',
+                        data: [135, 145, 140, 155, 165, 160, 150],
+                        fill: '-1',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderColor: 'transparent',
+                        pointRadius: 0,
+                        tension: 0.4
+                    },
+                    {
+                        label: '不确定性下界',
+                        data: [105, 115, 110, 125, 135, 130, 120],
+                        borderColor: 'transparent',
+                        pointRadius: 0,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    return `预测: ${context.formattedValue} ML/d`;
+                                }
+                                return null;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: '需水量 (ML/d)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    if (document.getElementById('uncertaintyChart')) {
+       createUncertaintyChart();
+    }
+    
+    const caseStudiesData = [
+        {
+            id: 'kampala',
+            title: '乌干达坎帕拉：移动应用改善城市卫生',
+            summary: '利用基于GIS的移动App，连接化粪池清理工和客户，将粪便污泥的非法处置率降低了87%。',
+            content: `
+                <p class="mb-4 text-slate-600">乌干达首都坎帕拉面临严峻的卫生挑战，超过60%的人口居住在非正式社区，排水系统覆盖率低。传统的化粪池清理工作效率低下且易造成二次污染。</p>
+                <p class="mb-4 text-slate-600">为应对此问题，坎帕拉首都城市管理局（KCCA）在GSMA等机构的支持下，推出了一款基于GIS的移动应用。该应用实现了：</p>
+                <ul class="list-disc list-inside space-y-2 mb-4 text-slate-600">
+                    <li><strong>客户与服务商的精准匹配：</strong>呼叫中心接收请求，并将任务分配给最近的清理工。</li>
+                    <li><strong>服务过程数据化：</strong>应用采集客户信息、清理量、设施类型和位置等关键数据。</li>
+                    <li><strong>决策支持：</strong>通过对171,000个卫生设施的数据分析，管理局能够识别服务薄弱区，进行精准的宣传教育。</li>
+                </ul>
+                <p class="font-semibold text-slate-800">成果：</p>
+                <p class="text-green-600 font-bold text-2xl">非法处置粪便污泥的数量减少了87%。</p>
+            `
+        },
+        {
+            id: 'wbe',
+            title: '西班牙：污水流行病学(WBE)助力疫情防控',
+            summary: '在新冠疫情期间，通过监测污水中病毒浓度，为保护弱势群体和恢复旅游经济提供了关键决策支持。',
+            content: `
+                <p class="mb-4 text-slate-600">在新冠疫情爆发初期，大规模核酸检测能力有限，且难以发现无症状感染者。污水流行病学（WBE）提供了一种有效的补充监测手段。</p>
+                <p class="mb-4 text-slate-600">水务企业Global Omnium及其技术公司Idrica在西班牙400多个城市应用了GoAigua疫情分析软件，实现了：</p>
+                <ul class="list-disc list-inside space-y-2 mb-4 text-slate-600">
+                    <li><strong>比临床诊断提前7-10天预警：</strong>通过检测污水中的病毒基因片段浓度变化，可以提前发现疫情苗头。</li>
+                    <li><strong>精准保护弱势群体：</strong>对所有养老院的污水进行持续监测，一旦发现病毒，立即启动精准防控，有效防止了疫情在最脆弱人群中扩散。</li>
+                    <li><strong>支持经济复苏：</strong>在旅游岛屿进行分区监控，向外界证明了地区的安全性，为旅游业的正常开展提供了保障。</li>
+                </ul>
+                <p class="font-semibold text-slate-800">结论：WBE被证明是独立于临床检测能力的、高效的、低成本的宏观预警工具。</p>
+            `
+        },
+        {
+            id: 'blockage',
+            title: '英国：AI预测系统预防下水道堵塞',
+            summary: '英国Wessex Water利用StormHarvester的AI系统，成功预警了60起早期堵塞，避免了重大污染事件。',
+            content: `
+                <p class="mb-4 text-slate-600">在英国，每年因湿巾、油脂等造成的下水道堵塞导致数亿英镑的损失和严重的环境污染事件。提前预警这些堵塞是行业的一大难题。</p>
+                <p class="mb-4 text-slate-600">Wessex Water公司在巴斯市的试点项目采用了StormHarvester的智能监测系统，该系统：</p>
+                <ul class="list-disc list-inside space-y-2 mb-4 text-slate-600">
+                    <li><strong>整合多源数据：</strong>结合了来自遥测系统的实时下水道水位数据，以及精确到1公里网格的超本地降雨预报。</li>
+                    <li><strong>应用机器学习：</strong>AI算法学习管网在不同降雨模式下的“正常”水位反应，并持续预测未来水位。</li>
+                    <li><strong>智能警报：</strong>当实际水位显著偏离AI的预测值时，系统会判定为潜在堵塞并发出警报，从而指导运维团队进行精准排查。</li>
+                </ul>
+                <p class="font-semibold text-slate-800">成果：</p>
+                <ul class="list-disc list-inside space-y-2 text-slate-600">
+                    <li><strong>预警准确度：</strong>92%</li>
+                    <li><strong>误报率减少：</strong>97%</li>
+                    <li>在为期3个月的试点中，成功检测到<strong>60起</strong>早期堵塞，避免了<strong>2起</strong>重大污染事件。</li>
+                </ul>
+            `
+        },
+    ];
+
+    const caseStudiesGrid = document.getElementById('case-studies-grid');
+    const modal = document.getElementById('case-study-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const modalClose = document.getElementById('modal-close');
+
+    function openModal(caseData) {
+        modalTitle.textContent = caseData.title;
+        modalBody.innerHTML = caseData.content;
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.querySelector('.modal-content').classList.remove('scale-95');
+    }
+
+    function closeModal() {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.querySelector('.modal-content').classList.add('scale-95');
+    }
+
+    caseStudiesData.forEach(caseData => {
+        const card = document.createElement('div');
+        card.className = 'card bg-white p-6 rounded-lg shadow-md cursor-pointer';
+        card.innerHTML = `
+            <h4 class="font-bold text-lg text-slate-800">${caseData.title}</h4>
+            <p class="text-slate-600 mt-2 text-sm">${caseData.summary}</p>
+        `;
+        card.addEventListener('click', () => openModal(caseData));
+        caseStudiesGrid.appendChild(card);
+    });
+    
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.accordion-icon');
+
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-45');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-45');
+            }
+        });
+    });
+
+});
+</script>
+</body>
+</html>

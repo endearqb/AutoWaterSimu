@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOA污水处理工艺交互式报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 本应用采用了一种主题式、自上而下的信息架构，旨在引导用户进行探索式学习。结构分为四个核心部分：1. 概览与核心对比：首先通过一个引人注目的标题和一个AOA与A²/O的并排比较，迅速抓住用户的注意力，并回答“它是什么？”和“它有何不同？”这两个基本问题。这种设计能让用户立即理解AOA工艺的核心价值。2. 数据驱动的性能仪表盘：该部分将报告中的关键性能指标（脱氮除磷效果、节能、减泥等）以交互式卡片和图表呈现。用户可以通过选择不同的案例来动态更新数据，满足其对“它效果如何？”的好奇心。3. 交互式原理剖析：将复杂的生物化学机制通过简化的、可点击的流程图进行可视化，实现了从“是什么”到“为什么”的认知深化。4. 实践指南与经济评估：最后，为技术人员和决策者提供实用的设计参数和成本效益分析，回答“如何应用？”和“成本如何？”的问题。整个流程从宏观到微观，从理论到实践，符合认知规律，使用户能够根据自身需求，在不同层次上与信息互动。 -->
+    <!-- Visualization & Content Choices: 1. 工艺对比 (Inform/Compare): 使用HTML/CSS构建的并排卡片和流程图，而非SVG，以展示AOA与A²/O的区别。流程图用带边框的div和Unicode箭头(→)实现，清晰直观。2. 性能仪表盘 (Compare/Inform): 使用Chart.js创建交互式条形图，动态展示不同案例的出水TN/TP。选择器(select)触发JS事件，更新图表和关键指标卡片上的数据，使数据探索更具吸引力。3. 经济性评估 (Compare): 使用Chart.js雷达图，直观对比AOA和A²/O在投资、能耗、药耗、污泥处置等多个维度的成本效益，信息密度高，视觉冲击力强。4. 原理剖析 (Organize/Inform): HTML/CSS构建的可点击流程图，点击不同阶段（厌氧/好氧/缺氧）会显示/隐藏对应的文字说明，这种“渐进式披露”的设计避免了信息过载。所有图表均使用Chart.js（Canvas渲染）实现。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover {
+            color: #0077b6;
+        }
+        .active-nav {
+            color: #0077b6;
+            font-weight: 500;
+            border-bottom: 2px solid #0077b6;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .process-step {
+            border: 2px solid;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .process-arrow {
+            font-size: 2rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-gray-800">AOA工艺深度解析</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#comparison" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">工艺对比</a>
+                        <a href="#performance" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">核心性能</a>
+                        <a href="#mechanism" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">工作原理</a>
+                        <a href="#economics" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">经济效益</a>
+                        <a href="#practice" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">设计实践</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-gray-200 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <option value="#comparison">工艺对比</option>
+                        <option value="#performance">核心性能</option>
+                        <option value="#mechanism">工作原理</option>
+                        <option value="#economics">经济效益</option>
+                        <option value="#practice">设计实践</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <section id="hero" class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
+                AOA工艺: <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">低碳节能的污水处理新范式</span>
+            </h2>
+            <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">
+                深入探索厌氧-好氧-缺氧(AOA)工艺如何通过优化碳源利用，在无需外加碳源的情况下，实现高效脱氮除磷，并显著降低能耗与运营成本。
+            </p>
+        </section>
+
+        <section id="comparison" class="scroll-mt-20 mb-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">工艺对比：AOA vs. 传统A²/O</h3>
+                <p class="mt-2 text-md text-gray-500">AOA工艺通过颠覆性的流程重构，解决了传统A²/O工艺碳源竞争和能耗高昂的核心痛点。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="card p-6">
+                    <h4 class="text-2xl font-bold text-center text-blue-600 mb-4">AOA 工艺</h4>
+                    <div class="flex items-center justify-center space-x-2 mb-4">
+                        <div class="process-step border-orange-400 text-orange-500">厌氧</div>
+                        <div class="process-arrow">→</div>
+                        <div class="process-step border-sky-400 text-sky-500">好氧</div>
+                        <div class="process-arrow">→</div>
+                        <div class="process-step border-green-400 text-green-500">缺氧</div>
+                    </div>
+                    <ul class="space-y-3 text-gray-600">
+                        <li><strong class="font-semibold text-gray-800">✔️ 核心回流:</strong> 无大规模内回流，仅污泥回流(RAS)。</li>
+                        <li><strong class="font-semibold text-gray-800">✔️ 反硝化碳源:</strong> 主要利用胞内储存的<span class="font-mono bg-gray-100 px-1 rounded">内碳源</span>。</li>
+                        <li><strong class="font-semibold text-gray-800">✔️ 微生物竞争:</strong> <span class="text-green-600 font-medium">功能分离</span>，脱氮与除磷协同增效。</li>
+                        <li><strong class="font-semibold text-gray-800">✔️ 主要能耗:</strong> <span class="text-green-600 font-medium">显著降低</span>，无内回流泵能耗。</li>
+                        <li><strong class="font-semibold text-gray-800">✔️ 低C/N适应性:</strong> <span class="text-green-600 font-medium">极强</span>，专为碳源不足设计。</li>
+                    </ul>
+                </div>
+                <div class="card p-6 border-2 border-gray-200">
+                    <h4 class="text-2xl font-bold text-center text-gray-500 mb-4">A²/O 工艺 (传统)</h4>
+                     <div class="flex items-center justify-center space-x-2 mb-4">
+                        <div class="process-step border-orange-400 text-orange-500">厌氧</div>
+                        <div class="process-arrow">→</div>
+                        <div class="process-step border-green-400 text-green-500">缺氧</div>
+                        <div class="process-arrow">→</div>
+                        <div class="process-step border-sky-400 text-sky-500">好氧</div>
+                    </div>
+                    <ul class="space-y-3 text-gray-600">
+                        <li><strong class="font-semibold text-gray-800">❌ 核心回流:</strong> 巨大内回流(>200%)，能耗高。</li>
+                        <li><strong class="font-semibold text-gray-800">❌ 反硝化碳源:</strong> 主要依赖进水中的<span class="font-mono bg-gray-100 px-1 rounded">外碳源</span>。</li>
+                        <li><strong class="font-semibold text-gray-800">❌ 微生物竞争:</strong> <span class="text-red-600 font-medium">直接竞争</span>碳源，相互制约。</li>
+                        <li><strong class="font-semibold text-gray-800">❌ 主要能耗:</strong> <span class="text-red-600 font-medium">曝气和回流双重高耗</span>。</li>
+                        <li><strong class="font-semibold text-gray-800">❌ 低C/N适应性:</strong> <span class="text-red-600 font-medium">较差</span>，常需补充外碳源。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance" class="scroll-mt-20 mb-20 bg-white rounded-xl p-6 md:p-10 shadow-lg">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">核心性能与工程实例</h3>
+                <p class="mt-2 text-md text-gray-500">选择一个实际案例，查看AOA工艺在处理低C/N市政污水时的卓越表现。</p>
+            </div>
+            <div class="flex justify-center mb-8">
+                <select id="case-study-selector" class="max-w-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="case1">某4万吨/日AOA厂 (C/N ≈ 5)</option>
+                    <option value="case2">某AAOA中试 (C/N = 7.5)</option>
+                    <option value="case3">济南中科成 (BEAOA)</option>
+                    <option value="case4">中山珍家山 (新建AOA)</option>
+                </select>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h4 id="performance-title" class="text-xl font-bold text-gray-800 mb-4">案例性能指标</h4>
+                    <p id="performance-description" class="text-gray-600 mb-6">该厂在处理典型低碳氮比市政污水时，无需投加任何外部碳源，出水水质稳定优于一级A标准。</p>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div id="tn-removal-rate" class="text-3xl font-bold text-blue-600">-</div>
+                            <div class="text-sm text-blue-800">总氮(TN)去除率</div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div id="sludge-reduction" class="text-3xl font-bold text-green-600">-</div>
+                            <div class="text-sm text-green-800">污泥减量</div>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <div id="energy-saving" class="text-3xl font-bold text-yellow-600">-</div>
+                            <div class="text-sm text-yellow-800">综合节能</div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <div id="n2o-reduction" class="text-3xl font-bold text-red-600">>91%</div>
+                            <div class="text-sm text-red-800">N₂O削减率</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="mechanism" class="scroll-mt-20 mb-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">交互式工作原理</h3>
+                <p class="mt-2 text-md text-gray-500">点击下方流程块，了解AOA工艺在各阶段的生物化学机制。</p>
+            </div>
+            <div class="flex items-center justify-center space-x-2 md:space-x-4 mb-8">
+                <div id="step-anaerobic" class="process-step border-orange-400 text-orange-500 bg-orange-50 hover:bg-orange-100">1. 厌氧区</div>
+                <div class="process-arrow">→</div>
+                <div id="step-oxic" class="process-step border-sky-400 text-sky-500 bg-sky-50 hover:bg-sky-100">2. 好氧区</div>
+                <div class="process-arrow">→</div>
+                <div id="step-anoxic" class="process-step border-green-400 text-green-500 bg-green-50 hover:bg-green-100">3. 缺氧区</div>
+            </div>
+            <div id="mechanism-details" class="card p-6 md:p-8 min-h-[200px] transition-all duration-500">
+                <div id="detail-anaerobic" class="space-y-2">
+                    <h4 class="text-xl font-bold text-orange-600">厌氧区: 碳源捕获与磷释放</h4>
+                    <p class="text-gray-600">在此阶段，进水中的有机物被聚磷菌(PAOs)高效吸收，并转化为胞内储存的内碳源(PHAs)。为获取能量，PAOs会分解体内的多聚磷酸盐并将其释放到水中，此为“释磷”过程。这一步为后续的除磷和内源反硝化奠定了物质基础。</p>
+                </div>
+                <div id="detail-oxic" class="hidden space-y-2">
+                    <h4 class="text-xl font-bold text-sky-600">好氧区: 硝化与磷吸收</h4>
+                    <p class="text-gray-600">在充足的溶解氧条件下，氨氮($NH_4^+$-N)被硝化细菌氧化为硝态氮($NO_3^-$-N)。同时，PAOs利用之前储存的内碳源作为能量，超量吸收水中的磷酸盐，完成“吸磷”过程，实现生物除磷。</p>
+                </div>
+                <div id="detail-anoxic" class="hidden space-y-2">
+                    <h4 class="text-xl font-bold text-green-600">后置缺氧区: 内源反硝化</h4>
+                    <p class="text-gray-600">这是AOA工艺的核心创新。从好氧区流入的硝态氮，在这里被反硝化菌利用微生物自身储存的内碳源(PHAs)作为电子供体，还原为无害的氮气($N_2$)并逸出。此过程高效利用了碳源，且能深度削减上游产生的温室气体$N_2O$。</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="economics" class="scroll-mt-20 mb-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">全生命周期经济效益</h3>
+                <p class="mt-2 text-md text-gray-500">AOA工艺在资本投入(CAPEX)和运营成本(OPEX)上均展现出巨大优势。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                 <div class="chart-container">
+                    <canvas id="economicsChart"></canvas>
+                </div>
+                <div class="space-y-4">
+                    <div class="card p-4 flex items-start space-x-4">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold">↓</div>
+                        <div>
+                            <h5 class="font-bold text-gray-800">资本支出 (CAPEX)</h5>
+                            <p class="text-gray-600 text-sm">节省约15%总投资，占地面积减少20-30%，无需大功率内回流泵。</p>
+                        </div>
+                    </div>
+                    <div class="card p-4 flex items-start space-x-4">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-2xl font-bold">↓↓</div>
+                        <div>
+                            <h5 class="font-bold text-gray-800">运营支出 (OPEX)</h5>
+                            <p class="text-gray-600 text-sm">曝气能耗降低25-50%，无需外加碳源药剂费，污泥处置成本减少30-40%。</p>
+                        </div>
+                    </div>
+                     <div class="card p-4 flex items-start space-x-4">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-2xl font-bold">↓↓↓</div>
+                        <div>
+                            <h5 class="font-bold text-gray-800">碳足迹</h5>
+                            <p class="text-gray-600 text-sm">从直接排放($N_2O$)、电耗、物耗三个层面全面降低碳排放，助力实现“双碳”目标。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="practice" class="scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">设计与运行最佳实践</h3>
+                <p class="mt-2 text-md text-gray-500">为工程技术人员提供的AOA工艺设计与运行核心参数指南。</p>
+            </div>
+            <div class="card p-6 md:p-8">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">参数</th>
+                                <th scope="col" class="px-6 py-3">推荐范围/值</th>
+                                <th scope="col" class="px-6 py-3">原理与考量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">进水 C/N 比</th>
+                                <td class="px-6 py-4 font-mono">&lt; 6</td>
+                                <td class="px-6 py-4">AOA核心优势区，专为解决低C/N问题设计。</td>
+                            </tr>
+                            <tr class="bg-gray-50 border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">好氧区 DO (mg/L)</th>
+                                <td class="px-6 py-4 font-mono">1.0 - 2.5</td>
+                                <td class="px-6 py-4">平衡硝化需求与能耗，低DO利于节能和耦合Anammox。</td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">污泥龄 (SRT)</th>
+                                <td class="px-6 py-4 font-mono">16 - 30 天</td>
+                                <td class="px-6 py-4">长泥龄有利于硝化菌等功能菌群富集，系统更稳定。</td>
+                            </tr>
+                             <tr class="bg-gray-50">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">缺氧区 HRT</th>
+                                <td class="px-6 py-4 font-mono">2.0 - 4.0 小时</td>
+                                <td class="px-6 py-4">保证充足的内源反硝化时间和污泥发酵。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white mt-16">
+        <div class="container mx-auto py-4 px-5 text-center text-sm text-gray-500">
+            <p>交互式报告根据《城市污水处理AOA工艺的研究进展、应用实践与战略指南》生成。</p>
+            <p>&copy; 2025 AOA工艺数据可视化平台. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const caseStudies = {
+                case1: {
+                    name: "某4万吨/日AOA厂 (C/N ≈ 5)",
+                    description: "该厂在处理典型低碳氮比市政污水时，无需投加任何外部碳源，出水水质稳定优于一级A标准。",
+                    tn_removal: '≈85%',
+                    sludge_reduction: '显著减少',
+                    energy_saving: '显著节能',
+                    chart_tn: 7.53,
+                    chart_tp: 0.37
+                },
+                case2: {
+                    name: "某AAOA中试 (C/N = 7.5)",
+                    description: "在C/N为7.5条件下，系统无需外加任何碳源，即可实现极限脱氮除磷。",
+                    tn_removal: '89.03%',
+                    sludge_reduction: '-',
+                    energy_saving: '零碳源投加',
+                    chart_tn: 3.57,
+                    chart_tp: 0.21
+                },
+                case3: {
+                    name: "济南中科成 (BEAOA)",
+                    description: "采用BEAOA技术提标改造，处理能力提升40%，并能适应北方地区巨大温差。",
+                    tn_removal: '>85%',
+                    sludge_reduction: '≈40%',
+                    energy_saving: '曝气↓>25%',
+                    chart_tn: 5.0,
+                    chart_tp: 0.3
+                },
+                case4: {
+                    name: "中山珍家山 (新建AOA)",
+                    description: "与传统A²/O方案相比，新建AOA厂在投资、占地、效率上全面胜出。",
+                    tn_removal: '比A²/O高30%',
+                    sludge_reduction: '>30%',
+                    energy_saving: '投资↓≈15%',
+                    chart_tn: 6.5,
+                    chart_tp: 0.4
+                }
+            };
+            
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            let performanceChart = new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['出水总氮 (TN mg/L)', '出水总磷 (TP mg/L)'],
+                    datasets: [{
+                        label: '出水浓度',
+                        data: [],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(75, 192, 192, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: '浓度 (mg/L)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: '出水水质指标' }
+                    }
+                }
+            });
+
+            const econCtx = document.getElementById('economicsChart').getContext('2d');
+            const economicsChart = new Chart(econCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['投资(CAPEX)', '能耗(OPEX)', '药耗(OPEX)', '污泥处置', '占地面积'],
+                    datasets: [{
+                        label: 'AOA 工艺',
+                        data: [85, 50, 20, 65, 75],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2
+                    }, {
+                        label: 'A²/O 工艺',
+                        data: [100, 100, 100, 100, 100],
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 110,
+                             pointLabels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: { display: true, text: 'AOA vs. A²/O 成本效益对比 (相对值)' }
+                    }
+                }
+            });
+
+            const caseSelector = document.getElementById('case-study-selector');
+            
+            function updatePerformanceView(caseKey) {
+                const data = caseStudies[caseKey];
+                document.getElementById('performance-title').textContent = `${data.name} 性能指标`;
+                document.getElementById('performance-description').textContent = data.description;
+                document.getElementById('tn-removal-rate').textContent = data.tn_removal;
+                document.getElementById('sludge-reduction').textContent = data.sludge_reduction;
+                document.getElementById('energy-saving').textContent = data.energy_saving;
+
+                performanceChart.data.datasets[0].data = [data.chart_tn, data.chart_tp];
+                performanceChart.options.plugins.title.text = `${data.name} 出水水质`;
+                performanceChart.update();
+            }
+
+            caseSelector.addEventListener('change', (e) => {
+                updatePerformanceView(e.target.value);
+            });
+
+            updatePerformanceView('case1');
+            
+            const steps = {
+                anaerobic: document.getElementById('step-anaerobic'),
+                oxic: document.getElementById('step-oxic'),
+                anoxic: document.getElementById('step-anoxic'),
+            };
+
+            const details = {
+                anaerobic: document.getElementById('detail-anaerobic'),
+                oxic: document.getElementById('detail-oxic'),
+                anoxic: document.getElementById('detail-anoxic'),
+            };
+
+            function handleStepClick(selectedStep) {
+                Object.keys(steps).forEach(step => {
+                    steps[step].classList.remove('font-bold', 'scale-105', 'shadow-md');
+                    details[step].classList.add('hidden');
+                });
+                
+                steps[selectedStep].classList.add('font-bold', 'scale-105', 'shadow-md');
+                details[selectedStep].classList.remove('hidden');
+            }
+
+            steps.anaerobic.addEventListener('click', () => handleStepClick('anaerobic'));
+            steps.oxic.addEventListener('click', () => handleStepClick('oxic'));
+            steps.anoxic.addEventListener('click', () => handleStepClick('anoxic'));
+            
+            handleStepClick('anaerobic');
+            
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('nav a');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active-nav');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active-nav');
+                    }
+                });
+            });
+
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', function(e) {
+                const targetId = e.target.value;
+                document.querySelector(targetId).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>

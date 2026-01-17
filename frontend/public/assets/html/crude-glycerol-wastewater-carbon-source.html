@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>粗甘油：废水处理的经济与可持续碳源新机遇</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!--
+    Infographic Plan Summary:
+    Title: 粗甘油：废水处理的经济与可持续碳源新机遇
+    Narrative Flow:
+    1.  Introduction: Biodiesel boom -> Glycerin surplus -> WWTP opportunity.
+    2.  Glycerin Profile: Composition (donut chart), impurities, variability.
+    3.  WWTP Applications: Denitrification (stats), EBPR (challenges, VFA solution).
+    4.  Impurities Deep Dive: Methanol, salts, LCFAs/soaps, MONG - their specific impacts.
+    5.  Pretreatment: Necessity, common methods (HTML/CSS flowchart), goal (fit-for-purpose), byproduct recovery.
+    6.  Economics: Cost comparison with traditional sources (bar chart), "true cost" discussion.
+    7.  SWOT Analysis: Visualized summary of S, W, O, T for crude glycerin in WWTPs.
+    8.  Conclusion & Outlook: Recommendations, future trends.
+    Color Palette: "Modern & Bold" (Dark Blue: #0B2D48, Teal: #12A4B1, Orange: #F47920, Yellow: #FDBB2F, Light Grey: #EAEAEA, White: #FFFFFF)
+
+    Visualization Choices Summary (Confirming NO SVG, NO MERMAID JS):
+    -   Biodiesel Growth (Stat): Goal: Inform. Viz: Large Text. Method: HTML/CSS. (NO SVG)
+    -   Glycerin Ratio (Stat): Goal: Inform. Viz: Large Text. Method: HTML/CSS. (NO SVG)
+    -   Crude Glycerin Composition (Table 2.1 data): Goal: Compare (composition). Viz: Donut Chart. Method: Chart.js (Canvas). (NO SVG)
+        -   Labels: 甘油, 水, 灰分/盐类, 甲醇, MONG (含皂类/FFAs)
+        -   Data: 甘油 (60%), 水 (15%), 甲醇 (10%), 灰分/盐类 (5%), MONG (10%).
+    -   Denitrification Performance (SDNR, COD/N): Goal: Inform. Viz: Text Stats. Method: HTML/CSS. (NO SVG)
+    -   Impurities Impact List: Goal: Organize/Inform. Viz: List with Unicode icons. Method: HTML/CSS. (NO SVG)
+    -   Pretreatment Process Flow: Goal: Organize. Viz: Flowchart. Method: HTML/CSS (Flexbox/Grid, Borders). (NO SVG, NO MERMAID JS)
+        -   Steps: 粗甘油 -> 酸化/中和 -> 固液分离 -> (可选: 除甲醇/脱盐) -> 适用于污水厂的甘油碳源
+    -   Cost Comparison (kg N removed, Table 8.1 data): Goal: Compare. Viz: Bar Chart. Method: Chart.js (Canvas). (NO SVG)
+        -   Labels: 粗甘油(预处理), 甲醇, 乙酸钠
+        -   Data: Crude Glycerin ($1.0), Methanol ($1.37), Sodium Acetate ($8.15).
+    -   SWOT Analysis: Goal: Organize. Viz: 4-Quadrant Layout. Method: HTML/CSS cards. (NO SVG)
+    -   All Chart.js instances will use `responsive: true`, `maintainAspectRatio: false`, label wrapping, and the specified tooltip configuration.
+    -   No Mermaid JS used. No SVG graphics used.
+    -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Microsoft Yahei', sans-serif;
+            background-color: #F0F4F8; /* Lighter grey for a softer background */
+            color: #0B2D48; /* Dark Blue */
+        }
+        .section-title {
+            color: #12A4B1; /* Teal */
+        }
+        .stat-highlight {
+            color: #F47920; /* Orange */
+            font-weight: bold;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.5rem; /* 8px */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Adjusted for potentially smaller grid cells */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 320px; /* Slightly adjust for md screens */
+                 max-height: 400px;
+            }
+        }
+        .flowchart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .flowchart-step {
+            background-color: #E0F2F7; /* Light Teal */
+            color: #0B2D48;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem; /* 6px */
+            text-align: center;
+            border: 1px solid #12A4B1; /* Teal border */
+            min-width: 150px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .flowchart-arrow {
+            font-size: 1.5rem; /* 24px */
+            color: #12A4B1; /* Teal */
+            transform: rotate(90deg); /* For vertical flow */
+        }
+         @media (min-width: 768px) { /* Horizontal flow on larger screens */
+            .flowchart-container {
+                flex-direction: row;
+                justify-content: center;
+            }
+            .flowchart-arrow {
+                 transform: rotate(0deg);
+            }
+        }
+
+        .swot-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+         @media (min-width: 768px) {
+            .swot-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .swot-quadrant {
+            padding: 1rem;
+            border-radius: 0.375rem; /* 6px */
+        }
+        .swot-s { background-color: #E6FFFA; border-left: 5px solid #4DB6AC; } /* Light Teal Green for Strengths */
+        .swot-w { background-color: #FFF5E6; border-left: 5px solid #FFB74D; } /* Light Orange for Weaknesses */
+        .swot-o { background-color: #E3F2FD; border-left: 5px solid #64B5F6; } /* Light Blue for Opportunities */
+        .swot-t { background-color: #FFEBEE; border-left: 5px solid #E57373; } /* Light Red for Threats */
+
+        h1, h2, h3 {
+            color: #0B2D48; /* Dark Blue */
+        }
+        h2.section-title {
+             border-bottom: 2px solid #FDBB2F; /* Yellow */
+             padding-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-gradient-to-r from-[#0B2D48] to-[#12A4B1] text-white p-8 text-center rounded-b-lg shadow-lg">
+        <h1 class="text-4xl font-bold mb-2">粗甘油：废水处理的经济与可持续碳源新机遇</h1>
+        <p class="text-lg">基于《粗甘油在生物碳源和水处理复合碳源中应用的可行性研究》报告的可视化分析</p>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8 space-y-12">
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">1. 现状：生物柴油副产物的挑战与机遇</h2>
+            <div class="grid md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <p class="text-lg mb-4">全球对可再生能源的需求推动了生物柴油产业的快速扩张。生物柴油产量预计以每年 <span class="stat-highlight text-2xl">4.5%</span> 的速度增长，2022年已达到 <span class="stat-highlight text-2xl">4100万立方米</span> (报告1.1节)。</p>
+                    <p class="text-lg mb-4">然而，每生产10公斤生物柴油，大约会产生 <span class="stat-highlight text-2xl">1公斤</span> 的副产物——粗甘油 (报告1.1节)。这导致了粗甘油供应严重过剩，价格大幅下跌，并带来了潜在的环境问题。</p>
+                </div>
+                <div class="text-center">
+                     <div class="p-6 bg-teal-50 rounded-lg shadow">
+                        <span class="text-6xl">🏭➡️💧</span>
+                        <p class="text-xl mt-2 font-semibold text-[#12A4B1]">过剩副产物的新出路？</p>
+                        <p class="text-md text-gray-700 mt-1">废水处理厂（WWTPs）常面临碳源不足的问题，需要外加碳源进行生物脱氮除磷。价格低廉的粗甘油为此提供了一个巨大的潜在市场 (报告1.2节)。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">2. 了解粗甘油：成分与变数</h2>
+            <div class="grid md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-[#0B2D48]">典型组成 (基于报告表2.1范围的示例值)</h3>
+                    <p class="text-md mb-4">粗甘油并非纯净物，其核心成分是甘油，但含有多种杂质。其纯度和组成因原料、生产工艺等因素差异巨大 (报告2.1, 2.3节)。</p>
+                    <ul class="list-disc list-inside text-md space-y-1">
+                        <li><span class="font-semibold">甘油:</span> 25% - 90% (示例图中约60%)</li>
+                        <li><span class="font-semibold">水:</span> 1.5% - 45% (示例图中约15%)</li>
+                        <li><span class="font-semibold">甲醇:</span> 6% - 40% (示例图中约10%)</li>
+                        <li><span class="font-semibold">灰分/盐类:</span> <1% - 16% (示例图中约5%)</li>
+                        <li><span class="font-semibold">MONG (非甘油有机物，含皂类/游离脂肪酸):</span> 可高达50.4% (示例图中约10%)</li>
+                    </ul>
+                     <p class="mt-4 text-sm text-gray-600">MONG包括未反应的甘油酯、脂肪酸甲酯(FAMEs)、游离脂肪酸(FFAs)、皂类等 (报告2.2节)。</p>
+                </div>
+                <div class="chart-container mx-auto">
+                    <canvas id="glycerinCompositionChart"></canvas>
+                    <p class="text-center text-sm mt-2 text-gray-600">图1: 粗甘油典型组成示意图</p>
+                </div>
+            </div>
+            <div class="mt-6 bg-yellow-50 p-4 rounded-lg border border-yellow-300">
+                <h3 class="text-lg font-semibold text-yellow-700">主要挑战：</h3>
+                <p class="text-yellow-700">粗甘油质量的<span class="font-bold">巨大变异性</span>和<span class="font-bold">杂质含量</span>是其作为稳定碳源应用的主要障碍 (报告2.3节)。</p>
+            </div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">3. 粗甘油在废水处理中的应用</h2>
+            <p class="text-lg mb-6">粗甘油主要作为生物脱氮除磷 (BNR) 过程中的外加碳源。其效果因具体工艺和杂质含量而异 (报告第3章)。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-blue-50 p-4 rounded-lg shadow">
+                    <h3 class="text-xl font-semibold mb-3 text-blue-700">3.1 反硝化 (Denitrification)</h3>
+                    <p class="mb-2">甘油可作为有效的电子供体，促进硝酸盐和亚硝酸盐还原为氮气 (报告3.1.1节)。</p>
+                    <p class="mb-1"><span class="font-semibold">性能指标示例:</span></p>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li>比反硝化速率 (SDNR): 可达约 <span class="stat-highlight">0.14 - 0.25 gN/gVSS/d</span> (报告3.1.2节, 表6.1)。</li>
+                        <li>COD/N 消耗比: 通常在 <span class="stat-highlight">3-7 g COD/g N</span> (报告3.1.2节, 表6.1)。</li>
+                    </ul>
+                    <p class="mt-3 text-sm text-blue-600">注意：未经驯化的污泥利用效率较低，杂质（如甲醇）对特定反硝化菌群（如Anammox）有显著影响 (报告3.1.2, 5.1节)。</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg shadow">
+                    <h3 class="text-xl font-semibold mb-3 text-green-700">3.2 强化生物除磷 (EBPR)</h3>
+                    <p class="mb-2">PAOs (聚磷菌) 利用碳源进行磷的吸收与释放 (报告3.2节)。</p>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><span class="font-semibold">直接投加粗甘油:</span> 效果不佳，甚至可能失败，因PAOs直接利用甘油能力有限或受杂质抑制 (报告3.2.1节)。</li>
+                        <li><span class="font-semibold">预发酵为VFAs (挥发性脂肪酸):</span> 将粗甘油预发酵产生的VFAs（如乙酸、丙酸）投加，能显著强化除磷效果 (报告3.2.1节)。</li>
+                    </ul>
+                    <p class="mt-3 text-sm text-green-600">注意：粗甘油中的长链脂肪酸 (LCFAs) 可能对PAOs产生长期负面影响 (报告3.2.2节)。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">4. 杂质的关键影响</h2>
+            <p class="text-lg mb-4">粗甘油中的杂质是其应用的主要瓶颈，它们可能抑制微生物活性、干扰工艺稳定性 (报告第5章)。</p>
+            <div class="space-y-4">
+                <div class="flex items-start p-3 bg-red-50 rounded-lg">
+                    <span class="text-2xl mr-3">⚠️</span>
+                    <div><span class="font-semibold text-red-700">甲醇 (Methanol):</span> 对Anammox菌有强抑制性 (IC50: 143 mg COD/L)，但可被某些反硝化菌利用 (报告5.1节)。含量可高达40%。</div>
+                </div>
+                <div class="flex items-start p-3 bg-orange-50 rounded-lg">
+                     <span class="text-2xl mr-3">🧂</span>
+                    <div><span class="font-semibold text-orange-700">盐类 (Salts):</span> 高浓度 (可达16%灰分) 会产生渗透胁迫，影响多种微生物活性和工艺稳定性 (报告5.2节)。</div>
+                </div>
+                <div class="flex items-start p-3 bg-purple-50 rounded-lg">
+                     <span class="text-2xl mr-3">🧼</span>
+                    <div><span class="font-semibold text-purple-700">皂类和长链脂肪酸 (Soaps/LCFAs):</span> 短期内可能被PAOs利用，但长期暴露会导致EBPR系统崩溃；对厌氧消化也有显著抑制 (报告5.3节)。</div>
+                </div>
+                <div class="flex items-start p-3 bg-gray-100 rounded-lg">
+                    <span class="text-2xl mr-3">🧩</span>
+                    <div><span class="font-semibold text-gray-700">非甘油有机物 (MONG):</span> 组成复杂 (可高达50.4%)，可能含有抑制物，导致物理性问题如设备堵塞、污泥性质改变 (报告2.2, 5.4节)。</div>
+                </div>
+            </div>
+            <p class="mt-6 text-sm text-gray-700">缓解策略包括预处理、稀释、微生物驯化和精确投加等 (报告5.4节)。</p>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">5. 预处理：提升价值的关键</h2>
+            <p class="text-lg mb-4">为降低杂质负面影响，粗甘油通常需要预处理。目标并非高纯度，而是“够用即可”，兼顾成本与效益 (报告第7章)。</p>
+            <h3 class="text-xl font-semibold mb-3 text-[#0B2D48]">简化预处理流程示例：</h3>
+            <div class="flowchart-container mb-6">
+                <div class="flowchart-step">① 粗甘油原料</div>
+                <div class="flowchart-arrow text-2xl font-bold md:mt-0 mt-2">➔</div>
+                <div class="flowchart-step">② 酸化/中和<br>(调pH,转化皂类)</div>
+                <div class="flowchart-arrow text-2xl font-bold md:mt-0 mt-2">➔</div>
+                <div class="flowchart-step">③ 固液分离<br>(除固体,部分MONG)</div>
+                <div class="flowchart-arrow text-2xl font-bold md:mt-0 mt-2">➔</div>
+                <div class="flowchart-step">④ (可选)<br>除甲醇/脱盐</div>
+                <div class="flowchart-arrow text-2xl font-bold md:mt-0 mt-2">➔</div>
+                <div class="flowchart-step">⑤ 适用于污水厂<br>的甘油碳源</div>
+            </div>
+            <p class="text-md mb-2">常用技术包括：酸化、中和、蒸馏（尤指真空蒸馏）、离子交换、膜分离、活性炭吸附等 (报告7.1节)。</p>
+            <div class="mt-4 p-4 bg-teal-50 rounded-lg border border-teal-300">
+                <h4 class="font-semibold text-teal-700">预处理的经济性提升：</h4>
+                <p class="text-sm text-teal-600">若能实现副产物回收（如FFAs用于生物柴油，磷酸盐作肥料），可显著改善经济性，符合循环经济理念 (报告7.3节)。</p>
+            </div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">6. 经济性对比：粗甘油 vs. 传统碳源</h2>
+            <p class="text-lg mb-4">粗甘油的低采购价是其主要吸引力，但“真实成本”需综合考量 (报告第8章)。</p>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-[#0B2D48]">单位氮去除成本估算 (反硝化)</h3>
+                    <p class="text-sm mb-4 text-gray-600">(数据源自报告表8.1及相关章节，仅供参考，实际成本因地而异)</p>
+                    <div class="chart-container" style="max-width: 450px;">
+                        <canvas id="costComparisonChart"></canvas>
+                         <p class="text-center text-sm mt-2 text-gray-600">图2: 不同碳源反硝化成本比较示意图</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-md mb-3"><span class="font-semibold">粗甘油 (80%纯度) 采购价:</span> 可低至 <span class="stat-highlight">$0.04 - $0.09/磅</span>，或 <span class="stat-highlight">$150 - $1000/公吨</span> (报告8.1节)。</p>
+                    <p class="text-md mb-3"><span class="font-semibold">甲醇成本:</span> 约 <span class="stat-highlight">$1.14 - $1.60/kg $NO_3^{-}-N$</span> 去除 (报告8.2节)。</p>
+                    <p class="text-md mb-3"><span class="font-semibold">乙酸钠成本:</span> 高达约 <span class="stat-highlight">$8.15/kg $NO_3^{-}-N$</span> 去除 (报告8.2节)。</p>
+                    <div class="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-300">
+                        <h4 class="font-semibold text-orange-700">关键考量：“真实成本”</h4>
+                        <p class="text-sm text-orange-600">必须包括预处理费用、监测、潜在工艺波动风险、污泥处理及专用储存投加设备等。精制甘油产品 (如MicroC®) 虽采购价高，但声称总运营成本可能更低 (报告8.2, 6.2节)。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">7. SWOT 分析：粗甘油在废水处理中的应用</h2>
+            <p class="text-lg mb-4">综合评估粗甘油作为废水处理碳源的优势、劣势、机遇与挑战 (基于报告内容综合)。</p>
+            <div class="swot-grid">
+                <div class="swot-quadrant swot-s">
+                    <h3 class="text-xl font-semibold mb-2 text-green-700">S - 优势 (Strengths)</h3>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        <li>采购成本极低 (报告6.2, 8.1节)</li>
+                        <li>供应量巨大且持续增长 (报告1.1, 8.1节)</li>
+                        <li>废物资源化，符合循环经济 (报告1.2, 10.3节)</li>
+                        <li>COD含量高，具碳源潜力 (报告1.2节)</li>
+                    </ul>
+                </div>
+                <div class="swot-quadrant swot-w">
+                    <h3 class="text-xl font-semibold mb-2 text-orange-700">W - 劣势 (Weaknesses)</h3>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        <li>质量波动大，成分不稳定 (报告2.3, 6.2节)</li>
+                        <li>杂质多 (甲醇、盐、皂类、MONG等) (报告2.2, 第5章)</li>
+                        <li>通常需要预处理，增加成本和复杂性 (报告6.2, 7.3, 8.3节)</li>
+                        <li>可能导致操作问题 (设备堵塞、腐蚀) (报告9.1节)</li>
+                        <li>对某些微生物或工艺有抑制性 (报告第5章)</li>
+                        <li>可能比甲醇产生更多污泥 (报告6.2节)</li>
+                    </ul>
+                </div>
+                <div class="swot-quadrant swot-o">
+                    <h3 class="text-xl font-semibold mb-2 text-blue-700">O - 机遇 (Opportunities)</h3>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        <li>显著降低废水处理厂碳源成本 (报告1.2, 8.2节)</li>
+                        <li>推动生物柴油产业可持续性 (报告1.1节)</li>
+                        <li>开发高效经济的预处理技术 (报告11.2节)</li>
+                        <li>复合碳源配方创新 (报告第4章, 11.1节)</li>
+                        <li>建立“废水处理级”粗甘油标准 (报告11.2, 11.3节)</li>
+                    </ul>
+                </div>
+                <div class="swot-quadrant swot-t">
+                    <h3 class="text-xl font-semibold mb-2 text-red-700">T - 挑战 (Threats)</h3>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        <li>预处理成本可能抵消低价优势 (报告8.3节)</li>
+                        <li>操作风险和管理复杂性增加 (报告9.1, 9.3节)</li>
+                        <li>环境影响不确定性 (如$N_2O$排放, 出水毒性) (报告10.1, 10.2节)</li>
+                        <li>相关法规、标准尚不完善 (报告10.4节)</li>
+                        <li>若需求大增，粗甘油价格可能上涨 (报告8.3节)</li>
+                        <li>供应链稳定性和质量保障问题 (报告8.1, 9.3节)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="text-3xl font-semibold mb-6 section-title">8. 未来展望与战略建议</h2>
+            <p class="text-lg mb-4">尽管面临挑战，但通过技术创新、产业链协同和政策引导，粗甘油作为可持续碳源的潜力巨大 (报告第11章)。</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-[#12A4B1]">关键发展方向：</h3>
+                    <ul class="list-disc list-inside space-y-1 text-md">
+                        <li>开发更经济高效的靶向预处理技术 (报告11.2节)。</li>
+                        <li>筛选和构建耐受性强的微生物菌群 (报告11.2节)。</li>
+                        <li>优化复合碳源配方与应用 (报告11.2节)。</li>
+                        <li>制定粗甘油作为废水碳源的技术标准与指南 (报告11.2节)。</li>
+                        <li>加强产业链上下游合作与信息共享 (报告11.2节)。</li>
+                    </ul>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-2 text-[#0B2D48]">对废水处理厂的建议 (报告11.2节)：</h3>
+                     <ul class="list-decimal list-inside space-y-1 text-sm">
+                        <li>建立严格的质量评估体系。</li>
+                        <li>进行充分的中试研究。</li>
+                        <li>投资适应性的预处理和投加系统。</li>
+                        <li>加强操作人员培训与过程监控。</li>
+                        <li>优先考虑与能提供稳定质量粗甘油的生物柴油生产商合作。</li>
+                    </ul>
+                </div>
+            </div>
+             <p class="mt-6 text-center text-lg font-semibold text-[#0B2D48]">通过共同努力，粗甘油有望成为解决水环境问题和促进循环经济发展的重要力量。</p>
+        </section>
+    </main>
+
+    <footer class="text-center p-6 mt-12 bg-[#0B2D48] text-gray-300 rounded-t-lg">
+        <p class="text-sm">本信息图数据主要来源于《粗甘油在生物碳源和水处理复合碳源中应用的可行性研究》报告。</p>
+        <p class="text-xs mt-1">信息图生成时间：<span id="generationDate"></span>。仅供参考，具体应用需详细评估。</p>
+    </footer>
+
+    <script>
+        document.getElementById('generationDate').textContent = new Date().toLocaleDateString('zh-CN');
+
+        function wrapLabel(str, maxWidth) {
+            if (typeof str !== 'string') return str; // Return as is if not a string
+            const lines = [];
+            let currentLine = '';
+            const words = str.replace(/([a-zA-Z0-9\(\),./]+)/g, ' $1 ').split(/\s+/).filter(Boolean); // Split by spaces and keep Eng/numbers together
+
+            for (const word of words) {
+                if ((currentLine + word).length > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = word;
+                } else {
+                    currentLine += (currentLine.length > 0 && !word.match(/^[\(\),.]/) ? ' ' : '') + word;
+                }
+            }
+            if (currentLine.length > 0) {
+                lines.push(currentLine.trim());
+            }
+            return lines.length > 1 ? lines : lines[0] || str; // if only one line, return as string
+        }
+
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: { size: 10 },
+                        boxWidth: 15,
+                         color: '#0B2D48', // Dark Blue for legend text
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return label;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Chart 1: Glycerin Composition
+        const glycerinCompositionCtx = document.getElementById('glycerinCompositionChart').getContext('2d');
+        const glycerinLabels = [
+            wrapLabel('甘油 (Glycerol)', 16),
+            wrapLabel('水 (Water)', 16),
+            wrapLabel('甲醇 (Methanol)', 16),
+            wrapLabel('灰分/盐类 (Ash/Salts)', 16),
+            wrapLabel('MONG (含皂类/FFAs)', 16)
+        ];
+        new Chart(glycerinCompositionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: glycerinLabels,
+                datasets: [{
+                    label: '粗甘油组成 (%)',
+                    data: [60, 15, 10, 5, 10], // Example: 甘油 60%, 水 15%, 甲醇 10%, 灰分/盐类 5%, MONG 10%
+                    backgroundColor: [
+                        '#12A4B1', // Teal
+                        '#48CAE4', // Lighter Teal/Blue
+                        '#F47920', // Orange
+                        '#FDBB2F', // Yellow
+                        '#A0AEC0'  // Gray
+                    ],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                ...commonChartOptions,
+                plugins: {
+                    ...commonChartOptions.plugins,
+                    legend: {
+                        ...commonChartOptions.plugins.legend,
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Chart 2: Cost Comparison
+        const costComparisonCtx = document.getElementById('costComparisonChart').getContext('2d');
+        const costLabels = [
+            wrapLabel('粗甘油 (预处理)', 16), // Assuming this cost includes some pretreatment
+            wrapLabel('甲醇 (Methanol)', 16),
+            wrapLabel('乙酸钠 (Sodium Acetate)', 16)
+        ];
+        new Chart(costComparisonCtx, {
+            type: 'bar',
+            data: {
+                labels: costLabels,
+                datasets: [{
+                    label: '估算单位氮去除成本 ($/kg N)',
+                    data: [1.0, 1.37, 8.15], // Data from thought process: CG $1.0, Methanol $1.37, Acetate $8.15
+                    backgroundColor: [
+                        '#4DB6AC', // Medium Teal Green
+                        '#F47920', // Orange
+                        '#E57373'  // Light Red (high cost)
+                    ],
+                    borderColor: [
+                        '#00796B',
+                        '#EF6C00',
+                        '#C62828'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                ...commonChartOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '成本 ($/kg N)',
+                            color: '#0B2D48'
+                        },
+                        ticks: { color: '#0B2D48' }
+                    },
+                    x: {
+                        ticks: { 
+                            color: '#0B2D48',
+                            font: {size: 10}
+                        }
+                    }
+                },
+                 plugins: {
+                    ...commonChartOptions.plugins,
+                    legend: {
+                       display: false // Hiding legend for bar chart as dataset label is clear
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

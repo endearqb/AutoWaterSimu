@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水下机器人在水务行业的应用：机遇与挑战</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .section-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .subsection-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #0077B6; /* Primary Blue from "Brilliant Blues" */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        .big-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00B4D8; /* Secondary Blue */
+        }
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .flowchart-item {
+            border: 2px solid #90E0EF; /* Accent Cyan */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            background-color: #CAF0F8; /* Light Background */
+            color: #03045E; /* Dark Text */
+        }
+        .flowchart-arrow {
+            font-size: 1.5rem;
+            color: #0077B6; /* Primary Blue */
+            margin: 0 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        /* Palette: Brilliant Blues
+           Primary Blue: #0077B6
+           Secondary Blue: #00B4D8
+           Accent Cyan: #90E0EF
+           Light Background/Neutral: #CAF0F8
+           Dark Text: #03045E
+           White: #FFFFFF (for card backgrounds)
+        */
+        /* Confirmation: NEITHER Mermaid JS NOR SVG were used anywhere in this output. */
+        /* Narrative Plan:
+           Theme: 水下机器人在水务行业的革新：机遇与挑战
+           Sections:
+           1. 引言 (Introduction)
+           2. 水下机器人的核心优势 (Core Advantages - Section VI from report)
+           3. 面临的挑战与局限 (Challenges and Limitations - Section VII from report)
+           4. 市场趋势与展望 (Market Trends & Outlook - derived)
+           5. 结论 (Conclusion)
+        */
+        /* Visualization Choices Summary (Confirming NO SVG, NO MERMAID JS for all):
+           - Enhanced Safety: Single Big Number + Unicode Icon (HTML/CSS, Unicode)
+           - Improved Efficiency: Bar Chart (Chart.js Canvas)
+           - Reduced Costs: Donut Chart (Chart.js Canvas)
+           - Enhanced Data Quality: Styled List with Unicode Icons (HTML/CSS, Unicode)
+           - Expanded Accessibility: HTML/CSS Diagram (HTML/CSS, Unicode)
+           - Technical Challenges: Radar Chart (Chart.js Canvas)
+           - Operational Challenges: Styled List with Unicode Icons (HTML/CSS, Unicode)
+           - Economic Challenges: Bar Chart (Chart.js Canvas)
+           - Environmental & Regulatory: Styled List with Unicode Icons (HTML/CSS, Unicode)
+           - Technological Advancements: Line Chart (Chart.js Canvas)
+           - Market Growth Projection: Single Big Number + Unicode Icon (HTML/CSS, Unicode)
+        */
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800" style="background-color: #CAF0F8;">
+
+    <nav class="sticky-nav hidden md:block">
+        <div class="container mx-auto flex justify-center space-x-6 py-2">
+            <a href="#introduction" class="text-lg font-medium hover:text-[#0077B6] transition-colors">引言</a>
+            <a href="#advantages" class="text-lg font-medium hover:text-[#0077B6] transition-colors">核心优势</a>
+            <a href="#challenges" class="text-lg font-medium hover:text-[#0077B6] transition-colors">挑战与局限</a>
+            <a href="#trends" class="text-lg font-medium hover:text-[#0077B6] transition-colors">市场趋势</a>
+            <a href="#conclusion" class="text-lg font-medium hover:text-[#0077B6] transition-colors">结论</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header id="introduction" class="text-center py-12 md:py-16 bg-white rounded-xl shadow-xl mb-12" style="background-image: linear-gradient(to right, #0077B6, #00B4D8); color: white;">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">水下机器人在水务行业的革新</h1>
+            <p class="text-xl md:text-2xl max-w-3xl mx-auto">探索水下机器人技术如何重塑水务管理，分析其带来的机遇与面临的挑战。</p>
+        </header>
+
+        <section id="advantages" class="py-8 md:py-12">
+            <h2 class="section-title" style="color: #03045E;">水下机器人的核心优势</h2>
+            <p class="text-center text-lg mb-10 max-w-2xl mx-auto" style="color: #03045E;">水下机器人在水务行业（包括污水处理厂WWTP）的应用带来了共通的显著效益。它们从根本上改变了传统水下作业模式，在安全性、效率、成本控制和数据质量方面均表现出卓越的优越性。</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+
+                <div class="card">
+                    <div class="text-center">
+                        <span class="stat-icon" style="color: #0077B6;">🛡️</span>
+                        <h3 class="subsection-title">提升作业人员安全性</h3>
+                    </div>
+                    <p class="text-center mb-4">将作业人员与危险水下环境隔离，大幅降低事故风险。</p>
+                    <p class="text-center big-number">90%+</p>
+                    <p class="text-center text-sm text-gray-600">潜在风险降低（估算）</p>
+                    <p class="mt-2 text-sm text-gray-700">通过替代人工潜水，水下机器人避免了人员暴露于深水高压、密闭空间有毒气体、污染水体等危险因素，例如在污水处理厂的清淤作业中实现“人不下井”。</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="subsection-title text-center">提高运营效率与作业速度</h3>
+                    <p class="text-center mb-4">自动化和连续作业能力显著缩短项目周期。</p>
+                    <div class="chart-container h-64 md:h-72">
+                        <canvas id="efficiencyChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-700">水下机器人可长时间连续工作，不受人类生理极限影响。其快速部署和通常高于人工的作业效率（如报告中提及清淤时间缩短30%），显著提升了水务运营的整体效能。</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="subsection-title text-center">降低运营与维护成本</h3>
+                    <p class="text-center mb-4">长期来看，可观的成本节约潜力。</p>
+                    <div class="chart-container h-64 md:h-72">
+                        <canvas id="costSavingChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-700">虽然初始投资较高，但通过替代昂贵的人工潜水、减少设施停运损失、实施预防性维护（避免大修）以及精确修复漏损（减少资源浪费），水下机器人能带来显著的长期经济效益。</p>
+                </div>
+
+                <div class="card md:col-span-2 lg:col-span-1">
+                     <div class="text-center"><span class="stat-icon" style="color: #0077B6;">📊</span>
+                        <h3 class="subsection-title">提升数据准确性与全面性</h3>
+                    </div>
+                    <ul class="space-y-2 text-gray-700 text-sm">
+                        <li class="flex items-center"><span class="text-xl mr-2" style="color: #00B4D8;">✅</span> 提供高分辨率、多维度数据</li>
+                        <li class="flex items-center"><span class="text-xl mr-2" style="color: #00B4D8;">✅</span> 精确地理空间标记，数据客观可重复</li>
+                        <li class="flex items-center"><span class="text-xl mr-2" style="color: #00B4D8;">✅</span> 大范围、长时序系统性巡检</li>
+                        <li class="flex items-center"><span class="text-xl mr-2" style="color: #00B4D8;">✅</span> 数字化记录，易于集成与分析</li>
+                    </ul>
+                    <p class="mt-2 text-sm text-gray-700">搭载先进传感器的机器人能获取远超传统方法的精确、全面的水下信息，为科学决策和智慧水务建设提供坚实的数据基础。</p>
+                </div>
+
+                <div class="card">
+                     <div class="text-center"><span class="stat-icon" style="color: #0077B6;">🌊</span>
+                        <h3 class="subsection-title">拓展作业环境的可达性</h3>
+                    </div>
+                    <div class="flex flex-col items-center space-y-2 my-4">
+                        <div class="flowchart-item w-full">机器人 🤖</div>
+                        <div class="flowchart-arrow">⬇️</div>
+                        <div class="grid grid-cols-2 gap-2 w-full">
+                            <div class="flowchart-item">狭窄管道</div>
+                            <div class="flowchart-item">深水高压</div>
+                            <div class="flowchart-item">浑浊水体</div>
+                            <div class="flowchart-item">危险区域</div>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-700">水下机器人能够进入对人类而言过于危险、难以到达或无法进入的环境，如小口径管道、深水水库、污染水域等，极大地拓展了水务检测和维护的作业边界。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="challenges" class="py-8 md:py-12 bg-white rounded-xl shadow-xl my-12 p-6 md:p-10">
+            <h2 class="section-title" style="color: #03045E;">面临的挑战与局限</h2>
+            <p class="text-center text-lg mb-10 max-w-2xl mx-auto" style="color: #03045E;">尽管水下机器人带来了诸多优势，但在水务行业的推广应用仍面临技术、运营、经济及环境法规等多方面的挑战。克服这些挑战是充分释放其潜能的关键。</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div class="card">
+                    <h3 class="subsection-title text-center">技术挑战</h3>
+                    <p class="text-center mb-4">导航、通信、能源等是核心技术瓶颈。</p>
+                    <div class="chart-container h-72 md:h-80">
+                        <canvas id="techChallengeChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-700">主要技术挑战包括：水下GPS信号缺失环境下的精确导航与定位；水下通信的带宽、延迟与可靠性问题；AUV的能源续航能力；传感器在浑浊、高生物淤积环境中的性能保持与维护；以及海量数据的有效管理与处理。</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="subsection-title text-center">运营挑战</h3>
+                     <ul class="space-y-3 text-gray-700 mt-4 text-sm">
+                        <li class="flex items-start"><span class="text-2xl mr-3 pt-1" style="color: #00B4D8;">⚙️</span> <div><strong>部署与回收：</strong>ROV缆索管理复杂，AUV布放回收（尤其大中型）需专业设备和团队，存在操作难度和风险。</div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3 pt-1" style="color: #00B4D8;">🛠️</span> <div><strong>系统维护：</strong>水下机器人是复杂机电系统，在恶劣环境中易损耗，其维护保养需专业技能和持续投入，可靠性要求高。</div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3 pt-1" style="color: #00B4D8;">🧑‍🎓</span> <div><strong>人为因素与技能要求：</strong>ROV精操、传感器数据判读、AUV任务规划等高度依赖操作员经验，行业需培养复合型人才。</div></li>
+                    </ul>
+                    <p class="mt-2 text-sm text-gray-700">日常运营中，机器人的部署、回收、系统维护以及对操作人员专业技能的要求，构成了实际应用的挑战。</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="subsection-title text-center">经济挑战</h3>
+                    <p class="text-center mb-4">初始投资高昂是主要经济障碍。</p>
+                     <div class="chart-container h-64 md:h-72">
+                        <canvas id="economicChallengeChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-700">购置机器人本体、传感器、配套软硬件等初始投资较大。针对特定应用的高端专业传感器和作业载荷本身成本亦不菲，这对于预算有限的水务企业而言是重要考量。</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="subsection-title text-center">环境与法规考量</h3>
+                    <ul class="space-y-3 text-gray-700 mt-4 text-sm">
+                        <li class="flex items-start"><span class="text-2xl mr-3 pt-1" style="color: #00B4D8;">🌍</span> <div><strong>潜在环境扰动：</strong>机器人作业（如推进器）可能搅动水底沉积物，对敏感水生生态产生短暂影响；设备意外泄漏或丢失也可能造成环境问题。</div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3 pt-1" style="color: #00B4D8;">🔒</span> <div><strong>数据安全：</strong>采集的涉及关键基础设施或敏感水域的数据，其存储、传输和使用需符合相关的安全和保密规定。</div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3 pt-1" style="color: #00B4D8;">📜</span> <div><strong>标准与规范缺失：</strong>目前行业内针对水下机器人在水务应用的具体技术标准、作业规范和数据格式等尚不完善，影响规范化推广。</div></li>
+                    </ul>
+                    <p class="mt-2 text-sm text-gray-700">机器人作业对环境的潜在影响、数据安全以及相关行业标准和法规的完善程度，也是推广应用中需要综合考虑的因素。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="trends" class="py-8 md:py-12">
+            <h2 class="section-title" style="color: #03045E;">市场趋势与展望</h2>
+            <p class="text-center text-lg mb-10 max-w-2xl mx-auto" style="color: #03045E;">水下机器人技术在水务行业的应用正经历快速发展，人工智能、先进传感器和自主控制等技术的进步，预示着其应用将更加广泛和深入。</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div class="card">
+                    <h3 class="subsection-title text-center">技术发展新趋势</h3>
+                    <p class="text-center mb-4">智能化、自主化是主要方向。</p>
+                    <div class="chart-container h-64 md:h-72">
+                        <canvas id="techTrendChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-700">人工智能与机器学习深化应用（自主导航、智能数据分析），先进传感器技术融合（高分辨率、小型化、抗污），机器人自主能力提升与集群协同，以及小型化、微型化与仿生设计是主要的技术发展方向。</p>
+                </div>
+                 <div class="card flex flex-col justify-center items-center">
+                    <div class="text-center">
+                        <span class="stat-icon" style="color: #0077B6;">📈</span>
+                        <h3 class="subsection-title">市场增长潜力巨大</h3>
+                    </div>
+                    <p class="text-center mb-4">全球水务市场对高效、安全解决方案的需求持续增长。</p>
+                    <p class="text-center big-number">¥150亿+</p>
+                    <p class="text-center text-sm text-gray-600">预计2030年中国水下机器人相关市场规模（估算）</p>
+                    <p class="mt-2 text-sm text-gray-700">随着技术的成熟和成本的降低，水下机器人在供水管网检测、污水处理厂运维、水库大坝安全评估等领域的应用将快速增长，市场前景广阔。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="conclusion" class="py-8 md:py-12 text-center bg-white rounded-xl shadow-xl my-12 p-6 md:p-10">
+            <h2 class="section-title" style="color: #03045E;">结论与展望</h2>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto mb-6" style="color: #03045E;">
+                水下机器人在水务行业的应用正开启一场深刻的技术革新。它们凭借在提升安全性、运营效率、数据质量以及降低成本等方面的显著优势，为应对传统水务管理面临的诸多挑战提供了强有力的解决方案。
+            </p>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto mb-6" style="color: #03045E;">
+                尽管目前在技术成熟度、运营整合、经济投入以及标准法规等方面仍存在挑战，但随着人工智能、先进传感、自主控制等技术的飞速发展和应用成本的逐步降低，这些障碍正被逐渐克服。
+            </p>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto font-semibold" style="color: #0077B6;">
+                展望未来，水下机器人有望成为推动水务行业向更安全、高效、智能和可持续方向发展的关键技术力量，为保障水资源安全和改善水环境质量做出重要贡献。
+            </p>
+        </section>
+
+    </div>
+
+    <footer class="text-center py-8 text-sm" style="color: #03045E; background-color: #90E0EF;">
+        <p>&copy; 2025 水下机器人水务应用研究信息图表。保留所有权利。</p>
+        <p class="mt-1">信息图表根据提供的研究报告生成，数据点部分为示例或基于报告描述估算。</p>
+    </footer>
+
+    <script>
+        function wrapLabels(label, maxWidth) {
+            const words = label.split(' ');
+            let lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + word).length > maxWidth) {
+                    lines.push(currentLine.trim());
+                    currentLine = '';
+                }
+                currentLine += word + ' ';
+            }
+            lines.push(currentLine.trim());
+            return lines.filter(line => line.length > 0);
+        }
+
+        const tooltipTitleCallback = function(tooltipItems) {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            } else {
+                return label;
+            }
+        };
+
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#03045E',
+                        font: { size: 10 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: tooltipTitleCallback
+                    },
+                    bodyFont: {size: 10},
+                    titleFont: {size: 12}
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#03045E', font: {size: 10} },
+                    grid: { color: '#D1D5DB' }
+                },
+                x: {
+                    ticks: { color: '#03045E', font: {size: 10}, callback: function(value, index, values) {
+                        const label = this.getLabelForValue(value);
+                        return Array.isArray(label) ? label : wrapLabels(label, 8); // Wrap x-axis labels if too long
+                    }},
+                    grid: { display: false }
+                }
+            }
+        };
+        
+        const primaryBlue = '#0077B6';
+        const secondaryBlue = '#00B4D8';
+        const accentCyan = '#90E0EF';
+        const lightBackground = '#CAF0F8';
+        const darkText = '#03045E';
+
+        // Efficiency Chart
+        const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
+        new Chart(efficiencyCtx, {
+            type: 'bar',
+            data: {
+                labels: [wrapLabels('传统人工作业',16), wrapLabels('机器人辅助作业',16)],
+                datasets: [{
+                    label: '作业耗时 (小时)',
+                    data: [100, 65], // Mock data
+                    backgroundColor: [accentCyan, secondaryBlue],
+                    borderColor: [primaryBlue, primaryBlue],
+                    borderWidth: 1
+                }]
+            },
+            options: {...commonChartOptions}
+        });
+
+        // Cost Saving Chart
+        const costSavingCtx = document.getElementById('costSavingChart').getContext('2d');
+        new Chart(costSavingCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [wrapLabels('人工成本降低',16), wrapLabels('停运损失减少',16), wrapLabels('维护成本优化',16)],
+                datasets: [{
+                    label: '成本节省构成',
+                    data: [50, 30, 20], // Mock data percentages
+                    backgroundColor: [secondaryBlue, primaryBlue, accentCyan],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: darkText, font: { size: 10 }, boxWidth: 15, padding:10,
+                        generateLabels: function(chart) {
+                             const data = chart.data;
+                             if (data.labels.length && data.datasets.length) {
+                                 return data.labels.map(function(label, i) {
+                                     const meta = chart.getDatasetMeta(0);
+                                     const style = meta.controller.getStyle(i);
+                                     const labelText = Array.isArray(label) ? label.join(' ') : label;
+                                     return {
+                                         text: labelText,
+                                         fillStyle: style.backgroundColor,
+                                         strokeStyle: style.borderColor,
+                                         lineWidth: style.borderWidth,
+                                         hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                         index: i
+                                     };
+                                 });
+                             }
+                             return [];
+                        }
+                    }},
+                    tooltip: { callbacks: { title: tooltipTitleCallback }, bodyFont: {size: 10}, titleFont: {size: 12} }
+                }
+            }
+        });
+
+        // Technical Challenge Chart
+        const techChallengeCtx = document.getElementById('techChallengeChart').getContext('2d');
+        new Chart(techChallengeCtx, {
+            type: 'radar',
+            data: {
+                labels: [wrapLabels('导航与定位',10), wrapLabels('水下通信',10), wrapLabels('能源续航',10), wrapLabels('传感器性能',10), wrapLabels('数据管理',10)],
+                datasets: [{
+                    label: '挑战等级 (1-5, 5为最高)',
+                    data: [4, 4.5, 3.5, 4, 3], // Mock data
+                    fill: true,
+                    backgroundColor: 'rgba(0, 180, 216, 0.2)', // secondaryBlue with alpha
+                    borderColor: secondaryBlue,
+                    pointBackgroundColor: secondaryBlue,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: secondaryBlue
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: { color: darkText, font: {size: 10}, padding: 10} },
+                     tooltip: { callbacks: { title: tooltipTitleCallback }, bodyFont: {size: 10}, titleFont: {size: 12}}
+                },
+                scales: {
+                    r: {
+                        angleLines: { color: '#90E0EF' },
+                        grid: { color: '#90E0EF' },
+                        pointLabels: { color: darkText, font: {size: 10}, 
+                            callback: function(label) {
+                                return Array.isArray(label) ? label : wrapLabels(label, 10);
+                            }
+                        },
+                        ticks: {
+                            backdropColor: 'transparent',
+                            color: darkText,
+                            stepSize: 1,
+                            font: {size: 8}
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 5
+                    }
+                }
+            }
+        });
+        
+        // Economic Challenge Chart
+        const economicChallengeCtx = document.getElementById('economicChallengeChart').getContext('2d');
+        new Chart(economicChallengeCtx, {
+            type: 'bar',
+            data: {
+                labels: [wrapLabels('初始投资成本',16), wrapLabels('专业载荷成本',16)],
+                datasets: [{
+                    label: '挑战指数 (相对值)',
+                    data: [80, 60], // Mock data
+                    backgroundColor: [accentCyan, secondaryBlue],
+                    borderColor: [primaryBlue, primaryBlue],
+                    borderWidth: 1
+                }]
+            },
+            options: {...commonChartOptions, indexAxis: 'y'}
+        });
+
+        // Tech Trend Chart
+        const techTrendCtx = document.getElementById('techTrendChart').getContext('2d');
+        new Chart(techTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['2020', '2022', '2024', wrapLabels('2026 (预测)',16), wrapLabels('2028 (预测)',16)],
+                datasets: [
+                    {
+                        label: wrapLabels('AI与自主技术应用',16),
+                        data: [20, 35, 55, 75, 90], // Mock data percentages
+                        borderColor: primaryBlue,
+                        backgroundColor: 'rgba(0, 119, 182, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: wrapLabels('先进传感器集成度',16),
+                        data: [30, 45, 60, 80, 95], // Mock data percentages
+                        borderColor: secondaryBlue,
+                        backgroundColor: 'rgba(0, 180, 216, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {...commonChartOptions}
+        });
+
+    </script>
+</body>
+</html>

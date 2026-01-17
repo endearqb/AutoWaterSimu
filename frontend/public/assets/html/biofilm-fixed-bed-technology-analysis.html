@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生物膜固定床技术互动解析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate Gray and Sky Blue with Emerald Green Accents -->
+    <!-- Application Structure Plan: The SPA is designed as a guided journey through the complex topic of biofilm carriers. It starts with a high-level introduction, then moves to an interactive "Carrier Material Explorer" where users can compare the three main types (Inorganic, Polymer, Natural) via clickable cards. Next, an "Interactive Science" section uses a visual diagram to explain key attachment properties, making abstract concepts tangible. A core feature is the "Application Guide," an interactive tool that allows users to select a wastewater type and receive tailored carrier recommendations, transforming the report's static table into a practical decision-making aid. The final section, "Future Outlook," uses an accordion layout to present next-gen technologies. This thematic, task-oriented structure is chosen to make the dense report content digestible, engaging, and directly useful for engineers and students, prioritizing user exploration over a linear reading experience. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Carrier material categories & comparison (Table 1.1). -> Goal: Allow easy comparison of core types. -> Viz/Method: Interactive card layout with icons. -> Interaction: Clicking a card expands it to reveal pros, cons, and a key insight. -> Justification: More engaging and scannable than a dense table. -> Library: Vanilla JS + Tailwind CSS.
+        - Report Info: Key carrier properties (SSA, roughness, porosity, etc.). -> Goal: Explain the science of biofilm attachment intuitively. -> Viz/Method: An HTML/CSS diagram of a carrier surface with interactive hotspots. -> Interaction: Clicking a hotspot displays a detailed explanation in a side panel. -> Justification: Turns abstract scientific principles into a visual, explorable experience. -> Library: Vanilla JS + Tailwind CSS.
+        - Report Info: Performance comparison (surface activity). -> Goal: Quantitatively compare carrier effectiveness. -> Viz/Method: Horizontal bar chart. -> Interaction: Tooltips on hover provide exact data and context from the report. -> Justification: A bar chart is the clearest way to visualize a direct performance comparison. -> Library: Chart.js.
+        - Report Info: Application selection matrix (Table 3.1). -> Goal: Create a practical decision-support tool. -> Viz/Method: Dropdown selector that dynamically updates content panels. -> Interaction: User selects a wastewater type; the app displays recommended carriers, parameters, and case studies. -> Justification: Transforms a static data table into a user-centric, interactive tool. -> Library: Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #1e293b; /* slate-800 */
+        }
+        .section-fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .section-fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .carrier-card {
+            transition: all 0.3s ease-in-out;
+        }
+        .carrier-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .hotspot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(3, 105, 161, 0.7); /* cyan-700 */
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .hotspot:hover {
+            transform: scale(1.5);
+            background-color: rgba(6, 182, 212, 1); /* cyan-500 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 50vh;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center my-12 section-fade-in">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">生物膜固定床技术深度解析</h1>
+            <p class="text-lg md:text-xl text-slate-600 max-w-4xl mx-auto">一个交互式指南，用于理解废水处理中生物膜载体的材料科学、关键性能与应用实践。</p>
+        </header>
+
+        <main>
+
+            <!-- Section 1: Carrier Material Explorer -->
+            <section id="carrier-explorer" class="my-16 section-fade-in">
+                <h2 class="text-3xl font-bold text-center mb-4">生物膜载体材料浏览器</h2>
+                <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">生物膜载体的演进历经了从传统到现代的变革。点击下方的卡片，深入探索三大核心载体类别的特性、优缺点及其在工程应用中的权衡。</p>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Inorganic Card -->
+                    <div class="carrier-card bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer" data-carrier="inorganic">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-3 flex items-center"><span class="text-3xl mr-4">🧱</span>无机载体</h3>
+                            <p class="text-slate-600 mb-4">以陶瓷、沸石、火山岩为代表，是追求极致耐久性的基石。</p>
+                            <div class="carrier-details hidden mt-4 border-t pt-4 text-sm">
+                                <p class="font-semibold text-emerald-700">优点：</p>
+                                <ul class="list-disc list-inside text-slate-600 mb-2">
+                                    <li>卓越的机械强度和化学惰性</li>
+                                    <li>极长的使用寿命，耐受严苛环境</li>
+                                </ul>
+                                <p class="font-semibold text-red-700">缺点：</p>
+                                <ul class="list-disc list-inside text-slate-600 mb-4">
+                                    <li>比表面积相对较低，易堵塞</li>
+                                    <li>密度高，安装不便，挂膜慢</li>
+                                </ul>
+                                <p class="bg-slate-100 p-3 rounded-lg"><span class="font-bold">深度解析：</span>选择无机载体，是在工程中优先考虑长期的结构稳定性，而在一定程度上牺牲了系统的快速启动能力和峰值生物量密度。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Polymer Card -->
+                    <div class="carrier-card bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer" data-carrier="polymer">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-3 flex items-center"><span class="text-3xl mr-4">🧪</span>有机合成聚合物</h3>
+                            <p class="text-slate-600 mb-4">以HDPE、PP为代表，是功能多样、应用最广的行业标准。</p>
+                            <div class="carrier-details hidden mt-4 border-t pt-4 text-sm">
+                                <p class="font-semibold text-emerald-700">优点：</p>
+                                <ul class="list-disc list-inside text-slate-600 mb-2">
+                                    <li>重量轻，比表面积高，成本效益好</li>
+                                    <li>可通过模塑制造复杂几何形状</li>
+                                </ul>
+                                <p class="font-semibold text-red-700">缺点：</p>
+                                <ul class="list-disc list-inside text-slate-600 mb-4">
+                                    <li>原生表面疏水，阻碍初始附着</li>
+                                    <li>存在微塑料污染的环境风险</li>
+                                </ul>
+                                <p class="bg-slate-100 p-3 rounded-lg"><span class="font-bold">深度解析：</span>面临成本、性能与环境影响的“三重困境”，推动了表面改性技术和对更优替代材料的探索。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Natural/Sustainable Card -->
+                    <div class="carrier-card bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer" data-carrier="natural">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-3 flex items-center"><span class="text-3xl mr-4">🌱</span>天然及可持续载体</h3>
+                            <p class="text-slate-600 mb-4">以生物绳、无纺布、竹子为代表，是生态友好的前沿选择。</p>
+                             <div class="carrier-details hidden mt-4 border-t pt-4 text-sm">
+                                <p class="font-semibold text-emerald-700">优点：</p>
+                                <ul class="list-disc list-inside text-slate-600 mb-2">
+                                    <li>生物相容性极佳，挂膜速度快</li>
+                                    <li>成本极低，符合循环经济理念</li>
+                                </ul>
+                                <p class="font-semibold text-red-700">缺点：</p>
+                                <ul class="list-disc list-inside text-slate-600 mb-4">
+                                    <li>机械强度低，使用寿命短</li>
+                                    <li>性能可能不稳定，易生物降解</li>
+                                </ul>
+                                <p class="bg-slate-100 p-3 rounded-lg"><span class="font-bold">深度解析：</span>发展趋势正从使用“原始”废料演进为将天然材料“工程化”，如“生物绳”，以融合可持续性与高性能设计的双重优势。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Science of Attachment -->
+            <section id="science" class="my-20 section-fade-in">
+                <h2 class="text-3xl font-bold text-center mb-4">生物膜附着的科学</h2>
+                <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">载体的性能远不止材料本身，其微观结构和表面性质是决定成败的关键。请与下方示意图互动，揭示培养高效生物膜的五大核心特性。</p>
+                <div class="flex flex-col md:flex-row gap-8 bg-white p-6 rounded-xl shadow-lg border border-slate-200">
+                    <div class="w-full md:w-1/2 relative aspect-square bg-slate-100 rounded-lg overflow-hidden">
+                        <div class="absolute inset-0 bg-repeat bg-center opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22%239C92AC%22 fill-opacity=%220.4%22 fill-rule=%22evenodd%22%3E%3Cpath d=%22M0 40L40 0H20L0 20M40 40V20L20 40%22/%3E%3C/g%3E%3C/svg%3E');"></div>
+                        <div class="absolute inset-1/4 rounded-full bg-sky-200"></div>
+                        <div class="absolute inset-1/3 rounded-full bg-sky-300 flex items-center justify-center text-center font-bold text-sky-800 p-4">载体剖面</div>
+                        
+                        <div class="hotspot" style="top: 20%; left: 20%;" data-feature="ssa">1</div>
+                        <div class="hotspot" style="top: 30%; left: 70%;" data-feature="roughness">2</div>
+                        <div class="hotspot" style="top: 65%; left: 15%;" data-feature="porosity">3</div>
+                        <div class="hotspot" style="top: 75%; left: 60%;" data-feature="hydrophilicity">4</div>
+                        <div class="hotspot" style="top: 50%; left: 50%; transform: translate(-50%, -50%);" data-feature="charge">5</div>
+                    </div>
+                    <div id="feature-explanation" class="w-full md:w-1/2 p-4 min-h-[300px]">
+                         <h3 id="feature-title" class="text-xl font-bold text-sky-800 mb-3">1. 有效比表面积 (SSA)</h3>
+                         <p id="feature-text" class="text-slate-700">行业焦点已从简单的“总面积”转向“有效面积”——即那些能保护微生物免受水力冲刷、真正促进稳定生物膜生长的区域。一个名义上比表面积较低但结构更优的载体，其性能可能远超面积更大但结构简单的载体。</p>
+                         <div id="paradigm-shift" class="mt-6 p-4 bg-sky-50 rounded-lg text-sky-900 border-l-4 border-sky-500">
+                             <p class="font-bold">认知转变：从“面积多大”到“面积多有效？”</p>
+                             <p class="text-sm">关键指标已从 $m^2/m^3$（数量）演变为 $g-N/(m^2·d)$（质量与性能）。</p>
+                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Application Guide -->
+            <section id="application-guide" class="my-20 section-fade-in">
+                 <h2 class="text-3xl font-bold text-center mb-4">应用选型指南</h2>
+                 <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">没有一种载体能适用于所有场景。选择正确的载体需要根据具体的水质特点和处理目标。请从下方选择废水类型，获取量身定制的载体推荐和运营参数。</p>
+                 <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200">
+                     <div class="mb-6">
+                         <label for="wastewater-type" class="block text-sm font-medium text-slate-700 mb-2">选择您的废水类型：</label>
+                         <select id="wastewater-type" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                             <option value="municipal" selected>市政污水</option>
+                             <option value="petrochemical">石化/化工废水</option>
+                             <option value="food">食品/饮料废水</option>
+                             <option value="pharma">制药废水</option>
+                         </select>
+                     </div>
+                     <div id="recommendation-content">
+                         <!-- Content will be dynamically inserted here -->
+                     </div>
+                 </div>
+            </section>
+            
+            <!-- Section 4: Future Outlook -->
+            <section id="future-outlook" class="my-20 section-fade-in">
+                <h2 class="text-3xl font-bold text-center mb-4">下一代生物膜技术展望</h2>
+                <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">生物膜技术正从被动组件转向智能、可持续的工程化解决方案。展开下方主题，了解正在重塑行业未来的前沿创新。</p>
+                <div class="space-y-4">
+                    <!-- Accordion Item 1 -->
+                    <div class="accordion-item bg-white rounded-lg shadow-md border border-slate-200">
+                        <button class="accordion-header w-full flex justify-between items-center p-5 text-left font-semibold text-lg text-slate-800">
+                            <span>先进载体工程：从被动到主动</span>
+                            <span class="accordion-icon text-sky-500 transform transition-transform duration-300">+</span>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t text-slate-600">
+                                <p class="mb-2"><strong>表面改性：</strong>通过等离子体处理、化学接枝等技术，克服塑料的疏水性，创造亲和表面。</p>
+                                <p><strong>功能化载体：</strong>开发出能主动参与反应的载体，如内置碳源的“缓释载体”、促进电子转移的“氧化还原介体载体”，将载体从“支架”变为“反应参与者”。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Accordion Item 2 -->
+                     <div class="accordion-item bg-white rounded-lg shadow-md border border-slate-200">
+                        <button class="accordion-header w-full flex justify-between items-center p-5 text-left font-semibold text-lg text-slate-800">
+                            <span>3D打印：设计“工程化微生物栖息地”</span>
+                            <span class="accordion-icon text-sky-500 transform transition-transform duration-300">+</span>
+                        </button>
+                        <div class="accordion-content">
+                             <div class="p-5 border-t text-slate-600">
+                                <p class="mb-2"><strong>为性能而设计：</strong>3D打印解放了设计束缚，能够制造数学上最优化的几何构型（如陀螺体），实现极高的有效比表面积。研究表明，3D打印载体的氨氮转化率可达 <strong class="text-sky-600">99.33%</strong>。</p>
+                                <p><strong>范式转变：</strong>这代表了从选择“现成载体”到工程化一个为特定微生物功能量身定制的“微型栖息地”的根本性演进。工程师可以设计出具有特定孔径、几何形状和吸附功能的多功能载体。</p>
+                                <div class="chart-container mt-6">
+                                    <canvas id="performanceChart"></canvas>
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Accordion Item 3 -->
+                     <div class="accordion-item bg-white rounded-lg shadow-md border border-slate-200">
+                        <button class="accordion-header w-full flex justify-between items-center p-5 text-left font-semibold text-lg text-slate-800">
+                            <span>先进过程集成与智能控制</span>
+                            <span class="accordion-icon text-sky-500 transform transition-transform duration-300">+</span>
+                        </button>
+                        <div class="accordion-content">
+                             <div class="p-5 border-t text-slate-600">
+                                <p class="mb-2"><strong>与Anammox耦合：</strong>IFAS等生物膜系统为固定生长缓慢的Anammox菌提供了理想平台，是高效节能脱氮的主要趋势。</p>
+                                <p><strong>AI与机器学习：</strong>鉴于曝气能耗巨大（占全厂50-80%），利用AI/ML模型实时预测负荷并优化DO控制，是实现节能降耗的关键。研究证实，智能控制可节省近 <strong class="text-sky-600">33%</strong> 的运营成本。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-20 pt-8 border-t border-slate-300 section-fade-in">
+             <h2 class="text-2xl font-bold mb-4">结论：技术的未来轨迹</h2>
+             <p class="text-slate-600 max-w-4xl mx-auto">
+                生物膜技术的发展正从被动的、现成的组件，转向智能、可持续、精密工程化的解决方案。未来在于材料科学、增材制造、微生物学和人工智能的融合。我们正迈向一个新时代：不再是简单地提供生长场所，而是在反应器内为特定目标量身定制、设计和运营动态、多功能的“工程化生态系统”。
+             </p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA STORE ---
+            const featureExplanations = {
+                ssa: {
+                    title: '1. 有效比表面积 (SSA)',
+                    text: '行业焦点已从简单的“总面积”转向“有效面积”——即那些能保护微生物免受水力冲刷、真正促进稳定生物膜生长的区域。一个名义上比表面积较低但结构更优的载体，其性能可能远超面积更大但结构简单的载体。',
+                    paradigm: '认知转变：从“面积多大”到“面积多有效？”',
+                    paradigm_detail: '关键指标已从 $m^2/m^3$（数量）演变为 $g-N/(m^2·d)$（质量与性能）。'
+                },
+                roughness: {
+                    title: '2. 表面粗糙度与拓扑结构',
+                    text: '具有微观峰、谷和裂缝的粗糙表面是细菌实现初始、不可逆附着的关键。这种微观拓扑为先锋菌落提供了锚定点，并保护它们免受水流影响，从而显著加速生物膜的形成。',
+                    paradigm: '关键作用：为微生物提供“立足点”',
+                    paradigm_detail: '粗糙表面是加速挂膜、提高生物膜稳定性的物理基础。'
+                },
+                porosity: {
+                    title: '3. 孔隙率与渗透性',
+                    text: '高孔隙率和相互连通的孔隙网络能增强传质，让营养物和氧气深入生物膜内部。使用可渗透载体（如海绵）允许对流穿过生物膜，其传质效率远高于不可渗透载体（如实心塑料）的扩散机制。',
+                    paradigm: '关键创新：从“扩散”到“对流”',
+                    paradigm_detail: '可渗透载体通过改变传质机制，极大地提升了处理效率。'
+                },
+                hydrophilicity: {
+                    title: '4. 亲水性与润湿性',
+                    text: '亲水性表面（水接触角低）在热力学上更有利于细菌附着。然而，更精确的原则是载体与生物质之间需要存在显著的“润湿性差异”，才能产生驱动稳定附着的强大界面能。',
+                    paradigm: '超越简单亲水性：“润湿性差异”驱动力',
+                    paradigm_detail: '仅当载体与生物质的润湿性差异足够大时，才能形成最稳定的附着。'
+                },
+                charge: {
+                    title: '5. 表面电荷 (Zeta电位)',
+                    text: '大多数细菌表面带负电荷。因此，一个带正电荷的载体表面能通过静电引力促进微生物的初始附着，是影响生物量生长总量的首要因素之一。',
+                    paradigm: '初始附着的“静电磁铁”',
+                    paradigm_detail: '利用正负电荷相吸原理，加速生物膜的形成过程。'
+                }
+            };
+            
+            const recommendations = {
+                municipal: {
+                    html: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">推荐用于：市政污水</h3>
+                        <div class="grid md:grid-cols-2 gap-6 text-sm">
+                            <div>
+                                <p><strong>推荐载体：</strong>HDPE/PP (用于MBBR/IFAS), 改性聚合物</p>
+                                <p><strong>关键污染物：</strong>BOD, COD, 氨氮, 总氮(TN), 总磷(TP)</p>
+                                <p><strong>优先特性：</strong>成本效益、高有效比表面积、良好的硝化性能</p>
+                                <p><strong>典型参数：</strong>HRT: 2–8小时, 填充率: 30–40%</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <h4 class="font-bold mb-2">案例分析：河北某污水厂升级</h4>
+                                <p class="text-slate-600">采用先进生物膜工艺后，总氮去除率达98%，COD去除率达94.6%，同时电耗降低11.4%，碳源用量减少41.4%，实现了提质增效与节能降耗的双赢。</p>
+                            </div>
+                        </div>`
+                },
+                petrochemical: {
+                    html: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">推荐用于：石化/化工废水</h3>
+                        <div class="grid md:grid-cols-2 gap-6 text-sm">
+                            <div>
+                                <p><strong>推荐载体：</strong>陶瓷、改性聚合物、功能化吸附载体 (如LEVAPOR)</p>
+                                <p><strong>关键污染物：</strong>难降解/有毒有机物, 高浓度COD, 酚类</p>
+                                <p><strong>优先特性：</strong>化学惰性、抗毒性、机械强度、吸附-降解协同能力</p>
+                                <p><strong>典型参数：</strong>HRT: 12–24+小时, 需稳定预处理</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <h4 class="font-bold mb-2">案例分析：炼油厂硝化系统保护</h4>
+                                <p class="text-slate-600">在活性污泥系统前增设一个纯膜MBBR作为“预处理”反应器，成功去除大部分有机负荷，保护了下游脆弱的硝化菌，确保氨氮稳定达标。设计原则：利用生物膜应对毒性和高负荷。</p>
+                            </div>
+                        </div>`
+                },
+                food: {
+                    html: `
+                         <h3 class="text-xl font-bold text-slate-800 mb-3">推荐用于：食品/饮料废水</h3>
+                        <div class="grid md:grid-cols-2 gap-6 text-sm">
+                            <div>
+                                <p><strong>推荐载体：</strong>高比表面积聚合物, 海绵状载体</p>
+                                <p><strong>关键污染物：</strong>极高且波动的BOD/COD, 油脂, TSS</p>
+                                <p><strong>优先特性：</strong>极高的有效比表面积、抗堵塞、抗冲击负荷能力</p>
+                                <p><strong>典型参数：</strong>HRT: 4–10小时, 填充率: >40%</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <h4 class="font-bold mb-2">案例分析：应对COD剧烈波动</h4>
+                                <p class="text-slate-600">某工厂进水COD在1,000-14,000 mg/L间剧烈波动。通过增设MBBR作为冲击负荷“缓冲器”，为下游工艺提供了稳定进水，确保了最终出水水质的稳定。原则：利用MBBR吸收冲击负荷。</p>
+                            </div>
+                        </div>`
+                },
+                pharma: {
+                    html: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">推荐用于：制药废水</h3>
+                        <div class="grid md:grid-cols-2 gap-6 text-sm">
+                            <div>
+                                <p><strong>推荐载体：</strong>海绵状载体、功能化/改性载体、3D打印载体</p>
+                                <p><strong>关键污染物：</strong>活性药物成分(APIs), 难降解微污染物, 抗生素</p>
+                                <p><strong>优先特性：</strong>生物亲和力、培养特异性菌群的能力、高传质效率</p>
+                                <p><strong>典型参数：</strong>HRT: 10–15小时, 需精确工艺控制</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <h4 class="font-bold mb-2">案例分析：定向去除布洛芬(IBU)</h4>
+                                <p class="text-slate-600">一项研究开发了基于海绵的MBBR，在优化条件下实现了高达92.7%的IBU去除率和96.7%的COD去除率。这表明，通过选用特制载体，可以培养出能降解特定难处理污染物的微生物群落。</p>
+                            </div>
+                        </div>`
+                }
+            };
+            
+            // --- LOGIC ---
+            
+            // Carrier Card Explorer Logic
+            const carrierCards = document.querySelectorAll('.carrier-card');
+            carrierCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const details = card.querySelector('.carrier-details');
+                    const isHidden = details.classList.contains('hidden');
+                    
+                    // Close all others
+                    carrierCards.forEach(c => {
+                        c.querySelector('.carrier-details').classList.add('hidden');
+                        c.classList.remove('ring-2', 'ring-sky-500');
+                    });
+                    
+                    // Open the clicked one
+                    if (isHidden) {
+                        details.classList.remove('hidden');
+                        card.classList.add('ring-2', 'ring-sky-500');
+                    }
+                });
+            });
+
+            // Science of Attachment Logic
+            const hotspots = document.querySelectorAll('.hotspot');
+            const featureTitle = document.getElementById('feature-title');
+            const featureText = document.getElementById('feature-text');
+            const paradigmShift = document.getElementById('paradigm-shift').querySelector('p:first-child');
+            const paradigmDetail = document.getElementById('paradigm-shift').querySelector('p:last-child');
+            
+            hotspots.forEach(hotspot => {
+                hotspot.addEventListener('click', () => {
+                    const feature = hotspot.dataset.feature;
+                    const data = featureExplanations[feature];
+                    if (data) {
+                        featureTitle.textContent = data.title;
+                        featureText.textContent = data.text;
+                        paradigmShift.textContent = data.paradigm;
+                        paradigmDetail.innerHTML = data.paradigm_detail;
+                    }
+                });
+            });
+
+            // Application Guide Logic
+            const wastewaterSelector = document.getElementById('wastewater-type');
+            const recommendationContent = document.getElementById('recommendation-content');
+            
+            function updateRecommendation() {
+                const selectedType = wastewaterSelector.value;
+                recommendationContent.innerHTML = recommendations[selectedType].html;
+            }
+            
+            wastewaterSelector.addEventListener('change', updateRecommendation);
+            updateRecommendation(); // Initial call
+
+            // Accordion Logic
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = item.querySelector('.accordion-icon');
+
+                header.addEventListener('click', () => {
+                    const isOpened = content.style.maxHeight && content.style.maxHeight !== '0px';
+
+                    // Close all accordions
+                    accordionItems.forEach(i => {
+                        i.querySelector('.accordion-content').style.maxHeight = '0px';
+                        i.querySelector('.accordion-icon').classList.remove('rotate-45');
+                    });
+
+                    // If it was closed, open it
+                    if (!isOpened) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.classList.add('rotate-45');
+                    }
+                });
+            });
+
+            // Chart.js Performance Chart
+            const ctx = document.getElementById('performanceChart')?.getContext('2d');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['商业化PE载体', '可渗透尼龙网', '3D打印陀螺体'],
+                        datasets: [{
+                            label: '硝化性能/氨氮转化率',
+                            data: [50, 85, 99.3], // Example data representing relative performance
+                            backgroundColor: ['rgba(100, 116, 139, 0.6)', 'rgba(56, 189, 248, 0.6)', 'rgba(16, 185, 129, 0.6)'],
+                            borderColor: ['#64748b', '#38bdf8', '#10b981'],
+                            borderWidth: 2,
+                            borderRadius: 5,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: '相对性能/去除率 (%)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: '不同载体技术的硝化性能对比', font: { size: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `${context.dataset.label}: ${context.raw}%`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Scroll Fade-in Animation
+            const sections = document.querySelectorAll('.section-fade-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            sections.forEach(section => observer.observe(section));
+        });
+    </script>
+</body>
+</html>

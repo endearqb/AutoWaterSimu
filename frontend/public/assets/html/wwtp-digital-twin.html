@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WWTP 数字孪生平台 - 交互式架构浏览器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Tech Water (Neutrals, Blues, Greens) -->
+    <!-- Application Structure Plan: The application is designed as a vertical interactive journey through the five layers of the WWTP digital twin architecture. A persistent left-hand navigation allows users to jump between layers, with the main content area dynamically updating. This structure was chosen because it mirrors the hierarchical and process-flow nature of the architecture described in the report, making it intuitive for users to follow the data's path from the physical world to the user interface. Key interactions include hover-reveal details, clickable diagrams, and interactive charts to deepen understanding at each layer. -->
+    <!-- Visualization & Content Choices: 
+        - Layer 1 (Data): Goal: Inform on data sources. Method: Interactive HTML/CSS diagram with Unicode icons. Interaction: Hovering reveals details, making it easy to grasp the variety of inputs.
+        - Layer 2 (Processing): Goal: Explain data refinement. Method: A clickable step-by-step HTML/CSS process diagram. Interaction: Clicking a stage highlights it and shows descriptive text, clarifying each part of the data pipeline.
+        - Layer 3 (Models): Goal: Compare model types. Method: Tabbed content area with a Chart.js bar chart for comparison. Interaction: Toggling tabs and hovering on the chart provides a clear, comparative view of mechanistic vs. AI models.
+        - Layer 4 (Analysis): Goal: Demonstrate applications. Method: Interactive cards with a simple slider simulation. Interaction: Flipping cards and using the slider for a 'what-if' scenario actively engages the user in understanding the platform's decision-making power.
+        - Layer 5 (UI): Goal: Showcase outputs. Method: A mock dashboard with HTML/CSS components and a Chart.js line chart. Interaction: The interactive chart and KPI tooltips simulate a real-world user interface, effectively concluding the data's journey.
+        - Library/Method: All visuals are built with HTML/Tailwind CSS, Unicode, and Chart.js (Canvas), confirming no SVG or Mermaid JS is used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 40vh; }
+        .nav-item.active { background-color: #0284c7; color: white; }
+        .nav-item.active .nav-text { font-weight: 700; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .tab-button.active { border-color: #0ea5e9; color: #0ea5e9; font-weight: 600; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card-flip { perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .card-flip:hover .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+        .card-back { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="app" class="flex flex-col md:flex-row min-h-screen">
+        
+        <nav id="main-nav" class="w-full md:w-64 bg-white shadow-lg p-4 md:p-6 flex flex-row md:flex-col justify-around md:justify-start md:space-y-4">
+            <h1 class="hidden md:block text-2xl font-bold text-sky-800 mb-6 pb-4 border-b-2 border-slate-200">WWTP数字孪生</h1>
+            <a href="#layer1" class="nav-item group flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-sky-100" data-target="layer1">
+                <div class="bg-slate-200 group-hover:bg-sky-200 p-2 rounded-full transition-all duration-200"><span class="text-xl">📡</span></div>
+                <span class="nav-text ml-3 text-slate-700 hidden md:block">物理-信息数据层</span>
+            </a>
+            <a href="#layer2" class="nav-item group flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-sky-100" data-target="layer2">
+                <div class="bg-slate-200 group-hover:bg-sky-200 p-2 rounded-full transition-all duration-200"><span class="text-xl">⚙️</span></div>
+                <span class="nav-text ml-3 text-slate-700 hidden md:block">数据预处理与注入层</span>
+            </a>
+            <a href="#layer3" class="nav-item group flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-sky-100" data-target="layer3">
+                <div class="bg-slate-200 group-hover:bg-sky-200 p-2 rounded-full transition-all duration-200"><span class="text-xl">🧠</span></div>
+                <span class="nav-text ml-3 text-slate-700 hidden md:block">模型与算法层</span>
+            </a>
+            <a href="#layer4" class="nav-item group flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-sky-100" data-target="layer4">
+                <div class="bg-slate-200 group-hover:bg-sky-200 p-2 rounded-full transition-all duration-200"><span class="text-xl">💡</span></div>
+                <span class="nav-text ml-3 text-slate-700 hidden md:block">分析与仿真层</span>
+            </a>
+            <a href="#layer5" class="nav-item group flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-sky-100" data-target="layer5">
+                <div class="bg-slate-200 group-hover:bg-sky-200 p-2 rounded-full transition-all duration-200"><span class="text-xl">🖥️</span></div>
+                <span class="nav-text ml-3 text-slate-700 hidden md:block">可视化与交互层</span>
+            </a>
+        </nav>
+
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            
+            <section id="layer1" class="content-section">
+                <h2 class="text-3xl font-bold text-sky-700 mb-2">第一层: 物理-信息数据层</h2>
+                <p class="text-lg text-slate-600 mb-6">作为数字孪生的“感官系统”，此层是连接物理水厂与数字世界的桥梁，负责从多样化的源头采集关键数据，为整个平台提供真实、及时的信息基础。</p>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">核心数据源交互图</h3>
+                    <p class="text-slate-500 mb-6">将鼠标悬停在下方的数据源图标上，查看其在数字孪生平台中的具体作用和数据类型。</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                        <div class="group relative flex flex-col items-center p-4 bg-slate-100 rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                            <span class="text-5xl mb-3">🌡️</span>
+                            <h4 class="font-semibold">物理传感器</h4>
+                            <div class="absolute bottom-full mb-2 w-60 p-3 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                <strong>作用:</strong> 实时监测水厂关键工艺参数。<br>
+                                <strong>数据示例:</strong> 流量、pH值、溶解氧(DO)、温度、压力等。
+                            </div>
+                        </div>
+                        <div class="group relative flex flex-col items-center p-4 bg-slate-100 rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                            <span class="text-5xl mb-3">📲</span>
+                            <h4 class="font-semibold">物联网(IoT)设备</h4>
+                             <div class="absolute bottom-full mb-2 w-60 p-3 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                <strong>作用:</strong> 提供灵活、分布式的智能数据采集点。<br>
+                                <strong>数据示例:</strong> 设备振动、能耗、环境参数等。
+                            </div>
+                        </div>
+                        <div class="group relative flex flex-col items-center p-4 bg-slate-100 rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                            <span class="text-5xl mb-3">📊</span>
+                            <h4 class="font-semibold">SCADA系统接口</h4>
+                             <div class="absolute bottom-full mb-2 w-60 p-3 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                <strong>作用:</strong> 集成现有的中控系统数据，获取全面的运营状态。<br>
+                                <strong>数据示例:</strong> 泵机启停状态、阀门开度、报警信息。
+                            </div>
+                        </div>
+                        <div class="group relative flex flex-col items-center p-4 bg-slate-100 rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                            <span class="text-5xl mb-3">🔬</span>
+                            <h4 class="font-semibold">LIMS系统接口</h4>
+                             <div class="absolute bottom-full mb-2 w-60 p-3 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                <strong>作用:</strong> 对接实验室数据，为模型校准和性能评估提供“地面真值”。<br>
+                                <strong>数据示例:</strong> 进出水COD、BOD、总氮、总磷化验结果。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="layer2" class="content-section">
+                <h2 class="text-3xl font-bold text-sky-700 mb-2">第二层: 数据预处理与注入层</h2>
+                <p class="text-lg text-slate-600 mb-6">作为数字孪生的“消化系统”，此层负责将原始、粗糙的数据转化为干净、可靠、标准化的信息流。数据质量在此层得到保障，直接决定了上层模型分析的可信度。</p>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">数据处理流程</h3>
+                    <p class="text-slate-500 mb-6">点击流程中的每一步，了解其具体工作内容和对数据质量的贡献。</p>
+                    <div id="processing-pipeline" class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4">
+                         <div class="pipeline-step text-center cursor-pointer p-3 rounded-lg w-full" data-desc="原始数据包含噪声、漂移、异常值和缺失值，是数据处理的起点。">
+                            <div class="text-3xl mb-2">📥</div>
+                            <div class="font-semibold">原始数据</div>
+                        </div>
+                        <div class="text-2xl text-slate-400 hidden md:block">→</div>
+                        <div class="pipeline-step text-center cursor-pointer p-3 rounded-lg w-full" data-desc="通过滤波、插值等方法，去除数据中的噪声和填补缺失值，使数据更平滑、完整。">
+                            <div class="text-3xl mb-2">🧹</div>
+                            <div class="font-semibold">数据清洗</div>
+                        </div>
+                         <div class="text-2xl text-slate-400 hidden md:block">→</div>
+                        <div class="pipeline-step text-center cursor-pointer p-3 rounded-lg w-full" data-desc="将不同来源、不同格式的数据转换为统一的标准格式（如统一单位、时间戳），便于后续处理。">
+                             <div class="text-3xl mb-2">📏</div>
+                            <div class="font-semibold">数据标准化</div>
+                        </div>
+                         <div class="text-2xl text-slate-400 hidden md:block">→</div>
+                        <div class="pipeline-step text-center cursor-pointer p-3 rounded-lg w-full" data-desc="通过设定规则或算法，识别并处理数据中的异常值，验证数据的有效性和合理性。">
+                            <div class="text-3xl mb-2">🛡️</div>
+                             <div class="font-semibold">验证与校正</div>
+                        </div>
+                    </div>
+                    <div id="pipeline-description" class="mt-6 p-4 bg-sky-50 border-l-4 border-sky-500 rounded-r-lg text-slate-700 min-h-[80px]">
+                        请点击上方流程中的任意一步查看详细说明。
+                    </div>
+                </div>
+            </section>
+
+            <section id="layer3" class="content-section">
+                <h2 class="text-3xl font-bold text-sky-700 mb-2">第三层: 模型与算法层</h2>
+                <p class="text-lg text-slate-600 mb-6">作为数字孪生的“大脑”，此层集成了不同类型的模型，深刻描述物理、化学及生物过程的内在规律，并利用数据挖掘复杂关系，共同构建起孪生体的核心智能。</p>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex border-b border-slate-200 mb-4">
+                        <button class="tab-button py-2 px-4 border-b-2 border-transparent" data-target="tab-mech">机理模型</button>
+                        <button class="tab-button py-2 px-4 border-b-2 border-transparent" data-target="tab-ai">AI/ML模型</button>
+                    </div>
+                    
+                    <div id="tab-mech" class="tab-content">
+                        <h3 class="text-xl font-semibold mb-2 text-cyan-700">机理模型 (Mechanistic Models)</h3>
+                        <p class="text-slate-600 mb-4">基于物理、化学和生物学第一性原理建立，能深刻揭示污染物转化的内在规律和因果关系。它们是理解和仿真核心工艺的基础。</p>
+                        <ul class="list-disc list-inside space-y-2 text-slate-600">
+                            <li><strong>活性污泥模型 (ASMs):</strong> 如ASM1, ASM2d，用于模拟好氧池中的硝化、反硝化和除磷过程。</li>
+                            <li><strong>厌氧消化模型 (ADMs):</strong> 如ADM1，用于描述污泥厌氧消化产沼气的复杂生化反应。</li>
+                        </ul>
+                    </div>
+
+                    <div id="tab-ai" class="tab-content">
+                        <h3 class="text-xl font-semibold mb-2 text-indigo-700">人工智能/机器学习模型 (AI/ML Models)</h3>
+                        <p class="text-slate-600 mb-4">基于历史数据进行训练，擅长处理机理不清、关系复杂的非线性问题。它们在预测和模式识别方面表现卓越。</p>
+                        <ul class="list-disc list-inside space-y-2 text-slate-600">
+                           <li><strong>进水负荷预测:</strong> 利用神经网络（如RNN, LSTM）根据降雨和历史数据预测未来进水流量和水质。</li>
+                           <li><strong>传感器异常诊断:</strong> 通过无监督学习识别传感器的微小漂移或故障，保障数据质量。</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md mt-6">
+                    <h3 class="text-xl font-semibold mb-4">模型特性对比</h3>
+                    <div class="chart-container">
+                        <canvas id="modelComparisonChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+             <section id="layer4" class="content-section">
+                <h2 class="text-3xl font-bold text-sky-700 mb-2">第四层: 分析与仿真层</h2>
+                <p class="text-lg text-slate-600 mb-6">作为数字孪生的“决策中枢”，此层调用模型库对高质量数据进行高级分析和仿真，将“数据”转化为“洞察”，支持从日常操作优化到长期战略规划的各类决策。</p>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="card-flip h-64">
+                        <div class="card-inner rounded-xl shadow-lg">
+                            <div class="card-front bg-white p-6 flex flex-col items-center justify-center text-center">
+                                <div class="text-5xl mb-3">🔮</div>
+                                <h3 class="text-xl font-bold">"假设-分析" (What-if)</h3>
+                                <p class="text-slate-500 mt-2">模拟不同情景，评估决策影响。将鼠标悬停查看示例。</p>
+                            </div>
+                            <div class="card-back bg-blue-500 text-white p-6 rounded-xl flex flex-col justify-center">
+                                <h4 class="font-bold text-lg">情景示例: 极端天气</h4>
+                                <p class="mt-2 text-sm">模拟“24小时内降雨量增加50%”的情景，系统预测进水流量将超出现有处理能力的20%，并建议提前启动备用蓄水池。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-flip h-64">
+                         <div class="card-inner rounded-xl shadow-lg">
+                            <div class="card-front bg-white p-6 flex flex-col items-center justify-center text-center">
+                                <div class="text-5xl mb-3">🔔</div>
+                                <h3 class="text-xl font-bold">预测性预警</h3>
+                                <p class="text-slate-500 mt-2">预测未来风险，提前采取措施。将鼠标悬停查看示例。</p>
+                            </div>
+                            <div class="card-back bg-amber-500 text-white p-6 rounded-xl flex flex-col justify-center">
+                                <h4 class="font-bold text-lg">预警示例: 出水水质超标</h4>
+                                <p class="mt-2 text-sm">模型预测未来6小时后，出水总磷浓度将有85%的概率轻微超标。系统建议立即将絮凝剂投加量提升15%。</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="card-flip h-64">
+                         <div class="card-inner rounded-xl shadow-lg">
+                            <div class="card-front bg-white p-6 flex flex-col items-center justify-center text-center">
+                                <div class="text-5xl mb-3">⚙️</div>
+                                <h3 class="text-xl font-bold">智能寻优控制</h3>
+                               <p class="text-slate-500 mt-2">计算最优控制参数，实现降本增效。将鼠标悬停查看示例。</p>
+                            </div>
+                            <div class="card-back bg-emerald-500 text-white p-6 rounded-xl flex flex-col justify-center">
+                                <h4 class="font-bold text-lg">优化示例: 曝气能耗</h4>
+                                <p class="mt-2 text-sm">基于当前进水负荷和微生物活性，优化算法计算出最优溶解氧设定点为1.8mg/L，预计可降低曝气能耗12%同时确保处理效果达标。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="layer5" class="content-section">
+                <h2 class="text-3xl font-bold text-sky-700 mb-2">第五层: 可视化与用户交互层</h2>
+                <p class="text-lg text-slate-600 mb-6">作为数字孪生的“脸面”，此层将所有复杂的数据、模型输出和分析结果，通过直观、友好的用户界面呈现给不同角色的用户，辅助其快速、准确地制定决策。</p>
+                 <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">决策支持仪表盘 (模拟)</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                             <h4 class="font-semibold mb-4 text-slate-700">实时工艺流程与出水水质预测</h4>
+                            <div class="bg-slate-100 p-4 rounded-lg">
+                                <p class="text-center text-slate-500 mb-2">动态工艺流程图 (模拟)</p>
+                                <div class="w-full h-48 bg-slate-200 rounded flex items-center justify-center text-slate-400 font-semibold">
+                                    [ 3D可视化模型 & 实时P&ID ]
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-center text-slate-500 mb-2">未来12小时出水总氮(TN)浓度预测</p>
+                                    <div class="chart-container h-48 max-h-[25vh]">
+                                        <canvas id="effluentChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-1 space-y-4">
+                             <h4 class="font-semibold mb-4 text-slate-700">关键绩效指标 (KPIs)</h4>
+                            <div class="bg-blue-100 p-4 rounded-lg shadow">
+                                <p class="text-sm text-blue-800">总处理水量 (今日)</p>
+                                <p class="text-2xl font-bold text-blue-900">18,540 <span class="text-base font-normal">m³</span></p>
+                            </div>
+                            <div class="bg-green-100 p-4 rounded-lg shadow">
+                                <p class="text-sm text-green-800">单位能耗 (本月)</p>
+                                <p class="text-2xl font-bold text-green-900">0.28 <span class="text-base font-normal">kWh/m³</span></p>
+                            </div>
+                             <div class="bg-red-100 p-4 rounded-lg shadow">
+                                <p class="text-sm text-red-800">活动警报数</p>
+                                <p class="text-2xl font-bold text-red-900">2</p>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            function showSection(targetId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                const targetSection = document.getElementById(targetId);
+                const activeNavItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
+                
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                }
+                if(activeNavItem) {
+                    activeNavItem.classList.add('active');
+                }
+            }
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.dataset.target;
+                    window.location.hash = targetId;
+                    showSection(targetId);
+                });
+            });
+
+            const initialTarget = window.location.hash ? window.location.hash.substring(1) : 'layer1';
+            showSection(initialTarget);
+
+            const pipelineSteps = document.querySelectorAll('.pipeline-step');
+            const pipelineDesc = document.getElementById('pipeline-description');
+            pipelineSteps.forEach(step => {
+                step.addEventListener('click', function() {
+                    pipelineSteps.forEach(s => s.classList.remove('bg-sky-200', 'shadow-md'));
+                    this.classList.add('bg-sky-200', 'shadow-md');
+                    pipelineDesc.textContent = this.dataset.desc;
+                });
+            });
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const targetId = this.dataset.target;
+                    tabContents.forEach(content => {
+                        if (content.id === targetId) {
+                            content.classList.add('active');
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
+                });
+            });
+            document.querySelector('.tab-button[data-target="tab-mech"]').click();
+            
+            Chart.defaults.font.family = "'Noto Sans SC', sans-serif";
+
+            const modelCtx = document.getElementById('modelComparisonChart').getContext('2d');
+            new Chart(modelCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['可解释性', '数据依赖性', '泛化能力', '开发复杂度'],
+                    datasets: [{
+                        label: '机理模型',
+                        data: [9, 3, 8, 9],
+                        backgroundColor: 'rgba(14, 165, 233, 0.6)',
+                        borderColor: 'rgba(14, 165, 233, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'AI/ML模型',
+                        data: [2, 9, 6, 5],
+                        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value === 0) return '低';
+                                    if (value === 5) return '中';
+                                    if (value === 10) return '高';
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '不同类型模型特性对比 (评分: 1-10)'
+                        }
+                    }
+                }
+            });
+
+            const effluentCtx = document.getElementById('effluentChart').getContext('2d');
+            new Chart(effluentCtx, {
+                type: 'line',
+                data: {
+                    labels: ['现在', '+2h', '+4h', '+6h', '+8h', '+10h', '+12h'],
+                    datasets: [{
+                        label: '预测TN浓度 (mg/L)',
+                        data: [10.2, 10.5, 11.1, 12.5, 14.8, 14.2, 13.1],
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: '排放标准',
+                        data: [15, 15, 15, 15, 15, 15, 15],
+                        borderColor: 'rgb(34, 197, 94)',
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

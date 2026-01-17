@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>层级RAG（HRAG）工程实现交互式指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Tech Clarity -->
+    <!-- Application Structure Plan: The application is designed as a single-page, long-form explainer with a sticky navigation bar for easy access to key sections. This structure guides the user from high-level concepts (What/Why HRAG) to deep technical details (Implementation Strategies) and practical advice (Evaluation/Selection). It uses interactive elements like diagrams, tabs, and a dynamic chart to break down complex information, making it more digestible and engaging than a static report. The goal is to facilitate understanding and aid decision-making for technical audiences. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: RAG vs HRAG comparison -> Goal: Compare -> Viz: Side-by-side HTML/CSS diagram -> Interaction: Hover to highlight differences -> Justification: Clearly illustrates the fundamental structural shift from flat to hierarchical. -> Method: HTML/CSS.
+        - Report Info: Multi-step retrieval process -> Goal: Inform/Organize -> Viz: HTML/CSS animated flowchart -> Interaction: On-scroll animation -> Justification: Makes the abstract process tangible. -> Method: HTML/CSS/JS.
+        - Report Info: Different implementation strategies (Parent-Child, Recursive, Graph, Metadata) -> Goal: Compare/Organize -> Viz: Tabbed interface -> Interaction: Click to switch content -> Justification: Manages cognitive load for dense, parallel topics. -> Method: HTML/JS.
+        - Report Info: Comparison of strategies -> Goal: Compare/Decision Support -> Viz: Interactive bar chart -> Interaction: Click buttons to highlight best strategy based on priority (e.g., 'Precision', 'Flexibility') -> Justification: Transforms a static table into a dynamic decision-making tool. -> Library: Chart.js.
+        - Report Info: Evaluation metrics -> Goal: Inform/Organize -> Viz: HTML table with tooltips -> Interaction: Hover on metric name -> Justification: Provides on-demand context for technical terms without cluttering the UI. -> Method: HTML/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #1f2937;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        .nav-link:not(.active) {
+            border-bottom-color: transparent;
+        }
+        .tab-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .strategy-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .strategy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .has-tooltip:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- Header and Navigation -->
+    <header id="header" class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-blue-600">HRAG 指南</h1>
+                </div>
+                <nav class="hidden md:flex md:space-x-8">
+                    <a href="#intro" class="nav-link border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:text-blue-600">导论</a>
+                    <a href="#architecture" class="nav-link border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:text-blue-600">核心架构</a>
+                    <a href="#strategies" class="nav-link border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:text-blue-600">实现策略</a>
+                    <a href="#selector" class="nav-link border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:text-blue-600">策略选择器</a>
+                    <a href="#considerations" class="nav-link border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:text-blue-600">实践与评估</a>
+                    <a href="#conclusion" class="nav-link border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:text-blue-600">结论</a>
+                </nav>
+                 <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+                        <span class="sr-only">打开主菜单</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#intro" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">导论</a>
+                <a href="#architecture" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">核心架构</a>
+                <a href="#strategies" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">实现策略</a>
+                <a href="#selector" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">策略选择器</a>
+                <a href="#considerations" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">实践与评估</a>
+                <a href="#conclusion" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">结论</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Section 1: Introduction -->
+        <section id="intro" class="mb-16 scroll-mt-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900">探索层级式检索增强生成 (HRAG)</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">从扁平到纵深：构建更智能、更精准的RAG系统，有效提升信息检索的上下文相关性与准确度。</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold text-center mb-4">传统 RAG: 扁平化检索</h3>
+                    <div class="flex justify-center items-center h-40 space-x-2">
+                        <div class="w-16 h-12 bg-gray-200 rounded animate-pulse"></div>
+                        <div class="w-16 h-12 bg-gray-200 rounded animate-pulse delay-75"></div>
+                        <div class="w-16 h-12 bg-gray-200 rounded animate-pulse delay-150"></div>
+                        <div class="w-16 h-12 bg-gray-200 rounded animate-pulse delay-200"></div>
+                    </div>
+                    <p class="mt-4 text-gray-600 text-sm">将知识库视为无差别的“信息块海洋”，检索时可能丢失结构化线索，导致上下文不完整或不精确。</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-lg border-2 border-blue-400">
+                    <h3 class="text-xl font-bold text-center mb-4 text-blue-600">层级 RAG (HRAG): 结构化检索</h3>
+                    <div class="flex flex-col items-center h-40">
+                         <div class="w-32 h-10 bg-blue-200 rounded mb-2 text-center py-1 text-sm font-semibold text-blue-800">摘要层</div>
+                         <div class="flex justify-center space-x-4">
+                            <div class="flex flex-col items-center">
+                                <div class="w-3 h-6 bg-blue-300"></div>
+                                <div class="w-20 h-10 bg-blue-100 rounded text-center py-1 text-xs font-medium text-blue-700">细节块A</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-3 h-6 bg-blue-300"></div>
+                                <div class="w-20 h-10 bg-blue-100 rounded text-center py-1 text-xs font-medium text-blue-700">细节块B</div>
+                            </div>
+                         </div>
+                    </div>
+                    <p class="mt-4 text-gray-600 text-sm">利用文档的层级结构（章节-小节），先定位宏观区域，再进行精细查找，模拟人类寻求信息的方式。</p>
+                </div>
+            </div>
+
+            <div class="mt-12">
+                <h3 class="text-2xl font-bold text-center text-gray-800 mb-8">HRAG 的核心优势</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="text-4xl mb-2">🎯</div>
+                        <h4 class="font-semibold text-lg">增强相关性</h4>
+                        <p class="text-sm text-gray-500 mt-1">在预定义层级内搜索，上下文更精准。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="text-4xl mb-2">⚡️</div>
+                        <h4 class="font-semibold text-lg">高效搜索</h4>
+                        <p class="text-sm text-gray-500 mt-1">减少搜索空间，提升检索与生成效率。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="text-4xl mb-2">✅</div>
+                        <h4 class="font-semibold text-lg">提升准确性</h4>
+                        <p class="text-sm text-gray-500 mt-1">引导式检索减少噪声，信息更精确。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="text-4xl mb-2">📚</div>
+                        <h4 class="font-semibold text-lg">驾驭长文档</h4>
+                        <p class="text-sm text-gray-500 mt-1">轻松导航技术手册、法律文件等复杂文档。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Core Architecture -->
+        <section id="architecture" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-900">核心架构与检索流程</h2>
+            <p class="text-center text-gray-500 max-w-2xl mx-auto mb-12">HRAG通过结构化索引和多步检索过程，实现从广泛定位到精细搜索的智能信息导航。这不仅优化了检索，更为复杂的推理任务奠定了基础。</p>
+
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                <h3 class="text-xl font-semibold mb-6 text-center">HRAG 多步检索流程示意</h3>
+                <div class="flex flex-col md:flex-row justify-around items-center gap-4">
+                    <div class="text-center flex-1">
+                        <div class="p-4 bg-gray-100 rounded-lg">
+                            <div class="text-4xl mb-2">🔍</div>
+                            <p class="font-bold">1. 用户查询</p>
+                            <p class="text-sm text-gray-600">"HRAG如何处理长文档？"</p>
+                        </div>
+                    </div>
+                    <div class="text-2xl text-gray-400 transform rotate-90 md:rotate-0">→</div>
+                    <div class="text-center flex-1">
+                        <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div class="text-4xl mb-2">🗂️</div>
+                            <p class="font-bold">2. 高层级搜索</p>
+                            <p class="text-sm text-gray-600">在“摘要/章节”索引中匹配，定位到相关章节。</p>
+                        </div>
+                    </div>
+                    <div class="text-2xl text-gray-400 transform rotate-90 md:rotate-0">→</div>
+                    <div class="text-center flex-1">
+                        <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                             <div class="text-4xl mb-2">📄</div>
+                            <p class="font-bold">3. 低层级搜索</p>
+                            <p class="text-sm text-gray-600">在已定位章节内，精确查找包含答案的“子块”。</p>
+                        </div>
+                    </div>
+                    <div class="text-2xl text-gray-400 transform rotate-90 md:rotate-0">→</div>
+                    <div class="text-center flex-1">
+                         <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div class="text-4xl mb-2">💡</div>
+                            <p class="font-bold">4. 上下文增强与生成</p>
+                            <p class="text-sm text-gray-600">组合父块与子块信息，生成更精准、连贯的答案。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 3: Implementation Strategies -->
+        <section id="strategies" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-900">主流工程实现策略</h2>
+            <p class="text-center text-gray-500 max-w-2xl mx-auto mb-12">不同的HRAG策略适用于不同的数据结构和业务需求。了解它们的核心机制、优势和局限性，是做出正确技术选型的关键。</p>
+            
+            <div id="strategies-container">
+                <div class="mb-8 flex justify-center flex-wrap gap-2">
+                    <button data-tab="parent-child" class="tab-btn px-4 py-2 text-sm font-medium rounded-md bg-white shadow-sm hover:bg-gray-100 focus:outline-none active">父子块检索</button>
+                    <button data-tab="recursive" class="tab-btn px-4 py-2 text-sm font-medium rounded-md bg-white shadow-sm hover:bg-gray-100 focus:outline-none">递归/节点检索</button>
+                    <button data-tab="graph" class="tab-btn px-4 py-2 text-sm font-medium rounded-md bg-white shadow-sm hover:bg-gray-100 focus:outline-none">图驱动RAG</button>
+                    <button data-tab="metadata" class="tab-btn px-4 py-2 text-sm font-medium rounded-md bg-white shadow-sm hover:bg-gray-100 focus:outline-none">元数据驱动</button>
+                </div>
+
+                <div id="tab-content" class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+                    <div id="parent-child-content" class="tab-pane active">
+                        <div class="grid md:grid-cols-2 gap-8 items-start">
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-800 mb-4">父子块检索 (Parent-Child Retrieval)</h3>
+                                <p class="text-gray-600 mb-4">核心思想是“为检索而小，为上下文而大”。文档被切分为用于精确语义搜索的小“子块”，以及包含更完整上下文的大“父块”。系统先检索子块，然后返回其对应的父块给LLM。</p>
+                                <div class="space-y-3">
+                                    <p><strong>关键框架:</strong> <span class="bg-blue-100 text-blue-800 text-sm font-mono py-1 px-2 rounded">LangChain: ParentDocumentRetriever</span></p>
+                                    <p><strong>优势:</strong> 概念清晰，易于实现，有效平衡嵌入精度和上下文完整性。</p>
+                                    <p><strong>局限:</strong> 层级关系固定（仅父子），对复杂的非线性层级支持不足。</p>
+                                    <p><strong>理想场景:</strong> 具有明确线性层级结构（如书籍、报告）的文档。</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border">
+                                <h4 class="font-semibold text-center mb-3">工作流程</h4>
+                                <ol class="relative border-l border-gray-200">                  
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">1. 分块</h3>
+                                        <p class="text-sm font-normal text-gray-500">文档被切割为小(子块)和大(父块)两种粒度。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">2. 索引</h3>
+                                        <p class="text-sm font-normal text-gray-500">仅将“子块”嵌入并存入向量数据库。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">3. 检索</h3>
+                                        <p class="text-sm font-normal text-gray-500">根据查询在子块中进行语义搜索。</p>
+                                    </li>
+                                    <li class="ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">4. 返回</h3>
+                                        <p class="text-sm font-normal text-gray-500">获取匹配子块对应的“父块”，并将其作为上下文返回。</p>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="recursive-content" class="tab-pane hidden">
+                         <div class="grid md:grid-cols-2 gap-8 items-start">
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-800 mb-4">递归/节点检索 (Recursive/Node Retrieval)</h3>
+                                <p class="text-gray-600 mb-4">此方法将文档视为“节点”的集合或图。检索到一个节点可以触发对相关节点（如父、子、相邻节点，甚至不同数据类型的关联节点）的进一步递归检索。</p>
+                                <div class="space-y-3">
+                                    <p><strong>关键框架:</strong> <span class="bg-green-100 text-green-800 text-sm font-mono py-1 px-2 rounded">LlamaIndex: RecursiveRetriever</span></p>
+                                    <p><strong>优势:</strong> 高度灵活，能处理异构数据（如文本链接表格），支持复杂层级和自定义逻辑。</p>
+                                    <p><strong>局限:</strong> 设置相对复杂，需要仔细设计节点关系和映射。</p>
+                                    <p><strong>理想场景:</strong> 需要在不同类型数据间进行层级跳转和联合查询的复杂文档。</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border">
+                                <h4 class="font-semibold text-center mb-3">工作流程</h4>
+                                <ol class="relative border-l border-gray-200">                  
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">1. 节点化</h3>
+                                        <p class="text-sm font-normal text-gray-500">将文档解析为包含链接信息的“节点”对象。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">2. 初始检索</h3>
+                                        <p class="text-sm font-normal text-gray-500">对所有节点进行初步的向量搜索。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">3. 递归查询</h3>
+                                        <p class="text-sm font-normal text-gray-500">若检索到特殊节点（如表格摘要），则调用专用引擎进行二次查询。</p>
+                                    </li>
+                                    <li class="ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">4. 组合</h3>
+                                        <p class="text-sm font-normal text-gray-500">综合所有检索路径的结果，形成最终上下文。</p>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="graph-content" class="tab-pane hidden">
+                        <div class="grid md:grid-cols-2 gap-8 items-start">
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-800 mb-4">图驱动RAG (GraphRAG)</h3>
+                                <p class="text-gray-600 mb-4">将知识表示为一个图，其中节点是实体或文本块，边代表它们之间的复杂关系。检索过程涉及图的遍历、社区检测和基于连接的推理。</p>
+                                <div class="space-y-3">
+                                    <p><strong>关键框架:</strong> <span class="bg-purple-100 text-purple-800 text-sm font-mono py-1 px-2 rounded">Microsoft/LlamaIndex GraphRAG</span></p>
+                                    <p><strong>优势:</strong> 能捕获复杂关系，支持多跳推理，发现非显式连接。</p>
+                                    <p><strong>局限:</strong> 构建和维护知识图谱成本高，计算资源消耗大。</p>
+                                    <p><strong>理想场景:</strong> 数据本身具有丰富的内在连接性，如研究论文引用网络、企业组织结构。</p>
+                                </div>
+                            </div>
+                             <div class="bg-gray-50 p-4 rounded-lg border">
+                                <h4 class="font-semibold text-center mb-3">工作流程</h4>
+                                <ol class="relative border-l border-gray-200">                  
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">1. 图构建</h3>
+                                        <p class="text-sm font-normal text-gray-500">从文本中提取实体和关系，构建知识图谱。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">2. 社区检测</h3>
+                                        <p class="text-sm font-normal text-gray-500">应用图算法识别紧密连接的“社区”并生成摘要。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">3. 图查询</h3>
+                                        <p class="text-sm font-normal text-gray-500">将查询映射到图节点，通过遍历图来检索信息。</p>
+                                    </li>
+                                    <li class="ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">4. 答案生成</h3>
+                                        <p class="text-sm font-normal text-gray-500">基于图遍历的结果和社区摘要生成答案。</p>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="metadata-content" class="tab-pane hidden">
+                        <div class="grid md:grid-cols-2 gap-8 items-start">
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-800 mb-4">元数据驱动 (Metadata-Driven)</h3>
+                                <p class="text-gray-600 mb-4">通过在每个文本块中嵌入显式的层级元数据（如章节ID、段落ID）来丰富信息。检索时，可以利用这些元数据进行过滤或定向搜索，直接利用文档的自然结构。</p>
+                                 <div class="space-y-3">
+                                    <p><strong>关键框架:</strong> <span class="bg-yellow-100 text-yellow-800 text-sm font-mono py-1 px-2 rounded">Contextual AI / Vector DB Features</span></p>
+                                    <p><strong>优势:</strong> 实现相对简单，直接利用文档固有结构，能显著提升上下文理解和检索精度。</p>
+                                    <p><strong>局限:</strong> 效果依赖于文档结构的清晰度和元数据质量。对无结构文档效果有限。</p>
+                                    <p><strong>理想场景:</strong> 具有清晰、一致内在层级的文档，如技术手册、法律文件、财报。</p>
+                                </div>
+                            </div>
+                           <div class="bg-gray-50 p-4 rounded-lg border">
+                                <h4 class="font-semibold text-center mb-3">工作流程</h4>
+                                <ol class="relative border-l border-gray-200">                  
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">1. 解析与增强</h3>
+                                        <p class="text-sm font-normal text-gray-500">解析文档，为每个块自动添加层级元数据。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">2. 索引</h3>
+                                        <p class="text-sm font-normal text-gray-500">将文本块及其丰富的元数据一同存入向量数据库。</p>
+                                    </li>
+                                    <li class="mb-6 ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">3. 过滤检索</h3>
+                                        <p class="text-sm font-normal text-gray-500">执行向量搜索的同时，使用元数据进行过滤，缩小范围。</p>
+                                    </li>
+                                    <li class="ml-4">
+                                        <div class="absolute w-3 h-3 bg-gray-300 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+                                        <h3 class="text-lg font-semibold text-gray-900">4. 返回</h3>
+                                        <p class="text-sm font-normal text-gray-500">返回经过元数据精确筛选后的文本块。</p>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Interactive Selector -->
+        <section id="selector" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-900">交互式策略选择器</h2>
+            <p class="text-center text-gray-500 max-w-2xl mx-auto mb-12">不确定哪种HRAG策略最适合您？根据您的项目优先级，点击下方按钮，我们将为您高亮推荐最匹配的实现方案。</p>
+            
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+                <div class="flex justify-center flex-wrap gap-3 mb-8">
+                    <button data-priority="complexity" class="priority-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-200 hover:bg-gray-300 focus:outline-none">优先级: 简单易用</button>
+                    <button data-priority="precision" class="priority-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-200 hover:bg-gray-300 focus:outline-none">优先级: 上下文精度</button>
+                    <button data-priority="flexibility" class="priority-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-200 hover:bg-gray-300 focus:outline-none">优先级: 检索灵活性</button>
+                    <button data-priority="discovery" class="priority-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-200 hover:bg-gray-300 focus:outline-none">优先级: 关系发现</button>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="strategyChart"></canvas>
+                </div>
+
+                <div id="recommendation" class="mt-8 p-4 bg-blue-50 rounded-lg text-center hidden">
+                    <h4 id="rec-title" class="font-bold text-lg text-blue-800"></h4>
+                    <p id="rec-text" class="text-blue-700 mt-2"></p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 5: Considerations & Evaluation -->
+        <section id="considerations" class="mb-16 scroll-mt-24">
+             <h2 class="text-3xl font-bold text-center mb-2 text-gray-900">实践考量与性能评估</h2>
+            <p class="text-center text-gray-500 max-w-2xl mx-auto mb-12">成功的HRAG系统不仅需要精巧的架构，还需周全的工程考量和科学的性能评估体系。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold mb-4">工程实践中的挑战</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold">层级设计不佳</h4>
+                            <p class="text-sm text-gray-600">如果层级结构与内容或用户查询模式不匹配，将直接导致检索效果不佳。</p>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold">错误传播</h4>
+                            <p class="text-sm text-gray-600">在高层级检索中的一个小错误，可能会在后续步骤中被放大，导致结果完全偏离。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">上下文碎片化/过载</h4>
+                            <p class="text-sm text-gray-600">块太小则上下文不足，太大则可能引入噪声或超出LLM的处理极限。</p>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold">性能权衡</h4>
+                            <p class="text-sm text-gray-600">层级化会增加索引和检索的复杂度，需要在准确性与延迟之间找到平衡。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold mb-4">关键评估指标</h3>
+                    <ul class="space-y-3">
+                        <li class="relative has-tooltip">
+                            <span class="font-semibold">上下文精确率 (Context Precision)</span>
+                            <div class="tooltip absolute z-10 w-64 p-2 -mt-20 text-sm leading-tight text-white transform -translate-x-1/2 bg-black rounded-lg shadow-lg left-1/2">检索到的信息有多大比例是真正相关的？需要分层级评估。</div>
+                        </li>
+                        <li class="relative has-tooltip">
+                            <span class="font-semibold">上下文召回率 (Context Recall)</span>
+                             <div class="tooltip absolute z-10 w-64 p-2 -mt-20 text-sm leading-tight text-white transform -translate-x-1/2 bg-black rounded-lg shadow-lg left-1/2">所有相关信息是否都已成功检索？</div>
+                        </li>
+                        <li class="relative has-tooltip">
+                            <span class="font-semibold">忠实度 (Faithfulness)</span>
+                             <div class="tooltip absolute z-10 w-64 p-2 -mt-20 text-sm leading-tight text-white transform -translate-x-1/2 bg-black rounded-lg shadow-lg left-1/2">生成的答案是否完全基于检索到的层级化上下文？</div>
+                        </li>
+                        <li class="relative has-tooltip">
+                            <span class="font-semibold text-blue-600">层级路径正确性 (Path Correctness)</span>
+                             <div class="tooltip absolute z-10 w-64 p-2 -mt-20 text-sm leading-tight text-white transform -translate-x-1/2 bg-black rounded-lg shadow-lg left-1/2">HRAG特有指标：系统导航层级的路径是否正确？</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Conclusion -->
+        <section id="conclusion" class="text-center scroll-mt-24">
+            <h2 class="text-3xl font-bold text-gray-900">结论与战略建议</h2>
+            <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-600">HRAG是RAG系统演进的关键一步，它通过引入结构化思维，解锁了更高水平的检索精度和推理潜力。成功的关键在于根据数据特性和业务需求，选择并定制最适合的HRAG策略。</p>
+            <div class="mt-8 flex justify-center">
+                 <div class="inline-block bg-green-100 text-green-800 rounded-full px-6 py-3 text-base font-semibold">
+                    建议: 从简单的策略（如父子块）开始，通过持续评估和迭代，逐步优化您的HRAG系统。
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white mt-16">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
+            <p>HRAG 交互式指南 &copy; 2024. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            const tabsContainer = document.getElementById('strategies-container');
+            if(tabsContainer){
+                const tabButtons = tabsContainer.querySelectorAll('.tab-btn');
+                const tabPanes = tabsContainer.querySelectorAll('.tab-pane');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        
+                        const targetTab = button.dataset.tab;
+                        tabPanes.forEach(pane => {
+                            if (pane.id === `${targetTab}-content`) {
+                                pane.classList.remove('hidden');
+                                pane.classList.add('active');
+                            } else {
+                                pane.classList.add('hidden');
+                                pane.classList.remove('active');
+                            }
+                        });
+                    });
+                });
+            }
+            
+            const chartCtx = document.getElementById('strategyChart');
+            if(chartCtx) {
+                const labels = ['父子块', '递归/节点', '图驱动', '元数据驱动'];
+                const data = {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '实现复杂度 (低为优)',
+                            data: [2, 4, 8, 3],
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '上下文精度 (高为优)',
+                            data: [6, 7, 8, 7],
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '检索灵活性 (高为优)',
+                            data: [4, 8, 7, 5],
+                            backgroundColor: 'rgba(255, 206, 86, 0.5)',
+                            borderColor: 'rgba(255, 206, 86, 1)',
+                            borderWidth: 1
+                        },
+                         {
+                            label: '关系发现能力 (高为优)',
+                            data: [2, 5, 9, 3],
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                };
+
+                const strategyChart = new Chart(chartCtx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                ticks: {
+                                    stepSize: 2
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const priorityButtons = document.querySelectorAll('.priority-btn');
+                const recommendationDiv = document.getElementById('recommendation');
+                const recTitle = document.getElementById('rec-title');
+                const recText = document.getElementById('rec-text');
+                
+                const recData = {
+                    complexity: {
+                        title: '推荐: 父子块检索 & 元数据驱动',
+                        text: '这两种方法实现相对简单，框架支持良好，是快速启动HRAG项目的理想选择，能有效平衡投入与产出。'
+                    },
+                    precision: {
+                        title: '推荐: 图驱动RAG & 递归/节点检索',
+                        text: '这些策略能捕获更丰富的上下文和关系，通过多步或递归查询，为LLM提供最精准的信息，特别适合对答案质量要求极高的场景。'
+                    },
+                    flexibility: {
+                        title: '推荐: 递归/节点检索',
+                        text: 'LlamaIndex的递归/节点检索提供了无与伦比的灵活性，能够处理异构数据源（如文本+表格），并支持高度定制化的检索逻辑。'
+                    },
+                    discovery: {
+                        title: '推荐: 图驱动RAG',
+                        text: 'GraphRAG专为发现数据中隐藏的、非显式的关系而设计，支持多跳推理，非常适合研究探索、知识发现等应用。'
+                    }
+                };
+                
+                const highlightMap = {
+                    complexity: [0, 3],
+                    precision: [2, 1],
+                    flexibility: [1],
+                    discovery: [2]
+                };
+
+                priorityButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const priority = button.dataset.priority;
+                        
+                        // Reset all backgrounds
+                        strategyChart.data.datasets.forEach(dataset => {
+                             dataset.backgroundColor = dataset.backgroundColor.replace(/1\)/, '0.5)');
+                        });
+                        
+                        // Highlight selected
+                        const indicesToHighlight = highlightMap[priority];
+                        indicesToHighlight.forEach(index => {
+                             strategyChart.data.datasets.forEach(dataset => {
+                                 const color = dataset.borderColor.replace(/1\)/, '0.8)');
+                                 if (Array.isArray(dataset.backgroundColor)) {
+                                     dataset.backgroundColor[index] = color;
+                                 }
+                             });
+                        });
+                        
+                        strategyChart.update();
+
+                        recTitle.textContent = recData[priority].title;
+                        recText.textContent = recData[priority].text;
+                        recommendationDiv.classList.remove('hidden');
+                    });
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

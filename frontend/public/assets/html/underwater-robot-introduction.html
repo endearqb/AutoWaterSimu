@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水下机器人技术概览与趋势</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #E0F7FA; /* Lightest blue from palette for overall background */
+        }
+        /* Chosen Color Palette: Brilliant Blues
+           - Primary Text, Headers, Accents: #0077B6 (darkBlue)
+           - Secondary Text, Borders: #00B4D8 (mediumBlue)
+           - Card Backgrounds, Highlights: #90E0EF (lightBlue)
+           - Page Background sections, Chart Grid: #CAF0F8 (veryLightBlue)
+           - White/Off-white for text on dark backgrounds: #FFFFFF / #F8F9FA
+        */
+        .darkBlue-text { color: #0077B6; }
+        .darkBlue-bg { background-color: #0077B6; }
+        .mediumBlue-text { color: #00B4D8; }
+        .mediumBlue-border { border-color: #00B4D8; }
+        .lightBlue-bg { background-color: #90E0EF; }
+        .veryLightBlue-bg { background-color: #CAF0F8; }
+
+        .section-title {
+            font-size: 2.25rem; /* 36px */
+            font-weight: 700;
+            color: #0077B6;
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-top: 1rem;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem; /* 12px */
+            padding: 1.5rem; /* 24px */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #B2EBF2; /* Light border */
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .card-title {
+            font-size: 1.5rem; /* 24px */
+            font-weight: 600;
+            color: #0077B6;
+            margin-bottom: 1rem;
+        }
+        .card-icon {
+            font-size: 2.5rem; /* 40px */
+            color: #00B4D8;
+            margin-bottom: 0.5rem;
+        }
+        .tech-icon {
+            font-size: 2rem; /* 32px */
+            color: #0077B6;
+            margin-right: 0.75rem; /* 12px */
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #CAF0F8;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 2.5rem; /* 40px */
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem; /* 12px */
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #00B4D8;
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem; /* 32px */
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.25rem; /* -36px, adjusted for icon position */
+            top: 0.25rem; /* 4px */
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #0077B6;
+            border: 3px solid #CAF0F8;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #90E0EF;
+            padding: 0.75rem; /* 12px */
+            text-align: left;
+        }
+        th {
+            background-color: #CAF0F8;
+            color: #0077B6;
+            font-weight: 600;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #F0FAFB;
+        }
+        /* Infographic specific comments:
+           - Overall Plan: Present an overview of underwater robots based on the provided text,
+             covering definition, evolution, types, key technologies, trends, and a comparison table.
+           - Visualization Choices:
+             - Evolution: HTML/CSS timeline. Goal: Change. Justification: Shows progression. No SVG.
+             - Types: Styled cards (HTML/CSS). Goal: Compare. Justification: Clear feature display. No SVG.
+             - Key Technologies: Icon-based list (HTML/CSS with Unicode). Goal: Organize. Justification: Visually groups key components. No SVG.
+             - Trends: Text with icons (HTML/CSS with Unicode). Goal: Inform. Justification: Highlights key development directions. No SVG.
+             - Comparison Table: Styled HTML table. Goal: Organize/Compare. Justification: Direct representation of structured data. No SVG.
+           - NO SVG graphics were used.
+           - NO MERMAID JS was used.
+           - Chosen Color Palette: "Brilliant Blues" (#0077B6, #00B4D8, #90E0EF, #CAF0F8).
+        */
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <header class="darkBlue-bg text-white py-12 sm:py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">水下机器人技术概览与趋势</h1>
+            <p class="text-lg sm:text-xl md:text-2xl opacity-90 max-w-3xl mx-auto">探索水下世界的智能先锋：定义、分类、核心技术与未来展望。</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 sm:py-12">
+
+        <section id="definition-evolution" class="mb-12 sm:mb-16">
+            <h2 class="section-title">
+                <span class="card-icon inline-block align-middle mr-2">🤖</span>水下机器人：定义与演进
+            </h2>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="card veryLightBlue-bg">
+                    <h3 class="card-title">定义</h3>
+                    <p class="text-gray-700 leading-relaxed">水下机器人，广义上是指能够潜入水中，替代或辅助人类在水下环境中执行各种极限作业任务的智能设备。这些任务涵盖了从简单的观察到复杂的操作，如水下目标探测与识别、水下打捞救援、水下资源勘探与开采、以及科学研究等。</p>
+                </div>
+                <div class="card veryLightBlue-bg">
+                    <h3 class="card-title">演进之路 <span class="card-icon inline-block align-middle ml-1 text-2xl">💡</span></h3>
+                    <div class="timeline mt-4">
+                        <div class="timeline-item">
+                            <h4 class="font-semibold darkBlue-text text-lg">早期探索</h4>
+                            <p class="text-sm text-gray-600">主要依赖缆控进行简单观测的装置。</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4 class="font-semibold darkBlue-text text-lg">逐步发展</h4>
+                            <p class="text-sm text-gray-600">演化为具备更高自主性、搭载先进传感器的精密系统。</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4 class="font-semibold darkBlue-text text-lg">中国发展</h4>
+                            <p class="text-sm text-gray-600">得益于海洋研究深入与海洋经济兴起，技术成熟度日益提高。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="main-types" class="mb-12 sm:mb-16">
+            <h2 class="section-title">
+                <span class="card-icon inline-block align-middle mr-2">🛠️</span>主要类型与特性
+            </h2>
+            <div class="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                <div class="card lightBlue-bg">
+                    <div class="flex items-center mb-3">
+                        <span class="card-icon mr-3">🔗</span>
+                        <h3 class="card-title mb-0">遥控水下机器人 (ROV)</h3>
+                    </div>
+                    <p class="mb-2">通过脐带缆与水面连接，由操作员实时控制。</p>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        <li><strong>供能与通信:</strong> 缆索提供持续动力和高带宽数据传输。</li>
+                        <li><strong>优点:</strong> 稳定性强，实时控制，可搭载重型工具。</li>
+                        <li><strong>应用:</strong> 精细观察、复杂操作、水下结构检查、设备维护。</li>
+                        <li><strong>示例:</strong> 美国SeaBotix公司的vLBV300型。</li>
+                    </ul>
+                </div>
+
+                <div class="card lightBlue-bg">
+                     <div class="flex items-center mb-3">
+                        <span class="card-icon mr-3">🔋</span>
+                        <h3 class="card-title mb-0">自主水下航行器 (AUV)</h3>
+                    </div>
+                    <p class="mb-2">不依赖缆索，依靠自身能源和预设程序或AI自主作业。</p>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        <li><strong>特点:</strong> 无缆索束缚，活动范围广。</li>
+                        <li><strong>应用:</strong> 大范围搜索、探测、测绘、环境监测。</li>
+                        <li><strong>微小型AUV:</strong> 便携、成本相对较低（如1-1.5万美元）。</li>
+                        <li><strong>示例:</strong> 中国的“潜龙二号”无缆自治水下机器人。</li>
+                    </ul>
+                </div>
+
+                <div class="card lightBlue-bg md:col-span-1 lg:col-span-2">
+                     <div class="flex items-center mb-3">
+                        <span class="card-icon mr-3">🧩</span>
+                        <h3 class="card-title mb-0">其他相关类型</h3>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold darkBlue-text mb-1">混合型 (ARV)</h4>
+                            <p class="text-sm">具备ROV和AUV双重工作模式，适应多样化任务需求。</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold darkBlue-text mb-1">爬行机器人 (ROC)</h4>
+                            <p class="text-sm">专用于在水下结构物表面或水底爬行，如清华四川能源互联网研究院的水下履带式机器人。</p>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-sm italic"><strong>融合趋势:</strong> ARV等混合平台的出现预示着未来水下机器人将更加灵活多能，克服单一模式的局限性。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="key-technologies" class="mb-12 sm:mb-16">
+            <h2 class="section-title">
+                <span class="card-icon inline-block align-middle mr-2">⚙️</span>核心赋能技术
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card veryLightBlue-bg">
+                    <div class="flex items-center"> <span class="tech-icon">🧭</span> <h4 class="font-semibold text-lg darkBlue-text">导航与定位</h4></div>
+                    <p class="text-sm mt-2">INS, DVL, 声学定位 (USBL, LBL), SLAM, IMU等，确保在无GPS环境下精确执行任务。</p>
+                </div>
+                <div class="card veryLightBlue-bg">
+                    <div class="flex items-center"> <span class="tech-icon">💨</span> <h4 class="font-semibold text-lg darkBlue-text">推进与控制</h4></div>
+                    <p class="text-sm mt-2">通过电动或液压推进器实现运动和姿态的精确控制。</p>
+                </div>
+                <div class="card veryLightBlue-bg">
+                    <div class="flex items-center"> <span class="tech-icon">👁️‍🗨️</span> <h4 class="font-semibold text-lg darkBlue-text">传感器技术</h4></div>
+                    <p class="text-sm mt-2">光学摄像机、声纳系统、激光扫描仪、水质传感器（CTD, DO, pH, 浊度等）。</p>
+                </div>
+                <div class="card veryLightBlue-bg">
+                    <div class="flex items-center"> <span class="tech-icon">📡</span> <h4 class="font-semibold text-lg darkBlue-text">水下通信</h4></div>
+                    <p class="text-sm mt-2">ROV依赖光纤/电缆；AUV主要依赖声学通信（带宽窄、延迟大），光通信距离受限。</p>
+                </div>
+                <div class="card veryLightBlue-bg">
+                    <div class="flex items-center"> <span class="tech-icon">⚡</span> <h4 class="font-semibold text-lg darkBlue-text">能源技术</h4></div>
+                    <p class="text-sm mt-2">ROV由母船供电；AUV依赖自身电池组（如锂离子电池），续航能力是关键。</p>
+                </div>
+                <div class="card veryLightBlue-bg">
+                    <div class="flex items-center"> <span class="tech-icon">🦾</span> <h4 class="font-semibold text-lg darkBlue-text">作业工具与机械臂</h4></div>
+                    <p class="text-sm mt-2">部分工作级ROV和特种AUV搭载，执行水下干预、维修或取样任务。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech-trends" class="mb-12 sm:mb-16">
+            <h2 class="section-title">
+                <span class="card-icon inline-block align-middle mr-2">📈</span>技术趋势与展望
+            </h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="card lightBlue-bg">
+                    <div class="flex items-center mb-2">
+                        <span class="card-icon text-3xl mr-2">🤏</span>
+                        <h4 class="font-semibold text-xl darkBlue-text">小型化趋势</h4>
+                    </div>
+                    <p class="text-sm">微小型AUV成本降低、便携性提高，拓宽应用范围（如小型水务公司、集群监测），降低单任务成本，实现更频繁监测。</p>
+                </div>
+                <div class="card lightBlue-bg">
+                     <div class="flex items-center mb-2">
+                        <span class="card-icon text-3xl mr-2">🤝</span>
+                        <h4 class="font-semibold text-xl darkBlue-text">传感器与平台协同进化</h4>
+                    </div>
+                    <p class="text-sm">先进传感器提升机器人作业价值，强大机器人平台为部署先进传感器提供基础。二者相互促进，推动更复杂精细化应用。</p>
+                </div>
+                <div class="card lightBlue-bg">
+                     <div class="flex items-center mb-2">
+                        <span class="card-icon text-3xl mr-2">🔄</span>
+                        <h4 class="font-semibold text-xl darkBlue-text">能力融合</h4>
+                    </div>
+                    <p class="text-sm">ARV等混合型机器人结合ROV的实时控制与AUV的自主巡检能力，适应更多样化任务，减少部署多种专用机器人的需求。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison-table" class="mb-12 sm:mb-16">
+            <h2 class="section-title">
+                <span class="card-icon inline-block align-middle mr-2">📊</span>水下机器人特性对比表
+            </h2>
+            <div class="card table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>机器人类型</th>
+                            <th>主要操作模式</th>
+                            <th>典型动力源</th>
+                            <th>通信方式</th>
+                            <th>一般作业深度范围</th>
+                            <th>在水务行业的典型应用</th>
+                            <th>主要优势</th>
+                            <th>主要限制</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>ROV</td>
+                            <td>缆控</td>
+                            <td>通过缆索供电</td>
+                            <td>通过缆索实时通信</td>
+                            <td>从浅水到数千米</td>
+                            <td>管道详细检测、大坝结构检查、水下设施定点维护、闸门检查</td>
+                            <td>实时控制、持续供能、高带宽通信、可搭载重型工具</td>
+                            <td>作业范围受缆索限制、缆索易缠绕、部署相对复杂</td>
+                        </tr>
+                        <tr>
+                            <td>AUV</td>
+                            <td>自主航行</td>
+                            <td>内置电池</td>
+                            <td>声学通信（主）</td>
+                            <td>从浅水到数千米</td>
+                            <td>大范围管道路由勘查、水库水质巡测、水下地形测绘、环境监测</td>
+                            <td>作业范围广、无缆索束缚、部署相对灵活</td>
+                            <td>续航时间有限、实时控制和数据传输能力弱、成本较高</td>
+                        </tr>
+                        <tr>
+                            <td>微小型AUV</td>
+                            <td>自主航行</td>
+                            <td>内置电池</td>
+                            <td>声学通信等</td>
+                            <td>通常数百米以内</td>
+                            <td>小型管道内部检查、特定区域水质采样、集群监测</td>
+                            <td>便携、成本较低、易于部署和回收</td>
+                            <td>负载能力和续航能力有限、抗流能力相对较弱</td>
+                        </tr>
+                        <tr>
+                            <td>ARV</td>
+                            <td>混合（缆控/自主）</td>
+                            <td>内置电池/缆索</td>
+                            <td>声学/缆索通信</td>
+                            <td>视具体设计而定</td>
+                            <td>复杂环境下的综合查勘（如先大范围巡检后定点详查）</td>
+                            <td>结合ROV和AUV优点，操作灵活</td>
+                            <td>技术相对复杂，成本可能较高</td>
+                        </tr>
+                        <tr>
+                            <td>ROC</td>
+                            <td>遥控爬行</td>
+                            <td>通过缆索供电</td>
+                            <td>通过缆索实时通信</td>
+                            <td>视具体设计而定</td>
+                            <td>大坝底板、水工隧洞底部的连续检测和作业</td>
+                            <td>作业稳定性高、可长时间附壁作业</td>
+                            <td>移动速度相对较慢、对作业面有一定要求</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="darkBlue-bg text-white text-center py-6 sm:py-8">
+        <p class="text-sm opacity-80">&copy; 2024 水下机器人技术信息中心。内容基于提供的研究报告。</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库服务
+  postgres:
+    image: postgres:15
+    container_name: dataanalysis_postgres_local
+    environment:
+      POSTGRES_DB: dataanalysis_local
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dataanalysis123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C --auth-host=trust"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - dataanalysis_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dataanalysis_local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: dataanalysis_redis_local
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dataanalysis_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin 数据库管理工具
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dataanalysis_pgadmin_local
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@dataanalysis.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - dataanalysis_network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    name: dataanalysis_postgres_data
+  pgadmin_data:
+    name: dataanalysis_pgadmin_data
+  redis_data:
+    name: dataanalysis_redis_data
+
+networks:
+  dataanalysis_network:
+    name: dataanalysis_network
+    driver: bridge

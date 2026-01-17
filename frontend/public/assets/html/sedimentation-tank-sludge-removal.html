@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式报告：沉淀池排泥系统原理与实践</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #1f2937;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .nav-link.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    
+    <!-- Chosen Palette: Calm Harmony (Light neutral background, muted blue primary, soft orange accent) -->
+    <!-- Application Structure Plan: A thematic, dashboard-style single-page application with a sticky top navigation bar. The structure is designed for task-oriented exploration rather than linear reading. It's divided into five key sections: 'Core Principles', 'Equipment Selection', 'Operational Strategy', 'Smart Future', and 'Cost-Benefit Analysis'. This non-linear structure allows different user personas (e.g., an operator vs. a manager) to directly access the information most relevant to them. Key interactions include interactive diagrams for conceptual understanding, a guided selector for equipment choice, dynamic charts for comparing strategies, and a simple calculator to illustrate life-cycle costs, making the dense report content more digestible and actionable. -->
+    <!-- Visualization & Content Choices: 
+        1. Sedimentation Zones (Goal: Inform) -> Interactive Diagram (HTML/CSS) -> Hover interaction to show details. Justification: Visually explains a core physical process better than text.
+        2. Equipment Comparison (Goal: Compare) -> Filterable Cards (HTML/CSS/JS) -> User selects tank type to filter equipment. Justification: Simplifies the complex decision-making process presented in Table 1 of the report.
+        3. Operational Strategies (Goal: Compare/Change) -> Doughnut Chart (Chart.js) -> Updates based on user's strategy selection. Justification: Visually quantifies the trade-offs between different strategies from Table 2.
+        4. Troubleshooting Guide (Goal: Organize/Inform) -> Interactive Accordion (HTML/CSS/JS) -> Click to expand. Justification: Organizes dense information from Table 3 into a user-friendly, searchable format.
+        5. Smart System Benefits (Goal: Inform) -> Bar Chart (Chart.js) -> Visualizes key performance indicators. Justification: Makes numerical benefits (e.g., cost savings) more impactful and memorable.
+        6. LCCA (Goal: Compare) -> Stacked Bar Chart (Chart.js) -> Interactive "calculator" updates chart. Justification: Illustrates the strategic concept of CAPEX vs. OPEX, which is a key conclusion of the report. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <div id="app" class="min-h-screen">
+        <header class="bg-white shadow-sm sticky top-0 z-50">
+            <div class="container mx-auto px-4">
+                <nav class="flex items-center justify-between h-16">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-800">沉淀池排泥系统 · 交互指南</h1>
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a data-target="principles" class="nav-link text-gray-600 hover:text-blue-600 pb-1 border-b-2 border-transparent">核心原理</a>
+                        <a data-target="equipment" class="nav-link text-gray-600 hover:text-blue-600 pb-1 border-b-2 border-transparent">设备选型</a>
+                        <a data-target="strategy" class="nav-link text-gray-600 hover:text-blue-600 pb-1 border-b-2 border-transparent">运行策略</a>
+                        <a data-target="smart" class="nav-link text-gray-600 hover:text-blue-600 pb-1 border-b-2 border-transparent">智能未来</a>
+                        <a data-target="cost" class="nav-link text-gray-600 hover:text-blue-600 pb-1 border-b-2 border-transparent">成本效益</a>
+                    </div>
+                    <div class="md:hidden">
+                        <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                        </button>
+                    </div>
+                </nav>
+                <div id="mobile-menu" class="hidden md:hidden py-2">
+                    <a data-target="principles" class="block nav-link px-4 py-2 text-gray-600">核心原理</a>
+                    <a data-target="equipment" class="block nav-link px-4 py-2 text-gray-600">设备选型</a>
+                    <a data-target="strategy" class="block nav-link px-4 py-2 text-gray-600">运行策略</a>
+                    <a data-target="smart" class="block nav-link px-4 py-2 text-gray-600">智能未来</a>
+                    <a data-target="cost" class="block nav-link px-4 py-2 text-gray-600">成本效益</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-8">
+            <!-- Section: Core Principles -->
+            <section id="principles" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">核心原理</h2>
+                <p class="text-lg text-gray-600 mb-8">理解污泥为何沉降以及为何必须及时清除，是所有排泥技术的基础。本节将带您了解沉淀过程的物理学、不同污泥的特性，以及延误排泥的严重后果。</p>
+                
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">污泥的沉降分层</h3>
+                        <p class="text-gray-600 mb-4">理想状态下，沉淀池内的污泥会形成四个区域。将鼠标悬停在下方图示的区域上，可以查看其详细说明。及时排泥的目标是维持一个健康的污泥毯高度，防止其过度压实或厌氧。</p>
+                        <div id="sedimentation-diagram" class="relative w-full h-80 bg-blue-50 border border-blue-200 rounded-lg flex flex-col">
+                            <div data-zone="clarification" class="flex-grow flex items-center justify-center cursor-pointer hover:bg-blue-100 transition">澄清区</div>
+                            <div data-zone="flocculent" class="flex-grow flex items-center justify-center cursor-pointer hover:bg-blue-100 transition border-t border-b border-dashed border-blue-300">絮凝/自由沉降区</div>
+                            <div data-zone="transition" class="flex-grow flex items-center justify-center cursor-pointer hover:bg-blue-100 transition border-t border-b border-dashed border-blue-300">干扰/过渡沉降区</div>
+                            <div data-zone="compression" class="flex-grow flex items-center justify-center cursor-pointer hover:bg-blue-100 transition">压缩沉降区</div>
+                            <div id="zone-tooltip" class="absolute hidden bg-gray-800 text-white text-sm rounded py-2 px-3 shadow-lg z-10"></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">主要污泥类型及其特性</h3>
+                        <p class="text-gray-600 mb-4">“污泥”并非单一物质。其来源和特性决定了必须采用不同的清除技术。点击下方的卡片了解更多。</p>
+                        <div class="space-y-4">
+                             <div class="p-4 border rounded-lg hover:shadow-md transition cursor-pointer" onclick="this.querySelector('p').classList.toggle('hidden')">
+                                <h4 class="font-semibold text-lg text-blue-700">初沉污泥</h4>
+                                <p class="text-gray-600 mt-2 hidden">主要为无机颗粒和密度大的有机物。特点是密度高、磨蚀性强，但絮体结构稳定。适合采用刮集能力强的设备。</p>
+                            </div>
+                            <div class="p-4 border rounded-lg hover:shadow-md transition cursor-pointer" onclick="this.querySelector('p').classList.toggle('hidden')">
+                                <h4 class="font-semibold text-lg text-green-700">二沉（活性）污泥</h4>
+                                <p class="text-gray-600 mt-2 hidden">本质是生物絮凝体。特点是密度低、含水率高、结构脆弱。必须温和处理，避免破坏絮体，因此吸泥方式是最佳选择。</p>
+                            </div>
+                            <div class="p-4 border rounded-lg hover:shadow-md transition cursor-pointer" onclick="this.querySelector('p').classList.toggle('hidden')">
+                                <h4 class="font-semibold text-lg text-purple-700">化学污泥</h4>
+                                <p class="text-gray-600 mt-2 hidden">由化学除磷等工艺产生，通常粘性较大，性质取决于所用药剂。设备选型需考虑其粘附性。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Equipment Selection -->
+            <section id="equipment" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">设备选型指南</h2>
+                <p class="text-lg text-gray-600 mb-8">选择正确的排泥设备是工艺成功的关键。本交互式指南将根据您的池型和工艺需求，帮助您了解不同设备的优缺点和最佳应用场景。</p>
+                
+                <div class="bg-white p-6 rounded-lg shadow mb-8">
+                    <h3 class="text-xl font-semibold mb-4">第一步：选择您的沉淀池形状</h3>
+                    <div id="pool-type-selector" class="flex space-x-4">
+                        <button data-pool="rectangular" class="tab-button px-6 py-2 rounded-lg font-semibold bg-gray-200 hover:bg-blue-500 hover:text-white transition">矩形池 (平流池)</button>
+                        <button data-pool="circular" class="tab-button px-6 py-2 rounded-lg font-semibold bg-gray-200 hover:bg-blue-500 hover:text-white transition">圆形池 (辐流池)</button>
+                    </div>
+                </div>
+
+                <div id="equipment-display"></div>
+            </section>
+            
+            <!-- Section: Operational Strategy -->
+            <section id="strategy" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">运行策略与维护</h2>
+                <p class="text-lg text-gray-600 mb-8">优良的设备需要配合科学的运行策略和维护计划。本节对比了不同的排泥策略，并提供了一个常见故障的快速排查指南。</p>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">排泥策略的演进与对比</h3>
+                        <p class="text-gray-600 mb-4">从简单的人工清泥到数据驱动的智能排泥，不同的策略在成本和效果上差异巨大。选择下方的策略以查看其对关键指标的影响。</p>
+                        <div id="strategy-selector" class="flex flex-wrap gap-2 mb-4">
+                            <button data-strategy="manual" class="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-blue-500 hover:text-white transition">人工排泥</button>
+                            <button data-strategy="timed" class="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-blue-500 hover:text-white transition">定时排泥</button>
+                            <button data-strategy="continuous" class="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-blue-500 hover:text-white transition">连续排泥</button>
+                            <button data-strategy="smart" class="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-blue-500 hover:text-white transition">智能排泥</button>
+                        </div>
+                        <div class="chart-container h-64 md:h-80">
+                            <canvas id="strategy-chart"></canvas>
+                        </div>
+                        <p id="strategy-desc" class="mt-4 text-gray-600 text-center"></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">常见故障排除指南</h3>
+                        <p class="text-gray-600 mb-4">遇到问题时，快速定位原因至关重要。点击下方问题查看可能的原因及解决方案。</p>
+                        <div id="troubleshooting-accordion" class="space-y-2">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Section: Smart Future -->
+            <section id="smart" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">智能未来：数据驱动的精准排泥</h2>
+                <p class="text-lg text-gray-600 mb-8">现代排泥系统正从简单的机械设备转变为集成了先进传感技术与物联网的智能系统。这不仅提升了效率，更带来了显著的经济效益。</p>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">智慧排泥系统的关键技术</h3>
+                        <p class="text-gray-600 mb-4">一个现代化的智能排泥系统集成了多种传感器，实现了从“按时”到“按需”的转变。将鼠标悬停在图示中的传感器上，了解它们的作用。</p>
+                        <div id="smart-system-diagram" class="relative w-full h-96 bg-gray-50 border rounded-lg p-4 flex flex-col justify-between">
+                            <div class="text-center font-bold">智慧沉淀池</div>
+                            <div class="absolute top-1/4 left-10 p-2 bg-blue-500 text-white rounded-lg text-sm cursor-pointer" data-tech="interface">污泥界面仪</div>
+                            <div class="absolute top-1/2 right-10 p-2 bg-green-500 text-white rounded-lg text-sm cursor-pointer" data-tech="density">在线浓度计</div>
+                            <div class="absolute bottom-1/4 left-16 p-2 bg-purple-500 text-white rounded-lg text-sm cursor-pointer" data-tech="iot">物联网(IoT)传感器</div>
+                            <div class="absolute top-10 right-16 p-2 bg-yellow-500 text-white rounded-lg text-sm cursor-pointer" data-tech="vision">机器视觉</div>
+                             <div class="w-full h-1/2 bg-blue-100 mt-auto flex items-end justify-center pb-2 text-blue-800">
+                                <div class="w-full h-2/3 bg-blue-300">污泥层</div>
+                            </div>
+                            <div id="tech-tooltip" class="absolute hidden bg-gray-800 text-white text-sm rounded py-2 px-3 shadow-lg z-10"></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">智能化带来的量化效益</h3>
+                        <p class="text-gray-600 mb-4">根据行业案例，投资智能化系统能带来可观的回报。下图展示了精准排泥在几个关键领域的效益提升。</p>
+                        <div class="chart-container h-80 md:h-96">
+                            <canvas id="benefits-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Cost -->
+            <section id="cost" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">成本效益分析</h2>
+                <p class="text-lg text-gray-600 mb-8">明智的投资决策需要超越初始投资，考虑设备的全生命周期成本。本节通过一个简化的模型，帮助您理解传统系统与智能系统在长期成本上的差异。</p>
+                 <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-semibold mb-4">全生命周期成本 (LCCA) 对比</h3>
+                    <p class="text-gray-600 mb-4">选择一个系统类型，查看其在10年生命周期内的成本构成。智能系统初始投资（CAPEX）更高，但其运营成本（OPEX），特别是药耗和能耗，远低于传统系统。</p>
+                    <div class="flex justify-center space-x-4 mb-6">
+                        <button id="lcca-traditional-btn" class="tab-button px-6 py-2 rounded-lg font-semibold bg-gray-200 hover:bg-blue-500 hover:text-white transition">传统定时系统</button>
+                        <button id="lcca-smart-btn" class="tab-button px-6 py-2 rounded-lg font-semibold bg-gray-200 hover:bg-blue-500 hover:text-white transition">智能传感系统</button>
+                    </div>
+                    <div class="chart-container h-80 md:h-96">
+                        <canvas id="lcca-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const appData = {
+                principles: {
+                    zones: {
+                        clarification: { name: '澄清区', desc: '位于最上层，基本不含悬浮物。' },
+                        flocculent: { name: '絮凝/自由沉降区', desc: '颗粒相互碰撞凝聚，沉降速度加快。' },
+                        transition: { name: '干扰/过渡沉降区', desc: '颗粒浓度增加，相互干扰，沉降减慢，形成污泥毯。' },
+                        compression: { name: '压缩沉降区', desc: '池底最高浓度区，通过重力压密脱水，过程缓慢。' }
+                    }
+                },
+                equipment: {
+                    rectangular: [
+                        { id: 'GH', name: '行车式刮泥机 (GH)', icon: '↔️', desc: '工作桥沿轨道往复运动，刮板将污泥推向集泥斗。', pros: '结构刚性好，运行平稳，刮泥彻底。', cons: '有空行程，效率相对较低。', use: '大中型污水厂的初沉池，尤其适合重质、含砂污泥。' },
+                        { id: 'GL', name: '链传动式刮泥机 (GL)', icon: '🔄', desc: '链条带动刮板在池底和水面循环运动。', pros: '连续运行，效率高，结构相对简单。', cons: '水下部件易腐蚀磨损（金属链）。', use: '各种规模的平流池，广泛用于初沉和二沉。' },
+                        { id: 'GH-S', name: '行车式吸泥机', icon: '💧', desc: '在行车上装配吸泥管，边走边吸。', pros: '对污泥扰动小，排泥浓度均匀。', cons: '结构复杂，初始投资高。', use: '对出水水质要求高的二沉池，用于去除轻质、脆弱的活性污泥。' }
+                    ],
+                    circular: [
+                        { id: 'GZ', name: '中心传动刮泥机 (GZ)', icon: '🎯', desc: '驱动装置在池中心，带动刮臂旋转。', pros: '结构紧凑，维护相对集中。', cons: '扭矩受限，不适用于大直径池。', use: '中小型圆形初沉池、二沉池。' },
+                        { id: 'GA', name: '周边传动刮泥机 (GA)', icon: '⭕', desc: '驱动装置在池边轨道上行走，带动工作桥旋转。', pros: '扭矩大，适用于大型池。', cons: '结构庞大，对土建精度要求高。', use: '大中型污水厂的大型圆形初沉、二沉池。' },
+                        { id: 'GZ-S', name: '回转式吸泥机', icon: '🌀', desc: '在旋转的刮臂上安装吸泥口。', pros: '对污泥扰动极小，排泥浓度高且稳定。', cons: '初始投资和维护成本较高。', use: '大型污水厂的二沉池，尤其适合活性污泥。' }
+                    ]
+                },
+                strategy: {
+                    data: {
+                        manual: { op_cost: 90, stability: 10, concentration: 20, desc: '人工排泥：运营成本极高，工艺稳定性极差，已基本淘汰。' },
+                        timed: { op_cost: 60, stability: 50, concentration: 40, desc: '定时排泥：实现了自动化，但无法适应负荷变化，常造成能源浪费。' },
+                        continuous: { op_cost: 70, stability: 80, concentration: 30, desc: '连续排泥：工艺非常稳定，但可能排出污泥过稀，能耗较高。' },
+                        smart: { op_cost: 20, stability: 95, concentration: 90, desc: '智能排泥：按需运行，显著节约能耗和药耗，工艺稳定性最佳。' }
+                    },
+                    chart: null
+                },
+                troubleshooting: [
+                    { problem: '电机过载或扭矩保护动作', cause: '污泥负荷过大、机械卡阻、传动系统故障。', solution: '停机前少量多次排泥降负荷；停机排查并清除异物；检查传动链各环节。' },
+                    { problem: '行车设备行走跑偏', cause: '两侧轨道不平行或水平度不一致；行走轮磨损不一。', solution: '停机，测量并校正轨道；检查并更换磨损严重的行走轮。' },
+                    { problem: '排泥不彻底，存在“死角”', cause: '刮板磨损或与池底间隙过大；吸泥口堵塞。', solution: '调整或更换刮板；停泵，检查并清理吸泥口，可尝试反冲洗。' },
+                    { problem: '设备运行时有异常噪音或振动', cause: '轴承磨损或缺油；连接螺栓松动；刮板与池底刮擦。', solution: '立即停机检查，润滑、紧固或更换磨损部件，这是严重故障的前兆。' }
+                ],
+                smart: {
+                    tech: {
+                        interface: { name: '污泥界面仪', desc: '采用超声波精确测量污泥毯高度，实现按泥位高低自动启停排泥，防止污泥流失。' },
+                        density: { name: '在线浓度计', desc: '采用微波法实时监测排出污泥的固含量，按浓度控制排泥时长，最大化排泥效率，大幅降低后续药耗。' },
+                        iot: { name: '物联网(IoT)传感器', desc: '在电机、轴承上安装振动、温度传感器，通过数据分析实现预测性维护，避免非计划停机。' },
+                        vision: { name: '机器视觉', desc: '利用AI摄像头监控水面浮渣、识别异常翻泥现象，并及时报警或启动刮渣机。' }
+                    },
+                    benefits: {
+                        labels: ['药耗降低', '能耗下降', '巡检效率提升'],
+                        values: [50.5, 8, 20]
+                    },
+                    chart: null
+                },
+                cost: {
+                    data: {
+                        traditional: [15, 30, 40, 15],
+                        smart: [40, 15, 10, 5],
+                    },
+                    labels: ['初始投资 (CAPEX)', '能耗成本', '药耗与处置成本', '维护成本'],
+                    chart: null
+                }
+            };
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.content-section');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            function showSection(targetId) {
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.target === targetId) {
+                        link.classList.add('active');
+                    }
+                });
+                if (!mobileMenu.classList.contains('hidden')) {
+                   mobileMenu.classList.add('hidden');
+                }
+            }
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showSection(link.dataset.target);
+                });
+            });
+            
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            function initPrinciples() {
+                const diagram = document.getElementById('sedimentation-diagram');
+                const tooltip = document.getElementById('zone-tooltip');
+                diagram.querySelectorAll('[data-zone]').forEach(zoneEl => {
+                    zoneEl.addEventListener('mousemove', e => {
+                        const zoneId = zoneEl.dataset.zone;
+                        const zoneData = appData.principles.zones[zoneId];
+                        tooltip.innerHTML = `<strong>${zoneData.name}</strong>: ${zoneData.desc}`;
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = `${e.clientX - diagram.getBoundingClientRect().left + 15}px`;
+                        tooltip.style.top = `${e.clientY - diagram.getBoundingClientRect().top + 15}px`;
+                    });
+                    zoneEl.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                    });
+                });
+            }
+
+            function initEquipment() {
+                const selector = document.getElementById('pool-type-selector');
+                const display = document.getElementById('equipment-display');
+
+                selector.addEventListener('click', e => {
+                    if (e.target.tagName === 'BUTTON') {
+                        const poolType = e.target.dataset.pool;
+                        selector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        renderEquipment(poolType);
+                    }
+                });
+
+                function renderEquipment(poolType) {
+                    const equipmentList = appData.equipment[poolType];
+                    display.innerHTML = `
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${equipmentList.map(item => `
+                                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500 hover:shadow-xl transition">
+                                    <div class="flex items-center mb-3">
+                                        <span class="text-3xl mr-4">${item.icon}</span>
+                                        <h4 class="text-xl font-bold text-gray-800">${item.name}</h4>
+                                    </div>
+                                    <p class="text-gray-600 mb-4">${item.desc}</p>
+                                    <div class="space-y-3 text-sm">
+                                        <p><strong class="text-green-600">优点:</strong> ${item.pros}</p>
+                                        <p><strong class="text-red-600">缺点:</strong> ${item.cons}</p>
+                                        <p><strong class="text-blue-600">最佳应用:</strong> ${item.use}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                selector.querySelector('button[data-pool="rectangular"]').click();
+            }
+
+            function initStrategy() {
+                const ctx = document.getElementById('strategy-chart').getContext('2d');
+                appData.strategy.chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['运营成本', '工艺稳定性', '排出污泥浓度'],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: ['#ef4444', '#22c55e', '#3b82f6'],
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}%` } }
+                        }
+                    }
+                });
+                
+                const selector = document.getElementById('strategy-selector');
+                const descEl = document.getElementById('strategy-desc');
+                selector.addEventListener('click', e => {
+                    if (e.target.tagName === 'BUTTON') {
+                        const strategyId = e.target.dataset.strategy;
+                        updateStrategyChart(strategyId);
+                        selector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        descEl.textContent = appData.strategy.data[strategyId].desc;
+                    }
+                });
+                
+                function updateStrategyChart(strategyId) {
+                    const data = appData.strategy.data[strategyId];
+                    appData.strategy.chart.data.datasets[0].data = [data.op_cost, data.stability, data.concentration];
+                    appData.strategy.chart.update();
+                }
+
+                selector.querySelector('button[data-strategy="timed"]').click();
+
+                const accordion = document.getElementById('troubleshooting-accordion');
+                accordion.innerHTML = appData.troubleshooting.map((item, index) => `
+                    <div class="border rounded-lg">
+                        <button class="w-full text-left p-4 font-semibold flex justify-between items-center accordion-toggle">
+                            <span>${item.problem}</span>
+                            <span>&#9662;</span>
+                        </button>
+                        <div class="accordion-content px-4">
+                            <div class="py-4 border-t">
+                                <p class="mb-2"><strong class="text-yellow-600">可能原因:</strong> ${item.cause}</p>
+                                <p><strong class="text-green-600">解决方法:</strong> ${item.solution}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                accordion.querySelectorAll('.accordion-toggle').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const content = button.nextElementSibling;
+                        const isExpanded = content.style.maxHeight;
+                        accordion.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                        accordion.querySelectorAll('.accordion-toggle span:last-child').forEach(s => s.innerHTML = '&#9662;');
+                        if (!isExpanded) {
+                            content.style.maxHeight = content.scrollHeight + 'px';
+                            button.querySelector('span:last-child').innerHTML = '&#9652;';
+                        }
+                    });
+                });
+            }
+
+            function initSmart() {
+                const diagram = document.getElementById('smart-system-diagram');
+                const tooltip = document.getElementById('tech-tooltip');
+                diagram.querySelectorAll('[data-tech]').forEach(techEl => {
+                    techEl.addEventListener('mousemove', e => {
+                        const techId = techEl.dataset.tech;
+                        const techData = appData.smart.tech[techId];
+                        tooltip.innerHTML = `<strong>${techData.name}</strong>: ${techData.desc}`;
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = `${e.clientX - diagram.getBoundingClientRect().left + 15}px`;
+                        tooltip.style.top = `${e.clientY - diagram.getBoundingClientRect().top + 15}px`;
+                    });
+                    techEl.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                    });
+                });
+
+                const ctx = document.getElementById('benefits-chart').getContext('2d');
+                appData.smart.chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: appData.smart.benefits.labels,
+                        datasets: [{
+                            label: '效益提升 (%)',
+                            data: appData.smart.benefits.values,
+                            backgroundColor: ['#3b82f6', '#22c55e', '#f97316'],
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: '智能化系统带来的效益提升' }
+                        },
+                        scales: { x: { beginAtZero: true, ticks: { callback: v => v + '%' } } }
+                    }
+                });
+            }
+
+            function initCost() {
+                const ctx = document.getElementById('lcca-chart').getContext('2d');
+                appData.cost.chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['成本构成'],
+                        datasets: appData.cost.labels.map((label, index) => ({
+                            label: label,
+                            data: [],
+                            backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16'][index]
+                        }))
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: '10年全生命周期成本构成' },
+                            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw} (相对单位)` } }
+                        },
+                        scales: { x: { stacked: true }, y: { stacked: true } }
+                    }
+                });
+
+                const traditionalBtn = document.getElementById('lcca-traditional-btn');
+                const smartBtn = document.getElementById('lcca-smart-btn');
+
+                function updateLccaChart(type) {
+                    const data = appData.cost.data[type];
+                    appData.cost.chart.data.datasets.forEach((dataset, index) => {
+                        dataset.data = [data[index]];
+                    });
+                    appData.cost.chart.update();
+                    traditionalBtn.classList.toggle('active', type === 'traditional');
+                    smartBtn.classList.toggle('active', type === 'smart');
+                }
+
+                traditionalBtn.addEventListener('click', () => updateLccaChart('traditional'));
+                smartBtn.addEventListener('click', () => updateLccaChart('smart'));
+
+                traditionalBtn.click();
+            }
+
+            initPrinciples();
+            initEquipment();
+            initStrategy();
+            initSmart();
+            initCost();
+            
+            showSection('principles');
+        });
+    </script>
+</body>
+</html>

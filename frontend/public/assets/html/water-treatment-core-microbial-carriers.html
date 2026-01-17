@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水处理微生物载体交互式指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Calm Harmony (Warm neutrals: stone/gray, with teal/soft blue accents) -->
+    <!-- Application Structure Plan: A task-oriented single-page application with four main sections: 1. Interactive Carrier Explorer (card-based), 2. Visual Comparison Dashboard (interactive charts), 3. Process Application Guide (clickable diagrams), and 4. Scenario-Based Best Practices Helper. This structure guides the user from general knowledge to specific decision-making, breaking down the dense report into manageable, interactive modules for better usability and engagement than a linear presentation. -->
+    <!-- Visualization & Content Choices: 1. Carrier Info -> Goal: Inform -> Method: Clickable HTML cards -> Interaction: Click to reveal details -> Justification: Organizes diverse materials cleanly, prevents info overload. 2. Performance Comparison -> Goal: Compare -> Method: Chart.js Radar Chart -> Interaction: Hover tooltips -> Justification: Excellent for multi-attribute comparison of carrier types. 3. Removal Efficiency -> Goal: Compare -> Method: Chart.js Bar Chart -> Interaction: Hover tooltips -> Justification: Clear visual for quantitative data points. 4. Process-Carrier Link -> Goal: Organize -> Method: Clickable HTML/CSS diagram -> Interaction: Click to show relationships -> Justification: More intuitive than text for showing process flows. 5. Scenarios -> Goal: Decision Support -> Method: Interactive expanding cards -> Justification: Q&A format is engaging for practical problem-solving. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .active-nav {
+            color: #0d9488;
+            font-weight: 600;
+            border-bottom: 2px solid #0d9488;
+        }
+        .inactive-nav {
+            color: #4b5563;
+        }
+        .content-card {
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .content-card:hover {
+             transform: translateY(-5px);
+             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .detail-enter-active {
+            transition: all 0.5s ease-out;
+            max-height: 1000px;
+            opacity: 1;
+        }
+        .detail-leave-active {
+            transition: all 0.3s ease-in;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-gray-800 font-sans leading-relaxed">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-xl md:text-2xl font-bold text-teal-700">微生物载体技术指南</h1>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#explore" class="inactive-nav hover:text-teal-600 transition-colors duration-300 pb-1">探索载体</a>
+                    <a href="#compare" class="inactive-nav hover:text-teal-600 transition-colors duration-300 pb-1">性能对比</a>
+                    <a href="#apply" class="inactive-nav hover:text-teal-600 transition-colors duration-300 pb-1">应用场景</a>
+                    <a href="#practice" class="inactive-nav hover:text-teal-600 transition-colors duration-300 pb-1">最佳实践</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="intro" class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">深入了解水处理的核心：微生物载体</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                生物膜法是现代水处理的高效技术，而微生物载体是其成功的关键。本指南将带您交互式地探索不同载体的世界，从基本原理到高级应用，助您做出最佳技术选择。
+            </p>
+        </section>
+
+        <section id="explore" class="mb-16 scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-900">探索载体材料</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">点击下方的卡片，查看不同类型载体材料的详细信息。我们将载体分为两大类：在长期实践中验证的“传统载体”，以及为应对特定挑战而设计的“先进功能化载体”。</p>
+            
+            <div id="carrier-selection" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8"></div>
+            
+            <div id="carrier-details-container" class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[300px] detail-leave-active"></div>
+        </section>
+
+        <section id="compare" class="mb-16 scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-900">多维度性能对比</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">没有一种载体是万能的。此处的图表直观地展示了不同载体类型在关键性能指标上的权衡与差异，帮助您理解它们各自的优势与适用性。</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                    <h3 class="text-xl font-bold text-center mb-4">传统载体性能雷达图</h3>
+                    <div class="chart-container">
+                        <canvas id="traditional-carriers-chart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                    <h3 class="text-xl font-bold text-center mb-4">先进载体性能雷达图</h3>
+                    <div class="chart-container">
+                        <canvas id="advanced-carriers-chart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 lg:col-span-2">
+                    <h3 class="text-xl font-bold text-center mb-4">特定应用脱氮效率提升对比</h3>
+                     <p class="text-center text-sm text-gray-500 mb-4">数据显示，功能化载体（如磁性载体）在特定条件下（如低温）能显著提升关键污染物的去除效率。</p>
+                    <div class="chart-container">
+                        <canvas id="efficiency-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="apply" class="mb-16 scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-900">集成工艺与应用场景</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">载体的选择与工艺设计密不可分。了解主流水处理工艺如何集成不同的载体技术，以应对从市政污水到高浓度工业废水的各种挑战。</p>
+            <div id="process-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+        
+        <section id="practice" class="scroll-mt-20">
+            <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-900">最佳实践：场景化选型指南</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">面对具体的工程问题，如何选择最合适的载体？这里提供了一个基于常见挑战的决策框架。点击您面临的场景，获取相应的选型建议与理由。</p>
+            <div id="practice-accordion" class="space-y-4"></div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
+            <p>&copy; 2025 微生物载体技术交互式指南</p>
+            <p class="text-sm text-gray-400 mt-1">根据《水处理中微生物载体材料的综合分析》报告生成</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const carrierData = {
+        'poly': {
+            name: '合成聚合物 (PE, PP, PU)',
+            icon: '⚙️',
+            category: '传统',
+            details: `
+                <h3 class="text-2xl font-bold mb-4 text-teal-700">合成聚合物 (PE, PP, PU)</h3>
+                <p class="mb-4"><strong>行业中坚力量：</strong>目前生物膜工艺，尤其是移动床生物膜反应器（MBBR）中应用最广泛的材料，包括聚乙烯(PE)、聚丙烯(PP)和聚氨酯(PU)。</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">关键特性</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>PE/PP:</strong> 密度接近水(~0.95 g/cm³)，易于流化。化学性质稳定，机械强度高，寿命长。</li>
+                            <li><strong>PU海绵:</strong> 巨大孔隙率，优异的亲水性和极高的比表面积。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">优缺点</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong class="text-green-600">优点:</strong> PE/PP成本效益高，耐用稳定。PU海绵挂膜速度快，生物量高。</li>
+                            <li><strong class="text-red-600">缺点:</strong> PE/PP表面疏水，初始挂膜慢。PU海绵机械强度较低，易破碎。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 bg-teal-50 border-l-4 border-teal-500 p-4 rounded-r-lg">
+                    <p><strong>核心权衡：</strong>PE/PP载体代表了耐久性，而PU海绵则偏向生物活性。选择取决于对启动速度和长期稳定性的需求。</p>
+                </div>
+            `
+        },
+        'inorganic': {
+            name: '无机材料 (陶粒, 沸石)',
+            icon: '🪨',
+            category: '传统',
+            details: `
+                <h3 class="text-2xl font-bold mb-4 text-blue-700">无机材料 (陶粒, 沸石, 砂)</h3>
+                <p class="mb-4"><strong>固定床的基石：</strong>因其高密度和高强度，主要应用于固定床或流化床生物反应器中，如曝气生物滤池(BAF)。</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">关键特性</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>密度高 (>1.5 g/cm³)，形状多为球形或不规则颗粒。</li>
+                            <li>极高的机械强度和优异的化学稳定性。</li>
+                            <li>兼具生物附着表面和物理过滤功能。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">优缺点</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong class="text-green-600">优点:</strong> 极其耐用，化学性质稳定，寿命几乎无限，能有效截留悬浮物。</li>
+                            <li><strong class="text-red-600">缺点:</strong> 比表面积相对较低，易堵塞需定期反洗，能耗较高。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                    <p><strong>核心应用：</strong>是曝气生物滤池(BAF)的首选填料，常用于深度处理或提标改造，产水水质好。</p>
+                </div>
+            `
+        },
+        'natural': {
+            name: '天然有机物 (竹, 木)',
+            icon: '🌿',
+            category: '传统',
+            details: `
+                <h3 class="text-2xl font-bold mb-4 text-green-700">天然有机物 (竹, 木, 稻草)</h3>
+                <p class="mb-4"><strong>可持续的选择：</strong>利用农业和林业废弃物制备，为水处理提供了一种可持续且功能独特的解决方案。</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">关键特性</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>多孔结构，可生物降解。</li>
+                            <li><strong>双重功能:</strong> 既是微生物附着的物理支架，又是反硝化过程的固体缓释碳源。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">优缺点</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong class="text-green-600">优点:</strong> 可持续，成本低，挂膜快，特别适合处理低C/N比的废水，可替代昂贵的外部碳源。</li>
+                            <li><strong class="text-red-600">缺点:</strong> 使用寿命有限，碳源释放速率难以精确控制，长期稳定性有待考验。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                    <p><strong>核心优势：</strong>对于二级出水等碳源不足的废水处理，具有巨大经济和环境效益。</p>
+                </div>
+            `
+        },
+        'surface_mod': {
+            name: '表面改性聚合物',
+            icon: '✨',
+            category: '先进',
+            details: `
+                <h3 class="text-2xl font-bold mb-4 text-purple-700">表面改性聚合物载体</h3>
+                <p class="mb-4"><strong>为性能而工程化：</strong>旨在克服基础聚合物(如PE)固有的疏水性、生物惰性等缺陷，通过精确调控其表面化学和物理性质，大幅提升性能。</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">主要强化机理</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>亲水性改性:</strong> 引入含氧基团(-OH, -COOH)，降低微生物附着能垒。</li>
+                            <li><strong>生物亲和性改性:</strong> 添加淀粉、羟基磷灰石等，提供初始营养源。</li>
+                            <li><strong>形貌改性:</strong> 添加无机粉末制造粗糙表面，增加有效比表面积。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">优缺点</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong class="text-green-600">优点:</strong> 显著缩短挂膜时间（可缩短至3-7天），提高生物膜稳定性，增强适应性。</li>
+                            <li><strong class="text-red-600">缺点:</strong> 成本高于未改性载体，改性层的长期稳定性需要验证。</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="mt-6 bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
+                    <p><strong>核心目标：</strong>解决传统PE/PP载体挂膜慢的痛点，特别适用于需要快速启动的系统。</p>
+                </div>
+            `
+        },
+        'magnetic': {
+            name: '磁性载体',
+            icon: '🧲',
+            category: '先进',
+            details: `
+                <h3 class="text-2xl font-bold mb-4 text-red-700">磁性载体</h3>
+                <p class="mb-4"><strong>强化处理与简化分离：</strong>通过将磁性纳米颗粒(如Fe₃O₄)引入到基体中，赋予载体全新的功能维度。</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                     <div>
+                        <h4 class="font-bold text-lg mb-2">主要强化机理</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>磁场辅助分离:</strong> 在外加磁场下可被快速、高效地从水中分离。</li>
+                            <li><strong>强化微生物代谢:</strong> 磁性环境可富集关键功能菌群(硝化与反硝化菌)，提高功能基因丰度。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">优缺点</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong class="text-green-600">优点:</strong> 可快速固液分离和回收再生，显著强化低温脱氮效果(NH₄⁺-N去除率提高16.2%)。</li>
+                            <li><strong class="text-red-600">缺点:</strong> 制备工艺复杂，成本较高，需要配套磁分离设备。</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="mt-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                    <p><strong>核心应用：</strong>低温脱氮、高浓度工业废水（如印染）处理及需要频繁再生的吸附工艺。</p>
+                </div>
+            `
+        },
+        'biochar': {
+            name: '生物炭基载体',
+            icon: '🔥',
+            category: '先进',
+            details: `
+                <h3 class="text-2xl font-bold mb-4 text-orange-700">生物炭基载体</h3>
+                <p class="mb-4"><strong>吸附与降解的协同作用：</strong>由生物质在缺氧条件下高温热解得到的富碳多孔材料，在水处理中展现出独特的复合功能。</p>
+                 <div class="grid md:grid-cols-2 gap-6">
+                     <div>
+                        <h4 class="font-bold text-lg mb-2">主要强化机理</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                             <li><strong>吸附-降解协同:</strong> 先通过物理吸附富集低浓度、难降解污染物，再由附着的生物膜进行高效降解。</li>
+                             <li><strong>催化与离子交换:</strong> 表面可经改性，靶向去除特定污染物。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">优缺点</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong class="text-green-600">优点:</strong> "先吸附后降解"模式高效，原料来源广泛（废物资源化），可改性以增强特定功能。</li>
+                            <li><strong class="text-red-600">缺点:</strong> 颗粒小易流失需固定，吸附位点可能饱和，性能受原料和制备工艺影响大。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
+                    <p><strong>核心应用：</strong>处理含难降解有机物（如抗生素、酚类）、重金属的废水，尤其对"伪持久性"污染物有效。</p>
+                </div>
+            `
+        }
+    };
+
+    const processData = [
+        { 
+            name: '移动床生物膜反应器 (MBBR)', 
+            icon: '🌊',
+            description: '通过曝气或搅拌使载体在反应器内流化。高效、紧凑、灵活，广泛用于市政和工业废水处理，特别适合提标改造。',
+            carriers: '常用轻质的<strong>聚乙烯(PE)/聚丙烯(PP)</strong>载体，其接近水的密度是实现“移动床”概念的物理基础。'
+        },
+        { 
+            name: '曝气生物滤池 (BAF)', 
+            icon: '🧱',
+            description: '使用静止堆积的颗粒填料，集生物处理与物理过滤于一体。常用于深度处理，产水悬浮物低。',
+            carriers: '首选重质的<strong>陶粒、沸石</strong>等无机载体，其高密度和强度是实现“固定床”和物理过滤功能所必需的。'
+        },
+        { 
+            name: '集成固定膜活性污泥 (IFAS)', 
+            icon: '🔄',
+            description: '在传统活性污泥池中投加生物膜载体，实现悬浮污泥与附着生物膜协同工作，显著提高处理能力和脱氮效率。',
+            carriers: '通常投加与MBBR相同的<strong>PE/PP</strong>载体，为生长缓慢的硝化菌提供稳定附着环境。'
+        }
+    ];
+
+    const practiceData = [
+        {
+            scenario: '市政污水厂提标改造（脱氮）',
+            recommendation: '高比表面积的<strong>聚乙烯/聚丙烯 (PE/PP)</strong> 载体，应用于MBBR或IFAS工艺。',
+            reason: '这是目前技术最成熟、成本效益最高的方案。PE/PP载体耐用、经济，MBBR/IFAS工艺能有效利用现有池容，快速提升硝化能力。'
+        },
+        {
+            scenario: '处理低C/N比废水（如深度脱氮）',
+            recommendation: '<strong>天然纤维载体 (如竹制填料)</strong> 或 <strong>生物亲和性改性载体</strong>。',
+            reason: '天然纤维载体可作为内碳源，减少或免除外加碳源的成本和操作。生物亲和性载体能为反硝化菌提供更好的生长环境。'
+        },
+        {
+            scenario: '寒冷地区污水处理',
+            recommendation: '功能性<strong>磁性载体</strong>或专为低温设计的<strong>K3型PE载体</strong>。',
+            reason: '磁性载体已被证明可强化低温脱氮性能。K3载体则因其机械强度和长寿命，在低温厌氧MBBR中表现出良好的适应性。'
+        },
+        {
+            scenario: '含难降解有机物的工业废水',
+            recommendation: '采用<strong>陶粒</strong>等重质填料的BAF工艺，或<strong>生物炭基</strong>功能载体。',
+            reason: 'BAF的过滤作用和长水力停留时间有助于降解难降解物。生物炭的“吸附-生物降解”协同作用对处理此类废水尤为有效。'
+        }
+    ];
+
+    const carrierSelectionEl = document.getElementById('carrier-selection');
+    const detailsContainerEl = document.getElementById('carrier-details-container');
+    let activeCarrierButton = null;
+
+    Object.keys(carrierData).forEach(key => {
+        const carrier = carrierData[key];
+        const button = document.createElement('button');
+        button.className = `p-4 rounded-lg text-center content-card border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2`;
+        
+        let bgColor, ringColor;
+        if (carrier.category === '传统') {
+            bgColor = 'bg-sky-100';
+            ringColor = 'focus:ring-sky-500';
+        } else {
+            bgColor = 'bg-amber-100';
+            ringColor = 'focus:ring-amber-500';
+        }
+        button.classList.add(bgColor, ringColor);
+        
+        button.innerHTML = `<div class="text-3xl mb-2">${carrier.icon}</div><div class="font-semibold">${carrier.name}</div>`;
+        button.onclick = () => {
+            if (activeCarrierButton === button) {
+                detailsContainerEl.classList.add('detail-leave-active');
+                detailsContainerEl.classList.remove('detail-enter-active');
+                activeCarrierButton.classList.remove('ring-2', 'ring-offset-2');
+                activeCarrierButton = null;
+            } else {
+                detailsContainerEl.innerHTML = carrier.details;
+                detailsContainerEl.classList.remove('detail-leave-active');
+                detailsContainerEl.classList.add('detail-enter-active');
+                if (activeCarrierButton) {
+                    activeCarrierButton.classList.remove('ring-2', 'ring-offset-2');
+                }
+                button.classList.add('ring-2', 'ring-offset-2');
+                activeCarrierButton = button;
+                detailsContainerEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        };
+        carrierSelectionEl.appendChild(button);
+    });
+
+    const processCardsEl = document.getElementById('process-cards');
+    processData.forEach(proc => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center content-card';
+        card.innerHTML = `
+            <div class="text-5xl mb-4">${proc.icon}</div>
+            <h3 class="text-xl font-bold mb-2">${proc.name}</h3>
+            <p class="text-gray-600 mb-4 flex-grow">${proc.description}</p>
+            <div class="mt-auto bg-gray-100 p-3 rounded-lg w-full">
+                <p class="text-sm"><strong class="text-teal-700">推荐载体：</strong>${proc.carriers}</p>
+            </div>
+        `;
+        processCardsEl.appendChild(card);
+    });
+
+    const practiceAccordionEl = document.getElementById('practice-accordion');
+    practiceData.forEach((item, index) => {
+        const accordionItem = document.createElement('div');
+        accordionItem.className = 'bg-white rounded-xl shadow-lg overflow-hidden';
+        accordionItem.innerHTML = `
+            <button class="w-full p-5 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none" data-index="${index}">
+                <span class="text-lg font-semibold text-gray-800">${item.scenario}</span>
+                <span class="transform transition-transform duration-300 text-teal-600 text-2xl font-light">+</span>
+            </button>
+            <div class="px-5 pb-5 text-gray-700 detail-leave-active">
+                <p class="mb-2"><strong>推荐方案：</strong>${item.recommendation}</p>
+                <p><strong>理由：</strong>${item.reason}</p>
+            </div>
+        `;
+        practiceAccordionEl.appendChild(accordionItem);
+    });
+
+    practiceAccordionEl.addEventListener('click', e => {
+        const button = e.target.closest('button');
+        if (!button) return;
+        
+        const content = button.nextElementSibling;
+        const icon = button.querySelector('span:last-child');
+        const isOpen = content.classList.contains('detail-enter-active');
+
+        practiceAccordionEl.querySelectorAll('.detail-enter-active').forEach(openContent => {
+            if(openContent !== content) {
+                openContent.classList.remove('detail-enter-active');
+                openContent.classList.add('detail-leave-active');
+                openContent.previousElementSibling.querySelector('span:last-child').textContent = '+';
+                openContent.previousElementSibling.querySelector('span:last-child').classList.remove('rotate-45');
+            }
+        });
+        
+        if (isOpen) {
+            content.classList.remove('detail-enter-active');
+            content.classList.add('detail-leave-active');
+            icon.textContent = '+';
+            icon.classList.remove('rotate-45');
+        } else {
+            content.classList.add('detail-enter-active');
+            content.classList.remove('detail-leave-active');
+            icon.textContent = '+';
+            icon.classList.add('rotate-45');
+        }
+    });
+
+    const radarOptions = {
+        maintainAspectRatio: false,
+        responsive: true,
+        scales: {
+            r: {
+                angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                pointLabels: { font: { size: 12 } },
+                suggestedMin: 0,
+                suggestedMax: 5,
+                ticks: {
+                    stepSize: 1,
+                    backdropColor: 'rgba(255, 255, 255, 0.75)'
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const labels = ['极低', '低', '中等', '高', '极高'];
+                        return context.dataset.label + ': ' + labels[context.raw];
+                    }
+                }
+            }
+        }
+    };
+
+    new Chart(document.getElementById('traditional-carriers-chart'), {
+        type: 'radar',
+        data: {
+            labels: ['挂膜速度', '机械强度', '使用寿命', '生物活性', '成本效益'],
+            datasets: [{
+                label: '合成聚合物 (PE/PP)',
+                data: [2, 4, 4, 3, 4],
+                backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                borderColor: 'rgba(14, 165, 233, 1)',
+                pointBackgroundColor: 'rgba(14, 165, 233, 1)',
+            }, {
+                label: '无机材料 (陶粒)',
+                data: [1, 5, 5, 2, 3],
+                backgroundColor: 'rgba(107, 114, 128, 0.2)',
+                borderColor: 'rgba(107, 114, 128, 1)',
+                pointBackgroundColor: 'rgba(107, 114, 128, 1)',
+            }, {
+                label: '天然有机物 (竹)',
+                data: [4, 2, 1, 4, 5],
+                backgroundColor: 'rgba(22, 163, 74, 0.2)',
+                borderColor: 'rgba(22, 163, 74, 1)',
+                pointBackgroundColor: 'rgba(22, 163, 74, 1)',
+            }]
+        },
+        options: radarOptions
+    });
+    
+    new Chart(document.getElementById('advanced-carriers-chart'), {
+        type: 'radar',
+        data: {
+            labels: ['挂膜速度', '性能强化', '技术复杂度', '运维便利性', '成本效益'],
+            datasets: [{
+                label: '表面改性',
+                data: [5, 4, 3, 4, 3],
+                backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                borderColor: 'rgba(168, 85, 247, 1)',
+                pointBackgroundColor: 'rgba(168, 85, 247, 1)',
+            }, {
+                label: '磁性载体',
+                data: [4, 5, 4, 5, 2],
+                backgroundColor: 'rgba(220, 38, 38, 0.2)',
+                borderColor: 'rgba(220, 38, 38, 1)',
+                pointBackgroundColor: 'rgba(220, 38, 38, 1)',
+            }, {
+                label: '生物炭基',
+                data: [3, 5, 2, 3, 4],
+                backgroundColor: 'rgba(249, 115, 22, 0.2)',
+                borderColor: 'rgba(249, 115, 22, 1)',
+                pointBackgroundColor: 'rgba(249, 115, 22, 1)',
+            }]
+        },
+        options: radarOptions
+    });
+    
+    new Chart(document.getElementById('efficiency-chart'), {
+        type: 'bar',
+        data: {
+            labels: ['NH₄⁺-N 去除率提升', '总氮 (TN) 去除率提升'],
+            datasets: [{
+                label: '磁性载体 vs. 商用载体 (低温条件)',
+                data: [16.2, 12.1],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.5)',
+                    'rgba(245, 158, 11, 0.5)',
+                ],
+                borderColor: [
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(245, 158, 11, 1)',
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '提升百分比 (%)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.formattedValue + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('header nav a');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active-nav');
+                    link.classList.add('inactive-nav');
+                    if (link.getAttribute('href').substring(1) === entry.target.id) {
+                        link.classList.add('active-nav');
+                        link.classList.remove('inactive-nav');
+                    }
+                });
+            }
+        });
+    }, { rootMargin: "-30% 0px -70% 0px" });
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+
+});
+</script>
+</body>
+</html>

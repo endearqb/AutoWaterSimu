@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI驱动的汽车设计革命：一个多智能体框架</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Tech Neutral -->
+    <!-- Application Structure Plan: The application is designed as a single-page, story-driven exploration, departing from the linear report structure for better engagement. It starts with a high-impact comparison of old vs. new workflows. The core of the app is an interactive "Meet the Agents" section, allowing users to explore each AI's role non-linearly. This is followed by a step-by-step visualization of the design process, a quantitative "Performance Dashboard" with charts, and a comparative analysis of different design methodologies. This structure guides the user from the "what" and "why" to the "how" and "how well," creating a logical and intuitive discovery path that prioritizes understanding and interaction over passive reading. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Traditional vs. AI workflow speed. -> Goal: Compare. -> Viz: Side-by-side animated flow diagram. -> Interaction: On-scroll reveal. -> Justification: Visually impactful, immediately shows core value. -> Library/Method: HTML/CSS/Tailwind.
+        - Report Info: The four AI agents' roles and tech. -> Goal: Organize/Inform. -> Viz: Interactive cards. -> Interaction: Click to expand/reveal details. -> Justification: Encourages exploration, breaks down complex system into digestible parts. -> Library/Method: HTML/JS.
+        - Report Info: Step-by-step design case study. -> Goal: Explain Process. -> Viz: Numbered timeline/flow. -> Interaction: Clickable steps to highlight details. -> Justification: Makes a complex workflow easy to follow. -> Library/Method: HTML/JS.
+        - Report Info: Quantitative speedup and accuracy data. -> Goal: Inform/Quantify. -> Viz: Bar chart (Speed) & Bar chart (Accuracy). -> Interaction: Animated chart loading, tooltips. -> Justification: Charts provide clear, quantitative proof of the framework's performance. -> Library/Method: Chart.js.
+        - Report Info: Comparison of design methodologies. -> Goal: Compare/Contextualize. -> Viz: Interactive comparison table. -> Interaction: Hover highlights. -> Justification: Positions the framework within the broader field of generative design. -> Library/Method: HTML/CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 350px; max-height: 40vh; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .nav-link { transition: color 0.3s, border-bottom-color 0.3s; }
+        .nav-link:hover, .nav-link.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+        .agent-card { transition: transform 0.3s, box-shadow 0.3s; }
+        .agent-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .workflow-step.active { background-color: #eef2ff; border-left-color: #4f46e5; }
+        .fade-in { animation: fadeIn 0.8s ease-in-out forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .slide-up { animation: slideUp 0.6s ease-out forwards; transform: translateY(20px); opacity: 0; }
+        @keyframes slideUp { to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header id="header" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-indigo-600">AI设计智能体</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#challenge" class="nav-link border-b-2 border-transparent pb-1">挑战与革新</a>
+                <a href="#agents" class="nav-link border-b-2 border-transparent pb-1">认识AI团队</a>
+                <a href="#workflow" class="nav-link border-b-2 border-transparent pb-1">工作流探秘</a>
+                <a href="#performance" class="nav-link border-b-2 border-transparent pb-1">性能仪表盘</a>
+                <a href="#comparison" class="nav-link border-b-2 border-transparent pb-1">方法论对比</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-slate-600">
+                <span class="w-6 h-0.5 bg-current block my-1"></span>
+                <span class="w-6 h-0.5 bg-current block my-1"></span>
+                <span class="w-6 h-0.5 bg-current block my-1"></span>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4 border-t border-slate-200">
+            <a href="#challenge" class="block py-2 text-slate-700">挑战与革新</a>
+            <a href="#agents" class="block py-2 text-slate-700">认识AI团队</a>
+            <a href="#workflow" class="block py-2 text-slate-700">工作流探秘</a>
+            <a href="#performance" class="block py-2 text-slate-700">性能仪表盘</a>
+            <a href="#comparison" class="block py-2 text-slate-700">方法论对比</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="hero" class="text-center mb-24 fade-in">
+            <h2 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">AI驱动的汽车设计革命</h2>
+            <p class="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">一个由专业AI智能体组成的协同框架，将数周的设计周期压缩至数分钟，实现美学与空气动力学的同步进化。</p>
+        </section>
+
+        <section id="challenge" class="mb-24">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-slate-900">挑战与革新</h3>
+                <p class="text-slate-600 mt-2">从缓慢的线性流程到快速的并行探索。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200 slide-up" style="animation-delay: 0.1s;">
+                    <h4 class="text-xl font-bold text-red-600 mb-4">传统工作流：线性且耗时</h4>
+                    <p class="text-slate-600 mb-6">传统汽车设计是一个孤立、顺序的流程，部门间协作困难，迭代周期长，导致时间和资源的巨大浪费。</p>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex items-center p-3 bg-red-50 rounded-md">
+                            <span class="text-red-500 text-lg mr-3">🎨</span>
+                            <span>设计师提交草图</span>
+                            <span class="mx-2 text-slate-400">→</span>
+                            <span class="font-mono text-red-700">耗时数天</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-red-50 rounded-md">
+                            <span class="text-red-500 text-lg mr-3">🧊</span>
+                            <span>CAD工程师手动建模</span>
+                            <span class="mx-2 text-slate-400">→</span>
+                            <span class="font-mono text-red-700">耗时数周</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-red-50 rounded-md">
+                            <span class="text-red-500 text-lg mr-3">⚙️</span>
+                            <span>CFD工程师准备网格</span>
+                            <span class="mx-2 text-slate-400">→</span>
+                            <span class="font-mono text-red-700">耗时数天</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-red-50 rounded-md">
+                            <span class="text-red-500 text-lg mr-3">💨</span>
+                            <span>进行空气动力学仿真</span>
+                            <span class="mx-2 text-slate-400">→</span>
+                            <span class="font-mono text-red-700">耗时数小时/天</span>
+                        </div>
+                        <div class="p-3 bg-red-100 rounded-md text-center text-red-800 font-semibold">总周期：数周到数月</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg border border-indigo-200 slide-up" style="animation-delay: 0.2s;">
+                    <h4 class="text-xl font-bold text-indigo-600 mb-4">多智能体框架：并行且高效</h4>
+                    <p class="text-slate-600 mb-6">AI智能体团队协同工作，将设计、建模和仿真并行化，实现近乎实时的反馈和快速迭代。</p>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex items-center p-3 bg-indigo-50 rounded-md">
+                            <span class="text-indigo-500 text-lg mr-3">🎨</span>
+                            <span>造型智能体生成效果图</span>
+                             <span class="font-mono text-indigo-700 ml-auto">秒级</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-indigo-50 rounded-md">
+                            <span class="text-indigo-500 text-lg mr-3">🧊</span>
+                            <span>CAD智能体检索/生成3D模型</span>
+                             <span class="font-mono text-indigo-700 ml-auto">秒级</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-indigo-50 rounded-md">
+                            <span class="text-indigo-500 text-lg mr-3">⚙️</span>
+                            <span>网格划分智能体自动生成网格</span>
+                            <span class="font-mono text-indigo-700 ml-auto">分钟级</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-indigo-50 rounded-md">
+                            <span class="text-indigo-500 text-lg mr-3">💨</span>
+                            <span>仿真智能体使用代理模型预测性能</span>
+                             <span class="font-mono text-indigo-700 ml-auto">秒级</span>
+                        </div>
+                         <div class="p-3 bg-indigo-100 rounded-md text-center text-indigo-800 font-semibold">总周期：分钟级到小时级</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="agents" class="mb-24">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-slate-900">认识AI设计团队</h3>
+                <p class="text-slate-600 mt-2">点击卡片，了解每个专业化智能体的角色和核心技术。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6" id="agent-grid">
+            </div>
+        </section>
+        
+        <section id="workflow" class="mb-24">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-slate-900">工作流探秘</h3>
+                <p class="text-slate-600 mt-2">追踪从一张草图到完整性能分析的全过程。</p>
+            </div>
+            <div class="lg:flex lg:space-x-8">
+                <div id="workflow-steps" class="lg:w-1/3 mb-8 lg:mb-0">
+                </div>
+                <div id="workflow-details" class="lg:w-2/3 bg-white p-8 rounded-lg shadow-lg border border-slate-200 min-h-[300px]">
+                </div>
+            </div>
+        </section>
+
+        <section id="performance" class="mb-24">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-slate-900">性能仪表盘</h3>
+                <p class="text-slate-600 mt-2">通过量化数据，直观感受AI框架带来的颠覆性变革。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                    <h4 class="text-xl font-semibold mb-4 text-center">设计周期指数级加速</h4>
+                    <div class="chart-container">
+                        <canvas id="speedChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                    <h4 class="text-xl font-semibold mb-4 text-center">空气动力学预测高精度</h4>
+                     <div class="chart-container">
+                        <canvas id="accuracyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="mb-24">
+             <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-slate-900">生成式设计方法论对比</h3>
+                <p class="text-slate-600 mt-2">理解多智能体框架在设计自动化演进中的独特地位。</p>
+            </div>
+            <div class="overflow-x-auto bg-white rounded-lg shadow-md border border-slate-200">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600 uppercase">
+                        <tr>
+                            <th class="p-4">标准</th>
+                            <th class="p-4">拓扑优化</th>
+                            <th class="p-4">单体生成式AI</th>
+                            <th class="p-4 text-indigo-600 font-bold">多智能体框架</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 font-semibold">核心目标</td>
+                            <td class="p-4">结构性能优化 (轻量化)</td>
+                            <td class="p-4">美学概念生成 (图像)</td>
+                            <td class="p-4 text-slate-900">美学与工程性能的协同设计</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 font-semibold">工程约束</td>
+                            <td class="p-4">处理物理约束能力强</td>
+                            <td class="p-4">几乎无工程约束概念</td>
+                            <td class="p-4 text-slate-900">通过专业智能体集成多物理场约束</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 font-semibold">输出类型</td>
+                            <td class="p-4">3D网格 (零部件)</td>
+                            <td class="p-4">2D图像 / 简单3D模型</td>
+                            <td class="p-4 text-slate-900">多模态 (效果图, CAD, 网格, 性能报告)</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 font-semibold">人机交互</td>
+                            <td class="p-4">定义问题，被动接收结果</td>
+                            <td class="p-4">提供初始提示，控制有限</td>
+                            <td class="p-4 text-slate-900">作为“AI团队”的协作者和指挥者</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                             <td class="p-4 font-semibold">信任与可验证性</td>
+                            <td class="p-4">高 (基于物理)</td>
+                            <td class="p-4">低 (黑箱)</td>
+                            <td class="p-4 text-slate-900">高 (模块化，步骤可验证)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-slate-300 py-8">
+        <div class="container mx-auto px-6 text-center text-sm">
+            <p>本交互式应用基于 Mohamed Elrefaie 及其合作者的开创性研究成果：《AI Agents in Engineering Design: A Multi-Agent Framework for Aesthetic and Aerodynamic Car Design》。</p>
+            <p class="mt-2">所有内容旨在对原始报告进行教育性、可视化解读。</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const appData = {
+        agents: [
+            {
+                name: '造型智能体',
+                icon: '�',
+                color: 'rose',
+                role: '美学探索与概念可视化',
+                description: '作为团队的“创意设计师”，它能理解设计师的草图和文字描述，快速生成大量高保真、风格各异的照片级效果图，极大地拓宽了美学探索的边界。',
+                tech: ['SDXL', 'ControlNet', 'DALL·E']
+            },
+            {
+                name: 'CAD智能体',
+                icon: '🧊',
+                color: 'sky',
+                role: '二维到三维的桥梁',
+                description: '作为“数字建模师”，它负责将2D概念转化为3D实体。它能从庞大的数据库中检索相似模型，或通过插值算法生成全新的、在几何上连续一致的汽车形态。',
+                tech: ['DeepSDF', 'PointNet', 'DrivAerNet++']
+            },
+            {
+                name: '网格划分智能体',
+                icon: '⚙️',
+                color: 'amber',
+                role: 'CFD仿真准备',
+                description: '作为“仿真预备工程师”，它将3D模型自动化地处理成符合CFD分析要求的高质量计算网格，并将传统流程中耗时数天的手动工作压缩至数分钟。',
+                tech: ['OpenFOAM', 'snappyHexMesh', 'Python API']
+            },
+            {
+                name: '仿真智能体',
+                icon: '💨',
+                color: 'teal',
+                role: '实时性能分析',
+                description: '作为“空气动力学专家”，它利用先进的代理模型（TripNet），在几秒钟内就能预测出新设计的空气动力学性能，为设计师提供近乎实时的性能反馈。',
+                tech: ['TripNet', 'RegDGCNN', '代理模型']
+            }
+        ],
+        workflow: [
+            {
+                title: '创意启动',
+                description: '流程始于人类设计师的灵感。提供一张简单的二维草图和一段描述性文本，例如“一辆具有未来感的跑车”。',
+                image: 'https://placehold.co/600x400/eef2ff/4f46e5?text=1.+%E6%A6%82%E5%BF%B5%E8%8D%89%E5%9B%BE%E8%BE%93%E5%85%A5'
+            },
+            {
+                title: '美学探索',
+                description: '造型智能体（🎨）被激活，围绕原始草图生成一系列高分辨率、风格各异的照片级效果图，供设计师进行视觉评估和美学探索。',
+                image: 'https://placehold.co/600x400/e0f2fe/0ea5e9?text=2.+%E7%94%9F%E6%88%90%E5%A4%9A%E6%A0%B7%E5%BC%8F%E6%95%88%E6%9E%9C%E5%9B%BE'
+            },
+            {
+                title: '三维检索与生成',
+                description: 'CAD智能体（🧊）介入，根据选定的效果图，从数据库中检索出形状最相似的三维模型。或者，设计师可以指令其融合两款现有车型的特征，生成一个全新的三维模型。',
+                image: 'https://placehold.co/600x400/f0f9ff/38bdf8?text=3.+%E4%BA%8C%E7%BB%B4%E5%88%B0%E4%B8%89%E7%BB%B4%E8%BD%AC%E6%8D%A2'
+            },
+            {
+                title: '即时性能反馈',
+                description: '对于新生成的模型，网格划分智能体（⚙️）自动准备CFD网格。随后，仿真智能体（💨）利用其TripNet代理模型，在几秒内预测出新设计的阻力系数等关键性能指标。',
+                image: 'https://placehold.co/600x400/ccfbf1/14b8a6?text=4.+%E5%AE%9E%E6%97%B6%E7%A9%BA%E6%B0%94%E5%8A%A8%E5%8A%9B%E5%AD%A6%E5%88%86%E6%9E%90'
+            },
+            {
+                title: '设计收敛',
+                description: '设计师和工程师基于AI提供的即时美学和性能反馈，快速迭代和优化方案，最终在一个极短的时间内锁定一个在美学和性能上都很有希望的设计方向。',
+                image: 'https://placehold.co/600x400/f3e8ff/8b5cf6?text=5.+%E8%BF%AD%E4%BB%A3%E4%BC%98%E5%8C%96+%E2%9E%95+%E5%86%B3%E7%AD%96'
+            }
+        ]
+    };
+
+    const colorMap = {
+        rose: { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200', ring: 'ring-rose-500' },
+        sky: { bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-200', ring: 'ring-sky-500' },
+        amber: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200', ring: 'ring-amber-500' },
+        teal: { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-200', ring: 'ring-teal-500' }
+    };
+
+    function renderAgents() {
+        const grid = document.getElementById('agent-grid');
+        grid.innerHTML = appData.agents.map((agent, index) => {
+            const colors = colorMap[agent.color];
+            return `
+            <div class="agent-card bg-white rounded-lg shadow-md border ${colors.border} p-6 cursor-pointer slide-up" style="animation-delay: ${index * 0.1}s;" data-agent-index="${index}">
+                <div class="flex items-center mb-4">
+                    <div class="text-3xl mr-4">${agent.icon}</div>
+                    <h4 class="text-xl font-bold text-slate-900">${agent.name}</h4>
+                </div>
+                <p class="text-sm font-semibold ${colors.text}">${agent.role}</p>
+                <div class="agent-details hidden mt-4 pt-4 border-t ${colors.border}">
+                    <p class="text-slate-600 text-sm mb-4">${agent.description}</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${agent.tech.map(t => `<span class="text-xs font-medium ${colors.bg} ${colors.text} px-2 py-1 rounded-full">${t}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+        grid.querySelectorAll('.agent-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const details = card.querySelector('.agent-details');
+                details.classList.toggle('hidden');
+            });
+        });
+    }
+
+    function renderWorkflow() {
+        const stepsContainer = document.getElementById('workflow-steps');
+        const detailsContainer = document.getElementById('workflow-details');
+
+        stepsContainer.innerHTML = appData.workflow.map((step, index) => `
+            <div class="workflow-step p-4 border-l-4 border-slate-200 cursor-pointer mb-2 rounded-r-md transition-all duration-300" data-step-index="${index}">
+                <p class="font-semibold text-slate-700">${index + 1}. ${step.title}</p>
+            </div>
+        `).join('');
+
+        const steps = stepsContainer.querySelectorAll('.workflow-step');
+        
+        function updateWorkflowDetails(index) {
+            const step = appData.workflow[index];
+            detailsContainer.innerHTML = `
+                <div class="fade-in">
+                    <h4 class="text-2xl font-bold mb-4">${step.title}</h4>
+                    <p class="text-slate-600 mb-6">${step.description}</p>
+                    <img src="${step.image}" alt="${step.title}" class="w-full h-auto rounded-lg object-cover">
+                </div>
+            `;
+            steps.forEach((s, i) => {
+                s.classList.toggle('active', i === index);
+            });
+        }
+        
+        steps.forEach((stepEl, index) => {
+            stepEl.addEventListener('click', () => updateWorkflowDetails(index));
+        });
+        
+        updateWorkflowDetails(0);
+    }
+
+    function createSpeedChart() {
+        const ctx = document.getElementById('speedChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['概念到3D模型', 'CFD网格生成', '空气动力学分析'],
+                datasets: [
+                    {
+                        label: '传统工作流 (天)',
+                        data: [14, 5, 1],
+                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'AI智能体框架 (天)',
+                        data: [0.01, 0.02, 0.001],
+                        backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        type: 'logarithmic',
+                        title: {
+                            display: true,
+                            text: '时间 (天，对数坐标)'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toFixed(3) + ' 天';
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+    }
+
+    function createAccuracyChart() {
+        const ctx = document.getElementById('accuracyChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['设计案例 A', '设计案例 B', '设计案例 C'],
+                datasets: [
+                    {
+                        label: '高保真CFD (真值)',
+                        data: [0.250, 0.280, 0.235],
+                        backgroundColor: 'rgba(107, 114, 128, 0.6)',
+                        borderColor: 'rgba(107, 114, 128, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'TripNet代理模型预测 (误差 <3%)',
+                        data: [0.255, 0.274, 0.239],
+                        backgroundColor: 'rgba(20, 184, 166, 0.6)',
+                        borderColor: 'rgba(20, 184, 166, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: '阻力系数 (Cd)'
+                        }
+                    }
+                },
+                 plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                           label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toFixed(3);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function setupMobileMenu() {
+        const button = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+        button.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+    }
+    
+    function setupNavScroll() {
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                    });
+                }
+            });
+        }, { rootMargin: "-50% 0px -50% 0px" });
+
+        sections.forEach(section => observer.observe(section));
+        
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (!mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+    }
+
+    renderAgents();
+    renderWorkflow();
+    createSpeedChart();
+    createAccuracyChart();
+    setupMobileMenu();
+    setupNavScroll();
+});
+</script>
+
+</body>
+</html>
+�

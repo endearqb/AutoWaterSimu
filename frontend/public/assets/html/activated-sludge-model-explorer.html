@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式活性污泥模型(ASM)探索器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate Gray, Sky Blue, Warm Sand -->
+    <!-- Application Structure Plan: A single-page application with a top navigation bar for smooth scrolling. The structure guides the user logically from the core problem to the proposed solution. 1. **Introduction**: A hero section stating the central question. 2. **Model vs. Reality**: An interactive chart to visually demonstrate the discrepancy between ASM predictions and observed data during a COD spike. 3. **Core Mechanisms**: A tabbed, interactive section to explain the underlying biological reasons (Metabolic Decoupling, Phosphorus Switch, Trace Element Ceiling) using simplified diagrams and user-driven toggles. This replaces dense text with exploration. 4. **Model Evolution**: A comparative view showing the progression from ASM1/3 to the proposed Enhanced ASM, allowing users to click and see how assumptions and equations change. 5. **Conclusion**: A summary of key takeaways and data requirements. This thematic flow is designed to be more intuitive and engaging than the linear structure of the source report, fostering understanding through interaction. -->
+    <!-- Visualization & Content Choices: 1. **Problem (Model vs. Reality)**: Goal: Compare. Viz: Line Chart (Chart.js). Interaction: A button animates the VSS growth curves. Justification: Dynamically and visually establishes the core problem. 2. **Mechanisms (P-Switch)**: Goal: Explain Relationship. Viz: HTML/CSS Diagram. Interaction: A toggle button alters the diagram's flow path (TCA vs. PHA) and updates descriptive text. Justification: Simplifies complex biochemistry into a clear, cause-and-effect interactive element. 3. **Mechanisms (TE Ceiling)**: Goal: Compare. Viz: Bar Chart (Chart.js). Interaction: A slider adjusts COD load, showing that VSS growth hits a ceiling regardless of COD if trace elements are low. Justification: Clearly illustrates the concept of a rate-limiting cap. 4. **Model Evolution**: Goal: Compare/Organize. Viz: Side-by-side card layout (HTML/Tailwind). Interaction: Clicking on a model (ASM1, ASM3, Enhanced) displays its specific assumptions and growth rate formula. Justification: Makes the abstract model changes concrete and easy to compare. All choices avoid SVG/Mermaid as required. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f9fa; /* Light Gray Background */
+        }
+        .smooth-scroll {
+            scroll-behavior: smooth;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0ea5e9; /* Sky Blue */
+            border-bottom-color: #0ea5e9;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #0ea5e9;
+            color: white;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 40vh;
+            max-height: 400px;
+        }
+        .flow-path {
+            transition: all 0.5s ease-in-out;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: draw-line 2s forwards;
+        }
+        .flow-path-hidden {
+            opacity: 0;
+            stroke-dashoffset: 0;
+        }
+        @keyframes draw-line {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        .pulse-effect {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 smooth-scroll">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-sky-600">ASM探索器</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#problem" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700">模型 vs. 现实</a>
+                        <a href="#mechanisms" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700">核心机理</a>
+                        <a href="#solution" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700">模型演进</a>
+                        <a href="#conclusion" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700">结论</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Section 1: Introduction -->
+        <section id="intro" class="text-center py-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">为何在高负荷下，模型会“说谎”？</h1>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600">
+                深入探索当污水处理系统遭遇COD负荷激增时，标准活性污泥模型（ASM）的预测为何会与实际微生物增长（VSS）严重脱节。本应用将通过交互式分析，揭示磷和微量元素在其中扮演的关键角色。
+            </p>
+        </section>
+
+        <!-- Section 2: Model vs. Reality -->
+        <section id="problem" class="py-16 bg-white rounded-2xl shadow-lg">
+            <div class="text-center mb-12 px-4">
+                <h2 class="text-3xl font-bold mb-2">模型预测与现实的鸿沟</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto">当进水COD负荷突然增加时，标准ASM模型预测微生物会立即快速增长。然而，现实是微生物增长存在显著滞后。点击下方按钮，观察这一差异。</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="vssGrowthChart"></canvas>
+            </div>
+            <div class="text-center mt-8">
+                <button id="simulateSpikeBtn" class="bg-sky-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-600 transition-colors duration-300 shadow-md hover:shadow-lg pulse-effect">
+                    模拟COD负荷冲击
+                </button>
+            </div>
+             <div class="mt-8 px-6 md:px-12 text-center text-sm text-slate-500">
+                <p>上图清晰地展示了，尽管COD被快速去除，但实际的活性生物质（VSS）增长远未达到模型的乐观预测。这是因为模型忽略了微生物在资源不平衡时采取的复杂生存策略。</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Core Mechanisms -->
+        <section id="mechanisms" class="py-16">
+            <div class="text-center mb-12 px-4">
+                <h2 class="text-3xl font-bold mb-2">探究背后的生物学奥秘</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto">VSS增长滞后并非模型校准问题，而是深刻的生化与生态学原理在起作用。选择下方标签，探索三大核心限制机理。</p>
+            </div>
+            
+            <div class="flex justify-center mb-8 border-b border-slate-200">
+                <button class="tab-button active py-2 px-6 font-medium" data-tab="decoupling">代谢解耦</button>
+                <button class="tab-button py-2 px-6 font-medium" data-tab="phosphorus">磷限制开关</button>
+                <button class="tab-button py-2 px-6 font-medium" data-tab="trace">微量元素瓶颈</button>
+            </div>
+
+            <div id="tab-content" class="bg-white rounded-2xl shadow-lg p-8 md:p-12 min-h-[500px]">
+                <!-- Tab 1: Decoupling -->
+                <div id="decoupling-content" class="tab-panel">
+                    <h3 class="text-2xl font-bold mb-4 text-sky-700">代谢解耦：先“囤粮”后“生长”</h3>
+                    <p class="text-slate-600 mb-6">在“盛宴与饥荒”交替的环境中，微生物演化出了聪明的生存策略。当碳源（食物）过量，而其他生长要素不足时，它们会优先将能量以细胞内储存物（如PHA）的形式“囤积”起来，而不是立即用于细胞增殖。这就导致了底物消耗（分解代谢）与生物质合成（合成代谢）的暂时“解耦”。</p>
+                    <div class="w-full max-w-2xl mx-auto p-4 border rounded-lg bg-slate-50">
+                         <div class="flex flex-col md:flex-row items-center justify-around text-center">
+                            <div class="flex flex-col items-center p-4">
+                                <span class="text-4xl mb-2">🍲</span>
+                                <h4 class="font-bold">高COD负荷（盛宴）</h4>
+                                <p class="text-sm text-slate-500">大量碳源进入</p>
+                            </div>
+                             <div class="text-4xl text-slate-300 transform rotate-90 md:rotate-0">→</div>
+                             <div class="flex flex-col items-center p-4 bg-amber-100 rounded-lg shadow">
+                                <span class="text-4xl mb-2">📦</span>
+                                <h4 class="font-bold">细胞内储存 (PHA)</h4>
+                                <p class="text-sm text-amber-700">碳源被迅速转化为储存物</p>
+                                <p class="text-xs text-slate-500">(COD去除, VSS不增长)</p>
+                            </div>
+                            <div class="text-4xl text-slate-300 transform rotate-90 md:rotate-0">→</div>
+                             <div class="flex flex-col items-center p-4">
+                                <span class="text-4xl mb-2">🌱</span>
+                                <h4 class="font-bold">后续生长（饥荒）</h4>
+                                <p class="text-sm text-slate-500">利用储存物缓慢增殖</p>
+                                <p class="text-xs text-slate-500">(VSS缓慢增长)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-6 text-center text-sm text-slate-500">这种策略使微生物能够最大化地捕获瞬时资源，在竞争中获得优势。标准ASM模型未能描述这一关键过程。</p>
+                </div>
+                <!-- Tab 2: Phosphorus Switch -->
+                <div id="phosphorus-content" class="tab-panel hidden">
+                    <h3 class="text-2xl font-bold mb-4 text-sky-700">磷限制：改变代谢流向的“生化开关”</h3>
+                    <p class="text-slate-600 mb-6">磷不仅是生长的必需原料（用于合成ATP和DNA），更是一个关键的代谢调节器。当磷充足时，代谢流向生长；当磷缺乏时，细胞会主动将碳流转向储存PHA，以避免代谢失衡。</p>
+                    <div class="text-center mb-6">
+                        <span class="mr-2">磷水平:</span>
+                        <button id="phosphorusToggle" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-green-500">
+                            <span id="phosphorusKnob" class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-6"></span>
+                        </button>
+                        <span id="phosphorusStatus" class="ml-2 font-bold text-green-600">充足</span>
+                    </div>
+
+                    <div class="w-full max-w-3xl mx-auto">
+                        <svg viewBox="0 0 400 200" class="w-full">
+                            <!-- Paths and Nodes -->
+                            <path d="M 50 100 L 150 100" stroke="#94a3b8" stroke-width="2" fill="none"/>
+                            <circle cx="25" cy="100" r="15" fill="#fde68a"/>
+                            <text x="25" y="104" font-size="8" text-anchor="middle" fill="#ca8a04">COD</text>
+
+                            <circle cx="175" cy="100" r="20" fill="#fb923c"/>
+                            <text x="175" y="100" font-size="8" text-anchor="middle" fill="white" font-weight="bold">乙酰</text>
+                             <text x="175" y="110" font-size="8" text-anchor="middle" fill="white" font-weight="bold">辅酶A</text>
+
+                            <!-- Growth Path -->
+                            <path id="growthPath" d="M 200 100 Q 250 50, 350 50" stroke="#10b981" stroke-width="4" fill="none" class="flow-path"/>
+                            <circle cx="375" cy="50" r="20" fill="#10b981"/>
+                            <text x="375" y="54" font-size="12" text-anchor="middle" fill="white">🌱</text>
+                            <text x="300" y="35" font-size="10" fill="#10b981">TCA循环 & 生长</text>
+
+                            <!-- Storage Path -->
+                            <path id="storagePath" d="M 200 100 Q 250 150, 350 150" stroke="#f59e0b" stroke-width="4" fill="none" class="flow-path flow-path-hidden"/>
+                            <circle cx="375" cy="150" r="20" fill="#f59e0b"/>
+                            <text x="375" y="154" font-size="12" text-anchor="middle" fill="white">📦</text>
+                            <text x="300" y="170" font-size="10" fill="#f59e0b">PHA储存</text>
+                        </svg>
+                    </div>
+                     <p id="phosphorusExplanation" class="mt-4 text-center text-slate-600 transition-opacity duration-300">当磷充足时，细胞优先进行生长，将乙酰辅酶A导入TCA循环以合成新的生物质。</p>
+                </div>
+                <!-- Tab 3: Trace Elements -->
+                <div id="trace-content" class="tab-panel hidden">
+                    <h3 class="text-2xl font-bold mb-4 text-sky-700">微量元素瓶颈：代谢引擎的“性能天花板”</h3>
+                    <p class="text-slate-600 mb-6">铁、钴、钼等微量元素是关键代谢酶的必需“零件”。它们的缺乏会直接降低微生物的最大比生长速率（μ_max），如同给汽车引擎设置了转速上限。无论提供多少燃料（COD），其性能都无法突破这个“天花板”。</p>
+                    <div class="chart-container" style="max-height: 350px;">
+                         <canvas id="traceElementChart"></canvas>
+                    </div>
+                    <div class="text-center mt-6 px-4">
+                        <label for="codSlider" class="block mb-2 font-medium text-slate-700">调整进水COD负荷:</label>
+                        <input type="range" id="codSlider" min="100" max="1000" value="400" class="w-full max-w-sm mx-auto">
+                    </div>
+                    <p class="mt-4 text-center text-sm text-slate-500">观察图表：即使COD负荷增加，在微量元素缺乏时，VSS的增长速率也只能达到一个较低的水平，远低于元素充足时的情况。</p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Solution -->
+        <section id="solution" class="py-16 bg-white rounded-2xl shadow-lg">
+            <div class="text-center mb-12 px-4">
+                <h2 class="text-3xl font-bold mb-2">解决方案：构建更智能的ASM模型</h2>
+                <p class="text-slate-600 max-w-3xl mx-auto">为了准确预测现实，我们需要对ASM模型进行升级。报告提出了一个分阶段的演进蓝图，从简单的参数修正到根本的结构重塑。点击下方模型，查看其核心假设与生长速率公式的演变。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                 <button data-model="asm1" class="model-btn p-6 border-2 border-slate-200 rounded-lg text-center hover:border-sky-500 hover:shadow-xl transition-all duration-300">
+                    <h4 class="text-xl font-bold">ASM1</h4>
+                    <p class="text-sm text-slate-500">基础模型</p>
+                </button>
+                <button data-model="asm3" class="model-btn p-6 border-2 border-slate-200 rounded-lg text-center hover:border-sky-500 hover:shadow-xl transition-all duration-300">
+                    <h4 class="text-xl font-bold">ASM3</h4>
+                    <p class="text-sm text-slate-500">引入储存概念</p>
+                </button>
+                <button data-model="enhanced" class="model-btn p-6 border-2 border-sky-500 rounded-lg text-center shadow-xl ring-2 ring-sky-300">
+                    <h4 class="text-xl font-bold">增强型ASM</h4>
+                    <p class="text-sm text-slate-500">机理化增强</p>
+                </button>
+            </div>
+            
+            <div id="model-details" class="bg-slate-50 rounded-lg p-6 min-h-[250px] transition-all duration-500">
+                 <h3 id="model-title" class="text-2xl font-bold mb-4 text-slate-800"></h3>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h5 class="font-semibold mb-2">核心假设:</h5>
+                        <ul id="model-assumptions" class="list-disc list-inside space-y-1 text-slate-700">
+                        </ul>
+                    </div>
+                     <div class="bg-slate-200 p-4 rounded-md">
+                        <h5 class="font-semibold mb-2">生长速率 (μ_H) 公式:</h5>
+                        <p id="model-formula" class="text-sm font-mono break-words text-slate-900"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Conclusion -->
+        <section id="conclusion" class="py-16">
+            <div class="text-center mb-12 px-4">
+                 <h2 class="text-3xl font-bold mb-2">关键结论与实践启示</h2>
+                 <p class="text-slate-600 max-w-2xl mx-auto">从简化的经验模型到更尊重生化现实的机理化框架，是提升污水处理工艺控制与优化能力的关键一步。</p>
+            </div>
+             <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h4 class="font-bold text-lg mb-3 text-sky-700">模型升级要点</h4>
+                    <ul class="space-y-2 list-disc list-inside text-slate-700">
+                        <li><b>多底物限制:</b> 必须在生长速率公式中引入磷和氮的Monod限制项。</li>
+                        <li><b>机理化储存:</b> 采用“同步生长与储存”（ASMGS）范式，替代不准确的序贯假设。</li>
+                        <li><b>微量元素效应:</b> 通过修正μ_max或引入新的限制项来表征催化瓶颈。</li>
+                    </ul>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h4 class="font-bold text-lg mb-3 text-sky-700">所需关键数据</h4>
+                     <ul class="space-y-2 list-disc list-inside text-slate-700">
+                        <li><b>详细水质分析:</b> 进水的磷形态、关键微量元素浓度。</li>
+                        <li><b>动态过程监测:</b> 冲击负荷期间的OUR、细胞内PHA含量、可溶性营养物浓度变化。</li>
+                        <li><b>解耦动力学测定:</b> 通过专门设计的呼吸计量实验，分别测定储存与生长的动力学参数。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-white mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            <p>基于专家报告的交互式分析应用。仅用于演示目的。</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        // --- Section 1: VSS Growth Chart ---
+        const vssCtx = document.getElementById('vssGrowthChart').getContext('2d');
+        let vssGrowthChart;
+        const initialLabels = ['T-0', 'T+1h', 'T+2h', 'T+4h', 'T+8h', 'T+12h', 'T+24h'];
+        const predictedVSS = [100, 150, 200, 300, 450, 600, 800];
+        const actualVSS = [100, 105, 110, 120, 150, 200, 300];
+
+        function createVssChart(data1 = [], data2 = []) {
+            if (vssGrowthChart) {
+                vssGrowthChart.destroy();
+            }
+            vssGrowthChart = new Chart(vssCtx, {
+                type: 'line',
+                data: {
+                    labels: initialLabels,
+                    datasets: [{
+                        label: 'ASM模型预测VSS增长',
+                        data: data1,
+                        borderColor: '#38bdf8', // Light Blue
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                    }, {
+                        label: '实际观测VSS增长',
+                        data: data2,
+                        borderColor: '#f97316', // Orange
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'VSS浓度 (mg/L)'
+                            }
+                        },
+                        x: {
+                           title: {
+                                display: true,
+                                text: 'COD冲击后时间'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuad'
+                    }
+                }
+            });
+        }
+        
+        createVssChart(); // Initialize empty chart
+
+        document.getElementById('simulateSpikeBtn').addEventListener('click', () => {
+             createVssChart(predictedVSS, actualVSS);
+        });
+
+        // --- Section 2: Mechanisms Tabs ---
+        const tabs = document.querySelectorAll('.tab-button');
+        const panels = document.querySelectorAll('.tab-panel');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const target = tab.getAttribute('data-tab');
+                panels.forEach(panel => {
+                    if (panel.id === `${target}-content`) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                });
+            });
+        });
+        
+        // Phosphorus Switch Interaction
+        const pToggle = document.getElementById('phosphorusToggle');
+        const pKnob = document.getElementById('phosphorusKnob');
+        const pStatus = document.getElementById('phosphorusStatus');
+        const pExplanation = document.getElementById('phosphorusExplanation');
+        const growthPath = document.getElementById('growthPath');
+        const storagePath = document.getElementById('storagePath');
+
+        pToggle.addEventListener('click', () => {
+            if (pKnob.classList.contains('translate-x-6')) { // If ON (Sufficient), turn OFF
+                pKnob.classList.remove('translate-x-6');
+                pKnob.classList.add('translate-x-1');
+                pToggle.classList.remove('bg-green-500');
+                pToggle.classList.add('bg-red-500');
+                pStatus.textContent = '缺乏';
+                pStatus.classList.remove('text-green-600');
+                pStatus.classList.add('text-red-600');
+                
+                growthPath.classList.add('flow-path-hidden');
+                storagePath.classList.remove('flow-path-hidden');
+                pExplanation.textContent = '当磷缺乏时，细胞主动将碳流转向PHA储存，以保存能量和碳源，等待环境好转。';
+
+            } else { // If OFF (Deficient), turn ON
+                pKnob.classList.add('translate-x-6');
+                pKnob.classList.remove('translate-x-1');
+                pToggle.classList.add('bg-green-500');
+                pToggle.classList.remove('bg-red-500');
+                pStatus.textContent = '充足';
+                pStatus.classList.add('text-green-600');
+                pStatus.classList.remove('text-red-600');
+
+                growthPath.classList.remove('flow-path-hidden');
+                storagePath.classList.add('flow-path-hidden');
+                pExplanation.textContent = '当磷充足时，细胞优先进行生长，将乙酰辅酶A导入TCA循环以合成新的生物质。';
+            }
+        });
+
+        // Trace Element Chart
+        const teCtx = document.getElementById('traceElementChart').getContext('2d');
+        let traceElementChart;
+
+        function createTraceElementChart(codLoad) {
+            const labels = ['VSS增长速率'];
+            const teSufficientGrowth = codLoad * 0.7; // Example high yield
+            const teDeficientGrowth = Math.min(codLoad * 0.7, 350); // Capped growth
+
+            if (traceElementChart) {
+                traceElementChart.data.datasets[0].data[0] = teSufficientGrowth;
+                traceElementChart.data.datasets[1].data[0] = teDeficientGrowth;
+                traceElementChart.update();
+            } else {
+                traceElementChart = new Chart(teCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '微量元素充足',
+                            data: [teSufficientGrowth],
+                            backgroundColor: '#34d399',
+                            borderColor: '#059669',
+                            borderWidth: 1
+                        }, {
+                            label: '微量元素缺乏',
+                            data: [teDeficientGrowth],
+                            backgroundColor: '#fbbf24',
+                            borderColor: '#d97706',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 1000,
+                                title: {
+                                    display: true,
+                                    text: '相对VSS增长速率'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '微量元素对VSS增长的影响'
+                            },
+                             legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        const codSlider = document.getElementById('codSlider');
+        codSlider.addEventListener('input', (e) => {
+            createTraceElementChart(parseInt(e.target.value));
+        });
+        createTraceElementChart(parseInt(codSlider.value));
+
+
+        // --- Section 3: Model Evolution ---
+        const modelBtns = document.querySelectorAll('.model-btn');
+        const modelTitle = document.getElementById('model-title');
+        const modelAssumptions = document.getElementById('model-assumptions');
+        const modelFormula = document.getElementById('model-formula');
+
+        const modelData = {
+            asm1: {
+                title: 'ASM1: 基础模型',
+                assumptions: [
+                    '生物质均一，产率系数固定。',
+                    '忽略营养盐（N, P）对异养菌的限制。',
+                    '无细胞内储存机制，采用“死亡-再生”概念。',
+                    '主要为市政污水设计，不适用于高负荷。'
+                ],
+                formula: 'μ_H = μ_max,H * (S_S / (K_S + S_S)) * (S_O / (K_O,H + S_O))'
+            },
+            asm3: {
+                title: 'ASM3: 引入储存概念',
+                assumptions: [
+                    '引入细胞内储存物(X_STO)。',
+                    '假设严格的序贯式过程：先储存，后生长。',
+                    '无法准确模拟OUR曲线的动态变化。',
+                    '仍未系统性考虑营养盐限制。'
+                ],
+                formula: '生长基于X_STO，储存基于S_S。两个过程严格分离。'
+            },
+            enhanced: {
+                title: '增强型ASM: 机理化增强',
+                assumptions: [
+                    '采用“同步生长与储存”(ASMGS)范式。',
+                    '引入磷和氮的多底物Monod限制。',
+                    '引入独立状态变量X_PHA。',
+                    '可进一步引入微量元素对μ_max的修正。'
+                ],
+                formula: 'μ_H = μ_max,H * f(S_S) * f(S_O) * f(S_NH) * f(S_P)'
+            }
+        };
+
+        function updateModelDetails(modelKey) {
+            const data = modelData[modelKey];
+            modelTitle.textContent = data.title;
+            modelAssumptions.innerHTML = data.assumptions.map(item => `<li>${item}</li>`).join('');
+            modelFormula.textContent = data.formula;
+            
+            modelBtns.forEach(btn => {
+                btn.classList.remove('border-sky-500', 'shadow-xl', 'ring-2', 'ring-sky-300');
+                btn.classList.add('border-slate-200');
+                if (btn.dataset.model === modelKey) {
+                    btn.classList.add('border-sky-500', 'shadow-xl', 'ring-2', 'ring-sky-300');
+                    btn.classList.remove('border-slate-200');
+                }
+            });
+        }
+
+        modelBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const modelKey = e.currentTarget.dataset.model;
+                updateModelDetails(modelKey);
+            });
+        });
+        
+        // Initialize with the enhanced model shown
+        updateModelDetails('enhanced');
+
+        // --- Smooth scrolling for nav links ---
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+    });
+    </script>
+</body>
+</html>

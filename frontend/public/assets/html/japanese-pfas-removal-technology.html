@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PFAS处理新技术：交互式报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Calm Tech" - Background: #FDFDFB (Warm Neutral), Text: #333333 (Dark Charcoal), Primary Accent: #2E5A88 (Deep Blue), Secondary Accent/Highlight: #4A7C59 (Muted Green) -->
+    <!-- Application Structure Plan: A single-page, narrative-driven scrolling application. The structure guides the user from the core problem (PFAS crisis) to the proposed solution (tech breakdown), through a critical analysis (comparison, challenges), and finally to future implications (market context). This thematic, storytelling approach is chosen over a dashboard to make a complex technical subject digestible and engaging for a broader audience, fostering understanding of the paradigm shift from "managing" to "solving" pollution. Key interactions include interactive charts for comparison and visual diagrams for process explanation, activated on scroll to maintain flow. -->
+    <!-- Visualization & Content Choices: 1. Pollution Scale (Inform): Text card '420倍' for high impact. 2. Process (Inform): Animated HTML/CSS diagrams, avoiding complex libraries for a clean, fast-loading visual explanation of the two-stage process. 3. Technology Comparison (Compare): Interactive Chart.js horizontal bar chart. Compares A Holdings vs. GAC/IX/RO on efficiency, cost, and waste. Chosen for its clarity in comparing multiple attributes across categories. Hover interaction provides details without clutter. 4. Scalability Gap (Compare): Chart.js donut chart to visually dramatize the >50x gap between pilot and required capacity. More intuitive than raw numbers. 5. Market Players (Organize): Simple HTML table for structured data presentation. Interaction not needed. CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FDFDFB;
+            color: #333333;
+        }
+        .bg-primary { background-color: #2E5A88; }
+        .text-primary { color: #2E5A88; }
+        .bg-secondary { background-color: #4A7C59; }
+        .text-secondary { color: #4A7C59; }
+        .border-primary { border-color: #2E5A88; }
+        .active-nav { color: #FDFDFB; background-color: #2E5A88; }
+        .inactive-nav { color: #2E5A88; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 60vh;
+            }
+        }
+        .content-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .content-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .bubble {
+            position: absolute;
+            bottom: -20px;
+            background-color: rgba(46, 90, 136, 0.3);
+            border-radius: 50%;
+            animation: rise 10s infinite ease-in;
+        }
+        @keyframes rise {
+            0% { bottom: -20px; opacity: 1; }
+            50% { opacity: 1; }
+            100% { bottom: 100%; opacity: 0; }
+        }
+    </style>
+</head>
+<body class="w-full overflow-x-hidden">
+
+    <header id="header" class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300">
+        <nav class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl font-bold text-primary">PFAS问题的未来</h1>
+                <div class="hidden md:flex space-x-2">
+                    <a href="#crisis" class="nav-link inactive-nav font-medium px-3 py-2 rounded-md text-sm transition-colors duration-300 hover:bg-primary/10">危机</a>
+                    <a href="#solution" class="nav-link inactive-nav font-medium px-3 py-2 rounded-md text-sm transition-colors duration-300 hover:bg-primary/10">解决方案</a>
+                    <a href="#comparison" class="nav-link inactive-nav font-medium px-3 py-2 rounded-md text-sm transition-colors duration-300 hover:bg-primary/10">技术比较</a>
+                    <a href="#challenge" class="nav-link inactive-nav font-medium px-3 py-2 rounded-md text-sm transition-colors duration-300 hover:bg-primary/10">挑战</a>
+                    <a href="#future" class="nav-link inactive-nav font-medium px-3 py-2 rounded-md text-sm transition-colors duration-300 hover:bg-primary/10">未来</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="min-h-screen flex flex-col items-center justify-center text-center bg-white px-4">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-4xl md:text-6xl font-extrabold text-primary mb-4">静冈的突破口</h2>
+                <p class="text-lg md:text-xl text-gray-600 mb-8">一家日本私营公司开发的PFAS（全氟和多氟烷基物质）去除新技术。以交互方式探索其创新方法和对未来的影响。</p>
+                <a href="#crisis" class="inline-block bg-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-opacity-90 transition-transform transform hover:scale-105">
+                    开始分析
+                </a>
+            </div>
+        </section>
+
+        <section id="crisis" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12 max-w-3xl mx-auto">
+                    <h3 class="text-3xl md:text-4xl font-bold text-primary mb-4">问题的核心：静冈的PFAS危机</h3>
+                    <p class="text-gray-600 md:text-lg">在静冈市发生的严重PFAS污染，凸显了传统水处理技术的局限性。这种危机状况成为寻求创新解决方案的强大催化剂。</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
+                    <div class="content-section bg-white p-8 rounded-xl shadow-lg border-t-4 border-red-500">
+                        <h4 class="text-2xl font-bold text-gray-800 mb-4">惊人的污染水平</h4>
+                        <p class="text-red-600 text-8xl font-extrabold mb-4">420<span class="text-4xl align-middle">倍</span></p>
+                        <p class="text-gray-600">在三保雨水泵站检测到的PFAS浓度，达到了国家临时目标值（50 ng/L）的420倍。这表明必须采取紧急而有效的措施。</p>
+                    </div>
+                    <div class="content-section bg-white p-8 rounded-xl shadow-lg border-t-4 border-primary">
+                        <h4 class="text-2xl font-bold text-gray-800 mb-4">传统技术的局限</h4>
+                        <p class="text-gray-600 mb-4">虽然尝试了活性炭（GAC）处理，但对于高浓度、大水量的污染水，其处理能力跟不上，成本也极为高昂。现有方法无法应对，出现了“市场失灵”。</p>
+                        <div class="w-full bg-gray-200 rounded-full h-8">
+                            <div class="bg-primary h-8 rounded-full flex items-center justify-center text-white text-sm font-medium" style="width: 5.5%;">
+                                5.5%
+                            </div>
+                        </div>
+                        <p class="text-xs text-right mt-1 text-gray-500">活性炭最大处理能力（720吨/天） vs 泵站总排水量（13,000吨/天）</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="py-20 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12 max-w-3xl mx-auto">
+                    <h3 class="text-3xl md:text-4xl font-bold text-primary mb-4">创新解决方案：两阶段处理系统</h3>
+                    <p class="text-gray-600 md:text-lg">A Holdings公司开发的系统结合了“捕获”和“销毁”两个阶段，旨在从根本上解决PFAS问题。</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                    <div class="content-section p-8 rounded-xl shadow-lg bg-gray-50 border-t-4 border-secondary">
+                        <h4 class="text-2xl font-bold text-secondary mb-2">第一阶段：捕获与浓缩</h4>
+                        <p class="text-gray-600 mb-6">采用加压浮选分离法，将水中的PFAS附着在泡沫上，实现高效分离和浓缩。</p>
+                        <div class="relative h-64 w-full bg-blue-100 rounded-lg overflow-hidden border border-blue-200">
+                             <div class="absolute top-0 left-0 right-0 h-16 bg-blue-200/50 flex items-center justify-center">
+                                <span class="text-blue-800 font-semibold">PFAS浓缩泡沫</span>
+                            </div>
+                            <div class="bubble" style="width: 20px; height: 20px; left: 15%; animation-delay: 0s;"></div>
+                            <div class="bubble" style="width: 30px; height: 30px; left: 30%; animation-delay: 1s;"></div>
+                            <div class="bubble" style="width: 15px; height: 15px; left: 50%; animation-delay: 2s;"></div>
+                            <div class="bubble" style="width: 25px; height: 25px; left: 70%; animation-delay: 1.5s;"></div>
+                            <div class="bubble" style="width: 22px; height: 22px; left: 85%; animation-delay: 3s;"></div>
+                            <div class="bubble" style="width: 18px; height: 18px; left: 5%; animation-delay: 2.5s;"></div>
+                        </div>
+                         <p class="text-sm text-gray-500 mt-4">微小的气泡吸附PFAS分子并浮到水面。通过回收这些泡沫，大大减少了需要处理的水量。</p>
+                    </div>
+                    <div class="content-section p-8 rounded-xl shadow-lg bg-gray-50 border-t-4 border-secondary">
+                        <h4 class="text-2xl font-bold text-secondary mb-2">第二阶段：分解与无害化</h4>
+                        <p class="text-gray-600 mb-6">将浓缩后的PFAS，用亚临界水或超临界水氧化（SCWO）技术分解至分子水平。</p>
+                        <div class="relative h-64 w-full bg-red-100 rounded-lg flex items-center justify-center border border-red-200">
+                            <div class="text-center">
+                                <p class="text-red-700 font-bold text-lg">C-F键</p>
+                                <p class="text-6xl my-2 animate-pulse">💥</p>
+                                <p class="text-red-700 font-bold">分解</p>
+                                <p class="text-green-700 font-bold mt-2">→ $CO_2, H_2O, F^-$</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-4">在高温高压下的特殊水体能破坏PFAS极其稳定的碳-氟键，最终将其转化为无害物质。这是终结“永久化学品”的技术。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12 max-w-3xl mx-auto">
+                    <h3 class="text-3xl md:text-4xl font-bold text-primary mb-4">技术比较：销毁还是管理？</h3>
+                    <p class="text-gray-600 md:text-lg">A Holdings的“销毁”技术与传统的“管理”技术有何不同？我们将从成本、效率以及最重要的环境负荷角度进行比较。将光标悬停在条形图上可查看详细信息。</p>
+                </div>
+                <div class="content-section chart-container bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                    <canvas id="techComparisonChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="challenge" class="py-20 bg-white">
+            <div class="container mx-auto px-4">
+                 <div class="text-center mb-12 max-w-3xl mx-auto">
+                    <h3 class="text-3xl md:text-4xl font-bold text-primary mb-4">最大的挑战：50倍的鸿沟</h3>
+                    <p class="text-gray-600 md:text-lg">这项创新技术要实现商业化，必须跨越巨大的“规模化壁垒”。试点工厂的处理能力与现场需求之间存在超过50倍的差距。</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
+                    <div class="content-section">
+                        <h4 class="text-2xl font-bold text-gray-800 mb-4">处理能力的差距</h4>
+                        <p class="text-gray-600 mb-4">验证实验设备的处理能力为每小时10吨（每天240吨）。然而，三保雨水泵站的实际排水量约为每天13,000吨。填补这一差距是证明该技术真正价值的关键。</p>
+                        <p class="text-gray-600">这一挑战不仅是简单地放大设备。它涉及制造、工程和巨大的资本投资，是一项极其艰巨的任务。“大容量”处理的主张尚未得到证实。</p>
+                    </div>
+                    <div class="content-section chart-container h-64 md:h-80 bg-gray-50 p-4 rounded-xl shadow-inner">
+                        <canvas id="scalabilityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="future" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12 max-w-3xl mx-auto">
+                    <h3 class="text-3xl md:text-4xl font-bold text-primary mb-4">市场与未来展望</h3>
+                    <p class="text-gray-600 md:text-lg">A Holdings的挑战有可能重塑PFAS治理市场的格局。让我们探讨其雄心勃勃的战略，以及作为衡量日本环保技术未来的试金石的重要性。</p>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                    <div class="content-section bg-white p-8 rounded-xl shadow-lg">
+                        <h4 class="text-2xl font-bold text-gray-800 mb-6 text-center">PFAS治理市场的主要参与者</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3">类别</th>
+                                        <th scope="col" class="px-6 py-3">公司名称</th>
+                                        <th scope="col" class="px-6 py-3">主要技术/服务</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="bg-white border-b"><td class="px-6 py-4 font-medium text-secondary">销毁技术</td><td class="px-6 py-4">A Holdings</td><td class="px-6 py-4">泡沫浮选 + SCWO</td></tr>
+                                    <tr class="bg-gray-50 border-b"><td class="px-6 py-4 font-medium text-primary">捕获技术</td><td class="px-6 py-4">可乐丽 (Kuraray)</td><td class="px-6 py-4">活性炭 (GAC)</td></tr>
+                                    <tr class="bg-white border-b"><td class="px-6 py-4 font-medium text-primary">捕获技术</td><td class="px-6 py-4">流机工程</td><td class="px-6 py-4">高精度吸附</td></tr>
+                                    <tr class="bg-gray-50 border-b"><td class="px-6 py-4 font-medium text-gray-600">工程</td><td class="px-6 py-4">オルガノ / 栗田工业</td><td class="px-6 py-4">综合水处理</td></tr>
+                                    <tr class="bg-white border-b"><td class="px-6 py-4 font-medium text-gray-600">分析</td><td class="px-6 py-4">岛津制作所</td><td class="px-6 py-4">分析和测量仪器</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                     <div class="content-section bg-white p-8 rounded-xl shadow-lg">
+                        <h4 class="text-2xl font-bold text-gray-800 mb-6 text-center">A Holdings的平台战略</h4>
+                        <div class="space-y-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl">🏢</div>
+                                <div>
+                                    <h5 class="font-bold">面向市政与工业</h5>
+                                    <p class="text-gray-600">销售和租赁大型处理厂。以静冈案例为模型进行推广。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl">💧</div>
+                                <div>
+                                    <h5 class="font-bold">面向消费者</h5>
+                                    <p class="text-gray-600">开发具有PFAS去除功能的家用净水器。大胆进入B2C市场。</p>
+                                </div>
+                            </div>
+                             <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl">🌍</div>
+                                <div>
+                                    <h5 class="font-bold">全球扩张</h5>
+                                    <p class="text-gray-600">“从静冈走向世界”。将日本技术定位为全球环境问题的解决方案。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12 content-section max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg border-l-4 border-secondary">
+                    <h4 class="text-xl font-bold text-secondary mb-3">结论：范式转变的风向标</h4>
+                    <p class="text-gray-600">A Holdings的项目是一项高风险、高回报的挑战。其成败不仅可能影响PFAS治理市场，还可能左右日本先进环保技术产业的未来。这不仅仅是关于水处理技术的故事，更是一个象征着从“管理”到“解决”的重大时代转折点的案例研究。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center text-gray-400">
+            <p>本交互式报告基于公开信息编制和分析。</p>
+            <p class="text-sm mt-2">&copy; 2025 Interactive Report. All rights reserved.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const chartData = {
+        labels: ['A Holdings (销毁)', '活性炭 (GAC)', '离子交换 (IX)', '反渗透膜 (RO)'],
+        datasets: [
+            {
+                label: '去除效率 (%)',
+                data: [97, 90, 99, 99.5], 
+                backgroundColor: 'rgba(74, 124, 89, 0.7)',
+                borderColor: 'rgba(74, 124, 89, 1)',
+                borderWidth: 1,
+                stack: 'Stack 0',
+            },
+            {
+                label: '初始费用 (相对值)',
+                data: [100, 30, 50, 80],
+                backgroundColor: 'rgba(217, 83, 79, 0.7)',
+                borderColor: 'rgba(217, 83, 79, 1)',
+                borderWidth: 1,
+                stack: 'Stack 1',
+            },
+            {
+                label: '运营费用 (相对值)',
+                data: [70, 90, 80, 95],
+                backgroundColor: 'rgba(240, 173, 78, 0.7)',
+                borderColor: 'rgba(240, 173, 78, 1)',
+                borderWidth: 1,
+                stack: 'Stack 2',
+            },
+            {
+                label: '二次废弃物风险',
+                data: [5, 95, 90, 85],
+                backgroundColor: 'rgba(46, 90, 136, 0.7)',
+                borderColor: 'rgba(46, 90, 136, 1)',
+                borderWidth: 1,
+                stack: 'Stack 3',
+            }
+        ]
+    };
+
+    const techComparisonCtx = document.getElementById('techComparisonChart').getContext('2d');
+    const techComparisonChart = new Chart(techComparisonCtx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                title: { display: true, text: 'PFAS处理技术多维度比较', font: { size: 16 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.x !== null) {
+                                if(context.dataset.label === '去除效率 (%)') {
+                                     label += context.parsed.x + '%';
+                                } else {
+                                     label += context.parsed.x;
+                                }
+                            }
+                            return label;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'bottom',
+                },
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    title: { display: true, text: '相对得分' }
+                },
+                y: {
+                    stacked: true,
+                    ticks: {
+                        callback: function(value, index, values) {
+                            const label = this.getLabelForValue(value);
+                            return label.length > 15 ? label.substring(0, 15) + '...' : label;
+                        }
+                    }
+                }
+            },
+        }
+    });
+
+    const scalabilityData = {
+        labels: ['验证设备处理能力 (240吨/天)', '泵站需求能力 (13,000吨/天)'],
+        datasets: [{
+            data: [240, 13000 - 240],
+            backgroundColor: ['#4A7C59', '#E5E7EB'],
+            borderColor: ['#FFFFFF'],
+            borderWidth: 2
+        }]
+    };
+
+    const scalabilityCtx = document.getElementById('scalabilityChart').getContext('2d');
+    const scalabilityChart = new Chart(scalabilityCtx, {
+        type: 'doughnut',
+        data: scalabilityData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: '处理能力差距 (吨/天)',
+                    font: { size: 14 }
+                },
+                tooltip: {
+                     callbacks: {
+                        label: function(context) {
+                           let label = context.label || '';
+                           if(label) label += ': ';
+                           let value = context.dataset.data[context.dataIndex];
+                           if(context.dataIndex === 0) {
+                               label += value;
+                           } else {
+                               label += (13000 - value);
+                           }
+                           return label + ' 吨';
+                        }
+                    }
+                }
+            },
+            cutout: '60%',
+        }
+    });
+
+    const sections = document.querySelectorAll('.content-section');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+    sections.forEach(section => observer.observe(section));
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    const navObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active-nav');
+                    link.classList.add('inactive-nav');
+                    if (link.getAttribute('href').substring(1) === entry.target.id) {
+                        link.classList.add('active-nav');
+                        link.classList.remove('inactive-nav');
+                    }
+                });
+            }
+        });
+    }, { rootMargin: '-50% 0px -50% 0px' });
+    document.querySelectorAll('section[id]').forEach(section => navObserver.observe(section));
+
+});
+</script>
+</body>
+</html>

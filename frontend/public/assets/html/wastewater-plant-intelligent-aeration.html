@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度解析：污水处理厂智能曝气系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard with five main sections accessible via a sticky top navigation: 概览 (Overview), 核心技术 (Core Technology), 效益分析 (Benefit Analysis), 实践案例 (Case Studies), and 成功关键 (Success Factors). This thematic structure, rather than mirroring the report's linear format, allows users to explore topics based on their interest (e.g., a plant manager might go straight to 'Benefit Analysis', while an engineer might focus on 'Core Technology'). The user flow starts with a high-level overview and KPI cards to grab attention, then encourages deeper exploration into interactive charts, diagrams, and case studies. This non-linear, task-oriented design enhances usability and information discovery. -->
+    <!-- Visualization & Content Choices: 
+        - Overview: Goal: Inform/Engage. Method: KPI cards (HTML/CSS) with Unicode icons to present key benefits like energy savings. Justification: Quickly communicates the value proposition.
+        - Core Technology: Goal: Explain/Organize. Method: Interactive diagram (HTML/CSS Flexbox) for the control loop and a comparison table. Justification: Visually simplifies complex processes and highlights key differences effectively without SVG.
+        - Benefit Analysis: Goal: Compare/Quantify. Method: Interactive charts (Chart.js) for energy savings (bar chart with a slider for interaction), cost breakdown (donut chart), and ROI (bar chart). Justification: Makes abstract financial and performance data tangible and explorable.
+        - Case Studies: Goal: Inform/Evidence. Method: Tabbed interface (JS) for success/failure cases. Justification: Organizes real-world examples neatly and allows for easy comparison.
+        - Success Factors: Goal: Organize/Advise. Method: Interactive accordion (JS). Justification: Presents dense information in a digestible, user-controlled format.
+        - Library/Method: Chart.js for all charts (Canvas-based). All other visuals are built with HTML/Tailwind CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #F8F9FA; }
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link.active { color: #2563EB; border-bottom-color: #2563EB; }
+        .nav-link:not(.active):hover { color: #60A5FA; border-bottom-color: #60A5FA; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .kpi-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 350px; max-height: 40vh; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .tab-button.active { background-color: #3B82F6; color: white; }
+        .tab-button { transition: background-color 0.3s ease, color 0.3s ease; }
+        .accordion-button.open .accordion-icon { transform: rotate(180deg); }
+        .accordion-icon { transition: transform 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl md:text-2xl font-bold text-blue-600">智能曝气系统</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link px-3 py-2 text-sm font-medium border-b-2 border-transparent">概览</a>
+                        <a href="#tech" class="nav-link px-3 py-2 text-sm font-medium border-b-2 border-transparent">核心技术</a>
+                        <a href="#benefits" class="nav-link px-3 py-2 text-sm font-medium border-b-2 border-transparent">效益分析</a>
+                        <a href="#cases" class="nav-link px-3 py-2 text-sm font-medium border-b-2 border-transparent">实践案例</a>
+                        <a href="#factors" class="nav-link px-3 py-2 text-sm font-medium border-b-2 border-transparent">成功关键</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-white border border-gray-300 rounded-md py-2 px-3 text-sm">
+                        <option value="overview">概览</option>
+                        <option value="tech">核心技术</option>
+                        <option value="benefits">效益分析</option>
+                        <option value="cases">实践案例</option>
+                        <option value="factors">成功关键</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <section id="overview" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">迈向智慧水务：智能曝气技术全景</h2>
+                <p class="max-w-3xl mx-auto text-slate-600">
+                    智能曝气系统是污水处理领域的一场技术革命。它利用实时数据和先进算法，精确控制曝气过程，颠覆了传统的高能耗、低效率模式。本应用将带您交互式地探索其工作原理、核心优势、经济效益和成功秘诀，助您全面掌握这项面向未来的关键技术。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="kpi-card bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-100 rounded-full text-blue-600 text-2xl">⚡</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-slate-800">显著节能降耗</h3>
+                            <p class="text-2xl font-bold text-blue-600">15-40%</p>
+                            <p class="text-sm text-slate-500">曝气能耗降低幅度</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-green-100 rounded-full text-green-600 text-2xl">💧</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-slate-800">稳定提升水质</h3>
+                            <p class="text-2xl font-bold text-green-600">稳定达标</p>
+                            <p class="text-sm text-slate-500">出水优于一级A标准</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-amber-100 rounded-full text-amber-600 text-2xl">💰</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-slate-800">降低运营成本</h3>
+                            <p class="text-2xl font-bold text-amber-600">成效显著</p>
+                            <p class="text-sm text-slate-500">减少药剂与人工成本</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-indigo-100 rounded-full text-indigo-600 text-2xl">⚙️</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-slate-800">增强系统韧性</h3>
+                            <p class="text-2xl font-bold text-indigo-600">主动适应</p>
+                            <p class="text-sm text-slate-500">有效应对负荷冲击</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">探秘“大脑”：核心技术解析</h2>
+                <p class="max-w-3xl mx-auto text-slate-600">
+                    智能曝气的“智能”源于一个精密的闭环控制系统，它由感知、决策和执行三部分构成。通过下面的交互式图解和对比，您可以清晰地了解其工作机制，以及它相比传统PLC控制的革命性优势。
+                </p>
+            </div>
+            
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-slate-100 mb-12">
+                <h3 class="text-2xl font-bold text-center mb-8">智能曝气工作循环</h3>
+                <div id="tech-diagram" class="grid grid-cols-1 md:grid-cols-5 items-center gap-4 text-center">
+                    <div class="tech-component p-4 rounded-lg cursor-pointer bg-slate-100" data-content="tech-sensors">
+                        <div class="text-4xl mb-2">📡</div>
+                        <h4 class="font-semibold">感知层</h4>
+                        <p class="text-sm text-slate-500">传感器</p>
+                    </div>
+                    <div class="text-2xl text-slate-400 font-mono hidden md:block">-></div>
+                    <div class="tech-component p-4 rounded-lg cursor-pointer bg-slate-100" data-content="tech-controller">
+                         <div class="text-4xl mb-2">🧠</div>
+                        <h4 class="font-semibold">决策层</h4>
+                        <p class="text-sm text-slate-500">控制器/算法</p>
+                    </div>
+                    <div class="text-2xl text-slate-400 font-mono hidden md:block">-></div>
+                    <div class="tech-component p-4 rounded-lg cursor-pointer bg-slate-100" data-content="tech-actuators">
+                         <div class="text-4xl mb-2">💪</div>
+                        <h4 class="font-semibold">执行层</h4>
+                        <p class="text-sm text-slate-500">执行器</p>
+                    </div>
+                </div>
+                <div id="tech-details" class="mt-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg min-h-[120px]">
+                    <p class="text-slate-700">点击上方任一模块，查看其详细功能介绍。</p>
+                </div>
+                <div id="tech-content-definitions" class="hidden">
+                    <div id="tech-sensors">
+                        <h5 class="font-bold text-lg mb-2 text-blue-700">感知层：系统的“眼睛”和“触角”</h5>
+                        <p>通过溶解氧(DO)、氨氮(NH3-N)、流量计等多种高精度传感器，实时、连续地监测水质和工艺参数。这些传感器采集的数据是智能决策的唯一依据，其准确性至关重要。</p>
+                    </div>
+                    <div id="tech-controller">
+                        <h5 class="font-bold text-lg mb-2 text-blue-700">决策层：系统的“大脑”</h5>
+                        <p>控制器接收传感器数据，并运用模型预测控制(MPC)、人工智能(AI)、机器学习(ML)等先进算法进行运算，动态计算出当前及未来的最优需氧量，生成精确的控制指令。</p>
+                    </div>
+                    <div id="tech-actuators">
+                        <h5 class="font-bold text-lg mb-2 text-blue-700">执行层：系统的“手臂”</h5>
+                        <p>根据控制器指令，变频鼓风机(VFD)和精密控制阀门等执行器会精确调节曝气量和气体分配，将计算出的需氧量转化为实际的供气量，完成闭环控制。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto bg-white p-8 rounded-xl shadow-lg border border-slate-100">
+                <h3 class="text-2xl font-bold text-center mb-8">新旧对比：优势一目了然</h3>
+                <table class="w-full min-w-[600px] text-left">
+                    <thead>
+                        <tr class="border-b-2 border-slate-300">
+                            <th class="p-4 font-semibold text-slate-800">特性</th>
+                            <th class="p-4 font-semibold text-slate-500 bg-slate-100 rounded-tl-lg">传统曝气系统 (基于PLC)</th>
+                            <th class="p-4 font-semibold text-blue-700 bg-blue-100 rounded-tr-lg">智能曝气系统 (基于AI/算法)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-slate-200">
+                            <td class="p-4 font-medium">控制逻辑</td>
+                            <td class="p-4 bg-slate-100">固定设定点, 简单PID, 依赖人工</td>
+                            <td class="p-4 bg-blue-50 text-blue-800">动态设定点, MPC/AI/ML, 自适应</td>
+                        </tr>
+                        <tr class="border-b border-slate-200">
+                            <td class="p-4 font-medium">适应性</td>
+                            <td class="p-4 bg-slate-100">响应慢, 适应性差</td>
+                            <td class="p-4 bg-blue-50 text-blue-800">响应快, 主动预测, 适应性强</td>
+                        </tr>
+                        <tr class="border-b border-slate-200">
+                            <td class="p-4 font-medium">能源效率</td>
+                            <td class="p-4 bg-slate-100">DO设定值偏高, 普遍过曝, 能耗高</td>
+                            <td class="p-4 bg-blue-50 text-blue-800">按需供气, 避免浪费, 显著节能</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-medium">过程稳定性</td>
+                            <td class="p-4 bg-slate-100 rounded-bl-lg">DO波动大, 冲击微生物系统</td>
+                            <td class="p-4 bg-blue-50 text-blue-800 rounded-br-lg">DO控制精确稳定, 工艺环境更优</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="benefits" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">价值衡量：效益与成本分析</h2>
+                <p class="max-w-3xl mx-auto text-slate-600">
+                    智能曝气系统的核心驱动力在于其卓越的经济效益。本部分通过交互式图表，为您量化展示其在节能、投资回报等方面的巨大潜力。您可以拖动滑块，模拟不同条件下的节能效果。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                    <h3 class="text-xl font-bold text-center mb-2">能耗对比与节能潜力</h3>
+                    <p class="text-sm text-center text-slate-500 mb-4">拖动滑块模拟不同规模污水厂的节能效果。</p>
+                    <div class="chart-container mx-auto">
+                        <canvas id="energyChart"></canvas>
+                    </div>
+                    <div class="mt-4 px-2">
+                        <label for="plantScale" class="block text-sm font-medium text-slate-700">模拟污水厂规模 (万吨/日): <span id="plantScaleValue" class="font-bold text-blue-600">10</span></label>
+                        <input id="plantScale" type="range" min="1" max="50" value="10" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                    <h3 class="text-xl font-bold text-center mb-4">投资回报(ROI)分析</h3>
+                    <p class="text-sm text-center text-slate-500 mb-4">基于案例数据，展示投资回收周期。</p>
+                    <div class="chart-container mx-auto">
+                        <canvas id="roiChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cases" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">真实世界：实践案例研究</h2>
+                <p class="max-w-3xl mx-auto text-slate-600">
+                    理论最终要回归实践。这里我们精选了全球范围内的典型成功案例和值得警惕的失败教训。通过这些真实故事，可以更深刻地理解智能曝气系统在实际应用中的表现和挑战。
+                </p>
+            </div>
+            
+            <div>
+                <div class="flex justify-center border-b border-slate-200 mb-8">
+                    <button class="tab-button active py-2 px-6 font-semibold" data-tab="success">✅ 成功故事</button>
+                    <button class="tab-button py-2 px-6 font-semibold text-slate-500" data-tab="failure">⚠️ 失败与挑战</button>
+                </div>
+
+                <div id="success" class="tab-content grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl p-6 shadow-lg border border-slate-100 flex flex-col">
+                        <h4 class="font-bold text-xl mb-2 text-green-700">德国库克斯港</h4>
+                        <p class="text-sm font-semibold text-slate-500 mb-4">技术: Xylem BLU-X (数字孪生)</p>
+                        <div class="space-y-2 flex-grow">
+                            <p class="text-slate-700"><strong>成果:</strong> 曝气能耗降低 <span class="font-bold text-green-600">26%</span>，年节约110万kWh。</p>
+                            <p class="text-slate-700"><strong>亮点:</strong> 利用“虚拟传感器”和机器学习，在物理传感器不足的情况下，依然实现了精确控制，充分挖掘了现有数据的价值。</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-lg border border-slate-100 flex flex-col">
+                        <h4 class="font-bold text-xl mb-2 text-green-700">中国株洲水务</h4>
+                        <p class="text-sm font-semibold text-slate-500 mb-4">技术: 自主研发 (PLC+大数据)</p>
+                        <div class="space-y-2 flex-grow">
+                            <p class="text-slate-700"><strong>成果:</strong> 能耗成本降幅超 <span class="font-bold text-green-600">30%</span>，大幅减少药剂使用。</p>
+                            <p class="text-slate-700"><strong>亮点:</strong> 硬件成本极低 (8.6万元)，通过本土化创新和精简设计，实现了高性价比的智能化升级，极具推广价值。</p>
+                        </div>
+                    </div>
+                     <div class="bg-white rounded-xl p-6 shadow-lg border border-slate-100 flex flex-col">
+                        <h4 class="font-bold text-xl mb-2 text-green-700">中国武汉江夏</h4>
+                        <p class="text-sm font-semibold text-slate-500 mb-4">技术: BIM智能曝气 (软件升级)</p>
+                        <div class="space-y-2 flex-grow">
+                            <p class="text-slate-700"><strong>成果:</strong> 曝气电耗降低 <span class="font-bold text-green-600">10-15%</span>，两年效益近200万元。</p>
+                            <p class="text-slate-700"><strong>亮点:</strong> 无需新增硬件，仅通过软件升级和BIM可视化，实现了低成本、高效益的提升，并改善了操作员的理解和交互。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="failure" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div class="bg-white rounded-xl p-6 shadow-lg border-2 border-red-100 flex flex-col">
+                        <h4 class="font-bold text-xl mb-2 text-red-700">挑战：传感器问题</h4>
+                        <p class="text-sm font-semibold text-slate-500 mb-4">根源: 数据质量差</p>
+                        <div class="space-y-2 flex-grow">
+                           <p class="text-slate-700"><strong>现象:</strong> “垃圾输入，垃圾输出”。传感器精度差、校准不及时或安装位置不当，导致控制系统接收错误数据，做出错误决策，性能远不及预期。</p>
+                            <p class="text-slate-700"><strong>教训:</strong> 数据质量是智能系统的生命线。必须建立严格的传感器选型、安装、校准和维护制度。</p>
+                        </div>
+                    </div>
+                     <div class="bg-white rounded-xl p-6 shadow-lg border-2 border-red-100 flex flex-col">
+                        <h4 class="font-bold text-xl mb-2 text-red-700">挑战：MBR膜堵塞</h4>
+                        <p class="text-sm font-semibold text-slate-500 mb-4">根源: 工艺协同失调</p>
+                        <div class="space-y-2 flex-grow">
+                           <p class="text-slate-700"><strong>现象:</strong> 在MBR工艺中，不当的曝气控制与加药（如絮凝剂）策略不匹配，可能导致膜组件严重污染和堵塞，反而增加能耗和维护成本。</p>
+                            <p class="text-slate-700"><strong>教训:</strong> 智能曝气需与特定工艺（尤其是MBR）紧密结合，综合考虑供氧和膜清洗等多重作用，进行协同优化。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="factors" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">通往成功之路：关键因素识别</h2>
+                <p class="max-w-3xl mx-auto text-slate-600">
+                   智能曝气系统的成功并非偶然，它依赖于技术、管理和人员的有机结合。以下是确保项目成功的几个关键因素。点击每个因素，展开查看详细的规避策略和建议。
+                </p>
+            </div>
+
+            <div id="accordion" class="space-y-4 max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <button class="accordion-button w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
+                        <span>📊 数据质量与传感器可靠性</span>
+                        <span class="accordion-icon text-blue-500 text-2xl font-light transform transition-transform">↓</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-5 border-t border-slate-200 bg-slate-50">
+                            <p class="text-slate-700"><strong>风险：</strong>控制失准、能耗增加、算法失效。<br><strong>规避策略：</strong><br>1. 严格选型、安装、校准和维护传感器。<br>2. 部署数据有效性校验算法，自动识别和处理异常数据。<br>3. 在关键测点考虑冗余设计。</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <button class="accordion-button w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
+                        <span>🤖 算法的鲁棒性与适应性</span>
+                        <span class="accordion-icon text-blue-500 text-2xl font-light transform transition-transform">↓</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-5 border-t border-slate-200 bg-slate-50">
+                            <p class="text-slate-700"><strong>风险：</strong>系统不稳定，对扰动响应差，优化效果不佳。<br><strong>规避策略：</strong><br>1. 进行充分的工艺分析和模型验证，确保算法与实际工况匹配。<br>2. 优先采用具备自适应或自学习能力的算法。<br>3. 进行试点测试，逐步优化算法参数。</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <button class="accordion-button w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
+                        <span>🧑‍💻 运营专业知识与培训</span>
+                        <span class="accordion-icon text-blue-500 text-2xl font-light transform transition-transform">↓</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-5 border-t border-slate-200 bg-slate-50">
+                            <p class="text-slate-700"><strong>风险：</strong>系统被绕过或误用，故障处理不当，效益无法发挥。<br><strong>规避策略：</strong><br>1. 提供全面系统的培训，让操作员从“执行者”转变为“监督者”。<br>2. 让操作人员早期参与项目，听取其经验和需求。<br>3. 设计用户友好的人机界面，降低操作门槛。</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <button class="accordion-button w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
+                        <span>🤝 管理层的支持与明确目标</span>
+                        <span class="accordion-icon text-blue-500 text-2xl font-light transform transition-transform">↓</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-5 border-t border-slate-200 bg-slate-50">
+                            <p class="text-slate-700"><strong>风险：</strong>资源投入不足，项目优先级低，评估困难。<br><strong>规避策略：</strong><br>1. 争取管理层对项目价值的认同与授权。<br>2. 设定具体、可衡量、可实现、相关且有时间限制(SMART)的项目目标，如明确的节能百分比。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
+            const sections = document.querySelectorAll('.content-section');
+            let energyChartInstance, roiChartInstance;
+            
+            function setActiveSection(hash) {
+                const targetId = hash.substring(1);
+                
+                sections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === hash) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                
+                if (mobileNav.value !== targetId) {
+                    mobileNav.value = targetId;
+                }
+
+                if (targetId === 'benefits') {
+                    initBenefitCharts();
+                }
+            }
+            
+            function navigate(event) {
+                event.preventDefault();
+                const hash = this.getAttribute('href');
+                window.location.hash = hash;
+            }
+            
+            navLinks.forEach(link => link.addEventListener('click', navigate));
+            
+            mobileNav.addEventListener('change', function() {
+                window.location.hash = this.value;
+            });
+
+            window.addEventListener('hashchange', () => setActiveSection(window.location.hash || '#overview'));
+
+            setActiveSection(window.location.hash || '#overview');
+
+            const techComponents = document.querySelectorAll('.tech-component');
+            const techDetailsContainer = document.getElementById('tech-details');
+            const techContentDefinitions = document.getElementById('tech-content-definitions');
+
+            techComponents.forEach(component => {
+                component.addEventListener('click', function() {
+                    techComponents.forEach(c => c.classList.replace('bg-blue-200', 'bg-slate-100'));
+                    this.classList.replace('bg-slate-100', 'bg-blue-200');
+                    const contentId = this.dataset.content;
+                    const contentHtml = techContentDefinitions.querySelector(`#${contentId}`).innerHTML;
+                    techDetailsContainer.innerHTML = contentHtml;
+                });
+            });
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.classList.add('text-slate-500');
+                    });
+                    this.classList.add('active');
+                    this.classList.remove('text-slate-500');
+                    
+                    const tabId = this.dataset.tab;
+                    tabContents.forEach(content => {
+                        if (content.id === tabId) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            const accordionButtons = document.querySelectorAll('.accordion-button');
+            accordionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.classList.toggle('open');
+                    const content = this.nextElementSibling;
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    }
+                });
+            });
+            
+            function initBenefitCharts() {
+                if (!energyChartInstance) {
+                    const energyCtx = document.getElementById('energyChart').getContext('2d');
+                    energyChartInstance = new Chart(energyCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['传统PLC控制', '智能曝气系统'],
+                            datasets: [{
+                                label: '年均曝气能耗 (万 kWh)',
+                                data: [120, 84],
+                                backgroundColor: [
+                                    'rgba(107, 114, 128, 0.5)',
+                                    'rgba(59, 130, 246, 0.6)',
+                                ],
+                                borderColor: [
+                                    'rgb(107, 114, 128)',
+                                    'rgb(59, 130, 246)',
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: '能耗 (万 kWh)' }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                title: { display: true, text: '能耗对比' }
+                            }
+                        }
+                    });
+
+                    const plantScaleSlider = document.getElementById('plantScale');
+                    const plantScaleValue = document.getElementById('plantScaleValue');
+                    plantScaleSlider.addEventListener('input', function() {
+                        const scale = parseInt(this.value);
+                        plantScaleValue.textContent = scale;
+                        const baseTraditional = 12 * scale;
+                        const savingsPercentage = 0.30; 
+                        const baseSmart = baseTraditional * (1 - savingsPercentage);
+                        energyChartInstance.data.datasets[0].data = [baseTraditional, baseSmart];
+                        energyChartInstance.update();
+                    });
+                }
+                
+                if (!roiChartInstance) {
+                    const roiCtx = document.getElementById('roiChart').getContext('2d');
+                    roiChartInstance = new Chart(roiCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['第一年', '第二年', '第三年', '第四年', '第五年'],
+                            datasets: [{
+                                label: '累计净收益 (万元)',
+                                data: [-80, 20, 120, 220, 320],
+                                backgroundColor: (context) => {
+                                    const value = context.dataset.data[context.dataIndex];
+                                    return value < 0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(34, 197, 94, 0.6)';
+                                },
+                                borderColor: (context) => {
+                                    const value = context.dataset.data[context.dataIndex];
+                                    return value < 0 ? 'rgb(239, 68, 68)' : 'rgb(34, 197, 94)';
+                                },
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                             plugins: {
+                                title: { display: true, text: '典型项目累计净收益' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += context.parsed.y + ' 万元';
+                                            }
+                                            if (context.dataIndex === 1 && context.parsed.y > 0) {
+                                                label += ' (投资回收点)';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    title: { display: true, text: '累计净收益 (万元)' },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + '万';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

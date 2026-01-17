@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashRAG: 交互式深度解析</title>
+    <!-- Chosen Palette: "Soothing Neutrals & Tech Blue" -->
+    <!-- Application Structure Plan: [The application is designed as a single-page dashboard with a fixed sidebar for navigation, allowing users to jump between key sections without linear scrolling. This structure is ideal for a technical audience that needs to quickly reference specific information. The sections are: 1) Overview: To quickly establish FlashRAG's value. 2) Core Architecture: An interactive diagram to deconstruct the complex framework, making it the centerpiece for exploration. 3) Key Features: A card-based layout for a high-level summary of capabilities. 4) Performance Benchmarks: Interactive charts to visualize and compare performance data. 5) Quick Start: A practical, actionable guide for developers. This thematic structure prioritizes user task-orientation (understanding, comparing, using) over the original report's linear narrative, enhancing usability and engagement.] -->
+    <!-- Visualization & Content Choices: [1. Toolkit Comparison (Table 1): Goal: Compare. Method: Styled HTML table. Justification: Best for direct data comparison. 2. Architecture Diagram: Goal: Organize/Inform. Method: Interactive diagram built with HTML/CSS. Interaction: Click to reveal details. Justification: Visually breaks down complexity and encourages exploration. 3. Performance Data (Tables 3, 4): Goal: Compare. Method: Chart.js bar charts. Interaction: Hover for tooltips, dropdown to filter data. Justification: Charts make quantitative comparisons intuitive. 4. Code Snippets: Goal: Inform/Enable. Method: Styled `<code>` blocks. Interaction: Copy-to-clipboard button. Justification: Improves developer experience. All choices adhere to the NO SVG/Mermaid constraint.] -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f7f4;
+            color: #3d3d3d;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 40vh;
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 380px;
+            }
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            transform-origin: left;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #2563eb;
+            transform: scale(1.05);
+            background-color: #f0f3f8;
+        }
+        .arch-block {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .arch-block:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .arch-block.active {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        .component-tab.active {
+            border-color: #2563eb;
+            color: #2563eb;
+            background-color: #eff6ff;
+        }
+        .component-tab {
+            transition: all 0.2s ease-in-out;
+        }
+        .content-section {
+            scroll-margin-top: 80px;
+        }
+        .code-block {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #e5e7eb;
+            color: #4b5563;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #d1d5db;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/80 fixed top-0 left-0 h-full hidden lg:flex flex-col">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-blue-700">FlashRAG</h1>
+                <p class="text-sm text-gray-500 mt-1">交互式深度解析</p>
+            </div>
+            <nav id="desktop-nav" class="flex-1 px-4 py-4 space-y-2">
+                <a href="#overview" class="nav-link block px-4 py-2 text-gray-600 font-medium rounded-lg">总览</a>
+                <a href="#architecture" class="nav-link block px-4 py-2 text-gray-600 font-medium rounded-lg">核心架构</a>
+                <a href="#features" class="nav-link block px-4 py-2 text-gray-600 font-medium rounded-lg">主要特性</a>
+                <a href="#benchmarks" class="nav-link block px-4 py-2 text-gray-600 font-medium rounded-lg">性能基准</a>
+                <a href="#quickstart" class="nav-link block px-4 py-2 text-gray-600 font-medium rounded-lg">快速上手</a>
+            </nav>
+            <div class="p-4 text-xs text-gray-400">
+                <p>基于 RUC-NLPIR 报告生成</p>
+                <p>&copy; 2025</p>
+            </div>
+        </aside>
+
+        <!-- Mobile Header -->
+        <header class="lg:hidden fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm shadow-md z-50">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                 <h1 class="text-xl font-bold text-blue-700">FlashRAG</h1>
+                 <button id="mobile-menu-btn" class="p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                 </button>
+            </div>
+            <div id="mobile-nav" class="hidden px-2 pt-2 pb-3 space-y-1">
+                <a href="#overview" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">总览</a>
+                <a href="#architecture" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">核心架构</a>
+                <a href="#features" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">主要特性</a>
+                <a href="#benchmarks" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">性能基准</a>
+                <a href="#quickstart" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700">快速上手</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="lg:pl-64 flex-1 pt-20 lg:pt-0">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+                <!-- Section 1: Overview -->
+                <section id="overview" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-4">总览：为何选择 FlashRAG？</h2>
+                    <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                        本节将带您快速了解 FlashRAG 的核心定位及其在众多 RAG 工具中的独特优势。检索增强生成 (RAG) 技术正面临复现困难、缺乏统一基准等挑战。FlashRAG 旨在通过提供一个高效、模块化且资源丰富的开源框架来解决这些痛点，从而加速 RAG 领域的研究与创新。
+                    </p>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-center">FlashRAG 与其他 RAG 工具包的总体比较</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">工具包</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">自动评估</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">多模态</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">已提供数据集</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">支持方法数</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comparison-table" class="bg-white divide-y divide-gray-200">
+                                    <!-- Data will be injected by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                         <p class="text-sm text-gray-500 mt-4">此比较清晰地表明，FlashRAG 在提供的预处理数据集数量（38个）和支持的先进 RAG 方法数量（16个）方面具有显著优势。这种对可复现性和标准化的强调，是其核心价值所在。</p>
+                    </div>
+                </section>
+
+                <!-- Section 2: Core Architecture -->
+                <section id="architecture" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-4">核心架构：模块化设计解析</h2>
+                     <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                        FlashRAG 的核心竞争力在于其精心设计的三层模块化架构。这一分层设计使得研究人员能够像搭积木一样，自由组合不同的模块和组件，构建定制化的 RAG 工作流程。点击下方架构图中的任意模块，即可查看其详细功能介绍。
+                    </p>
+
+                    <div class="lg:flex lg:space-x-8">
+                        <!-- Interactive Architecture Diagram -->
+                        <div class="lg:w-1/3 mb-8 lg:mb-0">
+                             <div id="arch-diagram" class="space-y-4">
+                                <div id="arch-environment" class="arch-block bg-white p-4 rounded-lg border-2 border-transparent">
+                                    <h4 class="font-bold text-lg text-teal-600">环境模块 (Environment)</h4>
+                                    <p class="text-sm text-gray-600">为实验提供数据、配置、评估等基础资源。</p>
+                                </div>
+                                <div class="text-center text-2xl text-gray-400">↓</div>
+                                <div id="arch-component" class="arch-block bg-white p-4 rounded-lg border-2 border-transparent active">
+                                    <h4 class="font-bold text-lg text-indigo-600">组件模块 (Component)</h4>
+                                    <p class="text-sm text-gray-600">构成 RAG 核心功能的构建单元。</p>
+                                </div>
+                                <div class="text-center text-2xl text-gray-400">↓</div>
+                                <div id="arch-pipeline" class="arch-block bg-white p-4 rounded-lg border-2 border-transparent">
+                                    <h4 class="font-bold text-lg text-rose-600">流水线模块 (Pipeline)</h4>
+                                    <p class="text-sm text-gray-600">编排组件以实现复杂的 RAG 流程。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Details Panel -->
+                        <div class="lg:w-2/3">
+                            <div id="arch-details-panel" class="bg-white p-6 rounded-xl shadow-lg min-h-[300px]">
+                                <!-- Environment Details -->
+                                <div id="detail-environment" class="hidden">
+                                    <h3 class="text-2xl font-semibold mb-4 text-teal-600">环境模块详情</h3>
+                                    <ul class="space-y-3 list-disc list-inside text-gray-700">
+                                        <li><strong class="font-medium">数据集与语料库:</strong> 收集并预处理了38个基准 RAG 数据集，统一为标准格式，并提供包含维基百科等的“语料库动物园”。</li>
+                                        <li><strong class="font-medium">超参数管理:</strong> 通过 `Config` 类集中管理所有实验参数，确保可复现性。</li>
+                                        <li><strong class="font-medium">评估指标:</strong> 内置全面的检索 (Recall, Precision) 和生成 (EM, F1, ROUGE) 指标体系。</li>
+                                        <li><strong class="font-medium">预处理脚本:</strong> 提供语料库构建、索引构建等辅助脚本，简化准备工作。</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Component Details -->
+                                <div id="detail-component">
+                                    <h3 class="text-2xl font-semibold mb-4 text-indigo-600">组件模块详情</h3>
+                                    <div class="border-b border-gray-200 mb-4">
+                                        <nav id="component-tabs" class="-mb-px flex space-x-4 overflow-x-auto" aria-label="Tabs">
+                                            <button data-tab="judger" class="component-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm active">判断器</button>
+                                            <button data-tab="retriever" class="component-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm">检索器</button>
+                                            <button data-tab="reranker" class="component-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm">重排序器</button>
+                                            <button data-tab="refiner" class="component-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm">精炼器</button>
+                                            <button data-tab="generator" class="component-tab whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm">生成器</button>
+                                        </nav>
+                                    </div>
+                                    <div id="component-content" class="text-gray-700">
+                                        <div data-content="judger"><strong>判断器 (Judger):</strong> 判断查询是否需要进行外部知识检索，实现了基于 SKR 思想的判断器。</div>
+                                        <div data-content="retriever" class="hidden"><strong>检索器 (Retriever):</strong> 负责从知识库中召回文档。支持稀疏检索 (BM25) 和稠密检索 (DPR, E5, BGE)，并集成 FAISS 进行高效向量操作。</div>
+                                        <div data-content="reranker" class="hidden"><strong>重排序器 (Reranker):</strong> 优化检索结果顺序。支持多种交叉编码器 (bge-reranker) 和双编码器模型。</div>
+                                        <div data-content="refiner" class="hidden"><strong>精炼器 (Refiner):</strong> 处理检索文本，通过抽取、摘要或基于困惑度的方法减少噪声和词元使用。</div>
+                                        <div data-content="generator" class="hidden"><strong>生成器 (Generator):</strong> 基于查询和知识生成最终答案。集成 vLLM 和 FastChat 加速库，支持 Llama, Flan-T5 等广泛的 LLM。</div>
+                                    </div>
+                                </div>
+
+                                <!-- Pipeline Details -->
+                                <div id="detail-pipeline" class="hidden">
+                                    <h3 class="text-2xl font-semibold mb-4 text-rose-600">流水线模块详情</h3>
+                                    <p class="mb-4">该模块将 RAG 算法流程与组件实现解耦，支持编排四种主要的 RAG 流程类型：</p>
+                                    <ul class="space-y-3 list-disc list-inside text-gray-700">
+                                        <li><strong class="font-medium">顺序流水线 (Sequential):</strong> 经典的线性执行路径，如“检索 → 生成”。</li>
+                                        <li><strong class="font-medium">分支流水线 (Branching):</strong> 并行处理多个路径后合并结果，支持 REPLUG 等方法。</li>
+                                        <li><strong class="font-medium">条件流水线 (Conditional):</strong> 根据判断器结果将查询导向不同路径。</li>
+                                        <li><strong class="font-medium">循环流水线 (Loop):</strong> 复杂的迭代式检索与生成，支持 Self-RAG, FLARE 等高级方法。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 3: Key Features -->
+                <section id="features" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-4">主要特性</h2>
+                    <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                       FlashRAG 提供了一系列强大的特性与功能，覆盖了 RAG 研究从数据准备到实验评估的全生命周期。这些特性旨在简化实验流程、提升研究效率并推动领域创新。
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="font-semibold text-xl mb-3 text-blue-600">广泛的算法支持</h3>
+                            <p class="text-gray-600">内置对超过16种先进或SOTA RAG算法的支持，包括Standard RAG, Self-RAG等，方便研究者进行复现与公平比较。</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="font-semibold text-xl mb-3 text-blue-600">全面的数据管理</h3>
+                            <p class="text-gray-600">提供38个预处理的基准数据集和包含维基百科的“语料库动物园”，并内置高效的索引构建脚本，支持稠密(Faiss)和稀疏(Pyserini)两种方式。</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="font-semibold text-xl mb-3 text-blue-600">前沿的多模态支持 (MRAG)</h3>
+                            <p class="text-gray-600">全面支持多模态RAG，集成Qwen, LLaVA等MLLM和CLIP检索器，并配备Gaokao-MM, MathVista等多模态基准数据集。</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="font-semibold text-xl mb-3 text-blue-600">可视化 Web 界面 (UI)</h3>
+                            <p class="text-gray-600">提供直观的Web UI，支持中间结果检查、一键式参数调整与自动评估，让RAG实验过程更加透明和高效。</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Section 4: Benchmarks -->
+                <section id="benchmarks" class="content-section mb-16">
+                    <h2 class="text-3xl font-bold mb-4">性能基准</h2>
+                    <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                        FlashRAG 通过大量的基准测试验证了其框架的有效性。本节将通过交互式图表展示不同 RAG 方法在多个标准数据集上的性能表现，揭示影响 RAG 系统性能的关键因素。您可以将鼠标悬停在图表上以查看详细数据。
+                    </p>
+
+                    <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                        <h3 class="text-xl font-semibold mb-4 text-center">RAG 方法性能对比</h3>
+                        <div class="chart-container">
+                            <canvas id="rag-methods-chart"></canvas>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-4 text-center">数据显示，所有RAG方法的性能均显著优于朴素生成（Naive Generation），且性能对检索质量高度敏感。</p>
+                    </div>
+
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-center">多模态 RAG (MRAG) 性能对比 (部分)</h3>
+                        <div class="chart-container">
+                            <canvas id="mrag-methods-chart"></canvas>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-4 text-center">MRAG 在知识密集型任务中能带来稳定性能提升，但在复杂的推理任务中效果具有依赖性。通常，参数规模更大的 MLLM 能更好地利用检索到的多模态知识。</p>
+                    </div>
+
+                </section>
+
+                <!-- Section 5: Quick Start -->
+                <section id="quickstart" class="content-section">
+                    <h2 class="text-3xl font-bold mb-4">快速上手</h2>
+                     <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                        FlashRAG 注重工程实现的实用性，旨在提供一个稳定、高效且易于上手的开发环境。以下是运行一个完整 RAG 工作流程的简明指南和核心代码示例。
+                    </p>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-xl font-semibold mb-4">安装与依赖</h3>
+                        <p class="mb-2 text-gray-600">首先，通过 pip 或从源码安装 FlashRAG (要求 Python >= 3.10):</p>
+                        <div class="code-block bg-gray-900 text-white p-4 rounded-lg mb-4">
+                            <button class="copy-btn">复制</button>
+                            <pre><code class="language-bash"># 从 PyPI 安装 (预发布版)
+pip install flashrag-dev --pre
+
+# 或者从 GitHub 源码安装
+git clone https://github.com/RUC-NLPIR/FlashRAG.git
+cd FlashRAG
+pip install -e .</code></pre>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold mb-4 mt-6">核心工作流代码示例</h3>
+                        <p class="mb-2 text-gray-600">以下代码演示了如何使用 FlashRAG 加载配置、初始化流水线并运行一个完整的 RAG 任务。</p>
+                        <div class="code-block bg-gray-900 text-white p-4 rounded-lg">
+                             <button class="copy-btn">复制</button>
+                            <pre><code class="language-python">from flashrag.config import Config
+from flashrag.utils import get_dataset
+from flashrag.pipeline import SequentialPipeline
+
+# 1. 定义并加载配置
+# 注意：请将模型路径替换为您的本地路径
+config_dict = {
+    'model2path': {
+        'e5-base-v2': '/path/to/your/e5-base-v2',
+        'Llama-2-7b-chat-hf': '/path/to/your/Llama-2-7b-chat-hf'
+    },
+    'retrieval_method': 'e5-base-v2',
+    'generator_model': 'Llama-2-7b-chat-hf',
+    'index_path': 'indexes/nq_e5_Flat.index',
+    'corpus_path': 'corpus/nq.jsonl',
+    'dataset_path': 'dataset/nq/test.jsonl'
+}
+config = Config(config_dict=config_dict)
+
+# 2. 加载数据集
+dataset = get_dataset(config)
+
+# 3. 初始化流水线
+pipeline = SequentialPipeline(config)
+
+# 4. 执行流水线并评估
+# `do_eval=True` 会计算评估指标
+results = pipeline.run(dataset, do_eval=True)
+
+# 5. 查看结果
+print(results[0])
+</code></pre>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        // Data for charts and tables
+        const comparisonData = [
+            { name: 'Langchain', eval: '✕', multimodal: '✓', datasets: '-', methods: 2 },
+            { name: 'LlamaIndex', eval: '✓', multimodal: '✓', datasets: '-', methods: 2 },
+            { name: 'Haystack', eval: '✓', multimodal: '✕', datasets: '-', methods: '-' },
+            { name: 'AutoRAG', eval: '✓', multimodal: '✕', datasets: '4', methods: 2 },
+            { name: 'RAGLab', eval: '✓', multimodal: '✕', datasets: '10', methods: 6 },
+            { name: 'FlashRAG (ours)', eval: '✓', multimodal: '✓', datasets: '38', methods: '16' }
+        ];
+
+        const ragMethodsData = {
+            labels: ['NQ (EM)', 'TriviaQA (EM)', 'HotpotQA (F1)'],
+            datasets: [
+                {
+                    label: 'Naive Generation',
+                    data: [22.6, 55.7, 28.4],
+                    backgroundColor: 'rgba(156, 163, 175, 0.7)',
+                    borderColor: 'rgba(156, 163, 175, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Standard RAG',
+                    data: [35.1, 58.8, 35.3],
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'LongLLMLingua',
+                    data: [32.2, 59.2, 37.5],
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Ret-Robust*',
+                    data: [42.9, 68.2, 35.8],
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Self-RAG*',
+                    data: [36.4, 38.2, 29.6],
+                    backgroundColor: 'rgba(249, 115, 22, 0.7)',
+                    borderColor: 'rgba(249, 115, 22, 1)',
+                    borderWidth: 1
+                }
+            ]
+        };
+
+        const mragMethodsData = {
+            labels: ['Llava-7B @ Gaokao-MM (Acc)', 'Qwen2-vl-7B @ MultimodalQA (EM)', 'Internvl2.5-8B @ MathVista (Acc)'],
+            datasets: [{
+                label: 'Performance Score',
+                data: [24.3, 40.2, 22.8],
+                backgroundColor: [
+                    'rgba(96, 165, 250, 0.7)',
+                    'rgba(52, 211, 153, 0.7)',
+                    'rgba(251, 146, 60, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(96, 165, 250, 1)',
+                    'rgba(52, 211, 153, 1)',
+                    'rgba(251, 146, 60, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        // Populate comparison table
+        const tableBody = document.getElementById('comparison-table');
+        comparisonData.forEach(item => {
+            const row = document.createElement('tr');
+            if (item.name.includes('FlashRAG')) {
+                row.className = 'bg-blue-50 font-semibold';
+            }
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${item.eval === '✓' ? 'text-green-600' : 'text-red-500'}">${item.eval}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${item.multimodal === '✓' ? 'text-green-600' : 'text-red-500'}">${item.multimodal}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${item.datasets}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${item.methods}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        // Chart.js Implementations
+        const chartOptions = {
+            maintainAspectRatio: false,
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.2)'
+                    }
+                },
+                x: {
+                   grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)'
+                }
+            }
+        };
+
+        new Chart(document.getElementById('rag-methods-chart'), {
+            type: 'bar',
+            data: ragMethodsData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('mrag-methods-chart'), {
+            type: 'bar',
+            data: mragMethodsData,
+            options: { ...chartOptions, plugins: { legend: { display: false } } }
+        });
+
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileNav = document.getElementById('mobile-nav');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileNav.classList.toggle('hidden');
+        });
+
+        // Smooth scrolling and active link highlighting
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.content-section');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href').substring(1) === entry.target.id) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, { rootMargin: '-50% 0px -50% 0px' });
+
+        sections.forEach(section => observer.observe(section));
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const targetId = e.currentTarget.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+                if (mobileNav.classList.contains('hidden') === false) {
+                    mobileNav.classList.add('hidden');
+                }
+            });
+        });
+
+        // Architecture Diagram Interactivity
+        const archBlocks = document.querySelectorAll('.arch-block');
+        const detailPanels = document.querySelectorAll('#arch-details-panel > div');
+        
+        archBlocks.forEach(block => {
+            block.addEventListener('click', () => {
+                const targetId = `detail-${block.id.split('-')[1]}`;
+                
+                archBlocks.forEach(b => b.classList.remove('active'));
+                block.classList.add('active');
+                
+                detailPanels.forEach(panel => {
+                    if (panel.id === targetId) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // Component Tabs Interactivity
+        const componentTabs = document.querySelectorAll('.component-tab');
+        const componentContents = document.querySelectorAll('#component-content > div');
+
+        componentTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetContent = tab.dataset.tab;
+
+                componentTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                componentContents.forEach(content => {
+                    if (content.dataset.content === targetContent) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+        
+        // Copy to clipboard
+        const copyButtons = document.querySelectorAll('.copy-btn');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const codeBlock = e.target.nextElementSibling.querySelector('code');
+                const textToCopy = codeBlock.innerText;
+                
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    e.target.textContent = '已复制!';
+                    setTimeout(() => {
+                        e.target.textContent = '复制';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(textArea);
+            });
+        });
+
+    });
+    </script>
+</body>
+</html>

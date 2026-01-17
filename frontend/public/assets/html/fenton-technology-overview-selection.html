@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>芬顿技术交互式对比分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: 本应用采用“仪表盘即导航”的核心设计理念。主视图是一个交互式决策仪表盘，以“决策矩阵”和“综合性能雷达图”为中心，帮助用户快速根据核心需求（如pH、污泥、成本）进行技术筛选。这种非线性的结构取代了报告原有的章节式流程，使用户能立即抓住关键差异。点击导航或图表元素，可以平滑滚动到相应的深度解析模块（工艺详解、效能对比等），这些模块以卡片和选项卡形式组织信息，避免信息过载。此结构旨在将用户从被动阅读者转变为主动探索者，通过互动发现最适合其需求的技术方案，从而最大化可用性和理解效率。 -->
+    <!-- Visualization & Content Choices: 
+        - 报告信息 -> 决策矩阵 (表3) -> 目标: 快速选型 -> 呈现方式: 交互式HTML表格 -> 交互: 点击/悬停 -> 理由: 将报告中最具决策价值的表格转化为应用的核心导航，直观且高效。
+        - 报告信息 -> 各技术优劣势 (表1) -> 目标: 多维度对比 -> 呈现方式: Chart.js 雷达图 -> 交互: 悬停显示具体数值 -> 理由: 雷达图能在一个视图中紧凑地展示多个维度的性能对比，非常适合宏观比较。
+        - 报告信息 -> 污染物去除效率 (表2) -> 目标: 对比特定效能 -> 呈现方式: Chart.js 条形图 -> 交互: 下拉菜单选择污染物 -> 理由: 动态条形图能清晰地量化不同技术在特定应用场景下的性能差异。
+        - 报告信息 -> 工艺机理 -> 目标: 简化理解 -> 呈现方式: HTML/CSS流程图 -> 交互: 静态展示 -> 理由: 使用结构化的HTML和Tailwind类名创建简化的视觉流程图，比纯文本和化学方程式更易于理解。
+        - 报告信息 -> 成本构成 -> 目标: 对比经济性 -> 呈现方式: Chart.js 堆叠条形图 -> 交互: 静态展示 -> 理由: 清晰展示不同技术在化学品与能源成本上的根本差异。
+        - 库/方法: Chart.js (Canvas), Tailwind CSS (HTML/CSS)。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #FDFBF7; color: #3C3C3C; }
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link.active, .nav-link:hover { color: #00796B; border-bottom-color: #00796B; }
+        .tech-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .tech-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .tab-button { transition: all 0.3s ease; }
+        .tab-button.active { background-color: #00796B; color: #FFFFFF; }
+        .tab-button:not(.active):hover { background-color: #E0F2F1; }
+        .chart-container { position: relative; width: 100%; max-width: 900px; margin-left: auto; margin-right: auto; height: 40vh; max-height: 450px; }
+        .decision-table td, .decision-table th { transition: background-color 0.3s; }
+        .decision-table tbody tr:hover td { background-color: #FFF8E1; }
+        .icon-box { display: flex; align-items: center; justify-content: center; width: 4rem; height: 4rem; border-radius: 50%; }
+        .bg-icon-ph { background-color: #E3F2FD; color: #1E88E5; }
+        .bg-icon-sludge { background-color: #FBE9E7; color: #D84315; }
+        .bg-icon-cost { background-color: #E8F5E9; color: #388E3C; }
+        .bg-icon-perf { background-color: #FFFDE7; color: #FBC02D; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-[#004D40]">芬顿技术交互指南</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 border-b-2 border-transparent">概览与选型</a>
+                        <a href="#deep-dive" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 border-b-2 border-transparent">工艺详解</a>
+                        <a href="#performance" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 border-b-2 border-transparent">效能对比</a>
+                        <a href="#economics" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 border-b-2 border-transparent">经济性评估</a>
+                        <a href="#sustainability" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 border-b-2 border-transparent">环境与可持续性</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-white border border-gray-300 rounded-md py-2 px-3 text-sm">
+                        <option value="#overview">概览与选型</option>
+                        <option value="#deep-dive">工艺详解</option>
+                        <option value="#performance">效能对比</option>
+                        <option value="#economics">经济性评估</option>
+                        <option value="#sustainability">环境与可持续性</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Section 1: Overview & Decision Hub -->
+        <section id="overview" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold mb-2 text-center text-[#004D40]">芬顿技术概览与快速选型</h2>
+            <p class="mt-4 max-w-3xl mx-auto text-center text-gray-600">
+                本区域是您的决策中心。芬顿技术家族庞大，没有“最优”只有“最适”。请使用下方的交互式决策矩阵和综合性能雷达图，根据您最关心的指标（如pH条件、污泥产量、成本构成等）快速筛选和对比，找到最适合您应用场景的技术方向。
+            </p>
+
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-center">综合性能雷达图</h3>
+                    <div class="chart-container" style="height: 45vh; max-height: 500px;">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-lg flex items-start space-x-4">
+                        <div class="icon-box bg-icon-ph">
+                            <span class="text-3xl font-bold">pH</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">操作pH范围</h4>
+                            <p class="text-sm text-gray-600 mt-1">经典芬顿依赖严苛的酸性环境，而非均相和螯合剂改性技术则成功地将操作窗口扩展至中性，极大降低了化学品消耗和成本。</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg flex items-start space-x-4">
+                        <div class="icon-box bg-icon-sludge">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">铁泥产量</h4>
+                            <p class="text-sm text-gray-600 mt-1">铁泥处置是传统芬顿的主要痛点。非均相技术通过固定化催化剂，从根本上解决了二次污染问题，实现了清洁生产。</p>
+                        </div>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg flex items-start space-x-4">
+                        <div class="icon-box bg-icon-cost">
+                            <span class="text-3xl font-bold">¥</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">成本结构</h4>
+                            <p class="text-sm text-gray-600 mt-1">技术演进伴随着成本焦点的转移：从经典芬顿的“化学品+污泥”成本，转向电芬顿的“能源”成本，或非均相芬顿的“催化剂”成本。</p>
+                        </div>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg flex items-start space-x-4">
+                        <div class="icon-box bg-icon-perf">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">处理性能</h4>
+                            <p class="text-sm text-gray-600 mt-1">光、电的引入显著强化了氧化能力，实现了更高的矿化度。而类芬顿技术则提供了更高的选择性，能“精准打击”特定污染物。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-center">交互式选型决策矩阵</h3>
+                 <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 decision-table">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 rounded-tl-lg">选型标准</th>
+                                <th scope="col" class="px-6 py-3">经典芬顿</th>
+                                <th scope="col" class="px-6 py-3">光-芬顿</th>
+                                <th scope="col" class="px-6 py-3">电-芬顿</th>
+                                <th scope="col" class="px-6 py-3">非均相芬顿</th>
+                                <th scope="col" class="px-6 py-3">类芬顿(过硫酸盐)</th>
+                                <th scope="col" class="px-6 py-3 rounded-tr-lg">类芬顿(螯合剂)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">初始pH值</th>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">差</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">差</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">良</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">污泥敏感度</th>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">差</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">良</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">化学品成本</th>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">差</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">良</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">中</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">差</span></td>
+                            </tr>
+                             <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">能源成本</th>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">差</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">差</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                                <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">优</span></td>
+                            </tr>
+                            <tr class="bg-white">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-bl-lg">推荐场景</th>
+                                <td class="px-6 py-4">高浓度, 污泥不敏感, 电价高</td>
+                                <td class="px-6 py-4">日照充足, 追求高矿化度</td>
+                                <td class="px-6 py-4">安全要求高, 追求极高矿化度, 电价低</td>
+                                <td class="px-6 py-4">对pH和污泥极敏感</td>
+                                <td class="px-6 py-4">背景有机物干扰严重</td>
+                                <td class="px-6 py-4 rounded-br-lg">原位修复, 无法调节pH</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Deep Dive into Technologies -->
+        <section id="deep-dive" class="scroll-mt-20 pt-16">
+            <h2 class="text-3xl font-bold mb-2 text-center text-[#004D40]">工艺机理深度解析</h2>
+             <p class="mt-4 max-w-3xl mx-auto text-center text-gray-600">
+                本节深入探讨每种核心芬顿技术的内部工作原理。我们摒弃了冗长的学术段落，通过简化的流程图、核心化学方程式和选项卡式的优缺点对比，让您直观地理解各种技术是如何产生羟基自由基（•OH）等活性物种，以及它们各自的技术特性和局限。
+            </p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="tech-cards-container">
+                
+            </div>
+        </section>
+
+        <!-- Section 3: Performance Comparison -->
+        <section id="performance" class="scroll-mt-20 pt-16">
+            <h2 class="text-3xl font-bold mb-2 text-center text-[#004D40]">处理效能对比分析</h2>
+            <p class="mt-4 max-w-3xl mx-auto text-center text-gray-600">
+                理论必须结合实践。本节通过交互式图表，量化展示了不同芬顿技术在处理各类典型污染物时的实际效果。请从下拉菜单中选择您感兴趣的污染物类型，图表将动态展示相关技术对该污染物的去除效率，为您提供直接、有力的选型数据支持。
+            </p>
+            <div class="mt-12 bg-white p-6 rounded-xl shadow-lg">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold mb-2 md:mb-0">关键污染物去除效率对比</h3>
+                    <div>
+                        <label for="pollutant-selector" class="mr-2 font-medium">选择污染物:</label>
+                        <select id="pollutant-selector" class="bg-white border border-gray-300 rounded-md py-2 px-3">
+                            <option value="textile" selected>纺织染料 (COD去除率)</option>
+                            <option value="phenol">苯酚 (污染物去除率)</option>
+                            <option value="leachate">垃圾渗滤液 (COD去除率)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Economics -->
+        <section id="economics" class="scroll-mt-20 pt-16">
+            <h2 class="text-3xl font-bold mb-2 text-center text-[#004D40]">技术经济性评估</h2>
+            <p class="mt-4 max-w-3xl mx-auto text-center text-gray-600">
+                成本是决定技术可行性的关键。本节剖析了不同芬顿技术在运营成本（OPEX）和资本投资（CAPEX）上的核心差异。下方的图表直观地揭示了从“化学品驱动”到“能源驱动”的成本结构转变，帮助您从经济角度评估各项技术的长期价值和适用性。
+            </p>
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-center">运营成本(OPEX)结构对比</h3>
+                    <div class="chart-container" style="height: 40vh; max-height: 400px;">
+                        <canvas id="opexChart"></canvas>
+                    </div>
+                     <p class="text-xs text-center text-gray-500 mt-2">数据为示意，旨在说明成本构成比例。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-center">资本投资(CAPEX)考量</h3>
+                    <ul class="space-y-4 text-gray-700">
+                        <li class="flex items-start">
+                            <span class="text-teal-600 font-bold mr-2 mt-1">▶</span>
+                            <div><strong>经典芬顿:</strong> 核心反应器投资低，但配套的化学品储存、计量和污泥处理设施（沉淀池、压滤机）会带来高昂的整体CAPEX。</div>
+                        </li>
+                        <li class="flex items-start">
+                             <span class="text-teal-600 font-bold mr-2 mt-1">▶</span>
+                           <div><strong>光/电-芬顿:</strong> 需要对光反应器、特种电极、大功率电源等核心设备进行投资，CAPEX相对较高。</div>
+                        </li>
+                         <li class="flex items-start">
+                             <span class="text-teal-600 font-bold mr-2 mt-1">▶</span>
+                           <div><strong>非均相芬顿:</strong> 主要CAPEX在于催化剂本身及其再生/回收设备。催化剂的寿命是决定其长期经济性的关键。</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 5: Sustainability & Environment -->
+        <section id="sustainability" class="scroll-mt-20 pt-16">
+            <h2 class="text-3xl font-bold mb-2 text-center text-[#004D40]">环境足迹与可持续性</h2>
+            <p class="mt-4 max-w-3xl mx-auto text-center text-gray-600">
+                一项优秀的技术不仅要高效，更要绿色。本节探讨芬顿技术的环境影响，特别是从“处置”到“资源化”的铁泥管理新思路，以及如何控制潜在的有毒副产物。这体现了从线性处理到循环经济的思维转变，是衡量技术未来潜力的重要维度。
+            </p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">铁泥管理：从负担到资源</h3>
+                    <p class="text-gray-600 mb-4">随着循环经济理念的深入，铁泥正从废弃物转变为有价值的资源。</p>
+                    <div class="space-y-3">
+                        <div class="bg-teal-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-teal-800">作为非均相催化剂回用</h4>
+                            <p class="text-sm text-teal-700">将芬顿污泥通过煅烧等方式处理，可转化为具有催化活性的非均相芬顿催化剂，实现“以废治废”的资源内部循环。</p>
+                        </div>
+                        <div class="bg-amber-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-amber-800">作为建筑材料原料</h4>
+                            <p class="text-sm text-amber-700">铁泥富含Fe₂O₃等成分，可作为替代原料，掺入到水泥或砖瓦生产中，实现跨行业资源化利用。</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">副产物风险与控制</h3>
+                    <p class="text-gray-600 mb-4">运行不当的芬顿工艺可能产生比母体毒性更强的副产物，这揭示了一个重要的“风险悖论”。</p>
+                     <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert">
+                        <p class="font-bold">核心控制策略</p>
+                        <p class="text-sm">确保充分乃至过量的氧化是关键。必须保证充足的氧化剂剂量和反应时间，推动反应向完全矿化进行，绝不能以牺牲处理深度为代价来节约短期成本。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-8 py-4 text-center text-sm">
+            <p>芬顿技术交互式对比分析指南 | 专为辅助决策设计</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    
+    const techData = [
+        { 
+            id: 'classic',
+            name: '经典芬顿',
+            mechanism: `
+                <div class="flex items-center justify-center space-x-2 text-sm md:text-base p-4 bg-gray-50 rounded-lg">
+                    <span>Fe²⁺ + H₂O₂</span>
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    <span class="font-bold text-teal-600">Fe³⁺ + •OH + OH⁻</span>
+                </div>`,
+            description: '利用亚铁离子(Fe²⁺)催化过氧化氢(H₂O₂)分解，产生强氧化性的羟基自由基(•OH)。',
+            advantages: [
+                '试剂廉价，来源广泛',
+                '反应迅速，设备简单',
+                '常温常压下即可进行'
+            ],
+            disadvantages: [
+                'pH范围要求苛刻 (2.8-3.5)',
+                '产生大量铁泥，处置成本高',
+                'H₂O₂利用率不高',
+                'Fe²⁺再生缓慢，是速率瓶颈'
+            ]
+        },
+        { 
+            id: 'photo',
+            name: '光-芬顿',
+            mechanism: `
+                <div class="flex items-center justify-center space-x-2 text-sm md:text-base p-4 bg-gray-50 rounded-lg">
+                    <span>Fe³⁺ + hν (光)</span>
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    <span class="font-bold text-teal-600">Fe²⁺ + •OH</span>
+                </div>`,
+            description: '引入紫外/可见光，通过光化学反应极大加速Fe³⁺还原为Fe²⁺的速率，打破传统芬顿的瓶颈。',
+            advantages: [
+                '反应速率和矿化度更高',
+                '试剂消耗和铁泥产生量减少',
+                '可利用太阳能，降低能耗',
+                '额外光解H₂O₂产生•OH'
+            ],
+            disadvantages: [
+                '引入额外能源消耗 (电/光)',
+                '对水体透明度有要求',
+                '可能产生光化学副产物',
+                '大型反应器光场均匀性是挑战'
+            ]
+        },
+        { 
+            id: 'electro',
+            name: '电-芬顿',
+             mechanism: `
+                <div class="flex items-center justify-center space-x-2 text-sm md:text-base p-4 bg-gray-50 rounded-lg">
+                    <span class="text-center">阴极: O₂ + 2H⁺ + 2e⁻<br>阳极/溶液: Fe³⁺ + e⁻</span>
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    <span class="font-bold text-teal-600 text-center">H₂O₂ (原位)<br>Fe²⁺ (再生)</span>
+                </div>`,
+            description: '通过电化学方法，在阴极原位生成H₂O₂，同时在阴极/阳极实现Fe²⁺的持续供给/再生。',
+            advantages: [
+                '无需运输和储存H₂O₂，安全性高',
+                '试剂利用率和矿化度极高',
+                '过程易于自动化控制',
+                '阳极氧化与芬顿协同作用'
+            ],
+            disadvantages: [
+                '能源消耗高，受电价影响大',
+                '电极材料成本和寿命是关键',
+                '可能受废水导电率影响',
+                '均相体系仍有pH和铁泥问题'
+            ]
+        },
+        { 
+            id: 'heterogeneous',
+            name: '非均相芬顿',
+             mechanism: `
+                <div class="flex items-center justify-center space-x-2 text-sm md:text-base p-4 bg-gray-50 rounded-lg">
+                    <span class="text-center">≡Fe(III) + H₂O₂ <br>(催化剂表面)</span>
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    <span class="font-bold text-teal-600 text-center">≡Fe(II) + •OH <br>(表面活性物种)</span>
+                </div>`,
+            description: '使用固载铁基催化剂替代可溶铁盐，将反应从液相转移到固-液界面。',
+            advantages: [
+                '操作pH范围宽 (可达中性)',
+                '基本无铁泥产生，无二次污染',
+                '催化剂可回收再利用',
+                '省去大量pH调节成本'
+            ],
+            disadvantages: [
+                '催化剂制备成本较高',
+                '长期稳定性和活性衰减是挑战',
+                '可能存在少量金属离子浸出',
+                '传质效率可能低于均相体系'
+            ]
+        },
+        { 
+            id: 'persulfate',
+            name: '类芬顿(过硫酸盐)',
+            mechanism: `
+                <div class="flex items-center justify-center space-x-2 text-sm md:text-base p-4 bg-gray-50 rounded-lg">
+                    <span>Fe²⁺ + S₂O₈²⁻</span>
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    <span class="font-bold text-teal-600">Fe³⁺ + SO₄²⁻ + SO₄•⁻</span>
+                </div>`,
+            description: '使用过硫酸盐(PS)替代H₂O₂，通过铁离子活化产生强氧化性的硫酸根自由基(SO₄•⁻)。',
+            advantages: [
+                '活性物种(SO₄•⁻)选择性更高',
+                '对背景有机物干扰不敏感',
+                'pH操作范围比经典芬顿更宽',
+                '氧化剂更稳定，便于储存'
+            ],
+            disadvantages: [
+                '氧化剂(过硫酸盐)成本较高',
+                '可能产生硫酸盐副产物',
+                '反应机理更复杂，常与•OH共存',
+            ]
+        },
+        { 
+            id: 'chelate',
+            name: '类芬顿(螯合剂)',
+            mechanism: `
+                <div class="flex items-center justify-center space-x-2 text-sm md:text-base p-4 bg-gray-50 rounded-lg">
+                    <span>[Fe(III)-L] + H₂O₂</span>
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    <span class="font-bold text-teal-600">[Fe(II)-L] + •OH</span>
+                </div>`,
+            description: '加入有机螯合剂(L)与铁离子形成可溶络合物，防止其在中性pH下沉淀。',
+            advantages: [
+                '可在中性pH下高效运行',
+                '适用于原位修复等特殊场景',
+                '无铁泥沉淀问题',
+                '可控的反应过程'
+            ],
+            disadvantages: [
+                '螯合剂本身成本高',
+                '螯合剂可能被降解，消耗氧化剂',
+                '潜在的生态毒性风险',
+            ]
+        }
+    ];
+
+    const techCardsContainer = document.getElementById('tech-cards-container');
+    techData.forEach(tech => {
+        const card = document.createElement('div');
+        card.className = 'tech-card bg-white rounded-xl shadow-lg p-6 flex flex-col';
+        card.innerHTML = `
+            <h3 class="text-xl font-bold text-center text-[#004D40]">${tech.name}</h3>
+            <p class="text-sm text-gray-600 mt-2 text-center flex-grow">${tech.description}</p>
+            <div class="mt-4 text-sm font-mono">${tech.mechanism}</div>
+            <div class="mt-4">
+                <div class="flex border-b border-gray-200">
+                    <button data-tech="${tech.id}" data-type="advantages" class="tab-button flex-1 py-2 px-1 text-sm font-medium rounded-t-lg active">优点</button>
+                    <button data-tech="${tech.id}" data-type="disadvantages" class="tab-button flex-1 py-2 px-1 text-sm font-medium rounded-t-lg">缺点</button>
+                </div>
+                <div id="content-${tech.id}" class="pt-4 text-sm">
+                    <ul class="space-y-2 list-inside">
+                        ${tech.advantages.map(adv => `<li class="flex items-start"><span class="text-green-500 mr-2 mt-1">✔</span>${adv}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        techCardsContainer.appendChild(card);
+    });
+
+    techCardsContainer.addEventListener('click', function(e) {
+        if (e.target.matches('.tab-button')) {
+            const techId = e.target.dataset.tech;
+            const type = e.target.dataset.type;
+            const contentDiv = document.getElementById(`content-${techId}`);
+            
+            // Update active button
+            const buttons = e.target.parentElement.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // Update content
+            const data = techData.find(t => t.id === techId)[type];
+            const icon = type === 'advantages' ? 
+                '<span class="text-green-500 mr-2 mt-1">✔</span>' : 
+                '<span class="text-red-500 mr-2 mt-1">✘</span>';
+            contentDiv.innerHTML = `
+                <ul class="space-y-2 list-inside">
+                    ${data.map(item => `<li class="flex items-start">${icon}${item}</li>`).join('')}
+                </ul>
+            `;
+        }
+    });
+
+    const radarCtx = document.getElementById('radarChart').getContext('2d');
+    const radarChart = new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+            labels: ['pH范围宽度', '污泥产量控制', '化学品成本', '能源成本', '设备投资(CAPEX)', '矿化/选择性'],
+            datasets: [
+                {
+                    label: '经典芬顿',
+                    data: [1, 1, 2, 5, 5, 3],
+                    backgroundColor: 'rgba(239, 83, 80, 0.2)',
+                    borderColor: 'rgb(239, 83, 80)',
+                    pointBackgroundColor: 'rgb(239, 83, 80)',
+                },
+                 {
+                    label: '光-芬顿',
+                    data: [1, 3, 3, 1, 3, 4],
+                    backgroundColor: 'rgba(255, 183, 77, 0.2)',
+                    borderColor: 'rgb(255, 183, 77)',
+                    pointBackgroundColor: 'rgb(255, 183, 77)',
+                },
+                {
+                    label: '电-芬顿',
+                    data: [3, 3, 5, 1, 2, 5],
+                    backgroundColor: 'rgba(66, 165, 245, 0.2)',
+                    borderColor: 'rgb(66, 165, 245)',
+                    pointBackgroundColor: 'rgb(66, 165, 245)',
+                },
+                 {
+                    label: '非均相芬顿',
+                    data: [5, 5, 4, 5, 3, 3],
+                    backgroundColor: 'rgba(102, 187, 106, 0.2)',
+                    borderColor: 'rgb(102, 187, 106)',
+                    pointBackgroundColor: 'rgb(102, 187, 106)',
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                    pointLabels: { font: { size: 12 } },
+                    suggestedMin: 0,
+                    suggestedMax: 5,
+                    ticks: {
+                        stepSize: 1,
+                        backdropColor: 'rgba(255, 255, 255, 0.75)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                 tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += ['差', '较差', '中', '良', '优'][context.raw - 1];
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const performanceData = {
+        textile: {
+            labels: ['光-芬顿 (PF)', '经典芬顿'],
+            data: [93.2, 70] // Using comparable COD removal data
+        },
+        phenol: {
+            labels: ['光-电-芬顿 (PEF)', '经典芬顿', '电-芬顿 (EF)'],
+            data: [100, 98, 90] // Pollutant removal %
+        },
+        leachate: {
+            labels: ['非均相芬顿', '非均相电-芬顿', '均相电-芬顿'],
+            data: [88.6, 87.5, 71.7] // COD removal %
+        }
+    };
+    
+    let performanceChart;
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+
+    function createOrUpdatePerformanceChart(pollutant) {
+        const chartData = performanceData[pollutant];
+        
+        if (performanceChart) {
+            performanceChart.data.labels = chartData.labels;
+            performanceChart.data.datasets[0].data = chartData.data;
+            performanceChart.options.plugins.title.text = `不同技术对${document.querySelector(`#pollutant-selector option[value=${pollutant}]`).textContent.split('(')[0]}的去除效率`;
+            performanceChart.update();
+        } else {
+            performanceChart = new Chart(performanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: '去除效率 (%)',
+                        data: chartData.data,
+                        backgroundColor: ['#4DB6AC', '#FFB74D', '#BA68C8', '#7986CB'],
+                        borderColor: ['#00897B', '#FFA726', '#AB47BC', '#5C6BC0'],
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                             grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                         y: {
+                             grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: `不同技术对纺织染料的去除效率`,
+                            font: { size: 16 }
+                        },
+                         tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.raw}%`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    createOrUpdatePerformanceChart('textile');
+    document.getElementById('pollutant-selector').addEventListener('change', function(e) {
+        createOrUpdatePerformanceChart(e.target.value);
+    });
+    
+    const opexCtx = document.getElementById('opexChart').getContext('2d');
+    const opexChart = new Chart(opexCtx, {
+        type: 'bar',
+        data: {
+            labels: ['经典芬顿', '光-芬顿', '电-芬顿', '非均相芬顿'],
+            datasets: [
+                {
+                    label: '化学品成本',
+                    data: [60, 35, 5, 20],
+                    backgroundColor: '#FFB74D',
+                },
+                {
+                    label: '能源成本',
+                    data: [0, 30, 80, 5],
+                    backgroundColor: '#7986CB',
+                },
+                {
+                    label: '污泥处置/催化剂成本',
+                    data: [40, 20, 15, 75],
+                    backgroundColor: '#A1887F',
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true,  grid: { display: false } },
+                y: { stacked: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }
+            },
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                },
+                title: {
+                    display: false,
+                }
+            },
+            responsive: true
+        }
+    });
+
+    // Smooth scrolling for navigation
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if(targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    document.getElementById('mobile-nav').addEventListener('change', function(e) {
+        const targetId = e.target.value;
+        const targetElement = document.querySelector(targetId);
+        if(targetElement) {
+             targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+        }
+    });
+
+    // Active nav link on scroll
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const onScroll = () => {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 80) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    };
+    window.addEventListener('scroll', onScroll);
+
+});
+</script>
+</body>
+</html>

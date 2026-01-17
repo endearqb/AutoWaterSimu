@@ -1,0 +1,45 @@
+<svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形装饰 -->
+  <circle cx="40" cy="40" r="35" fill="#10b981" opacity="0.1"/>
+  <circle cx="40" cy="40" r="25" fill="#10b981" opacity="0.2"/>
+  
+  <!-- 主要图标 - 环保叶子和数据图表结合 -->
+  <g transform="translate(15, 15)">
+    <!-- 叶子形状 -->
+    <path d="M25 10 C35 10, 45 20, 45 30 C45 40, 35 50, 25 50 C15 40, 15 30, 15 20 C15 15, 20 10, 25 10 Z" fill="#10b981"/>
+    
+    <!-- 叶子纹理 -->
+    <path d="M25 15 L25 45 M20 25 L30 25 M22 35 L28 35" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+    
+    <!-- 数据点 -->
+    <circle cx="35" cy="20" r="2" fill="#3b82f6"/>
+    <circle cx="38" cy="25" r="1.5" fill="#8b5cf6"/>
+    <circle cx="32" cy="30" r="1.5" fill="#f59e0b"/>
+    
+    <!-- 连接线 -->
+    <path d="M35 20 L38 25 L32 30" stroke="#6b7280" stroke-width="1" fill="none"/>
+  </g>
+  
+  <!-- 文字部分 -->
+  <g transform="translate(75, 20)">
+    <!-- ENVDAMA 文字 -->
+    <text x="0" y="20" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1f2937">
+      ENV
+    </text>
+    <text x="50" y="20" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#10b981">
+      DAMA
+    </text>
+    
+    <!-- 副标题 -->
+    <text x="0" y="40" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+      智能环保数据分析平台
+    </text>
+  </g>
+  
+  <!-- 装饰性元素 -->
+  <g opacity="0.3">
+    <circle cx="170" cy="20" r="3" fill="#10b981"/>
+    <circle cx="180" cy="30" r="2" fill="#3b82f6"/>
+    <circle cx="175" cy="40" r="2.5" fill="#8b5cf6"/>
+  </g>
+</svg>

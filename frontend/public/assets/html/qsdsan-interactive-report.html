@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QSDsan 交互式报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Earth -->
+    <!-- Application Structure Plan: 本应用采用单页应用（SPA）设计，左侧为固定的主导航栏，右侧为可滚动的内容区域。这种结构允许用户随时跳转到感兴趣的部分，无需按顺序阅读。内容组织采用主题式布局，从高层次的“平台简介”开始，到核心的“系统架构”可视化，再到具体的“集成评估”（技术经济分析TEA与生命周期评价LCA）、“高级建模功能”，最后是“社区生态”。这样的信息架构设计旨在引导用户循序渐进地理解QSDsan的复杂性，从“是什么”到“如何工作”，再到“有何应用”，符合认知规律，极大提升了报告内容的可消费性和易用性。 -->
+    <!-- Visualization & Content Choices:
+        - 核心架构: (目标: 组织与告知) 使用HTML/CSS构建的交互式流程图来展示核心类之间的层次和数据流关系。用户点击每个类，右侧会显示详细解释。这比静态列表更能清晰地传达OOP结构。
+        - TEA对比: (目标: 比较) 使用Chart.js柱状图比较不同系统的经济性，直观展示报告中提到的“B系统最经济”这类发现。
+        - LCA对比: (目标: 比较) 使用Chart.js雷达图展示多维度环境影响（如GWP、养分回收），清晰揭示不同方案间的权衡关系。
+        - 动态模拟: (目标: 展示变化) 使用Chart.js折线图模拟BSM1验证过程，生动地表现时变行为，使“动态”概念具象化。
+        - 不确定性分析: (目标: 展示分布) 使用Chart.js直方图（用条形图模拟）展示蒙特卡洛模拟的结果分布，帮助用户理解概率性结果。
+        所有可视化选择都旨在将报告中的抽象概念转化为易于理解的交互式图形，并严格遵守了仅使用Canvas渲染的要求。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #1e293b; /* slate-800 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 40vh;
+            max-height: 400px;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+        .nav-link.active {
+            background-color: #f1f5f9; /* slate-100 */
+            color: #475569; /* slate-600 */
+            border-left-color: #475569; /* slate-600 */
+        }
+        .architecture-box {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .architecture-box.active, .architecture-box:hover {
+            border-color: #ca8a04; /* amber-500 */
+            background-color: #fefce8; /* yellow-50 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .content-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            border: 1px solid #e2e8f0; /* slate-200 */
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div class="flex h-screen">
+        <aside class="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
+            <div class="h-16 flex items-center justify-center border-b border-slate-200">
+                <h1 class="text-xl font-bold text-slate-700">QSDsan 报告</h1>
+            </div>
+            <nav id="main-nav" class="flex-1 p-4 space-y-2">
+                <a href="#intro" class="nav-link block w-full text-left p-3 rounded-lg text-slate-600 hover:bg-slate-100 font-medium">🚀 平台简介</a>
+                <a href="#architecture" class="nav-link block w-full text-left p-3 rounded-lg text-slate-600 hover:bg-slate-100 font-medium">🏗️ 核心架构</a>
+                <a href="#assessment" class="nav-link block w-full text-left p-3 rounded-lg text-slate-600 hover:bg-slate-100 font-medium">📊 集成评估</a>
+                <a href="#advanced" class="nav-link block w-full text-left p-3 rounded-lg text-slate-600 hover:bg-slate-100 font-medium">⚙️ 高级功能</a>
+                <a href="#ecosystem" class="nav-link block w-full text-left p-3 rounded-lg text-slate-600 hover:bg-slate-100 font-medium">🌍 生态系统</a>
+            </nav>
+            <div class="p-4 border-t border-slate-200 text-xs text-slate-400">
+                <p>为量化可持续设计而构建</p>
+            </div>
+        </aside>
+
+        <main id="main-content" class="flex-1 overflow-y-auto">
+            <section id="intro" class="min-h-screen p-8 md:p-12 lg:p-16 flex items-center">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-4xl md:text-5xl font-bold text-slate-800 mb-6">QSDsan: 赋能量化可持续设计</h2>
+                    <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+                        QSDsan 是一个为环境卫生和资源回收系统量化可持续设计（QSD）而开发的开源Python平台。它旨在通过整合系统设计、模拟、技术经济分析（TEA）和生命周期评价（LCA），为早期技术研发提供决策支持，识别关键瓶颈，并指导研究方向。
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-6 text-center">
+                        <div class="content-card p-6">
+                            <div class="text-4xl mb-2">🔄</div>
+                            <h3 class="font-bold text-slate-700 text-lg mb-2">集成化平台</h3>
+                            <p class="text-sm text-slate-500">无缝整合设计、模拟、TEA与LCA，提供全方位可持续性评估。</p>
+                        </div>
+                        <div class="content-card p-6">
+                            <div class="text-4xl mb-2">💡</div>
+                            <h3 class="font-bold text-slate-700 text-lg mb-2">支持早期技术</h3>
+                            <p class="text-sm text-slate-500">专注于充满不确定性的创新阶段，帮助导航复杂的技术权衡。</p>
+                        </div>
+                        <div class="content-card p-6">
+                             <div class="text-4xl mb-2">🤝</div>
+                            <h3 class="font-bold text-slate-700 text-lg mb-2">开源社区驱动</h3>
+                            <p class="text-sm text-slate-500">通过开放协作，汇集全球智慧，共同推动环境卫生技术进步。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="architecture" class="min-h-screen p-8 md:p-12 lg:p-16 bg-white">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">核心架构：面向对象的构建模块</h2>
+                    <p class="text-slate-600 mb-12 text-center max-w-3xl mx-auto">
+                        QSDsan采用面向对象编程（OOP）范式，其核心功能由一系列分层互动的类实现。这种模块化设计提供了极高的灵活性，允许用户定义从基础物质到完整系统的所有元素。点击下方流程图中的模块，查看其详细功能描述。
+                    </p>
+                    <div class="lg:grid lg:grid-cols-5 lg:gap-8 items-start">
+                        <div id="architecture-diagram" class="lg:col-span-3 flex flex-col items-center space-y-2">
+                            <div data-target="desc-component" class="architecture-box w-48 text-center p-4 border-2 border-slate-300 rounded-lg">
+                                <span class="font-mono font-bold">Component</span><br><span class="text-sm text-slate-500">物质组分</span>
+                            </div>
+                            <div class="text-2xl text-slate-400">↓</div>
+                            <div data-target="desc-wastestream" class="architecture-box w-48 text-center p-4 border-2 border-slate-300 rounded-lg">
+                                <span class="font-mono font-bold">WasteStream</span><br><span class="text-sm text-slate-500">废物流</span>
+                            </div>
+                            <div class="text-2xl text-slate-400">↓</div>
+                            <div data-target="desc-sanunit" class="architecture-box w-48 text-center p-4 border-2 border-slate-300 rounded-lg">
+                                <span class="font-mono font-bold">SanUnit</span><br><span class="text-sm text-slate-500">环境卫生单元</span>
+                            </div>
+                            <div class="text-2xl text-slate-400">↓</div>
+                             <div data-target="desc-system" class="architecture-box w-48 text-center p-4 border-2 border-slate-300 rounded-lg">
+                                <span class="font-mono font-bold">System</span><br><span class="text-sm text-slate-500">完整系统</span>
+                            </div>
+                            <div class="w-full flex justify-center items-center h-16">
+                                <div class="w-px h-full bg-slate-300"></div>
+                            </div>
+                            <div class="w-full flex justify-around">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-px h-8 bg-slate-300"></div>
+                                    <div class="h-px w-24 bg-slate-300 -ml-12"></div>
+                                    <div class="text-2xl text-slate-400">↘</div>
+                                    <div data-target="desc-tea" class="architecture-box w-48 text-center p-4 border-2 border-green-300 rounded-lg">
+                                        <span class="font-mono font-bold">TEA</span><br><span class="text-sm text-slate-500">技术经济分析</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="w-px h-8 bg-slate-300"></div>
+                                    <div class="h-px w-24 bg-slate-300 -mr-12"></div>
+                                    <div class="text-2xl text-slate-400">↙</div>
+                                    <div data-target="desc-lca" class="architecture-box w-48 text-center p-4 border-2 border-sky-300 rounded-lg">
+                                        <span class="font-mono font-bold">LCA</span><br><span class="text-sm text-slate-500">生命周期评价</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="architecture-descriptions" class="lg:col-span-2 mt-12 lg:mt-0 p-6 content-card min-h-[300px]">
+                            <div id="desc-default" class="description-panel">
+                                <h3 class="font-bold text-lg text-slate-700 mb-2">请选择一个模块</h3>
+                                <p class="text-slate-600">点击左侧流程图中的任意模块，即可在此处查看其详细的功能和作用。</p>
+                            </div>
+                            <div id="desc-component" class="description-panel hidden">
+                                <h3 class="font-bold text-lg text-slate-700 mb-2">Component: 定义物质</h3>
+                                <p class="text-slate-600">作为最基础的模块，<code>Component</code>用于定义系统中的所有化学和生物物质及其关键属性，如COD、氮含量等。这是精确模拟的基石。</p>
+                            </div>
+                            <div id="desc-wastestream" class="description-panel hidden">
+                                <h3 class="font-bold text-lg text-slate-700 mb-2">WasteStream: 表征流动</h3>
+                                <p class="text-slate-600">基于定义的<code>Component</code>，<code>WasteStream</code>对象用于追踪和管理系统中物质与能量的流动，包括流量、温度、压力等，并计算废水的宏观属性。</p>
+                            </div>
+                            <div id="desc-sanunit" class="description-panel hidden">
+                                <h3 class="font-bold text-lg text-slate-700 mb-2">SanUnit: 模拟单元操作</h3>
+                                <p class="text-slate-600"><code>SanUnit</code>是模拟的核心，用于表征各种环境卫生处理单元（如反应器、沉淀池）。它封装了内部的转化逻辑、设计参数、成本和环境清单数据。</p>
+                            </div>
+                            <div id="desc-system" class="description-panel hidden">
+                                <h3 class="font-bold text-lg text-slate-700 mb-2">System: 集成完整过程</h3>
+                                <p class="text-slate-600">将多个<code>SanUnit</code>通过<code>WasteStream</code>连接，便构成了<code>System</code>对象。它负责管理整个系统的模拟，并为后续的TEA和LCA提供汇总数据。</p>
+                            </div>
+                            <div id="desc-tea" class="description-panel hidden">
+                                <h3 class="font-bold text-lg text-slate-700 mb-2">TEA: 评估经济可行性</h3>
+                                <p class="text-slate-600">技术经济分析 (TEA) 模块利用系统模拟得出的数据（如资本成本、运营成本），计算净现值(NPV)、投资回收期等关键经济指标。</p>
+                            </div>
+                            <div id="desc-lca" class="description-panel hidden">
+                                <h3 class="font-bold text-lg text-slate-700 mb-2">LCA: 评估环境可持续性</h3>
+                                <p class="text-slate-600">生命周期评价 (LCA) 模块利用系统清单（如能耗、物耗、排放），结合影响指标和特征化因子，量化系统的潜在环境影响，如全球变暖潜能值 (GWP)。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="assessment" class="min-h-screen p-8 md:p-12 lg:p-16">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">集成评估：经济性 vs. 环境影响</h2>
+                    <p class="text-slate-600 mb-8 text-center max-w-3xl mx-auto">
+                        QSDsan的核心优势在于其集成的TEA和LCA功能，允许用户在同一平台内对环境卫生系统进行全面的可持续性评估，从而揭示经济成本和环境影响之间的复杂权衡。
+                    </p>
+                    <div class="w-full">
+                        <div class="mb-4 border-b border-slate-200">
+                            <nav id="assessment-tabs" class="flex space-x-8" aria-label="Tabs">
+                                <button data-target="tea-content" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-amber-500 text-amber-600">
+                                    技术经济分析 (TEA)
+                                </button>
+                                <button data-target="lca-content" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                                    生命周期评价 (LCA)
+                                </button>
+                            </nav>
+                        </div>
+                        <div class="mt-8">
+                            <div id="tea-content" class="tab-content">
+                                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                                    <div>
+                                        <h3 class="font-bold text-2xl text-slate-700 mb-4">评估经济可行性</h3>
+                                        <p class="text-slate-600 leading-relaxed">
+                                            TEA模块旨在评估不同环境卫生方案的经济表现。通过汇总各个<code>SanUnit</code>的资本成本（CAPEX）和运营成本（OPEX），它可以计算出整个系统的总成本和盈利能力指标。这有助于决策者识别成本驱动因素，并在设计阶段就优化系统的经济效益。
+                                        </p>
+                                    </div>
+                                    <div class="content-card p-4">
+                                        <div class="chart-container">
+                                            <canvas id="teaChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="lca-content" class="tab-content hidden">
+                                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                                     <div>
+                                        <h3 class="font-bold text-2xl text-slate-700 mb-4">量化环境足迹</h3>
+                                        <p class="text-slate-600 leading-relaxed">
+                                           LCA模块用于系统地评估环境卫生方案在其整个生命周期内的潜在环境影响。它通过将系统模拟产生的清单数据（如物料消耗、能源使用、废物排放）与环境影响类别（如全球变暖、富营养化）相关联，为可持续性决策提供关键的环境维度数据。
+                                        </p>
+                                    </div>
+                                    <div class="content-card p-4">
+                                        <div class="chart-container">
+                                            <canvas id="lcaChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="advanced" class="min-h-screen p-8 md:p-12 lg:p-16 bg-white">
+                 <div class="max-w-6xl mx-auto">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-12 text-center">高级建模功能</h2>
+                    <div class="grid lg:grid-cols-2 gap-16">
+                        <div class="flex flex-col items-center text-center">
+                            <h3 class="text-2xl font-bold text-slate-700 mb-4">动态模拟：捕捉时变行为</h3>
+                            <p class="text-slate-600 mb-8 max-w-lg">
+                                许多环境卫生过程本质上是动态变化的。QSDsan支持动态模拟，能够求解常微分方程组(ODEs)来模拟系统随时间演变的行为。这对于评估系统对波动进水的响应、控制策略和瞬态表现至关重要。
+                            </p>
+                            <div class="w-full content-card p-4">
+                               <div class="chart-container">
+                                    <canvas id="dynamicSimChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="flex flex-col items-center text-center">
+                            <h3 class="text-2xl font-bold text-slate-700 mb-4">不确定性与敏感性分析</h3>
+                            <p class="text-slate-600 mb-8 max-w-lg">
+                                现实世界充满不确定性。QSDsan允许用户为输入参数定义概率分布，并通过蒙特卡洛模拟进行不确定性量化(UQ)，从而提供对系统性能、成本和环境影响的概率性预测，并识别出最具影响力的关键参数。
+                            </p>
+                           <div class="w-full content-card p-4">
+                                <div class="chart-container">
+                                    <canvas id="uqChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="ecosystem" class="min-h-screen p-8 md:p-12 lg:p-16">
+                 <div class="max-w-4xl mx-auto text-center">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-4">生态系统与社区</h2>
+                    <p class="text-slate-600 mb-12">
+                        QSDsan并非孤立的工具，它是一个不断发展的生态系统的一部分，拥有活跃的社区、丰富的资源和协同工具，共同推动环境卫生领域的可持续创新。
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="content-card p-6">
+                            <h3 class="font-bold text-lg text-slate-700 mb-2">EXPOsan</h3>
+                            <p class="text-slate-600 text-sm mb-4">一个开放的系统模型库，收录了使用QSDsan开发的各类环境卫生系统案例，促进知识共享和模型复用。</p>
+                            <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">模型库</span>
+                        </div>
+                        <div class="content-card p-6">
+                            <h3 class="font-bold text-lg text-slate-700 mb-2">DMsan</h3>
+                            <p class="text-slate-600 text-sm mb-4">一个用于多标准决策分析(MCDA)的Python包，可与QSDsan集成，综合考量技术、经济、环境、社会等多个维度，辅助复杂决策。</p>
+                             <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200">决策分析</span>
+                        </div>
+                         <div class="content-card p-6">
+                            <h3 class="font-bold text-lg text-slate-700 mb-2">用户资源</h3>
+                            <p class="text-slate-600 text-sm mb-4">提供全面的在线文档、Jupyter教程、视频演示、活动日历和邮件列表，大力支持用户的学习和社区参与。</p>
+                             <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-purple-600 bg-purple-200">社区支持</span>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = {
+                architecture: {
+                    "desc-component": { title: "Component: 定义物质", content: "作为最基础的模块，<code>Component</code>用于定义系统中的所有化学和生物物质及其关键属性，如COD、氮含量等。这是精确模拟的基石。" },
+                    "desc-wastestream": { title: "WasteStream: 表征流动", content: "基于定义的<code>Component</code>，<code>WasteStream</code>对象用于追踪和管理系统中物质与能量的流动，包括流量、温度、压力等，并计算废水的宏观属性。" },
+                    "desc-sanunit": { title: "SanUnit: 模拟单元操作", content: "<code>SanUnit</code>是模拟的核心，用于表征各种环境卫生处理单元（如反应器、沉淀池）。它封装了内部的转化逻辑、设计参数、成本和环境清单数据。" },
+                    "desc-system": { title: "System: 集成完整过程", content: "将多个<code>SanUnit</code>通过<code>WasteStream</code>连接，便构成了<code>System</code>对象。它负责管理整个系统的模拟，并为后续的TEA和LCA提供汇总数据。" },
+                    "desc-tea": { title: "TEA: 评估经济可行性", content: "技术经济分析 (TEA) 模块利用系统模拟得出的数据（如资本成本、运营成本），计算净现值(NPV)、投资回收期等关键经济指标。" },
+                    "desc-lca": { title: "LCA: 评估环境可持续性", content: "生命周期评价 (LCA) 模块利用系统清单（如能耗、物耗、排放），结合影响指标和特征化因子，量化系统的潜在环境影响，如全球变暖潜能值 (GWP)。" }
+                }
+            };
+
+            const mainContent = document.getElementById('main-content');
+            const navLinks = document.querySelectorAll('#main-nav a');
+            const sections = document.querySelectorAll('main section');
+
+            function updateActiveLink() {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (mainContent.scrollTop >= sectionTop - 60) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.href.includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            mainContent.addEventListener('scroll', updateActiveLink);
+            updateActiveLink();
+
+            const archDiagram = document.getElementById('architecture-diagram');
+            const archBoxes = archDiagram.querySelectorAll('.architecture-box');
+            const descPanels = document.querySelectorAll('#architecture-descriptions .description-panel');
+            const defaultPanel = document.getElementById('desc-default');
+            
+            archDiagram.addEventListener('click', (e) => {
+                const box = e.target.closest('.architecture-box');
+                if (!box) return;
+
+                const targetId = box.dataset.target;
+                
+                archBoxes.forEach(b => b.classList.remove('active'));
+                box.classList.add('active');
+
+                descPanels.forEach(p => p.classList.add('hidden'));
+                const targetPanel = document.getElementById(targetId);
+                if (targetPanel) {
+                    targetPanel.classList.remove('hidden');
+                } else {
+                    defaultPanel.classList.remove('hidden');
+                }
+            });
+
+            const assessmentTabs = document.getElementById('assessment-tabs');
+            const tabButtons = assessmentTabs.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('#assessment .tab-content');
+
+            assessmentTabs.addEventListener('click', (e) => {
+                const button = e.target.closest('.tab-button');
+                if (!button) return;
+                
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('border-amber-500', 'text-amber-600');
+                    btn.classList.add('border-transparent', 'text-slate-500', 'hover:text-slate-700', 'hover:border-slate-300');
+                });
+                button.classList.add('border-amber-500', 'text-amber-600');
+                button.classList.remove('border-transparent', 'text-slate-500');
+
+                const targetId = button.dataset.target;
+                tabContents.forEach(content => {
+                    if (content.id === targetId) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+
+
+            const chartColors = {
+                primary: 'rgba(71, 85, 105, 0.8)', // slate-600
+                primaryLight: 'rgba(100, 116, 139, 0.6)', // slate-500
+                secondary: 'rgba(202, 138, 4, 0.8)', // amber-500
+                secondaryLight: 'rgba(217, 119, 6, 0.6)', // amber-600
+                tertiary: 'rgba(14, 165, 233, 0.8)', // sky-500
+                background: 'rgba(241, 245, 249, 0.5)' // slate-100
+            };
+
+            const defaultChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { family: "'Noto Sans SC', sans-serif" }
+                        }
+                    },
+                    tooltip: {
+                        bodyFont: { family: "'Noto Sans SC', sans-serif" },
+                        titleFont: { family: "'Noto Sans SC', sans-serif" }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            font: { family: "'Noto Sans SC', sans-serif" }
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            font: { family: "'Noto Sans SC', sans-serif" }
+                        },
+                         grid: { color: chartColors.background }
+                    }
+                }
+            };
+
+            new Chart(document.getElementById('teaChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['系统A', '系统B (沼气回收)', '系统C (养分回收)'],
+                    datasets: [{
+                        label: '年化总成本 (美元/户)',
+                        data: [120, 75, 150],
+                        backgroundColor: [chartColors.primaryLight, chartColors.secondary, chartColors.primaryLight],
+                        borderColor: [chartColors.primary, chartColors.secondaryLight, chartColors.primary],
+                        borderWidth: 1
+                    }]
+                },
+                options: { ...defaultChartOptions, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+
+            new Chart(document.getElementById('lcaChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['全球变暖潜能 (GWP)', '氮(N)回收', '磷(P)回收', 'COD回收', '水资源消耗'],
+                    datasets: [
+                        {
+                            label: '系统 A',
+                            data: [6, 7, 6, 8, 7],
+                            backgroundColor: 'rgba(71, 85, 105, 0.2)',
+                            borderColor: 'rgba(71, 85, 105, 1)',
+                            pointBackgroundColor: 'rgba(71, 85, 105, 1)'
+                        },
+                        {
+                            label: '系统 B',
+                            data: [8, 5, 8, 5, 9],
+                            backgroundColor: 'rgba(202, 138, 4, 0.2)',
+                            borderColor: 'rgba(202, 138, 4, 1)',
+                            pointBackgroundColor: 'rgba(202, 138, 4, 1)'
+                        },
+                        {
+                            label: '系统 C',
+                            data: [4, 9, 7, 6, 5],
+                            backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                            borderColor: 'rgba(14, 165, 233, 1)',
+                            pointBackgroundColor: 'rgba(14, 165, 233, 1)'
+                        }
+                    ]
+                },
+                options: {...defaultChartOptions, scales: { r: { ticks: { display: false }}}}
+            });
+            
+            new Chart(document.getElementById('dynamicSimChart'), {
+                type: 'line',
+                data: {
+                    labels: ['0', '10', '20', '30', '40', '50'],
+                    datasets: [{
+                        label: 'QSDsan 模拟出水COD (mg/L)',
+                        data: [15, 22, 18, 25, 23, 20],
+                        borderColor: chartColors.secondary,
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        fill: false
+                    }, {
+                        label: 'BSM1 基准',
+                        data: [14.8, 22.2, 18.1, 25.3, 22.8, 19.9],
+                        borderColor: chartColors.primary,
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        fill: false
+                    }]
+                },
+                 options: {...defaultChartOptions, plugins: { ...defaultChartOptions.plugins, tooltip: { mode: 'index', intersect: false }}, scales: { ...defaultChartOptions.scales, x: { title: { display: true, text: '模拟天数'}}}}
+            });
+
+            new Chart(document.getElementById('uqChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['<100', '100-110', '110-120', '120-130', '>130'],
+                    datasets: [{
+                        label: '模拟次数',
+                        data: [50, 150, 450, 250, 100],
+                        backgroundColor: chartColors.primaryLight,
+                        borderColor: chartColors.primary,
+                        borderWidth: 1
+                    }]
+                },
+                options: { ...defaultChartOptions, plugins: { legend: { display: false } }, scales: { ...defaultChartOptions.scales, x: { title: { display: true, text: '年化成本区间 (美元/户)' }}, y: { title: { display: true, text: '频率' }}}}
+            });
+        });
+    </script>
+</body>
+</html>

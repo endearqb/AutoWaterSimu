@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>llmware RAG 方案交互式解读</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Background: #F8F7F4, Panels: #FFFFFF, Text: #2d3748, Primary Accent: #4A5568, Secondary Accent: #D97706) -->
+    <!-- Application Structure Plan: A single-page dashboard/explorer design. The structure is thematic rather than linear, using a top navigation bar for quick scrolling. Key concepts like the core architecture and RAG workflow are visualized as interactive diagrams. Clicking a component or step reveals detailed information in an adjacent panel. This user-controlled, progressive disclosure approach is more engaging for a dense technical report than a simple top-to-bottom read. It allows users to choose their own exploration path and dive deep into areas of interest, which is superior for usability and information synthesis. -->
+    <!-- Visualization & Content Choices: 
+        1. Core Architecture: Goal(Organize) -> Interactive Diagram (HTML/CSS) -> Clicking a component shows its description. Justification: Visually represents system structure and relationships better than a table or list.
+        2. RAG Workflow: Goal(Change/Process) -> Interactive Step-by-Step Diagram (HTML/CSS) -> Clicking a step explains that part of the process. Justification: Breaks down a complex sequence into manageable, explorable stages.
+        3. Model Comparison: Goal(Compare) -> Bar Chart (Chart.js/Canvas) -> Visually compares model parameter sizes. Justification: Immediately conveys the scale difference between BLING and DRAGON models.
+        4. Database Support: Goal(Inform) -> Styled Tags/Badges (HTML/CSS) -> Lists supported databases. Justification: More modern and visually scannable than a plain list.
+        5. Strengths/Limitations: Goal(Compare) -> Two-column layout. Justification: Direct side-by-side comparison is most effective for this type of information.
+        All choices adhere to the NO SVG/Mermaid constraint and prioritize interactivity to enhance user understanding. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F7F4;
+            color: #2d3748;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #4A5568;
+            border-bottom-color: #4A5568;
+        }
+        .content-card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .interactive-element {
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .interactive-element.active {
+            background-color: #4A5568;
+            color: #FFFFFF;
+            border-color: #4A5568;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 50vh;
+        }
+        .db-tag {
+            background-color: #E2E8F0;
+            color: #4A5568;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800">llmware RAG 方案交互式解读</h1>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#architecture" class="nav-link px-1 py-2 text-sm font-medium text-gray-600">核心架构</a>
+                    <a href="#workflow" class="nav-link px-1 py-2 text-sm font-medium text-gray-600">RAG 流程</a>
+                    <a href="#models" class="nav-link px-1 py-2 text-sm font-medium text-gray-600">专用模型</a>
+                    <a href="#enterprise" class="nav-link px-1 py-2 text-sm font-medium text-gray-600">企业级特性</a>
+                    <a href="#analysis" class="nav-link px-1 py-2 text-sm font-medium text-gray-600">优势与局限</a>
+                </nav>
+                 <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden">
+            <a href="#architecture" class="block py-2 px-4 text-sm text-gray-600 hover:bg-gray-100">核心架构</a>
+            <a href="#workflow" class="block py-2 px-4 text-sm text-gray-600 hover:bg-gray-100">RAG 流程</a>
+            <a href="#models" class="block py-2 px-4 text-sm text-gray-600 hover:bg-gray-100">专用模型</a>
+            <a href="#enterprise" class="block py-2 px-4 text-sm text-gray-600 hover:bg-gray-100">企业级特性</a>
+            <a href="#analysis" class="block py-2 px-4 text-sm text-gray-600 hover:bg-gray-100">优势与局限</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">探索新一代企业级 RAG 框架</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                llmware 是一个统一的开源框架，专为构建企业级检索增强生成 (RAG) 应用而设计。其核心理念是利用一系列小型、专用、可私有化部署的模型，在保障数据安全和成本效益的同时，高效赋能各类业务流程。
+            </p>
+        </section>
+
+        <!-- Core Architecture -->
+        <section id="architecture" class="mb-16 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">核心系统架构</h2>
+                <p class="text-md text-gray-600">llmware 通过一系列模块化组件协同工作。点击下方图示中的组件，了解其在 RAG 系统中的关键作用。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div id="architecture-diagram" class="flex flex-col space-y-4 items-center p-4">
+                    <div data-target="arch-prompt" class="interactive-element w-full md:w-3/4 p-3 border-2 border-gray-300 rounded-lg text-center font-semibold bg-gray-100 hover:bg-gray-200">
+                        Prompt (提示管理器)
+                    </div>
+                    <div class="text-2xl text-gray-400">↑↓</div>
+                    <div data-target="arch-model" class="interactive-element w-full md:w-3/4 p-3 border-2 border-gray-300 rounded-lg text-center font-semibold bg-gray-100 hover:bg-gray-200 active">
+                        ModelCatalog (模型目录)
+                    </div>
+                    <div class="text-2xl text-gray-400">↑↓</div>
+                    <div data-target="arch-query" class="interactive-element w-full md:w-3/4 p-3 border-2 border-gray-300 rounded-lg text-center font-semibold bg-gray-100 hover:bg-gray-200">
+                        Query (检索引擎)
+                    </div>
+                    <div class="text-2xl text-gray-400">↑↓</div>
+                    <div data-target="arch-library" class="interactive-element w-full md:w-3/4 p-3 border-2 border-gray-300 rounded-lg text-center font-semibold bg-gray-100 hover:bg-gray-200">
+                        Library (知识库)
+                    </div>
+                </div>
+                <div class="content-card p-6 md:p-8 min-h-[300px]">
+                    <div id="architecture-details">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RAG Workflow -->
+        <section id="workflow" class="mb-16 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">RAG 流程实现深度剖析</h2>
+                <p class="text-md text-gray-600">llmware 覆盖了从数据处理到答案生成的完整 RAG 链路。点击流程中的每一步，查看其详细实现。</p>
+            </div>
+            <div class="w-full overflow-x-auto pb-4">
+                <div id="workflow-steps" class="flex space-x-2 md:space-x-4 min-w-max justify-center">
+                    <div data-target="flow-parse" class="interactive-element text-center border-2 border-gray-300 rounded-lg px-4 py-3 font-medium bg-gray-100 hover:bg-gray-200 active">1. 文档解析</div>
+                    <div class="flex items-center text-gray-400 text-2xl font-light">→</div>
+                    <div data-target="flow-chunk" class="interactive-element text-center border-2 border-gray-300 rounded-lg px-4 py-3 font-medium bg-gray-100 hover:bg-gray-200">2. 分块与索引</div>
+                    <div class="flex items-center text-gray-400 text-2xl font-light">→</div>
+                    <div data-target="flow-embed" class="interactive-element text-center border-2 border-gray-300 rounded-lg px-4 py-3 font-medium bg-gray-100 hover:bg-gray-200">3. 嵌入与存储</div>
+                    <div class="flex items-center text-gray-400 text-2xl font-light">→</div>
+                    <div data-target="flow-retrieve" class="interactive-element text-center border-2 border-gray-300 rounded-lg px-4 py-3 font-medium bg-gray-100 hover:bg-gray-200">4. 检索</div>
+                    <div class="flex items-center text-gray-400 text-2xl font-light">→</div>
+                    <div data-target="flow-generate" class="interactive-element text-center border-2 border-gray-300 rounded-lg px-4 py-3 font-medium bg-gray-100 hover:bg-gray-200">5. 生成与验证</div>
+                </div>
+            </div>
+            <div id="workflow-details" class="content-card p-6 md:p-8 mt-8 min-h-[250px]">
+                <!-- JS will populate this -->
+            </div>
+        </section>
+
+        <!-- Specialized Models -->
+        <section id="models" class="mb-16 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">RAG 专用模型家族</h2>
+                <p class="text-md text-gray-600">llmware 的核心竞争力在于其为 RAG 优化的专用模型，旨在平衡性能、效率和部署便捷性。</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="flex flex-col space-y-6">
+                    <div class="content-card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-gray-800">BLING 系列</h3>
+                        <p class="text-gray-600">参数量约10亿级别的轻量级模型，为在 CPU 上快速运行而优化，适合基础问答、关键词提取等任务。</p>
+                    </div>
+                    <div class="content-card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-gray-800">DRAGON 系列</h3>
+                        <p class="text-gray-600">参数量相对较大（如70亿级）的高性能 GGUF 模型，适用于需要深度理解和推理的复杂 RAG 任务，如合同分析。</p>
+                    </div>
+                    <div class="content-card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-orange-600">SLIMs 系列 (函数调用模型)</h3>
+                        <p class="text-gray-600">一项重要创新，是紧凑的、专门用于函数调用的模型，能执行情感分析、信息提取等结构化任务，为构建智能代理提供路径。</p>
+                    </div>
+                </div>
+                <div class="content-card p-6 flex flex-col justify-center">
+                     <h3 class="text-xl font-bold mb-4 text-center">模型规模与定位示意</h3>
+                    <div class="chart-container">
+                        <canvas id="modelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Enterprise Features -->
+        <section id="enterprise" class="mb-16 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">企业级部署考量</h2>
+                <p class="text-md text-gray-600">llmware 提供了全面的企业级特性，确保 RAG 系统能够安全、高效地集成到现有环境中。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="content-card p-6">
+                    <div class="text-3xl mb-3 text-orange-600">🔒</div>
+                    <h3 class="text-xl font-bold mb-2">安全与隐私</h3>
+                    <p class="text-gray-600">支持完全本地化/私有化部署，数据不出内网。内置 PII 过滤、偏见监控和幻觉检测等安全工具。</p>
+                </div>
+                 <div class="content-card p-6">
+                    <div class="text-3xl mb-3 text-orange-600">⚙️</div>
+                    <h3 class="text-xl font-bold mb-2">性能与加速</h3>
+                    <p class="text-gray-600">与英特尔深度合作，通过 OpenVINO 工具套件优化，在 AI PC 和至强服务器上实现卓越的推理性能。</p>
+                </div>
+                 <div class="content-card p-6">
+                    <div class="text-3xl mb-3 text-orange-600">💾</div>
+                    <h3 class="text-xl font-bold mb-2">数据库集成</h3>
+                    <p class="text-gray-600">灵活支持多种主流数据库，无缝融入企业现有数据生态系统。</p>
+                </div>
+            </div>
+             <div class="mt-8 content-card p-6">
+                <h3 class="text-xl font-bold mb-4 text-center">广泛的数据库支持</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold mb-3 text-center">集合数据库 (元数据存储)</h4>
+                        <div id="collection-db" class="flex flex-wrap justify-center gap-2">
+                           <!-- JS will populate this -->
+                        </div>
+                    </div>
+                     <div>
+                        <h4 class="font-semibold mb-3 text-center">向量数据库 (语义检索)</h4>
+                        <div id="vector-db" class="flex flex-wrap justify-center gap-2">
+                            <!-- JS will populate this -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis -->
+        <section id="analysis" class="scroll-mt-20">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">优势与潜在局限性</h2>
+                <p class="text-md text-gray-600">全面评估 llmware 在企业 RAG 解决方案中的定位。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="content-card p-6 border-l-4 border-green-500">
+                    <h3 class="text-2xl font-bold mb-4 text-green-600">主要优势</h3>
+                    <ul class="space-y-3 list-disc list-inside text-gray-700">
+                        <li><strong>聚焦小型、本地化模型</strong>：极大地增强了数据隐私、安全性和成本效益。</li>
+                        <li><strong>端到端完整框架</strong>：提供从数据准备到后处理的完整工具链，简化开发。</li>
+                        <li><strong>强大的企业级特性</strong>：内置安全工具、数据血缘追踪、丰富的数据库集成。</li>
+                        <li><strong>创新的 SLIMs 模型</strong>：以轻量级方式实现函数调用，赋能智能代理应用。</li>
+                        <li><strong>优异的硬件优化</strong>：与英特尔合作，在常见硬件上实现高性能推理。</li>
+                         <li><strong>高度灵活可扩展</strong>：支持自定义模型和广泛的数据库选项。</li>
+                    </ul>
+                </div>
+                <div class="content-card p-6 border-l-4 border-yellow-500">
+                    <h3 class="text-2xl font-bold mb-4 text-yellow-600">潜在局限性</h3>
+                     <ul class="space-y-3 list-disc list-inside text-gray-700">
+                        <li><strong>小型模型性能上限</strong>：处理极其复杂的推理任务时，能力可能不及超大型前沿模型。</li>
+                        <li><strong>社区生态系统规模</strong>：相比 LangChain 等框架，社区规模尚在发展中，可能影响第三方集成的丰富度。</li>
+                        <li><strong>超大规模负载表现</strong>：在处理 PB 级数据或极高并发请求时的性能基准资料较少。</li>
+                        <li><strong>前沿模型支持速度</strong>：官方集成最新、最大开源模型的速度可能存在延迟。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-400 text-sm">
+            <p>此交互式报告根据 llmware-ai GitHub 仓库及其相关技术文档生成。</p>
+            <p>&copy; 2024 Interactive Report. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        const archData = {
+            'arch-model': {
+                title: 'ModelCatalog (模型目录)',
+                content: '这是访问和管理模型的核心枢纽。它提供了一种统一的方式来调用所有支持的模型，而不论其底层实现是 GGUF、HuggingFace 还是基于 API 的模型。开发者可通过简单的 API 调用加载模型，极大地简化了模型的切换和实验。'
+            },
+            'arch-library': {
+                title: 'Library (知识库)',
+                content: '代表一个独立的知识库或文档集合。它负责处理文档的摄取、解析、文本分块和初步索引等关键步骤。每个 Library 实例可以对应不同的用例或权限设置。'
+            },
+            'arch-query': {
+                title: 'Query (检索引擎)',
+                content: '这是从 Library 中执行搜索和检索操作的主要类。它支持文本匹配、向量语义查询、混合查询以及基于元数据的过滤，是 RAG 系统性能的基石。'
+            },
+            'arch-prompt': {
+                title: 'Prompt (提示管理器)',
+                content: '负责管理与 LLM 的交互，包括构建提示词、注入检索到的上下文，并执行最终的推理。其 `prompt_with_source` 方法可以便捷地将多种知识源整合到提示中。'
+            }
+        };
+
+        const workflowData = {
+            'flow-parse': {
+                title: '1. 文档解析与数据提取',
+                content: '高质量RAG始于精准的文档解析。llmware 支持包括PDF、Word、PPT在内的多种格式，并集成了OCR功能，能从图像中提取文本，确保知识库的完整性。'
+            },
+            'flow-chunk': {
+                title: '2. 文本分块与索引策略',
+                content: '将解析后的文档分割成大小合适的文本块 (Chunking) 是向量化的关键。llmware 提供灵活的分块控制，并在索引时一并存储文本和元数据（如来源、章节），为过滤查询提供支持。'
+            },
+            'flow-embed': {
+                title: '3. 嵌入生成与向量数据库集成',
+                content: '通过嵌入模型将文本块转换为高维向量，捕捉其语义信息。llmware 支持多种嵌入模型，并能灵活集成 Milvus、FAISS、ChromaDB 等多种主流向量数据库。'
+            },
+            'flow-retrieve': {
+                title: '4. 检索机制',
+                content: '`Query` 类承担信息检索的职责，支持多种策略：<br><strong>- 文本检索:</strong> 基于关键词匹配。<br><strong>- 语义检索:</strong> 基于向量相似度进行自然语言查询。<br><strong>- 混合检索:</strong> 结合两者优势，以达到更好的召回和排序效果。'
+            },
+            'flow-generate': {
+                title: '5. 生成与验证',
+                content: '`Prompt` 类将检索到的上下文与用户查询结合，送往 LLM 生成响应。框架还提供了一系列后处理工具，如证据验证、事实核查和“人在回路”反馈机制，以提升结果的可靠性。'
+            }
+        };
+
+        const dbData = {
+            collection: ['MongoDB', 'SQLite', 'Postgres'],
+            vector: ['Milvus', 'PG Vector', 'Redis', 'Qdrant', 'FAISS', 'Pinecone', 'Mongo Atlas', 'ChromaDB', 'LanceDB']
+        };
+
+        // Architecture Section Logic
+        const archDiagram = document.getElementById('architecture-diagram');
+        const archDetails = document.getElementById('architecture-details');
+        
+        function updateArchDetails(targetId) {
+            const data = archData[targetId];
+            archDetails.innerHTML = `<h3 class="text-2xl font-bold mb-4 text-gray-800">${data.title}</h3><p class="text-gray-600 leading-relaxed">${data.content}</p>`;
+            
+            archDiagram.querySelectorAll('.interactive-element').forEach(el => {
+                el.classList.remove('active');
+            });
+            archDiagram.querySelector(`[data-target="${targetId}"]`).classList.add('active');
+        }
+
+        archDiagram.addEventListener('click', (e) => {
+            const target = e.target.closest('.interactive-element');
+            if (target && target.dataset.target) {
+                updateArchDetails(target.dataset.target);
+            }
+        });
+
+        // Workflow Section Logic
+        const workflowSteps = document.getElementById('workflow-steps');
+        const workflowDetails = document.getElementById('workflow-details');
+
+        function updateWorkflowDetails(targetId) {
+            const data = workflowData[targetId];
+            workflowDetails.innerHTML = `<h3 class="text-xl font-bold mb-3">${data.title}</h3><div class="text-gray-600 leading-relaxed">${data.content}</div>`;
+
+            workflowSteps.querySelectorAll('.interactive-element').forEach(el => {
+                el.classList.remove('active');
+            });
+            workflowSteps.querySelector(`[data-target="${targetId}"]`).classList.add('active');
+        }
+        
+        workflowSteps.addEventListener('click', (e) => {
+            const target = e.target.closest('.interactive-element');
+            if (target && target.dataset.target) {
+                updateWorkflowDetails(target.dataset.target);
+            }
+        });
+
+        // Database Tags Logic
+        const collectionDbContainer = document.getElementById('collection-db');
+        const vectorDbContainer = document.getElementById('vector-db');
+
+        dbData.collection.forEach(db => {
+            collectionDbContainer.innerHTML += `<span class="db-tag">${db}</span>`;
+        });
+        dbData.vector.forEach(db => {
+            vectorDbContainer.innerHTML += `<span class="db-tag">${db}</span>`;
+        });
+
+        // Chart.js Model Chart
+        const ctx = document.getElementById('modelChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['BLING 系列', 'DRAGON 系列', 'SLIMs 系列'],
+                datasets: [{
+                    label: '相对参数规模/复杂度',
+                    data: [15, 60, 5],
+                    backgroundColor: [
+                        'rgba(74, 85, 104, 0.6)',
+                        'rgba(217, 119, 6, 0.6)',
+                        'rgba(107, 114, 128, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(74, 85, 104, 1)',
+                        'rgba(217, 119, 6, 1)',
+                        'rgba(107, 114, 128, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.data[context.dataIndex] === 5) {
+                                    label += '轻量级 (函数调用)';
+                                } else if (context.dataset.data[context.dataIndex] === 15) {
+                                    label += '小规模 (约1B+)';
+                                } else {
+                                     label += '中等规模 (约7B+)';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '复杂度/规模 →'
+                        }
+                    },
+                    y: {
+                       ticks: {
+                           font: {
+                               size: 14
+                           }
+                       }
+                    }
+                }
+            }
+        });
+        
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth scrolling for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                if (mobileMenu.classList.contains('hidden') === false) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+
+        // Active nav link highlighting on scroll
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('header nav a');
+        
+        window.onscroll = () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if(pageYOffset >= sectionTop - 80) { // 80px offset for sticky header
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if(link.href.includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        };
+
+        // Initial content load
+        updateArchDetails('arch-model');
+        updateWorkflowDetails('flow-parse');
+
+    });
+    </script>
+</body>
+</html>

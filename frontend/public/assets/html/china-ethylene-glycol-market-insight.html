@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国乙二醇产业深度洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F0F4F8; /* Light Blue-Gray Background */
+        }
+        .chart-container {
+            position: relative;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #118AB2; /* Energetic Blue */
+        }
+        .stat-label {
+            font-size: 1rem;
+            color: #073B4C; /* Dark Blue */
+        }
+        h1, h2, h3 {
+            color: #073B4C; /* Dark Blue */
+        }
+        .section-intro-text {
+            color: #073B4C; /* Dark Blue */
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #073B4C;
+        }
+        .chart-context-text {
+            font-size: 0.9rem;
+            color: #4A5568; /* Tailwind gray-700 */
+            line-height: 1.5;
+            margin-top: 0.5rem;
+        }
+        .flow-diagram-box {
+            border: 2px solid #118AB2; /* Energetic Blue */
+            background-color: #E0F7FA; /* Lighter blue shade */
+            color: #073B4C; /* Dark Blue */
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .flow-diagram-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #118AB2; /* Energetic Blue */
+            margin: 0.5rem 0;
+        }
+         .list-item-icon {
+            color: #06D6A0; /* Energetic Green */
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- 
+        Infographic Plan Summary:
+        1. Introduction: Hook with key market statement and a big number (Total MEG Capacity).
+        2. MEG Market Overview: Capacity/Production (Bar Chart), Process Mix (Donut Chart), Key Producers (Table).
+        3. MEG Price Dynamics: Influencing Factors (HTML/CSS Diagram).
+        4. MEG Consumption: Applications (Donut Chart), Polyester Segments (Donut Chart), Key Regions (Bar Chart).
+        5. Byproduct Glycols (DEG & TEG): Key uses (Styled Lists with Unicode icons).
+        6. Environmental Challenges & Waste: Waste types (Styled Lists), MEG LD50 issue (Text).
+        7. Future Outlook: "Dual Carbon" challenges, Tech Trends (Styled Lists).
+        8. Conclusion: Summary.
+
+        Visualization Choices:
+        - Big Number: Styled text for total capacity.
+        - MEG Capacity/Production: Chart.js Bar Chart.
+        - Process Mix: Chart.js Donut Chart.
+        - Key Producers: HTML Table.
+        - Price Influencers: HTML/CSS diagram (boxes and lines/arrows).
+        - Consumption Applications: Chart.js Donut Chart.
+        - Polyester Segments: Chart.js Donut Chart.
+        - Consumption Regions: Chart.js Bar Chart.
+        - DEG/TEG Uses: HTML Lists with Unicode.
+        - Waste Types: HTML Lists.
+        - LD50 Issue: Text.
+        - Outlook Lists: HTML Lists.
+
+        Color Palette: "Energetic & Playful" (#FF6B6B, #FFD166, #06D6A0, #118AB2, #073B4C)
+        Backgrounds: #F0F4F8 (body), #FFFFFF (cards)
+
+        Confirmation: NO SVG graphics are used. NO Mermaid JS is used. All charts are via Chart.js (Canvas). Diagrams are HTML/CSS.
+    -->
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4 text-[#118AB2]">中国乙二醇市场深度洞察</h1>
+            <p class="text-xl text-[#073B4C]">增长、挑战与未来展望</p>
+        </header>
+
+        <section class="mb-12 text-center">
+             <p class="section-intro-text max-w-3xl mx-auto">
+                中国是全球最大的乙二醇生产国和消费国。近年来，煤制乙二醇（CTEG）产能迅速扩张，深刻改变了国内供应格局，但也带来了环保挑战。本报告旨在梳理中国乙二醇及其副产物的市场现状、价格机制、消费结构、废弃物管理及未来趋势。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mt-8">
+                <div class="stat-card">
+                    <div class="stat-value">2977<span class="text-2xl">万吨/年</span></div>
+                    <div class="stat-label">2023年底全国乙二醇总产能</div>
+                    <p class="chart-context-text text-sm">较2022年增长19.2%，显示产能持续扩张。</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">1643<span class="text-2xl">万吨</span></div>
+                    <div class="stat-label">2023年全国乙二醇总产量</div>
+                     <p class="chart-context-text text-sm">尽管产能巨大，开工率受市场影响有所波动。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="market-overview" class="mb-12">
+            <h2 class="text-3xl font-semibold mb-6 text-center">市场概览：工业乙二醇 (MEG)</h2>
+            <p class="section-intro-text max-w-3xl mx-auto text-center">
+                中国乙二醇市场在生产能力、工艺路线和企业格局方面均呈现复杂且动态的特征。煤制路线的崛起是近年来最显著的变化。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div class="chart-container h-auto md:h-[450px]">
+                    <h3 class="chart-title">乙二醇产能与产量趋势</h3>
+                    <canvas id="capacityProductionChart"></canvas>
+                    <p class="chart-context-text">数据显示2023年产能与产量均有显著增长。2024年产能基数略有调整，但总体维持高位。图表展示了近年产能的快速扩张和实际产量情况。</p>
+                </div>
+                <div class="chart-container h-auto md:h-[450px]">
+                    <h3 class="chart-title">乙二醇生产工艺构成 (2024年初产能)</h3>
+                    <canvas id="processMixChart"></canvas>
+                    <p class="chart-context-text">煤（合成气）制乙二醇产能已占相当比重（约35.9%），达到1020万吨/年，反映了国家能源结构特点和对原料多元化的追求。</p>
+                </div>
+            </div>
+            <div class="mt-8 chart-container">
+                <h3 class="chart-title">主要乙二醇生产企业 (部分)</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-[#118AB2] text-white">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">企业名称</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">产能 (万吨/年)</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">备注</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-700">
+                            <tr>
+                                <td class="text-left py-3 px-4">中国石化</td>
+                                <td class="text-left py-3 px-4">~330 (2019年底数据)</td>
+                                <td class="text-left py-3 px-4">传统主要生产商</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="text-left py-3 px-4">荣盛石化</td>
+                                <td class="text-left py-3 px-4">240</td>
+                                <td class="text-left py-3 px-4">大型民营石化企业</td>
+                            </tr>
+                            <tr>
+                                <td class="text-left py-3 px-4">恒力石化</td>
+                                <td class="text-left py-3 px-4">180</td>
+                                <td class="text-left py-3 px-4">纤维级乙二醇</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="text-left py-3 px-4">新疆天业</td>
+                                <td class="text-left py-3 px-4">未列具体，但为重要煤制企业</td>
+                                <td class="text-left py-3 px-4">煤制乙二醇代表</td>
+                            </tr>
+                             <tr>
+                                <td class="text-left py-3 px-4">万凯新材 (规划)</td>
+                                <td class="text-left py-3 px-4">120 (天然气制)</td>
+                                <td class="text-left py-3 px-4">新兴工艺路线</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="chart-context-text">市场参与者日趋多元化，大型民营企业和煤化工企业占比提升。上表数据部分为近年新增或规划产能，具体市场份额动态变化。</p>
+            </div>
+        </section>
+
+        <section id="price-dynamics" class="mb-12">
+            <h2 class="text-3xl font-semibold mb-6 text-center">价格动态与影响因素</h2>
+            <p class="section-intro-text max-w-3xl mx-auto text-center">
+                乙二醇价格波动受多重因素驱动，包括上游成本、市场供需、下游行业景气度及宏观经济环境。2023年价格整体偏弱，呈窄幅波动。
+            </p>
+            <div class="chart-container p-6">
+                <h3 class="chart-title">乙二醇价格主要影响因素示意图</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div class="flow-diagram-box">上游原料成本<br>(原油, 煤炭)</div>
+                    <div class="flow-diagram-arrow hidden md:flex">➡️</div>
+                     <div class="flex md:hidden flow-diagram-arrow">⬇️</div>
+                    <div class="flow-diagram-box md:col-span-1 row-start-2 md:row-start-auto">供应面因素<br>(产能, 开工率, 进口)</div>
+                     <div class="flex md:hidden flow-diagram-arrow">⬇️</div>
+                </div>
+                <div class="flex justify-center my-2">
+                    <div class="flow-diagram-arrow">⬇️ ⬆️</div>
+                </div>
+                <div class="flow-diagram-box w-1/2 mx-auto mb-4">乙二醇市场价格</div>
+                 <div class="flex justify-center my-2">
+                    <div class="flow-diagram-arrow">⬇️ ⬆️</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div class="flow-diagram-box">下游需求状况<br>(聚酯行业景气度)</div>
+                    <div class="flow-diagram-arrow hidden md:flex">⬅️</div>
+                    <div class="flex md:hidden flow-diagram-arrow">⬇️</div>
+                    <div class="flow-diagram-box md:col-span-1 row-start-2 md:row-start-auto">宏观经济与政策<br>(经济增长, 环保)</div>
+                </div>
+                 <p class="chart-context-text mt-4">这些因素相互作用，共同决定乙二醇的价格水平。煤制乙二醇的成本和聚酯行业的需求是关键的“底”和“顶”。</p>
+            </div>
+        </section>
+
+        <section id="consumption-pattern" class="mb-12">
+            <h2 class="text-3xl font-semibold mb-6 text-center">消费格局：乙二醇去哪儿了？</h2>
+            <p class="section-intro-text max-w-3xl mx-auto text-center">
+                中国乙二醇的消费高度集中于聚酯产业，主要用户区域位于东部沿海的石化产业集群地带。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                <div class="chart-container h-auto md:h-[420px] md:col-span-1">
+                    <h3 class="chart-title">主要应用领域 (消费占比)</h3>
+                    <canvas id="applicationShareChart"></canvas>
+                    <p class="chart-context-text">超过90%的乙二醇用于生产聚酯，防冻液是第二大应用，但占比较小。</p>
+                </div>
+                <div class="chart-container h-auto md:h-[420px] md:col-span-1">
+                    <h3 class="chart-title">聚酯产品细分 (在聚酯应用中)</h3>
+                    <canvas id="polyesterSegmentsChart"></canvas>
+                    <p class="chart-context-text">在聚酯应用中，涤纶纤维（长丝和短纤）是主要去向，其次是PET树脂（瓶片、薄膜等）。</p>
+                </div>
+                <div class="chart-container h-auto md:h-[420px] md:col-span-1">
+                    <h3 class="chart-title">主要消费区域 (2019年数据)</h3>
+                    <canvas id="consumptionRegionsChart"></canvas>
+                     <p class="chart-context-text">浙江和江苏两省合计消费占比近80%，体现了聚酯产业的高度区域集中性。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="byproducts" class="mb-12">
+            <h2 class="text-3xl font-semibold mb-6 text-center">副产乙二醇：DEG 与 TEG</h2>
+             <p class="section-intro-text max-w-3xl mx-auto text-center">
+                二甘醇（DEG）和三甘醇（TEG）是乙二醇（MEG）生产过程中的主要副产物，各有其特定的应用领域。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-2xl font-medium mb-4 text-[#118AB2]">二甘醇 (DEG) 主要应用</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-center"><span class="list-item-icon">🧪</span>不饱和聚酯树脂 (UPR) 原料</li>
+                        <li class="flex items-center"><span class="list-item-icon">💧</span>溶剂 (油墨、染料、树脂)</li>
+                        <li class="flex items-center"><span class="list-item-icon">🧩</span>增塑剂</li>
+                        <li class="flex items-center"><span class="list-item-icon">🌡️</span>湿润剂 (烟草、胶黏剂)</li>
+                        <li class="flex items-center"><span class="list-item-icon">🛠️</span>化学中间体 (如合成吗啉)</li>
+                    </ul>
+                    <p class="chart-context-text mt-3">DEG市场供应与MEG（特别是乙烯法）产量联动，其毒性问题在特定应用中需严格管控。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-2xl font-medium mb-4 text-[#06D6A0]">三甘醇 (TEG) 主要应用</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-center"><span class="list-item-icon">💨</span>天然气脱水剂 (最主要应用)</li>
+                        <li class="flex items-center"><span class="list-item-icon">🧪</span>溶剂 (树脂、油漆)</li>
+                        <li class="flex items-center"><span class="list-item-icon">🧴</span>湿润剂 (烟草、化妆品)</li>
+                        <li class="flex items-center"><span class="list-item-icon">🧼</span>纤维润滑剂、增塑剂</li>
+                    </ul>
+                    <p class="chart-context-text mt-3">TEG的需求与天然气产业发展密切相关，因其优良的吸湿性和稳定性而被广泛使用。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="environmental-waste" class="mb-12">
+            <h2 class="text-3xl font-semibold mb-6 text-center">环保挑战与废弃物管理</h2>
+            <p class="section-intro-text max-w-3xl mx-auto text-center">
+                乙二醇类物质的使用会产生多种废弃物，其成分和浓度因应用场景而异，对环境管理提出了挑战。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-medium mb-3 text-[#FF6B6B]">聚酯生产废弃物</h3>
+                    <p class="font-semibold text-gray-700">主要污染物:</p>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 mt-2">
+                        <li>乙二醇 (MEG) 单体</li>
+                        <li>乙醛 (VOC, 潜在致癌物)</li>
+                        <li>锑化合物 (催化剂残留)</li>
+                        <li>高COD/BOD废水</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-medium mb-3 text-[#FFD166]">废汽车防冻液</h3>
+                     <p class="font-semibold text-gray-700">主要成分:</p>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 mt-2">
+                        <li>高浓度乙二醇 (MEG)</li>
+                        <li>有机酸 (乙二醇降解产物)</li>
+                        <li>重金属离子 (腐蚀产物)</li>
+                        <li>添加剂及其降解物</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-medium mb-3 text-[#06D6A0]">废三甘醇 (天然气脱水)</h3>
+                    <p class="font-semibold text-gray-700">主要污染物:</p>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 mt-2">
+                        <li>降解的TEG (有机酸、醛类)</li>
+                        <li>吸收的烃类 (含BTEX)</li>
+                        <li>盐分、固体杂质</li>
+                        <li>废过滤材料 (活性炭等)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 bg-white p-6 rounded-lg shadow">
+                <h3 class="text-xl font-medium mb-3 text-[#118AB2]">废乙二醇的危废判定困境</h3>
+                <p class="text-gray-700 leading-relaxed">
+                    根据中国《危险废物鉴别标准 急性毒性初筛》(GB 5085.2-2007)，液体废物经口LD₅₀(大鼠) ≤ 500 mg/kg可初筛为危废。乙二醇(MEG)的LD₅₀数据在不同文献中差异显著：部分SDS（如基于ECHA分类）给出的ATE值为500 mg/kg，恰好达到危废界限；而其他研究报告的实验LD₅₀值远高于此（如5890 mg/kg）。这种数据不一致性导致废乙二醇（如废防冻液）的危险废物属性判定存在不确定性，取决于监管机构对数据的采信。相比之下，DEG和TEG的LD₅₀值普遍远高于500 mg/kg。
+                </p>
+                 <p class="chart-context-text mt-2">明确乙二醇LD₅₀的官方认定标准对相关行业的合规管理至关重要。</p>
+            </div>
+        </section>
+
+        <section id="future-outlook" class="mb-12">
+            <h2 class="text-3xl font-semibold mb-6 text-center">未来展望与战略影响</h2>
+             <p class="section-intro-text max-w-3xl mx-auto text-center">
+                中国乙二醇产业面临保障国家战略需求与实现绿色低碳转型的双重挑战，技术创新是关键。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-2xl font-medium mb-4 text-[#118AB2]">“双碳”目标下的挑战</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start"><span class="list-item-icon mt-1">📉</span>煤制乙二醇 (CTEG) 碳排放强度高 (约5吨CO₂/吨MEG)，与减碳战略相悖。</li>
+                        <li class="flex items-start"><span class="list-item-icon mt-1">💧</span>CTEG工艺水资源消耗大，在水资源紧张地区面临压力。</li>
+                        <li class="flex items-start"><span class="list-item-icon mt-1">⚖️</span>产业发展需在原料安全与环境可持续性之间取得平衡。</li>
+                        <li class="flex items-start"><span class="list-item-icon mt-1">⚠️</span>高碳排放资产可能面临政策收紧和搁浅风险。</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-2xl font-medium mb-4 text-[#06D6A0]">主要技术进步趋势</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start"><span class="list-item-icon mt-1">⚙️</span>持续优化CTEG工艺，降本增效，提高产品质量。</li>
+                        <li class="flex items-start"><span class="list-item-icon mt-1">♻️</span>发展碳捕集、利用与封存 (CCUS) 技术。</li>
+                        <li class="flex items-start"><span class="list-item-icon mt-1">💨</span>探索煤化工与绿氢等新能源耦合，源头减碳。</li>
+                        <li class="flex items-start"><span class="list-item-icon mt-1">🌿</span>关注生物基乙二醇等绿色替代路线的研发与产业化。</li>
+                         <li class="flex items-start"><span class="list-item-icon mt-1">🗑️</span>提升废弃物资源化和无害化处理技术。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center mt-12 py-8 border-t border-gray-300">
+            <p class="text-lg text-[#073B4C] mb-2">总结与展望</p>
+            <p class="text-gray-600 max-w-3xl mx-auto">
+                中国乙二醇产业正站在转型升级的关键路口。如何在保障产业链供应链安全的同时，积极响应“双碳”目标，推动绿色低碳发展，将是行业未来可持续的核心议题。技术创新、产业结构优化以及废弃物全生命周期管理能力的提升，缺一不可。
+            </p>
+            <p class="text-sm text-gray-500 mt-6">信息图基于《中国工业乙二醇及副产乙二醇市场与废弃物管理深度调研报告》编制。</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const CHART_COLORS = {
+            red: '#FF6B6B',
+            yellow: '#FFD166',
+            green: '#06D6A0',
+            blue: '#118AB2',
+            darkBlue: '#073B4C',
+            lightGray: '#E2E8F0' // Tailwind gray-300
+        };
+
+        function wrapLabel(str, maxWidth) {
+            if (typeof str !== 'string' || str.length <= maxWidth) {
+                return str;
+            }
+            const words = str.split(' ');
+            let currentLine = '';
+            const lines = [];
+            for (const word of words) {
+                if ((currentLine + word).length > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = '';
+                }
+                currentLine += word + ' ';
+            }
+            lines.push(currentLine.trim());
+            return lines;
+        }
+        
+        const commonTooltipTitleCallback = function(tooltipItems) {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            }
+            return label;
+        };
+
+        // 1. Capacity and Production Chart
+        const capacityCtx = document.getElementById('capacityProductionChart').getContext('2d');
+        new Chart(capacityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['2022年底产能', '2023年底产能', '2023年产量', wrapLabel('2024年初调整后产能',16)],
+                datasets: [{
+                    label: '万吨/年 或 万吨',
+                    data: [2977.2 - 480, 2977.2, 1643, 2844.1],
+                    backgroundColor: [CHART_COLORS.blue, CHART_COLORS.green, CHART_COLORS.yellow, CHART_COLORS.red],
+                    borderColor: [CHART_COLORS.darkBlue, CHART_COLORS.darkBlue, CHART_COLORS.darkBlue, CHART_COLORS.darkBlue],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: '数量 (万吨)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { title: commonTooltipTitleCallback } }
+                }
+            }
+        });
+
+        // 2. Process Mix Chart
+        const processCtx = document.getElementById('processMixChart').getContext('2d');
+        new Chart(processCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [wrapLabel('煤(合成气)制乙二醇', 16), wrapLabel('非煤制乙二醇 (主石油基)',16)],
+                datasets: [{
+                    label: '产能占比 (万吨/年)',
+                    data: [1020, 1824.1], // 1020万吨煤制, 1824.1万吨非煤制 (2024年初数据)
+                    backgroundColor: [CHART_COLORS.red, CHART_COLORS.blue],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { callbacks: { title: commonTooltipTitleCallback } }
+                }
+            }
+        });
+
+        // 3. Application Share Chart
+        const applicationCtx = document.getElementById('applicationShareChart').getContext('2d');
+        new Chart(applicationCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['聚酯生产', '防冻液', '其他应用'],
+                datasets: [{
+                    label: '消费占比',
+                    data: [92, 4, 4], // 90-94% for polyester, ~4% antifreeze, rest others
+                    backgroundColor: [CHART_COLORS.green, CHART_COLORS.yellow, CHART_COLORS.lightGray],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { callbacks: { title: commonTooltipTitleCallback } }
+                }
+            }
+        });
+        
+        // 4. Polyester Segments Chart
+        const polyesterSegmentsCtx = document.getElementById('polyesterSegmentsChart').getContext('2d');
+        new Chart(polyesterSegmentsCtx, {
+            type: 'pie',
+            data: {
+                labels: [wrapLabel('涤纶纤维 (长丝/短纤)',16), wrapLabel('PET树脂 (瓶片/薄膜)',16), '聚酯切片'],
+                datasets: [{
+                    label: '聚酯内部占比',
+                    data: [70, 25, 5], // Estimates: ~70% fiber, ~25% PET resin, remaining chips
+                    backgroundColor: [CHART_COLORS.blue, CHART_COLORS.red, CHART_COLORS.yellow],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { callbacks: { title: commonTooltipTitleCallback } }
+                }
+            }
+        });
+
+        // 5. Consumption Regions Chart
+        const regionsCtx = document.getElementById('consumptionRegionsChart').getContext('2d');
+        new Chart(regionsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['浙江省', '江苏省', '其他地区'],
+                datasets: [{
+                    label: '消费量占比 (%) (2019年数据)',
+                    data: [44, 35, 21], // Zhejiang 44%, Jiangsu 35%
+                    backgroundColor: [CHART_COLORS.green, CHART_COLORS.blue, CHART_COLORS.lightGray],
+                    borderColor: CHART_COLORS.darkBlue,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                 scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: { display: true, text: '占比 (%)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { title: commonTooltipTitleCallback } }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

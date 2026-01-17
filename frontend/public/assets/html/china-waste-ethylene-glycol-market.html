@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国废乙二醇市场洞察：趋势、挑战与机遇</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #F0F4F8; /* Light grayish blue */
+            color: #333333;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Adjusted max-width for better fit in columns */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 320px; /* Adjusted for md screens */
+                 max-height: 380px;
+            }
+        }
+        .header-accent {
+            background-color: #2979FF; /* Vibrant Blue */
+            color: white;
+        }
+        .section-title {
+            color: #2979FF; /* Vibrant Blue */
+            border-bottom: 2px solid #FF6D00; /* Vibrant Orange */
+            padding-bottom: 0.5rem;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .stat-number {
+            color: #FF6D00; /* Vibrant Orange */
+            font-weight: bold;
+        }
+        /* Flowchart styles */
+        .flow-step {
+            background-color: #E3F2FD; /* Light blue */
+            border: 1px solid #2979FF;
+            color: #1E88E5; /* Darker blue text */
+        }
+        .flow-arrow {
+            color: #2979FF;
+        }
+        .flow-decision {
+            background-color: #FFF3E0; /* Light orange */
+            border: 1px solid #FF6D00;
+            color: #F57C00; /* Darker orange text */
+        }
+
+        /* Bullet point styling */
+        .custom-list li::before {
+            content: "▶"; /* Unicode play symbol as bullet */
+            color: #FF6D00; /* Vibrant Orange */
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+            font-size: 0.8em;
+            margin-right: 0.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 
+        Infographic Narrative Plan:
+        1.  标题与引言: 中国废乙二醇市场的巨大规模和废弃物问题。
+        2.  第一部分：废乙二醇的来源与特性 - 图表：主要用途（聚酯/防冻液），HTML/CSS卡片：典型成分。
+        3.  第二部分：危险废物管理与法规 - HTML/CSS流程图：危废判定，HTML/CSS卡片：关键污染物。
+        4.  第三部分：回收技术概览 - HTML/CSS图标/文字：主要技术，HTML/CSS卡片：技术亮点。
+        5.  第四部分：市场格局与经济性 - 图表：再生乙二醇需求领域，文本：企业类型和价格挑战。
+        6.  第五部分：挑战与机遇 - HTML/CSS卡片列表：SWOT风格展示。
+        7.  结论/展望: 总结和未来方向。
+
+        Chosen Color Palette: "Energetic & Playful"
+        - Background: #F0F4F8 (Light grayish blue)
+        - Card Background: #FFFFFF
+        - Primary Text: #333333
+        - Headers/Accents 1 (Blue): #2979FF
+        - Accents 2 (Orange): #FF6D00
+        - Chart Colors: #2979FF, #FF6D00, #00BFA5 (Teal), #FFC400 (Amber)
+
+        Visualization Choices Summary (Confirming NO SVG, NO MERMAID JS):
+        - EG 主要用途 (聚酯 vs 防冻液): Donut Chart (Chart.js - Canvas)
+        - 废乙二醇来源典型成分: HTML/CSS Card List
+        - 废乙二醇危废判定流程: HTML/CSS Flowchart
+        - 主要回收技术类型: HTML/CSS Icons/Text (Unicode/CSS shapes)
+        - 再生乙二醇需求领域: Donut Chart (Chart.js - Canvas)
+        - 挑战与机遇: HTML/CSS Card List (SWOT-like)
+        - 中国乙二醇年消费量: Single Big Number (HTML/CSS)
+        - MVR 精馏能耗降低: Icon + Number (Unicode/HTML/CSS)
+
+        Confirmation: NEITHER Mermaid JS NOR SVG were used anywhere in this output. All visualizations are achieved using Chart.js (Canvas rendering) or structured HTML/CSS with Tailwind.
+    -->
+
+    <header class="header-accent p-6 shadow-md">
+        <div class="container mx-auto text-center">
+            <h1 class="text-3xl md:text-4xl font-bold">中国废乙二醇市场洞察</h1>
+            <p class="text-lg md:text-xl mt-2">趋势、挑战与机遇</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="introduction" class="mb-12 text-center">
+            <p class="text-xl md:text-2xl mb-4">
+                中国是全球最大的乙二醇生产国和消费国之一，年消费量惊人，这必然伴随着大量含乙二醇废物的产生，对环境和资源管理提出了严峻挑战。
+            </p>
+            <div class="bg-white rounded-lg shadow-xl p-6 inline-block">
+                <div class="text-gray-600 text-lg">中国乙二醇年消费量超过</div>
+                <div class="stat-number text-5xl md:text-6xl my-2">2000万吨</div>
+                <div class="text-gray-500 text-sm">（数据来源：调研报告）</div>
+            </div>
+            <p class="mt-4 text-lg text-gray-700">
+                本信息图旨在深入剖析中国废乙二醇的来源、特性、法规、处理技术、市场格局以及面临的挑战与机遇，为行业可持续发展提供参考。
+            </p>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <div class="md:col-span-2 card p-6">
+                <h2 class="text-2xl font-semibold section-title mb-6">废乙二醇的来源与特性</h2>
+                <p class="mb-6 text-gray-700">废乙二醇并非单一物质，其成分和浓度因来源而异，主要源于聚酯生产和汽车防冻液。这种复杂性是回收处理的主要挑战。</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+                    <div>
+                        <h3 class="text-xl font-medium mb-2 text-center text-gray-800">乙二醇主要用途分布</h3>
+                        <p class="text-sm text-gray-600 mb-4 text-center">乙二醇的绝大部分用于聚酯生产，其次是汽车防冻液，这直接决定了废乙二醇的主要来源构成。</p>
+                        <div class="chart-container mx-auto">
+                            <canvas id="egUsesChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-medium mb-4 text-gray-800">主要来源废乙二醇特性</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                                <h4 class="font-semibold text-blue-700">1. 聚酯生产过程</h4>
+                                <ul class="list-disc list-inside text-sm text-gray-600 custom-list pl-4">
+                                    <li><span class="font-medium">主要杂质：</span>二甘醇 (DEG)，三甘醇 (TEG)，催化剂残留，低聚物，乙醛。</li>
+                                    <li><span class="font-medium">浓度范围：</span>从稀工艺废水 (数百至数千mg/L) 到高浓度精馏残液。</li>
+                                    <li><span class="font-medium">挑战：</span>杂质多样，分离难度大，如低聚物易堵塞设备。</li>
+                                </ul>
+                            </div>
+                            <div class="p-4 rounded-lg bg-orange-50 border border-orange-200">
+                                <h4 class="font-semibold text-orange-700">2. 废弃汽车防冻液 (UEC)</h4>
+                                <ul class="list-disc list-inside text-sm text-gray-600 custom-list pl-4">
+                                    <li><span class="font-medium">乙二醇浓度：</span>通常为 20%-50%。</li>
+                                    <li><span class="font-medium">主要污染物：</span>水分，腐蚀抑制剂，降解产物 (有机酸)，重金属离子 (铅、铜、锌等)，油类。</li>
+                                    <li><span class="font-medium">挑战：</span>成分复杂，含多种添加剂和重金属，通常被列为危险废物。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 card p-6">
+                <h2 class="text-2xl font-semibold section-title mb-6">危险废物管理与法规</h2>
+                <p class="mb-6 text-gray-700">废乙二醇的管理，特别是其危废属性的判定，直接影响其处理流程和成本。中国的管理依据《国家危险废物名录》和GB 5085系列鉴别标准。</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-medium mb-3 text-gray-800">废乙二醇危废判定流程（简化）</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flow-step p-3 rounded-md text-center">废乙二醇产生</div>
+                            <div class="text-center flow-arrow text-2xl">⬇</div>
+                            <div class="flow-decision p-3 rounded-md text-center">是否为废防冻液？</div>
+                            <div class="flex justify-around">
+                                <div class="text-center">
+                                    <div class="flow-arrow text-xl">↙</div>
+                                    <div class="flow-step p-2 mt-1 rounded-md inline-block">是：属HW06 (900-404-06)</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="flow-arrow text-xl">↘</div>
+                                    <div class="flow-step p-2 mt-1 rounded-md inline-block">否：需鉴别</div>
+                                </div>
+                            </div>
+                            <div class="text-center flow-arrow text-2xl mt-2">⬇ <span class="text-xs">(针对“否”路径)</span></div>
+                            <div class="flow-step p-3 rounded-md text-center">依据GB 5085系列标准进行危险特性鉴别<br>(腐蚀性、毒性、易燃性、反应性等)</div>
+                             <div class="text-center flow-arrow text-2xl">⬇</div>
+                            <div class="flow-decision p-3 rounded-md text-center">是否具有危险特性 或 特定污染物超标？</div>
+                             <div class="flex justify-around">
+                                <div class="text-center">
+                                    <div class="flow-arrow text-xl">↙</div>
+                                    <div class="flow-step p-2 mt-1 rounded-md inline-block">是：按危险废物管理</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="flow-arrow text-xl">↘</div>
+                                    <div class="flow-step p-2 mt-1 rounded-md inline-block">否：按一般工业固废管理 (需符合相关环保要求)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-medium mb-3 text-gray-800">关键危险特性判定因素</h3>
+                        <p class="text-sm text-gray-600 mb-4">除了乙二醇本身的毒性，废液中的特定杂质是导致其被归类为危险废物的关键：</p>
+                        <div class="space-y-3">
+                            <div class="bg-red-50 border border-red-200 p-3 rounded-lg">
+                                <p class="font-semibold text-red-700">特定乙二醇醚类 (GB 5085.6)</p>
+                                <p class="text-xs text-gray-600">如2-甲氧基乙醇、2-乙氧基乙醇总含量 ≥3% (或2-乙氧基乙醇 ≥0.5% 为生殖毒性)。</p>
+                            </div>
+                            <div class="bg-yellow-50 border border-yellow-300 p-3 rounded-lg">
+                                <p class="font-semibold text-yellow-700">重金属离子 (浸出毒性 GB 5085.3)</p>
+                                <p class="text-xs text-gray-600">如铅 (Pb) ≥5 mg/L, 镉 (Cd) ≥1 mg/L, 六价铬 (Cr⁶⁺) ≥5 mg/L。</p>
+                            </div>
+                            <div class="bg-green-50 border border-green-200 p-3 rounded-lg">
+                                <p class="font-semibold text-green-700">pH值 (腐蚀性 GB 5085.1)</p>
+                                <p class="text-xs text-gray-600">pH ≤2 或 pH ≥12.5。</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-4">注：完整判定需参照GB 5085系列标准全文。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 card p-6">
+                <h2 class="text-2xl font-semibold section-title mb-6">废乙二醇回收技术概览</h2>
+                <p class="mb-6 text-gray-700">废乙二醇的回收技术多样，选择取决于废液特性、目标纯度及经济性。核心技术包括精馏、化学回收和膜分离等。</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="text-center p-4 bg-gray-50 rounded-lg border">
+                        <span class="text-3xl">🔧</span>
+                        <h4 class="font-semibold mt-2 mb-1 text-gray-700">精馏技术</h4>
+                        <p class="text-xs text-gray-600">经典分离方法，可获高纯度产品。MVR精馏能显著节能 (能耗可降至传统1/5-1/6)，但初投资高。</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg border">
+                        <span class="text-3xl">♻️</span>
+                        <h4 class="font-semibold mt-2 mb-1 text-gray-700">化学回收 (PET解聚)</h4>
+                        <p class="text-xs text-gray-600">如乙二醇解聚法，直接从废PET中回收单体BHET或乙二醇，但能耗较高。</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg border">
+                        <span class="text-3xl">💧</span>
+                        <h4 class="font-semibold mt-2 mb-1 text-gray-700">膜分离技术</h4>
+                        <p class="text-xs text-gray-600">如电渗析脱盐、反渗透浓缩。能耗较低，但膜污染和寿命是挑战。</p>
+                    </div>
+                     <div class="text-center p-4 bg-gray-50 rounded-lg border">
+                        <span class="text-3xl">🧪</span>
+                        <h4 class="font-semibold mt-2 mb-1 text-gray-700">吸附/离子交换</h4>
+                        <p class="text-xs text-gray-600">用于精制，去除痕量杂质。吸附剂/树脂需再生，可能产生二次污染。</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg border">
+                        <span class="text-3xl">🌿</span>
+                        <h4 class="font-semibold mt-2 mb-1 text-gray-700">生物处理</h4>
+                        <p class="text-xs text-gray-600">适用于低浓度含乙二醇废水，成本低，但不能回收乙二醇产品。</p>
+                    </div>
+                     <div class="text-center p-4 bg-gray-50 rounded-lg border">
+                        <span class="text-3xl">💥</span>
+                        <h4 class="font-semibold mt-2 mb-1 text-gray-700">高级氧化 (AOPs)</h4>
+                        <p class="text-xs text-gray-600">处理难降解废水，药剂成本高，不回收乙二醇。</p>
+                    </div>
+                </div>
+                 <p class="mt-6 text-sm text-gray-600">预处理（如过滤、油水分离、pH调节）对保护核心单元、提高效率至关重要。大型聚酯企业通常拥有内部回收装置，而社会源废乙二醇回收市场仍在发展初期。</p>
+            </div>
+
+            <div class="md:col-span-2 card p-6">
+                <h2 class="text-2xl font-semibold section-title mb-6">市场格局与经济性</h2>
+                <p class="mb-6 text-gray-700">中国废乙二醇回收市场呈现分化：大型企业内部回收成熟，社会源回收体系尚不完善。经济性受新料价格和回收成本双重影响。</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <h3 class="text-xl font-medium mb-2 text-center text-gray-800">再生乙二醇主要需求领域</h3>
+                        <p class="text-sm text-gray-600 mb-4 text-center">再生乙二醇的品质决定其应用范围，聚酯和防冻液是主要市场，但对纯度要求各异。</p>
+                        <div class="chart-container mx-auto">
+                            <canvas id="recycledEGDemandChart"></canvas>
+                        </div>
+                         <p class="text-xs text-gray-500 mt-2 text-center">（图示为假设比例，实际需求取决于再生品质量和价格）</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-xl font-medium mb-2 text-gray-800">主要回收主体类型</h3>
+                            <ul class="list-disc list-inside text-sm text-gray-600 custom-list pl-4">
+                                <li><strong>大型聚酯/石化企业：</strong>主要处理自身废液，系统内循环。</li>
+                                <li><strong>专业危废处理企业：</strong>开始涉足废有机溶剂回收，具备资质。</li>
+                                <li><strong>PET化学回收企业：</strong>新兴力量，通过解聚生产再生乙二醇。</li>
+                                <li><strong>废防冻液回收企业：</strong>理论上由有资质企业回收，但规模化专业企业不多。</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-medium mb-2 text-gray-800">市场价格与经济性挑战</h3>
+                             <p class="text-sm text-gray-700 mb-2">再生乙二醇的经济性面临严峻考验：</p>
+                            <ul class="list-disc list-inside text-sm text-gray-600 custom-list pl-4">
+                                <li><strong>新料价格冲击：</strong>新料（尤其煤制乙二醇）价格低位时，再生品无价格优势。</li>
+                                <li><strong>成本高昂：</strong>收集、运输、提纯（高能耗）、残渣处置成本高。</li>
+                                <li><strong>标准缺失：</strong>缺乏统一的再生乙二醇国家/行业标准，影响市场接受度。</li>
+                                <li><strong>信息不对称：</strong>废料收购和再生品销售价格缺乏透明数据。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 card p-6">
+                <h2 class="text-2xl font-semibold section-title mb-6">挑战与机遇 (SWOT风格分析)</h2>
+                <p class="mb-6 text-gray-700">废乙二醇回收行业在中国机遇与挑战并存。克服挑战、抓住机遇是实现可持续发展的关键。</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                        <h3 class="text-lg font-semibold text-red-700 mb-2">主要挑战 (Weaknesses/Threats)</h3>
+                        <ul class="list-disc list-inside text-sm space-y-1 text-gray-700 custom-list pl-4">
+                            <li><strong>技术难题：</strong>杂质去除复杂，高能效低成本技术缺乏。</li>
+                            <li><strong>经济压力：</strong>新料价格波动冲击，回收成本高。</li>
+                            <li><strong>法规政策：</strong>危废鉴别模糊，激励政策不足。</li>
+                            <li><strong>物流收集：</strong>分散源收集难，成本高。</li>
+                            <li><strong>标准体系：</strong>再生产品标准不完善。</li>
+                        </ul>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <h3 class="text-lg font-semibold text-green-700 mb-2">发展机遇 (Strengths/Opportunities)</h3>
+                        <ul class="list-disc list-inside text-sm space-y-1 text-gray-700 custom-list pl-4">
+                            <li><strong>政策驱动：</strong>国家循环经济战略，“双碳”目标。</li>
+                            <li><strong>技术进步：</strong>MVR精馏、膜分离、生物基等技术发展。</li>
+                            <li><strong>环保意识：</strong>公众与企业环保意识提升，绿色消费导向。</li>
+                            <li><strong>资源安全：</strong>减少对外部资源依赖，增强产业链韧性。</li>
+                            <li><strong>市场潜力：</strong>乙二醇消费量巨大，回收市场空间广阔。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 card p-6">
+                <h2 class="text-2xl font-semibold section-title mb-6">结论与展望</h2>
+                <p class="text-gray-700 mb-4">中国废乙二醇回收利用面临复杂局面：来源多样、成分复杂、法规待完善、经济性波动。大型企业内部回收较成熟，但社会化专业回收体系仍需大力发展。技术创新、标准建立和政策支持是推动行业发展的关键动力。</p>
+                <p class="text-gray-700 font-semibold mb-2">战略建议方向：</p>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 custom-list pl-4">
+                    <li><strong>政府层面：</strong>明确危废标准、完善再生品标准、出台激励政策、强化监管。</li>
+                    <li><strong>产业层面：</strong>投资先进技术、构建高效收集网络、加强产业链协同、提升质量管理。</li>
+                    <li><strong>科研层面：</strong>开展基础与应用研究、进行技术经济评估、搭建交流平台。</li>
+                </ul>
+                <p class="mt-6 text-center text-lg font-medium text-gray-800">通过多方协同努力，中国废乙二醇回收利用行业有望为资源节约、环境保护和绿色低碳转型做出积极贡献。</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center p-6 mt-8 bg-gray-800 text-gray-300 text-sm">
+        <p>&copy; 2025 中国废乙二醇市场洞察信息图。基于调研报告编制。</p>
+        <p>免责声明：本信息图仅供参考，不构成任何投资或决策建议。</p>
+    </footer>
+
+    <script>
+        function wrapLabel(label, maxWidth) {
+            if (typeof label !== 'string') return [String(label)]; // Ensure label is a string
+            const words = label.split(''); // Split by char for Chinese
+            let currentLine = '';
+            const lines = [];
+            for (const char of words) {
+                if ((currentLine + char).length > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine);
+                    currentLine = '';
+                }
+                currentLine += char;
+            }
+            if (currentLine.length > 0) {
+                lines.push(currentLine);
+            }
+            return lines.length > 0 ? lines : [label];
+        }
+
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 10 }, // Smaller font for legend
+                        boxWidth: 20,
+                        padding:10
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(''); // Join without space for Chinese
+                            } else {
+                              return label;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Chart 1: EG Uses
+        const egUsesCtx = document.getElementById('egUsesChart').getContext('2d');
+        const egUsesLabels = ['聚酯生产 (PET树脂, 聚酯纤维)', '汽车防冻液', '其他应用 (不饱和聚酯等)'];
+        new Chart(egUsesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: egUsesLabels.map(label => wrapLabel(label, 10)), // Wrap labels
+                datasets: [{
+                    label: '乙二醇主要用途',
+                    data: [93, 4, 3], // Data from report Section II
+                    backgroundColor: ['#2979FF', '#FF6D00', '#00BFA5'],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
+                }]
+            },
+            options: commonChartOptions
+        });
+
+        // Chart 2: Recycled EG Demand
+        const recycledEGCtx = document.getElementById('recycledEGDemandChart').getContext('2d');
+        const recycledEGLabels = ['聚酯生产 (高纯度要求)', '防冻液生产 (纯度要求较低)', '其他工业应用'];
+        new Chart(recycledEGCtx, {
+            type: 'pie',
+            data: {
+                labels: recycledEGLabels.map(label => wrapLabel(label, 10)),
+                datasets: [{
+                    label: '再生乙二醇需求领域',
+                    data: [55, 35, 10], // Illustrative data based on report discussion
+                    backgroundColor: ['#2979FF', '#FF6D00', '#FFC400'],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
+                }]
+            },
+            options: commonChartOptions
+        });
+    </script>
+
+</body>
+</html>

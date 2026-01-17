@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>污水生物毒性监测技术市场洞察与趋势分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 40vh;
+            width: 100%;
+            max-height: 400px;
+        }
+        .flowchart-arrow {
+            content: '→';
+            font-size: 2rem;
+            line-height: 1;
+            color: #4771b2;
+            margin: 0 0.5rem;
+        }
+        .flowchart-arrow-down {
+            content: '↓';
+            font-size: 2rem;
+            line-height: 1;
+            color: #4771b2;
+        }
+        .kpi-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            text-align: center;
+            border-left: 5px solid #4771b2;
+            transition: all 0.3s ease-in-out;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-700">
+
+    <!-- 
+    Infographic Narrative Plan:
+    1.  Hero Section: Title and hook about protecting water infrastructure.
+    2.  The Problem: Explain why biotoxicity monitoring is crucial for WWTPs.
+    3.  The Solutions Landscape: Overview of main methods (Benchmark, Fast Alternatives, Online Systems).
+    4.  Deep Dive Comparison: A major section visualizing the comparison from the report's Table 1.
+    5.  Market Adoption & Trends: Show the shift from traditional to modern methods.
+    6.  The Future is Smart: Visualize emerging technologies like AI/ML, 'Omics'.
+    7.  Implementation Roadmap: A flowchart for how to deploy a monitoring plan.
+    8.  Footer: Concluding statement.
+    
+    Visualization Selection Plan:
+    -   Hero Stat (Inform): Single Big Number - Styled HTML.
+    -   Test Duration (Compare): Horizontal Bar Chart - Chart.js (Canvas). Justification: Best for comparing a single metric across categories.
+    -   Multi-Feature Comparison (Compare): Radar Chart - Chart.js (Canvas). Justification: Ideal for comparing multiple variables for a few items, showing a method's "profile".
+    -   Method Suitability (Compare): Donut Chart - Chart.js (Canvas). Justification: Shows parts of a whole (suitability for different plant types).
+    -   Adoption Trend (Change): Line Chart - Chart.js (Canvas). Justification: Best way to show trends over time.
+    -   AI/ML Data Flow (Organize): Flowchart - HTML/CSS with Tailwind. Justification: Clearly shows a process.
+    -   Implementation Roadmap (Organize): Flowchart - HTML/CSS with Tailwind. Justification: A process is best shown sequentially.
+    -   CONFIRMATION: No SVG or Mermaid JS used. All visuals are either Chart.js (Canvas) or structured HTML/CSS.
+    
+    Color Palette Choice: "Brilliant Blues" for a professional, tech, and water-related theme.
+    -   Primary: #00429d (Dark Blue), #4771b2 (Medium Blue), #73a2c6 (Light Blue), #a8d5da (Pale Cyan)
+    -   Background/Highlight: #ffffe0 (Light Yellow, used sparingly), #f8f9fa (Main BG)
+    -   Text: #374151 (Dark Gray)
+    -->
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">污水生物毒性监测技术</h1>
+            <h2 class="text-2xl md:text-3xl font-light text-[#00429d]">市场洞察与未来趋势</h2>
+            <p class="max-w-3xl mx-auto mt-4 text-lg text-gray-600">为保障水处理设施稳定运行，抵御无形的环境风险，先进的生物毒性监测技术正成为守护水安全的第一道防线。</p>
+        </header>
+
+        <section id="problem" class="mb-16">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-gray-800">毒性冲击：污水处理厂面临的隐形杀手</h3>
+                <p class="mt-2 text-gray-600">有毒有害物质的流入会严重破坏生物处理系统的核心微生物群落，导致“倒槽”等灾难性后果。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="kpi-card">
+                    <p class="text-5xl font-bold text-[#00429d]">80%</p>
+                    <p class="text-lg mt-2 text-gray-600">处理效率骤降风险</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="text-5xl font-bold text-[#00429d]">>50%</p>
+                    <p class="text-lg mt-2 text-gray-600">硝化菌抑制率可达</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="text-5xl font-bold text-[#00429d]">24/7</p>
+                    <p class="text-lg mt-2 text-gray-600">潜在的毒性冲击威胁</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="mb-16">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-gray-800">核心监测技术全面对比</h3>
+                <p class="mt-2 text-gray-600">从传统基准到快速预警，不同方法在速度、成本和信息维度上各有侧重。</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h4 class="text-xl font-bold mb-4 text-center text-gray-800">关键性能多维度雷达图</h4>
+                    <p class="text-center text-gray-600 mb-4 text-sm">综合评估不同技术在速度、灵敏度、成本效益（1/成本）、操作简易度及工艺相关性五大维度的表现。</p>
+                    <div class="chart-container h-96">
+                        <canvas id="methodComparisonRadar"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h4 class="text-xl font-bold mb-4 text-center text-gray-800">典型测试时长对比 (分钟)</h4>
+                    <p class="text-center text-gray-600 mb-4 text-sm">快速性是应急预警的关键。不同方法的测试时长差异巨大，直接影响决策效率。</p>
+                    <div class="chart-container h-96">
+                        <canvas id="testDurationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="market-trends" class="mb-16">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-gray-800">市场趋势与技术采纳</h3>
+                <p class="mt-2 text-gray-600">监测技术正从劳动密集型向自动化、智能化方向演进。</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 <div class="bg-white rounded-lg shadow-md p-6">
+                    <h4 class="text-xl font-bold mb-4 text-center text-gray-800">技术采纳演进趋势</h4>
+                    <p class="text-center text-gray-600 mb-4 text-sm">快速方法与在线传感器正逐步成为主流，传统方法则更多用于基准校对和机理研究。</p>
+                    <div class="chart-container h-80">
+                        <canvas id="adoptionTrendChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h4 class="text-xl font-bold mb-4 text-center text-gray-800">不同规模污水厂技术适用性</h4>
+                    <p class="text-center text-gray-600 mb-4 text-sm">大型或高风险水厂倾向于投资在线系统，而中小型水厂更青睐高性价比的快速筛选工具。</p>
+                     <div class="chart-container h-80">
+                        <canvas id="suitabilityDonutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="future-tech" class="mb-16">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-gray-800">未来方向：更智能、更灵敏的预警体系</h3>
+                <p class="mt-2 text-gray-600">新兴技术正为实现预测性、高精度的毒性管理提供全新可能。</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8">
+                 <h4 class="text-2xl font-bold text-center mb-6 text-gray-800">基于AI与机器学习的预测性预警流程</h4>
+                 <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="p-4 rounded-lg bg-blue-100 border border-[#73a2c6]">
+                            <span class="text-4xl">📡</span>
+                            <p class="font-semibold mt-2 text-[#00429d]">多源数据</p>
+                            <p class="text-xs text-gray-600">pH, DO, COD...</p>
+                        </div>
+                    </div>
+                    <div class="flowchart-arrow hidden md:block"></div>
+                    <div class="flowchart-arrow-down md:hidden self-center"></div>
+                     <div class="flex flex-col items-center">
+                        <div class="p-4 rounded-lg bg-blue-100 border border-[#73a2c6]">
+                            <span class="text-4xl">🤖</span>
+                            <p class="font-semibold mt-2 text-[#00429d]">AI/ML 模型</p>
+                            <p class="text-xs text-gray-600">模式识别与预测</p>
+                        </div>
+                    </div>
+                    <div class="flowchart-arrow hidden md:block"></div>
+                    <div class="flowchart-arrow-down md:hidden self-center"></div>
+                     <div class="flex flex-col items-center">
+                        <div class="p-4 rounded-lg bg-orange-100 border border-orange-400">
+                             <span class="text-4xl">⚠️</span>
+                            <p class="font-semibold mt-2 text-orange-600">预测性警报</p>
+                            <p class="text-xs text-gray-600">提前识别风险</p>
+                        </div>
+                    </div>
+                     <div class="flowchart-arrow hidden md:block"></div>
+                    <div class="flowchart-arrow-down md:hidden self-center"></div>
+                    <div class="flex flex-col items-center">
+                        <div class="p-4 rounded-lg bg-blue-100 border border-[#73a2c6]">
+                             <span class="text-4xl">⚙️</span>
+                            <p class="font-semibold mt-2 text-[#00429d]">应急响应</p>
+                            <p class="text-xs text-gray-600">分流、调整工艺</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h4 class="text-xl font-bold mb-2 text-gray-800">组学技术 (Omics)</h4>
+                    <p class="text-gray-600">通过分析微生物的基因和转录本，从分子层面揭示毒性作用机理，为超早期预警提供生物标志物。</p>
+                </div>
+                 <div class="bg-white rounded-lg shadow-md p-6">
+                    <h4 class="text-xl font-bold mb-2 text-gray-800">微流控/芯片实验室</h4>
+                    <p class="text-gray-600">将复杂的生物分析过程集成于微米级芯片，实现快速、低耗、便携的现场高通量毒性筛选。</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center mt-16 border-t pt-8">
+            <p class="text-gray-600">通过科学选择和组合应用不同的监测工具，结合精细化的管理策略与智能化的数据分析，污水处理行业将能更有效地应对进水生物毒性挑战。</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const colorPalette = {
+                darkBlue: '#00429d',
+                mediumBlue: '#4771b2',
+                lightBlue: '#73a2c6',
+                paleCyan: '#a8d5da',
+                highlight: '#ff9e4a',
+                textPrimary: '#374151',
+                textSecondary: '#6b7280',
+                gridColor: '#e5e7eb'
+            };
+
+            function wrapLabel(str, maxWidth) {
+                if (typeof str !== 'string' || str.length <= maxWidth) {
+                    return str;
+                }
+                const words = str.split(' ');
+                const lines = [];
+                let currentLine = '';
+                for (const word of words) {
+                    if ((currentLine + word).length > maxWidth && currentLine.length > 0) {
+                        lines.push(currentLine.trim());
+                        currentLine = '';
+                    }
+                    currentLine += `${word} `;
+                }
+                lines.push(currentLine.trim());
+                return lines;
+            }
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) {
+                    return label.join(' ');
+                }
+                return label;
+            };
+
+            const commonChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: colorPalette.textPrimary,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipTitleCallback
+                        }
+                    }
+                }
+            };
+
+            function createMethodComparisonRadar() {
+                const ctx = document.getElementById('methodComparisonRadar');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['速度', '灵敏度', '成本效益', '操作简易度', '工艺相关性'],
+                        datasets: [{
+                            label: 'OUR呼吸速率法',
+                            data: [2, 3, 3, 2, 5],
+                            borderColor: colorPalette.darkBlue,
+                            backgroundColor: 'rgba(0, 66, 157, 0.2)',
+                            pointBackgroundColor: colorPalette.darkBlue,
+                        }, {
+                            label: '发光细菌法',
+                            data: [5, 4, 4, 4, 3],
+                            borderColor: colorPalette.highlight,
+                            backgroundColor: 'rgba(255, 158, 74, 0.2)',
+                             pointBackgroundColor: colorPalette.highlight,
+                        },
+                        {
+                            label: 'ATP生物发光法',
+                            data: [5, 4, 4, 5, 2],
+                            borderColor: colorPalette.lightBlue,
+                            backgroundColor: 'rgba(115, 162, 198, 0.2)',
+                             pointBackgroundColor: colorPalette.lightBlue,
+                        }]
+                    },
+                    options: {
+                        ...commonChartOptions,
+                        scales: {
+                            r: {
+                                angleLines: { color: colorPalette.gridColor },
+                                grid: { color: colorPalette.gridColor },
+                                pointLabels: {
+                                    color: colorPalette.textPrimary,
+                                    font: { size: 14 }
+                                },
+                                ticks: {
+                                    backdropColor: 'rgba(255, 255, 255, 0.75)',
+                                    color: colorPalette.textSecondary,
+                                    stepSize: 1
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 5
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createTestDurationChart() {
+                const ctx = document.getElementById('testDurationChart');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            wrapLabel('微生物呼吸速率法 (OUR)', 16),
+                            wrapLabel('在线生物传感器', 16),
+                            wrapLabel('发光细菌法', 16),
+                            wrapLabel('酶抑制分析法', 16),
+                            wrapLabel('ATP生物发光法', 16)
+                        ],
+                        datasets: [{
+                            label: '典型测试时长 (分钟)',
+                            data: [180, 15, 18, 45, 2],
+                            backgroundColor: [
+                                colorPalette.darkBlue,
+                                colorPalette.mediumBlue,
+                                colorPalette.lightBlue,
+                                colorPalette.paleCyan,
+                                colorPalette.highlight
+                            ],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        ...commonChartOptions,
+                        indexAxis: 'y',
+                         plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: colorPalette.gridColor },
+                                title: {
+                                    display: true,
+                                    text: '分钟 (对数刻度)',
+                                    color: colorPalette.textSecondary
+                                },
+                                type: 'logarithmic',
+                                ticks: { color: colorPalette.textPrimary }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: colorPalette.textPrimary }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createAdoptionTrendChart() {
+                const ctx = document.getElementById('adoptionTrendChart');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['过去', '现在', '未来'],
+                        datasets: [
+                        {
+                            label: '传统OUR法',
+                            data: [80, 40, 10],
+                            borderColor: colorPalette.darkBlue,
+                            backgroundColor: 'transparent',
+                            tension: 0.3
+                        },
+                        {
+                            label: '快速筛选方法',
+                            data: [15, 55, 65],
+                            borderColor: colorPalette.highlight,
+                            backgroundColor: 'transparent',
+                            tension: 0.3
+                        },
+                        {
+                            label: '在线生物传感器',
+                            data: [5, 15, 30],
+                            borderColor: colorPalette.lightBlue,
+                            backgroundColor: 'transparent',
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        ...commonChartOptions,
+                        scales: {
+                            y: {
+                                grid: { color: colorPalette.gridColor },
+                                title: { 
+                                    display: true, 
+                                    text: '技术采纳度 (%)',
+                                    color: colorPalette.textSecondary
+                                },
+                                ticks: { color: colorPalette.textPrimary }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: colorPalette.textPrimary }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function createSuitabilityDonutChart() {
+                const ctx = document.getElementById('suitabilityDonutChart');
+                if(!ctx) return;
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['在线传感器', '快速筛选工具', '传统OUR法'],
+                        datasets: [{
+                            label: '大型/高风险污水厂',
+                            data: [65, 30, 5],
+                            backgroundColor: [colorPalette.mediumBlue, colorPalette.highlight, colorPalette.paleCyan],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        ...commonChartOptions,
+                        plugins: {
+                            ...commonChartOptions.plugins,
+                            title: {
+                                display: true,
+                                text: '大型/高风险水厂技术选择倾向',
+                                color: colorPalette.textPrimary,
+                                font: { size: 16 }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createMethodComparisonRadar();
+            createTestDurationChart();
+            createAdoptionTrendChart();
+            createSuitabilityDonutChart();
+        });
+    </script>
+</body>
+</html>

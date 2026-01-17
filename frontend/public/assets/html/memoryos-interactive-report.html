@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoryOS: 交互式报告</title>
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: A single-page, scrollytelling dashboard. The user flows from a high-level introduction to a detailed architectural exploration, then to interactive performance charts, and finally to impact analysis. This structure guides the user from the "what" to the "how" and "why," making complex information digestible. Key interactions include clickable diagrams to reveal details, and chart filters to compare data, empowering user-driven exploration over passive reading. -->
+    <!-- Visualization & Content Choices: The architecture is visualized as an interactive HTML/CSS diagram (Goal: Organize, Method: HTML+JS) to allow users to drill down without being overwhelmed. Performance data is shown in dynamic bar charts (Goal: Compare, Method: Chart.js) with filters, making comparisons intuitive. The ablation study uses an interactive chart (Goal: Compare/Inform, Method: Chart.js+JS) where users can toggle components to see the impact, directly engaging them with the data's story. The case study uses a side-by-side layout (Goal: Inform, Method: HTML) for clear comparison. This multi-faceted approach ensures each piece of information is presented in its most effective format. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+            color: #374151; /* gray-700 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .highlight-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .highlight-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .nav-link {
+            transition: color 0.3s;
+        }
+        .nav-link:hover {
+            color: #4f46e5; /* indigo-600 */
+        }
+        .pill-button {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .pill-button.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-stone-100">
+
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-indigo-600">MemoryOS</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#introduction" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">简介</a>
+                        <a href="#architecture" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">核心架构</a>
+                        <a href="#performance" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">性能评测</a>
+                        <a href="#efficiency" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">效率分析</a>
+                        <a href="#impact" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">影响与结论</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-8 p-4">
+
+        <section id="introduction" class="text-center py-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">MemoryOS: 赋予AI智能体长时记忆</h1>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600 mb-8">
+                深入剖析一款受操作系统启发的先进AI记忆架构，旨在解决大语言模型普遍存在的“记忆衰减”问题，实现更连贯、更具个性化的长时对话体验。
+            </p>
+            <a href="https://arxiv.org/abs/2506.06326" target="_blank" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300">阅读完整论文</a>
+        </section>
+
+        <section id="architecture" class="py-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">核心架构：三层记忆体系</h2>
+                <p class="mt-4 text-lg text-gray-600">MemoryOS借鉴操作系统原理，构建了一个分层的记忆系统。点击下方模块探索其工作机制。</p>
+            </div>
+            
+            <div class="relative max-w-5xl mx-auto p-8">
+                <div class="grid md:grid-cols-3 gap-8 items-center">
+                    <div id="stm-card" data-target="stm" class="architecture-card text-center p-6 bg-white rounded-xl shadow-lg cursor-pointer highlight-card">
+                        <div class="text-4xl mb-4">🧠</div>
+                        <h3 class="text-xl font-semibold mb-2 text-blue-600">短期记忆 (STM)</h3>
+                        <p class="text-sm text-gray-500">存储实时对话，形成对话链，先进先出。</p>
+                    </div>
+                    <div class="hidden md:block text-center text-4xl text-gray-400 font-extralight">→</div>
+                    <div id="mtm-card" data-target="mtm" class="architecture-card text-center p-6 bg-white rounded-xl shadow-lg cursor-pointer highlight-card">
+                        <div class="text-4xl mb-4">🗂️</div>
+                        <h3 class="text-xl font-semibold mb-2 text-green-600">中期记忆 (MTM)</h3>
+                        <p class="text-sm text-gray-500">分段分页存储主题，基于热度评分管理。</p>
+                    </div>
+                     <div class="hidden md:block text-center text-4xl text-gray-400 font-extralight">→</div>
+                    <div id="lpm-card" data-target="lpm" class="architecture-card text-center p-6 bg-white rounded-xl shadow-lg cursor-pointer highlight-card">
+                         <div class="text-4xl mb-4">🗄️</div>
+                        <h3 class="text-xl font-semibold mb-2 text-purple-600">长期个性化记忆 (LPM)</h3>
+                        <p class="text-sm text-gray-500">持久化用户与智能体画像及知识库。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="architecture-details" class="mt-8 max-w-4xl mx-auto">
+                <div id="stm-detail" class="detail-content hidden bg-white p-8 rounded-lg shadow-md">
+                    <h4 class="text-2xl font-bold mb-4 text-blue-700">短期记忆 (STM) 机制</h4>
+                    <p class="text-gray-700">STM 是对话的入口，它以“对话页” ($page_i = \{Q_i, R_i, T_i\}$) 的形式存储最近的几次交互。为了维持上下文，系统会通过LLM判断对话的连续性，将相关的页面链接成“对话链”，并生成元摘要 $meta_{chain}$。当STM队列（一个固定长度的`deque`）满时，最旧的对话页将遵循先进先出(FIFO)原则被推送到MTM进行处理。</p>
+                </div>
+                <div id="mtm-detail" class="detail-content hidden bg-white p-8 rounded-lg shadow-md">
+                    <h4 class="text-2xl font-bold mb-4 text-green-700">中期记忆 (MTM) 机制</h4>
+                    <p class="text-gray-700 mb-4">MTM 采用创新的“分段分页”架构，将来自STM的对话页根据主题组织成不同的“段 (Segment)”。一个段的归属由结合了语义和关键词的相似度评分 $\mathcal{F}_{score}$ 决定。</p>
+                    <p class="text-gray-700">每个段都有一个动态的“热度 (Heat)”评分，由访问频率、交互长度和近期性共同决定。热度最高的段被认为是重要的，其内容会被分析并提炼至LPM。这个机制确保了系统能动态地识别并保留用户长期感兴趣的话题。</p>
+                </div>
+                <div id="lpm-detail" class="detail-content hidden bg-white p-8 rounded-lg shadow-md">
+                    <h4 class="text-2xl font-bold mb-4 text-purple-700">长期个性化记忆 (LPM) 机制</h4>
+                    <p class="text-gray-700 mb-4">LPM 是智能体个性和持久知识的最终归宿。它分为“用户个性化”和“AI智能体个性化”两部分。当MTM中的某个段“热度”达标时，系统会调用LLM进行深度分析，提取和更新LPM中的信息，例如：</p>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li><strong>用户画像 (User Profile):</strong> 用户的静态属性。</li>
+                        <li><strong>用户特质 (User Traits):</strong> 动态演化的用户兴趣、习惯和偏好（基于90个维度）。</li>
+                        <li><strong>用户知识库 (User KB):</strong> 从对话中提取的关于用户的事实信息。</li>
+                        <li><strong>智能体特质 (Agent Traits):</strong> AI通过交互学习到的动态属性。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance" class="py-16 bg-gray-50 rounded-xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">性能评测：效果对比</h2>
+                <p class="mt-4 text-lg text-gray-600">MemoryOS在多个基准测试中均表现出卓越的性能，显著优于其他主流记忆增强方法。</p>
+                 <div class="mt-6">
+                    <button id="btn-gvd" class="pill-button px-4 py-2 bg-white rounded-full shadow-sm text-gray-700 active">GVD 数据集</button>
+                    <button id="btn-locomo" class="pill-button px-4 py-2 bg-white rounded-full shadow-sm text-gray-700">LoCoMo 数据集</button>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </section>
+
+        <section id="efficiency" class="py-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">效率分析</h2>
+                <p class="mt-4 text-lg text-gray-600">除了效果，MemoryOS在计算效率（LLM调用次数和Token消耗）方面也展示了巨大优势。</p>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="efficiencyChart"></canvas>
+            </div>
+        </section>
+
+        <section id="impact" class="py-16 bg-gray-50 rounded-xl">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">影响与结论</h2>
+                <p class="mt-4 text-lg text-gray-600">通过消融研究和案例分析，我们可以看到MemoryOS每个组件的价值及其在真实对话中的具体影响。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-12 items-start">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">消融研究：各模块的重要性</h3>
+                    <div class="chart-container" style="height:350px;">
+                        <canvas id="ablationChart"></canvas>
+                    </div>
+                     <p class="text-center mt-4 text-sm text-gray-500">基于GVD数据集, GPT-4o-mini</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">案例学习：对话连贯性展示</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="font-semibold text-gray-700">场景：</p>
+                            <p class="text-gray-600 bg-gray-100 p-3 rounded-md">用户在几周前提到曾去湿地公园，看到松鼠并进行了锻炼以健身。</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-700">几周后，当用户想吃汉堡时...</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="border-r pr-4 border-dashed">
+                                <p class="font-bold text-red-500 mb-2">普通LLM的回答</p>
+                                <div class="bg-red-50 p-3 rounded-lg">
+                                    <p class="text-red-800">"红烧鸡肉汉堡，超级美味！"</p>
+                                    <p class="text-xs text-red-600 mt-2">（完全忘记用户想健身的目标）</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-bold text-green-500 mb-2">MemoryOS加持的回答</p>
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <p class="text-green-800">"芝士汉堡[...]，不过别忘了你还要去健身房哦！"</p>
+                                    <p class="text-xs text-green-600 mt-2">（成功记起并应用了用户的长期目标）</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>MemoryOS - 一个为AI智能体设计的全面记忆解决方案。</p>
+            <p class="mt-2 text-sm text-gray-400">由 BAI-LAB 呈现 | <a href="https://github.com/BAI-LAB/MemoryOS" target="_blank" class="underline hover:text-indigo-400">访问 GitHub 仓库</a></p>
+        </div>
+    </footer>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const architectureCards = document.querySelectorAll('.architecture-card');
+    const detailContents = document.querySelectorAll('.detail-content');
+
+    architectureCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const targetId = card.dataset.target;
+            
+            detailContents.forEach(content => {
+                if (content.id === `${targetId}-detail`) {
+                    content.classList.toggle('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+
+            architectureCards.forEach(c => c.classList.remove('ring-2', 'ring-indigo-500'));
+            if (!document.getElementById(`${targetId}-detail`).classList.contains('hidden')) {
+                card.classList.add('ring-2', 'ring-indigo-500');
+            }
+        });
+    });
+
+    const smoothScrollLinks = document.querySelectorAll('a[href^="#"]');
+    smoothScrollLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            document.querySelector(targetId).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+    const gvdData = {
+        labels: ['TiM', 'MemoryBank', 'MemGPT', 'A-Mem', 'MemoryOS'],
+        datasets: [{
+            label: '准确率 (%) (GPT-4o-mini)',
+            data: [84.5, 78.4, 87.9, 90.4, 93.3],
+            backgroundColor: 'rgba(79, 70, 229, 0.7)',
+            borderColor: 'rgba(79, 70, 229, 1)',
+            borderWidth: 1
+        }, {
+            label: '正确性 (%) (GPT-4o-mini)',
+            data: [78.8, 73.3, 83.2, 86.5, 91.2],
+            backgroundColor: 'rgba(5, 150, 105, 0.7)',
+            borderColor: 'rgba(5, 150, 105, 1)',
+            borderWidth: 1
+        }, {
+            label: '连贯性 (%) (GPT-4o-mini)',
+            data: [90.8, 91.2, 89.6, 91.4, 92.3],
+            backgroundColor: 'rgba(219, 39, 119, 0.7)',
+            borderColor: 'rgba(219, 39, 119, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    const locomoData = {
+        labels: ['TiM', 'MemoryBank', 'MemGPT', 'A-Mem*', 'MemoryOS'],
+        datasets: [{
+            label: 'F1 Score (Avg)',
+            data: [18.01, 6.84, 29.13, 26.55, 36.23],
+            backgroundColor: 'rgba(79, 70, 229, 0.7)',
+            borderColor: 'rgba(79, 70, 229, 1)',
+            borderWidth: 1
+        }, {
+            label: 'BLEU-1 (Avg)',
+            data: [15.25, 14.12, 23.94, 20.43, 32.26], 
+            backgroundColor: 'rgba(5, 150, 105, 0.7)',
+            borderColor: 'rgba(5, 150, 105, 1)',
+            borderWidth: 1
+        }]
+    };
+    
+    const efficiencyData = {
+        labels: ['MemoryBank', 'TiM', 'MemGPT', 'A-Mem*', 'MemoryOS'],
+        datasets: [{
+            label: '检索Token数',
+            data: [432, 1274, 16977, 2712, 3874],
+            backgroundColor: 'rgba(217, 119, 6, 0.7)',
+            borderColor: 'rgba(217, 119, 6, 1)',
+            yAxisID: 'y'
+        }, {
+            label: '平均LLM调用次数',
+            data: [3.0, 2.6, 4.3, 13.0, 4.9],
+            backgroundColor: 'rgba(30, 64, 175, 0.7)',
+            borderColor: 'rgba(30, 64, 175, 1)',
+            yAxisID: 'y1'
+        }]
+    };
+
+    const ablationData = {
+        labels: ['准确率', '正确性', '连贯性'],
+        datasets: [{
+            label: '无MemoryOS',
+            data: [2.7, 6.8, 57.3],
+            backgroundColor: 'rgba(220, 38, 38, 0.6)'
+        }, {
+            label: '无MTM',
+            data: [40.6, 46.6, 63.2],
+            backgroundColor: 'rgba(217, 119, 6, 0.6)'
+        }, {
+            label: '无LPM',
+            data: [88.5, 76.5, 73.3],
+            backgroundColor: 'rgba(20, 184, 166, 0.6)'
+        }, {
+            label: 'MemoryOS (完整)',
+            data: [93.3, 91.2, 92.3],
+            backgroundColor: 'rgba(79, 70, 229, 0.6)'
+        }]
+    };
+
+    const perfCtx = document.getElementById('performanceChart').getContext('2d');
+    const performanceChart = new Chart(perfCtx, {
+        type: 'bar',
+        data: gvdData,
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: '分数 (%)' }
+                }
+            },
+            plugins: {
+                title: { display: true, text: 'GVD 数据集性能对比', font: { size: 16 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.formattedValue}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const effCtx = document.getElementById('efficiencyChart').getContext('2d');
+    const efficiencyChart = new Chart(effCtx, {
+        type: 'bar',
+        data: efficiencyData,
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: '检索Token数' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: { display: true, text: '平均LLM调用次数' },
+                    grid: { drawOnChartArea: false }
+                }
+            },
+             plugins: {
+                title: { display: true, text: '效率对比 (Token消耗 vs LLM调用)', font: { size: 16 } },
+                tooltip: { mode: 'index', intersect: false }
+            }
+        }
+    });
+
+    const ablationCtx = document.getElementById('ablationChart').getContext('2d');
+    const ablationChart = new Chart(ablationCtx, {
+        type: 'bar',
+        data: ablationData,
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: '分数 (%)' }
+                }
+            },
+            plugins: {
+                title: { display: true, text: '消融研究结果', font: { size: 16 } },
+                 tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.formattedValue}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const btnGvd = document.getElementById('btn-gvd');
+    const btnLocomo = document.getElementById('btn-locomo');
+
+    btnGvd.addEventListener('click', () => {
+        performanceChart.data = gvdData;
+        performanceChart.options.plugins.title.text = 'GVD 数据集性能对比';
+        performanceChart.update();
+        btnGvd.classList.add('active');
+        btnLocomo.classList.remove('active');
+    });
+
+    btnLocomo.addEventListener('click', () => {
+        performanceChart.data = locomoData;
+        performanceChart.options.plugins.title.text = 'LoCoMo 数据集性能对比 (Avg F1/BLEU-1)';
+        performanceChart.update();
+        btnLocomo.classList.add('active');
+        btnGvd.classList.remove('active');
+    });
+});
+</script>
+
+</body>
+</html>

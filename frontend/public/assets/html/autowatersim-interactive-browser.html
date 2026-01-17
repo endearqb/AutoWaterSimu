@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoWaterSimu | 交互式项目浏览器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- 
+    Chosen Palette: Calm Neutrals & Teal
+    Application Structure Plan: The SPA is designed as an interactive dashboard with a sticky top navigation, allowing users to jump to thematic sections (Overview, Architecture, Roadmap, AI Core, Benchmarks). This non-linear structure is superior to a simple scroll for a dense, technical report, as it empowers users to explore content based on their interests. The core interaction revolves around tabbed interfaces within the 'Roadmap' and 'Benchmarks' sections, breaking down complex phased information into digestible, user-controlled chunks. This architecture prioritizes user-driven exploration and clarity over mirroring the source document's linear format.
+    Visualization & Content Choices: 
+    - Report Info: Competitor Comparison (Table 1) -> Goal: Compare -> Viz/Method: Interactive Card Selector -> Interaction: Click on competitor logo to highlight its features -> Justification: More engaging and direct than a static table or a complex radar chart for categorical data. Library: HTML/CSS/JS.
+    - Report Info: Development Phases (Sec II-VI) -> Goal: Organize/Change -> Viz/Method: Interactive Tabbed Timeline -> Interaction: Click on a phase tab (1-5) to display detailed content for that phase -> Justification: Breaks down a long, multi-stage process into manageable steps, preventing information overload. Library: HTML/CSS/JS.
+    - Report Info: ASM1 Components (Table 2) -> Goal: Inform -> Viz/Method: Horizontal Bar Chart -> Interaction: Static chart with tooltips -> Justification: Clearly visualizes the quantitative breakdown of the core model. Library: Chart.js (Canvas).
+    - Report Info: BSM1/BSM2 Layouts (Sec III/V) -> Goal: Organize -> Viz/Method: Simplified Diagrams -> Interaction: Static visual aid -> Justification: Provides a quick visual reference for the benchmark systems without technical clutter. Library: HTML/CSS.
+    - Report Info: PyTorch & AI Concepts (Sec I/IV) -> Goal: Inform/Compare -> Viz/Method: Styled content cards -> Interaction: Click-to-reveal more info (future potential), hover effects -> Justification: Organizes complex technical concepts into clean, separated blocks. Library: HTML/CSS.
+    CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF8; /* Warm off-white */
+            color: #4A4A4A; /* Dark Gray */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            max-height: 350px;
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #1A746B; /* Muted Teal */
+            border-bottom-color: #1A746B;
+        }
+        .tab-button {
+            transition: all 0.3s;
+        }
+        .tab-button.active {
+            background-color: #1A746B;
+            color: #FFFFFF;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .competitor-card.active {
+            border-color: #E8846B; /* Muted Orange Accent */
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+        <header class="text-center py-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#3B4F5E] mb-3">AutoWaterSimu</h1>
+            <p class="text-lg md:text-xl text-[#6B7A88]">一个交互式的项目开发路线图与技术解析</p>
+        </header>
+
+        <nav class="sticky top-0 z-50 bg-[#FDFBF8]/90 backdrop-blur-sm shadow-sm mb-12">
+            <div class="flex justify-center items-center py-3 space-x-4 md:space-x-8 overflow-x-auto">
+                <a href="#overview" class="nav-link p-2 text-sm md:text-base font-medium whitespace-nowrap">项目总览</a>
+                <a href="#architecture" class="nav-link p-2 text-sm md:text-base font-medium whitespace-nowrap">技术架构</a>
+                <a href="#roadmap" class="nav-link p-2 text-sm md:text-base font-medium whitespace-nowrap">开发路线图</a>
+                <a href="#ai-core" class="nav-link p-2 text-sm md:text-base font-medium whitespace-nowrap">AI 核心</a>
+                <a href="#benchmarks" class="nav-link p-2 text-sm md:text-base font-medium whitespace-nowrap">基准验证</a>
+            </div>
+        </nav>
+
+        <main class="space-y-20">
+
+            <section id="overview" class="scroll-mt-24">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#3B4F5E]">项目总览</h2>
+                <div class="max-w-4xl mx-auto text-center mb-12">
+                    <p class="text-lg">AutoWaterSimu 是一个开源、基于 PyTorch 的自动化水循环模拟平台。初期重点是利用活性污泥模型 (ASM) 构建全厂级污水处理数字孪生系统。其核心价值主张在于利用 PyTorch 的原生能力，深度集成前沿 AI 技术，以解决传统模拟软件在处理复杂、非线性过程中的挑战。</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                    <h3 class="text-2xl font-bold text-center mb-2 text-[#3B4F5E]">市场定位与竞品分析</h3>
+                    <p class="text-center text-gray-500 mb-8">点击下方 Logo 查看各平台特性对比</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center mb-8">
+                        <button data-competitor="autowatersimu" class="competitor-selector p-4 bg-gray-100 rounded-lg font-bold">AutoWaterSimu</button>
+                        <button data-competitor="gpsx" class="competitor-selector p-4 bg-gray-100 rounded-lg font-bold">GPS-X</button>
+                        <button data-competitor="biowin" class="competitor-selector p-4 bg-gray-100 rounded-lg font-bold">BioWin</button>
+                    </div>
+
+                    <div id="competitor-details" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- JS will populate this section -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="architecture" class="scroll-mt-24">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#3B4F5E]">技术架构</h2>
+                <div class="max-w-4xl mx-auto text-center mb-12">
+                    <p class="text-lg">AutoWaterSimu 的架构基于一系列关键原则，以确保系统的鲁棒性、灵活性和可扩展性。选择 PyTorch 作为核心框架是实现这些目标的技术基石。</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#1A746B]">模块化设计</h4>
+                        <p>核心组件（过程模型、求解器、AI模块）均可独立开发、测试和替换，便于功能扩展和协作。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#1A746B]">动态计算图</h4>
+                        <p>充分利用 PyTorch 特性，为实现复杂的自适应模拟和动态控制流程提供极大的灵活性。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#1A746B]">自动微分</h4>
+                        <p>广泛应用 `autograd` 功能，为灵敏度分析、参数估计和混合 AI 模型训练提供核心支持。</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#1A746B]">GPU 加速</h4>
+                        <p>可无缝利用 GPU 进行计算密集型任务，大幅提升 AI 模型训练和大规模模拟的效率。</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#1A746B]">丰富的生态系统</h4>
+                        <p>无缝集成 `torchdiffeq`、`torch.optim` 等高级库，并与现有科学计算工具良好互操作。</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#1A746B]">原生 Python API</h4>
+                        <p>便于脚本编写、集成到更大的工作流程中，并充分利用 Python 庞大的数据科学生态。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="roadmap" class="scroll-mt-24">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#3B4F5E]">开发路线图</h2>
+                <div class="max-w-4xl mx-auto text-center mb-12">
+                    <p class="text-lg">项目开发将遵循一个循序渐进的五阶段路径，从构建核心引擎开始，逐步扩展至全厂级数字孪生，并最终建立一个可持续的开源生态。</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                    <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                        <button data-phase="1" class="tab-button phase-tab px-4 py-2 rounded-full font-semibold bg-gray-200 text-gray-700">阶段一</button>
+                        <button data-phase="2" class="tab-button phase-tab px-4 py-2 rounded-full font-semibold bg-gray-200 text-gray-700">阶段二</button>
+                        <button data-phase="3" class="tab-button phase-tab px-4 py-2 rounded-full font-semibold bg-gray-200 text-gray-700">阶段三</button>
+                        <button data-phase="4" class="tab-button phase-tab px-4 py-2 rounded-full font-semibold bg-gray-200 text-gray-700">阶段四</button>
+                        <button data-phase="5" class="tab-button phase-tab px-4 py-2 rounded-full font-semibold bg-gray-200 text-gray-700">阶段五</button>
+                    </div>
+                    <div id="roadmap-content">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </section>
+            
+            <section id="ai-core" class="scroll-mt-24">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#3B4F5E]">AI 核心：混合建模</h2>
+                <div class="max-w-4xl mx-auto text-center mb-12">
+                    <p class="text-lg">混合建模是 AutoWaterSimu 的核心技术特色。它将机理模型（如 ASM）的领域知识与数据驱动 AI 模型的灵活性相结合，旨在显著提升模拟的准确性、鲁棒性和预测能力，是通往下一代模拟技术的关键路径。</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-lg p-8">
+                        <h3 class="text-2xl font-bold mb-4 text-[#3B4F5E]">神经微分方程 (Neural ODEs)</h3>
+                        <p class="mb-4">将神经网络嵌入微分方程，用于学习和表征系统中“未知”或机理不清的动态过程。</p>
+                        <div class="border-l-4 border-[#1A746B] pl-4 text-sm">
+                            <p><strong class="font-semibold">优势：</strong>非常适合改进现有模型中理解尚不完善的环节，并能高效拟合时序数据。</p>
+                            <p><strong class="font-semibold">场景：</strong>当系统动力学的某些部分难以用第一性原理描述时。</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-8">
+                        <h3 class="text-2xl font-bold mb-4 text-[#3B4F5E]">物理信息神经网络 (PINNs)</h3>
+                        <p class="mb-4">将物理定律（如质量平衡方程）直接作为约束项整合到神经网络的损失函数中。</p>
+                        <div class="border-l-4 border-[#E8846B] pl-4 text-sm">
+                            <p><strong class="font-semibold">优势：</strong>引导网络产生符合物理规律的预测，即使在数据稀疏时也能保证模型的泛化能力。</p>
+                            <p><strong class="font-semibold">场景：</strong>当存在已知的物理规律且希望模型严格遵守这些规律时，尤其是在数据稀疏的情况下。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="benchmarks" class="scroll-mt-24">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#3B4F5E]">基准验证</h2>
+                 <div class="max-w-4xl mx-auto text-center mb-12">
+                    <p class="text-lg">模型的准确性是其应用价值的前提。AutoWaterSimu 将利用国际公认的基准模拟模型（BSM）进行严格的校准与验证，以确保其可信度并能与行业标准进行对标。</p>
+                </div>
+                 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                    <div class="flex justify-center gap-4 mb-8 border-b">
+                        <button data-benchmark="bsm1" class="tab-button benchmark-tab py-2 px-4 font-semibold border-b-2 border-transparent">BSM1</button>
+                        <button data-benchmark="bsm2" class="tab-button benchmark-tab py-2 px-4 font-semibold border-b-2 border-transparent">BSM2</button>
+                    </div>
+                    <div id="benchmark-content">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center mt-20 py-10 border-t border-gray-200">
+            <p class="text-lg text-[#3B4F5E] mb-4">加入我们，共同塑造水处理模拟的未来！</p>
+            <a href="https://github.com/YourUsername/AutoWaterSimu" target="_blank" rel="noopener noreferrer" 
+               class="inline-block bg-[#1A746B] text-white font-bold py-3 px-8 rounded-lg hover:bg-opacity-90 transition-all shadow-md hover:shadow-lg">
+                访问 GitHub 仓库
+            </a>
+        </footer>
+
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const state = {
+            activeCompetitor: 'autowatersimu',
+            activePhase: '1',
+            activeBenchmark: 'bsm1',
+        };
+
+        const competitorData = {
+            autowatersimu: {
+                name: 'AutoWaterSimu',
+                features: [
+                    { name: '核心框架', value: 'PyTorch (开源)', highlight: true },
+                    { name: 'AI/ML 集成', value: '原生深度集成 (Neural ODEs, PINNs)', highlight: true },
+                    { name: '可扩展性', value: '高 (Python, PyTorch 生态)', highlight: true },
+                    { name: '用户界面', value: 'Python API (初期), Web GUI (远期)' },
+                    { name: '开源性', value: '是', highlight: true },
+                ]
+            },
+            gpsx: {
+                name: 'GPS-X',
+                features: [
+                    { name: '核心框架', value: '专用' },
+                    { name: 'AI/ML 集成', value: '有限/附加组件' },
+                    { name: '可扩展性', value: '自定义模型 (需专业知识)' },
+                    { name: '用户界面', value: 'GUI, 拖拽式建模' },
+                    { name: '开源性', value: '否' },
+                ]
+            },
+            biowin: {
+                name: 'BioWin',
+                features: [
+                    { name: '核心框架', value: '专用' },
+                    { name: 'AI/ML 集成', value: '模型构建器 (可定制)' },
+                    { name: '可扩展性', value: '模型构建器' },
+                    { name: '用户界面', value: 'GUI, 绘图工具' },
+                    { name: '开源性', value: '否' },
+                ]
+            }
+        };
+
+        const roadmapData = {
+            '1': {
+                title: '阶段一：核心模拟引擎与 ASM1 模型实现',
+                description: '此阶段的核心任务是构建模拟引擎的基础架构，并精确实现国际公认的 ASM1 模型。这为后续所有开发提供了一个坚实且经过验证的平台，是项目的“最小可行产品”(MVP)。',
+                content: `<div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center"><div><h4 class="font-bold text-lg mb-2 text-[#1A746B]">关键任务:</h4><ul class="list-disc pl-5 space-y-1"><li>开发基础模拟框架 (时间循环, ODE求解器集成)</li><li>精确实现 ASM1 的13个状态变量与8个生化过程</li><li>构建灵活的数据输入/输出模块</li><li>实现基本的结果可视化与导出功能</li></ul></div><div class="chart-container"><canvas id="asm1Chart"></canvas><p class="text-xs text-center text-gray-400 mt-1">ASM1 核心组件</p></div></div>`
+            },
+            '2': {
+                title: '阶段二：验证、功能增强与初期数字孪生能力构建',
+                description: '在核心引擎之上，此阶段重点是利用 BSM1 基准进行严格验证，标志着项目从“能够运行”迈向“根据行业基准正确运行”。同时，开发核心 API 和情景管理功能，提升项目的实用性。',
+                content: `<h4 class="font-bold text-lg mb-2 text-[#1A746B]">关键任务:</h4><ul class="list-disc pl-5 space-y-1"><li>利用 BSM1 标准平台进行模型校准与验证</li><li>开发文档完善的 Python API 作为主要用户界面</li><li>实现情景管理能力，便于运行和比较多种模拟</li><li>开发数据处理与比较工具，支持与实测数据对比</li></ul>`
+            },
+            '3': {
+                title: '阶段三：高级 ASM 集成与 PyTorch 特有创新',
+                description: '此阶段将引入项目的核心差异化优势：AI 创新。通过集成更高级的 ASM2d 模型和引入混合建模技术，旨在显著提升模拟的准确性、鲁棒性和预测能力。',
+                content: `<h4 class="font-bold text-lg mb-2 text-[#1A746B]">关键任务:</h4><ul class="list-disc pl-5 space-y-1"><li>集成 ASM2d 模型，增强营养物去除模拟能力</li><li>引入神经微分方程 (Neural ODEs) 改进模型动态</li><li>应用物理信息神经网络 (PINNs) 确保物理解释性</li><li>开发基于梯度的自动化参数估计（校准）模块</li></ul>`
+            },
+            '4': {
+                title: '阶段四：迈向全面的厂级数字孪生',
+                description: '借鉴 BSM2 经验，将模拟范围从单个单元扩展至包含污泥处理线的全厂级流程。此阶段旨在构建一个完整的污水处理厂数字孪生，并开发高级应用功能。',
+                content: `<h4 class="font-bold text-lg mb-2 text-[#1A746B]">关键任务:</h4><ul class="list-disc pl-5 space-y-1"><li>集成初沉池、厌氧消化等 BSM2 单元过程模型</li><li>开发不同模型间的接口，确保全流程物质平衡</li><li>开发实时数据同化、预测性控制等高级数字孪生功能</li><li>增强“情景推演”分析能力</li></ul>`
+            },
+            '5': {
+                title: '阶段五：长期愿景：社区、可扩展性与未来研究',
+                description: '此阶段着眼于项目的长期可持续发展，重点建设一个活跃的开源社区，完善系统的可扩展性，并探索前沿研究方向，确保项目的持续创新与影响力。',
+                content: `<h4 class="font-bold text-lg mb-2 text-[#1A746B]">关键任务:</h4><ul class="list-disc pl-5 space-y-1"><li>建立和维护开源社区 (贡献指南、文档、论坛)</li><li>设计插件架构，允许用户方便地扩展功能</li><li>探索与水文模型集成、高级 AI 控制等未来研究方向</li><li>利用开放数据提升模型鲁棒性与适用性</li></ul>`
+            }
+        };
+
+        const benchmarkData = {
+            bsm1: {
+                title: '基准模拟模型1号 (BSM1)',
+                description: 'BSM1 是一个标准化的平台，专为测试污水处理厂的控制策略和核心活性污泥过程模型而设计。它提供了一个理想的测试平台，用于验证 AutoWaterSimu 的 ASM1 实现的准确性和可信度。',
+                layout: `<div class="flex items-center justify-center space-x-2 p-4 bg-gray-100 rounded-lg">
+                    <div class="text-center"><div class="p-2 border rounded">进水</div></div>
+                    <div class="font-bold text-gray-400">→</div>
+                    <div class="text-center"><div class="p-4 border-2 border-[#1A746B] rounded-lg">5格室活性污泥反应器<br>(2缺氧, 3好氧)</div></div>
+                    <div class="font-bold text-gray-400">→</div>
+                    <div class="text-center"><div class="p-2 border rounded">二沉池</div></div>
+                    <div class="font-bold text-gray-400">→</div>
+                    <div class="text-center"><div class="p-2 border rounded">出水</div></div>
+                </div>`
+            },
+            bsm2: {
+                title: '基准模拟模型2号 (BSM2)',
+                description: 'BSM2 在 BSM1 的基础上进行了扩展，提供了一个包含污泥处理线的、行业公认的完整污水处理厂布局。采用 BSM2 作为蓝图，将指导 AutoWaterSimu 从单元过程模拟迈向全厂级数字孪生。',
+                layout: `<div class="flex items-center justify-center space-x-2 p-4 bg-gray-100 rounded-lg text-sm">
+                    <div class="text-center"><div class="p-2 border rounded">进水</div></div>
+                    <div class="font-bold text-gray-400">→</div>
+                    <div class="text-center"><div class="p-2 border rounded">初沉池</div></div>
+                     <div class="font-bold text-gray-400">→</div>
+                    <div class="text-center"><div class="p-3 border-2 border-[#1A746B] rounded-lg">活性污泥</div></div>
+                     <div class="font-bold text-gray-400">→</div>
+                    <div class="text-center"><div class="p-2 border rounded">二沉池</div></div>
+                     <div class="font-bold text-gray-400">→</div>
+                     <div class="text-center"><div class="p-3 border-2 border-[#E8846B] rounded-lg">污泥处理线<br>(浓缩, 消化, 脱水)</div></div>
+                </div>`
+            }
+        };
+
+        const competitorDetailsContainer = document.getElementById('competitor-details');
+        const roadmapContentContainer = document.getElementById('roadmap-content');
+        const benchmarkContentContainer = document.getElementById('benchmark-content');
+        let asm1ChartInstance = null;
+        
+        const renderCompetitor = () => {
+            competitorDetailsContainer.innerHTML = '';
+            const data = competitorData[state.activeCompetitor];
+            let cardHtml = `<div class="competitor-card active border-2 rounded-xl p-6 transition-all duration-300">
+                <h4 class="font-bold text-xl mb-4">${data.name}</h4>
+                <ul class="space-y-3">`;
+            
+            data.features.forEach(f => {
+                cardHtml += `<li class="flex justify-between items-center text-sm ${f.highlight ? 'font-bold text-[#1A746B]' : ''}">
+                    <span>${f.name}</span>
+                    <span class="text-right">${f.value}</span>
+                </li>`;
+            });
+            
+            cardHtml += `</ul></div>`;
+            competitorDetailsContainer.innerHTML = cardHtml;
+        };
+        
+        const renderRoadmap = () => {
+            const phase = roadmapData[state.activePhase];
+            roadmapContentContainer.innerHTML = `
+                <div class="p-1">
+                    <h3 class="text-xl font-bold mb-2 text-[#3B4F5E]">${phase.title}</h3>
+                    <p class="mb-6">${phase.description}</p>
+                    ${phase.content}
+                </div>
+            `;
+            
+            document.querySelectorAll('.phase-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.phase === state.activePhase);
+            });
+
+            if (state.activePhase === '1') {
+                createAsm1Chart();
+            }
+        };
+
+        const renderBenchmark = () => {
+            const benchmark = benchmarkData[state.activeBenchmark];
+            benchmarkContentContainer.innerHTML = `
+                <div>
+                    <h3 class="text-xl font-bold mb-2 text-[#3B4F5E]">${benchmark.title}</h3>
+                    <p class="mb-6">${benchmark.description}</p>
+                    ${benchmark.layout}
+                </div>
+            `;
+
+            document.querySelectorAll('.benchmark-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.benchmark === state.activeBenchmark);
+                btn.classList.toggle('text-gray-500', btn.dataset.benchmark !== state.activeBenchmark);
+                btn.classList.toggle('text-[#1A746B]', btn.dataset.benchmark === state.activeBenchmark);
+                btn.classList.toggle('border-b-2', btn.dataset.benchmark === state.activeBenchmark);
+                 btn.classList.toggle('border-[#1A746B]', btn.dataset.benchmark === state.activeBenchmark);
+            });
+        };
+
+        const createAsm1Chart = () => {
+            const canvas = document.getElementById('asm1Chart');
+            if (!canvas) return;
+            if (asm1ChartInstance) {
+                asm1ChartInstance.destroy();
+            }
+
+            asm1ChartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ['状态变量', '生化过程'],
+                    datasets: [{
+                        data: [13, 8],
+                        backgroundColor: ['#1A746B', '#5DB8AF'],
+                        borderRadius: 4,
+                        barPercentage: 0.6,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: () => null,
+                                label: (context) => `${context.label}: ${context.raw}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { display: false }, ticks: { precision: 0 } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        };
+
+        document.querySelector('.grid').addEventListener('click', (e) => {
+            if (e.target.matches('.competitor-selector')) {
+                state.activeCompetitor = e.target.dataset.competitor;
+                renderCompetitor();
+            }
+        });
+
+        document.querySelector('#roadmap').addEventListener('click', (e) => {
+            if (e.target.matches('.phase-tab')) {
+                state.activePhase = e.target.dataset.phase;
+                renderRoadmap();
+            }
+        });
+
+        document.querySelector('#benchmarks').addEventListener('click', (e) => {
+             if (e.target.matches('.benchmark-tab')) {
+                state.activeBenchmark = e.target.dataset.benchmark;
+                renderBenchmark();
+            }
+        });
+
+        // Navigation scrollspy
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('main section');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                    });
+                }
+            });
+        }, { rootMargin: '-50% 0px -50% 0px' });
+
+        sections.forEach(sec => observer.observe(sec));
+
+        // Initial render
+        renderCompetitor();
+        renderRoadmap();
+        renderBenchmark();
+
+    });
+    </script>
+</body>
+</html>

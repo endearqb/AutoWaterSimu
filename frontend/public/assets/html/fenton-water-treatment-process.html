@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>芬顿水处理工艺：交互式指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Neutral Stone, Teal Accent, Sand Highlight) -->
+    <!-- Application Structure Plan: A multi-section SPA with sticky navigation. The structure is thematic (Tech Overview, Challenges, Cases, etc.) rather than linear, allowing users to explore based on interest. Key interactions include tabbed content for technology comparison, click-to-reveal modals for case studies, and interactive charts. This design prioritizes user-driven exploration and quick synthesis of complex information over a simple report-to-webpage conversion. -->
+    <!-- Visualization & Content Choices: 1. Tech Comparison: Goal=Compare, Viz=Interactive Bar Chart (Chart.js), Interaction=Click tabs to highlight data. Justification=Dynamic comparison is better than static Table 1. 2. Cost Breakdown: Goal=Inform, Viz=Doughnut Chart (Chart.js). Justification=Visualizes OPEX components effectively. 3. Coupled Processes: Goal=Organize, Viz=HTML/CSS Flowchart. Justification=Clearly shows process integration without external libraries. 4. Case Studies: Goal=Analyze, Viz=Bar charts in modals. Justification=Presents key results visually and concisely. 5. Cost Comparison: Goal=Compare, Viz=Bar Chart (Chart.js). Justification=Directly compares lifecycle costs from Table 4. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #F5F5F4; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        @media (max-width: 768px) { .chart-container { height: 300px; } }
+        .tab-active { border-color: #14B8A6; color: #14B8A6; background-color: #F0FDFA; }
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); z-index: 50;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            width: 90%; max-width: 48rem; max-height: 90vh; overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <header class="sticky top-0 bg-white/80 backdrop-blur-lg shadow-sm z-40">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-teal-600">芬顿工艺指南</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="text-stone-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">技术概览</a>
+                        <a href="#challenges" class="text-stone-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">核心挑战与对策</a>
+                        <a href="#coupling" class="text-stone-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">耦合工艺</a>
+                        <a href="#cases" class="text-stone-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">工程案例</a>
+                        <a href="#economics" class="text-stone-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">经济与安全</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+
+        <section id="hero" class="text-center mb-20">
+            <h2 class="text-4xl font-extrabold text-stone-900 sm:text-5xl md:text-6xl">
+                芬顿水处理工艺
+            </h2>
+            <p class="mt-6 max-w-2xl mx-auto text-xl text-stone-500">
+                一个将复杂报告转化为直观洞见的交互式探索平台。深入了解芬顿技术的原理、挑战、应用与最佳实践。
+            </p>
+        </section>
+
+        <section id="overview" class="py-12">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">技术概览</h3>
+                <p class="mt-4 text-lg text-stone-600">芬顿技术是一个多元化的体系。点击下方标签，探索从经典到前沿的各种芬顿工艺，并通过交互图表直观对比它们的关键特性。</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                <button data-tech="classic" class="tech-tab tab-active px-4 py-2 border-b-2 font-medium text-sm rounded-t-lg transition">经典芬顿</button>
+                <button data-tech="photo" class="tech-tab px-4 py-2 border-b-2 border-transparent font-medium text-sm rounded-t-lg transition">光芬顿</button>
+                <button data-tech="electro" class="tech-tab px-4 py-2 border-b-2 border-transparent font-medium text-sm rounded-t-lg transition">电芬顿</button>
+                <button data-tech="heterogeneous" class="tech-tab px-4 py-2 border-b-2 border-transparent font-medium text-sm rounded-t-lg transition">非均相芬顿</button>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div id="tech-details" class="bg-white p-6 rounded-lg shadow-md">
+                </div>
+                <div>
+                    <div class="chart-container">
+                        <canvas id="techComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="challenges" class="py-12 mt-16 bg-white rounded-lg shadow-md p-8">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">核心挑战与对策</h3>
+                <p class="mt-4 text-lg text-stone-600">传统芬顿工艺面临pH值严苛和大量铁泥两大瓶颈。本节将解析这些问题的根源，并展示如何通过技术创新（如非均相催化）从根本上解决它们，从而拓宽应用范围并降低环境风险。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h4 class="font-bold text-xl mb-4 text-teal-700">技术瓶颈剖析</h4>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <h5 class="font-semibold">pH值困境</h5>
+                            <p class="text-sm text-stone-600">最佳反应范围仅为pH 2.5-4.0，需要大量酸碱进行调节，增加成本并腐蚀设备。</p>
+                        </div>
+                        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <h5 class="font-semibold">铁泥难题</h5>
+                            <p class="text-sm text-stone-600">反应后产生大量$Fe(OH)_3$危废污泥，处置成本高昂，存在二次污染风险。</p>
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-xl mt-8 mb-4 text-green-700">突破性解决方案：非均相芬顿</h4>
+                    <p class="text-stone-700">通过将铁基催化剂固载化，非均相芬顿从源头解决了上述问题。它拓宽了pH适用范围（可达中性），基本消除了铁泥的产生，并实现了催化剂的回收利用，是芬顿技术向清洁、高效发展的重要方向。</p>
+                </div>
+                <div>
+                    <div class="chart-container">
+                        <canvas id="challengeSolutionChart"></canvas>
+                    </div>
+                     <p class="text-center text-sm text-stone-500 mt-2">非均相芬顿如何优化运行成本构成</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="coupling" class="py-12 mt-16">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">协同增效：芬顿基耦合工艺</h3>
+                <p class="mt-4 text-lg text-stone-600">在实际工程中，芬顿技术常与其他工艺联用以实现“1+1>2”的效果。这种系统集成是成本优化的关键策略，旨在用廉价工艺处理大部分易降解污染物，再用芬顿“利刃”精准解决顽固污染物。</p>
+            </div>
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center gap-6">
+                    <div class="flex-shrink-0 bg-teal-500 text-white w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold">生</div>
+                    <div class="flex-grow">
+                        <h4 class="text-xl font-bold">芬顿 + 生物法 (Fenton + Bio)</h4>
+                        <p class="text-stone-600 mt-2">最经典的组合。芬顿作为<span class="font-semibold text-teal-600">预处理</span>，将难降解大分子“打断”成易于生化的小分子，显著提升废水的可生化性（BOD/COD比值）。例如，可将垃圾渗滤液的B/C比从0.12提升至0.54。</p>
+                    </div>
+                </div>
+                <div class="flex justify-center">
+                    <div class="text-2xl text-stone-400">↓</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center gap-6">
+                     <div class="flex-shrink-0 bg-sky-500 text-white w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold">膜</div>
+                     <div class="flex-grow">
+                        <h4 class="text-xl font-bold">芬顿 + 膜技术 (Membrane-Fenton)</h4>
+                        <p class="text-stone-600 mt-2">用膜分离替代沉淀池，实现高效固液分离。此举可大幅提高反应器内催化剂浓度，<span class="font-semibold text-sky-600">强化反应效率</span>，同时节省超过60%的占地面积，并减少30-60%的药耗和排泥量。</p>
+                    </div>
+                </div>
+                <div class="flex justify-center">
+                    <div class="text-2xl text-stone-400">↓</div>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md flex items-center gap-6">
+                     <div class="flex-shrink-0 bg-indigo-500 text-white w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold">电</div>
+                     <div class="flex-grow">
+                        <h4 class="text-xl font-bold">微电解 + 芬顿</h4>
+                        <p class="text-stone-600 mt-2">微电解过程原位产生$Fe^{2+}$，为后续芬顿反应提供催化剂，<span class="font-semibold text-indigo-600">节省药剂成本</span>。此组合在印染废水处理中应用广泛，实现了物化预处理与高级氧化的无缝衔接。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cases" class="py-12 mt-16 bg-stone-100 rounded-lg p-8">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">工程案例分析</h3>
+                <p class="mt-4 text-lg text-stone-600">理论终须实践检验。点击下方卡片，深入剖析来自不同行业的真实案例，学习成功经验，吸取失败教训。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="case-card cursor-pointer bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-transform" data-case="tianjin">
+                    <h4 class="font-bold text-lg">天津大韩庄：管理失败的警示</h4>
+                    <p class="text-sm text-stone-500 mt-2">垃圾渗滤液处理</p>
+                    <p class="mt-4 text-red-600 font-semibold flex items-center">教训：管理优于技术 <span class="ml-2 text-xl">👎</span></p>
+                </div>
+                <div class="case-card cursor-pointer bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-transform" data-case="huzhou">
+                    <h4 class="font-bold text-lg">湖州光正：卓越运营的典范</h4>
+                    <p class="text-sm text-stone-500 mt-2">印染废水处理</p>
+                    <p class="mt-4 text-green-600 font-semibold flex items-center">经验：创新与精细化管理 <span class="ml-2 text-xl">👍</span></p>
+                </div>
+                <div class="case-card cursor-pointer bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-transform" data-case="wuxi">
+                    <h4 class="font-bold text-lg">无锡荣成：大型项目的成本基准</h4>
+                    <p class="text-sm text-stone-500 mt-2">造纸废水处理</p>
+                    <p class="mt-4 text-blue-600 font-semibold flex items-center">价值：提供了真实的成本数据 <span class="ml-2 text-xl">💰</span></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="economics" class="py-12 mt-16">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">经济与安全考量</h3>
+                <p class="mt-4 text-lg text-stone-600">成功的工程不仅要技术可行，更要经济合理、运行安全。本节提供成本对比分析与核心安全规程，助您做出全面决策。</p>
+            </div>
+            <div class="grid lg:grid-cols-5 gap-8">
+                <div class="lg:col-span-3 bg-white p-6 rounded-lg shadow-md">
+                    <h4 class="text-xl font-bold mb-4">技术经济性对比</h4>
+                    <p class="text-sm text-stone-600 mb-4">不同芬顿工艺的成本结构差异巨大。传统芬顿初始投资低，但药耗和污泥处置费高昂；非均相或膜芬顿前期投入高，但长期运行成本和环境风险更低。选择何种技术，是一项基于全生命周期成本和风险的战略决策。</p>
+                    <div class="chart-container h-96">
+                        <canvas id="opexChart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 bg-amber-50 border border-amber-200 p-6 rounded-lg shadow-md">
+                     <h4 class="text-xl font-bold mb-4 text-amber-800">核心安全规程</h4>
+                     <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-xl mr-3">⚠️</span>
+                            <div><strong class="font-semibold">化学品安全:</strong> 严格遵守浓$H_2O_2$（强氧化剂）和强酸碱的操作规程，配备完整的个人防护装备(PPE)。</div>
+                        </li>
+                         <li class="flex items-start">
+                            <span class="text-xl mr-3">🔥</span>
+                             <div><strong class="font-semibold">防爆防热:</strong> 芬顿反应为强放热反应，必须缓慢滴加$H_2O_2$，严防温度失控引发爆炸性分解。</div>
+                        </li>
+                         <li class="flex items-start">
+                            <span class="text-xl mr-3">🚿</span>
+                             <div><strong class="font-semibold">应急设施:</strong> 操作区必须配备紧急洗眼器、淋浴装置和消防设施。</div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-xl mr-3">💨</span>
+                             <div><strong class="font-semibold">通风系统:</strong> 保持良好通风，防止酸雾等有害气体聚集。</div>
+                        </li>
+                     </ul>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+    
+    <footer class="bg-stone-800 text-white mt-16">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>基于《芬顿（Fenton）及其衍生耦合工艺在水处理中的应用》调研报告创建</p>
+            <p class="mt-1 text-stone-400">交互式指南 &copy; 2025</p>
+        </div>
+    </footer>
+
+    <div id="case-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="flex justify-between items-start">
+                <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+                <button id="close-modal" class="text-2xl font-bold text-stone-500 hover:text-stone-800">&times;</button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const techData = {
+            classic: {
+                title: '经典均相芬顿',
+                content: `
+                    <p class="text-stone-700"><strong>核心原理:</strong> 在酸性条件下(pH 2.5-4.0)，液相中的$Fe^{2+}$催化$H_2O_2$产生强氧化性的羟基自由基(•OH)，将有机物矿化。</p>
+                    <p class="mt-3 text-sm"><strong class="text-green-600">优势:</strong> 设备简单，初始投资低，反应速率快。</p>
+                    <p class="mt-1 text-sm"><strong class="text-red-600">劣势:</strong> pH范围苛刻，产生大量铁泥，化学品消耗大，催化剂难回收。</p>
+                `,
+                chartData: [4, 10, 10]
+            },
+            photo: {
+                title: '光芬顿 (Photo-Fenton)',
+                content: `
+                    <p class="text-stone-700"><strong>核心原理:</strong> 利用紫外/太阳光加速$Fe^{3+}$还原为$Fe^{2+}$，并直接光解$H_2O_2$，产生更多•OH，提升反应效率。</p>
+                    <p class="mt-3 text-sm"><strong class="text-green-600">优势:</strong> 反应效率和$H_2O_2$利用率更高，铁泥产量减少。</p>
+                    <p class="mt-1 text-sm"><strong class="text-red-600">劣势:</strong> 需额外能源(UV灯)，设备和运行成本增加。</p>
+                `,
+                chartData: [5, 6, 8]
+            },
+            electro: {
+                title: '电芬顿 (Electro-Fenton)',
+                content: `
+                    <p class="text-stone-700"><strong>核心原理:</strong> 通过电化学方法在阴极原位生成$H_2O_2$并持续再生$Fe^{2+}$，无需外加化学品。</p>
+                    <p class="mt-3 text-sm"><strong class="text-green-600">优势:</strong> 无需运输储存$H_2O_2$，安全性高，催化剂循环效率高。</p>
+                    <p class="mt-1 text-sm"><strong class="text-red-600">劣势:</strong> 能耗高，电极材料成本高、寿命有限。</p>
+                `,
+                chartData: [4, 5, 9]
+            },
+            heterogeneous: {
+                title: '非均相芬顿',
+                content: `
+                    <p class="text-stone-700"><strong>核心原理:</strong> 使用固相含铁催化剂，在固-液界面催化$H_2O_2$，从根本上解决铁泥和pH问题。</p>
+                    <p class="mt-3 text-sm"><strong class="text-green-600">优势:</strong> pH适用范围宽(可达中性)，基本无铁泥，催化剂可回收。</p>
+                    <p class="mt-1 text-sm"><strong class="text-red-600">劣势:</strong> 催化剂制备成本较高，可能存在失活问题，反应速率可能稍慢。</p>
+                `,
+                chartData: [8, 1, 3]
+            }
+        };
+
+        const techDetailsEl = document.getElementById('tech-details');
+        const techTabs = document.querySelectorAll('.tech-tab');
+        let techChart;
+
+        function updateTechContent(techKey) {
+            const data = techData[techKey];
+            techDetailsEl.innerHTML = `<h4 class="text-xl font-bold mb-4 text-teal-700">${data.title}</h4>${data.content}`;
+            
+            techTabs.forEach(tab => {
+                tab.classList.remove('tab-active');
+                if (tab.dataset.tech === techKey) {
+                    tab.classList.add('tab-active');
+                }
+            });
+            updateTechChart(techKey);
+        }
+
+        function updateTechChart(techKey) {
+            const activeIndex = Object.keys(techData).indexOf(techKey);
+            const newColors = techChart.data.labels.map((label, index) => {
+                return index === activeIndex ? 'rgba(20, 184, 166, 0.8)' : 'rgba(20, 184, 166, 0.3)';
+            });
+            techChart.data.datasets[0].backgroundColor = newColors;
+            techChart.update();
+        }
+
+        techTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                updateTechContent(tab.dataset.tech);
+            });
+        });
+
+        const techCtx = document.getElementById('techComparisonChart').getContext('2d');
+        techChart = new Chart(techCtx, {
+            type: 'bar',
+            data: {
+                labels: ['经典', '光芬顿', '电芬顿', '非均相'],
+                datasets: [{
+                    label: '综合性能评分 (越低越优)',
+                    data: [
+                        techData.classic.chartData[0] + techData.classic.chartData[1] + techData.classic.chartData[2],
+                        techData.photo.chartData[0] + techData.photo.chartData[1] + techData.photo.chartData[2],
+                        techData.electro.chartData[0] + techData.electro.chartData[1] + techData.electro.chartData[2],
+                        techData.heterogeneous.chartData[0] + techData.heterogeneous.chartData[1] + techData.heterogeneous.chartData[2],
+                    ],
+                    backgroundColor: [
+                        'rgba(20, 184, 166, 0.3)',
+                        'rgba(20, 184, 166, 0.3)',
+                        'rgba(20, 184, 166, 0.3)',
+                        'rgba(20, 184, 166, 0.3)'
+                    ],
+                    borderColor: 'rgba(15, 118, 110, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: '芬顿技术综合性能对比 (虚拟评分)' },
+                    tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                let techKey = context.label.toLowerCase();
+                                if(techKey === '经典') techKey = 'classic';
+                                if(techKey === '光芬顿') techKey = 'photo';
+                                if(techKey === '电芬顿') techKey = 'electro';
+                                if(techKey === '非均相') techKey = 'heterogeneous';
+
+                                const data = techData[techKey]?.chartData;
+                                if(data){
+                                     return [
+                                        `总分: ${context.parsed.x}`,
+                                        `pH适应性: ${data[0]}/10`,
+                                        `铁泥问题: ${data[1]}/10 (越高越严重)`,
+                                        `成本因素: ${data[2]}/10 (越高越贵)`
+                                     ];
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: { x: { beginAtZero: true, max: 25 } }
+            }
+        });
+        
+        const challengeCtx = document.getElementById('challengeSolutionChart').getContext('2d');
+        new Chart(challengeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['化学品 (酸碱, Fe, H2O2)', '污泥处置', '能耗/其他', '催化剂'],
+                datasets: [{
+                    label: '传统芬顿成本',
+                    data: [50, 40, 10, 0],
+                    backgroundColor: ['#f87171', '#fbbf24', '#a78bfa', '#d4d4d8']
+                }, {
+                    label: '非均相芬顿成本',
+                    data: [45, 5, 20, 30],
+                    backgroundColor: ['#f87171', '#fbbf24', '#a78bfa', '#60a5fa']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: '运行成本构成对比 (%)' }
+                }
+            }
+        });
+
+        const opexCtx = document.getElementById('opexChart').getContext('2d');
+        new Chart(opexCtx, {
+            type: 'bar',
+            data: {
+                labels: ['均相芬顿', '膜芬顿', '电芬顿', '耦合生物法'],
+                datasets: [{
+                    label: '吨水运行成本 (元/m³)',
+                    data: [1.0, 0.7, 4.2, 5.0],
+                    backgroundColor: ['#ef4444', '#3b82f6', '#8b5cf6', '#14b8a6'],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: '不同工艺运行成本(OPEX)参考' },
+                    tooltip: {
+                        callbacks: {
+                            footer: function(tooltipItems) {
+                                const labels = {
+                                    '均相芬顿': '注意：此为最低药耗估算，未含污泥处置费。',
+                                    '膜芬顿': '效益：药耗/泥量减少30-60%。',
+                                    '电芬顿': '说明：成本对电价高度敏感。',
+                                    '耦合生物法': '说明：此为造纸废水全流程成本，仅供参考。'
+                                };
+                                return labels[tooltipItems[0].label] || '';
+                            }
+                        }
+                    }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: '元 / 立方米' } } }
+            }
+        });
+
+        updateTechContent('classic');
+        
+        const caseData = {
+            tianjin: {
+                title: "天津大韩庄：管理失败的警示",
+                body: `
+                    <p class="mb-4"><strong>行业：</strong>垃圾渗滤液处理</p>
+                    <p class="mb-4"><strong>工艺：</strong>混凝沉淀 + 均相芬顿</p>
+                    <p class="mb-4"><strong>失败症结：</strong>项目的失败并非源于技术本身，而是彻头彻尾的管理混乱。每日产生的2.6吨芬顿危废污泥未按规定处置，而是直接非法填埋，累计超百吨，造成严重二次污染。此外，防渗膜破损、监管缺位等问题也极为严重。</p>
+                    <p class="font-bold text-red-600"><strong>核心教训：</strong>一个技术上可行的方案，如果缺乏严格的环境管理、有效的法规执行和负责任的运营维护，最终必然走向失败。工程的成功，管理优于技术。</p>
+                `
+            },
+            huzhou: {
+                title: "湖州光正：卓越运营的典范",
+                body: `
+                    <p class="mb-4"><strong>行业：</strong>印染废水处理</p>
+                    <p class="mb-4"><strong>技术创新：</strong>采用“磁化催化反应芬顿”技术，并配套高度自动化的加药控制系统，实现对COD的“靶向去除”。</p>
+                    <p class="mb-4"><strong>卓越成效：</strong>通过持续优化和自动化控制，成功将<strong>原材料成本降低了56%</strong>，远低于行业平均水平。同时，运营人员也减少了30%，实现了减员增效和稳定达标的双重目标。</p>
+                    <p class="font-bold text-green-600"><strong>核心教训：</strong>卓越运营的力量。通过技术创新、精细化过程控制和高度自动化，芬顿这一“高成本”技术完全可以变得经济、高效、可靠。</p>
+                    <div class="h-48 mt-4"><canvas id="huzhouChart"></canvas></div>
+                `
+            },
+            wuxi: {
+                title: "无锡荣成：大型项目的成本基准",
+                body: `
+                    <p class="mb-4"><strong>行业：</strong>造纸废水处理 (1.5万吨/日)</p>
+                    <p class="mb-4"><strong>工艺流程：</strong>初沉-IC厌氧-A/O-芬顿氧化</p>
+                    <p class="mb-4"><strong>技术经济数据：</strong>该项目为大型芬顿耦合工艺的成本评估提供了宝贵的真实世界数据。</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong>总投资 (CAPEX):</strong> 4500万元人民币</li>
+                        <li><strong>吨水投资:</strong> 3000元/(m³/d)</li>
+                        <li><strong>综合运行成本 (OPEX):</strong> 约 <strong>5元/立方米</strong></li>
+                    </ul>
+                    <p class="font-bold text-blue-600 mt-4"><strong>价值：</strong>为其他类似项目在进行初步可行性研究时，提供了极具参考价值的投资和运行成本基准。</p>
+                `
+            }
+        };
+
+        const modal = document.getElementById('case-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const closeModalBtn = document.getElementById('close-modal');
+
+        document.querySelectorAll('.case-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const caseKey = card.dataset.case;
+                const data = caseData[caseKey];
+                modalTitle.textContent = data.title;
+                modalBody.innerHTML = data.body;
+                modal.style.display = 'flex';
+                
+                if (caseKey === 'huzhou') {
+                    const huzhouCtx = document.getElementById('huzhouChart')?.getContext('2d');
+                    if (huzhouCtx) {
+                         new Chart(huzhouCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['原材料成本', '运营人员'],
+                                datasets: [{
+                                    label: '降低百分比 (%)',
+                                    data: [56, 30],
+                                    backgroundColor: ['#10b981', '#0ea5e9']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { y: { beginAtZero: true, max: 60, title: {display: true, text:'降低百分比(%)'} } },
+                                plugins: { title: { display: true, text: '湖州光正优化成效' } }
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                 modal.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

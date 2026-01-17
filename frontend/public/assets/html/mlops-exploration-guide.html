@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps与MLflow：交互式探索报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Neutrals -->
+    <!-- Application Structure Plan: The application is structured as a narrative journey for the user, starting from high-level concepts and drilling down to specifics. It begins with "What is MLOps?" and its lifecycle (interactive diagram), followed by the core principles. Then, it dives deep into MLflow with a tabbed interface for its components. A key interactive section is the platform comparison, where users can dynamically change the data shown on a chart to compare MLflow, Kubeflow, and TFX. The app concludes with a look at future trends. This thematic, task-oriented flow is more engaging than the linear report structure and guides users from understanding the problem (MLOps necessity) to exploring solutions (MLflow and others). -->
+    <!-- Visualization & Content Choices:
+        - MLOps Lifecycle: Report Info -> 7 stages of MLOps. Goal -> Organize/Inform. Viz -> Interactive HTML/CSS diagram. Interaction -> Click on a stage to reveal its description. Justification -> Visually engaging, breaks down a complex process into digestible, user-controlled chunks.
+        - Platform Comparison: Report Info -> Table 1 data (MLflow vs Kubeflow vs TFX). Goal -> Compare. Viz -> Chart.js Bar Chart. Interaction -> User clicks buttons (e.g., '部署复杂性', '框架无关性') to dynamically update the chart data. Justification -> Transforms a static table into an interactive tool for analysis, making comparisons more direct and impactful.
+        - MLflow Components: Report Info -> Details of Tracking, Projects, Models, Registry. Goal -> Organize/Inform. Viz -> Tabbed HTML interface. Interaction -> Clicking tabs switches content. Justification -> Manages dense information cleanly without overwhelming the user, promoting focused learning.
+        - Cloud Platforms: Report Info -> Table 2 data. Goal -> Compare. Viz -> Interactive cards. Interaction -> Hover effects and clickable details. Justification -> Modern, clean presentation for high-level comparison.
+        - All libraries (Tailwind, Chart.js) are loaded via CDN. All visuals are created using HTML/CSS or Canvas via Chart.js.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f7f4;
+            color: #3d405b;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 60vh;
+            }
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #81b29a;
+            border-bottom-color: #81b29a;
+        }
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background-color: #81b29a;
+            color: #ffffff;
+        }
+        .lifecycle-node {
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+        .lifecycle-node:hover, .lifecycle-node.active {
+            transform: scale(1.05);
+            background-color: #e07a5f;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-[#f8f7f4]/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-[#3d405b]">MLOps探索指南</h1>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#intro" class="nav-link font-medium pb-1">什么是MLOps</a>
+                <a href="#lifecycle" class="nav-link font-medium pb-1">生命周期</a>
+                <a href="#mlflow" class="nav-link font-medium pb-1">MLflow深度剖析</a>
+                <a href="#comparison" class="nav-link font-medium pb-1">平台比较</a>
+                <a href="#future" class="nav-link font-medium pb-1">未来趋势</a>
+            </div>
+            <button id="mobile-menu-btn" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 space-y-2">
+             <a href="#intro" class="block nav-link font-medium py-1">什么是MLOps</a>
+             <a href="#lifecycle" class="block nav-link font-medium py-1">生命周期</a>
+             <a href="#mlflow" class="block nav-link font-medium py-1">MLflow深度剖析</a>
+             <a href="#comparison" class="block nav-link font-medium py-1">平台比较</a>
+             <a href="#future" class="block nav-link font-medium py-1">未来趋势</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- Section 1: Introduction to MLOps -->
+        <section id="intro" class="scroll-mt-24 text-center mb-24">
+            <h2 class="text-4xl font-bold mb-4 text-[#3d405b]">从实验到生产的桥梁</h2>
+            <p class="text-lg max-w-3xl mx-auto text-gray-600 mb-8">
+                MLOps (机器学习运营) 是一套旨在统一机器学习系统开发与运维的实践。它的核心目标是自动化和简化从数据准备、模型训练到部署监控的整个工作流程，将算法从理论变为可靠、可扩展的商业价值。
+            </p>
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-2 text-[#e07a5f]">提升效率</h3>
+                    <p class="text-gray-600">自动化重复性任务，解放数据科学家和工程师，使其专注于更高价值的创新活动。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-2 text-[#81b29a]">加速迭代</h3>
+                    <p class="text-gray-600">显著缩短从概念到生产的周期，使企业能够更快地响应市场变化。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-2 text-[#f2cc8f]">确保可靠</h3>
+                    <p class="text-gray-600">通过持续监控和治理，确保模型性能稳定，并符合法规、安全与道德标准。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: MLOps Lifecycle -->
+        <section id="lifecycle" class="scroll-mt-24 mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4 text-[#3d405b]">端到端的MLOps生命周期</h2>
+                <p class="text-lg max-w-3xl mx-auto text-gray-600">MLOps不是一个线性过程，而是一个持续的反馈循环。点击下方任何一个阶段来探索其详细内容。</p>
+            </div>
+            <div class="relative max-w-4xl mx-auto">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div id="node-1" class="lifecycle-node p-4 bg-white rounded-lg shadow-lg border-2 border-transparent">问题定义</div>
+                    <div id="node-2" class="lifecycle-node p-4 bg-white rounded-lg shadow-lg border-2 border-transparent">数据工程</div>
+                    <div id="node-3" class="lifecycle-node p-4 bg-white rounded-lg shadow-lg border-2 border-transparent">模型开发</div>
+                    <div id="node-4" class="lifecycle-node p-4 bg-white rounded-lg shadow-lg border-2 border-transparent">模型验证</div>
+                    <div id="node-5" class="col-start-1 md:col-start-2 lifecycle-node p-4 bg-white rounded-lg shadow-lg border-2 border-transparent">模型部署</div>
+                    <div id="node-6" class="lifecycle-node p-4 bg-white rounded-lg shadow-lg border-2 border-transparent">模型监控</div>
+                    <div id="node-7" class="col-span-2 md:col-span-1 md:col-start-4 lifecycle-node p-4 bg-white rounded-lg shadow-lg border-2 border-transparent">模型再训练</div>
+                </div>
+            </div>
+            <div id="lifecycle-details" class="mt-8 p-8 bg-white rounded-xl shadow-inner min-h-[150px] border border-gray-100 transition-all duration-500">
+                <p class="text-gray-500 text-center">请选择一个阶段查看详情。</p>
+            </div>
+        </section>
+
+        <!-- Section 3: MLflow Deep Dive -->
+        <section id="mlflow" class="scroll-mt-24 mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4 text-[#3d405b]">MLflow 深度剖析</h2>
+                <p class="text-lg max-w-3xl mx-auto text-gray-600">MLflow 是一个开源平台，旨在管理端到端的机器学习生命周期。它以轻量、灵活和框架无关的设计理念，成为业界的流行选择。</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8 border border-gray-100">
+                <div class="flex flex-wrap justify-center gap-2 mb-8 border-b pb-4">
+                    <button data-tab="tracking" class="tab-btn active px-4 py-2 font-semibold rounded-md text-sm sm:text-base">MLflow Tracking</button>
+                    <button data-tab="projects" class="tab-btn px-4 py-2 font-semibold rounded-md text-sm sm:text-base bg-gray-100 text-gray-600">MLflow Projects</button>
+                    <button data-tab="models" class="tab-btn px-4 py-2 font-semibold rounded-md text-sm sm:text-base bg-gray-100 text-gray-600">MLflow Models</button>
+                    <button data-tab="registry" class="tab-btn px-4 py-2 font-semibold rounded-md text-sm sm:text-base bg-gray-100 text-gray-600">Model Registry</button>
+                </div>
+                <div id="tab-content" class="min-h-[300px]">
+                    <!-- Content will be injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Platform Comparison -->
+        <section id="comparison" class="scroll-mt-24 mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4 text-[#3d405b]">开源平台横向对比</h2>
+                <p class="text-lg max-w-3xl mx-auto text-gray-600">MLflow、Kubeflow 和 TFX 是三大主流开源MLOps平台，但各有侧重。点击下方按钮，交互式地比较它们在不同维度上的表现。</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8 border border-gray-100">
+                <div class="flex flex-wrap justify-center gap-2 mb-8">
+                    <button data-metric="complexity" class="metric-btn px-4 py-2 font-medium rounded-md bg-indigo-100 text-indigo-700">部署复杂性</button>
+                    <button data-metric="agnostic" class="metric-btn px-4 py-2 font-medium rounded-md bg-gray-100 text-gray-600">框架无关性</button>
+                    <button data-metric="scalability" class="metric-btn px-4 py-2 font-medium rounded-md bg-gray-100 text-gray-600">可扩展性</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+                 <div id="comparison-text" class="mt-8 text-center text-gray-600"></div>
+            </div>
+        </section>
+
+        <!-- Section 5: Future Trends -->
+        <section id="future" class="scroll-mt-24">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4 text-[#3d405b]">MLOps的未来轨迹</h2>
+                <p class="text-lg max-w-3xl mx-auto text-gray-600">MLOps领域正以前所未有的速度发展，尤其是在生成式AI (GenAI) 的推动下。以下是几个关键的新兴趋势。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                     <h3 class="text-2xl font-semibold mb-3 text-[#3d405b]">LLMOps 的兴起</h3>
+                     <p class="text-gray-600">为应对大语言模型（LLM）生命周期管理的独特挑战，如提示工程、模型微调和RAG，LLMOps应运而生，成为最活跃的发展方向。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                     <h3 class="text-2xl font-semibold mb-3 text-[#3d405b]">以数据为中心的AI</h3>
+                     <p class="text-gray-600">理念从“以模型为中心”转向“以数据为中心”，强调高质量、一致的数据是提升AI系统性能的关键，其重要性甚至超过模型算法本身。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                     <h3 class="text-2xl font-semibold mb-3 text-[#3d405b]">MLflow 3.0+ 拥抱 GenAI</h3>
+                     <p class="text-gray-600">MLflow正积极演进，通过引入生产级跟踪(Tracing)、提示注册表和“LLM即评委”评估框架等功能，致力于成为统一所有AI工作负载的领先平台。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-24">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>智能运营：MLOps框架与MLflow平台综合分析报告</p>
+            <p class="text-sm text-gray-400 mt-2">基于调研报告生成的交互式应用</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const contentData = {
+            lifecycle: {
+                1: {
+                    title: '阶段一：问题定义与范围界定',
+                    description: '在任何技术实现之前，首要任务是清晰地理解需要通过机器学习解决的业务问题。此阶段需要与业务利益相关者紧密合作，设定明确的目标，并确定用于衡量模型成功的关键绩效指标（KPIs）。'
+                },
+                2: {
+                    title: '阶段二：数据工程',
+                    description: '此阶段是机器学习的基础，涉及数据的收集、提取、验证、清洗和特征工程。数据质量直接决定了模型性能的上限。在MLOps中，这些步骤通常由自动化的数据管道管理。'
+                },
+                3: {
+                    title: '阶段三：模型开发',
+                    description: '这是数据科学家的传统领域，包括探索性数据分析（EDA）、算法选择、模型训练和超参数调优。MLOps实践确保这一阶段是可复现的，所有实验都被详细地跟踪和记录。'
+                },
+                4: {
+                    title: '阶段四：模型验证',
+                    description: '在部署之前，模型必须经过严格的验证，以确保其性能达到预定义的业务标准。这不仅包括评估其准确性，还可能涉及对模型的公平性、偏见和鲁棒性进行测试。'
+                },
+                5: {
+                    title: '阶段五：模型部署',
+                    description: '此阶段涉及将训练好的模型打包（如使用Docker容器化），创建可复现的部署管道（CI/CD），并将其发布到生产环境中。可以采用A/B测试或金丝雀发布等策略。'
+                },
+                6: {
+                    title: '阶段六：模型监控',
+                    description: '一旦模型上线，其运营和预测性能就需要被持续监控。这包括跟踪技术指标（如延迟）、业务KPIs，以及最关键的——检测数据漂移和概念漂移。'
+                },
+                7: {
+                    title: '阶段七：模型再训练与退役',
+                    description: '监控阶段的输出是驱动整个MLOps生命周期循环的关键反馈。当检测到模型性能下降时，会触发自动化的再训练流程，使用最新的数据来更新模型。'
+                }
+            },
+            mlflowTabs: {
+                tracking: {
+                    title: 'MLflow Tracking: 实验的心脏',
+                    description: '作为MLflow的核心，Tracking组件旨在解决实验管理的混乱问题。它提供API和一个Web UI，用于系统地记录、组织和可视化实验数据，确保研究过程的透明度和可追溯性。',
+                    features: [
+                        { name: '参数与指标记录', detail: '轻松记录超参数和性能指标，支持按时间序列可视化。' },
+                        { name: '工件与模型存储', detail: '保存任意文件，如模型、数据集或图表。' },
+                        { name: '自动日志记录 (Autologging)', detail: '一行代码即可自动捕获主流框架的训练信息，极大简化代码。' },
+                        { name: '可视化UI', detail: '提供直观的Web界面，用于浏览、搜索和比较不同实验的结果。' }
+                    ]
+                },
+                projects: {
+                    title: 'MLflow Projects: 可复现的执行环境',
+                    description: 'Projects组件旨在解决代码的可复现性问题。它定义了一种标准格式来打包和分发代码，确保无论在何种环境下，代码都能以相同的方式执行。',
+                    features: [
+                        { name: '标准化打包', detail: '项目可以是任何代码目录或Git仓库。' },
+                        { name: 'MLproject文件', detail: '通过一个YAML文件定义项目的执行入口和参数。' },
+                        { name: '环境管理', detail: '支持通过Conda、pip或Docker来定义和隔离项目依赖，保证复现性。' },
+                        { name: '远程执行', detail: '可以使用`mlflow run`命令直接从Git仓库URL运行项目。' }
+                    ]
+                },
+                models: {
+                    title: 'MLflow Models: 通用的模型打包格式',
+                    description: 'Models组件旨在解决模型部署中的“最后一公里”问题。它通过定义一个包含多种“口味”(Flavors)的标准格式，使得任何模型都能被通用工具部署。',
+                    features: [
+                        { name: '“口味”(Flavors)概念', detail: '一个模型可被赋予多种口味，如`sklearn`原生口味和通用的`python_function`口味。' },
+                        { name: '增强的可移植性', detail: '部署工具只需支持`pyfunc`等标准口味，即可服务于来自任何框架的模型。' },
+                        { name: '模型签名', detail: '明确定义模型的输入输出模式，增强部署的可靠性。' },
+                        { name: '轻松打包', detail: '通过一行`log_model`函数即可自动以标准格式保存模型。' }
+                    ]
+                },
+                registry: {
+                    title: 'Model Registry: 模型的集中式生命周期管理',
+                    description: 'Model Registry提供了一个集中的、协作式的平台，用于管理从开发到生产的整个模型生命周期，解决了版本控制和部署流程中的混乱。',
+                    features: [
+                        { name: '模型版本控制', detail: '自动为注册到同一名称下的模型分配版本号(v1, v2, ...)，跟踪演进历史。' },
+                        { name: '阶段转换与别名', detail: '通过`Staging`, `Production`等阶段管理模型上线流程，并支持`@champion`等灵活别名。' },
+                        { name: '注解与描述', detail: '允许团队为模型版本添加Markdown描述和元数据标签，便于治理和审计。' },
+                        { name: '端到端模型谱系', detail: '将每个模型版本链接回创建它的MLflow运行，实现完全可追溯性。' }
+                    ]
+                }
+            },
+            comparison: {
+                labels: ['MLflow', 'Kubeflow', 'TFX'],
+                metrics: {
+                    complexity: {
+                        title: '部署复杂性 (分数越低越简单)',
+                        data: [2, 9, 5],
+                        description: "MLflow以其轻量级著称，部署相对简单。Kubeflow作为Kubernetes原生平台，部署和维护复杂度最高。TFX的复杂度居中。"
+                    },
+                    agnostic: {
+                        title: '框架无关性 (分数越高越灵活)',
+                        data: [9, 9, 3],
+                         description: "MLflow和Kubeflow都具有很高的框架无关性，支持任何库或容器化任务。TFX则与TensorFlow生态系统深度绑定。"
+                    },
+                    scalability: {
+                        title: '可扩展性 (分数越高越强)',
+                        data: [6, 10, 10],
+                        description: "Kubeflow和TFX都为大规模分布式计算设计，可扩展性极高。MLflow本身不提供计算编排，但在元数据管理方面表现良好。"
+                    }
+                }
+            }
+        };
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth Scrolling & Active Nav Link
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                if(mobileMenu.classList.contains('hidden') === false){
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+        window.onscroll = () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 60) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        };
+
+        // Lifecycle Section
+        const lifecycleNodes = document.querySelectorAll('.lifecycle-node');
+        const lifecycleDetails = document.getElementById('lifecycle-details');
+        lifecycleNodes.forEach((node, index) => {
+            node.addEventListener('click', () => {
+                lifecycleNodes.forEach(n => n.classList.remove('active'));
+                node.classList.add('active');
+                const stage = index + 1;
+                const data = contentData.lifecycle[stage];
+                lifecycleDetails.innerHTML = `
+                    <div class="fade-in">
+                        <h3 class="text-2xl font-semibold mb-2 text-[#3d405b]">${data.title}</h3>
+                        <p class="text-gray-600">${data.description}</p>
+                    </div>
+                `;
+            });
+        });
+        
+        // MLflow Tabs
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContent = document.getElementById('tab-content');
+
+        function renderTabContent(tabId) {
+            const data = contentData.mlflowTabs[tabId];
+            let featuresHtml = '<ul class="space-y-4">';
+            data.features.forEach(feature => {
+                featuresHtml += `
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-3 mt-1">&#10003;</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">${feature.name}</h4>
+                            <p class="text-gray-600">${feature.detail}</p>
+                        </div>
+                    </li>
+                `;
+            });
+            featuresHtml += '</ul>';
+
+            tabContent.innerHTML = `
+                <div class="fade-in">
+                    <h3 class="text-3xl font-bold mb-4 text-[#3d405b]">${data.title}</h3>
+                    <p class="text-lg text-gray-600 mb-6">${data.description}</p>
+                    ${featuresHtml}
+                </div>
+            `;
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.add('bg-gray-100', 'text-gray-600');
+                });
+                button.classList.add('active');
+                button.classList.remove('bg-gray-100', 'text-gray-600');
+                renderTabContent(button.dataset.tab);
+            });
+        });
+
+        renderTabContent('tracking');
+
+        // Comparison Chart
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        const metricButtons = document.querySelectorAll('.metric-btn');
+        const comparisonText = document.getElementById('comparison-text');
+
+        let comparisonChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: contentData.comparison.labels,
+                datasets: [{
+                    label: '得分',
+                    data: contentData.comparison.metrics.complexity.data,
+                    backgroundColor: ['#81b29a', '#e07a5f', '#f2cc8f'],
+                    borderColor: ['#6a9a81', '#c7664a', '#d9b67a'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: contentData.comparison.metrics.complexity.title,
+                        font: {
+                            size: 16
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        grid: {
+                            color: '#e5e7eb'
+                        }
+                    },
+                    x: {
+                         grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateChart(metric) {
+            const metricData = contentData.comparison.metrics[metric];
+            comparisonChart.data.datasets[0].data = metricData.data;
+            comparisonChart.options.plugins.title.text = metricData.title;
+            comparisonText.textContent = metricData.description;
+            comparisonChart.update();
+        }
+        
+        comparisonText.textContent = contentData.comparison.metrics.complexity.description;
+
+
+        metricButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                metricButtons.forEach(btn => {
+                    btn.classList.remove('bg-indigo-100', 'text-indigo-700');
+                    btn.classList.add('bg-gray-100', 'text-gray-600');
+                });
+                button.classList.add('bg-indigo-100', 'text-indigo-700');
+                button.classList.remove('bg-gray-100', 'text-gray-600');
+                updateChart(button.dataset.metric);
+            });
+        });
+    });
+    </script>
+</body>
+</html>

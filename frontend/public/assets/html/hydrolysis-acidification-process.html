@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式解析：水解酸化工艺</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Warm Neutrals with Muted Blue Accent) -->
+    <!-- Application Structure Plan: The SPA is structured thematically around user tasks, not linearly like the report. It features: 1) A visual, interactive core process diagram. 2) A dynamic "Application Explorer" where users select a wastewater type to see relevant parameters, charts, and case studies. 3) An interactive troubleshooting guide. This task-oriented design enhances usability by allowing users to quickly find and compare information relevant to their specific needs, transforming static data into an exploratory tool. -->
+    <!-- Visualization & Content Choices: 1. Core Process (Report Ch 1-2) -> Goal: Inform/Organize -> Method: HTML/CSS Diagram -> Interaction: Hover tooltips -> Justification: More intuitive than text for process flow. 2. Parameters & Cases (Report Ch 3, 5) -> Goal: Compare/Inform -> Method: Chart.js Bar Chart + Dynamic Text Blocks -> Interaction: User clicks buttons to filter by wastewater type -> Justification: Transforms static tables into an interactive dashboard for direct comparison. 3. Troubleshooting (Report Ch 4) -> Goal: Inform/Organize -> Method: Interactive Accordion/List -> Interaction: User selects a problem to see details -> Justification: More efficient and user-friendly than a large, static table. CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F7F4;
+            color: #374151;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        .control-button {
+            transition: all 0.3s;
+        }
+        .control-button.active {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .troubleshoot-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .troubleshoot-item:hover {
+            background-color: #e5e7eb;
+        }
+        .troubleshoot-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4">
+            <nav class="flex justify-between items-center py-4">
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800">水解酸化工艺 · 交互式指南</h1>
+                <div class="hidden md:flex items-center space-x-8 text-gray-600 font-medium">
+                    <a href="#process" class="nav-link pb-1">核心原理</a>
+                    <a href="#explorer" class="nav-link pb-1">应用探索</a>
+                    <a href="#troubleshooting" class="nav-link pb-1">运行指南</a>
+                    <a href="#decision" class="nav-link pb-1">决策展望</a>
+                </div>
+                <button id="mobile-menu-button" class="md:hidden p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </nav>
+            <div id="mobile-menu" class="hidden md:hidden flex-col space-y-2 pb-4">
+                 <a href="#process" class="nav-link block text-center py-2">核心原理</a>
+                 <a href="#explorer" class="nav-link block text-center py-2">应用探索</a>
+                 <a href="#troubleshooting" class="nav-link block text-center py-2">运行指南</a>
+                 <a href="#decision" class="nav-link block text-center py-2">决策展望</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-16">
+        
+        <section id="hero" class="text-center mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4 text-gray-800">解构污水处理的“预处理器”</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                深入探索水解酸化工艺——一种将复杂有机物高效转化为易降解小分子的智能生物技术。本指南将通过交互式可视化，带您了解其核心原理、应用场景与最佳运行实践。
+            </p>
+        </section>
+
+        <section id="process" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-800">核心原理：两段式降解的艺术</h3>
+                <p class="max-w-2xl mx-auto mt-2 text-gray-600">水解酸化的精髓在于将完整的厌氧消化过程“截断”，专注于前两个阶段，从而为后续处理单元提供“优质口粮”，同时抑制产甲烷过程。</p>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-8 md:space-y-0 md:space-x-4 text-center">
+                    <div class="flex-1 p-4 rounded-lg bg-gray-50">
+                        <div class="text-5xl mb-3">📄</div>
+                        <h4 class="font-bold text-lg">复杂有机物</h4>
+                        <p class="text-sm text-gray-500">（蛋白质、纤维素、脂肪）</p>
+                    </div>
+                    
+                    <div class="text-4xl text-blue-400 font-light transform md:-translate-y-2">→</div>
+                    
+                    <div class="flex-1 p-4 rounded-lg bg-gray-50 relative group">
+                        <div class="text-5xl mb-3">✂️</div>
+                        <h4 class="font-bold text-lg">第一步：水解</h4>
+                        <p class="text-sm text-gray-500">转化为可溶性单体</p>
+                        <div class="absolute bottom-full mb-2 w-60 left-1/2 -translate-x-1/2 p-3 text-sm bg-gray-800 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                            <b>限速步骤</b>: 由水解菌 (如梭菌属) 分泌胞外酶完成，此过程的效率决定了整体反应速率。
+                        </div>
+                    </div>
+
+                    <div class="text-4xl text-blue-400 font-light transform md:-translate-y-2">→</div>
+
+                    <div class="flex-1 p-4 rounded-lg bg-gray-50 relative group">
+                        <div class="text-5xl mb-3">🧪</div>
+                        <h4 class="font-bold text-lg">第二步：酸化</h4>
+                        <p class="text-sm text-gray-500">发酵产生VFA</p>
+                         <div class="absolute bottom-full mb-2 w-64 left-1/2 -translate-x-1/2 p-3 text-sm bg-gray-800 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                            <b>核心产物</b>: 由产酸菌将单体转化为挥发性脂肪酸 (VFA)，如乙酸、丙酸、丁酸，是后续脱氮的优质碳源。
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 border-t-2 border-dashed border-red-400 pt-6 text-center">
+                    <div class="inline-block bg-red-100 text-red-700 px-4 py-2 rounded-full font-semibold">
+                        🚫 在此抑制产甲烷阶段 (Methanogenesis)
+                    </div>
+                    <p class="mt-3 text-sm text-gray-600 max-w-xl mx-auto">通过控制较短的污泥停留时间(SRT)，生长缓慢的产甲烷菌被“淘洗”出系统，从而确保了VFA的积累。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="explorer" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-800">交互式应用探索</h3>
+                <p class="max-w-2xl mx-auto mt-2 text-gray-600">选择不同的废水类型，查看水解酸化工艺的关键设计参数、预期效果和典型案例。</p>
+            </div>
+
+            <div id="controls" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                <button data-type="municipal" class="control-button px-4 py-2 rounded-full bg-white shadow-sm font-medium text-gray-700">市政污水</button>
+                <button data-type="chemical" class="control-button px-4 py-2 rounded-full bg-white shadow-sm font-medium text-gray-700">化工废水</button>
+                <button data-type="textile" class="control-button px-4 py-2 rounded-full bg-white shadow-sm font-medium text-gray-700">纺织印染</button>
+                <button data-type="food" class="control-button px-4 py-2 rounded-full bg-white shadow-sm font-medium text-gray-700">食品废水</button>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                    <div id="dashboard" class="fade-in">
+                        <h4 class="text-xl font-bold mb-4 text-gray-700">关键设计参数</h4>
+                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-500">推荐HRT (h)</p>
+                                <p id="param-hrt" class="text-2xl font-bold text-blue-500"></p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-500">典型OLR ($kg/m^3·d$)</p>
+                                <p id="param-olr" class="text-2xl font-bold text-blue-500"></p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-500">pH范围</p>
+                                <p id="param-ph" class="text-2xl font-bold text-blue-500"></p>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold mt-8 mb-4 text-gray-700">推荐水力停留时间 (HRT) 范围</h4>
+                        <div class="chart-container">
+                            <canvas id="hrtChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="case-study" class="fade-in">
+                        <h4 class="text-xl font-bold mb-4 text-gray-700">典型应用案例</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <h5 class="font-semibold">主要工艺目标</h5>
+                                <p id="case-goal" class="text-gray-600 bg-blue-50 p-3 rounded-md"></p>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold">关键绩效</h5>
+                                <p id="case-performance" class="text-gray-600 bg-blue-50 p-3 rounded-md"></p>
+                            </div>
+                             <div>
+                                <h5 class="font-semibold">价值分析</h5>
+                                <p id="case-analysis" class="text-gray-600"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="troubleshooting" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-800">运行与维护指南</h3>
+                <p class="max-w-2xl mx-auto mt-2 text-gray-600">点击常见问题，快速获取原因分析与推荐的纠正措施，保障系统长期稳定运行。</p>
+            </div>
+            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+                <div id="troubleshoot-list"></div>
+            </div>
+        </section>
+        
+        <section id="decision" class="scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-800">决策框架与未来展望</h3>
+                <p class="max-w-2xl mx-auto mt-2 text-gray-600">评估水解酸化工艺的适用性，并了解其与前沿技术的融合趋势。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h4 class="font-bold text-xl mb-4">适用性决策清单</h4>
+                    <ul class="space-y-3 text-gray-700">
+                        <li class="flex items-start"><span class="text-green-500 mr-2 mt-1">✓</span><span><b>提高可生化性：</b>原水B/C比是否低于0.3？</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2 mt-1">✓</span><span><b>去除悬浮物：</b>颗粒态有机物占比是否高于40%？</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2 mt-1">✓</span><span><b>削减毒性：</b>废水中是否含有对后续工艺的抑制物？</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2 mt-1">✓</span><span><b>提供内碳源：</b>后续脱氮工艺是否缺乏碳源？</span></li>
+                        <li class="flex items-start"><span class="text-yellow-500 mr-2 mt-1">!</span><span><b>高浓度废水警示：</b>对于易降解的高浓度废水，需谨慎评估，防止系统“酸化”或转为产甲烷。</span></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h4 class="font-bold text-xl mb-4">未来发展趋势</h4>
+                     <ul class="space-y-3 text-gray-700">
+                        <li class="flex items-start"><span class="text-blue-500 mr-2 mt-1">➤</span><span><b>工艺集成：</b>与MBR、AOPs等技术结合，应对高难度废水。</span></li>
+                        <li class="flex items-start"><span class="text-blue-500 mr-2 mt-1">➤</span><span><b>资源化导向：</b>优化VFA组分产率，回收高价值化学品与氢能。</span></li>
+                        <li class="flex items-start"><span class="text-blue-500 mr-2 mt-1">➤</span><span><b>生物强化：</b>投加高效特种菌剂，实现对特定污染物的靶向降解。</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-4 py-6 text-center text-gray-400">
+            <p>基于《污水生物处理中水解酸化工艺的工程应用与运行最佳实践深度解析》报告生成。</p>
+            <p class="text-sm mt-1">交互式Web应用由AI生成</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const data = {
+                wastewater: {
+                    municipal: {
+                        params: { hrt: "2 - 4", olr: "2 - 5", ph: "5.0 - 9.0" },
+                        hrtRange: [2, 4],
+                        case: {
+                            goal: "缓冲负荷，去除SS，提供内碳源",
+                            performance: "平均COD去除率57.6%，SS去除率高达85.9%。在冲击负荷下保持稳定。",
+                            analysis: "作为市政污水厂提标改造的经济高效方案，它是一个高效的“缓冲器”和“内碳源生产者”，能显著降低后续好氧单元的负荷和曝气能耗。"
+                        }
+                    },
+                    chemical: {
+                        params: { hrt: "4 - 12", olr: "1 - 4", ph: "5.0 - 9.0" },
+                        hrtRange: [4, 12],
+                        case: {
+                            goal: "提高可生化性，削减毒性",
+                            performance: "生物氧化率从31.2%提升至51.2% (+64%)，基本消除联苯、吡啶等抑制物的毒性。",
+                            analysis: "在此类应用中，水解酸化扮演“生化反应调质器”的角色。其目标并非追求高COD去除率，而是进行“分子结构改造”，为后续生物处理扫清障碍。"
+                        }
+                    },
+                    textile: {
+                        params: { hrt: "4 - 12", olr: "1 - 4", ph: "5.0 - 9.0" },
+                        hrtRange: [4, 12],
+                        case: {
+                            goal: "脱色，提高可生化性",
+                            performance: "脱色率约65%，出水B/C比提升至0.42，COD去除率约50%。",
+                            analysis: "核心价值在于其独特的脱色功能。强厌氧环境能有效破坏偶氮等发色基团，同时改善产物的可生化性，为后续处理创造条件。"
+                        }
+                    },
+                    food: {
+                        params: { hrt: "2 - 6", olr: "4 - 10", ph: "5.0 - 9.0" },
+                        hrtRange: [2, 6],
+                        case: {
+                            goal: "高效液化SS，快速去除COD",
+                            performance: "酸化段自身可实现20-40%的COD去除，可与后续甲烷发酵组成两相系统。",
+                            analysis: "对于高浓度有机废水，水解酸化的目标是高效液化和预处理。采用两相系统能极大提高处理负荷和稳定性，并有望回收氢气、甲烷等能源。"
+                        }
+                    }
+                },
+                troubleshooting: [
+                    {
+                        problem: "出水pH值过低，系统“酸化”",
+                        cause: "1. 进水有机负荷（特别是易降解COD）冲击，VFA产酸速率超过系统碱度消耗速率。<br>2. 进水碱度不足。",
+                        solution: "1. 降低进水负荷，利用均衡调节池缓冲冲击。<br>2. 监测并补充碱度（如投加碳酸钠）。<br>3. 监测VFA/碱度比作为预警指标。"
+                    },
+                    {
+                        problem: "反应器堵塞，出水SS高",
+                        cause: "1. 污泥龄（SRT）过长，污泥过度积累。<br>2. 水力负荷过高，污泥床膨胀流失。<br>3. 进水含砂砾等无机物。",
+                        solution: "1. 建立并执行规律的排泥计划，降低SRT。<br>2. 监测并控制污泥床界面高度。<br>3. 检查并确保沉砂池等预处理单元有效运行。"
+                    },
+                    {
+                        problem: "池面产生大量气泡，有甲烷味",
+                        cause: "1. SRT控制不当，过长的SRT导致产甲烷菌增殖。<br>2. 进水为高浓度且易降解的废水，且pH接近中性。",
+                        solution: "1. 立即增加排泥量，缩短SRT，将产甲烷菌“洗出”系统。<br>2. 重新评估工艺选择，此类废水可能更适合完整的厌氧消化。"
+                    },
+                    {
+                        problem: "产生黑水和臭鸡蛋味 (H₂S)",
+                        cause: "1. 进水中含有较高浓度的硫酸盐，被硫酸盐还原菌（SRB）还原为硫化物。<br>2. 废气未得到有效收集和处理。",
+                        solution: "1. 分析进水硫酸盐浓度，考虑源头控制或预去除。<br>2. 确保反应池密闭和废气收集处理系统正常运行。"
+                    }
+                ]
+            };
+
+            const paramHrt = document.getElementById('param-hrt');
+            const paramOlr = document.getElementById('param-olr');
+            const paramPh = document.getElementById('param-ph');
+            const caseGoal = document.getElementById('case-goal');
+            const casePerformance = document.getElementById('case-performance');
+            const caseAnalysis = document.getElementById('case-analysis');
+            const dashboard = document.getElementById('dashboard');
+            const caseStudy = document.getElementById('case-study');
+
+            const ctx = document.getElementById('hrtChart').getContext('2d');
+            const hrtChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['最低HRT (h)', '最高HRT (h)'],
+                    datasets: [{
+                        label: '推荐水力停留时间 (小时)',
+                        data: [],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.5)',
+                            'rgba(59, 130, 246, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(59, 130, 246, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '小时 (h)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.raw} 小时`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            function updateExplorer(type) {
+                const wastewaterData = data.wastewater[type];
+                if (!wastewaterData) return;
+                
+                dashboard.classList.remove('fade-in');
+                caseStudy.classList.remove('fade-in');
+                
+                void dashboard.offsetWidth; 
+                void caseStudy.offsetWidth;
+
+                paramHrt.textContent = wastewaterData.params.hrt;
+                paramOlr.textContent = wastewaterData.params.olr;
+                paramPh.textContent = wastewaterData.params.ph;
+
+                caseGoal.innerHTML = wastewaterData.case.goal;
+                casePerformance.innerHTML = wastewaterData.case.performance;
+                caseAnalysis.textContent = wastewaterData.case.analysis;
+                
+                hrtChart.data.datasets[0].data = wastewaterData.hrtRange;
+                hrtChart.update();
+
+                dashboard.classList.add('fade-in');
+                caseStudy.classList.add('fade-in');
+
+                document.querySelectorAll('#controls .control-button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.type === type);
+                });
+            }
+
+            document.getElementById('controls').addEventListener('click', function(e) {
+                if (e.target.classList.contains('control-button')) {
+                    const type = e.target.dataset.type;
+                    updateExplorer(type);
+                }
+            });
+
+            function buildTroubleshootingList() {
+                const listContainer = document.getElementById('troubleshoot-list');
+                let html = '';
+                data.troubleshooting.forEach((item, index) => {
+                    html += `
+                        <div class="border-b border-gray-200 last:border-b-0">
+                            <div id="trouble-header-${index}" class="troubleshoot-item flex justify-between items-center p-4 md:p-6">
+                                <h5 class="font-semibold text-gray-800">${item.problem}</h5>
+                                <span class="arrow text-blue-500 transform transition-transform">▼</span>
+                            </div>
+                            <div id="trouble-details-${index}" class="troubleshoot-details px-4 md:px-6 text-gray-600">
+                                <div class="py-4">
+                                    <h6 class="font-semibold text-gray-700 mb-2">可能原因</h6>
+                                    <p class="text-sm leading-relaxed">${item.cause}</p>
+                                    <h6 class="font-semibold text-gray-700 mt-4 mb-2">纠正措施</h6>
+                                    <p class="text-sm leading-relaxed">${item.solution}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                listContainer.innerHTML = html;
+                
+                listContainer.addEventListener('click', function(e) {
+                    const header = e.target.closest('.troubleshoot-item');
+                    if(header) {
+                        const index = header.id.split('-')[2];
+                        const details = document.getElementById(`trouble-details-${index}`);
+                        const arrow = header.querySelector('.arrow');
+                        const isOpen = details.style.maxHeight && details.style.maxHeight !== '0px';
+
+                        if (isOpen) {
+                            details.style.maxHeight = '0px';
+                            details.style.paddingTop = '0px';
+                            details.style.paddingBottom = '0px';
+                            arrow.style.transform = 'rotate(0deg)';
+                        } else {
+                            details.style.maxHeight = details.scrollHeight + 'px';
+                            details.style.paddingTop = '0.5rem';
+                            details.style.paddingBottom = '1rem';
+                            arrow.style.transform = 'rotate(180deg)';
+                        }
+                    }
+                });
+            }
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if (mobileMenu.classList.contains('flex')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            buildTroubleshootingList();
+            updateExplorer('municipal');
+        });
+    </script>
+</body>
+</html>

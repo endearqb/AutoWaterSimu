@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式报告：微滴中的C-F键活化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral Harmony -->
+    <!-- Application Structure Plan: A narrative-driven, single-page application designed to guide the user through the scientific story. The structure is thematic: 1. The Core Problem (C-F bond paradox). 2. Traditional vs. New Methods (Interactive Comparison). 3. The "Magic" of Microdroplets (Visual explanation of interface properties). 4. The Breakthrough Mechanism (Animated diagram). 5. Environmental Implications for PFAS (Dashboard view). 6. The Scalability Challenge (Interactive engineering trade-off model). This structure was chosen over a linear report format to enhance engagement and comprehension for a broader audience, turning passive reading into active exploration. -->
+    <!-- Visualization & Content Choices: 
+        - C-F Bond Strength: Bar Chart (Chart.js) to provide a clear quantitative comparison against other bonds. Interaction: Hover for details. Justification: Most effective way to show magnitude differences.
+        - Activation Method Comparison: Interactive Tabbed Component (HTML/JS) to replace a static table. Interaction: Click to switch methods. Justification: Focuses user attention and reduces cognitive load compared to a dense table.
+        - Reaction Mechanism: Custom CSS/JS Animated Diagram to show the step-by-step process. Interaction: Scroll-triggered animation. Justification: A dynamic process is best explained visually and sequentially, making the abstract concept tangible.
+        - Scalability Models: Interactive Toggle (HTML/JS) to compare "Sizing-Up" vs. "Numbering-Up". Interaction: Click to toggle view. Justification: Simplifies a complex engineering trade-off into a clear binary choice.
+        - All elements are designed to provide context, explain what is being shown, and guide the user to the key takeaway.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF7;
+            color: #3f3f46;
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f97316;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 100%;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #0d9488, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .mechanism-step {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .mechanism-step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header id="header" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold gradient-text">界面化学新篇章</h1>
+                </div>
+                <nav class="hidden md:flex md:space-x-8">
+                    <a href="#problem" class="nav-link text-gray-600 hover:text-gray-900 font-medium">悖论与挑战</a>
+                    <a href="#solution" class="nav-link text-gray-600 hover:text-gray-900 font-medium">微滴的魔力</a>
+                    <a href="#mechanism" class="nav-link text-gray-600 hover:text-gray-900 font-medium">反应机理</a>
+                    <a href="#impact" class="nav-link text-gray-600 hover:text-gray-900 font-medium">环境影响</a>
+                    <a href="#future" class="nav-link text-gray-600 hover:text-gray-900 font-medium">未来之路</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="py-20 md:py-28 text-center bg-amber-50">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-800 leading-tight">
+                    气-液界面即催化剂
+                </h1>
+                <p class="mt-4 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                    一项突破性发现：仅用水微滴，即可在常温常压下断裂自然界最强的化学键之一，为降解“永久化学品”开辟了全新路径。
+                </p>
+                <div class="mt-8">
+                    <a href="#problem" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-full hover:bg-orange-600 transition-transform transform hover:scale-105 shadow-lg">
+                        探索这项发现
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Problem -->
+        <section id="problem" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800">悖论与挑战</h2>
+                    <p class="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">碳-氟(C-F)键的超高稳定性既是宝藏也是诅咒，其活化是化学界长期存在的巨大挑战。</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-4">最强单键的力量</h3>
+                        <p class="text-gray-700 mb-6">C-F键的键解离能极高，远超其他常见化学键。这赋予了含氟材料卓越的稳定性，但也使其在环境中极难降解，成为“永久化学品” (PFAS) 的根源。</p>
+                        <div class="chart-container">
+                            <canvas id="bondEnergyChart"></canvas>
+                        </div>
+                        <p class="text-center text-sm text-gray-500 mt-2">数据来源：综合化学文献</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-4">传统方法的困境</h3>
+                        <p class="text-gray-700 mb-6">传统上，断裂C-F键需要依赖“强力”化学手段。点击下方标签，探索不同方法的特点及其局限性。</p>
+                        
+                        <div id="method-comparison">
+                            <div class="flex flex-wrap gap-2 border-b-2 border-gray-200 pb-2 mb-4">
+                                <button data-method="microdroplet" class="method-btn active bg-teal-100 text-teal-800">微滴界面法</button>
+                                <button data-method="metal" class="method-btn bg-gray-100 text-gray-800">过渡金属催化</button>
+                                <button data-method="photo" class="method-btn bg-gray-100 text-gray-800">光氧化还原</button>
+                                <button data-method="electro" class="method-btn bg-gray-100 text-gray-800">电化学</button>
+                            </div>
+                            <div id="method-content" class="transition-opacity duration-300">
+                                <!-- JS will populate this -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- The Solution -->
+        <section id="solution" class="py-16 md:py-24 bg-teal-50">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800">微滴的魔力：界面的独特化学环境</h2>
+                    <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">一个微小的水滴远非简单的水分子集合。其气-液界面是一个高活性的化学反应区域，具备多种催化特性。</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-lg transition-shadow">
+                        <div class="text-4xl text-teal-600 mb-4">⚡️</div>
+                        <h3 class="text-xl font-semibold mb-2">超强界面电场 (IEF)</h3>
+                        <p class="text-gray-600">界面存在高达 $10^9 V/m$ 的内禀电场，能稳定极性过渡态，有效降低反应活化能，如同一个“内建的催化剂”。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-lg transition-shadow">
+                        <div class="text-4xl text-blue-600 mb-4">💧</div>
+                        <h3 class="text-xl font-semibold mb-2">部分溶剂化与浓缩</h3>
+                        <p class="text-gray-600">反应物部分暴露于空气，改变了其反应活性。同时，溶剂的快速蒸发急剧提升了反应物浓度，从而加速反应。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-lg transition-shadow">
+                        <div class="text-4xl text-red-600 mb-4">💥</div>
+                        <h3 class="text-xl font-semibold mb-2">活性物种自发生成</h3>
+                        <p class="text-gray-600">强电场足以引发水的氧化还原，自发产生水合电子 ($e^-(aq)$) 等强还原剂，为无试剂反应提供了“弹药”。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Mechanism -->
+        <section id="mechanism" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800">反应机理：毫秒间的化学嬗变</h2>
+                    <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">由Shibata和Banerjee团队提出的机理，揭示了C-F键如何在微滴飞行的短暂瞬间内被活化和取代。</p>
+                </div>
+                <div class="relative max-w-4xl mx-auto p-8 bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                        <!-- Visual representation of the droplet -->
+                        <div class="w-full md:w-1/2 flex justify-center">
+                            <div id="droplet-animation" class="relative w-64 h-64 md:w-80 md:h-80 bg-blue-100 rounded-full flex items-center justify-center">
+                                <div class="absolute w-full h-full border-4 border-blue-300 rounded-full animate-ping opacity-50"></div>
+                                <span class="text-5xl">💧</span>
+                                <div id="molecule" class="absolute bg-gray-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg" style="top: 10%; left: 10%; transition: all 2s ease-in-out;">Ar-F</div>
+                                <div id="carbocation" class="absolute bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg opacity-0" style="top: 45%; left: 45%; transition: all 1s ease-in-out;">Ar⁺</div>
+                                <div id="fluoride" class="absolute bg-green-500 text-white text-xs font-bold px-1 rounded-full shadow-lg opacity-0" style="top: 55%; left: 55%; transition: all 1.5s ease-in-out;">F⁻</div>
+                                <div id="product" class="absolute bg-teal-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg opacity-0" style="top: 45%; left: 45%; transition: all 1s ease-in-out;">Ar-OH</div>
+                            </div>
+                        </div>
+                        <!-- Steps description -->
+                        <div class="w-full md:w-1/2 space-y-4">
+                            <div id="step-1" class="mechanism-step flex items-start gap-4">
+                                <div class="flex-shrink-0 w-8 h-8 bg-gray-200 text-gray-700 font-bold rounded-full flex items-center justify-center">1</div>
+                                <div><h4 class="font-semibold">单电子还原</h4><p class="text-sm text-gray-600">有机氟分子(Ar-F)在微滴界面被自发生成的还原物种攻击，形成不稳定的自由基阴离子。</p></div>
+                            </div>
+                             <div id="step-2" class="mechanism-step flex items-start gap-4">
+                                <div class="flex-shrink-0 w-8 h-8 bg-gray-200 text-gray-700 font-bold rounded-full flex items-center justify-center">2</div>
+                                <div><h4 class="font-semibold">C-F键断裂</h4><p class="text-sm text-gray-600">自由基阴离子迅速异裂，断开C-F键，生成高活性的碳正离子(Ar⁺)和氟离子(F⁻)。</p></div>
+                            </div>
+                             <div id="step-3" class="mechanism-step flex items-start gap-4">
+                                <div class="flex-shrink-0 w-8 h-8 bg-gray-200 text-gray-700 font-bold rounded-full flex items-center justify-center">3</div>
+                                <div><h4 class="font-semibold">亲核取代</h4><p class="text-sm text-gray-600">碳正离子立即与周围的水分子反应，生成最终的取代产物(Ar-OH)。</p></div>
+                            </div>
+                             <div id="step-4" class="mechanism-step flex items-start gap-4">
+                                <div class="flex-shrink-0 w-8 h-8 bg-orange-500 text-white font-bold rounded-full flex items-center justify-center">✓</div>
+                                <div><h4 class="font-semibold">反应完成</h4><p class="text-sm text-gray-600">整个过程在毫秒级时间内完成，质谱仪成功捕捉到关键的碳正离子中间体，为机理提供了直接证据。</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Environmental Impact -->
+        <section id="impact" class="py-16 md:py-24 bg-gray-50">
+             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800">环境影响：降解“永久化学品”的曙光</h2>
+                    <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">这项技术最激动人心的应用前景，在于它可能为清除环境中顽固的PFAS污染物提供革命性方案。</p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md lg:col-span-2">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">PFAS：无处不在的威胁</h3>
+                        <p class="text-gray-600 mb-6">全氟和多氟烷基物质 (PFAS) 是一个包含上万种人造化学品的家族。它们存在于不粘锅、防水衣物、消防泡沫中，因其极难降解而在全球环境中累积，对生态和人类健康构成持久威胁。高达97%的美国人血液中含有PFAS。</p>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="bg-red-50 p-3 rounded-lg">
+                                <h4 class="font-bold text-red-800">PFOA</h4>
+                                <p class="text-red-700">1类致癌物，与肾癌、睾丸癌等相关。</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h4 class="font-bold text-blue-800">PFOS</h4>
+                                <p class="text-blue-700">具有肝、发育和免疫毒性，在生物体内高度富集。</p>
+                            </div>
+                            <div class="bg-yellow-50 p-3 rounded-lg">
+                                <h4 class="font-bold text-yellow-800">PFHxS</h4>
+                                <p class="text-yellow-700">持久性强，与甲状腺功能紊乱相关。</p>
+                            </div>
+                             <div class="bg-green-50 p-3 rounded-lg">
+                                <h4 class="font-bold text-green-800">GenX</h4>
+                                <p class="text-green-700">作为替代品，但同样显示出多种毒性。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">修复技术：转移 vs. 销毁</h3>
+                        <p class="text-gray-600 mb-2">现有技术大多是将污染物从水中转移到其他介质，而非真正销毁。</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <span class="text-xl">➡️</span>
+                                <div><strong class="text-gray-700">吸附法 (活性炭):</strong> 将PFAS转移到固体上，饱和的吸附剂成为新的危险废物。</div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-xl">💥</span>
+                                <div><strong class="text-gray-700">高级氧化:</strong> 能量和成本高昂，且可能产生有害副产物。</div>
+                            </li>
+                             <li class="flex items-start gap-3">
+                                <span class="text-xl text-teal-600">💧</span>
+                                <div><strong class="text-teal-700">微滴降解法:</strong> <span class="font-bold">真正销毁！</span>利用水体自身，在温和条件下原位降解PFAS，潜力巨大。</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Future -->
+        <section id="future" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800">未来之路：从实验室到工业化</h2>
+                    <p class="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">将实验室的科学发现转化为能处理大规模污染的实用技术，仍面临巨大的工程学挑战。</p>
+                </div>
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                    <div class="flex items-center justify-center mb-6">
+                        <span class="text-gray-600 font-medium mr-3">尺寸放大 (Sizing-Up)</span>
+                        <label for="scalability-toggle" class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" value="" id="scalability-toggle" class="sr-only peer">
+                            <div class="w-14 h-7 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                        </label>
+                        <span class="text-teal-700 font-medium ml-3">数量放大 (Numbering-Up)</span>
+                    </div>
+
+                    <div id="scalability-content" class="grid md:grid-cols-2 gap-8">
+                         <!-- JS will populate this -->
+                    </div>
+                </div>
+                <div class="mt-12 text-center max-w-3xl mx-auto">
+                    <h3 class="text-2xl font-semibold text-gray-800">未解之谜与展望</h3>
+                    <p class="mt-4 text-gray-700">未来的研究需聚焦于开发高效、节能的工程系统，并系统回答关于降解范围、副产物、矿化程度和真实水体基质效应等关键问题。将科学的火花发展成燎原之势，需要化学家与工程师的紧密合作与持续创新。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>本交互式报告基于 Norio Shibata 教授与 Shibdas Banerjee 教授团队发表于 J. Am. Chem. Soc. 的开创性研究成果。</p>
+            <p class="text-sm text-gray-400 mt-2">应用设计与开发：Gemini. 内容仅供教育与展示目的。</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- Chart.js: Bond Energy Chart ---
+        const bondEnergyCtx = document.getElementById('bondEnergyChart').getContext('2d');
+        new Chart(bondEnergyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['C-F (芳香)', 'C-F (脂肪)', 'C-O', 'C-H', 'C-C'],
+                datasets: [{
+                    label: '键解离能 (kJ/mol)',
+                    data: [526, 485, 358, 413, 346],
+                    backgroundColor: [
+                        'rgba(249, 115, 22, 0.6)',
+                        'rgba(234, 88, 12, 0.6)',
+                        'rgba(13, 148, 136, 0.6)',
+                        'rgba(15, 118, 110, 0.6)',
+                        'rgba(17, 94, 89, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(249, 115, 22, 1)',
+                        'rgba(234, 88, 12, 1)',
+                        'rgba(13, 148, 136, 1)',
+                        'rgba(15, 118, 110, 1)',
+                        'rgba(17, 94, 89, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'C-F键与其他化学键的强度比较'
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // --- Interactive Method Comparison ---
+        const methodButtons = document.querySelectorAll('.method-btn');
+        const methodContentEl = document.getElementById('method-content');
+        const methodsData = {
+            microdroplet: {
+                title: '微滴界面法 (本研究)',
+                principle: '界面电场/自发生成还原物种/单电子转移。',
+                reagents: '无 (水本身即为反应介质)。',
+                conditions: '常温常压，水相。',
+                pros: '无需试剂、条件极其温和、反应速率极快、环境友好。',
+                cons: '规模化生产是巨大挑战，机理尚在深入研究。'
+            },
+            metal: {
+                title: '过渡金属催化',
+                principle: '金属中心对C-F键的氧化加成。',
+                reagents: 'Ni(0), Pd(0)等配合物，通常需昂贵配体。',
+                conditions: '通常需高温、有机溶剂、无水无氧。',
+                pros: '反应类型多样，合成应用成熟。',
+                cons: '催化剂成本高、对空气/水敏感、金属残留。'
+            },
+            photo: {
+                title: '光氧化还原催化',
+                principle: '光诱导的单电子转移生成自由基。',
+                reagents: 'Ir, Ru等光敏剂，或有机光催化剂。',
+                conditions: '温和，可见光照射，通常在有机溶剂中。',
+                pros: '条件温和，选择性高，可控性好。',
+                cons: '光催化剂昂贵，部分反应量子产率低。'
+            },
+            electro: {
+                title: '电化学',
+                principle: '电极表面的直接或间接电子转移。',
+                reagents: '需电解质和电极。',
+                conditions: '温和，但需外加电势和特定电解液。',
+                pros: '无需化学氧化剂/还原剂，绿色。',
+                cons: '需要专门设备，电解液和电极选择是关键。'
+            }
+        };
+
+        function updateMethodContent(method) {
+            const data = methodsData[method];
+            methodContentEl.style.opacity = '0';
+            setTimeout(() => {
+                methodContentEl.innerHTML = `
+                    <h4 class="text-lg font-bold text-teal-700 mb-2">${data.title}</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><strong>核心原理:</strong> ${data.principle}</li>
+                        <li><strong>典型试剂:</strong> ${data.reagents}</li>
+                        <li><strong>反应条件:</strong> ${data.conditions}</li>
+                        <li><strong>主要优势:</strong> ${data.pros}</li>
+                        <li><strong>主要局限:</strong> ${data.cons}</li>
+                    </ul>
+                `;
+                methodContentEl.style.opacity = '1';
+            }, 150);
+        }
+
+        methodButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                methodButtons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-teal-100', 'text-teal-800');
+                    btn.classList.add('bg-gray-100', 'text-gray-800');
+                });
+                button.classList.add('active', 'bg-teal-100', 'text-teal-800');
+                button.classList.remove('bg-gray-100', 'text-gray-800');
+                updateMethodContent(button.dataset.method);
+            });
+        });
+        updateMethodContent('microdroplet');
+
+        // --- Mechanism Animation ---
+        const mechanismSection = document.getElementById('mechanism');
+        const steps = document.querySelectorAll('.mechanism-step');
+        const molecule = document.getElementById('molecule');
+        const carbocation = document.getElementById('carbocation');
+        const fluoride = document.getElementById('fluoride');
+        const product = document.getElementById('product');
+
+        function runAnimation() {
+            // Reset states
+            molecule.style.transform = 'translate(0, 0)';
+            molecule.style.opacity = '1';
+            carbocation.style.opacity = '0';
+            fluoride.style.opacity = '0';
+            product.style.opacity = '0';
+
+            setTimeout(() => { // Step 1: molecule moves
+                molecule.style.transform = 'translate(100px, 100px)';
+            }, 500);
+            
+            setTimeout(() => { // Step 2: dissociation
+                molecule.style.opacity = '0';
+                carbocation.style.opacity = '1';
+                fluoride.style.opacity = '1';
+                fluoride.style.transform = 'translate(20px, 20px)';
+            }, 2500);
+
+            setTimeout(() => { // Step 3: product formation
+                carbocation.style.opacity = '0';
+                fluoride.style.opacity = '0';
+                product.style.opacity = '1';
+            }, 4000);
+
+             setTimeout(() => { // Step 4: product moves out
+                product.style.transform = 'translate(100px, -100px)';
+                product.style.opacity = '0';
+            }, 5500);
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    let delay = 0;
+                    steps.forEach(step => {
+                        setTimeout(() => step.classList.add('visible'), delay);
+                        delay += 500;
+                    });
+                    runAnimation();
+                    // Animate only once
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        observer.observe(mechanismSection);
+        
+        // --- Scalability Toggle ---
+        const scalabilityToggle = document.getElementById('scalability-toggle');
+        const scalabilityContentEl = document.getElementById('scalability-content');
+        const scalabilityData = {
+            sizingUp: {
+                title: '尺寸放大 (Sizing-Up)',
+                icon: '↔️',
+                description: '直接增大反应器的几何尺寸。这是传统的放大方法，但在微观化学中存在根本性缺陷。',
+                pros: ['机械设计最简单', '初始资本成本可能更低'],
+                cons: ['表面积-体积比急剧下降，界面反应效率严重损失', '传质传热性能恶化，难以控制', '对气溶胶体系是致命的，因为大喷嘴产生大液滴，界面效应减弱']
+            },
+            numberingUp: {
+                title: '数量放大 (Numbering-Up)',
+                icon: '🔢',
+                description: '将成百上千个微型反应器（如喷头）并联，形成阵列，以量取胜。',
+                pros: ['完美保留实验室规模的高性能 (高S/V比，优异传质传热)', '模块化设计，易于维护和更换'],
+                cons: ['资本成本极高', '流体均匀分配是世界级技术难题', '系统复杂，可靠性要求高']
+            }
+        };
+
+        function updateScalabilityContent() {
+            const data = scalabilityToggle.checked ? scalabilityData.numberingUp : scalabilityData.sizingUp;
+            scalabilityContentEl.innerHTML = `
+                <div class="border-r-0 md:border-r-2 md:border-dashed border-gray-200 pr-0 md:pr-8">
+                    <h4 class="text-xl font-bold mb-2 ${scalabilityToggle.checked ? 'text-teal-700' : 'text-gray-700'}">${scalabilityData.sizingUp.icon} ${scalabilityData.sizingUp.title}</h4>
+                    <p class="text-sm text-gray-600 mb-4">${scalabilityData.sizingUp.description}</p>
+                    <div class="font-medium text-gray-800">优势:</div>
+                    <ul class="list-disc list-inside text-sm text-green-700 space-y-1 mt-1">
+                        ${scalabilityData.sizingUp.pros.map(p => `<li>${p}</li>`).join('')}
+                    </ul>
+                    <div class="font-medium text-gray-800 mt-3">挑战:</div>
+                    <ul class="list-disc list-inside text-sm text-red-700 space-y-1 mt-1">
+                        ${scalabilityData.sizingUp.cons.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="${scalabilityToggle.checked ? 'opacity-100' : 'opacity-100'}">
+                    <h4 class="text-xl font-bold mb-2 ${scalabilityToggle.checked ? 'text-teal-700' : 'text-gray-700'}">${scalabilityData.numberingUp.icon} ${scalabilityData.numberingUp.title}</h4>
+                    <p class="text-sm text-gray-600 mb-4">${scalabilityData.numberingUp.description}</p>
+                    <div class="font-medium text-gray-800">优势:</div>
+                    <ul class="list-disc list-inside text-sm text-green-700 space-y-1 mt-1">
+                        ${scalabilityData.numberingUp.pros.map(p => `<li>${p}</li>`).join('')}
+                    </ul>
+                    <div class="font-medium text-gray-800 mt-3">挑战:</div>
+                    <ul class="list-disc list-inside text-sm text-red-700 space-y-1 mt-1">
+                        ${scalabilityData.numberingUp.cons.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        scalabilityToggle.addEventListener('change', updateScalabilityContent);
+        updateScalabilityContent();
+
+        // --- Active Nav Link on Scroll ---
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const header = document.getElementById('header');
+
+        const scrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                    });
+                }
+            });
+        }, { rootMargin: `-${header.offsetHeight}px 0px 0px 0px`, threshold: 0.4 });
+
+        sections.forEach(section => {
+            scrollObserver.observe(section);
+        });
+
+    });
+    </script>
+</body>
+</html>

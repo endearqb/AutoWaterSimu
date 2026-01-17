@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式水处理系统平衡框架</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Calm Water -->
+    <!-- Application Structure Plan: The application is structured as a guided, interactive journey rather than a static report. It starts with a high-level visual overview (the PFD) and allows users to "zoom in" on specific concepts. The main sections are: 1. **主页/介绍**: A visual and interactive Process Flow Diagram (PFD) serves as the main navigation hub. This immediately grounds the user in the context of a treatment plant. 2. **核心概念**: Instead of long text, this section uses interactive cards and toggles to explain fundamental ideas like mass balance, control volumes, and ideal vs. non-ideal flow. This breaks down complex theory into digestible pieces. 3. **单元模拟器**: This is the core interactive component. Clicking a unit on the PFD opens a detailed view with dynamic charts (RTD, mass balance) and explanations. This allows users to directly connect theory (e.g., dead zones) to visual outcomes (a skewed chart). 4. **实践工具箱**: This section provides practical information on data, tools, and an interactive checklist. This transforms the report's recommendations into an actionable format. This user-centric, non-linear structure prioritizes exploration and learning by doing over passive reading, making the complex material more engaging and understandable. -->
+    <!-- Visualization & Content Choices: 1. **PFD (Process Flow Diagram)**: Goal: Organize/Navigate. Method: HTML divs with Tailwind CSS for a clean, non-SVG diagram. Interaction: Clickable units to navigate the app. Justification: Provides an intuitive, visual entry point to the system's components. 2. **RTD Curve**: Goal: Compare (Ideal vs. Real Flow). Method: Chart.js Line Chart. Interaction: A toggle updates the chart data to show curves for Ideal, Short-Circuit, and Dead Zone scenarios. Justification: Visually demonstrates the impact of hydraulic imperfections far more effectively than text alone. 3. **Mass Balance**: Goal: Inform/Analyze. Method: Chart.js Stacked Bar Chart. Interaction: Updates dynamically based on the selected process unit and scenario. Justification: Clearly visualizes the core principle of mass conservation (Inputs = Outputs + Reactions) for different parts of the plant. 4. **SBR Cycle**: Goal: Show Change. Method: Chart.js Line Chart with shaded regions. Interaction: Buttons to highlight each phase of the cycle. Justification: Simplifies the complex, time-based SBR process into a clear, step-by-step visual narrative. 5. **Checklist**: Goal: Organize/Action. Method: Interactive HTML checklist. Justification: Converts the report's final recommendations into a practical, engaging tool. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f7fafc;
+            color: #2d3748;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button.active {
+            background-color: #3182ce;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .pfd-unit {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .pfd-unit:hover, .pfd-unit.active {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(49, 130, 206, 0.3), 0 4px 6px -2px rgba(49, 130, 206, 0.1);
+            border-color: #3182ce;
+        }
+        .pfd-arrow {
+            position: absolute;
+            background-color: #a0aec0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pfd-arrow::after {
+            content: '';
+            position: absolute;
+            border-style: solid;
+        }
+        .arrow-right::after {
+            border-width: 8px 0 8px 12px;
+            border-color: transparent transparent transparent #a0aec0;
+            right: -12px;
+        }
+        .arrow-down::after {
+            border-width: 12px 8px 0 8px;
+            border-color: #a0aec0 transparent transparent transparent;
+            bottom: -12px;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">水处理系统平衡框架</h1>
+            <p class="text-lg text-gray-600 mt-2">一个将复杂理论转化为直观洞察的动态工具</p>
+        </header>
+
+        <nav class="flex justify-center bg-white p-2 rounded-xl shadow-md mb-10 space-x-2">
+            <button data-target="home" class="nav-button active py-2 px-4 rounded-lg font-semibold">主页：工艺流程图</button>
+            <button data-target="concepts" class="nav-button py-2 px-4 rounded-lg font-semibold">核心概念</button>
+            <button data-target="tools" class="nav-button py-2 px-4 rounded-lg font-semibold">实践工具箱</button>
+        </nav>
+
+        <main>
+            <section id="home" class="content-section active">
+                 <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+                    <h2 class="text-2xl font-bold text-center mb-4">污水处理厂 (WWTP) 工艺流程模型</h2>
+                     <p class="text-center text-gray-600 max-w-3xl mx-auto mb-8">这是我们进行物料平衡分析的虚拟工厂。整个应用将围绕这个模型展开。请点击下方的任何一个处理单元，以深入探索其内部的水力行为、物料转化和平衡计算。这个交互式流程图是您导航和理解复杂水处理过程的路线图。</p>
+                </div>
+                <div class="relative bg-white p-8 rounded-xl shadow-lg" style="height: 500px;">
+                    <!-- PFD Units -->
+                    <div id="unit-influent" data-unit="influent" class="pfd-unit absolute flex items-center justify-center bg-gray-100 border-2 border-gray-300 rounded-lg p-4 w-40 h-16" style="left: 20px; top: 210px;">
+                        <span class="font-semibold text-center">进水</span>
+                    </div>
+                    <div id="unit-primary" data-unit="primary" class="pfd-unit absolute flex items-center justify-center bg-blue-100 border-2 border-blue-300 rounded-lg p-4 w-48 h-20" style="left: 240px; top: 100px;">
+                        <span class="font-semibold text-center">初沉池</span>
+                    </div>
+                    <div id="unit-bioreactor" data-unit="bioreactor" class="pfd-unit active absolute flex items-center justify-center bg-green-100 border-2 border-green-300 rounded-lg p-4 w-48 h-20" style="left: 240px; top: 200px;">
+                        <span class="font-semibold text-center">生物反应器</span>
+                    </div>
+                    <div id="unit-sbr" data-unit="sbr" class="pfd-unit absolute flex items-center justify-center bg-purple-100 border-2 border-purple-300 rounded-lg p-4 w-48 h-20" style="left: 240px; top: 300px;">
+                        <span class="font-semibold text-center">SBR<br>(序批式反应器)</span>
+                    </div>
+                    <div id="unit-secondary" data-unit="secondary" class="pfd-unit absolute flex items-center justify-center bg-blue-100 border-2 border-blue-300 rounded-lg p-4 w-48 h-20" style="left: 570px; top: 200px;">
+                        <span class="font-semibold text-center">二沉池</span>
+                    </div>
+                    <div id="unit-effluent" data-unit="effluent" class="pfd-unit absolute flex items-center justify-center bg-gray-100 border-2 border-gray-300 rounded-lg p-4 w-40 h-16" style="right: 20px; top: 210px;">
+                        <span class="font-semibold text-center">出水</span>
+                    </div>
+                    <div id="unit-sludge" data-unit="sludge" class="pfd-unit absolute flex items-center justify-center bg-yellow-100 border-2 border-yellow-300 rounded-lg p-4 w-48 h-20" style="left: 570px; top: 380px;">
+                        <span class="font-semibold text-center">污泥处理</span>
+                    </div>
+                    
+                    <!-- PFD Arrows -->
+                    <div class="pfd-arrow arrow-right" style="left: 160px; top: 234px; width: 80px; height: 8px;"></div>
+                    <div class="pfd-arrow" style="left: 330px; top: 220px; width: 8px; height: 0px;"></div>
+                    <div class="pfd-arrow arrow-right" style="left: 488px; top: 234px; width: 82px; height: 8px;"></div>
+                    <div class="pfd-arrow arrow-right" style="left: 718px; top: 234px; width: 82px; height: 8px;"></div>
+                    <div class="pfd-arrow arrow-down" style="left: 638px; top: 320px; width: 8px; height: 60px;"></div>
+                </div>
+
+                <div id="unit-details" class="mt-8 bg-white p-8 rounded-xl shadow-lg">
+                    <h3 id="unit-title" class="text-3xl font-bold mb-4">生物反应器模拟</h3>
+                    <p id="unit-description" class="text-gray-700 mb-6">这是污水处理厂的心脏。在生物反应器中，微生物消耗污水中的有机物（以COD衡量）和营养物质（氮、磷），将其转化为自身细胞和无害物质。这个过程对氧气、停留时间等条件非常敏感。本节将模拟理想与非理想水力条件对处理效果的影响。</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">水力停留时间分布 (RTD)</h4>
+                            <p class="text-sm text-gray-600 mb-4">RTD曲线揭示了水流在反应器内的实际“旅行时间”分布，是诊断水力缺陷（如短路和死区）的“心电图”。</p>
+                            <div class="flex justify-center space-x-2 mb-4 bg-gray-100 p-1 rounded-lg">
+                                <button data-sim="ideal" class="sim-toggle-btn bg-blue-500 text-white flex-1 py-1 px-3 rounded-md text-sm">理想混合</button>
+                                <button data-sim="shortcircuit" class="sim-toggle-btn bg-white text-gray-700 flex-1 py-1 px-3 rounded-md text-sm">短流模式</button>
+                                <button data-sim="deadzone" class="sim-toggle-btn bg-white text-gray-700 flex-1 py-1 px-3 rounded-md text-sm">死区模式</button>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="rtdChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">物料平衡分析 (COD)</h4>
+                             <p class="text-sm text-gray-600 mb-4">此图展示在不同水力条件下，COD（化学需氧量）在生物反应器这个控制容积内的平衡情况。</p>
+                             <div class="mt-14"></div>
+                            <div class="chart-container mt-4">
+                                <canvas id="massBalanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="concepts" class="content-section">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h2 class="text-3xl font-bold text-center mb-2">核心概念解析</h2>
+                    <p class="text-center text-gray-600 max-w-3xl mx-auto mb-8">物料平衡不是简单的加减法，它建立在一系列核心工程原理之上。本节将通过交互式卡片，为您解析构建一个可靠平衡框架所必须理解的关键概念，从不可违背的物理定律到描述系统动态的数学工具。</p>
+                    
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="font-bold text-xl mb-2">1. 质量守恒定律</h3>
+                            <p class="text-gray-700">在一个系统中，质量不会凭空产生或消失。其基本方程为：<br><code class="bg-gray-200 p-1 rounded">输入 - 输出 = 累积</code><br>这是所有平衡计算的基石。</p>
+                        </div>
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="font-bold text-xl mb-2">2. 控制容积 (CV)</h3>
+                            <p class="text-gray-700">为进行分析而划定的虚拟边界。我们可以对单个反应器或整个工厂进行平衡计算，这取决于我们如何定义这个“容积”。</p>
+                        </div>
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="font-bold text-xl mb-2">3. 稳态 vs. 动态</h3>
+                            <p class="text-gray-700"><b>稳态</b>：系统属性不随时间变化（累积=0）。<b>动态</b>：系统属性随时间变化（累积≠0），如SBR或液位变化的均衡池。</p>
+                        </div>
+                         <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="font-bold text-xl mb-2">4. 可变液位平衡</h3>
+                            <p class="text-gray-700">当液位（体积V）和浓度(C)都变化时，累积项变为微分方程：<br><code class="bg-gray-200 p-1 rounded">d(VC)/dt = V(dC/dt) + C(dV/dt)</code><br>这是精确模拟SBR等过程的关键。</p>
+                        </div>
+                         <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="font-bold text-xl mb-2">5. 化学药剂投加</h3>
+                            <p class="text-gray-700">投加的药剂（如用于除磷的铁盐）是直接的质量输入，并且会通过反应生成新的固体（污泥），必须精确计入平衡。</p>
+                        </div>
+                         <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="font-bold text-xl mb-2">6. 数据校正</h3>
+                            <p class="text-gray-700">由于测量总有误差，原始数据几乎总是不平衡的。数据校正技术利用统计学方法微调数据，以强制实现质量闭合，使模型可信。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tools" class="content-section">
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <h2 class="text-3xl font-bold text-center mb-2">实践工具箱</h2>
+                    <p class="text-center text-gray-600 max-w-3xl mx-auto mb-8">一个成功的物料平衡框架，不仅需要理论，更需要正确的工具和系统化的实施步骤。本节为您提供工具选择的对比，以及一份可交互的行动清单，助您将理论框架落地。</p>
+                     <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="border-b-2 p-4 bg-gray-100 font-bold">特性</th>
+                                    <th class="border-b-2 p-4 bg-gray-100 font-bold">电子表格 (如 Excel)</th>
+                                    <th class="border-b-2 p-4 bg-gray-100 font-bold">专用模拟软件 (如 BioWin)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="border-b p-4 font-semibold">成本</td>
+                                    <td class="border-b p-4">低</td>
+                                    <td class="border-b p-4">高</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="border-b p-4 font-semibold">动态模拟能力</td>
+                                    <td class="border-b p-4">有限，实现复杂</td>
+                                    <td class="border-b p-4">强大，核心功能</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="border-b p-4 font-semibold">透明度</td>
+                                    <td class="border-b p-4">高，所有公式可见</td>
+                                    <td class="border-b p-4">低，核心模型为“黑箱”</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="border-b p-4 font-semibold">理想应用场景</td>
+                                    <td class="border-b p-4">单一单元的稳态分析，教学演示</td>
+                                    <td class="border-b p-4">全厂动态模拟，工艺优化评估</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4">行动建议清单</h3>
+                    <ul id="checklist" class="space-y-3">
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            const pfdUnits = document.querySelectorAll('.pfd-unit');
+            const simToggleButtons = document.querySelectorAll('.sim-toggle-btn');
+            
+            let rtdChart, massBalanceChart;
+            let activeUnit = 'bioreactor'; 
+            let activeSim = 'ideal';
+
+            const unitData = {
+                influent: {
+                    title: "进水",
+                    description: "未经处理的原始污水进入处理厂，其流量和污染物浓度（如COD、TSS、氮、磷）随时间和季节波动，是整个系统所有物料的最初来源。",
+                    simulatable: false
+                },
+                primary: {
+                    title: "初沉池",
+                    description: "利用重力沉降去除大部分可沉降的悬浮固体（TSS）。这是一个物理过程，可以显著降低后续生物处理单元的负荷。其物料平衡主要关注TSS的去除效率和初沉污泥的产生量。",
+                    simulatable: true
+                },
+                bioreactor: {
+                    title: "生物反应器",
+                    description: "污水处理厂的心脏。在生物反应器中，微生物消耗污水中的有机物（以COD衡量）和营养物质（氮、磷），将其转化为自身细胞和无害物质。这个过程对氧气、停留时间等条件非常敏感。",
+                    simulatable: true
+                },
+                sbr: {
+                    title: "SBR (序批式反应器)",
+                    description: "一种特殊的生物反应器，在一个池内按时间顺序完成进水、反应、沉淀、滗水等所有处理步骤。它本质上是一个非稳态系统，液位和浓度都在周期性变化，对其建模必须采用动态平衡方程。",
+                    simulatable: true
+                },
+                secondary: {
+                    title: "二沉池",
+                    description: "用于将生物处理后的混合液进行固液分离，澄清后的水作为出水，沉淀下来的活性污泥大部分回流至生物反应器，以维持足够的微生物浓度，剩余部分作为剩余污泥排放。",
+                    simulatable: true
+                },
+                effluent: {
+                    title: "出水",
+                    description: "经过所有处理工艺后，达到排放标准的处理后水体。其水质参数是衡量整个处理厂性能的最终指标。",
+                    simulatable: false
+                },
+                sludge: {
+                    title: "污泥处理",
+                    description: "处理从初沉池和二沉池排出的污泥。通常包括浓缩、消化和脱水等步骤，以减少最终处置的污泥体积。此过程产生的污泥水（高浓度废水）通常会返回至处理厂前端，形成一个重要的内部循环负荷。",
+                    simulatable: false
+                }
+            };
+
+            const checklistItems = [
+                "绘制并验证工艺流程图 (PFD)",
+                "为每个单元定义控制容积 (CVs)",
+                "建立全面的数据采集计划 (SCADA, LIMS)",
+                "进行初步的稳态物料平衡计算",
+                "对关键单元进行RTD示踪剂实验，诊断水力缺陷",
+                "根据诊断结果选择并应用合适的数学模型",
+                "选择合适的计算工具 (Excel vs. 专用软件)",
+                "进行数据校正，强制实现物料平衡闭合",
+                "应用模型进行工艺优化 (加药, 曝气, 排泥)",
+                "创建并定期维护全厂物料平衡图作为核心沟通工具"
+            ];
+            
+            const checklistContainer = document.getElementById('checklist');
+            checklistItems.forEach(itemText => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center bg-gray-50 p-3 rounded-lg border';
+                li.innerHTML = `
+                    <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-4 cursor-pointer">
+                    <span class="text-gray-800">${itemText}</span>
+                `;
+                checklistContainer.appendChild(li);
+            });
+
+            function navigateTo(targetId) {
+                navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.target === targetId));
+                contentSections.forEach(sec => sec.classList.toggle('active', sec.id === targetId));
+            }
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => navigateTo(button.dataset.target));
+            });
+            
+            pfdUnits.forEach(unit => {
+                unit.addEventListener('click', () => {
+                    const unitId = unit.dataset.unit;
+                    if (unitData[unitId].simulatable) {
+                        activeUnit = unitId;
+                        pfdUnits.forEach(u => u.classList.remove('active'));
+                        unit.classList.add('active');
+                        updateUnitDetails();
+                    } else {
+                        alert(`“${unitData[unitId].title}”单元为流程端点或简化模块，本应用不提供其详细模拟。请选择“初沉池”、“生物反应器”、“SBR”或“二沉池”进行交互。`);
+                    }
+                });
+            });
+
+            simToggleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    activeSim = button.dataset.sim;
+                    simToggleButtons.forEach(btn => {
+                        btn.classList.remove('bg-blue-500', 'text-white');
+                        btn.classList.add('bg-white', 'text-gray-700');
+                    });
+                    button.classList.add('bg-blue-500', 'text-white');
+                    button.classList.remove('bg-white', 'text-gray-700');
+                    updateCharts();
+                });
+            });
+
+            function updateUnitDetails() {
+                const data = unitData[activeUnit];
+                document.getElementById('unit-title').textContent = `${data.title}模拟`;
+                document.getElementById('unit-description').textContent = data.description;
+                updateCharts();
+            }
+
+            function generateChartData() {
+                const labels = Array.from({ length: 21 }, (_, i) => (i * 0.1).toFixed(1));
+                let rtdData, massBalanceData;
+
+                const baseInput = 100;
+                let removal = 0;
+                let output = 0;
+
+                switch (activeSim) {
+                    case 'shortcircuit':
+                        rtdData = labels.map(x => {
+                            const t = parseFloat(x);
+                            return 3 * Math.exp(-3 * t) + 20 * Math.exp(-20 * (t - 0.1));
+                        });
+                        removal = baseInput * 0.6;
+                        output = baseInput * 0.4;
+                        break;
+                    case 'deadzone':
+                        rtdData = labels.map(x => {
+                            const t = parseFloat(x);
+                            return 0.5 * (2.5 * Math.exp(-2.5 * t) + 0.5 * Math.exp(-0.5 * (t-0.5)));
+                        });
+                        removal = baseInput * 0.75;
+                        output = baseInput * 0.25;
+                        break;
+                    case 'ideal':
+                    default:
+                        rtdData = labels.map(x => {
+                            const t = parseFloat(x);
+                            return 4 * t * Math.exp(-2 * t);
+                        });
+                        removal = baseInput * 0.9;
+                        output = baseInput * 0.1;
+                        break;
+                }
+                
+                if (activeUnit === 'sbr') {
+                     massBalanceData = {
+                        labels: ['进水(Fill)', '反应(React)', '沉淀(Settle)', '出水(Decant)'],
+                        datasets: [
+                            { label: '池内COD (kg)', data: [50, 20, 20, 5], backgroundColor: '#63b3ed' },
+                            { label: '转化/去除COD (kg)', data: [5, 30, 0, 0], backgroundColor: '#68d391' },
+                        ]
+                    };
+                    const sbrLabels = ['0h (开始进水)', '2h (进水结束)', '6h (反应结束)', '7h (沉淀结束)', '8h (滗水结束)'];
+                    rtdData = [
+                        {x: sbrLabels[0], y: 0}, {x: sbrLabels[1], y: 100}, {x: sbrLabels[2], y: 25}, {x: sbrLabels[3], y: 25}, {x: sbrLabels[4], y: 5}
+                    ];
+
+                } else {
+                    massBalanceData = {
+                        labels: [unitData[activeUnit].title],
+                        datasets: [
+                            { label: '出水带走 (kg/d)', data: [output], backgroundColor: '#f6ad55', stack: 'output' },
+                            { label: '反应去除 (kg/d)', data: [removal], backgroundColor: '#68d391', stack: 'output' },
+                            { label: '进水负荷 (kg/d)', data: [baseInput], backgroundColor: '#4a5568', stack: 'input' }
+                        ]
+                    };
+                }
+
+                return { rtdData, massBalanceData, isSBR: activeUnit === 'sbr' };
+            }
+
+            function updateCharts() {
+                const { rtdData, massBalanceData, isSBR } = generateChartData();
+
+                if (rtdChart) rtdChart.destroy();
+                const rtdCtx = document.getElementById('rtdChart').getContext('2d');
+                if(isSBR){
+                     rtdChart = new Chart(rtdCtx, {
+                        type: 'line',
+                        data: {
+                            datasets: [{
+                                label: 'SBR周期内COD浓度变化',
+                                data: rtdData,
+                                borderColor: '#805ad5',
+                                backgroundColor: 'rgba(128, 90, 213, 0.1)',
+                                fill: true,
+                                tension: 0.1
+                            }]
+                        },
+                        options: getChartOptions('SBR 周期 (小时)', 'COD 浓度 (mg/L)')
+                    });
+                } else {
+                     rtdChart = new Chart(rtdCtx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({ length: 21 }, (_, i) => (i * 0.1).toFixed(1)),
+                            datasets: [{
+                                label: '示踪剂浓度',
+                                data: rtdData,
+                                borderColor: '#4299e1',
+                                backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: getChartOptions('归一化时间 (t/τ)', '归一化浓度 (C/C₀)')
+                    });
+                }
+
+                if (massBalanceChart) massBalanceChart.destroy();
+                const massBalanceCtx = document.getElementById('massBalanceChart').getContext('2d');
+                massBalanceChart = new Chart(massBalanceCtx, {
+                    type: 'bar',
+                    data: massBalanceData,
+                    options: getChartOptions(isSBR ? 'SBR 操作阶段' : '物料平衡', 'COD质量 (kg)', true, isSBR)
+                });
+            }
+
+            function getChartOptions(xLabel, yLabel, isStacked = false, isSBR = false) {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: xLabel, font: { weight: 'bold' } },
+                            stacked: isStacked
+                        },
+                        y: {
+                            title: { display: true, text: yLabel, font: { weight: 'bold' } },
+                            beginAtZero: true,
+                            stacked: isStacked
+                        }
+                    }
+                };
+            }
+            
+            updateUnitDetails();
+        });
+    </script>
+</body>
+</html>

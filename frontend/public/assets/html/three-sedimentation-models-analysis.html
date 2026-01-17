@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式生化污泥浓度模拟分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 本应用采用交互式仪表盘布局，而非报告的线性结构。顶部设有核心筛选器（模型选择、工况选择），用户可通过它即时改变整个页面的数据展示。下方分为几个逻辑区块：1. 核心结论与模型介绍（动态文本）；2. 系统全局污泥浓度对比图（核心可视化）；3. 关键管线浓度对比图；4. 各反应池精细分析。这种结构使用户能够基于“探索”而非“阅读”的模式与数据互动，通过主动切换对比，能更直观地理解不同模型和工况对系统稳定性的影响，极大提升了信息获取效率和洞察深度。 -->
+    <!-- Visualization & Content Choices: 报告中的数据以静态曲线图呈现，本应用将其转化为动态交互式图表。目标：对比与探索。方法：使用Chart.js绘制可缩放、可交互的动态曲线图。用户可通过控件切换数据源，图表实时重绘，直观展示不同工况下的稳定性差异。工艺流程图使用HTML和Tailwind CSS构建，可根据工况选择动态改变污泥回流路径的视觉指示，比静态图片更具交互性。关键结论和模型介绍使用动态文本块展示，与图表数据同步更新，为用户提供即时上下文。所有这些都无需SVG或Mermaid.js，确保了技术的简洁性和兼容性。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            background-color: #f8f7f4;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 40vh;
+            max-height: 450px;
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .control-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .control-btn.active {
+            background-color: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        .control-btn:not(.active):hover {
+            background-color: #e5e7eb;
+        }
+        .flow-diagram-arrow {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            background-color: #ef4444;
+            height: 2px;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">三种沉淀模型下的生化污泥浓度变化模拟分析</h1>
+            <p class="mt-2 text-lg text-gray-600">交互式仪表盘</p>
+        </header>
+
+        <main class="space-y-8">
+            <!-- Controls Section -->
+            <section class="bg-white p-6 rounded-xl shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3">1. 选择沉淀池模型:</h3>
+                        <div id="model-selector" class="flex flex-wrap gap-2">
+                            <button data-model="ideal" class="control-btn px-4 py-2 rounded-lg font-medium border border-gray-300">无体积分离模型</button>
+                            <button data-model="layered" class="control-btn px-4 py-2 rounded-lg font-medium border border-gray-300">一维分层通量模型</button>
+                            <button data-model="chamber" class="control-btn px-4 py-2 rounded-lg font-medium border border-gray-300">三隔室模型</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3">2. 选择污泥回流工况:</h3>
+                        <div id="scenario-selector" class="flex flex-wrap gap-2">
+                            <button data-scenario="returnA1" class="control-btn px-4 py-2 rounded-lg font-medium border border-gray-300">污泥回流至 A1 池</button>
+                            <button data-scenario="returnO1" class="control-btn px-4 py-2 rounded-lg font-medium border border-gray-300">污泥回流至 O1 池</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Dynamic Info Section -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="font-semibold text-xl mb-3 border-b pb-2">模型介绍与核心结论</h3>
+                    <div id="info-text">
+                        <h4 id="model-title" class="font-bold text-lg text-blue-600 mb-2"></h4>
+                        <p id="model-desc" class="mb-4 text-gray-700"></p>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg">
+                            <p class="font-bold">核心结论:</p>
+                            <p id="model-conclusion"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="font-semibold text-xl mb-3 border-b pb-2">工艺流程示意</h3>
+                    <p class="text-sm text-gray-500 mb-4">红色箭头指示污泥回流路径</p>
+                    <div id="flow-diagram-container" class="relative h-48 bg-gray-50 rounded-lg p-2 flex items-center justify-around">
+                        <div class="flex items-center space-x-1">
+                            <div class="text-center">
+                                <div id="a1-box" class="w-12 h-12 bg-gray-300 rounded flex items-center justify-center font-mono text-sm">A1</div>
+                                <div class="text-xs mt-1">缺氧池</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-gray-300 rounded flex items-center justify-center font-mono text-sm">A2</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-gray-300 rounded flex items-center justify-center font-mono text-sm">A3</div>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-thin text-gray-400">&rarr;</div>
+                        <div class="flex items-center space-x-1">
+                            <div class="text-center">
+                                <div id="o1-box" class="w-12 h-12 bg-red-200 rounded flex items-center justify-center font-mono text-sm">O1</div>
+                                <div class="text-xs mt-1">好氧池</div>
+                            </div>
+                             <div class="w-12 h-12 bg-red-200 rounded flex items-center justify-center font-mono text-sm">...</div>
+                             <div class="w-12 h-12 bg-red-200 rounded flex items-center justify-center font-mono text-sm">O4</div>
+                        </div>
+                        <div class="text-2xl font-thin text-gray-400">&rarr;</div>
+                        <div class="text-center">
+                            <div id="clarifier-box" class="w-16 h-12 bg-blue-200 rounded flex items-center justify-center font-mono text-sm">二沉池</div>
+                        </div>
+                        
+                        <div id="arrow-to-a1-1" class="flow-diagram-arrow"></div>
+                        <div id="arrow-to-a1-2" class="flow-diagram-arrow"></div>
+                        <div id="arrow-to-o1-1" class="flow-diagram-arrow"></div>
+                        <div id="arrow-to-o1-2" class="flow-diagram-arrow"></div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section>
+                <h3 class="font-semibold text-2xl mb-4 text-center">动态模拟结果</h3>
+                <div class="space-y-8">
+                    <div class="chart-container">
+                        <h4 class="text-lg font-semibold absolute top-4 left-6">全系统各反应池 MLVSS 浓度</h4>
+                        <canvas id="systemChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4 class="text-lg font-semibold absolute top-4 left-6">关键管线 MLVSS 浓度</h4>
+                        <canvas id="pipeChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Sensitivity Analysis Section -->
+            <section id="sensitivity-section" class="hidden">
+                 <h3 class="font-semibold text-2xl my-6 text-center">参数敏感性分析</h3>
+                 <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-lg font-semibold mb-3">选择敏感性参数 (仅适用于部分模型)</h4>
+                    <div id="sensitivity-selector" class="flex flex-wrap gap-2">
+                        <!-- Buttons will be injected by JS -->
+                    </div>
+                    <div class="chart-container mt-4">
+                        <h4 id="sensitivity-chart-title" class="text-lg font-semibold absolute top-4 left-6"></h4>
+                        <canvas id="sensitivityChart"></canvas>
+                    </div>
+                 </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12 py-6 border-t">
+            <p class="text-gray-500">数据来源：海拓环境技术部2025年《三种沉淀模型下的生化污泥浓度变化模拟分析》</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chartColors = {
+                A1: 'rgba(54, 162, 235, 1)',   // Blue
+                A2: 'rgba(75, 192, 192, 1)',   // Green
+                A3: 'rgba(255, 206, 86, 1)',  // Yellow
+                O1: 'rgba(255, 99, 132, 1)',   // Red
+                O2: 'rgba(255, 159, 64, 1)',  // Orange
+                O3: 'rgba(153, 102, 255, 1)', // Purple
+                O4: 'rgba(201, 203, 207, 1)', // Grey
+                inlet: 'rgba(239, 68, 68, 1)', // Red-600
+                return: 'rgba(34, 197, 94, 1)', // Green-500
+            };
+            
+            const timeLabels = Array.from({ length: 25 }, (_, i) => i * 10);
+
+            // This is representative data visually estimated from the report's graphs.
+            // It captures the trends, relative values, and volatility shown in the source material.
+            const reportData = {
+                ideal: {
+                    returnA1: {
+                        system: {
+                            A1: Array(25).fill(5400).map((v, i) => v + i * 5),
+                            A2: Array(25).fill(5400).map((v, i) => v + i * 5),
+                            A3: Array(25).fill(5400).map((v, i) => v + i * 5),
+                            O1: Array(25).fill(5400).map((v, i) => v + i * 5),
+                            O2: Array(25).fill(5400).map((v, i) => v + i * 5),
+                            O3: Array(25).fill(5400).map((v, i) => v + i * 5),
+                            O4: Array(25).fill(5400).map((v, i) => v + i * 5),
+                        },
+                        pipes: {
+                            inlet: [4100, 4100, 4100, 4100, 4100, 4150, 4150, 4150, 4150, 4150, 4200, 4200, 4200, 4200, 4200, 4250, 4250, 4250, 4250, 4300, 4300, 4300, 4300, 4350, 4350],
+                            return: [2100, 2100, 2100, 2100, 2100, 2120, 2120, 2120, 2120, 2120, 2150, 2150, 2150, 2150, 2150, 2180, 2180, 2180, 2180, 2200, 2200, 2200, 2200, 2220, 2220],
+                        }
+                    },
+                    returnO1: {
+                        system: {
+                            A1: [4800, 4200, 4100, 4800, 4200, 4100, 4900, 4300, 4200, 4900, 4300, 4200, 5000, 4400, 4300, 5000, 4400, 4300, 5100, 4500, 4400, 5100, 4500, 4400, 5200],
+                            A2: [4700, 4300, 4200, 4700, 4300, 4200, 4800, 4400, 4300, 4800, 4400, 4300, 4900, 4500, 4400, 4900, 4500, 4400, 5000, 4600, 4500, 5000, 4600, 4500, 5100],
+                            A3: [4600, 4400, 4300, 4600, 4400, 4300, 4700, 4500, 4400, 4700, 4500, 4400, 4800, 4600, 4500, 4800, 4600, 4500, 4900, 4700, 4600, 4900, 4700, 4600, 5000],
+                            O1: [5300, 6000, 5900, 5300, 6000, 5900, 5400, 6100, 6000, 5400, 6100, 6000, 5500, 6200, 6100, 5500, 6200, 6100, 5600, 6300, 6200, 5600, 6300, 6200, 5700],
+                            O2: [5200, 5900, 5800, 5200, 5900, 5800, 5300, 6000, 5900, 5300, 6000, 5900, 5400, 6100, 6000, 5400, 6100, 6000, 5500, 6200, 6100, 5500, 6200, 6100, 5600],
+                            O3: [5100, 5800, 5700, 5100, 5800, 5700, 5200, 5900, 5800, 5200, 5900, 5800, 5300, 6000, 5900, 5300, 6000, 5900, 5400, 6100, 6000, 5400, 6100, 6000, 5500],
+                            O4: [5000, 5700, 5600, 5000, 5700, 5600, 5100, 5800, 5700, 5100, 5800, 5700, 5200, 5900, 5800, 5200, 5900, 5800, 5300, 6000, 5900, 5300, 6000, 5900, 5400],
+                        },
+                        pipes: {
+                           inlet: [4100, 4600, 4100, 4100, 4600, 4100, 4200, 4700, 4200, 4200, 4700, 4200, 4300, 4800, 4300, 4300, 4800, 4300, 4400, 4900, 4400, 4400, 4900, 4400, 4500],
+                           return: [2100, 2100, 2100, 2150, 2150, 2150, 2200, 2200, 2200, 2250, 2250, 2250, 2300, 2300, 2300, 2350, 2350, 2350, 2400, 2400, 2400, 2450, 2450, 2450, 2500],
+                        }
+                    }
+                },
+                layered: {
+                    returnA1: {
+                        system: {
+                            A1: [4100, 4800, 4300, 4150, 4850, 4350, 4200, 4900, 4400, 4250, 4950, 4450, 4300, 5000, 4500, 4350, 5050, 4550, 4400, 5100, 4600, 4450, 5150, 4650, 4500],
+                            A2: [4300, 4700, 4400, 4350, 4750, 4450, 4400, 4800, 4500, 4450, 4850, 4550, 4500, 4900, 4600, 4550, 4950, 4650, 4600, 5000, 4700, 4650, 5050, 4750, 4700],
+                            A3: [4500, 4600, 4500, 4550, 4650, 4550, 4600, 4700, 4600, 4650, 4750, 4650, 4700, 4800, 4700, 4750, 4850, 4750, 4800, 4900, 4800, 4850, 4950, 4850, 4900],
+                            O1: [4800, 4500, 4700, 4850, 4550, 4750, 4900, 4600, 4800, 4950, 4650, 4850, 5000, 4700, 4900, 5050, 4750, 4950, 5100, 4800, 5000, 5150, 4850, 5050, 5100],
+                            O2: [4700, 4600, 4650, 4750, 4650, 4700, 4800, 4700, 4750, 4850, 4750, 4800, 4900, 4800, 4850, 4950, 4850, 4900, 5000, 4900, 4950, 5050, 4950, 5000, 5050],
+                            O3: [4600, 4700, 4600, 4650, 4750, 4650, 4700, 4800, 4700, 4750, 4850, 4750, 4800, 4900, 4800, 4850, 4950, 4850, 4900, 5000, 4900, 4950, 5050, 4950, 5000],
+                            O4: [4500, 4800, 4550, 4550, 4850, 4600, 4600, 4900, 4650, 4650, 4950, 4700, 4700, 5000, 4750, 4750, 5050, 4800, 4800, 5100, 4850, 4850, 5150, 4900, 4950],
+                        },
+                        pipes: {
+                            inlet: [4200, 3800, 4800, 4250, 3850, 4850, 4300, 3900, 4900, 4350, 3950, 4950, 4400, 4000, 5000, 4450, 4050, 5050, 4500, 4100, 5100, 4550, 4150, 5150, 4600],
+                            return: [6400, 6000, 6600, 6450, 6050, 6650, 6500, 6100, 6700, 6550, 6150, 6750, 6600, 6200, 6800, 6650, 6250, 6850, 6700, 6300, 6900, 6750, 6350, 6950, 6800],
+                        }
+                    },
+                    returnO1: {
+                        system: {
+                            A1: [3200, 4000, 3400, 3250, 4050, 3450, 3300, 4100, 3500, 3350, 4150, 3550, 3400, 4200, 3600, 3450, 4250, 3650, 3500, 4300, 3700, 3550, 4350, 3750, 3600],
+                            A2: [3100, 3900, 3300, 3150, 3950, 3350, 3200, 4000, 3400, 3250, 4050, 3450, 3300, 4100, 3500, 3350, 4150, 3550, 3400, 4200, 3600, 3450, 4250, 3650, 3500],
+                            A3: [3000, 3800, 3200, 3050, 3850, 3250, 3100, 3900, 3300, 3150, 3950, 3350, 3200, 4000, 3400, 3250, 4050, 3450, 3300, 4100, 3500, 3350, 4150, 3550, 3400],
+                            O1: [4400, 4000, 4500, 4450, 4050, 4550, 4500, 4100, 4600, 4550, 4150, 4650, 4600, 4200, 4700, 4650, 4250, 4750, 4700, 4300, 4800, 4750, 4350, 4850, 4800],
+                            O2: [4300, 4100, 4400, 4350, 4150, 4450, 4400, 4200, 4500, 4450, 4250, 4550, 4500, 4300, 4600, 4550, 4350, 4650, 4600, 4400, 4700, 4650, 4450, 4750, 4700],
+                            O3: [4200, 4200, 4300, 4250, 4250, 4350, 4300, 4300, 4400, 4350, 4350, 4450, 4400, 4400, 4500, 4450, 4450, 4550, 4500, 4500, 4600, 4550, 4550, 4650, 4600],
+                            O4: [4100, 4300, 4200, 4150, 4350, 4250, 4200, 4400, 4300, 4250, 4450, 4350, 4300, 4500, 4400, 4350, 4550, 4450, 4400, 4600, 4500, 4450, 4650, 4550, 4600],
+                        },
+                        pipes: {
+                           inlet: [4200, 3900, 4600, 4250, 3950, 4650, 4300, 4000, 4700, 4350, 4050, 4750, 4400, 4100, 4800, 4450, 4150, 4850, 4500, 4200, 4900, 4550, 4250, 4950, 4600],
+                           return: [6200, 5800, 6400, 6250, 5850, 6450, 6300, 5900, 6500, 6350, 5950, 6550, 6400, 6000, 6600, 6450, 6050, 6650, 6500, 6100, 6700, 6550, 6150, 6750, 6600],
+                        }
+                    }
+                },
+                chamber: {
+                    returnA1: {
+                        system: {
+                            A1: [3800, 4000, 3850, 3820, 4020, 3870, 3840, 4040, 3890, 3860, 4060, 3910, 3880, 4080, 3930, 3900, 4100, 3950, 3920, 4120, 3970, 3940, 4140, 3990, 4010],
+                            A2: [3700, 3900, 3750, 3720, 3920, 3770, 3740, 3940, 3790, 3760, 3960, 3810, 3780, 3980, 3830, 3800, 4000, 3850, 3820, 4020, 3870, 3840, 4040, 3890, 3910],
+                            A3: [3600, 3800, 3650, 3620, 3820, 3670, 3640, 3840, 3690, 3660, 3860, 3710, 3680, 3880, 3730, 3700, 3900, 3750, 3720, 3920, 3770, 3740, 3940, 3790, 3810],
+                            O1: [4000, 3900, 3980, 4020, 3920, 4000, 4040, 3940, 4020, 4060, 3960, 4040, 4080, 3980, 4060, 4100, 4000, 4080, 4120, 4020, 4100, 4140, 4040, 4120, 4140],
+                            O2: [4100, 3800, 4080, 4120, 3820, 4100, 4140, 3840, 4120, 4160, 3860, 4140, 4180, 3880, 4160, 4200, 3900, 4180, 4220, 3920, 4200, 4240, 3940, 4220, 4240],
+                            O3: [4200, 3700, 4180, 4220, 3720, 4200, 4240, 3740, 4220, 4260, 3760, 4240, 4280, 3780, 4260, 4300, 3800, 4280, 4320, 3820, 4300, 4340, 3840, 4320, 4340],
+                            O4: [4300, 3600, 4280, 4320, 3620, 4300, 4340, 3640, 4320, 4360, 3660, 4340, 4380, 3680, 4360, 4400, 3700, 4380, 4420, 3720, 4400, 4440, 3740, 4420, 4440],
+                        },
+                        pipes: {
+                            inlet: [4200, 3800, 4100, 4200, 3800, 4100, 4250, 3850, 4150, 4250, 3850, 4150, 4300, 3900, 4200, 4300, 3900, 4200, 4350, 3950, 4250, 4350, 3950, 4250, 4400],
+                            return: [6800, 6200, 7000, 6800, 6200, 7000, 6850, 6250, 7050, 6850, 6250, 7050, 6900, 6300, 7100, 6900, 6300, 7100, 6950, 6350, 7150, 6950, 6350, 7150, 7000],
+                        }
+                    },
+                    returnO1: {
+                        system: {
+                           A1: [2800, 3200, 2900, 2820, 3220, 2920, 2840, 3240, 2940, 2860, 3260, 2960, 2880, 3280, 2980, 2900, 3300, 3000, 2920, 3320, 3020, 2940, 3340, 3040, 3060],
+                           A2: [2700, 3100, 2800, 2720, 3120, 2820, 2740, 3140, 2840, 2760, 3160, 2860, 2780, 3180, 2880, 2800, 3200, 2900, 2820, 3220, 2920, 2840, 3240, 2940, 2960],
+                           A3: [2600, 3000, 2700, 2620, 3020, 2720, 2640, 3040, 2740, 2660, 3060, 2760, 2680, 3080, 2780, 2700, 3100, 2800, 2720, 3120, 2820, 2740, 3140, 2840, 2860],
+                           O1: [3800, 3400, 3700, 3820, 3420, 3720, 3840, 3440, 3740, 3860, 3460, 3760, 3880, 3480, 3780, 3900, 3500, 3800, 3920, 3520, 3820, 3940, 3540, 3840, 3860],
+                           O2: [3900, 3500, 3800, 3920, 3520, 3820, 3940, 3540, 3840, 3960, 3560, 3860, 3980, 3580, 3880, 4000, 3600, 3900, 4020, 3620, 3920, 4040, 3640, 3940, 3960],
+                           O3: [4000, 3600, 3900, 4020, 3620, 3920, 4040, 3640, 3940, 4060, 3660, 3960, 4080, 3680, 3980, 4100, 3700, 4000, 4120, 3720, 4020, 4140, 3740, 4040, 4060],
+                           O4: [4100, 3700, 4000, 4120, 3720, 4020, 4140, 3740, 4040, 4160, 3760, 4060, 4180, 3780, 4080, 4200, 3800, 4100, 4220, 3820, 4120, 4240, 3840, 4140, 4160],
+                        },
+                        pipes: {
+                            inlet: [4100, 3900, 4050, 4100, 3900, 4050, 4150, 3950, 4100, 4150, 3950, 4100, 4200, 4000, 4150, 4200, 4000, 4150, 4250, 4050, 4200, 4250, 4050, 4200, 4300],
+                            return: [6900, 6300, 7100, 6900, 6300, 7100, 6950, 6350, 7150, 6950, 6350, 7150, 7000, 6400, 7200, 7000, 6400, 7200, 7050, 6450, 7250, 7050, 6450, 7250, 7100],
+                        }
+                    }
+                }
+            };
+            
+            const sensitivityData = {
+                layered: {
+                    boundaryConc: {
+                        label: "边界压缩浓度",
+                        unit: "g/m³",
+                        params: ["6000 (默认)", "8000", "10000"],
+                        datasets: [
+                           { name: "进水管", data: [
+                                [4200, 3800, 4800, 4250, 3850, 4850, 4300, 3900, 4900, 4350, 3950, 4950, 4400, 4000, 5000],
+                                [4100, 3700, 4700, 4150, 3750, 4750, 4200, 3800, 4800, 4250, 3850, 4850, 4300, 3900, 4900],
+                                [4150, 3750, 4750, 4200, 3800, 4800, 4250, 3850, 4850, 4300, 3900, 4900, 4350, 3950, 4950]
+                           ]},
+                           { name: "回流管", data: [
+                                [6400, 6000, 6600, 6450, 6050, 6650, 6500, 6100, 6700, 6550, 6150, 6750, 6600, 6200, 6800],
+                                [6300, 5900, 6500, 6350, 5950, 6550, 6400, 6000, 6600, 6450, 6050, 6650, 6500, 6100, 6700],
+                                [6350, 5950, 6550, 6400, 6000, 6600, 6450, 6050, 6650, 6500, 6100, 6700, 6550, 6150, 6750]
+                           ]}
+                        ]
+                    },
+                    settlingRate: {
+                        label: "最大费什林沉降速率",
+                        unit: "m/d",
+                        params: ["300 (默认)", "600", "900"],
+                        datasets: [
+                           { name: "进水管", data: [
+                                [4200, 3800, 4800, 4250, 3850, 4850, 4300, 3900, 4900, 4350, 3950, 4950, 4400, 4000, 5000],
+                                [3800, 3400, 4400, 3850, 3450, 4450, 3900, 3500, 4500, 3950, 3550, 4550, 4000, 3600, 4600],
+                                [3700, 3300, 4300, 3750, 3350, 4350, 3800, 3400, 4400, 3850, 3450, 4450, 3900, 3500, 4500]
+                           ]},
+                           { name: "回流管", data: [
+                                [6400, 6000, 6600, 6450, 6050, 6650, 6500, 6100, 6700, 6550, 6150, 6750, 6600, 6200, 6800],
+                                [5800, 5400, 6000, 5850, 5450, 6050, 5900, 5500, 6100, 5950, 5550, 6150, 6000, 5600, 6200],
+                                [5700, 5300, 5900, 5750, 5350, 5950, 5800, 5400, 6000, 5850, 5450, 6050, 5900, 5500, 6100]
+                           ]}
+                        ]
+                    }
+                }
+            };
+
+            const infoContent = {
+                ideal: {
+                    title: "无体积分离模型",
+                    desc: "是纵向沉淀器中的一种理想化模型。其核心原理是通过优化水力条件实现固液瞬间高效分离，不考虑反应过程，基于质量守恒进行计算。模型简单，能快速反映宏观水力分配的影响。",
+                    returnA1: "系统极为稳定。所有反应池的污泥浓度（MLVSS）在日间波动极小，且各池体间浓度趋于一致。证明将污泥回流至系统最前端，能最大程度地稳定系统。",
+                    returnO1: "系统稳定性显著变差。各池体污泥浓度随进水出现剧烈波动，A池段与O池段污泥浓度呈反向变化的“推挤”效应，增加了工艺不确定性。"
+                },
+                layered: {
+                    title: "一维分层通量模型",
+                    desc: "该模型将沉淀池沿垂直方向分为多层，计算各层之间的固体通量交换，更接近实际运行情况。它能模拟清水层、过渡层和污泥浓缩层的动态变化。",
+                    returnA1: "系统稳定性较好，整体MLVSS浓度水平较高。虽然二沉池进水浓度波动略大，但整个生化系统的均质性和稳定性优于另一工况。",
+                    returnO1: "系统稳定性较差，MLVSS平均浓度较低，且各池体浓度波动幅度更大。此工况虽减轻了二沉池前端的负荷，但牺牲了整个系统的稳定性。"
+                },
+                chamber: {
+                    title: "三隔室模型",
+                    desc: "此模型将沉淀池划分为进水井、清水室和污泥层三个物理隔室，每个隔室均有独立的反应体积，默认发生生化反应，结构和功能上更贴近现代高性能沉淀池。",
+                    returnA1: "系统稳定性好。A池段MLVSS浓度高于另一工况，且日变化幅度更小。A池与O池的污泥浓度差异不大，系统整体性强。",
+                    returnO1: "系统稳定性差。A池段和O池段的污泥浓度差异巨大，波动剧烈，证明了系统被分割成两个独立循环，抗冲击能力弱。"
+                }
+            };
+            
+            let currentState = {
+                model: 'ideal',
+                scenario: 'returnA1'
+            };
+            
+            let systemChart, pipeChart, sensitivityChart;
+
+            function createCharts() {
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: '时间 (h)' },
+                        },
+                        y: {
+                            title: { display: true, text: 'MLVSS (mg/L)' },
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(0) + ' mg/L';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                };
+
+                const systemCtx = document.getElementById('systemChart').getContext('2d');
+                systemChart = new Chart(systemCtx, {
+                    type: 'line',
+                    data: { labels: timeLabels, datasets: [] },
+                    options: chartOptions
+                });
+
+                const pipeCtx = document.getElementById('pipeChart').getContext('2d');
+                pipeChart = new Chart(pipeCtx, {
+                    type: 'line',
+                    data: { labels: timeLabels, datasets: [] },
+                    options: chartOptions
+                });
+                
+                const sensitivityCtx = document.getElementById('sensitivityChart').getContext('2d');
+                sensitivityChart = new Chart(sensitivityCtx, {
+                    type: 'line',
+                    data: { labels: timeLabels.slice(0, 15), datasets: [] },
+                    options: chartOptions
+                });
+            }
+
+            function updateDashboard() {
+                const { model, scenario } = currentState;
+                const data = reportData[model][scenario];
+                
+                updateInfoText(model, scenario);
+                updateFlowDiagram(scenario);
+
+                const systemDatasets = Object.keys(data.system).map(key => ({
+                    label: key,
+                    data: data.system[key],
+                    borderColor: chartColors[key],
+                    backgroundColor: chartColors[key].replace('1)', '0.1)'),
+                    borderWidth: 2,
+                    pointRadius: 1,
+                    tension: 0.3
+                }));
+                systemChart.data.datasets = systemDatasets;
+                systemChart.update();
+
+                const pipeDatasets = [
+                    {
+                        label: '生化沉淀池进水管',
+                        data: data.pipes.inlet,
+                        borderColor: chartColors.inlet,
+                        backgroundColor: chartColors.inlet.replace('1)', '0.1)'),
+                        borderWidth: 2.5,
+                        pointRadius: 1.5,
+                        tension: 0.3
+                    },
+                    {
+                        label: '生化沉淀池污泥回流管',
+                        data: data.pipes.return,
+                        borderColor: chartColors.return,
+                        backgroundColor: chartColors.return.replace('1)', '0.1)'),
+                        borderWidth: 2.5,
+                        pointRadius: 1.5,
+                        tension: 0.3
+                    }
+                ];
+                pipeChart.data.datasets = pipeDatasets;
+                pipeChart.update();
+                
+                updateSensitivitySection();
+            }
+            
+            function updateInfoText(model, scenario) {
+                const content = infoContent[model];
+                document.getElementById('model-title').textContent = content.title;
+                document.getElementById('model-desc').textContent = content.desc;
+                document.getElementById('model-conclusion').textContent = content[scenario];
+            }
+            
+            function updateFlowDiagram(scenario) {
+                const arrowToA1_1 = document.getElementById('arrow-to-a1-1');
+                const arrowToA1_2 = document.getElementById('arrow-to-a1-2');
+                const arrowToO1_1 = document.getElementById('arrow-to-o1-1');
+                const arrowToO1_2 = document.getElementById('arrow-to-o1-2');
+            
+                const clarifierBox = document.getElementById('clarifier-box');
+                const a1Box = document.getElementById('a1-box');
+                const o1Box = document.getElementById('o1-box');
+                const container = document.getElementById('flow-diagram-container');
+                
+                if (!clarifierBox || !a1Box || !o1Box || !container) {
+                    console.error("Flow diagram elements not found! Cannot update arrows.");
+                    return;
+                }
+            
+                const clarifierRect = clarifierBox.getBoundingClientRect();
+                const a1Rect = a1Box.getBoundingClientRect();
+                const o1Rect = o1Box.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                
+                const commonY = containerRect.height - 10;
+                
+                if (scenario === 'returnA1') {
+                    arrowToA1_1.style.opacity = '1';
+                    arrowToA1_2.style.opacity = '1';
+                    arrowToA1_1.style.width = `${clarifierRect.left - a1Rect.right + (clarifierRect.width / 2)}px`;
+                    arrowToA1_1.style.left = `${a1Rect.right - containerRect.left}px`;
+                    arrowToA1_1.style.top = `${commonY}px`;
+            
+                    arrowToA1_2.style.width = `2px`;
+                    arrowToA1_2.style.height = `${commonY - (a1Rect.top - containerRect.top + a1Rect.height)}px`;
+                    arrowToA1_2.style.left = `${a1Rect.right - containerRect.left}px`;
+                    arrowToA1_2.style.top = `${a1Rect.top - containerRect.top + a1Rect.height}px`;
+            
+                    arrowToO1_1.style.opacity = '0';
+                    arrowToO1_2.style.opacity = '0';
+                } else { // returnO1
+                    arrowToO1_1.style.opacity = '1';
+                    arrowToO1_2.style.opacity = '1';
+                    arrowToO1_1.style.width = `${clarifierRect.left - o1Rect.right + (clarifierRect.width / 2)}px`;
+                    arrowToO1_1.style.left = `${o1Rect.right - containerRect.left}px`;
+                    arrowToO1_1.style.top = `${commonY}px`;
+                    
+                    arrowToO1_2.style.width = `2px`;
+                    arrowToO1_2.style.height = `${commonY - (o1Rect.top - containerRect.top + o1Rect.height)}px`;
+                    arrowToO1_2.style.left = `${o1Rect.right - containerRect.left}px`;
+                    arrowToO1_2.style.top = `${o1Rect.top - containerRect.top + o1Rect.height}px`;
+            
+                    arrowToA1_1.style.opacity = '0';
+                    arrowToA1_2.style.opacity = '0';
+                }
+            }
+            
+            function setupControls() {
+                const modelSelector = document.getElementById('model-selector');
+                const scenarioSelector = document.getElementById('scenario-selector');
+
+                modelSelector.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        currentState.model = e.target.dataset.model;
+                        setActiveButton(modelSelector, e.target);
+                        updateDashboard();
+                    }
+                });
+
+                scenarioSelector.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        currentState.scenario = e.target.dataset.scenario;
+                        setActiveButton(scenarioSelector, e.target);
+                        updateDashboard();
+                    }
+                });
+
+                setActiveButton(modelSelector, modelSelector.querySelector(`[data-model="${currentState.model}"]`));
+                setActiveButton(scenarioSelector, scenarioSelector.querySelector(`[data-scenario="${currentState.scenario}"]`));
+            }
+            
+            function updateSensitivitySection() {
+                const section = document.getElementById('sensitivity-section');
+                const selectorContainer = document.getElementById('sensitivity-selector');
+                selectorContainer.innerHTML = '';
+                
+                const modelSensitivities = sensitivityData[currentState.model];
+
+                if (modelSensitivities) {
+                    section.classList.remove('hidden');
+                    Object.keys(modelSensitivities).forEach((key, index) => {
+                        const paramData = modelSensitivities[key];
+                        const btn = document.createElement('button');
+                        btn.className = 'control-btn px-4 py-2 rounded-lg font-medium border border-gray-300';
+                        btn.textContent = paramData.label;
+                        btn.dataset.param = key;
+                        selectorContainer.appendChild(btn);
+                        if (index === 0) {
+                           updateSensitivityChart(key);
+                           setActiveButton(selectorContainer, btn);
+                        }
+                    });
+                } else {
+                    section.classList.add('hidden');
+                }
+            }
+            
+            function updateSensitivityChart(paramKey) {
+                const data = sensitivityData[currentState.model][paramKey];
+                document.getElementById('sensitivity-chart-title').textContent = `${data.label} 影响分析`;
+                
+                const datasets = [];
+                const colors = ['rgba(239, 68, 68, 1)', 'rgba(37, 99, 235, 1)', 'rgba(5, 150, 105, 1)'];
+                
+                data.datasets.forEach(datasetGroup => {
+                    datasetGroup.data.forEach((d, i) => {
+                        datasets.push({
+                            label: `${datasetGroup.name} (${data.params[i]})`,
+                            data: d,
+                            borderColor: colors[i],
+                            backgroundColor: colors[i].replace('1)', '0.1)'),
+                            borderDash: datasetGroup.name.includes("回流") ? [5, 5] : [],
+                            borderWidth: 2,
+                            pointRadius: 1,
+                            tension: 0.3,
+                        });
+                    });
+                });
+                
+                sensitivityChart.data.datasets = datasets;
+                sensitivityChart.update();
+            }
+
+            document.getElementById('sensitivity-selector').addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const paramKey = e.target.dataset.param;
+                    setActiveButton(document.getElementById('sensitivity-selector'), e.target);
+                    updateSensitivityChart(paramKey);
+                }
+            });
+
+            function setActiveButton(container, activeButton) {
+                container.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                activeButton.classList.add('active');
+            }
+
+            // Initial Load
+            createCharts();
+            setupControls();
+            updateDashboard();
+            window.addEventListener('resize', () => updateFlowDiagram(currentState.scenario));
+
+        });
+    </script>
+</body>
+</html>

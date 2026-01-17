@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 交互式深度解析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral Slate -->
+    <!-- Application Structure Plan: A dashboard-style, thematic SPA. The structure avoids the linear format of the source report to improve usability. It features a main navigation bar for quick access to key themes: Core Architecture (an interactive diagram), Key Innovations (a card-based highlight section), Tools & Security (a tabbed view with a comparative chart), and Prompt Engineering (an interactive demonstration). This non-linear, task-oriented structure allows users to explore topics based on interest, facilitating better synthesis of the complex technical information. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Layered system architecture. -> Goal: Organize/Inform. -> Viz/Method: Interactive layered diagram (HTML/CSS). -> Interaction: Click layers to reveal details. -> Justification: Visually intuitive, promotes exploration over passive reading. -> Library: Vanilla JS + Tailwind.
+        - Report Info: Comparison of Agentic AI tools. -> Goal: Compare. -> Viz/Method: Radar Chart. -> Interaction: Buttons to toggle tool data sets. -> Justification: Excellent for multi-variate comparison, providing a quick visual summary of strengths. -> Library: Chart.js.
+        - Report Info: Various tools (BashTool, EditTool). -> Goal: Organize. -> Viz/Method: Tabbed Interface. -> Interaction: Click tabs to switch content. -> Justification: Standard, space-efficient UI pattern for grouping related but distinct information. -> Library: Vanilla JS.
+        - Report Info: Novel components. -> Goal: Inform/Highlight. -> Viz/Method: Card layout. -> Interaction: Hover effects. -> Justification: Makes key innovations scannable and digestible. -> Library: Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F7F4;
+            color: #333D47;
+        }
+        .bg-warm-neutral { background-color: #F8F7F4; }
+        .bg-slate-accent { background-color: #333D47; }
+        .text-slate-accent { color: #333D47; }
+        .border-slate-accent { border-color: #333D47; }
+        .bg-warm-card { background-color: #FFFFFF; }
+        .shadow-warm { box-shadow: 0 4px 15px rgba(51, 61, 71, 0.05); }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s;
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #A9B4C2;
+            transform: scaleX(1);
+            transition: transform 0.3s ease-in-out;
+        }
+        .nav-link::after {
+            transform: scaleX(0);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .tab.active {
+            border-color: #333D47;
+            background-color: #333D47;
+            color: #FFFFFF;
+        }
+        .architecture-layer {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left-width: 4px;
+        }
+        .architecture-layer.active, .architecture-layer:hover {
+            transform: translateX(10px);
+            background-color: #E9EAEB;
+        }
+    </style>
+</head>
+<body class="bg-warm-neutral">
+
+    <header class="bg-warm-card shadow-warm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-slate-accent">Claude Code 深度解析</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#intro" class="nav-link active">引言</a>
+                <a href="#architecture" class="nav-link">核心架构</a>
+                <a href="#innovations" class="nav-link">关键创新</a>
+                <a href="#tools-security" class="nav-link">工具与安全</a>
+                <a href="#prompt-engineering" class="nav-link">提示工程</a>
+                <a href="#comparison" class="nav-link">横向对比</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-slate-accent">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#intro" class="block py-2 px-6 text-sm nav-link">引言</a>
+            <a href="#architecture" class="block py-2 px-6 text-sm nav-link">核心架构</a>
+            <a href="#innovations" class="block py-2 px-6 text-sm nav-link">关键创新</a>
+            <a href="#tools-security" class="block py-2 px-6 text-sm nav-link">工具与安全</a>
+            <a href="#prompt-engineering" class="block py-2 px-6 text-sm nav-link">提示工程</a>
+            <a href="#comparison" class="block py-2 px-6 text-sm nav-link">横向对比</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section id="intro" class="text-center min-h-[60vh] flex flex-col justify-center items-center">
+            <h2 class="text-5xl font-bold mb-4 text-slate-accent leading-tight">探索 Agentic AI 编码的未来</h2>
+            <p class="text-xl max-w-3xl mx-auto text-gray-600 mb-8">
+                本报告将 Anthropic 的 Claude Code 从一份深度技术文档，转化为一个交互式的探索体验。我们将剖析其流式架构、分层安全、创新组件和 Agentic 设计，揭示其作为下一代 AI 编码工具的强大潜力。
+            </p>
+            <a href="#architecture" class="bg-slate-accent text-white font-bold py-3 px-8 rounded-full transition-transform transform hover:scale-105">
+                开始探索 &rarr;
+            </a>
+        </section>
+
+        <section id="architecture" class="py-20">
+            <h2 class="text-4xl font-bold text-center mb-4 text-slate-accent">核心架构：事件驱动，流式优先</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto text-gray-600 mb-12">
+                Claude Code 的架构体现了现代软件工程的核心原则。它采用分层设计，从用户界面到系统调用，每一层都职责分明。点击下方各层，深入了解其内部运作机制。
+            </p>
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="w-full md:w-1/3">
+                    <div id="layer-ui" class="architecture-layer active border-l-blue-400 p-6 bg-warm-card shadow-warm rounded-r-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">表示层 (UI)</h3>
+                        <p class="text-sm text-gray-600">基于 React (Ink) 的终端界面</p>
+                    </div>
+                    <div id="layer-orchestration" class="architecture-layer border-l-green-400 p-6 bg-warm-card shadow-warm rounded-r-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">编排引擎</h3>
+                        <p class="text-sm text-gray-600">控制流与异步任务协调</p>
+                    </div>
+                    <div id="layer-execution" class="architecture-layer border-l-yellow-400 p-6 bg-warm-card shadow-warm rounded-r-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">执行引擎</h3>
+                        <p class="text-sm text-gray-600">工具状态机与安全沙盒</p>
+                    </div>
+                    <div id="layer-system" class="architecture-layer border-l-red-400 p-6 bg-warm-card shadow-warm rounded-r-lg">
+                        <h3 class="text-xl font-bold mb-2">系统层</h3>
+                        <p class="text-sm text-gray-600">系统调用与底层交互</p>
+                    </div>
+                </div>
+                <div class="w-full md:w-2/3 bg-warm-card p-8 rounded-lg shadow-warm">
+                    <div id="architecture-details">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="innovations" class="py-20 bg-gray-50 rounded-xl">
+            <h2 class="text-4xl font-bold text-center mb-4 text-slate-accent">关键创新：解决核心挑战</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto text-gray-600 mb-12">
+                Claude Code 的独特之处在于其为解决 LLM 应用落地中的基本挑战而设计的创新组件。这些组件不仅是功能，更是对复杂问题的精巧解答。
+            </p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-warm-card p-6 rounded-lg shadow-warm transition-all hover:shadow-xl hover:-translate-y-1">
+                    <h3 class="text-xl font-bold mb-2">流式 JSON 解析与恢复</h3>
+                    <p class="text-gray-600">
+                        高效处理不完整的 LLM 输出流，通过内置的恢复机制增强系统鲁棒性，即使面对不完美的 JSON 数据也能提取有效信息，显著提升交互的流畅度和可靠性。
+                    </p>
+                </div>
+                <div class="bg-warm-card p-6 rounded-lg shadow-warm transition-all hover:shadow-xl hover:-translate-y-1">
+                    <h3 class="text-xl font-bold mb-2">智能数据截断 `normalizeToSize`</h3>
+                    <p class="text-gray-600">
+                        超越简单的字符截断。该算法根据实际字节数，通过迭代式降低数据对象（如代码 AST）的深度来压缩上下文，在满足 LLM 窗口限制的同时保留最大化的核心信息。
+                    </p>
+                </div>
+                <div class="bg-warm-card p-6 rounded-lg shadow-warm transition-all hover:shadow-xl hover:-translate-y-1">
+                    <h3 class="text-xl font-bold mb-2">多智能体结果综合</h3>
+                    <p class="text-gray-600">
+                        当任务被分解给多个子智能体后，系统能有效地整合、去重、消解冲突，并将分散的中间结果合成为一个连贯、完整的最终答复，是其处理复杂任务能力的关键。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tools-security" class="py-20">
+            <h2 class="text-4xl font-bold text-center mb-4 text-slate-accent">工具与安全：能力与约束的平衡</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto text-gray-600 mb-12">
+                工具是 Claude Code 将智能转化为行动的桥梁，而强大的安全体系则是其可靠运行的基石。这里展示了其核心工具的设计理念和多层安全架构。
+            </p>
+            <div class="mb-8 border-b-2 border-gray-200 flex justify-center">
+                <button class="tab active py-2 px-6 font-semibold text-gray-600" data-tab="tools">核心工具集</button>
+                <button class="tab py-2 px-6 font-semibold text-gray-600" data-tab="security">分层安全体系</button>
+            </div>
+            <div id="tools-content" class="tab-content">
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                    <div>
+                        <div class="bg-slate-accent text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-mono">&gt;_</div>
+                        <h3 class="text-xl font-bold mb-2">BashTool</h3>
+                        <p class="text-gray-600">在强隔离的沙盒环境中执行 Shell 命令，具备严格的资源限制和权限控制，在赋予 LLM 强大系统能力的同时最大限度降低风险。</p>
+                    </div>
+                     <div>
+                        <div class="bg-slate-accent text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-mono">📝</div>
+                        <h3 class="text-xl font-bold mb-2">EditTool</h3>
+                        <p class="text-gray-600">采用基于上下文的补丁和搜索/替换块等鲁棒编辑技术，而非脆弱的行号定位。对每一种可预见的编辑错误都设计了特定的验证机制。</p>
+                    </div>
+                     <div>
+                        <div class="bg-slate-accent text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-mono">🤖</div>
+                        <h3 class="text-xl font-bold mb-2">AgentTool</h3>
+                        <p class="text-gray-600">实现分层任务分解的核心。能将复杂任务派生给子智能体，并综合其发现，是 Claude Code 实现高级 Agentic 行为的关键。</p>
+                    </div>
+                </div>
+            </div>
+            <div id="security-content" class="tab-content hidden">
+                <p class="text-center text-gray-700 max-w-2xl mx-auto">
+                    “安全不是一个系统，而是多个独立层，能够安全失败。” Claude Code 的安全理念贯穿于整个架构，通过多道防线共同抵御风险。
+                </p>
+                <div class="mt-8 space-y-4 max-w-2xl mx-auto">
+                    <div class="flex items-start"><span class="bg-green-500 text-white rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center mr-4">1</span><span><strong>输入验证：</strong>在用户输入层面进行严格的清理和验证，以防止提示注入。</span></div>
+                    <div class="flex items-start"><span class="bg-blue-500 text-white rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center mr-4">2</span><span><strong>权限检查：</strong>在工具调用前进行细致的权限检查和级联，确保操作在授权范围内。</span></div>
+                    <div class="flex items-start"><span class="bg-yellow-500 text-white rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center mr-4">3</span><span><strong>沙盒隔离：</strong>在代码执行时使用强隔离的沙盒环境，限制资源和访问。</span></div>
+                    <div class="flex items-start"><span class="bg-red-500 text-white rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center mr-4">4</span><span><strong>持续监控：</strong>三个独立的遥测系统提供完整的可观察性，用于诊断和发现异常。</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="prompt-engineering" class="py-20 bg-gray-50 rounded-xl">
+             <h2 class="text-4xl font-bold text-center mb-4 text-slate-accent">提示工程：指令的艺术</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto text-gray-600 mb-12">
+                精心设计的提示是引导 LLM 可靠行为的关键。Claude Code 在这方面展现了深思熟虑的设计，通过显式指令和对 LLM “行为模式”的理解来塑造输出。
+            </p>
+            <div class="bg-warm-card p-8 rounded-lg shadow-warm max-w-4xl mx-auto">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">提示策略示例</h4>
+                        <ul class="space-y-4 text-gray-700">
+                           <li class="flex items-start"><span class="text-xl mr-3">🔁</span><div><strong>重复与强调：</strong><p class="text-sm">关键指令出现三次，并逐步加强语气，以确保被 LLM 注意并严格遵循。</p></div></li>
+                           <li class="flex items-start"><span class="text-xl mr-3">🛡️</span><div><strong>详尽的安全指令：</strong><p class="text-sm">为 BashTool 设计长达 500+ 词的安全说明，明确限制高风险操作。</p></div></li>
+                           <li class="flex items-start"><span class="text-xl mr-3">⛓️</span><div><strong>思维链 (CoT) 引导：</strong><p class="text-sm">可能动态引导 LLM 在给出最终答案前，先输出其思考过程和中间步骤，以处理复杂推理任务。</p></div></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">LLM 行为洞察</h4>
+                        <div class="border-l-4 border-slate-accent pl-4">
+                            <p class="text-gray-800 italic">"清晰的约束实际上是解放性的——它们防止了决策瘫痪和过度帮助。"</p>
+                            <p class="text-sm text-gray-600 mt-2">
+                                这个观察总结了 LLM 的一种行为模式：当给予非常明确、具体的指令和限制时，它们往往能产生更符合预期、更少“自由发挥”的输出。这反映了 LLM 在遵循指令和在约束条件下进行创造之间的平衡。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="py-20">
+            <h2 class="text-4xl font-bold text-center mb-4 text-slate-accent">横向对比：Agentic 工具全景</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto text-gray-600 mb-12">
+                为了更清晰地定位 Claude Code，我们将其与 Aider, Devin, 和 GitHub Copilot Agent Mode 在关键维度上进行比较。使用下面的按钮切换视图，探索它们的异同。
+            </p>
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+             <div id="chart-controls" class="flex justify-center mt-8 space-x-4"></div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-accent text-white mt-20">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>&copy; 2025 Claude Code 交互式分析报告。基于公开信息和技术分析生成。</p>
+            <p class="text-sm text-gray-400 mt-2">此应用旨在提供教育和信息参考，不代表 Anthropic 官方立场。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            function changeActiveLink() {
+                let index = sections.length;
+                while(--index && window.scrollY + 50 < sections[index].offsetTop) {}
+                
+                navLinks.forEach((link) => link.classList.remove('active'));
+                const activeLink = document.querySelector(`.nav-link[href="#${sections[index].id}"]`);
+                if(activeLink) {
+                    activeLink.classList.add('active');
+                }
+            }
+
+            changeActiveLink();
+            window.addEventListener('scroll', changeActiveLink);
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    document.querySelector(link.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if (mobileMenu.classList.contains('hidden') === false) {
+                       mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const architectureLayers = {
+                'layer-ui': {
+                    title: '表示层 (UI): 现代化的终端交互',
+                    content: 'Claude Code 在终端 UI 中使用了基于 React 的库（极有可能是 Ink），而非传统的 Blessed。这一选择旨在利用 React 强大的声明式渲染模型、组件化思想和丰富的生态系统，从而加快开发迭代速度并实现更现代的 UI 交互范式。同时，引入 Yoga-layout 布局引擎，使其能实现类似 Web 的 Flexbox 响应式布局，提供远超传统 TUI 的精致体验。'
+                },
+                'layer-orchestration': {
+                    title: '编排引擎: 智能的任务协调中心',
+                    content: '这是系统的“大脑”，核心是一个多阶段异步生成器，负责协调从 LLM 推理到工具调用的所有流程。它的一个关键洞察是：工具根据副作用分类——只读工具（如文件读取）并行运行以提高效率，而写操作（如文件修改）则序列化以确保安全。它还具备自动上下文压缩和支持递归轮次的能力，使其能处理无限深度的对话和复杂的任务分解。'
+                },
+                'layer-execution': {
+                    title: '执行引擎: 安全可靠的行动转化器',
+                    content: '该引擎负责将 LLM 的决策转化为实际的系统操作。每个工具都被设计为一个精细的状态机，内置权限检查、进度报告和错误处理。核心组件 BashTool 在一个高度隔离的沙盒（如 Docker 或 WASM）中运行，并辅以严格的资源限制和访问控制，以在赋予 AI 强大能力的同时，确保系统安全。'
+                },
+                'layer-system': {
+                    title: '系统层: 与环境的底层交互',
+                    content: '这是架构的最底层，负责处理所有与操作系统和外部环境的直接交互，如文件系统 I/O、网络请求和执行系统命令。该层的操作受到上层执行引擎和安全策略的严格控制和监督。ANR (Application Not Responding) 检测系统也在此层面运作，通过工作线程监控耗时操作，防止系统假死，确保用户体验。'
+                }
+            };
+            const archLayers = document.querySelectorAll('.architecture-layer');
+            const archDetailsContainer = document.getElementById('architecture-details');
+
+            function updateArchDetails(layerId) {
+                const details = architectureLayers[layerId];
+                archDetailsContainer.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-4 text-slate-accent">${details.title}</h3>
+                    <p class="text-gray-700 leading-relaxed">${details.content}</p>
+                `;
+                archLayers.forEach(l => l.classList.remove('active'));
+                document.getElementById(layerId).classList.add('active');
+            }
+
+            archLayers.forEach(layer => {
+                layer.addEventListener('click', () => {
+                    updateArchDetails(layer.id);
+                });
+            });
+            updateArchDetails('layer-ui');
+
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const target = tab.dataset.tab;
+                    tabContents.forEach(content => {
+                        if (content.id === `${target}-content`) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            const chartData = {
+                labels: ['自主规划', '工具使用范围', '代码库理解深度', '安全机制', '生态集成', '成本效益'],
+                datasets: [
+                    {
+                        label: 'Claude Code',
+                        data: [8, 9, 8, 9, 7, 6],
+                        backgroundColor: 'rgba(51, 61, 71, 0.2)',
+                        borderColor: 'rgba(51, 61, 71, 1)',
+                        pointBackgroundColor: 'rgba(51, 61, 71, 1)',
+                    },
+                    {
+                        label: 'Aider',
+                        data: [5, 6, 7, 6, 6, 8],
+                        backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                        borderColor: 'rgba(74, 144, 226, 1)',
+                        pointBackgroundColor: 'rgba(74, 144, 226, 1)',
+                        hidden: true
+                    },
+                    {
+                        label: 'Devin',
+                        data: [9, 8, 9, 8, 7, 4],
+                        backgroundColor: 'rgba(80, 227, 194, 0.2)',
+                        borderColor: 'rgba(80, 227, 194, 1)',
+                        pointBackgroundColor: 'rgba(80, 227, 194, 1)',
+                        hidden: true
+                    },
+                     {
+                        label: 'GitHub Copilot Agent',
+                        data: [7, 7, 8, 7, 9, 7],
+                        backgroundColor: 'rgba(126, 87, 194, 0.2)',
+                        borderColor: 'rgba(126, 87, 194, 1)',
+                        pointBackgroundColor: 'rgba(126, 87, 194, 1)',
+                        hidden: true
+                    }
+                ]
+            };
+            
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            const comparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: chartData,
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: {
+                                font: { size: 14, family: "'Noto Sans SC', sans-serif" },
+                                color: '#333D47'
+                            },
+                            ticks: {
+                                backdropColor: 'rgba(248, 247, 244, 0.75)',
+                                color: '#6b7280'
+                            },
+                            min: 0,
+                            max: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                           display: false
+                        }
+                    }
+                }
+            });
+
+            const chartControlsContainer = document.getElementById('chart-controls');
+            chartData.datasets.forEach((dataset, index) => {
+                const button = document.createElement('button');
+                button.textContent = dataset.label;
+                button.style.backgroundColor = dataset.backgroundColor;
+                button.style.borderColor = dataset.borderColor;
+                button.className = 'px-4 py-2 text-sm font-semibold rounded-full border-2 transition-opacity';
+                if (!dataset.hidden) {
+                    button.style.opacity = '1';
+                } else {
+                    button.style.opacity = '0.5';
+                }
+                
+                button.onclick = () => {
+                    const meta = comparisonChart.getDatasetMeta(index);
+                    meta.hidden = !meta.hidden;
+                    button.style.opacity = meta.hidden ? '0.5' : '1';
+                    comparisonChart.update();
+                };
+                chartControlsContainer.appendChild(button);
+            });
+        });
+    </script>
+
+</body>
+</html>

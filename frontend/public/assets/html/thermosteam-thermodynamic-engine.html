@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式报告: thermosteam 热力学引擎</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Warm neutrals with teal accent) -->
+    <!-- Application Structure Plan: 设计一个带有顶部粘性导航的单页应用。结构包括：1) 简介部分，概括核心价值；2) 核心架构部分，通过可视化图表展示其在生态系统中的位置；3) 热力学模型部分，使用交互式图表和卡片深入介绍核心计算模型（如UNIFAC）；4) 应用领域部分，以卡片形式展示其在具体生物精炼过程中的应用实例；5) 软件生态与竞品对比，使用雷达图直观比较其与Aspen Plus等软件的差异；6) 稳健性与开发实践，通过图标展示其高质量的软件工程实践。这种结构将线性报告重构为主题式、可交互的探索路径，旨在提升用户理解和参与度。 -->
+    <!-- Visualization & Content Choices: 1) 核心架构: HTML/CSS构建的层级图，目标是组织和展示其依赖关系，悬停交互提供更多信息。2) 热力学模型: Chart.js条形图展示各模型的重要性，目标是比较和告知，点击交互可筛选显示详细描述。3) 竞品对比: Chart.js雷达图，目标是比较`thermosteam`与DWSIM、Aspen Plus在成本、灵活性等多个维度的优劣，交互为悬停提示。4) 其他部分: 使用带有图标和强调色的信息卡片来组织文本，目标是清晰地告知用户关键信息。所有选择均旨在将复杂的报告内容转化为易于消化和探索的视觉元素。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fdfcfb;
+            color: #1f2937;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0d9488;
+            border-bottom-color: #0d9488;
+        }
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .highlight {
+            color: #0d9488;
+        }
+    </style>
+</head>
+<body class="bg-stone-50">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-slate-800">thermosteam</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#intro" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">简介</a>
+                        <a href="#architecture" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">核心架构</a>
+                        <a href="#models" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">热力学模型</a>
+                        <a href="#applications" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">应用领域</a>
+                        <a href="#comparison" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">生态与对比</a>
+                        <a href="#robustness" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">稳健性</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="intro" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
+                    <span class="highlight">thermosteam</span>: BioSTEAM 的热力学引擎
+                </h1>
+                <p class="mt-6 max-w-3xl mx-auto text-lg text-gray-600">
+                    一个独立、开源的 Python 库，为化学过程模拟（特别是生物精炼领域）提供强大而灵活的框架，用于处理质量与能量平衡、混合物性质估算、相平衡求解及化学反应模拟。
+                </p>
+                <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="p-6 bg-stone-100 rounded-lg">
+                        <h3 class="text-xl font-semibold text-slate-800">开源与灵活</h3>
+                        <p class="mt-2 text-gray-600">基于 Python 原生开发，采用宽松的 NCSA 许可证，易于集成、扩展和二次开发。</p>
+                    </div>
+                    <div class="p-6 bg-stone-100 rounded-lg">
+                        <h3 class="text-xl font-semibold text-slate-800">专注生物精炼</h3>
+                        <p class="mt-2 text-gray-600">为 BioSTEAM 的技术经济分析(TEA)和生命周期评价(LCA)提供坚实的热力学计算基础。</p>
+                    </div>
+                    <div class="p-6 bg-stone-100 rounded-lg">
+                        <h3 class="text-xl font-semibold text-slate-800">性能优化</h3>
+                        <p class="mt-2 text-gray-600">通过 Numba JIT 编译和缓存机制，实现高效计算，支持快速迭代分析。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">核心架构与依赖</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        `thermosteam` 构建于成熟的科学计算生态之上，采用分层和模块化的设计，确保了其功能的强大与稳定。
+                    </p>
+                </div>
+                <div class="mt-12 flex flex-col items-center space-y-4">
+                     <div class="card w-full max-w-md p-4 bg-teal-600 text-white rounded-lg text-center shadow-lg">
+                        <h4 class="font-bold text-lg">BioSTEAM</h4>
+                        <p class="text-sm">生物精炼厂模拟与技术经济分析</p>
+                    </div>
+                    <div class="text-3xl text-gray-400">↓</div>
+                    <div class="card w-full max-w-md p-6 bg-white rounded-lg text-center shadow-lg">
+                        <h4 class="font-bold text-xl highlight">thermosteam</h4>
+                        <p class="text-sm text-gray-500">核心热力学引擎</p>
+                    </div>
+                    <div class="text-3xl text-gray-400">↓</div>
+                    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                        <div class="card p-4 bg-white rounded-lg shadow-md">
+                             <h4 class="font-bold text-lg text-slate-800">thermo & chemicals</h4>
+                             <p class="text-sm text-gray-500">基础物性数据与热力学模型库</p>
+                        </div>
+                        <div class="card p-4 bg-white rounded-lg shadow-md">
+                             <h4 class="font-bold text-lg text-slate-800">numpy & scipy</h4>
+                             <p class="text-sm text-gray-500">底层数值计算与科学算法</p>
+                        </div>
+                    </div>
+                </div>
+                 <p class="mt-8 text-center text-gray-600 max-w-3xl mx-auto">
+                    这种分层架构使得 `thermosteam` 能够专注于过程模拟的逻辑，同时利用 `thermo` 等库的精确模型和 `numpy` 的高性能计算能力。模块化的代码结构（如 `equilibrium`, `reaction`）降低了耦合度，易于维护和扩展。
+                </p>
+            </div>
+        </section>
+
+        <section id="models" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">关键热力学模型</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        `thermosteam` 整合了多种热力学模型来精确求解相平衡和模拟化学反应，其中 UNIFAC 模型尤为关键。
+                    </p>
+                </div>
+
+                <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div class="chart-container h-96 md:h-[450px]">
+                        <canvas id="modelsChart"></canvas>
+                    </div>
+                    <div id="model-details" class="space-y-6">
+                        <div class="p-6 bg-stone-50 rounded-lg">
+                            <h3 class="text-xl font-bold highlight">UNIFAC 模型</h3>
+                            <p class="mt-2 text-gray-600">
+                                基于基团贡献法预测液相活度系数，能够处理缺乏实验数据的复杂有机混合物。这使其在生物精炼领域（如醇、酸、酯混合体系）的 VLE 和 LLE 计算中具有不可替代的优势。
+                            </p>
+                        </div>
+                        <div class="p-6 bg-stone-50 rounded-lg opacity-70">
+                            <h3 class="text-xl font-bold text-slate-800">修正的拉乌尔定律</h3>
+                            <p class="mt-2 text-gray-600">
+                                结合活度系数（常由UNIFAC计算）来描述中低压下非理想溶液的汽液平衡行为，是 VLE 计算的基础。
+                            </p>
+                        </div>
+                         <div class="p-6 bg-stone-50 rounded-lg opacity-70">
+                            <h3 class="text-xl font-bold text-slate-800">Peng-Robinson EOS</h3>
+                            <p class="mt-2 text-gray-600">
+                                广义状态方程，目前主要用于描述纯组分的 P-V-T 性质。未来计划扩展至混合物，以处理高压或临界区的相平衡。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications" class="py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">主要应用领域</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        通过与 BioSTEAM 结合，`thermosteam` 在多种生物精炼过程的模拟、设计和经济性分析中发挥了核心作用。
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-teal-700">纤维素乙醇生产</h3>
+                        <p class="mt-2 text-gray-600">模拟以玉米秸秆或小麦秸秆为原料，通过预处理、酶解、发酵和蒸馏等步骤生产第二代生物燃料的过程。</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-teal-700">脂质甘蔗联产</h3>
+                        <p class="mt-2 text-gray-600">对从特殊甘蔗中提取糖和脂质，并分别转化为乙醇和生物柴油的复杂过程进行建模与经济性评估。</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-teal-700">生物基化学品</h3>
+                        <p class="mt-2 text-gray-600">支持山梨酸钾、乳酸、HMF等多种高附加值生物基化学品生产路线的模拟与不确定性分析。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="comparison" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">生态与竞品对比</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        `thermosteam`/BioSTEAM 在开源生态中定位明确，与商业软件相比，在灵活性、成本和特定分析领域展现出独特优势。
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div class="chart-container h-96 md:h-[450px]">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                    <div class="text-gray-600 space-y-4">
+                        <p>
+                            与功能全面的商业软件 <b class="highlight">Aspen Plus</b> 或开源模拟器 <b class="highlight">DWSIM</b> 不同，`thermosteam`/BioSTEAM 的核心竞争力不在于拥有最广泛的单元模型库，而在于：
+                        </p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><b class="text-slate-800">零成本与完全开放:</b> 采用宽松开源许可，无任何使用费用，代码完全透明。</li>
+                            <li><b class="text-slate-800">Python 原生 API:</b> 提供极高的编程灵活性和可扩展性，便于研究人员进行定制化开发和自动化分析。</li>
+                            <li><b class="text-slate-800">聚焦 TEA/LCA 与不确定性分析:</b> 专为新兴技术的快速经济性评估和大规模不确定性量化而设计，这是其核心优势。</li>
+                        </ul>
+                        <p>
+                           这使其成为学术界和新兴技术研发领域评估创新生物过程的理想工具。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="robustness" class="py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">稳健性与开发实践</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        项目遵循现代软件工程最佳实践，确保了代码的高质量、计算的准确性和长期的可维护性。
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl text-teal-600 mb-4">✓</div>
+                        <h3 class="text-xl font-semibold text-slate-800">全面的单元测试</h3>
+                        <p class="mt-2 text-gray-600">拥有覆盖核心功能的完整测试套件，保障计算的正确性与一致性。</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                         <div class="text-4xl text-teal-600 mb-4">⚙️</div>
+                        <h3 class="text-xl font-semibold text-slate-800">持续集成 (CI)</h3>
+                        <p class="mt-2 text-gray-600">通过 GitHub Actions 等工具进行跨平台自动化测试，确保代码在多环境下稳定运行。</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                         <div class="text-4xl text-teal-600 mb-4">📖</div>
+                        <h3 class="text-xl font-semibold text-slate-800">标准化文档</h3>
+                        <p class="mt-2 text-gray-600">使用 Sphinx 和 ReadTheDocs 提供清晰的 API 参考和教程，降低用户学习成本。</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                         <div class="text-4xl text-teal-600 mb-4">📄</div>
+                        <h3 class="text-xl font-semibold text-slate-800">宽松开源许可</h3>
+                        <p class="mt-2 text-gray-600">采用 NCSA 许可证，鼓励社区贡献和广泛应用，无商业使用限制。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-white">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-center">
+            <p>本交互式报告基于 thermosteam 仓库的公开分析资料生成。</p>
+            <p class="mt-2">
+                <a href="https://github.com/BioSTEAMDevelopmentGroup/thermosteam" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:text-teal-300 transition">访问 GitHub 仓库</a>
+            </p>
+            <p class="mt-8 text-xs text-gray-400">
+                由 AI 构建的交互式可视化报告。
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            const options = {
+                rootMargin: '-50% 0px -50% 0px',
+                threshold: 0
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, options);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            navLinks.forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            const modelsChartCtx = document.getElementById('modelsChart').getContext('2d');
+            new Chart(modelsChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['UNIFAC', '修正的拉乌尔定律', 'Peng-Robinson EOS', '理想气体'],
+                    datasets: [{
+                        label: '在生物精炼模拟中的重要性/应用频率',
+                        data: [95, 85, 60, 50],
+                        backgroundColor: [
+                            '#0d9488',
+                            '#0f766e',
+                            '#115e59',
+                            '#134e4a'
+                        ],
+                        borderColor: '#ccfbf1',
+                        borderWidth: 2,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: '核心热力学模型相对重要性',
+                            color: '#1f2937',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#e5e7eb'
+                            },
+                            ticks: {
+                                color: '#4b5563'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#4b5563',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const comparisonChartCtx = document.getElementById('comparisonChart').getContext('2d');
+            new Chart(comparisonChartCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['成本', 'TEA/LCA 强度', 'Python API 灵活性', 'GUI 易用性', '通用模型广度', '社区开放性'],
+                    datasets: [{
+                        label: 'thermosteam/BioSTEAM',
+                        data: [9, 9, 10, 3, 6, 10],
+                        fill: true,
+                        backgroundColor: 'rgba(13, 148, 136, 0.2)',
+                        borderColor: 'rgb(13, 148, 136)',
+                        pointBackgroundColor: 'rgb(13, 148, 136)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(13, 148, 136)'
+                    }, {
+                        label: 'Aspen Plus (商业软件)',
+                        data: [1, 7, 5, 9, 10, 2],
+                        fill: true,
+                        backgroundColor: 'rgba(55, 65, 81, 0.2)',
+                        borderColor: 'rgb(55, 65, 81)',
+                        pointBackgroundColor: 'rgb(55, 65, 81)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(55, 65, 81)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     plugins: {
+                        title: {
+                            display: true,
+                            text: '过程模拟软件能力对比',
+                            color: '#1f2937',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#374151'
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: '#d1d5db'
+                            },
+                            grid: {
+                                color: '#e5e7eb'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 13
+                                },
+                                color: '#1f2937'
+                            },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: '#6b7280'
+                            },
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

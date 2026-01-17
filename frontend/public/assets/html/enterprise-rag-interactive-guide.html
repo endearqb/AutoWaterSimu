@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业级RAG系统：交互式技术架构指南</title>
+    <!-- Chosen Palette: Calm Tech Blue (#F8FAFC, #1E293B, #3B82F6, #93C5FD, #E2E8F0) -->
+    <!-- 
+      Application Structure Plan: The SPA is designed as an interactive journey through the 7 key stages of building a RAG system, from data to deployment. This thematic, task-oriented structure (The Data Foundation, The Knowledge Core, etc.) is more intuitive and engaging for a user than a linear report format. It allows users to either follow the logical progression or use the sticky navigation to jump directly to a specific area of interest (e.g., "Vector Databases" or "Security"). This design prioritizes user understanding and exploration over strict adherence to the source report's chapter order. Key interactions include tabbed interfaces for comparisons, clickable flowcharts to reveal details, and animated charts to highlight key data points, making dense technical information digestible and memorable.
+    -->
+    <!-- 
+      Visualization & Content Choices: 
+      - RAG Core Flow (HTML/CSS Flowchart, Goal: Organize): To provide a high-level overview of the entire process at the start. Justification: Sets the context for the entire application.
+      - Parser Tools (HTML Table, Goal: Compare): To compare different library features side-by-side. Justification: Best for detailed textual comparison.
+      - Chunking Strategies (Interactive Tabbed Panel, Goal: Organize/Inform): To present different strategies without overwhelming the user. Clicking a tab reveals details. Justification: Manages information density and encourages user interaction.
+      - Vector DBs (Radar Chart, Goal: Compare): To visually compare multiple databases across several criteria (scalability, performance, etc.). Justification: Radar charts excel at multi-attribute comparison.
+      - Retrieval Flow (Clickable HTML/CSS Flowchart, Goal: Organize/Interact): Users can click each step (e.g., Re-ranking) to see an explanation. Justification: Makes a complex process interactive and less intimidating.
+      - LLM Selection (Donut Chart, Goal: Inform): To show the weight of different factors in the decision. Justification: Visually represents proportions of a whole.
+      - Architecture Patterns (HTML/CSS Diagrams, Goal: Organize): To abstractly represent complex concepts like Microservices and GraphRAG. Justification: Simplifies complex architectural ideas.
+      - Evaluation Metrics (Styled Cards, Goal: Inform): To present key metrics in a visually distinct and easily scannable format. Justification: Highlights critical information.
+      - Library/Method: All charts use Chart.js on Canvas. All diagrams use structured HTML with Tailwind CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #F8FAFC; color: #1E293B;}
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        @media (max-width: 768px) { .chart-container { height: 300px; } }
+        .nav-link { transition: color 0.3s, border-color 0.3s; }
+        .nav-link.active { color: #3B82F6; border-bottom-color: #3B82F6; }
+        .nav-link:hover { color: #3B82F6; }
+        .tab-button.active { background-color: #3B82F6; color: white; }
+        .flow-step { transition: all 0.3s ease; }
+        .flow-step:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="w-full">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-20">
+                <h1 class="text-xl md:text-2xl font-bold text-[#3B82F6]">RAG 技术架构指南</h1>
+                <div class="hidden md:flex items-center space-x-6 text-sm font-medium">
+                    <a href="#data" class="nav-link border-b-2 border-transparent pb-1">数据基础</a>
+                    <a href="#knowledge" class="nav-link border-b-2 border-transparent pb-1">知识核心</a>
+                    <a href="#retrieval" class="nav-link border-b-2 border-transparent pb-1">检索引擎</a>
+                    <a href="#orchestration" class="nav-link border-b-2 border-transparent pb-1">编排与生成</a>
+                    <a href="#architecture" class="nav-link border-b-2 border-transparent pb-1">架构与部署</a>
+                    <a href="#ops" class="nav-link border-b-2 border-transparent pb-1">运维与安全</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-16">
+
+        <section id="intro" class="text-center mb-24">
+            <h2 class="text-4xl md:text-5xl font-bold text-slate-800">构建企业级RAG系统的<span class="text-[#3B82F6]">战略蓝图</span></h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-500 mt-6 mb-12">本指南将带您深入探索构建一个稳健、可扩展、高效的企业知识库所需的核心技术与架构决策，将复杂的技术研究转化为直观的、可交互的探索之旅。</p>
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200">
+                <h3 class="text-xl font-bold text-center mb-6 text-slate-700">核心工作流程概览</h3>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 text-center">
+                    <div class="p-4"><p class="font-semibold mt-2">用户查询</p></div>
+                    <div class="text-2xl font-bold text-[#93C5FD] transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div class="flex-1 p-4 bg-slate-100 rounded-lg"><p class="font-semibold">数据预处理 & 索引</p></div>
+                    <div class="text-2xl font-bold text-[#93C5FD] transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div class="flex-1 p-4 bg-slate-100 rounded-lg"><p class="font-semibold">检索 & 重排</p></div>
+                    <div class="text-2xl font-bold text-[#93C5FD] transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div class="flex-1 p-4 bg-slate-100 rounded-lg"><p class="font-semibold">LLM 上下文增强 & 生成</p></div>
+                    <div class="text-2xl font-bold text-[#93C5FD] transform md:rotate-0 rotate-90">&rarr;</div>
+                     <div class="p-4"><p class="font-semibold mt-2">精准答案</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="data" class="pt-20 -mt-20 mb-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">第一阶段: 奠定数据基础</h2>
+            <p class="text-lg text-slate-500 mb-12">一切始于数据。此阶段的核心目标是将多样、混乱的企业文档（如PDF、Word文档）转化为干净、结构化、富含上下文信息的数据块，为后续的精准检索铺平道路。</p>
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200">
+                <h3 class="text-xl font-bold mb-6 text-[#3B82F6]">关键环节：文档解析与文本分块</h3>
+                <p class="text-slate-600 mb-8">选择正确的工具和策略至关重要。例如，对于包含复杂表格的PDF，简单的文本抓取会丢失结构信息，导致RAG系统产生幻觉。同样，不佳的分块策略也会割裂语义，影响检索效果。</p>
+                <div class="bg-slate-50 rounded-xl p-6">
+                    <div class="flex border-b border-slate-200 mb-4">
+                        <button class="tab-button flex-1 py-2 px-4 text-sm font-semibold rounded-t-lg transition active" data-target="tab-chunking">分块策略对比</button>
+                        <button class="tab-button flex-1 py-2 px-4 text-sm font-semibold rounded-t-lg transition" data-target="tab-parsers">PDF解析工具</button>
+                    </div>
+                    <div id="tab-content">
+                        <div id="tab-chunking" class="tab-pane active">
+                            <p class="text-sm text-slate-500 mb-4">分块质量直接影响检索内容的质量。一个好的策略应该兼顾语义完整性和上下文相关性。</p>
+                            <ul class="space-y-3 text-slate-700">
+                                <li class="p-3 bg-white rounded-md shadow-sm"><strong>固定大小分块:</strong> 实现简单，但易割裂语义。适合初步验证。</li>
+                                <li class="p-3 bg-white rounded-md shadow-sm"><strong>递归字符分割:</strong> 按层级（段落、句子、词）分割，是LangChain等框架的常用方法。</li>
+                                <li class="p-3 bg-white rounded-md shadow-sm"><strong>布局感知分块:</strong> 结合文档视觉结构（标题、表格）分块，对复杂PDF至关重要。</li>
+                                <li class="p-3 bg-white rounded-md shadow-sm"><strong>语义分块:</strong> 基于语义相似性分割，旨在创建上下文更连贯的块，效果更佳但计算成本更高。</li>
+                            </ul>
+                        </div>
+                        <div id="tab-parsers" class="tab-pane hidden">
+                            <p class="text-sm text-slate-500 mb-4">选择能准确提取文本、表格和布局信息的工具是避免信息丢失的关键。</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-200 text-slate-600">
+                                        <tr><th class="p-3">工具</th><th class="p-3">核心优势</th><th class="p-3">适用场景</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b"><td class="p-3">PyMuPDF</td><td class="p-3">功能全面，高精度定位</td><td class="p-3">复杂布局，需手动控制</td></tr>
+                                        <tr class="border-b"><td class="p-3">pdfplumber</td><td class="p-3">智能提取表格</td><td class="p-3">行列数据清晰的表格</td></tr>
+                                        <tr><td class="p-3">Camelot</td><td class="p-3">处理带清晰线条的表格</td><td class="p-3">规整的扫描版表格</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="knowledge" class="pt-20 -mt-20 mb-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">第二阶段: 构建知识核心</h2>
+            <p class="text-lg text-slate-500 mb-12">将处理好的数据块转换为机器可理解的数字向量，并存入专门的数据库中。这一步是实现高效语义检索的引擎，数据库的选择对系统性能有决定性影响。</p>
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200">
+                <h3 class="text-xl font-bold mb-6 text-center text-[#3B82F6]">主流向量数据库能力对比</h3>
+                <p class="text-slate-600 mb-8 text-center max-w-2xl mx-auto">企业需在可扩展性、集成便捷性、特性集和运维模式（托管 vs. 自托管）之间权衡。此图表展示了几个主流方案在关键维度上的相对表现。</p>
+                <div class="chart-container">
+                    <canvas id="vectorDBChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="retrieval" class="pt-20 -mt-20 mb-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">第三阶段: 设计检索引擎</h2>
+            <p class="text-lg text-slate-500 mb-12">有效的检索策略是确保LLM获得最相关上下文的保障。高级RAG系统通过多阶段的精密操作，显著提升复杂查询的召回率和精确率。</p>
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200">
+                 <h3 class="text-xl font-bold text-center mb-6 text-[#3B82F6]">高级检索工作流 (点击查看详情)</h3>
+                <div id="retrieval-flow" class="relative flex flex-col md:flex-row items-center justify-between text-center space-y-4 md:space-y-0">
+                    <div class="flow-step cursor-pointer p-4 bg-slate-50 rounded-lg border w-full md:w-auto" data-info="将模糊的用户查询转化为更精确、更丰富的搜索指令，如分解为子问题或生成假设性答案(HyDE)以引导检索。"><strong>查询转换</strong></div>
+                    <div class="text-2xl font-bold text-[#93C5FD] transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div class="flow-step cursor-pointer p-4 bg-slate-50 rounded-lg border w-full md:w-auto" data-info="结合向量搜索（语义）和关键词搜索（精确匹配）的优势，并可能引入知识图谱查询，从多个角度召回信息。"><strong>混合搜索</strong></div>
+                    <div class="text-2xl font-bold text-[#93C5FD] transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div class="flow-step cursor-pointer p-4 bg-slate-50 rounded-lg border w-full md:w-auto" data-info="使用Reciprocal Rank Fusion (RRF)等算法，智能融合来自不同检索路径的结果列表，生成一个更优的初步排序。"><strong>结果融合</strong></div>
+                    <div class="text-2xl font-bold text-[#93C5FD] transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div class="flow-step cursor-pointer p-4 bg-slate-50 rounded-lg border w-full md:w-auto" data-info="使用计算成本更高但更精确的交叉编码器模型，对初步排序后的候选文档进行二次精排，确保喂给LLM的是最相关的上下文。"><strong>重新排序</strong></div>
+                </div>
+                <div id="retrieval-info" class="mt-8 p-4 bg-[#E2E8F0] rounded-lg text-center text-slate-700 hidden">点击流程中的步骤查看详细说明。</div>
+            </div>
+        </section>
+
+        <section id="orchestration" class="pt-20 -mt-20 mb-20">
+             <h2 class="text-3xl font-bold text-slate-800 mb-4">第四阶段: 编排与生成</h2>
+             <p class="text-lg text-slate-500 mb-12">这是将所有组件粘合起来，构建出流畅、智能应用的最后一步。选择合适的LLM和编排框架，是平衡成本、性能和开发效率的艺术。</p>
+            <div class="grid md:grid-cols-5 gap-8">
+                <div class="md:col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-4 text-[#3B82F6]">LLM选型决策因素</h3>
+                    <p class="text-slate-600 mb-8">在API服务和自托管开源模型之间选择，需综合考量成本、控制权、性能和隐私等多个因素。</p>
+                    <div class="chart-container" style="max-width: 300px; height: 300px;">
+                        <canvas id="llmChoiceChart"></canvas>
+                    </div>
+                </div>
+                <div class="md:col-span-3 bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-4 text-[#3B82F6]">主流编排框架对比</h3>
+                    <p class="text-slate-600 mb-4">LangChain和LlamaIndex是构建LLM应用的两个主流框架，在RAG场景下各有侧重。</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-slate-600">
+                                <tr><th class="p-3">特性</th><th class="p-3">LangChain</th><th class="p-3">LlamaIndex</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-semibold">核心优势</td><td class="p-3">灵活性高，强大的智能体与工作流编排</td><td class="p-3">易用性好，专注数据索引与查询优化</td></tr>
+                                <tr class="border-b"><td class="p-3 font-semibold">最佳场景</td><td class="p-3">构建复杂、多步骤、多工具的系统</td><td class="p-3">快速搭建以数据查询为核心的应用</td></tr>
+                                <tr><td class="p-3 font-semibold">学习曲线</td><td class="p-3">较陡峭</td><td class="p-3">较平缓</td></tr>
+                            </tbody>
+                        </table>
+                        <p class="text-xs text-slate-400 mt-4">*注: LangChain的子项目LangGraph进一步增强了其构建循环、有状态的多智能体系统的能力。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="pt-20 -mt-20 mb-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">第五阶段: 设计架构与部署</h2>
+            <p class="text-lg text-slate-500 mb-12">企业级RAG系统需要一个可扩展、可维护且安全的架构。从微服务到无服务器，再到前沿的知识图谱，不同的模式适用于不同的业务场景。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-4 text-[#3B82F6]">微服务架构</h3>
+                    <p class="text-slate-600 mb-6">将RAG系统分解为独立的服务（如数据提取、查询处理），可以提升安全性、可扩展性和可维护性，是大型系统的推荐模式。</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="p-3 bg-slate-50 rounded-md"><strong>数据提取服务:</strong> 负责文档解析、嵌入。</div>
+                        <div class="p-3 bg-slate-50 rounded-md"><strong>查询API服务:</strong> 处理用户请求，编排检索和生成。</div>
+                         <div class="p-3 bg-slate-50 rounded-md"><strong>知识库服务:</strong> 包装向量数据库和知识图谱。</div>
+                    </div>
+                 </div>
+                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-4 text-[#3B82F6]">GraphRAG: 知识图谱增强</h3>
+                    <p class="text-slate-600 mb-6">利用知识图谱（KG）的结构化信息，GraphRAG能进行更深度的关系推理，回答“为什么”和“怎么样”的问题，有效减少幻觉。</p>
+                     <div class="text-center p-4 bg-slate-50 rounded-md">
+                        <p>用户查询 &rarr; LLM转为图查询 &rarr; 查询KG获取子图 &rarr; 增强上下文 &rarr; LLM生成答案</p>
+                    </div>
+                 </div>
+            </div>
+        </section>
+
+        <section id="ops" class="pt-20 -mt-20">
+             <h2 class="text-3xl font-bold text-slate-800 mb-4">第六阶段: 运维与安全</h2>
+             <p class="text-lg text-slate-500 mb-12">RAG系统并非一劳永逸。建立全面的监控、评估和安全防护体系，是确保系统在生产环境中持续提供价值的关键。</p>
+             <div class="grid md:grid-cols-2 gap-8">
+                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-4 text-[#3B82F6]">关键评估指标 (RAGAs)</h3>
+                    <p class="text-slate-600 mb-6">需要对RAG流程的两个核心阶段进行量化评估，以定位问题并持续优化。</p>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-slate-700">检索阶段评估</h4>
+                             <ul class="list-disc list-inside text-slate-600 text-sm mt-2">
+                                <li><strong>上下文精确率 (Context Precision):</strong> 检索到的内容是否都是相关的？</li>
+                                <li><strong>上下文召回率 (Context Recall):</strong> 是否检索到了所有需要的信息？</li>
+                            </ul>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold text-slate-700">生成阶段评估</h4>
+                             <ul class="list-disc list-inside text-slate-600 text-sm mt-2">
+                                <li><strong>忠实度 (Faithfulness):</strong> 答案是否完全基于给定的上下文？</li>
+                                <li><strong>答案相关性 (Answer Relevance):</strong> 答案是否直接回答了用户的问题？</li>
+                            </ul>
+                        </div>
+                    </div>
+                 </div>
+                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+                    <h3 class="text-xl font-bold mb-4 text-[#3B82F6]">核心安全考量</h3>
+                     <p class="text-slate-600 mb-6">RAG系统引入了新的攻击面，需要主动进行防御。</p>
+                     <div class="space-y-3">
+                         <div class="p-3 bg-red-50 border border-red-200 rounded-md"><strong>提示注入:</strong> 恶意用户通过巧妙的提问绕过系统指令。需加强输入验证和使用防护栏(Guardrails)框架。</div>
+                         <div class="p-3 bg-red-50 border border-red-200 rounded-md"><strong>数据投毒:</strong> 攻击者污染知识库源文件，误导RAG系统。需加强数据来源的治理和审计。</div>
+                          <div class="p-3 bg-red-50 border border-red-200 rounded-md"><strong>访问控制:</strong> 确保用户只能访问其有权限的知识。需在数据库和应用层实施细粒度访问控制。</div>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t mt-20">
+        <div class="container mx-auto px-6 py-8 text-center text-slate-400 text-sm">
+            <p>&copy; 2025 RAG技术架构指南. All Rights Reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const blue = '#3B82F6';
+            const lightBlue = '#93C5FD';
+            const darkBlue = '#1E40AF';
+            const lightGray = '#E2E8F0';
+
+            const defaultTooltip = {
+                callbacks: {
+                    title: (tooltipItems) => {
+                        const item = tooltipItems[0];
+                        let label = item.chart.data.labels[item.dataIndex];
+                        return Array.isArray(label) ? label.join(' ') : label;
+                    }
+                },
+                bodyFont: { family: "'Noto Sans SC', sans-serif" },
+                titleFont: { family: "'Noto Sans SC', sans-serif" }
+            };
+
+            const defaultLegend = {
+                labels: {
+                    font: { family: "'Noto Sans SC', sans-serif", size: 12 },
+                    color: '#475569'
+                }
+            };
+            
+            function wrapLabel(label) {
+                const maxLength = 16;
+                if (typeof label !== 'string' || label.length <= maxLength) return label;
+                const words = label.split(' ');
+                const lines = [];
+                let currentLine = '';
+                for (const word of words) {
+                    if ((currentLine + ' ' + word).trim().length > maxLength) {
+                        lines.push(currentLine.trim());
+                        currentLine = word;
+                    } else {
+                        currentLine = (currentLine + ' ' + word).trim();
+                    }
+                }
+                if (currentLine) lines.push(currentLine.trim());
+                return lines;
+            }
+
+            // Vector DB Chart
+            const vectorDBCtx = document.getElementById('vectorDBChart');
+            if(vectorDBCtx) {
+                new Chart(vectorDBCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['可扩展性', '混合搜索', wrapLabel('易用性 (云托管)'), '社区生态', '成本效益'],
+                        datasets: [{
+                            label: 'Weaviate',
+                            data: [85, 95, 75, 85, 80],
+                            borderColor: blue,
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            pointBackgroundColor: blue,
+                        }, {
+                            label: 'Milvus',
+                            data: [95, 70, 60, 80, 85],
+                            borderColor: darkBlue,
+                            backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                            pointBackgroundColor: darkBlue,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { tooltip: defaultTooltip, legend: defaultLegend },
+                        scales: {
+                            r: {
+                                suggestedMin: 0, suggestedMax: 100,
+                                grid: { color: lightGray },
+                                angleLines: { color: lightGray },
+                                pointLabels: { font: { size: 13, family: "'Noto Sans SC', sans-serif" }, color: '#334155' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // LLM Choice Chart
+            const llmChoiceCtx = document.getElementById('llmChoiceChart');
+            if(llmChoiceCtx) {
+                new Chart(llmChoiceCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['成本效益', '控制与定制', '性能与延迟', '数据隐私'],
+                        datasets: [{
+                            data: [25, 35, 20, 20],
+                            backgroundColor: [blue, darkBlue, lightBlue, lightGray],
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        plugins: { tooltip: defaultTooltip, legend: defaultLegend },
+                    }
+                });
+            }
+            
+            // Tab functionality
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const targetId = button.dataset.target;
+                    tabPanes.forEach(pane => {
+                        if (pane.id === targetId) {
+                            pane.classList.remove('hidden');
+                            pane.classList.add('active');
+                        } else {
+                            pane.classList.add('hidden');
+                            pane.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            // Retrieval Flow interactivity
+            const flowSteps = document.querySelectorAll('.flow-step');
+            const infoBox = document.getElementById('retrieval-info');
+            const defaultInfo = infoBox.textContent;
+            flowSteps.forEach(step => {
+                step.addEventListener('click', () => {
+                    infoBox.textContent = step.dataset.info;
+                    infoBox.classList.remove('hidden');
+                    flowSteps.forEach(s => s.classList.remove('bg-[#E2E8F0]'));
+                    step.classList.add('bg-[#E2E8F0]');
+                });
+            });
+            document.getElementById('retrieval-flow').addEventListener('mouseleave', () => {
+                 infoBox.textContent = defaultInfo;
+                 if(!infoBox.classList.contains('hidden')){
+                     infoBox.classList.add('hidden');
+                 }
+                 flowSteps.forEach(s => s.classList.remove('bg-[#E2E8F0]'));
+            });
+
+            // Sticky nav active state on scroll
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('nav a.nav-link');
+            const onScroll = () => {
+                const scrollY = window.pageYOffset;
+                sections.forEach(sec => {
+                    const secHeight = sec.offsetHeight;
+                    const secTop = sec.offsetTop - 100;
+                    const secId = sec.getAttribute('id');
+                    
+                    if (scrollY > secTop && scrollY <= secTop + secHeight) {
+                        navLinks.forEach(link => {
+                           link.classList.remove('active');
+                           if(link.getAttribute('href') === `#${secId}`) {
+                               link.classList.add('active');
+                           }
+                        });
+                    }
+                });
+            };
+            window.addEventListener('scroll', onScroll);
+        });
+    </script>
+</body>
+</html>

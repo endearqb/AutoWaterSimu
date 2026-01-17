@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生物毒性监测决策支持仪表盘</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FDFBF7;
+            --text-primary: #4A4A4A;
+            --text-secondary: #7A7A7A;
+            --accent-primary: #E67E22;
+            --accent-secondary: #27AE60;
+            --border-color: #EAEAEA;
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+        .sidebar {
+            background-color: #FFFFFF;
+            border-right: 1px solid var(--border-color);
+        }
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link.active, .sidebar-link:hover {
+            background-color: var(--bg-color);
+            color: var(--accent-primary);
+            border-left-color: var(--accent-primary);
+        }
+        .kpi-card {
+            background-color: #fff;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 45vh;
+            max-height: 500px;
+        }
+        .details-pane {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            min-height: 45vh;
+        }
+        table thead th {
+            cursor: pointer;
+            position: relative;
+        }
+        table thead th:hover {
+            background-color: #f9f9f9;
+        }
+        table thead th .sort-arrow {
+            opacity: 0.3;
+        }
+         table thead th:hover .sort-arrow {
+            opacity: 1;
+        }
+        .active-row {
+            background-color: #fef5eb !important;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+    <!-- Chosen Palette: Warm Analytics (BG: #FDFBF7, Text: #4A4A4A, Accent1: #E67E22, Accent2: #27AE60) -->
+    <!-- Application Structure Plan: A dashboard-style SPA with a left-sidebar for navigation between thematic views: 'Overview', 'Comparison Matrix', 'Decision Support', and 'Future Tech'. This app-like structure facilitates a task-oriented user flow, where users first get context (Overview), then explore data with interactive tools (Matrix/Support), and finally look ahead (Future). This is more powerful for professional users than a linear scrolling page. -->
+    <!-- Visualization & Content Choices: 
+        - Overview (Inform): KPI cards with large numbers (Styled HTML).
+        - Comparison Matrix (Compare/Explore): An interactive Bubble Chart (Chart.js/Canvas) maps methods by Speed, Relevance, and Cost. An interactive HTML table allows sorting and clicking. This combo offers multiple ways to analyze the data. Goal: Compare. Justification: Bubble chart is excellent for multi-dimensional trade-off analysis.
+        - Decision Support (Guide): A simple JS-based questionnaire that filters/recommends methods. Goal: Organize/Guide. Justification: Provides personalized guidance, making the data actionable.
+        - Future Tech (Inform): Styled HTML cards.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <aside class="sidebar w-64 flex-shrink-0 hidden md:block">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold" style="color: var(--accent-primary);">决策仪表盘</h1>
+            <p class="text-sm" style="color: var(--text-secondary);">生物毒性监测</p>
+        </div>
+        <nav id="sidebar-nav" class="mt-8 flex flex-col">
+            <a href="#overview" class="sidebar-link active text-lg font-medium p-4">📊 仪表盘概览</a>
+            <a href="#matrix" class="sidebar-link text-lg font-medium p-4">⚖️ 方法比较矩阵</a>
+            <a href="#support" class="sidebar-link text-lg font-medium p-4">💡 决策支持工具</a>
+            <a href="#future" class="sidebar-link text-lg font-medium p-4">🚀 技术展望</a>
+        </nav>
+    </aside>
+
+    <main id="main-content" class="flex-1 p-6 md:p-10 overflow-y-auto">
+        <div id="overview" class="view-section">
+            <h2 class="text-3xl font-bold mb-2">仪表盘概览</h2>
+            <p class="text-lg mb-8" style="color: var(--text-secondary);">了解进水毒性为何是污水处理厂面临的关键挑战。</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="kpi-card">
+                    <h3 class="font-bold text-xl mb-2">处理效率</h3>
+                    <p class="text-4xl font-bold" style="color: var(--accent-primary);">≤80%</p>
+                    <p class="mt-2" style="color: var(--text-secondary);">毒性冲击可能导致处理效率骤降。</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 class="font-bold text-xl mb-2">硝化抑制</h3>
+                    <p class="text-4xl font-bold" style="color: var(--accent-primary);">>50%</p>
+                    <p class="mt-2" style="color: var(--text-secondary);">硝化菌对多种毒物高度敏感。</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 class="font-bold text-xl mb-2">系统风险</h3>
+                    <p class="text-4xl font-bold" style="color: var(--accent-primary);">“倒槽”</p>
+                    <p class="mt-2" style="color: var(--text-secondary);">严重时可导致生物系统完全崩溃。</p>
+                </div>
+            </div>
+            <div class="mt-10 bg-white p-6 rounded-lg border border-[var(--border-color)]">
+                <h3 class="font-bold text-2xl mb-4">监测目标</h3>
+                <p class="leading-relaxed">主动的生物毒性监测旨在实现从“被动应对”到“主动预防”的转变。其核心目标包括：<strong style="color: var(--accent-secondary);">保护核心生物处理单元</strong>，<strong style="color: var(--accent-secondary);">保障出水水质稳定达标</strong>，为<strong style="color: var(--accent-secondary);">应急响应提供预警</strong>，并最终<strong style="color: var(--accent-secondary);">优化整体处理工艺</strong>。这对于提升污水处理系统的韧性和可持续性至关重要。</p>
+            </div>
+        </div>
+
+        <div id="matrix" class="view-section hidden">
+            <h2 class="text-3xl font-bold mb-2">方法比较矩阵</h2>
+            <p class="text-lg mb-8" style="color: var(--text-secondary);">通过多维度图表和可排序表格，深入探索各种监测方法的优劣。</p>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg border border-[var(--border-color)]">
+                    <h3 class="font-bold text-xl mb-4 text-center">综合性能气泡图</h3>
+                    <div class="chart-container">
+                        <canvas id="comparisonBubbleChart"></canvas>
+                    </div>
+                </div>
+                <div class="details-pane" id="details-pane">
+                    <h3 class="font-bold text-xl mb-4">详情信息</h3>
+                    <div id="details-content" class="text-gray-500 text-center mt-20">请在下方表格中点击一种方法以查看其详细信息。</div>
+                </div>
+            </div>
+            <div class="mt-8 bg-white p-6 rounded-lg border border-[var(--border-color)] overflow-x-auto">
+                 <h3 class="font-bold text-xl mb-4">详细数据表 (可点击排序和查看)</h3>
+                <table class="min-w-full text-left text-sm" id="methods-table">
+                    <thead class="border-b bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-bold" data-sort="name">方法名称</th>
+                            <th scope="col" class="px-6 py-4 font-bold" data-sort="speed">速度 <span class="sort-arrow">↕</span></th>
+                            <th scope="col" class="px-6 py-4 font-bold" data-sort="relevance">相关性 <span class="sort-arrow">↕</span></th>
+                            <th scope="col" class="px-6 py-4 font-bold" data-sort="costEffectiveness">成本效益 <span class="sort-arrow">↕</span></th>
+                            <th scope="col" class="px-6 py-4 font-bold" data-sort="easeOfUse">易用性 <span class="sort-arrow">↕</span></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="support" class="view-section hidden">
+            <h2 class="text-3xl font-bold mb-2">决策支持工具</h2>
+            <p class="text-lg mb-8" style="color: var(--text-secondary);">回答几个简单问题，我们将为您推荐最合适的监测方法。</p>
+            <div class="bg-white p-8 rounded-lg border border-[var(--border-color)] grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div>
+                        <label class="font-bold block mb-2">1. 您的首要监测目标是什么？</label>
+                        <select id="goal-select" class="w-full p-2 border border-gray-300 rounded">
+                            <option value="default">请选择...</option>
+                            <option value="relevance">保护核心工艺 (硝化)</option>
+                            <option value="speed">快速应急预警</option>
+                            <option value="easeOfUse">日常简便筛查</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label class="font-bold block mb-2">2. 您的预算和维护能力如何？</label>
+                        <select id="budget-select" class="w-full p-2 border border-gray-300 rounded">
+                            <option value="default">请选择...</option>
+                            <option value="high">预算充足，维护能力强</option>
+                            <option value="low">预算有限，追求性价比</option>
+                        </select>
+                    </div>
+                </div>
+                 <div id="recommendation-box" class="flex flex-col items-center justify-center bg-gray-50 p-6 rounded-lg text-center">
+                    <p class="text-gray-500">请完成左侧选择以获取推荐。</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="future" class="view-section hidden">
+            <h2 class="text-3xl font-bold mb-2">技术展望</h2>
+            <p class="text-lg mb-8" style="color: var(--text-secondary);">探索正在重塑生物毒性监测未来的前沿技术。</p>
+            <div class="space-y-6">
+                <div class="kpi-card flex items-start gap-6">
+                    <span class="text-5xl">🧬</span>
+                    <div>
+                        <h3 class="font-bold text-2xl" style="color: var(--accent-secondary);">组学技术 (Omics)</h3>
+                        <p class="mt-2 leading-relaxed">通过宏基因组学和宏转录组学，深入分子层面，分析微生物群落的结构、功能及其对毒性胁迫的基因表达响应。这为发现更灵敏的早期预警生物标志物提供了可能，能够捕捉到传统方法难以察觉的亚致死效应。</p>
+                    </div>
+                </div>
+                 <div class="kpi-card flex items-start gap-6">
+                    <span class="text-5xl">🤖</span>
+                     <div>
+                        <h3 class="font-bold text-2xl" style="color: var(--accent-secondary);">人工智能与机器学习 (AI/ML)</h3>
+                        <p class="mt-2 leading-relaxed">利用AI算法分析来自pH、DO、COD等多种常规在线传感器的大数据流。通过识别与历史毒性事件相关的数据模式，建立预测模型，从而在毒性冲击实际发生前进行预警，实现从“监测”到“预测”的飞跃。</p>
+                    </div>
+                </div>
+                 <div class="kpi-card flex items-start gap-6">
+                    <span class="text-5xl">🔬</span>
+                     <div>
+                        <h3 class="font-bold text-2xl" style="color: var(--accent-secondary);">微流控与芯片实验室</h3>
+                        <p class="mt-2 leading-relaxed">将复杂的生物分析过程集成于微米级芯片上，实现检测装置的小型化、自动化和高通量。这为开发低成本、低试剂消耗的便携式现场快速检测设备铺平了道路，使毒性监测更加灵活、普及。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const methodsData = {
+            our: { id: 'our', name: '微生物呼吸速率法 (OUR)', speed: 2, sensitivity: 3, costEffectiveness: 3, easeOfUse: 2, relevance: 5, pros: '与实际工艺直接相关，结果说服力强，有国际标准方法。', cons: '测试耗时较长（小时级），操作复杂，对污泥状态敏感。' },
+            luminescence: { id: 'luminescence', name: '发光细菌法', speed: 4, sensitivity: 4, costEffectiveness: 4, easeOfUse: 4, relevance: 3, pros: '非常快速（5-30分钟），灵敏度高，操作简便，商业化程度高。', cons: '间接测量，与活性污泥微生物存在差异；易受水样色度、浊度干扰。' },
+            atp: { id: 'atp', name: 'ATP 生物发光法', speed: 5, sensitivity: 4, costEffectiveness: 4, easeOfUse: 5, relevance: 2, pros: '极快（秒到分钟级），操作最简便，可便携用于现场。', cons: '非特异性强，易受样品中非目标生物或有机物干扰，结果解读复杂。' },
+            enzyme: { id: 'enzyme', name: '酶抑制法', speed: 3, sensitivity: 3, costEffectiveness: 3, easeOfUse: 3, relevance: 3, pros: '相对快速，能反映对特定生化途径的影响。', cons: '单一酶活性不能完全代表整体健康，易受环境因素影响。' },
+            sensor: { id: 'sensor', name: '在线生物传感器', speed: 4, sensitivity: 4, costEffectiveness: 2, easeOfUse: 3, relevance: 4, pros: '连续数据，强大的早期预警能力，自动化运行。', cons: '初始投资高，需要专业维护和定期校准，生物膜稳定性是挑战。' }
+        };
+
+        const colorPalette = {
+            accent1: 'rgba(230, 126, 34, 0.7)',
+            accent2: 'rgba(39, 174, 96, 0.7)',
+            text: '#4A4A4A',
+            our: 'rgba(52, 152, 219, 0.7)',
+            luminescence: 'rgba(155, 89, 182, 0.7)',
+            atp: 'rgba(26, 188, 156, 0.7)',
+            enzyme: 'rgba(241, 196, 15, 0.7)',
+            sensor: 'rgba(231, 76, 60, 0.7)',
+        };
+        
+        let bubbleChart;
+        let currentSort = { key: 'name', order: 'asc' };
+        let activeMethodId = null;
+
+        const navLinks = document.querySelectorAll('.sidebar-link');
+        const views = document.querySelectorAll('.view-section');
+
+        function switchView(hash) {
+            views.forEach(v => v.classList.add('hidden'));
+            navLinks.forEach(l => l.classList.remove('active'));
+
+            const activeView = document.querySelector(hash);
+            const activeLink = document.querySelector(`.sidebar-link[href="${hash}"]`);
+
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeLink) activeLink.classList.add('active');
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const hash = e.currentTarget.getAttribute('href');
+                switchView(hash);
+            });
+        });
+        
+        function updateDetailsPane(methodId) {
+            const method = methodsData[methodId];
+            if (!method) return;
+            const content = document.getElementById('details-content');
+            content.innerHTML = `
+                <h4 class="font-bold text-lg mb-2" style="color: ${colorPalette.accent1};">${method.name}</h4>
+                <div class="space-y-3 text-left">
+                   <p><strong style="color:var(--accent-secondary)">✓ 优点:</strong> ${method.pros}</p>
+                   <p><strong style="color:#E74C3C">✗ 局限:</strong> ${method.cons}</p>
+                </div>
+            `;
+        }
+
+        function renderTable() {
+            const tableBody = document.querySelector('#methods-table tbody');
+            const data = Object.values(methodsData).sort((a, b) => {
+                let valA = a[currentSort.key];
+                let valB = b[currentSort.key];
+                if (typeof valA === 'string') {
+                    return currentSort.order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                return currentSort.order === 'asc' ? valA - valB : valB - valA;
+            });
+
+            tableBody.innerHTML = data.map(m => `
+                <tr data-id="${m.id}" class="border-b transition duration-300 ease-in-out hover:bg-gray-100 cursor-pointer ${m.id === activeMethodId ? 'active-row' : ''}">
+                    <td class="px-6 py-4 font-medium">${m.name}</td>
+                    <td class="px-6 py-4">${'★'.repeat(m.speed)}${'☆'.repeat(5-m.speed)}</td>
+                    <td class="px-6 py-4">${'★'.repeat(m.relevance)}${'☆'.repeat(5-m.relevance)}</td>
+                    <td class="px-6 py-4">${'★'.repeat(m.costEffectiveness)}${'☆'.repeat(5-m.costEffectiveness)}</td>
+                    <td class="px-6 py-4">${'★'.repeat(m.easeOfUse)}${'☆'.repeat(5-m.easeOfUse)}</td>
+                </tr>
+            `).join('');
+            
+            tableBody.querySelectorAll('tr').forEach(row => {
+                row.addEventListener('click', () => {
+                    activeMethodId = row.dataset.id;
+                    updateDetailsPane(activeMethodId);
+                    renderTable(); // to update active class
+                });
+            });
+        }
+        
+        document.querySelectorAll('#methods-table thead th').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.dataset.sort;
+                if (currentSort.key === key) {
+                    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.key = key;
+                    currentSort.order = 'asc';
+                }
+                renderTable();
+            });
+        });
+
+        function createBubbleChart() {
+            const ctx = document.getElementById('comparisonBubbleChart').getContext('2d');
+            const data = {
+                datasets: Object.values(methodsData).map(m => ({
+                    label: m.name,
+                    data: [{
+                        x: m.speed,
+                        y: m.relevance,
+                        r: m.costEffectiveness * 5
+                    }],
+                    backgroundColor: colorPalette[m.id] || colorPalette.accent1,
+                }))
+            };
+            bubbleChart = new Chart(ctx, {
+                type: 'bubble',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const d = context.dataset;
+                                    const m = Object.values(methodsData).find(method => method.name === d.label);
+                                    return `${d.label}: 速度(${m.speed}), 相关性(${m.relevance}), 成本效益(${m.costEffectiveness})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: '速度 (越高越快)' }, min: 0, max: 6, ticks: {stepSize: 1} },
+                        y: { title: { display: true, text: '工艺相关性 (越高越相关)' }, min: 0, max: 6, ticks: {stepSize: 1} }
+                    }
+                }
+            });
+        }
+        
+        function updateRecommendation() {
+            const goal = document.getElementById('goal-select').value;
+            const budget = document.getElementById('budget-select').value;
+            const box = document.getElementById('recommendation-box');
+            
+            if (goal === 'default' || budget === 'default') {
+                box.innerHTML = `<p class="text-gray-500">请完成左侧选择以获取推荐。</p>`;
+                return;
+            }
+
+            let bestFit = null;
+            if (goal === 'relevance') {
+                bestFit = 'our';
+            } else if (goal === 'speed' && budget === 'low') {
+                bestFit = 'luminescence';
+            } else if (goal === 'speed' && budget === 'high') {
+                bestFit = 'sensor';
+            } else if (goal === 'easeOfUse') {
+                bestFit = 'atp';
+            }
+
+            if (bestFit) {
+                const method = methodsData[bestFit];
+                box.innerHTML = `
+                    <p class="mb-2">基于您的选择，我们推荐：</p>
+                    <h4 class="text-2xl font-bold mb-4" style="color: var(--accent-primary);">${method.name}</h4>
+                    <p class="text-sm text-left"><strong style="color:var(--accent-secondary)">✓ 理由:</strong> ${method.pros}</p>
+                `;
+            } else {
+                 box.innerHTML = `<p>请尝试其他组合以获得推荐。</p>`;
+            }
+        }
+
+        document.getElementById('goal-select').addEventListener('change', updateRecommendation);
+        document.getElementById('budget-select').addEventListener('change', updateRecommendation);
+
+        // Initial setup
+        switchView('#overview');
+        createBubbleChart();
+        renderTable();
+    });
+    </script>
+</body>
+</html>

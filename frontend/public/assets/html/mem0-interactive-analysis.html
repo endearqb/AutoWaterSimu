@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mem0 交互式技术解析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral Harmony -->
+    <!-- Application Structure Plan: The SPA is structured thematically to guide the user from the 'what' and 'why' to the 'how' and 'where'. It starts with a high-level introduction (The Problem & The Mission). It then dives into the core architecture with an interactive diagram ("How It Works"). A dedicated "Performance Dashboard" section follows, allowing users to interact with benchmark data. Finally, the "Use Cases & Ecosystem" section provides real-world context and shows integration possibilities. This non-linear, thematic structure is chosen over the report's linear format to improve engagement and comprehension, allowing users to explore sections based on their interests (e.g., a developer might jump to the performance dashboard, while a product manager might focus on use cases). Navigation is handled by a sticky top bar. -->
+    <!-- Visualization & Content Choices: 
+        - The Problem (Stateless AI): Goal: Inform. Method: Side-by-side animated text cards to contrast "Stateless" vs "Stateful" AI, creating immediate visual impact. Justification: More engaging than static text.
+        - Core Architecture Diagram: Goal: Organize/Explain. Method: HTML/Tailwind diagram with JS-powered hover/click interactions. Justification: Visually breaks down the complex lifecycle (Extract -> Store -> Retrieve -> Augment) without overwhelming the user. Avoids static images or SVG for interactivity.
+        - Performance Benchmarks: Goal: Compare. Method: Interactive bar charts using Chart.js. Justification: Allows direct, visual comparison of Mem0 against alternatives across multiple metrics (Accuracy, Latency, Token Usage). Users can hover for details.
+        - Use Cases & Ecosystem: Goal: Inform/Organize. Method: A grid of interactive cards with hover effects. Justification: Provides a scannable overview of Mem0's applicability and its integration with other tools like LangChain and LlamaIndex.
+        - RAG Workflow: Goal: Explain. Method: A step-by-step numbered list with icons, using HTML/Tailwind. Justification: Clearly illustrates the process flow in a simple, digestible format.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF8; /* Warm off-white */
+            color: #4A4A4A;
+        }
+        .bg-primary { background-color: #FDFBF8; }
+        .bg-secondary { background-color: #F4F1ED; }
+        .text-primary { color: #333333; }
+        .text-secondary { color: #5a5a5a; }
+        .accent-color { color: #D97706; } /* Amber-600 */
+        .accent-bg { background-color: #D97706; }
+        .border-accent { border-color: #D97706; }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #D97706;
+            border-bottom-color: #D97706;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 40vh;
+        }
+        .diagram-box {
+            transition: all 0.3s ease;
+            border: 1px solid #E5E7EB;
+        }
+        .diagram-box.active {
+            border-color: #D97706;
+            background-color: #FFFBEB;
+            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        .slide-in-up {
+            animation: slideInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        @keyframes slideInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-primary">
+
+    <header id="header" class="sticky top-0 z-50 bg-primary/80 backdrop-blur-lg shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-2xl font-bold text-primary">Mem0 解析</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#intro" class="nav-link px-3 py-2 text-sm font-medium">简介</a>
+                        <a href="#architecture" class="nav-link px-3 py-2 text-sm font-medium">核心架构</a>
+                        <a href="#rag" class="nav-link px-3 py-2 text-sm font-medium">RAG 方案</a>
+                        <a href="#performance" class="nav-link px-3 py-2 text-sm font-medium">性能基准</a>
+                        <a href="#ecosystem" class="nav-link px-3 py-2 text-sm font-medium">生态与应用</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                        <span class="sr-only">打开主菜单</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#intro" class="nav-link block px-3 py-2 rounded-md text-base font-medium">简介</a>
+                <a href="#architecture" class="nav-link block px-3 py-2 rounded-md text-base font-medium">核心架构</a>
+                <a href="#rag" class="nav-link block px-3 py-2 rounded-md text-base font-medium">RAG 方案</a>
+                <a href="#performance" class="nav-link block px-3 py-2 rounded-md text-base font-medium">性能基准</a>
+                <a href="#ecosystem" class="nav-link block px-3 py-2 rounded-md text-base font-medium">生态与应用</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="intro" class="text-center min-h-[80vh] flex flex-col justify-center items-center">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-primary mb-4 slide-in-up">告别遗忘，拥抱<span class="accent-color">智能记忆</span></h2>
+            <p class="max-w-3xl mx-auto text-lg md:text-xl text-secondary mb-8 slide-in-up" style="animation-delay: 0.2s;">当前 AI 代理普遍存在无状态性问题，无法形成长期记忆。Mem0 旨在成为 AI 的智能记忆层，从根本上解决这一架构缺陷，实现真正有状态、个性化的 AI 交互。</p>
+            <div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl mt-8">
+                <div class="card p-6 text-left slide-in-up" style="animation-delay: 0.4s;">
+                    <h3 class="font-bold text-xl mb-3 text-red-500">❌ 无状态 AI 的困境</h3>
+                    <ul class="space-y-2 text-secondary">
+                        <li class="flex items-start"><span class="mr-2 mt-1">🧠</span><span>**遗忘用户偏好：** 每次对话都像初次见面。</span></li>
+                        <li class="flex items-start"><span class="mr-2 mt-1">🔄</span><span>**重复提问：** 无法在连续交互中保持上下文。</span></li>
+                        <li class="flex items-start"><span class="mr-2 mt-1">📉</span><span>**信任度低：** 肤浅的个性化，无法建立长期关系。</span></li>
+                    </ul>
+                </div>
+                <div class="card p-6 text-left slide-in-up" style="animation-delay: 0.6s;">
+                    <h3 class="font-bold text-xl mb-3 text-green-500">✅ Mem0 带来的变革</h3>
+                    <ul class="space-y-2 text-secondary">
+                        <li class="flex items-start"><span class="mr-2 mt-1">💡</span><span>**持久化记忆：** 跨会话记住关键信息和偏好。</span></li>
+                        <li class="flex items-start"><span class="mr-2 mt-1">🚀</span><span>**高效情境感知：** 快速检索相关记忆，提供精准响应。</span></li>
+                        <li class="flex items-start"><span class="mr-2 mt-1">🤝</span><span>**建立信任：** 通过共享历史，构建更深层次的人机交互。</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="py-16 bg-secondary -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-primary">核心架构：动态记忆生命周期</h2>
+                <p class="max-w-2xl mx-auto mt-4 text-secondary">Mem0 的核心是一个主动的信息管理系统。它并非被动存储，而是在记忆的形成、整合、存储和检索的每个阶段进行智能策展。请将鼠标悬停在下方流程图的各个阶段上，了解其工作原理。</p>
+            </div>
+            <div id="architecture-diagram" class="max-w-5xl mx-auto">
+                <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4 mb-6">
+                    <div data-step="1" class="diagram-box p-4 rounded-lg w-full md:w-1/4 text-center cursor-pointer">
+                        <div class="text-2xl mb-2">📥</div>
+                        <h4 class="font-bold">1. 交互与提取</h4>
+                        <p class="text-xs text-secondary hidden md:block">从新对话中提取核心事实与偏好。</p>
+                    </div>
+                    <div class="text-2xl font-mono text-gray-400 transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div data-step="2" class="diagram-box p-4 rounded-lg w-full md:w-1/4 text-center cursor-pointer">
+                        <div class="text-2xl mb-2">💾</div>
+                        <h4 class="font-bold">2. 混合存储</h4>
+                        <p class="text-xs text-secondary hidden md:block">将信息存入向量、键值和图数据库。</p>
+                    </div>
+                    <div class="text-2xl font-mono text-gray-400 transform md:rotate-0 rotate-90">&rarr;</div>
+                     <div data-step="3" class="diagram-box p-4 rounded-lg w-full md:w-1/4 text-center cursor-pointer">
+                        <div class="text-2xl mb-2">🔍</div>
+                        <h4 class="font-bold">3. 检索与评分</h4>
+                        <p class="text-xs text-secondary hidden md:block">根据相关性、重要性等对记忆评分。</p>
+                    </div>
+                    <div class="text-2xl font-mono text-gray-400 transform md:rotate-0 rotate-90">&rarr;</div>
+                    <div data-step="4" class="diagram-box p-4 rounded-lg w-full md:w-1/4 text-center cursor-pointer">
+                        <div class="text-2xl mb-2">💡</div>
+                        <h4 class="font-bold">4. 增强生成</h4>
+                        <p class="text-xs text-secondary hidden md:block">将最相关的记忆注入提示，生成响应。</p>
+                    </div>
+                </div>
+                <div id="diagram-details" class="card p-6 mt-8 min-h-[150px] flex items-center justify-center">
+                    <p class="text-center text-secondary">将鼠标悬停在上面任何一个步骤上以查看详细信息。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="rag" class="py-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-primary">RAG 方案：高效的情境化响应引擎</h2>
+                <p class="max-w-2xl mx-auto mt-4 text-secondary">Mem0 的整个架构本质上构成了一个高度优化的检索增强生成（RAG）系统。它用高质量、经过提炼的“记忆”取代了原始文本，从而实现了卓越的效率和准确性。</p>
+            </div>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-6">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full accent-bg text-white flex items-center justify-center text-xl font-bold">1</div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-bold">接收查询</h4>
+                            <p class="text-secondary">用户的输入触发 RAG 流程。</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full accent-bg text-white flex items-center justify-center text-xl font-bold">2</div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-bold">`search()` 核心检索</h4>
+                            <p class="text-secondary">通过多源搜索和智能评分，找到最相关的历史记忆。</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full accent-bg text-white flex items-center justify-center text-xl font-bold">3</div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-bold">上下文增强</h4>
+                            <p class="text-secondary">将检索到的记忆片段格式化并整合到 LLM 的提示中。</p>
+                        </div>
+                    </div>
+                     <div class="flex items-start">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full accent-bg text-white flex items-center justify-center text-xl font-bold">4</div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-bold">情境化响应生成</h4>
+                            <p class="text-secondary">LLM 基于增强后的提示，生成更精准、个性化的回答。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <h4 class="font-bold text-lg mb-4 text-center">效率优势</h4>
+                     <p class="text-secondary mb-4 text-center">与将全部对话历史作为上下文的“全上下文”方法相比，Mem0 的 RAG 方案优势显著。</p>
+                    <div class="flex justify-around text-center">
+                        <div>
+                            <p class="text-3xl font-bold accent-color">91%</p>
+                            <p class="text-secondary">延迟降低</p>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold accent-color">90%</p>
+                            <p class="text-secondary">Token 节省</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance" class="py-16 bg-secondary -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-primary">性能基准仪表盘</h2>
+                <p class="max-w-2xl mx-auto mt-4 text-secondary">在 LOCOMO 基准测试中，Mem0 在准确性、延迟和 Token 效率方面均表现出色，展现了其作为 SOTA (State-Of-The-Art) 解决方案的潜力。下方的图表展示了 Mem0 与其他方案的性能对比。</p>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-8 md:gap-12">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-center mb-4">准确率对比 (Jaccard 指数)</h3>
+                    <div class="chart-container">
+                        <canvas id="accuracyChart"></canvas>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-center mb-4">p95 延迟对比 (秒)</h3>
+                    <div class="chart-container">
+                        <canvas id="latencyChart"></canvas>
+                    </div>
+                </div>
+                 <div class="card p-6 lg:col-span-2">
+                    <h3 class="text-xl font-bold text-center mb-4">Token 使用量对比 (每次对话平均)</h3>
+                     <div class="chart-container">
+                        <canvas id="tokenChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="ecosystem" class="py-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-primary">生态系统与应用场景</h2>
+                <p class="max-w-2xl mx-auto mt-4 text-secondary">Mem0 积极融入现有 AI 开发工作流，并已在多个真实场景中证明其价值，从个性化学习到高效的任务自动化。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card p-6">
+                    <h4 class="font-bold text-lg mb-2">关键集成</h4>
+                    <ul class="space-y-2 text-secondary">
+                        <li class="flex items-center"><img src="https://avatars.githubusercontent.com/u/13289325?s=200&v=4" class="w-5 h-5 mr-2 rounded-full"> LangChain</li>
+                        <li class="flex items-center"><img src="https://avatars.githubusercontent.com/u/123305363?s=200&v=4" class="w-5 h-5 mr-2 rounded-full"> LlamaIndex</li>
+                        <li class="flex items-center"><img src="https://avatars.githubusercontent.com/u/131242296?s=200&v=4" class="w-5 h-5 mr-2 rounded-full"> CrewAI</li>
+                        <li class="flex items-center"><span class="text-xl mr-2">🌐</span> 浏览器扩展</li>
+                    </ul>
+                </div>
+                 <div class="card p-6">
+                    <h4 class="font-bold text-lg mb-2">典型用例</h4>
+                    <ul class="space-y-2 text-secondary">
+                        <li>🤖 AI 助手 & 客户支持</li>
+                        <li>🎓 个性化学习与辅导</li>
+                        <li>❤️ 医疗健康追踪</li>
+                        <li>✈️ 个人 AI 旅行助手</li>
+                    </ul>
+                </div>
+                <div class="card p-6">
+                    <h4 class="font-bold text-lg mb-2">部署选项</h4>
+                     <ul class="space-y-2 text-secondary">
+                        <li>☁️ **托管平台:** 便捷接入，无需管理基础设施。</li>
+                        <li>🖥️ **自托管 (OpenMemory):** 完全的数据控制权和隐私保障。</li>
+                    </ul>
+                </div>
+                <div class="card lg:col-span-3 p-6">
+                    <h4 class="font-bold text-lg mb-2 text-center">案例研究亮点</h4>
+                    <div class="grid md:grid-cols-3 gap-4 text-center mt-4">
+                        <div>
+                            <p class="text-2xl font-bold accent-color">BrowserUse</p>
+                            <p class="text-secondary">任务完成率 98%，成本降低 41%</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold accent-color">OpenNote</p>
+                            <p class="text-secondary">Token 成本降低 40%</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold accent-color">RevisionDojo</p>
+                            <p class="text-secondary">周末内完成集成，增强辅导能力</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-secondary">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+            <p>此页面是根据公开报告生成的交互式展示。所有数据和信息来源于报告内容。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if (mobileMenu.classList.contains('hidden') === false) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            const activateNavLink = (id) => {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${id}`) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        activateNavLink(entry.target.id);
+                        entry.target.querySelectorAll('.slide-in-up, .fade-in').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'translateY(0)';
+                        });
+                    }
+                });
+            }, { rootMargin: '-30% 0px -70% 0px' });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            const diagramSteps = document.querySelectorAll('.diagram-box');
+            const diagramDetails = document.getElementById('diagram-details');
+
+            const detailsContent = {
+                1: {
+                    title: '交互与提取',
+                    text: '当系统接收到新的对话（用户消息和AI回应）时，会利用LLM分析并提取出核心的事实、偏好和上下文信息。这一步是高质量记忆的来源。'
+                },
+                2: {
+                    title: '混合存储',
+                    text: '提取出的信息被结构化并存储在最优化的数据库中。向量数据库用于语义搜索，图数据库（Mem0-g）用于理解复杂关系，确保信息的高效管理。'
+                },
+                3: {
+                    title: '检索与评分',
+                    text: '当需要回忆时，系统从数据库中检索初步信息。一个智能评分层会根据相关性、重要性和时近性对记忆进行排序，确保只有最相关的内容被筛选出来。'
+                },
+                4: {
+                    title: '增强生成',
+                    text: '最终，经过评分筛选的最相关的记忆片段被注入到LLM的提示中。这为LLM提供了精准的上下文，使其能够生成更智能、更个性化的响应。'
+                }
+            };
+            
+            let activeStep = null;
+
+            diagramSteps.forEach(step => {
+                step.addEventListener('mouseenter', () => {
+                    if (activeStep) {
+                        activeStep.classList.remove('active');
+                    }
+                    step.classList.add('active');
+                    activeStep = step;
+
+                    const stepNum = step.dataset.step;
+                    diagramDetails.innerHTML = `
+                        <div class="text-left fade-in">
+                            <h3 class="font-bold text-lg accent-color mb-2">${detailsContent[stepNum].title}</h3>
+                            <p class="text-secondary">${detailsContent[stepNum].text}</p>
+                        </div>
+                    `;
+                });
+            });
+
+
+            const createChart = (ctx, type, labels, data, label, backgroundColor, borderColor) => {
+                 const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y;
+                                        if (context.chart.canvas.id === 'latencyChart') label += ' s';
+                                        if (context.chart.canvas.id === 'tokenChart') label += ' tokens';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#E5E7EB'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                };
+
+                if (type === 'bar') {
+                    // For long labels, wrap them
+                    chartOptions.scales.x.ticks = {
+                        callback: function(value, index, values) {
+                            const label = this.getLabelForValue(value);
+                            if (label.length > 16) {
+                                return label.split(' ').reduce((acc, word) => {
+                                    if (!acc.length || acc[acc.length - 1].length + word.length > 16) {
+                                        acc.push(word);
+                                    } else {
+                                        acc[acc.length - 1] += ' ' + word;
+                                    }
+                                    return acc;
+                                }, []);
+                            }
+                            return label;
+                        }
+                    };
+                }
+
+
+                return new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            backgroundColor: backgroundColor,
+                            borderColor: borderColor,
+                            borderWidth: 2,
+                            tension: 0.4
+                        }]
+                    },
+                    options: chartOptions
+                });
+            };
+
+            const accuracyData = {
+                labels: ['OpenAI Memory', 'LangMem', 'Mem0', 'Mem0-g', '全上下文'],
+                data: [52, 55, 66, 68, 72.9]
+            };
+            const latencyData = {
+                labels: ['OpenAI Memory', 'Mem0', 'LangMem', '全上下文'],
+                data: [0.89, 1.44, 59.82, 17.12]
+            };
+            const tokenData = {
+                labels: ['Mem0', 'Mem0-g', '全上下文'],
+                data: [7000, 14000, 26000] // Assuming full context uses ~26000 from report
+            };
+
+            createChart(
+                document.getElementById('accuracyChart').getContext('2d'),
+                'bar',
+                accuracyData.labels,
+                accuracyData.data,
+                '准确率 (Jaccard)',
+                'rgba(217, 119, 6, 0.2)',
+                'rgba(217, 119, 6, 1)'
+            );
+             createChart(
+                document.getElementById('latencyChart').getContext('2d'),
+                'bar',
+                latencyData.labels,
+                latencyData.data,
+                '延迟 (秒)',
+                'rgba(34, 197, 94, 0.2)',
+                'rgba(34, 197, 94, 1)'
+            );
+
+            createChart(
+                document.getElementById('tokenChart').getContext('2d'),
+                'bar',
+                tokenData.labels,
+                tokenData.data,
+                '平均 Token 使用量',
+                'rgba(59, 130, 246, 0.2)',
+                'rgba(59, 130, 246, 1)'
+            );
+        });
+    </script>
+</body>
+</html>

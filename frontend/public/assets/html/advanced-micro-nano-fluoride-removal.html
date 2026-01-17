@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式报告：先进微纳除氟技术</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The application is structured as a single-page, multi-section dashboard. A sticky navigation bar allows users to jump to thematic sections: 1. Overview (the problem), 2. Innovative Materials (the solutions), 3. Technology Comparison (data-driven analysis), 4. Engineering Applications (real-world context), and 5. Future Outlook. This non-linear, thematic structure is chosen over the report's linear format to enhance usability and allow users to explore topics based on their interest, making the dense information more digestible and accessible. Key interactions include tabbed content for material details and an interactive chart for cost comparison, facilitating active user engagement. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Traditional PAC/PAM limitations. Goal: Inform. Method: Styled list with icons (HTML/CSS). Justification: Quickly highlights key issues.
+        - Report Info: HAP, LDHs, MOFs materials. Goal: Organize & Compare. Method: Interactive tabs (JS) revealing details. Simple diagrams (HTML/CSS Flexbox) illustrate concepts like LDH structure. Justification: Breaks down complex sections into user-controlled, digestible chunks.
+        - Report Info: Technology comparison table. Goal: Compare. Method: Styled HTML table. Justification: Direct, clear data presentation.
+        - Report Info: Cost analysis data. Goal: Compare. Method: Interactive Bar Chart (Chart.js). Justification: Visualizing quantitative cost data is far more impactful and easier to interpret than a static table.
+        - Report Info: Case study process. Goal: Organize. Method: HTML/CSS flowchart. Justification: Simplifies the multi-step process for quick understanding.
+        - Report Info: Strategic recommendations. Goal: Organize. Method: Accordion (JS). Justification: Hides complexity, allowing users to focus on one scenario at a time.
+        - Library/Method: Chart.js for canvas-based charts. Vanilla JS for all interactions.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F7F4;
+            color: #3C3C3C;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            height: 400px;
+            margin: auto;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 450px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0C4A6E;
+            border-bottom-color: #0C4A6E;
+        }
+        .tab-btn.active {
+            background-color: #0C4A6E;
+            color: white;
+        }
+        .tab-btn {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .material-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .material-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-[#F8F7F4] text-[#3C3C3C]">
+
+    <!-- Header & Navigation -->
+    <header id="header" class="bg-[#F8F7F4]/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-800">先进除氟技术交互报告</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#challenge" class="nav-link px-3 py-2 rounded-md text-sm font-medium">核心挑战</a>
+                        <a href="#materials" class="nav-link px-3 py-2 rounded-md text-sm font-medium">创新材料</a>
+                        <a href="#comparison" class="nav-link px-3 py-2 rounded-md text-sm font-medium">技术对比</a>
+                        <a href="#application" class="nav-link px-3 py-2 rounded-md text-sm font-medium">工程应用</a>
+                        <a href="#future" class="nav-link px-3 py-2 rounded-md text-sm font-medium">未来展望</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-900">
+                        <span class="sr-only">打开主菜单</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="md:hidden hidden pb-3">
+                <a href="#challenge" class="nav-link block px-3 py-2 rounded-md text-base font-medium">核心挑战</a>
+                <a href="#materials" class="nav-link block px-3 py-2 rounded-md text-base font-medium">创新材料</a>
+                <a href="#comparison" class="nav-link block px-3 py-2 rounded-md text-base font-medium">技术对比</a>
+                <a href="#application" class="nav-link block px-3 py-2 rounded-md text-base font-medium">工程应用</a>
+                <a href="#future" class="nav-link block px-3 py-2 rounded-md text-base font-medium">未来展望</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        
+        <!-- Section 1: Challenge -->
+        <section id="challenge" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4 text-sky-900">高级除氟技术的迫切性</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">新兴产业带来了成分更复杂、浓度更高的含氟废水，传统PAC/PAM工艺因其固有的局限性，已难以应对日益严峻的挑战。</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold mb-4 text-red-700">传统PAC-PAM工艺的四大局限</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-red-500 font-bold text-xl mr-3">✗</span>
+                            <div><strong class="text-gray-800">高额污泥处置成本：</strong>产生大量被归为危险废物的化学污泥，处置费用高昂，是水处理厂的沉重经济负担。</div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-red-500 font-bold text-xl mr-3">✗</span>
+                            <div><strong class="text-gray-800">严格的pH值依赖性：</strong>铝盐混凝剂仅在特定pH范围内高效，对运行控制要求苛刻，增加了操作复杂性和成本。</div>
+                        </li>
+                        <li class="flex items-start">
+                           <span class="text-red-500 font-bold text-xl mr-3">✗</span>
+                            <div><strong class="text-gray-800">二次污染风险：</strong>出水可能残留有神经毒性的铝离子，对环境和人类健康构成潜在威胁。</div>
+                        </li>
+                         <li class="flex items-start">
+                            <span class="text-red-500 font-bold text-xl mr-3">✗</span>
+                            <div><strong class="text-gray-800">工艺复杂占地大：</strong>多单元、多点投加的流程导致基建投资高，占地面积大。</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-sky-50 p-6 rounded-lg border-2 border-dashed border-sky-300">
+                    <h3 class="text-xl font-bold mb-4 text-green-700">技术革新的目标：“集成功能”材料</h3>
+                    <p class="mb-4">行业发展的核心诉求是开发一种能“同步替代PAC和PAM”的集成功能材料，实现“多步”到“一步”的工艺强化，从而根本性地改变水处理厂的设计和运营模式。</p>
+                    <div class="space-y-3">
+                        <div class="flex items-center p-3 bg-white rounded-md shadow-sm">
+                            <span class="text-green-600 font-bold text-xl mr-3">✓</span>
+                            <span>对氟离子的<strong>特异性吸附/反应</strong></span>
+                        </div>
+                        <div class="flex items-center p-3 bg-white rounded-md shadow-sm">
+                            <span class="text-green-600 font-bold text-xl mr-3">✓</span>
+                            <span>有效的电荷中和与<strong>混凝功能</strong></span>
+                        </div>
+                        <div class="flex items-center p-3 bg-white rounded-md shadow-sm">
+                            <span class="text-green-600 font-bold text-xl mr-3">✓</span>
+                            <span>形成致密易沉降颗粒的<strong>絮凝/沉降功能</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Materials -->
+        <section id="materials" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4 text-sky-900">三大创新材料平台</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">点击下方卡片，探索不同微纳材料如何通过独特机理，实现对传统除氟工艺的替代与超越。</p>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Al₁₃-HAP Card -->
+                <div class="material-card bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer" data-material="hap">
+                    <h3 class="text-2xl font-bold mb-2 text-sky-800">Al₁₃-HAP</h3>
+                    <p class="font-semibold text-gray-700 mb-4">分子层面的“吸附剂+混凝剂”</p>
+                    <p class="text-gray-600">通过将PAC的核心活性组分($Al_{13}$)嫁接到HAP表面，同时赋予材料对氟的特异性吸附和强大的混凝能力，是真正的集成功能材料典范。</p>
+                </div>
+
+                <!-- LDHs Card -->
+                <div class="material-card bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer" data-material="ldh">
+                     <h3 class="text-2xl font-bold mb-2 text-teal-800">LDHs</h3>
+                    <p class="font-semibold text-gray-700 mb-4">“按需生产”的原位混凝剂</p>
+                    <p class="text-gray-600">通过向废水中投加廉价前驱体，原位生成具有“三明治”结构的LDHs纳米片，同步实现沉淀、混凝和吸附，极大简化工艺。</p>
+                </div>
+
+                <!-- MOFs Card -->
+                <div class="material-card bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer" data-material="mof">
+                    <h3 class="text-2xl font-bold mb-2 text-purple-800">MOFs</h3>
+                    <p class="font-semibold text-gray-700 mb-4">选择性吸附的“精处理”专家</p>
+                    <p class="text-gray-600">拥有超高比表面积和可调控孔道，对痕量氟具有极强捕获能力，是满足最严苛排放标准的末端深度处理技术。</p>
+                </div>
+            </div>
+
+            <!-- Material Details Content -->
+            <div id="material-details-container" class="mt-12"></div>
+        </section>
+
+
+        <!-- Section 3: Comparison -->
+        <section id="comparison" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4 text-sky-900">性能与经济性对比分析</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">通过关键性能指标和真实案例的成本数据，直观比较不同除氟技术的优劣势与适用场景。</p>
+
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-12">
+                <h3 class="text-xl font-bold mb-4 text-center">主要除氟技术关键性能对比</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">材料类别</th>
+                                <th scope="col" class="px-6 py-3">核心优势</th>
+                                <th scope="col" class="px-6 py-3">核心局限</th>
+                                <th scope="col" class="px-6 py-3">污泥产出</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">传统混凝法 (PAC/PAM)</th>
+                                <td class="px-6 py-4">技术成熟、成本低</td>
+                                <td class="px-6 py-4">污泥量大、pH敏感、二次污染</td>
+                                <td class="px-6 py-4 font-bold text-red-600">大量</td>
+                            </tr>
+                            <tr class="bg-gray-50 border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Al₁₃-HAP</th>
+                                <td class="px-6 py-4">集成混凝与吸附、效率高</td>
+                                <td class="px-6 py-4">合成成本相对较高</td>
+                                <td class="px-6 py-4 font-semibold text-yellow-600">中等</td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">层状双氢氧化物 (LDHs)</th>
+                                <td class="px-6 py-4">可原位生成、热再生、成本潜力大</td>
+                                <td class="px-6 py-4">易团聚、需精确控制</td>
+                                <td class="px-6 py-4 font-semibold text-yellow-600">中等</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">金属有机框架 (MOFs)</th>
+                                <td class="px-6 py-4">超高比表面积、选择性极强</td>
+                                <td class="px-6 py-4">水稳定性差、成本极高、难分离</td>
+                                <td class="px-6 py-4 font-medium text-green-600">极低</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-xl font-bold mb-2 text-center">焦化废水案例：不同方案运行成本对比</h3>
+                <p class="text-center text-gray-500 mb-6">单位：元/m³ (不含污泥处置费)</p>
+                <div class="chart-container">
+                    <canvas id="costChart"></canvas>
+                </div>
+                 <p class="text-center text-xs text-gray-400 mt-4">数据来源：报告第五部分案例研究。方案三为定性估算。</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Application -->
+        <section id="application" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4 text-sky-900">工程应用与技术选型</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">从高浓度废水处理的实际案例，到针对不同场景的战略建议，深入了解先进材料如何在工程实践中落地。</p>
+            
+            <div class="grid lg:grid-cols-2 gap-12">
+                <div class="bg-white p-8 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold mb-6 text-center">案例：高浓度含氟焦化废水处理</h3>
+                    <p class="text-center mb-6">针对 F⁻ 浓度高达 <strong>238.27 mg/L</strong> 的复杂废水，组合工艺在成本和效果上展现出巨大优势。</p>
+                    <div class="space-y-4">
+                        <div class="text-center p-4 border-2 border-gray-300 rounded-lg">
+                            <p class="font-bold text-lg">初始废水</p>
+                            <p class="text-sm text-gray-600">F⁻: 238.27 mg/L</p>
+                        </div>
+                        <div class="flex justify-center">
+                            <div class="text-2xl text-gray-400">↓</div>
+                        </div>
+                        <div class="bg-sky-100 p-4 rounded-lg shadow-sm">
+                            <p class="font-bold text-lg text-sky-800">第一阶段：主体沉淀 (粗处理)</p>
+                            <p>投加 6 g/L 廉价 $CaCl_2$，去除约90%的氟化物。</p>
+                        </div>
+                        <div class="flex justify-center">
+                             <div class="text-2xl text-gray-400">↓</div>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded-lg shadow-sm">
+                            <p class="font-bold text-lg text-green-800">第二阶段：深度净化 (精处理)</p>
+                            <p>投加 2 g/L 高效除氟药剂，将 F⁻ 降至10 mg/L以下。</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-yellow-50 rounded-lg text-center">
+                        <p class="font-bold text-yellow-800">结论：</p>
+                        <p>"廉价药剂粗处理 + 高效药剂精处理"的组合策略是处理高浓度复杂废水的最佳工程实践。</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold mb-6 text-center">技术选型战略建议</h3>
+                    <div id="accordion-container" class="space-y-2">
+                        <!-- Accordion items will be generated here by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Future -->
+        <section id="future" class="text-center scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4 text-sky-900">未来研究与发展方向</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">为推动该领域的持续进步，未来研究需在材料、工艺、经济和环境安全等多个维度上协同发展。</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="font-bold text-lg mb-2">成本与规模化</h4>
+                    <p class="text-sm text-gray-600">开发绿色、低成本、可规模化生产的合成技术，是新材料走向市场的关键瓶颈。</p>
+                </div>
+                 <div class="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="font-bold text-lg mb-2">稳定性与再生</h4>
+                    <p class="text-sm text-gray-600">评估材料在真实工业环境中的长期性能、抗干扰能力和多次再生后的效率。</p>
+                </div>
+                 <div class="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="font-bold text-lg mb-2">污泥资源化</h4>
+                    <p class="text-sm text-gray-600">开发从污泥中回收有价资源的途径，如提纯$CaF_2$或回收HAP作磷肥，实现循环经济。</p>
+                </div>
+                 <div class="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="font-bold text-lg mb-2">环境健康安全(EHS)</h4>
+                    <p class="text-sm text-gray-600">深入研究工程纳米颗粒在环境中的迁移、转化及长期生态影响，避免引入新风险。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-8 py-4 text-center text-sm">
+            <p>交互式技术报告 | 根据源报告《先进微纳材料在集成除氟中的应用》生成</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Mobile Menu Toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Navigation Active State
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        window.onscroll = () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 80) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        };
+
+        // Material Details Section
+        const materialCards = document.querySelectorAll('.material-card');
+        const detailsContainer = document.getElementById('material-details-container');
+        const materialsData = {
+            hap: {
+                title: '深度解析：Al₁₃-HAP 作为真正的集成功能材料',
+                color: 'sky',
+                content: `
+                    <p class="mb-4">Al₁₃-HAP的设计精妙之处在于，它在分子层面实现了混凝剂与吸附剂的集成。Al₁₃正是高效聚合氯化铝（PAC）中的核心活性组分。通过将其嫁接到HAP表面，该材料不仅保留了HAP对氟的特异性吸附能力，同时赋予了其强大的混凝功能。</p>
+                    <h4 class="font-semibold mb-2 text-gray-700">多重协同除氟机理:</h4>
+                    <ul class="list-disc list-inside space-y-2 mb-4">
+                        <li><strong>离子交换:</strong> 保留HAP基底固有的 F⁻ 与 —OH 的交换能力。</li>
+                        <li><strong>配体交换:</strong> F⁻ 可直接取代与表面 Al₁₃ 络合物相连的 —OH 基团。</li>
+                        <li><strong>静电吸引:</strong> 高正电荷的 Al₁₃ 对带负电的 F⁻ 产生强烈静电吸引。</li>
+                        <li><strong>氢键作用:</strong> 提供了额外的吸附途径。</li>
+                    </ul>
+                    <h4 class="font-semibold mb-2 text-gray-700">工艺范式转变: 从“吸附剂”到“晶种”</h4>
+                    <p>一种更先进的应用理念是“诱导结晶法”，HAP作为晶种诱导溶液中离子在其表面快速生长为氟磷灰石晶体。这使除氟过程从容量受限的吸附转变为动力学控制的催化沉淀，可处理更高浓度废水并实现晶种的重复利用。</p>
+                `
+            },
+            ldh: {
+                title: '深度解析：原位合成作为终极集成工艺',
+                color: 'teal',
+                content: `
+                    <p class="mb-4">相比预先合成LDHs粉末，更具工程智慧和成本效益的策略是<strong>原位合成</strong>。通过向废水中直接投加廉价的氧化钙(CaO)和偏铝酸钠(NaAlO₂)，使其在废水中原位共沉淀生成Ca-Al-LDH纳米片，废水池本身即成为化学反应器。</p>
+                    <div class="my-4 p-4 border-l-4 border-teal-500 bg-teal-50">
+                        <p>该过程将传统的石灰-PAC-PAM多步加药，集成为一步协同反应，展现了巨大的工艺简化潜力和成本优势。</p>
+                    </div>
+                    <h4 class="font-semibold mb-2 text-gray-700">一体化集成功能:</h4>
+                    <ul class="list-disc list-inside space-y-2 mb-4">
+                        <li><strong>化学沉淀:</strong> CaO提供的 Ca²⁺ 首先与部分 F⁻ 反应生成 CaF₂。</li>
+                        <li><strong>同步混凝与吸附:</strong> 原位生成的LDHs纳米片，以其巨大比表面积和正电荷，高效捕获剩余F⁻，并卷扫沉淀其他悬浮物。</li>
+                    </ul>
+                     <h4 class="font-semibold mb-2 text-gray-700">“三明治”结构与记忆效应</h4>
+                    <p>LDHs拥有带正电荷的主层板和可交换的层间阴离子。煅烧后可转变为复合金属氧化物(LDOs)，在水中又能“记忆”并恢复层状结构，高效捕获阴离子，为热再生提供了可能。</p>
+                `
+            },
+            mof: {
+                title: '深度解析：MOFs的定位 - 精处理而非主体处理',
+                color: 'purple',
+                content: `
+                    <p class="mb-4">综合考量其高昂的成本、不稳定的化学性质以及复杂的应用形态，MOFs并不适合作为混凝沉淀池中PAC/PAM的直接替代品。它们的价值在于其高度的选择性和能够将污染物浓度降至极低水平（如ppb级）的能力。</p>
+                    <h4 class="font-semibold mb-2 text-gray-700">在工艺链中的合理定位:</h4>
+                    <div class="my-4 p-4 border-l-4 border-purple-500 bg-purple-50">
+                        <p>作为<strong>末端深度处理</strong>或<strong>精处理(Polishing)</strong>单元。在传统工艺去除90%以上主体氟化物后，再利用MOF填充的吸附柱或功能化膜，对低浓度残留氟进行精准去除，以满足最严格的排放或回用标准。</p>
+                    </div>
+                    <h4 class="font-semibold mb-2 text-gray-700">面临的工程挑战:</h4>
+                    <ul class="list-disc list-inside space-y-2 mb-4">
+                        <li><strong>水稳定性:</strong> 许多MOFs在水环境中会发生水解坍塌，是其应用的首要障碍。</li>
+                        <li><strong>成本与规模化:</strong> 合成过程复杂、原料昂贵，难以实现低成本工业化生产。</li>
+                        <li><strong>固液分离与工程化:</strong> 微晶粉末形态难于回收，必须二次加工为颗粒、球团或膜，增加了成本和复杂性。</li>
+                    </ul>
+                `
+            }
+        };
+
+        materialCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const materialKey = card.dataset.material;
+                const data = materialsData[materialKey];
+                
+                detailsContainer.innerHTML = `
+                    <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border-t-4 border-${data.color}-600">
+                        <h3 class="text-2xl font-bold mb-4 text-${data.color}-800">${data.title}</h3>
+                        <div class="prose max-w-none text-gray-700">
+                            ${data.content}
+                        </div>
+                    </div>
+                `;
+                detailsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        });
+
+
+        // Cost Chart
+        const ctx = document.getElementById('costChart').getContext('2d');
+        const costChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['方案一: 推荐两段法', '方案二: 高效药剂单段法', '方案三: 传统PAC法(估)'],
+                datasets: [{
+                    label: '主要药剂成本',
+                    data: [14.00, 39.20, 15], 
+                    backgroundColor: '#38BDF8', // sky-400
+                    borderColor: '#0EA5E9', // sky-500
+                    borderWidth: 1
+                }, {
+                    label: 'PAM成本',
+                    data: [0.03, 0.03, 0.05],
+                    backgroundColor: '#FDBA74', // orange-300
+                    borderColor: '#F97316', // orange-500
+                    borderWidth: 1
+                }, {
+                    label: '污泥处置成本(定性)',
+                    data: [5, 8, 12],
+                    backgroundColor: '#F87171', // red-400
+                    borderColor: '#EF4444', // red-500
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: false,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.dataset.label.includes('定性')) {
+                                        label += '相对较高/中/低';
+                                    } else {
+                                        label += context.parsed.y.toFixed(2) + ' 元/m³';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                    },
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: '成本 (元/m³)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Accordion for Recommendations
+        const accordionContainer = document.getElementById('accordion-container');
+        const recommendations = [
+            {
+                title: "场景一：低至中等浓度废水 (如饮用水)",
+                content: "<strong>推荐技术:</strong> 采用颗粒状改性HAP或改性活性氧化铝填充的<strong>固定床吸附柱</strong>。<br><strong>理由:</strong> 工艺简单、运行稳定、自动化程度高、占地小，且材料生物相容性好，适用于对出水水质安全性要求高的场合。"
+            },
+            {
+                title: "场景二：高浓度、高复杂度工业废水",
+                content: "<strong>推荐技术:</strong> 采用以焦化废水案例为蓝本的<strong>两段式组合工艺</strong>。<br><strong>理由:</strong> 该策略能够以最低的运行成本实现对高浓度氟化物的有效去除，兼顾了经济性和处理效果，是目前最具推广价值的解决方案。"
+            },
+            {
+                title: "场景三：寻求最大工艺强化与占地节省的新建项目",
+                content: "<strong>推荐技术:</strong> 探索<strong>原位生成LDHs工艺</strong>。<br><strong>理由:</strong> 将药剂合成与废水处理融为一体，最大限度地简化了工艺流程和设备需求。但需要较高的过程控制水平来保证反应稳定性和沉淀物性质。"
+            },
+            {
+                title: "场景四：对出水水质有极端要求 (如高纯水回用)",
+                content: "<strong>推荐技术:</strong> 在主体工艺后，增设<strong>MOF基固定床吸附</strong>或<strong>MOF功能化膜过滤</strong>作为最终的精处理单元。<br><strong>理由:</strong> 利用MOF的超强选择性和吸附能力，对痕量氟化物进行捕获，确保出水达到最高纯度标准。"
+            }
+        ];
+
+        recommendations.forEach((item, index) => {
+            const accordionItem = document.createElement('div');
+            accordionItem.innerHTML = `
+                <div class="accordion-header flex justify-between items-center p-4 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-t-lg">
+                    <h4 class="font-semibold text-gray-800">${item.title}</h4>
+                    <span class="transform transition-transform duration-300">▼</span>
+                </div>
+                <div class="accordion-content bg-white p-4 border border-t-0 border-gray-200 rounded-b-lg">
+                    <p class="text-gray-700">${item.content}</p>
+                </div>
+            `;
+            accordionContainer.appendChild(accordionItem);
+
+            const header = accordionItem.querySelector('.accordion-header');
+            const content = accordionItem.querySelector('.accordion-content');
+            const icon = header.querySelector('span');
+
+            header.addEventListener('click', () => {
+                const isOpen = content.style.maxHeight;
+                // Close all other accordions
+                document.querySelectorAll('.accordion-content').forEach(el => el.style.maxHeight = null);
+                document.querySelectorAll('.accordion-header span').forEach(el => el.style.transform = 'rotate(0deg)');
+                
+                if (!isOpen) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

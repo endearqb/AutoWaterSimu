@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式微纳除氟技术决策应用</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Tech -->
+    <!-- Application Structure Plan: The application is designed as a task-oriented, single-page dashboard to guide users from understanding the problem to making a decision. The structure is non-linear, allowing users to jump to sections of interest via a sticky navigation bar. It starts with a high-level comparison (Old vs. New), details the core technologies (La vs. Zr), provides an interactive chart for quantitative comparison, shows practical applications through case studies, and culminates in an interactive decision-support tool. This structure was chosen to transform a dense, linear report into an intuitive, exploratory experience for technical professionals, prioritizing quick insights and actionable conclusions over passive reading. -->
+    <!-- Visualization & Content Choices: 
+    - Report Info: Traditional vs. New Process -> Goal: Inform -> Viz: HTML/CSS side-by-side diagram -> Interaction: Static visual comparison -> Justification: Clearly illustrates the primary value proposition (simplicity) without user input.
+    - Report Info: La vs. Zr materials -> Goal: Compare -> Viz: Tabbed content cards -> Interaction: Click to switch between material details -> Justification: Organizes detailed information cleanly, allowing focused comparison.
+    - Report Info: Table 1 Performance Data -> Goal: Compare -> Viz: Interactive Bar Chart (Chart.js/Canvas) -> Interaction: Buttons to switch displayed metrics (removal rate, cost, etc.) -> Justification: Transforms a static table into a dynamic tool, enabling users to compare technologies based on their own priorities.
+    - Report Info: Decision Framework -> Goal: Guide/Decide -> Viz: Multi-step form/wizard -> Interaction: User selects inputs (water quality, goals) to receive a tailored recommendation -> Justification: Provides direct, personalized value by operationalizing the report's conclusions into a practical tool. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #f8fafc; color: #334155; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 320px; max-height: 450px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .nav-link { transition: color 0.3s, border-color 0.3s; }
+        .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; }
+        .btn-metric.active { background-color: #1d4ed8; color: white; }
+        .tech-tab.active { border-color: #2563eb; background-color: #eff6ff; }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <header id="header" class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-blue-600">微纳除氟技术</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#tech-leap" class="nav-link text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">技术革新</a>
+                        <a href="#core-paths" class="nav-link text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">核心材料</a>
+                        <a href="#performance" class="nav-link text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">性能对比</a>
+                        <a href="#scenarios" class="nav-link text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">应用场景</a>
+                        <a href="#decision-tool" class="nav-link text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">决策助手</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="bg-white pt-20 pb-12">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl md:text-5xl font-extrabold text-slate-800 tracking-tight">革新水处理：一步法高效除氟</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">告别传统多药剂、多步骤的复杂工艺。本应用将深度解析以微纳材料为核心的一体化除氟技术，助您轻松选择最高效、经济的解决方案。</p>
+            </div>
+        </section>
+
+        <section id="tech-leap" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-slate-800">技术革新：从三步到一步</h3>
+                    <p class="mt-2 text-md text-slate-500">先进微纳材料通过一体化设计，将复杂的处理流程简化为单一单元操作。</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                        <h4 class="text-xl font-bold text-center text-red-600 mb-4">传统三步法工艺</h4>
+                        <div class="space-y-4 text-center text-sm">
+                            <div class="p-3 bg-red-50 rounded-lg">
+                                <p class="font-semibold">1. 混凝</p>
+                                <p class="text-slate-600">投加 PAC (聚合氯化铝)</p>
+                            </div>
+                            <div class="text-2xl text-red-400">▼</div>
+                            <div class="p-3 bg-red-50 rounded-lg">
+                                <p class="font-semibold">2. 絮凝</p>
+                                <p class="text-slate-600">投加 PAM (聚丙烯酰胺)</p>
+                            </div>
+                            <div class="text-2xl text-red-400">▼</div>
+                             <div class="p-3 bg-red-50 rounded-lg">
+                                <p class="font-semibold">3. 化学沉淀</p>
+                                <p class="text-slate-600">投加石灰 (氢氧化钙)</p>
+                            </div>
+                            <div class="mt-6 pt-4 border-t">
+                                <h5 class="font-semibold text-slate-700">弊端</h5>
+                                <ul class="mt-2 text-left list-disc list-inside text-slate-600 space-y-1">
+                                    <li>工艺复杂，占地面积大</li>
+                                    <li>药剂种类多，运营成本高</li>
+                                    <li>污泥产量巨大，处置困难</li>
+                                    <li>出水氟浓度难以稳定达标 (<10-20 mg/L)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-lg border-2 border-blue-500">
+                        <h4 class="text-xl font-bold text-center text-blue-600 mb-4">新型一步法工艺</h4>
+                         <div class="space-y-4 text-center text-sm">
+                            <div class="p-3 bg-blue-50 rounded-lg">
+                                <p class="font-semibold">1. 一体化处理</p>
+                                <p class="text-slate-600">投加 单一微纳除氟材料</p>
+                            </div>
+                            <div class="text-2xl text-blue-400">▼</div>
+                            <div class="p-3 bg-blue-50 rounded-lg">
+                                <p class="font-semibold">2. 高效固液分离</p>
+                                <p class="text-slate-600">沉淀或过滤</p>
+                            </div>
+                             <div class="mt-16 pt-4 border-t">
+                                <h5 class="font-semibold text-slate-700">优势</h5>
+                                <ul class="mt-2 text-left list-disc list-inside text-slate-600 space-y-1">
+                                    <li>工艺简化，节省投资</li>
+                                    <li>单一药剂，操作便捷</li>
+                                    <li>污泥产量显著减少</li>
+                                    <li>出水品质高，可稳定达标 (<1.5 mg/L)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="mt-12 bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-bold text-slate-800 mb-3">一体化机理揭秘</h4>
+                    <p class="text-slate-600 mb-4">单一材料之所以能同步替代PAC和PAM，源于其精妙的复合功能设计，在一个步骤中协同实现三大核心作用：</p>
+                    <div class="grid md:grid-cols-3 gap-4 text-center">
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <h5 class="font-bold text-blue-700">类PAC功能</h5>
+                            <p class="text-sm text-slate-600 mt-1">材料表面带正电荷，能中和水中胶体颗粒，实现“脱稳”混凝。</p>
+                        </div>
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <h5 class="font-bold text-green-700">类PAM功能</h5>
+                            <p class="text-sm text-slate-600 mt-1">独特的微纳网络或长链结构，能架桥、网捕微小颗粒，形成易于沉降的絮体。</p>
+                        </div>
+                         <div class="bg-slate-100 p-4 rounded-lg">
+                            <h5 class="font-bold text-purple-700">核心除氟功能</h5>
+                            <p class="text-sm text-slate-600 mt-1">通过高效沉淀、离子交换、表面络合等多种机制，靶向去除氟离子。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="core-paths" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-slate-800">两大核心材料平台</h3>
+                    <p class="mt-2 text-md text-slate-500">了解镧(La)基和锆(Zr)基两大主流技术路径的特点与区别，做出明智选择。</p>
+                </div>
+                <div id="tech-tabs-container" class="grid md:grid-cols-2 gap-6 lg:gap-8">
+                    <div id="tech-la" class="tech-tab active p-6 border-2 rounded-xl cursor-pointer transition-all duration-300">
+                        <h4 class="text-2xl font-bold text-sky-600">镧(La)基体系</h4>
+                        <p class="text-slate-500 mt-1 mb-4">高效沉淀剂，适用于高浓度含氟废水</p>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start"><span class="text-sky-500 mr-3 text-xl">🎯</span><div><strong class="font-semibold">核心机理:</strong> 化学沉淀。利用镧离子与氟离子形成溶解度极低的LaF₃沉淀。</div></li>
+                            <li class="flex items-start"><span class="text-sky-500 mr-3 text-xl">💧</span><div><strong class="font-semibold">适用场景:</strong> 高浓度、高盐分、大水量的工业废水（如氟化工、冶炼）。</div></li>
+                            <li class="flex items-start"><span class="text-sky-500 mr-3 text-xl">♻️</span><div><strong class="font-semibold">再生潜力:</strong> 无（消耗型）。目标是生成稳定污泥并去除。</div></li>
+                            <li class="flex items-start"><span class="text-sky-500 mr-3 text-xl">🔑</span><div><strong class="font-semibold">关键参数:</strong> La/F摩尔比和pH值是决定成败的关键。</div></li>
+                        </ul>
+                    </div>
+                     <div id="tech-zr" class="tech-tab p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 border-gray-200">
+                        <h4 class="text-2xl font-bold text-teal-600">锆(Zr)基体系</h4>
+                        <p class="text-slate-500 mt-1 mb-4">稳定可再生的吸附剂，适用于精处理</p>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start"><span class="text-teal-500 mr-3 text-xl">🎯</span><div><strong class="font-semibold">核心机理:</strong> 离子交换。材料表面的Zr-OH与水中的F⁻发生选择性交换。</div></li>
+                            <li class="flex items-start"><span class="text-teal-500 mr-3 text-xl">💧</span><div><strong class="font-semibold">适用场景:</strong> 饮用水处理或作为低浓度废水的深度处理（精处理）单元。</div></li>
+                            <li class="flex items-start"><span class="text-teal-500 mr-3 text-xl">♻️</span><div><strong class="font-semibold">再生潜力:</strong> 高（可再生）。通过碱洗脱可多次循环使用。</div></li>
+                            <li class="flex items-start"><span class="text-teal-500 mr-3 text-xl">🔑</span><div><strong class="font-semibold">关键优势:</strong> 化学性质稳定，污泥产量极低，生命周期成本可控。</div></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-slate-800">全景性能对比</h3>
+                    <p class="mt-2 text-md text-slate-500">通过交互式图表，直观对比不同除氟技术的关键性能指标。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-6">
+                        <button class="btn-metric active px-4 py-2 text-sm font-semibold rounded-full bg-blue-600 text-white transition" data-metric="removalRate">典型去除率 (%)</button>
+                        <button class="btn-metric px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 transition" data-metric="minConcentration">可达最低F⁻浓度 (mg/L)</button>
+                        <button class="btn-metric px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 transition" data-metric="sludgeProduction">污泥产量 (相对值)</button>
+                        <button class="btn-metric px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 transition" data-metric="costEffectiveness">成本效益 (相对值)</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="techCompareChart"></canvas>
+                    </div>
+                    <div id="chart-context-info" class="mt-6 p-4 bg-slate-50 rounded-lg text-center">
+                        <p class="text-slate-600">点击指标按钮切换图表。将鼠标悬停在图表条上可查看具体数值。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="scenarios" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-slate-800">典型应用场景与策略</h3>
+                    <p class="mt-2 text-md text-slate-500">了解新技术在不同水质和工业场景下的具体应用策略与效果。</p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <h4 class="text-xl font-bold text-slate-800">高盐/复杂工业废水</h4>
+                        <p class="text-sm text-slate-500 mb-4">(如：煤化工、冶金)</p>
+                        <p class="font-semibold text-slate-700">挑战:</p>
+                        <p class="mb-3 text-slate-600">共存离子干扰严重，对吸附法造成挑战，且是膜法预处理的关键瓶颈。</p>
+                        <p class="font-semibold text-slate-700">推荐策略:</p>
+                        <p class="text-slate-600">优先考虑<strong class="text-sky-600">镧盐沉淀法</strong>，其机理稳健，抗干扰能力强。或采用复合药剂进行两级处理，兼顾成本与效果。</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <h4 class="text-xl font-bold text-slate-800">饮用水/低浓度精处理</h4>
+                        <p class="text-sm text-slate-500 mb-4">(如：地表水、深度处理出水)</p>
+                        <p class="font-semibold text-slate-700">挑战:</p>
+                        <p class="mb-3 text-slate-600">要求出水稳定达到极低标准 (<1.5 mg/L)，且对工艺安全性、稳定性和成本高度敏感。</p>
+                        <p class="font-semibold text-slate-700">推荐策略:</p>
+                        <p class="text-slate-600">优先考虑可再生的<strong class="text-teal-600">锆基吸附剂</strong>，采用固定床工艺，实现污泥最小化和可持续运行。</p>
+                    </div>
+                     <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <h4 class="text-xl font-bold text-slate-800">膜法水处理预处理</h4>
+                        <p class="text-sm text-slate-500 mb-4">(如：RO/NF系统前)</p>
+                        <p class="font-semibold text-slate-700">挑战:</p>
+                        <p class="mb-3 text-slate-600">原水中的F⁻和Ca²⁺会在膜浓缩侧形成CaF₂结垢，严重损害膜元件，是零排放工艺的核心痛点。</p>
+                        <p class="font-semibold text-slate-700">推荐策略:</p>
+                        <p class="text-slate-600">在膜系统前设置高效除氟单元，将F⁻降至1.5 mg/L以下。一体化药剂还能同步去除悬浮物，为膜系统提供双重保护。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="decision-tool" class="py-16 md:py-24">
+             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-slate-800">智能决策助手</h3>
+                    <p class="mt-2 text-md text-slate-500">通过两步简单选择，获取为您量身定制的技术路径建议。</p>
+                </div>
+                <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold text-slate-700 mb-3">第一步：您的进水水质是？</h4>
+                             <div class="space-y-2">
+                                <label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="radio" name="water-quality" value="high" class="form-radio h-5 w-5 text-blue-600">
+                                    <span class="ml-3 text-slate-700">高浓度 (>50mg/L) & 高盐分</span>
+                                </label>
+                                 <label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="radio" name="water-quality" value="medium" class="form-radio h-5 w-5 text-blue-600">
+                                    <span class="ml-3 text-slate-700">中等浓度 & 组分复杂</span>
+                                </label>
+                                 <label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="radio" name="water-quality" value="low" class="form-radio h-5 w-5 text-blue-600">
+                                    <span class="ml-3 text-slate-700">低浓度 (<10mg/L) / 饮用水</span>
+                                </label>
+                            </div>
+                        </div>
+                         <div>
+                            <h4 class="text-lg font-semibold text-slate-700 mb-3">第二步：您的核心目标是？</h4>
+                             <div class="space-y-2">
+                                <label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="radio" name="goal" value="cost" class="form-radio h-5 w-5 text-blue-600">
+                                    <span class="ml-3 text-slate-700">最低运营成本 (OPEX)</span>
+                                </label>
+                                 <label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="radio" name="goal" value="simple" class="form-radio h-5 w-5 text-blue-600">
+                                    <span class="ml-3 text-slate-700">最简化操作</span>
+                                </label>
+                                 <label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="radio" name="goal" value="green" class="form-radio h-5 w-5 text-blue-600">
+                                    <span class="ml-3 text-slate-700">污泥最小化 / 可持续性</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <button id="get-recommendation" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition-transform transform hover:scale-105">获取推荐方案</button>
+                    </div>
+
+                    <div id="recommendation-result" class="hidden mt-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                        <h4 id="rec-title" class="text-xl font-bold text-blue-800"></h4>
+                        <p id="rec-desc" class="mt-2 text-blue-900"></p>
+                        <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm">
+                           <div>
+                                <h5 class="font-semibold text-slate-700">✅ 优势:</h5>
+                                <p id="rec-pros" class="mt-1 text-slate-600"></p>
+                           </div>
+                           <div>
+                                <h5 class="font-semibold text-slate-700">⚠️ 注意事项:</h5>
+                                <p id="rec-cons" class="mt-1 text-slate-600"></p>
+                           </div>
+                        </div>
+                        <p class="mt-4 font-bold text-slate-800">下一步建议：任何方案的最终选择都应基于使用真实废水的实验室烧杯实验和小试验证结果。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-white">
+        <div class="container mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-sm text-slate-400">
+            <p>本应用内容根据“微纳除氟材料深度研究报告”生成，旨在提供交互式技术概览与决策支持。</p>
+            <p>&copy; 2024 交互式技术洞察</p>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const chartData = {
+                labels: ['镧盐沉淀', '锆基吸附', '复合一体化药剂', '传统石灰沉淀', '活性氧化铝'],
+                datasets: {
+                    removalRate: {
+                        label: '典型去除率 (%)',
+                        data: [99, 95, 95, 80, 90],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                    },
+                    minConcentration: {
+                        label: '可达最低F⁻浓度 (mg/L)',
+                        data: [1.0, 1.5, 1.0, 15, 1.5],
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                    },
+                    sludgeProduction: {
+                        label: '污泥产量 (相对值, 5为最高)',
+                        data: [3, 1, 2, 5, 2],
+                        backgroundColor: 'rgba(249, 115, 22, 0.7)',
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                    },
+                    costEffectiveness: {
+                        label: '成本效益 (相对值, 5为最优)',
+                        data: [3, 4, 4, 2, 3],
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                    }
+                }
+            };
+
+            const ctx = document.getElementById('techCompareChart').getContext('2d');
+            const techCompareChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: chartData.datasets.removalRate.label,
+                        data: chartData.datasets.removalRate.data,
+                        backgroundColor: chartData.datasets.removalRate.backgroundColor,
+                        borderColor: chartData.datasets.removalRate.borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(200, 200, 200, 0.2)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const metricButtons = document.querySelectorAll('.btn-metric');
+            metricButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    metricButtons.forEach(btn => {
+                        btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                        btn.classList.add('bg-slate-200', 'text-slate-700');
+                    });
+                    button.classList.add('active', 'bg-blue-600', 'text-white');
+                    button.classList.remove('bg-slate-200', 'text-slate-700');
+                    
+                    const metric = button.dataset.metric;
+                    const newDataset = chartData.datasets[metric];
+                    
+                    techCompareChart.data.datasets[0].label = newDataset.label;
+                    techCompareChart.data.datasets[0].data = newDataset.data;
+                    techCompareChart.data.datasets[0].backgroundColor = newDataset.backgroundColor;
+                    techCompareChart.data.datasets[0].borderColor = newDataset.borderColor;
+                    techCompareChart.options.scales.y.title.text = newDataset.label;
+                    techCompareChart.update();
+                });
+            });
+
+            const techTabs = document.querySelectorAll('.tech-tab');
+            techTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    techTabs.forEach(t => {
+                        t.classList.remove('active', 'border-blue-500', 'bg-eff6ff');
+                        t.classList.add('border-gray-200');
+                    });
+                    tab.classList.add('active', 'border-blue-500', 'bg-eff6ff');
+                    tab.classList.remove('border-gray-200');
+                });
+            });
+            
+            const getRecommendationBtn = document.getElementById('get-recommendation');
+            const recommendationResult = document.getElementById('recommendation-result');
+
+            getRecommendationBtn.addEventListener('click', () => {
+                const waterQuality = document.querySelector('input[name="water-quality"]:checked');
+                const goal = document.querySelector('input[name="goal"]:checked');
+
+                if (!waterQuality || !goal) {
+                    alert('请完成所有选择。');
+                    return;
+                }
+
+                const wqValue = waterQuality.value;
+                const goalValue = goal.value;
+                
+                let rec = {};
+
+                if (wqValue === 'high') {
+                    rec = {
+                        title: '推荐方案：镧(La)基沉淀法',
+                        desc: '对于高浓度、高盐分的复杂废水，基于化学沉淀的镧基体系是最稳健的选择，其抗干扰能力强，能有效应对恶劣水质。',
+                        pros: '除氟效率极高，受共存离子影响小，工艺成熟。',
+                        cons: '消耗型药剂，成本相对较高，需精确控制La/F摩尔比。'
+                    };
+                } else if (wqValue === 'low') {
+                     rec = {
+                        title: '推荐方案：锆(Zr)基吸附法 (固定床)',
+                        desc: '对于饮用水或低浓度精处理，追求可持续性和低污泥产量的场景，可再生的锆基吸附剂是理想选择。',
+                        pros: '可再生循环使用，污泥产量极低，化学性质稳定，环境友好。',
+                        cons: '初始投资相对较高，吸附容量有限，再生过程需处理浓缩废液。'
+                    };
+                } else { // medium
+                    if(goalValue === 'green') {
+                        rec = {
+                            title: '推荐方案：锆(Zr)基吸附法',
+                            desc: '若在中等浓度废水中，您的首要目标是可持续性与污泥最小化，锆基吸附法依然是优先考虑的绿色技术路线。',
+                            pros: '环境友好，污泥量少，可再生。',
+                            cons: '可能受复杂离子竞争影响，需通过小试验证实际吸附容量。'
+                        };
+                    } else {
+                         rec = {
+                            title: '推荐方案：复合一体化药剂',
+                            desc: '对于组分复杂的中等浓度废水，且追求操作简便和成本效益，复合一体化药剂提供了“一剂式”的便捷解决方案。',
+                            pros: '操作极为简便，单一药剂投加，简化工艺流程，综合成本可控。',
+                            cons: '专利配方，成分不透明，适用性需通过实验验证。'
+                        };
+                    }
+                }
+
+                document.getElementById('rec-title').innerText = rec.title;
+                document.getElementById('rec-desc').innerText = rec.desc;
+                document.getElementById('rec-pros').innerText = rec.pros;
+                document.getElementById('rec-cons').innerText = rec.cons;
+
+                recommendationResult.classList.remove('hidden');
+                recommendationResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: "-50% 0px -50% 0px" });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>

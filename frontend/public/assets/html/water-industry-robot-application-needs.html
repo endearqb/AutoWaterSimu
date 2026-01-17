@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水务行业概览与机器人应用需求</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc; /* bg-slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Example max-width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .flowchart-step {
+            background-color: #118AB2; /* Energetic & Playful - Blue */
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flowchart-arrow {
+            font-size: 2rem;
+            color: #073B4C; /* Energetic & Playful - Dark Blue/Black */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.5rem;
+        }
+        .icon-placeholder {
+            font-size: 2.5rem;
+            line-height: 1;
+            color: #06D6A0; /* Energetic & Playful - Green */
+        }
+        .section-title {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700; /* font-bold */
+            color: #073B4C; /* Energetic & Playful - Dark Blue/Black */
+            margin-bottom: 1.5rem; /* mb-6 */
+            text-align: center;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-2xl */
+        }
+        .stat-number {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: bold;
+            color: #FF6B6B; /* Energetic & Playful - Red */
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-gradient-to-r from-[#118AB2] to-[#06D6A0] text-white py-12 sm:py-16 text-center">
+        <div class="container mx-auto px-4">
+            <h1 class="text-4xl sm:text-5xl font-bold mb-4">水务行业概览与机器人应用需求</h1>
+            <p class="text-lg sm:text-xl max-w-3xl mx-auto">深入了解水务行业的关键领域、面临的挑战以及创新机器人技术如何驱动行业变革。</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 sm:py-12">
+
+        <section id="scope-importance" class="mb-12 sm:mb-16">
+            <h2 class="section-title">水务行业的范围与重要性</h2>
+            <div class="card max-w-4xl mx-auto">
+                <p class="text-lg leading-relaxed mb-4">水务行业是一个综合性的产业，涵盖了从原水的取用、输送、净化处理，到自来水的供应，再到使用后的排水收集、污水处理以及水资源的回收利用等完整链条。它不仅包括了传统意义上的供水和排水，还拓展至水资源管理、水环境治理、水生态保护等多个方面。</p>
+                <p class="text-lg leading-relaxed">作为城市最基本的公共服务行业之一，水务行业对于保障民生、支持工农业生产、维护生态平衡具有不可替代的重要性。随着社会经济的发展和环境保护意识的提高，对水务行业的服务质量、运营效率和环境效益也提出了更高的要求。</p>
+            </div>
+        </section>
+
+        <section id="business-segments" class="mb-12 sm:mb-16">
+            <h2 class="section-title">主要业务板块及其运营挑战</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#118AB2]">1. 供水系统 (水源、处理、输配)</h3>
+                    <div class="icon-placeholder mb-3">💧</div>
+                    <p class="mb-2">负责从水源地获取原水，经净化处理后通过庞大的输配管网系统将自来水输送到用户。</p>
+                    <p><strong class="text-slate-700">关键设施：</strong>取水口、泵站、水处理厂、储水设施、城市供水管网。</p>
+                    <p><strong class="text-slate-700">运营挑战：</strong>管网维护、检漏、清洗，取水口和水库水下结构检查。</p>
+                    <div class="mt-4">
+                        <h4 class="font-semibold text-slate-600 mb-2">简化流程:</h4>
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                            <div class="flowchart-step w-full sm:w-auto">水源获取</div>
+                            <div class="flowchart-arrow transform sm:rotate-0 rotate-90">➔</div>
+                            <div class="flowchart-step w-full sm:w-auto">净化处理</div>
+                            <div class="flowchart-arrow transform sm:rotate-0 rotate-90">➔</div>
+                            <div class="flowchart-step w-full sm:w-auto">输配到户</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#118AB2]">2. 排水与污水管理 (收集、处理、排放)</h3>
+                    <div class="icon-placeholder mb-3">♻️</div>
+                    <p class="mb-2">负责收集城市生活污水、工业废水及雨水，通过排水管网输送至污水处理厂进行处理后排放或回用。</p>
+                    <p><strong class="text-slate-700">关键设施：</strong>排水管网、污水泵站、污水处理厂（沉淀池、曝气池等）、排放口。</p>
+                    <p><strong class="text-slate-700">运营挑战：</strong>管网清淤、检测、修复，污水处理厂水下构筑物检查与维护。</p>
+                     <div class="mt-4">
+                        <h4 class="font-semibold text-slate-600 mb-2">简化流程:</h4>
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                            <div class="flowchart-step w-full sm:w-auto">污水收集</div>
+                            <div class="flowchart-arrow transform sm:rotate-0 rotate-90">➔</div>
+                            <div class="flowchart-step w-full sm:w-auto">处理净化</div>
+                            <div class="flowchart-arrow transform sm:rotate-0 rotate-90">➔</div>
+                            <div class="flowchart-step w-full sm:w-auto">达标排放/回用</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#118AB2]">3. 水资源管理与水利工程 (大坝、水库、河道)</h3>
+                    <div class="icon-placeholder mb-3">댐</div>
+                    <p class="mb-2">涉及水资源的调配、存储、防洪及水能利用等。</p>
+                    <p><strong class="text-slate-700">关键设施：</strong>大坝、水库、堤防、闸门、水电站、引水隧洞、航道。</p>
+                    <p><strong class="text-slate-700">运营挑战：</strong>水下结构安全监测、渗漏检测、冲刷评估、泥沙淤积调查、闸门运行状态检查。</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#118AB2]">4. 水环境监测</h3>
+                    <div class="icon-placeholder mb-3">🔬</div>
+                    <p class="mb-2">对江河、湖泊、水库等地表水及地下水的水质状况进行系统性监视和测定。</p>
+                    <p><strong class="text-slate-700">目的：</strong>掌握水环境质量状况与趋势，评估污染，为水环境保护提供科学依据。</p>
+                    <p><strong class="text-slate-700">监测内容：</strong>水温、pH、溶解氧、浊度、污染物（重金属、有机物等）。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="industry-challenges" class="mb-12 sm:mb-16">
+            <h2 class="section-title">行业对机器人技术的需求：面临的挑战</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card text-center">
+                    <div class="icon-placeholder mb-3">🛠️</div>
+                    <h4 class="text-xl font-semibold mb-2 text-[#FF6B6B]">基础设施老化</h4>
+                    <p>管网老化、腐蚀、渗漏、堵塞，导致水资源浪费和水质下降。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="icon-placeholder mb-3">🚶‍♂️</div>
+                    <h4 class="text-xl font-semibold mb-2 text-[#FF6B6B]">人工巡检局限</h4>
+                    <p>水下和密闭空间作业难度大、效率低、成本高、风险大。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="icon-placeholder mb-3">📊</div>
+                    <h4 class="text-xl font-semibold mb-2 text-[#FF6B6B]">数据获取不足</h4>
+                    <p>缺乏准确、实时数据支撑运营决策、维护和资产管理。</p>
+                </div>
+                <div class="card text-center">
+                     <div class="icon-placeholder mb-3">📉</div>
+                    <h4 class="text-xl font-semibold mb-2 text-[#FFD166]">水资源短缺</h4>
+                    <p>提高利用效率、减少漏损、加强再生水利用压力大。</p>
+                </div>
+                <div class="card text-center">
+                     <div class="icon-placeholder mb-3">📜</div>
+                    <h4 class="text-xl font-semibold mb-2 text-[#FFD166]">法规与期望提高</h4>
+                    <p>环保法规趋严，公众对水质安全和水生态健康期望更高。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="icon-placeholder mb-3">💰</div>
+                    <h4 class="text-xl font-semibold mb-2 text-[#FFD166]">运营成本控制</h4>
+                    <p>在保障质量和满足环保要求下，有效控制成本压力持续。</p>
+                </div>
+            </div>
+            <div class="mt-8 text-center card max-w-3xl mx-auto bg-[#06D6A0] text-white">
+                <h3 class="text-2xl font-semibold mb-3">机器人技术的驱动力</h3>
+                <p class="text-lg">这些挑战共同构成了水下机器人在水务行业应用的驱动力。机器人技术有望通过提供更安全、高效、精准和经济的解决方案，助力水务行业克服传统方法的瓶颈。机器人不仅替代人工完成任务，更是关键的“数据使能者”。</p>
+            </div>
+        </section>
+
+        <section id="market-insights" class="mb-12 sm:mb-16">
+            <h2 class="section-title">市场洞察与趋势 (模拟数据)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-3 text-center text-[#073B4C]">水务机器人市场增长预测</h3>
+                    <div class="chart-container h-72 md:h-80">
+                        <canvas id="marketGrowthChart"></canvas>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600 text-center">模拟数据显示，受基础设施更新和技术进步驱动，水务机器人市场预计在未来五年将保持强劲增长。</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-3 text-center text-[#073B4C]">运营成本构成分析 (传统方式)</h3>
+                     <div class="chart-container h-72 md:h-80">
+                        <canvas id="costCompositionChart"></canvas>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600 text-center">模拟数据显示，人工巡检和应急维修在传统水务运营成本中占比较高，机器人技术有望优化此结构。</p>
+                </div>
+                <div class="card md:col-span-2">
+                    <h3 class="text-xl font-semibold mb-3 text-center text-[#073B4C]">机器人技术采纳率 (按应用领域)</h3>
+                    <div class="chart-container h-80 md:h-96">
+                         <canvas id="adoptionRateChart"></canvas>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600 text-center">模拟数据显示，管道检测和清洁机器人的采纳率较高，水质监测和设施维护机器人潜力巨大。</p>
+                </div>
+            </div>
+            <div class="card mt-8">
+                <h3 class="text-xl font-semibold mb-4 text-[#073B4C]">典型机器人应用流程：管道检测</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <div class="bg-[#FF6B6B] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-3">1</div>
+                        <p>部署机器人至管道入口</p>
+                    </div>
+                    <div class="pl-11 relative">
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                        <div class="flowchart-arrow transform rotate-90 text-2xl text-[#FF6B6B] my-1">↓</div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="bg-[#FFD166] text-gray-800 rounded-full h-8 w-8 flex items-center justify-center font-bold mr-3">2</div>
+                        <p>机器人自主导航或遥控巡检管道内部</p>
+                    </div>
+                     <div class="pl-11 relative">
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                        <div class="flowchart-arrow transform rotate-90 text-2xl text-[#FFD166] my-1">↓</div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="bg-[#06D6A0] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-3">3</div>
+                        <p>搭载传感器（摄像头、声纳等）采集数据</p>
+                    </div>
+                     <div class="pl-11 relative">
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                        <div class="flowchart-arrow transform rotate-90 text-2xl text-[#06D6A0] my-1">↓</div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="bg-[#118AB2] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-3">4</div>
+                        <p>数据分析，生成缺陷报告和三维模型</p>
+                    </div>
+                    <div class="pl-11 relative">
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                        <div class="flowchart-arrow transform rotate-90 text-2xl text-[#118AB2] my-1">↓</div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="bg-[#073B4C] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-3">5</div>
+                        <p>基于报告制定精确的维护或修复计划</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-[#073B4C] text-slate-300 py-8 text-center">
+        <p>&copy; 2025 水务行业机器人应用研究。此信息图内容基于研究报告生成。</p>
+    </footer>
+
+    <script>
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            }
+            return label;
+        };
+
+        const processLabels = (labels) => {
+            return labels.map(label => {
+                if (typeof label === 'string' && label.length > 16) {
+                    const words = label.split(' ');
+                    const lines = [];
+                    let currentLine = '';
+                    for (const word of words) {
+                        if ((currentLine + word).length > 16 && currentLine.length > 0) {
+                            lines.push(currentLine.trim());
+                            currentLine = word + ' ';
+                        } else {
+                            currentLine += word + ' ';
+                        }
+                    }
+                    lines.push(currentLine.trim());
+                    return lines;
+                }
+                return label;
+            });
+        };
+        
+        // Energetic & Playful Palette
+        const colorRed = '#FF6B6B';
+        const colorYellow = '#FFD166';
+        const colorGreen = '#06D6A0';
+        const colorBlue = '#118AB2';
+        const colorDarkBlue = '#073B4C';
+
+        // Market Growth Chart
+        const marketGrowthCtx = document.getElementById('marketGrowthChart').getContext('2d');
+        new Chart(marketGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: processLabels(['2020年', '2021年', '2022年', '2023年', '2024年(预测)', '2025年(预测)']),
+                datasets: [{
+                    label: '市场规模 (亿元)',
+                    data: [50, 65, 85, 110, 145, 190],
+                    borderColor: colorGreen,
+                    backgroundColor: 'rgba(6, 214, 160, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                plugins: {
+                    tooltip: { callbacks: { title: tooltipTitleCallback } }
+                }
+            }
+        });
+
+        // Cost Composition Chart
+        const costCompositionCtx = document.getElementById('costCompositionChart').getContext('2d');
+        new Chart(costCompositionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: processLabels(['人工巡检与维护', '能源消耗', '应急维修', '常规设备折旧', '其他']),
+                datasets: [{
+                    label: '成本构成',
+                    data: [35, 25, 20, 15, 5],
+                    backgroundColor: [colorRed, colorYellow, colorBlue, colorDarkBlue, colorGreen],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: { callbacks: { title: tooltipTitleCallback } }
+                }
+            }
+        });
+
+        // Adoption Rate Chart
+        const adoptionRateCtx = document.getElementById('adoptionRateChart').getContext('2d');
+        new Chart(adoptionRateCtx, {
+            type: 'bar',
+            data: {
+                labels: processLabels(['管道检测机器人', '管道清洁机器人', '水下结构检查ROV', '水质监测无人船/机器人', '大坝/水库维护机器人']),
+                datasets: [{
+                    label: '技术采纳率 (%)',
+                    data: [65, 50, 40, 30, 20],
+                    backgroundColor: [colorBlue, colorGreen, colorYellow, colorRed, colorDarkBlue],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y', // For horizontal bar chart if labels are long
+                scales: {
+                    x: { beginAtZero: true, max: 100 }
+                },
+                plugins: {
+                    tooltip: { callbacks: { title: tooltipTitleCallback } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

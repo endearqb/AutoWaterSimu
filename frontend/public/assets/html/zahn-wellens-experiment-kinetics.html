@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zahn-Wellens实验非典型动力学交互式分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Scientific Calm (Warm Neutral, Slate Blue, Muted Teal) -->
+    <!-- Application Structure Plan: The SPA is designed as a narrative journey to solve the user's specific problem. It starts with the core question (Hero), compares the user's experiment to the standard (Context), explains the expected theory (Expectation), interactively investigates the three main hypotheses via a tabbed interface with dynamic charts and visuals (Investigation), presents the final conclusion with a key interactive chart (Verdict), and provides actionable next steps (Recommendations). This structure was chosen over a simple report layout to transform passive reading into active exploration, making the complex scientific reasoning more intuitive and memorable. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Experimental parameters (1000 vs 4000 mg/L) -> Goal: Highlight deviation -> Viz: Side-by-side comparison cards -> Interaction: Static, for clarity -> Justification: Immediately frames the problem.
+        - Report Info: Theoretical Monod kinetics -> Goal: Explain user's initial expectation -> Viz: Simple illustrative diagram -> Interaction: Static -> Justification: Validates user's intuition before challenging it.
+        - Report Info: Nutrient limitation calculation -> Goal: Show resource deficit -> Viz: Interactive Bar Chart (Chart.js) -> Interaction: Buttons to switch between 1000/4000 mg/L scenarios -> Justification: Visually quantifies the nutrient shortage, making the abstract numbers in the report tangible.
+        - Report Info: Oxygen transfer limitation calculation -> Goal: Visualize the primary bottleneck -> Viz: Custom HTML/CSS/JS infographic of OTR vs OUR -> Interaction: Buttons to switch scenarios -> Justification: This is the most critical point; a custom visual of supply vs demand is more impactful than a standard chart.
+        - Report Info: Final integrated theory (Fig 1) -> Goal: Summarize the core finding -> Viz: Interactive Line Chart (Chart.js) -> Interaction: Hover tooltips on data points and zones -> Justification: Recreates the report's key graph, making it interactive to clearly explain the transition from biochemical to physical control.
+        - All implementations use Chart.js (Canvas) or HTML/CSS/JS, confirming NO SVG/Mermaid.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fdfcf9;
+            color: #3d4f60;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #1e88e5;
+            border-bottom-color: #1e88e5;
+        }
+        .tab-button {
+            transition: all 0.3s;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .pill-button {
+            transition: all 0.2s;
+        }
+        .pill-button.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .icon-accent {
+            color: #1e88e5;
+        }
+        .bg-accent-light {
+            background-color: #e3f2fd;
+        }
+        .border-accent {
+            border-color: #1e88e5;
+        }
+        .text-accent {
+             color: #1e88e5;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-xl font-bold text-gray-800">降解动力学分析器</div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#problem" class="nav-link">实验难题</a>
+                    <a href="#investigation" class="nav-link">瓶颈探究</a>
+                    <a href="#verdict" class="nav-link">核心结论</a>
+                    <a href="#recommendations" class="nav-link">后续步骤</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- Section 1: The Problem -->
+        <section id="problem" class="text-center mb-24">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">一个令人困惑的结果</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                您在Zahn-Wellens实验中发现，将污泥浓度从 <span class="font-bold text-accent">1000 mg/L</span> 增加到 <span class="font-bold text-accent">4000 mg/L</span>，生物降解速率几乎没有变化。这与“更多微生物 = 更快降解”的直觉相悖。这并非实验失败，而是一个揭示系统内在限制的宝贵线索。
+            </p>
+        </section>
+
+        <!-- Section 2: Context -->
+        <section id="context" class="mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">第一步：实验 VS 标准</h2>
+                <p class="mt-2 text-lg text-gray-600">您的实验参数与OECD 302B标准指南有何不同？</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-gray-400">
+                    <h3 class="text-xl font-bold mb-3">OECD 302B 标准指南</h3>
+                    <p class="text-gray-700">为了测试固有降解潜力，指南创造了非常有利的条件。</p>
+                    <div class="mt-4 space-y-2">
+                        <p><strong>接种物浓度 (TSS):</strong> <span class="font-semibold text-green-600">200 - 1000 mg/L</span></p>
+                        <p><strong>接种物:底物 比率:</strong> 2.5:1 至 4:1</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-accent">
+                    <h3 class="text-xl font-bold mb-3">您的实验设置</h3>
+                    <p class="text-gray-700">您的实验，实际上是在“标准上限”与“远超标准”之间进行比较。</p>
+                    <div class="mt-4 space-y-2">
+                        <p><strong>实验组 1:</strong> <span class="font-semibold text-green-600">1000 mg/L (标准上限)</span></p>
+                        <p><strong>实验组 2:</strong> <span class="font-semibold text-red-500">4000 mg/L (4倍于上限)</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-8 text-lg text-gray-700 bg-blue-50 p-4 rounded-lg max-w-4xl mx-auto">
+                <p>💡 <span class="font-semibold">核心洞察：</span>当1000 mg/L的速率已经不再随生物量增加而提升时，说明系统在达到此浓度时，<span class="text-accent font-bold">已经遇到了某种瓶颈</span>。简单增加污泥无法突破这个瓶颈。</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Investigation -->
+        <section id="investigation" class="mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">瓶颈探究：是什么限制了降解速率？</h2>
+                <p class="mt-2 text-lg text-gray-600">我们将从三个层面，系统化地探寻速率停滞背后的真凶。</p>
+            </div>
+
+            <div class="flex justify-center mb-8 space-x-2 md:space-x-4">
+                <button class="tab-button font-semibold py-2 px-4 rounded-full bg-white shadow-sm" data-tab="physical">
+                    <span class="text-2xl mr-2">💨</span>物理限制
+                </button>
+                <button class="tab-button font-semibold py-2 px-4 rounded-full bg-white shadow-sm" data-tab="kinetic">
+                    <span class="text-2xl mr-2">🔬</span>动力学限制
+                </button>
+                <button class="tab-button font-semibold py-2 px-4 rounded-full bg-white shadow-sm" data-tab="biological">
+                    <span class="text-2xl mr-2">🧬</span>生物学限制
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tab-content" class="bg-white p-8 rounded-2xl shadow-xl border">
+                <!-- Physical Limitations Tab -->
+                <div id="physical-content" class="tab-pane">
+                    <h3 class="text-2xl font-bold mb-2 text-accent">物理限制：最可能的“元凶”</h3>
+                    <p class="text-gray-600 mb-6">瓶颈不在于微生物“不想工作”，而在于关键物质（如氧气）无法及时“送达”。在您的静态实验中，这是一个极大概率发生的限制。</p>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h4 class="font-bold text-lg mb-4 text-center">交互模拟：氧气供需平衡</h4>
+                        <p class="text-center text-gray-600 mb-4">静态烧瓶的供氧能力(OTR)是有限的。点击下方按钮，查看不同污泥浓度下的耗氧需求(OUR)。</p>
+                        <div class="flex justify-center mb-6">
+                           <div class="bg-white p-2 rounded-full shadow-md">
+                             <button id="btn-1000-o2" class="pill-button px-4 py-1.5 text-sm font-semibold rounded-full">1000 mg/L 污泥</button>
+                             <button id="btn-4000-o2" class="pill-button px-4 py-1.5 text-sm font-semibold rounded-full">4000 mg/L 污泥</button>
+                           </div>
+                        </div>
+                        <div class="flex flex-col md:flex-row justify-center items-center gap-8 text-center">
+                            <div class="w-full md:w-1/3">
+                                <h5 class="font-semibold mb-2">供氧速率 (OTR)</h5>
+                                <div id="otr-viz" class="relative bg-blue-200 h-48 w-full max-w-xs mx-auto rounded-lg overflow-hidden">
+                                    <div class="absolute bottom-0 w-full bg-blue-400" style="height: 50%;"></div>
+                                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-lg">
+                                        <p>固定供应</p>
+                                        <p class="text-2xl">~30</p>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">单位: mg O₂/L/hr</p>
+                            </div>
+                            <div class="text-4xl text-gray-300 hidden md:block">&rarr;</div>
+                            <div class="w-full md:w-1/3">
+                                <h5 class="font-semibold mb-2">耗氧速率 (OUR)</h5>
+                                <div id="our-viz" class="relative bg-red-200 h-48 w-full max-w-xs mx-auto rounded-lg overflow-hidden">
+                                    <div id="our-bar" class="absolute bottom-0 w-full bg-red-400 transition-all duration-500" style="height: 25%;"></div>
+                                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-lg">
+                                        <p>需求</p>
+                                        <p id="our-value" class="text-2xl">15</p>
+                                    </div>
+                                    <div id="our-overflow" class="absolute top-0 w-full bg-red-600 opacity-0 transition-opacity duration-500 text-white flex items-center justify-center font-bold" style="height: 0;">缺氧!</div>
+                                </div>
+                                 <p class="text-xs text-gray-500 mt-1">单位: mg O₂/L/hr</p>
+                            </div>
+                        </div>
+                        <div id="oxygen-explanation" class="mt-6 p-4 bg-blue-100/50 rounded-md text-center text-gray-800">
+                           在 1000 mg/L 时，供氧(30) > 耗氧(15)，系统运行正常。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kinetic Limitations Tab -->
+                <div id="kinetic-content" class="tab-pane hidden">
+                     <h3 class="text-2xl font-bold mb-2 text-accent">动力学限制：重要的协同因素</h3>
+                    <p class="text-gray-600 mb-6">瓶颈可能来自“原料”供应不足。即使工人（微生物）再多，没有足够的砖瓦（营养盐），也无法加快建设速度。</p>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h4 class="font-bold text-lg mb-4 text-center">交互图表：营养盐（N&P）供需分析</h4>
+                        <p class="text-center text-gray-600 mb-4">标准培养基提供的N、P是有限的。点击按钮查看不同污泥浓度下的营养需求。</p>
+                        <div class="flex justify-center mb-6">
+                           <div class="bg-white p-2 rounded-full shadow-md">
+                             <button id="btn-1000-np" class="pill-button px-4 py-1.5 text-sm font-semibold rounded-full">1000 mg/L 污泥</p>
+                             <button id="btn-4000-np" class="pill-button px-4 py-1.5 text-sm font-semibold rounded-full">4000 mg/L 污泥</p>
+                           </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="nutrientChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Biological Limitations Tab -->
+                <div id="biological-content" class="tab-pane hidden">
+                    <h3 class="text-2xl font-bold mb-2 text-accent">生物学限制：微生物的“社交”与“自保”</h3>
+                    <p class="text-gray-600 mb-6">在高密度下，微生物群落内部可能发生复杂的自我调节，主动限制代谢活动。</p>
+                    <div class="grid md:grid-cols-2 gap-6 mt-4">
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h4 class="font-semibold text-lg mb-2">群体感应 (Quorum Sensing)</h4>
+                            <p class="text-gray-600">细菌会通过释放化学信号进行“交流”。当种群密度过高时，信号可能从“促进”变为“抑制”，整个群体会主动“减速慢行”，以避免资源过快耗尽。</p>
+                        </div>
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h4 class="font-semibold text-lg mb-2">抑制性副产物积累</h4>
+                            <p class="text-gray-600">4倍的微生物会以4倍的速度产生代谢废物。这些废物（如有机酸）会快速积累到有毒浓度，反过来毒害微生物自身，造成“自毒”效应，迫使速率下降。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Verdict -->
+        <section id="verdict" class="mb-24">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">核心结论：从“生化控制”到“物理控制”</h2>
+                <p class="mt-2 text-lg text-gray-600 max-w-3xl mx-auto">您的实验结果，完美展示了反应系统如何从由微生物内在能力决定速率，转变为由外部物质输送能力（氧气）决定速率。</p>
+            </div>
+            <div class="bg-white p-4 md:p-8 rounded-2xl shadow-xl border">
+                 <div class="chart-container h-[400px] max-h-[60vh]">
+                     <canvas id="verdictChart"></canvas>
+                 </div>
+                 <div class="grid md:grid-cols-2 gap-4 mt-6 text-sm text-gray-600">
+                     <div class="bg-blue-50 p-4 rounded-md">
+                         <h4 class="font-bold text-blue-800">理想关系 (理论)</h4>
+                         <p>在一切条件理想的情况下，速率应与生物量成正比。这是您最初的预期。</p>
+                     </div>
+                     <div class="bg-red-50 p-4 rounded-md">
+                         <h4 class="font-bold text-red-800">实际关系 (观测)</h4>
+                         <p>速率在达到某个点后便进入平台期。这个“天花板”就是您实验装置的<span class="font-bold">最大供氧速率(OTR)</span>。您的两个实验点(1000和4000 mg/L)都落在了这个平台上。</p>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Recommendations -->
+        <section id="recommendations">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800">后续步骤：如何验证与优化？</h2>
+                <p class="mt-2 text-lg text-gray-600">将这次的“困惑”转化为下一次实验设计的“洞察”。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <div class="text-4xl icon-accent mb-3">💨</div>
+                    <h3 class="font-bold text-lg mb-2">实验A：强化曝气</h3>
+                    <p class="text-gray-600 text-sm">使用更高效的曝气方式，并用DO探头监控溶氧。如果4000mg/L组速率显著提升，则证明氧气限制是主因。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <div class="text-4xl icon-accent mb-3">🔬</div>
+                    <h3 class="font-bold text-lg mb-2">实验B：补充营养盐</h3>
+                    <p class="text-gray-600 text-sm">在4000mg/L组中额外添加2-3倍的N和P。如果速率提升，则证明营养盐是重要限制因素。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <div class="text-4xl icon-accent mb-3">💥</div>
+                    <h3 class="font-bold text-lg mb-2">实验C：絮体破碎</h3>
+                    <p class="text-gray-600 text-sm">通过温和匀浆打散大絮体，以减小扩散屏障。若初始速率加快，则证明底物扩散受限。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <div class="text-4xl icon-accent mb-3">🧬</div>
+                    <h3 class="font-bold text-lg mb-2">实验D：先进表征</h3>
+                    <p class="text-gray-600 text-sm">使用16S rRNA测序等技术分析微生物群落，从“黑箱”走向精确，理解微观层面的变化。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-24">
+        <div class="container mx-auto px-6 py-4 text-center text-sm">
+            <p>交互式分析应用 | 根据您的实验数据与科学报告生成</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Tab Functionality ---
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            tabPanes.forEach(pane => {
+                pane.classList.add('hidden');
+            });
+            document.getElementById(`${tab.dataset.tab}-content`).classList.remove('hidden');
+        });
+    });
+    // Set initial active tab
+    tabs[0].click();
+
+    // --- Smooth Scrolling for Nav Links ---
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+    // --- Chart Data ---
+    const nutrientData = {
+        '1000': {
+            labels: ['氮 (N) 需求', '磷 (P) 需求'],
+            supply: [6.54, 3.84],
+            demand: [52.5, 10.5]
+        },
+        '4000': {
+            labels: ['氮 (N) 需求', '磷 (P) 需求'],
+            supply: [6.54, 3.84],
+            demand: [210, 42]
+        }
+    };
+
+    // --- Nutrient Chart (Kinetic Limitation) ---
+    const nutrientCtx = document.getElementById('nutrientChart').getContext('2d');
+    let nutrientChart;
+
+    function createOrUpdateNutrientChart(concentration) {
+        const data = nutrientData[concentration];
+        if (nutrientChart) {
+            nutrientChart.data.datasets[0].data = data.supply;
+            nutrientChart.data.datasets[1].data = data.demand;
+            nutrientChart.update();
+        } else {
+            nutrientChart = new Chart(nutrientCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: '培养基供给量',
+                            data: data.supply,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '污泥需求量',
+                            data: data.demand,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '浓度 (mg/L)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `污泥浓度 ${concentration} mg/L 时的营养盐平衡`,
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2) + ' mg/L';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Nutrient chart buttons
+    const btn1000np = document.getElementById('btn-1000-np');
+    const btn4000np = document.getElementById('btn-4000-np');
+
+    btn1000np.addEventListener('click', () => {
+        createOrUpdateNutrientChart('1000');
+        btn1000np.classList.add('active');
+        btn4000np.classList.remove('active');
+    });
+    btn4000np.addEventListener('click', () => {
+        createOrUpdateNutrientChart('4000');
+        btn4000np.classList.add('active');
+        btn1000np.classList.remove('active');
+    });
+
+    btn1000np.click(); // Initial state
+
+    // --- Oxygen Visualization (Physical Limitation) ---
+    const btn1000o2 = document.getElementById('btn-1000-o2');
+    const btn4000o2 = document.getElementById('btn-4000-o2');
+    const ourBar = document.getElementById('our-bar');
+    const ourValue = document.getElementById('our-value');
+    const ourOverflow = document.getElementById('our-overflow');
+    const oxygenExplanation = document.getElementById('oxygen-explanation');
+
+    const o2Data = {
+        otr: 30,
+        our: { '1000': 15, '4000': 60 }
+    };
+    
+    function updateO2Viz(concentration) {
+        const our = o2Data.our[concentration];
+        const otr = o2Data.otr;
+        const percentage = Math.min((our / otr) * 50, 100);
+
+        ourBar.style.height = `${percentage}%`;
+        ourValue.textContent = our;
+
+        if (our > otr) {
+            ourOverflow.style.opacity = '1';
+            ourOverflow.style.height = `${((our - otr)/our)*100}%`;
+            oxygenExplanation.innerHTML = `在 ${concentration} mg/L 时, 耗氧(${our}) <span class="font-bold text-red-500">远超</span> 供氧(${otr})，系统<span class="font-bold text-red-500">严重缺氧</span>，速率被卡住！`;
+        } else {
+            ourOverflow.style.opacity = '0';
+            ourOverflow.style.height = '0%';
+            oxygenExplanation.innerHTML = `在 ${concentration} mg/L 时，供氧(${otr}) > 耗氧(${our})，系统运行正常。`;
+        }
+    }
+
+    btn1000o2.addEventListener('click', () => {
+        updateO2Viz('1000');
+        btn1000o2.classList.add('active');
+        btn4000o2.classList.remove('active');
+    });
+    btn4000o2.addEventListener('click', () => {
+        updateO2Viz('4000');
+        btn4000o2.classList.add('active');
+        btn1000o2.classList.remove('active');
+    });
+
+    btn1000o2.click(); // Initial state
+
+
+    // --- Verdict Chart ---
+    const verdictCtx = document.getElementById('verdictChart').getContext('2d');
+    const verdictChart = new Chart(verdictCtx, {
+        type: 'line',
+        data: {
+            labels: [0, 500, 1000, 2000, 3000, 4000, 5000],
+            datasets: [{
+                label: '理想关系 (理论)',
+                data: [0, 2, 4, 8, 12, 16, 20],
+                borderColor: 'rgb(59, 130, 246)',
+                borderDash: [5, 5],
+                tension: 0.1,
+                fill: false,
+            }, {
+                label: '实际关系 (观测)',
+                data: [0, 2, 4, 4.2, 4.1, 4.0, 4.2],
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.1,
+                fill: 'origin',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '降解速率 vs 接种物浓度',
+                    font: { size: 18 }
+                },
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                 annotation: {
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: 4.1,
+                            yMax: 4.1,
+                            borderColor: 'rgb(255, 99, 132)',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            label: {
+                                content: '系统最大氧气传递速率 (OTR_max)',
+                                enabled: true,
+                                position: 'end',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: '接种物浓度 (mg/L TSS)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '相对降解速率'
+                    }
+                }
+            }
+        },
+    });
+});
+</script>
+
+</body>
+</html>

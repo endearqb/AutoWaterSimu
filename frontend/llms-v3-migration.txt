@@ -1,0 +1,1692 @@
+<SYSTEM>Documentation for migrating to Chakra UI v3.</SYSTEM>
+
+# Migration to v3
+
+<FeaturedVideo />
+
+:::warning
+
+We recommend using the [LLMs.txt](/docs/get-started/llms) files to make the
+Chakra UI v3 documentation available to large language models.
+
+:::
+
+## Steps
+
+> The minimum node version required is Node.20.x
+
+:::steps
+
+### Update Packages
+
+Remove the unused packages: `@emotion/styled` and `framer-motion`. These
+packages are no longer required in Chakra UI.
+
+```bash
+npm uninstall @emotion/styled framer-motion
+```
+
+Install updated versions of the packages: `@chakra-ui/react` and
+`@emotion/react`.
+
+```bash
+npm install @chakra-ui/react@latest @emotion/react@latest
+```
+
+Next, install component snippets using the CLI snippets. Snippets provide
+pre-built compositions of Chakra components to save you time and put you in
+charge.
+
+```bash
+npx @chakra-ui/cli snippet add
+```
+
+### Refactor Custom Theme
+
+Move your custom theme to a dedicated `theme.js` or `theme.ts` file. Use
+`createSystem` and `defaultConfig` to configure your theme.
+
+**Before**
+
+```ts
+import { extendTheme } from "@chakra-ui/react"
+
+export const theme = extendTheme({
+  fonts: {
+    heading: `'Figtree', sans-serif`,
+    body: `'Figtree', sans-serif`,
+  },
+})
+```
+
+**After**
+
+```ts {3}
+import { createSystem, defaultConfig } from "@chakra-ui/react"
+
+export const system = createSystem(defaultConfig, {
+  theme: {
+    tokens: {
+      fonts: {
+        heading: { value: `'Figtree', sans-serif` },
+        body: { value: `'Figtree', sans-serif` },
+      },
+    },
+  },
+})
+```
+
+> All token values need to be wrapped in an object with a **value** key. Learn
+> more about tokens [here](/docs/theming/tokens).
+
+### Update ChakraProvider
+
+Update the ChakraProvider import from `@chakra-ui/react` to the one from the
+snippets. Next, rename the `theme` prop to `value` to match the new system-based
+theming approach.
+
+**Before**
+
+```tsx
+import { ChakraProvider } from "@chakra-ui/react"
+
+export const App = ({ Component }) => (
+  <ChakraProvider theme={theme}>
+    <Component />
+  </ChakraProvider>
+)
+```
+
+**After**
+
+```tsx {1,3}
+import { Provider } from "@/components/ui/provider"
+import { defaultSystem } from "@chakra-ui/react"
+
+export const App = ({ Component }) => (
+  <Provider>
+    <Component />
+  </Provider>
+)
+```
+
+```tsx {1,3}
+import { ColorModeProvider } from "@/components/ui/color-mode"
+import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
+
+export function Provider(props) {
+  return (
+    <ChakraProvider value={defaultSystem}>
+      <ColorModeProvider {...props} />
+    </ChakraProvider>
+  )
+}
+```
+
+> If you have a custom theme, replace `defaultSystem` with the custom `system`
+
+The Provider component compose the `ChakraProvider` from Chakra and
+`ThemeProvider` from `next-themes`
+
+:::
+
+## Improvements
+
+- **Performance:** Improved reconciliation performance by `4x` and re-render
+  performance by `1.6x`
+
+- **Namespaced imports:** Import components using the dot notation for more
+  concise imports
+
+  ```tsx
+  import { Accordion } from "@chakra-ui/react"
+
+  const Demo = () => {
+    return (
+      <Accordion.Root>
+        <Accordion.Item>
+          <Accordion.ItemTrigger />
+          <Accordion.ItemContent />
+        </Accordion.Item>
+      </Accordion.Root>
+    )
+  }
+  ```
+
+- **TypeScript:** Improved IntelliSense and type inference for style props and
+  tokens.
+
+- **Polymorphism:** Loosened the `as` prop typings in favor of using the
+  `asChild` prop. This pattern was inspired by Radix Primitives and Ark UI.
+
+## Removed Features
+
+### Color Mode
+
+- `ColorModeProvider` and `useColorMode` have been removed in favor of
+  `next-themes`
+- `LightMode`, `DarkMode` and `ColorModeScript` components have been removed.
+  You now have to use `className="light"` or `className="dark"` to force themes.
+- `useColorModeValue` has been removed in favor of `useTheme` from `next-themes`
+
+:::note
+
+We provide snippets for color mode via the CLI to help you set up color mode
+quickly using `next-themes`
+
+:::
+
+### Hooks
+
+We removed the hooks package in favor of using dedicated, robust libraries like
+`react-use` and `usehooks-ts`
+
+The only hooks we ship now are `useBreakpointValue`, `useCallbackRef`,
+`useDisclosure`, `useControllableState` and `useMediaQuery`.
+
+### Style Config
+
+We removed the `styleConfig` and `multiStyleConfig` concept in favor of recipes
+and slot recipes. This pattern was inspired by Panda CSS.
+
+### Next.js package
+
+We've removed the `@chakra-ui/next-js` package in favor of using the `asChild`
+prop for better flexibility.
+
+To style the Next.js image component, use the `asChild` prop on the `Box`
+component.
+
+```jsx
+<Box asChild>
+  <NextImage />
+</Box>
+```
+
+To style the Next.js link component, use the `asChild` prop on the `Link`
+component
+
+```jsx
+<Link isExternal asChild>
+  <NextLink />
+</Link>
+```
+
+### Theme Tools
+
+We've removed this package in favor using CSS color mix.
+
+**Before**
+
+We used JS to resolve the colors and then apply the transparency
+
+```jsx
+defineStyle({
+  bg: transparentize("blue.200", 0.16)(theme),
+  // -> rgba(0, 0, 255, 0.16)
+})
+```
+
+**After**
+
+We now use CSS color-mix
+
+```jsx
+defineStyle({
+  bg: "blue.200/16",
+  // -> color-mix(in srgb, var(--chakra-colors-200), transparent 16%)
+})
+```
+
+### forwardRef
+
+Due to the simplification of the `as` prop, we no longer provide a custom
+`forwardRef`. Prefer to use `forwardRef` from React directly.
+
+Before:
+
+```tsx {3}
+import { Button as ChakraButton, forwardRef } from "@chakra-ui/react"
+
+const Button = forwardRef<ButtonProps, "button">(function Button(props, ref) {
+  return <ChakraButton ref={ref} {...props} />
+})
+```
+
+After:
+
+```tsx {2, 4}
+import { Button as ChakraButton } from "@chakra-ui/react"
+import { forwardRef } from "react"
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button(props, ref) {
+    return <ChakraButton ref={ref} {...props} />
+  },
+)
+```
+
+### Icons
+
+Removed `@chakra-ui/icons` package. Prefer to use `lucide-react` or
+`react-icons` instead.
+
+### Storybook Addon
+
+We're removed the storybook addon in favor of using `@storybook/addon-themes`
+and `withThemeByClassName` helper.
+
+```tsx
+import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
+import { withThemeByClassName } from "@storybook/addon-themes"
+import type { Preview, ReactRenderer } from "@storybook/react"
+
+const preview: Preview = {
+  decorators: [
+    withThemeByClassName<ReactRenderer>({
+      defaultTheme: "light",
+      themes: {
+        light: "",
+        dark: "dark",
+      },
+    }),
+    (Story) => (
+      <ChakraProvider value={defaultSystem}>
+        <Story />
+      </ChakraProvider>
+    ),
+  ],
+}
+
+export default preview
+```
+
+### Removed Components
+
+- **StackItem**: You don't need this anymore. Use `Box` instead.
+- **FocusLock**: We no longer ship a focus lock component. Install and use
+  `react-focus-lock` directly.
+- **AlertDialog**
+  - Replace with the `Dialog` component and set `role=alertdialog`
+  - Set `leastDestructiveRef` prop to the `initialFocusEl` to the `Dialog.Root`
+    component
+
+### CircularProgress
+
+- Renamed to `ProgressCircle` and now uses compound components
+- `isIndeterminate` becomes `value={null}`
+- `thickness` prop becomes `--thickness` CSS variable
+- `color` prop becomes `stroke` prop on `ProgressCircle.Range`
+
+Before:
+
+```tsx
+<CircularProgress
+  value={75}
+  thickness="4px"
+  color="blue.500"
+  isIndeterminate={false}
+/>
+```
+
+After:
+
+```tsx
+<ProgressCircle.Root value={75}>
+  <ProgressCircle.Circle css={{ "--thickness": "4px" }}>
+    <ProgressCircle.Track />
+    <ProgressCircle.Range stroke="blue.500" />
+  </ProgressCircle.Circle>
+</ProgressCircle.Root>
+```
+
+For indeterminate progress:
+
+```tsx
+<ProgressCircle.Root value={null}>
+  <ProgressCircle.Circle>
+    <ProgressCircle.Track />
+    <ProgressCircle.Range />
+  </ProgressCircle.Circle>
+</ProgressCircle.Root>
+```
+
+### StackDivider
+
+- No longer available as a separate component
+- Use explicit `Stack.Separator` components between stack items
+
+Before:
+
+```tsx
+<VStack divider={<StackDivider borderColor="gray.200" />} spacing={4}>
+  <Box>Item 1</Box>
+  <Box>Item 2</Box>
+  <Box>Item 3</Box>
+</VStack>
+```
+
+After:
+
+```tsx
+<VStack gap={4}>
+  <Box>Item 1</Box>
+  <Stack.Separator borderColor="gray.200" />
+  <Box>Item 2</Box>
+  <Stack.Separator borderColor="gray.200" />
+  <Box>Item 3</Box>
+</VStack>
+```
+
+## Prop Changes
+
+### Boolean Props
+
+Changed naming convention for boolean properties from `is<X>` to `<x>`
+
+- `isOpen` -> `open`
+- `defaultIsOpen` -> `defaultOpen`
+- `isDisabled` -> `disabled`
+- `isInvalid` -> `invalid`
+- `isRequired` -> `required`
+
+### ColorScheme Prop
+
+The `colorScheme` prop has been changed to `colorPalette`
+
+**Before**
+
+- You could only use `colorScheme` in a component's theme
+- `colorScheme` clashes with the native `colorScheme` prop in HTML elements
+
+```tsx
+<Button colorScheme="blue">Click me</Button>
+```
+
+**After**
+
+- You can now use `colorPalette` anywhere
+
+```tsx
+<Button colorPalette="blue">Click me</Button>
+```
+
+Usage in any component, you can do something like:
+
+```tsx
+<Box colorPalette="red">
+  <Box bg="colorPalette.400">Some box</Box>
+  <Text color="colorPalette.600">Some text</Text>
+</Box>
+```
+
+If you are using custom colors, you must define two things to make
+`colorPalette` work:
+
+- **tokens**: For the 50-950 color palette
+- **semanticTokens**: For the `solid`, `contrast`, `fg`, `muted`, `subtle`,
+  `emphasized`, and `focusRing` color keys
+
+```tsx title="theme.ts" /brand: {/ /tokens: {/ /semanticTokens: {/
+import { createSystem, defaultConfig } from "@chakra-ui/react"
+
+export const system = createSystem(defaultConfig, {
+  theme: {
+    tokens: {
+      colors: {
+        brand: {
+          50: { value: "#e6f2ff" },
+          100: { value: "#e6f2ff" },
+          200: { value: "#bfdeff" },
+          300: { value: "#99caff" },
+          // ...
+          950: { value: "#001a33" },
+        },
+      },
+    },
+    semanticTokens: {
+      colors: {
+        brand: {
+          solid: { value: "{colors.brand.500}" },
+          contrast: { value: "{colors.brand.100}" },
+          fg: { value: "{colors.brand.700}" },
+          muted: { value: "{colors.brand.100}" },
+          subtle: { value: "{colors.brand.200}" },
+          emphasized: { value: "{colors.brand.300}" },
+          focusRing: { value: "{colors.brand.500}" },
+        },
+      },
+    },
+  },
+})
+```
+
+> Read more about it [here](/guides/theming-custom-colors).
+
+### Gradient Props
+
+Gradient style prop simplified to `gradient` and `gradientFrom` and `gradientTo`
+props. This reduces the runtime performance cost of parsing the gradient string,
+and allows for better type inference.
+
+**Before**
+
+```tsx
+<Box bgGradient="linear(to-r, red.200, pink.500)" />
+```
+
+**After**
+
+```tsx
+<Box bgGradient="to-r" gradientFrom="red.200" gradientTo="pink.500" />
+```
+
+### Color Palette
+
+- Default color palette is now `gray` for all components but you can configure
+  this in your theme.
+
+- Default theme color palette size has been increased to 11 shades to allow more
+  color variations.
+
+  **Before**
+
+  ```tsx
+  const colors = {
+    // ...
+    gray: {
+      50: "#F7FAFC",
+      100: "#EDF2F7",
+      200: "#E2E8F0",
+      300: "#CBD5E0",
+      400: "#A0AEC0",
+      500: "#718096",
+      600: "#4A5568",
+      700: "#2D3748",
+      800: "#1A202C",
+      900: "#171923",
+    },
+  }
+  ```
+
+  **After**
+
+  ```tsx
+  const colors = {
+    // ...
+    gray: {
+      50: { value: "#fafafa" },
+      100: { value: "#f4f4f5" },
+      200: { value: "#e4e4e7" },
+      300: { value: "#d4d4d8" },
+      400: { value: "#a1a1aa" },
+      500: { value: "#71717a" },
+      600: { value: "#52525b" },
+      700: { value: "#3f3f46" },
+      800: { value: "#27272a" },
+      900: { value: "#18181b" },
+      950: { value: "#09090b" },
+    },
+  }
+  ```
+
+### Style Props
+
+Changed the naming convention for some style props
+
+- `noOfLines` -> `lineClamp`
+- `truncated` -> `truncate`
+- `_activeLink` -> `_currentPage`
+- `_activeStep` -> `_currentStep`
+- `_mediaDark` -> `_osDark`
+- `_mediaLight` -> `_osLight`
+
+**Examples:**
+
+```tsx
+// Before
+<Text noOfLines={2}>
+  Long text that will be clamped to 2 lines
+</Text>
+
+<Text truncated>
+  This text will be truncated with ellipsis
+</Text>
+
+// After
+<Text lineClamp={2}>
+  Long text that will be clamped to 2 lines
+</Text>
+
+<Text truncate>
+  This text will be truncated with ellipsis
+</Text>
+```
+
+We removed the `apply` prop in favor of `textStyle` or `layerStyles`
+
+### Nested Styles
+
+We have changed the way you write nested styles in Chakra UI components.
+
+**Before**
+
+Write nested styles using the `sx` or `__css` prop, and you sometimes don't get
+auto-completion for nested styles.
+
+```tsx
+<Box
+  sx={{
+    svg: { color: "red.500" },
+  }}
+/>
+```
+
+**After**
+
+Write nested styles using the `css` prop. All nested selectors **require** the
+use of the ampersand `&` prefix
+
+```tsx
+<Box
+  css={{
+    "& svg": { color: "red.500" },
+  }}
+/>
+```
+
+This was done for two reasons:
+
+- **Faster style processing:** Before we had to check if a style key is a style
+  prop or a selector which is quite expensive overall.
+- **Better typings:** This makes it easier to type nested style props are
+  strongly typed
+
+## Component Changes
+
+### ChakraProvider
+
+- Removed `theme` prop in favor of passing the `system` prop instead. Import the
+  `defaultSystem` module instead of `theme`
+
+- Removed `resetCss` prop in favor of passing `preflight: false` to the
+  `createSystem` function
+
+Before
+
+```tsx
+<ChakraProvider resetCss={false}>
+  <Component />
+</ChakraProvider>
+```
+
+After
+
+```tsx
+const system = createSystem(defaultConfig, { preflight: false })
+
+<Provider value={system}>
+  <Component />
+</Provider>
+```
+
+- Removed support for configuring toast options. Pass it to the `createToaster`
+  function in `components/ui/toaster.tsx` file instead.
+
+### Modal
+
+- Renamed to `Dialog`
+- Remove `isCentered` prop in favor of using the `placement=center` prop
+- Removed `isOpen` and `onClose` props in favor of using the `open` and
+  `onOpenChange` props
+
+### Avatar
+
+- Remove `max` prop in favor of userland control
+- Remove excess label part
+- Move image related props to `Avatar.Image` component
+- Move fallback icon to `Avatar.Fallback` component
+- Move `name` prop to `Avatar.Fallback` component
+
+### Portal
+
+- Remove `appendToParentPortal` prop in favor of using the `containerRef`
+- Remove `PortalManager` component
+
+### Progress
+
+- Now uses compound components with `Progress.Root`, `Progress.Track`, and
+  `Progress.Range`
+- `hasStripe` prop renamed to `striped`
+- `isAnimated` prop renamed to `animated`
+- `colorScheme` prop renamed to `colorPalette`
+
+Before:
+
+```tsx
+<Progress hasStripe isAnimated value={75} colorScheme="blue" />
+```
+
+After:
+
+```tsx
+<Progress.Root striped animated value={75} colorPalette="blue">
+  <Progress.Track>
+    <Progress.Range />
+  </Progress.Track>
+</Progress.Root>
+```
+
+### Stack
+
+- Changed `spacing` to `gap`
+- Removed `StackItem` in favor of using the `Box` component directly
+
+### Select
+
+Now called `NativeSelect` and exposes all parts now.
+
+Before:
+
+```tsx
+<Select placeholder="Select option">
+  <option value="option1">Option 1</option>
+  <option value="option2">Option 2</option>
+  <option value="option3">Option 3</option>
+</Select>
+```
+
+After:
+
+```tsx
+<NativeSelect.Root size="sm" width="240px">
+  <NativeSelect.Field placeholder="Select option">
+    <option value="option1">Option 1</option>
+    <option value="option2">Option 2</option>
+    <option value="option3">Option 3</option>
+  </NativeSelect.Field>
+  <NativeSelect.Indicator />
+</NativeSelect.Root>
+```
+
+Changing the icon
+
+Before:
+
+```tsx
+<Select icon={<MdArrowDropDown />} placeholder="Woohoo! A new icon" />
+```
+
+After:
+
+```tsx
+<NativeSelect.Indicator>
+  <MdArrowDropDown />
+</NativeSelect.Indicator>
+```
+
+### Collapse
+
+- Rename `Collapse` to `Collapsible` namespace
+- Rename `in` to `open`
+- `animateOpacity` has been removed, use keyframes animations `expand-height`
+  and `collapse-height` instead
+
+Before
+
+```tsx
+<Collapse in={isOpen} animateOpacity>
+  Some content
+</Collapse>
+```
+
+After
+
+```tsx
+<Collapsible.Root open={isOpen}>
+  <Collapsible.Content>Some content</Collapsible.Content>
+</Collapsible.Root>
+```
+
+### Image
+
+- Now renders a native `img` without any fallback
+- Remove `fallbackSrc` due to the SSR issues it causes
+- Remove `useImage` hook
+- Remove `Img` in favor of using the `Image` component directly
+
+### PinInput
+
+- Changed `value`, `defaultValue` to use `string[]` instead of `string`
+- `onChange` prop is now called `onValueChange`
+- Add new `PinInput.Control` and `PinInput.Label` component parts
+- `PinInput.Root` now renders a `div` element by default. Consider combining
+  with `Stack` or `Group` for better layout control
+- `onComplete` prop is now called `onValueComplete`
+
+### NumberInput
+
+- Rename `NumberInputStepper` to `NumberInput.Control`
+- Rename `NumberInputStepperIncrement` to `NumberInput.IncrementTrigger`
+- Rename `NumberInputStepperDecrement` to `NumberInput.DecrementTrigger`
+- `onChange` prop is now called `onValueChange`
+- Remove `focusBorderColor` and `errorBorderColor`, consider setting the
+  `--focus-color` and `--error-color` css variables instead
+- `onInvalid` prop is now called `onValueInvalid`
+- `parse` and `format` props removed in favor of `formatOptions` prop
+
+Before
+
+```tsx
+<NumberInput>
+  <NumberInputField />
+  <NumberInputStepper>
+    <NumberIncrementStepper />
+    <NumberDecrementStepper />
+  </NumberInputStepper>
+</NumberInput>
+```
+
+After
+
+```tsx
+<NumberInput.Root>
+  <NumberInput.Input />
+  <NumberInput.Control>
+    <NumberInput.IncrementTrigger />
+    <NumberInput.DecrementTrigger />
+  </NumberInput.Control>
+</NumberInput.Root>
+```
+
+### Divider
+
+- Rename to `Separator`
+- Switch to `div` element for better layout control
+- Simplify component to rely on `borderTopWidth` and `borderInlineStartWidth`
+- To change the thickness reliably, set the `--divider-border-width` css
+  variable
+
+### Input, Select, Textarea
+
+- Removed `invalid` prop in favor of wrapping the component in a `Field`
+  component. This allows for adding a label, error text and asterisk easily.
+
+Before
+
+```tsx
+<Input invalid />
+```
+
+After
+
+```tsx
+<Field.Root invalid>
+  <Field.Label>Email</Field.Label>
+  <Input />
+  <Field.ErrorText>This field is required</Field.ErrorText>
+</Field.Root>
+```
+
+### Link
+
+- Removed `isExternal` prop in favor of explicitly setting the `target` and
+  `rel` props
+
+Before
+
+```tsx
+<Link isExternal>Click me</Link>
+```
+
+After
+
+```tsx
+<Link target="_blank" rel="noopener noreferrer">
+  Click me
+</Link>
+```
+
+### Button
+
+- Removed `isActive` in favor of passing `data-active`
+
+Before
+
+```tsx
+<Button isActive>Click me</Button>
+```
+
+After
+
+```tsx
+<Button data-active>Click me</Button>
+```
+
+### IconButton
+
+- Removed `icon` prop in favor of rendering the `children` prop directly
+- Removed `isRounded` in favor of using the `borderRadius=full` prop
+
+### Spinner
+
+- Change the `thickness` prop to `borderWidth`
+- Change the `speed` prop to `animationDuration`
+
+Before
+
+```tsx
+<Spinner thickness="2px" speed="0.5s" />
+```
+
+After
+
+```tsx
+<Spinner borderWidth="2px" animationDuration="0.5s" />
+```
+
+### Dialog, Drawer
+
+- `isOpen` and `onChange` props have been removed in favor of `open` and
+  `onOpenChange` props
+- `blockScrollOnMount` is now `preventScroll`
+- `closeOnEsc` is now `closeOnEscape`
+- `closeOnOverlayClick` is now `closeOnInteractOutside`
+- `initialFocusRef` is now an `initialFocusEl` function that returns the element
+- `finalFocusRef` is now an `finalFocusEl` function that returns the element
+
+### Editable
+
+- `finalFocusRef` is now `finalFocusEl` function that returns the element
+- `isDisabled` is now `disabled`
+- `onSubmit` is now `onValueCommit`
+- `onCancel` is now `onValueRevert`
+- `onChange` is now `onValueChange`
+- `startWithEditView` is now `defaultEdit`
+- Replace `submitOnBlur` with `submitMode`
+
+### FormControl
+
+- Replace `FormControl` with the `Field` component.
+- Replace `FormErrorMessage` with the `Field.ErrorText` component.
+
+Before:
+
+```tsx
+<FormControl>
+  <Input />
+  <FormErrorMessage>This field is required</FormErrorMessage>
+</FormControl>
+```
+
+After:
+
+```tsx
+<Field.Root>
+  <Input />
+  <Field.ErrorText>This field is required</Field.ErrorText>
+</Field.Root>
+```
+
+### Collapse
+
+Replace with the `Collapsible` component.
+
+Before:
+
+```tsx
+<Collapse in={isOpen} animateOpacity>
+  Some content
+</Collapse>
+```
+
+After:
+
+```tsx
+<Collapsible.Root open={isOpen}>
+  <Collapsible.Content>Some content</Collapsible.Content>
+</Collapsible.Root>
+```
+
+### Slider
+
+- `onChange` prop is now called `onValueChange`
+- `onChangeEnd` prop is now called `onValueChangeEnd`
+- `onChangeStart` prop is now removed
+- `isReversed` prop is now removed
+
+### RangeSlider
+
+Can now be used as a single slider by passing an array of values
+
+Before:
+
+```tsx
+<RangeSlider defaultValue={[10, 30]}>
+  <RangeSliderTrack>
+    <RangeSliderFilledTrack />
+  </RangeSliderTrack>
+  <RangeSliderThumb index={0} />
+  <RangeSliderThumb index={1} />
+</RangeSlider>
+```
+
+After:
+
+```tsx
+<Slider.Root defaultValue={[10, 30]}>
+  <Slider.Control>
+    <Slider.Track>
+      <Slider.Range />
+    </Slider.Track>
+    <Slider.Thumbs />
+  </Slider.Control>
+</Slider.Root>
+```
+
+### Table
+
+- `TableContainer` is now `Table.ScrollArea`
+- `Td`(now called `Table.ColumnHeader`) `isNumeric` is now `textAlign="end"`
+
+The compound component have been renamed slightly.
+
+Before:
+
+```tsx
+<Table variant="simple">
+  <TableCaption>Imperial to metric conversion factors</TableCaption>
+  <Thead>
+    <Tr>
+      <Th>Product</Th>
+      <Th>Category</Th>
+      <Th isNumeric>Price</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {items.map((item) => (
+      <Tr key={item.id}>
+        <Td>{item.name}</Td>
+        <Td>{item.category}</Td>
+        <Td isNumeric>{item.price}</Td>
+      </Tr>
+    ))}
+  </Tbody>
+  <Tfoot>
+    <Tr>
+      <Th>Product</Th>
+      <Th>Category</Th>
+      <Th isNumeric>Price</Th>
+    </Tr>
+  </Tfoot>
+</Table>
+```
+
+After:
+
+```tsx
+<Table.Root size="sm">
+  <Table.Header>
+    <Table.Row>
+      <Table.ColumnHeader>Product</Table.ColumnHeader>
+      <Table.ColumnHeader>Category</Table.ColumnHeader>
+      <Table.ColumnHeader textAlign="end">Price</Table.ColumnHeader>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    {items.map((item) => (
+      <Table.Row key={item.id}>
+        <Table.Cell>{item.name}</Table.Cell>
+        <Table.Cell>{item.category}</Table.Cell>
+        <Table.Cell textAlign="end">{item.price}</Table.Cell>
+      </Table.Row>
+    ))}
+  </Table.Body>
+</Table.Root>
+```
+
+### Tag
+
+`TagLeftIcon` and `TagRightIcon` are now `Tag.StartElement` and `Tag.EndElement`
+
+Before:
+
+```tsx
+<Tag>
+  <TagLeftIcon boxSize="12px" as={AddIcon} />
+  <TagLabel>Cyan</TagLabel>
+  <TagRightIcon boxSize="12px" as={AddIcon} />
+</Tag>
+```
+
+After:
+
+```tsx
+<Tag.Root>
+  <Tag.StartElement>
+    <AddIcon />
+  </Tag.StartElement>
+  <Tag.Label>Cyan</Tag.Label>
+  <Tag.EndElement>
+    <AddIcon />
+  </Tag.EndElement>
+</Tag.Root>
+```
+
+- `TagCloseButton` is now `Tag.CloseTrigger`
+
+Before:
+
+```tsx
+<Tag>
+  <TagLabel>Green</TagLabel>
+  <TagCloseButton />
+</Tag>
+```
+
+After:
+
+```tsx
+<Tag.Root>
+  <Tag.Label>Green</Tag.Label>
+  <Tag.CloseTrigger />
+</Tag.Root>
+```
+
+### Alert
+
+- `AlertIcon` is now `Alert.Indicator`
+
+Before:
+
+```tsx
+<Alert>
+  <AlertIcon />
+  <AlertTitle>Your browser is outdated!</AlertTitle>
+  <AlertDescription>Your Chakra experience may be degraded.</AlertDescription>
+</Alert>
+```
+
+After:
+
+```tsx
+<Alert.Root status="error">
+  <Alert.Indicator />
+  <Alert.Content>
+    <Alert.Title>Invalid Fields</Alert.Title>
+    <Alert.Description>
+      Your form has some errors. Please fix them and try again.
+    </Alert.Description>
+  </Alert.Content>
+</Alert.Root>
+```
+
+- Removed `addRole`prop in favor of `role` prop.
+
+### Skeleton
+
+- `startColor` and `endColor` props now use CSS variables
+
+Before:
+
+```tsx
+<Skeleton startColor="pink.500" endColor="orange.500" />
+```
+
+After:
+
+```tsx
+<Skeleton
+  css={{
+    "--start-color": "colors.pink.500",
+    "--end-color": "colors.orange.500",
+  }}
+/>
+```
+
+- `isLoaded` prop is now `loading`
+
+Before:
+
+```tsx
+<Skeleton isLoaded>
+  <span>Chakra ui is cool</span>
+</Skeleton>
+```
+
+After:
+
+```tsx
+<Skeleton loading={false}>
+  <span>Chakra ui is cool</span>
+</Skeleton>
+```
+
+### Menu
+
+- Now uses compound components everywhere
+
+Before:
+
+```tsx
+<Menu>
+  <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+    Actions
+  </MenuButton>
+  <MenuList>
+    <MenuItem>Download</MenuItem>
+    <MenuItem>Create a Copy</MenuItem>
+  </MenuList>
+</Menu>
+```
+
+After:
+
+```tsx
+<Menu.Root>
+  <Menu.Trigger asChild>
+    <Button>
+      Actions
+      <ChevronDownIcon />
+    </Button>
+  </Menu.Trigger>
+  <Portal>
+    <Menu.Positioner>
+      <Menu.Content>
+        <Menu.Item value="download">Download</Menu.Item>
+        <Menu.Item value="copy">Create a Copy</Menu.Item>
+      </Menu.Content>
+    </Menu.Positioner>
+  </Portal>
+</Menu.Root>
+```
+
+- Accesing internal state is now done via `Menu.Context` no longer render prop.
+
+Before:
+
+```tsx
+<Menu>
+  {({ isOpen }) => (
+    <>
+      <MenuButton isActive={isOpen} as={Button} rightIcon={<ChevronDownIcon />}>
+        {isOpen ? "Close" : "Open"}
+      </MenuButton>
+      <MenuList>
+        <MenuItem>Download</MenuItem>
+        <MenuItem onClick={() => alert("Kagebunshin")}>Create a Copy</MenuItem>
+      </MenuList>
+    </>
+  )}
+</Menu>
+```
+
+After:
+
+```tsx
+<Menu.Root>
+  <Menu.Context>
+    {(menu) => (
+      <Menu.Trigger asChild>
+        <Button>
+          {menu.open ? "Close" : "Open"}
+          <ChevronDownIcon />
+        </Button>
+      </Menu.Trigger>
+    )}
+  </Menu.Context>
+  <Portal>
+    <Menu.Positioner>
+      <Menu.Content>
+        <Menu.Item value="download">Download</Menu.Item>
+        <Menu.Item value="copy" onSelect={() => alert("Kagebunshin")}>
+          Create a Copy
+        </Menu.Item>
+      </Menu.Content>
+    </Menu.Positioner>
+  </Portal>
+</Menu.Root>
+```
+
+- `isLazy` prop on `Menu` is split into `lazyMount` and `unmountOnExit` on
+  `Menu.Root`
+
+- `MenuOptionGroup` is now split into `Menu.RadioItemGroup` and
+  `Menu.CheckboxItemGroup` to handle the states separately.
+
+Before:
+
+```tsx
+<Menu>
+  <MenuButton as={Button}>Trigger</MenuButton>
+  <MenuList>
+    <MenuOptionGroup defaultValue="asc" title="Order" type="radio">
+      <MenuItemOption value="asc">Ascending</MenuItemOption>
+      <MenuItemOption value="desc">Descending</MenuItemOption>
+    </MenuOptionGroup>
+    <MenuDivider />
+    <MenuOptionGroup title="Country" type="checkbox">
+      <MenuItemOption value="email">Email</MenuItemOption>
+      <MenuItemOption value="phone">Phone</MenuItemOption>
+      <MenuItemOption value="country">Country</MenuItemOption>
+    </MenuOptionGroup>
+  </MenuList>
+</Menu>
+```
+
+After:
+
+```tsx
+<Menu.Root>
+  <Menu.Trigger asChild>
+    <Button>Trigger</Button>
+  </Menu.Trigger>
+  <Portal>
+    <Menu.Positioner>
+      <Menu.Content minW="10rem">
+        <Menu.RadioItemGroup defaultValue="asc">
+          <Menu.RadioItem value="asc">Ascending</Menu.RadioItem>
+          <Menu.RadioItem value="desc">Descending</Menu.RadioItem>
+        </Menu.RadioItemGroup>
+        <Menu.CheckboxItemGroup defaultValue={["email"]}>
+          <Menu.CheckboxItem value="email">Email</Menu.CheckboxItem>
+          <Menu.CheckboxItem value="phone">Phone</Menu.CheckboxItem>
+          <Menu.CheckboxItem value="country">Country</Menu.CheckboxItem>
+        </Menu.CheckboxItemGroup>
+      </Menu.Content>
+    </Menu.Positioner>
+  </Portal>
+</Menu.Root>
+```
+
+### Tooltip
+
+- `closeOnEsc` now renamed to `closeOnEscape`
+- `closeOnMouseDown` is now `closeOnPointerDown`
+
+- `placement`, `gutter`, `offset` and `arrow` on `Tooltip` is now included as
+  `positioning` prop on `Tooltip.Root`
+
+Before:
+
+```tsx
+<Tooltip placement="top" />
+```
+
+After:
+
+```tsx
+<Tooltip.Root positioning={{ placement: "top" }} />
+```
+
+### Accordion
+
+- These props have been changed:
+  - `allowMultiple` -> `multiple`
+  - `allowToggle` -> `collapsible`
+  - `index` -> `value`
+  - `defaultIndex` -> `defaultValue`
+
+Before:
+
+```tsx
+<Accordion allowMultiple index={[0]} onChange={() => {}} />
+```
+
+After:
+
+```tsx
+<Accordion multiple value={["0"]} onValueChange={() => {}} />
+```
+
+- `AccordionButton` is now `Accordion.Trigger`
+- `AccordionIcon` is now `Accordion.ItemIndicator`
+
+Before:
+
+```tsx
+<AccordionButton>Section 1 title</AccordionButton>
+```
+
+After:
+
+```tsx
+<Accordion.Trigger>Section 1 title</Accordion.Trigger>
+```
+
+### Tabs
+
+- Component structure has changed and `value` prop is now required on list and
+  panels.
+
+Before:
+
+```tsx
+<Tabs>
+  <TabList>
+    <Tab>One</Tab>
+    <Tab>Two</Tab>
+    <Tab>Three</Tab>
+  </TabList>
+  <TabPanels>
+    <TabPanel>one!</TabPanel>
+    <TabPanel>two!</TabPanel>
+    <TabPanel>three!</TabPanel>
+  </TabPanels>
+</Tabs>
+```
+
+After:
+
+```tsx
+<Tabs.Root>
+  <Tabs.List>
+    <Tabs.Trigger value="one">One</Tabs.Trigger>
+    <Tabs.Trigger value="two">Two</Tabs.Trigger>
+    <Tabs.Trigger value="three">Three</Tabs.Trigger>
+  </Tabs.List>
+  <Tabs.Content value="one">one!</Tabs.Content>
+  <Tabs.Content value="two">two!</Tabs.Content>
+  <Tabs.Content value="three">three!</Tabs.Content>
+</Tabs.Root>
+```
+
+- `defaultIndex`, `index` and `onChange` is now `defaultValue`, `value` and
+  `onValueChange` respectively
+
+Before:
+
+```tsx
+<Tabs defaultIndex={0} index={0} onChange={(index) => {}} />
+```
+
+After:
+
+```tsx
+<Tabs defaultValue={0} value={0} onValueChange={({ value }) => {}} />
+```
+
+- `isLazy` prop on `Tabs` is now `lazyMount` and `unmountOnExit` on `Tabs.Root`
+
+Before:
+
+```tsx
+<Tabs isLazy />
+```
+
+After:
+
+```tsx
+<Tabs.Root lazyMount unmountOnExit />
+```
+
+### Show and Hide
+
+- `Show` and `Hide` components are removed in favor of `hideFrom` and
+  `hideBelow`
+
+Before:
+
+```tsx
+<Show below="md">
+  This text appears only on screens md and smaller.
+</Show>
+
+<Hide below="md">
+  This text hides at the "md" value screen width and smaller.
+</Hide>
+```
+
+After:
+
+```tsx
+<Box hideBelow="md">
+  This text hides at the "md" value screen width and smaller.
+</Box>
+
+<Box hideFrom="md">
+  This text appears only on screens md and larger.
+</Box>
+```
+
+### Checkbox
+
+- Refactored to use compound components
+
+Before:
+
+```tsx
+<Checkbox defaultChecked>Checkbox</Checkbox>
+```
+
+After:
+
+```tsx
+<Checkbox.Root defaultChecked>
+  <Checkbox.HiddenInput />
+  <Checkbox.Control>
+    <Checkbox.Indicator />
+  </Checkbox.Control>
+  <Checkbox.Label>Checkbox</Checkbox.Label>
+</Checkbox.Root>
+```
+
+### Radio Group
+
+- Refactored to use compound components
+
+Before:
+
+```tsx
+<RadioGroup defaultValue="2">
+  <Radio value="1">Radio</Radio>
+  <Radio value="2">Radio</Radio>
+</RadioGroup>
+```
+
+After:
+
+```tsx
+<RadioGroup.Root defaultValue="2">
+  <RadioGroup.Item value="1">
+    <RadioGroup.ItemHiddenInput />
+    <RadioGroup.ItemIndicator />
+    <RadioGroup.ItemText />
+  </RadioGroup.Item>
+</RadioGroup.Root>
+```
+
+### Button Props
+
+- `isActive` → `data-active` attribute
+- `isDisabled` → `disabled`
+- `isLoading` → `loading`
+- `leftIcon` and `rightIcon` → passed as children
+- `iconSpacing` → removed (use gap in flex layout)
+- `colorScheme` → `colorPalette`
+
+**Example:**
+
+```tsx
+// Before
+<Button
+  isActive={true}
+  isDisabled={false}
+  isLoading={true}
+  leftIcon={<Icon />}
+  rightIcon={<Icon />}
+  colorScheme="blue"
+>
+  Submit
+</Button>
+
+// After
+<Button
+  data-active=""
+  disabled={false}
+  loading={true}
+  colorPalette="blue"
+>
+  <LeftIcon />
+  Submit
+  <RightIcon />
+</Button>
+```
+
+### Input Props
+
+- `isDisabled` → `disabled`
+- `isInvalid` → `invalid`
+- `isReadOnly` → `readOnly`
+- `isRequired` → `required`
+- `colorScheme` → `colorPalette`
+- `focusBorderColor` → use CSS variables
+- `errorBorderColor` → use CSS variables
+
+**Example:**
+
+```tsx
+// Before
+<Input
+  isDisabled={false}
+  isInvalid={true}
+  isReadOnly={false}
+  isRequired={true}
+  colorScheme="blue"
+  focusBorderColor="blue.500"
+  errorBorderColor="red.500"
+/>
+
+// After
+<Input
+  disabled={false}
+  invalid={true}
+  readOnly={false}
+  required={true}
+  colorPalette="blue"
+  style={{
+    "--focus-color": "blue.500",
+    "--error-color": "red.500"
+  }}
+/>
+```
+
+### Checkbox Props
+
+- `isChecked` → `checked`
+- `isDisabled` → `disabled`
+- `isInvalid` → `invalid`
+- `isIndeterminate` → `indeterminate` (on Indicator)
+- `colorScheme` → `colorPalette`
+- `iconColor` → removed (use CSS)
+- `iconSize` → removed (use CSS)
+- `spacing` → removed (use gap)
+
+**Example:**
+
+```tsx
+// Before
+<Checkbox
+  isChecked={true}
+  isDisabled={false}
+  isInvalid={true}
+  isIndeterminate={true}
+  colorScheme="blue"
+>
+  Accept terms
+</Checkbox>
+
+// After
+<Checkbox.Root
+  checked={true}
+  disabled={false}
+  invalid={true}
+  colorPalette="blue"
+>
+  <Checkbox.Control>
+    <Checkbox.Indicator indeterminate={true} />
+  </Checkbox.Control>
+  <Checkbox.Label>Accept terms</Checkbox.Label>
+</Checkbox.Root>
+```
+
+### Modal to Dialog Props
+
+- `isOpen` → `open`
+- `onClose` → `onOpenChange` (different signature)
+- `isCentered` → `placement="center"`
+- `scrollBehavior` → same
+- `motionPreset` → updated values (e.g., `slideInBottom` → `slide-in-bottom`)
+- `closeOnOverlayClick` → `closeOnInteractOutside`
+- `closeOnEsc` → `closeOnEscape`
+- `blockScrollOnMount` → `preventScroll`
+- `returnFocusOnClose` → `restoreFocus`
+- `initialFocusRef` → `initialFocusEl` (function)
+- `finalFocusRef` → `finalFocusEl` (function)
+
+**Example:**
+
+```tsx
+// Before
+<Modal
+  isOpen={isOpen}
+  onClose={onClose}
+  isCentered={true}
+  closeOnOverlayClick={true}
+  initialFocusRef={initialRef}
+>
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Title</ModalHeader>
+    <ModalBody>Content</ModalBody>
+  </ModalContent>
+</Modal>
+
+// After
+<Dialog.Root
+  open={isOpen}
+  onOpenChange={(e) => !e.open && onClose()}
+  placement="center"
+  closeOnInteractOutside={true}
+  initialFocusEl={() => initialRef.current}
+>
+  <Dialog.Backdrop />
+  <Dialog.Positioner>
+    <Dialog.Content>
+      <Dialog.Header>
+        <Dialog.Title>Title</Dialog.Title>
+      </Dialog.Header>
+      <Dialog.Body>Content</Dialog.Body>
+    </Dialog.Content>
+  </Dialog.Positioner>
+</Dialog.Root>
+```
+
+### Stack Props
+
+- `spacing` → `gap`
+- `divider` → `separator`
+- Other props remain the same
+
+**Example:**
+
+```tsx
+// Before
+<Stack
+  spacing="4"
+  divider={<StackDivider />}
+>
+  <Box>Item 1</Box>
+  <Box>Item 2</Box>
+</Stack>
+
+// After
+<Stack
+  gap="4"
+  separator={<Stack.Separator />}
+>
+  <Box>Item 1</Box>
+  <Box>Item 2</Box>
+</Stack>
+```
+

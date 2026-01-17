@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>污水曝气技术交互式对比分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 本应用设计为一个交互式对比仪表板，旨在将源报告中的多维复杂数据转化为直观的决策支持工具。核心架构围绕用户最关键的决策点——“曝气深度”展开。用户首先选择一个深度（浅、中、深），随后应用会动态更新所有可视化图表和数据摘要，展示在该深度下五种曝气技术的各项性能对比。这种以用户任务为中心的设计（“我的池子有多深？”）取代了报告的线性结构，使用户能快速聚焦于与其工况最相关的信息。导航通过顶部的深度选择器和下方的性能指标卡片实现，用户流清晰直接：选择深度 -> 查看宏观对比图 -> 探索详细指标卡片 -> 阅读具体技术优缺点。此结构旨在最大化可用性，将数据探索过程从被动阅读转变为主动查询。 -->
+    <!-- Visualization & Content Choices: 报告中的数据通过多种图表和交互元素呈现，以达成不同的沟通目标。1) 目标：比较关键性能指标（溶氧效率、能耗）。方法：使用Chart.js绘制分组条形图，清晰展示各技术在选定深度下的性能范围（最小值/最大值），便于横向对比。2) 目标：评估综合混合效果。方法：采用雷达图，直观展示各项混合指标（固体悬浮、死区防止等）的“能力形状”，快速识别技术的混合优势。3) 目标：权衡经济性与寿命。方法：使用条形图展示生命周期因素，如初始投资、运维成本和使用寿命，并将定性描述（高/中/低）量化为数值以便于可视化。4. 目标：展示性能衰减趋势。方法：使用折线图表示细气泡曝气器的风阻随时间的变化，强调维护的重要性。所有交互（如点击深度按钮）都会触发JS函数，该函数从预设的数据对象中获取相应数据，并更新所有图表实例和文本内容，确保信息同步和一致。此设计完全规避了SVG和Mermaid JS，严格遵循技术要求。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background-color: #f8fafc; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; max-height: 450px; } }
+        .active-depth-btn { background-color: #0d9488 !important; color: white !important; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .tech-card { transition: all 0.3s ease-in-out; }
+        .tech-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .tech-icon { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-800 mb-2">污水曝气技术交互式对比分析</h1>
+            <p class="text-stone-600 max-w-3xl mx-auto">一个基于深度调研报告的决策支持工具，旨在帮助您根据具体工况选择最佳曝气方案。</p>
+        </header>
+
+        <main>
+            <section id="comparator" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-semibold text-stone-700 mb-2">第一步：选择您的曝气池深度</h2>
+                    <p class="text-stone-500">您的选择将动态更新下方所有对比数据。</p>
+                </div>
+                <div id="depth-selector" class="flex flex-wrap justify-center gap-3 md:gap-4 mb-8">
+                    <button data-depth="浅层" class="depth-btn text-lg font-semibold py-3 px-6 rounded-full bg-stone-100 hover:bg-teal-100 text-teal-800 transition-all duration-300 shadow-sm">浅层 (&lt;3m)</button>
+                    <button data-depth="中层" class="depth-btn text-lg font-semibold py-3 px-6 rounded-full bg-stone-100 hover:bg-teal-100 text-teal-800 transition-all duration-300 shadow-sm">中层 (3-6m)</button>
+                    <button data-depth="深层" class="depth-btn text-lg font-semibold py-3 px-6 rounded-full bg-stone-100 hover:bg-teal-100 text-teal-800 transition-all duration-300 shadow-sm">深层 (&gt;6m)</button>
+                </div>
+
+                <div id="charts-container">
+                     <div class="mb-12">
+                        <h3 class="text-xl font-semibold text-center text-stone-700 mb-4">关键性能对比 (<span id="current-depth-display1"></span>)</h3>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-slate-50 p-4 rounded-xl">
+                                <h4 class="text-lg font-medium text-center mb-2">溶氧效率 (SOTE, %)</h4>
+                                <div class="chart-container"><canvas id="soteChart"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl">
+                                <h4 class="text-lg font-medium text-center mb-2">能耗效率 (SAE, kgO₂/kWh)</h4>
+                                <div class="chart-container"><canvas id="saeChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mb-12">
+                        <h3 class="text-xl font-semibold text-center text-stone-700 mb-4">混合与成本效益 (<span id="current-depth-display2"></span>)</h3>
+                        <div class="grid md:grid-cols-2 gap-8">
+                             <div class="bg-slate-50 p-4 rounded-xl">
+                                <h4 class="text-lg font-medium text-center mb-2">综合混合效果</h4>
+                                <div class="chart-container"><canvas id="mixingChart"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl">
+                                <h4 class="text-lg font-medium text-center mb-2">生命周期考量 (投资、运维与寿命)</h4>
+                                <div class="chart-container"><canvas id="costLifeChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="details" class="mb-8">
+                <h2 class="text-2xl font-semibold text-center text-stone-700 mb-6">第二步：深入了解各技术在 <span id="current-depth-display3"></span> 的表现</h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="tech-details-grid">
+                </div>
+            </section>
+
+            <section id="tech-overview" class="mb-8">
+                 <h2 class="text-2xl font-semibold text-center text-stone-700 mb-6">曝气技术工作原理简介</h2>
+                 <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <div class="bg-white p-5 rounded-xl shadow-md text-center">
+                        <div class="tech-icon bg-blue-100 text-blue-600 mx-auto mb-3"><span>💨</span></div>
+                        <h4 class="font-bold text-lg mb-2">微孔/细气泡</h4>
+                        <p class="text-sm text-stone-600">通过弹性膜片或陶瓷上的微孔释放大量细小气泡，气液接触面积大，溶氧效率高。</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-md text-center">
+                        <div class="tech-icon bg-sky-100 text-sky-600 mx-auto mb-3"><span>🫧</span></div>
+                        <h4 class="font-bold text-lg mb-2">粗气泡</h4>
+                        <p class="text-sm text-stone-600">通过较大的孔口释放大气泡，上升速度快，混合能力强，不易堵塞。</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-md text-center">
+                        <div class="tech-icon bg-indigo-100 text-indigo-600 mx-auto mb-3"><span>🌊</span></div>
+                        <h4 class="font-bold text-lg mb-2">表面曝气</h4>
+                        <p class="text-sm text-stone-600">通过水面叶轮旋转，剧烈搅动水体并卷吸空气，实现充氧和表层混合。</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-md text-center">
+                        <div class="tech-icon bg-purple-100 text-purple-600 mx-auto mb-3"><span>🌪️</span></div>
+                        <h4 class="font-bold text-lg mb-2">射流曝气</h4>
+                        <p class="text-sm text-stone-600">利用水泵产生高速水射流，在喷嘴处吸入或压入空气，形成气水混合流并喷射扩散。</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-md text-center">
+                        <div class="tech-icon bg-emerald-100 text-emerald-600 mx-auto mb-3"><span>⚙️</span></div>
+                        <h4 class="font-bold text-lg mb-2">潜水曝气</h4>
+                        <p class="text-sm text-stone-600">将电机、叶轮等集成为一体潜入水下工作，兼具吸气、混合与推流功能。</p>
+                    </div>
+                 </div>
+            </section>
+
+            <section id="summary" class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-semibold text-center text-stone-700 mb-6">选型策略与结论</h2>
+                <div class="space-y-4 text-stone-600">
+                    <p>选择最佳的曝气技术并非“一刀切”的决定，而是一个需要综合平衡多方面因素的系统工程。<strong>曝气深度</strong>是首要的决定性因素，它直接影响了技术的适用性和效率。本应用的数据清晰地表明：</p>
+                    <ul class="list-disc list-inside space-y-2 pl-4">
+                        <li><strong>浅层池 (&lt;3m):</strong> 表面曝气因其投资低、安装简便而具优势，但能效一般。细气泡曝气也可行，但效率优势不突出。</li>
+                        <li><strong>中层池 (3-6m):</strong> 这是多数技术的竞争区域。微孔/细气泡曝气凭借其高能效成为主流选择。射流和潜水曝气则在需要更强混合或水质条件复杂时表现出色。</li>
+                        <li><strong>深层池 (&gt;6m):</strong> 技术挑战增大。细气泡曝气依然可行，但需关注高背压带来的能耗和维护难题。射流曝气和专为深水设计的潜水曝气系统因其强大的混合与深层供氧能力，成为极具竞争力的方案。</li>
+                    </ul>
+                    <p>除了深度，您还应考虑<strong>初始投资与运维成本</strong>的全生命周期经济性，<strong>混合需求</strong>是否高于供氧需求，以及<strong>水质特性</strong>（如易堵塞、腐蚀性）对设备寿命和维护频率的影响。在许多复杂场景中，采用<strong>组合曝气方案</strong>（如细气泡供氧 + 机械搅拌混合）可能是实现整体性能最优化的明智之举。</p>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12 text-stone-500 text-sm">
+            <p>数据来源于《污水处理厂不同曝气方式在不同曝气深度下的综合性能评估》报告。</p>
+            <p>本交互式应用仅供参考，具体工程设计请咨询专业工程师。</p>
+        </footer>
+    </div>
+
+<script>
+const appData = {
+    techs: {
+        '微孔/细气泡曝气': {
+            icon: '💨', color: 'rgba(59, 130, 246, 0.7)',
+            summary: {
+                '浅层': { pros: '技术成熟，有一定效率。', cons: 'SOTE优势不明显，混合能力可能不足。', conclusion: '可行，但非最优选，需评估混合需求。' },
+                '中层': { pros: 'SOTE和SAE通常最优，节能潜力大。', cons: '易污堵，需定期维护，混合能力相对较弱。', conclusion: '主流选择，尤其适用于对能耗敏感的市政污水厂。' },
+                '深层': { pros: 'SOTE随深度继续提高。', cons: '鼓风机背压和能耗显著增加，深池混合和维护是巨大挑战。', conclusion: '仍是重要选择，但需仔细权衡能耗与维护成本，并可能需辅助混合。' },
+            },
+            performance: {
+                '浅层': { sote: [15, 30], sae: [1.5, 3.0], mixing: [3, 3, 2], cost: [2, 3, 8] },
+                '中层': { sote: [30, 50], sae: [2.5, 6.0], mixing: [2, 2, 2], cost: [3, 2, 8] },
+                '深层': { sote: [40, 60], sae: [2.0, 5.0], mixing: [1, 1, 1], cost: [4, 4, 8] },
+            }
+        },
+        '粗气泡曝气': {
+            icon: '🫧', color: 'rgba(14, 165, 233, 0.7)',
+            summary: {
+                '浅层': { pros: '混合能力强，不易堵塞，维护少。', cons: '溶氧效率和SAE低，能耗高。', conclusion: '适用于曝气沉砂池或对混合要求高的特定场景。' },
+                '中层': { pros: '混合能力强，运行可靠。', cons: '能耗高，效率远低于细气泡。', conclusion: '适用于高固体浓度或要求极低维护的工业废水。' },
+                '深层': { pros: '混合能力强，可靠性高，效率衰减相对平缓。', cons: '能耗非常高，经济性差。', conclusion: '仅在对混合和可靠性有极端要求，且不计能耗的特殊场合考虑。' },
+            },
+            performance: {
+                '浅层': { sote: [3, 8], sae: [0.8, 1.5], mixing: [4, 4, 3], cost: [2, 1, 15] },
+                '中层': { sote: [5, 15], sae: [1.0, 1.8], mixing: [4, 4, 3], cost: [2, 1, 15] },
+                '深层': { sote: [10, 20], sae: [1.2, 2.0], mixing: [4, 4, 3], cost: [3, 1, 15] },
+            }
+        },
+        '表面曝气': {
+            icon: '🌊', color: 'rgba(99, 102, 241, 0.7)',
+            summary: {
+                '浅层': { pros: '初始投资低，安装维护方便，表层混合好。', cons: 'SAE较低，能耗较高，可能产生噪音水雾。', conclusion: '浅池中经济实用的选择，尤其适用于氧化沟等工艺。' },
+                '中层': { pros: '安装仍较方便。', cons: '效率随深度增加显著下降，深层混合与充氧能力差。', conclusion: '不推荐用于中层池的整体曝气，除非有特殊设计（如导流筒）。' },
+                '深层': { pros: '无', cons: '完全不适用，无法实现有效曝气和混合。', conclusion: '技术上不适用。' },
+            },
+            performance: {
+                '浅层': { sote: [7, 11], sae: [0.9, 2.5], mixing: [4, 2, 2], cost: [1, 3, 15] },
+                '中层': { sote: [3, 7], sae: [0.6, 1.5], mixing: [2, 1, 1], cost: [3, 4, 15] },
+                '深层': { sote: [0, 0], sae: [0, 0], mixing: [1, 1, 1], cost: [5, 5, 15] },
+            }
+        },
+        '射流曝气': {
+            icon: '🌪️', color: 'rgba(168, 85, 247, 0.7)',
+            summary: {
+                '浅层': { pros: '混合能力强，可形成定向流。', cons: '系统较复杂，投资和能耗可能偏高。', conclusion: '在有特殊混合需求或池型不规则时可考虑。' },
+                '中层': { pros: '溶氧效率和混合效果俱佳，对水质适应性好。', cons: '初始投资较高，喷嘴有堵塞风险。', conclusion: '细气泡曝气的有力竞争者，尤其适合需要强化混合的场景。' },
+                '深层': { pros: '深水适应性好，混合与充氧能力强。', cons: '投资高，水泵和鼓风机能耗需综合评估。', conclusion: '深水池曝气的优选方案之一，尤其在混合要求高时。' },
+            },
+            performance: {
+                '浅层': { sote: [10, 20], sae: [1.0, 2.0], mixing: [5, 5, 4], cost: [3, 4, 10] },
+                '中层': { sote: [20, 40], sae: [1.2, 3.0], mixing: [5, 5, 4], cost: [4, 3, 10] },
+                '深层': { sote: [30, 50], sae: [1.5, 3.0], mixing: [5, 5, 4], cost: [5, 3, 10] },
+            }
+        },
+        '潜水曝气': {
+            icon: '⚙️', color: 'rgba(16, 185, 129, 0.7)',
+            summary: {
+                '浅层': { pros: '安装灵活，兼具曝气和混合。', cons: '部分型号在浅水非最佳工况，效率一般。', conclusion: '适用于小型设施或现有池体改造。' },
+                '中层': { pros: '安装维护方便（可吊装），曝气混合一体。', cons: '效率因型号差异大，需关注电机密封可靠性。', conclusion: '是灵活的解决方案，特别适合改造项目和不规则池型。' },
+                '深层': { pros: '部分型号专为深水设计，效果好。', cons: '深水专用型号成本高，自吸式效率可能受限。', conclusion: '与射流曝气同为深水池的优选方案，安装灵活性是其突出优点。' },
+            },
+            performance: {
+                '浅层': { sote: [15, 25], sae: [1.5, 3.0], mixing: [4, 4, 4], cost: [3, 3, 7] },
+                '中层': { sote: [25, 40], sae: [2.0, 4.5], mixing: [5, 5, 4], cost: [4, 2, 7] },
+                '深层': { sote: [30, 45], sae: [2.5, 4.5], mixing: [5, 5, 4], cost: [5, 3, 7] },
+            }
+        },
+    }
+};
+
+let currentState = { depth: '中层' };
+let charts = {};
+
+const techNames = Object.keys(appData.techs);
+const techColors = techNames.map(tech => appData.techs[tech].color);
+
+document.addEventListener('DOMContentLoaded', () => {
+    initialize();
+    updateDashboard();
+});
+
+function initialize() {
+    setupEventListeners();
+    createCharts();
+    document.querySelector(`[data-depth="${currentState.depth}"]`).classList.add('active-depth-btn');
+}
+
+function setupEventListeners() {
+    const depthButtons = document.querySelectorAll('.depth-btn');
+    depthButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            currentState.depth = button.dataset.depth;
+            depthButtons.forEach(btn => btn.classList.remove('active-depth-btn'));
+            button.classList.add('active-depth-btn');
+            updateDashboard();
+        });
+    });
+}
+
+function createCharts() {
+    const chartOptions = (title) => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 12 }}},
+            title: { display: false, text: title, font: { size: 16 } },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) { label += ': '; }
+                        if (context.parsed.y !== null) {
+                            if (Array.isArray(context.raw)) {
+                                label += `范围 ${context.raw[0]} - ${context.raw[1]}`;
+                            } else {
+                                label += context.parsed.y;
+                            }
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(200, 200, 200, 0.2)' } },
+            x: { grid: { display: false } }
+        }
+    });
+    
+    const radarOptions = {
+         responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        },
+        scales: {
+            r: {
+                angleLines: { display: true },
+                suggestedMin: 0,
+                suggestedMax: 5,
+                ticks: { stepSize: 1, backdropColor: 'transparent' },
+                 pointLabels: { font: { size: 12 } }
+            }
+        }
+    };
+
+    charts.sote = new Chart(document.getElementById('soteChart'), { type: 'bar', options: chartOptions('SOTE (%)') });
+    charts.sae = new Chart(document.getElementById('saeChart'), { type: 'bar', options: chartOptions('SAE (kgO₂/kWh)') });
+    charts.mixing = new Chart(document.getElementById('mixingChart'), { type: 'radar', options: radarOptions });
+    charts.costLife = new Chart(document.getElementById('costLifeChart'), { 
+        type: 'bar', 
+        options: {
+            ...chartOptions('生命周期'),
+            scales: {
+                y: { beginAtZero: true, title: {display: true, text: '相对值/年'} },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function updateDashboard() {
+    const depth = currentState.depth;
+
+    document.getElementById('current-depth-display1').textContent = depth;
+    document.getElementById('current-depth-display2').textContent = depth;
+    document.getElementById('current-depth-display3').textContent = depth;
+    
+    updateSoteChart(depth);
+    updateSaeChart(depth);
+    updateMixingChart(depth);
+    updateCostLifeChart(depth);
+    updateTechDetails(depth);
+}
+
+function updateSoteChart(depth) {
+    charts.sote.data = {
+        labels: techNames.map(name => name.split('/')),
+        datasets: [{
+            label: `SOTE 范围 (%) - ${depth}`,
+            data: techNames.map(tech => appData.techs[tech].performance[depth].sote),
+            backgroundColor: techColors,
+            borderColor: techColors.map(c => c.replace('0.7', '1')),
+            borderWidth: 1,
+            barPercentage: 0.8,
+            categoryPercentage: 0.7
+        }]
+    };
+    charts.sote.update();
+}
+
+function updateSaeChart(depth) {
+    charts.sae.data = {
+        labels: techNames.map(name => name.split('/')),
+        datasets: [{
+            label: `SAE 范围 (kgO₂/kWh) - ${depth}`,
+            data: techNames.map(tech => appData.techs[tech].performance[depth].sae),
+            backgroundColor: techColors,
+            borderColor: techColors.map(c => c.replace('0.7', '1')),
+            borderWidth: 1,
+            barPercentage: 0.8,
+            categoryPercentage: 0.7
+        }]
+    };
+    charts.sae.update();
+}
+
+function updateMixingChart(depth) {
+    charts.mixing.data = {
+        labels: ['固体悬浮', '死区防止', '混合均匀性'],
+        datasets: techNames.map(tech => ({
+            label: tech,
+            data: appData.techs[tech].performance[depth].mixing,
+            fill: true,
+            backgroundColor: appData.techs[tech].color.replace('0.7', '0.2'),
+            borderColor: appData.techs[tech].color.replace('0.7', '1'),
+            pointBackgroundColor: appData.techs[tech].color.replace('0.7', '1'),
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: appData.techs[tech].color.replace('0.7', '1')
+        }))
+    };
+    charts.mixing.update();
+}
+
+
+function updateCostLifeChart(depth) {
+    const costData = techNames.map(tech => appData.techs[tech].performance[depth].cost[0]);
+    const opexData = techNames.map(tech => appData.techs[tech].performance[depth].cost[1]);
+    const lifeData = techNames.map(tech => appData.techs[tech].performance[depth].cost[2]);
+    
+    charts.costLife.data = {
+        labels: techNames.map(name => name.split('/')),
+        datasets: [
+            {
+                label: '初始投资 (相对值)',
+                data: costData,
+                backgroundColor: 'rgba(252, 165, 165, 0.7)',
+                borderColor: 'rgba(252, 165, 165, 1)',
+                borderWidth: 1
+            },
+            {
+                label: '运维成本 (相对值)',
+                data: opexData,
+                backgroundColor: 'rgba(134, 239, 172, 0.7)',
+                borderColor: 'rgba(134, 239, 172, 1)',
+                borderWidth: 1
+            },
+            {
+                label: '主要部件寿命 (年)',
+                data: lifeData,
+                backgroundColor: 'rgba(147, 197, 253, 0.7)',
+                borderColor: 'rgba(147, 197, 253, 1)',
+                borderWidth: 1,
+                type: 'line',
+                fill: false,
+                tension: 0.1
+            }
+        ]
+    };
+    charts.costLife.update();
+}
+
+
+function updateTechDetails(depth) {
+    const grid = document.getElementById('tech-details-grid');
+    grid.innerHTML = '';
+
+    for (const tech in appData.techs) {
+        const techInfo = appData.techs[tech];
+        const summary = techInfo.summary[depth];
+
+        if (summary.pros === '无') continue; 
+
+        const card = document.createElement('div');
+        card.className = 'tech-card bg-white p-5 rounded-xl shadow-md flex flex-col';
+        card.innerHTML = `
+            <div class="flex items-center mb-3">
+                <div class="tech-icon text-2xl" style="background-color: ${techInfo.color.replace('0.7', '0.1')}; color: ${techInfo.color.replace('0.7', '1')}">
+                    ${techInfo.icon}
+                </div>
+                <h4 class="font-bold text-lg ml-3">${tech}</h4>
+            </div>
+            <div class="text-sm space-y-3 flex-grow">
+                <div>
+                    <strong class="text-green-600">优点:</strong>
+                    <p class="text-stone-600">${summary.pros}</p>
+                </div>
+                <div>
+                    <strong class="text-red-600">缺点:</strong>
+                    <p class="text-stone-600">${summary.cons}</p>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-stone-200">
+                <strong class="text-teal-700">选型结论:</strong>
+                <p class="text-sm text-stone-700 font-medium">${summary.conclusion}</p>
+            </div>
+        `;
+        grid.appendChild(card);
+    }
+}
+
+</script>
+</body>
+</html>

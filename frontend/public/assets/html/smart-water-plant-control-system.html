@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧水厂生产控制系统 - 交互式方案</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- 
+        Chosen Palette: Warm Neutrals
+        Application Structure Plan: 本应用采用以“运营总览”为核心的仪表盘式布局，包含六个主要功能模块：运营总览、智慧工艺、全厂调度、资产健康、实施蓝图和安全中心。这种结构打破了原始报告的线性叙述，转而采用一种更符合用户探索习惯的任务导向型架构。用户可以先通过总览仪表盘快速把握水厂的宏观状态，然后根据兴趣或发现的问题，自由下钻到具体的工艺流程、设备状态或战略规划层面。这种设计旨在降低信息获取门槛，让非专业用户也能直观地理解智慧水厂的价值和实现路径，从而提升报告内容的可消费性和影响力。
+        Visualization & Content Choices: 
+        - Report Info: 核心KPI数据 -> Goal: 快速告知状态 -> Viz/Presentation: Chart.js仪表盘式圆环图和关键指标卡片 -> Interaction: 悬浮提示详情 -> Justification: 快速评估宏观运营状况。
+        - Report Info: 三大核心工艺（加药/沉淀/过滤）-> Goal: 组织和比较 -> Viz/Presentation: 交互式工艺流程图（HTML/CSS），结合Chart.js趋势图和代表“健康度”的进度条 -> Interaction: 点击流程节点切换详情视图 -> Justification: 直观展示工艺联动关系和各环节运行细节。
+        - Report Info: 实施路线图 -> Goal: 组织和告知 -> Viz/Presentation: HTML/CSS实现的交互式时间轴 -> Interaction: 点击阶段显示详细任务 -> Justification: 清晰、分步地展示项目战略规划。
+        - Report Info: 预测性维护概念 -> Goal: 组织和告知 -> Viz/Presentation: 带有状态指示和排序功能的交互式表格 -> Interaction: 点击展开资产详情 -> Justification: 高效管理和监控大量资产的健康状况。
+        - Report Info: 网络安全框架 -> Goal: 组织和告知 -> Viz/Presentation: HTML/CSS Grid布局的卡片式框架图 -> Interaction: 点击卡片展开详情 -> Justification: 结构化地呈现复杂的安全概念。
+        - Library/Method: 所有图表均使用Chart.js并渲染至Canvas。所有图示和布局均使用HTML和Tailwind CSS实现。
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .chart-container { position: relative; width: 100%; margin-left: auto; margin-right: auto; }
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link.active { color: #ffffff; background-color: #2563eb; }
+        .nav-link:not(.active):hover { background-color: #f3f4f6; }
+        .section-fade-enter { opacity: 0; transform: translateY(10px); }
+        .section-fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 300ms, transform 300ms; }
+        .kpi-card { transition: all 0.3s ease; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .tab-button.active { border-color: #2563eb; color: #2563eb; background-color: #dbeafe; }
+        .timeline-item::before { content: ''; position: absolute; left: 11px; top: 12px; bottom: -12px; width: 2px; background-color: #d1d5db; }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-dot { position: absolute; left: 0; top: 12px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background-color: white; border-radius: 9999px; border: 2px solid #d1d5db; z-index: 10; }
+        .timeline-item.active .timeline-dot { border-color: #2563eb; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-sm sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-3 md:justify-start md:space-x-10">
+                    <div class="flex justify-start lg:w-0 lg:flex-1">
+                        <a href="#" class="flex items-center space-x-2">
+                            <span class="text-2xl text-blue-600">💧</span>
+                            <span class="text-xl font-bold text-gray-700">智慧水厂交互式方案</span>
+                        </a>
+                    </div>
+                    <nav class="hidden md:flex space-x-1" id="main-nav">
+                        <a href="#dashboard" class="nav-link active rounded-md px-3 py-2 text-sm font-medium text-gray-700">运营总览</a>
+                        <a href="#process" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-700">智慧工艺</a>
+                        <a href="#scheduling" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-700">全厂调度</a>
+                        <a href="#assets" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-700">资产健康</a>
+                        <a href="#roadmap" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-700">实施蓝图</a>
+                        <a href="#security" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-700">安全中心</a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow">
+            <!-- 运营总览 Section -->
+            <section id="dashboard-section" class="py-8 md:py-12 section-fade-enter-active">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-10">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">运营总览</h1>
+                        <p class="mt-4 text-lg text-gray-600">本节提供水厂宏观运行状态的实时快照，通过关键绩效指标（KPI）展示水质、效率、成本和可靠性的核心表现，帮助您在5秒内判断全厂运行是否正常。</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- KPI Cards -->
+                        <div class="kpi-card bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-lg font-medium text-gray-700">出厂水浊度 (NTU)</h3>
+                            <div class="chart-container h-48 sm:h-56 mx-auto max-w-xs"><canvas id="turbidityChart"></canvas></div>
+                        </div>
+                        <div class="kpi-card bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-lg font-medium text-gray-700">综合能耗 (kWh/m³)</h3>
+                            <div class="chart-container h-48 sm:h-56 mx-auto max-w-xs"><canvas id="energyChart"></canvas></div>
+                        </div>
+                        <div class="kpi-card bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-lg font-medium text-gray-700">吨水药耗 (kg/kt)</h3>
+                            <div class="chart-container h-48 sm:h-56 mx-auto max-w-xs"><canvas id="chemicalsChart"></canvas></div>
+                        </div>
+                        <div class="kpi-card bg-white p-6 rounded-xl shadow-md">
+                            <h3 class="text-lg font-medium text-gray-700">系统程控率 (%)</h3>
+                            <div class="chart-container h-48 sm:h-56 mx-auto max-w-xs"><canvas id="automationChart"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-10 bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">24小时需水量预测 vs 实际产量</h3>
+                        <div class="chart-container h-80 md:h-96 w-full max-w-full"><canvas id="demandForecastChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 智慧工艺 Section -->
+            <section id="process-section" class="py-8 md:py-12 hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-10">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">智慧工艺</h1>
+                        <p class="mt-4 text-lg text-gray-600">本节深入剖析水处理的核心环节：智慧投矾、智慧沉淀与智慧过滤。通过交互式图表，您可以了解AI模型如何赋能每个工艺单元，实现自主控制与精益生产。</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="mb-6 border-b border-gray-200">
+                            <nav id="process-tabs" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                <button data-tab="dosing" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">智慧投矾</button>
+                                <button data-tab="sedimentation" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">智慧沉淀</button>
+                                <button data-tab="filtration" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">智慧过滤</button>
+                            </nav>
+                        </div>
+                        
+                        <div id="process-content">
+                            <!-- Dosing Content -->
+                            <div id="dosing-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-4">精准加药：混合预测与视觉反馈</h3>
+                                    <p class="text-gray-600 mb-4">系统采用集成学习模型（RFR, SVR, MLP）预测最佳投矾量，并融合计算机视觉对矾花形态的实时分析，进行前馈式修正。这种双重反馈机制确保了极高的控制精度（误差≤0.2 NTU）和药耗节省（目标降低10%）。</p>
+                                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                                        <h4 class="font-bold">核心算法</h4>
+                                        <p class="text-sm text-gray-700">集成学习 + Conv1D-GRU + 计算机视觉（分形维数）</p>
+                                    </div>
+                                </div>
+                                <div class="chart-container h-80 w-full max-w-lg"><canvas id="dosingChart"></canvas></div>
+                            </div>
+
+                            <!-- Sedimentation Content -->
+                            <div id="sedimentation-content" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-4">动态排泥：从被动响应到主动预测</h3>
+                                    <p class="text-gray-600 mb-4">通过机器学习模型预测污泥界面高度，结合模型预测控制（MPC）算法，系统能够动态优化排泥周期与强度。这不仅避免了污泥上浮，还显著降低了排泥带来的水量和能源浪费。</p>
+                                    <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+                                        <h4 class="font-bold">核心技术</h4>
+                                        <p class="text-sm text-gray-700">机器学习（污泥界面预测）+ 模型预测控制（MPC）</p>
+                                    </div>
+                                </div>
+                                <div class="chart-container h-80 w-full max-w-lg"><canvas id="sedimentationChart"></canvas></div>
+                            </div>
+                            
+                            <!-- Filtration Content -->
+                            <div id="filtration-content" class="hidden">
+                                 <div>
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-4">按需反洗：滤池健康度评估与队列管理</h3>
+                                    <p class="text-gray-600 mb-6">系统为每个滤池建立“健康度”评估模型，综合运行时间、水头损失、出水浊度等多维数据，智能决策反洗时机与强度。同时通过智能队列管理，实现滤池群组的协同调度，最大化全厂处理效率。</p>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    <div class="p-4 bg-gray-50 rounded-lg border">
+                                        <h4 class="font-semibold">滤池 #1</h4>
+                                        <p class="text-sm text-gray-500">健康度</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1"><div class="bg-green-600 h-2.5 rounded-full" style="width: 92%"></div></div>
+                                        <p class="text-xs text-right mt-1">92%</p>
+                                    </div>
+                                    <div class="p-4 bg-gray-50 rounded-lg border">
+                                        <h4 class="font-semibold">滤池 #2</h4>
+                                        <p class="text-sm text-gray-500">健康度</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1"><div class="bg-green-600 h-2.5 rounded-full" style="width: 85%"></div></div>
+                                        <p class="text-xs text-right mt-1">85%</p>
+                                    </div>
+                                    <div class="p-4 bg-gray-50 rounded-lg border">
+                                        <h4 class="font-semibold">滤池 #3</h4>
+                                        <p class="text-sm text-gray-500">健康度</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1"><div class="bg-yellow-400 h-2.5 rounded-full" style="width: 55%"></div></div>
+                                        <p class="text-xs text-right mt-1">55% (预警)</p>
+                                    </div>
+                                    <div class="p-4 bg-red-100 rounded-lg border border-red-400">
+                                        <h4 class="font-semibold">滤池 #4</h4>
+                                        <p class="text-sm text-gray-500">状态</p>
+                                        <p class="font-bold text-red-600">正在反洗</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 全厂调度 Section -->
+            <section id="scheduling-section" class="py-8 md:py-12 hidden">
+                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-10">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">全厂智慧联动与优化调度</h1>
+                        <p class="mt-4 text-lg text-gray-600">本节展示“水厂大脑”如何运作，它打破工序壁垒，通过精准的供需预测和实时的产能评估，实现从水源到龙头的全流程水量、水质协同优化，达成全局最优。</p>
+                    </div>
+                     <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                            <div class="lg:col-span-2">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-4">最优流量分配</h3>
+                                <p class="text-gray-600 mb-4">系统基于供需预测和各产线实时产能，以综合运行成本（药耗、电耗）最低为目标，通过多目标优化算法，计算出最优的流量分配方案，并将指令下发至各产线进水阀门。</p>
+                                <div id="flow-distribution-legend" class="space-y-2">
+                                    <div class="flex items-center"><div class="w-4 h-4 rounded-full bg-blue-500 mr-2"></div><span>一期产线</span></div>
+                                    <div class="flex items-center"><div class="w-4 h-4 rounded-full bg-teal-500 mr-2"></div><span>二期产线</span></div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-3 chart-container h-80 w-full"><canvas id="flowDistributionChart"></canvas></div>
+                        </div>
+                     </div>
+                </div>
+            </section>
+            
+            <!-- 资产健康 Section -->
+            <section id="assets-section" class="py-8 md:py-12 hidden">
+                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-10">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">智慧诊断与资产健康管理</h1>
+                        <p class="mt-4 text-lg text-gray-600">本节聚焦于预测性维护（PdM），通过AI技术对关键设备（泵、电机）和工艺过程的异常进行早期预警和精准诊断，变被动响应为主动风险管控。</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <div class="px-6 py-4">
+                             <h3 class="text-xl font-semibold text-gray-800">关键设备健康状态</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">设备名称</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">剩余使用寿命 (RUL)</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">关键参数 (振动/温度)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">一期投矾泵 #1</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">健康</span></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2,150 小时</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.2 mm/s / 45°C</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">二期反洗泵 #3</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">预警</span></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-semibold">120 小时</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-semibold">1.8 mm/s / 68°C</td>
+                                    </tr>
+                                     <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">送水泵房主泵 #2</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">故障</span></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">0 小时 (待维修)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">4.5 mm/s / 95°C</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 实施蓝图 Section -->
+            <section id="roadmap-section" class="py-8 md:py-12 hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                     <div class="text-center mb-10">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">战略实施路线图</h1>
+                        <p class="mt-4 text-lg text-gray-600">本节将智慧水厂的建设蓝图分解为四个循序渐进的阶段。这种“试点先行，分步推广”的策略旨在控制风险、验证技术、积累经验，确保项目最终成功。</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div id="timeline-nav" class="md:col-span-1">
+                            <div class="relative">
+                                <div class="timeline-item active" data-phase="1">
+                                    <div class="timeline-dot">1</div>
+                                    <div class="ml-10 py-2 cursor-pointer">
+                                        <h4 class="font-bold text-lg">第一阶段</h4>
+                                        <p class="text-sm text-gray-500">奠定基础与试点先行</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item" data-phase="2">
+                                    <div class="timeline-dot">2</div>
+                                    <div class="ml-10 py-2 cursor-pointer">
+                                        <h4 class="font-bold text-lg">第二阶段</h4>
+                                        <p class="text-sm text-gray-500">扩展与集成</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item" data-phase="3">
+                                    <div class="timeline-dot">3</div>
+                                    <div class="ml-10 py-2 cursor-pointer">
+                                        <h4 class="font-bold text-lg">第三阶段</h4>
+                                        <p class="text-sm text-gray-500">全厂优化</p>
+                                    </div>
+                                </div>
+                                 <div class="timeline-item" data-phase="4">
+                                    <div class="timeline-dot">4</div>
+                                    <div class="ml-10 py-2 cursor-pointer">
+                                        <h4 class="font-bold text-lg">第四阶段</h4>
+                                        <p class="text-sm text-gray-500">持续改进</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="timeline-content" class="md:col-span-3 bg-white p-6 rounded-xl shadow-md">
+                            <!-- Phase 1 Content -->
+                            <div class="phase-content" data-phase="1">
+                                <h3 class="text-xl font-semibold mb-2">第一阶段: 奠定基础与试点先行 <span class="text-base font-normal text-gray-500">(1-6个月)</span></h3>
+                                <p class="mb-4 text-gray-600">此阶段的核心是搭建技术底座，并通过“智慧投矾”试点项目快速验证方案价值。</p>
+                                <h4 class="font-semibold mb-2">关键产出:</h4>
+                                <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                    <li>数据治理规范与“数据标准规则库”</li>
+                                    <li>中心服务器与MLOps平台部署</li>
+                                    <li>智慧投矾系统上线运行与价值评估报告</li>
+                                </ul>
+                            </div>
+                            <!-- Phase 2 Content -->
+                            <div class="phase-content hidden" data-phase="2">
+                                <h3 class="text-xl font-semibold mb-2">第二阶段: 扩展与集成 <span class="text-base font-normal text-gray-500">(7-18个月)</span></h3>
+                                <p class="mb-4 text-gray-600">在试点成功的基础上，将智能化改造推广至沉淀、过滤等核心工艺，并引入预测性维护和新一代HMI。</p>
+                                <h4 class="font-semibold mb-2">关键产出:</h4>
+                                <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                    <li>核心工艺单元智能化全覆盖</li>
+                                    <li>设备预测性维护系统上线</li>
+                                    <li>基于ISA-101标准的新版HMI原型</li>
+                                </ul>
+                            </div>
+                            <!-- Phase 3 Content -->
+                            <div class="phase-content hidden" data-phase="3">
+                                <h3 class="text-xl font-semibold mb-2">第三阶段: 全厂优化 <span class="text-base font-normal text-gray-500">(19-30个月)</span></h3>
+                                <p class="mb-4 text-gray-600">此阶段的目标是打通所有智能模块，实现全厂级的协同优化，并为管理层提供决策驾驶舱。</p>
+                                <h4 class="font-semibold mb-2">关键产出:</h4>
+                                <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                    <li>全厂级闭环优化控制系统上线</li>
+                                    <li>管理驾驶舱全面推广使用</li>
+                                </ul>
+                            </div>
+                             <!-- Phase 4 Content -->
+                            <div class="phase-content hidden" data-phase="4">
+                                <h3 class="text-xl font-semibold mb-2">第四阶段: 持续改进 <span class="text-base font-normal text-gray-500">(长期)</span></h3>
+                                <p class="mb-4 text-gray-600">智慧化并非一蹴而就。此阶段将利用MLOps框架，实现AI模型的持续监控与迭代，确保系统智能“常青”。</p>
+                                <h4 class="font-semibold mb-2">关键产出:</h4>
+                                <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                    <li>模型性能漂移报告与自动再训练</li>
+                                    <li>系统年度优化计划与新AI应用探索</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- 安全中心 Section -->
+            <section id="security-section" class="py-8 md:py-12 hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                     <div class="text-center mb-10">
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">OT/ICS 网络安全中心</h1>
+                        <p class="mt-4 text-lg text-gray-600">随着IT与OT深度融合，网络安全是智慧水厂的生命线。本节展示基于NIST网络安全框架的纵深防御体系，确保生产安全、可靠。</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-center">
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h3 class="font-bold text-lg text-blue-600">识别</h3>
+                            <p class="text-sm mt-2 text-gray-600">建立完整的OT资产清单，进行网络安全风险评估。</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h3 class="font-bold text-lg text-blue-600">保护</h3>
+                            <p class="text-sm mt-2 text-gray-600">通过网络分段、零信任访问控制和员工培训等手段进行主动防御。</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h3 class="font-bold text-lg text-blue-600">检测</h3>
+                            <p class="text-sm mt-2 text-gray-600">部署入侵检测系统（IDS）持续监控网络流量，定期进行漏洞扫描。</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h3 class="font-bold text-lg text-blue-600">响应</h3>
+                            <p class="text-sm mt-2 text-gray-600">制定并演练事件响应计划，建立与国家安全机构的信息共享渠道。</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h3 class="font-bold text-lg text-blue-600">恢复</h3>
+                            <p class="text-sm mt-2 text-gray-600">执行“3-2-1”原则的定期备份与恢复验证，确保业务连续性。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white mt-12">
+            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+                <p>&copy; 2025 智慧水厂解决方案。本应用仅为方案展示，所有数据均为模拟。</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const appState = {
+                activeSection: 'dashboard',
+                charts: {}
+            };
+
+            const sections = {
+                dashboard: document.getElementById('dashboard-section'),
+                process: document.getElementById('process-section'),
+                scheduling: document.getElementById('scheduling-section'),
+                assets: document.getElementById('assets-section'),
+                roadmap: document.getElementById('roadmap-section'),
+                security: document.getElementById('security-section'),
+            };
+
+            const navLinks = document.querySelectorAll('#main-nav a');
+
+            function setActiveSection(sectionId) {
+                if (appState.activeSection === sectionId) return;
+
+                // Update nav link styles
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.hash === `#${sectionId}`);
+                });
+
+                // Hide current section and show new one
+                const currentSection = sections[appState.activeSection];
+                const newSection = sections[sectionId];
+
+                if (currentSection) {
+                    currentSection.classList.add('hidden');
+                    currentSection.classList.remove('section-fade-enter-active');
+                }
+                if (newSection) {
+                    newSection.classList.remove('hidden');
+                    // Use a timeout to apply the transition class after the element is displayed
+                    setTimeout(() => {
+                        newSection.classList.add('section-fade-enter-active');
+                    }, 10);
+                }
+
+                appState.activeSection = sectionId;
+                window.location.hash = sectionId;
+
+                // Initialize charts for the new section if they don't exist
+                initializeChartsForSection(sectionId);
+            }
+
+            function initializeChartsForSection(sectionId) {
+                switch(sectionId) {
+                    case 'dashboard':
+                        createKpiCharts();
+                        createDemandForecastChart();
+                        break;
+                    case 'process':
+                        createDosingChart();
+                        createSedimentationChart();
+                        break;
+                    case 'scheduling':
+                        createFlowDistributionChart();
+                        break;
+                }
+            }
+            
+            function wrapText(str, maxWidth) {
+                if (typeof str !== 'string' || str.length <= maxWidth) {
+                    return str;
+                }
+                const words = str.split('');
+                const lines = [];
+                let currentLine = '';
+                for (const word of words) {
+                    if ((currentLine + word).length > maxWidth) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine += word;
+                    }
+                }
+                lines.push(currentLine);
+                return lines;
+            }
+
+            const chartTooltip = {
+                callbacks: {
+                    title: function (context) {
+                        return wrapText(context[0].label, 16);
+                    }
+                }
+            };
+            
+            function createKpiGauge(canvasId, label, value, target, unit, color, darkColor) {
+                if (appState.charts[canvasId]) appState.charts[canvasId].destroy();
+                
+                const data = {
+                    labels: [label, ''],
+                    datasets: [{
+                        data: [value, target - value > 0 ? target - value : 0],
+                        backgroundColor: [color, '#e5e7eb'],
+                        borderColor: ['#ffffff'],
+                        borderWidth: 2,
+                        circumference: 180,
+                        rotation: 270,
+                    }]
+                };
+
+                const config = {
+                    type: 'doughnut',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        },
+                        cutout: '70%',
+                    },
+                    plugins: [{
+                        id: 'textCenter',
+                        beforeDraw: function(chart) {
+                            const {width, height, ctx} = chart;
+                            ctx.restore();
+                            const fontSize = (height / 114).toFixed(2);
+                            ctx.font = `bold ${fontSize}rem sans-serif`;
+                            ctx.textBaseline = 'middle';
+
+                            const text = `${value}`;
+                            const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                            const textY = height / 1.5;
+                            
+                            ctx.fillStyle = darkColor;
+                            ctx.fillText(text, textX, textY);
+                            
+                            const unitText = unit;
+                            const unitFontSize = (height / 180).toFixed(2);
+                            ctx.font = `${unitFontSize}rem sans-serif`;
+                            const unitTextX = Math.round((width - ctx.measureText(unitText).width) / 2);
+                            const unitTextY = textY + 20;
+                            ctx.fillStyle = '#6b7280';
+                            ctx.fillText(unitText, unitTextX, unitTextY);
+
+                            ctx.save();
+                        }
+                    }]
+                };
+
+                appState.charts[canvasId] = new Chart(document.getElementById(canvasId), config);
+            }
+
+            function createKpiCharts() {
+                createKpiGauge('turbidityChart', '浊度', 0.18, 0.2, 'NTU', '#3b82f6', '#1e40af'); // Blue
+                createKpiGauge('energyChart', '能耗', 0.28, 0.3, 'kWh/m³', '#10b981', '#047857'); // Green
+                createKpiGauge('chemicalsChart', '药耗', 8.9, 10.0, 'kg/kt', '#f97316', '#c2410c'); // Orange
+                createKpiGauge('automationChart', '程控率', 98.5, 100, '%', '#8b5cf6', '#6d28d9'); // Purple
+            }
+            
+            function createDemandForecastChart() {
+                const canvasId = 'demandForecastChart';
+                if (appState.charts[canvasId]) return;
+
+                const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+                const forecastData = [1200, 1150, 1100, 1050, 1000, 1100, 1300, 1500, 1800, 2000, 2200, 2300, 2250, 2100, 2000, 1900, 1850, 1900, 2100, 2300, 2400, 2200, 1800, 1400];
+                const actualData = forecastData.slice(0, 12).map(d => d + (Math.random() - 0.5) * 100);
+
+                const config = {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '预测需水量',
+                                data: forecastData,
+                                borderColor: '#a5b4fc',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                tension: 0.4,
+                                borderDash: [5, 5]
+                            },
+                            {
+                                label: '实际产水量',
+                                data: actualData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 3,
+                                pointRadius: 2,
+                                tension: 0.4,
+                                fill: true,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { position: 'top' },
+                            tooltip: chartTooltip
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: { display: true, text: '流量 (m³/h)' }
+                            },
+                            x: {
+                                title: { display: true, text: '时间' }
+                            }
+                        }
+                    }
+                };
+                appState.charts[canvasId] = new Chart(document.getElementById(canvasId), config);
+            }
+
+            function createDosingChart() {
+                const canvasId = 'dosingChart';
+                if (appState.charts[canvasId]) return;
+                
+                const labels = Array.from({ length: 12 }, (_, i) => `T-${11-i} min`);
+                const rawTurbidity = [5.2, 5.3, 5.1, 5.5, 5.8, 6.2, 6.1, 5.9, 6.5, 7.1, 7.0, 6.8];
+                const dosage = [20.5, 20.5, 20.4, 21.0, 21.5, 22.1, 22.0, 21.8, 22.9, 24.0, 23.8, 23.5];
+
+                const config = {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '原水浊度',
+                                data: rawTurbidity,
+                                yAxisID: 'y_turbidity',
+                                borderColor: '#f97316',
+                                tension: 0.3
+                            },
+                            {
+                                label: '智能投矾量',
+                                data: dosage,
+                                yAxisID: 'y_dosage',
+                                borderColor: '#3b82f6',
+                                tension: 0.3,
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            title: { display: true, text: '原水浊度 vs. 智能投矾量' },
+                            legend: { position: 'bottom' },
+                            tooltip: chartTooltip
+                        },
+                        scales: {
+                            y_turbidity: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: '浊度 (NTU)'}
+                            },
+                            y_dosage: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: '投加量 (mg/L)'},
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                };
+                 appState.charts[canvasId] = new Chart(document.getElementById(canvasId), config);
+            }
+
+            function createSedimentationChart() {
+                const canvasId = 'sedimentationChart';
+                if (appState.charts[canvasId]) return;
+
+                const labels = Array.from({ length: 8 }, (_, i) => `${i * 3}h ago`);
+                const predictedLevel = [1.2, 1.4, 1.6, 1.9, 2.2, 2.5, 2.8, 3.1];
+                const actualLevel = [1.25, 1.42, 1.65, 1.88, 2.23, 2.51, 2.85];
+
+                const config = {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '预测污泥界面',
+                                data: predictedLevel,
+                                type: 'line',
+                                borderColor: '#a5b4fc',
+                                borderDash: [5, 5],
+                                tension: 0.1
+                            },
+                            {
+                                label: '实际污泥界面',
+                                data: actualLevel,
+                                backgroundColor: '#10b981'
+                            },
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: '污泥界面高度预测与实际对比' },
+                            legend: { position: 'bottom' },
+                            tooltip: chartTooltip
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 4,
+                                title: { display: true, text: '高度 (m)' },
+                                ticks: {
+                                    callback: function(value) { return value + 'm'; }
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: 3.0,
+                                    yMax: 3.0,
+                                    borderColor: '#ef4444',
+                                    borderWidth: 2,
+                                    label: {
+                                        content: '排泥阈值',
+                                        enabled: true,
+                                        position: 'end'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                 appState.charts[canvasId] = new Chart(document.getElementById(canvasId), config);
+            }
+
+            function createFlowDistributionChart() {
+                const canvasId = 'flowDistributionChart';
+                if (appState.charts[canvasId]) return;
+
+                const config = {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['一期产线', '二期产线'],
+                        datasets: [{
+                            label: '流量分配',
+                            data: [45, 55],
+                            backgroundColor: ['#3b82f6', '#14b8a6'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                appState.charts[canvasId] = new Chart(document.getElementById(canvasId), config);
+            }
+            
+            // Navigation Handler
+            document.getElementById('main-nav').addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    const sectionId = e.target.hash.substring(1);
+                    setActiveSection(sectionId);
+                }
+            });
+
+            // Process Tabs Handler
+            const processTabs = document.getElementById('process-tabs');
+            const processContents = {
+                dosing: document.getElementById('dosing-content'),
+                sedimentation: document.getElementById('sedimentation-content'),
+                filtration: document.getElementById('filtration-content')
+            };
+            let activeTab = 'dosing';
+
+            processTabs.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'BUTTON') return;
+                const tabId = e.target.dataset.tab;
+                if (tabId === activeTab) return;
+
+                // Update button styles
+                processTabs.querySelector(`[data-tab="${activeTab}"]`).classList.remove('active');
+                e.target.classList.add('active');
+
+                // Toggle content visibility
+                processContents[activeTab].classList.add('hidden');
+                processContents[tabId].classList.remove('hidden');
+
+                activeTab = tabId;
+            });
+            
+            // Roadmap Timeline Handler
+            const timelineNav = document.getElementById('timeline-nav');
+            const phaseContents = document.querySelectorAll('.phase-content');
+            let activePhase = '1';
+
+            timelineNav.addEventListener('click', function(e) {
+                const timelineItem = e.target.closest('.timeline-item');
+                if (!timelineItem) return;
+
+                const phaseId = timelineItem.dataset.phase;
+                if(phaseId === activePhase) return;
+
+                // Update active state on timeline items
+                timelineNav.querySelector(`[data-phase="${activePhase}"]`).classList.remove('active');
+                timelineItem.classList.add('active');
+
+                // Toggle content visibility
+                phaseContents.forEach(content => {
+                    content.classList.toggle('hidden', content.dataset.phase !== phaseId);
+                });
+                
+                activePhase = phaseId;
+            });
+
+            // Initial load
+            const initialHash = window.location.hash.substring(1);
+            if (sections[initialHash]) {
+                setActiveSection(initialHash);
+            } else {
+                setActiveSection('dashboard');
+            }
+        });
+    </script>
+</body>
+</html>

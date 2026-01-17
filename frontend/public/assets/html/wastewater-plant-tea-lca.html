@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式指南：污水处理厂的TEA与LCA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony Neutrals -->
+    <!-- Application Structure Plan: The SPA is designed as a thematic, multi-section journey. It starts with a high-level introduction, then allows users to explore TEA and LCA individually and, most importantly, through an interactive integrated view that forms the core of the application. This central element uses toggles and dynamic charts to visually demonstrate the trade-offs between economic and environmental factors. Subsequent sections cover practical implementation (How It's Done), common issues (Challenges vs. Best Practices), and future trends. This non-linear yet guided structure was chosen to cater to different user interests (e.g., managers focusing on trade-offs, engineers on methodology) and to make the complex, dense report content digestible and engaging, rather than a passive linear read. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Comparing MBR vs. CAS technologies. Goal: Compare economic vs. environmental performance. Viz: Bar chart for TEA (CAPEX/OPEX), Radar chart for LCA (multi-dimensional environmental impacts). Interaction: Charts dynamically update based on a central toggle. Justification: This pairing directly visualizes the report's core concept of trade-offs. The bar chart is ideal for clear cost comparison, while the radar chart excels at showing multi-criteria environmental performance profiles. Library: Chart.js (Canvas).
+        2. Report Info: Procedural steps for TEA and LCA. Goal: Organize and simplify complex workflows. Viz: Custom-styled horizontal stepper diagram. Interaction: Hover effects to highlight steps. Justification: Built with HTML/CSS (Tailwind), this avoids forbidden libraries, is lightweight, and presents the process more engagingly than a simple list.
+        3. Report Info: Challenges and Best Practices. Goal: Inform and contrast problems with solutions. Viz: Interactive tabbed content area. Interaction: User clicks tabs to switch between views. Justification: A classic, intuitive UI pattern for comparing two related sets of information, making it easy to digest.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F7F4;
+            color: #334155;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #0d9488;
+            border-bottom-color: #0d9488;
+        }
+        .btn-toggle {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .btn-toggle.active {
+            background-color: #0d9488;
+            color: white;
+        }
+        .btn-toggle:not(.active) {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+        .icon-placeholder {
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             font-size: 2rem;
+             color: #0d9488;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <header class="py-6 border-b border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between items-center">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-4 sm:mb-0">污水处理的可持续决策指南</h1>
+                <nav id="navbar" class="flex flex-wrap justify-center gap-x-4 gap-y-2 sm:gap-6">
+                    <a href="#intro" class="nav-link text-sm sm:text-base font-medium text-slate-600 pb-1 active">引言</a>
+                    <a href="#comparison" class="nav-link text-sm sm:text-base font-medium text-slate-600 pb-1">核心分析</a>
+                    <a href="#process" class="nav-link text-sm sm:text-base font-medium text-slate-600 pb-1">实施路径</a>
+                    <a href="#challenges" class="nav-link text-sm sm:text-base font-medium text-slate-600 pb-1">实践要点</a>
+                    <a href="#future" class="nav-link text-sm sm:text-base font-medium text-slate-600 pb-1">未来展望</a>
+                </nav>
+            </div>
+        </header>
+
+        <main>
+            <section id="intro" class="page-section py-12 md:py-20 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-teal-800 mb-4">从“处理”到“增值”的转变</h2>
+                <p class="max-w-3xl mx-auto text-lg text-slate-600 leading-relaxed">
+                    现代污水处理厂 (WWTP) 正从单纯的污染物去除设施，向“水资源回收设施” (WRRF) 演进。面对日益严格的法规、攀升的成本和资源回收的需求，我们需要更科学的决策工具。技术经济分析 (TEA) 与生命周期评价 (LCA) 正是保障污水处理项目在经济与环境双重维度上实现可持续发展的关键。
+                </p>
+                <div class="mt-12 grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+                    <div class="bg-white/70 p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex items-center mb-3">
+                            <span class="icon-placeholder mr-4">💰</span>
+                            <h3 class="text-xl font-bold text-amber-600">技术经济分析 (TEA)</h3>
+                        </div>
+                        <p class="text-slate-600">系统评估项目的经济可行性、盈利能力和财务风险，确保投资的“经济账”算得清、站得稳。</p>
+                    </div>
+                    <div class="bg-white/70 p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex items-center mb-3">
+                            <span class="icon-placeholder mr-4">🌿</span>
+                             <h3 class="text-xl font-bold text-teal-600">生命周期评价 (LCA)</h3>
+                        </div>
+                        <p class="text-slate-600">全面量化项目从建设到运营、再到废弃的整个生命周期对环境的潜在影响，算好“环境账”，避免“负担转移”。</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="comparison" class="page-section py-12 md:py-20 bg-white rounded-2xl shadow-lg my-12 hidden">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">核心分析：经济与环境的权衡</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600">不同的处理技术在经济成本和环境影响上各有优劣。通过整合TEA和LCA，我们可以清晰地看到这些权衡。让我们以两种主流技术：膜生物反应器(MBR)与传统活性污泥法(CAS)为例进行探索。</p>
+                    <div id="toggle-buttons" class="mt-8 flex justify-center space-x-2 rounded-full p-1 bg-gray-200 max-w-xs mx-auto">
+                        <button id="btn-tea" class="btn-toggle text-sm font-semibold py-2 px-6 rounded-full w-full active">经济视角 (TEA)</button>
+                        <button id="btn-lca" class="btn-toggle text-sm font-semibold py-2 px-6 rounded-full w-full">环境视角 (LCA)</button>
+                    </div>
+                </div>
+
+                <div id="analysis-content">
+                    <div id="tea-view">
+                         <div class="text-center mb-6">
+                            <h3 class="text-2xl font-semibold text-amber-700">成本构成比较 (TEA)</h3>
+                            <p class="text-slate-500 mt-2">MBR技术通常初始投资(CAPEX)较高，但运营成本(OPEX)可能更具优势。</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="teaChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="lca-view" class="hidden">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-semibold text-teal-700">环境影响足迹 (LCA)</h3>
+                            <p class="text-slate-500 mt-2">MBR因能耗较高，可能在“全球变暖潜能”上表现较差，但在“富营养化”控制上更优。</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="lcaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="process" class="page-section py-12 md:py-20 hidden">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">实施路径：如何开展分析？</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600">TEA和LCA都遵循系统化的流程。了解这些步骤是确保分析质量和可靠性的基础。</p>
+                </div>
+                
+                <div class="space-y-12">
+                    <div>
+                        <h3 class="text-2xl font-bold text-amber-700 mb-6 text-center">TEA 分析流程</h3>
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-amber-300 mb-2">1</div>
+                                <h4 class="font-semibold text-slate-700">目标界定</h4>
+                                <p class="text-sm text-slate-500">明确评估目的与边界</p>
+                            </div>
+                            <div class="text-amber-400 text-2xl hidden md:block">&rarr;</div>
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-amber-300 mb-2">2</div>
+                                <h4 class="font-semibold text-slate-700">工艺建模</h4>
+                                <p class="text-sm text-slate-500">建立物料与能量平衡</p>
+                            </div>
+                            <div class="text-amber-400 text-2xl hidden md:block">&rarr;</div>
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-amber-300 mb-2">3</div>
+                                <h4 class="font-semibold text-slate-700">成本估算</h4>
+                                <p class="text-sm text-slate-500">核算CAPEX与OPEX</p>
+                            </div>
+                            <div class="text-amber-400 text-2xl hidden md:block">&rarr;</div>
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-amber-300 mb-2">4</div>
+                                <h4 class="font-semibold text-slate-700">现金流分析</h4>
+                                <p class="text-sm text-slate-500">计算NPV, IRR等指标</p>
+                            </div>
+                            <div class="text-amber-400 text-2xl hidden md:block">&rarr;</div>
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-amber-300 mb-2">5</div>
+                                <h4 class="font-semibold text-slate-700">风险/敏感性分析</h4>
+                                <p class="text-sm text-slate-500">评估不确定性影响</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-2xl font-bold text-teal-700 mb-6 text-center">LCA 分析流程 (ISO 14040/44)</h3>
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-teal-300 mb-2">1</div>
+                                <h4 class="font-semibold text-slate-700">目标与范围定义</h4>
+                                <p class="text-sm text-slate-500">确定功能单位和系统边界</p>
+                            </div>
+                            <div class="text-teal-400 text-2xl hidden md:block">&rarr;</div>
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-teal-300 mb-2">2</div>
+                                <h4 class="font-semibold text-slate-700">清单分析 (LCI)</h4>
+                                <p class="text-sm text-slate-500">收集输入/输出数据</p>
+                            </div>
+                            <div class="text-teal-400 text-2xl hidden md:block">&rarr;</div>
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-teal-300 mb-2">3</div>
+                                <h4 class="font-semibold text-slate-700">影响评价 (LCIA)</h4>
+                                <p class="text-sm text-slate-500">分类、特征化、计算影响</p>
+                            </div>
+                            <div class="text-teal-400 text-2xl hidden md:block">&rarr;</div>
+                            <div class="flex-1 p-4 rounded-lg">
+                                <div class="text-3xl font-bold text-teal-300 mb-2">4</div>
+                                <h4 class="font-semibold text-slate-700">解释</h4>
+                                <p class="text-sm text-slate-500">分析结果、得出结论与建议</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="challenges" class="page-section py-12 md:py-20 bg-white rounded-2xl shadow-lg my-12 hidden">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">实践要点：挑战与最佳实践</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600">成功的分析需要避开常见陷阱，并遵循行业最佳实践，以确保结果的可靠性和实用性。</p>
+                </div>
+
+                <div class="max-w-4xl mx-auto">
+                    <div id="tabs-container" class="flex border-b border-gray-300 mb-6">
+                        <button class="tab-btn flex-1 py-3 text-lg font-semibold border-b-4 border-red-500 text-red-600" data-tab="pitfalls">常见陷阱 ⚠️</button>
+                        <button class="tab-btn flex-1 py-3 text-lg font-semibold border-b-4 border-transparent text-gray-500" data-tab="practices">最佳实践 ✅</button>
+                    </div>
+
+                    <div id="tab-content">
+                        <div id="pitfalls-content" class="tab-pane space-y-4">
+                            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-400">
+                                <h4 class="font-bold text-red-800">数据质量差/缺失</h4>
+                                <p class="text-red-700">使用不准确、过时或不具代表性的数据，是导致结论错误的首要原因。</p>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-400">
+                                <h4 class="font-bold text-red-800">忽略“负担转移”</h4>
+                                <p class="text-red-700">只关注改善某个指标，却在其他方面造成了更大的环境或经济成本。</p>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-400">
+                                <h4 class="font-bold text-red-800">边界定义不一致</h4>
+                                <p class="text-red-700">在比较不同方案时，若系统边界或功能单位不一致，会得出“苹果对橘子”的误导性结论。</p>
+                            </div>
+                             <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-400">
+                                <h4 class="font-bold text-red-800">缺乏敏感性/不确定性分析</h4>
+                                <p class="text-red-700">将结果视为确定性数值，而忽略了关键参数波动可能带来的巨大影响。</p>
+                            </div>
+                        </div>
+
+                        <div id="practices-content" class="tab-pane space-y-4 hidden">
+                            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800">确保数据质量与透明度</h4>
+                                <p class="text-green-700">优先使用现场一手数据，清晰记录所有数据来源、假设和方法。</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800">进行彻底的敏感性/不确定性分析</h4>
+                                <p class="text-green-700">识别关键变量，评估其波动对结果的影响，提供结论的置信区间。</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800">定义清晰一致的边界与功能单位</h4>
+                                <p class="text-green-700">确保比较的公平性，对任何差异进行说明和合理性解释。</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800">拥抱整合的TEA-LCA方法</h4>
+                                <p class="text-green-700">从系统层面思考，全面理解经济和环境的相互作用和潜在权衡。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="future" class="page-section py-12 md:py-20 hidden">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">未来展望：迈向智慧与可持续的水务管理</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600">TEA和LCA的应用正与前沿技术深度融合，推动污水处理行业进入一个更智能、更高效、更可持续的新时代。</p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+                        <h3 class="font-bold text-xl text-slate-800 mb-3">与循环经济深度融合</h3>
+                        <p class="text-slate-600">将WWTP打造为资源回收中心，实现水、能源、营养物等资源的闭环利用，TEA/LCA是评估其整体可行性的核心工具。</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+                        <h3 class="font-bold text-xl text-slate-800 mb-3">数字技术赋能</h3>
+                        <p class="text-slate-600">利用数字孪生、AI和大数据，实现动态TEA/LCA，实时优化运营，预测性能，将静态评估变为动态决策支持系统。</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+                        <h3 class="font-bold text-xl text-slate-800 mb-3">前瞻性TEA/LCA</h3>
+                        <p class="text-slate-600">在技术研发早期介入，指导研发方向，识别潜在瓶颈，加速创新技术从实验室到市场的转化。</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+                        <h3 class="font-bold text-xl text-slate-800 mb-3">更精细化的影响评价</h3>
+                        <p class="text-slate-600">开发针对新兴污染物（如微塑料）和区域特异性（如水资源短缺）的评价方法，使LCA结果更精准。</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+                        <h3 class="font-bold text-xl text-slate-800 mb-3">生命周期可持续性评估 (LCSA)</h3>
+                        <p class="text-slate-600">将社会影响（S-LCA）纳入考量，与TEA（经济）和LCA（环境）结合，形成三位一体的全面可持续性评估框架。</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+                        <h3 class="font-bold text-xl text-slate-800 mb-3">标准化与能力建设</h3>
+                        <p class="text-slate-600">推动行业指南制定，加强跨学科合作与培训，将TEA/LCA思维制度化，使其成为行业核心竞争力。</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center py-8 mt-12 border-t border-gray-200">
+            <p class="text-sm text-slate-500">该交互式报告基于提供的“技术经济分析(TEA)与生命周期评价(LCA)在污水处理厂全厂建模与运行中的应用”报告生成。</p>
+        </footer>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const teaChartData = {
+        labels: ['资本成本 (CAPEX)', '运营成本 (OPEX)'],
+        datasets: [
+            {
+                label: 'MBR (膜生物反应器)',
+                data: [150, 80],
+                backgroundColor: 'rgba(245, 158, 11, 0.6)',
+                borderColor: 'rgba(245, 158, 11, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'CAS (传统活性污泥法)',
+                data: [100, 110],
+                backgroundColor: 'rgba(107, 114, 128, 0.6)',
+                borderColor: 'rgba(107, 114, 128, 1)',
+                borderWidth: 1
+            }
+        ]
+    };
+
+    const lcaChartData = {
+        labels: [
+            '全球变暖潜能 (GWP)', 
+            '富营养化', 
+            '酸化', 
+            '资源消耗', 
+            '人类毒性'
+        ],
+        datasets: [{
+            label: 'MBR (相对影响)',
+            data: [7, 4, 6, 6, 5],
+            fill: true,
+            backgroundColor: 'rgba(77, 182, 172, 0.2)',
+            borderColor: 'rgb(77, 182, 172)',
+            pointBackgroundColor: 'rgb(77, 182, 172)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(77, 182, 172)'
+        }, {
+            label: 'CAS (相对影响)',
+            data: [5, 8, 5, 7, 6],
+            fill: true,
+            backgroundColor: 'rgba(107, 114, 128, 0.2)',
+            borderColor: 'rgb(107, 114, 128)',
+            pointBackgroundColor: 'rgb(107, 114, 128)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(107, 114, 128)'
+        }]
+    };
+
+    const chartOptions = {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            label += context.parsed.y + ' (相对单位)';
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                     callback: function(value) {
+                        return value + ' M';
+                    }
+                }
+            },
+            r: {
+                angleLines: {
+                    display: false
+                },
+                suggestedMin: 0,
+                suggestedMax: 10,
+                 pointLabels: {
+                    font: {
+                        size: 11
+                    },
+                    // Wrap long labels
+                    callback: function(label) {
+                        if (label.length > 8) {
+                            return label.match(/.{1,8}/g);
+                        }
+                        return label;
+                    }
+                }
+            }
+        }
+    };
+
+    let teaChartInstance, lcaChartInstance;
+
+    function createTeaChart() {
+        if (teaChartInstance) teaChartInstance.destroy();
+        const ctx = document.getElementById('teaChart').getContext('2d');
+        teaChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: teaChartData,
+            options: { ...chartOptions, scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return '¥' + value + ' M';}}}}}
+        });
+    }
+
+    function createLcaChart() {
+        if (lcaChartInstance) lcaChartInstance.destroy();
+        const ctx = document.getElementById('lcaChart').getContext('2d');
+        lcaChartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: lcaChartData,
+            options: { ...chartOptions, scales: { r: { angleLines: { display: true }, suggestedMin: 0, suggestedMax: 10, pointLabels: chartOptions.scales.r.pointLabels}}}
+        });
+    }
+
+    const sections = document.querySelectorAll('.page-section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    function showSection(hash) {
+        sections.forEach(section => {
+            if ('#' + section.id === hash) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        });
+
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === hash) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const hash = link.getAttribute('href');
+            history.pushState(null, null, hash);
+            showSection(hash);
+        });
+    });
+
+    const toggleBtnTea = document.getElementById('btn-tea');
+    const toggleBtnLca = document.getElementById('btn-lca');
+    const teaView = document.getElementById('tea-view');
+    const lcaView = document.getElementById('lca-view');
+
+    toggleBtnTea.addEventListener('click', () => {
+        toggleBtnTea.classList.add('active');
+        toggleBtnLca.classList.remove('active');
+        teaView.classList.remove('hidden');
+        lcaView.classList.add('hidden');
+        createTeaChart();
+    });
+
+    toggleBtnLca.addEventListener('click', () => {
+        toggleBtnLca.classList.add('active');
+        toggleBtnTea.classList.remove('active');
+        lcaView.classList.remove('hidden');
+        teaView.classList.add('hidden');
+        createLcaChart();
+    });
+
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => {
+                b.classList.remove('border-red-500', 'text-red-600', 'border-green-500', 'text-green-600');
+                b.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            const tab = btn.dataset.tab;
+            if(tab === 'pitfalls'){
+                btn.classList.add('border-red-500', 'text-red-600');
+            } else {
+                btn.classList.add('border-green-500', 'text-green-600');
+            }
+
+            tabPanes.forEach(pane => {
+                if (pane.id === tab + '-content') {
+                    pane.classList.remove('hidden');
+                } else {
+                    pane.classList.add('hidden');
+                }
+            });
+        });
+    });
+
+
+    function init() {
+        const initialHash = window.location.hash || '#intro';
+        showSection(initialHash);
+        createTeaChart();
+    }
+
+    window.addEventListener('popstate', () => {
+        const hash = window.location.hash || '#intro';
+        showSection(hash);
+    });
+
+    init();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国产反硝化碳源市场洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F9FA; /* Very light grey */
+            color: #343A40; /* Dark grey for text */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width, can be overridden by Tailwind */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .section-title {
+            color: #1E88E5; /* Blue */
+        }
+        .stat-card {
+            background-color: #FFFFFF; /* White */
+            border-left: 5px solid #1E88E5; /* Blue */
+        }
+        .stat-value {
+            color: #1E88E5; /* Blue */
+        }
+        .accent-text {
+            color: #FFB300; /* Amber */
+        }
+        .process-step {
+            background-color: #E3F2FD; /* Light Blue */
+            border: 1px solid #90CAF9; /* Lighter Blue */
+        }
+        .arrow {
+            font-size: 1.5rem;
+            color: #1E88E5; /* Blue */
+        }
+        .icon-style {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+        /* Chosen Palette: "Fresh & Bright Inspired" */
+        /* Primary: #1E88E5 (Blue) */
+        /* Secondary/Accent: #FFB300 (Amber) */
+        /* Text: #343A40 (Dark Grey) */
+        /* Backgrounds: #F8F9FA (Page), #FFFFFF (Cards) */
+        /* Chart Colors: #1E88E5 (Blue), #43A047 (Green), #FFB300 (Amber), #F4511E (Deep Orange), #665191 (Purple) */
+
+        /* Explicitly confirm that NEITHER Mermaid JS NOR SVG were used anywhere in the output */
+        /* Narrative Plan Summary:
+           1. Introduction: Importance of denitrification & external carbon sources. Visuals: Big Number (carbon shortage), Process Flow (denitrification).
+           2. Single-Component Carbon Sources: Details on Methanol, Acetic Acid/Sodium Acetate, Glucose, Molasses. Visuals: Stat Cards, Tables (HTML), Bar Chart (Sodium Acetate), Donut Chart (Glucose), Stacked Bar Chart (Molasses).
+           3. Composite Carbon Sources: Definition, advantages, example formulation, COD concentrations. Visuals: HTML List (advantages), Bar Chart (example formulation), Big Number (COD).
+           4. Key Evaluation Factors: Purity, impurities (N, P), moisture, variability. Visuals: Bar Chart (Purity vs. Moisture), Icon+Text (N&P warning).
+           5. Summary & Outlook: Recap, trends towards standardization and customization. Visuals: Text.
+           All visualizations using Chart.js (Canvas) or HTML/CSS. NO SVG, NO MERMAID JS.
+        */
+        /* Visualization Choices Summary (Data Point -> Goal -> Chosen Visualization -> Justification/Library/Method - Confirming NO SVG):
+           - Carbon Shortage -> Inform -> Single Big Number/Text (HTML/CSS) -> Direct impact. NO SVG.
+           - Denitrification Process -> Organize -> HTML/CSS Flow Diagram -> Show steps. NO SVG, NO MERMAID.
+           - Methanol Purity -> Inform -> Stat Card (HTML/CSS) -> Key spec. NO SVG.
+           - Methanol Specs -> Organize -> HTML Table -> Detailed data. NO SVG.
+           - Acetic Acid/Sodium Acetate Purity/Content -> Inform -> Stat Card (HTML/CSS) -> Key specs. NO SVG.
+           - Sodium Acetate Forms Comparison -> Compare -> Chart.js Bar Chart -> Visual comparison. NO SVG.
+           - Liquid Sodium Acetate Specs -> Organize -> HTML Table -> Detailed data. NO SVG.
+           - Glucose Composition -> Compare (composition) -> Chart.js Donut Chart -> Show parts of whole. NO SVG.
+           - Molasses Composition -> Compare (composition) -> Chart.js Stacked Bar Chart -> Show parts of whole for complex mix. NO SVG.
+           - Composite Carbon Advantages -> Organize -> HTML List -> Clear points. NO SVG.
+           - Composite Carbon Example Formulation -> Inform/Compare -> Chart.js Bar Chart -> Show component percentages. NO SVG.
+           - Composite Carbon COD -> Inform -> Single Big Number/Text (HTML/CSS) -> Key property. NO SVG.
+           - Purity vs. Moisture Comparison -> Compare -> Chart.js Bar Chart -> Visual contrast. NO SVG.
+           - N&P Impurity Warning -> Inform/Warn -> Icon+Text (HTML/CSS + Unicode) -> Highlight risk. NO SVG.
+           - All textual summaries and introductions -> Inform -> HTML Text -> Provide context. NO SVG.
+        */
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8">
+
+    <header class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold section-title">中国污水处理反硝化碳源市场洞察</h1>
+        <p class="text-lg md:text-xl text-gray-600 mt-2">基于国产碳源组分与趋势的深度分析</p>
+    </header>
+
+    <main class="space-y-12">
+
+        <section id="introduction" class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-center">引言：碳源为何重要？</h2>
+            <p class="mb-4 text-lg">在污水处理领域，生物脱氮是控制水体富营养化的核心环节。反硝化细菌利用有机物作为碳源，将硝酸盐或亚硝酸盐还原为无害的氮气。充足且易于生物利用的碳源是确保高效反硝化的前提条件。</p>
+            
+            <div class="grid md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3 text-center accent-text">市政污水碳源普遍不足</h3>
+                    <p class="text-center text-gray-700 mb-6 text-lg">中国市政污水处理厂普遍面临进水碳源不足（C/N比偏低）的问题，这已成为制约脱氮效率的关键因素。因此，补充外源碳源成为常规技术手段。</p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold mb-4 text-center">生物脱氮过程示意</h3>
+                    <div class="space-y-2 text-center">
+                        <div class="p-3 rounded-md process-step">氨氮 ($NH_3/NH_4^+$)</div>
+                        <div class="arrow self-center">↓ 硝化作用 (好氧)</div>
+                        <div class="p-3 rounded-md process-step">硝酸盐 ($NO_3^-$) / 亚硝酸盐 ($NO_2^-$)</div>
+                        <div class="arrow self-center">↓ 反硝化作用 (缺氧 + <span class="font-bold text-red-600">需外加碳源</span>)</div>
+                        <div class="p-3 rounded-md process-step">氮气 ($N_2$)</div>
+                    </div>
+                </div>
+            </div>
+             <p class="mt-6 text-lg">外源碳源根据化学组成可分为单一组分碳源（如甲醇、乙酸钠）和复合碳源。本报告将聚焦国产碳源的组分与特性。</p>
+        </section>
+
+        <section id="single-component" class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-semibold mb-8 section-title text-center">常用国产单一组分碳源</h2>
+            <p class="mb-6 text-lg text-center">单一组分碳源因其成分明确、性质相对稳定，在污水处理中得到广泛应用。其质量通常有国家或行业标准进行规范。</p>
+
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3">2.1 甲醇 (Methanol)</h3>
+                    <p class="mb-4">甲醇成本相对较低，产泥量少，是常用的外加碳源之一。其质量参考 GB 338-2011《工业用甲醇》。</p>
+                    <div class="stat-card p-4 rounded-md shadow mb-4">
+                        <p class="text-xl"><span class="icon-style">💧</span><span class="font-semibold">优等品甲醇：</span>纯度通常 <span class="stat-value text-2xl font-bold">&gt;99%</span> (推断自水分≤0.10%及其他低杂质含量)</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-300 rounded-md">
+                            <caption class="text-lg font-medium p-2 bg-gray-100 border-b border-gray-300">表1：工业用甲醇关键质量指标 (GB 338-2011 摘要)</caption>
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="py-2 px-4 border-b">项目</th>
+                                    <th class="py-2 px-4 border-b">单位</th>
+                                    <th class="py-2 px-4 border-b">优等品</th>
+                                    <th class="py-2 px-4 border-b">一等品</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 px-4 border-b">外观</td>
+                                    <td class="py-2 px-4 border-b">-</td>
+                                    <td colspan="2" class="py-2 px-4 border-b text-center">透明液体，无悬浮杂质</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-b">水分</td>
+                                    <td class="py-2 px-4 border-b">w/%</td>
+                                    <td class="py-2 px-4 border-b">≤ 0.10</td>
+                                    <td class="py-2 px-4 border-b">≤ 0.15</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-b">酸度 (以HCOOH计)</td>
+                                    <td class="py-2 px-4 border-b">w/%</td>
+                                    <td class="py-2 px-4 border-b">≤ 0.0015</td>
+                                    <td class="py-2 px-4 border-b">≤ 0.0030</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">甲醇的纯度高，杂质含量低，是其作为碳源的重要优势。不同等级产品在纯度和成本间有所权衡。</p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3">2.2 乙酸及乙酸钠 (Acetic Acid & Sodium Acetate)</h3>
+                    <p class="mb-4">乙酸及其盐（如乙酸钠）是挥发性脂肪酸(VFA)，反硝化速率高。</p>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div class="stat-card p-4 rounded-md shadow">
+                             <p class="text-xl"><span class="icon-style">🔬</span><span class="font-semibold">工业冰乙酸 (GB/T 1628-2008参考)：</span>优等品纯度通常 <span class="stat-value text-2xl font-bold">≥99.5%</span></p>
+                        </div>
+                        <div class="stat-card p-4 rounded-md shadow">
+                            <p class="text-xl"><span class="icon-style">🧪</span><span class="font-semibold">污水处理用液体乙酸钠 (T/CSTE 0008—2020)：</span>$CH_3COONa$含量 <span class="stat-value text-2xl font-bold">≥25%</span></p>
+                        </div>
+                    </div>
+                    <div class="md:flex md:space-x-6">
+                        <div class="chart-container mb-6 md:mb-0 md:w-1/2">
+                            <canvas id="sodiumAcetateChart"></canvas>
+                        </div>
+                        <div class="md:w-1/2 overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-300 rounded-md">
+                                <caption class="text-lg font-medium p-2 bg-gray-100 border-b border-gray-300">表2：污水处理用液体乙酸钠关键指标 (T/CSTE 0008—2020 摘要)</caption>
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="py-2 px-4 border-b">项目</th>
+                                        <th class="py-2 px-4 border-b">单位</th>
+                                        <th class="py-2 px-4 border-b">指标要求</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">含量 (以$CH_3COONa$计)</td>
+                                        <td class="py-2 px-4 border-b">w/%</td>
+                                        <td class="py-2 px-4 border-b">≥ 25</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">CODcr值</td>
+                                        <td class="py-2 px-4 border-b">mg/g</td>
+                                        <td class="py-2 px-4 border-b">≥ 195</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">总磷 (P, 以25%溶液计)</td>
+                                        <td class="py-2 px-4 border-b">mg/L</td>
+                                        <td class="py-2 px-4 border-b">≤ 0.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">总氮 (N, 以25%溶液计)</td>
+                                        <td class="py-2 px-4 border-b">mg/L</td>
+                                        <td class="py-2 px-4 border-b">≤ 15</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">液体乙酸钠便于投加，其专用标准严格控制了氮磷等杂质，避免二次污染。无水乙酸钠 (GB/T 694-2015) 纯度可达≥98.5%。</p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3">2.3 葡萄糖 (Glucose)</h3>
+                    <p class="mb-4">葡萄糖易于微生物利用，但反硝化速率通常慢于乙酸盐或甲醇。质量参考 GB/T 20880-2018《食品葡萄糖》。</p>
+                    <div class="md:flex md:space-x-6 items-center">
+                        <div class="chart-container mb-6 md:mb-0 md:w-1/2">
+                            <canvas id="glucoseChart"></canvas>
+                        </div>
+                         <div class="md:w-1/2 stat-card p-4 rounded-md shadow">
+                            <p class="text-xl mb-2"><span class="icon-style">🍬</span><span class="font-semibold">食用级葡萄糖 (干基计)：</span>含量 <span class="stat-value text-2xl font-bold">≥90.0%</span></p>
+                            <p class="text-xl"><span class="icon-style">💧</span><span class="font-semibold">水分含量：</span>允许上限 <span class="stat-value text-2xl font-bold">≤20.0%</span></p>
+                            <p class="mt-2 text-gray-600">高水分含量会显著影响有效碳投加量和成本。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3">2.4 糖蜜 (Molasses)</h3>
+                    <p class="mb-4">糖蜜是制糖副产品，价格低廉但成分复杂且变异性大。主要含糖类，也含非糖有机物、粗蛋白和矿物质。</p>
+                    <div class="md:flex md:space-x-6 items-center">
+                        <div class="chart-container mb-6 md:mb-0 md:w-1/2">
+                             <canvas id="molassesChart"></canvas>
+                        </div>
+                        <div class="md:w-1/2 overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-300 rounded-md">
+                                <caption class="text-lg font-medium p-2 bg-gray-100 border-b border-gray-300">表3：糖蜜典型组分范围 (w/%)</caption>
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="py-2 px-4 border-b">组分</th>
+                                        <th class="py-2 px-4 border-b">典型范围</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td class="py-2 px-4 border-b">总糖含量</td><td class="py-2 px-4 border-b">48 ~ 60</td></tr>
+                                    <tr><td class="py-2 px-4 border-b">粗蛋白</td><td class="py-2 px-4 border-b">3 ~ 6</td></tr>
+                                    <tr><td class="py-2 px-4 border-b">非糖有机胶体</td><td class="py-2 px-4 border-b">3 ~ 4</td></tr>
+                                    <tr><td class="py-2 px-4 border-b">矿物质 (灰分)</td><td class="py-2 px-4 border-b">8 ~ 10</td></tr>
+                                    <tr><td class="py-2 px-4 border-b">水分</td><td class="py-2 px-4 border-b">(变动较大)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">糖蜜的组分因原料（甘蔗/甜菜）和工艺而异，其实际碳含量和可生化性需特别关注。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="composite-sources" class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-semibold mb-8 section-title text-center">国产复合碳源：创新与趋势</h2>
+            <p class="mb-4 text-lg">复合碳源由多种单一碳源复配而成，旨在提供多样化碳底物、优化成本、提高COD浓度或降低安全风险。</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3 accent-text">复合碳源的主要优势</h3>
+                    <ul class="list-disc list-inside space-y-2 mb-6 text-gray-700 bg-amber-50 p-4 rounded-md">
+                        <li>提供多样化碳底物，满足不同微生物需求</li>
+                        <li>通过组分优化，可能提高反硝化效率</li>
+                        <li>掺入廉价组分或废弃物，降低综合成本</li>
+                        <li>通常配制为高浓度液体 (如 <span class="font-bold">20万-50万 mg/L COD</span>)，便于储运和投加</li>
+                        <li>减少或替代高危化学品（如纯甲醇），提高安全性</li>
+                    </ul>
+                     <div class="stat-card p-4 rounded-md shadow mt-6">
+                        <p class="text-xl text-center"><span class="icon-style">📈</span><span class="font-semibold">常见复合碳源COD浓度：</span><span class="stat-value text-2xl font-bold">200,000 - 500,000 mg/L</span></p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="compositeCarbonChart"></canvas>
+                </div>
+            </div>
+             <p class="mt-6 text-lg">许多市售复合碳源配方具有专属性。专利 CN113264588A 提供了一个配方实例，其中乙酸钠是主要组分，并辅以少量醇类、葡萄糖、糖蜜及源自垃圾渗滤液等的腐殖酸发酵液，体现了“以废治废”的资源化趋势。国家也推广利用厨余垃圾预处理产生的VFA作为替代碳源。</p>
+        </section>
+
+        <section id="evaluation-factors" class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-semibold mb-8 section-title text-center">碳源评估的关键考量因素</h2>
+            <p class="mb-6 text-lg text-center">选择碳源时，需综合考量其纯度、有效碳含量、潜在杂质及其影响。</p>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="chart-container">
+                    <canvas id="purityMoistureChart"></canvas>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold mb-4 accent-text">关注潜在杂质</h3>
+                    <div class="space-y-4">
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                            <p class="text-xl font-semibold text-red-700"><span class="icon-style">⚠️</span>氮 (N) 和 磷 (P)</p>
+                            <p class="text-gray-700">碳源中若含有氮、磷，将直接增加污水厂处理负荷，与脱氮除磷目标相悖。如T/CSTE 0008—2020对液体乙酸钠中总氮(≤15 mg/L)和总磷(≤0.5 mg/L)有严格限制。</p>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                            <p class="text-xl font-semibold text-yellow-700"><span class="icon-style">💧</span>水分含量</p>
+                            <p class="text-gray-700">水分是常见“稀释剂”，显著影响有效碳浓度和运输成本。如食用葡萄糖允许高达20%水分。</p>
+                        </div>
+                         <div class="bg-gray-100 p-4 rounded-lg border border-gray-300">
+                            <p class="text-xl font-semibold text-gray-700"><span class="icon-style">🧱</span>其他杂质</p>
+                            <p class="text-gray-700">重金属、有毒物、惰性固体/悬浮物、生产副产物等都可能对处理过程产生不利影响。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="mt-6 text-lg">对于糖蜜或废弃物衍生组分，其化学成分的天然变异性较大，要求供应商加强品控，用户可能需更频繁抽检。</p>
+        </section>
+
+        <section id="summary" class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-center">总结与展望</h2>
+            <div class="text-lg space-y-3">
+                <p><span class="icon-style">🌏</span>中国市场为污水处理反硝化过程提供了从高纯度标准化化学品到复杂复合配方的多样化碳源选择。</p>
+                <p><span class="icon-style">📜</span><strong>单一组分碳源</strong>（甲醇、乙酸/乙酸钠、葡萄糖）标准化程度较高，纯度和关键杂质有国标/行标/团标可依。水分含量是影响其有效性的关键。</p>
+                <p><span class="icon-style">🔄</span><strong>糖蜜</strong>组分具天然变异性，总糖量约48-60%，需具体评估其COD贡献和可生化性。</p>
+                <p><span class="icon-style">💡</span><strong>复合碳源</strong>配方多样，常以乙酸钠等为基础，辅以其他组分，并趋向高COD浓度液体产品和废物资源化利用。许多配方具商业保密性，需依赖供应商参数和检测报告。</p>
+                <p><span class="icon-style">🎯</span>准确了解碳源的化学成分、有效碳含量及潜在杂质，对于精确投加、控制成本、稳定达标至关重要。</p>
+                <p class="mt-4 font-semibold accent-text">未来趋势：预计将看到更多针对特定应用场景的标准化碳源，以及更高效、经济、可持续的复合碳源解决方案的发展。</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center mt-12 py-6 border-t border-gray-300">
+        <p class="text-sm text-gray-500">数据来源: 本信息图表根据《中国污水处理厂常用反硝化碳源组分及典型比例分析》报告编制。</p>
+        <p class="text-sm text-gray-500">声明: 无SVG及Mermaid JS图形库使用。图表由Chart.js (Canvas)生成，流程图及部分元素由HTML/CSS构建。</p>
+    </footer>
+
+    <script>
+        const FONT_COLOR = '#343A40'; // Dark grey for chart text
+
+        function wrapLabel(str, maxWidth) {
+            if (typeof str !== 'string' || str.length <= maxWidth) {
+                return str;
+            }
+            const words = str.split(' ');
+            let currentLine = '';
+            const lines = [];
+            for (let word of words) {
+                if ((currentLine + word).length > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = word + ' ';
+                } else {
+                    currentLine += word + ' ';
+                }
+            }
+            if (currentLine.length > 0) {
+                lines.push(currentLine.trim());
+            }
+            return lines.length > 0 ? lines : [str]; // Return array even for single line if processed
+        }
+        
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: FONT_COLOR,
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return label;
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: FONT_COLOR, font: { size: 12 } },
+                    grid: { color: '#E0E0E0' }
+                },
+                x: {
+                    ticks: { color: FONT_COLOR, font: { size: 12 } },
+                    grid: { display: false }
+                }
+            }
+        };
+
+        // Chart 1: Sodium Acetate Content
+        const saCtx = document.getElementById('sodiumAcetateChart').getContext('2d');
+        new Chart(saCtx, {
+            type: 'bar',
+            data: {
+                labels: [wrapLabel('液体乙酸钠 (T/CSTE 0008—2020)', 16), wrapLabel('无水乙酸钠 (GB/T 694-2015)', 16)],
+                datasets: [{
+                    label: '乙酸钠含量 (CH₃COONa w/%)',
+                    data: [25, 98.5],
+                    backgroundColor: ['#1E88E5', '#43A047'],
+                    borderColor: ['#1E88E5', '#43A047'],
+                    borderWidth: 1
+                }]
+            },
+            options: { ...commonChartOptions, plugins: { ...commonChartOptions.plugins, legend: { display: false } } }
+        });
+        document.querySelector('#sodiumAcetateChart').parentElement.insertAdjacentHTML('afterend', '<p class="text-center text-sm text-gray-600 mt-1">图1：不同形态乙酸钠的有效成分对比</p>');
+
+
+        // Chart 2: Glucose Composition
+        const glucoseCtx = document.getElementById('glucoseChart').getContext('2d');
+        new Chart(glucoseCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [wrapLabel('葡萄糖 (干基计)',16), wrapLabel('最大允许水分',16)],
+                datasets: [{
+                    label: '食用级葡萄糖成分',
+                    data: [90, 20], // Using 90 for glucose content and 20 for max moisture for visualization
+                    backgroundColor: ['#1E88E5', '#FFB300'],
+                    hoverOffset: 4
+                }]
+            },
+            options: { ...commonChartOptions, plugins: { ...commonChartOptions.plugins, legend: { position: 'top'} } }
+        });
+        document.querySelector('#glucoseChart').parentElement.insertAdjacentHTML('afterend', '<p class="text-center text-sm text-gray-600 mt-1">图2：食用级葡萄糖主要成分 (示意最大水分占比)</p>');
+
+        // Chart 3: Molasses Composition (Stacked Bar)
+        const molassesCtx = document.getElementById('molassesChart').getContext('2d');
+        new Chart(molassesCtx, {
+            type: 'bar', // Using a single stacked bar
+            data: {
+                labels: [wrapLabel('糖蜜典型组分', 16)],
+                datasets: [
+                    { label: '总糖', data: [54], backgroundColor: '#1E88E5' }, // Avg of 48-60
+                    { label: '粗蛋白', data: [4.5], backgroundColor: '#43A047' }, // Avg of 3-6
+                    { label: '非糖有机胶体', data: [3.5], backgroundColor: '#FFB300' }, // Avg of 3-4
+                    { label: '矿物质(灰分)', data: [9], backgroundColor: '#F4511E' }, // Avg of 8-10
+                    { label: '水分等其他', data: [29], backgroundColor: '#665191' } // Remainder to 100
+                ]
+            },
+            options: {
+                ...commonChartOptions,
+                indexAxis: 'y', // To make bars horizontal for better label display
+                scales: {
+                    x: { stacked: true, ticks: { color: FONT_COLOR }, grid: { color: '#E0E0E0' } },
+                    y: { stacked: true, ticks: { color: FONT_COLOR }, grid: { display: false } }
+                },
+                plugins: { ...commonChartOptions.plugins, legend: { position: 'top'} }
+            }
+        });
+        document.querySelector('#molassesChart').parentElement.insertAdjacentHTML('afterend', '<p class="text-center text-sm text-gray-600 mt-1">图3：糖蜜典型组分百分比 (示意)</p>');
+
+        // Chart 4: Composite Carbon Source Example Formulation
+        const compositeCtx = document.getElementById('compositeCarbonChart').getContext('2d');
+        const compositeData = {
+            labels: [wrapLabel('乙酸钠',10), wrapLabel('腐殖酸发酵液',12), wrapLabel('葡萄糖',10), wrapLabel('糖蜜',10), wrapLabel('甲醇',10), wrapLabel('乙醇',10), wrapLabel('水(余量)',10)],
+            datasets: [{
+                label: '组分质量分数 (%)',
+                data: [25, 3, 2, 1, 0.1, 0.1, (100-25-3-2-1-0.1-0.1)], // Example 1 from patent
+                backgroundColor: ['#1E88E5', '#43A047', '#FFB300', '#F4511E', '#665191', '#2F4B7C', '#A05195'],
+                borderWidth: 1
+            }]
+        };
+        new Chart(compositeCtx, {
+            type: 'bar',
+            data: compositeData,
+            options: { ...commonChartOptions, plugins: { ...commonChartOptions.plugins, legend: { display: false } } }
+        });
+        document.querySelector('#compositeCarbonChart').parentElement.insertAdjacentHTML('afterend', '<p class="text-center text-sm text-gray-600 mt-1">图4：复合碳源配方实例 (基于专利 CN113264588A)</p>');
+        
+        // Chart 5: Purity vs Moisture
+        const purityMoistureCtx = document.getElementById('purityMoistureChart').getContext('2d');
+        new Chart(purityMoistureCtx, {
+            type: 'bar',
+            data: {
+                labels: [wrapLabel('优等品甲醇',12), wrapLabel('食用级葡萄糖',12)],
+                datasets: [
+                    {
+                        label: '有效成分/纯度 (%)',
+                        data: [99.9, 90], // Methanol >99% (taking 99.9 from moisture ≤0.1), Glucose ≥90%
+                        backgroundColor: '#1E88E5',
+                        stack: 'Stack 0',
+                    },
+                    {
+                        label: '最大允许水分 (%)',
+                        data: [0.1, 20], // Methanol ≤0.10%, Glucose ≤20%
+                        backgroundColor: '#FFB300',
+                        stack: 'Stack 1', // Different stack for side-by-side
+                    }
+                ]
+            },
+             options: {
+                ...commonChartOptions,
+                scales: {
+                    x: { ticks: { callback: function(value, index, values) {
+                        let label = this.getLabelForValue(value);
+                         return Array.isArray(label) ? label : wrapLabel(label, 10); // Wrap x-axis labels
+                    }}},
+                    y: { beginAtZero: true, max: 100, ticks: { color: FONT_COLOR }, grid: { color: '#E0E0E0' } }
+                },
+                plugins: { ...commonChartOptions.plugins, legend: { position: 'top'} }
+            }
+        });
+        document.querySelector('#purityMoistureChart').parentElement.insertAdjacentHTML('afterend', '<p class="text-center text-sm text-gray-600 mt-1">图5：部分碳源纯度与最大水分含量对比 (示意)</p>');
+
+    </script>
+</body>
+</html>

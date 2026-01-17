@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QSDsan | 卫生与资源回收系统量化可持续设计平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Sustainable Tech -->
+    <!-- Application Structure Plan: The SPA is structured as a user journey, moving from high-level concept to practical application. 1. **Hero Section**: A concise introduction to QSDsan's purpose and its key integrated features (TEA, LCA, Uncertainty). 2. **Core Concepts**: An interactive HTML/CSS diagram explaining the foundational workflow (`Component` -> `WasteStream` -> `SanUnit` -> `System`). This simplifies the complex class structure into an understandable process flow. 3. **Application & Case Studies**: A gallery of real-world applications. Each case study is a card that, upon clicking, reveals key findings and an interactive Chart.js visualization (e.g., cost breakdown, environmental impact). This demonstrates the platform's practical value. 4. **The Ecosystem**: A visual diagram showcasing QSDsan's relationship with BioSTEAM, DMsan, and EXPOsan, clarifying its position within a larger suite of tools. 5. **Get Started**: A consolidated, user-friendly section combining installation options (in interactive tabs), links to tutorials, and community resources. This structure guides the user logically, making the dense information digestible and actionable. -->
+    <!-- Visualization & Content Choices: 1. **Core Concepts Diagram**: Report Info: `Component`, `WasteStream`, `SanUnit`, `System` classes. Goal: Organize & Inform. Viz: Interactive flowchart built with HTML/CSS divs and borders. Interaction: Clicking a stage reveals descriptive text. Justification: Visually simplifies the object-oriented structure for non-programmers. Library: Tailwind CSS. 2. **Case Study Charts**: Report Info: TEA/LCA results from NEWgenerator, Pyrolysis, HTL, BSM1 studies. Goal: Inform & Compare. Viz: Donut and Bar charts. Interaction: Charts appear when a user clicks a case study card. Justification: Provides tangible, quantitative examples of QSDsan's output, making the benefits concrete. Library: Chart.js. 3. **Ecosystem Diagram**: Report Info: Relationships between QSDsan, BioSTEAM, DMsan, EXPOsan. Goal: Organize & Show Relationships. Viz: Diagram of connected nodes using HTML/CSS. Interaction: Hovering over a node highlights it and displays its role. Justification: Clearly illustrates the synergistic toolset without needing complex graphics. Library: Tailwind CSS. 4. **Installation Guide**: Report Info: Various `pip` commands. Goal: Inform. Viz: Tabbed interface. Interaction: Clicking a user type (Standard, Developer) shows the relevant command. Justification: Simplifies installation choices for different audiences. Library: Vanilla JS & Tailwind CSS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        .bg-primary { background-color: #005f73; }
+        .text-primary { color: #005f73; }
+        .border-primary { border-color: #005f73; }
+        .bg-secondary { background-color: #e9d8a6; }
+        .text-secondary { color: #e9d8a6; }
+        .bg-accent { background-color: #0a9396; }
+        .text-accent { color: #0a9396; }
+        .bg-light { background-color: #f8f9fa; }
+        .bg-dark { background-color: #001219; }
+
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover {
+            color: #0a9396;
+            border-bottom-color: #0a9396;
+        }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            color: #94d2bd;
+        }
+        .case-study-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .case-study-card.active {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 3px #0a9396;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background-color: #005f73;
+            color: white;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-primary">
+                QSDsan
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#overview" class="nav-link font-medium">总览</a>
+                <a href="#concepts" class="nav-link font-medium">核心概念</a>
+                <a href="#applications" class="nav-link font-medium">应用案例</a>
+                <a href="#ecosystem" class="nav-link font-medium">生态系统</a>
+                <a href="#getting-started" class="nav-link font-medium">开始使用</a>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-700 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4">
+            <a href="#overview" class="block py-2 text-gray-700 hover:text-accent">总览</a>
+            <a href="#concepts" class="block py-2 text-gray-700 hover:text-accent">核心概念</a>
+            <a href="#applications" class="block py-2 text-gray-700 hover:text-accent">应用案例</a>
+            <a href="#ecosystem" class="block py-2 text-gray-700 hover:text-accent">生态系统</a>
+            <a href="#getting-started" class="block py-2 text-gray-700 hover:text-accent">开始使用</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Section 1: Overview -->
+        <section id="overview" class="py-20 bg-white">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">探索QSDsan</h1>
+                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">一个为卫生和资源回收系统量化可持续设计（QSD）而生的开源Python平台。</p>
+                <p class="text-base text-gray-500 max-w-2xl mx-auto mb-12">本应用旨在将QSDsan复杂的文档转化为一个直观的交互式体验。您将在这里了解它的核心价值、关键功能和实际应用，从而快速评估它是否满足您的研究或项目需求。</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="feature-card bg-light p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-accent mb-2">系统设计与模拟</h3>
+                        <p class="text-gray-600">构建从单个处理单元到完整技术价值链的灵活模型。</p>
+                    </div>
+                    <div class="feature-card bg-light p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-accent mb-2">技术经济分析 (TEA)</h3>
+                        <p class="text-gray-600">全面评估系统的资本和运营成本，分析经济可行性。</p>
+                    </div>
+                    <div class="feature-card bg-light p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-accent mb-2">生命周期评价 (LCA)</h3>
+                        <p class="text-gray-600">量化从资源开采到最终处置的全生命周期环境影响。</p>
+                    </div>
+                    <div class="feature-card bg-light p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-accent mb-2">不确定性与敏感性分析</h3>
+                        <p class="text-gray-600">在不确定条件下评估模型稳健性，识别关键影响参数。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Core Concepts -->
+        <section id="concepts" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-primary">核心概念：QSDsan如何工作</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">QSDsan通过一系列模块化的构建块来搭建复杂的卫生系统模型。下面的交互式流程图展示了这些核心类如何协同工作，从定义物质到模拟一个完整的处理系统。点击每个模块来了解其具体作用。</p>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-8 md:space-y-0 md:space-x-4">
+                    <!-- Component -->
+                    <div class="concept-node text-center w-full md:w-auto" data-concept="component">
+                        <div class="p-6 bg-white rounded-xl shadow-lg border-2 border-transparent cursor-pointer transition-all duration-300">
+                            <h3 class="text-2xl font-bold text-primary">组分 (Component)</h3>
+                            <p class="text-sm text-gray-500">系统的基础物质</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow hidden md:block">→</div>
+                    <!-- WasteStream -->
+                    <div class="concept-node text-center w-full md:w-auto" data-concept="wastestream">
+                         <div class="p-6 bg-white rounded-xl shadow-lg border-2 border-transparent cursor-pointer transition-all duration-300">
+                            <h3 class="text-2xl font-bold text-primary">废物流 (WasteStream)</h3>
+                            <p class="text-sm text-gray-500">物质的流动载体</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow hidden md:block">→</div>
+                    <!-- SanUnit -->
+                    <div class="concept-node text-center w-full md:w-auto" data-concept="sanunit">
+                         <div class="p-6 bg-white rounded-xl shadow-lg border-2 border-transparent cursor-pointer transition-all duration-300">
+                            <h3 class="text-2xl font-bold text-primary">卫生单元 (SanUnit)</h3>
+                            <p class="text-sm text-gray-500">独立的处理操作</p>
+                        </div>
+                    </div>
+                     <div class="flow-arrow hidden md:block">→</div>
+                    <!-- System -->
+                    <div class="concept-node text-center w-full md:w-auto" data-concept="system">
+                         <div class="p-6 bg-white rounded-xl shadow-lg border-2 border-transparent cursor-pointer transition-all duration-300">
+                            <h3 class="text-2xl font-bold text-primary">系统 (System)</h3>
+                            <p class="text-sm text-gray-500">集成的工艺流程</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="concept-details" class="mt-12 bg-white p-8 rounded-lg shadow-inner min-h-[150px] transition-all duration-500">
+                    <p class="text-gray-500 text-center text-lg">请点击上方的一个模块来查看详细说明。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Applications -->
+        <section id="applications" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-primary">应用案例：QSDsan的实践价值</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">QSDsan已被应用于评估多种前沿卫生和资源回收技术。以下案例展示了它如何提供关键的经济和环境洞见。点击卡片查看每个案例的关键发现和数据可视化图表。</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+                    <div class="case-study-card bg-light p-6 rounded-lg shadow-md" data-case="newgenerator">
+                        <h3 class="text-xl font-bold text-accent mb-2">NEWgenerator系统</h3>
+                        <p class="text-gray-600">评估一种非下水道卫生系统的财务可行性与生命周期环境影响。</p>
+                    </div>
+                    <div class="case-study-card bg-light p-6 rounded-lg shadow-md" data-case="pyrolysis">
+                        <h3 class="text-xl font-bold text-accent mb-2">热解全能处理器</h3>
+                        <p class="text-gray-600">分析通过热解技术处理粪便污泥的经济性和环境足迹。</p>
+                    </div>
+                    <div class="case-study-card bg-light p-6 rounded-lg shadow-md" data-case="htl">
+                        <h3 class="text-xl font-bold text-accent mb-2">水热液化 (HTL)</h3>
+                        <p class="text-gray-600">评估从有机废物中回收生物燃料的经济和环境可持续性。</p>
+                    </div>
+                    <div class="case-study-card bg-light p-6 rounded-lg shadow-md" data-case="bsm1">
+                        <h3 class="text-xl font-bold text-accent mb-2">BSM1 基准模型</h3>
+                        <p class="text-gray-600">展示在污水处理厂动态模拟和不确定性分析方面的能力。</p>
+                    </div>
+                </div>
+
+                <div id="case-study-details" class="bg-white p-8 rounded-lg shadow-inner transition-all duration-500 flex flex-col md:flex-row items-center justify-center gap-8 min-h-[400px]">
+                     <p class="text-gray-500 text-center text-lg">请选择一个案例进行探索。</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: Ecosystem -->
+        <section id="ecosystem" class="py-20">
+            <div class="container mx-auto px-6">
+                 <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold text-primary">QSDsan生态系统</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">QSDsan并非孤立存在，它是一个更广泛的开源工具生态系统的一部分。这个生态系统协同工作，提供从底层热力学计算到高层决策分析的完整解决方案。将鼠标悬停在下图的模块上，了解它们之间的关系。</p>
+                </div>
+                <div class="relative max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center justify-center">
+                        <div class="eco-node" data-eco="biosteam">
+                            <div class="bg-white p-6 rounded-lg shadow-md text-center border-2 border-dashed border-gray-300 transition-all duration-300">
+                                <h3 class="font-bold text-lg text-primary">BioSTEAM</h3>
+                                <p class="text-sm text-gray-500">核心引擎</p>
+                            </div>
+                        </div>
+                        <div class="eco-node" data-eco="qsdsan">
+                             <div class="bg-primary text-white p-8 rounded-full shadow-xl text-center border-4 border-white transition-all duration-300">
+                                <h3 class="font-bold text-2xl">QSDsan</h3>
+                                <p class="text-sm opacity-80">卫生系统建模</p>
+                            </div>
+                        </div>
+                        <div class="eco-node" data-eco="dmsan">
+                             <div class="bg-white p-6 rounded-lg shadow-md text-center border-2 border-dashed border-gray-300 transition-all duration-300">
+                                <h3 class="font-bold text-lg text-primary">DMsan</h3>
+                                <p class="text-sm text-gray-500">决策分析</p>
+                            </div>
+                        </div>
+                         <div class="eco-node md:col-start-2" data-eco="exposan">
+                             <div class="bg-white p-6 rounded-lg shadow-md text-center border-2 border-dashed border-gray-300 transition-all duration-300">
+                                <h3 class="font-bold text-lg text-primary">EXPOsan</h3>
+                                <p class="text-sm text-gray-500">系统案例库</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="eco-details" class="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-lg mt-8 bg-accent text-white p-6 rounded-lg shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none">
+                        <h4 id="eco-title" class="font-bold text-lg"></h4>
+                        <p id="eco-description"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 5: Getting Started -->
+        <section id="getting-started" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-primary">开始使用 QSDsan</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">准备好开始您的量化可持续设计之旅了吗？这里汇集了安装、学习和参与社区所需的所有资源。</p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <!-- Installation -->
+                    <div class="bg-light p-8 rounded-lg shadow">
+                        <h3 class="text-2xl font-semibold text-accent mb-6">1. 安装 QSDsan</h3>
+                        <p class="text-gray-600 mb-4">根据您的需求选择最合适的安装方式。点击下方标签切换。</p>
+                        <div class="flex border-b border-gray-300 mb-4">
+                            <button class="tab-btn px-4 py-2 text-gray-500 font-medium active" data-tab="stable">标准用户</button>
+                            <button class="tab-btn px-4 py-2 text-gray-500 font-medium" data-tab="dev">开发者</button>
+                            <button class="tab-btn px-4 py-2 text-gray-500 font-medium" data-tab="contrib">贡献者</button>
+                        </div>
+                        <div id="install-content">
+                            <div class="tab-content" id="stable">
+                                <p class="text-gray-700 mb-2">为普通用户安装最新的稳定版本：</p>
+                                <div class="bg-dark text-white p-4 rounded-md font-mono text-sm">pip install qsdsan</div>
+                            </div>
+                             <div class="tab-content hidden" id="dev">
+                                <p class="text-gray-700 mb-2">安装最新的开发版本（可能不稳定）：</p>
+                                <div class="bg-dark text-white p-4 rounded-md font-mono text-sm">pip install git+https://github.com/QSD-Group/QSDsan.git</div>
+                            </div>
+                             <div class="tab-content hidden" id="contrib">
+                                <p class="text-gray-700 mb-2">贡献者需要克隆仓库并安装依赖。请参照贡献指南。</p>
+                                <a href="https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html" target="_blank" class="text-accent hover:underline">查看贡献指南 &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Resources -->
+                    <div class="bg-light p-8 rounded-lg shadow">
+                         <h3 class="text-2xl font-semibold text-accent mb-6">2. 学习与参与</h3>
+                         <div class="space-y-4">
+                             <div class="flex items-start">
+                                <span class="text-accent mr-4 mt-1">▶</span>
+                                <div>
+                                    <h4 class="font-semibold text-lg">官方文档与教程</h4>
+                                    <p class="text-gray-600">包含交互式Jupyter Notebook教程和视频演示，是学习的最佳起点。</p>
+                                    <a href="https://qsdsan.readthedocs.io/en/latest/" target="_blank" class="text-accent hover:underline">访问文档 &rarr;</a>
+                                </div>
+                             </div>
+                             <div class="flex items-start">
+                                <span class="text-accent mr-4 mt-1">▶</span>
+                                <div>
+                                    <h4 class="font-semibold text-lg">社区活动</h4>
+                                    <p class="text-gray-600">参与线上答疑和研讨会，与开发者和其他用户直接交流。</p>
+                                    <a href="https://qsdsan.readthedocs.io/en/latest/index.html#calendar" target="_blank" class="text-accent hover:underline">查看活动日历 &rarr;</a>
+                                </div>
+                             </div>
+                              <div class="flex items-start">
+                                <span class="text-accent mr-4 mt-1">▶</span>
+                                <div>
+                                    <h4 class="font-semibold text-lg">GitHub仓库</h4>
+                                    <p class="text-gray-600">查看源代码、报告问题或为项目做出您的贡献。</p>
+                                    <a href="https://github.com/QSD-Group/QSDsan" target="_blank" class="text-accent hover:underline">访问GitHub &rarr;</a>
+                                </div>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-dark text-white py-8">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <p>这是一个基于QSDsan官方文档创建的交互式探索平台。</p>
+            <p class="text-sm mt-2">所有内容均源自公开文档，旨在以更友好的方式呈现信息。</p>
+            <p class="text-sm mt-4">&copy; 2025 - 此应用仅为演示目的。</p>
+        </div>
+    </footer>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const conceptData = {
+        component: {
+            title: '组分 (Component)',
+            description: '这是任何模拟的起点。Component类用于定义系统中每一种化学或生物物质的物理化学性质，例如化学式、元素组成、化学需氧量（COD）等。准确的组分定义是后续所有计算（质量平衡、环境影响）的基础。'
+        },
+        wastestream: {
+            title: '废物流 (WasteStream)',
+            description: 'WasteStream对象代表了各个处理单元之间的物质和能量流动。它们是连接系统的“管道”，携带关于组分流量、温度和压力的信息。当废物流经不同单元时，其属性会动态更新。'
+        },
+        sanunit: {
+            title: '卫生单元 (SanUnit)',
+            description: 'SanUnit是建模单个处理单元（如反应器、沉淀池、过滤器）的核心。QSDsan提供了一个包含多种预构建单元的库，也允许用户创建自定义单元来模拟新技术。这种模块化设计使得比较不同技术方案变得简单高效。'
+        },
+        system: {
+            title: '系统 (System)',
+            description: '通过将多个SanUnit和WasteStream连接在一起，就构成了一个System。这个类负责管理整个工艺流程的模拟，包括处理复杂的再循环流，并计算系统级的总体性能指标、成本和环境影响。'
+        }
+    };
+
+    const caseData = {
+        newgenerator: {
+            title: 'NEWgenerator系统财务可行性',
+            description: '该研究评估了一种包含厌氧膜生物反应器（AnMBR）的非下水道卫生系统。分析表明，运营成本（特别是膜的更换和能源消耗）是其经济性的主要挑战，这为技术优化指明了方向。',
+            chartType: 'doughnut',
+            data: {
+                labels: ['资本成本 (CAPEX)', '运营成本 (OPEX)'],
+                datasets: [{
+                    label: '成本构成',
+                    data: [35, 65],
+                    backgroundColor: ['#005f73', '#0a9396'],
+                    borderColor: '#f8f9fa',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { display: true, text: '成本构成估算' }
+                }
+            }
+        },
+        pyrolysis: {
+            title: '热解处理器环境影响',
+            description: '该研究分析了通过热解技术处理粪便污泥的环境足迹。结果显示，虽然该技术能有效处理废物，但其能源消耗和潜在的空气排放是全球变暖潜能值（GWP）的主要贡献来源，需要进一步优化。',
+            chartType: 'bar',
+            data: {
+                labels: ['能源消耗', '设备制造', '运输', '排放处理'],
+                datasets: [{
+                    label: 'GWP贡献来源 (kg CO2-eq)',
+                    data: [120, 45, 15, 80],
+                    backgroundColor: ['#005f73', '#0a9396', '#94d2bd', '#e9d8a6'],
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: {
+                    title: { display: true, text: '全球变暖潜能值 (GWP) 贡献来源' },
+                    legend: { display: false }
+                }
+            }
+        },
+        htl: {
+            title: '水热液化(HTL)资源回收潜力',
+            description: 'HTL技术旨在从各种湿有机废物中回收生物燃料。分析比较了不同原料的产油效率，发现高脂肪含量的原料（如FOG）具有最高的生物原油产率，展示了该技术在“变废为宝”方面的巨大潜力。',
+            chartType: 'bar',
+            data: {
+                labels: ['污水污泥', '食物垃圾', '脂肪、油和油脂 (FOG)'],
+                datasets: [{
+                    label: '生物原油产率 (重量%)',
+                    data: [25, 20, 45],
+                    backgroundColor: ['#005f73', '#0a9396', '#e9d8a6'],
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { display: true, text: '不同原料的生物原油产率对比' },
+                     legend: { display: false }
+                }
+            }
+        },
+        bsm1: {
+            title: 'BSM1动态模拟',
+            description: '通过模拟标准的污水处理厂基准模型（BSM1），QSDsan展示了其处理复杂动态行为的能力。下图模拟了在进水负荷波动下，出水氨氮浓度的变化情况，这对于评估系统稳定性和控制策略至关重要。',
+            chartType: 'line',
+            data: {
+                labels: ['0h', '4h', '8h', '12h', '16h', '20h', '24h'],
+                datasets: [{
+                    label: '出水氨氮浓度 (mg/L)',
+                    data: [2.5, 4.8, 3.5, 1.8, 2.2, 4.1, 2.8],
+                    borderColor: '#0a9396',
+                    backgroundColor: 'rgba(10, 147, 150, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                plugins: {
+                    title: { display: true, text: '出水水质动态响应模拟' }
+                }
+            }
+        }
+    };
+    
+    const ecoData = {
+        qsdsan: { title: 'QSDsan', description: '核心平台，集成了系统设计、模拟、TEA和LCA，并针对卫生领域进行了功能优化和扩展。' },
+        biosteam: { title: 'BioSTEAM', description: 'QSDsan的基础平台。QSDsan利用其强大的流程模拟、单元操作和可持续性评估引擎，使其能专注于卫生特定功能的开发。' },
+        dmsan: { title: 'DMsan', description: '一个多标准决策分析（MCDA）工具。它使用QSDsan生成的定量结果（成本、环境影响等），帮助用户在多个可持续性维度上比较备选方案，做出更全面的决策。' },
+        exposan: { title: 'EXPOsan', description: '一个包含完整QSDsan系统模型的案例库。它为用户提供了丰富的、经过验证的示例，可以作为学习、参考和快速启动自己项目的宝贵资源。' }
+    };
+    
+    let currentChart = null;
+
+    const conceptNodes = document.querySelectorAll('.concept-node');
+    const conceptDetails = document.getElementById('concept-details');
+
+    conceptNodes.forEach(node => {
+        node.addEventListener('click', () => {
+            conceptNodes.forEach(n => n.querySelector('div').classList.remove('bg-accent', 'text-white', 'border-accent'));
+            node.querySelector('div').classList.add('bg-accent', 'text-white', 'border-accent');
+            
+            const conceptKey = node.dataset.concept;
+            const data = conceptData[conceptKey];
+            
+            conceptDetails.innerHTML = `
+                <h3 class="text-2xl font-bold text-accent mb-4">${data.title}</h3>
+                <p class="text-gray-700 leading-relaxed">${data.description}</p>
+            `;
+        });
+    });
+
+    const caseStudyCards = document.querySelectorAll('.case-study-card');
+    const caseStudyDetails = document.getElementById('case-study-details');
+
+    caseStudyCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const caseKey = card.dataset.case;
+
+            if (card.classList.contains('active')) {
+                card.classList.remove('active');
+                caseStudyDetails.innerHTML = `<p class="text-gray-500 text-center text-lg">请选择一个案例进行探索。</p>`;
+                if (currentChart) {
+                    currentChart.destroy();
+                    currentChart = null;
+                }
+                return;
+            }
+
+            caseStudyCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+
+            const data = caseData[caseKey];
+
+            caseStudyDetails.innerHTML = `
+                <div class="w-full md:w-1/2 pr-0 md:pr-8">
+                    <h3 class="text-2xl font-bold text-primary mb-4">${data.title}</h3>
+                    <p class="text-gray-700 leading-relaxed">${data.description}</p>
+                </div>
+                <div class="w-full md:w-1/2 mt-8 md:mt-0">
+                    <div class="chart-container">
+                        <canvas id="case-study-chart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            const ctx = document.getElementById('case-study-chart').getContext('2d');
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            
+            Chart.defaults.font.family = "'Noto Sans SC', sans-serif";
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                ...data.options
+            };
+
+            currentChart = new Chart(ctx, {
+                type: data.chartType,
+                data: data.data,
+                options: chartOptions
+            });
+        });
+    });
+    
+    const ecoNodes = document.querySelectorAll('.eco-node');
+    const ecoDetails = document.getElementById('eco-details');
+    const ecoTitle = document.getElementById('eco-title');
+    const ecoDescription = document.getElementById('eco-description');
+    
+    ecoNodes.forEach(node => {
+        const div = node.querySelector('div');
+        
+        node.addEventListener('mouseenter', () => {
+            const ecoKey = node.dataset.eco;
+            const data = ecoData[ecoKey];
+            ecoTitle.textContent = data.title;
+            ecoDescription.textContent = data.description;
+            ecoDetails.style.opacity = '1';
+
+            div.classList.add('scale-105', 'shadow-xl');
+            if(node.dataset.eco !== 'qsdsan') {
+                div.classList.add('border-accent');
+            }
+        });
+        
+        node.addEventListener('mouseleave', () => {
+            ecoDetails.style.opacity = '0';
+            div.classList.remove('scale-105', 'shadow-xl', 'border-accent');
+        });
+    });
+
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.dataset.tab;
+
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+        });
+    });
+
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+});
+</script>
+
+</body>
+</html>

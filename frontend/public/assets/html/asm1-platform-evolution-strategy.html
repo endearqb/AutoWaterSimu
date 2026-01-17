@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASM1平台演进战略 - 交互式报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Warm Neutrals + Muted Blue/Teal Accents) -->
+    <!-- Application Structure Plan: The SPA is designed as a single-page, multi-section narrative dashboard. The structure follows a logical story: starting with the high-level Vision (comparing the present and future), diving into the technical Architecture (the 'how'), showcasing the core Innovations (the 'what' and 'wow'), and concluding with a strategic Roadmap (the 'when'). This thematic, non-linear structure allows users (e.g., stakeholders, developers) to explore sections based on their interests, rather than being forced into a linear reading. Navigation is facilitated by a sticky header, and interactivity (charts, clickable elements) is used to unpack complex information, making the dense report content more digestible and engaging. -->
+    <!-- Visualization & Content Choices: 1. **Vision/Comparison**: Goal is to compare two architectures. An interactive bar chart (Chart.js) is chosen to visually and dynamically contrast the limited Streamlit MVP against the robust React+FastAPI proposal across key metrics like scalability and UI flexibility. Interaction (buttons) makes the comparison an active discovery process. 2. **Architecture**: Goal is to organize technical components. A clean, diagram-like layout using styled HTML/Tailwind cards is used instead of a complex chart, which is more effective for showing layered relationships (Frontend -> API -> Backend). Interaction (hover effects) provides light engagement. 3. **Innovations**: Goal is to inform about distinct, powerful features. A tabbed interface is used to neatly segment and present the three core innovation pillars (AI, Whiteboard, UX), preventing information overload. 4. **Roadmap**: Goal is to show change/progression over time. A horizontal bar chart (Chart.js) is used as a timeline, a standard and intuitive visualization for phased projects. Interaction (hovering over phases) dynamically displays detailed information, connecting the visual timeline to concrete actions and deliverables. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f9fa; /* A very light, calm gray */
+            color: #343a40;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #007BFF; /* A subtle blue for accent */
+            border-bottom-color: #007BFF;
+        }
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background-color: #007BFF;
+            color: white;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header id="header" class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-800">ASM1平台演进战略</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#vision" class="nav-link text-gray-600 font-medium px-3 py-2 text-sm rounded-md">愿景与演进</a>
+                    <a href="#architecture" class="nav-link text-gray-600 font-medium px-3 py-2 text-sm rounded-md">架构蓝图</a>
+                    <a href="#innovations" class="nav-link text-gray-600 font-medium px-3 py-2 text-sm rounded-md">核心创新</a>
+                    <a href="#roadmap" class="nav-link text-gray-600 font-medium px-3 py-2 text-sm rounded-md">战略路线图</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Section 1: Vision & Evolution -->
+            <section id="vision" class="mb-24 text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">愿景与演进</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg leading-8 text-gray-600">从验证概念的MVP到支撑未来的生产级平台，这是一次根本性的战略升级。我们的目标是构建一个可扩展、高度定制化且性能卓越的ASM1应用。</p>
+                <div class="mt-12 bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-2xl font-semibold mb-2">架构能力对比</h3>
+                    <p class="text-gray-500 mb-6">点击下方按钮，交互式对比当前MVP与未来平台在关键维度的能力差异。</p>
+                    <div class="flex justify-center space-x-4 mb-8">
+                        <button id="btn-streamlit" class="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">Streamlit MVP</button>
+                        <button id="btn-react-fastapi" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">React + FastAPI</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="architectureComparisonChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Architecture Blueprint -->
+            <section id="architecture" class="mb-24">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl text-center">架构蓝图</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg leading-8 text-gray-600 text-center">我们采用业界领先的前后端分离架构，确保系统的高内聚、低耦合，为未来的功能迭代和性能优化奠定坚实基础。</p>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                    <!-- Frontend -->
+                    <div class="bg-white p-8 rounded-2xl shadow-lg text-center h-full">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                           <span class="text-2xl">📱</span>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">前端: React</h3>
+                        <p class="mt-4 text-gray-600">采用组件化思想构建高度交互和动态的用户界面。庞大的生态系统为实现“画板”等复杂功能提供了无限可能。</p>
+                    </div>
+                    <!-- API -->
+                    <div class="bg-white p-8 rounded-2xl shadow-lg text-center h-full">
+                         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                           <span class="text-2xl">🔗</span>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">API: FastAPI</h3>
+                        <p class="mt-4 text-gray-600">基于Python的高性能框架。原生异步支持完美处理耗时的模拟任务，并通过Pydantic确保数据交互的健壮性。</p>
+                    </div>
+                    <!-- Backend -->
+                    <div class="bg-white p-8 rounded-2xl shadow-lg text-center h-full">
+                         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
+                           <span class="text-2xl">⚙️</span>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">后端逻辑: DDD + Python</h3>
+                        <p class="mt-4 text-gray-600">应用领域驱动设计(DDD)原则，将复杂的ASM1模型封装为清晰、可维护的领域对象，从容应对业务复杂性。</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Core Innovations -->
+            <section id="innovations" class="mb-24">
+                 <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl text-center">三大核心创新</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg leading-8 text-gray-600 text-center">通过技术创新，我们将ASM1工具的价值提升到全新高度，实现智能化、直观化和易用性的革命。</p>
+                <div class="mt-12">
+                    <div class="flex justify-center border-b border-gray-200">
+                        <button class="tab-btn px-4 py-2 font-medium text-lg text-gray-600" data-tab="ai">🧠 AI 赋能</button>
+                        <button class="tab-btn px-4 py-2 font-medium text-lg text-gray-600" data-tab="whiteboard">🎨 交互式画板</button>
+                        <button class="tab-btn px-4 py-2 font-medium text-lg text-gray-600" data-tab="ux">✨ 易用性革命</button>
+                    </div>
+                    <div class="mt-8">
+                        <!-- AI Tab Content -->
+                        <div id="tab-content-ai" class="tab-content">
+                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="bg-white p-6 rounded-xl shadow-md">
+                                    <h4 class="font-bold text-lg">自动化模型校准</h4>
+                                    <p class="text-gray-600 mt-2">利用贝叶斯优化等算法，自动寻找最优参数组合，将原本耗时数周的手动校准工作缩短至数小时，大幅提升模型精度。</p>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-md">
+                                    <h4 class="font-bold text-lg">自然语言交互</h4>
+                                    <p class="text-gray-600 mt-2">用户可通过日常语言查询或设置模型。“将好氧池DO设为2mg/L”，系统即可理解并执行，彻底改变交互方式。</p>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-md">
+                                    <h4 class="font-bold text-lg">挖掘预测性洞见</h4>
+                                    <p class="text-gray-600 mt-2">应用机器学习分析海量模拟数据，发现隐藏模式，预测出水水质，为污水厂的优化运营提供超前指导。</p>
+                                </div>
+                            </div>
+                        </div>
+                         <!-- Whiteboard Tab Content -->
+                        <div id="tab-content-whiteboard" class="tab-content hidden">
+                            <div class="bg-white rounded-2xl shadow-lg overflow-hidden md:flex">
+                                <div class="p-8 md:w-1/2">
+                                    <h3 class="text-2xl font-bold text-gray-900">可视化构建，所见即所得</h3>
+                                    <p class="mt-4 text-gray-600 leading-relaxed">告别繁琐的参数表！在“画板”上，用户可以像搭积木一样，通过拖拽、连接代表不同处理单元的图形节点，直观地构建出污水处理工艺流程。每一次修改，都能在流程图上获得即时视觉反馈，让复杂的模型结构一目了然。</p>
+                                </div>
+                                <div class="p-8 md:w-1/2 bg-slate-50 flex items-center justify-center">
+                                    <div class="text-center font-mono text-sm text-slate-500">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="bg-white border-2 border-blue-400 border-dashed rounded-lg p-4">厌氧池</div>
+                                            <div class="text-2xl font-bold text-blue-400">→</div>
+                                            <div class="bg-white border-2 border-blue-400 border-dashed rounded-lg p-4">好氧池</div>
+                                            <div class="text-2xl font-bold text-blue-400">→</div>
+                                            <div class="bg-white border-2 border-blue-400 border-dashed rounded-lg p-4">沉淀池</div>
+                                        </div>
+                                        <div class="mt-4">↑_________污泥回流_________↓</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- UX Tab Content -->
+                        <div id="tab-content-ux" class="tab-content hidden">
+                           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div class="bg-white p-6 rounded-xl shadow-md">
+                                    <h4 class="font-bold text-lg">引导式工作流</h4>
+                                    <p class="text-gray-600 mt-2">通过分步向导，引导用户完成复杂的模型设置，降低操作难度。</p>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-md">
+                                    <h4 class="font-bold text-lg">预设模板</h4>
+                                    <p class="text-gray-600 mt-2">提供A/O、A2O等常见工艺模板，用户可在其基础上修改，无需从零开始。</p>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-md">
+                                    <h4 class="font-bold text-lg">情境化帮助</h4>
+                                    <p class="text-gray-600 mt-2">在界面的每个角落嵌入帮助信息，用户遇到疑问时能即时获得解答。</p>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-md">
+                                    <h4 class="font-bold text-lg">交互式图表</h4>
+                                    <p class="text-gray-600 mt-2">提供可缩放、筛选、对比的多维度交互式图表，让结果解读更深入。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Strategic Roadmap -->
+            <section id="roadmap" class="mb-16">
+                 <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl text-center">战略路线图</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg leading-8 text-gray-600 text-center">我们采用分阶段迭代的开发策略，确保在每个阶段都能交付明确价值，稳步迈向最终愿景。</p>
+                 <div class="mt-12 bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-2xl font-semibold mb-6">开发阶段与核心目标</h3>
+                    <div class="lg:flex lg:items-start lg:space-x-8">
+                        <div class="lg:w-2/3">
+                            <div class="chart-container h-64 md:h-80">
+                                <canvas id="roadmapChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="roadmapDetails" class="mt-8 lg:mt-0 lg:w-1/3 bg-blue-50 p-6 rounded-xl">
+                            <h4 id="roadmapPhaseTitle" class="text-xl font-bold text-blue-800">第一阶段：奠定基础</h4>
+                            <p id="roadmapPhaseDescription" class="mt-2 text-blue-700">完成从Streamlit到React+FastAPI架构的迁移，实现ASM1模型的核心模拟功能，打通前后端交互流程。</p>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="border-t py-6">
+        <div class="text-center text-gray-500 text-sm">
+            <p>ASM1平台演进战略交互式报告</p>
+            <p class="mt-1">由 AI 根据项目规划文档生成</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Data ---
+            const architectureData = {
+                labels: ['可扩展性', 'UI定制化', '状态管理', '长时任务处理', 'AI集成便利性'],
+                streamlit: {
+                    label: 'Streamlit MVP',
+                    data: [3, 4, 3, 2, 6],
+                    backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                },
+                reactFastapi: {
+                    label: 'React + FastAPI',
+                    data: [9, 10, 9, 10, 9],
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                }
+            };
+
+            const roadmapData = {
+                labels: ['第一阶段', '第二阶段', '第三阶段', '第四阶段'],
+                datasets: [{
+                    label: '核心任务',
+                    data: [25, 25, 25, 25],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }],
+                details: [
+                    { title: '第一阶段：奠定基础', description: '完成从Streamlit到React+FastAPI架构的迁移，实现ASM1模型的核心模拟功能，打通前后端交互流程。' },
+                    { title: '第二阶段：提升用户体验', description: '引入交互式“画板”功能，并对UI/UX进行全面优化，实现引导式工作流和情境化帮助，显著降低使用门槛。' },
+                    { title: '第三阶段：集成人工智能', description: '引入AI技术，实现自动化模型校准、初步的自然语言交互，以及基于机器学习的预测性分析功能。' },
+                    { title: '第四阶段：扩展与社区化', description: '进行性能深度优化，考虑云部署，并扩展用户账户、模型共享和团队协作等高级功能，构建平台生态。' }
+                ]
+            };
+            
+            // --- Chart Instances ---
+            let comparisonChart, roadmapChart;
+
+            // --- Chart Creation Functions ---
+            function createComparisonChart(initialDataset) {
+                const ctx = document.getElementById('architectureComparisonChart').getContext('2d');
+                if (comparisonChart) {
+                    comparisonChart.destroy();
+                }
+                comparisonChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: architectureData.labels,
+                        datasets: [initialDataset]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 10,
+                                grid: {
+                                    color: '#e9ecef'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw}/10`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createRoadmapChart() {
+                const ctx = document.getElementById('roadmapChart').getContext('2d');
+                roadmapChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: roadmapData,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                stacked: true,
+                                display: false
+                            },
+                            y: {
+                                stacked: true,
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false // Disable default tooltip
+                            }
+                        },
+                        onHover: (event, chartElement) => {
+                            const canvas = event.native.target;
+                            if (chartElement.length) {
+                                canvas.style.cursor = 'pointer';
+                                const index = chartElement[0].index;
+                                updateRoadmapDetails(index);
+                            } else {
+                                canvas.style.cursor = 'default';
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- UI Update Functions ---
+            function updateRoadmapDetails(index) {
+                const detail = roadmapData.details[index];
+                document.getElementById('roadmapPhaseTitle').textContent = detail.title;
+                document.getElementById('roadmapPhaseDescription').textContent = detail.description;
+            }
+
+            // --- Event Handlers & Initializers ---
+            // Navigation scroll highlighting
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            window.onscroll = () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+
+            // Architecture comparison buttons
+            document.getElementById('btn-streamlit').addEventListener('click', () => {
+                createComparisonChart(architectureData.streamlit);
+            });
+            document.getElementById('btn-react-fastapi').addEventListener('click', () => {
+                createComparisonChart(architectureData.reactFastapi);
+            });
+
+            // Innovations tabs
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    const tab = button.dataset.tab;
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                        if (content.id === `tab-content-${tab}`) {
+                            content.classList.remove('hidden');
+                        }
+                    });
+                });
+            });
+
+            // --- Initial Calls ---
+            createComparisonChart(architectureData.reactFastapi); // Start with the future view
+            createRoadmapChart();
+            document.querySelector('.tab-btn[data-tab="ai"]').click(); // Activate first tab
+            document.querySelector('.nav-link[href="#vision"]').classList.add('active');
+        });
+    </script>
+</body>
+</html>

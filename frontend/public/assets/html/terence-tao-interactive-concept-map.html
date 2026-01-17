@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陶哲轩思想 - 交互式概念星图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 我设计了一个“概念星图”的交互结构。用户不再需要按1到10的顺序线性阅读，而是可以在一个可视化的星图上自由探索。每个核心概念（如“挂谷问题”、“结构与随机”）是一个“星辰节点”。点击节点，会高亮相关的概念连接，并在侧边栏显示该概念的摘要、涉及的播客集数，以及可能的交互图表。这种结构能极大地增强探索性和趣味性，并直观地揭示了原文中隐藏在各集之间的深刻联系，完美契合了将线性报告转化为互动体验的核心目标。 -->
+    <!-- Visualization & Content Choices: 1. 概念星图 (Goal: Organize/Relate): 使用HTML/CSS/JS构建，节点和连线动态生成，实现非线性探索。2. 动态内容面板 (Goal: Inform): JS根据用户点击，动态填充由播客稿合成的摘要和全文链接。3. 交互式图表 (Goal: Compare/Illustrate): 为“结构与随机”概念，使用Chart.js(Canvas)制作一个对比“随机”与“结构化”数据分布的条形图，让抽象概念可视化。4. 流程图 (Goal: Organize): 为“解题方法”概念，用HTML/CSS将陶哲轩的步骤梳理成清晰的视觉流程。所有内容均源自报告，无SVG/Mermaid。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fdfbf7;
+            color: #4a4a4a;
+        }
+        .concept-node {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 9999px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            font-weight: 500;
+        }
+        .concept-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+        }
+        .concept-node.active {
+            transform: scale(1.15);
+            background-color: #f2b988;
+            color: #fff;
+            border-color: #f2b988;
+            box-shadow: 0 10px 20px rgba(242, 185, 136, 0.4);
+            z-index: 25;
+        }
+        .concept-line {
+            position: absolute;
+            background-color: #cbd5e1;
+            height: 1.5px;
+            transform-origin: 0 0;
+            z-index: -1;
+            transition: background-color 0.3s ease;
+        }
+        .concept-line.active {
+            background-color: #f2b988;
+            height: 2px;
+        }
+        .content-panel {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        .episode-card {
+            background-color: #fdfbf7;
+            border: 1px solid #f0e9e1;
+            transition: all 0.2s ease-in-out;
+        }
+        .episode-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#d19a66]">陶哲轩思想 - 交互式概念星图</h1>
+            <p class="text-gray-500 mt-2">点击星图中的节点，探索这位伟大数学家的深刻思想世界。</p>
+        </header>
+
+        <main class="flex flex-col md:flex-row gap-8" style="height: calc(100vh - 200px);">
+            <div id="galaxy-container" class="w-full md:w-3/5 h-[50vh] md:h-full bg-gray-50 rounded-lg p-4 relative overflow-hidden border">
+                <div id="galaxy-map" class="w-full h-full relative">
+                </div>
+            </div>
+
+            <div id="content-panel" class="w-full md:w-2/5 h-[50vh] md:h-full content-panel p-6">
+                <div id="panel-content-area" class="h-full">
+                     <div class="flex flex-col items-center justify-center h-full text-center text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mouse-pointer-click mb-4"><path d="m9 9 5 12 1.8-5.2L21 14Z"/><path d="M7.2 2.2 8 7.1"/><path d="m5.1 4.2 3.1 3.1"/><path d="m3 9.2 4.7 1.3"/><path d="m4.2 14.9 3.1-3.1"/><path d="m2.2 12.8 4.3-.2"/></svg>
+                        <p class="text-lg font-medium">请选择一个概念节点</p>
+                        <p class="text-sm">开始您的探索之旅</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="episode-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 id="modal-title" class="text-xl font-bold text-[#d19a66]"></h3>
+                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div id="modal-body" class="p-6 overflow-y-auto">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const conceptData = {
+                kakeya: { title: '挂谷问题 (U型转弯)', x: 15, y: 15, episodes: [1, 2], related: ['singularity'] },
+                singularity: { title: '奇点与爆破', x: 35, y: 10, episodes: [2, 3], related: ['kakeya', 'navier_stokes'] },
+                navier_stokes: { title: '纳维-斯托克斯方程', x: 55, y: 15, episodes: [3, 4], related: ['singularity', 'water_computer'] },
+                water_computer: { title: '“水”计算机', x: 75, y: 10, episodes: [4], related: ['navier_stokes', 'problem_solving'] },
+                structure_randomness: { title: '结构与随机', x: 25, y: 45, episodes: [5], related: ['universality'] },
+                fox_hedgehog: { title: '狐狸与刺猬 (思维风格)', x: 45, y: 80, episodes: [6, 10], related: ['problem_solving', 'genius'] },
+                universality: { title: '普适性与数据压缩', x: 20, y: 75, episodes: [7], related: ['structure_randomness'] },
+                problem_solving: { title: '解题心法 (策略作弊)', x: 70, y: 45, episodes: [8], related: ['water_computer', 'fox_hedgehog', 'ai_math'] },
+                ai_math: { title: '数学与AI (Lean)', x: 80, y: 80, episodes: [9], related: ['problem_solving'] },
+                genius: { title: '天才的孤独与伟大', x: 55, y: 55, episodes: [10], related: ['fox_hedgehog'] }
+            };
+
+            const episodeData = {
+                1: { title: "第一集：当“数学莫扎特”思考U型转弯", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者 (热情洋溢地)**：嘿，你好呀！欢迎收听我们的节目。问你一个问题：你有没有想过，开车时怎么做一个最节省空间的U型转弯？如果我告诉你，这个看似简单的问题，正是世界上最伟大的数学家之一，被称为“数学莫扎特”的陶哲轩非常感兴趣的问题，你会不会觉得很意外？\n\n**分析者 (冷静、沉稳地)**：这听起来像个脑筋急转弯，但它其实是一个非常经典的数学谜题，叫做“挂谷问题”（Kakeya Problem）。它最早由一位日本数学家在大概一百年前提出。问题就是：如何用最小的面积，让一根针完成180度的旋转？\n\n**引导者**：我猜，最简单的就是在原地打个转吧？就像陀螺一样，那会形成一个圆形区域。\n\n**分析者**：没错，这是一个直观的答案。但后来人们发现，像驾校教的那种“三点掉头”，占用的面积其实更小。而真正让人震惊的是，一位叫做贝西科维奇的数学家证明，在二维平面上，你其实可以用**任意小**的面积来完成这个180度的转弯，小到近乎为零！\n\n**引导者**：哇！等一下，这怎么可能？用几乎不占空间的面积来掉头？这得是多么眼花缭乱的操作啊！不过…这只是个平面上的智力游戏，对吧？它有什么用呢？\n\n**分析者**：这正是问题的关键。当这个问题从二维进入三维，一切都变得不一样了。想象一下，哈勃太空望远镜就像一根在太空中的“针”，它需要转动到每一个方向去观察所有星球。现在假设——当然这只是个假设——太空里的空间非常宝贵，我们希望它在转动时占用的**体积**尽可能小。这个三维版本的挂谷问题，就远远超出了一个智力游戏的范畴。\n\n**引导者**：我好像有点明白了！所以，一个关于U型转弯的简单谜题，竟然升级成了探索宇宙、关乎望远镜如何高效工作的大学问！\n\n**分析者**：完全正确。陶哲轩提到，这个三维问题，出人意料地与许多其他领域的核心难题联系在了一起，比如偏微分方程、数论，甚至物理学中的波的传播。它成了一把钥匙，能打开通往更深层次科学奥秘的大门。\n\n**引导者 (总结)**：所以，我们从一个关于“如何最小化U型转弯面积”的古老谜题出发，发现二维世界里的答案是“几乎为零”，然后意识到，三维世界里的答案，竟然是理解宇宙运行规律的关键之一。数学的魅力，就是这样在不经意间，将最简单和最深刻的事物联系在一起。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**引导者**：好了，今天的分享就到这里。留给你一个小问题思考一下：\*\*如果一个简单的U型转弯都隐藏着如此深刻的秘密，那你自己的生活或工作中，有没有哪个看似不起眼的小问题，背后可能也藏着一个复杂得多的答案呢？\*\*期待下次再会！`},
+                2: { title: "第二集：波、奇点，以及为什么你的浴缸不会爆炸？", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：你好呀，欢迎回来！上一集我们聊了那个神奇的“挂谷问题”——如何在三维空间里最有效地转动一根针。你可能还在想，“嗯，这谜题很酷，但它到底和真实世界有什么关系？” 别急，今天我们就来揭晓答案，你会发现，它竟然关乎水波、宇宙规律，甚至能解释为什么你家的浴缸不会突然“爆炸”！\n\n**分析者**：这个联系的关键，在于波的传播方式。你可以把一道波想象成是由无数个“波包”组成的——也就是一小撮集中的能量，沿着特定方向前进。从几何上看，一个波包在时间和空间中穿行的轨迹，就像一根细长的“管道”。\n\n**引导者**：啊哈！我明白了！挂谷问题研究的是如何最紧密地“封装”这些管道。而波是由在管道里穿行的东西组成的。这么说，如果能非常高效地封装管道……\n\n**分析者**：完全正确。那就意味着，你可能可以创造出一种奇特的波。它开始时非常分散，能量弥漫在很大一片区域，但随后，它所有的能量会突然集中起来，不是集中在一个点，而是在一个相当大的时空区域内都变得极其强烈。在物理学上，我们称之为“爆破”（Blow-up）或“奇点”（Singularity）。在那一刻，能量的强度会变得非常大，甚至可能是无限大，导致我们熟悉的基础物理定律都失效了。\n\n**引导者**：这个比喻太形象了！让我想想……就像往池塘里扔一颗石子，涟漪会散开。如果我们把这个过程倒带，所有涟漪就会汇聚到一个点，溅起一朵大水花。这很正常。但你说的“爆破”，就好像这些涟漪汇聚后，溅起的水花有摧毁一切的力量，连水本身都承受不住了？\n\n**分析者**：正是这个意思。陶哲轩提到，在现实生活中我们看不到这种现象——你浴缸里的水晃来晃去，并不会突然爆炸，或者喷射出以光速运动的水滴。但关键的问题是：这在**数学上**是绝对不可能的吗？我们的数学方程能100%保证这种稳定性吗？\n\n**引导者 (总结)**：原来如此！所以，那个关于封装管道的抽象几何问题，最终帮助我们理解了物理世界中的波能否将能量无限集中，形成可怕的“奇点”。虽然我们的世界看起来很稳定，但数学家们需要一个绝对可靠的证明，来确保这种稳定不是一种侥幸。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**分析者**：我们每天都相信世界是稳定运行的，但数学家需要为此找到终极的证明。那么今天留给你的问题是：**在你习以为常的日常生活中，有哪件事是你认为理所当然，但它的背后，其实依赖于一个极其复杂且精密的系统在完美地运作呢？**`},
+                3: { title: "第三集：关于水流的“百万美元问题”", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：嘿，你好！如果我告诉你，有一个数学难题，研究的是像水流这样平常的东西，而只要你能解开它，就能赢得一百万美元的奖金，你会不会立刻对数学充满兴趣？今天，我们就来聊聊这个数学界最著名的未解之谜之一：纳维-斯托克斯方程问题（Navier-Stokes Problem）。\n\n**分析者**：首先，纳维-斯托克斯方程是一组描述流体——比如水和空气——运动的方程。它们的应用极其广泛，从设计飞机的气动外形，到预测明天的天气，都离不开它。它被誉为数学界的七大“千禧年大奖难题”之一。\n\n**引导者**：既然它这么重要，而且天天都在用，那问题出在哪儿呢？\n\n**分析者**：问题，又回到了我们上一集提到的“奇点”。这个百万美元问题的核心就是：如果你从一个平滑、稳定的水流开始，这些方程的解，会不会在某个未来的时刻，预测出水的速度在某个点变成了**无限大**？简单来说，流体自身会不会“爆破”？\n\n**引导者**：这不就是我们之前聊的“浴缸会不会爆炸”的问题嘛！我们凭经验知道它不会。但数学家就是那种不满足于“通常不会”，而非要弄清楚“是不是绝对不会”的人。他们必须排除哪怕亿万分之一的可能性，以防某天我们用这些方程去模拟什么关键的东西时，它突然给出一个灾难性的、会“爆炸”的答案。\n\n**分析者**：你说到了关键。这个问题的困难之处在于，流体的运动是一场“拔河比赛”。比赛的一方，是流体的“粘性”——就像蜂蜜比水更粘稠一样，这种内在的摩擦力会消耗能量，让流动趋于平缓和稳定。而另一方，是“输运”效应——流体自身的运动会把能量从一个地方带到另一个地方，有可能让能量集中起来。\n\n**引导者**：一场“平息”与“煽动”的较量！\n\n**分析者**：没错。而这个方程是“超临界”（supercritical）的。这意味着，在越来越小的尺度上，“煽动”能量集中的力量，要比“平息”它的粘性力量强大得多。这就像在一个微观世界里，混乱的力量总是能战胜秩序。\n\n**引导者**：哇，这让我想到一个很实际的例子。我们为什么没法预测超过两周的天气？陶哲轩也提到了，这背后是同样的原因！因为描述空气运动的方程也是“超临界”的。在一个很小的尺度上发生的微小扰动，比如一只蝴蝶扇动翅膀，可能会被不成比例地放大，最终造成巨大的、完全不可预测的后果。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**分析者 (总结)**：所以，价值百万美元的纳维-斯托克斯问题，本质上是在问流体方程能否永远保持稳定。虽然现实世界给了我们信心，但方程本身揭示了一场在微观尺度上，“混乱”似乎总能战胜“秩序”的战争，这使得证明其绝对稳定变得异常困难。这个问题也揭示了“统计上不可能”和“数学上不可能”的巨大差异。\n\n**引导者**：那么，今天的问题就留给“分析者”来问吧！\n\n**分析者**：好的。在你的专业领域或者认知里，有没有这样一种“黑天鹅”事件——它发生的概率极小，以至于几乎被所有人忽略，但一旦发生，就将彻底颠覆现有的所有规则和认知？我们下次再聊。`},
+                4: { title: "第四集：如何用“水”造一台计算机？", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：你好呀，欢迎回来！我们一直在聊那个关于水流会不会“爆炸”的百万美元问题。你可能会觉得，既然它这么难，数学家们是怎么研究它的呢？他们总不能真的去实验室里等着水爆炸吧？当然不能！陶哲轩想出了一个绝妙的办法：既然我无法证明它“不会”爆炸，那我就反过来，试着亲手“设计”一个能爆炸的模型！\n\n**分析者**：这听起来有点疯狂，但这是数学家独有的“超能力”。他们可以修改物理定律。陶哲轩的做法是，他拿来了描述水流的纳维-斯托克斯方程，然后开始修改它。他把一些通常会分散能量的渠道“关掉”，然后把所有的能量都强制导向一个他想要的方向——让能量在越来越小的尺度上聚集。他把这叫做“工程化爆破”（engineer a blowup）。\n\n**引导者**：这就像玩游戏开了作弊码！他直接改了游戏规则，好让自己的角色变得无敌。但这么做，对他理解真实世界里的那个、没改过的方程，有什么帮助呢？\n\n**分析者**：帮助巨大。因为这么做可以排除掉某些证明思路。如果有人说，“嘿，我有办法证明水流绝不会爆破！我的方法只用到了能量守恒这些基本原理。”陶哲轩就可以回应：“你的方法肯定行不通。因为我创造的这个‘作弊版’方程，也满足你说的那些基本原理，但它确实爆破了。所以，你想证明真实世界的方程没问题，就必须用到一些我这个版本里没有的、真实方程独有的特性。”\n\n**引导者**：我明白了！这就像是在侦探小说里，通过排除法，一步步缩小嫌疑人的范围。他通过创造一个“反例”，告诉所有人：“别走这条路，此路不通。”\n\n**分析者**：完全正确。而更有趣的是，为了实现这种可控的爆破，他设想了一种匪夷所思的东西——一台用“水”做的计算机。他想象着，能不能用一股股特定形态的水流脉冲来代表“0”和“1”，然后让它们碰撞，实现像计算机里的“与门”、“或门”那样的逻辑运算。\n\n**引导者**：用液态水来计算？这简直是“水朋克”科幻小说里的情节！这台“水计算机”能干嘛？\n\n**分析者**：它的任务只有一个：自我复制，并且越变越小。想象一个由水构成的机器人，它唯一的程序就是制造一个更小版本的自己。造好之后，它把全部能量都转移给那个小机器人，然后自己消散掉。那个小机器人启动后，再重复这个过程……周而复始，能量最终就会在一个无限小的点上爆破。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**分析者 (总结)**：虽然在真实的水流中实现“水计算机”还只是一个遥远的幻想，但这个思想实验意义非凡。它不仅为解决那个百万美元难题指明了哪些路走不通，也展现了数学家那种天马行空的创造力——他们可以为了解决一个问题，而去构想一个全新的、由液体构成的计算世界。\n\n**引导者**：那么，今天的问题是：**如果你可以像数学家一样，为了解决一个棘手问题，而暂时“修改”一条现实规则，你会修改哪一条？你又期望通过这个思想实验，发现什么呢？**`},
+                5: { title: "第五集：随机中的规律，和数字π的“阴谋”", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：嘿，你好！欢迎收听。你有没有想过，圆周率π，3.1415926……这一串无限不循环的数字，它的每一位是随机出现的吗？比如，数字“7”出现的次数会比“8”多吗？我们凭直觉会觉得，应该是完全随机的，每个数字出现的概率都一样。\n\n**分析者**：是的，这是我们普遍的信念。但陶哲轩提出了一个有趣的观点：我们如何**证明**它一定是随机的呢？有没有可能，在π的亿万位数字之后，存在一个我们还没发现的“阴谋”或者“模式”，导致某个数字会比其他数字出现得更多？从数学上讲，我们目前的技术，是无法100%排除这种可能性的。\n\n**引导者**：一个隐藏在π背后的“阴谋”？这个想法太酷了！这其实引出了一个更大的话题，就是数学家们经常面对的一对核心矛盾：**结构（Structure）**与**随机（Randomness）**。\n\n**分析者**：完全正确。宇宙中的大部分事物，看起来都是随机的、没有规律的。但数学家们的工作，很大程度上就是在这些看似随机的现象中，去寻找那些隐藏的“结构”。或者反过来，证明某些东西是真的随机，没有任何隐藏结构。\n\n**引导者**：这听起来有点抽象，有什么具体的例子吗？\n\n**分析者**：有一个很经典的例子叫“塞迈雷迪定理”（Szemerédi's Theorem）。这个定理是说，在一个足够大的数字集合里，你总能找到“等差数列”——就是像3, 5, 7或者10, 15, 20这样，每个数之间都差一个固定值的序列。\n\n**引导者**：这不难理解。比如在“所有奇数”这个集合里，我很容易就能找到等差数列，比如11, 13, 15, 17。因为奇数本身就是一个非常有“结构”的集合。\n\n**分析者**：没错。但这个定理的强大之处在于，它不仅对有“结构”的集合有效，对“随机”的集合也同样有效！想象一下，你把所有奇数写下来，然后为每个数抛一次硬币，正面就留下，反面就划掉。这样你会得到一个完全随机、毫无规律的数字集合。塞迈雷迪定理证明了，即使是在这样一个随机产生的集合里，只要它足够大，你也一定能找到任意长度的等差数列。\n\n**引导者 (总结)**：我明白了！所以，等差数列这种“结构”，就像打不死的小强一样，无论是在一个高度有序的、有规律的系统里，还是在一个完全随机、混乱的系统里，它都必然会存在。而数学家们的工作，就是去发现并证明这些必然存在的规律。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**分析者**：这种“结构与随机的二分法”是现代数学一个非常深刻的思想。它告诉我们，一个对象要么是完全随机的，要么就一定与某个有结构的东西相关。那么，留给你的问题是：**回顾你自己的生活，你觉得它更像一个充满“结构”的、可预测的轨道，还是更像一个充满“随机”事件的、不断带来意外的旅程？或者，两者皆有？**`},
+                6: { title: "第六集：数学家是狐狸，还是刺猬？", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：你好呀，欢迎回来！我们一直在聊陶哲轩这位数学大师，你可能会好奇，像他这样能解决这么多不同领域难题的人，他的思维方式有什么特别之处吗？今天，我们就来聊聊一个有趣的比喻：数学家到底是更像狐狸，还是更像刺猬？\n\n**分析者**：这个比喻源自一句古希腊谚语：“狐狸知道很多事，但刺猬知道一件大事。” “刺猬型”的学者，会毕生专注于一个领域，挖得非常非常深，成为那个领域里无人能及的专家。而“狐狸型”的学者，则知识广博，能在许多不同的领域之间穿梭，发现它们之间的联系。\n\n**引导者**：那陶哲轩属于哪一种呢？他解决了那么多不同领域的问题，听起来非常像一只博学的狐狸！\n\n**分析者**：他自己也更认同自己是“狐狸”。他最享受的，就是在不同数学领域之间做“套利”（arbitrage）。他会先去一个领域，学习那里的“独门秘技”，然后跑到另一个看似完全不相关的领域，把这些技巧用在新问题上，常常能产生出人意料的效果。\n\n**引导者**：这个太酷了！就像一个武林高手，学会了A门派的剑法，然后用它去破解B门派的阵法。这种跨界的能力，一定能看到别人看不到的风景。\n\n**分析者**：正是如此。比如，他非常推崇数学中的“美”，而这种美，往往就体现在不同概念的连接上。最著名的例子就是欧拉恒等式：e^(iπ) + 1 = 0。这个公式被誉为最美的数学公式。\n\n**引导者**：我听说过它！因为它把数学里最重要的5个常数（e, i, π, 1, 0）都联系在了一起。\n\n**分析者**：这只是表面。陶哲轩解释说，它真正的美，在于它统一了数学中几个最核心的思想。数字“e”代表着“增长与衰减”的动态过程，比如复利计算；“π”代表着几何学中的“旋转与周期”；而“i”则代表着坐标轴90度的“转向”，是进入复数世界的钥匙。这个公式告诉你，一个关于“增长”的规则，作用在一个“转向”上，持续一段“旋转”的时间，最终会精确地到达“-1”这个点。它把动态、几何、代数完美地融合在了一起。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**引导者 (总结)**：所以，无论是像“狐狸”一样在不同知识领域间建立连接，还是欣赏像欧拉恒等式那样融合了不同数学分支的“美”，我们都能看到，数学最深刻的魅力，就在于“统一”与“连接”。它能让我们从看似孤立的事物中，发现背后那个共同的、更根本的规律。\n\n**分析者**：这种跨界思维，不仅仅适用于数学。那么，今天留给你的问题是：**在你自己的知识体系里，有没有两个你认为完全不相关的领域？试着像“狐狸”一样思考，你能在它们之间，找到一条意想不到的连接吗？**`},
+                7: { title: "第七集：为什么宇宙是可以理解的？", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：嘿，你好！爱因斯坦曾经说过一句非常有名的话：“关于宇宙，最不可理解的事情是，它竟然是可以被理解的。” 这听起来有点绕，但仔细想想，确实如此。为什么像 E=mc² 这样简洁的公式，就能描述宇宙如此深刻的现实？这简直是个奇迹！\n\n**分析者**：陶哲轩提供了一个数学家的视角，他认为，一个好的物理或数学理论，本质上就是一种极致的“数据压缩”。宇宙每时每刻都在产生海量的数据——天文学家们有数PB（千万亿字节）的观测数据。而一个好的理论，比如暗物质模型，可能只需要十几个参数和几页纸的公式，就能以极高的精度解释所有这些数据。压缩率越高，理论就越好。\n\n**引导者**：这个比喻太棒了！就像我们把一部几个G的高清电影，压缩成几百兆的文件，但画质几乎没损失。所以，宇宙之所以“可以理解”，是因为它“可以被压缩”。但问题是，为什么呢？为什么复杂的宇宙，允许我们用简单的规律去描述它？\n\n**分析者**：这就引出了一个数学中非常深刻的现象，叫做“普适性”（Universality）。它指的是，许多复杂系统在宏观尺度上涌现出的规律，几乎不依赖于其微观层面的具体细节。最经典的例子是“中心极限定理”，它解释了为什么“正态分布”，也就是那条著名的钟形曲线，在自然界中无处不在。\n\n**引导者**：我知道这个！身高、体重、考试成绩……很多东西的分布都像个钟形。\n\n**分析者**：是的。因为这些宏观结果，往往是大量微小的、独立的随机因素叠加而成的。无论这些微观因素具体是什么，只要它们数量够多、相互独立，最终的宏观结果就会趋向于正态分布。这就像宇宙只关心最终的统计平均效果，而不关心每一个微观粒子具体在干嘛。这就是一种“普适性”。\n\n**引导者**：但这种普适性，或者说这种“模型”，总有失效的时候吧？\n\n**分析者**：当然。陶哲轩特别提到了2008年的金融危机。当时的金融模型，很大程度上假设成千上万个房贷违约事件是相互独立的，就像抛硬币一样，所以它们的风险可以用漂亮的钟形曲线来管理。但它们忽略了“系统性风险”——当经济大环境恶化时，所有人都可能同时违约，这就不再是独立的随机事件了。模型的美丽外表，与残酷的现实脱节了。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**引导者 (总结)**：所以，宇宙之所以可以被我们理解，很大程度上得益于“普适性”这个神奇的现象，它让简单的宏观规律得以从复杂的微观世界中涌现。数学帮助我们建立这些简洁的模型来“压缩”宇宙。但我们也必须警惕，要不断地用现实去检验模型，搞清楚它的适用边界在哪里，否则就可能陷入像金融危机那样的麻烦。\n\n**分析者**：那么，留给你的问题是：**在你所熟悉的某个复杂系统里——比如一个公司、一个社会热点、甚至是你自己的朋友圈——你有没有发现什么令人惊讶的、非常简单的宏观规律或模式？**`},
+                8: { title: "第八集：如何解决“不可能”的问题？", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：你好呀，欢迎回来。我们聊了这么多深奥的数学难题，你可能会想，陶哲轩这样的大脑，在解决问题时，是不是有什么我们凡人学不会的“独门绝技”？今天，我们就来揭秘他亲自传授的解题心法。剧透一下，这个方法的核心，竟然是“有策略地作弊”！\n\n**分析者**：是的，你没听错。陶哲轩说，数学的美妙之处，就在于你可以随心所欲地改变问题和规则。这在其他任何领域都是不可想象的。工程师不能把要造的桥换条河，但数学家可以。他把解题比作玩一个有无限“作弊码”的电子游戏。\n\n**引导者**：这个比喻太有意思了！所以具体要怎么“作弊”呢？\n\n**分析者**：他的核心思想是：永远不要一上来就挑战“终极难度”。如果一个问题有10个难点让你头疼，那就先想办法“作弊”，关掉其中9个，只留下1个。先集中精力解决这个只有一个难点的“削弱版”问题。\n\n**引导者**：啊，我明白了！先打小怪升级，不直接挑战大魔王！\n\n**分析者**：正是如此。他用了一个很生动的比喻：你看香港功夫片，英雄一个人对付一百个小喽啰，但打斗场面总是精心设计成他每次只对付一个人。打倒一个，再对付下一个。如果那一百个人真的一拥而上，电影就没法拍了。解决数学问题也是一样，要把困难“分而治之”。\n\n**引导者**：这真是个既实用又充满智慧的方法。先通过“作弊”简化问题，搞清楚每个小困难的本质，等把10个小困难都单独解决掉之后，再把它们重新组合起来，去面对最初的那个大问题。\n\n**分析者**：是的。他还提到，他非常依赖笔和纸，以及办公室里那四块巨大的黑板。他会把关于一个问题所有他知道的东西都写在黑板上，然后就坐在沙发上，看着全局。这让他能从整体上把握问题的结构，而不是陷入某个细节出不来。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**引导者 (总结)**：所以，顶尖数学家的解题秘诀，并非遥不可及。它不是靠蛮力，而是靠智慧。核心就是“有策略地作弊”：把一个大问题拆解成无数个可控的小问题，逐一击破。这个方法听起来简单，但它背后是一种深刻的认知策略：面对复杂，保持耐心，先易后难。\n\n**分析者**：那么，今天留给你的问题非常实用：**当你面对一个看起来不可能完成的、让你感到无从下手的巨大任务时，你能否尝试用这种“关掉九个难点”的思路，为自己设计出第一个、最简单的、可以立即执行的步骤呢？**`},
+                9: { title: "第九集：当数学遇上AI", script: `(音效：轻快、好奇的开场音乐，逐渐淡出)\n\n**引导者**：你好呀，欢迎收听！在今天这个AI无处不在的时代，你是否想过，像数学这样最严谨、最需要创造力的人类智力堡垒，会不会有一天也被AI攻克？今天，我们就来聊聊数学家们如何看待，以及如何使用AI这个新工具。\n\n**分析者**：首先，数学界已经出现了一种非常强大的工具，它不是我们熟悉的ChatGPT，而是一种叫做“形式化证明辅助工具”的计算机语言，其中最著名的一个叫Lean。你可以把它理解成一个极度较真、绝不犯错的数学伙伴。\n\n**引导者**：它和我们用笔和纸证明数学题有什么不一样呢？\n\n**分析者**：天差地别。用笔和纸，你可能会有一些模糊的跳跃。但用Lean，你写的每一行代码，都必须有绝对严谨的逻辑依据。陶哲轩形容说，这就像是在向一个极其“学究气”（pedantic）的同事解释你的证明，他会揪住每一个细节问你：“你确定这里是这个意思吗？你考虑过分母为零的情况吗？”\n\n**引导者**：听起来有点累！那这么做的意义是什么？\n\n**分析者**：意义是革命性的。第一，它能提供100%的正确性保证。第二，也是最重要的，它让“大规模、无信任”的协作成为可能。陶哲轩参与了一个项目，动员了全球50多位数学家，共同解决一个包含2200万个小问题的巨大代数难题。这种规模的协作在过去是不可想象的，因为你无法逐一核对每个人的工作。但有了Lean，只要代码能通过编译，你就可以完全信任它，哪怕你从没见过这位贡献者。\n\n**引导者**：哇！这简直是数学界的“开源项目”和“去中心化协作”！那我们熟悉的AI大语言模型呢？它们能做什么？\n\n**分析者**：目前，AI还很难独立完成有创造性的数学证明，因为它缺乏一种“嗅觉”——它不知道自己什么时候走错了路。但它已经是非常好的“副驾驶”了。比如，当陶哲轩在用Lean写证明时，AI可以像一个超级强大的“自动补全”工具，帮他找到需要的定理，或者写出一些常规的证明步骤，大大提高了效率。他预测，未来几年，用Lean写证明所花的时间，将从现在的“比手写多花10倍”，变成“比手写更快”。那将是一个巨大的转折点。\n\n**(音效：轻柔、引人思考的结尾音乐)**\n\n**引导者 (总结)**：所以，AI和数学的结合，正在开启一个全新的时代。一方面，像Lean这样的形式化工具，正在重塑数学研究的协作模式，让全球智慧可以被前所未有地连接起来。另一方面，大语言模型正在成为数学家强大的助手，降低研究的门槛。数学这座古老的殿堂，正在被新技术注入新的活力。\n\n**分析者**：那么，今天的问题是：**想象一下，如果你拥有一个绝对可靠、能瞬间验证任何想法对错的“AI助手”，在你的工作或学习中，你会用它去挑战哪个你以前连想都不敢想的大胆假设？**`},
+                10: { title: "第十集：天才的孤独与伟大", script: `(音效：庄重而引人深思的音乐，逐渐淡出)\n\n**引导者**：你好，欢迎收听我们这个系列的最后一集。在过去的旅程中，我们看到了数学的深刻与美妙，也领略了陶哲轩的智慧与谦逊。今天，让我们把目光投向数学世界里那些最闪亮、也最富传奇色彩的名字，聊一聊天才的伟大，以及他们可能为此付出的代价。\n\n**分析者**：在数学史上，有两位人物的经历常常被一同提起。一位是安德鲁·怀尔斯，他在阁楼里秘密工作七年，最终证明了困扰人类三百多年的“费马大定理”。另一位是格里戈里·佩雷尔曼，他同样是独自奋战多年，攻克了“庞加莱猜想”这个百年难题。\n\n**引导者**：我听说过佩雷尔曼的故事，他不仅解决了这个千禧年大奖难题，之后还拒绝了被誉为“数学界诺贝尔奖”的菲尔兹奖，和一百万美元的奖金！他说：“如果我的证明是正确的，那就不需要其他任何认可了。” 这种纯粹，简直令人敬畏。\n\n**分析者**：是的。这两位都是我们之前提到的“刺猬型”数学家的典范。他们选择了一条孤独而漫长的道路，将自己完全沉浸在一个问题中，与世隔绝，最终取得了辉煌的成就。他们的故事，满足了我们对“孤独天才”的所有浪漫想象。\n\n**引导者**：但陶哲轩本人的风格，似乎与他们截然不同。他更像一只活跃的“狐狸”，享受在不同领域间穿梭和协作的乐趣。\n\n**分析者**：完全正确。这也正是数学这个学科伟大的地方——它足够宽广，可以容纳完全不同的成功路径。你可以像佩雷尔曼那样，成为一个专注的、深邃的“刺猬”，用极致的深度战胜最难的问题。你也可以像陶哲轩那样，成为一个博学的、敏捷的“狐狸”，用广度建立起前所未有的连接。\n\n**引导者**：所以，没有哪条路是唯一正确的路。整个数学的生态，既需要刺猬的深度，也需要狐狸的广度。他们共同推动着知识的边界。\n\n**分析者**：正是如此。陶哲轩自己也说，他从不让自己过度沉迷于某一个问题。如果一条路走不通，他会很乐意转向另一个问题。而他也非常敬佩那些有毅力、能坚持到底的合作者。他认为，每个人都应该找到最适合自己天性的工作方式。\n\n**(音效：悠远、启发的结尾音乐)**\n\n**引导者 (总结)**：从佩雷尔曼的孤独坚守，到陶哲轩的开放协作，我们看到了通往伟大成就的不同风景。重要的不是选择哪条路，而是认识到，无论是深耕还是联结，纯粹的热爱与不懈的探索，是所有伟大心灵共同的底色。感谢你的一路收听，希望这次的分享，能让你感受到数学世界的温度与深度。\n\n**分析者**：那么，作为这个系列的最后一个问题，我们想问你：**回顾你的人生道路，你认为哪一次选择，最能定义你是谁？那是一个“刺猬”式的决定，还是一个“狐狸”式的决定？** 期待在未来的某个地方，与你再次相遇。`}
+            };
+            
+            const conceptSummaries = {
+                kakeya: '一个关于“针如何用最小面积/体积完成180度旋转”的古老谜题。二维的答案是任意小，但三维版本却出人意料地与物理学中波的传播、能量集中等深刻问题联系在一起，是探索“奇点”的钥匙之一。',
+                singularity: '物理学和数学中的一个概念，指能量或某种量在有限的时间和空间内变得无限大的点或区域，此时我们熟知的物理定律可能会失效。挂谷问题和纳维-斯托克斯方程的研究都与之密切相关。',
+                navier_stokes: '一组描述水、空气等流体运动的方程，是天气预报、航空航天等领域的基础。其核心难题（千禧年大奖难题之一）在于证明其解是否永远光滑，还是可能出现速度无限大的“奇点”，即流体自身“爆破”。',
+                water_computer: '陶哲轩为探索纳维-斯托克斯方程极限而构想的思想实验。他设想用特定形态的水流脉冲作为计算单元，构建一个能自我复制并不断缩小的“液态机器人”，以此来“工程化”地制造一个能量爆破，从而反向研究真实方程的性质。',
+                structure_randomness: '数学中一对核心矛盾。许多对象（如π的数字）看似随机，但数学家需要证明其不存在隐藏的“结构”或“阴谋”。反之，像等差数列这样的“结构”，又会顽强地出现在看似完全随机的集合中（塞迈雷迪定理），揭示了秩序与混乱间的深刻联系。',
+                fox_hedgehog: '一个关于学者风格的比喻。“刺猬”深耕一个领域，知道一件大事；“狐狸”涉猎广泛，知道很多事。陶哲轩将自己归为“狐狸”，享受在不同数学领域间迁移知识、建立连接的乐趣。这种连接也体现在欧拉恒等式等数学之美中。',
+                universality: '一个深刻的数学物理现象，指许多复杂系统的宏观规律，并不依赖其微观细节。这解释了为何宇宙“可以被理解”，因为复杂的现实可以被“压缩”成简洁的理论。但模型有其边界，忽略系统性风险可能导致灾难（如2008金融危机）。',
+                problem_solving: '陶哲轩的解题心法。核心是“有策略地作弊”——将一个复杂问题分解，一次只处理一个难点。通过简化问题、分而治之，逐步建立理解，最终解决看似不可能的难题。这是一个关于智慧而非蛮力的过程。',
+                ai_math: 'AI正在改变数学研究。形式化证明工具（如Lean）保证了100%的正确性，并使得大规模、无信任的全球协作成为可能。大语言模型（LLM）则扮演着强大的“副驾驶”，通过代码补全、文献检索等功能，大大提高数学家的工作效率。',
+                genius: '数学的伟大可以经由不同路径达成。有像佩雷尔曼、怀尔斯那样选择孤独深耕的“刺猬”，也有像陶哲轩这样享受协作与连接的“狐狸”。学科的生态需要多样性，无论何种风格，对数学纯粹的热爱和不懈的探索是共通的。'
+            };
+
+            const galaxyMap = document.getElementById('galaxy-map');
+            const panelContentArea = document.getElementById('panel-content-area');
+            const modal = document.getElementById('episode-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            
+            let activeNodeId = null;
+            let myChart = null;
+
+            function createGalaxy() {
+                const containerRect = galaxyMap.getBoundingClientRect();
+
+                // Draw lines first
+                Object.keys(conceptData).forEach(key => {
+                    const concept = conceptData[key];
+                    if (concept.related) {
+                        concept.related.forEach(relatedKey => {
+                            const relatedConcept = conceptData[relatedKey];
+                            if (relatedConcept) {
+                                const line = document.createElement('div');
+                                line.className = 'concept-line';
+                                line.dataset.from = key;
+                                line.dataset.to = relatedKey;
+                                
+                                const x1 = concept.x / 100 * containerRect.width;
+                                const y1 = concept.y / 100 * containerRect.height;
+                                const x2 = relatedConcept.x / 100 * containerRect.width;
+                                const y2 = relatedConcept.y / 100 * containerRect.height;
+
+                                const length = Math.sqrt((x2 - x1)**2 + (y2 - y1)**2);
+                                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+                                line.style.width = `${length}px`;
+                                line.style.left = `${x1}px`;
+                                line.style.top = `${y1}px`;
+                                line.style.transform = `rotate(${angle}deg)`;
+                                
+                                galaxyMap.appendChild(line);
+                            }
+                        });
+                    }
+                });
+
+                // Draw nodes on top
+                Object.keys(conceptData).forEach(key => {
+                    const concept = conceptData[key];
+                    const node = document.createElement('div');
+                    node.className = 'concept-node';
+                    node.id = `node-${key}`;
+                    node.textContent = concept.title;
+                    node.style.left = `calc(${concept.x}% - 60px)`;
+                    node.style.top = `calc(${concept.y}% - 20px)`;
+                    
+                    node.addEventListener('click', () => {
+                        updateContentPanel(key);
+                    });
+
+                    galaxyMap.appendChild(node);
+                });
+            }
+
+            function updateContentPanel(conceptId) {
+                if (activeNodeId) {
+                    document.getElementById(`node-${activeNodeId}`).classList.remove('active');
+                }
+                document.getElementById(`node-${conceptId}`).classList.add('active');
+                activeNodeId = conceptId;
+
+                // Update active lines
+                document.querySelectorAll('.concept-line').forEach(line => line.classList.remove('active'));
+                const relatedConcepts = conceptData[conceptId].related || [];
+                relatedConcepts.push(conceptId);
+                
+                document.querySelectorAll('.concept-line').forEach(line => {
+                    const { from, to } = line.dataset;
+                    if (from === conceptId || to === conceptId) {
+                         line.classList.add('active');
+                    }
+                });
+                
+
+                const concept = conceptData[conceptId];
+                const summary = conceptSummaries[conceptId];
+                
+                let episodesHtml = concept.episodes.map(epNum => {
+                    const epData = episodeData[epNum];
+                    return `
+                        <div class="episode-card rounded-lg p-3 mt-2 cursor-pointer" data-ep-num="${epNum}">
+                            <p class="font-semibold text-[#d19a66]">${epData.title}</p>
+                            <p class="text-xs text-gray-500 mt-1">点击阅读完整剧本</p>
+                        </div>
+                    `;
+                }).join('');
+
+                panelContentArea.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-3 text-[#d19a66]">${concept.title}</h2>
+                    <p class="text-gray-600 mb-4 leading-relaxed">${summary}</p>
+                    <div class="border-t pt-4">
+                        <h4 class="font-semibold text-gray-700 mb-2">相关播客剧集：</h4>
+                        ${episodesHtml}
+                    </div>
+                    <div id="interactive-area" class="mt-4"></div>
+                `;
+
+                if (conceptId === 'structure_randomness') {
+                    renderStructureVsRandomnessChart();
+                } else if (conceptId === 'problem_solving') {
+                    renderProblemSolvingFlow();
+                }
+
+                document.querySelectorAll('.episode-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const epNum = e.currentTarget.dataset.epNum;
+                        showEpisodeModal(epNum);
+                    });
+                });
+            }
+
+            function renderStructureVsRandomnessChart() {
+                const interactiveArea = document.getElementById('interactive-area');
+                interactiveArea.innerHTML = `
+                    <h4 class="font-semibold text-gray-700 mb-2">交互式图表：π 的数字分布</h4>
+                     <div class="chart-container">
+                        <canvas id="piChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-gray-500 mt-2">模拟 π 的数字在“随机”与“结构化”下的分布对比。</p>
+                `;
+                const ctx = document.getElementById('piChart').getContext('2d');
+                const labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                const randomData = Array.from({length: 10}, () => Math.floor(Math.random() * 20) + 90);
+                
+                if (myChart) {
+                    myChart.destroy();
+                }
+
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '随机分布 (设想)',
+                            data: randomData,
+                            backgroundColor: 'rgba(209, 154, 102, 0.6)',
+                            borderColor: 'rgba(209, 154, 102, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    color: '#6b7280'
+                                }
+                            },
+                             x: {
+                                ticks: {
+                                    color: '#6b7280'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#4a4a4a'
+                                }
+                            },
+                            tooltip: {
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                backgroundColor: '#4a4a4a',
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderProblemSolvingFlow() {
+                const interactiveArea = document.getElementById('interactive-area');
+                const steps = [
+                    { title: "识别所有难点", icon: "&#128269;" },
+                    { title: "激活“作弊码”", icon: "&#127918;" },
+                    { title: "关掉9个，只留1个", icon: "&#128274;" },
+                    { title: "解决“削弱版”问题", icon: "&#128170;" },
+                    { title: "重复此过程", icon: "&#128260;" },
+                    { title: "整合所有解法", icon: "&#129513;" }
+                ];
+                let flowHtml = steps.map((step, index) => `
+                    <div class="flex items-center mt-2">
+                        <div class="flex-shrink-0 bg-[#f2b988] text-white rounded-full h-8 w-8 flex items-center justify-center text-lg">${step.icon}</div>
+                        <div class="ml-4">
+                            <p class="font-medium">${step.title}</p>
+                        </div>
+                    </div>
+                    ${index < steps.length - 1 ? '<div class="h-6 w-px bg-gray-300 ml-4"></div>' : ''}
+                `).join('');
+                 interactiveArea.innerHTML = `
+                    <h4 class="font-semibold text-gray-700 mb-3">流程图：陶哲轩的解题心法</h4>
+                    ${flowHtml}
+                `;
+            }
+
+            function showEpisodeModal(epNum) {
+                const epData = episodeData[epNum];
+                modalTitle.textContent = epData.title;
+                
+                let formattedScript = epData.script
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#d19a66]">$1</strong>')
+                    .replace(/\n/g, '<br>');
+                
+                modalBody.innerHTML = `<div class="prose max-w-none text-gray-700 leading-relaxed">${formattedScript}</div>`;
+                modal.classList.remove('hidden');
+            }
+
+            closeModalBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+            
+            window.addEventListener('resize', () => {
+                galaxyMap.innerHTML = '';
+                createGalaxy();
+                if(activeNodeId) {
+                    document.getElementById(`node-${activeNodeId}`).classList.add('active');
+                     document.querySelectorAll('.concept-line').forEach(line => {
+                        const { from, to } = line.dataset;
+                        if (from === activeNodeId || to === activeNodeId) {
+                            line.classList.add('active');
+                        }
+                    });
+                }
+            });
+
+            createGalaxy();
+        });
+    </script>
+
+</body>
+</html>

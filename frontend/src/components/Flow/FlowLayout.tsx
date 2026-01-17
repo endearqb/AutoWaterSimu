@@ -1,0 +1,312 @@
+import { Box } from "@chakra-ui/react"
+import React, { type ReactNode, useEffect, useRef, useState } from "react"
+import useFlowStore from "../../stores/flowStore"
+import type { RFState } from "../../stores/flowStore"
+import BaseInspectorContainer, {
+  INSPECTOR_PANEL_WIDTH,
+} from "./inspectorbar/BaseInspectorContainer"
+import SimulationActionPlate from "./inspectorbar/SimulationActionPlate"
+import type { SimulationControllerProps } from "./inspectorbar/useSimulationController"
+import BubbleMenu from "./menu/BubbleMenu"
+
+interface BubbleMenuProps {
+  onExport: () => string
+  onImport: (files: File[]) => void
+  onNewFlowChart: () => void
+  store: () => RFState
+}
+
+interface BaseBubbleMenuProps {
+  flowStore?: () => RFState
+  modelStore?: any
+  config?: any
+  onExport?: () => string
+  onImport?: (files: File[]) => void
+  onNewFlowChart?: () => void
+  [key: string]: any
+}
+
+interface FlowLayoutProps {
+  canvas: ReactNode
+  inspector: ReactNode
+  toolbar: ReactNode | ((props: any) => ReactNode)
+  store?: () => any
+  BubbleMenuComponent?: React.ComponentType<
+    BubbleMenuProps | BaseBubbleMenuProps
+  >
+  simulationControlProps?: SimulationControllerProps
+}
+
+const FlowLayout = ({
+  canvas,
+  inspector,
+  toolbar,
+  store,
+  BubbleMenuComponent,
+  simulationControlProps,
+}: FlowLayoutProps) => {
+  const themeScopeRef = useRef<HTMLDivElement>(null!)
+  const flowStore = store || useFlowStore
+  const {
+    selectedNode,
+    selectedEdge,
+    exportFlowData,
+    importFlowData,
+    setImportedFileName,
+    setCurrentFlowChartName,
+    newFlowChart,
+  } = flowStore()
+
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false)
+  const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
+  const [toolbarPosition, setToolbarPosition] = useState({ x: 16, y: 16 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [sidebarWidth, setSidebarWidth] = useState(240)
+  const [isToolbarLocked, setIsToolbarLocked] = useState(true)
+
+  const getDefaultPosition = () => ({ x: sidebarWidth + 16, y: 16 })
+
+  useEffect(() => {
+    if (isToolbarLocked) {
+      setToolbarPosition(getDefaultPosition())
+    }
+  }, [isToolbarLocked, sidebarWidth])
+
+  useEffect(() => {
+    if (selectedNode || selectedEdge) {
+      setIsInspectorOpen(true)
+    }
+  }, [selectedNode, selectedEdge])
+
+  useEffect(() => {
+    if (!selectedNode && !selectedEdge) {
+      setIsInspectorOpen(false)
+    }
+  }, [selectedNode, selectedEdge])
+
+  useEffect(() => {
+    const checkSidebarWidth = () => {
+      const sidebarElement = document.querySelector("[data-sidebar]")
+      if (sidebarElement) {
+        const width = sidebarElement.getBoundingClientRect().width
+        setSidebarWidth(width)
+      } else {
+        setSidebarWidth(240)
+      }
+    }
+
+    checkSidebarWidth()
+
+    const observer = new ResizeObserver(checkSidebarWidth)
+    const sidebarElement = document.querySelector("[data-sidebar]")
+    if (sidebarElement) {
+      observer.observe(sidebarElement)
+    }
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isToolbarLocked) return
+
+    setIsDragging(true)
+    const rect = (e.target as HTMLElement)
+      .closest("[data-toolbar]")
+      ?.getBoundingClientRect()
+    if (rect) {
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      })
+    }
+  }
+
+  const handleToggleLock = () => {
+    if (!isToolbarLocked) {
+      setToolbarPosition(getDefaultPosition())
+    }
+    setIsToolbarLocked(!isToolbarLocked)
+  }
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return
+
+    const newX = e.clientX - dragOffset.x
+    const newY = e.clientY - dragOffset.y
+
+    const maxX = window.innerWidth - 250
+    const maxY = window.innerHeight - 100
+
+    setToolbarPosition({
+      x: Math.max(sidebarWidth + 16, Math.min(newX, maxX)),
+      y: Math.max(16, Math.min(newY, maxY)),
+    })
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    document.addEventListener("mousemove", handleMouseMove)
+    document.addEventListener("mouseup", handleMouseUp)
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [isDragging, dragOffset, sidebarWidth])
+
+  const handleExport = () => {
+    try {
+      const flowData = exportFlowData()
+      const dataStr = JSON.stringify(flowData, null, 2)
+      return dataStr
+    } catch (error) {
+      console.error("导出流程图失败:", error)
+      return ""
+    }
+  }
+
+  const handleImport = async (files: File[]) => {
+    if (files.length === 0) return
+
+    const file = files[0]
+    if (!file.name.endsWith(".json")) {
+      const { toaster } = await import("../ui/toaster")
+      toaster.create({
+        title: "文件格式错误",
+        description: "请选择JSON格式的文件",
+        type: "error",
+        duration: 3000,
+      })
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const content = e.target?.result as string
+        const flowData = JSON.parse(content)
+        const result = importFlowData(flowData)
+
+        const fileName = file.name.replace(/\.json$/, "")
+        setImportedFileName(fileName)
+        setCurrentFlowChartName(fileName)
+
+        const { toaster } = await import("../ui/toaster")
+        toaster.create({
+          title: result.success ? "导入成功" : "导入失败",
+          description: result.message,
+          type: result.success ? "success" : "error",
+          duration: 3000,
+        })
+      } catch (error) {
+        const { toaster } = await import("../ui/toaster")
+        toaster.create({
+          title: "导入失败",
+          description: "文件格式错误或内容无效",
+          type: "error",
+          duration: 3000,
+        })
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const handleNewFlowChart = async () => {
+    try {
+      newFlowChart()
+      const { toaster } = await import("../ui/toaster")
+      toaster.create({
+        title: "新建成功",
+        description: "已创建新的流程图",
+        type: "success",
+        duration: 3000,
+      })
+    } catch (error) {
+      const { toaster } = await import("../ui/toaster")
+      toaster.create({
+        title: "新建失败",
+        description: "创建新流程图时出现错误",
+        type: "error",
+        duration: 3000,
+      })
+    }
+  }
+
+  const toolbarProps = {
+    sidebarWidth,
+    isToolbarLocked,
+    isToolbarCollapsed,
+    toolbarPosition,
+    isDragging,
+    onToggleLock: handleToggleLock,
+    onToggleCollapse: () => setIsToolbarCollapsed(!isToolbarCollapsed),
+    onMouseDown: handleMouseDown,
+    store: flowStore,
+  }
+
+  return (
+    <Box
+      ref={themeScopeRef}
+      data-flow-theme-scope
+      h="calc(100vh)"
+      overflow="hidden"
+      position="relative"
+    >
+      <Box
+        w="100%"
+        h="100%"
+        position="relative"
+        transition="margin-right 0.1s ease"
+        marginRight={isInspectorOpen ? `${INSPECTOR_PANEL_WIDTH}px` : "0"}
+      >
+        {canvas}
+        {simulationControlProps && (
+          <SimulationActionPlate {...simulationControlProps} />
+        )}
+      </Box>
+
+      {typeof toolbar === "function"
+        ? toolbar(toolbarProps)
+        : typeof toolbar === "object" && toolbar && "type" in toolbar
+          ? React.cloneElement(toolbar as React.ReactElement, toolbarProps)
+          : toolbar}
+
+      {(() => {
+        const { showBubbleMenu } = flowStore()
+        if (!showBubbleMenu) return null
+        return BubbleMenuComponent ? (
+          <BubbleMenuComponent
+            onExport={handleExport}
+            onImport={handleImport}
+            onNewFlowChart={handleNewFlowChart}
+            store={flowStore}
+            flowStore={flowStore}
+          />
+        ) : (
+          <BubbleMenu
+            onExport={handleExport}
+            onImport={handleImport}
+            store={flowStore}
+          />
+        )
+      })()}
+
+      <BaseInspectorContainer
+        isOpen={isInspectorOpen}
+        onToggle={() => setIsInspectorOpen(!isInspectorOpen)}
+      >
+        {inspector}
+      </BaseInspectorContainer>
+    </Box>
+  )
+}
+
+export default FlowLayout

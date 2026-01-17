@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>现代污水处理厂设计的终极博弈</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            overflow: auto;
+            scroll-snap-type: y mandatory;
+        }
+        .slide {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            scroll-snap-align: start;
+            padding: 4vw;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .slide-content {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .slide-header {
+            background-color: #005a9e;
+            color: white;
+            padding: 20px 40px;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        .slide-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .slide-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        .slide-body {
+            flex-grow: 1;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .pagination {
+            position: absolute;
+            bottom: 20px;
+            right: 40px;
+            font-size: 1.2rem;
+            color: #555;
+            font-weight: 500;
+        }
+        .arrow-navigation {
+            position: fixed;
+            bottom: 5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+        .arrow-navigation a {
+            background-color: rgba(0, 90, 158, 0.8);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            font-size: 24px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .arrow-navigation a:hover {
+            background-color: #003d6b;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide-container">
+        <!-- Slide 1: Title -->
+        <div id="slide1" class="slide bg-gray-100">
+            <div class="slide-content" style="background-image: linear-gradient(rgba(0, 30, 60, 0.7), rgba(0, 60, 90, 0.7)), url('https://images.unsplash.com/photo-1541701494587-b959e78555e2?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center;">
+                <div class="flex flex-col justify-center items-center h-full text-white text-center p-10">
+                    <h1 class="text-5xl md:text-6xl font-bold leading-tight" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.7);">现代污水处理厂设计的终极博弈</h1>
+                    <p class="mt-6 text-xl md:text-2xl font-light opacity-90">成本、效率与高级处理的协同之道</p>
+                    <div class="mt-8 border-t-2 border-cyan-400 w-24"></div>
+                </div>
+            </div>
+            <div class="pagination">1 / 5</div>
+        </div>
+
+        <!-- Slide 2: The Core Game -->
+        <div id="slide2" class="slide">
+            <div class="slide-content">
+                <div class="slide-header">
+                    <h2>核心博弈：污泥浓度 vs 建设成本</h2>
+                    <p>反应器与二沉池之间的微妙平衡</p>
+                </div>
+                <div class="slide-body grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                            <h3 class="text-xl font-bold text-blue-800">提高污泥浓度 (TSS)</h3>
+                            <div class="mt-4 flex items-start gap-4">
+                                <div class="text-green-600 bg-green-100 p-3 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">优势：降低反应器成本</h4>
+                                    <p class="text-gray-600 text-sm">更高浓度的微生物“厨师”意味着处理相同污水量所需的反应器体积更小。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-red-50 p-6 rounded-lg border border-red-200">
+                            <h3 class="text-xl font-bold text-red-800">提高污泥浓度 (TSS)</h3>
+                            <div class="mt-4 flex items-start gap-4">
+                                <div class="text-red-600 bg-red-100 p-3 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">劣势：增加二沉池成本</h4>
+                                    <p class="text-gray-600 text-sm">污泥沉降性能变差，需要更大的沉降面积来保证泥水分离效果。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg h-full">
+                        <h4 class="text-lg font-semibold text-center mb-2">总建设成本优化曲线</h4>
+                        <div id="costChart" class="w-full h-64"></div>
+                        <p class="text-center text-gray-600 mt-2 text-sm">设计师的目标是找到总成本最低的“最优污泥浓度点”。</p>
+                    </div>
+                </div>
+                <div class="pagination">2 / 5</div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Advanced Treatment -->
+        <div id="slide3" class="slide">
+            <div class="slide-content">
+                <div class="slide-header" style="background-color: #277c5c;">
+                    <h2>高级处理工艺的挑战</h2>
+                    <p>从“厨房”到精密“中央厨房”的系统升级</p>
+                </div>
+                <div class="slide-body grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-green-50 p-6 rounded-xl border-2 border-green-200 flex flex-col justify-center">
+                        <h3 class="text-2xl font-bold text-green-800 mb-4">脱氮 (反硝化)</h3>
+                        <p class="text-gray-700 mb-4">不仅是去除污染物，更是资源的巧妙利用。反硝化过程能利用污水中的有机物作为碳源，从而降低好氧阶段的曝气能耗。</p>
+                        <div class="w-full bg-gray-200 rounded-lg p-4 text-center">
+                             <span class="font-mono text-green-900">有机物 (C) + NO₃⁻ → N₂↑ + H₂O + CO₂</span>
+                             <p class="text-sm mt-2 text-green-700">↓ 降低总需氧量，节省电耗</p>
+                        </div>
+                    </div>
+                    <div class="bg-purple-50 p-6 rounded-xl border-2 border-purple-200 flex flex-col justify-center">
+                        <h3 class="text-2xl font-bold text-purple-800 mb-4">生物除磷</h3>
+                        <p class="text-gray-700 mb-4">对环境极为苛刻的“精密手术”。聚磷菌(PAOs)需要在绝对厌氧区“富集能量”，任何氧或硝酸盐的渗入都可能导致除磷失败。</p>
+                         <div class="w-full bg-gray-200 rounded-lg p-4 text-center">
+                             <strong class="text-purple-900">“厌氧区”环境要求</strong>
+                             <div class="flex justify-around mt-2">
+                                <span class="text-red-600 font-bold text-lg">🚫 O₂ (溶解氧)</span>
+                                <span class="text-red-600 font-bold text-lg">🚫 NO₃⁻ (硝酸盐)</span>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+                 <div class="pagination">3 / 5</div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Multi-dimensional Design -->
+        <div id="slide4" class="slide">
+            <div class="slide-content">
+                 <div class="slide-header" style="background-color: #b95000;">
+                    <h2>多维度设计与未来展望</h2>
+                    <p>在多重目标限制下的权衡艺术</p>
+                </div>
+                <div class="slide-body grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                     <div class="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg h-full">
+                        <h4 class="text-lg font-semibold text-center mb-2">设计目标权衡雷达图</h4>
+                        <div id="radarChart" class="w-full h-80"></div>
+                    </div>
+                    <div class="space-y-6 text-gray-800">
+                        <h3 class="text-3xl font-bold text-orange-900">这是一场多目标的博弈</h3>
+                        <p>污水处理厂的设计不再是单一维度的优化，而是在相互制约的多个目标中寻找最佳解决方案的复杂工程。</p>
+                        <ul class="space-y-3 list-disc list-inside">
+                            <li><strong class="font-semibold">精细化需求:</strong> 需精确了解进水组分 (如RBCOD)，以指导工艺设计。</li>
+                            <li><strong class="font-semibold">多目标权衡:</strong> 在成本、空间、能耗和出水标准之间做出艰难抉择。</li>
+                            <li><strong class="font-semibold">宏大工程:</strong> 从微生物到宏观设施，体现了系统工程的复杂与精密。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="pagination">4 / 5</div>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Conclusion -->
+        <div id="slide5" class="slide">
+            <div class="slide-content" style="background-image: linear-gradient(to top, rgba(0, 80, 130, 0.8), rgba(20, 120, 180, 0.6)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center;">
+                <div class="flex flex-col justify-center items-center h-full text-white text-center p-12">
+                     <div class="bg-white/20 backdrop-blur-sm p-8 rounded-xl">
+                        <h2 class="text-4xl md:text-5xl font-bold" style="text-shadow: 1px 1px 6px rgba(0,0,0,0.5);">结论：智慧的博弈，和谐的未来</h2>
+                        <p class="mt-6 text-lg md:text-xl max-w-3xl mx-auto font-light leading-relaxed">
+                            现代污水处理工程，是融合了微生物学、化学、流体力学和系统工程的宏大叙事。它不仅是一场关于成本与效率的技术博弈，更是人类运用智慧管理水资源、与自然环境寻求和谐共生的深刻体现。
+                        </p>
+                     </div>
+                </div>
+            </div>
+            <div class="pagination text-white/80">5 / 5</div>
+        </div>
+
+    </div>
+
+    <div class="arrow-navigation">
+        <a id="prev" href="#">&uarr;</a>
+        <a id="next" href="#">&darr;</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        // --- Chart for Slide 2 ---
+        const costChartDom = document.getElementById('costChart');
+        if (costChartDom) {
+            const costChart = echarts.init(costChartDom);
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function (params) {
+                        let res = params[0].name + ' (TSS)';
+                        for (let i = 0, l = params.length; i < l; i++) {
+                            res += '<br/>' + params[i].marker + params[i].seriesName + ' : ' + params[i].value;
+                        }
+                        return res;
+                    }
+                },
+                legend: {
+                    data: ['反应器成本', '二沉池成本', '总成本'],
+                    bottom: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['低', '较低', '中', '中高', '高', '极高'],
+                    name: '污泥浓度 (TSS)',
+                    nameLocation: 'middle',
+                    nameGap: 25
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '建设成本',
+                     axisLabel: { formatter: '{value}' }
+                },
+                series: [
+                    {
+                        name: '反应器成本',
+                        type: 'line',
+                        smooth: true,
+                        data: [120, 100, 80, 60, 40, 30]
+                    },
+                    {
+                        name: '二沉池成本',
+                        type: 'line',
+                        smooth: true,
+                        data: [30, 45, 65, 90, 120, 160]
+                    },
+                    {
+                        name: '总成本',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: {
+                            width: 4,
+                            color: '#fac858'
+                        },
+                        data: [150, 145, 145, 150, 160, 190],
+                        markPoint: {
+                            data: [
+                                { type: 'min', name: '最优成本点' }
+                            ]
+                        }
+                    }
+                ]
+            };
+            costChart.setOption(option);
+        }
+
+        // --- Chart for Slide 4 ---
+        const radarChartDom = document.getElementById('radarChart');
+        if (radarChartDom) {
+            const radarChart = echarts.init(radarChartDom);
+            const radarOption = {
+                color: ['#5470C6', '#91CC75'],
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    data: ['成本优先型设计', '高效稳定型设计'],
+                    bottom: 0
+                },
+                radar: {
+                    indicator: [
+                        { name: '出水标准', max: 100 },
+                        { name: '工艺稳定性', max: 100 },
+                        { name: '低运行能耗', max: 100 },
+                        { name: '小占地空间', max: 100 },
+                        { name: '低建设成本', max: 100 }
+                    ],
+                    radius: '65%',
+                    center: ['50%', '50%'],
+                },
+                series: [
+                    {
+                        name: '设计方案对比',
+                        type: 'radar',
+                        data: [
+                            {
+                                value: [75, 70, 80, 70, 95],
+                                name: '成本优先型设计',
+                                areaStyle: {
+                                    opacity: 0.2
+                                }
+                            },
+                            {
+                                value: [95, 90, 65, 60, 70],
+                                name: '高效稳定型设计',
+                                areaStyle: {
+                                    opacity: 0.2
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            radarChart.setOption(radarOption);
+        }
+        
+        // --- Slide Navigation ---
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+
+        function navigateToSlide(index) {
+            if (index >= 0 && index < slides.length) {
+                slides[index].scrollIntoView({ behavior: 'smooth' });
+                currentSlide = index;
+            }
+        }
+        
+        document.getElementById('prev').addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateToSlide(currentSlide - 1);
+        });
+
+        document.getElementById('next').addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateToSlide(currentSlide + 1);
+        });
+        
+        // Resize charts on window resize
+        window.addEventListener('resize', () => {
+             if (costChartDom) echarts.getInstanceByDom(costChartDom).resize();
+             if (radarChartDom) echarts.getInstanceByDom(radarChartDom).resize();
+        });
+
+    </script>
+</body>
+</html>

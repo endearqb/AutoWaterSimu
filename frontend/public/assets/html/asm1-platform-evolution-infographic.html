@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASM1平台演进战略 - 交互式报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Brilliant Blues -->
+    <!-- Application Structure Plan: The infographic is structured as a top-to-bottom narrative journey, guiding the user from the "Why" (the problem and vision) to the "How" (the new architecture), the "What" (the core innovations), and finally the "When" (the roadmap). This logical flow makes the complex strategic plan digestible. It starts with a high-impact comparison chart to immediately establish the need for change. It then uses a clean, structured flow diagram for the technical architecture. The core features are presented in a card-based grid for clarity. The plan concludes with a visual timeline. A sticky navigation bar enhances usability by allowing users to jump between these logical sections. This structure was chosen to tell a compelling story of transformation. -->
+    <!-- Visualization & Content Choices: 1. Architecture Comparison: Goal is 'Compare'. A horizontal bar chart (Chart.js) is used to visually contrast the limitations of Streamlit against the advantages of React+FastAPI, based on the report's Table 1. This provides a strong, data-driven justification for the migration. 2. Architecture Flow: Goal is 'Organize'. A flowchart is implemented using structured HTML and Tailwind CSS to show the relationship between the front-end, API, and back-end. This is more effective and clearer than a complex chart for representing system layers. 3. Innovations: Goal is 'Inform'. A three-column card layout is used to present the key innovation pillars (AI, Whiteboard, UX). Unicode icons are used for quick visual identification. 4. Roadmap: Goal is 'Change'. A horizontal bar chart is used as a timeline, a standard and intuitive visualization for phased projects. Hovering over a phase dynamically displays detailed information, connecting the visual timeline to concrete actions and deliverables. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F0F4F8; /* Light Blue-Gray background */
+            color: #102A43; /* Dark Slate Blue text */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #065A92; /* A strong blue for accent */
+            border-bottom-color: #065A92;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem; /* 16px */
+            padding: 2rem; /* 32px */
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="header" class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl md:text-2xl font-bold text-[#065A92]">ASM1平台演进战略</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#vision" class="nav-link text-[#243B53] font-medium px-3 py-2 text-sm rounded-md">愿景与演进</a>
+                    <a href="#architecture" class="nav-link text-[#243B53] font-medium px-3 py-2 text-sm rounded-md">架构蓝图</a>
+                    <a href="#innovations" class="nav-link text-[#243B53] font-medium px-3 py-2 text-sm rounded-md">核心创新</a>
+                    <a href="#roadmap" class="nav-link text-[#243B53] font-medium px-3 py-2 text-sm rounded-md">战略路线图</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <section id="vision" class="mb-24 text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-[#102A43] sm:text-4xl">从MVP到生产级平台：一次战略升级</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg leading-8 text-[#486581]">当前的Streamlit MVP成功验证了简化ASM1交互的核心价值，但其在扩展性、UI定制化及长时任务处理方面的局限性日益凸显。为了构建一个能够支撑未来复杂功能和AI集成的强大平台，架构升级势在必行。下面的图表直观地展示了新架构在关键维度上的巨大优势。</p>
+                <div class="mt-12 card">
+                    <h3 class="text-2xl font-semibold mb-6">架构能力对比：Streamlit vs. React + FastAPI</h3>
+                    <div class="chart-container">
+                        <canvas id="architectureComparisonChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="architecture" class="mb-24">
+                <h2 class="text-3xl font-bold tracking-tight text-[#102A43] sm:text-4xl text-center">现代化架构蓝图</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg leading-8 text-[#486581] text-center">我们采用业界领先的前后端分离架构。这种“分而治之”的设计不仅能应对ASM1模型的内在复杂性，更为系统的可维护性、开发效率和未来扩展性奠定了坚实的基础。</p>
+                <div class="mt-12 flex flex-col md:flex-row items-center justify-center gap-8 text-center font-mono">
+                    <div class="card w-full md:w-1/4 p-6">
+                        <div class="text-4xl mb-4">🖥️</div>
+                        <h3 class="text-xl font-bold text-[#065A92]">前端 (Frontend)</h3>
+                        <p class="mt-2 text-2xl font-semibold text-[#102A43]">React</p>
+                        <p class="mt-2 text-[#486581]">构建高度交互、可定制的用户界面。</p>
+                    </div>
+                    <div class="text-4xl font-extrabold text-[#9FB3C8] transform rotate-90 md:rotate-0">→</div>
+                     <div class="card w-full md:w-1/4 p-6">
+                        <div class="text-4xl mb-4">🔗</div>
+                        <h3 class="text-xl font-bold text-[#065A92]">应用程序接口 (API)</h3>
+                        <p class="mt-2 text-2xl font-semibold text-[#102A43]">FastAPI</p>
+                        <p class="mt-2 text-[#486581]">高性能、异步处理长时模拟任务。</p>
+                    </div>
+                    <div class="text-4xl font-extrabold text-[#9FB3C8] transform rotate-90 md:rotate-0">→</div>
+                     <div class="card w-full md:w-1/4 p-6">
+                        <div class="text-4xl mb-4">⚙️</div>
+                        <h3 class="text-xl font-bold text-[#065A92]">后端 (Backend)</h3>
+                        <p class="mt-2 text-2xl font-semibold text-[#102A43]">Python + DDD</p>
+                        <p class="mt-2 text-[#486581]">封装复杂模型逻辑，确保代码清晰可维护。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="innovations" class="mb-24">
+                 <h2 class="text-3xl font-bold tracking-tight text-[#102A43] sm:text-4xl text-center">三大核心创新支柱</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg leading-8 text-[#486581] text-center">通过技术创新，我们将ASM1工具的价值提升到全新高度，实现智能化、直观化和易用性的革命性飞跃。</p>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="card">
+                        <div class="text-5xl mb-4">🧠</div>
+                        <h3 class="text-2xl font-bold mb-2">AI 赋能</h3>
+                        <p class="text-[#486581]">利用AI技术自动化模型校准，实现自然语言交互，并从海量模拟数据中挖掘预测性洞见，将手动任务转变为智能辅助决策。</p>
+                    </div>
+                     <div class="card">
+                        <div class="text-5xl mb-4">🎨</div>
+                        <h3 class="text-2xl font-bold mb-2">交互式“画板”</h3>
+                        <p class="text-[#486581]">引入可视化建模界面，用户可通过拖拽、连接图形节点直观地构建和配置污水处理工艺流程，告别繁琐的参数表单。</p>
+                    </div>
+                     <div class="card">
+                        <div class="text-5xl mb-4">✨</div>
+                        <h3 class="text-2xl font-bold mb-2">易用性革命</h3>
+                        <p class="text-[#486581]">通过引导式工作流、情境化帮助和高效数据可视化，从根本上降低ASM1模型的使用门槛，赋能更广泛的用户群体。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="roadmap" class="mb-16">
+                 <h2 class="text-3xl font-bold tracking-tight text-[#102A43] sm:text-4xl text-center">分阶段战略路线图</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg leading-8 text-[#486581] text-center">我们采用分阶段迭代的开发策略，确保在每个阶段都能交付明确价值，稳步迈向最终愿景。将鼠标悬停在图表上以查看各阶段详情。</p>
+                 <div class="mt-12 card">
+                    <h3 class="text-2xl font-semibold mb-6 text-center">开发阶段与核心目标</h3>
+                    <div class="lg:flex lg:items-center lg:space-x-8">
+                        <div class="lg:w-2/3">
+                            <div class="chart-container h-64 md:h-80">
+                                <canvas id="roadmapChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="roadmapDetails" class="mt-8 lg:mt-0 lg:w-1/3 bg-[#E0E8F0] p-6 rounded-xl">
+                            <h4 id="roadmapPhaseTitle" class="text-xl font-bold text-[#065A92]">第一阶段：奠定基础</h4>
+                            <p id="roadmapPhaseDescription" class="mt-2 text-[#243B53]">完成从Streamlit到React+FastAPI架构的迁移，实现ASM1模型的核心模拟功能，打通前后端交互流程。</p>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="border-t border-[#D9E2EC] py-6">
+        <div class="text-center text-[#486581] text-sm">
+            <p>ASM1平台演进战略信息图</p>
+            <p class="mt-1">基于深度研究报告生成</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const architectureData = {
+                labels: ['可扩展性', 'UI定制化', ['后端长时任务', '处理'], 'AI集成便利性', '状态管理'],
+                datasets: [
+                    {
+                        label: 'Streamlit MVP',
+                        data: [3, 4, 3, 6, 4],
+                        backgroundColor: 'rgba(159, 179, 200, 0.6)',
+                        borderColor: 'rgba(159, 179, 200, 1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'React + FastAPI',
+                        data: [9, 10, 10, 9, 9],
+                        backgroundColor: 'rgba(6, 90, 146, 0.6)',
+                        borderColor: 'rgba(6, 90, 146, 1)',
+                        borderWidth: 2
+                    }
+                ]
+            };
+
+            const roadmapData = {
+                labels: ['第一阶段', '第二阶段', '第三阶段', '第四阶段'],
+                datasets: [{
+                    label: '核心任务',
+                    data: [25, 25, 25, 25],
+                    backgroundColor: [
+                        'rgba(6, 90, 146, 0.5)',
+                        'rgba(36, 59, 83, 0.5)',
+                        'rgba(72, 101, 129, 0.5)',
+                        'rgba(159, 179, 200, 0.5)'
+                    ],
+                    borderColor: [
+                        '#065A92',
+                        '#243B53',
+                        '#486581',
+                        '#9FB3C8'
+                    ],
+                    borderWidth: 1
+                }],
+                details: [
+                    { title: '第一阶段：奠定基础', description: '完成从Streamlit到React+FastAPI架构的迁移，实现ASM1模型的核心模拟功能，打通前后端交互流程。' },
+                    { title: '第二阶段：提升用户体验', description: '引入交互式“画板”功能，并对UI/UX进行全面优化，实现引导式工作流和情境化帮助，显著降低使用门槛。' },
+                    { title: '第三阶段：集成人工智能', description: '引入AI技术，实现自动化模型校准、初步的自然语言交互，以及基于机器学习的预测性分析功能。' },
+                    { title: '第四阶段：优化与社区化', description: '进行性能深度优化，考虑云部署，并扩展用户账户、模型共享和团队协作等高级功能，构建平台生态。' }
+                ]
+            };
+            
+            let comparisonChart, roadmapChart;
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) {
+                  return label.join(' ');
+                } else {
+                  return label;
+                }
+            };
+            
+            function createComparisonChart() {
+                const ctx = document.getElementById('architectureComparisonChart').getContext('2d');
+                if (comparisonChart) comparisonChart.destroy();
+                comparisonChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: architectureData,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 10,
+                                grid: { color: '#e0e8f0' },
+                                ticks: { color: '#486581' }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: '#102A43', font: { weight: 'bold' } }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#102A43' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: tooltipTitleCallback,
+                                    label: (context) => `${context.dataset.label}: ${context.raw}/10`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createRoadmapChart() {
+                const ctx = document.getElementById('roadmapChart').getContext('2d');
+                roadmapChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: roadmapData,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { stacked: true, display: false },
+                            y: { stacked: true, grid: { display: false }, ticks: { color: '#102A43' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        },
+                        onHover: (event, chartElement) => {
+                            const canvas = event.native.target;
+                            if (chartElement.length) {
+                                canvas.style.cursor = 'pointer';
+                                const index = chartElement[0].index;
+                                updateRoadmapDetails(index);
+                            } else {
+                                canvas.style.cursor = 'default';
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateRoadmapDetails(index) {
+                const detail = roadmapData.details[index];
+                document.getElementById('roadmapPhaseTitle').textContent = detail.title;
+                document.getElementById('roadmapPhaseDescription').textContent = detail.description;
+            }
+
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            window.onscroll = () => {
+                let current = '';
+                sections.forEach(section => {
+                    if (pageYOffset >= section.offsetTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href')?.includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+
+            createComparisonChart();
+            createRoadmapChart();
+        });
+    </script>
+</body>
+</html>

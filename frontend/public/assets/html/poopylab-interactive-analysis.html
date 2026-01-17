@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PooPyLab_Project 交互式分析报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: The SPA is designed as a single, scrollable narrative page with a sticky navigation header for easy access to key sections. This structure guides the user through a logical flow: 1) A quick 'Overview' for immediate context. 2) A 'Core Evaluation' using a SWOT analysis for a balanced view of its pros and cons, highlighting the critical documentation issue. 3) A 'Tech Deep Dive' to visualize the technical foundation. 4) An 'Interactive Competitor Analysis' allowing users to filter and compare PooPyLab against alternatives, moving beyond static tables. 5) A clear 'Final Verdict & Recommendations' section. This non-linear but guided structure was chosen to make the dense report content digestible, engaging, and to empower users to explore data points interactively, which is more effective than reading a linear document. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Language distribution (92.7% Python, 7.3% C). -> Goal: Inform. -> Viz: Donut Chart. -> Interaction: Hover for details. -> Justification: Instantly communicates the project's technical composition. -> Library: Chart.js.
+        - Report Info: Project file structure and accessibility issues. -> Goal: Inform. -> Viz: Styled HTML list with icons. -> Interaction: Visual cues (color, icons) to signify broken/inaccessible resources. -> Justification: Clearly visualizes the critical documentation problem without needing complex graphics. -> Library: Tailwind CSS.
+        - Report Info: Strengths, Weaknesses, Opportunities, Threats. -> Goal: Organize/Synthesize. -> Viz: 4-quadrant card layout (SWOT). -> Interaction: None, focus is on clear information hierarchy. -> Justification: A standard, effective framework for summarizing analytical findings. -> Library: Tailwind CSS.
+        - Report Info: Comparison with commercial and open-source alternatives. -> Goal: Compare. -> Viz: Filterable cards and a Radar Chart. -> Interaction: Users click buttons to filter competitors by type (Commercial, Open Source, etc.). Selected competitors can be compared on a radar chart. -> Justification: Transforms a static comparison table into an engaging, user-driven exploration tool. -> Library: Chart.js, Vanilla JS.
+        - Report Info: Recommendations for users and developers. -> Goal: Guide. -> Viz: Tabbed content area. -> Interaction: Clicking tabs switches content. -> Justification: Neatly separates advice for two distinct audiences. -> Library: Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .active-nav {
+            color: #C084FC;
+            font-weight: 600;
+        }
+        .active-filter {
+            background-color: #C084FC !important;
+            color: #FFFFFF !important;
+        }
+        .competitor-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .competitor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="header" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-gray-800">
+                PooPyLab <span class="text-purple-500">洞察</span>
+            </div>
+            <div class="hidden md:flex space-x-8 text-gray-600">
+                <a href="#overview" class="hover:text-purple-500 nav-link">概览</a>
+                <a href="#evaluation" class="hover:text-purple-500 nav-link">核心评估</a>
+                <a href="#tech" class="hover:text-purple-500 nav-link">技术探究</a>
+                <a href="#competitors" class="hover:text-purple-500 nav-link">竞品分析</a>
+                <a href="#verdict" class="hover:text-purple-500 nav-link">最终结论</a>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-800 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4 space-y-2">
+            <a href="#overview" class="block hover:text-purple-500 nav-link">概览</a>
+            <a href="#evaluation" class="block hover:text-purple-500 nav-link">核心评估</a>
+            <a href="#tech" class="block hover:text-purple-500 nav-link">技术探究</a>
+            <a href="#competitors" class="block hover:text-purple-500 nav-link">竞品分析</a>
+            <a href="#verdict" class="block hover:text-purple-500 nav-link">最终结论</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="overview" class="text-center pt-16">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-gray-800 leading-tight">PooPyLab_Project</h1>
+            <p class="mt-4 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">一款专注生物废水处理的开源模拟软件：潜力与现实的深度剖析。</p>
+            
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200/50">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span class="text-2xl">⭐</span>
+                        <h3 class="text-lg font-semibold text-gray-700">社区关注 (Stars)</h3>
+                    </div>
+                    <p class="mt-2 text-5xl font-bold text-purple-500">69</p>
+                    <p class="mt-1 text-sm text-gray-500">反映了项目在开发者社区的关注度</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200/50">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span class="text-2xl">🍴</span>
+                        <h3 class="text-lg font-semibold text-gray-700">项目复刻 (Forks)</h3>
+                    </div>
+                    <p class="mt-2 text-5xl font-bold text-purple-500">30</p>
+                    <p class="mt-1 text-sm text-gray-500">用户学习、修改或贡献的意愿体现</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200/50">
+                     <div class="flex items-center justify-center space-x-2">
+                        <span class="text-2xl">🧑‍💻</span>
+                        <h3 class="text-lg font-semibold text-gray-700">核心贡献者</h3>
+                    </div>
+                    <p class="mt-2 text-5xl font-bold text-purple-500">2</p>
+                    <p class="mt-1 text-sm text-gray-500">开发工作高度集中，依赖核心成员</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="evaluation" class="pt-24">
+            <h2 class="text-3xl font-bold text-center text-gray-800">核心评估：机遇与挑战 (SWOT)</h2>
+            <p class="mt-4 text-center text-gray-600 max-w-2xl mx-auto">该部分对PooPyLab项目的内在优势、劣势，以及外部环境带来的机遇和威胁进行了综合评估。这是理解项目当前状况和未来潜力的关键。</p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold text-green-800">优势 (Strengths)</h3>
+                    <ul class="mt-4 space-y-2 text-green-700 list-disc list-inside">
+                        <li><strong>完全开源:</strong> GPL-3.0许可证确保代码透明和自由使用。</li>
+                        <li><strong>Python核心:</strong> 易于上手，可利用庞大的科学计算生态。</li>
+                        <li><strong>性能潜力:</strong> C语言扩展模块为密集型计算提供性能优化可能。</li>
+                        <li><strong>灵活可编程:</strong> 允许用户通过代码构建自定义工艺流程。</li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold text-red-800">劣势 (Weaknesses)</h3>
+                    <ul class="mt-4 space-y-2 text-red-700 list-disc list-inside">
+                        <li class="font-bold"><strong>致命的文档缺失:</strong> Wiki、教程、示例等关键资源几乎全部无法访问。</li>
+                        <li><strong>核心代码不透明:</strong> 关键的C语言文件`syseqs.c`无法查看，难以评估其可靠性。</li>
+                        <li><strong>功能局限:</strong> 仅明确支持稳态模拟，缺乏动态模拟能力。</li>
+                        <li><strong>社区薄弱:</strong> 高度依赖单一开发者，缺乏活跃的贡献者社区。</li>
+                    </ul>
+                </div>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold text-blue-800">机遇 (Opportunities)</h3>
+                    <ul class="mt-4 space-y-2 text-blue-700 list-disc list-inside">
+                        <li><strong>教育领域:</strong> 可作为教授废水处理建模与Python应用的优秀教学工具。</li>
+                        <li><strong>快速原型开发:</strong> 为熟悉Python的研究者提供灵活的稳态模型开发平台。</li>
+                        <li><strong>特定研究需求:</strong> 满足需要高度定制化模型的研究场景。</li>
+                    </ul>
+                </div>
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold text-yellow-800">威胁 (Threats)</h3>
+                    <ul class="mt-4 space-y-2 text-yellow-700 list-disc list-inside">
+                        <li><strong>强大竞品:</strong> 面临功能完善的商业软件 (如SUMO, GPS-X) 的竞争。</li>
+                        <li><strong>开源替代品:</strong> PyPoo、QSDsan等文档更完善的Python项目构成直接威胁。</li>
+                        <li><strong>项目停滞风险:</strong> 若文档和维护问题不解决，可能被社区边缘化。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech" class="pt-24">
+            <h2 class="text-3xl font-bold text-center text-gray-800">技术探究</h2>
+            <p class="mt-4 text-center text-gray-600 max-w-2xl mx-auto">深入了解构成PooPyLab项目的技术组件，包括其编程语言分布和项目文件结构的关键状态。这揭示了项目的技术选型和当前维护的实际情况。</p>
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-4 text-gray-700">语言构成</h3>
+                    <div class="chart-container mx-auto">
+                        <canvas id="langChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-4 text-gray-700">项目结构与状态</h3>
+                    <div class="bg-gray-800 text-white p-6 rounded-lg font-mono text-sm shadow-lg">
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 mr-2">📁</span> PooPyLab_Project/
+                        </div>
+                        <div class="pl-6 border-l-2 border-gray-700">
+                            <div class="flex items-center mt-2 text-red-400 line-through">
+                                <span class="text-yellow-400 mr-2">📁</span> docs/ <span class="ml-2 text-xs italic">(无法访问)</span>
+                            </div>
+                            <div class="flex items-center mt-2 text-red-400 line-through">
+                                <span class="text-yellow-400 mr-2">📁</span> examples/ <span class="ml-2 text-xs italic">(无法访问)</span>
+                            </div>
+                            <div class="flex items-center mt-2 text-green-400">
+                                <span class="text-yellow-400 mr-2">📁</span> tests/ <span class="ml-2 text-xs italic">(可访问, 被迫用作示例)</span>
+                            </div>
+                            <div class="flex items-center mt-2 text-green-400">
+                                <span class="text-blue-400 mr-2">📄</span> README.md
+                            </div>
+                             <div class="flex items-center mt-2 text-green-400">
+                                <span class="text-blue-400 mr-2">📄</span> LICENSE.txt
+                            </div>
+                            <div class="flex items-center mt-2 text-green-400">
+                                <span class="text-blue-400 mr-2">📄</span> setup.py
+                            </div>
+                            <div class="flex items-center mt-2 text-red-400 line-through">
+                                <span class="text-blue-400 mr-2">📄</span> syseqs.c <span class="ml-2 text-xs italic">(核心C代码, 无法访问)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="competitors" class="pt-24">
+            <h2 class="text-3xl font-bold text-center text-gray-800">交互式竞品分析</h2>
+            <p class="mt-4 text-center text-gray-600 max-w-2xl mx-auto">PooPyLab并非孤立存在。通过与主流商业软件和开源替代品的对比，可以更清晰地了解其在市场中的定位。请使用下方的过滤器与图表进行探索。</p>
+            <div class="mt-8 flex justify-center space-x-2 md:space-x-4">
+                <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition bg-white text-gray-700 hover:bg-gray-100 active-filter" data-filter="all">全部</button>
+                <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition bg-white text-gray-700 hover:bg-gray-100" data-filter="开源">开源</button>
+                <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition bg-white text-gray-700 hover:bg-gray-100" data-filter="商业">商业</button>
+                <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition bg-white text-gray-700 hover:bg-gray-100" data-filter="免费">免费</button>
+            </div>
+            <div id="competitor-grid" class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+            <div class="mt-16">
+                <h3 class="text-xl font-semibold text-center mb-4 text-gray-700">多维度特性对比 (雷达图)</h3>
+                 <p class="text-center text-gray-500 text-sm mb-4">从上方卡片中选择2-4个软件进行对比。</p>
+                <div class="chart-container mx-auto bg-white p-4 rounded-xl shadow-lg border border-gray-200/50">
+                    <canvas id="competitorRadarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="verdict" class="pt-24">
+            <h2 class="text-3xl font-bold text-center text-gray-800">最终结论与建议</h2>
+             <p class="mt-4 text-center text-gray-600 max-w-2xl mx-auto">综合以上分析，我们对PooPyLab项目的现状、潜力和未来发展方向给出了最终评估和具体建议，旨在为不同角色的相关者提供参考。</p>
+            <div class="mt-12 max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200/50">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8 px-8" aria-label="Tabs">
+                            <button id="tab-users" class="tab-btn border-purple-500 text-purple-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">给潜在用户</button>
+                            <button id="tab-devs" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">给开发者</button>
+                        </nav>
+                    </div>
+                    <div id="content-users" class="tab-content p-8">
+                        <h3 class="font-bold text-lg text-gray-800">行动建议：谨慎评估，做好准备</h3>
+                        <p class="mt-2 text-gray-600">PooPyLab当前更像一个需要自行探索的“开发者工具箱”，而非即用型软件。</p>
+                        <ul class="mt-4 space-y-3">
+                            <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">⚠️</span>
+                                <div><strong class="font-semibold text-gray-700">谨慎评估：</strong>投入时间前，充分认识到项目文档缺失和核心代码不透明的现状。</div>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">🛠️</span>
+                                <div><strong class="font-semibold text-gray-700">自主学习：</strong>准备好通过阅读`tests/`下的测试代码来反推软件用法。</div>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">🎯</span>
+                                <div><strong class="font-semibold text-gray-700">适用人群：</strong>具备扎实Python能力、不畏惧探索代码、且仅需简单稳态模拟的研究者。</div>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">🔄</span>
+                                <div><strong class="font-semibold text-gray-700">考虑替代方案：</strong>若需动态模拟、清晰文档或社区支持，优先考虑PyPoo、QSDsan或STOAT等。</div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div id="content-devs" class="tab-content p-8 hidden">
+                        <h3 class="font-bold text-lg text-gray-800">发展建议：恢复基础，重建信任</h3>
+                        <p class="mt-2 text-gray-600">项目的潜力能否释放，完全取决于能否解决下述基础性问题。</p>
+                        <ul class="mt-4 space-y-3">
+                            <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">🥇</span>
+                                <div><strong class="font-semibold text-gray-700">首要任务 - 恢复文档：</strong>修复所有失效的文档链接 (Wiki, docs, examples, brownbook) 是最关键、优先级最高的一步。</div>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">🔍</span>
+                                <div><strong class="font-semibold text-gray-700">确保代码透明：</strong>公开`syseqs.c`等核心代码，供社区审查和评估。</div>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">🗺️</span>
+                                <div><strong class="font-semibold text-gray-700">制定路线图：</strong>明确未来开发方向（如动态模拟、模型库扩展），并与社区分享。</div>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="mr-3 mt-1 text-purple-500">🤝</span>
+                                <div><strong class="font-semibold text-gray-700">阐明模型基础：</strong>详细说明软件实现的生物模型，是否遵循ASM标准等。</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 mt-24">
+        <div class="container mx-auto px-6 py-8 text-center text-gray-400">
+            <p>基于 "PooPyLab_Project：开源生物废水处理模拟软件深度研究报告" 生成的交互式报告。</p>
+            <p class="text-sm mt-2">此应用仅用于信息展示与分析。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const langData = {
+                labels: ['Python', 'C'],
+                datasets: [{
+                    label: '语言占比',
+                    data: [92.7, 7.3],
+                    backgroundColor: [
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(75, 85, 99, 0.8)'
+                    ],
+                    borderColor: [
+                        '#FFFFFF',
+                        '#FFFFFF'
+                    ],
+                    borderWidth: 2
+                }]
+            };
+            const langConfig = {
+                type: 'doughnut',
+                data: langData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#4A4A4A',
+                                font: {
+                                    size: 14,
+                                    family: 'Inter, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            const langChartCtx = document.getElementById('langChart').getContext('2d');
+            new Chart(langChartCtx, langConfig);
+
+            const competitorsData = [
+                { name: 'PooPyLab', type: '开源', license: 'GPL-3.0', dynamic: 1, docs: 1, ecosystem: 2, flexibility: 4, color: 'rgba(239, 68, 68, 0.5)'},
+                { name: 'SUMO', type: '商业', license: '部分开源', dynamic: 5, docs: 4, ecosystem: 5, flexibility: 4, color: 'rgba(59, 130, 246, 0.5)'},
+                { name: 'GPS-X', type: '商业', license: '专有', dynamic: 5, docs: 5, ecosystem: 5, flexibility: 3, color: 'rgba(16, 185, 129, 0.5)'},
+                { name: 'STOAT', type: '免费', license: '专有', dynamic: 4, docs: 3, ecosystem: 3, flexibility: 2, color: 'rgba(249, 115, 22, 0.5)'},
+                { name: 'PyPoo', type: '开源', license: 'MIT', dynamic: 4, docs: 4, ecosystem: 3, flexibility: 5, color: 'rgba(168, 85, 247, 0.5)'},
+                { name: 'QSDsan', type: '开源', license: 'BSD-3-Clause', dynamic: 5, docs: 5, ecosystem: 4, flexibility: 5, color: 'rgba(99, 102, 241, 0.5)'}
+            ];
+
+            const competitorGrid = document.getElementById('competitor-grid');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            let selectedForComparison = [];
+
+            const renderCompetitors = (filter = 'all') => {
+                competitorGrid.innerHTML = '';
+                const filteredData = filter === 'all' ? competitorsData : competitorsData.filter(c => c.type === filter);
+                
+                filteredData.forEach(c => {
+                    const isSelected = selectedForComparison.find(s => s.name === c.name);
+                    const card = document.createElement('div');
+                    card.className = `competitor-card bg-white p-6 rounded-xl shadow-md border ${isSelected ? 'border-purple-500 ring-2 ring-purple-300' : 'border-gray-200/50'} cursor-pointer`;
+                    card.dataset.name = c.name;
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                           <h4 class="text-xl font-bold text-gray-800">${c.name}</h4>
+                           <span class="px-3 py-1 text-xs font-semibold rounded-full ${
+                               c.type === '开源' ? 'bg-green-100 text-green-800' :
+                               c.type === '商业' ? 'bg-blue-100 text-blue-800' :
+                               'bg-yellow-100 text-yellow-800'
+                           }">${c.type}</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">许可证: ${c.license}</p>
+                        <div class="mt-4 space-y-2 text-sm">
+                            <div class="flex items-center"><span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center ${c.dynamic > 3 ? 'bg-green-500' : 'bg-red-500'} text-white text-xs font-bold">✔</span> 动态模拟</div>
+                            <div class="flex items-center"><span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center ${c.docs > 3 ? 'bg-green-500' : 'bg-red-500'} text-white text-xs font-bold">✔</span> 文档质量</div>
+                            <div class="flex items-center"><span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center ${c.flexibility > 3 ? 'bg-green-500' : 'bg-red-500'} text-white text-xs font-bold">✔</span> 灵活性</div>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => toggleCompetitorSelection(c.name));
+                    competitorGrid.appendChild(card);
+                });
+            };
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active-filter'));
+                    btn.classList.add('active-filter');
+                    renderCompetitors(btn.dataset.filter);
+                });
+            });
+
+            const radarCtx = document.getElementById('competitorRadarChart').getContext('2d');
+            let radarChart;
+
+            const updateRadarChart = () => {
+                if (radarChart) {
+                    radarChart.destroy();
+                }
+
+                const datasets = selectedForComparison.map(c => {
+                    return {
+                        label: c.name,
+                        data: [c.dynamic, c.docs, c.ecosystem, c.flexibility],
+                        backgroundColor: c.color,
+                        borderColor: c.color.replace('0.5', '1'),
+                        pointBackgroundColor: c.color.replace('0.5', '1'),
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: c.color.replace('0.5', '1')
+                    }
+                });
+
+                radarChart = new Chart(radarCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['动态模拟', '文档质量', '生态系统', '灵活性/可定制性'],
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        elements: {
+                            line: {
+                                borderWidth: 3
+                            }
+                        },
+                        scales: {
+                           r: {
+                                angleLines: {
+                                    display: false
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 5,
+                                pointLabels: {
+                                    font: {
+                                        size: 12,
+                                        family: 'Inter, sans-serif'
+                                    }
+                                },
+                                ticks: {
+                                    stepSize: 1
+                                }
+                           }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                        }
+                    }
+                });
+            };
+            
+            const toggleCompetitorSelection = (name) => {
+                const competitor = competitorsData.find(c => c.name === name);
+                const index = selectedForComparison.findIndex(s => s.name === name);
+
+                if (index > -1) {
+                    selectedForComparison.splice(index, 1);
+                } else {
+                    if (selectedForComparison.length < 4) {
+                       selectedForComparison.push(competitor);
+                    } else {
+                        alert('最多只能选择4个软件进行对比。');
+                        return;
+                    }
+                }
+                renderCompetitors(document.querySelector('.filter-btn.active-filter').dataset.filter);
+                updateRadarChart();
+            };
+
+            renderCompetitors();
+            selectedForComparison.push(competitorsData[0], competitorsData[4]);
+            renderCompetitors();
+            updateRadarChart();
+
+            const tabUsers = document.getElementById('tab-users');
+            const tabDevs = document.getElementById('tab-devs');
+            const contentUsers = document.getElementById('content-users');
+            const contentDevs = document.getElementById('content-devs');
+
+            tabUsers.addEventListener('click', () => {
+                contentUsers.classList.remove('hidden');
+                contentDevs.classList.add('hidden');
+                tabUsers.classList.add('border-purple-500', 'text-purple-600');
+                tabUsers.classList.remove('border-transparent', 'text-gray-500');
+                tabDevs.classList.add('border-transparent', 'text-gray-500');
+                tabDevs.classList.remove('border-purple-500', 'text-purple-600');
+            });
+
+            tabDevs.addEventListener('click', () => {
+                contentDevs.classList.remove('hidden');
+                contentUsers.classList.add('hidden');
+                tabDevs.classList.add('border-purple-500', 'text-purple-600');
+                tabDevs.classList.remove('border-transparent', 'text-gray-500');
+                tabUsers.classList.add('border-transparent', 'text-gray-500');
+                tabUsers.classList.remove('border-purple-500', 'text-purple-600');
+            });
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+            const headerHeight = document.getElementById('header').offsetHeight;
+
+            const onScroll = () => {
+                let currentSection = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - headerHeight - 50;
+                    if (pageYOffset >= sectionTop) {
+                        currentSection = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active-nav');
+                    if (link.getAttribute('href') === `#${currentSection}`) {
+                        link.classList.add('active-nav');
+                    }
+                });
+            };
+
+            window.addEventListener('scroll', onScroll);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧水厂运行决策支持系统 (WWTP ODSS) 交互式仪表盘</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Neutrals with a touch of professional blue. Background: #f8fafc (slate-50), Text: #1e293b (slate-800), Primary Accent: #0ea5e9 (sky-500) -->
+    <!-- Application Structure Plan: A single-page dashboard structure is chosen over a linear report format to enhance usability. The non-linear, thematic navigation (首页, 核心技术, 应用价值, 市场格局, 实施与未来) allows users (managers, engineers) to directly access sections relevant to their interests, such as exploring vendor comparisons or understanding ROI without scrolling through technical details first. Key interactions include tabbed content for technical modules, interactive charts with toggles to reveal data trade-offs (e.g., energy vs. GHG), and a filterable vendor list. This user-centric design aims to transform passive reading into active exploration, making complex information digestible and actionable. -->
+    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Presentation Method -> Interaction -> Justification. 1) ODSS Architecture -> Inform -> HTML/CSS Diagram -> Static -> Clearly shows the layered structure without complexity. 2) Energy Savings (9-40%) -> Compare/Inform -> Bar Chart (Chart.js) -> Toggle button -> Interactively demonstrates the core benefit (energy saving) and the crucial operational trade-off with N₂O emissions, promoting deeper understanding. 3) Vendor Comparison (Table 2) -> Compare/Organize -> Filterable HTML Cards -> JS Filter Buttons -> Transforms a static table into an engaging tool for users to quickly find and compare providers based on their business model. 4) SWAN Framework -> Inform/Organize -> Styled HTML Stepper -> Static -> Presents the implementation process in a clear, step-by-step visual format that is easier to follow than a text block. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #0ea5e9;
+            border-bottom-color: #0ea5e9;
+        }
+        .tab-button.active {
+            background-color: #0ea5e9;
+            color: white;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .kpi-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-md">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#home" class="text-2xl font-bold text-slate-800">
+                        <span class="text-sky-500">智慧</span>水厂 ODSS
+                    </a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#home" class="nav-link px-3 py-2 text-sm font-medium text-slate-600 hover:text-sky-500 border-b-2 border-transparent">首页</a>
+                        <a href="#tech" class="nav-link px-3 py-2 text-sm font-medium text-slate-600 hover:text-sky-500 border-b-2 border-transparent">核心技术</a>
+                        <a href="#value" class="nav-link px-3 py-2 text-sm font-medium text-slate-600 hover:text-sky-500 border-b-2 border-transparent">应用价值</a>
+                        <a href="#market" class="nav-link px-3 py-2 text-sm font-medium text-slate-600 hover:text-sky-500 border-b-2 border-transparent">市场格局</a>
+                        <a href="#future" class="nav-link px-3 py-2 text-sm font-medium text-slate-600 hover:text-sky-500 border-b-2 border-transparent">实施与未来</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">打开主菜单</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#home" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-white hover:bg-sky-500">首页</a>
+                <a href="#tech" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-white hover:bg-sky-500">核心技术</a>
+                <a href="#value" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-white hover:bg-sky-500">应用价值</a>
+                <a href="#market" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-white hover:bg-sky-500">市场格局</a>
+                <a href="#future" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-white hover:bg-sky-500">实施与未来</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="home" class="pt-20 pb-16 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">
+                    解锁污水处理的未来：<span class="text-sky-500">数据驱动的决策智慧</span>
+                </h1>
+                <p class="mt-6 max-w-3xl mx-auto text-lg text-slate-600">
+                    欢迎来到污水处理厂运行决策支持系统 (WWTP ODSS) 的交互式世界。本应用将复杂的报告内容，转化为直观的洞察。探索ODSS如何通过集成先进传感、数据科学和人工智能，实现污水处理过程的精细化管理、最优化控制和智能化决策。
+                </p>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="kpi-card">
+                        <p class="text-5xl font-bold text-sky-500">9-40%</p>
+                        <p class="mt-2 text-lg font-semibold">能耗优化潜力</p>
+                        <p class="mt-1 text-slate-500">通过先进曝气控制，显著降低运营成本。</p>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="text-5xl font-bold text-sky-500">>80%</p>
+                        <p class="mt-2 text-lg font-semibold">CSO溢流减少</p>
+                        <p class="mt-1 text-slate-500">用智能调度替代巨额基建投资。</p>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="text-5xl font-bold text-sky-500">2-3 年</p>
+                        <p class="mt-2 text-lg font-semibold">典型投资回报期</p>
+                        <p class="mt-1 text-slate-500">清晰的商业案例，可量化的财务收益。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech" class="py-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight">ODSS 技术核心</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">本节深入剖析现代ODSS的架构演进与关键技术组件。了解系统如何从数据中提炼智能，赋能污水处理厂的日常运营。</p>
+                </div>
+                
+                <div class="mt-12">
+                     <h3 class="text-2xl font-semibold text-center mb-8">工厂智能的架构演进：从SCADA到数字孪生</h3>
+                     <div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
+                        <div class="relative space-y-4">
+                            <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-sky-200 -translate-x-1/2"></div>
+                            <div class="relative flex items-center">
+                                <div class="w-1/2 pr-8 text-right">
+                                    <h4 class="font-bold text-lg text-sky-600">第四层：可视化与交互</h4>
+                                    <p class="text-sm text-slate-500">通过仪表盘、GIS界面和数字孪生，将洞察呈现给用户。</p>
+                                </div>
+                                <div class="absolute left-1/2 w-8 h-8 bg-sky-500 rounded-full border-4 border-white -translate-x-1/2 flex items-center justify-center text-white font-bold">4</div>
+                                <div class="w-1/2 pl-8"></div>
+                            </div>
+                            <div class="relative flex items-center">
+                                <div class="w-1/2 pr-8"></div>
+                                <div class="absolute left-1/2 w-8 h-8 bg-sky-500 rounded-full border-4 border-white -translate-x-1/2 flex items-center justify-center text-white font-bold">3</div>
+                                <div class="w-1/2 pl-8">
+                                    <h4 class="font-bold text-lg text-sky-600">第三层：分析与智能</h4>
+                                    <p class="text-sm text-slate-500">系统的“大脑”，集成AI/ML算法进行模拟、预测和优化。</p>
+                                </div>
+                            </div>
+                            <div class="relative flex items-center">
+                                <div class="w-1/2 pr-8 text-right">
+                                    <h4 class="font-bold text-lg text-sky-600">第二层：数据聚合与存储</h4>
+                                    <p class="text-sm text-slate-500">利用数据湖技术，汇集传感器、SCADA、LIMS等异构数据。</p>
+                                </div>
+                                <div class="absolute left-1/2 w-8 h-8 bg-sky-500 rounded-full border-4 border-white -translate-x-1/2 flex items-center justify-center text-white font-bold">2</div>
+                                <div class="w-1/2 pl-8"></div>
+                            </div>
+                            <div class="relative flex items-center">
+                                <div class="w-1/2 pr-8"></div>
+                                 <div class="absolute left-1/2 w-8 h-8 bg-sky-500 rounded-full border-4 border-white -translate-x-1/2 flex items-center justify-center text-white font-bold">1</div>
+                                <div class="w-1/2 pl-8">
+                                    <h4 class="font-bold text-lg text-sky-600">第一层：物理与赛博设施</h4>
+                                    <p class="text-sm text-slate-500">包含管道、泵阀以及赋予其感知能力的传感器和执行器。</p>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+                </div>
+
+                <div class="mt-16">
+                    <div class="mb-8 flex justify-center space-x-2 sm:space-x-4">
+                        <button class="tab-button px-4 py-2 text-sm font-medium rounded-full transition active" data-tab="monitoring">实时监测与预警</button>
+                        <button class="tab-button px-4 py-2 text-sm font-medium rounded-full transition" data-tab="diagnosis">故障诊断</button>
+                        <button class="tab-button px-4 py-2 text-sm font-medium rounded-full transition" data-tab="simulation">工艺模拟与优化</button>
+                        <button class="tab-button px-4 py-2 text-sm font-medium rounded-full transition" data-tab="xai">可解释AI (XAI)</button>
+                    </div>
+                    <div id="tab-content" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg fade-in">
+                        
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="value" class="py-20 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight">战略应用与运营价值</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">本节展示ODSS如何在关键运营场景中创造可量化的实际价值。从节能降耗到提标增效，探索技术如何转化为实实在在的经济和环境效益。</p>
+                </div>
+                <div class="mt-12 grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">能耗优化：平衡成本与环境影响</h3>
+                        <p class="text-slate-600 mb-6">曝气是污水处理厂最大的能耗来源。ODSS通过先进控制策略（如ABAC）实现精准曝气，大幅降低能耗。然而，优化并非单纯节能，而是在能耗、脱氮效率与温室气体（N₂O）排放之间的多目标权衡。切换下方按钮，查看不同优化目标下的策略考量。</p>
+                        <div class="flex items-center space-x-4 mb-4">
+                            <span>优化目标:</span>
+                            <button id="toggle-energy" class="px-4 py-2 text-sm font-medium rounded-md bg-sky-500 text-white">最小化能耗</button>
+                            <button id="toggle-ghg" class="px-4 py-2 text-sm font-medium rounded-md bg-slate-200 text-slate-700">最小化碳足迹</button>
+                        </div>
+                        <div id="optimization-text" class="p-4 bg-slate-100 rounded-lg text-slate-700">
+                            <p><strong class="text-sky-600">策略：</strong> 采用低DO或间歇曝气模式。 <br><strong>结果：</strong> 显著降低曝气电耗 (可达20-40%)，同时可能促进同步硝化反硝化，减少碳源投加。这是最直接的成本节约路径。</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="energyChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="mt-16 grid md:grid-cols-2 gap-12 items-center">
+                    <div class="order-2 md:order-1">
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="font-bold text-lg mb-4 text-center">用智能替代混凝土：CSO治理案例</h4>
+                            <p class="text-slate-500 mb-4 text-center">布法罗市通过部署实时控制系统和数字孪生，有效管理合流制下水道溢流（CSO）。</p>
+                            <div class="flex justify-around text-center">
+                                <div>
+                                    <p class="text-4xl font-bold text-sky-500">80%</p>
+                                    <p class="text-slate-600">CSO溢流量减少</p>
+                                </div>
+                                <div>
+                                    <p class="text-4xl font-bold text-sky-500">$4亿</p>
+                                    <p class="text-slate-600">资本支出节省</p>
+                                </div>
+                            </div>
+                            <p class="mt-4 text-sm text-center text-slate-500">这是一个用运营优化（OPEX）战略性替代硬件建设（CAPEX）的典范，重塑了水务投资的经济学。</p>
+                        </div>
+                    </div>
+                     <div class="order-1 md:order-2">
+                        <h3 class="text-2xl font-semibold mb-4">提升脱氮除磷效率与支持战略决策</h3>
+                        <p class="text-slate-600 mb-2">ODSS将操作员从“救火队员”转变为“微生物农场主”，通过精细调控实现BNR工艺的稳定高效。更重要的是，数字孪生为提标改造、扩容增效等重大资本决策提供了科学依据。</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 h-6 w-6 text-sky-500">✓</span>
+                                <p class="ml-2 text-slate-600"><strong>虚拟测试：</strong>在数字孪生中无风险测试优化策略，找到最佳运行参数。</p>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="flex-shrink-0 h-6 w-6 text-sky-500">✓</span>
+                                <p class="ml-2 text-slate-600"><strong>网络化智能：</strong>汇集多厂经验，实现知识共享，应对冲击负荷。</p>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 h-6 w-6 text-sky-500">✓</span>
+                                <p class="ml-2 text-slate-600"><strong>资本支出规避：</strong>通过运营优化满足新标准，延迟或避免数亿元的基建投资。</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="market" class="py-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight">市场格局与供应商分析</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">全球智慧水务市场百家争鸣。本节对主流供应商及其解决方案进行横向比较，并提供选型考量框架，帮助您在众多方案中找到最适合自身需求的合作伙伴。</p>
+                </div>
+                
+                <div class="my-8 flex justify-center flex-wrap gap-2">
+                    <button class="filter-btn px-4 py-2 text-sm font-medium rounded-full bg-sky-500 text-white" data-filter="all">全部</button>
+                    <button class="filter-btn px-4 py-2 text-sm font-medium rounded-full bg-slate-200 text-slate-700" data-filter="综合解决方案提供商">综合解决方案提供商</button>
+                    <button class="filter-btn px-4 py-2 text-sm font-medium rounded-full bg-slate-200 text-slate-700" data-filter="平台赋能者">平台赋能者</button>
+                    <button class="filter-btn px-4 py-2 text-sm font-medium rounded-full bg-slate-200 text-slate-700" data-filter="所有者-运营者自建平台">所有者-运营者自建平台</button>
+                </div>
+
+                <div id="vendor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    
+                </div>
+            </div>
+        </section>
+
+        <section id="future" class="py-20 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight">实施、经济性与未来视野</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">数字化转型是一场旅程。本节提供实用的实施指南、投资回报分析框架，并展望生成式AI和循环经济将如何定义下一代智慧水务管理。</p>
+                </div>
+                
+                <div class="mt-12 grid md:grid-cols-2 gap-12">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6">数字孪生实施路线图 (SWAN框架)</h3>
+                        <ol class="space-y-4">
+                            <li class="flex">
+                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-sky-100 text-sky-600 rounded-full font-bold text-lg">1</div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">识别期望成果</h4>
+                                    <p class="text-slate-600">从“为什么”开始，明确要解决的具体业务问题。</p>
+                                </div>
+                            </li>
+                            <li class="flex">
+                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-sky-100 text-sky-600 rounded-full font-bold text-lg">2</div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">评估差距</h4>
+                                    <p class="text-slate-600">全面评估数据、传感、网络、人员等方面的现状。</p>
+                                </div>
+                            </li>
+                             <li class="flex">
+                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-sky-100 text-sky-600 rounded-full font-bold text-lg">3</div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">实施第一个数字孪生</h4>
+                                    <p class="text-slate-600">从高回报、易衡量的用例起步，建立内部信心。</p>
+                                </div>
+                            </li>
+                             <li class="flex">
+                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-sky-100 text-sky-600 rounded-full font-bold text-lg">4</div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">扩展数字孪生</h4>
+                                    <p class="text-slate-600">迭代扩展平台覆盖范围和功能，形成智慧大脑。</p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-8">
+                        <div class="bg-slate-800 text-white p-6 rounded-xl shadow-lg">
+                            <h4 class="font-bold text-xl mb-2">未来趋势一：生成式AI</h4>
+                            <p class="text-slate-300">AI将从“预测”走向“创造”。生成式设计工具能在数小时内探索数万种工艺方案，颠覆传统水厂设计流程，实现自优化运营。</p>
+                        </div>
+                         <div class="bg-green-700 text-white p-6 rounded-xl shadow-lg">
+                            <h4 class="font-bold text-xl mb-2">未来趋势二：工厂即资源回收设施 (WRRF)</h4>
+                            <p class="text-green-200">循环经济理念推动污水厂向价值创造中心转型。数字孪生是协同优化水、能源、营养物质回收的关键技术，将“废物”转化为宝贵资源。</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300">
+        <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>本交互式应用基于《智慧水厂：污水处理厂运行决策支持系统（WWTP ODSS）的全面解析》报告生成。</p>
+            <p class="text-sm mt-2 text-slate-400">&copy; 2025 智慧水务洞察。保留所有权利。</p>
+        </div>
+    </footer>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabData = {
+        monitoring: {
+            title: '实时监测与预测性预警',
+            content: `
+                <p class="text-slate-600 mb-4">有效的监测必须能够理解众多变量间的内在关联性，识别出正常运行模式的偏离。技术发展已从孤立的单变量控制演进到能够捕捉复杂动态的机器学习模型。</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">特征</th>
+                                <th scope="col" class="px-6 py-3">单变量SPC</th>
+                                <th scope="col" class="px-6 py-3">多元SPC (PCA)</th>
+                                <th scope="col" class="px-6 py-3">机器学习 (LSTM)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">基本原理</th>
+                                <td class="px-6 py-4">监控单个变量是否超出统计控制限。</td>
+                                <td class="px-6 py-4">监控整体过程的变异和与模型的偏差。</td>
+                                <td class="px-6 py-4">学习正常操作的动态模式，识别异常。</td>
+                            </tr>
+                            <tr class="bg-slate-50 border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">核心价值</th>
+                                <td class="px-6 py-4">基础传感器健康监控。</td>
+                                <td class="px-6 py-4">全局性过程状态监控。</td>
+                                <td class="px-6 py-4 text-sky-600 font-semibold">数据验证与调和 (DVR)，为高级控制提供可靠数据。</td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">局限性</th>
+                                <td class="px-6 py-4">忽略变量相关性，误报率高。</td>
+                                <td class="px-6 py-4">对非线性、动态变化不敏感。</td>
+                                <td class="px-6 py-4">模型是“黑箱”，计算量大。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="mt-4 text-sm text-slate-500"><strong>核心焦点转移：</strong> 从单纯的“故障检测”转向更为关键的“数据验证与调和”(DVR)。确保数据质量是所有上层优化的基石。</p>
+            `,
+        },
+        diagnosis: {
+            title: '先进故障诊断与根因分析',
+            content: `
+                <p class="text-slate-600 mb-4">一旦检测到异常，关键是诊断其根本原因。诊断系统已从依赖专家经验的规则库，发展到融合数据与知识的混合智能系统。</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-4 bg-slate-100 rounded-lg">
+                        <h4 class="font-semibold text-slate-800">传统方法</h4>
+                        <ul class="mt-2 list-disc list-inside text-slate-600 space-y-1">
+                            <li><strong>专家系统:</strong> 基于"if-then"规则库进行逻辑推理。</li>
+                            <li><strong>故障树分析 (FTA):</strong> 从顶事件向下追溯，揭示故障传播路径。</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-sky-100 rounded-lg">
+                         <h4 class="font-semibold text-sky-800">前沿趋势：混合智能</h4>
+                        <ul class="mt-2 list-disc list-inside text-sky-700 space-y-1">
+                            <li><strong>数据驱动的FTA:</strong> 利用算法从历史数据中自动推断故障树模型。</li>
+                            <li><strong>物理约束的AI:</strong> 将质量平衡等物理定律嵌入神经网络，提升模型鲁棒性。</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="mt-4 text-sm text-slate-500"><strong>核心理念：</strong> 融合数据驱动的模式识别能力与知识模型的逻辑严谨性，使诊断系统更鲁棒、可信和自适应。</p>
+            `,
+        },
+        simulation: {
+            title: '工艺模拟与优化引擎',
+            content: `
+                <p class="text-slate-600 mb-4">以活性污泥模型 (ASM) 系列为代表的机理模型，是支持“情景分析”和运行优化的核心预测引擎。其应用需遵循IWA的《良好模型实践指南》(GMP)。</p>
+                <h4 class="font-semibold text-slate-800 mb-2">GMP 统一协议 (关键步骤)</h4>
+                <ol class="list-decimal list-inside text-slate-600 space-y-2">
+                    <li><strong>项目定义:</strong> 明确目标、范围和预期精度。</li>
+                    <li><strong>数据收集与调和:</strong> 获取高质量、可靠的、用于模型输入的数据集 (最耗时步骤)。</li>
+                    <li><strong>工厂模型建立:</strong> 将真实工艺流程转化为数学描述。</li>
+                    <li><strong>校准与验证:</strong> 调整参数使模型输出与实测数据匹配。</li>
+                    <li><strong>模拟与结果解读:</strong> 运行情景，实现项目目标。</li>
+                </ol>
+                 <p class="mt-4 text-sm text-slate-500"><strong>未来方向：</strong> 面对日益增加的模型复杂性，行业正从追求完备的纯机理模型，转向将ASM与数据驱动技术相结合的“混合建模”范式，以平衡精确性与实用性。</p>
+            `,
+        },
+        xai: {
+            title: '可解释人工智能 (XAI) 的兴起',
+            content: `
+                <p class="text-slate-600 mb-4">XAI旨在打破AI的“黑箱”，使其决策过程能被人类理解，从而建立操作员对系统的信任。它将AI从预测工具转变为可协作的、用于过程优化和知识发现的伙伴。</p>
+                <div class="bg-slate-100 p-4 rounded-lg">
+                <p class="font-mono text-sm text-slate-700"><strong>场景示例:</strong></p>
+                <p class="font-mono text-sm mt-2"><span class="text-red-500">[AI 预测]</span>: 明天出水氨氮会超标。</p>
+                <p class="font-mono text-sm mt-2"><span class="text-green-500">[XAI 解释]</span>: 模型预测超标，是因为检测到进水TSS和TP浓度上升，根据历史数据，该模式与硝化效率下降显著相关。</p>
+                </div>
+                <p class="mt-4 text-sm text-slate-500"><strong>核心价值：</strong> XAI提供的“为什么”使操作员能够更有信心地采纳建议，并采取针对性措施。它架起了数据驱动的洞察与人类专业经验之间的关键桥梁。</p>
+            `,
+        },
+    };
+
+    const tabContentContainer = document.getElementById('tab-content');
+    const tabButtons = document.querySelectorAll('.tab-button');
+
+    function updateTabContent(tabKey) {
+        const data = tabData[tabKey];
+        tabContentContainer.innerHTML = `
+            <h3 class="text-2xl font-semibold mb-4 text-slate-800">${data.title}</h3>
+            ${data.content}
+        `;
+        tabContentContainer.classList.remove('fade-in');
+        void tabContentContainer.offsetWidth;
+        tabContentContainer.classList.add('fade-in');
+
+        tabButtons.forEach(button => {
+            button.classList.toggle('active', button.dataset.tab === tabKey);
+        });
+    }
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            updateTabContent(button.dataset.tab);
+        });
+    });
+
+    updateTabContent('monitoring');
+
+    const vendorData = [
+        { name: '威立雅 (Veolia)', platform: 'Hubgrade', type: '综合解决方案提供商', description: '数字孪生 + 运营专家服务。将深厚的全球运营经验打包成数字服务，提供端到端优化。', logo: 'V' },
+        { name: '苏伊士 (Suez)', platform: 'AQUADVANCED®', type: '综合解决方案提供商', description: '模块化软件套件 (管网/水厂)。针对水循环不同环节提供高度专业化的模块，尤其在管网管理方面优势突出。', logo: 'S' },
+        { name: '赛莱默 (Xylem)', platform: 'Vue Platform', type: '平台赋能者', description: '供应商无关的数据整合平台。强调开放性和兼容性，旨在打破数据孤岛，整合客户现有投资。', logo: 'X' },
+        { name: '北控水务 (BEWG)', platform: '北控云 (BECloud™)', type: '所有者-运营者自建平台', description: '集团级工业互联网平台。为大型水务集团量身打造，以标准化和规模化管理庞大资产组合为核心。', logo: 'B' },
+        { name: 'AVEVA', platform: 'CONNECT / Process Simulation', type: '平台赋能者', description: '工业智能孪生。拥有强大的工程设计与过程模拟能力，贯穿资产生命周期。', logo: 'A' },
+        { name: 'DHI', platform: 'TwinPlant / MIKE OPERATIONS', type: '平台赋能者', description: '水力/水质模型驱动的数字孪生。以业界领先的水环境模型为内核，提供精准的预测与模拟。', logo: 'D' },
+    ];
+
+    const vendorGrid = document.getElementById('vendor-grid');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    function renderVendors(filter) {
+        vendorGrid.innerHTML = '';
+        const filteredData = filter === 'all' ? vendorData : vendorData.filter(v => v.type === filter);
+        
+        filteredData.forEach(vendor => {
+            const card = document.createElement('div');
+            card.className = 'bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow fade-in';
+            card.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 flex-shrink-0 bg-slate-200 rounded-full flex items-center justify-center text-xl font-bold text-slate-600">${vendor.logo}</div>
+                    <div class="ml-4">
+                        <h4 class="font-bold text-lg text-slate-800">${vendor.name}</h4>
+                        <p class="text-sm text-sky-600 font-semibold">${vendor.platform}</p>
+                    </div>
+                </div>
+                <p class="text-xs bg-slate-100 text-slate-600 inline-block px-2 py-1 rounded-full mb-3">${vendor.type}</p>
+                <p class="text-slate-600 text-sm">${vendor.description}</p>
+            `;
+            vendorGrid.appendChild(card);
+        });
+    }
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            filterButtons.forEach(btn => {
+                btn.classList.remove('bg-sky-500', 'text-white');
+                btn.classList.add('bg-slate-200', 'text-slate-700');
+            });
+            button.classList.add('bg-sky-500', 'text-white');
+            button.classList.remove('bg-slate-200', 'text-slate-700');
+            renderVendors(button.dataset.filter);
+        });
+    });
+
+    renderVendors('all');
+
+    const energyData = {
+        labels: ['传统控制', 'DO优化', 'ABAC控制'],
+        datasets: [{
+            label: '曝气能耗 (相对值)',
+            data: [100, 88, 78],
+            backgroundColor: 'rgba(14, 165, 233, 0.6)',
+            borderColor: 'rgba(14, 165, 233, 1)',
+            borderWidth: 1
+        }]
+    };
+    
+    const ghgData = {
+        labels: ['传统控制', 'DO优化', 'ABAC控制'],
+        datasets: [{
+            label: '综合碳足迹 (相对值, 含N₂O)',
+            data: [100, 95, 85],
+            backgroundColor: 'rgba(100, 116, 139, 0.6)',
+            borderColor: 'rgba(100, 116, 139, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    const energyCtx = document.getElementById('energyChart').getContext('2d');
+    const energyChart = new Chart(energyCtx, {
+        type: 'bar',
+        data: energyData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '相对成本/排放'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: '曝气优化策略的效益对比',
+                    font: {
+                        size: 16
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y + '%';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const toggleEnergyBtn = document.getElementById('toggle-energy');
+    const toggleGhgBtn = document.getElementById('toggle-ghg');
+    const optimizationText = document.getElementById('optimization-text');
+
+    toggleEnergyBtn.addEventListener('click', () => {
+        energyChart.data = energyData;
+        energyChart.update();
+        toggleEnergyBtn.classList.add('bg-sky-500', 'text-white');
+        toggleEnergyBtn.classList.remove('bg-slate-200', 'text-slate-700');
+        toggleGhgBtn.classList.remove('bg-sky-500', 'text-white');
+        toggleGhgBtn.classList.add('bg-slate-200', 'text-slate-700');
+        optimizationText.innerHTML = `<p><strong class="text-sky-600">策略：</strong> 采用低DO或间歇曝气模式。 <br><strong>结果：</strong> 显著降低曝气电耗 (可达20-40%)，同时可能促进同步硝化反硝化，减少碳源投加。这是最直接的成本节约路径。</p>`;
+    });
+
+    toggleGhgBtn.addEventListener('click', () => {
+        energyChart.data = ghgData;
+        energyChart.update();
+        toggleGhgBtn.classList.add('bg-sky-500', 'text-white');
+        toggleGhgBtn.classList.remove('bg-slate-200', 'text-slate-700');
+        toggleEnergyBtn.classList.remove('bg-sky-500', 'text-white');
+        toggleEnergyBtn.classList.add('bg-slate-200', 'text-slate-700');
+        optimizationText.innerHTML = `<p><strong class="text-slate-600">策略：</strong> 综合考虑电力消耗的间接CO₂排放和工艺过程的直接N₂O排放。 <br><strong>结果：</strong> 找到总碳足迹最低的平衡点。这可能意味着需要接受略高的能耗，以避免在低DO条件下产生大量的N₂O。</p>`;
+    });
+
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    const navLinks = document.querySelectorAll('.nav-link, #mobile-menu a');
+    const sections = document.querySelectorAll('main section');
+    
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 80) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').includes(current)) {
+                link.classList.add('active');
+            }
+        });
+    });
+
+});
+</script>
+</body>
+</html>

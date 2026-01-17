@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式污水生物毒性监测技术浏览器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F5F7FA;
+            color: #2c3e50;
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .nav-item.active, .nav-item:hover {
+            color: #1abc9c;
+            border-bottom-color: #1abc9c;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .method-selector-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .method-selector-btn.active {
+            background-color: #1abc9c;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgba(26, 188, 156, 0.39);
+        }
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            background-color: white;
+            min-width: 150px;
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            color: #7f8c8d;
+            margin: 0 1rem;
+            align-self: center;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Chosen Palette: Urban Waters (BG: #F5F7FA, Primary: #2c3e50, Secondary: #7f8c8d, Accent: #1abc9c, Highlight: #f1c40f) -->
+    <!-- Application Structure Plan: The application is designed as a user-centric journey, starting with the "Why" (the problem), moving to the "What" (the methods), then the "How" (decision framework), and finally the "What's Next" (future tech). This thematic flow is more intuitive than the report's linear structure. The core is the interactive "Method Explorer," allowing users to dynamically compare tools based on their needs, which promotes discovery and understanding over passive reading. A sticky navigation facilitates movement between these logical sections. -->
+    <!-- Visualization & Content Choices: 
+        - The Challenge (Inform): Key stats are presented in bold "Key Figure" cards for high impact. Goal: Inform. Method: Styled HTML.
+        - Method Explorer (Compare): An interactive dashboard. Users select methods via buttons. This updates a central Radar Chart (Chart.js/Canvas) for multi-dimensional comparison and displays detailed info cards. A Bar Chart (Chart.js/Canvas) provides a single-metric view (test time). Goal: Compare & Explore. Justification: This interactive setup is superior to a static table for comparing complex options.
+        - Decision Framework (Organize/Guide): An HTML/CSS flowchart visualizes the selection process. Goal: Organize. Justification: A visual flow is easier to follow than descriptive text for making a decision.
+        - Future Horizon (Inform): Styled HTML cards with Unicode icons introduce emerging tech. Goal: Inform. Justification: A visually clean and scannable way to present future concepts.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-xl font-bold text-[#2c3e50]">生物毒性监测浏览器</div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#challenge" class="nav-item text-gray-500 font-medium border-b-2 border-transparent pb-1">挑战与机遇</a>
+                    <a href="#explorer" class="nav-item text-gray-500 font-medium border-b-2 border-transparent pb-1">方法浏览器</a>
+                    <a href="#framework" class="nav-item text-gray-500 font-medium border-b-2 border-transparent pb-1">决策框架</a>
+                    <a href="#future" class="nav-item text-gray-500 font-medium border-b-2 border-transparent pb-1">未来技术</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="challenge" class="text-center mb-20 pt-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#2c3e50] mb-4">应对进水毒性：污水处理的隐形战争</h1>
+            <p class="text-lg text-[#7f8c8d] max-w-3xl mx-auto">
+                污水处理厂是水环境的最后一道防线，但突发的有毒进水会对其核心微生物系统造成毁灭性打击。本应用旨在帮助您了解、比较和选择最合适的生物毒性监测工具，化被动为主动，守护水处理设施的安全与稳定。
+            </p>
+        </section>
+
+        <section id="explorer" class="mb-20 section-card">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold">方法浏览器</h2>
+                <p class="text-[#7f8c8d] mt-2">点击下方按钮，选择您感兴趣的监测方法进行动态比较。</p>
+            </div>
+            
+            <div id="method-selector" class="flex flex-wrap justify-center gap-3 mb-10">
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-4">综合性能雷达图</h3>
+                    <div class="chart-container h-96">
+                        <canvas id="comparisonRadarChart"></canvas>
+                    </div>
+                </div>
+                <div id="method-details" class="space-y-4">
+                </div>
+            </div>
+        </section>
+
+        <section id="framework" class="mb-20 section-card">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold">决策框架：如何选择合适的监测方案？</h2>
+                <p class="text-[#7f8c8d] mt-2">没有“一刀切”的解决方案。选择最佳方法取决于您的具体需求和风险等级。以下是一个简化的决策流程。</p>
+            </div>
+            <div class="flex flex-col items-center space-y-4 md:space-y-0">
+                <div class="flex flex-col md:flex-row items-center justify-center w-full">
+                    <div class="flow-step">
+                        <span class="text-3xl mb-2">🎯</span>
+                        <h4 class="font-bold">1. 明确目标</h4>
+                        <p class="text-sm text-gray-500">常规巡检？保护硝化系统？溯源工业污染？</p>
+                    </div>
+                    <div class="flow-arrow hidden md:block">→</div>
+                    <div class="flow-arrow md:hidden">↓</div>
+                    <div class="flow-step">
+                        <span class="text-3xl mb-2">📈</span>
+                        <h4 class="font-bold">2. 评估风险</h4>
+                        <p class="text-sm text-gray-500">高风险工业废水？低风险生活污水？</p>
+                    </div>
+                </div>
+                <div class="flow-arrow md:hidden">↓</div>
+                <div class="hidden md:block w-px bg-gray-300 h-8 self-center"></div>
+                <div class="flow-arrow -rotate-90 md:hidden hidden">↓</div>
+                 <div class="flow-arrow rotate-90 hidden md:block">↳</div>
+                
+                 <div class="flex flex-col md:flex-row-reverse items-center justify-center w-full">
+                     <div class="flow-step">
+                         <span class="text-3xl mb-2">⚙️</span>
+                        <h4 class="font-bold">4. 整合与行动</h4>
+                        <p class="text-sm text-gray-500">建立预警阈值，制定应急预案 (SOPs)，整合至 SCADA 系统。</p>
+                    </div>
+                    <div class="flow-arrow hidden md:block">←</div>
+                    <div class="flow-arrow md:hidden">↓</div>
+                     <div class="flow-step">
+                         <span class="text-3xl mb-2">🛠️</span>
+                        <h4 class="font-bold">3. 选择工具组合</h4>
+                        <p class="text-sm text-gray-500">在线传感器用于一级预警？快速试剂盒用于日常筛查？OUR法用于确认？</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="future" class="mb-12 section-card">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold">未来技术：更智能、更灵敏的预警体系</h2>
+                <p class="text-[#7f8c8d] mt-2">新兴技术正在为实现预测性、高精度的毒性管理提供全新可能。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center p-6 bg-gray-50 rounded-lg">
+                    <span class="text-4xl">🧬</span>
+                    <h3 class="text-xl font-semibold mt-4 mb-2">组学技术 (Omics)</h3>
+                    <p class="text-sm text-[#7f8c8d]">通过分析微生物基因(宏基因组学)和表达活性(宏转录组学)，从分子层面捕捉最早期的毒性胁迫信号。</p>
+                </div>
+                <div class="text-center p-6 bg-gray-50 rounded-lg">
+                    <span class="text-4xl">🤖</span>
+                    <h3 class="text-xl font-semibold mt-4 mb-2">人工智能 (AI/ML)</h3>
+                    <p class="text-sm text-[#7f8c8d]">利用机器学习算法分析多源传感器数据，识别与毒性事件相关的复杂模式，实现预测性预警。</p>
+                </div>
+                <div class="text-center p-6 bg-gray-50 rounded-lg">
+                    <span class="text-4xl">🔬</span>
+                    <h3 class="text-xl font-semibold mt-4 mb-2">芯片实验室 (Lab-on-a-Chip)</h3>
+                    <p class="text-sm text-[#7f8c8d]">将复杂的生物分析过程集成于微芯片上，开发小型化、自动化、低消耗的便携式现场检测设备。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="text-center py-8 border-t border-gray-200">
+        <p class="text-[#7f8c8d]">通过科学的工具组合与智能化的数据分析，提升污水处理的风险管理水平。</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const methodsData = {
+                our: {
+                    id: 'our',
+                    name: '微生物呼吸速率法 (OUR)',
+                    scores: { speed: 2, sensitivity: 3, costEffectiveness: 3, easeOfUse: 2, relevance: 5 },
+                    details: {
+                        principle: '测量有毒物质对活性污泥耗氧速率(OUR)的抑制程度，直接反映对核心生物过程的影响。',
+                        pros: '与实际工艺直接相关，结果说服力强，有国际标准方法。',
+                        cons: '测试耗时较长（小时级），操作复杂，对污泥状态敏感。',
+                    }
+                },
+                luminescence: {
+                    id: 'luminescence',
+                    name: '发光细菌法',
+                    scores: { speed: 4, sensitivity: 4, costEffectiveness: 4, easeOfUse: 4, relevance: 3 },
+                    details: {
+                        principle: '测量有毒物质对费氏弧菌等发光细菌发光强度的抑制作用。',
+                        pros: '非常快速（5-30分钟），灵敏度高，操作简便，商业化程度高。',
+                        cons: '间接测量，与活性污泥微生物存在差异；易受水样色度、浊度干扰。',
+                    }
+                },
+                atp: {
+                    id: 'atp',
+                    name: 'ATP 生物发光法',
+                    scores: { speed: 5, sensitivity: 4, costEffectiveness: 4, easeOfUse: 5, relevance: 2 },
+                    details: {
+                        principle: '通过测量活细胞中能量货币ATP的含量，来评估微生物的总体生理活性。',
+                        pros: '极快（秒到分钟级），操作最简便，可便携用于现场。',
+                        cons: '非特异性强，易受样品中非目标生物或有机物干扰，结果解读复杂。',
+                    }
+                },
+                enzyme: {
+                    id: 'enzyme',
+                    name: '酶抑制法',
+                    scores: { speed: 3, sensitivity: 3, costEffectiveness: 3, easeOfUse: 3, relevance: 3 },
+                    details: {
+                        principle: '测量有毒物质对特定酶（如脱氢酶）活性的抑制情况。',
+                        pros: '相对快速，能反映对特定生化途径的影响。',
+                        cons: '单一酶活性不能完全代表整体健康，易受环境因素影响。',
+                    }
+                },
+                sensor: {
+                    id: 'sensor',
+                    name: '在线生物传感器',
+                    scores: { speed: 4, sensitivity: 4, costEffectiveness: 2, easeOfUse: 3, relevance: 4 },
+                    details: {
+                        principle: '自动化、小型化的监测系统（如在线呼吸仪、微生物燃料电池），实时监测生物响应。',
+                        pros: '连续数据，强大的早期预警能力，自动化运行。',
+                        cons: '初始投资高，需要专业维护和定期校准，生物膜稳定性是挑战。',
+                    }
+                }
+            };
+
+            const colorPalette = {
+                primary: '#2c3e50',
+                secondary: '#7f8c8d',
+                accent: '#1abc9c',
+                highlight: '#f1c40f',
+                background: 'rgba(26, 188, 156, 0.2)',
+                grid: '#e5e7eb'
+            };
+
+            const selectedMethods = new Set(['our', 'luminescence']);
+            let radarChart;
+
+            const selectorContainer = document.getElementById('method-selector');
+            const detailsContainer = document.getElementById('method-details');
+
+            function wrapLabel(str, maxWidth = 16) {
+                if (typeof str !== 'string' || str.length <= maxWidth) return str;
+                const lines = [];
+                let currentLine = '';
+                str.split('').forEach(char => {
+                    if (currentLine.length >= maxWidth) {
+                        lines.push(currentLine);
+                        currentLine = '';
+                    }
+                    currentLine += char;
+                });
+                lines.push(currentLine);
+                return lines;
+            }
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) return label.join('');
+                return label;
+            };
+
+            function createRadarChart() {
+                const ctx = document.getElementById('comparisonRadarChart').getContext('2d');
+                const chartData = {
+                    labels: ['相关性', '易用性', '成本效益', '灵敏度', '速度'],
+                    datasets: []
+                };
+
+                const colors = [colorPalette.accent, colorPalette.primary, colorPalette.highlight, '#3498db', '#e74c3c'];
+
+                radarChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { callbacks: { title: tooltipTitleCallback } }
+                        },
+                        scales: {
+                            r: {
+                                angleLines: { color: colorPalette.grid },
+                                grid: { color: colorPalette.grid },
+                                pointLabels: { font: { size: 14 } },
+                                suggestedMin: 0,
+                                suggestedMax: 5,
+                                ticks: { stepSize: 1, backdropColor: 'rgba(255,255,255,0)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateRadarChart() {
+                if (!radarChart) return;
+                const datasets = [];
+                const colors = [colorPalette.accent, colorPalette.primary, colorPalette.highlight, '#3498db', '#e74c3c'];
+                let colorIndex = 0;
+                
+                selectedMethods.forEach(methodId => {
+                    const method = methodsData[methodId];
+                    const color = colors[colorIndex % colors.length];
+                    datasets.push({
+                        label: method.name,
+                        data: [
+                            method.scores.relevance,
+                            method.scores.easeOfUse,
+                            method.scores.costEffectiveness,
+                            method.scores.sensitivity,
+                            method.scores.speed
+                        ],
+                        borderColor: color,
+                        backgroundColor: `${color}33`,
+                        pointBackgroundColor: color,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: color
+                    });
+                    colorIndex++;
+                });
+                
+                radarChart.data.datasets = datasets;
+                radarChart.update();
+            }
+
+            function updateDetails() {
+                detailsContainer.innerHTML = '';
+                if (selectedMethods.size === 0) {
+                    detailsContainer.innerHTML = `<p class="text-center text-gray-500">请至少选择一种方法来查看详细信息。</p>`;
+                } else {
+                    selectedMethods.forEach(methodId => {
+                        const method = methodsData[methodId];
+                        const card = `
+                            <div class="border-l-4 p-4 rounded-r-lg bg-gray-50/50" style="border-color: ${radarChart.data.datasets.find(d => d.label === method.name)?.borderColor || '#ccc'};">
+                                <h4 class="font-bold text-lg text-[#2c3e50]">${method.name}</h4>
+                                <p class="text-sm text-[#7f8c8d] my-1"><strong class="font-semibold text-gray-600">原理:</strong> ${method.details.principle}</p>
+                                <p class="text-sm text-green-700"><strong class="font-semibold">优点:</strong> ${method.details.pros}</p>
+                                <p class="text-sm text-red-700"><strong class="font-semibold">局限:</strong> ${method.details.cons}</p>
+                            </div>
+                        `;
+                        detailsContainer.innerHTML += card;
+                    });
+                }
+            }
+
+            function handleSelectorClick(e) {
+                const btn = e.target.closest('.method-selector-btn');
+                if (!btn) return;
+                
+                const methodId = btn.dataset.methodId;
+                if (selectedMethods.has(methodId)) {
+                    if (selectedMethods.size > 1) { 
+                        selectedMethods.delete(methodId);
+                        btn.classList.remove('active');
+                    }
+                } else {
+                    selectedMethods.add(methodId);
+                    btn.classList.add('active');
+                }
+                
+                updateRadarChart();
+                updateDetails();
+            }
+
+            function initializeSelectors() {
+                Object.values(methodsData).forEach(method => {
+                    const btn = document.createElement('button');
+                    btn.className = 'method-selector-btn px-4 py-2 text-sm font-medium bg-white rounded-full shadow-sm border border-gray-200 text-gray-700';
+                    btn.dataset.methodId = method.id;
+                    btn.textContent = method.name;
+                    if(selectedMethods.has(method.id)) {
+                        btn.classList.add('active');
+                    }
+                    selectorContainer.appendChild(btn);
+                });
+                selectorContainer.addEventListener('click', handleSelectorClick);
+            }
+            
+            function setupSmoothScrolling() {
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('href');
+                        const targetElement = document.querySelector(targetId);
+                        if(targetElement) {
+                           targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+            }
+
+            createRadarChart();
+            initializeSelectors();
+            updateRadarChart();
+            updateDetails();
+            setupSmoothScrolling();
+        });
+    </script>
+</body>
+</html>

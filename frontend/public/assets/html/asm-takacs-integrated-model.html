@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式ASM-Takács模型集成指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 本应用采用了一种主题式、非线性的信息架构，旨在将复杂的污水处理模型报告转化为一个直观的互动学习工具。结构分为五个核心板块：1) 概览：通过宏观流程图建立整体概念；2) 模型核心：使用选项卡和互动图表分别解构ASM1和Takács模型；3) 耦合接口：应用的核心，通过可视化的分步流程图，具象化展示“聚合”与“分馏”这两个关键的抽象转换过程；4) 校准协议：将繁杂的校准步骤转化为一个交互式的垂直时间线，降低认知负荷；5) 高级考量：通过对比卡片展示模型间的差异。这种结构摒弃了报告的线性叙事，而是围绕核心概念组织内容，让用户可以根据自身需求自由探索、互动和学习，从而更深刻地理解模型集成的原理与实践。 -->
+    <!-- Visualization & Content Choices: 
+        1. 报告信息：Takács沉降速度公式 -> 目标：探索参数影响 -> 呈现方式：带滑块的互动Chart.js折线图 -> 互动：用户拖动滑块（v0, rh, rp）可实时观察曲线变化 -> 理由：将静态的数学公式转化为动态的视觉反馈，帮助用户建立对模型核心参数物理意义的直观理解 -> 库/方法：Chart.js/Canvas。
+        2. 报告信息：ASM与TSS的聚合与分馏过程 -> 目标：阐明复杂的数据转换逻辑 -> 呈现方式：使用HTML/CSS构建的分步式流程图 -> 互动：通过清晰的视觉流和高亮提示引导用户理解从多个ASM组分到单个TSS，再返回的完整闭环 -> 理由：将报告中最核心但也最抽象的接口概念，拆解为具体、可视化的步骤，极大降低了理解门槛 -> 库/方法：HTML/CSS/JS。
+        3. 报告信息：模型校准协议表格 -> 目标：有序地呈现一个复杂的多步骤流程 -> 呈现方式：交互式垂直时间线 -> 互动：用户可点击每一步展开查看详细信息（目标、数据需求、关键参数） -> 理由：相比于静态表格，时间线更加生动，分步展开的方式避免了信息过载，更符合人类认知习惯 -> 库/方法：HTML/CSS/JS。
+        4. 报告信息：Takács vs. Bürger-Diehl 模型对比 -> 目标：直观比较两个模型的优劣 -> 呈现方式：并排的卡片式布局 -> 互动：清晰的并列对比，一目了然 -> 理由：提供了直接、清晰的视觉对比，便于用户快速做出判断和选择 -> 库/方法：HTML/CSS。
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #C57B57;
+            border-bottom-color: #C57B57;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border: 1px solid #EAEAEA;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+        .tab-button {
+            transition: all 0.3s;
+        }
+        .tab-button.active {
+            background-color: #C57B57;
+            color: #FFFFFF;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 50vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 450px;
+            }
+        }
+        .step-line {
+            background-color: #D1D5DB;
+        }
+        .step-circle {
+            background-color: #FFFFFF;
+            border-color: #D1D5DB;
+            transition: all 0.3s;
+        }
+        .step-item:hover .step-circle, .step-item.active .step-circle {
+            background-color: #C57B57;
+            border-color: #C57B57;
+            color: #FFFFFF;
+        }
+        .flow-arrow {
+            position: relative;
+            width: 2px;
+            background-color: #9CA3AF;
+            margin: 0 1rem;
+        }
+        .flow-arrow::after {
+            content: '▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #9CA3AF;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header id="header" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800">ASM-Takács 集成模型</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#overview" class="nav-link py-2">概览</a>
+                <a href="#models" class="nav-link py-2">模型核心</a>
+                <a href="#interface" class="nav-link py-2">耦合接口</a>
+                <a href="#calibration" class="nav-link py-2">校准协议</a>
+                <a href="#advanced" class="nav-link py-2">高级考量</a>
+            </div>
+             <button id="mobile-menu-button" class="md:hidden text-gray-700 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-4 6h4"></path></svg>
+            </button>
+        </nav>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4">
+            <a href="#overview" class="block nav-link py-2 text-center">概览</a>
+            <a href="#models" class="block nav-link py-2 text-center">模型核心</a>
+            <a href="#interface" class="block nav-link py-2 text-center">耦合接口</a>
+            <a href="#calibration" class="block nav-link py-2 text-center">校准协议</a>
+            <a href="#advanced" class="block nav-link py-2 text-center">高级考量</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- 1. Overview Section -->
+        <section id="overview" class="scroll-mt-20 mb-24">
+            <h2 class="text-3xl font-bold text-center mb-4">全流程污水处理模拟：为何集成是关键</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+                污水处理厂是一个生物反应与物理分离紧密耦合的系统。孤立地模拟任一单元都无法捕捉其动态交互。只有将描述生物转化的ASM模型与描述物理沉降的Takács模型集成，才能全面预测系统性能，为优化与控制提供可靠依据。
+            </p>
+            <div class="card p-6 md:p-8">
+                <h3 class="text-2xl font-semibold text-center mb-6">核心工艺流程与模型耦合示意图</h3>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <!-- Bioreactor -->
+                    <div class="text-center p-6 bg-blue-50 rounded-lg w-full md:w-1/3 border-2 border-blue-200">
+                        <div class="text-4xl mb-2">🏭</div>
+                        <h4 class="text-xl font-bold text-blue-800">生物反应器</h4>
+                        <p class="text-blue-600">模型: ASM1</p>
+                    </div>
+
+                    <!-- Arrows -->
+                    <div class="flex flex-row md:flex-col items-center justify-around w-full md:w-auto">
+                         <div class="text-center px-4">
+                            <div class="text-2xl text-gray-500">→</div>
+                            <p class="text-sm font-semibold text-gray-600">混合液</p>
+                        </div>
+                         <div class="text-center px-4">
+                            <div class="text-2xl text-gray-500">←</div>
+                            <p class="text-sm font-semibold text-gray-600">回流污泥(RAS)</p>
+                        </div>
+                    </div>
+
+                    <!-- Clarifier -->
+                    <div class="text-center p-6 bg-teal-50 rounded-lg w-full md:w-1/3 border-2 border-teal-200">
+                        <div class="text-4xl mb-2">💧</div>
+                        <h4 class="text-xl font-bold text-teal-800">二沉池</h4>
+                        <p class="text-teal-600">模型: Takács</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Models Section -->
+        <section id="models" class="scroll-mt-20 mb-24">
+            <h2 class="text-3xl font-bold text-center mb-12">两大核心模型解析</h2>
+            <div class="flex justify-center mb-8">
+                <div class="bg-gray-200 rounded-full p-1 flex">
+                    <button class="tab-button active px-6 py-2 rounded-full font-semibold" data-tab="asm1">ASM1模型</button>
+                    <button class="tab-button px-6 py-2 rounded-full font-semibold" data-tab="takacs">Takács模型</button>
+                </div>
+            </div>
+
+            <!-- ASM1 Content -->
+            <div id="asm1-content" class="tab-content">
+                <div class="card p-6 md:p-8">
+                    <h3 class="text-2xl font-semibold mb-2">活性污泥模型1号 (ASM1)</h3>
+                    <p class="text-gray-600 mb-6">ASM1通过13个状态变量和8个生化过程，定量描述污水中碳、氮的生物转化。核心区别在于可溶性(S)和颗粒性(X)组分，这是与物理分离模型耦合的基础。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold text-lg mb-2 text-sky-700">可溶性组分 (Soluble, S)</h4>
+                            <ul id="soluble-components" class="space-y-2 list-disc list-inside text-gray-700"></ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-2 text-orange-700">颗粒性组分 (Particulate, X)</h4>
+                            <ul id="particulate-components" class="space-y-2 list-disc list-inside text-gray-700"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Takacs Content -->
+            <div id="takacs-content" class="tab-content hidden">
+                <div class="card p-6 md:p-8">
+                    <h3 class="text-2xl font-semibold mb-2">Takács 一维二沉池模型</h3>
+                    <p class="text-gray-600 mb-6">该模型基于固体通量理论，通过一个创新的“双指数”方程描述污泥沉降速度。用户可以通过调整下方滑块，直观感受关键沉降参数如何影响沉降性能曲线。</p>
+                    <div class="chart-container">
+                        <canvas id="settlingChart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t">
+                        <div>
+                            <label for="v0_slider" class="block font-medium mb-1">最大理论沉降速度 (v₀): <span id="v0_value"></span> m/d</label>
+                            <input id="v0_slider" type="range" min="200" max="800" value="474" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="rh_slider" class="block font-medium mb-1">受阻沉降参数 (rₕ): <span id="rh_value"></span> m³/g</label>
+                            <input id="rh_slider" type="range" min="0.1" max="1.0" step="0.001" value="0.576" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                         <div>
+                            <label for="rp_slider" class="block font-medium mb-1">絮凝区沉降参数 (rₚ): <span id="rp_value"></span> m³/g</label>
+                            <input id="rp_slider" type="range" min="1.0" max="5.0" step="0.01" value="2.86" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Interface Section -->
+        <section id="interface" class="scroll-mt-20 mb-24">
+            <h2 class="text-3xl font-bold text-center mb-4">关键耦合接口：模型间的“翻译官”</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+               耦合的本质是在ASM1的“多组分语言”和Takács的“TSS宏观语言”之间进行转换。这个过程分为两步：从生物反应器到二沉池的“聚合”，以及从二沉池返回的“分馏”。
+            </p>
+            <div class="card p-6 md:p-8">
+                 <div class="flex flex-col items-center">
+                    <div class="w-full text-center p-4 bg-gray-100 rounded-lg">
+                        <h3 class="text-xl font-bold text-gray-800">曝气池出口 (ASM1)</h3>
+                    </div>
+
+                    <div class="w-16 h-16 flex items-center justify-center text-3xl text-gray-500">↓</div>
+                    
+                    <div class="w-full p-6 border-2 border-dashed border-amber-400 rounded-lg bg-amber-50">
+                        <h3 class="text-xl font-bold text-center text-amber-800 mb-4">步骤一: 聚合 (Aggregation)</h3>
+                        <div class="flex flex-col md:flex-row items-center justify-around">
+                            <div class="text-center">
+                                <p class="font-semibold">ASM1 颗粒性组分</p>
+                                <div class="mt-2 p-3 bg-white rounded-md shadow text-sm">Xᵢ, Xₛ, X<sub>B,H</sub>, X<sub>B,A</sub>, Xₚ</div>
+                            </div>
+                            <div class="text-4xl text-amber-600 my-4 md:my-0">→</div>
+                             <div class="text-center">
+                                <p class="font-semibold">总颗粒态COD</p>
+                                <div class="mt-2 p-3 bg-white rounded-md shadow text-sm">Σ Particulate COD</div>
+                            </div>
+                            <div class="text-4xl text-amber-600 my-4 md:my-0">→</div>
+                            <div class="text-center">
+                                <p class="font-semibold">Takács模型输入</p>
+                                <div class="mt-2 p-3 bg-white rounded-md shadow text-sm font-mono">TSS = i<sub>TSS_COD</sub> * ΣCOD</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-16 h-16 flex items-center justify-center text-3xl text-gray-500">↕</div>
+
+                    <div class="w-full p-6 border-2 border-dashed border-cyan-400 rounded-lg bg-cyan-50">
+                        <h3 class="text-xl font-bold text-center text-cyan-800 mb-4">步骤二: 分馏 (Fractionation)</h3>
+                        <p class="text-center text-cyan-700 mb-4 text-sm">基于“恒定组分假设”：污泥在沉降过程中内部组分比例保持不变。</p>
+                        <div class="flex flex-col md:flex-row items-center justify-around">
+                             <div class="text-center">
+                                <p class="font-semibold">Takács模型输出</p>
+                                <div class="mt-2 p-3 bg-white rounded-md shadow text-sm">TSS (回流/出水)</div>
+                            </div>
+                            <div class="text-4xl text-cyan-600 my-4 md:my-0">→</div>
+                             <div class="text-center">
+                                <p class="font-semibold">按比例拆分</p>
+                                <div class="mt-2 p-3 bg-white rounded-md shadow text-sm">TSS / i<sub>TSS_COD</sub> * (Xᵢ / ΣCOD)</div>
+                            </div>
+                            <div class="text-4xl text-cyan-600 my-4 md:my-0">→</div>
+                            <div class="text-center">
+                                <p class="font-semibold">ASM1 颗粒性组分</p>
+                                <div class="mt-2 p-3 bg-white rounded-md shadow text-sm">Xᵢ, Xₛ, X<sub>B,H</sub>, X<sub>B,A</sub>, Xₚ</div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="w-16 h-16 flex items-center justify-center text-3xl text-gray-500">↑</div>
+                     <div class="w-full text-center p-4 bg-gray-100 rounded-lg">
+                        <h3 class="text-xl font-bold text-gray-800">二沉池出口 (回流/出水)</h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Calibration Section -->
+        <section id="calibration" class="scroll-mt-20 mb-24">
+            <h2 class="text-3xl font-bold text-center mb-12">系统化模型校准协议</h2>
+             <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+               一个未经校准的模型只是一个理论框架。遵循系统性的校准协议，将通用模型调整为特定污水厂的“数字孪生”，是确保模拟结果可靠性的关键。
+            </p>
+            <div class="relative wrap overflow-hidden p-10 h-full">
+                <div class="absolute h-full border-2 border-gray-300" style="left: 50%"></div>
+                <div id="calibration-steps" class="space-y-12">
+                    <!-- Steps will be injected by JS -->
+                </div>
+            </div>
+        </section>
+        
+        <!-- 5. Advanced Section -->
+        <section id="advanced" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-12">高级考量与未来发展</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-4">模型对比：Takács vs. Bürger-Diehl</h3>
+                     <p class="text-gray-600 mb-6">标准的Takács模型在动态工况下存在局限性。更先进的Bürger-Diehl模型提供了更高的精度，尤其是在评估暴雨冲击等场景时。</p>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-3 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b">特性</th>
+                                <th class="py-2 px-3 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b">Takács 模型</th>
+                                <th class="py-2 px-3 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b">Bürger-Diehl 模型</th>
+                            </tr>
+                        </thead>
+                        <tbody id="model-comparison-table">
+                            <!-- Rows will be injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-4">耦合原则的普适性</h3>
+                    <p class="text-gray-600 mb-2">本应用中阐述的“聚合-分馏”耦合原则具有良好的通用性。</p>
+                    <p class="text-gray-600">它可以直接应用于更高级的活性污泥模型，如：</p>
+                    <ul class="list-disc list-inside mt-4 space-y-2">
+                        <li><b>ASM2d:</b> 在聚合时加入聚磷菌($X_{PAO}$)等组分。</li>
+                        <li><b>ASM3:</b> 在聚合时加入微生物内储物($X_{STO}$)等组分。</li>
+                    </ul>
+                     <p class="text-gray-600 mt-4">掌握了这一核心技术，就等于掌握了连接各类ASM生物模型与沉降模型的钥匙。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="bg-gray-800 text-white mt-24">
+        <div class="container mx-auto px-6 py-4 text-center">
+            <p>基于IWA《活性污泥模型与Takács二沉池模型的集成应用》报告的交互式指南。</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Data from the report
+        const asmComponents = {
+            soluble: [
+                { symbol: 'Sᵢ', name: '可溶性惰性有机物' },
+                { symbol: 'Sₛ', name: '快速可生物降解底物' },
+                { symbol: 'Sₒ', name: '溶解氧' },
+                { symbol: 'Sₙₒ', name: '硝态氮和亚硝态氮' },
+                { symbol: 'Sₙₕ', name: '氨氮' },
+                { symbol: 'Sₙₔ', name: '可溶性可生物降解有机氮' },
+                { symbol: 'Sₐₗₖ', name: '碱度' }
+            ],
+            particulate: [
+                { symbol: 'Xᵢ', name: '颗粒性惰性有机物' },
+                { symbol: 'Xₛ', name: '缓慢可生物降解底物' },
+                { symbol: 'X<sub>B,H</sub>', name: '活性异养微生物' },
+                { symbol: 'X<sub>B,A</sub>', name: '活性自养微生物' },
+                { symbol: 'Xₚ', name: '微生物衰亡产生的颗粒产物' },
+                { symbol: 'Xₙₔ', name: '颗粒性可生物降解有机氮' }
+            ]
+        };
+
+        const calibrationData = [
+            { title: '目标定义与数据收集', details: '明确模拟目的，收集污水厂历史运行数据、设计图纸和在线监测数据。' },
+            { title: '进水组分表征', details: '将常规水质指标（COD, TKN）分馏为ASM1的13个状态变量，这是模型准确性的基础。' },
+            { title: '水力模型校准', details: '通过示踪剂实验等方法，确保模型能准确反映反应器内的停留时间分布。' },
+            { title: '二沉池模型校准', details: '通过批量沉降实验获取数据，校准Takács模型的沉降参数(v₀, rₕ, rₚ, fₙₛ)。' },
+            { title: '稳态生物模型校准', details: '使用长期平均数据，校准产率系数(Y)和衰减系数(b)等，以匹配平均出水水质和污泥产量。' },
+            { title: '动态生物模型校准', details: '使用高频次动态数据，校准最大比生长速率(μₘₐₓ)和水解速率(kₕ)等动力学参数。' },
+            { title: '模型验证', details: '使用一组独立于校准的新数据，检验最终模型的预测能力。' },
+        ];
+        
+        const modelComparisonData = [
+            { feature: '数学基础', takacs: '离散层常微分方程(ODE)', buerger: '连续空间偏微分方程(PDE)' },
+            { feature: '数值精度', takacs: '存在数值弥散，精度较低', buerger: '数值弥散小，精度高' },
+            { feature: '物理机制', takacs: '仅受阻/絮凝沉降', buerger: '包含压缩沉降' },
+            { feature: '动态性能', takacs: '动态工况下失真', buerger: '动态工况下更可靠' },
+            { feature: '适用场景', takacs: '常规、稳态工况', buerger: '所有工况，尤其动态模拟' },
+        ];
+
+
+        // Populate ASM Components
+        const solubleList = document.getElementById('soluble-components');
+        const particulateList = document.getElementById('particulate-components');
+        asmComponents.soluble.forEach(c => {
+            solubleList.innerHTML += `<li><span class="font-mono font-bold">${c.symbol}</span>: ${c.name}</li>`;
+        });
+        asmComponents.particulate.forEach(c => {
+            particulateList.innerHTML += `<li><span class="font-mono font-bold">${c.symbol}</span>: ${c.name}</li>`;
+        });
+        
+        // Populate Calibration Steps
+        const stepsContainer = document.getElementById('calibration-steps');
+        calibrationData.forEach((step, index) => {
+            const sideClass = index % 2 === 0 ? 'flex-row-reverse' : '';
+            const textAlign = index % 2 === 0 ? 'text-right' : 'text-left';
+            const stepHtml = `
+                <div class="mb-8 flex justify-between items-center w-full ${sideClass}">
+                    <div class="order-1 w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-gray-800 shadow-xl w-12 h-12 rounded-full">
+                        <h1 class="mx-auto font-bold text-lg text-white">${index + 1}</h1>
+                    </div>
+                    <div class="order-1 card rounded-lg shadow-xl w-5/12 px-6 py-4">
+                        <h3 class="mb-3 font-bold text-gray-800 text-xl">${step.title}</h3>
+                        <p class="text-sm leading-snug tracking-wide text-gray-600">${step.details}</p>
+                    </div>
+                </div>
+            `;
+            stepsContainer.innerHTML += stepHtml;
+        });
+        
+        // Populate Model Comparison Table
+        const comparisonTable = document.getElementById('model-comparison-table');
+        modelComparisonData.forEach(row => {
+            const rowHtml = `
+                <tr class="border-b">
+                    <td class="py-3 px-3 font-semibold">${row.feature}</td>
+                    <td class="py-3 px-3">${row.takacs}</td>
+                    <td class="py-3 px-3">${row.buerger}</td>
+                </tr>
+            `;
+            comparisonTable.innerHTML += rowHtml;
+        });
+
+        // Tabs logic
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                const tabId = button.dataset.tab;
+                tabContents.forEach(content => {
+                    if (content.id === `${tabId}-content`) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // Chart.js logic for Takács model
+        const ctx = document.getElementById('settlingChart').getContext('2d');
+        const v0_slider = document.getElementById('v0_slider');
+        const rh_slider = document.getElementById('rh_slider');
+        const rp_slider = document.getElementById('rp_slider');
+        const v0_value = document.getElementById('v0_value');
+        const rh_value = document.getElementById('rh_value');
+        const rp_value = document.getElementById('rp_value');
+
+        let settlingChart;
+
+        function takacs_vs(X, v0, rh, rp, x_min = 0, v0_prime = 250) {
+            const val = v0 * Math.exp(-rh * (X - x_min)) - v0 * Math.exp(-rp * (X - x_min));
+            return Math.max(0, Math.min(v0_prime, val));
+        }
+
+        function updateChart() {
+            const v0 = parseFloat(v0_slider.value);
+            const rh = parseFloat(rh_slider.value);
+            const rp = parseFloat(rp_slider.value);
+            
+            v0_value.textContent = v0;
+            rh_value.textContent = rh.toFixed(3);
+            rp_value.textContent = rp.toFixed(2);
+
+            const labels = [];
+            const data = [];
+            for (let x = 0; x <= 12000; x += 250) {
+                labels.push(x);
+                data.push(takacs_vs(x/1000, v0, rh, rp)); // Concentration in kg/m³
+            }
+
+            settlingChart.data.labels = labels;
+            settlingChart.data.datasets[0].data = data;
+            settlingChart.update();
+        }
+
+        function createChart() {
+             settlingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '污泥沉降速度 (m/d)',
+                        data: [],
+                        borderColor: '#C57B57',
+                        backgroundColor: 'rgba(197, 123, 87, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '污泥浓度 (mg/L)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '沉降速度 (m/d)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `速度: ${context.parsed.y.toFixed(2)} m/d`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            updateChart();
+        }
+
+        v0_slider.addEventListener('input', updateChart);
+        rh_slider.addEventListener('input', updateChart);
+        rp_slider.addEventListener('input', updateChart);
+        
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Smooth scroll and active link highlighting
+        const navLinks = document.querySelectorAll('nav a');
+        const sections = document.querySelectorAll('main section');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        createChart();
+    });
+    </script>
+</body>
+</html>

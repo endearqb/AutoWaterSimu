@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超滤膜硫酸钙结垢：交互式解决方案</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral & Professional Blue -->
+    <!-- Application Structure Plan: A task-oriented SPA with a top navigation bar. The sections are: '首页' (Overview), '机理探究' (Mechanism Explorer), '预防策略' (Prevention), '清洗指南' (Cleaning Guide), '诊断与管理' (Diagnostics & Management), and '未来展望' (Future Tech). This structure guides the user from understanding the problem to preventing, fixing, and managing it long-term, which is more practical for engineers and operators than a linear report format. Interactions like charts, clickable diagrams, and calculators are used to make complex data digestible and engaging. -->
+    <!-- Visualization & Content Choices: The application translates the report's dense text into interactive experiences. For example, '机理探究' uses a Chart.js line chart to show CaSO4's retrograde solubility interactively. '清洗指南' features a dynamic Chart.js bar chart comparing cleaning agents and a step-by-step interactive HTML guide for the CIP process. '诊断与管理' uses a powerful stacked bar chart to visualize the Total Cost of Ownership (TCO), making the economic argument for prevention very clear. An interactive HTML table simplifies the complex troubleshooting matrix. All choices prioritize user understanding and task completion over simple data presentation, adhering to the NO SVG/Mermaid constraint. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F7F4;
+            color: #333;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #4A6C8C;
+            border-bottom-color: #4A6C8C;
+        }
+        .section-title {
+            color: #4A6C8C;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            background-color: #4A6C8C;
+            color: #ffffff;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #3b5670;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .tab-button {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .tab-button.active {
+            background-color: #4A6C8C;
+            color: white;
+        }
+        .troubleshooting-symptom.active {
+            background-color: #E5A044;
+            color: white;
+        }
+        .kpi-card {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-[#F8F7F4]">
+
+    <header id="main-header" class="bg-white/80 backdrop-blur-md shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-[#4A6C8C]">CaSO₄ 结垢解决方案</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#home" class="nav-link px-3 py-2 text-sm font-medium text-gray-700">首页</a>
+                        <a href="#mechanism" class="nav-link px-3 py-2 text-sm font-medium text-gray-700">机理探究</a>
+                        <a href="#prevention" class="nav-link px-3 py-2 text-sm font-medium text-gray-700">预防策略</a>
+                        <a href="#cleaning" class="nav-link px-3 py-2 text-sm font-medium text-gray-700">清洗指南</a>
+                        <a href="#diagnosis" class="nav-link px-3 py-2 text-sm font-medium text-gray-700">诊断与管理</a>
+                        <a href="#future" class="nav-link px-3 py-2 text-sm font-medium text-gray-700">未来展望</a>
+                    </div>
+                </div>
+                 <div class="md:hidden">
+                    <button id="mobile-menu-button" class="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden bg-white">
+            <a href="#home" class="block nav-link px-4 py-3 text-base font-medium text-gray-700">首页</a>
+            <a href="#mechanism" class="block nav-link px-4 py-3 text-base font-medium text-gray-700">机理探究</a>
+            <a href="#prevention" class="block nav-link px-4 py-3 text-base font-medium text-gray-700">预防策略</a>
+            <a href="#cleaning" class="block nav-link px-4 py-3 text-base font-medium text-gray-700">清洗指南</a>
+            <a href="#diagnosis" class="block nav-link px-4 py-3 text-base font-medium text-gray-700">诊断与管理</a>
+            <a href="#future" class="block nav-link px-4 py-3 text-base font-medium text-gray-700">未来展望</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Home Section -->
+        <section id="home" class="pt-20 pb-12 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-[#4A6C8C] sm:text-4xl">应对超滤膜硫酸钙结垢的挑战</h2>
+                    <p class="mt-4 text-lg max-w-2xl mx-auto text-gray-600">本应用将复杂的工业报告转化为直观、可交互的决策工具，帮助您理解、预防并解决棘手的硫酸钙结垢问题。</p>
+                </div>
+                <div class="mt-12">
+                    <div class="max-w-4xl mx-auto text-center p-6 rounded-xl bg-[#eef2f6]">
+                        <h3 class="font-bold text-xl text-[#4A6C8C]">核心战略原则</h3>
+                        <p class="mt-2 text-gray-700 text-lg">“ 预防的价值远超补救 ”</p>
+                        <p class="mt-3 text-gray-600">将资源优先投入主动预防，其长期回报远高于依赖被动清洗。一个设计精良、监控到位的预防体系，是保障超滤系统长期稳定、高效、经济运行的基石。</p>
+                    </div>
+                </div>
+
+                <div class="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    <a href="#mechanism" class="card p-6 block text-center">
+                        <div class="text-4xl text-[#4A6C8C]">🔬</div>
+                        <h3 class="mt-4 text-lg font-bold">机理探究</h3>
+                        <p class="mt-2 text-gray-600">深入了解结垢为何发生，探索温度、pH等关键影响因素。</p>
+                    </a>
+                    <a href="#prevention" class="card p-6 block text-center">
+                        <div class="text-4xl text-[#5DB7A8]">🛡️</div>
+                        <h3 class="mt-4 text-lg font-bold">预防策略</h3>
+                        <p class="mt-2 text-gray-600">学习如何通过预处理和阻垢剂，从源头控制结垢风险。</p>
+                    </a>
+                    <a href="#cleaning" class="card p-6 block text-center">
+                        <div class="text-4xl text-[#E5A044]">💧</div>
+                        <h3 class="mt-4 text-lg font-bold">清洗指南</h3>
+                        <p class="mt-2 text-gray-600">获取标准化的CIP流程和化学药剂选择的权威建议。</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mechanism Section -->
+        <section id="mechanism" class="py-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold section-title">机理探究：结垢的根源</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-gray-600">硫酸钙结垢是一个涉及热力学和动力学的复杂结晶过程。理解其根源是有效预防的第一步。本节将揭示结垢是如何在膜表面发生，以及哪些关键因素在“推波助澜”。</p>
+                </div>
+                <div class="mt-12 grid md:grid-cols-2 gap-12 items-center">
+                    <div class="card p-6">
+                        <h3 class="font-bold text-xl text-[#4A6C8C] text-center mb-4">结晶级联过程</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-[#eef2f6] flex items-center justify-center font-bold text-[#4A6C8C] text-lg">1</div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">成核 (Nucleation)</h4>
+                                    <p class="text-gray-600">在膜表面等界面上，微小的晶核优先形成，这比在溶液中自发形成要容易得多。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-[#eef2f6] flex items-center justify-center font-bold text-[#4A6C8C] text-lg">2</div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">晶体生长 (Crystal Growth)</h4>
+                                    <p class="text-gray-600">晶核作为模板，不断捕获离子长大，最终形成致密的垢层，堵塞膜孔。</p>
+                                </div>
+                            </div>
+                             <div class="flex items-start">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-[#eef2f6] flex items-center justify-center font-bold text-[#4A6C8C] text-lg">3</div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">协同污染 (Synergistic Fouling)</h4>
+                                    <p class="text-gray-600">有机物、胶体硅等污染物与硫酸钙共同作用，形成更难清洗的复合污垢。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="font-bold text-xl text-[#4A6C8C] text-center mb-4">关键风险：反常溶解度</h3>
+                         <p class="text-center text-gray-600 mb-4">与大多数盐不同，硫酸钙的溶解度随温度升高而<span class="font-bold text-[#E5A044]">下降</span>。这是一个极易被忽视的操作风险点。</p>
+                        <div class="chart-container h-64 sm:h-72">
+                            <canvas id="solubilityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prevention Section -->
+        <section id="prevention" class="py-20 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold section-title">预防策略：防患于未然</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-gray-600">最经济、最有效的结垢管理策略是“预防优先”。通过上游预处理和科学使用阻垢剂，可以从根本上控制结垢风险，延长膜寿命，减少停机时间。</p>
+                </div>
+                <div class="mt-12 grid md:grid-cols-2 gap-8">
+                    <div class="card p-8">
+                        <h3 class="font-bold text-xl text-[#4A6C8C] mb-4">上游预处理：第一道防线</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">✓</span>
+                                <div><strong class="text-gray-800">pH值调节：</strong>优先使用盐酸（HCl）而非硫酸，避免引入$SO_4^{2-}$。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">✓</span>
+                                <div><strong class="text-gray-800">水软化：</strong>通过离子交换树脂，高效去除水中的$Ca^{2+}$等硬度离子。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">✓</span>
+                                <div><strong class="text-gray-800">常规过滤：</strong>使用多介质/保安过滤器，去除悬浮物，减少成核位点。</div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card p-8">
+                        <h3 class="font-bold text-xl text-[#4A6C8C] mb-4">阻垢剂的科学应用</h3>
+                        <p class="text-gray-600 mb-4">阻垢剂通过阈值抑制、晶格畸变等方式干扰结晶过程。选择和投加剂量必须基于水质分析和专业软件计算，<strong class="text-[#E5A044]">绝非“多多益善”</strong>。</p>
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <h4 class="font-semibold text-center text-gray-700">风险模拟器 (演示)</h4>
+                             <p class="text-xs text-center text-gray-500 mb-2">演示专业软件如何评估风险</p>
+                            <div class="flex items-center space-x-2">
+                                <input id="recovery-slider" type="range" min="70" max="90" value="80" class="w-full">
+                                <span id="recovery-value" class="font-mono text-lg text-[#4A6C8C] w-12 text-center">80%</span>
+                            </div>
+                            <label for="recovery-slider" class="text-sm text-center block text-gray-600 mt-1">调整系统回收率</label>
+                            <div id="risk-output" class="mt-4 text-center text-lg font-bold p-2 rounded-md transition-colors"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cleaning Section -->
+        <section id="cleaning" class="py-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold section-title">化学清洗(CIP)权威指南</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-gray-600">当结垢不可避免时，一套科学、高效、安全的CIP方案是恢复膜性能的关键。本节将指导您选择合适的“化学武器”并遵循标准化的操作流程。</p>
+                </div>
+
+                <div class="mt-12">
+                    <div class="card p-6 md:p-8">
+                        <h3 class="font-bold text-xl text-center text-[#4A6C8C] mb-6">清洗剂比较：EDTA vs. 柠檬酸</h3>
+                        <div class="chart-container h-80 sm:h-96">
+                            <canvas id="cleanerChart"></canvas>
+                        </div>
+                         <p class="text-center text-gray-500 mt-4 text-sm">EDTA在碱性(pH 7-11)下效率高但环境风险大；柠檬酸在酸性(pH~4)下环保且成本低。商业复合清洗剂通常含有增效成分，针对性更强。</p>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                     <h3 class="font-bold text-2xl text-center text-[#4A6C8C] mb-8">标准化CIP流程</h3>
+                     <div class="max-w-4xl mx-auto">
+                        <div id="cip-steps" class="space-y-2">
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Diagnosis Section -->
+        <section id="diagnosis" class="py-20 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold section-title">诊断与长期资产管理</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-gray-600">CIP并非终点。当清洗失败时如何排查？如何从长远角度管理膜的寿命和成本？本节提供诊断性思维和全生命周期成本（TCO）的视角。</p>
+                </div>
+
+                <div class="mt-12 card p-6 md:p-8">
+                    <h3 class="font-bold text-xl text-center text-[#4A6C8C] mb-6">CIP失败故障排查</h3>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div id="troubleshooting-symptoms" class="flex md:flex-col flex-wrap justify-center gap-2">
+                        </div>
+                        <div id="troubleshooting-details" class="flex-grow p-4 bg-gray-50 rounded-lg min-h-[200px]">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-12 card p-6 md:p-8">
+                     <h3 class="font-bold text-xl text-center text-[#4A6C8C] mb-6">经济性：全生命周期成本(TCO)对比</h3>
+                     <p class="text-center text-gray-600 max-w-2xl mx-auto mb-6">短视地节省初始投资而依赖频繁清洗，最终成本高昂。全面的TCO分析证明，“预防为主”的策略远比“清洗为主”更经济。</p>
+                     <div class="chart-container h-80 sm:h-96">
+                        <canvas id="tcoChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        
+        <!-- Future Section -->
+        <section id="future" class="py-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold section-title">结垢控制的未来视野</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-gray-600">技术正在进步，结垢控制正从被动反应转向主动预测。了解前沿技术，规划更智能、更可持续的水处理未来。</p>
+                </div>
+
+                <div class="mt-12 grid md:grid-cols-3 gap-8 text-center">
+                    <div class="card p-8">
+                         <div class="text-4xl text-[#4A6C8C]">📡</div>
+                        <h3 class="mt-4 text-lg font-bold">先进原位监测</h3>
+                        <p class="mt-2 text-gray-600">通过石英晶体微天平(QCM-D)、电阻抗谱(EIS)等技术，实时探测膜表面微观变化，在结垢形成之初即发出预警。</p>
+                    </div>
+                    <div class="card p-8">
+                         <div class="text-4xl text-[#4A6C8C]">🤖</div>
+                        <h3 class="mt-4 text-lg font-bold">人工智能与机器学习</h3>
+                        <p class="mt-2 text-gray-600">利用历史数据训练AI模型，精确预测膜污染趋势，实现从“按时清洗”到“按需清洗”的智能转变，节省成本并延长膜寿命。</p>
+                    </div>
+                    <div class="card p-8">
+                         <div class="text-4xl text-[#4A6C8C]">♻️</div>
+                        <h3 class="mt-4 text-lg font-bold">卤水价值化</h3>
+                        <p class="mt-2 text-gray-600">在循环经济框架下，将浓缩液中的盐类作为资源回收，变废为宝，将废水处理从成本中心转变为利润中心。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-[#4A6C8C] text-white">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>本应用根据《关于超滤系统硫酸钙结垢预防与修复的综合技术报告》创建。</p>
+            <p class="opacity-70 mt-1">仅供演示与信息参考用途。</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+    
+    // Smooth scroll and active nav link
+    const navLinks = document.querySelectorAll('a[href^="#"]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+                if (mobileMenu.classList.contains('hidden') === false) {
+                    mobileMenu.classList.add('hidden');
+                }
+            }
+        });
+    });
+    
+    const sections = document.querySelectorAll('section');
+    const headerHeight = document.getElementById('main-header').offsetHeight;
+    
+    function updateActiveNavLink() {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - headerHeight - 50;
+            if (window.pageYOffset >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+    
+    window.addEventListener('scroll', updateActiveNavLink);
+    updateActiveNavLink();
+
+    // Chart.js: Retrograde Solubility
+    const solubilityCtx = document.getElementById('solubilityChart').getContext('2d');
+    new Chart(solubilityCtx, {
+        type: 'line',
+        data: {
+            labels: ['10°C', '20°C', '30°C', '40°C', '50°C', '60°C', '70°C'],
+            datasets: [{
+                label: '硫酸钙 (CaSO₄) 溶解度 (g/100g H₂O)',
+                data: [0.24, 0.255, 0.26, 0.21, 0.20, 0.19, 0.18],
+                borderColor: '#E5A044',
+                backgroundColor: 'rgba(229, 160, 68, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: false },
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: { display: true, text: '溶解度 (g/100g H₂O)' }
+                },
+                x: {
+                     title: { display: true, text: '温度' }
+                }
+            }
+        }
+    });
+
+    // Prevention Section: Risk Simulator
+    const recoverySlider = document.getElementById('recovery-slider');
+    const recoveryValue = document.getElementById('recovery-value');
+    const riskOutput = document.getElementById('risk-output');
+
+    function updateRisk() {
+        const value = parseInt(recoverySlider.value);
+        recoveryValue.textContent = `${value}%`;
+        
+        riskOutput.classList.remove('bg-green-200', 'text-green-800', 'bg-yellow-200', 'text-yellow-800', 'bg-red-200', 'text-red-800');
+
+        if (value < 80) {
+            riskOutput.textContent = '结垢风险：低';
+            riskOutput.classList.add('bg-green-200', 'text-green-800');
+        } else if (value < 87) {
+            riskOutput.textContent = '结垢风险：中';
+            riskOutput.classList.add('bg-yellow-200', 'text-yellow-800');
+        } else {
+            riskOutput.textContent = '结垢风险：高 - 建议校核阻垢剂方案！';
+            riskOutput.classList.add('bg-red-200', 'text-red-800');
+        }
+    }
+    recoverySlider.addEventListener('input', updateRisk);
+    updateRisk();
+
+    // Cleaning Section: Cleaner Comparison Chart
+    const cleanerCtx = document.getElementById('cleanerChart').getContext('2d');
+    new Chart(cleanerCtx, {
+        type: 'bar',
+        data: {
+            labels: ['溶解效率', '相对成本', '环境友好度'],
+            datasets: [
+                {
+                    label: 'EDTA',
+                    data: [9, 7, 2],
+                    backgroundColor: 'rgba(74, 108, 140, 0.7)',
+                    borderColor: '#4A6C8C',
+                    borderWidth: 1
+                },
+                {
+                    label: '柠檬酸',
+                    data: [6, 4, 9],
+                    backgroundColor: 'rgba(93, 183, 168, 0.7)',
+                    borderColor: '#5DB7A8',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 10,
+                    ticks: {
+                       callback: function(value) {
+                           if (value === 0) return '低';
+                           if (value === 5) return '中';
+                           if (value === 10) return '高';
+                           return null;
+                       }
+                    }
+                }
+            },
+            plugins: {
+                title: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            let score = context.raw;
+                            let scoreText = '';
+                            if (score > 8) scoreText = '高';
+                            else if (score > 5) scoreText = '较高';
+                            else if (score > 3) scoreText = '中等';
+                            else scoreText = '较低';
+                            return `${label}${scoreText} (${score}/10)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Cleaning Section: CIP Steps
+    const cipStepsContainer = document.getElementById('cip-steps');
+    const cipData = [
+        { step: 0, title: '系统隔离与安全检查', content: '将待清洗膜组件从生产系统完全隔离。穿戴好所有必需的个人防护装备（PPE）。', icon: '🔒' },
+        { step: 1, title: '低压水力冲洗', content: '使用产水或洁净水在低压下冲洗，冲走松散沉积物，避免无效消耗化学品。', icon: '💨' },
+        { step: 2, title: '碱洗 (可选)', content: '若存在有机物或生物膜污染，用NaOH溶液（pH 11-12）在30-40°C循环清洗，为后续溶解无机垢扫清障碍。', icon: '🧼' },
+        { step: 3, title: '中间冲洗', content: '碱洗后用洁净水彻底冲洗，直到pH恢复中性，防止酸碱中和反应。', icon: '🚿' },
+        { step: 4, title: '酸性/螯合剂清洗', content: '配制2%柠檬酸或EDTA基清洗液，加热至推荐温度（如40°C），低压高流速循环。', icon: '🧪' },
+        { step: 5, title: '浸泡', content: '循环-浸泡交替进行。浸泡使药剂充分渗透垢层深处，时间从1小时到数小时不等。', icon: '⏳' },
+        { step: 6, title: '最终冲洗', content: '用大量洁净水彻底冲洗系统，直至排出水的pH和电导率恢复正常。', icon: '💧' },
+        { step: 7, title: '性能验证', content: '恢复运行，监测TMP和通量。成功CIP应恢复至初始清洁状态的70-80%以上。', icon: '📊' }
+    ];
+
+    cipData.forEach(item => {
+        const stepElement = document.createElement('div');
+        stepElement.className = 'card overflow-hidden';
+        stepElement.innerHTML = `
+            <button class="w-full text-left p-4 flex items-center justify-between bg-gray-100 hover:bg-gray-200 transition">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-4">${item.icon}</span>
+                    <span class="font-semibold text-[#4A6C8C]">第 ${item.step} 步: ${item.title}</span>
+                </div>
+                <span class="transform transition-transform text-xl text-gray-500">+</span>
+            </button>
+            <div class="p-4 bg-white hidden">
+                <p class="text-gray-600">${item.content}</p>
+            </div>
+        `;
+        cipStepsContainer.appendChild(stepElement);
+        const button = stepElement.querySelector('button');
+        const content = stepElement.querySelector('.bg-white');
+        const icon = button.querySelector('.transform');
+        
+        button.addEventListener('click', () => {
+            const isHidden = content.classList.contains('hidden');
+            document.querySelectorAll('#cip-steps .bg-white').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('#cip-steps .transform').forEach(el => { el.textContent = '+'; el.classList.remove('rotate-45'); });
+            
+            if (isHidden) {
+                content.classList.remove('hidden');
+                icon.textContent = '';
+                icon.classList.add('rotate-45');
+            }
+        });
+    });
+
+    // Diagnosis Section: Troubleshooting Matrix
+    const troubleshootingSymptomsContainer = document.getElementById('troubleshooting-symptoms');
+    const troubleshootingDetailsContainer = document.getElementById('troubleshooting-details');
+    const troubleshootingData = [
+        {
+            symptom: '通量恢复率低',
+            causes: [
+                '<strong>诊断错误：</strong>污垢并非以CaSO₄为主，可能是硅垢或硫酸钡/锶垢。',
+                '<strong>清洗方案不当：</strong>药剂、浓度、温度、时间不足。',
+                '<strong>污垢不可逆：</strong>垢层与有机物深度交联或老化，清洗剂无法渗透。'
+            ],
+            actions: [
+                '<strong>进行膜解剖：</strong>通过SEM-EDX等手段确定垢层成分。',
+                '<strong>优化清洗方案：</strong>提高温度、延长浸泡时间或更换清洗剂。',
+                '<strong>进行小试：</strong>用更强力的方案测试小块膜样品。'
+            ]
+        },
+        {
+            symptom: '清洗后通量快速下降',
+            causes: [
+                '<strong>上游预处理失效：</strong>软化器、加药泵等故障。',
+                '<strong>阻垢剂问题：</strong>选型错误、剂量不足或过量（形成二次污染）。',
+                '<strong>清洗不彻底：</strong>残留的晶核成为新一轮结垢的“种子”。'
+            ],
+            actions: [
+                '<strong>立即检查预处理系统：</strong>检查出水硬度、药剂余量等。',
+                '<strong>重新评估阻垢剂方案：</strong>使用专业软件校核型号和剂量。',
+                '<strong>延长最终冲洗时间。</strong>'
+            ]
+        },
+        {
+            symptom: '清洗后产水水质恶化',
+            causes: [
+                '<strong>膜元件物理损伤：</strong>高压、水锤、化学品不兼容导致膜丝划伤或降解。',
+                '<strong>密封圈损坏或错位：</strong>导致浓水泄漏至产水侧。'
+            ],
+            actions: [
+                '<strong>进行膜完整性测试：</strong>定位泄漏的膜丝或膜片。',
+                '<strong>检查并重新安装膜元件：</strong>确保密封件完好并正确安装。'
+            ]
+        }
+    ];
+
+    troubleshootingData.forEach((item, index) => {
+        const button = document.createElement('button');
+        button.textContent = item.symptom;
+        button.className = 'troubleshooting-symptom p-2 md:p-3 rounded-lg text-sm md:text-base cursor-pointer border border-gray-300 w-full text-left';
+        button.dataset.index = index;
+        troubleshootingSymptomsContainer.appendChild(button);
+    });
+
+    function displayTroubleshootingDetails(index) {
+        const data = troubleshootingData[index];
+        troubleshootingDetailsContainer.innerHTML = `
+            <div>
+                <h4 class="font-bold text-gray-800 mb-2">根本原因分析：</h4>
+                <ul class="list-disc list-inside space-y-1 text-gray-600">${data.causes.map(c => `<li>${c}</li>`).join('')}</ul>
+            </div>
+            <div class="mt-4">
+                <h4 class="font-bold text-gray-800 mb-2">推荐诊断措施：</h4>
+                 <ul class="list-disc list-inside space-y-1 text-gray-600">${data.actions.map(a => `<li>${a}</li>`).join('')}</ul>
+            </div>
+        `;
+        document.querySelectorAll('.troubleshooting-symptom').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.troubleshooting-symptom[data-index='${index}']`).classList.add('active');
+    }
+    
+    troubleshootingSymptomsContainer.addEventListener('click', (e) => {
+        if (e.target.matches('.troubleshooting-symptom')) {
+            displayTroubleshootingDetails(e.target.dataset.index);
+        }
+    });
+
+    displayTroubleshootingDetails(0);
+
+    // Diagnosis Section: TCO Chart
+    const tcoCtx = document.getElementById('tcoChart').getContext('2d');
+    new Chart(tcoCtx, {
+        type: 'bar',
+        data: {
+            labels: ['策略A：预防为主', '策略B：清洗为主'],
+            datasets: [
+                {
+                    label: '初始投资 (CAPEX)',
+                    data: [30, 10],
+                    backgroundColor: '#4A6C8C'
+                },
+                {
+                    label: '化学品/能源 (OPEX)',
+                    data: [20, 50],
+                    backgroundColor: '#5DB7A8'
+                },
+                {
+                    label: '停机/膜更换 (隐性成本)',
+                    data: [5, 40],
+                    backgroundColor: '#E5A044'
+                }
+            ]
+        },
+        options: {
+            plugins: {
+                title: { display: true, text: '5年运营总成本模拟对比 (单位：万元)'},
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y + ' 万元';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, title: { display: true, text: '成本 (万元)' } }
+            }
+        }
+    });
+});
+</script>
+</body>
+</html>

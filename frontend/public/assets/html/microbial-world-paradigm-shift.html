@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微生物世界的范式转移：互动解读</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Earthy Harmony -->
+    <!-- Application Structure Plan: 本应用采用“比较故事”的叙事结构，旨在引导用户理解报告的核心论点：环境压力驱动微生物生态系统的根本性重塑。结构如下：1. **引言**：提出“环境塑造生命引擎”的核心主题。2. **核心原理**：用视觉化方式解释寡营养(K)与富营养(r)策略。3. **案例一：硝化作用**：通过互动滑块（氨浓度）和图表，让用户动态比较AOA与AOB的生态位。4. **案例二：厌氧消化**：通过互动开关（温度）和图表/流程图，让用户动态比较MAD与TAD的微生物群落和代谢途径。这种并列结构强化了两个案例间的类比关系。5. **综合分析**：通过总结对比和工程启示，升华主题，将科学发现与实际应用联系起来。此结构旨在将线性报告转化为探索性学习体验，优先考虑概念的理解而非信息的罗列。 -->
+    <!-- Visualization & Content Choices: 1. **AOA/AOB对比**: 目标：比较。方法：使用一个水平条形图(Chart.js)动态展示在不同“氨浓度”（通过滑块控制）下AOA与AOB的相对丰度。交互：用户拖动滑块，图表和旁边的文字解释会实时更新，直观展示K/r策略的竞争结果。2. **MAD/TAD对比**: 目标：比较两种工艺下的群落结构和核心代谢通路。方法：使用一个双状态切换器（中温/高温）。切换状态会同时更新两个可视化元素：a) 一个甜甜圈图(Chart.js)显示关键微生物类群的丰度变化；b) 一个使用HTML/Tailwind构建的、非SVG的流程图，清晰地展示乙酸营养型产甲烷与互营乙酸氧化(SAO)这两种核心代谢途径的切换。交互：点击按钮在两种模式间切换，让代谢途径和微生物群落的变化一目了然。3. **特征雷达图**: 目标：组织和比较AOA/AOB的多维度特征。方法：使用雷达图(Chart.js)展示两者在氨亲和力、氧亲和力、pH适应性等方面的差异，比表格更具视觉冲击力。4. **总结对比**: 目标：综合信息。方法：使用简洁的HTML表格，将两个案例的关键驱动因素、参与者、代谢策略和工程意义并列，帮助用户固化认知。所有选择均基于Chart.js和HTML/CSS，确保无SVG/Mermaid。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF8; /* Warm Neutral Background */
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #C77D55; /* Accent Color */
+        }
+        .btn-primary {
+            background-color: #7B8B76; /* Muted Green */
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #6A7A65;
+        }
+        .btn-secondary {
+            background-color: #EAE3D9; /* Light Neutral */
+            color: #4A4A4A;
+            transition: background-color 0.3s;
+        }
+        .btn-secondary.active {
+            background-color: #C77D55; /* Accent Color */
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: #C77D55;
+            margin-top: 1rem;
+        }
+        .flow-box {
+            border: 2px solid #D1C7B9;
+            background-color: #F9F6F2;
+        }
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: #7B8B76;
+        }
+    </style>
+</head>
+<body class="leading-relaxed">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-[#4A4A4A]">微生物生态学新视角</div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#intro" class="nav-link">引言</a>
+                <a href="#case1" class="nav-link">案例一: 硝化作用</a>
+                <a href="#case2" class="nav-link">案例二: 厌氧消化</a>
+                <a href="#synthesis" class="nav-link">综合分析</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="intro" class="container mx-auto px-6 py-16 md:py-24 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">微生物世界的范式转移</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">环境如何筛选并重塑驱动地球生物化学循环的微观引擎？本应用将通过两个关键生物过程的互动分析，揭示生态位分化的普适法则。</p>
+        </section>
+
+        <section id="case1" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold section-title inline-block">案例一：硝化作用的竞争</h2>
+                    <p class="mt-4 text-gray-600 max-w-2xl mx-auto">长久以来，氨氧化被认为是细菌(AOB)的专属领域。然而，氨氧化古菌(AOA)的发现彻底改变了这一认知。两者间的竞争核心在于对“食物”——氨——的获取策略。请拖动下面的滑块，模拟环境中氨浓度的变化，观察它们的丰度如何此消彼长。</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <div class="mb-4">
+                            <label for="ammoniaSlider" class="block font-medium mb-2 text-center">环境氨浓度</label>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm">极低 (寡营养)</span>
+                                <input id="ammoniaSlider" type="range" min="0" max="100" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" style="accent-color: #C77D55;">
+                                <span class="text-sm">极高 (富营养)</span>
+                            </div>
+                        </div>
+                        <div id="aoa_aob_description" class="p-6 rounded-lg bg-[#F9F6F2]">
+                            <h3 class="font-bold text-lg mb-2">生态位解读</h3>
+                            <p class="text-gray-700"></p>
+                        </div>
+                        <div class="mt-8">
+                             <h3 class="font-bold text-lg mb-2 text-center">多维度特征对比</h3>
+                             <div class="chart-container h-64 md:h-80">
+                                <canvas id="traitChartAOA_AOB"></canvas>
+                             </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg mb-2 text-center">相对丰度模拟</h3>
+                        <div class="chart-container h-80 md:h-96">
+                            <canvas id="abundanceChartAOA_AOB"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="case2" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold section-title inline-block">案例二：厌氧消化的重塑</h2>
+                    <p class="mt-4 text-gray-600 max-w-2xl mx-auto">厌氧消化是变废为宝的关键技术。温度是决定其内部微生物群落和代谢路径的“指挥棒”。请点击下方按钮，在传统“中温”和高效“高温”工艺间切换，观察微生物结构和核心代谢流如何发生根本性转变。</p>
+                </div>
+                
+                <div class="text-center mb-8">
+                    <div id="tempToggle" class="inline-flex rounded-lg shadow-sm">
+                        <button data-temp="mad" class="btn-secondary px-6 py-2 rounded-l-lg">中温消化 (MAD)</button>
+                        <button data-temp="tad" class="btn-secondary px-6 py-2 rounded-r-lg">高温消化 (TAD)</button>
+                    </div>
+                </div>
+
+                <div class="grid lg:grid-cols-2 gap-12 items-start">
+                    <div>
+                        <h3 class="font-bold text-xl mb-4 text-center">核心代谢途径</h3>
+                        <div id="mad-pathway" class="space-y-4">
+                            <div class="p-4 rounded-lg flow-box text-center">
+                                <p class="font-semibold">复杂有机物</p>
+                                <p class="text-sm">(蛋白质, 糖类)</p>
+                            </div>
+                            <div class="text-center flow-arrow">↓</div>
+                            <div class="p-4 rounded-lg flow-box text-center">
+                                <p class="font-semibold">挥发性脂肪酸 (VFA)</p>
+                            </div>
+                            <div class="text-center flow-arrow">↓</div>
+                            <div class="p-4 rounded-lg flow-box text-center bg-[#D1C7B9]/30 border-[#C77D55]">
+                                <p class="font-bold text-[#C77D55]">乙酸 (CH₃COOH)</p>
+                                <p class="text-sm text-[#C77D55]">关键中间产物</p>
+                            </div>
+                             <div class="text-center flow-arrow">↓</div>
+                            <div class="p-4 rounded-lg flow-box text-center">
+                                <p class="font-semibold">甲烷 (CH₄)</p>
+                                <p class="text-sm font-bold text-green-700">主要途径: 乙酸营养型</p>
+                            </div>
+                        </div>
+
+                        <div id="tad-pathway" class="hidden space-y-4">
+                           <div class="p-4 rounded-lg flow-box text-center">
+                                <p class="font-semibold">复杂有机物</p>
+                                <p class="text-sm">(蛋白质, 糖类)</p>
+                            </div>
+                            <div class="text-center flow-arrow">↓</div>
+                            <div class="grid grid-cols-5 gap-2 items-center">
+                                <div class="col-span-2 p-4 rounded-lg flow-box text-center">
+                                     <p class="font-semibold">乙酸 (CH₃COOH)</p>
+                                </div>
+                                <div class="text-center flow-arrow">→</div>
+                                <div class="col-span-2 p-4 rounded-lg flow-box text-center bg-[#D1C7B9]/30 border-[#7B8B76]">
+                                    <p class="font-bold text-[#7B8B76]">H₂ + CO₂</p>
+                                </div>
+                            </div>
+                             <p class="text-xs text-center my-1">互营乙酸氧化 (SAO) by "T-菌"</p>
+                             <div class="text-center flow-arrow">↓</div>
+                             <div class="p-4 rounded-lg flow-box text-center">
+                                <p class="font-semibold">甲烷 (CH₄)</p>
+                                <p class="text-sm font-bold text-green-700">主要途径: 氢营养型</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div>
+                        <h3 class="font-bold text-xl mb-4 text-center">关键微生物群落</h3>
+                        <p id="community-desc" class="text-center text-sm text-gray-500 mb-4"></p>
+                        <div class="chart-container h-80 md:h-96">
+                            <canvas id="communityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="synthesis" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                     <h2 class="text-3xl font-bold section-title inline-block">综合分析：殊途同归的生态法则</h2>
+                    <p class="mt-4 text-gray-600 max-w-2xl mx-auto">两个案例看似不同，却共同揭示了“生态位分化”这一核心法则：环境筛选出最适应的物种，并塑造出独特的代谢网络。这种从“黑箱”到“白箱”的认知升级，为设计和优化生物工艺提供了前所未有的机遇。</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-max text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#EAE3D9]">
+                                <th class="p-4 font-bold">比较维度</th>
+                                <th class="p-4 font-bold">案例一: 硝化作用</th>
+                                <th class="p-4 font-bold">案例二: 厌氧消化</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4 font-medium">主要选择压力</td>
+                                <td class="p-4">生物化学性 (氨浓度)</td>
+                                <td class="p-4">物理性 (温度)</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4 font-medium">生态策略</td>
+                                <td class="p-4">寡营养 (K策略) vs. 富营养 (r策略)</td>
+                                <td class="p-4">嗜中温 vs. 嗜热 (极端环境适应)</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4 font-medium">"传统" 主力</td>
+                                <td class="p-4">氨氧化细菌 (AOB)</td>
+                                <td class="p-4">中温菌群 (乙酸营养型古菌)</td>
+                            </tr>
+                             <tr class="hover:bg-gray-50">
+                                <td class="p-4 font-medium">"新兴" 主力</td>
+                                <td class="p-4">氨氧化古菌 (AOA)</td>
+                                <td class="p-4">高温菌群 ("T-菌" + 氢营养型古菌)</td>
+                            </tr>
+                             <tr class="hover:bg-gray-50">
+                                <td class="p-4 font-medium">核心代谢转变</td>
+                                <td class="p-4">无代谢途径转变，为功能执行者更替</td>
+                                <td class="p-4">乙酸营养型 → 互营乙酸氧化 (SAO)</td>
+                            </tr>
+                             <tr class="hover:bg-gray-50">
+                                <td class="p-4 font-medium">工艺启示</td>
+                                <td class="p-4">修正全球氮循环模型，为农业、污水处理提供新思路</td>
+                                <td class="p-4">解释TAD高效率与脆弱性，指导反应器设计与过程监控</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-6">
+        <p>&copy; 2025 微生物生态学互动解读。基于报告数据生成。</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Data from Report ---
+            const aoaAobData = {
+                traits: {
+                    labels: ['氨亲和力', '氧亲和力', 'pH耐受范围(偏酸性)', '生长策略(寡营养)', '能耗效率'],
+                    aoa: [9, 8, 8, 9, 8], // Scaled 1-10 for visualization
+                    aob: [3, 5, 5, 3, 4]
+                },
+                descriptions: [
+                    { range: [0, 30], text: '在氨浓度极低的环境中，AOA凭借其对底物极高的亲和力（K-策略）和低能耗的生存方式占据绝对优势，是寡营养环境中的主要贡献者。' },
+                    { range: [31, 70], text: '在氨浓度中等的环境中，AOA和AOB形成竞争关系。AOB作为机会主义者(r-策略)，开始展现其快速响应能力，两者共同存在。' },
+                    { range: [71, 100], text: '在氨浓度极高的富营养环境中，AOB凭借其快速生长和高代谢速率的特性占据主导地位，贡献了主要的硝化通量。AOA的生长可能受到高浓度氨的抑制。' }
+                ]
+            };
+
+            const madTadData = {
+                mad: {
+                    description: '中温消化(MAD)系统微生物多样性高，功能冗余强，运行稳定。以乙酸营养型产甲烷为核心，代表菌群为Methanosaeta和Methanosarcina。',
+                    community: {
+                        labels: ['乙酸营养型古菌', '氢营养型古菌', '多样化细菌'],
+                        data: [40, 15, 45],
+                        colors: ['#C77D55', '#7B8B76', '#EAE3D9']
+                    }
+                },
+                tad: {
+                    description: '高温消化(TAD)系统筛选出高度特化的嗜热菌群，多样性降低。核心代谢转变为互营乙酸氧化(SAO)与氢营养型产甲烷的紧密耦合。',
+                    community: {
+                        labels: ['"T-菌" (SAOB)', '氢营养型古菌', '其他嗜热菌'],
+                        data: [45, 40, 15],
+                        colors: ['#B36A5E', '#5A7D7C', '#EAE3D9']
+                    }
+                }
+            };
+            
+            // --- Chart.js Instances ---
+            let abundanceChart, traitChart, communityChart;
+
+            // --- Helper Functions ---
+            const renderAbundanceChart = () => {
+                const ctx = document.getElementById('abundanceChartAOA_AOB').getContext('2d');
+                abundanceChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['氨氧化古菌 (AOA)', '氨氧化细菌 (AOB)'],
+                        datasets: [{
+                            label: '相对丰度',
+                            data: [80, 20],
+                            backgroundColor: ['#7B8B76', '#C77D55'],
+                            borderColor: ['#6A7A65', '#B36A5E'],
+                            borderWidth: 1,
+                            maxBarThickness: 80
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: (value) => value + '%'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `${context.dataset.label}: ${context.raw.toFixed(0)}%`
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const renderTraitChart = () => {
+                const ctx = document.getElementById('traitChartAOA_AOB').getContext('2d');
+                traitChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: aoaAobData.traits.labels,
+                        datasets: [
+                            {
+                                label: 'AOA (古菌)',
+                                data: aoaAobData.traits.aoa,
+                                backgroundColor: 'rgba(123, 139, 118, 0.2)',
+                                borderColor: '#7B8B76',
+                                pointBackgroundColor: '#7B8B76',
+                                pointBorderColor: '#fff',
+                            },
+                            {
+                                label: 'AOB (细菌)',
+                                data: aoaAobData.traits.aob,
+                                backgroundColor: 'rgba(199, 125, 85, 0.2)',
+                                borderColor: '#C77D55',
+                                pointBackgroundColor: '#C77D55',
+                                pointBorderColor: '#fff',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 10,
+                                pointLabels: { font: { size: 12 } },
+                                grid: { color: '#EAE3D9' },
+                                angleLines: { color: '#EAE3D9' }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                        }
+                    }
+                });
+            };
+            
+            const renderCommunityChart = (temp = 'mad') => {
+                 const ctx = document.getElementById('communityChart').getContext('2d');
+                 const data = madTadData[temp].community;
+                 communityChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: data.data,
+                            backgroundColor: data.colors,
+                            borderColor: '#FDFBF8',
+                            borderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => ` ${context.label}: ${context.raw}%`
+                                }
+                            }
+                        }
+                    }
+                 });
+            };
+
+            // --- Interaction Logic ---
+            const ammoniaSlider = document.getElementById('ammoniaSlider');
+            const descriptionEl = document.querySelector('#aoa_aob_description p');
+
+            const updateAoaAob = (value) => {
+                const aoaAbundance = 100 - value * 0.9;
+                const aobAbundance = 100 - aoaAbundance;
+                abundanceChart.data.datasets[0].data = [aoaAbundance, aobAbundance];
+                abundanceChart.update();
+
+                const desc = aoaAobData.descriptions.find(d => value >= d.range[0] && value <= d.range[1]);
+                descriptionEl.textContent = desc ? desc.text : '';
+            };
+            
+            ammoniaSlider.addEventListener('input', (e) => {
+                updateAoaAob(e.target.value);
+            });
+
+            const tempToggle = document.getElementById('tempToggle');
+            const madPathway = document.getElementById('mad-pathway');
+            const tadPathway = document.getElementById('tad-pathway');
+            const communityDesc = document.getElementById('community-desc');
+
+            tempToggle.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON') return;
+                
+                const selectedTemp = e.target.dataset.temp;
+                const buttons = tempToggle.querySelectorAll('button');
+
+                buttons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if(btn.dataset.temp === selectedTemp) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                madPathway.classList.toggle('hidden', selectedTemp !== 'mad');
+                tadPathway.classList.toggle('hidden', selectedTemp !== 'tad');
+                
+                communityDesc.textContent = madTadData[selectedTemp].description;
+                
+                if (communityChart) {
+                    communityChart.destroy();
+                }
+                renderCommunityChart(selectedTemp);
+            });
+
+
+            // --- Smooth Scrolling for Nav ---
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // --- Initial Render ---
+            renderAbundanceChart();
+            renderTraitChart();
+            updateAoaAob(ammoniaSlider.value);
+            
+            // Set initial state for temp toggle
+            document.querySelector('#tempToggle button[data-temp="mad"]').classList.add('active');
+            communityDesc.textContent = madTadData.mad.description;
+            renderCommunityChart('mad');
+
+        });
+    </script>
+</body>
+</html>

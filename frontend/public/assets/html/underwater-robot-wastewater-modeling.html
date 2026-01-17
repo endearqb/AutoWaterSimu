@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水下机器人在污水处理厂应用的行业趋势与市场洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- 
+        Infographic Narrative Plan:
+        1.  标题 (Title): 水下机器人在污水处理厂应用的行业趋势与市场洞察
+        2.  引言 (Introduction): 传统污水处理面临的挑战，引出对精准数据和智能化解决方案的需求，水下机器人作为新兴技术出现。
+        3.  核心技术趋势 (Key Technology Trends):
+            - 机器人平台对比 (ROV vs AUV 在WWTP的适用性)
+            - WWTP环境下的先进传感技术 (声纳主导，光学为辅，水质传感挑战)
+            - 导航与定位的关键技术 (SLAM, 多传感器融合)
+        4.  市场驱动力与主要障碍 (Market Drivers & Barriers):
+            - 驱动力：提升效率、保障安全、数据驱动决策、法规要求。
+            - 障碍：恶劣环境（高浊度、腐蚀等）、技术成熟度、成本、数据集成。
+        5.  应用价值与效益 (Application Value & Benefits):
+            - 赋能精准建模 (ASM/CFD)，优化运营。
+            - 提升数据质量，支持科学决策。
+        6.  市场潜力展望 (Market Potential - Illustrative):
+            - (示意性) 市场规模增长趋势。
+            - (示意性) 技术采纳曲线。
+        7.  未来发展方向 (Future Outlook):
+            - AI与机器学习集成。
+            - 传感器技术突破 (小型化、抗污、多参数)。
+            - 机器人自主性与协同作业。
+        8.  结论 (Conclusion): 总结水下机器人在WWTP智能化转型中的关键作用和广阔前景。
+
+        Visualization Choices:
+        - 引言: 大数字突出传统挑战（如数据缺失率），配合图标。
+        - 机器人平台对比: 卡片式对比ROV与AUV在WWTP环境下的关键特性。
+        - 先进传感技术: 甜甜圈图展示不同传感器在WWTP环境下的适用性权重（声纳高，光学低等）。
+        - 市场驱动力: 图标列表。
+        - 主要障碍: HTML/CSS实现的SWOT分析风格布局（优势/劣势/机遇/挑战，这里简化为障碍和促成因素）。
+        - 应用价值: 流程图 (HTML/CSS) 展示机器人数据如何赋能ASM/CFD模型，最终提升运营。
+        - 市场潜力(示意性): 柱状图展示市场规模（假设）逐年增长；折线图展示技术采纳率（假设）随时间变化。
+        - 未来发展方向: 卡片式展示，配图标。
+        - Confirmation: NO SVG graphics were used. NO Mermaid JS was used. All diagrams are HTML/CSS or Canvas.
+        - Color Palette Chosen: Energetic & Playful (#FF6B6B, #FFD166, #06D6A0, #118AB2, #073B4C) 
+    -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width, can be overridden by Tailwind */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Default height */
+            max-height: 400px; /* Default max-height */
+        }
+        .section-title {
+            font-size: 2rem; /* 32px */
+            font-weight: 700;
+            color: #073B4C; /* Dark Blue/Teal from palette */
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .sub-section-title {
+            font-size: 1.5rem; /* 24px */
+            font-weight: 600;
+            color: #118AB2; /* Strong Blue from palette */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* 12px */
+            padding: 1.5rem; /* 24px */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .text-highlight {
+            color: #FF6B6B; /* Vibrant Red from palette */
+            font-weight: 600;
+        }
+        .icon-placeholder { /* For Unicode icons or simple text icons */
+            font-size: 2.5rem;
+            color: #06D6A0; /* Turquoise Green */
+            margin-bottom: 0.5rem;
+        }
+        .palette-energetic-red { color: #FF6B6B; }
+        .palette-energetic-yellow { color: #FFD166; }
+        .palette-energetic-green { color: #06D6A0; }
+        .palette-energetic-blue { color: #118AB2; }
+        .palette-energetic-darkblue { color: #073B4C; }
+
+        .bg-palette-energetic-red { background-color: #FF6B6B; }
+        .bg-palette-energetic-yellow { background-color: #FFD166; }
+        .bg-palette-energetic-green { background-color: #06D6A0; }
+        .bg-palette-energetic-blue { background-color: #118AB2; }
+        .bg-palette-energetic-darkblue { background-color: #073B4C; }
+        
+        /* Custom flow chart styles */
+        .flow-chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .flow-chart-item {
+            background-color: #e0f2fe; /* Light blue */
+            border: 2px solid #118AB2; /* Strong Blue */
+            color: #073B4C; /* Dark Blue/Teal */
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .flow-chart-arrow {
+            font-size: 1.5rem;
+            color: #118AB2; /* Strong Blue */
+            transform: rotate(90deg); /* For vertical flow */
+        }
+
+        /* Sticky Navigation (Optional - Basic Implementation) */
+        #sticky-nav {
+            position: sticky;
+            top: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 50;
+            padding: 0.5rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #sticky-nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #sticky-nav li a {
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: #073B4C;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        #sticky-nav li a:hover, #sticky-nav li a.active {
+            color: #FF6B6B;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <nav id="sticky-nav" class="hidden md:block">
+        <ul>
+            <li><a href="#introduction">引言</a></li>
+            <li><a href="#tech-trends">核心技术</a></li>
+            <li><a href="#market-drivers">市场驱动与障碍</a></li>
+            <li><a href="#app-value">应用价值</a></li>
+            <li><a href="#market-potential">市场潜力</a></li>
+            <li><a href="#future-outlook">未来展望</a></li>
+        </ul>
+    </nav>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center py-8 mb-8 bg-palette-energetic-darkblue text-white rounded-lg shadow-xl">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2">水下机器人在污水处理厂应用的行业趋势与市场洞察</h1>
+            <p class="text-lg md:text-xl text-palette-energetic-green">赋能精准建模，驱动智慧水务转型</p>
+        </header>
+
+        <section id="introduction" class="mb-12">
+            <h2 class="section-title">引言：挑战与机遇并存的污水处理行业</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="card">
+                    <p class="text-lg leading-relaxed">
+                        传统污水处理厂（WWTP）在过程优化、能耗控制和稳定达标方面面临持续挑战。其核心生物过程模型（如ASM、CFD）的准确性，高度依赖于对反应池内部物理化学状态的精准把握。然而，传统人工采样和固定传感器的局限性，导致了关键<span class="text-highlight">空间异质性数据</span>的缺失，制约了模型的预测能力和运营优化的深度。
+                    </p>
+                    <p class="text-lg leading-relaxed mt-4">
+                        在此背景下，水下机器人技术，凭借其搭载先进传感系统深入复杂水下环境的能力，正成为获取高精度、高密度原位数据的<span class="text-highlight">新兴解决方案</span>。这不仅为优化现有模型提供了可能，更为污水处理行业的智能化、精细化管理带来了新的发展契机。
+                    </p>
+                </div>
+                <div class="card text-center">
+                    <div class="icon-placeholder">🌊</div>
+                    <h3 class="sub-section-title !mt-0">传统数据采集的痛点</h3>
+                    <ul class="list-disc list-inside text-left space-y-1 text-gray-700">
+                        <li>数据空间代表性不足，难以捕捉异质性</li>
+                        <li>人工采样频率低、成本高、风险大</li>
+                        <li>固定传感器覆盖范围有限，维护困难</li>
+                        <li>精确物理参数（如池体几何、污泥分布）获取难</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech-trends" class="mb-12">
+            <h2 class="section-title">核心技术趋势：驱动变革的力量</h2>
+            <p class="text-center text-lg text-gray-600 mb-8">水下机器人技术的进步，正为污水处理厂的精细化管理带来革命性工具。</p>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card md:col-span-1">
+                    <h3 class="sub-section-title text-center">机器人平台：ROV与AUV的权衡</h3>
+                    <p class="mb-4 text-sm text-gray-600">在WWTP复杂环境中，ROV凭借其实时控制和持续供电能力，在精细检测任务中更具优势。</p>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-blue-50 rounded-lg border border-palette-energetic-blue">
+                            <h4 class="font-semibold text-palette-energetic-blue">ROV (遥控水下机器人)</h4>
+                            <ul class="list-disc list-inside text-xs text-gray-700">
+                                <li><span class="text-green-500 font-bold">✓</span> 实时控制与观察</li>
+                                <li><span class="text-green-500 font-bold">✓</span> 持续动力与高带宽数据</li>
+                                <li><span class="text-green-500 font-bold">✓</span> 复杂环境机动性好</li>
+                                <li><span class="text-red-500 font-bold">✗</span> 缆索限制与缠绕风险</li>
+                            </ul>
+                        </div>
+                        <div class="p-3 bg-yellow-50 rounded-lg border border-palette-energetic-yellow">
+                            <h4 class="font-semibold text-palette-energetic-yellow">AUV (自主水下航行器)</h4>
+                            <ul class="list-disc list-inside text-xs text-gray-700">
+                                <li><span class="text-green-500 font-bold">✓</span> 无缆索束缚，活动范围大</li>
+                                <li><span class="text-red-500 font-bold">✗</span> WWTP内部导航挑战大</li>
+                                <li><span class="text-red-500 font-bold">✗</span> 实时干预能力弱</li>
+                                <li><span class="text-red-500 font-bold">✗</span> 续航与载荷相对受限</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card md:col-span-1">
+                    <h3 class="sub-section-title text-center">先进传感技术：洞察水下奥秘</h3>
+                    <p class="mb-4 text-sm text-gray-600">声纳技术因其高浊度适应性成为首选，光学技术为辅，水质传感面临挑战。</p>
+                    <div class="chart-container h-56 max-h-64">
+                        <canvas id="sensorTechChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center mt-2 text-gray-500">示意图：不同传感技术在WWTP高浊度环境适用性</p>
+                </div>
+
+                <div class="card md:col-span-1">
+                    <h3 class="sub-section-title text-center">导航与定位：GPS缺失环境的挑战</h3>
+                     <p class="mb-4 text-sm text-gray-600">SLAM、多传感器融合是WWTP内部精准导航的关键。</p>
+                    <div class="flow-chart-container">
+                        <div class="flow-chart-item">挑战：GPS信号缺失</div>
+                        <div class="flow-chart-arrow">↓</div>
+                        <div class="flow-chart-item">挑战：高浊度、动态水流、多障碍</div>
+                        <div class="flow-chart-arrow">↓</div>
+                        <div class="flow-chart-item bg-green-100 border-palette-energetic-green">解决方案：声学SLAM</div>
+                        <div class="flow-chart-arrow">↓</div>
+                        <div class="flow-chart-item bg-green-100 border-palette-energetic-green">解决方案：多传感器融合 (INS, DVL, 声纳)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="market-drivers" class="mb-12">
+            <h2 class="section-title">市场驱动力与主要障碍</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="sub-section-title"><span class="icon-placeholder inline-block align-middle mr-2">🚀</span>市场驱动力</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start"><span class="text-palette-energetic-green text-xl mr-2">✔</span> 提升运营效率与处理效果的需求</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-green text-xl mr-2">✔</span> 保障作业安全，降低人工风险</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-green text-xl mr-2">✔</span> 数据驱动决策，实现精细化管理</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-green text-xl mr-2">✔</span> 日益严格的环保法规与排放标准</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-green text-xl mr-2">✔</span> 对基础设施（池体、设备）状态的精准评估需求</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 class="sub-section-title"><span class="icon-placeholder inline-block align-middle mr-2">🚧</span>主要障碍与挑战</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start"><span class="text-palette-energetic-red text-xl mr-2">✗</span> WWTP内部恶劣环境（高浊度、腐蚀、生物淤积）</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-red text-xl mr-2">✗</span> 机器人导航与传感器在特定环境下的技术成熟度</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-red text-xl mr-2">✗</span> 较高的初始投资成本与维护费用</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-red text-xl mr-2">✗</span> 海量数据的处理、分析与集成难度</li>
+                        <li class="flex items-start"><span class="text-palette-energetic-red text-xl mr-2">✗</span> 缺乏行业标准和专业操作人才</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="app-value" class="mb-12">
+            <h2 class="section-title">应用价值：赋能精准建模与智慧运营</h2>
+            <p class="text-center text-lg text-gray-600 mb-8">水下机器人获取的高质量数据，为优化WWTP生物过程模型、提升运营决策水平提供了坚实基础。</p>
+            <div class="card">
+                <h3 class="sub-section-title text-center">机器人数据如何增强WWTP模型</h3>
+                <div class="grid md:grid-cols-2 gap-6 mt-6 items-stretch">
+                    <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-300">
+                        <h4 class="font-semibold text-indigo-700 mb-2">1. 精确物理参数输入</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                            <li><span class="text-highlight">精确池体几何与容积：</span> 支持CFD模拟准确性，优化ASM中HRT计算。</li>
+                            <li><span class="text-highlight">高分辨率污泥剖面：</span> 改进CFD边界条件，精确ASM固体平衡与SRT。</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-teal-50 rounded-lg border border-teal-300">
+                        <h4 class="font-semibold text-teal-700 mb-2">2. 动态模型校准与验证</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                            <li><span class="text-highlight">三维水质参数建图：</span> 为ASM提供空间验证数据，支持动态校准。</li>
+                            <li><span class="text-highlight">连接CFD与ASM：</span> 验证CFD水动力学，为ASM提供真实输入。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 text-center">
+                    <h4 class="font-semibold text-palette-energetic-blue mb-2">数据驱动的优化流程</h4>
+                    <div class="flow-chart-container md:flex-row md:justify-center md:gap-2">
+                        <div class="flow-chart-item">机器人数据采集<br>(几何, 污泥, 水质)</div>
+                        <div class="flow-chart-arrow md:rotate-0">➡️</div>
+                        <div class="flow-chart-item">数据处理与可视化</div>
+                        <div class="flow-chart-arrow md:rotate-0">➡️</div>
+                        <div class="flow-chart-item">模型输入与校准<br>(CFD & ASM)</div>
+                        <div class="flow-chart-arrow md:rotate-0">➡️</div>
+                        <div class="flow-chart-item bg-palette-energetic-green text-white">优化运营决策<br>(节能降耗, 稳定达标)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="market-potential" class="mb-12">
+            <h2 class="section-title">市场潜力展望（示意性）</h2>
+            <p class="text-center text-lg text-gray-600 mb-8">随着技术成熟和成本下降，水下机器人在WWTP领域的应用市场预计将稳步增长。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="sub-section-title text-center">WWTP机器人技术市场规模（示意）</h3>
+                    <div class="chart-container h-64 max-h-80">
+                        <canvas id="marketSizeChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center mt-2 text-gray-500">注：此图表数据为示意性，非真实市场数据。</p>
+                </div>
+                <div class="card">
+                    <h3 class="sub-section-title text-center">技术采纳率趋势（示意）</h3>
+                    <div class="chart-container h-64 max-h-80">
+                        <canvas id="adoptionRateChart"></canvas>
+                    </div>
+                     <p class="text-xs text-center mt-2 text-gray-500">注：此图表数据为示意性，非真实市场数据。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="future-outlook" class="mb-12">
+            <h2 class="section-title">未来发展方向：迈向自主智能新纪元</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card text-center">
+                    <div class="icon-placeholder">🤖</div>
+                    <h3 class="sub-section-title !mt-0">AI与机器学习集成</h3>
+                    <p class="text-sm text-gray-600">提升机器人自主导航、智能避障、数据自动分析与缺陷识别能力，实现预测性维护。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="icon-placeholder">🔬</div>
+                    <h3 class="sub-section-title !mt-0">传感器技术突破</h3>
+                    <p class="text-sm text-gray-600">研发更小型化、高精度、低维护、抗强干扰的原位传感器（尤其针对营养盐和有机物）。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="icon-placeholder">🌐</div>
+                    <h3 class="sub-section-title !mt-0">机器人集群与协同</h3>
+                    <p class="text-sm text-gray-600">利用多机器人集群执行大规模、分布式监测任务，构建自适应水下传感网络。</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center py-8 mt-12 bg-palette-energetic-blue text-white rounded-lg shadow-xl">
+            <h2 class="text-2xl font-semibold mb-3">结论：智慧水务的关键推动力</h2>
+            <p class="text-md md:text-lg max-w-3xl mx-auto leading-relaxed">
+                水下机器人技术及其搭载的先进传感系统，正为克服传统污水处理厂数据采集瓶颈、提升生物过程模型精度和实现智慧运营提供革命性途径。尽管面临环境、技术和成本等挑战，但其在提高处理效率、保障水质安全、降低运营风险方面的巨大潜力，预示着其在水务行业智能化转型中将扮演日益重要的角色。持续的技术创新和应用实践，将推动水下机器人在WWTP领域迈向更广阔的应用前景。
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Helper function for Chart.js label wrapping
+        function wrapLabels(labels, maxWidth) {
+            return labels.map(label => {
+                if (typeof label === 'string' && label.length > maxWidth) {
+                    const words = label.split(' ');
+                    const lines = [];
+                    let currentLine = '';
+                    words.forEach(word => {
+                        if ((currentLine + word).length > maxWidth && currentLine.length > 0) {
+                            lines.push(currentLine.trim());
+                            currentLine = word + ' ';
+                        } else {
+                            currentLine += word + ' ';
+                        }
+                    });
+                    lines.push(currentLine.trim());
+                    return lines;
+                }
+                return label;
+            });
+        }
+
+        // Chart.js Tooltip Configuration
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            }
+            return label;
+        };
+        
+        const chartJsOptionsBase = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: { family: "'Noto Sans SC', sans-serif" }
+                    }
+                },
+                tooltip: {
+                    callbacks: { title: tooltipTitleCallback },
+                    bodyFont: { family: "'Noto Sans SC', sans-serif" },
+                    titleFont: { family: "'Noto Sans SC', sans-serif" }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        font: { family: "'Noto Sans SC', sans-serif" }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: {
+                        font: { family: "'Noto Sans SC', sans-serif" }
+                    },
+                    grid: { color: '#e0e0e0' }
+                }
+            }
+        };
+
+        // Sensor Technology Chart (Donut)
+        const sensorLabels = ['声纳系统 (高浊度适用)', '结构光 (特定条件)', '立体视觉 (受限)', 'LiDAR (不适用)'];
+        const wrappedSensorLabels = wrapLabels(sensorLabels, 16);
+        new Chart(document.getElementById('sensorTechChart'), {
+            type: 'doughnut',
+            data: {
+                labels: wrappedSensorLabels,
+                datasets: [{
+                    label: 'WWTP环境适用性权重',
+                    data: [70, 20, 7, 3], // Illustrative data
+                    backgroundColor: ['#06D6A0', '#FFD166', '#FF6B6B', '#CED4DA'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: { ...chartJsOptionsBase, plugins: { ...chartJsOptionsBase.plugins, legend: { position: 'bottom' } } }
+        });
+
+        // Market Size Chart (Bar - Illustrative)
+        const marketSizeLabels = ['2023', '2024', '2025 (预测)', '2026 (预测)', '2027 (预测)'];
+        const wrappedMarketSizeLabels = wrapLabels(marketSizeLabels, 16);
+        new Chart(document.getElementById('marketSizeChart'), {
+            type: 'bar',
+            data: {
+                labels: wrappedMarketSizeLabels,
+                datasets: [{
+                    label: '市场规模 (百万美元 - 示意)',
+                    data: [50, 65, 85, 110, 140], // Illustrative data
+                    backgroundColor: '#118AB2',
+                    borderRadius: 4
+                }]
+            },
+            options: chartJsOptionsBase
+        });
+
+        // Technology Adoption Rate Chart (Line - Illustrative)
+        const adoptionRateLabels = ['2022', '2023', '2024', '2025', '2026', '2027'];
+        const wrappedAdoptionRateLabels = wrapLabels(adoptionRateLabels, 16);
+        new Chart(document.getElementById('adoptionRateChart'), {
+            type: 'line',
+            data: {
+                labels: wrappedAdoptionRateLabels,
+                datasets: [{
+                    label: '技术采纳率 (% - 示意)',
+                    data: [5, 8, 12, 18, 25, 35], // Illustrative data
+                    borderColor: '#06D6A0',
+                    backgroundColor: 'rgba(6, 214, 160, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: chartJsOptionsBase
+        });
+
+        // Sticky Nav Scroll Highlight
+        const navLinks = document.querySelectorAll('#sticky-nav a');
+        const sections = document.querySelectorAll('section[id]');
+
+        function activateNavLink() {
+            let currentSectionId = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) { // Adjust offset as needed
+                    currentSectionId = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSectionId}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        window.addEventListener('scroll', activateNavLink);
+        activateNavLink(); // Initial call
+
+    </script>
+</body>
+</html>

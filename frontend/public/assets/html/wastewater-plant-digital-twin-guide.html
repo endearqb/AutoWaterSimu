@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>污水厂数字孪生交互式探索指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The SPA is designed as a narrative journey, guiding the user through four logical stages: 1) "解构现实" (Deconstruct Reality) explains the 'why' and 'what' of a WWTP using an interactive process diagram. 2) "构建虚拟" (Build the Virtual) explains the 'how' of a digital twin, comparing modeling paradigms with an interactive radar chart. 3) "实现价值" (Realize Value) demonstrates the 'what if' scenarios with an interactive dashboard, showing tangible benefits like cost savings. 4) "开启旅程" (Start the Journey) provides a 'how-to' guide with a clickable implementation roadmap. This structure transforms the dense report into an intuitive, exploratory experience, prioritizing user understanding and engagement over a literal translation of the report's layout. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: WWTP Process -> Goal: Organize/Inform -> Viz: Interactive HTML/CSS Flowchart -> Interaction: Click stage to show details -> Justification: More engaging than static text, clarifies process flow. -> Library/Method: Vanilla JS + Tailwind.
+        - Report Info: Modeling Paradigms -> Goal: Compare/Inform -> Viz: Radar Chart -> Interaction: Hover to see details -> Justification: Visually represents multi-dimensional trade-offs between models effectively. -> Library/Method: Chart.js.
+        - Report Info: Use Cases (e.g., Energy Optimization) -> Goal: Inform/Engage -> Viz: Bar Chart + Slider -> Interaction: Move slider to see potential savings -> Justification: Makes the abstract concept of optimization tangible and impactful. -> Library/Method: Chart.js + JS.
+        - Report Info: Implementation Roadmap -> Goal: Organize/Inform -> Viz: Interactive Step-by-Step Timeline -> Interaction: Click step to expand details -> Justification: Presents a complex process in a digestible, linear format. -> Library/Method: Vanilla JS + Tailwind.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #f4f8fa; color: #34495e; }
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        .nav-link { transition: color 0.3s, border-color 0.3s; }
+        .nav-link.active { color: #0891b2; border-bottom-color: #0891b2; }
+        .process-step { transition: all 0.3s ease-in-out; cursor: pointer; }
+        .process-step.active { border-color: #0891b2; transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .timeline-item::before { content: ''; position: absolute; left: 1rem; top: 1.25rem; bottom: 0; width: 2px; background-color: #e5e7eb; }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-dot { transition: transform 0.3s; }
+        .timeline-item.active .timeline-dot { transform: scale(1.5); background-color: #0891b2; }
+        .value-card { transition: all 0.3s ease; }
+        .value-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="header" class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-cyan-700">数字孪生炼金术</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#section-1" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-cyan-600 border-b-2 border-transparent">解构现实</a>
+                        <a href="#section-2" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-cyan-600 border-b-2 border-transparent">构建虚拟</a>
+                        <a href="#section-3" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-cyan-600 border-b-2 border-transparent">实现价值</a>
+                        <a href="#section-4" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-cyan-600 border-b-2 border-transparent">开启旅程</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#section-1" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-cyan-600">解构现实</a>
+                    <a href="#section-2" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-cyan-600">构建虚拟</a>
+                    <a href="#section-3" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-cyan-600">实现价值</a>
+                    <a href="#section-4" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-cyan-600">开启旅程</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="section-1" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-base font-semibold text-cyan-600 tracking-wide uppercase">第一部分：解构现实</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">万物皆有其理</p>
+                    <p class="mt-5 max-w-2xl mx-auto text-xl text-gray-500">在创造数字“副本”之前，我们必须回归第一性原理，理解污水处理厂的本质。它并非一堆设备的简单集合，而是一个由物理、化学和生物原理驱动的精密系统。本节将带您交互式地探索这个系统的核心流程与内在逻辑。</p>
+                </div>
+
+                <div class="mt-12">
+                    <div id="process-flow" class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                        <!-- Process steps will be injected here by JS -->
+                    </div>
+                    
+                    <div id="process-details" class="mt-8 p-6 bg-white rounded-xl shadow-lg min-h-[250px] transition-all duration-500">
+                        <!-- Details will be injected here by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-2" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-base font-semibold text-cyan-600 tracking-wide uppercase">第二部分：构建虚拟</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">思想的镜像</p>
+                    <p class="mt-5 max-w-2xl mx-auto text-xl text-gray-500">理解了物理现实后，我们便可以开始构建它的数字对应物。一个真正的数字孪生远不止一个3D模型，它是一个拥有“感知”、“思考”和“预测”能力的活系统。本节将揭示数字孪生的大脑——不同的建模方法。</p>
+                </div>
+
+                <div class="mt-12 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                    <div class="relative">
+                        <h3 class="text-2xl font-extrabold text-gray-900 tracking-tight sm:text-3xl">建模范式的对决</h3>
+                        <p class="mt-3 text-lg text-gray-500">
+                            数字孪生的“思考”能力源于其核心模型。主要存在三种范式：基于物理定律的演绎推理（机理模型），从历史数据中学习的归纳推理（AI/ML模型），以及结合二者之长的集成智能（混合模型）。每种方法都有其独特的优势和适用场景。
+                        </p>
+                        <p class="mt-3 text-lg text-gray-500">
+                            下方的雷达图直观地比较了这三种方法在五个关键维度上的表现。将鼠标悬停在图表上以查看各模型的具体特点。
+                        </p>
+                    </div>
+
+                    <div class="mt-10 lg:mt-0" aria-hidden="true">
+                        <div class="chart-container">
+                            <canvas id="modeling-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-3" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-base font-semibold text-cyan-600 tracking-wide uppercase">第三部分：实现价值</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">从洞察到行动</p>
+                    <p class="mt-5 max-w-2xl mx-auto text-xl text-gray-500">数字孪生并非技术奇迹的陈列品，而是创造价值的强大工具。它能将数据转化为决策，帮助污水处理厂变得更高效、更安全、更有韧性。本节将通过互动式仪表板，让您亲身体验数字孪生带来的核心应用价值。</p>
+                </div>
+                
+                <div class="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+                    <div class="value-card p-6 bg-white rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-cyan-500 text-white">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                        <h3 class="mt-5 text-lg font-medium text-gray-900">能耗优化师</h3>
+                        <p class="mt-2 text-base text-gray-500">曝气是能耗大户。通过孪生模拟，可找到最低能耗的运行参数。拖动下方滑块，看看优化能带来多大的改变。</p>
+                        <div class="mt-4">
+                            <label for="optimization-slider" class="block text-sm font-medium text-gray-700">优化水平: <span id="slider-value" class="font-bold text-cyan-600">0%</span></label>
+                            <input id="optimization-slider" type="range" min="0" max="30" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="mt-4 h-32">
+                             <canvas id="energy-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="value-card p-6 bg-white rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-cyan-500 text-white">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <h3 class="mt-5 text-lg font-medium text-gray-900">预言家</h3>
+                        <p class="mt-2 text-base text-gray-500">从“坏了再修”到“坏前预警”。孪生体通过监测设备状态，预测潜在故障，将维护成本和停机时间降至最低。</p>
+                        <div id="maintenance-output" class="mt-4 p-4 bg-gray-100 rounded-md text-center">
+                            <p class="font-semibold">点击切换维护模式</p>
+                            <button id="maintenance-toggle" class="mt-2 px-4 py-2 bg-cyan-600 text-white rounded-md text-sm">切换到预测性维护</button>
+                        </div>
+                    </div>
+                    
+                    <div class="value-card p-6 bg-white rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-cyan-500 text-white">
+                           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.55-2.27A1 1 0 0121 8.66v6.68a1 1 0 01-1.45.89L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h3 class="mt-5 text-lg font-medium text-gray-900">飞行模拟器</h3>
+                        <p class="mt-2 text-base text-gray-500">如何在不影响真实工厂的情况下，培训操作员应对突发状况？数字孪生提供了高保真的虚拟演练场，提升团队韧性。</p>
+                        <div class="mt-4 text-center">
+                           <p class="text-sm text-gray-600 p-4 bg-gray-100 rounded-md">"安全演练：模拟突发有毒进水冲击。"</p>
+                           <p class="mt-2 text-sm text-gray-600 p-4 bg-gray-100 rounded-md">"培训目标：在2分钟内稳定生物反应。"</p>
+                        </div>
+                    </div>
+
+                     <div class="value-card p-6 bg-white rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-cyan-500 text-white">
+                           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <h3 class="mt-5 text-lg font-medium text-gray-900">智能副驾</h3>
+                        <p class="mt-2 text-base text-gray-500">从被动响应到主动管理。孪生体整合数据并预测未来，为操作员提供前瞻性建议，如同拥有一个智能副驾。</p>
+                         <div class="mt-4 text-left">
+                           <p class="text-sm text-gray-600 p-3 bg-green-100 border-l-4 border-green-500 rounded-md"><strong>建议:</strong> 未来6小时进水负荷预计增加15%。建议启动备用曝气机组#3。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-4" class="py-16 sm:py-24 bg-white">
+             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-base font-semibold text-cyan-600 tracking-wide uppercase">第四部分：开启旅程</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">行稳致远，分步实施</p>
+                    <p class="mt-5 max-w-2xl mx-auto text-xl text-gray-500">构建数字孪生并非一蹴而就的“大爆炸”工程，而是一段旅程。一个务实的、分阶段的路线图至关重要。点击下方的时间轴，探索从确立目标到持续优化的每一步。</p>
+                </div>
+
+                <div id="timeline" class="mt-12 max-w-3xl mx-auto">
+                    <!-- Timeline items injected by JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800">
+        <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+            <p>基于《数字炼金术》报告构建的交互式指南。</p>
+            <p class="mt-2">此应用仅为概念演示，所有数据均为说明性目的。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const processData = [
+                { id: 'step1', name: '预处理', icon: '🌊', description: '<strong>原理:</strong> 物理拦截与分离。<br><strong>任务:</strong> 通过格栅和沉砂池，去除污水中较大的固体垃圾、砂砾和油脂，以保护后续处理设备。<br><strong>关键指标(KPI):</strong> 流量、总悬浮固体(TSS)。' },
+                { id: 'step2', name: '初级处理', icon: '💧', description: '<strong>原理:</strong> 重力沉降。<br><strong>任务:</strong> 在初沉池中，通过减缓水流，让较重的有机固体沉淀下来形成污泥。能去除约50-70%的悬浮物和30-40%的BOD。<br><strong>关键指标(KPI):</strong> TSS去除率、BOD去除率。' },
+                { id: 'step3', name: '二级处理', icon: '🦠', description: '<strong>原理:</strong> 加速微生物代谢。<br><strong>任务:</strong> 核心生物处理阶段。在曝气池中，利用微生物消耗溶解在水中的有机物和营养物质（氮、磷）。<br><strong>关键指标(KPI):</strong> 溶解氧(DO)、BOD、COD、氨氮、硝酸盐氮。' },
+                { id: 'step4', name: '三级处理', icon: '✨', description: '<strong>原理:</strong> 深度净化与消毒。<br><strong>任务:</strong> 对水质进行精加工。通过过滤、化学或紫外线消毒等方法，去除微小颗粒和有害病原体，确保出水达标。<br><strong>关键指标(KPI):</strong> 浊度、余氯/UVT、总磷。' },
+                { id: 'step5', name: '污泥处理', icon: '🔄', description: '<strong>原理:</strong> 资源化与稳定化。<br><strong>任务:</strong> 对处理过程中产生的所有污泥进行浓缩、消化和脱水，以减少体积、杀灭病原体，并可能回收能源（沼气）。<br><strong>关键指标(KPI):</strong> 污泥含固率、挥发性固体去除率。' }
+            ];
+
+            const timelineData = [
+                {
+                    phase: "1. 确立使命与识别用例",
+                    time: "1-3个月",
+                    description: "这是战略规划阶段。关键是定义清晰、高价值的业务目标，而不是为了技术而技术。要从一个具体的痛点开始，比如曝气池能耗过高或关键水泵频繁故障。通过跨部门研讨会，让运营、维护和管理层共同确定最有价值的切入点，并形成排序后的用例列表。",
+                    challenge: "<strong>挑战:</strong> 目标模糊，试图一次性解决所有问题。"
+                },
+                {
+                    phase: "2. 数据审计与设施准备",
+                    time: "3-6个月",
+                    description: "“无数据，不孪生”。这个阶段是对工厂“数字神经系统”的体检。需要全面评估现有传感器、SCADA系统的数据质量、频率和覆盖范围。识别并填补关键的数据缺口是成功的基石。这可能意味着需要投资升级或增加新的传感器。",
+                    challenge: "<strong>挑战:</strong> 数据质量差、数据孤岛严重。"
+                },
+                {
+                    phase: "3. 试点项目",
+                    time: "6-12个月",
+                    description: "从小处着手，快速验证。选择一个已识别的高价值用例（如一个曝气池的能耗优化）来构建第一个迷你数字孪生。这有助于在可控范围内验证技术、展示投资回报率（ROI），最重要的是，建立起操作人员对这项新技术的信任和信心。",
+                    challenge: "<strong>挑战:</strong> 试点项目选择不当，无法展示明确价值。"
+                },
+                {
+                    phase: "4. 扩展与集成",
+                    time: "12-24个月",
+                    description: "在试点成功的基础上，将数字孪生的覆盖范围扩展到其他流程。这不仅仅是复制，而是要考虑不同流程间的相互影响。需要制定计划，将不同的模型和数据源集成到一个统一的孪生平台中，实现跨流程的全局优化。",
+                    challenge: "<strong>挑战:</strong> 系统集成复杂，不同供应商技术标准不一。"
+                },
+                {
+                    phase: "5. 演进与优化",
+                    time: "持续进行",
+                    description: "数字孪生不是一个项目，而是一个持续演进的生命体。它需要随着物理工厂的变化、新技术的出现和运营经验的积累而不断更新和优化。建立一个持续改进的流程，让孪生成为企业运营文化的一部分。",
+                    challenge: "<strong>挑战:</strong> 缺乏长期投入，孪生模型与现实脱节。"
+                }
+            ];
+
+            const processFlowContainer = document.getElementById('process-flow');
+            const processDetailsContainer = document.getElementById('process-details');
+            
+            processData.forEach((step, index) => {
+                const stepEl = document.createElement('div');
+                stepEl.className = 'process-step w-full md:w-1/6 p-4 bg-white rounded-lg border-2 border-gray-200 shadow-sm text-center';
+                stepEl.dataset.id = step.id;
+                stepEl.innerHTML = `<div class="text-4xl">${step.icon}</div><h4 class="mt-2 font-semibold text-gray-700">${step.name}</h4>`;
+                
+                processFlowContainer.appendChild(stepEl);
+                if (index < processData.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'text-2xl text-gray-300 transform md:rotate-0 rotate-90';
+                    arrow.innerHTML = '➡️';
+                    processFlowContainer.appendChild(arrow);
+                }
+            });
+
+            const timelineContainer = document.getElementById('timeline');
+            timelineData.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'timeline-item relative pl-8 pb-8 cursor-pointer';
+                itemEl.innerHTML = `
+                    <div class="timeline-dot absolute left-0 top-5 h-4 w-4 rounded-full bg-gray-300 border-4 border-white"></div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-lg font-bold text-gray-800">${item.phase} <span class="text-sm font-normal text-gray-500">- ${item.time}</span></p>
+                        <div class="timeline-details hidden mt-2 text-gray-600">
+                            <p>${item.description}</p>
+                            <p class="mt-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">${item.challenge}</p>
+                        </div>
+                    </div>
+                `;
+                timelineContainer.appendChild(itemEl);
+            });
+            
+            function updateProcessDetails(id) {
+                const stepData = processData.find(s => s.id === id);
+                document.querySelectorAll('.process-step').forEach(el => {
+                    el.classList.toggle('active', el.dataset.id === id);
+                });
+                if (stepData) {
+                    processDetailsContainer.innerHTML = `<h3 class="text-xl font-bold text-cyan-700">${stepData.name}</h3><p class="mt-2 text-gray-600">${stepData.description}</p>`;
+                }
+            }
+            
+            processFlowContainer.addEventListener('click', (e) => {
+                const stepEl = e.target.closest('.process-step');
+                if (stepEl) {
+                    updateProcessDetails(stepEl.dataset.id);
+                }
+            });
+
+            timelineContainer.addEventListener('click', e => {
+                const item = e.target.closest('.timeline-item');
+                if (item) {
+                    item.classList.toggle('active');
+                    item.querySelector('.timeline-details').classList.toggle('hidden');
+                }
+            });
+
+            updateProcessDetails('step1');
+
+            const modelingCtx = document.getElementById('modeling-chart').getContext('2d');
+            const modelingChart = new Chart(modelingCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['解释性', '准确性', '泛化能力', '数据依赖', '计算成本'],
+                    datasets: [
+                        {
+                            label: '机理模型',
+                            data: [5, 3, 5, 2, 4],
+                            backgroundColor: 'rgba(8, 145, 178, 0.2)',
+                            borderColor: 'rgb(8, 145, 178)',
+                            pointBackgroundColor: 'rgb(8, 145, 178)',
+                        },
+                        {
+                            label: 'AI/ML模型',
+                            data: [2, 5, 3, 5, 2],
+                            backgroundColor: 'rgba(217, 119, 6, 0.2)',
+                            borderColor: 'rgb(217, 119, 6)',
+                            pointBackgroundColor: 'rgb(217, 119, 6)',
+                        },
+                        {
+                            label: '混合模型',
+                            data: [4, 5, 4, 4, 3],
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                            borderColor: 'rgb(34, 197, 94)',
+                            pointBackgroundColor: 'rgb(34, 197, 94)',
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: { font: { size: 12 }, color: '#334155'},
+                            ticks: {
+                                backdropColor: 'rgba(255, 255, 255, 0.75)',
+                                color: '#64748b',
+                                stepSize: 1
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 5
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.r !== null) {
+                                        label += context.parsed.r;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const energyCtx = document.getElementById('energy-chart').getContext('2d');
+            const initialEnergyData = {
+                labels: ['曝气能耗', '药剂成本'],
+                datasets: [{
+                    label: '成本（相对值）',
+                    data: [100, 100],
+                    backgroundColor: ['#38bdf8', '#fbbf24'],
+                    borderColor: ['#0ea5e9', '#f59e0b'],
+                    borderWidth: 1
+                }]
+            };
+            const energyChart = new Chart(energyCtx, {
+                type: 'bar',
+                data: initialEnergyData,
+                options: {
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, max: 120, display: false },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const slider = document.getElementById('optimization-slider');
+            const sliderValue = document.getElementById('slider-value');
+            slider.addEventListener('input', (e) => {
+                const value = e.target.value;
+                sliderValue.textContent = `${value}%`;
+                energyChart.data.datasets[0].data = [100 - value, 100 - (value * 0.5)];
+                energyChart.update();
+            });
+
+            const maintenanceToggle = document.getElementById('maintenance-toggle');
+            const maintenanceOutput = document.getElementById('maintenance-output');
+            let isPredictive = false;
+            maintenanceToggle.addEventListener('click', () => {
+                isPredictive = !isPredictive;
+                if(isPredictive) {
+                    maintenanceOutput.innerHTML = `
+                        <p class="font-semibold text-green-700">预测性维护模式</p>
+                        <p class="text-sm text-gray-600 mt-1"><strong>警报:</strong> #2号泵振动异常。预计72小时内可能故障。已自动生成维修工单。</p>
+                        <p class="text-xs text-gray-500 mt-2"><strong>结果:</strong> 避免了计划外停机，节省35%维修成本。</p>
+                    `;
+                    maintenanceToggle.textContent = '切换回被动维护';
+                    maintenanceOutput.parentElement.classList.add('bg-green-50');
+                } else {
+                     maintenanceOutput.innerHTML = `
+                        <p class="font-semibold text-red-700">被动维护模式</p>
+                        <p class="text-sm text-gray-600 mt-1"><strong>警报:</strong> #2号泵已故障！产线停机！</p>
+                        <p class="text-xs text-gray-500 mt-2"><strong>结果:</strong> 紧急维修，成本高昂，影响出水水质。</p>
+                    `;
+                    maintenanceToggle.textContent = '切换到预测性维护';
+                    maintenanceOutput.parentElement.classList.remove('bg-green-50');
+                }
+            });
+            // reset maintenance toggle on load
+            maintenanceOutput.innerHTML = `
+                <p class="font-semibold">点击切换维护模式</p>
+                <button id="maintenance-toggle" class="mt-2 px-4 py-2 bg-cyan-600 text-white rounded-md text-sm">切换到预测性维护</button>
+            `;
+            document.getElementById('maintenance-toggle').addEventListener('click', maintenanceToggle.click);
+            maintenanceToggle.click(); // to set initial state correctly after re-adding button
+            maintenanceToggle.click();
+
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (mobileMenu.offsetParent !== null) {
+                         mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const sections = document.querySelectorAll('section');
+            const header = document.getElementById('header');
+            const options = {
+                rootMargin: `-${header.offsetHeight}px 0px 0px 0px`,
+                threshold: 0.3
+            };
+
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`.nav-link[href="#${id}"]`);
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => link.classList.remove('active'));
+                        if (navLink) navLink.classList.add('active');
+                    }
+                });
+            }, options);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

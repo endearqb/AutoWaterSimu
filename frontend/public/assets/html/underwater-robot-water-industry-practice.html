@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水下机器人在水务行业的应用趋势信息图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width, can be overridden by Tailwind */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .section-title {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* bold */
+            color: #003F5C; /* Dark Blue from palette */
+            margin-bottom: 1.5rem; /* mb-6 */
+            text-align: center;
+            padding-top: 2rem; /* pt-8 */
+            padding-bottom: 1rem; /* pb-4 */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 1.5rem; /* p-6 */
+            margin-bottom: 1.5rem; /* mb-6 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-2xl */
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #FF7C43; /* Orange from palette */
+        }
+        .stat-label {
+            font-size: 1rem;
+            color: #665191; /* Purple from palette */
+        }
+        .icon-placeholder { /* For HTML/CSS icons */
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 9999px; /* rounded-full */
+            background-color: #FFA600; /* Yellow from palette */
+            color: white;
+            text-align: center;
+            line-height: 2rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .flowchart-step {
+            background-color: #e0f2fe; /* light sky blue */
+            border: 2px solid #38bdf8; /* sky blue */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1rem; /* p-4 */
+            margin-bottom: 0.75rem; /* mb-3 */
+            text-align: center;
+        }
+        .flowchart-arrow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0.5rem 0; /* my-2 */
+            color: #38bdf8; /* sky blue */
+            font-size: 1.5rem; /* text-2xl */
+        }
+        /* Chosen Palette: Brilliant Blues (#003F5C, #2F4B7C, #665191, #A05195, #D45087, #F95D6A, #FF7C43, #FFA600) */
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-gradient-to-r from-[#003F5C] to-[#2F4B7C] text-white py-12 sm:py-20">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">水下机器人：赋能智慧水务新时代</h1>
+            <p class="text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto">探索水下机器人在供水、排水、水利及水环境监测等领域的创新应用、核心优势与未来趋势。</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div class="bg-white/20 p-6 rounded-lg backdrop-blur-sm">
+                    <div class="stat-value text-[#FFA600]">≥95%</div>
+                    <div class="stat-label text-gray-200">典型缺陷检测准确率</div>
+                </div>
+                <div class="bg-white/20 p-6 rounded-lg backdrop-blur-sm">
+                    <div class="stat-value text-[#FFA600]">30-60%</div>
+                    <div class="stat-label text-gray-200">运营成本降低潜力</div>
+                </div>
+                <div class="bg-white/20 p-6 rounded-lg backdrop-blur-sm">
+                    <div class="stat-value text-[#FFA600]">100%</div>
+                    <div class="stat-label text-gray-200">高风险作业人员安全保障</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+
+        <section id="overview">
+            <h2 class="section-title">水下机器人概览</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="card">
+                    <h3 class="text-2xl font-semibold text-[#003F5C] mb-3 flex items-center">
+                        <span class="icon-placeholder">R</span>遥控水下机器人 (ROV)
+                    </h3>
+                    <p class="text-gray-700 leading-relaxed">通过脐带缆与母船或控制站连接，由操作员远程控制。通常搭载摄像头、声纳、机械手等设备，用于水下观测、检查和轻型作业。供电和数据传输实时稳定，适合定点精细作业。</p>
+                    <p class="mt-2 text-sm text-gray-500"><strong>主要特点：</strong>实时控制、持续供能、高带宽通信、负载能力强。</p>
+                    <p class="mt-1 text-sm text-gray-500"><strong>水务应用：</strong>管道内部详细检测、大坝结构检查、水下设施定点维护、闸门检查。</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-2xl font-semibold text-[#003F5C] mb-3 flex items-center">
+                        <span class="icon-placeholder">A</span>自主水下航行器 (AUV)
+                    </h3>
+                    <p class="text-gray-700 leading-relaxed">无需缆索，依靠自身携带的能源和预设程序或人工智能进行自主作业。通常用于大范围水下搜索、探测、测绘和环境监测，尤其适用于缆索不便的场景。</p>
+                    <p class="mt-2 text-sm text-gray-500"><strong>主要特点：</strong>作业范围广、无缆索束缚、部署灵活、智能化程度高。</p>
+                    <p class="mt-1 text-sm text-gray-500"><strong>水务应用：</strong>大范围管道路由勘查、水库水质巡测、水下地形测绘、环境监测。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications">
+            <h2 class="section-title">核心应用领域</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card md:col-span-2">
+                    <h3 class="text-xl font-semibold text-[#2F4B7C] mb-4">1. 管网检测与维护 (供水、排水、污水)</h3>
+                    <p class="text-gray-600 mb-4">城市供排水管网是水务系统的“血管”，其健康状况至关重要。水下机器人能有效进行结构缺陷检测、堵塞物排查、渗漏点定位等，保障管网安全高效运行。</p>
+                    <div class="grid sm:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-medium text-[#665191] mb-2">管网检测市场份额（示例）</h4>
+                            <div class="chart-container h-64 sm:h-72">
+                                <canvas id="pipeInspectionMarketShare"></canvas>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 text-center">注：图表数据为基于报告提及的“约占5%”的示意性数据。</p>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-[#665191] mb-2">典型检测任务</h4>
+                            <ul class="list-disc list-inside text-gray-700 space-y-1">
+                                <li>结构缺陷检测 (裂缝、腐蚀、变形)</li>
+                                <li>堵塞物与沉积物排查</li>
+                                <li>渗漏点精确定位</li>
+                                <li>管道路由测绘</li>
+                                <li>内部清洁与辅助疏通</li>
+                            </ul>
+                             <p class="mt-4 text-sm text-gray-700"><strong>关键指标：</strong>广州某项目清淤时间缩短约<strong class="text-[#FF7C43]">30%</strong>，现场人员减少近<strong class="text-[#FF7C43]">50%</strong>。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-[#2F4B7C] mb-4">2. 水下构筑物检测与维护</h3>
+                    <p class="text-gray-600 mb-4">大坝、水库、取排水口、桥墩等水工构筑物长期受水体侵蚀和环境影响，水下机器人可进行安全评估、渗漏检测、冲刷测绘，保障工程安全。</p>
+                    <h4 class="text-lg font-medium text-[#665191] mb-2">主要检测内容</h4>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>结构外观检查 (裂缝、剥落、腐蚀)</li>
+                        <li>水下清洗与无损检测 (NDT)</li>
+                        <li>渗漏检测与精确定位</li>
+                        <li>水下地形与冲刷测绘</li>
+                        <li>辅助水下安装与维修</li>
+                    </ul>
+                    <p class="mt-4 text-sm text-gray-700"><strong>技术亮点：</strong>中国某深水大坝渗漏探测技术，最大检测深度<strong class="text-[#FF7C43]">150米</strong>，缺陷定位精度达<strong class="text-[#FF7C43]">米级</strong>。</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-[#2F4B7C] mb-4">3. 水质监测与环境评估</h3>
+                    <p class="text-gray-600 mb-4">传统水质监测手段有限，水下机器人可搭载多参数传感器，在江河湖库进行原位实时测量、水样采集、污染源追踪，为水环境保护提供数据支持。</p>
+                    <h4 class="text-lg font-medium text-[#665191] mb-2">监测参数示例</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">溶解氧 (DO)</span>
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">pH</span>
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">温度</span>
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">浊度</span>
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">电导率</span>
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">叶绿素</span>
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">氨氮</span>
+                        <span class="bg-[#A05195] text-white px-3 py-1 rounded-full text-sm">硝酸盐</span>
+                    </div>
+                     <p class="mt-4 text-sm text-gray-700"><strong>应用优势：</strong>可实现大范围、三维空间、高频次的水质参数获取，弥补固定监测点不足。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="advantages">
+            <h2 class="section-title">核心优势</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card text-center">
+                    <div class="p-4 bg-[#D45087] rounded-full inline-block mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-[#D45087] mb-2">提升安全性</h3>
+                    <p class="text-gray-600 text-sm">替代人工进入高风险水下环境（深水、密闭空间、污染水体），保障作业人员生命安全。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="p-4 bg-[#F95D6A] rounded-full inline-block mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-[#F95D6A] mb-2">提高效率</h3>
+                    <p class="text-gray-600 text-sm">可长时间连续作业，快速部署，提升检测和维护效率，缩短项目周期，减少设施停运时间。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="p-4 bg-[#FF7C43] rounded-full inline-block mb-3">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-[#FF7C43] mb-2">降低成本</h3>
+                    <p class="text-gray-600 text-sm">减少人工潜水费用，优化维护策略，降低因漏损或故障造成的水资源和经济损失。</p>
+                </div>
+                <div class="card text-center">
+                    <div class="p-4 bg-[#FFA600] rounded-full inline-block mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-[#FFA600] mb-2">提升数据质量</h3>
+                    <p class="text-gray-600 text-sm">获取高分辨率、多维度、地理参考的精确数据，数据客观可重复，为科学决策提供坚实基础。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="trends-challenges">
+            <h2 class="section-title">市场洞察：趋势与挑战</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-[#003F5C] mb-3">驱动因素与技术趋势</h3>
+                     <p class="text-gray-600 mb-3">水务基础设施老化、水资源短缺、环保法规趋严以及对精细化管理的需求，共同推动水下机器人技术的应用。</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <span class="icon-placeholder text-sm mt-1">AI</span>
+                            <div><strong class="text-[#2F4B7C]">人工智能与机器学习：</strong>提升自主导航、智能避障、缺陷自动识别和预测性维护能力。</div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="icon-placeholder text-sm mt-1">S</span>
+                            <div><strong class="text-[#2F4B7C]">先进传感器技术：</strong>高分辨率成像、小型化、多参数融合、抗污传感器，获取更丰富信息。</div>
+                        </li>
+                         <li class="flex items-start">
+                            <span class="icon-placeholder text-sm mt-1">A+</span>
+                            <div><strong class="text-[#2F4B7C]">自主能力提升与集群智能：</strong>AUV自主决策能力增强，多机器人协同执行复杂任务。</div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="icon-placeholder text-sm mt-1">M</span>
+                            <div><strong class="text-[#2F4B7C]">小型化与微型化：</strong>降低成本，拓展在狭窄空间（如小管道）的应用。</div>
+                        </li>
+                    </ul>
+                    <div class="mt-6">
+                        <h4 class="text-lg font-medium text-[#665191] mb-2">水务行业机器人应用增长预测（示意图）</h4>
+                        <div class="chart-container h-64 sm:h-72">
+                            <canvas id="marketGrowthTrend"></canvas>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">注：此为示意性增长趋势图，非精确市场数据。</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-[#003F5C] mb-3">面临的主要挑战</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-lg font-medium text-[#A05195]">技术挑战</h4>
+                            <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 pl-4">
+                                <li>复杂/GPS缺失环境下的导航与精确定位</li>
+                                <li>水下通信带宽、延迟与可靠性</li>
+                                <li>能源供应与续航能力 (尤其AUV)</li>
+                                <li>传感器在浑浊、高生物淤积环境下的性能与维护</li>
+                                <li>海量数据的有效管理、处理与智能分析</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-[#D45087]">运营挑战</h4>
+                            <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 pl-4">
+                                <li>部署与回收的后勤保障及操作复杂性</li>
+                                <li>机器人系统自身的维护保养与可靠性</li>
+                                <li>操作人员专业技能要求与人才培养</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-[#F95D6A]">经济挑战</h4>
+                            <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 pl-4">
+                                <li>高昂的初始投资成本 (设备、传感器、软件)</li>
+                                <li>投资回报分析 (ROI) 的复杂性与不确定性</li>
+                                 <li>缺乏统一标准与规范，影响规模化推广</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="flowchart-example">
+            <h2 class="section-title">清淤机器人作业流程示例</h2>
+            <p class="text-center text-gray-700 mb-8 max-w-2xl mx-auto">以广州排水公司的水下清淤机器人为例，展示其在泵站、渠箱等有限空间进行不停产清淤的典型作业流程。该技术实现了“人不下井、水不断流、泥不落地”。</p>
+            <div class="max-w-md mx-auto">
+                <div class="flowchart-step">
+                    <span class="font-semibold">1. 远程部署与定位</span><br>
+                    操作员远程控制机器人进入作业区域，利用声纳等感知系统定位。
+                </div>
+                <div class="flowchart-arrow">▼</div>
+                <div class="flowchart-step">
+                    <span class="font-semibold">2. 障碍物识别与路径规划</span><br>
+                    图形化声纳避障系统探测障碍物，智能规划清淤路径。
+                </div>
+                <div class="flowchart-arrow">▼</div>
+                <div class="flowchart-step">
+                    <span class="font-semibold">3. 淤积物扰动与收集</span><br>
+                    “抓斗式”头部配合高压水射流扰动并收集淤积物。
+                </div>
+                <div class="flowchart-arrow">▼</div>
+                <div class="flowchart-step">
+                    <span class="font-semibold">4. 泵送与排出</span><br>
+                    机器人内置泵送系统将泥浆输送至地面处理设备（如吸泥车）。
+                </div>
+                <div class="flowchart-arrow">▼</div>
+                <div class="flowchart-step">
+                    <span class="font-semibold">5. 实时监控与调整</span><br>
+                    操作员通过可视化界面实时监控作业状态，调整机器人动作。
+                </div>
+                 <div class="flowchart-arrow">▼</div>
+                <div class="flowchart-step">
+                    <span class="font-semibold">6. 作业完成与回收</span><br>
+                    清淤完成后，机器人自主或遥控返回，进行维护保养。
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center py-12 mt-12 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2025 水下机器人水务应用研究信息图。根据相关研究报告综合编制。</p>
+            <p class="text-xs text-gray-500 mt-2">本信息图内容仅供参考，具体数据请以专业报告为准。未采用SVG和Mermaid JS进行图表绘制。</p>
+            </footer>
+    </main>
+
+    <script>
+        const brilliantBluesPalette = ['#003F5C', '#2F4B7C', '#665191', '#A05195', '#D45087', '#F95D6A', '#FF7C43', '#FFA600'];
+
+        function wrapLabel(label, maxWidth) {
+            if (typeof label !== 'string') return label; // Already an array or not a string
+            if (label.length <= maxWidth) return label;
+
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + word).length > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = word + ' ';
+                } else {
+                    currentLine += word + ' ';
+                }
+            }
+            lines.push(currentLine.trim());
+            return lines;
+        }
+        
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#003F5C',
+                        font: { size: 12, family: "'Noto Sans SC', sans-serif" }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return label;
+                            }
+                        }
+                    },
+                    bodyFont: { family: "'Noto Sans SC', sans-serif" },
+                    titleFont: { family: "'Noto Sans SC', sans-serif" }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { 
+                        color: '#2F4B7C', 
+                        font: { size: 11, family: "'Noto Sans SC', sans-serif" },
+                        callback: function(value, index, values) {
+                            const label = this.getLabelForValue(value);
+                            return wrapLabel(label, 8); // Wrap x-axis labels if too long
+                        }
+                    },
+                    grid: { display: false }
+                },
+                y: { 
+                    ticks: { 
+                        color: '#2F4B7C', 
+                        font: { size: 11, family: "'Noto Sans SC', sans-serif" }
+                    },
+                    grid: { color: '#e0e0e0' }
+                }
+            }
+        };
+
+        // Chart 1: Pipe Inspection Market Share (Donut Chart)
+        const pipeInspectionData = {
+            labels: ['管网检测机器人应用', '其他水务机器人应用', '传统检测方法主导'],
+            datasets: [{
+                label: '市场份额（示意）',
+                data: [5, 15, 80], // Illustrative data
+                backgroundColor: [brilliantBluesPalette[4], brilliantBluesPalette[6], brilliantBluesPalette[1]],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        };
+        new Chart(document.getElementById('pipeInspectionMarketShare'), {
+            type: 'doughnut',
+            data: pipeInspectionData,
+            options: { ...commonChartOptions, cutout: '60%' }
+        });
+
+        // Chart 2: Market Growth Trend (Line Chart - Illustrative)
+        const marketGrowthData = {
+            labels: ['2020', '2021', '2022', '2023', '2024', '2025 (预测)'],
+            datasets: [{
+                label: '水务行业机器人应用指数（示意）',
+                data: [30, 38, 45, 55, 68, 85], // Illustrative data
+                borderColor: brilliantBluesPalette[5], // #F95D6A
+                backgroundColor: 'rgba(249, 93, 106, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: brilliantBluesPalette[5],
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: brilliantBluesPalette[5]
+            }]
+        };
+        new Chart(document.getElementById('marketGrowthTrend'), {
+            type: 'line',
+            data: marketGrowthData,
+            options: commonChartOptions
+        });
+
+    </script>
+
+</body>
+</html>

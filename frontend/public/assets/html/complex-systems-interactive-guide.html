@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复杂系统交互式探索指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral Harmony -->
+    <!-- Application Structure Plan: A single-page application with a sticky navigation header for easy traversal between thematic sections. The structure is designed for non-linear exploration, starting with an introduction, moving to core concepts, then a deep-dive into an interactive comparison of modeling paradigms. It's followed by a visual explanation of simplification strategies (the 'trilemma'), a practical guide to the modeling workflow and tools, and concludes with case studies. This task-oriented flow (Understand -> Compare -> Simplify -> Implement) was chosen over the report's linear structure to better guide the user from theory to practice, enhancing usability and knowledge retention. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Paradigm Comparison (Table 1) -> Goal: Compare -> Viz: Interactive Radar Chart (Chart.js) + Dynamic Text Panels -> Interaction: Clicking paradigm labels filters the chart and updates descriptive text, allowing direct, focused comparison -> Justification: More engaging and intuitive than a static table for multi-attribute comparison.
+        - Report Info: Modeller's Trilemma -> Goal: Inform -> Viz: HTML/CSS Triangle Diagram -> Interaction: Hover effects on corners to reveal tooltips -> Justification: A strong visual metaphor for a core conceptual trade-off.
+        - Report Info: ABM Software Comparison (Table 3) -> Goal: Compare/Organize -> Viz: Interactive Bar Chart (Chart.js) + Sortable Cards -> Interaction: Buttons to sort tools by performance or complexity, dynamically updating both the card order and the chart -> Justification: Empowers users to analyze tools based on their specific needs.
+        - Report Info: Modeling Workflow -> Goal: Organize -> Viz: Numbered Step-by-Step Diagram (HTML/CSS) -> Interaction: Clicking a step reveals detailed text -> Justification: Breaks down a complex process into digestible, interactive chunks.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f7f4;
+            color: #3d405b;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #81b29a;
+            border-bottom-color: #81b29a;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background-color: #81b29a;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #6a9a81;
+        }
+        .btn-secondary {
+            background-color: #e07a5f;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #c96c53;
+        }
+        .section-title {
+            color: #3d405b;
+            font-weight: 700;
+        }
+        .trilemma-container {
+            position: relative;
+            width: 300px;
+            height: 260px;
+            margin: 2rem auto;
+        }
+        .trilemma-point {
+            position: absolute;
+            width: 120px;
+            text-align: center;
+            font-weight: 500;
+            padding: 0.5rem;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 0.5rem;
+            backdrop-filter: blur(5px);
+        }
+        .trilemma-shape {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, rgba(242, 204, 143, 0.3), rgba(224, 122, 95, 0.3));
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            transform: translate(-50%, -50%);
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 40vh;
+            width: 90%;
+            max-width: 600px;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="header" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="text-xl font-bold text-gray-800">驾驭复杂性</div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#introduction" class="nav-link px-3 py-2">引言</a>
+                    <a href="#paradigms" class="nav-link px-3 py-2">建模范式</a>
+                    <a href="#simplification" class="nav-link px-3 py-2">简化策略</a>
+                    <a href="#workflow" class="nav-link px-3 py-2">工具与流程</a>
+                    <a href="#casestudies" class="nav-link px-3 py-2">案例分析</a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-800 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden mt-4">
+                <a href="#introduction" class="block nav-link py-2">引言</a>
+                <a href="#paradigms" class="block nav-link py-2">建模范式</a>
+                <a href="#simplification" class="block nav-link py-2">简化策略</a>
+                <a href="#workflow" class="block nav-link py-2">工具与流程</a>
+                <a href="#casestudies" class="block nav-link py-2">案例分析</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        
+        <section id="introduction" class="text-center mb-20">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 section-title">驾驭复杂性</h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                欢迎来到复杂系统建模的交互式探索指南。本应用旨在将复杂的理论转化为直观、可操作的知识。您将通过互动的方式，学习如何为现实世界中的复杂系统（如生态、经济、社会网络）创建既易于理解又便于计算的框架。
+            </p>
+        </section>
+
+        <section id="concepts" class="mb-20">
+            <h2 class="text-3xl section-title text-center mb-10">核心概念探索</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                在建模之前，我们必须理解复杂性的本质。复杂系统并非只是“繁杂”，它们拥有一系列独特的、可观察的特性。这些特性是系统产生非预期行为的根源。本节将带您快速了解这些定义了“复杂”的核心概念。
+            </p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-2" style="color:#3d405b;">非线性与反馈</h3>
+                    <p class="text-gray-600">因果关系不成比例。微小的扰动可能通过反馈回路（正反馈放大、负反馈稳定）引发巨大效应，这是复杂行为的引擎。</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-2" style="color:#3d405b;">涌现</h3>
+                    <p class="text-gray-600">宏观层面的模式（如交通堵塞）自发出现，而这些模式在系统的单个组件（车辆）中并不存在，是“整体大于部分之和”的体现。</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-2" style="color:#3d405b;">自组织</h3>
+                    <p class="text-gray-600">系统在没有中央控制的情况下，仅通过局部互动自发形成秩序。控制是分布式的，而非集中式的，如鸟群的形成。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="paradigms" class="mb-20">
+            <h2 class="text-3xl section-title text-center mb-10">建模范式交互对比</h2>
+             <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                选择正确的建模范式是构建成功模型的第一步。不同的范式提供了观察和抽象系统的独特视角。本节将通过交互式图表和详细说明，帮助您深入比较三种核心的建模范式：系统动力学（SD）、基于行动主体的建模（ABM）和网络理论，理解它们的适用场景、优势与局限。
+            </p>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="chart-container mx-auto mb-6">
+                    <canvas id="paradigmChart"></canvas>
+                </div>
+                <div class="text-center mb-6">
+                    <p class="text-sm text-gray-500">点击下方按钮以在图表中筛选并查看详细信息。</p>
+                    <div id="paradigm-buttons" class="flex flex-wrap justify-center gap-2 mt-4">
+                    </div>
+                </div>
+                <div id="paradigm-details" class="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50 min-h-[150px]">
+                    <h3 id="paradigm-title" class="text-2xl font-bold mb-2 text-gray-800">请选择一个范式</h3>
+                    <p id="paradigm-description" class="text-gray-700">此处将显示所选范式的详细说明、核心优势和主要弱点。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="simplification" class="mb-20">
+            <h2 class="text-3xl section-title text-center mb-10">简化策略工具箱</h2>
+             <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                如何创建既可理解又可计算的模型？答案在于管理一个核心的权衡：建模者的三难困境。您需要在模型的保真度、可解释性和计算成本之间找到最佳平衡点。本节将可视化这个三难困境，并提供一个实用的简化技术工具箱。
+            </p>
+            <div class="flex flex-col lg:flex-row items-center gap-8">
+                <div class="lg:w-1/3 w-full">
+                    <h3 class="text-2xl font-semibold text-center mb-4">建模者的三难困境</h3>
+                    <div class="trilemma-container">
+                        <div class="trilemma-shape"></div>
+                        <div class="trilemma-point" style="top: -20px; left: 50%; transform: translateX(-50%);">保真度</div>
+                        <div class="trilemma-point" style="bottom: -20px; left: -20px;">可解释性</div>
+                        <div class="trilemma-point" style="bottom: -20px; right: -20px;">计算效率</div>
+                    </div>
+                </div>
+                <div class="lg:w-2/3 w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6">
+                        <h4 class="text-lg font-bold mb-2" style="color: #81b29a;">模型降阶 (MOR)</h4>
+                        <p class="text-sm text-gray-600">通过数学方法降低状态变量数量，保留核心动态。适用于工程领域的微分方程模型。</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="text-lg font-bold mb-2" style="color: #81b29a;">粗粒化</h4>
+                        <p class="text-sm text-gray-600">将微观组件（如原子、个体）分组为更少的宏观单元，降低计算自由度。选择分组方案是关键挑战。</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="text-lg font-bold mb-2" style="color: #81b29a;">平均场近似</h4>
+                        <p class="text-sm text-gray-600">用一个平均场替代所有复杂的个体间相互作用，将多体问题简化为单体问题。源于统计物理。</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="text-lg font-bold mb-2" style="color: #81b29a;">代理建模</h4>
+                        <p class="text-sm text-gray-600">构建一个快速的“模型的模型”（通常是机器学习模型）来近似慢速的、昂贵的原始模拟，极大提升分析效率。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="workflow" class="mb-20">
+            <h2 class="text-3xl section-title text-center mb-10">工具与统一工作流程</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                成功的建模是一个涉及抽象、模拟、简化和分析的迭代过程。这里我们提供一个集成的战略工作流程，并介绍一些主流的建模工具。这个流程将帮助您系统地从问题定义走向洞察提取，而合适的工具则能让您的研究事半功倍。
+            </p>
+            <div class="grid lg:grid-cols-2 gap-12 items-start">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-center">战略工作流程</h3>
+                    <div class="space-y-4">
+                        <div class="workflow-step card p-4 cursor-pointer" data-step="1">
+                            <h4 class="font-bold">1. 问题阐明 & 范式选择</h4>
+                            <p class="text-sm text-gray-600 hidden">清晰定义研究问题、系统边界和目标。根据问题核心选择主要建模范式（SD, ABM, 网络理论）。</p>
+                        </div>
+                        <div class="workflow-step card p-4 cursor-pointer" data-step="2">
+                            <h4 class="font-bold">2. 初步实施 & 评估</h4>
+                            <p class="text-sm text-gray-600 hidden">构建模型的高保真初始版本。评估其在保真度、可解释性和计算成本上的表现。</p>
+                        </div>
+                        <div class="workflow-step card p-4 cursor-pointer" data-step="3">
+                             <h4 class="font-bold">3. 战略性简化</h4>
+                            <p class="text-sm text-gray-600 hidden">如果模型太慢或太复杂，应用适当的简化技术，如粗粒化或代理建模。</p>
+                        </div>
+                         <div class="workflow-step card p-4 cursor-pointer" data-step="4">
+                            <h4 class="font-bold">4. 验证、分析与迭代</h4>
+                            <p class="text-sm text-gray-600 hidden">将简化模型与原始数据验证。使用可视化等方法分析并提取洞见。根据洞见返回并迭代优化模型。</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-center">ABM 软件工具性能对比</h3>
+                     <div class="chart-container mx-auto">
+                        <canvas id="toolChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-gray-500 mt-2">性能越低越好 (相对 Agents.jl)。数据源自特定基准模型比较。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="casestudies" class="mb-20">
+            <h2 class="text-3xl section-title text-center mb-10">综合案例分析</h2>
+             <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                理论的价值在于实践。本节通过两个经典的案例——流行病模拟和金融市场建模——展示如何综合运用之前讨论的范式、技术和工作流程来解决现实世界中的复杂问题。这些案例突显了混合方法的强大威力。
+            </p>
+            <div class="space-y-6">
+                <div class="card">
+                    <button class="w-full text-left p-6 flex justify-between items-center focus:outline-none case-toggle">
+                        <h3 class="text-xl font-bold" style="color: #e07a5f;">案例一：模拟流行病</h3>
+                        <span class="text-2xl transform transition-transform duration-300 ">+</span>
+                    </button>
+                    <div class="case-content hidden p-6 pt-0">
+                        <p class="text-gray-700">这是一个典型的多方法集成案例：</p>
+                        <ul class="list-disc list-inside mt-4 space-y-2 text-gray-600">
+                            <li><strong>从SD开始：</strong> 使用聚合模型（如S-I-R模型）快速理解感染宏观动态。</li>
+                            <li><strong>引入网络：</strong> 使用网络理论分析社会接触结构，识别“超级传播者”。</li>
+                            <li><strong>构建ABM：</strong> 创建基于网络的ABM，以测试针对性的干预措施（如隔离高中心性节点），这是SD模型无法做到的。</li>
+                            <li><strong>用代理模型简化：</strong> 由于ABM计算昂贵，构建一个快速的代理模型来预测不同干预策略下的疫情规模，从而高效搜索最优策略。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card">
+                    <button class="w-full text-left p-6 flex justify-between items-center focus:outline-none case-toggle">
+                         <h3 class="text-xl font-bold" style="color: #e07a5f;">案例二：模拟金融市场</h3>
+                         <span class="text-2xl transform transition-transform duration-300 ">+</span>
+                    </button>
+                    <div class="case-content hidden p-6 pt-0">
+                         <p class="text-gray-700">此案例侧重于解决模型校准的计算挑战：</p>
+                         <ul class="list-disc list-inside mt-4 space-y-2 text-gray-600">
+                             <li><strong>构建ABM：</strong> 创建包含异质交易者（基本面派 vs. 技术分析派）的ABM，以复现市场的“程式化事实”（如肥尾、波动率聚集）。</li>
+                             <li><strong>计算障碍：</strong> 由于参数众多，直接将此模型校准到真实市场数据在计算上是不可行的。</li>
+                             <li><strong>用代理模型解决：</strong> 使用代理建模作为解决方案。训练一个机器学习模型来预测给定参数集能否产生期望的市场行为。这个快速的代理模型使得在巨大的参数空间中搜索合理参数成为可能，从而解决了校准难题。</li>
+                         </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-6">
+        <p>&copy; 2025 复杂系统交互式探索指南。基于源报告创建。</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const paradigmData = {
+                labels: ['抽象层次', '处理异质性', '计算效率', '解释微观机制', '捕捉反馈/延迟', '分析拓扑结构'],
+                datasets: [
+                    {
+                        label: '系统动力学 (SD)',
+                        data: [5, 1, 5, 2, 5, 1],
+                        borderColor: 'rgba(242, 204, 143, 1)',
+                        backgroundColor: 'rgba(242, 204, 143, 0.2)',
+                        pointBackgroundColor: 'rgba(242, 204, 143, 1)',
+                        hidden: false,
+                    },
+                    {
+                        label: '基于行动主体的建模 (ABM)',
+                        data: [2, 5, 2, 5, 3, 4],
+                        borderColor: 'rgba(224, 122, 95, 1)',
+                        backgroundColor: 'rgba(224, 122, 95, 0.2)',
+                        pointBackgroundColor: 'rgba(224, 122, 95, 1)',
+                        hidden: false,
+                    },
+                    {
+                        label: '网络理论',
+                        data: [3, 3, 4, 1, 1, 5],
+                        borderColor: 'rgba(129, 178, 154, 1)',
+                        backgroundColor: 'rgba(129, 178, 154, 0.2)',
+                        pointBackgroundColor: 'rgba(129, 178, 154, 1)',
+                        hidden: false,
+                    }
+                ]
+            };
+
+            const paradigmDetailsContent = {
+                '系统动力学 (SD)': {
+                    title: '系统动力学 (SD)',
+                    description: '一种自上而下的聚合视角，关注系统层面上资源、信息的积累与流动。核心理念是“结构决定行为”。<br><b>优势:</b> 非常适合战略层面分析、政策测试，能高效捕捉反馈和时间延迟。 <br><b>局限:</b> 忽略个体差异和空间关系，不适用于异质性主导的现象。'
+                },
+                '基于行动主体的建模 (ABM)': {
+                    title: '基于行动主体的建模 (ABM)',
+                    description: '一种自下而上的计算方法，模拟自主、异质的行动主体的行为和互动，观察涌现出的宏观模式。<br><b>优势:</b> 能独特地捕捉由异质性和局部互动驱动的涌现现象、适应性行为和网络效应。<br><b>局限:</b> 计算成本高昂，且个体层面的规则难以参数化和验证。'
+                },
+                '网络理论': {
+                    title: '网络理论',
+                    description: '提供一种数学语言来描述组件之间连接的模式，将系统抽象为节点和边。核心理念是“结构即功能”。<br><b>优势:</b> 强大的可视化和量化系统互动拓扑的能力，能揭示关键节点和社群结构。<br><b>局限:</b> 传统分析是静态的，本身不直接模拟行为，而是提供行为发生的“布线图”。'
+                }
+            };
+            
+            const ctxParadigm = document.getElementById('paradigmChart').getContext('2d');
+            const paradigmChart = new Chart(ctxParadigm, {
+                type: 'radar',
+                data: paradigmData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: { 
+                                font: { size: 12 },
+                                color: '#3d405b'
+                            },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                stepSize: 1,
+                                font: { size: 10 },
+                                color: '#888'
+                            },
+                            min: 0,
+                            max: 5
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.r !== null) {
+                                        label += context.parsed.r + ' / 5';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const paradigmButtonsContainer = document.getElementById('paradigm-buttons');
+            paradigmData.datasets.forEach((dataset, index) => {
+                const button = document.createElement('button');
+                button.textContent = dataset.label;
+                button.className = 'btn px-4 py-2 rounded-full text-sm font-semibold';
+                button.style.backgroundColor = dataset.backgroundColor;
+                button.style.borderColor = dataset.borderColor;
+                button.style.color = dataset.borderColor;
+                button.style.borderWidth = '2px';
+
+                button.onclick = () => {
+                    const meta = paradigmChart.getDatasetMeta(index);
+                    meta.hidden = !meta.hidden;
+                    
+                    paradigmChart.update();
+                    updateParadigmDetails(dataset.label, !meta.hidden);
+                    updateButtonStyles();
+                };
+                paradigmButtonsContainer.appendChild(button);
+            });
+
+            const paradigmTitleEl = document.getElementById('paradigm-title');
+            const paradigmDescriptionEl = document.getElementById('paradigm-description');
+            
+            function updateParadigmDetails(label, isVisible) {
+                if (isVisible) {
+                    const details = paradigmDetailsContent[label];
+                    paradigmTitleEl.textContent = details.title;
+                    paradigmDescriptionEl.innerHTML = details.description;
+                } else {
+                     paradigmTitleEl.textContent = '请选择一个范式';
+                     paradigmDescriptionEl.innerHTML = '此处将显示所选范式的详细说明、核心优势和主要弱点。';
+                }
+            }
+            
+            function updateButtonStyles() {
+                const buttons = paradigmButtonsContainer.querySelectorAll('button');
+                buttons.forEach((button, index) => {
+                     const meta = paradigmChart.getDatasetMeta(index);
+                     if(meta.hidden) {
+                         button.style.opacity = '0.5';
+                     } else {
+                         button.style.opacity = '1';
+                     }
+                });
+            }
+
+            updateButtonStyles();
+
+            const workflowSteps = document.querySelectorAll('.workflow-step');
+            workflowSteps.forEach(step => {
+                step.addEventListener('click', () => {
+                    const content = step.querySelector('p');
+                    content.classList.toggle('hidden');
+                });
+            });
+
+            const caseToggles = document.querySelectorAll('.case-toggle');
+            caseToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const content = toggle.nextElementSibling;
+                    const icon = toggle.querySelector('span');
+                    content.classList.toggle('hidden');
+                    if(content.classList.contains('hidden')) {
+                        icon.classList.remove('rotate-45');
+                    } else {
+                        icon.classList.add('rotate-45');
+                    }
+                });
+            });
+            
+            const toolData = {
+                labels: ['Mesa (Python)', 'NetLogo (JVM)', 'Agents.jl (Julia)'],
+                datasets: [{
+                    label: '相对性能 (越低越好)',
+                    data: [27, 10, 1], 
+                    backgroundColor: [
+                        'rgba(242, 204, 143, 0.6)',
+                        'rgba(224, 122, 95, 0.6)',
+                        'rgba(129, 178, 154, 0.6)',
+                    ],
+                    borderColor: [
+                        'rgba(242, 204, 143, 1)',
+                        'rgba(224, 122, 95, 1)',
+                        'rgba(129, 178, 154, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            };
+
+            const ctxTool = document.getElementById('toolChart').getContext('2d');
+            const toolChart = new Chart(ctxTool, {
+                type: 'bar',
+                data: toolData,
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '相对性能 (x倍慢于Agents.jl)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 60) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>

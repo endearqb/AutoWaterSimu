@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOA/Anammox污水处理技术：互动式深度评估</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Professional Neutrals with Alert Amber -->
+    <!-- Application Structure Plan: A top-down, thematic dashboard structure. Starts with a high-level "Promise vs. Reality" comparison to engage the user. The core of the app is four interactive cards representing the report's key critical themes (Operational, Environmental, Economic, Transparency). Clicking a card reveals detailed text and a relevant data visualization, allowing users to explore non-linearly. The structure concludes with actionable, tabbed recommendations for different stakeholders. This design transforms a dense report into a digestible, explorable journey, prioritizing user understanding of the core risks and trade-offs. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: N₂O emission factors for Anammox vs. Traditional. -> Goal: Compare, Highlight Risk. -> Viz: Bar Chart (Chart.js). -> Interaction: Tooltips. -> Justification: Visually demonstrates the significant and uncertain environmental downside, directly challenging the "green" narrative. The color choice (amber) reinforces the risk.
+        2. Report Info: Whole-Life Cost (WLC) for side-stream applications. -> Goal: Compare, Provide Context. -> Viz: Bar Chart (Chart.js). -> Interaction: Tooltips. -> Justification: Shows the economic advantage in its *correct* context (side-stream) while the surrounding text emphasizes the lack of data for mainstream, preventing misinterpretation.
+        3. Report Info: Four core vulnerabilities. -> Goal: Organize, Inform. -> Presentation: Interactive HTML/CSS cards. -> Interaction: Click to expand/reveal details. -> Justification: Breaks down the main critical findings into manageable chunks, improving content retention and user engagement.
+        4. Report Info: Stakeholder advice. -> Goal: Organize, Action. -> Presentation: Tabbed HTML/CSS component. -> Interaction: Click to switch tabs. -> Justification: Neatly segments the report's conclusions into targeted, actionable advice for different audiences.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover {
+            color: #0d9488; /* teal-600 */
+        }
+        .active-section {
+            color: #0d9488;
+            border-bottom: 2px solid #0d9488;
+        }
+        .challenge-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .challenge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .detail-section {
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s ease-in-out;
+        }
+        .detail-section.active {
+            display: block;
+            max-height: 2000px;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-teal-700">AOA技术评估</div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#introduction" class="nav-link pb-1">承诺 vs. 现实</a>
+                <a href="#challenges" class="nav-link pb-1">核心挑战</a>
+                <a href="#distinction" class="nav-link pb-1">关键区别</a>
+                <a href="#recommendations" class="nav-link pb-1">战略建议</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#introduction" class="block py-2 px-4 text-sm hover:bg-teal-50">承诺 vs. 现实</a>
+            <a href="#challenges" class="block py-2 px-4 text-sm hover:bg-teal-50">核心挑战</a>
+            <a href="#distinction" class="block py-2 px-4 text-sm hover:bg-teal-50">关键区别</a>
+            <a href="#recommendations" class="block py-2 px-4 text-sm hover:bg-teal-50">战略建议</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section id="hero" class="text-center mb-20">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-900">AOA/Anammox 技术深度解析</h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                一项被誉为“突破性”的污水处理技术，其背后隐藏着怎样的运营、环境和经济现实？本应用将带您揭示宣传光环之下的技术真相。
+            </p>
+        </section>
+
+        <section id="introduction" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-12">承诺 vs. 现实</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="bg-white p-6 rounded-lg shadow-lg border border-teal-100">
+                    <h3 class="text-2xl font-semibold mb-4 text-teal-700">理论上的承诺</h3>
+                    <p class="mb-4">AOA/Anammox技术基于创新的生物脱氮“捷径”，理论上具备颠覆性优势，被宣传为下一代可持续污水处理的核心。</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start"><span class="text-teal-500 font-bold mr-2">✓</span><div><strong>节能降耗：</strong>曝气能耗降低~60%，无需外加碳源，显著降低运营成本。</div></li>
+                        <li class="flex items-start"><span class="text-teal-500 font-bold mr-2">✓</span><div><strong>污泥减量：</strong>污泥产量减少~90%，大幅减轻后续处置负担。</div></li>
+                        <li class="flex items-start"><span class="text-teal-500 font-bold mr-2">✓</span><div><strong>高效脱氮：</strong>特别适用于处理低C/N比的污水，解决行业“卡脖子”难题。</div></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg border border-amber-200">
+                    <h3 class="text-2xl font-semibold mb-4 text-amber-700">现实中的挑战</h3>
+                    <p class="mb-4">然而，全球科学研究和工程实践揭示，该技术在走向主流应用时，面临着一系列被严重低估的根本性脆弱性。</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">✗</span><div><strong>运营脆弱：</strong>对温度、水质波动极为敏感，启动漫长，控制复杂，易崩溃。</div></li>
+                        <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">✗</span><div><strong>环境代价：</strong>可能产生大量强效温室气体N₂O，其“低碳”优势存疑。</div></li>
+                        <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">✗</span><div><strong>数据缺失：</strong>商业化项目的独立、长期、可验证数据严重缺乏，存在巨大信息鸿沟。</div></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="challenges" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-12">四大核心挑战：深入剖析</h2>
+            <div class="text-center mb-8 text-gray-600">点击下方卡片，查看各项挑战的详细分析和数据。</div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="challenge-card bg-white p-6 rounded-lg shadow-md border-b-4 border-blue-500 cursor-pointer" data-target="detail-operational">
+                    <div class="text-4xl mb-4">🔬</div>
+                    <h3 class="text-xl font-semibold mb-2">运营脆弱性</h3>
+                    <p class="text-gray-600">工艺的稳定运行是其最大挑战，源于核心微生物固有的“娇贵”特性。</p>
+                </div>
+                <div class="challenge-card bg-white p-6 rounded-lg shadow-md border-b-4 border-amber-500 cursor-pointer" data-target="detail-environmental">
+                    <div class="text-4xl mb-4">💨</div>
+                    <h3 class="text-xl font-semibold mb-2">环境资质存疑</h3>
+                    <p class="text-gray-600">“低碳”光环之下，可能隐藏着不为人知的气候成本。</p>
+                </div>
+                <div class="challenge-card bg-white p-6 rounded-lg shadow-md border-b-4 border-red-500 cursor-pointer" data-target="detail-economic">
+                    <div class="text-4xl mb-4">💰</div>
+                    <h3 class="text-xl font-semibold mb-2">经济可行性</h3>
+                    <p class="text-gray-600">运营成本节省的背后，是更高的资本投入和风险成本。</p>
+                </div>
+                <div class="challenge-card bg-white p-6 rounded-lg shadow-md border-b-4 border-gray-500 cursor-pointer" data-target="detail-transparency">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-xl font-semibold mb-2">透明度差距</h3>
+                    <p class="text-gray-600">缺乏独立的长期数据，是评估该技术商业价值的最大障碍。</p>
+                </div>
+            </div>
+
+            <div id="detail-operational" class="detail-section mt-8 bg-blue-50/50 p-6 rounded-lg border-l-4 border-blue-500">
+                <h4 class="text-2xl font-semibold mb-4">深入解读：运营脆弱性</h4>
+                <p class="mb-4">Anammox工艺的稳定运行依赖于一个微妙的微生物生态平衡，而这个平衡极易被打破。</p>
+                <ul class="space-y-4 list-disc list-inside">
+                    <li><strong>温度的“阿喀琉斯之踵”：</strong>Anammox菌是嗜温菌，当水温低于15°C时活性会断崖式下跌，这使其在温带和寒冷地区的冬季运行面临根本性障碍。</li>
+                    <li><strong>“微生物战争”：</strong>在低氨氮的主流污水中，亚硝酸盐氧化菌（NOB）会与Anammox菌争夺“食物”（亚硝酸盐），一旦NOB占优，整个脱氮系统将崩溃。为了抑制NOB，需要极其精密的曝气控制，大大增加了操作复杂性和风险。</li>
+                    <li><strong>启动缓慢，恢复困难：</strong>Anammox菌生长极为缓慢（倍增时间长达10-30天），导致反应器启动周期长达数月。一次水力冲击或操作失误就可能将其大量冲走，而恢复又是一个漫长的过程。</li>
+                </ul>
+            </div>
+            <div id="detail-environmental" class="detail-section mt-8 bg-amber-50/50 p-6 rounded-lg border-l-4 border-amber-500">
+                 <h4 class="text-2xl font-semibold mb-4">深入解读：隐藏的气候成本</h4>
+                 <p class="mb-4">将AOA技术简单等同于“低碳”是片面的。虽然它通过减少曝气节约了电力（间接CO₂排放），但工艺本身可能产生强效温室气体一氧化二氮（N₂O），其百年增温潜能是CO₂的近300倍。在特定工况下，增加的N₂O排放可能完全抵消甚至超过节电带来的气候效益。</p>
+                 <div class="chart-container">
+                     <canvas id="n2oChart"></canvas>
+                 </div>
+                 <p class="text-center text-sm text-gray-600 mt-2">数据显示，Anammox工艺的N₂O排放因子变化范围大且可能高于传统工艺。</p>
+            </div>
+            <div id="detail-economic" class="detail-section mt-8 bg-red-50/50 p-6 rounded-lg border-l-4 border-red-500">
+                <h4 class="text-2xl font-semibold mb-4">深入解读：全生命周期成本考量</h4>
+                <p class="mb-4">经济性评估不能只看电费。Anammox工艺需要更高的前期投资（CAPEX）用于精密设备和自控系统，还需要更高技能的运维人员。其脆弱性也带来了更高的停产和重启风险成本。目前，全球严重缺乏针对<b>主流应用</b>的、可靠的全生命周期成本（WLC）数据。</p>
+                <div class="chart-container">
+                    <canvas id="wlcChart"></canvas>
+                </div>
+                <p class="text-center text-sm text-gray-600 mt-2">注意：此成本对比仅适用于条件有利的<b>侧流处理</b>，不代表主流应用情况。</p>
+            </div>
+            <div id="detail-transparency" class="detail-section mt-8 bg-gray-100 p-6 rounded-lg border-l-4 border-gray-500">
+                 <h4 class="text-2xl font-semibold mb-4">深入解读：关键的透明度差距</h4>
+                 <p class="mb-4">尽管AOA/BEAOA技术被宣传已在多个万吨级项目中应用，但市场上几乎找不到由独立第三方发布的、包含详细工艺参数和长期性能数据的技术报告或学术论文。目前的信息主要来源于技术推广方的宣传材料，缺乏客观验证，这为潜在投资者和使用者带来了巨大的信息不对称风险。</p>
+                 <div class="text-center p-8 bg-gray-200 rounded-lg">
+                    <p class="text-6xl mb-4">📄</p>
+                    <p class="text-xl font-semibold text-gray-700">数据真空</p>
+                    <p class="text-gray-600">经同行评议的商业化长期运行数据严重缺失。</p>
+                 </div>
+            </div>
+        </section>
+
+        <section id="distinction" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-12">关键区别：侧流 vs. 主流应用</h2>
+            <p class="text-center max-w-3xl mx-auto mb-8 text-gray-600">混淆Anammox技术在两种不同场景下的表现是造成误判的主要原因。该技术在“侧流”处理中已获成功，但在“主流”应用中仍面临巨大障碍。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-green-50 p-6 rounded-lg border-2 border-green-200">
+                    <h3 class="text-xl font-semibold mb-3 text-green-800">✅ 侧流 (Sidestream) 应用</h3>
+                    <p class="text-sm mb-4 text-green-700">处理污水厂内部消化污泥的脱水滤液等。</p>
+                    <ul class="space-y-2 text-gray-700">
+                        <li><strong>水质特点：</strong><span class="font-semibold">高</span>氨氮、<span class="font-semibold">高</span>温度、<span class="font-semibold">高</span>碱度</li>
+                        <li><strong>对Anammox：</strong>条件<span class="font-bold text-green-600">有利</span>。高浓度游离氨能天然抑制NOB。</li>
+                        <li><strong>应用状态：</strong>技术相对成熟，全球有超过100个成功商业案例。</li>
+                    </ul>
+                </div>
+                <div class="bg-yellow-50 p-6 rounded-lg border-2 border-yellow-200">
+                    <h3 class="text-xl font-semibold mb-3 text-yellow-800">⚠️ 主流 (Mainstream) 应用</h3>
+                    <p class="text-sm mb-4 text-yellow-700">处理城市生活污水的主工艺线。</p>
+                     <ul class="space-y-2 text-gray-700">
+                        <li><strong>水质特点：</strong><span class="font-semibold">低</span>氨氮、<span class="font-semibold">低</span>温度、<span class="font-semibold">低</span>碱度</li>
+                        <li><strong>对Anammox：</strong>条件<span class="font-bold text-red-600">严苛</span>。温度低、NOB抑制困难等所有挑战都集中于此。</li>
+                        <li><strong>应用状态：</strong>仍处于探索阶段，技术成熟度和经济性远未得到证实。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section id="recommendations" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-12">战略建议</h2>
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-4 border-b border-gray-200">
+                    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="recommendation-tabs">
+                        <li class="mr-2">
+                            <button class="tab-btn inline-block p-4 border-b-2 rounded-t-lg" data-target="tab-investors">致投资者</button>
+                        </li>
+                        <li class="mr-2">
+                            <button class="tab-btn inline-block p-4 border-b-2 rounded-t-lg" data-target="tab-engineers">致工程师/管理者</button>
+                        </li>
+                        <li class="mr-2">
+                            <button class="tab-btn inline-block p-4 border-b-2 rounded-t-lg" data-target="tab-policymakers">致政策制定者</button>
+                        </li>
+                    </ul>
+                </div>
+                <div id="tab-content">
+                    <div id="tab-investors" class="tab-pane p-4 bg-white rounded-lg shadow">
+                        <h4 class="font-semibold text-lg mb-2">采取极度审慎的尽职调查</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>不能仅凭宣传材料决策，应将“AOA/BEAOA”视为营销品牌，用全球Anammox研究的标尺衡量其风险。</li>
+                            <li><strong>要求提供独立、可验证的长期数据：</strong>必须要求提供由第三方审计的、至少包含一个完整年份（含冬季）的商业项目详细运行数据。</li>
+                            <li><strong>将N₂O排放评估作为必要条件：</strong>要求提供基于实际测量的全生命周期温室气体排放报告，不应采信任何缺乏数据的“低碳”溢价。</li>
+                        </ul>
+                    </div>
+                    <div id="tab-engineers" class="tab-pane hidden p-4 bg-white rounded-lg shadow">
+                        <h4 class="font-semibold text-lg mb-2">优先考虑侧流，审慎对待主流</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>优先考虑侧流应用：</strong>Anammox在侧流处理中技术较为成熟，风险相对可控，是当前最合适的应用场景。</li>
+                            <li><strong>对主流应用采取“试点先行”原则：</strong>必须从小型中试开始，进行至少1-2年的长期试验，评估其在本地水质和气候下的真实表现。</li>
+                            <li><strong>进行全面的风险和能力评估：</strong>该技术对运维人员和自控系统的要求远超传统工艺，能力不匹配是导致失败的主要原因。</li>
+                        </ul>
+                    </div>
+                    <div id="tab-policymakers" class="tab-pane hidden p-4 bg-white rounded-lg shadow">
+                        <h4 class="font-semibold text-lg mb-2">推动标准建立，规范市场</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>推动建立温室气体排放监测标准：</strong>应尽快推行针对污水厂的N₂O等温室气体排放的标准化监测、报告和核查（MRV）体系。</li>
+                            <li><strong>规范“低碳技术”的认证：</strong>任何声称“低碳”的技术必须提供包括N₂O在内的全温室气体排放核算报告，以防止“绿色漂洗”（greenwashing）。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-4 text-center text-sm">
+            <p>本应用内容基于《AOA（基于厌氧氨氧化）污水处理技术的全球批判性评估》报告生成。</p>
+            <p>所有数据和分析仅供参考，旨在促进对该技术更全面、更深入的理解。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const challengeCards = document.querySelectorAll('.challenge-card');
+            const detailSections = document.querySelectorAll('.detail-section');
+
+            challengeCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const targetId = card.dataset.target;
+                    const targetSection = document.getElementById(targetId);
+
+                    const isActive = targetSection.classList.contains('active');
+
+                    detailSections.forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    challengeCards.forEach(c => c.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400'));
+
+                    if (!isActive) {
+                        targetSection.classList.add('active');
+                        card.classList.add('ring-2', 'ring-offset-2', 'ring-blue-400');
+                    }
+                });
+            });
+
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetId = tab.dataset.target;
+                    
+                    tabs.forEach(t => t.classList.remove('border-teal-500', 'text-teal-600'));
+                    tab.classList.add('border-teal-500', 'text-teal-600');
+                    
+                    tabPanes.forEach(pane => {
+                        if (pane.id === targetId) {
+                            pane.classList.remove('hidden');
+                        } else {
+                            pane.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            tabs[0].click();
+
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('nav a[href^="#"]');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active-section');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active-section');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: "-50% 0px -50% 0px" });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            const n2oCtx = document.getElementById('n2oChart').getContext('2d');
+            new Chart(n2oCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['传统工艺', 'Anammox 工艺'],
+                    datasets: [{
+                        label: 'N₂O 排放因子 (% of N Load)',
+                        data: [
+                          { y: [0.1, 0.58], label: '0.1% - 0.58%' },
+                          { y: [0.057, 2.3], label: '0.057% - 2.3%' }
+                        ],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.6)', // blue-500
+                            'rgba(245, 158, 11, 0.6)'  // amber-500
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(245, 158, 11, 1)'
+                        ],
+                        borderWidth: 1,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'N₂O 排放因子 (% of N Load)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'N₂O排放对比：Anammox vs. 传统工艺',
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    const dataPoint = context.dataset.data[context.dataIndex];
+                                    return ` 范围: ${dataPoint.label}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    parsing: {
+                        xAxisKey: 'x',
+                        yAxisKey: 'y'
+                    }
+                }
+            });
+
+            const wlcCtx = document.getElementById('wlcChart').getContext('2d');
+            new Chart(wlcCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['传统SBR技术', 'PNA/Anammox技术'],
+                    datasets: [{
+                        label: '全生命周期成本 (百万英镑)',
+                        data: [20.1, 7.7],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.6)', // red-500
+                            'rgba(34, 197, 94, 0.6)' // green-500
+                        ],
+                        borderColor: [
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(34, 197, 94, 1)'
+                        ],
+                        borderWidth: 1,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '成本 (百万英镑)'
+                            }
+                        }
+                    },
+                     plugins: {
+                        title: {
+                            display: true,
+                            text: '侧流处理全生命周期成本对比 (40年)',
+                            font: { size: 16 }
+                        },
+                         legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

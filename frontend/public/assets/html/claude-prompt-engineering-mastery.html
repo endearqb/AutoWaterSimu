@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精通Claude提示工程：您的可视化指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F7FAFC;
+            color: #2D3748;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Default height */
+            max-height: 450px; /* Default max-height */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .chart-container {
+                height: 350px;
+                max-height: 500px;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .chart-container {
+                height: 400px;
+                max-height: 550px;
+            }
+        }
+        .stat-card {
+            background-color: #FFFFFF;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .html-diagram {
+            background-color: #E2E8F0; /* bg-slate-200 */
+            border: 1px solid #CBD5E0; /* border-slate-300 */
+            padding: 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .flow-step {
+            background-color: #FFFFFF;
+            border: 2px solid #3B82F6; /* Primary Accent */
+            color: #3B82F6;
+            padding: 0.75rem 1.25rem;
+            border-radius: 9999px; /* rounded-full */
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .flow-arrow {
+            font-size: 1.5rem; /* text-2xl */
+            color: #6B7280; /* text-gray-500 */
+            margin: 0 0.5rem;
+        }
+        .section-title {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700; /* font-bold */
+            color: #1A202C; /* text-gray-900 */
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3B82F6; /* Primary Accent */
+            display: inline-block;
+        }
+        .subsection-title {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 600; /* font-semibold */
+            color: #1A202C; /* text-gray-800 */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .highlight-text {
+            color: #3B82F6; /* Primary Accent */
+            font-weight: 600;
+        }
+        .icon-placeholder {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: #CBD5E0;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            margin-right: 8px;
+            color: #4A5568;
+        }
+
+        /* Palette: Vibrant Professional
+           Background: #F7FAFC
+           Text: #2D3748
+           Card Background: #FFFFFF
+           Primary Accent (Vibrant Blue): #3B82F6
+           Secondary Accent (Teal/Green): #10B981
+           Tertiary Accent (Orange): #F59E0B
+           Highlight/Call to Action (Indigo/Purple): #6366F1
+        */
+
+        /*
+            Infographic Plan & Narrative Structure:
+            1. Hero Section: Title and brief intro.
+            2. Section 1: 提示工程基石 (Pillars of Prompt Engineering) - Basic Structure, Clarity, Roles.
+            3. Section 2: 提升提示效果的关键技巧 (Key Techniques to Enhance Your Prompts) - Data/Instruction Separation, Formatting/Prefilling, Step-by-Step Thinking, Few-Shot.
+            4. Section 3: 确保输出质量 (Ensuring Output Quality) - Avoiding Hallucinations.
+            5. Section 4: 构建与进阶 (Building & Advancing Your Prompts) - Complex Prompts, Advanced Techniques Overview.
+            6. Section 5: 通用建议与最佳实践 (General Advice & Best Practices).
+            7. Footer.
+
+            Visualization Choices (Confirming NO SVG, NO MERMAID JS):
+            - Basic Structure: HTML/CSS diagram. Goal: Organize. Justification: Simple visual representation. NO SVG.
+            - Clarity & Directness: Big Number (Text), List (HTML). Goal: Inform. Justification: Emphasize key points. NO SVG.
+            - Role Prompting: Unicode Icon + Text. Goal: Inform. Justification: Simple visual cue. NO SVG.
+            - Separating Data: HTML/CSS diagram. Goal: Organize. Justification: Clear structural representation. NO SVG.
+            - Formatting & Prefilling: Donut Chart (Chart.js Canvas for formats), Text for prefilling. Goal: Compare/Inform. Justification: Show proportions, emphasize technique. NO SVG.
+            - Step-by-Step Thinking: Flow Chart (HTML/CSS). Goal: Organize. Justification: Show process flow. NO SVG, NO MERMAID.
+            - Few-Shot Prompting: Bar Chart (Chart.js Canvas) for "Number of Examples (1-5)". Goal: Inform. Justification: Simple comparison. NO SVG.
+            - Avoiding Hallucinations: Radar Chart (Chart.js Canvas) for strategies. Goal: Compare. Justification: Multi-faceted comparison. NO SVG.
+            - Complex Prompts: HTML/CSS diagram (Iterative loop). Goal: Organize. Justification: Show process. NO SVG.
+            - Advanced Techniques: Bubble Chart (Chart.js Canvas). Goal: Compare. Justification: Visual grouping. NO SVG.
+            - Best Practices: List (HTML) with Unicode Icons. Goal: Organize. Justification: Clear, scannable points. NO SVG.
+
+            Mermaid JS was NOT used. SVG graphics were NOT used. All visuals are either Chart.js (Canvas), HTML/CSS structures, or Unicode characters.
+        */
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white py-12 sm:py-20">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">精通Claude提示工程</h1>
+            <p class="text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto">您的可视化指南：释放大型语言模型的全部潜力</p>
+            <p class="text-md sm:text-lg text-slate-200 max-w-2xl mx-auto">
+                本指南基于深度研究报告“Claude提示工程教程内容分析与总结”，旨在通过直观的可视化图表，帮助您理解和掌握与Claude高效沟通的核心原则与高级技巧。
+            </p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="pillars" class="mb-16">
+            <h2 class="section-title">提示工程基石</h2>
+            <p class="mb-8 text-lg text-gray-700">构建高效提示的起点是理解其基础结构和核心原则。这些基石为与Claude进行清晰、有效的沟通奠定了基础，确保模型能够准确理解您的意图并生成期望的输出。</p>
+
+            <div class="grid md:grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="stat-card lg:col-span-1">
+                    <h3 class="subsection-title">1. 基础提示结构</h3>
+                    <p class="mb-4">所有提示都应遵循 <code class="text-sm bg-gray-200 p-1 rounded">Human: [您的指令] Assistant:</code> 的标准格式。这清晰地划分了用户与模型的对话轮次。</p>
+                    <div class="html-diagram">Human: 请介绍一下提示工程。
+
+Assistant:</div>
+                    <p class="mt-4"><span class="highlight-text">预填充回复 (Prefilling)</span>: 在 <code class="text-sm bg-gray-200 p-1 rounded">Assistant:</code> 后添加文本（如 <code class="text-sm bg-gray-200 p-1 rounded">{</code>）可引导输出格式。</p>
+                </div>
+
+                <div class="stat-card lg:col-span-1">
+                    <h3 class="subsection-title">2. 清晰与直接</h3>
+                    <p class="mb-4">提示应尽可能清晰、明确、具体。避免模糊指令。</p>
+                    <ul class="list-disc list-inside space-y-2 mb-4">
+                        <li>详细说明期望的输出格式（JSON, XML, 列表等）、长度、风格、语气。</li>
+                        <li>优先使用<span class="highlight-text">正面指令</span>（“请用三句话总结”）。</li>
+                        <li>对于复杂任务，将其<span class="highlight-text">分解为小步骤</span>。</li>
+                    </ul>
+                    <div class="text-center">
+                        <span class="text-6xl font-bold text-[#F59E0B]">明确!</span>
+                        <p class="text-gray-600">是获取优质回复的关键</p>
+                    </div>
+                </div>
+
+                <div class="stat-card lg:col-span-1">
+                    <h3 class="subsection-title">3. 分配角色 (角色提示)</h3>
+                    <p class="mb-4">在提示开头为Claude分配特定角色（例如，“你是一位经验丰富的软件工程师”）。</p>
+                    <div class="flex items-center justify-center p-4 bg-blue-50 rounded-lg">
+                        <span class="text-4xl mr-3">🎭</span>
+                        <div>
+                            <p class="font-semibold">影响输出风格与专业度</p>
+                            <p class="text-sm text-gray-600">使其回答更符合特定场景需求。</p>
+                        </div>
+                    </div>
+                    <p class="mt-4">角色设定有助于规范Claude的回答风格、语气、专业知识领域和关注点。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="techniques" class="mb-16">
+            <h2 class="section-title">提升提示效果的关键技巧</h2>
+            <p class="mb-8 text-lg text-gray-700">掌握这些关键技巧，可以让您的提示如虎添翼，显著提升Claude理解和执行复杂指令的能力，从而获得更精准、结构化和富有洞察力的回应。</p>
+            <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="stat-card">
+                    <h3 class="subsection-title">4. 分离数据与指令</h3>
+                    <p class="mb-4">当提示中既包含指令又包含待处理数据时，应明确区分。推荐使用XML标签（如 <code class="text-sm bg-gray-200 p-1 rounded">&lt;document&gt;...&lt;/document&gt;</code>）或三重引号包裹数据。</p>
+                    <div class="html-diagram">Human: 请分析以下文档：
+&lt;document_to_analyze&gt;
+这是示例文档内容...
+&lt;/document_to_analyze&gt;
+请总结其主要观点。
+
+Assistant:</div>
+                    <p class="mt-4">通常将指令放在数据之前，或在指令中明确引用被标记的数据。</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="subsection-title">5. 格式化输出与替Claude开头</h3>
+                    <p class="mb-4">明确要求Claude以特定格式输出，如JSON, XML, Markdown等。如果可能，提供一个期望格式的简单示例。在 <code class="text-sm bg-gray-200 p-1 rounded">Assistant:</code> 后预填充回复开头（例如 <code class="text-sm bg-gray-200 p-1 rounded">Assistant: {"name": "</code>）能有效引导输出。</p>
+                    <div class="chart-container mx-auto h-64 md:h-72">
+                        <canvas id="formattingChart"></canvas>
+                    </div>
+                    <p class="text-center mt-2 text-sm text-gray-600">常见输出格式占比（示例）</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="subsection-title">6. 逐步思考 / “内心独白”</h3>
+                    <p class="mb-4">对于复杂推理任务，要求Claude在给出最终答案前，先进行逐步思考。通常将其思考过程放在 <code class="text-sm bg-gray-200 p-1 rounded">&lt;thinking&gt;...&lt;/thinking&gt;</code> 标签中。</p>
+                    <div class="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-2 my-4">
+                        <div class="flow-step">输入指令</div>
+                        <div class="flow-arrow">➡️</div>
+                        <div class="flow-step bg-[#10B981] text-white border-[#10B981]">&lt;thinking&gt;思考过程&lt;/thinking&gt;</div>
+                        <div class="flow-arrow">➡️</div>
+                        <div class="flow-step">最终答案</div>
+                    </div>
+                    <p class="mt-4">这能显著提高在数学、逻辑推理和多步骤指令遵循任务上的表现。</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="subsection-title">7. 使用示例 (Few-Shot Prompting)</h3>
+                    <p class="mb-4">在提示中给出少量（通常<span class="highlight-text">1到5个</span>）高质量的输入/输出示例，向Claude展示期望的任务行为和回应格式。</p>
+                    <div class="chart-container mx-auto h-64 md:h-72">
+                        <canvas id="fewShotChart"></canvas>
+                    </div>
+                    <p class="text-center mt-2 text-sm text-gray-600">Few-Shot提示中常用示例数量</p>
+                    <p class="mt-4">对于需要特定风格、格式或处理细微差别的任务特别有效。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="quality" class="mb-16">
+            <h2 class="section-title">确保输出质量</h2>
+            <p class="mb-8 text-lg text-gray-700">获取高质量的输出不仅仅依赖于清晰的指令，还需要主动采取策略来避免潜在的问题，例如模型产生幻觉。理解并应用这些质量保障措施，是充分发挥Claude能力的关键环节。</p>
+            <div class="stat-card max-w-3xl mx-auto">
+                <h3 class="subsection-title text-center">8. 避免幻觉 (Hallucinations)</h3>
+                <p class="mb-6 text-center">幻觉指模型自信地生成不准确或虚构信息。以下策略有助于减少幻觉：</p>
+                <div class="chart-container mx-auto" style="height: 350px; max-height: 450px;">
+                    <canvas id="hallucinationChart"></canvas>
+                </div>
+                <ul class="list-disc list-inside space-y-1 mt-6 text-sm text-gray-700 columns-2 md:columns-3">
+                    <li>提供相关上下文</li>
+                    <li>允许回答“不知道”</li>
+                    <li>要求引用来源</li>
+                    <li>降低<code class="text-xs bg-gray-200 p-0.5 rounded">temperature</code>参数</li>
+                    <li>交叉验证信息</li>
+                    <li>明确指示范围</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="advanced" class="mb-16">
+            <h2 class="section-title">构建与进阶</h2>
+            <p class="mb-8 text-lg text-gray-700">随着您对基础原则和技巧的熟练掌握，可以开始构建更复杂的提示，并探索高级功能来应对更具挑战性的任务。这个过程强调迭代和多种技术的组合运用。</p>
+            <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="stat-card">
+                    <h3 class="subsection-title">构建复杂提示</h3>
+                    <p class="mb-4">构建复杂提示是一个<span class="highlight-text">迭代开发</span>的过程：从简单开始，测试，然后逐步增加复杂性、约束和细节。有效的复杂提示通常<span class="highlight-text">组合使用多种技巧</span>。</p>
+                    <div class="text-center my-4 p-4 border-2 border-dashed border-[#6366F1] rounded-lg">
+                        <p class="font-semibold text-lg text-[#6366F1]">简单提示 ➡️ 测试 ➡️ 分析 ➡️ 改进 ➡️ 复杂提示</p>
+                        <p class="text-sm text-gray-600 mt-2">持续测试和优化是关键。</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="subsection-title">高级技巧概览</h3>
+                    <p class="mb-4">当单个提示难以胜任时，可以运用以下高级技巧：</p>
+                    <div class="chart-container mx-auto h-72 md:h-80">
+                        <canvas id="advancedTechniquesChart"></canvas>
+                    </div>
+                     <p class="text-center mt-2 text-sm text-gray-600">高级提示工程技术（概念性）</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="best-practices" class="mb-16">
+            <h2 class="section-title">通用建议与最佳实践</h2>
+            <p class="mb-8 text-lg text-gray-700">遵循这些通用建议和最佳实践，将帮助您在提示工程的道路上行稳致远，持续提升与Claude协作的效率和成果质量。</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+                    <p class="font-semibold text-lg mb-2"><span class="icon-placeholder">🔄</span>迭代与实验</p>
+                    <p class="text-gray-600 text-sm">提示工程高度依赖实验和迭代优化。不要期望一次完美。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+                    <p class="font-semibold text-lg mb-2"><span class="icon-placeholder">🎯</span>明确性至上</p>
+                    <p class="text-gray-600 text-sm">始终追求提示的清晰、明确和无歧义。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+                    <p class="font-semibold text-lg mb-2"><span class="icon-placeholder">📚</span>上下文是关键</p>
+                    <p class="text-gray-600 text-sm">为Claude提供充足且相关的上下文信息。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+                    <p class="font-semibold text-lg mb-2"><span class="icon-placeholder">🔖</span>利用XML标签</p>
+                    <p class="text-gray-600 text-sm">XML标签是组织提示内容、分隔不同部分的强大工具。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+                    <p class="font-semibold text-lg mb-2"><span class="icon-placeholder">⚙️</span>控制模型参数</p>
+                    <p class="text-gray-600 text-sm">理解并利用 <code class="text-xs bg-gray-200 p-0.5 rounded">temperature</code>, <code class="text-xs bg-gray-200 p-0.5 rounded">max_tokens</code> 等参数。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+                    <p class="font-semibold text-lg mb-2"><span class="icon-placeholder">💰</span>考虑成本与延迟</p>
+                    <p class="text-gray-600 text-sm">更长、更复杂的提示可能会增加成本和响应延迟。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8 text-center">
+        <p>&copy; 2024 Claude提示工程可视化指南。保留所有权利。</p>
+        <p class="text-sm text-gray-400 mt-1">基于“Claude提示工程教程内容分析与总结”报告生成。</p>
+    </footer>
+
+    <script>
+        const primaryAccent = '#3B82F6'; // Vibrant Blue
+        const secondaryAccent = '#10B981'; // Teal/Green
+        const tertiaryAccent = '#F59E0B'; // Orange
+        const highlightAccent = '#6366F1'; // Indigo/Purple
+        const textColor = '#2D3748'; // Dark Gray for chart text
+
+        function wrapLabel(str, maxWidth = 16) {
+            if (typeof str !== 'string') return str; // Return as is if not a string
+            if (str.length <= maxWidth) return str;
+
+            const words = str.split(' ');
+            let currentLine = '';
+            const lines = [];
+
+            for (const word of words) {
+                if ((currentLine + ' ' + word).trim().length > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = (currentLine + ' ' + word).trim();
+                }
+            }
+            if (currentLine.length > 0) {
+                lines.push(currentLine);
+            }
+            return lines.length > 0 ? lines : [str]; // Ensure it always returns an array for consistency if wrapped, or original string if not
+        }
+        
+        const tooltipTitleCallback = function(tooltipItems) {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+              return label.join(' ');
+            } else {
+              return label;
+            }
+        };
+
+        // Chart 1: Formatting Output (Donut Chart)
+        const formattingCtx = document.getElementById('formattingChart').getContext('2d');
+        new Chart(formattingCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [wrapLabel('JSON'), wrapLabel('XML'), wrapLabel('Markdown'), wrapLabel('列表'), wrapLabel('其他格式')],
+                datasets: [{
+                    label: '输出格式',
+                    data: [35, 25, 20, 15, 5],
+                    backgroundColor: [primaryAccent, secondaryAccent, tertiaryAccent, highlightAccent, '#A0AEC0' /* gray-500 */],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: textColor } },
+                    tooltip: { callbacks: { title: tooltipTitleCallback } }
+                }
+            }
+        });
+
+        // Chart 2: Few-Shot Prompting (Bar Chart)
+        const fewShotCtx = document.getElementById('fewShotChart').getContext('2d');
+        new Chart(fewShotCtx, {
+            type: 'bar',
+            data: {
+                labels: [wrapLabel('1个示例'), wrapLabel('2-3个示例'), wrapLabel('4-5个示例')],
+                datasets: [{
+                    label: '常用示例数量范围',
+                    data: [40, 85, 60], // Conceptual values representing frequency/recommendation
+                    backgroundColor: [secondaryAccent, primaryAccent, tertiaryAccent],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { color: textColor }, 
+                        grid: { color: '#E2E8F0' } 
+                    },
+                    x: { 
+                        ticks: { color: textColor }, 
+                        grid: { display: false } 
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { title: tooltipTitleCallback } }
+                }
+            }
+        });
+
+        // Chart 3: Avoiding Hallucinations (Radar Chart)
+        const hallucinationCtx = document.getElementById('hallucinationChart').getContext('2d');
+        new Chart(hallucinationCtx, {
+            type: 'radar',
+            data: {
+                labels: [
+                    wrapLabel('提供上下文'), 
+                    wrapLabel('允许“不知道”'), 
+                    wrapLabel('要求引用'), 
+                    wrapLabel('低Temperature'), 
+                    wrapLabel('交叉验证'),
+                    wrapLabel('明确范围')
+                ],
+                datasets: [{
+                    label: '减少幻觉策略有效性（概念）',
+                    data: [9, 7, 7, 6, 8, 7.5], // Conceptual scores
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)', // primaryAccent with alpha
+                    borderColor: primaryAccent,
+                    pointBackgroundColor: primaryAccent,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: primaryAccent
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#CBD5E0' },
+                        grid: { color: '#E2E8F0' },
+                        pointLabels: { 
+                            font: { size: 10 }, 
+                            color: textColor,
+                            callback: function(label) { // Manual wrapping for radar point labels if needed
+                                return wrapLabel(label, 12); // Shorter width for radar labels
+                            }
+                        },
+                        ticks: { 
+                            backdropColor: 'transparent', 
+                            color: textColor,
+                            stepSize: 2
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top', labels: { color: textColor } },
+                    tooltip: { callbacks: { title: tooltipTitleCallback } }
+                }
+            }
+        });
+        
+        // Chart 4: Advanced Techniques (Bubble Chart)
+        const advancedTechniquesCtx = document.getElementById('advancedTechniquesChart').getContext('2d');
+        new Chart(advancedTechniquesCtx, {
+            type: 'bubble',
+            data: {
+                labels: [ // For tooltip access if needed, though bubble charts use dataset labels more
+                    wrapLabel('提示链 (Chaining)'), 
+                    wrapLabel('工具使用 (Tool Use)'), 
+                    wrapLabel('检索增强生成 (RAG)'), 
+                    wrapLabel('性能评估')
+                ],
+                datasets: [
+                    {
+                        label: wrapLabel('提示链 (Chaining)'),
+                        data: [{ x: 2, y: 3, r: 18 }], // x: complexity, y: impact, r: usage frequency (conceptual)
+                        backgroundColor: primaryAccent + 'BF', // Alpha for bubbles
+                        borderColor: primaryAccent
+                    },
+                    {
+                        label: wrapLabel('工具使用 (Tool Use)'),
+                        data: [{ x: 3.5, y: 4, r: 22 }],
+                        backgroundColor: secondaryAccent + 'BF',
+                        borderColor: secondaryAccent
+                    },
+                    {
+                        label: wrapLabel('检索增强生成 (RAG)'),
+                        data: [{ x: 4, y: 4.5, r: 25 }],
+                        backgroundColor: tertiaryAccent + 'BF',
+                        borderColor: tertiaryAccent
+                    },
+                    {
+                        label: wrapLabel('性能评估'),
+                        data: [{ x: 2.5, y: 2, r: 15 }],
+                        backgroundColor: highlightAccent + 'BF',
+                        borderColor: highlightAccent
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        title: { display: true, text: wrapLabel('影响力 (概念)'), color: textColor }, 
+                        ticks: { color: textColor }, 
+                        grid: { color: '#E2E8F0' } 
+                    },
+                    x: { 
+                        title: { display: true, text: wrapLabel('复杂度 (概念)'), color: textColor }, 
+                        ticks: { color: textColor }, 
+                        grid: { color: '#E2E8F0' } 
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: textColor } },
+                    tooltip: { 
+                        callbacks: { 
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    if(Array.isArray(label)) label = label.join(' ');
+                                    label += ': ';
+                                }
+                                if (context.parsed.r !== null) {
+                                    label += `(复杂度: ${context.parsed.x}, 影响力: ${context.parsed.y}, 重要性: ${context.parsed.r})`;
+                                }
+                                return label;
+                            }
+                        } 
+                    }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

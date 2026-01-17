@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式报告：臭氧及其耦合水处理工艺</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The SPA is designed as a task-oriented, interactive dashboard, moving away from the report's linear structure. The goal is to facilitate user-driven exploration and comparison. A sticky top navigation bar allows quick access to key thematic sections: '核心原理' (Core Principles), '工艺对比' (Process Comparison), '挑战与对策' (Challenges & Solutions), '工程案例' (Case Studies), and '未来趋势' (Future Trends). The core of the app is the '工艺对比' section, which acts as an interactive hub for comparing different AOPs. This structure was chosen because the primary user need for such a dense report is not linear reading, but the ability to quickly compare technologies, understand their trade-offs, and see real-world applications. This non-linear, interactive model enhances usability and comprehension. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Oxidant comparison (Table 1) -> Goal: Compare -> Viz: Bar Chart -> Interaction: Hover for details -> Justification: Clearly shows the superior oxidative power of Ozone. -> Library: Chart.js.
+        - Report Info: Coupled AOPs (Part 2) -> Goal: Compare/Organize -> Viz: Interactive tabbed interface with HTML/CSS diagrams and a summary bar chart -> Interaction: Click tabs to switch process details and highlight on the chart -> Justification: This is the most effective way to compare multiple complex processes side-by-side on various metrics (cost, efficiency, risk), making it the interactive core of the application. -> Library: Chart.js, Vanilla JS.
+        - Report Info: Challenges & Solutions (Part 3) -> Goal: Inform -> Viz: Card layout -> Interaction: Simple display -> Justification: Presents a clear problem-solution format for the key challenges.
+        - Report Info: Case Studies (Table 4) -> Goal: Inform/Compare -> Viz: Filterable cards and a dynamic horizontal bar chart -> Interaction: Filter by application type, click card to highlight on chart -> Justification: Allows users to focus on relevant real-world examples and see performance data visually. -> Library: Chart.js, Vanilla JS.
+        - Report Info: Future Trends (Part 5) -> Goal: Inform -> Viz: Accordion component -> Interaction: Click to expand -> Justification: Organizes forward-looking content compactly. -> Library: Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 300px; max-height: 40vh; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .smooth-scroll { scroll-behavior: smooth; }
+        .nav-link { transition: all 0.3s ease; padding: 8px 16px; border-radius: 9999px; }
+        .nav-link.active { background-color: #3B82F6; color: white; }
+        .nav-link:not(.active):hover { background-color: #EFF6FF; color: #3B82F6; }
+        .process-tab { transition: all 0.3s ease; border-width: 2px; }
+        .process-tab.active { border-color: #3B82F6; background-color: #DBEAFE; transform: translateY(-2px); }
+        .case-filter.active { background-color: #3B82F6; color: white; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 smooth-scroll">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl md:text-2xl font-bold text-blue-600">臭氧水处理技术透视</h1>
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="#introduction" class="nav-link">首页</a>
+                    <a href="#principles" class="nav-link">核心原理</a>
+                    <a href="#comparison" class="nav-link">工艺对比</a>
+                    <a href="#challenges" class="nav-link">挑战与对策</a>
+                    <a href="#cases" class="nav-link">工程案例</a>
+                    <a href="#future" class="nav-link">未来趋势</a>
+                </div>
+                <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <a href="#introduction" class="block nav-link text-center mb-2">首页</a>
+                <a href="#principles" class="block nav-link text-center mb-2">核心原理</a>
+                <a href="#comparison" class="block nav-link text-center mb-2">工艺对比</a>
+                <a href="#challenges" class="block nav-link text-center mb-2">挑战与对策</a>
+                <a href="#cases" class="block nav-link text-center mb-2">工程案例</a>
+                <a href="#future" class="block nav-link text-center mb-2">未来趋势</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-12">
+        
+        <section id="introduction" class="text-center min-h-[60vh] flex flex-col justify-center items-center">
+            <h2 class="text-3xl md:text-5xl font-bold tracking-tight mb-4">探索水的净化之道</h2>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                从基础原理到前沿应用，本报告将复杂的水处理科学转化为直观的互动体验。深入了解臭氧——这种强大的氧化剂——如何通过耦合不同技术，应对日益严峻的水污染挑战，保障我们的水质安全。
+            </p>
+        </section>
+
+        <section id="principles" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold">核心原理：臭氧的力量</h2>
+                <p class="mt-2 text-gray-600 max-w-2xl mx-auto">臭氧（$O_3$）是一种高效的氧化剂和消毒剂。它通过两种核心路径降解污染物，其效能受到多种关键因素的影响。</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-4 text-center md:text-left">双重作用机理</h3>
+                    <div class="space-y-4">
+                        <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                            <h4 class="font-bold text-lg text-blue-700">直接氧化 (分子路径)</h4>
+                            <p class="text-gray-600 mt-2">臭氧分子本身作为亲电试剂，选择性地攻击有机物中电子云密度高的位置，如不饱和双键和活化的芳香环。此路径反应较慢，在酸性条件下占主导。</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+                            <h4 class="font-bold text-lg text-green-700">间接氧化 (自由基路径)</h4>
+                            <p class="text-gray-600 mt-2">臭氧分解产生氧化能力更强的羟基自由基($\cdot$OH)，它能无选择性、极快速地攻击几乎所有有机物。此路径是高级氧化工艺（AOPs）的核心，在碱性条件下被促进。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold mb-4 text-center">氧化能力对比</h3>
+                     <p class="text-center text-sm text-gray-500 mb-4">标准氧化还原电位 (V)越高，氧化能力越强。</p>
+                    <div class="chart-container h-[350px] md:h-[400px]">
+                        <canvas id="oxidantChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="py-12 md:py-20 bg-slate-100 -mx-4 px-4 rounded-2xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold">工艺对比：选择最佳方案</h2>
+                <p class="mt-2 text-gray-600 max-w-2xl mx-auto">不同的臭氧耦合工艺适用于不同的场景。点击下方标签，探索各工艺的原理、优缺点及适用领域，并通过图表进行直观比较。</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 mb-8">
+                <button data-process="o3" class="process-tab p-3 md:p-4 text-sm md:text-base font-semibold bg-white rounded-lg shadow-sm border-2 border-transparent">单独臭氧</button>
+                <button data-process="hco" class="process-tab p-3 md:p-4 text-sm md:text-base font-semibold bg-white rounded-lg shadow-sm border-2 border-transparent">催化臭氧化 (HCO)</button>
+                <button data-process="peroxone" class="process-tab p-3 md:p-4 text-sm md:text-base font-semibold bg-white rounded-lg shadow-sm border-2 border-transparent">O₃/H₂O₂ (Peroxone)</button>
+                <button data-process="uv" class="process-tab p-3 md:p-4 text-sm md:text-base font-semibold bg-white rounded-lg shadow-sm border-2 border-transparent">O₃/UV</button>
+                <button data-process="bac" class="process-tab p-3 md:p-4 text-sm md:text-base font-semibold bg-white rounded-lg shadow-sm border-2 border-transparent">臭氧-生物炭 (O₃-BAC)</button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 grid md:grid-cols-5 gap-8">
+                <div id="process-details" class="md:col-span-2">
+                    <!-- Dynamic content will be injected here -->
+                </div>
+                <div class="md:col-span-3">
+                    <h3 class="text-xl font-semibold mb-4 text-center">综合性能雷达图</h3>
+                    <div class="chart-container h-[350px] md:h-[400px]">
+                        <canvas id="processComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="challenges" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold">挑战与对策</h2>
+                <p class="mt-2 text-gray-600 max-w-2xl mx-auto">臭氧技术虽强大，但在工程应用中仍面临关键挑战。了解这些挑战并探索有效的控制策略至关重要。</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-red-100 text-red-600 p-3 rounded-full mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold">副产物：溴酸盐($BrO_3^-$)</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">当原水含溴离子时，臭氧化过程可能生成潜在致癌物溴酸盐。严格控制其浓度是应用臭氧技术的首要前提。</p>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-700">主要对策：</h4>
+                        <ul class="list-disc list-inside mt-2 text-sm text-gray-600 space-y-1">
+                            <li>降低pH值，抑制反应速率</li>
+                            <li>投加氨氮，阻断生成路径</li>
+                            <li>优化臭氧投加方式，避免局部过量</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-yellow-100 text-yellow-600 p-3 rounded-full mr-4">
+                           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold">催化剂失活 (HCO)</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">在催化臭氧化工艺中，催化剂的长期稳定是核心。污染、中毒和烧结都可能导致其活性下降，增加运行成本。</p>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-700">主要对策：</h4>
+                        <ul class="list-disc list-inside mt-2 text-sm text-gray-600 space-y-1">
+                            <li>化学清洗，去除盐垢和毒物</li>
+                            <li>热处理（焙烧），烧掉有机污染物</li>
+                            <li>开发新型抗失活催化剂材料</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-100 text-green-600 p-3 rounded-full mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold">经济与能耗</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">臭氧系统初始投资高，且臭氧发生器是能耗大户。成本效益分析是决定技术是否可行的最终标尺。</p>
+                     <div class="bg-gray-100 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-700">主要对策：</h4>
+                        <ul class="list-disc list-inside mt-2 text-sm text-gray-600 space-y-1">
+                            <li>使用纯氧源代替空气源，降低电耗</li>
+                            <li>优化传质效率，减少臭氧浪费</li>
+                            <li>结合AI进行智能剂量控制，按需投加</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cases" class="py-12 md:py-20 bg-slate-100 -mx-4 px-4 rounded-2xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold">工程案例：实践的证明</h2>
+                <p class="mt-2 text-gray-600 max-w-2xl mx-auto">从市政污水到工业废水，臭氧技术在全球范围内得到广泛应用。通过真实案例，了解其在不同场景下的卓越表现。</p>
+            </div>
+            
+            <div class="flex justify-center space-x-2 md:space-x-4 mb-8">
+                <button class="case-filter px-4 py-2 rounded-full font-semibold transition-colors duration-300" data-filter="all">全部</button>
+                <button class="case-filter px-4 py-2 rounded-full font-semibold transition-colors duration-300" data-filter="municipal">市政与饮用水</button>
+                <button class="case-filter px-4 py-2 rounded-full font-semibold transition-colors duration-300" data-filter="industrial">工业废水</button>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="case-cards-container">
+                <!-- Case study cards will be injected here -->
+            </div>
+            
+            <div>
+                 <h3 class="text-xl font-semibold mb-4 text-center">关键污染物去除率 (%)</h3>
+                <div class="chart-container h-[400px] md:h-[500px] bg-white rounded-lg shadow-md p-4">
+                    <canvas id="caseStudyChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <section id="future" class="py-12 md:py-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold">未来趋势：更智能、更精准</h2>
+                <p class="mt-2 text-gray-600 max-w-2xl mx-auto">臭氧技术正朝着材料创新、过程智能化和应用拓展的方向发展，以应对未来的水环境挑战。</p>
+            </div>
+            <div id="accordion-container" class="max-w-4xl mx-auto space-y-4">
+                 <!-- Accordion items will be injected here -->
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-4 py-6 text-center text-sm">
+            <p>&copy; 2025 臭氧水处理技术交互式报告。内容根据提供的技术调研报告生成。</p>
+            <p class="text-gray-400 mt-1">仅用于信息展示和技术交流。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const appData = {
+                oxidants: {
+                    labels: ['高锰酸钾', '二氧化氯', '氯气', '过氧化氢', '臭氧', '羟基自由基'],
+                    values: [1.68, 1.50, 1.49, 1.78, 2.07, 2.80],
+                },
+                processes: {
+                    o3: {
+                        name: '单独臭氧',
+                        description: '利用臭氧分子直接氧化或其分解产生的少量自由基来降解污染物。技术成熟，主要用于消毒、脱色和除味。',
+                        pros: ['广谱高效消毒', '无化学残留', '可同时脱色除味'],
+                        cons: ['对难降解有机物矿化不彻底', '能耗较高', '可能生成溴酸盐'],
+                        application: '饮用水常规消毒，市政污水一级处理后消毒。',
+                        performance: { '矿化率': 2, '运行成本': 3, '技术成熟度': 5, '副产物风险': 4, '操作复杂度': 2 }
+                    },
+                    hco: {
+                        name: '多相催化臭氧化 (HCO)',
+                        description: '通过固相催化剂加速臭氧分解，产生大量羟基自由基，大幅提高对难降解有机物的矿化效率。',
+                        pros: ['矿化率极高', '臭氧利用率高', '催化剂可回收'],
+                        cons: ['催化剂易失活，需再生', '催化剂成本高', '机理复杂，稳定性是挑战'],
+                        application: '高浓度、高毒性工业废水（如石化、纺织、化工）深度处理。',
+                        performance: { '矿化率': 5, '运行成本': 4, '技术成熟度': 3, '副产物风险': 3, '操作复杂度': 5 }
+                    },
+                    peroxone: {
+                        name: 'O₃/H₂O₂ (Peroxone)',
+                        description: '投加过氧化氢(H₂O₂)作为引发剂，快速将臭氧转化为羟基自由基，是一种高效的均相高级氧化工艺。',
+                        pros: ['自由基生成速率快', '设备改造简单', '技术成熟可靠'],
+                        cons: ['需额外投加化学药剂', 'H₂O₂/O₃投加比控制要求高', '过量H₂O₂会清除自由基'],
+                        application: '饮用水深度处理，用于去除嗅味物质、农药等微量有机污染物。',
+                        performance: { '矿化率': 4, '运行成本': 3, '技术成熟度': 4, '副产物风险': 3, '操作复杂度': 3 }
+                    },
+                    uv: {
+                        name: 'O₃/UV',
+                        description: '利用紫外光(UV)直接光解水中的臭氧分子，高效原位生成羟基自由基，氧化能力极强。',
+                        pros: ['降解效率极高', '反应清洁，无额外化学品', '适用范围广'],
+                        cons: ['能耗非常高（臭氧+UV）', '对水质（UVT、浊度）要求苛刻', '设备投资大'],
+                        application: '特殊工业废水，处理剧毒、极难降解污染物（如氰化物）。',
+                        performance: { '矿化率': 5, '运行成本': 5, '技术成熟度': 3, '副产物风险': 2, '操作复杂度': 4 }
+                    },
+                    bac: {
+                        name: '臭氧-生物活性炭 (O₃-BAC)',
+                        description: '臭氧将大分子难降解有机物氧化为易生物降解的小分子，再由生物活性炭(BAC)上的微生物进行深度降解。',
+                        pros: ['DOC去除率高', '延长活性炭寿命（生物再生）', '出水生物稳定性好，控制DBP前体物'],
+                        cons: ['工艺流程长，占地大', '对微生物培养和运管要求高', '初期投资较高'],
+                        application: '饮用水深度处理的黄金标准，特别适用于微污染水源。',
+                        performance: { '矿化率': 3, '运行成本': 2, '技术成熟度': 5, '副产物风险': 1, '操作复杂度': 4 }
+                    }
+                },
+                caseStudies: [
+                    { id: 'case1', name: '瑞士某污水厂', type: 'municipal', target: '微污染物', performance: 79, description: '采用后臭氧化+砂滤工艺，微污染物平均去除率超过79%。', process: 'O₃ + 砂滤' },
+                    { id: 'case2', name: '美国圣地亚哥水回用项目', type: 'municipal', target: 'NDMA, 1,4-二噁烷', performance: 85, description: 'O₃-BAC作为RO预处理，有效去除RO膜易穿透的低分子量污染物。', process: 'O₃-BAC' },
+                    { id: 'case3', name: '荷兰默兹河饮用水项目', type: 'municipal', target: '微污染物', performance: 78.9, description: 'Peroxone工艺在有效去除微污染物的同时，将溴酸盐控制在极低水平(<1 µg/L)。', process: 'O₃/H₂O₂' },
+                    { id: 'case4', name: '中国某石化废水厂', type: 'industrial', target: 'COD', performance: 38.2, description: 'HCO工艺中试项目，展现了处理复杂石化废水的潜力。', process: 'HCO' },
+                    { id: 'case5', name: '某工业废水实验室研究', type: 'industrial', target: 'TOC', performance: 78.7, description: '铁基HCO工艺对TOC去除率高达78.7%，远超单独臭氧(31.6%)。', process: 'HCO' },
+                    { id: 'case6', name: '中国某纺织废水回用', type: 'industrial', target: 'COD, 聚丙烯酸酯', performance: 90, description: '采用臭氧催化氧化组合工艺，废水回用率高达90%以上。', process: '组合工艺+HCO' },
+                ],
+                futureTrends: [
+                    { title: '新型催化材料与过程强化', content: '研究正转向单原子催化剂（SACs）等，以实现原子级的催化效率。同时，臭氧纳米气泡（NBs）技术有望从根本上解决传质瓶颈，大幅降低能耗。等离子体AOPs等技术也在探索中。', icon: 'M12 21a9 9 0 01-9-9 1.5 1.5 0 013 0 6 6 0 006 6v3zM21 12a9 9 0 01-9 9m9-9a1.5 1.5 0 00-3 0 6 6 0 01-6 6v-3m-9-6a9 9 0 019-9m-9 9a1.5 1.5 0 01-3 0 6 6 0 00-6-6v3' },
+                    { title: '人工智能（AI）的融合', content: 'AI和机器学习正被用于构建预测模型，实现对臭氧剂量的智能、动态优化。通过分析实时水质数据，AI可以帮助水厂在满足处理效果的同时，实现能耗和药耗的最小化，并进行故障预警。', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+                    { title: '应对新兴污染物', content: '面对PFAS（永久化学品）、微塑料和抗生素抗性基因（ARGs）等新挑战，臭氧技术的角色正在被重新评估。它对PFAS直接降解效果有限，但对ARGs具有强大的破坏潜力，是阻断其环境传播的有效屏障。', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547a2 2 0 00-.547 1.806l.477 2.387a6 6 0 00.517 3.86l.158.318a6 6 0 00.517 3.86l2.387.477a2 2 0 001.806-.547a2 2 0 00.547-1.806l-.477-2.387a6 6 0 00-.517-3.86l-.158-.318a6 6 0 00-.517-3.86l-2.387-.477z' }
+                ]
+            };
+            
+            function wrapText(text, maxWidth) {
+                const words = text.split(' ');
+                const lines = [];
+                let currentLine = words[0];
+
+                for (let i = 1; i < words.length; i++) {
+                    const word = words[i];
+                    const width = currentLine.length + word.length + 1; 
+                    if (width < maxWidth) {
+                        currentLine += ' ' + word;
+                    } else {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    }
+                }
+                lines.push(currentLine);
+                return lines;
+            }
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                           font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 12 }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            font: { size: 11 },
+                            callback: function(value) {
+                                return this.getLabelForValue(value).length > 10 ? this.getLabelForValue(value).substr(0, 10) + '...' : this.getLabelForValue(value);
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { font: { size: 11 } }
+                    }
+                }
+            };
+            
+            // 1. Oxidant Chart
+            new Chart(document.getElementById('oxidantChart'), {
+                type: 'bar',
+                data: {
+                    labels: appData.oxidants.labels,
+                    datasets: [{
+                        label: '标准氧化还原电位 (V)',
+                        data: appData.oxidants.values,
+                        backgroundColor: ['#A78BFA', '#FBBF24', '#FB923C', '#60A5FA', '#3B82F6', '#22C55E'],
+                        borderColor: 'rgba(255, 255, 255, 0.5)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { ...chartOptions, indexAxis: 'y' }
+            });
+
+            // 2. Process Comparison Section
+            const processTabs = document.querySelectorAll('.process-tab');
+            const processDetailsContainer = document.getElementById('process-details');
+            const radarChartCanvas = document.getElementById('processComparisonChart');
+            let radarChart;
+
+            function updateProcessDetails(processKey) {
+                const process = appData.processes[processKey];
+                processDetailsContainer.innerHTML = `
+                    <h3 class="text-2xl font-bold text-blue-700 mb-2">${process.name}</h3>
+                    <p class="text-gray-600 mb-4">${process.description}</p>
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="font-semibold text-green-600">优势:</h4>
+                            <ul class="list-disc list-inside text-sm text-gray-700 mt-1 space-y-1">${process.pros.map(p => `<li>${p}</li>`).join('')}</ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-red-600">劣势:</h4>
+                            <ul class="list-disc list-inside text-sm text-gray-700 mt-1 space-y-1">${process.cons.map(c => `<li>${c}</li>`).join('')}</ul>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold text-gray-800">主要应用领域:</h4>
+                            <p class="text-sm text-gray-700 mt-1">${process.application}</p>
+                        </div>
+                    </div>
+                `;
+                processTabs.forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.process === processKey);
+                });
+
+                updateRadarChart(processKey);
+            }
+
+            function updateRadarChart(highlightedKey) {
+                const datasets = Object.keys(appData.processes).map(key => {
+                    const process = appData.processes[key];
+                    const isHighlighted = key === highlightedKey;
+                    return {
+                        label: process.name,
+                        data: Object.values(process.performance),
+                        fill: isHighlighted,
+                        backgroundColor: isHighlighted ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0)',
+                        borderColor: isHighlighted ? '#3B82F6' : '#9CA3AF',
+                        pointBackgroundColor: isHighlighted ? '#3B82F6' : '#9CA3AF',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#3B82F6',
+                        borderWidth: isHighlighted ? 3 : 1.5,
+                        hidden: !isHighlighted
+                    }
+                });
+
+                if (radarChart) {
+                    radarChart.data.datasets = datasets;
+                    radarChart.update();
+                } else {
+                    radarChart = new Chart(radarChartCanvas, {
+                        type: 'radar',
+                        data: {
+                            labels: Object.keys(appData.processes.o3.performance),
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                   callbacks: {
+                                       label: function(context) {
+                                           let label = context.dataset.label || '';
+                                           if (label) {
+                                               label += ': ';
+                                           }
+                                           if (context.parsed.r !== null) {
+                                               // Custom labels for the scale 1-5
+                                               const scaleLabels = ['低', '较低', '中', '较高', '高'];
+                                               label += scaleLabels[context.parsed.r - 1];
+                                           }
+                                           return label;
+                                       }
+                                   }
+                                }
+                            },
+                            scales: {
+                                r: {
+                                    angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                                    pointLabels: { font: { size: 12 } },
+                                    min: 0,
+                                    max: 5,
+                                    ticks: {
+                                        stepSize: 1,
+                                        backdropColor: 'rgba(255, 255, 255, 0.75)',
+                                        callback: function(value) {
+                                            const labels = ['', '低', '较低', '中', '较高', '高'];
+                                            return labels[value];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            processTabs.forEach(tab => tab.addEventListener('click', () => updateProcessDetails(tab.dataset.process)));
+            updateProcessDetails('o3');
+
+            // 3. Case Studies Section
+            const caseFilters = document.querySelectorAll('.case-filter');
+            const caseCardsContainer = document.getElementById('case-cards-container');
+            const caseChartCanvas = document.getElementById('caseStudyChart');
+            let caseChart;
+            let activeCaseFilter = 'all';
+
+            function renderCaseCards(filter) {
+                const filteredCases = filter === 'all' ? appData.caseStudies : appData.caseStudies.filter(c => c.type === filter);
+                caseCardsContainer.innerHTML = filteredCases.map(c => `
+                    <div class="bg-white p-5 rounded-xl shadow-md cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300" data-case-id="${c.id}">
+                        <h4 class="font-bold text-lg text-blue-700">${c.name}</h4>
+                        <p class="text-sm text-gray-500 mb-2">${c.process}</p>
+                        <p class="text-gray-700">${c.description}</p>
+                        <div class="mt-3 text-right font-semibold text-green-600">${c.performance}% 去除率</div>
+                    </div>
+                `).join('');
+                
+                document.querySelectorAll('[data-case-id]').forEach(card => {
+                    card.addEventListener('click', () => {
+                         updateCaseChart(filter, card.dataset.caseId);
+                    });
+                });
+            }
+            
+            function updateCaseChart(filter, highlightedId = null) {
+                const filteredCases = filter === 'all' ? appData.caseStudies : appData.caseStudies.filter(c => c.type === filter);
+                
+                const data = {
+                    labels: filteredCases.map(c => wrapText(c.name, 15)),
+                    datasets: [{
+                        label: '关键污染物去除率 (%)',
+                        data: filteredCases.map(c => c.performance),
+                        backgroundColor: filteredCases.map(c => c.id === highlightedId ? '#16A34A' : '#22C55E'),
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                    }]
+                };
+
+                if (caseChart) {
+                    caseChart.data = data;
+                    caseChart.update();
+                } else {
+                    caseChart = new Chart(caseChartCanvas, {
+                        type: 'bar',
+                        data: data,
+                        options: { ...chartOptions, indexAxis: 'y',
+                           scales: {
+                                x: { max: 100 }
+                           }
+                        }
+                    });
+                }
+            }
+
+            caseFilters.forEach(button => {
+                button.addEventListener('click', () => {
+                    activeCaseFilter = button.dataset.filter;
+                    caseFilters.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    renderCaseCards(activeCaseFilter);
+                    updateCaseChart(activeCaseFilter);
+                });
+            });
+
+            // Initial render
+            document.querySelector('.case-filter[data-filter="all"]').classList.add('active');
+            renderCaseCards('all');
+            updateCaseChart('all');
+
+
+            // 4. Future Trends Accordion
+            const accordionContainer = document.getElementById('accordion-container');
+            accordionContainer.innerHTML = appData.futureTrends.map((item, index) => `
+                <div class="bg-white rounded-lg shadow-sm">
+                    <h2>
+                        <button type="button" class="flex items-center justify-between w-full p-5 font-medium text-left text-gray-700 hover:bg-gray-100 transition-colors" data-accordion-target="#accordion-body-${index}" aria-expanded="false">
+                            <span class="flex items-center">
+                               <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${item.icon}"></path></svg>
+                                ${item.title}
+                            </span>
+                            <svg data-accordion-icon class="w-6 h-6 shrink-0 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    </h2>
+                    <div id="accordion-body-${index}" class="hidden p-5 border-t border-gray-200">
+                        <p class="text-gray-600">${item.content}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('[data-accordion-target]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.getAttribute('data-accordion-target');
+                    const targetBody = document.querySelector(targetId);
+                    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+                    targetBody.classList.toggle('hidden');
+                    button.setAttribute('aria-expanded', !isExpanded);
+                    button.querySelector('[data-accordion-icon]').classList.toggle('rotate-180');
+                });
+            });
+
+            // 5. Mobile Menu
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+
+            // 6. Smooth Scrolling & Active Nav Link
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>

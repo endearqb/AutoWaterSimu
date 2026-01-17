@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国环保产业“七宗罪”乱象揭秘</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #ECF0F1; /* Clouds - Light Gray */
+            color: #2C3E50; /* Wet Asphalt - Dark Slate Blue */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width */
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        /* Responsive height for chart containers */
+        .chart-container-sm { height: 300px; max-height: 300px; }
+        .chart-container-md { height: 350px; max-height: 350px; }
+        .chart-container-lg { height: 400px; max-height: 400px; }
+
+        @media (min-width: 768px) {
+            .chart-container-sm { height: 350px; max-height: 350px; }
+            .chart-container-md { height: 400px; max-height: 400px; }
+            .chart-container-lg { height: 450px; max-height: 450px; }
+        }
+
+        .stat-card {
+            background-color: #FFFFFF;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2ECC71; /* Emerald Green */
+        }
+        .stat-label {
+            font-size: 1rem;
+            color: #7F8C8D; /* Asbestos - Gray */
+            margin-top: 0.5rem;
+        }
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2C3E50; /* Wet Asphalt */
+            margin-bottom: 1rem;
+            text-align: center;
+            padding-top: 2rem;
+        }
+        .sub-section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3498DB; /* Peter River Blue */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .text-content {
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        .highlight-sin {
+            color: #E74C3C; /* Alizarin Crimson */
+            font-weight: 700;
+        }
+        .flowchart-node {
+            background-color: #ECF0F1; /* Clouds */
+            border: 2px solid #3498DB; /* Peter River Blue */
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            margin: 0.5rem;
+            min-width: 120px;
+        }
+        .flowchart-arrow {
+            font-size: 1.5rem;
+            color: #2C3E50; /* Wet Asphalt */
+            margin: 0 0.5rem;
+            align-self: center;
+        }
+        .icon-list-item {
+            display: flex;
+            align-items: center;
+            background-color: #FFFFFF;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .icon-list-item .icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+        /* Palette: Emerald #2ECC71, Sunflower Yellow #F1C40F, Peter River Blue #3498DB, Wet Asphalt #2C3E50, Clouds #ECF0F1, Alizarin #E74C3C */
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-gradient-to-r from-[#2C3E50] to-[#34495E] text-white py-12 px-4 text-center">
+        <h1 class="text-4xl font-bold mb-4">侵蚀中国绿色雄心的七宗罪</h1>
+        <p class="text-xl max-w-3xl mx-auto">揭秘中国环保产业（工程、设备、药剂）系统性乱象及其深层根源</p>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+
+        <section id="introduction" class="mb-12">
+            <h2 class="section-title">引言：中国环保运动的悖论</h2>
+            <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+                <p class="text-content">中国经济的崛起伴随着严峻的环境恶化，促使国家大力推动环保事业并投入巨资。环保产业营收规模显著增长，国家亦制定了宏伟的污染控制目标。然而，在这官方的进步叙事之下，隐藏着一个令人不安的现实：肩负守护环境重任的产业本身，却充斥着系统性的乱象。这些“乱象”不仅浪费资源、侵蚀公众信任，更严重削弱国家迈向生态可持续发展的努力。</p>
+                <div class="chart-container chart-container-sm mx-auto">
+                    <canvas id="revenueGrowthChart"></canvas>
+                </div>
+                <p class="text-xs text-center mt-2 text-gray-500">图表1：中国环保产业营收规模趋势 (示意图，基于报告[1]产业增长描述)</p>
+                <p class="text-content mt-4">本报告将以“七宗罪”为分析框架，深入剖析这些盘根错节的弊病，揭示驱动中国环保领域种种乱象的动机与模式。</p>
+            </div>
+        </section>
+
+        <section class="mb-12">
+             <h2 class="section-title">七宗罪：环保产业的沉疴</h2>
+             <p class="text-center max-w-2xl mx-auto mb-6">以下将逐一剖析“傲慢”、“贪婪”、“懒惰”、“暴怒”、“嫉妒”、“淫欲”和“饕餮”这七宗罪如何在中国环保产业的具体领域中显现，并揭示其深远影响。</p>
+        </section>
+
+        <section id="pride" class="mb-12">
+            <h2 class="section-title"><span class="highlight-sin">傲慢</span>：欺瞒与浮夸之虚妄</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">核心表现</h3>
+                    <p class="text-content">傲慢体现为狂妄自大、拒绝反馈，在环保领域演变成危险的欺瞒文化和表面合规。典型表现包括环评报告普遍造假、监测数据伪造、项目“洗绿”、夸大设备性能和药剂功效。</p>
+                    <ul class="list-disc list-inside text-content">
+                        <li>环境工程：环评造假，如深圳湾航道疏浚工程环评报告大段抄袭 [3]。林某鑫等人出售“环评报告资质页”[26, 27]。</li>
+                        <li>环保设备：误导性性能宣称，如“简易低效设施大行其道”，“新瓶装旧酒”[6]。</li>
+                        <li>环保药剂：夸大功效，人为制造“甲醛焦虑”以推销治理产品 [7]。</li>
+                    </ul>
+                </div>
+                <div class="chart-container chart-container-md">
+                    <canvas id="eiaFalsificationChart"></canvas>
+                    <p class="text-xs text-center mt-2 text-gray-500">图表2：环评报告质量问题分布 (示意图，基于报告[3]“普遍造假”描述)</p>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="sub-section-title">深层影响</h3>
+                <p class="text-content">系统性侵蚀监管权威与公信力；“洗绿”流行导致资源错配；抵制反馈和创新导致行业停滞。</p>
+            </div>
+        </section>
+
+        <section id="greed" class="mb-12">
+            <h2 class="section-title"><span class="highlight-sin">贪婪</span>：对非法利益的无尽攫取</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">核心表现</h3>
+                    <p class="text-content">贪婪是将个人或企业利益置于所有其他考量之上，导致不道德、剥削性和非法行为。具体表现为“豆腐渣”工程、招投标腐败、销售劣质仿冒设备、药剂中非法添加有害物质等。</p>
+                     <div class="stat-card my-4">
+                        <div class="stat-number text-[#E74C3C]">~90%</div>
+                        <div class="stat-label">“豆腐渣”工程与腐败相关 (源自报告[29]专家观点)</div>
+                    </div>
+                    <p class="text-content">例如，清远市垃圾填埋场因土工膜破损导致渗滤液泄漏 [9]，湖南招投标腐败案中官员为特定公司“量身定做招标文件” [10]。</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">腐败如何催生劣质工程 (示意流程)</h3>
+                    <div class="flex flex-col items-center space-y-2 md:space-y-0 md:flex-row md:justify-around">
+                        <div class="flowchart-node">招投标腐败 [10]<br>(如：串标、受贿)</div>
+                        <div class="flowchart-arrow">➡️</div>
+                        <div class="flowchart-node">劣质材料/施工<br>(“豆腐渣工程”[8,9])</div>
+                        <div class="flowchart-arrow">➡️</div>
+                        <div class="flowchart-node">环保设施失效<br>环境污染</div>
+                    </div>
+                     <p class="text-xs text-center mt-4 text-gray-500">图表3：贪婪驱动下的劣质工程形成路径</p>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="sub-section-title">深层影响</h3>
+                <p class="text-content">“竞相逐底”成为市场动态；腐败是环境失败的基石；短期利益的短视导致长期环境债务。</p>
+            </div>
+        </section>
+
+        <section id="sloth" class="mb-12">
+            <h2 class="section-title"><span class="highlight-sin">懒惰</span>：疏忽与不作为之沉疴</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">核心表现</h3>
+                    <p class="text-content">懒惰表现为自满、抵制变革、玩忽职守和普遍不作为。例如环境风险整治长期拖延、设备售后服务缺失、核心技术研发不足、监管惰性和执法不力。</p>
+                    <p class="text-content">天津大韩庄垃圾填埋场渗滤液问题整改“推进缓慢”[15]。核心技术如高端膜材料国产化率不足30% [16]。</p>
+                     <div class="chart-container chart-container-md mt-4">
+                        <canvas id="projectDelayChart"></canvas>
+                        <p class="text-xs text-center mt-2 text-gray-500">图表4：环保项目拖延示意图 (基于报告[15]案例)</p>
+                    </div>
+                </div>
+                <div class="chart-container chart-container-md">
+                    <canvas id="techLocalizationChart"></canvas>
+                    <p class="text-xs text-center mt-2 text-gray-500">图表5：核心环保技术国产化率不足 (基于报告[16]数据)</p>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="sub-section-title">深层影响</h3>
+                <p class="text-content">“失能常态化”与习得性无助；技术停滞阻碍真正环境解决方案；因不作为导致“慢燃”危机升级。</p>
+            </div>
+        </section>
+
+        <section id="wrath" class="mb-12">
+            <h2 class="section-title"><span class="highlight-sin">暴怒</span>：失控污染与危害之毁灭性狂暴</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">核心表现</h3>
+                    <p class="text-content">暴怒可解读为因极端疏忽或故意违法，对环境和公众健康释放的猛烈、破坏性后果。包括基础设施坍塌、灾难性设备故障、非法倾倒剧毒化学品、二次污染等。</p>
+                    <p class="text-content">例如湖南郴州尾矿库溃坝 [18]，江苏李某潮团伙非法倾倒73.85吨危险废物 [21]，大韩庄垃圾填埋场非法填埋新处理设施产生的污泥 [15]。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">“暴怒”事件类型</h3>
+                    <div class="space-y-3">
+                        <div class="icon-list-item"><span class="icon">🏭💥</span><span>基础设施붕괴/重大事故 (如尾矿库溃坝[18])</span></div>
+                        <div class="icon-list-item"><span class="icon">💧🗑️</span><span>非法倾倒危险废物 (如废酸、有毒溶剂[21])</span></div>
+                        <div class="icon-list-item"><span class="icon">💨🏭</span><span>设备故障致失控排放 (如污水直排[19])</span></div>
+                        <div class="icon-list-item"><span class="icon">♻️➡️🗑️</span><span>二次污染 (如处理设施污泥非法填埋[15,47])</span></div>
+                    </div>
+                     <p class="text-xs text-center mt-4 text-gray-500">图表6：“暴怒”的典型环境危害形式</p>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="sub-section-title">深层影响</h3>
+                <p class="text-content">多种“罪行”叠加放大环境灾难；环境不公，代价由弱势群体承担；暴怒的持久遗毒造成不可逆转损害与代际不公。</p>
+            </div>
+        </section>
+
+        <section id="envy" class="mb-12">
+            <h2 class="section-title"><span class="highlight-sin">嫉妒</span>：恶性竞争与模仿之恶毒</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">核心表现</h3>
+                    <p class="text-content">嫉妒滋生怨恨，破坏合作，鼓励“竞相逐底”，导致不道德模仿而非真正创新。表现为竞标中“恶意杀价”[23]、项目设计肤浅模仿（如环评“抄袭门”[3]）、伪劣仿冒设备泛滥[6,24]。</p>
+                    <p class="text-content">“许多环保企业仍依赖传统技术...导致经济效益不高”，可能加剧不顾一切的低价竞标行为 [34]。</p>
+                </div>
+                <div class="chart-container chart-container-md">
+                    <canvas id="raceToBottomChart"></canvas>
+                    <p class="text-xs text-center mt-2 text-gray-500">图表7：“竞相逐底”现象示意图 (基于报告[23]描述)</p>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="sub-section-title">深层影响</h3>
+                <p class="text-content">系统性扼杀合作创新与知识共享；表面解决方案泛滥；侵蚀信任和市场诚信。</p>
+            </div>
+        </section>
+
+        <section id="lust" class="mb-12">
+            <h2 class="section-title"><span class="highlight-sin">淫欲</span>：对审批与不正当优势的非法渴求</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+                 <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">核心表现</h3>
+                    <p class="text-content">淫欲表现为对权力、认可或控制的过度渴望，导致操纵行为。在环保领域转化为通过不道德手段非法获取许可证、合同或优惠待遇。例如为获取环评和项目审批而贿赂 [3,10]，非法分包与“挂靠”[26,53]，伪造监测数据以“通过”检查 [4,5]。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">非法“挂靠”运作流程 (示意)</h3>
+                     <div class="flex flex-col items-center space-y-2 md:space-y-0 md:flex-row md:justify-around">
+                        <div class="flowchart-node">无资质实体/个人</div>
+                        <div class="flowchart-arrow">➡️</div>
+                        <div class="flowchart-node">寻求“挂靠”[26]<br>(支付费用)</div>
+                        <div class="flowchart-arrow">➡️</div>
+                        <div class="flowchart-node">利用持牌公司名义<br>承接项目/出具报告</div>
+                    </div>
+                    <p class="text-xs text-center mt-4 text-gray-500">图表8：“淫欲”驱动下的资质滥用路径</p>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="sub-section-title">深层影响</h3>
+                <p class="text-content">监管机构被“俘获”；形成影子经济和非法网络；破坏精英管理和公平竞争。</p>
+            </div>
+        </section>
+
+        <section id="gluttony" class="mb-12">
+            <h2 class="section-title"><span class="highlight-sin">饕餮</span>：不可持续实践与资源管理不当之过度</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="sub-section-title">核心表现</h3>
+                    <p class="text-content">饕餮表现为过度消耗、过度投资而缺乏适当评估、资源负担过重以及不可持续实践。如过度依赖末端治理而非源头预防[56]，环保项目融资不可持续[1]，鼓吹过度使用设备/药剂（如甲醛检测骗局[7]），产生过量二次废物[15,22,47]。</p>
+                     <div class="chart-container chart-container-md mt-4">
+                        <canvas id="treatmentFocusChart"></canvas>
+                        <p class="text-xs text-center mt-2 text-gray-500">图表9：环保投入侧重示意图 (基于报告[56]及普遍观察)</p>
+                    </div>
+                </div>
+                 <div class="chart-container chart-container-md">
+                    <canvas id="secondaryWasteChart"></canvas>
+                    <p class="text-xs text-center mt-2 text-gray-500">图表10：环保“解决方案”产生二次废物问题 (示意图)</p>
+                </div>
+            </div>
+             <div class="max-w-4xl mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="sub-section-title">深层影响</h3>
+                <p class="text-content">以数量而非质量营造进步假象；“解决方案”制造新问题，二次污染是饕餮症状；不可持续财务模式威胁长期效用。</p>
+            </div>
+        </section>
+
+        <section id="systemic-roots" class="mb-12">
+            <h2 class="section-title">“罪行”的系统性根源：超越个体失当</h2>
+            <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+                <p class="text-content">中国环保产业的种种乱象，并非仅仅是孤立的个体道德缺失，其背后潜藏着更为深刻的系统性弊病，为“七宗罪”的滋生提供了土壤：</p>
+                <ul class="space-y-4">
+                    <li class="icon-list-item"><span class="icon text-[#E74C3C]">🔗</span><div><strong>监管俘获与地方保护主义：</strong>地方政府可能干预环保执法，或营造纵容违规行为的环境 [3,58,59]。</div></li>
+                    <li class="icon-list-item"><span class="icon text-[#E74C3C]">📉</span><div><strong>执法不力与处罚不足：</strong>低额罚款和执法不一致，未能形成足够威慑力 [41,42,43]。</div></li>
+                    <li class="icon-list-item"><span class="icon text-[#E74C3C]">🛠️</span><div><strong>行业标准与道德文化缺失：</strong>标准缺失或定义不清，缺乏强大道德文化使渎职行为常态化 [23,28]。</div></li>
+                    <li class="icon-list-item"><span class="icon text-[#E74C3C]">❓</span><div><strong>信息不对称与不透明：</strong>客户和公众缺乏技术专长评估服务质量，使得不法分子能够利用知识鸿沟 [7]。</div></li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="redemption" class="mb-12">
+            <h2 class="section-title">救赎之路：迈向有道德且高效的环保产业</h2>
+            <div class="max-w-3xl mx-auto bg-gradient-to-r from-[#2ECC71] to-[#27AE60] text-white p-8 rounded-lg shadow-lg">
+                <p class="text-content text-lg mb-6">要根除侵蚀中国环保产业的“七宗罪”，需要一场系统性的、多维度、深层次的变革：</p>
+                <ul class="space-y-4 text-base">
+                    <li class="icon-list-item bg-white/20 hover:bg-white/30 transition-all"><span class="icon">⚖️</span><div><strong>强化法治与严格执法：</strong>大幅提高罚款，加强监察，确保司法独立。</div></li>
+                    <li class="icon-list-item bg-white/20 hover:bg-white/30 transition-all"><span class="icon">📢</span><div><strong>促进透明与公众参与：</strong>强制信息公开，赋予公众监督权，保护举报人。</div></li>
+                    <li class="icon-list-item bg-white/20 hover:bg-white/30 transition-all"><span class="icon">💡</span><div><strong>推动技术自立与质量标准提升：</strong>投资核心技术研发，建立并强制执行严格标准。</div></li>
+                    <li class="icon-list-item bg-white/20 hover:bg-white/30 transition-all"><span class="icon">🤝</span><div><strong>培育行业道德文化：</strong>推动行业自律，加强环境伦理教育，公开点名批评。</div></li>
+                    <li class="icon-list-item bg-white/20 hover:bg-white/30 transition-all"><span class="icon">🏛️</span><div><strong>改革治理结构与遏制地方保护主义：</strong>明确央地职责，加强中央监督，政绩考核与环保绩效挂钩。</div></li>
+                </ul>
+                 <p class="text-content mt-6">唯有刮骨疗毒，彻底清除这些侵蚀行业肌体的“毒瘤”，中国环保产业才能真正肩负起建设美丽中国的历史使命。</p>
+            </div>
+        </section>
+        
+    </main>
+
+    <footer class="bg-[#2C3E50] text-white py-8 px-4 text-center">
+        <p>&copy; 2024 中国环保产业深度观察。信息图表基于公开报告分析。</p>
+        <p class="text-xs mt-2">免责声明：本图表内容仅供研究参考，部分数据为基于报告描述的示意性呈现。</p>
+    </footer>
+
+<script>
+    const CHART_COLORS = {
+        red: '#E74C3C', // Alizarin Crimson
+        orange: '#F39C12', // Orange
+        yellow: '#F1C40F', // Sunflower Yellow
+        green: '#2ECC71', // Emerald Green
+        blue: '#3498DB', // Peter River Blue
+        purple: '#9B59B6', // Amethyst
+        grey: '#95A5A6'  // Concrete
+    };
+
+    const CHART_FONT = { family: "'Noto Sans SC', sans-serif" };
+
+    // Helper function to wrap labels
+    function wrapLabels(labels, maxWidth = 8) { // Adjusted for Chinese characters
+        return labels.map(label => {
+            if (typeof label === 'string' && label.length > maxWidth) {
+                let lines = [];
+                let currentLine = "";
+                for (let i = 0; i < label.length; i++) {
+                    currentLine += label[i];
+                    if (currentLine.length >= maxWidth && i < label.length -1) {
+                        lines.push(currentLine);
+                        currentLine = "";
+                    }
+                }
+                if (currentLine) lines.push(currentLine);
+                return lines.length > 0 ? lines : [label]; // Ensure it returns at least the original label if not split
+            }
+            return label;
+        });
+    }
+    
+    // Standard tooltip configuration
+    const tooltipTitleCallback = {
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    title: function(tooltipItems) {
+                        const item = tooltipItems[0];
+                        let label = item.chart.data.labels[item.dataIndex];
+                        if (Array.isArray(label)) {
+                            return label.join(''); // Join without space for Chinese
+                        } else {
+                            return label;
+                        }
+                    }
+                }
+            },
+            legend: {
+                labels: {
+                    font: CHART_FONT
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { font: CHART_FONT },
+                title: { font: CHART_FONT }
+            },
+            y: {
+                ticks: { font: CHART_FONT },
+                title: { font: CHART_FONT }
+            }
+        },
+        responsive: true,
+        maintainAspectRatio: false
+    };
+
+
+    // Chart 1: Revenue Growth (Illustrative)
+    const revenueGrowthCtx = document.getElementById('revenueGrowthChart').getContext('2d');
+    new Chart(revenueGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: ['2018', '2019', '2020', '2021', '2022 (预估)'],
+            datasets: [{
+                label: '环保产业营收 (万亿元)',
+                data: [8.5, 9.2, 10.0, 11.5, 12.5], // Illustrative data based on growth trend
+                borderColor: CHART_COLORS.green,
+                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: { ...tooltipTitleCallback, 
+            scales: { 
+                y: { beginAtZero: true, title: { display: true, text: '营收 (万亿元)'}},
+                x: { title: { display: true, text: '年份'}}
+            }
+        }
+    });
+
+    // Chart 2: EIA Falsification (Illustrative Donut)
+    const eiaFalsificationCtx = document.getElementById('eiaFalsificationChart').getContext('2d');
+    new Chart(eiaFalsificationCtx, {
+        type: 'doughnut',
+        data: {
+            labels: wrapLabels(['严重造假/抄袭', '质量低劣/走过场', '基本合规']),
+            datasets: [{
+                label: '环评报告质量',
+                data: [35, 45, 20], // Illustrative data
+                backgroundColor: [CHART_COLORS.red, CHART_COLORS.orange, CHART_COLORS.green],
+                hoverOffset: 4
+            }]
+        },
+        options: { ...tooltipTitleCallback, plugins: {...tooltipTitleCallback.plugins, legend: { position: 'bottom'}}}
+    });
+
+    // Chart 4: Project Delay (Illustrative Line)
+    const projectDelayCtx = document.getElementById('projectDelayChart').getContext('2d');
+    new Chart(projectDelayCtx, {
+        type: 'line',
+        data: {
+            labels: ['阶段1', '阶段2', '阶段3', '原定完成', '实际完成'],
+            datasets: [{
+                label: '计划进度',
+                data: [20, 40, 70, 100, null],
+                borderColor: CHART_COLORS.blue,
+                borderDash: [5, 5],
+                tension: 0.1
+            }, {
+                label: '实际进度 (某项目)',
+                data: [15, 30, 50, 65, 100], // Illustrative data showing delay
+                borderColor: CHART_COLORS.red,
+                tension: 0.1
+            }]
+        },
+        options: { ...tooltipTitleCallback, scales: {y: {max:110, title: {display:true, text:'项目完成度 (%)'}}}}
+    });
+    
+    // Chart 5: Tech Localization (Bar)
+    const techLocalizationCtx = document.getElementById('techLocalizationChart').getContext('2d');
+    new Chart(techLocalizationCtx, {
+        type: 'bar',
+        data: {
+            labels: wrapLabels(['高端膜材料']),
+            datasets: [{
+                label: '国产化率 (%)',
+                data: [28], // Based on "<30%"
+                backgroundColor: CHART_COLORS.red,
+            }, {
+                label: '进口依赖度 (%)',
+                data: [72],
+                backgroundColor: CHART_COLORS.grey,
+            }]
+        },
+        options: { ...tooltipTitleCallback, indexAxis: 'y', scales: {x: {stacked: true, max: 100, title:{display:true, text:'百分比 (%)'}}, y: {stacked: true}} }
+    });
+
+    // Chart 7: Race to the Bottom (Bar)
+    const raceToBottomCtx = document.getElementById('raceToBottomChart').getContext('2d');
+    new Chart(raceToBottomCtx, {
+        type: 'bar',
+        data: {
+            labels: wrapLabels(['理性投标', '恶意低价投标']),
+            datasets: [{
+                label: '投标价格',
+                data: [100, 60], // Illustrative: 100 normal, 60 low
+                backgroundColor: [CHART_COLORS.blue, CHART_COLORS.orange],
+                yAxisID: 'yPrice'
+            }, {
+                label: '预期质量/效果',
+                data: [90, 40], // Illustrative: 90 good quality, 40 poor
+                backgroundColor: [CHART_COLORS.green, CHART_COLORS.red],
+                yAxisID: 'yQuality'
+            }]
+        },
+        options: { ...tooltipTitleCallback, 
+            scales: { 
+                yPrice: { type: 'linear', display: true, position: 'left', title: {display: true, text: '价格指数'}},
+                yQuality: { type: 'linear', display: true, position: 'right', title: {display: true, text: '质量指数'}, grid: { drawOnChartArea: false }}
+            }
+        }
+    });
+
+    // Chart 9: Treatment Focus (Stacked Bar)
+    const treatmentFocusCtx = document.getElementById('treatmentFocusChart').getContext('2d');
+    new Chart(treatmentFocusCtx, {
+        type: 'bar',
+        data: {
+            labels: wrapLabels(['环保投入重点']),
+            datasets: [{
+                label: '源头预防与清洁生产',
+                data: [25], // Illustrative
+                backgroundColor: CHART_COLORS.green,
+            }, {
+                label: '末端治理设施建设',
+                data: [75], // Illustrative
+                backgroundColor: CHART_COLORS.orange,
+            }]
+        },
+        options: { ...tooltipTitleCallback, indexAxis: 'y', responsive: true, scales: { x: { stacked: true, title:{display:true, text:'投入占比 (%)'}}, y: { stacked: true } } }
+    });
+
+    // Chart 10: Secondary Waste (Illustrative Donut)
+    const secondaryWasteCtx = document.getElementById('secondaryWasteChart').getContext('2d');
+    new Chart(secondaryWasteCtx, {
+        type: 'doughnut',
+        data: {
+            labels: wrapLabels(['产生严重二次废物', '二次废物可控/轻微', '无明显二次废物']),
+            datasets: [{
+                label: '环保方案的二次废物问题',
+                data: [40, 35, 25], // Illustrative data
+                backgroundColor: [CHART_COLORS.red, CHART_COLORS.yellow, CHART_COLORS.green],
+                hoverOffset: 4
+            }]
+        },
+        options: { ...tooltipTitleCallback, plugins: {...tooltipTitleCallback.plugins, legend: { position: 'bottom'}}}
+    });
+
+</script>
+</body>
+</html>
