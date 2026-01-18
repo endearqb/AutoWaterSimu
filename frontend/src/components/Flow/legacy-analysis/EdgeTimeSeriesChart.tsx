@@ -84,6 +84,12 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
     return plotAreaHeight + chartMargin.top + chartMargin.bottom + xAxisHeight
   }, [chartMargin.bottom, chartMargin.top, plotAreaHeight])
 
+  const filteredSelectedVariables = useMemo(() => {
+    return selectedVariables.filter(
+      (v) => v !== "flow_rate" && v !== "flowrate" && v !== "flow",
+    )
+  }, [selectedVariables])
+
   // 获取可用变量信息
   const availableVariables = useMemo(() => {
     if (modelType === "asm1slim") {
@@ -115,7 +121,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
     if (
       !resultData.timestamps ||
       selectedEdges.length === 0 ||
-      selectedVariables.length === 0
+      filteredSelectedVariables.length === 0
     ) {
       return []
     }
@@ -140,7 +146,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
           const sourceNode = edge.source
           const sourceData = resultData.node_data?.[sourceNode]
 
-          selectedVariables.forEach((variable) => {
+          filteredSelectedVariables.forEach((variable) => {
             // 使用连接线浓度计算逻辑：基于源节点数据和连接线参数配置
             if (
               sourceData &&
@@ -190,7 +196,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
   }, [
     resultData,
     selectedEdges,
-    selectedVariables,
+    filteredSelectedVariables,
     safeTimeRange,
     maxTimeIndex,
     edges,
@@ -214,7 +220,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
     let colorIndex = 0
 
     selectedEdges.forEach((edgeId) => {
-      selectedVariables.forEach((variable) => {
+      filteredSelectedVariables.forEach((variable) => {
         const key = `${edgeId}_${variable}`
         const variableInfo = availableVariables.find((v) => v.name === variable)
 
@@ -254,7 +260,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
     edges,
     resultData.node_data,
     selectedEdges,
-    selectedVariables,
+    filteredSelectedVariables,
   ])
 
   // 如果没有数据，显示提示信息

@@ -115,8 +115,13 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
     }
 
     if (selectedVariables.length === 0 && availableVariables.length > 0) {
-      const defaultVariables = availableVariables
-        .slice(0, Math.min(5, availableVariables.length))
+      const nonFlowVariables = availableVariables.filter(
+        (v) => v.name !== "flow_rate",
+      )
+      const variablesSource =
+        nonFlowVariables.length > 0 ? nonFlowVariables : availableVariables
+      const defaultVariables = variablesSource
+        .slice(0, Math.min(5, variablesSource.length))
         .map((v) => v.name)
       setSelectedVariables(defaultVariables)
     }
