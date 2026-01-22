@@ -38,18 +38,18 @@
 - [x] 国际化时间显示（`frontend/src/utils/timeUtils.ts`）：
   - [x] 支持当前语言的 `Intl.DateTimeFormat`。
   - [x] 相对时间文案（刚刚/分钟前/小时前/天前）改为 `t(...)`。
-- [ ] 通用校验/错误消息国际化：
+- [x] 通用校验/错误消息国际化：
   - [x] `frontend/src/utils.ts`
   - [x] `frontend/src/utils/fileValidation.ts`
   - [x] `frontend/src/hooks/useCustomToast.ts`
 - [x] API/服务层错误提示国际化：
   - [x] `frontend/src/services/*.ts`
-- [ ] 配置类文本国际化：
+- [x] 配置类文本国际化：
   - [x] `frontend/src/config/*.ts`（label、校验提示等）
 - [ ] `frontend/index.html` 默认标题/语言基线处理。
 
 ### 4) 按功能模块迁移 UI 文本
-- [ ] 认证与账号：
+- [x] 认证与账号：
   - [x] `frontend/src/routes/login.tsx`
   - [x] `frontend/src/routes/signup.tsx`
   - [x] `frontend/src/routes/recover-password.tsx`
@@ -103,8 +103,8 @@
   - [ ] `useArticleData` 根据语言返回
 
 ### 6) 测试与验证
-- [ ] 更新 E2E 测试避免硬编码文案（优先改为 test id）或在测试中固定语言为 en：
-  - [ ] `frontend/tests/*.spec.ts`
+- [x] 更新 E2E 测试避免硬编码文案（优先改为 test id）或在测试中固定语言为 en：
+  - [x] `frontend/tests/*.spec.ts`
 - [ ] 运行类型检查：
   - [x] `cd frontend; npx tsc --noEmit`
 - [ ] 手动回归（核心路径）：登录/注册、菜单、Flow/模型、知识库 UI、AI deep research 列表与详情、更新页。
@@ -113,4 +113,4 @@
 - [ ] 语言切换可用，偏好可持久化。
 - [ ] 除排除内容外，所有可见 UI 文本支持 zh/en。
 - [ ] 日期/数字格式随语言变化。
-- [ ] 测试通过并完成类型检查。
+- [x] 测试通过并完成类型检查。
