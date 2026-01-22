@@ -26,7 +26,7 @@ services:
 
   # Redis 缓存服务
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: dataanalysis_redis_local
     ports:
       - "6379:6379"
