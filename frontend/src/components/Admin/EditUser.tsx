@@ -18,7 +18,8 @@ import { FaExchangeAlt } from "react-icons/fa"
 import { type UserPublic, type UserUpdate, UsersService } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
-import { emailPattern, handleError } from "@/utils"
+import { confirmPasswordRules, getEmailPattern, handleError, passwordRules } from "@/utils"
+import { useI18n } from "@/i18n"
 import { Checkbox } from "../ui/checkbox"
 import {
   DialogBody,
@@ -42,6 +43,7 @@ const EditUser = ({ user }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast } = useCustomToast()
+  const { t } = useI18n()
   const {
     control,
     register,
@@ -59,7 +61,7 @@ const EditUser = ({ user }: EditUserProps) => {
     mutationFn: (data: UserUpdateForm) =>
       UsersService.updateUser({ userId: user.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User updated successfully.")
+      showSuccessToast(t("admin.userUpdatedSuccess"))
       reset()
       setIsOpen(false)
     },
@@ -88,30 +90,30 @@ const EditUser = ({ user }: EditUserProps) => {
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
           <FaExchangeAlt fontSize="16px" />
-          Edit User
+          {t("admin.editUser")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>{t("admin.editUserTitle")}</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>Update the user details below.</Text>
+            <Text mb={4}>{t("admin.editUserDescription")}</Text>
             <VStack gap={4}>
               <Field
                 required
                 invalid={!!errors.email}
                 errorText={errors.email?.message}
-                label="Email"
+                label={t("admin.emailLabel")}
               >
                 <Input
                   id="email"
                   {...register("email", {
-                    required: "Email is required",
-                    pattern: emailPattern,
+                    required: t("validation.required"),
+                    pattern: getEmailPattern(),
                   })}
-                  placeholder="Email"
+                  placeholder={t("auth.emailPlaceholder")}
                   type="email"
                 />
               </Field>
@@ -119,12 +121,12 @@ const EditUser = ({ user }: EditUserProps) => {
               <Field
                 invalid={!!errors.full_name}
                 errorText={errors.full_name?.message}
-                label="Full Name"
+                label={t("admin.fullNameLabel")}
               >
                 <Input
                   id="name"
                   {...register("full_name")}
-                  placeholder="Full name"
+                  placeholder={t("auth.fullNamePlaceholder")}
                   type="text"
                 />
               </Field>
@@ -132,17 +134,12 @@ const EditUser = ({ user }: EditUserProps) => {
               <Field
                 invalid={!!errors.password}
                 errorText={errors.password?.message}
-                label="Set Password"
+                label={t("admin.setPasswordLabel")}
               >
                 <Input
                   id="password"
-                  {...register("password", {
-                    minLength: {
-                      value: 8,
-                      message: "Password must be at least 8 characters",
-                    },
-                  })}
-                  placeholder="Password"
+                  {...register("password", passwordRules(false))}
+                  placeholder={t("auth.passwordPlaceholder")}
                   type="password"
                 />
               </Field>
@@ -150,16 +147,15 @@ const EditUser = ({ user }: EditUserProps) => {
               <Field
                 invalid={!!errors.confirm_password}
                 errorText={errors.confirm_password?.message}
-                label="Confirm Password"
+                label={t("admin.confirmPasswordLabel")}
               >
                 <Input
                   id="confirm_password"
-                  {...register("confirm_password", {
-                    validate: (value) =>
-                      value === getValues().password ||
-                      "The passwords do not match",
-                  })}
-                  placeholder="Password"
+                  {...register(
+                    "confirm_password",
+                    confirmPasswordRules(getValues, false),
+                  )}
+                  placeholder={t("auth.confirmPasswordPlaceholder")}
                   type="password"
                 />
               </Field>
@@ -167,17 +163,17 @@ const EditUser = ({ user }: EditUserProps) => {
               <Field
                 invalid={!!errors.user_type}
                 errorText={errors.user_type?.message}
-                label="User Type"
+                label={t("admin.userTypeLabel")}
               >
                 <NativeSelect.Root size="md">
                   <NativeSelect.Field
                     {...register("user_type")}
-                    placeholder="选择用户类型"
+                    placeholder={t("admin.selectUserType")}
                   >
-                    <option value="basic">Basic</option>
-                    <option value="pro">Pro</option>
-                    <option value="ultra">Ultra</option>
-                    <option value="enterprise">Enterprise</option>
+                    <option value="basic">{t("admin.userTypeBasic")}</option>
+                    <option value="pro">{t("admin.userTypePro")}</option>
+                    <option value="ultra">{t("admin.userTypeUltra")}</option>
+                    <option value="enterprise">{t("admin.userTypeEnterprise")}</option>
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>
@@ -194,7 +190,7 @@ const EditUser = ({ user }: EditUserProps) => {
                       checked={field.value}
                       onCheckedChange={({ checked }) => field.onChange(checked)}
                     >
-                      Is superuser?
+                      {t("admin.isSuperuser")}
                     </Checkbox>
                   </Field>
                 )}
@@ -208,7 +204,7 @@ const EditUser = ({ user }: EditUserProps) => {
                       checked={field.value}
                       onCheckedChange={({ checked }) => field.onChange(checked)}
                     >
-                      Is active?
+                      {t("admin.isActive")}
                     </Checkbox>
                   </Field>
                 )}
@@ -223,11 +219,11 @@ const EditUser = ({ user }: EditUserProps) => {
                 colorPalette="gray"
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </DialogActionTrigger>
             <Button variant="solid" type="submit" loading={isSubmitting}>
-              Save
+              {t("common.save")}
             </Button>
           </DialogFooter>
           <DialogCloseTrigger />

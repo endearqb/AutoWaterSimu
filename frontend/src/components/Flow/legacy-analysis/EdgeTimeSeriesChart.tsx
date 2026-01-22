@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import { useI18n } from "../../../i18n"
 import {
   type ASM1ResultData,
   type EdgeParameterConfig,
@@ -68,6 +69,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
   yAxisHeight,
   modelType = "asm1",
 }) => {
+  const { t, language } = useI18n()
   const plotAreaHeight = useMemo(() => {
     if (typeof yAxisHeight === "number") return yAxisHeight
     if (typeof chartHeight === "number") return chartHeight
@@ -96,7 +98,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
       return getSlimAvailableVariables(resultData as ASM1SlimResultData)
     }
     return getAvailableVariables(resultData as ASM1ResultData)
-  }, [resultData, modelType])
+  }, [resultData, modelType, language])
 
   const timestampsLength = resultData.timestamps?.length || 0
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
@@ -273,7 +275,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
         justifyContent="center"
       >
         <Text color="gray.500" fontSize="lg">
-          请选择连接线和指标以显示时序图
+          {t("flow.analysis.selectEdgesAndMetrics")}
         </Text>
       </Box>
     )
@@ -284,9 +286,9 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
       {/* 双滑块时间范围选择 */}
       {showTimeRangeSlider && (
         <VStack align="start" gap={2} w="full">
-          <Text fontWeight="bold">时间范围选择</Text>
+          <Text fontWeight="bold">{t("flow.analysis.timeRange")}</Text>
           <HStack w="full" gap={4}>
-            <Text minW="60px">时间:</Text>
+            <Text minW="60px">{t("flow.analysis.timeLabel")}</Text>
             <Slider.Root
               value={safeTimeRange}
               onValueChange={(details) =>
@@ -308,7 +310,8 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
             </Slider.Root>
             <Text minW="150px">
               {resultData.timestamps?.[safeTimeRange[0]]?.toFixed(2) || 0} -{" "}
-              {resultData.timestamps?.[safeTimeRange[1]]?.toFixed(2) || 0} h
+              {resultData.timestamps?.[safeTimeRange[1]]?.toFixed(2) || 0}{" "}
+              {t("flow.simulation.unit.hours")}
             </Text>
           </HStack>
         </VStack>
@@ -329,7 +332,11 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
             />
             <YAxis />
             <Tooltip
-              labelFormatter={(value) => `时间: ${Number(value).toFixed(2)} h`}
+                labelFormatter={(value) =>
+                  t("flow.analysis.timeTooltipLabel", {
+                    value: Number(value).toFixed(2),
+                  })
+                }
               formatter={(value: any, name: string) => [
                 Number(value).toFixed(4),
                 name,

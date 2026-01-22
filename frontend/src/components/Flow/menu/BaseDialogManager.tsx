@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { useI18n } from "../../../i18n"
 import type { BaseModelState } from "../../../stores/baseModelStore"
 import type { RFState } from "../../../stores/flowStore"
 import LoadDialog from "./LoadDialog"
@@ -38,6 +39,7 @@ const BaseDialogManager = <
   onCloseSaveDialog,
   onCloseLoadDialog,
 }: BaseDialogManagerProps<TFlowChart>) => {
+  const { t } = useI18n()
   const [flowChartName, setFlowChartName] = useState("")
   const [flowChartDescription, setFlowChartDescription] = useState("")
   const [flowCharts, setFlowCharts] = useState<TFlowChart[]>([])
@@ -72,7 +74,7 @@ const BaseDialogManager = <
       } else if (importedFileName) {
         setFlowChartName(importedFileName)
       } else {
-        setFlowChartName("未命名流程图")
+        setFlowChartName(t("flow.menu.untitledFlowchart"))
       }
     }
   }, [isSaveDialogOpen, currentFlowChartName, importedFileName])
@@ -89,8 +91,8 @@ const BaseDialogManager = <
     if (!flowChartName.trim()) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "保存失败",
-        description: "请输入流程图名称",
+        title: t("flow.menu.saveFailed"),
+        description: t("flow.menu.enterFlowchartName"),
         type: "error",
         duration: 3000,
       })
@@ -111,7 +113,7 @@ const BaseDialogManager = <
             description: flowChartDescription,
             flow_data: flowData,
           } as any)
-          result = { success: true, message: "更新成功" }
+          result = { success: true, message: t("flow.menu.updateSuccess") }
         } else {
           // 创建新流程图
           const flowData = exportFlowData ? exportFlowData() : {}
@@ -120,7 +122,7 @@ const BaseDialogManager = <
             description: flowChartDescription,
             flow_data: flowData,
           } as any)
-          result = { success: true, message: "保存成功" }
+          result = { success: true, message: t("flow.menu.saveSuccess") }
         }
       } else if (flowState && saveFlowChart && updateFlowChart) {
         // 使用流程图Store的方法
@@ -134,14 +136,19 @@ const BaseDialogManager = <
           result = await saveFlowChart(flowChartName, flowChartDescription)
         }
       } else {
-        throw new Error("没有可用的保存方法")
+        throw new Error(t("flow.menu.noSaveMethod"))
       }
 
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: result.success ? "保存成功" : "保存失败",
+        title: result.success
+          ? t("flow.menu.saveSuccess")
+          : t("flow.menu.saveFailed"),
         description:
-          result.message || (result.success ? "保存成功" : "保存失败"),
+          result.message ||
+          (result.success
+            ? t("flow.menu.saveSuccess")
+            : t("flow.menu.saveFailed")),
         type: result.success ? "success" : "error",
         duration: 3000,
       })
@@ -154,8 +161,8 @@ const BaseDialogManager = <
     } catch (error) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "保存失败",
-        description: "网络错误或服务器异常",
+        title: t("flow.menu.saveFailed"),
+        description: t("flow.menu.networkError"),
         type: "error",
         duration: 3000,
       })
@@ -169,8 +176,8 @@ const BaseDialogManager = <
     if (!flowChartName.trim()) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "另存为失败",
-        description: "请输入流程图名称",
+        title: t("flow.menu.saveAsFailed"),
+        description: t("flow.menu.enterFlowchartName"),
         type: "error",
         duration: 3000,
       })
@@ -187,19 +194,24 @@ const BaseDialogManager = <
           name: flowChartName,
           description: flowChartDescription,
         } as any)
-        result = { success: true, message: "另存为成功" }
+        result = { success: true, message: t("flow.menu.saveAsSuccess") }
       } else if (flowState && saveFlowChart) {
         // 另存为总是创建新流程图，不管当前是否有ID
         result = await saveFlowChart(flowChartName, flowChartDescription)
       } else {
-        throw new Error("没有可用的保存方法")
+        throw new Error(t("flow.menu.noSaveMethod"))
       }
 
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: result.success ? "另存为成功" : "另存为失败",
+        title: result.success
+          ? t("flow.menu.saveAsSuccess")
+          : t("flow.menu.saveAsFailed"),
         description:
-          result.message || (result.success ? "另存为成功" : "另存为失败"),
+          result.message ||
+          (result.success
+            ? t("flow.menu.saveAsSuccess")
+            : t("flow.menu.saveAsFailed")),
         type: result.success ? "success" : "error",
         duration: 3000,
       })
@@ -212,8 +224,8 @@ const BaseDialogManager = <
     } catch (error) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "另存为失败",
-        description: "网络错误或服务器异常",
+        title: t("flow.menu.saveAsFailed"),
+        description: t("flow.menu.networkError"),
         type: "error",
         duration: 3000,
       })
@@ -251,18 +263,23 @@ const BaseDialogManager = <
           flowState.setCurrentFlowChartName((flowchartData as any).name)
         }
 
-        result = { success: true, message: "加载成功" }
+        result = { success: true, message: t("flow.menu.loadSuccess") }
       } else if (flowState && loadFlowChart) {
         result = await loadFlowChart(flowChartId)
       } else {
-        throw new Error("没有可用的加载方法")
+        throw new Error(t("flow.menu.noLoadMethod"))
       }
 
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: result.success ? "加载成功" : "加载失败",
+        title: result.success
+          ? t("flow.menu.loadSuccess")
+          : t("flow.menu.loadFailed"),
         description:
-          result.message || (result.success ? "加载成功" : "加载失败"),
+          result.message ||
+          (result.success
+            ? t("flow.menu.loadSuccess")
+            : t("flow.menu.loadFailed")),
         type: result.success ? "success" : "error",
         duration: 3000,
       })
@@ -273,8 +290,8 @@ const BaseDialogManager = <
     } catch (error) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "加载失败",
-        description: "网络错误或服务器异常",
+        title: t("flow.menu.loadFailed"),
+        description: t("flow.menu.networkError"),
         type: "error",
         duration: 3000,
       })
@@ -292,18 +309,23 @@ const BaseDialogManager = <
       // 优先使用模型Store的方法
       if (modelState && deleteModelFlowchart) {
         await deleteModelFlowchart(flowChartId)
-        result = { success: true, message: "删除成功" }
+        result = { success: true, message: t("flow.menu.deleteSuccess") }
       } else if (flowState && deleteFlowChart) {
         result = await deleteFlowChart(flowChartId)
       } else {
-        throw new Error("没有可用的删除方法")
+        throw new Error(t("flow.menu.noDeleteMethod"))
       }
 
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: result.success ? "删除成功" : "删除失败",
+        title: result.success
+          ? t("flow.menu.deleteSuccess")
+          : t("flow.menu.deleteFailed"),
         description:
-          result.message || (result.success ? "删除成功" : "删除失败"),
+          result.message ||
+          (result.success
+            ? t("flow.menu.deleteSuccess")
+            : t("flow.menu.deleteFailed")),
         type: result.success ? "success" : "error",
         duration: 3000,
       })
@@ -315,8 +337,8 @@ const BaseDialogManager = <
     } catch (error) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "删除失败",
-        description: "网络错误或服务器异常",
+        title: t("flow.menu.deleteFailed"),
+        description: t("flow.menu.networkError"),
         type: "error",
         duration: 3000,
       })

@@ -20,6 +20,7 @@ import {
   type CalculationParameters,
   getDefaultCalculationParams,
 } from "../config/simulationConfig"
+import { t } from "../i18n"
 // import type { BaseModelService } from '../services/baseModelService' // 暂时注释掉未使用的导入
 
 /**
@@ -148,6 +149,8 @@ export interface FlowChartService<
   deleteFlowchart: (params: { id: string }) => Promise<any>
 }
 
+const getDefaultFlowchartName = () => t("flow.menu.untitledFlowchart")
+
 /**
  * 创建模型流程图Store的工厂函数
  * @param config 模型配置
@@ -183,7 +186,7 @@ export function createModelFlowStore<
       ],
       edgeParameterConfigs: {},
       currentFlowChartId: null,
-      currentFlowChartName: "未命名",
+      currentFlowChartName: getDefaultFlowchartName(),
       currentJobId: null,
       importedFileName: null,
       calculationParameters: getDefaultCalculationParams(
@@ -722,7 +725,10 @@ export function createModelFlowStore<
 
           // 验证数据格式
           if (!data || typeof data !== "object") {
-            return { success: false, message: "无效的数据格式" }
+            return {
+              success: false,
+              message: t("flow.store.flowchart.invalidFormat"),
+            }
           }
 
           const {
@@ -734,7 +740,10 @@ export function createModelFlowStore<
 
           // 基本验证
           if (!Array.isArray(nodes) || !Array.isArray(importedEdges)) {
-            return { success: false, message: "节点或边数据格式错误" }
+            return {
+              success: false,
+              message: t("flow.store.flowchart.invalidGraph"),
+            }
           }
 
           // 处理导入的节点数据，将asm1slimParameters、modelParameters或asm1Parameters合并到data中
@@ -852,13 +861,17 @@ export function createModelFlowStore<
             selectedEdge: null,
           })
 
-          return { success: true, message: "流程图导入成功" }
+          return {
+            success: true,
+            message: t("flow.store.flowchart.importSuccess"),
+          }
         } catch (error) {
           console.error("导入流程图失败:", error)
-          return {
-            success: false,
-            message: error instanceof Error ? error.message : "导入失败",
-          }
+          const message =
+            error instanceof Error
+              ? error.message
+              : t("flow.store.flowchart.importFailed")
+          return { success: false, message }
         }
       },
 
@@ -884,7 +897,11 @@ export function createModelFlowStore<
             })
 
             set({ currentFlowChartName: name })
-            return { success: true, message: "流程图更新成功", data: result }
+            return {
+              success: true,
+              message: t("flow.store.flowchart.updateSuccess"),
+              data: result,
+            }
           }
           // 创建新流程图
           const result = await flowChartService.createFlowchart({
@@ -899,12 +916,23 @@ export function createModelFlowStore<
             currentFlowChartId: (result as any).id,
             currentFlowChartName: name,
           })
-          return { success: true, message: "流程图创建成功", data: result }
+          return {
+            success: true,
+            message: t("flow.store.flowchart.createSuccess"),
+            data: result,
+          }
         } catch (error: any) {
           console.error("保存流程图失败:", error)
-          const message =
-            error?.body?.detail || error?.message || "保存流程图失败"
-          return { success: false, message }
+          const reason =
+            error?.body?.detail ||
+            error?.message ||
+            t("common.unknown")
+          return {
+            success: false,
+            message: t("flow.store.flowchart.saveFailedWithReason", {
+              reason,
+            }),
+          }
         }
       },
 
@@ -918,22 +946,36 @@ export function createModelFlowStore<
             if (importResult.success) {
               set({
                 currentFlowChartId: id,
-                currentFlowChartName: (flowchart as any).name || "未命名",
+                currentFlowChartName:
+                  (flowchart as any).name || getDefaultFlowchartName(),
                 importedFileName: null,
               })
-              return { success: true, message: "流程图加载成功" }
+              return {
+                success: true,
+                message: t("flow.store.flowchart.loadSuccess"),
+              }
             }
             return {
               success: false,
-              message: `加载失败: ${importResult.message}`,
+              message: t("flow.store.flowchart.loadFailedWithReason", {
+                reason: importResult.message,
+              }),
             }
           }
-          return { success: false, message: "流程图数据为空" }
+          return {
+            success: false,
+            message: t("flow.store.flowchart.loadFailedEmpty"),
+          }
         } catch (error: any) {
           console.error("加载流程图失败:", error)
-          const message =
-            error?.body?.detail || error?.message || "加载流程图失败"
-          return { success: false, message }
+          const reason =
+            error?.body?.detail ||
+            error?.message ||
+            t("common.unknown")
+          return {
+            success: false,
+            message: t("flow.store.flowchart.loadFailedWithReason", { reason }),
+          }
         }
       },
 
@@ -945,14 +987,19 @@ export function createModelFlowStore<
           })
           return {
             success: true,
-            message: "获取流程图列表成功",
+            message: t("flow.store.flowchart.listSuccess"),
             data: (response as any).data || [],
           }
         } catch (error: any) {
           console.error("获取流程图列表失败:", error)
-          const message =
-            error?.body?.detail || error?.message || "获取流程图列表失败"
-          return { success: false, message }
+          const reason =
+            error?.body?.detail ||
+            error?.message ||
+            t("common.unknown")
+          return {
+            success: false,
+            message: t("flow.store.flowchart.listFailedWithReason", { reason }),
+          }
         }
       },
 
@@ -976,12 +1023,23 @@ export function createModelFlowStore<
             set({ currentFlowChartName: name })
           }
 
-          return { success: true, message: "流程图更新成功", data: result }
+          return {
+            success: true,
+            message: t("flow.store.flowchart.updateSuccess"),
+            data: result,
+          }
         } catch (error: any) {
           console.error("更新流程图失败:", error)
-          const message =
-            error?.body?.detail || error?.message || "更新流程图失败"
-          return { success: false, message }
+          const reason =
+            error?.body?.detail ||
+            error?.message ||
+            t("common.unknown")
+          return {
+            success: false,
+            message: t("flow.store.flowchart.updateFailedWithReason", {
+              reason,
+            }),
+          }
         }
       },
 
@@ -993,12 +1051,22 @@ export function createModelFlowStore<
             get().newFlowChart()
           }
 
-          return { success: true, message: "流程图删除成功" }
+          return {
+            success: true,
+            message: t("flow.store.flowchart.deleteSuccess"),
+          }
         } catch (error: any) {
           console.error("删除流程图失败:", error)
-          const message =
-            error?.body?.detail || error?.message || "删除流程图失败"
-          return { success: false, message }
+          const reason =
+            error?.body?.detail ||
+            error?.message ||
+            t("common.unknown")
+          return {
+            success: false,
+            message: t("flow.store.flowchart.deleteFailedWithReason", {
+              reason,
+            }),
+          }
         }
       },
 
@@ -1032,7 +1100,7 @@ export function createModelFlowStore<
           ],
           edgeParameterConfigs: {},
           currentFlowChartId: null,
-          currentFlowChartName: "未命名",
+          currentFlowChartName: getDefaultFlowchartName(),
           currentJobId: null,
           importedFileName: null,
           calculationParameters: getDefaultCalculationParams(

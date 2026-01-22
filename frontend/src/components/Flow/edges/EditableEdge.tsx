@@ -6,6 +6,7 @@ import {
   getSmoothStepPath,
 } from "@xyflow/react"
 import React, { useState } from "react"
+import { useI18n } from "../../../i18n"
 
 interface EditableEdgeProps extends EdgeProps {
   updateEdgeFlow: (id: string, value: number) => void
@@ -25,6 +26,7 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
   selected, // <- React Flow 会注入
   updateEdgeFlow,
 }) => {
+  const { t } = useI18n()
   const [isEditing, setIsEditing] = useState(false)
   const [tempFlow, setTempFlow] = useState<string>(String(data?.flow || ""))
 
@@ -98,7 +100,7 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
               borderRadius="4px"
               px={2}
               py={1}
-              placeholder="流量值"
+              placeholder={t("flow.edge.flowPlaceholder")}
             />
           ) : // 只有当有流量值时才显示可点击区域
           flowText ? (

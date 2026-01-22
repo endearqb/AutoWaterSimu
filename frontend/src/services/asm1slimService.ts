@@ -12,6 +12,7 @@ import type {
   MaterialBalanceTimeSeriesResponse,
   MaterialBalanceValidationResponse,
 } from "../client/types.gen"
+import { t } from "@/utils/i18n"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
 
@@ -31,6 +32,8 @@ class ASM1SlimServiceImpl
       ASM1SlimJobInputDataResponse
     >
 {
+  private readonly modelName = "ASM1 Slim"
+
   // ========== 计算任务相关方法 ==========
 
   /**
@@ -44,7 +47,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimService.createCalculationJob({ requestBody: input })
     } catch (error) {
-      throw handleApiError(error, "创建计算任务失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.createJobFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -61,7 +67,12 @@ class ASM1SlimServiceImpl
         requestBody: flowchartData,
       })
     } catch (error) {
-      throw handleApiError(error, "从流程图创建计算任务失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.createJobFromFlowchartFailed", {
+          model: this.modelName,
+        }),
+      )
     }
   }
 
@@ -74,7 +85,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimService.getCalculationStatus({ jobId })
     } catch (error) {
-      throw handleApiError(error, "获取计算状态失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getStatusFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -89,7 +103,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimService.getCalculationResultSummary({ jobId })
     } catch (error) {
-      throw handleApiError(error, "获取计算结果摘要失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getSummaryFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -118,7 +135,10 @@ class ASM1SlimServiceImpl
         edgeIds: params.edgeIds,
       })
     } catch (error) {
-      throw handleApiError(error, "获取时间序列数据失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getTimeSeriesFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -131,7 +151,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimService.getCalculationFinalValues({ jobId })
     } catch (error) {
-      throw handleApiError(error, "获取最终值数据失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getFinalValuesFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -148,7 +171,10 @@ class ASM1SlimServiceImpl
         requestBody: { input_data: input },
       })
     } catch (error) {
-      throw handleApiError(error, "验证输入数据失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.validateInputFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -168,7 +194,10 @@ class ASM1SlimServiceImpl
         limit: limit || 50,
       })
     } catch (error) {
-      throw handleApiError(error, "获取用户任务列表失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getUserJobsFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -181,7 +210,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimService.deleteCalculationJob({ jobId })
     } catch (error) {
-      throw handleApiError(error, "删除计算任务失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.deleteJobFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -194,7 +226,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimService.getJobInputData({ jobId })
     } catch (error) {
-      throw handleApiError(error, "获取任务输入数据失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getJobInputFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -216,7 +251,10 @@ class ASM1SlimServiceImpl
         limit: limit || 50,
       })
     } catch (error) {
-      throw handleApiError(error, "获取流程图列表失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getFlowchartsFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -233,7 +271,10 @@ class ASM1SlimServiceImpl
         requestBody: flowchart,
       })
     } catch (error) {
-      throw handleApiError(error, "创建流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.createFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -246,7 +287,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimFlowchartsService.readAsm1SlimFlowchart({ id })
     } catch (error) {
-      throw handleApiError(error, "获取流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -266,7 +310,10 @@ class ASM1SlimServiceImpl
         requestBody: flowchart,
       })
     } catch (error) {
-      throw handleApiError(error, "更新流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.updateFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -278,7 +325,10 @@ class ASM1SlimServiceImpl
     try {
       return await Asm1SlimFlowchartsService.deleteAsm1SlimFlowchart({ id })
     } catch (error) {
-      throw handleApiError(error, "删除流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.deleteFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 

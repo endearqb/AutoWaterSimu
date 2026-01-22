@@ -1,8 +1,9 @@
-import { Box, Field, HStack, Stack, Switch, Text } from "@chakra-ui/react"
+﻿import { Box, Field, HStack, Stack, Switch, Text } from "@chakra-ui/react"
 import { Slider } from "@chakra-ui/react"
 import { useState } from "react"
 import type { EnhancedCustomParameter } from "../../../config/modelConfigs"
 import { getModelConfig } from "../../../config/modelConfigs"
+import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
 
 interface ModelCalculationPanelProps {
@@ -20,16 +21,18 @@ function ModelCalculationPanel({
     throw new Error("ModelCalculationPanel requires a store prop")
   }
 
+  const { t } = useI18n()
   const { selectedNode, updateNodeParameter, nodes } = store()
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({})
   const [syncParameters, setSyncParameters] = useState(true)
 
-  // 获取模型配置
   const modelConfig = getModelConfig(modelType)
   if (!modelConfig) {
     return (
       <Box>
-        <Text color="red.500">未找到模型配置: {modelType}</Text>
+        <Text color="red.500">
+          {t("flow.modelCalculation.missingConfig", { model: modelType })}
+        </Text>
       </Box>
     )
   }
@@ -46,11 +49,10 @@ function ModelCalculationPanel({
 
     const numValue = Number.parseFloat(value)
 
-    // 验证参数值 - 只有当值不是NaN且超出范围时才报错
     if (!Number.isNaN(numValue) && (numValue < min || numValue > max)) {
       setParamErrors((prev) => ({
         ...prev,
-        [paramName]: `参数值必须在 ${min} - ${max} 范围内`,
+        [paramName]: t("flow.modelCalculation.rangeError", { min, max }),
       }))
     } else {
       setParamErrors((prev) => {
@@ -59,16 +61,13 @@ function ModelCalculationPanel({
       })
     }
 
-    // 只有当值是有效数字时才更新
     if (!Number.isNaN(numValue)) {
       if (syncParameters) {
-        // 同步模式：更新所有相同类型节点的参数
         const targetNodes = nodes.filter((node) => node.type === nodeType)
         targetNodes.forEach((node) => {
           updateNodeParameter(node.id, paramName, numValue)
         })
       } else {
-        // 独立模式：只更新当前选中的节点
         updateNodeParameter(selectedNode.id, paramName, numValue)
       }
     }
@@ -88,7 +87,7 @@ function ModelCalculationPanel({
   if (!selectedNode) {
     return (
       <Box>
-        <Text color="gray.500">请选择一个节点查看计算参数</Text>
+        <Text color="gray.500">{t("flow.modelCalculation.emptyState")}</Text>
       </Box>
     )
   }
@@ -99,7 +98,9 @@ function ModelCalculationPanel({
     return (
       <Box>
         <Text color="gray.500">
-          计算参数仅适用于{modelConfig.displayName}节点
+          {t("flow.modelCalculation.onlyForModel", {
+            model: modelConfig.displayName,
+          })}
         </Text>
       </Box>
     )
@@ -108,7 +109,7 @@ function ModelCalculationPanel({
   if (calculationParameters.length === 0) {
     return (
       <Box>
-        <Text color="gray.500">该模型暂无可配置的计算参数</Text>
+        <Text color="gray.500">{t("flow.modelCalculation.noParameters")}</Text>
       </Box>
     )
   }
@@ -117,7 +118,7 @@ function ModelCalculationPanel({
     <Stack gap={6}>
       <Box>
         <Text fontSize="lg" fontWeight="semibold" mb={4}>
-          {modelConfig.displayName} 计算参数
+          {t("flow.modelCalculation.title", { model: modelConfig.displayName })}
         </Text>
 
         <Box mb={6} p={4} bg="gray.50" borderRadius="md">
@@ -133,16 +134,19 @@ function ModelCalculationPanel({
             <Box>
               <Text fontSize="xs" color="gray.600">
                 {syncParameters
-                  ? `开启时，修改参数会同步到所有${modelConfig.displayName}节点`
-                  : "关闭时，只修改当前选中的节点参数"}
+                  ? t("flow.modelCalculation.syncOn", {
+                      model: modelConfig.displayName,
+                    })
+                  : t("flow.modelCalculation.syncOff")}
               </Text>
             </Box>
           </HStack>
         </Box>
 
         <Text fontSize="sm" color="gray.600" mb={4}>
-          {modelConfig.description ||
-            `以下参数用于${modelConfig.displayName}模型的生化反应计算，请根据实际工艺条件调整参数值。`}
+          {t("flow.modelCalculation.description", {
+            model: modelConfig.displayName,
+          })}
         </Text>
 
         <Stack gap={5}>
@@ -177,7 +181,7 @@ function ModelCalculationPanel({
                 >
                   <HStack justify="space-between" mb={2}>
                     <Text fontSize="sm">
-                      {param.label} ({param.ui.unit})
+                      {t(param.label)} ({param.ui.unit})
                     </Text>
                     <Slider.ValueText fontSize="sm" />
                   </HStack>
@@ -190,7 +194,7 @@ function ModelCalculationPanel({
                 </Slider.Root>
 
                 <Text fontSize="xs" color="gray.600" mb={2}>
-                  {param.description}
+                  {param.description ? t(param.description) : ""}
                 </Text>
 
                 {hasError && <Field.ErrorText>{hasError}</Field.ErrorText>}
@@ -202,8 +206,7 @@ function ModelCalculationPanel({
 
       <Box>
         <Text fontSize="sm" color="blue.600" fontStyle="italic">
-          💡 提示：这些参数会影响{modelConfig.displayName}
-          模型的计算结果，建议根据实际污水处理工艺的运行数据进行校准。
+          {t("flow.modelCalculation.tip", { model: modelConfig.displayName })}
         </Text>
       </Box>
     </Stack>

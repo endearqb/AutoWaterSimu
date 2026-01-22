@@ -1,6 +1,7 @@
 import { Box, IconButton } from "@chakra-ui/react"
 import { type ReactNode, useEffect, useState } from "react"
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi"
+import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 import BubbleMenu from "./menu/BubbleMenu"
 import BaseToolbarContainer from "./toolbar/BaseToolbarContainer"
@@ -12,6 +13,7 @@ interface LayoutProps {
 }
 
 const Layout = ({ canvas, inspector }: LayoutProps) => {
+  const { t } = useI18n()
   const {
     selectedNode,
     selectedEdge,
@@ -160,8 +162,8 @@ const Layout = ({ canvas, inspector }: LayoutProps) => {
       // 动态导入toaster
       const { toaster } = await import("../ui/toaster")
       toaster.create({
-        title: "文件格式错误",
-        description: "请选择JSON格式的文件",
+        title: t("flow.menu.fileFormatErrorTitle"),
+        description: t("flow.menu.fileFormatErrorDescription"),
         type: "error",
         duration: 3000,
       })
@@ -183,7 +185,9 @@ const Layout = ({ canvas, inspector }: LayoutProps) => {
         // 动态导入toaster
         const { toaster } = await import("../ui/toaster")
         toaster.create({
-          title: result.success ? "导入成功" : "导入失败",
+          title: result.success
+            ? t("flow.menu.importSuccess")
+            : t("flow.menu.importFailed"),
           description: result.message,
           type: result.success ? "success" : "error",
           duration: 3000,
@@ -192,8 +196,8 @@ const Layout = ({ canvas, inspector }: LayoutProps) => {
         // 动态导入toaster
         const { toaster } = await import("../ui/toaster")
         toaster.create({
-          title: "导入失败",
-          description: "文件格式错误或内容无效",
+          title: t("flow.menu.importFailed"),
+          description: t("flow.menu.importInvalidDescription"),
           type: "error",
           duration: 3000,
         })

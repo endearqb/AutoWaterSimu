@@ -1,6 +1,7 @@
 import { Card, Text, VStack } from "@chakra-ui/react"
 import type React from "react"
 import type { ASM1ResultData } from "../asm1-analysis"
+import { useI18n } from "../../../../i18n"
 
 interface AIReportPanelProps {
   resultData?: ASM1ResultData
@@ -8,6 +9,7 @@ interface AIReportPanelProps {
 }
 
 const AIReportPanel: React.FC<AIReportPanelProps> = () => {
+  const { t } = useI18n()
   return (
     <Card.Root>
       {/* <Card.Header>
@@ -16,13 +18,13 @@ const AIReportPanel: React.FC<AIReportPanelProps> = () => {
       <Card.Body>
         <VStack align="center" justify="center" h="400px" gap={4}>
           <Text fontSize="xl" color="gray.500" textAlign="center">
-            🤖 AI智能分析报告
+            {t("flow.analysis.aiReportTitle")}
           </Text>
           <Text fontSize="lg" color="gray.400" textAlign="center">
-            待开发，敬请期待
+            {t("flow.analysis.aiReportComingSoon")}
           </Text>
           <Text fontSize="sm" color="gray.300" textAlign="center">
-            即将为您提供基于ASM1模型的智能分析和优化建议
+            {t("flow.analysis.aiReportDescription")}
           </Text>
         </VStack>
       </Card.Body>

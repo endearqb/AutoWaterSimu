@@ -1,6 +1,7 @@
 import { Box, Input, Text } from "@chakra-ui/react"
 import { Handle, type NodeProps, Position } from "@xyflow/react"
 import { memo, useEffect, useRef, useState } from "react"
+import { useI18n } from "../../../i18n"
 import useFlowStore from "../../../stores/flowStore"
 import type { RFState } from "../../../stores/flowStore"
 import GlassNodeContainer from "./GlassNodeContainer"
@@ -27,11 +28,12 @@ interface DefaultNodeProps extends NodeProps<any> {
 
 const DefaultNode = ({ data, selected, id, store }: DefaultNodeProps) => {
   const nodeData = data as DefaultNodeData
+  const { t, language } = useI18n()
   const flowStore = store || useFlowStore
   const { updateNodeParameter } = flowStore()
   const [isEditing, setIsEditing] = useState(false)
   const [label, setLabel] = useState(
-    nodeData.label || nodeData.number || "default\nnode",
+    nodeData.label || nodeData.number || t("flow.node.default"),
   )
   const hoveredNodeId = useHoveredNodeId()
   const isHovered = hoveredNodeId === id
@@ -51,8 +53,8 @@ const DefaultNode = ({ data, selected, id, store }: DefaultNodeProps) => {
   }, [isEditing])
 
   useEffect(() => {
-    setLabel(nodeData.label || nodeData.number || "default\nnode")
-  }, [nodeData.label, nodeData.number])
+    setLabel(nodeData.label || nodeData.number || t("flow.node.default"))
+  }, [nodeData.label, nodeData.number, language])
 
   const handleDoubleClick = () => setIsEditing(true)
 
@@ -61,7 +63,7 @@ const DefaultNode = ({ data, selected, id, store }: DefaultNodeProps) => {
       setIsEditing(false)
       updateNodeParameter(id, "label", label)
     } else if (e.key === "Escape") {
-      setLabel(nodeData.label || nodeData.number || "default\nnode")
+      setLabel(nodeData.label || nodeData.number || t("flow.node.default"))
       setIsEditing(false)
     }
   }

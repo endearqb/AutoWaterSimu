@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import { useI18n } from "../../i18n"
 
 export const Route = createFileRoute("/_layout/overview")({
   component: Overview,
@@ -67,6 +68,7 @@ interface DataPoint {
 }
 
 function Overview() {
+  const { t } = useI18n()
   // 获取当前时间
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -80,7 +82,7 @@ function Overview() {
     queryFn: async () => {
       const response = await fetch(`${apiUrl}/water-plants/1`)
       if (!response.ok) {
-        throw new Error("获取水厂信息失败")
+        throw new Error(t("overview.errors.plant"))
       }
       return response.json()
     },
@@ -96,7 +98,7 @@ function Overview() {
 
       const response = await fetch(url.toString())
       if (!response.ok) {
-        throw new Error("获取生产数据失败")
+        throw new Error(t("overview.errors.production"))
       }
       return response.json()
     },
@@ -137,7 +139,7 @@ function Overview() {
 
       const response = await fetch(url.toString())
       if (!response.ok) {
-        throw new Error("获取加氯数据失败")
+        throw new Error(t("overview.errors.chlorine"))
       }
       const data = (await response.json()) as ChlorineSimulationState[]
 
@@ -174,7 +176,7 @@ function Overview() {
       time.setHours(i)
       const isNextDay = i >= 24
       const displayHour = isNextDay ? i - 24 : i
-      const hour = `${isNextDay ? "次日" : ""}${displayHour.toString().padStart(2, "0")}:00`
+      const hour = `${isNextDay ? t("overview.nextDayPrefix") : ""}${displayHour.toString().padStart(2, "0")}:00`
       const isHistory = time <= now
 
       // 查找对应时间的历史数据
@@ -212,7 +214,7 @@ function Overview() {
     <Container maxW="full">
       <Box pt={6} m={4}>
         <Heading size="lg" mb={6}>
-          水量监控概览
+          {t("overview.title")}
         </Heading>
 
         <Box
@@ -224,7 +226,7 @@ function Overview() {
           borderColor="gray.200"
         >
           <Text fontSize="md" mb={4} color="gray.600">
-            实时水量监控与预测数据
+            {t("overview.subtitle")}
           </Text>
 
           <Box h="350px">
@@ -260,15 +262,22 @@ function Overview() {
                 />
                 <Tooltip
                   formatter={(value: number, name: string) => {
-                    const label = name === "value" ? "实际水量" : "预测水量"
+                    const label =
+                      name === "value"
+                        ? t("overview.actualWater")
+                        : t("overview.predictedWater")
                     return [`${value.toFixed(1)}m³`, label]
                   }}
-                  labelFormatter={(label) => `时间: ${label}`}
+                  labelFormatter={(label) =>
+                    t("overview.timeLabel", { label })
+                  }
                   wrapperStyle={{ zIndex: 1000 }}
                 />
                 <Legend
                   formatter={(value) =>
-                    value === "value" ? "实际水量" : "预测水量"
+                    value === "value"
+                      ? t("overview.actualWater")
+                      : t("overview.predictedWater")
                   }
                   wrapperStyle={{
                     borderRadius: "3px",
@@ -288,7 +297,10 @@ function Overview() {
                   x={`${now.getHours().toString().padStart(2, "0")}:00`}
                   stroke="#666"
                   strokeDasharray="3 3"
-                  label={{ value: "当前时间", position: "insideTopLeft" }}
+                  label={{
+                    value: t("overview.currentTime"),
+                    position: "insideTopLeft",
+                  }}
                 />
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">

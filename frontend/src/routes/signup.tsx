@@ -20,8 +20,13 @@ import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
+import { useI18n } from "@/i18n"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
-import { confirmPasswordRules, emailPattern, passwordRules } from "@/utils"
+import {
+  confirmPasswordRules,
+  getEmailPattern,
+  passwordRules,
+} from "@/utils"
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -40,6 +45,7 @@ interface UserRegisterForm extends UserRegister {
 
 function SignUp() {
   const { signUpMutation } = useAuth()
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -97,7 +103,7 @@ function SignUp() {
             <VStack gap={2}>
               <Image
                 src="/assets/images/E-logos-1.png"
-                alt="ENVDAMA Logo"
+                alt={t("app.logoAlt")}
                 boxSize={8}
               />
               <Heading
@@ -114,7 +120,7 @@ function SignUp() {
             </VStack>
             <VStack gap={2}>
               <Text color="gray.600" fontSize="md">
-                加入 ENVDAMA ，开启您的智能环保数据分析之旅
+                {t("auth.signupIntro")}
               </Text>
             </VStack>
           </VStack>
@@ -127,9 +133,9 @@ function SignUp() {
                 id="full_name"
                 minLength={3}
                 {...register("full_name", {
-                  required: "Full Name is required",
+                  required: t("validation.required"),
                 })}
-                placeholder="Full Name"
+                placeholder={t("auth.fullNamePlaceholder")}
                 type="text"
               />
             </InputGroup>
@@ -140,10 +146,10 @@ function SignUp() {
               <Input
                 id="email"
                 {...register("email", {
-                  required: "Email is required",
-                  pattern: emailPattern,
+                  required: t("validation.required"),
+                  pattern: getEmailPattern(),
                 })}
-                placeholder="Email"
+                placeholder={t("auth.emailPlaceholder")}
                 type="email"
               />
             </InputGroup>
@@ -152,14 +158,14 @@ function SignUp() {
             type="password"
             startElement={<FiLock />}
             {...register("password", passwordRules())}
-            placeholder="Password"
+            placeholder={t("auth.passwordPlaceholder")}
             errors={errors}
           />
           <PasswordInput
             type="confirm_password"
             startElement={<FiLock />}
             {...register("confirm_password", confirmPasswordRules(getValues))}
-            placeholder="Confirm Password"
+            placeholder={t("auth.confirmPasswordPlaceholder")}
             errors={errors}
           />
           <Button
@@ -178,12 +184,12 @@ function SignUp() {
             }}
             transition="all 0.2s"
           >
-            立即注册
+            {t("auth.signUpNow")}
           </Button>
           <Text textAlign="center" color="gray.600">
-            已有账户？{" "}
+            {t("auth.alreadyHaveAccount")}{" "}
             <RouterLink to="/login" className="main-link">
-              立即登录
+              {t("auth.loginNow")}
             </RouterLink>
           </Text>
         </VStack>

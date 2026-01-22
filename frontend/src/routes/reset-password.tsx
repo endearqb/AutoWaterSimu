@@ -7,6 +7,7 @@ import { FiLock } from "react-icons/fi"
 import { type ApiError, LoginService, type NewPassword } from "@/client"
 import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/ui/password-input"
+import { useI18n } from "@/i18n"
 import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
@@ -42,6 +43,7 @@ function ResetPassword() {
   })
   const { showSuccessToast } = useCustomToast()
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   const resetPassword = async (data: NewPassword) => {
     const token = new URLSearchParams(window.location.search).get("token")
@@ -54,7 +56,7 @@ function ResetPassword() {
   const mutation = useMutation({
     mutationFn: resetPassword,
     onSuccess: () => {
-      showSuccessToast("Password updated successfully.")
+      showSuccessToast(t("auth.resetSuccess"))
       reset()
       navigate({ to: "/login" })
     },
@@ -79,27 +81,27 @@ function ResetPassword() {
       centerContent
     >
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
-        Reset Password
+        {t("auth.resetTitle")}
       </Heading>
       <Text textAlign="center">
-        Please enter your new password and confirm it to reset your password.
+        {t("auth.resetDescription")}
       </Text>
       <PasswordInput
         startElement={<FiLock />}
         type="new_password"
         errors={errors}
         {...register("new_password", passwordRules())}
-        placeholder="New Password"
+        placeholder={t("auth.newPasswordPlaceholder")}
       />
       <PasswordInput
         startElement={<FiLock />}
         type="confirm_password"
         errors={errors}
         {...register("confirm_password", confirmPasswordRules(getValues))}
-        placeholder="Confirm Password"
+        placeholder={t("auth.confirmPasswordPlaceholder")}
       />
       <Button variant="solid" type="submit">
-        Reset Password
+        {t("auth.resetSubmit")}
       </Button>
     </Container>
   )

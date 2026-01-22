@@ -20,7 +20,8 @@ import {
 } from "@/client"
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
-import { emailPattern, handleError } from "@/utils"
+import { getEmailPattern, handleError } from "@/utils"
+import { useI18n } from "@/i18n"
 import { Field } from "../ui/field"
 
 const UserInformation = () => {
@@ -28,6 +29,7 @@ const UserInformation = () => {
   const { showSuccessToast } = useCustomToast()
   const [editMode, setEditMode] = useState(false)
   const { user: currentUser } = useAuth()
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -51,7 +53,7 @@ const UserInformation = () => {
     mutationFn: (data: UserUpdateMe) =>
       UsersService.updateUserMe({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User updated successfully.")
+      showSuccessToast(t("userSettings.updateProfileSuccess"))
     },
     onError: (err: ApiError) => {
       handleError(err)
@@ -83,14 +85,14 @@ const UserInformation = () => {
     <>
       <Container maxW="full">
         <Heading size="sm" py={4}>
-          用户信息
+          {t("userSettings.infoTitle")}
         </Heading>
         <Box
           w={{ sm: "full", md: "sm" }}
           as="form"
           onSubmit={handleSubmit(onSubmit)}
         >
-          <Field label="用户名">
+          <Field label={t("userSettings.userNameLabel")}>
             {editMode ? (
               <Input
                 {...register("full_name", { maxLength: 30 })}
@@ -105,21 +107,21 @@ const UserInformation = () => {
                 truncate
                 maxW="sm"
               >
-                {currentUser?.full_name || "N/A"}
+                {currentUser?.full_name || t("common.notAvailable")}
               </Text>
             )}
           </Field>
           <Field
             mt={4}
-            label="邮箱"
+            label={t("userSettings.emailLabel")}
             invalid={!!errors.email}
             errorText={errors.email?.message}
           >
             {editMode ? (
               <Input
                 {...register("email", {
-                  required: "Email is required",
-                  pattern: emailPattern,
+                  required: t("validation.required"),
+                  pattern: getEmailPattern(),
                 })}
                 type="email"
                 size="md"
@@ -130,12 +132,15 @@ const UserInformation = () => {
               </Text>
             )}
           </Field>
-          <Field mt={4} label="用户类型">
+          <Field mt={4} label={t("userSettings.userTypeLabel")}>
             <Text fontSize="md" py={2} truncate maxW="sm">
-              {currentUser?.user_type
-                ? currentUser.user_type.charAt(0).toUpperCase() +
-                  currentUser.user_type.slice(1)
-                : "Basic"}
+              {currentUser?.user_type === "pro"
+                ? t("userSettings.userTypePro")
+                : currentUser?.user_type === "ultra"
+                  ? t("userSettings.userTypeUltra")
+                  : currentUser?.user_type === "enterprise"
+                    ? t("userSettings.userTypeEnterprise")
+                    : t("userSettings.userTypeBasic")}
             </Text>
           </Field>
           <Flex mt={4} gap={3}>
@@ -146,7 +151,7 @@ const UserInformation = () => {
               loading={editMode ? isSubmitting : false}
               disabled={editMode ? !isDirty || !getValues("email") : false}
             >
-              {editMode ? "Save" : "Edit"}
+              {editMode ? t("common.save") : t("common.edit")}
             </Button>
             {editMode && (
               <Button
@@ -155,7 +160,7 @@ const UserInformation = () => {
                 onClick={onCancel}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             )}
           </Flex>

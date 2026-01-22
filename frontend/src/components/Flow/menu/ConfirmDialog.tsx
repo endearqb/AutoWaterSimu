@@ -7,6 +7,7 @@ import {
   Text,
 } from "@chakra-ui/react"
 import React, { useState } from "react"
+import { useI18n } from "../../../i18n"
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -23,6 +24,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   title,
   message,
 }) => {
+  const { t } = useI18n()
   const [isLoading, setIsLoading] = useState(false)
   const portalRef = React.useRef<HTMLElement>(null!)
 
@@ -59,7 +61,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <Dialog.Body>
               <Text mb={4}>{message}</Text>
               <Text fontSize="sm" color="gray.600">
-                请选择如何处理当前流程图：
+                {t("flow.menu.confirmPrompt")}
               </Text>
             </Dialog.Body>
 
@@ -70,21 +72,21 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   onClick={() => handleConfirm("skip")}
                   disabled={isLoading}
                 >
-                  不保存
+                  {t("flow.menu.skipSave")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => handleConfirm("export")}
                   disabled={isLoading}
                 >
-                  本地导出
+                  {t("flow.menu.localExport")}
                 </Button>
                 <Button
                   onClick={() => handleConfirm("save")}
                   disabled={isLoading}
                   loading={isLoading}
                 >
-                  在线保存
+                  {t("flow.menu.saveOnline")}
                 </Button>
               </Stack>
             </Dialog.Footer>

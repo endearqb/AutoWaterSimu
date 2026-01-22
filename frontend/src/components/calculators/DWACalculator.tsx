@@ -1,5 +1,6 @@
 import { useColorModeValue } from "@/components/ui/color-mode"
 import { Field } from "@/components/ui/field"
+import { useI18n } from "@/i18n"
 import {
   Badge,
   Box,
@@ -537,6 +538,7 @@ const StatCard: React.FC<{
 }
 
 export const DWACalculator: React.FC = () => {
+  const { t } = useI18n()
   const cardBg = useColorModeValue("white", "gray.800")
 
   const [inputs, setInputs] = React.useState<DWAInputs>({
@@ -647,20 +649,27 @@ export const DWACalculator: React.FC = () => {
       <Card.Root bg={cardBg} shadow="md" borderRadius="xl" overflow="hidden">
         <Card.Body p={8}>
           <Text fontSize="3xl" fontWeight="extrabold" color="gray.800" mb={4}>
-            DWA A/O 工艺设计计算器
+            {t("calculators.dwa.title")}
           </Text>
 
           <Text maxW="full" mx="auto" fontSize="lg" color="gray.600" mb={4}>
-            基于德国 DWA 标准的 A/O
-            工艺设计计算，包含缺氧/好氧池容积、污泥龄、供氧量、二沉池等关键参数的计算与优化。
+            {t("calculators.dwa.description")}
           </Text>
 
           <Tabs.Root defaultValue="water-quality" variant="enclosed">
             <Tabs.List mb={6}>
-              <Tabs.Trigger value="water-quality">进出水水质</Tabs.Trigger>
-              <Tabs.Trigger value="process-params">工艺参数</Tabs.Trigger>
-              <Tabs.Trigger value="oxygen-params">供氧参数</Tabs.Trigger>
-              <Tabs.Trigger value="sst-params">二沉池参数</Tabs.Trigger>
+              <Tabs.Trigger value="water-quality">
+                {t("calculators.dwa.tabs.waterQuality")}
+              </Tabs.Trigger>
+              <Tabs.Trigger value="process-params">
+                {t("calculators.dwa.tabs.processParams")}
+              </Tabs.Trigger>
+              <Tabs.Trigger value="oxygen-params">
+                {t("calculators.dwa.tabs.oxygenParams")}
+              </Tabs.Trigger>
+              <Tabs.Trigger value="sst-params">
+                {t("calculators.dwa.tabs.sstParams")}
+              </Tabs.Trigger>
             </Tabs.List>
 
             <Tabs.Content value="water-quality">
@@ -673,7 +682,7 @@ export const DWACalculator: React.FC = () => {
                 gap={6}
               >
                 <LabeledNumber
-                  label="日平均进水水量"
+                  label={t("calculators.dwa.labels.dailyInfluentFlow")}
                   value={inputs.Q_d_Knoz}
                   onChange={(v) => onChange("Q_d_Knoz", v)}
                   step={100}
@@ -682,7 +691,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="进水COD"
+                  label={t("calculators.dwa.labels.influentCod")}
                   value={inputs.C_COD_ZB}
                   onChange={(v) => onChange("C_COD_ZB", v)}
                   min={100}
@@ -693,7 +702,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="进水BOD5"
+                  label={t("calculators.dwa.labels.influentBod5")}
                   value={inputs.C_BOD5_ZB}
                   onChange={(v) => onChange("C_BOD5_ZB", v)}
                   min={50}
@@ -704,7 +713,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="进水总氮"
+                  label={t("calculators.dwa.labels.influentTn")}
                   value={inputs.C_TN_ZB}
                   onChange={(v) => onChange("C_TN_ZB", v)}
                   min={10}
@@ -715,7 +724,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="进水总磷"
+                  label={t("calculators.dwa.labels.influentTp")}
                   value={inputs.C_P_ZB}
                   onChange={(v) => onChange("C_P_ZB", v)}
                   min={1}
@@ -726,7 +735,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="进水悬浮固体"
+                  label={t("calculators.dwa.labels.influentSs")}
                   value={inputs.C_SS_ZB}
                   onChange={(v) => onChange("C_SS_ZB", v)}
                   min={100}
@@ -737,7 +746,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="出水COD"
+                  label={t("calculators.dwa.labels.effluentCod")}
                   value={inputs.S_COD_AN}
                   onChange={(v) => onChange("S_COD_AN", v)}
                   min={10}
@@ -748,7 +757,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="出水总氮"
+                  label={t("calculators.dwa.labels.effluentTn")}
                   value={inputs.S_TN_AN}
                   onChange={(v) => onChange("S_TN_AN", v)}
                   min={5}
@@ -759,7 +768,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="出水氨氮"
+                  label={t("calculators.dwa.labels.effluentNh4")}
                   value={inputs.S_NH4_AN}
                   onChange={(v) => onChange("S_NH4_AN", v)}
                   min={1}
@@ -781,7 +790,7 @@ export const DWACalculator: React.FC = () => {
                 gap={6}
               >
                 <LabeledSlider
-                  label="设计温度"
+                  label={t("calculators.dwa.labels.designTemp")}
                   value={inputs.T_C}
                   onChange={(v) => onChange("T_C", v)}
                   min={5}
@@ -792,7 +801,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="生物池污泥浓度"
+                  label={t("calculators.dwa.labels.sludgeConcentration")}
                   value={inputs.TS_BB}
                   onChange={(v) => onChange("TS_BB", v)}
                   min={2}
@@ -803,7 +812,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="易降解COD比例"
+                  label={t("calculators.dwa.labels.readilyCodRatio")}
                   value={inputs.f_COD}
                   onChange={(v) => onChange("f_COD", v)}
                   min={0.15}
@@ -811,11 +820,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.01}
                   unit=""
                   decimals={2}
-                  hint="典型值 0.15-0.25"
+                  hint={t("calculators.dwa.hints.readilyCodRatio")}
                 />
 
                 <LabeledSlider
-                  label="可降解COD产泥系数"
+                  label={t("calculators.dwa.labels.codYield")}
                   value={inputs.Y_COD_abb}
                   onChange={(v) => onChange("Y_COD_abb", v)}
                   min={0.3}
@@ -823,11 +832,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.01}
                   unit=""
                   decimals={2}
-                  hint="典型值 0.67"
+                  hint={t("calculators.dwa.hints.codYield")}
                 />
 
                 <LabeledSlider
-                  label="15℃衰减系数"
+                  label={t("calculators.dwa.labels.decayFactor")}
                   value={inputs.b}
                   onChange={(v) => onChange("b", v)}
                   min={0.1}
@@ -835,11 +844,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.01}
                   unit="d⁻¹"
                   decimals={2}
-                  hint="典型值 0.17"
+                  hint={t("calculators.dwa.hints.decayFactor")}
                 />
 
                 <LabeledSlider
-                  label="硝化菌最大比生长速率"
+                  label={t("calculators.dwa.labels.maxGrowthRate")}
                   value={inputs.miu_A_max}
                   onChange={(v) => onChange("miu_A_max", v)}
                   min={0.2}
@@ -847,16 +856,25 @@ export const DWACalculator: React.FC = () => {
                   step={0.01}
                   unit="d⁻¹"
                   decimals={2}
-                  hint="15℃条件下"
+                  hint={t("calculators.dwa.hints.maxGrowthRate")}
                 />
 
-                <Field label="碳源类型">
+                <Field label={t("calculators.dwa.select.carbonSource")}>
                   <Select.Root
                     collection={createListCollection({
                       items: [
-                        { label: "甲醇", value: "甲醇" },
-                        { label: "乙醇", value: "乙醇" },
-                        { label: "醋酸", value: "醋酸" },
+                        {
+                          label: t("calculators.dwa.select.options.methanol"),
+                          value: "甲醇",
+                        },
+                        {
+                          label: t("calculators.dwa.select.options.ethanol"),
+                          value: "乙醇",
+                        },
+                        {
+                          label: t("calculators.dwa.select.options.acetate"),
+                          value: "醋酸",
+                        },
                       ],
                     })}
                     value={[inputs.COD_dos_name]}
@@ -867,7 +885,11 @@ export const DWACalculator: React.FC = () => {
                     <Select.HiddenSelect />
                     <Select.Control>
                       <Select.Trigger>
-                        <Select.ValueText placeholder="选择碳源类型" />
+                        <Select.ValueText
+                          placeholder={t(
+                            "calculators.dwa.select.carbonPlaceholder",
+                          )}
+                        />
                       </Select.Trigger>
                       <Select.IndicatorGroup>
                         <Select.Indicator />
@@ -878,9 +900,24 @@ export const DWACalculator: React.FC = () => {
                         <Select.Content>
                           {createListCollection({
                             items: [
-                              { label: "甲醇", value: "甲醇" },
-                              { label: "乙醇", value: "乙醇" },
-                              { label: "醋酸", value: "醋酸" },
+                              {
+                                label: t(
+                                  "calculators.dwa.select.options.methanol",
+                                ),
+                                value: "甲醇",
+                              },
+                              {
+                                label: t(
+                                  "calculators.dwa.select.options.ethanol",
+                                ),
+                                value: "乙醇",
+                              },
+                              {
+                                label: t(
+                                  "calculators.dwa.select.options.acetate",
+                                ),
+                                value: "醋酸",
+                              },
                             ],
                           }).items.map((item) => (
                             <Select.Item key={item.value} item={item}>
@@ -894,12 +931,20 @@ export const DWACalculator: React.FC = () => {
                   </Select.Root>
                 </Field>
 
-                <Field label="除磷剂类型">
+                <Field label={t("calculators.dwa.select.phosphorusRemoval")}>
                   <Select.Root
                     collection={createListCollection({
                       items: [
-                        { label: "铁盐", value: "铁盐" },
-                        { label: "铝盐", value: "铝盐" },
+                        {
+                          label: t("calculators.dwa.select.options.ironSalt"),
+                          value: "铁盐",
+                        },
+                        {
+                          label: t(
+                            "calculators.dwa.select.options.aluminumSalt",
+                          ),
+                          value: "铝盐",
+                        },
                       ],
                     })}
                     value={[inputs.P_dos_name]}
@@ -910,7 +955,11 @@ export const DWACalculator: React.FC = () => {
                     <Select.HiddenSelect />
                     <Select.Control>
                       <Select.Trigger>
-                        <Select.ValueText placeholder="选择除磷剂类型" />
+                        <Select.ValueText
+                          placeholder={t(
+                            "calculators.dwa.select.phosphorusPlaceholder",
+                          )}
+                        />
                       </Select.Trigger>
                       <Select.IndicatorGroup>
                         <Select.Indicator />
@@ -921,8 +970,18 @@ export const DWACalculator: React.FC = () => {
                         <Select.Content>
                           {createListCollection({
                             items: [
-                              { label: "铁盐", value: "铁盐" },
-                              { label: "铝盐", value: "铝盐" },
+                              {
+                                label: t(
+                                  "calculators.dwa.select.options.ironSalt",
+                                ),
+                                value: "铁盐",
+                              },
+                              {
+                                label: t(
+                                  "calculators.dwa.select.options.aluminumSalt",
+                                ),
+                                value: "铝盐",
+                              },
                             ],
                           }).items.map((item) => (
                             <Select.Item key={item.value} item={item}>
@@ -948,7 +1007,7 @@ export const DWACalculator: React.FC = () => {
                 gap={6}
               >
                 <LabeledSlider
-                  label="α (混合液KLa/清水KLa)"
+                  label={t("calculators.dwa.labels.alpha")}
                   value={inputs.alfa}
                   onChange={(v) => onChange("alfa", v)}
                   min={0.8}
@@ -956,11 +1015,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.01}
                   unit=""
                   decimals={2}
-                  hint="典型值 0.8-0.85"
+                  hint={t("calculators.dwa.hints.alpha")}
                 />
 
                 <LabeledSlider
-                  label="β (混合液饱和DO/清水饱和DO)"
+                  label={t("calculators.dwa.labels.beta")}
                   value={inputs.beta}
                   onChange={(v) => onChange("beta", v)}
                   min={0.9}
@@ -968,11 +1027,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.01}
                   unit=""
                   decimals={2}
-                  hint="典型值 0.9-0.97"
+                  hint={t("calculators.dwa.hints.beta")}
                 />
 
                 <LabeledSlider
-                  label="混合液剩余DO值"
+                  label={t("calculators.dwa.labels.c0")}
                   value={inputs.C_0}
                   onChange={(v) => onChange("C_0", v)}
                   min={0.5}
@@ -983,7 +1042,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledSlider
-                  label="氧利用率"
+                  label={t("calculators.dwa.labels.oxygenUtilization")}
                   value={inputs.E_A}
                   onChange={(v) => onChange("E_A", v)}
                   min={0.2}
@@ -994,7 +1053,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledNumber
-                  label="曝气装置与池底距离"
+                  label={t("calculators.dwa.labels.aeratorDepth")}
                   value={inputs.h_TB2A}
                   onChange={(v) => onChange("h_TB2A", v)}
                   step={0.1}
@@ -1004,7 +1063,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledNumber
-                  label="设计水深"
+                  label={t("calculators.dwa.labels.designDepth")}
                   value={inputs.h_tk}
                   onChange={(v) => onChange("h_tk", v)}
                   step={0.5}
@@ -1014,7 +1073,7 @@ export const DWACalculator: React.FC = () => {
                 />
 
                 <LabeledNumber
-                  label="当地海拔高度"
+                  label={t("calculators.dwa.labels.altitude")}
                   value={inputs.h_El}
                   onChange={(v) => onChange("h_El", v)}
                   step={10}
@@ -1035,7 +1094,7 @@ export const DWACalculator: React.FC = () => {
                 gap={6}
               >
                 <LabeledSlider
-                  label="污泥体积指数DSVI"
+                  label={t("calculators.dwa.labels.dsvi")}
                   value={inputs.DSVI}
                   onChange={(v) => onChange("DSVI", v)}
                   min={50}
@@ -1043,11 +1102,11 @@ export const DWACalculator: React.FC = () => {
                   step={10}
                   unit="L/kg"
                   decimals={0}
-                  hint="典型值 50-200"
+                  hint={t("calculators.dwa.hints.dsvi")}
                 />
 
                 <LabeledSlider
-                  label="设计浓缩时间"
+                  label={t("calculators.dwa.labels.thickeningTime")}
                   value={inputs.t_E}
                   onChange={(v) => onChange("t_E", v)}
                   min={1.0}
@@ -1055,11 +1114,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.1}
                   unit="h"
                   decimals={1}
-                  hint="典型值 1.0-2.5"
+                  hint={t("calculators.dwa.hints.thickeningTime")}
                 />
 
                 <LabeledSlider
-                  label="污泥回流比"
+                  label={t("calculators.dwa.labels.returnRatio")}
                   value={inputs.RV}
                   onChange={(v) => onChange("RV", v)}
                   min={0.5}
@@ -1067,11 +1126,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.1}
                   unit=""
                   decimals={1}
-                  hint="典型值 0.5-1.2"
+                  hint={t("calculators.dwa.hints.returnRatio")}
                 />
 
                 <LabeledSlider
-                  label="污泥回流短流系数"
+                  label={t("calculators.dwa.labels.shortCircuitFactor")}
                   value={inputs.f}
                   onChange={(v) => onChange("f", v)}
                   min={0.5}
@@ -1079,11 +1138,11 @@ export const DWACalculator: React.FC = () => {
                   step={0.1}
                   unit=""
                   decimals={1}
-                  hint="典型值 0.5-1.0"
+                  hint={t("calculators.dwa.hints.shortCircuitFactor")}
                 />
 
                 <LabeledSlider
-                  label="设计表面负荷"
+                  label={t("calculators.dwa.labels.surfaceLoading")}
                   value={inputs.q_A}
                   onChange={(v) => onChange("q_A", v)}
                   min={0.8}
@@ -1091,7 +1150,7 @@ export const DWACalculator: React.FC = () => {
                   step={0.1}
                   unit="m/h"
                   decimals={1}
-                  hint="典型值 0.8-2.0"
+                  hint={t("calculators.dwa.hints.surfaceLoading")}
                 />
               </Grid>
             </Tabs.Content>
@@ -1103,17 +1162,17 @@ export const DWACalculator: React.FC = () => {
           <VStack gap={8}>
             <Flex justify="space-between" align="center" w="100%">
               <Text fontSize="2xl" fontWeight="bold" color="gray.800">
-                计算结果
+                {t("calculators.dwa.results.title")}
               </Text>
               {result && (
                 <Button
                   onClick={handleCalculate}
                   loading={isCalculating}
-                  loadingText="重新计算中..."
+                  loadingText={t("calculators.dwa.results.recomputing")}
                   colorScheme="blue"
                   variant="outline"
                 >
-                  重新计算
+                  {t("calculators.dwa.results.recompute")}
                 </Button>
               )}
             </Flex>
@@ -1139,41 +1198,41 @@ export const DWACalculator: React.FC = () => {
                         mb={4}
                         color="blue.700"
                       >
-                        生物池设计参数
+                        {t("calculators.dwa.results.bioDesign")}
                       </Text>
                       <Grid templateColumns="1fr 1fr" gap={4}>
                         <StatCard
-                          label="总生物池容积"
+                          label={t("calculators.dwa.results.labels.totalBioVolume")}
                           value={result.V_bioT}
                           unit="m³"
                           color="blue"
                         />
                         <StatCard
-                          label="好氧池容积"
+                          label={t("calculators.dwa.results.labels.aerobicVolume")}
                           value={result.V_aero}
                           unit="m³"
                           color="blue"
                         />
                         <StatCard
-                          label="缺氧池容积"
+                          label={t("calculators.dwa.results.labels.anoxicVolume")}
                           value={result.V_D}
                           unit="m³"
                           color="blue"
                         />
                         <StatCard
-                          label="厌氧池容积"
+                          label={t("calculators.dwa.results.labels.anaerobicVolume")}
                           value={result.V_an}
                           unit="m³"
                           color="blue"
                         />
                         <StatCard
-                          label="总水力停留时间"
+                          label={t("calculators.dwa.results.labels.totalHrt")}
                           value={result.HRT_bioT}
                           unit="h"
                           color="blue"
                         />
                         <StatCard
-                          label="污泥龄"
+                          label={t("calculators.dwa.results.labels.sludgeAge")}
                           value={result.t_TS_Bem_f}
                           unit="d"
                           color="blue"
@@ -1193,41 +1252,41 @@ export const DWACalculator: React.FC = () => {
                         mb={4}
                         color="green.700"
                       >
-                        供氧与回流参数
+                        {t("calculators.dwa.results.oxygenReturn")}
                       </Text>
                       <Grid templateColumns="1fr 1fr" gap={4}>
                         <StatCard
-                          label="平均耗氧量"
+                          label={t("calculators.dwa.results.labels.avgOxygen")}
                           value={result.OV_h_aM}
                           unit="kgO₂/h"
                           color="green"
                         />
                         <StatCard
-                          label="最高耗氧量"
+                          label={t("calculators.dwa.results.labels.maxOxygen")}
                           value={result.OV_h_max}
                           unit="kgO₂/h"
                           color="green"
                         />
                         <StatCard
-                          label="标准传氧速率"
+                          label={t("calculators.dwa.results.labels.sor")}
                           value={result.SOR}
                           unit="kgO₂/h"
                           color="green"
                         />
                         <StatCard
-                          label="混合液回流比"
+                          label={t("calculators.dwa.results.labels.returnRatio")}
                           value={result.RF}
                           unit=""
                           color="green"
                         />
                         <StatCard
-                          label="内回流比"
+                          label={t("calculators.dwa.results.labels.internalReturnRatio")}
                           value={result.RZ}
                           unit=""
                           color="green"
                         />
                         <StatCard
-                          label="剩余污泥量"
+                          label={t("calculators.dwa.results.labels.excessSludge")}
                           value={result.US_d_r}
                           unit="kg/d"
                           color="green"
@@ -1247,41 +1306,41 @@ export const DWACalculator: React.FC = () => {
                         mb={4}
                         color="purple.700"
                       >
-                        二沉池设计参数
+                        {t("calculators.dwa.results.sstDesign")}
                       </Text>
                       <Grid templateColumns="1fr 1fr" gap={4}>
                         <StatCard
-                          label="二沉池表面积"
+                          label={t("calculators.dwa.results.labels.sstArea")}
                           value={sstResult.Ast}
                           unit="m²"
                           color="purple"
                         />
                         <StatCard
-                          label="二沉池深度"
+                          label={t("calculators.dwa.results.labels.sstDepth")}
                           value={sstResult.h}
                           unit="m"
                           color="purple"
                         />
                         <StatCard
-                          label="设计流量"
+                          label={t("calculators.dwa.results.labels.designFlow")}
                           value={sstResult.Q_d_max}
                           unit="m³/d"
                           color="purple"
                         />
                         <StatCard
-                          label="进水污泥浓度"
+                          label={t("calculators.dwa.results.labels.influentSludge")}
                           value={sstResult.TS_BB}
                           unit="kg/m³"
                           color="purple"
                         />
                         <StatCard
-                          label="回流污泥浓度"
+                          label={t("calculators.dwa.results.labels.returnSludge")}
                           value={sstResult.TS_RS}
                           unit="kg/m³"
                           color="purple"
                         />
                         <StatCard
-                          label="污泥体积负荷"
+                          label={t("calculators.dwa.results.labels.sludgeLoading")}
                           value={sstResult.q_sv}
                           unit="L/(m³·h)"
                           color="purple"
@@ -1301,7 +1360,7 @@ export const DWACalculator: React.FC = () => {
                       borderRadius="lg"
                     >
                       <Text fontSize="lg" fontWeight="semibold" mb={4}>
-                        易降解COD比例对设计参数的影响
+                        {t("calculators.dwa.chart.title")}
                       </Text>
                       <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={chartData}>
@@ -1316,13 +1375,15 @@ export const DWACalculator: React.FC = () => {
                             formatter={(value: number, name: string) => [
                               value.toFixed(2),
                               name === "V_BB"
-                                ? "生物池容积 (m³)"
+                                ? t("calculators.dwa.chart.tooltip.bioVolume")
                                 : name === "SOR"
-                                  ? "标准传氧速率 (kgO₂/h)"
-                                  : "总停留时间 (h)",
+                                  ? t("calculators.dwa.chart.tooltip.sor")
+                                  : t("calculators.dwa.chart.tooltip.totalHrt"),
                             ]}
                             labelFormatter={(value) =>
-                              `易降解COD比例: ${Number(value).toFixed(2)}`
+                              t("calculators.dwa.chart.tooltip.label", {
+                                value: Number(value).toFixed(2),
+                              })
                             }
                           />
                           <Legend />
@@ -1332,7 +1393,7 @@ export const DWACalculator: React.FC = () => {
                             dataKey="V_BB"
                             stroke="#3182ce"
                             strokeWidth={2}
-                            name="生物池容积"
+                            name={t("calculators.dwa.chart.legend.bioVolume")}
                           />
                           <Line
                             yAxisId="right"
@@ -1340,7 +1401,7 @@ export const DWACalculator: React.FC = () => {
                             dataKey="SOR"
                             stroke="#38a169"
                             strokeWidth={2}
-                            name="标准传氧速率"
+                            name={t("calculators.dwa.chart.legend.sor")}
                           />
                           <Line
                             yAxisId="left"
@@ -1348,7 +1409,7 @@ export const DWACalculator: React.FC = () => {
                             dataKey="HRT_bioT"
                             stroke="#805ad5"
                             strokeWidth={2}
-                            name="总停留时间"
+                            name={t("calculators.dwa.chart.legend.totalHrt")}
                           />
                         </LineChart>
                       </ResponsiveContainer>
@@ -1357,7 +1418,7 @@ export const DWACalculator: React.FC = () => {
                     <Collapsible.Root>
                       <Collapsible.Trigger asChild>
                         <Button variant="outline" w="100%">
-                          查看详细计算说明
+                          {t("calculators.dwa.details.toggle")}
                         </Button>
                       </Collapsible.Trigger>
                       <Collapsible.Content>
@@ -1368,26 +1429,25 @@ export const DWACalculator: React.FC = () => {
                           borderRadius="md"
                         >
                           <Text fontSize="sm" color="gray.600" lineHeight={1.6}>
-                            <strong>计算说明：</strong>
+                            <strong>{t("calculators.dwa.details.calculationTitle")}</strong>
                             <br />
-                            1. 本计算器基于德国DWA标准进行A/O工艺设计
+                            {t("calculators.dwa.details.calculationItems.item1")}
                             <br />
-                            2. 生物池容积根据污泥龄、污泥浓度和污泥产量计算
+                            {t("calculators.dwa.details.calculationItems.item2")}
                             <br />
-                            3. 供氧量考虑碳氧化、硝化需氧和反硝化回收氧量
+                            {t("calculators.dwa.details.calculationItems.item3")}
                             <br />
-                            4. 回流比根据反硝化脱氮要求确定
+                            {t("calculators.dwa.details.calculationItems.item4")}
                             <br />
-                            5. 二沉池设计考虑污泥沉降性能和浓缩要求
+                            {t("calculators.dwa.details.calculationItems.item5")}
                             <br />
-                            6. 外加碳源投加量根据反硝化碳源需求自动计算
+                            {t("calculators.dwa.details.calculationItems.item6")}
                             <br />
                             <br />
-                            <strong>注意事项：</strong>
-                            <br />• 进水污泥体积负荷应小于500L/(m³·h)
-                            <br />• 好氧池COD负荷建议控制在0.3-0.8
-                            kgCOD/(kgMLSS·d)
-                            <br />• 污泥龄应满足硝化菌增殖要求
+                            <strong>{t("calculators.dwa.details.noticeTitle")}</strong>
+                            <br />• {t("calculators.dwa.details.noticeItems.item1")}
+                            <br />• {t("calculators.dwa.details.noticeItems.item2")}
+                            <br />• {t("calculators.dwa.details.noticeItems.item3")}
                             <br />
                           </Text>
                         </Box>
@@ -1399,16 +1459,18 @@ export const DWACalculator: React.FC = () => {
             ) : (
               <Box textAlign="center" py={12}>
                 <Text fontSize="lg" color="gray.500" mb={4}>
-                  请点击"开始计算"按钮进行计算
+                  {t("calculators.dwa.emptyState.prompt")}
                 </Text>
                 <Button
                   onClick={handleCalculate}
                   loading={isCalculating}
-                  loadingText="计算中..."
+                  loadingText={t("calculators.dwa.emptyState.calculating")}
                   colorScheme="blue"
                   size="lg"
                 >
-                  {isCalculating ? "计算中..." : "开始计算"}
+                  {isCalculating
+                    ? t("calculators.dwa.emptyState.calculating")
+                    : t("calculators.dwa.emptyState.start")}
                 </Button>
               </Box>
             )}

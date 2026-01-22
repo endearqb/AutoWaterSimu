@@ -3,7 +3,13 @@
  * 提供统一的时间格式化和显示功能
  */
 
+import { getCurrentLanguage, t } from "./i18n"
+
 export class TimeUtils {
+  private static getLocale(): string {
+    return getCurrentLanguage() === "zh" ? "zh-CN" : "en-US"
+  }
+
   /**
    * 格式化日期时间为本地时间字符串
    * @param dateTime - 日期时间字符串或Date对象
@@ -17,6 +23,7 @@ export class TimeUtils {
     if (!dateTime) return "-"
 
     const date = typeof dateTime === "string" ? new Date(dateTime) : dateTime
+    if (Number.isNaN(date.getTime())) return "-"
 
     // 默认格式化选项
     const defaultOptions: Intl.DateTimeFormatOptions = {
@@ -30,7 +37,10 @@ export class TimeUtils {
       ...options,
     }
 
-    return date.toLocaleString("zh-CN", defaultOptions)
+    return new Intl.DateTimeFormat(
+      TimeUtils.getLocale(),
+      defaultOptions,
+    ).format(date)
   }
 
   /**
@@ -95,16 +105,16 @@ export class TimeUtils {
     const diffDays = Math.floor(diffHours / 24)
 
     if (diffSeconds < 60) {
-      return "刚刚"
+      return t("time.relative.justNow")
     }
     if (diffMinutes < 60) {
-      return `${diffMinutes}分钟前`
+      return t("time.relative.minutesAgo", { count: diffMinutes })
     }
     if (diffHours < 24) {
-      return `${diffHours}小时前`
+      return t("time.relative.hoursAgo", { count: diffHours })
     }
     if (diffDays < 7) {
-      return `${diffDays}天前`
+      return t("time.relative.daysAgo", { count: diffDays })
     }
     return TimeUtils.formatDate(date)
   }
@@ -136,15 +146,25 @@ export class TimeUtils {
     const diffDays = Math.floor(diffHours / 24)
 
     if (diffDays > 0) {
-      return `${diffDays}天 ${diffHours % 24}小时 ${diffMinutes % 60}分钟`
+      return t("time.duration.days", {
+        days: diffDays,
+        hours: diffHours % 24,
+        minutes: diffMinutes % 60,
+      })
     }
     if (diffHours > 0) {
-      return `${diffHours}小时 ${diffMinutes % 60}分钟`
+      return t("time.duration.hours", {
+        hours: diffHours,
+        minutes: diffMinutes % 60,
+      })
     }
     if (diffMinutes > 0) {
-      return `${diffMinutes}分钟 ${diffSeconds % 60}秒`
+      return t("time.duration.minutes", {
+        minutes: diffMinutes,
+        seconds: diffSeconds % 60,
+      })
     }
-    return `${diffSeconds}秒`
+    return t("time.duration.seconds", { seconds: diffSeconds })
   }
 
   /**

@@ -7,8 +7,10 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { Link as RouterLink, useRouterState } from "@tanstack/react-router"
+import { useI18n } from "../../i18n"
 
 export const FooterCTA = () => {
+  const { t } = useI18n()
   const router = useRouterState()
 
   // 如果在特定页面不显示CTA
@@ -45,7 +47,7 @@ export const FooterCTA = () => {
           lineHeight="1.2"
           mb={6}
         >
-          有了ENVDAMA，何时开始都不晚
+          {t("landing.footerCta.title")}
         </Text>
 
         <Text
@@ -56,7 +58,7 @@ export const FooterCTA = () => {
           maxW="3xl"
           lineHeight="1.6"
         >
-          物料平衡计算、ASM模型仿真、工艺流程设计、参数优化分析，以及您专属的智能助手。
+          {t("landing.footerCta.description")}
         </Text>
 
         <VStack mt={{ base: 8, md: 10 }} mb={{ base: 0, md: 8 }} gap={4}>
@@ -81,7 +83,7 @@ export const FooterCTA = () => {
                 }}
                 transition="all 0.2s"
               >
-                联系我
+                {t("landing.footerCta.contact")}
               </Button>
             </ChakraLink>
 
@@ -96,7 +98,7 @@ export const FooterCTA = () => {
                 }}
                 transition="all 0.2s"
               >
-                开始免费使用
+                {t("landing.footerCta.start")}
               </Button>
             </RouterLink>
           </HStack>

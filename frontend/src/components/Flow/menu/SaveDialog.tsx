@@ -9,6 +9,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React from "react"
+import { useI18n } from "../../../i18n"
 
 interface SaveDialogProps {
   isOpen: boolean
@@ -35,6 +36,7 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
   onSave,
   onSaveAs,
 }) => {
+  const { t } = useI18n()
   const portalRef = React.useRef<HTMLElement>(null!)
   React.useEffect(() => {
     const el = document.querySelector("[data-flow-theme-scope]")
@@ -51,7 +53,9 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
           <Dialog.Content>
             <Dialog.Header>
               <Dialog.Title>
-                {currentFlowChartId ? "更新流程图" : "保存流程图"}
+                {currentFlowChartId
+                  ? t("flow.menu.updateFlowchartTitle")
+                  : t("flow.menu.saveFlowchartTitle")}
               </Dialog.Title>
               <Dialog.CloseTrigger asChild>
                 <CloseButton />
@@ -61,20 +65,20 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text mb={2} fontSize="sm" fontWeight="medium">
-                    流程图名称 *
+                    {t("flow.menu.flowchartName")} *
                   </Text>
                   <Input
-                    placeholder="请输入流程图名称"
+                    placeholder={t("flow.menu.flowchartNamePlaceholder")}
                     value={flowChartName}
                     onChange={(e) => onFlowChartNameChange(e.target.value)}
                   />
                 </Box>
                 <Box>
                   <Text mb={2} fontSize="sm" fontWeight="medium">
-                    描述
+                    {t("flow.menu.description")}
                   </Text>
                   <Input
-                    placeholder="请输入流程图描述（可选）"
+                    placeholder={t("flow.menu.descriptionPlaceholder")}
                     value={flowChartDescription}
                     onChange={(e) =>
                       onFlowChartDescriptionChange(e.target.value)
@@ -91,11 +95,11 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
                   onClick={onSaveAs}
                   loading={isLoading}
                 >
-                  另存为
+                  {t("flow.menu.saveAs")}
                 </Button>
               )}
               <Button colorScheme="blue" onClick={onSave} loading={isLoading}>
-                {currentFlowChartId ? "更新" : "保存"}
+                {currentFlowChartId ? t("common.update") : t("common.save")}
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

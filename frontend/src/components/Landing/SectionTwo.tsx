@@ -1,8 +1,15 @@
 import { Box, HStack, Heading, Image, Text, VStack } from "@chakra-ui/react"
 import { FaCheck } from "react-icons/fa"
+import { useI18n } from "../../i18n"
 
 export function SectionTwo() {
-  const features = ["物料平衡", "ASM1Slim", "ASM1", "充满可能性的其他模型"]
+  const { t } = useI18n()
+  const features = [
+    t("landing.sectionTwo.features.materialBalance"),
+    t("landing.sectionTwo.features.asm1Slim"),
+    t("landing.sectionTwo.features.asm1"),
+    t("landing.sectionTwo.features.more"),
+  ]
 
   return (
     <Box
@@ -30,7 +37,7 @@ export function SectionTwo() {
             {/* 图片包装容器，确保图片占满分配的空间 */}
             <Image // 左侧图片组件
               src="/assets/images/Image-10.jpeg" // 图片路径，需要确保文件存在
-              alt="财务概览" // 无障碍文本描述，可修改为更具体描述
+              alt={t("landing.sectionTwo.imageAlt")} // 无障碍文本描述，可修改为更具体描述
               height="100%" // 高度100%填满容器，让图片贴边
               width="100%" // 宽度100%填满容器，让图片贴边
               objectFit="cover" // 改为cover让图片完全填充容器并贴边
@@ -61,7 +68,7 @@ export function SectionTwo() {
               letterSpacing="tight"
               lineHeight="1.2"
             >
-              模拟模型概览
+              {t("landing.sectionTwo.title")}
             </Heading>
 
             <Text
@@ -70,8 +77,7 @@ export function SectionTwo() {
               fontSize="sm"
               lineHeight="1.6"
             >
-              定义您自己的池体。拖动连接调节池、反应池、沉淀池、药剂储存池等所有模拟仿真需要的构筑物。
-              跟踪水流的流向与浓度变化，更清楚地了解您工艺的当前运行状况与短期的未来运行趋势。
+              {t("landing.sectionTwo.description")}
             </Text>
 
             <VStack align="start" gap={2}>
@@ -94,7 +100,7 @@ export function SectionTwo() {
                   textDecoration: "underline",
                 }}
               >
-                掌控您的工艺模型 →
+                {t("landing.sectionTwo.cta")}
               </Text>
             </Box>
           </Box>

@@ -6,12 +6,13 @@ import ChangePassword from "@/components/UserSettings/ChangePassword"
 import DeleteAccount from "@/components/UserSettings/DeleteAccount"
 import UserInformation from "@/components/UserSettings/UserInformation"
 import useAuth from "@/hooks/useAuth"
+import { useI18n } from "@/i18n"
 
-const tabsConfig = [
-  { value: "my-profile", title: "用户信息", component: UserInformation },
-  { value: "password", title: "修改密码", component: ChangePassword },
+const tabsConfig = (t: (key: string) => string) => [
+  { value: "my-profile", title: t("userSettings.tabProfile"), component: UserInformation },
+  { value: "password", title: t("userSettings.tabPassword"), component: ChangePassword },
   // { value: "appearance", title: "Appearance", component: Appearance },
-  { value: "danger-zone", title: "删除账号", component: DeleteAccount },
+  { value: "danger-zone", title: t("userSettings.tabDanger"), component: DeleteAccount },
 ]
 
 export const Route = createFileRoute("/_layout/settings")({
@@ -20,9 +21,11 @@ export const Route = createFileRoute("/_layout/settings")({
 
 function UserSettings() {
   const { user: currentUser } = useAuth()
+  const { t } = useI18n()
+  const baseTabs = tabsConfig(t)
   const finalTabs = currentUser?.is_superuser
-    ? tabsConfig.slice(0, 2)
-    : tabsConfig
+    ? baseTabs.slice(0, 2)
+    : baseTabs
 
   if (!currentUser) {
     return null
@@ -31,7 +34,7 @@ function UserSettings() {
   return (
     <Container maxW="full">
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} py={12}>
-        用户设置
+        {t("userSettings.title")}
       </Heading>
 
       <Tabs.Root defaultValue="my-profile" variant="subtle">

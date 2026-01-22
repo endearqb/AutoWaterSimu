@@ -19,6 +19,7 @@ import { useState } from "react"
 import { FaPlay } from "react-icons/fa"
 // import { DotGrid } from '../ui/DotGrid';
 import { type Story, stories } from "../../data/stories"
+import { useI18n } from "../../i18n"
 import { DialogContent } from "../ui/dialog"
 
 interface StoryCardProps extends Story {
@@ -99,6 +100,7 @@ function StoryCard({
 }
 
 function VideoPlayer({}: { src: string }) {
+  const { t } = useI18n()
   const [isPlaying, setPlaying] = useState(false)
 
   const togglePlay = () => {
@@ -123,7 +125,7 @@ function VideoPlayer({}: { src: string }) {
         alignItems="center"
         justifyContent="center"
       >
-        <Text color="gray.500">视频播放器占位符</Text>
+        <Text color="gray.500">{t("landing.stories.videoPlaceholder")}</Text>
       </Box>
 
       {!isPlaying && (
@@ -141,7 +143,7 @@ function VideoPlayer({}: { src: string }) {
             onClick={togglePlay}
           >
             <FaPlay style={{ marginRight: "8px" }} />
-            播放
+            {t("landing.stories.play")}
           </Button>
         </Box>
       )}
@@ -150,6 +152,7 @@ function VideoPlayer({}: { src: string }) {
 }
 
 export function Stories() {
+  const { t } = useI18n()
   const [selectedStory, setSelectedStory] = useState<Story | null>(null)
 
   return (
@@ -186,7 +189,7 @@ export function Stories() {
                 lineHeight="1.2"
                 textAlign="center"
               >
-                学习使用路径
+                {t("landing.stories.title")}
               </Text>
             </VStack>
 

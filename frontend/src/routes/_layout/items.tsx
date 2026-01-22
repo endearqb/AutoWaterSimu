@@ -15,6 +15,7 @@ import { ItemsService } from "@/client"
 import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
 import AddItem from "@/components/Items/AddItem"
 import PendingItems from "@/components/Pending/PendingItems"
+import { useI18n } from "@/i18n"
 import {
   PaginationItems,
   PaginationNextTrigger,
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/_layout/items")({
 function ItemsTable() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
+  const { t } = useI18n()
 
   const { data, isLoading, isPlaceholderData } = useQuery({
     ...getItemsQueryOptions({ page }),
@@ -70,10 +72,8 @@ function ItemsTable() {
             <FiSearch />
           </EmptyState.Indicator>
           <VStack textAlign="center">
-            <EmptyState.Title>You don't have any items yet</EmptyState.Title>
-            <EmptyState.Description>
-              Add a new item to get started
-            </EmptyState.Description>
+            <EmptyState.Title>{t("items.emptyTitle")}</EmptyState.Title>
+            <EmptyState.Description>{t("items.emptyDescription")}</EmptyState.Description>
           </VStack>
         </EmptyState.Content>
       </EmptyState.Root>
@@ -85,10 +85,10 @@ function ItemsTable() {
       <Table.Root size={{ base: "sm", md: "md" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader w="sm">ID</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Title</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Description</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Actions</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">{t("common.id")}</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">{t("common.title")}</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">{t("common.description")}</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">{t("common.actions")}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -105,7 +105,7 @@ function ItemsTable() {
                 truncate
                 maxW="30%"
               >
-                {item.description || "N/A"}
+                {item.description || t("common.notAvailable")}
               </Table.Cell>
               <Table.Cell>
                 <ItemActionsMenu item={item} />
@@ -132,10 +132,12 @@ function ItemsTable() {
 }
 
 function Items() {
+  const { t } = useI18n()
+
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
-        Items Management
+        {t("items.title")}
       </Heading>
       <AddItem />
       <ItemsTable />

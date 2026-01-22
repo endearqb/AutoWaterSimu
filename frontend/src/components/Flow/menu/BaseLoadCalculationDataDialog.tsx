@@ -28,6 +28,7 @@ import {
   PaginationPrevTrigger,
   PaginationRoot,
 } from "../../ui/pagination"
+import { useI18n } from "../../../i18n"
 
 /**
  * 通用LoadCalculationDataDialog组件的Props接口
@@ -121,6 +122,7 @@ const BaseLoadCalculationDataDialog = <
   TResult,
   TResultSummary
 >) => {
+  const { t, language } = useI18n()
   const {
     pageSize = 10,
     jobNameField = "job_name" as keyof TJob,
@@ -129,11 +131,11 @@ const BaseLoadCalculationDataDialog = <
     jobCreatedAtField = "created_at" as keyof TJob,
     jobCompletedAtField = "completed_at" as keyof TJob,
     statusTextMap = {
-      pending: "等待中",
-      running: "计算中",
-      success: "已完成",
-      failed: "失败",
-      cancelled: "已取消",
+      pending: t("flow.jobStatus.pending"),
+      running: t("flow.jobStatus.running"),
+      success: t("flow.jobStatus.success"),
+      failed: t("flow.jobStatus.failed"),
+      cancelled: t("flow.jobStatus.cancelled"),
     },
     statusColorMap = {
       pending: "yellow",
@@ -200,8 +202,8 @@ const BaseLoadCalculationDataDialog = <
       console.error("Failed to fetch jobs:", error)
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "获取任务列表失败",
-        description: "无法获取计算任务列表",
+        title: t("flow.loadCalculation.fetchFailedTitle"),
+        description: t("flow.loadCalculation.fetchFailedDescription"),
         type: "error",
         duration: 3000,
       })
@@ -212,7 +214,7 @@ const BaseLoadCalculationDataDialog = <
 
   // 获取任务状态显示文本
   const getStatusText = (status: string) => {
-    return statusTextMap[status] || "未知"
+    return statusTextMap[status] || t("common.unknown")
   }
 
   // 获取状态颜色
@@ -222,7 +224,8 @@ const BaseLoadCalculationDataDialog = <
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("zh-CN")
+    const locale = language === "zh" ? "zh-CN" : "en-US"
+    return new Date(dateString).toLocaleString(locale)
   }
 
   // 选择任务
@@ -262,8 +265,10 @@ const BaseLoadCalculationDataDialog = <
       const jobName = selectedJob[jobNameField] as string
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
-        title: "加载成功",
-        description: `已加载计算任务：${jobName}`,
+        title: t("flow.loadCalculation.loadSuccessTitle"),
+        description: t("flow.loadCalculation.loadSuccessDescription", {
+          name: jobName,
+        }),
         type: "success",
         duration: 3000,
       })
@@ -273,13 +278,13 @@ const BaseLoadCalculationDataDialog = <
       console.error("Failed to load job data:", error)
       const { toaster } = await import("../../ui/toaster")
 
-      let errorMessage = "无法加载计算任务数据"
+      let errorMessage = t("flow.loadCalculation.loadFailedDescription")
       if (error instanceof Error) {
         errorMessage = error.message
       }
 
       toaster.create({
-        title: "加载失败",
+        title: t("flow.loadCalculation.loadFailedTitle"),
         description: errorMessage,
         type: "error",
         duration: 5000,
@@ -320,7 +325,7 @@ const BaseLoadCalculationDataDialog = <
 
         await Promise.all(promises)
       } catch (error) {
-        console.error("加载计算结果数据失败:", error)
+        console.error(t("flow.simulation.loadResultFailed"), error)
         // 不阻止主要的数据加载流程
       }
     }
@@ -340,6 +345,9 @@ const BaseLoadCalculationDataDialog = <
     )
   }
 
+  const pageStart = (currentPage - 1) * pageSize + 1
+  const pageEnd = Math.min(currentPage * pageSize, totalJobs)
+
   return (
     <DialogRoot
       open={isOpen}
@@ -352,7 +360,7 @@ const BaseLoadCalculationDataDialog = <
         flexDirection="column"
       >
         <DialogHeader flexShrink={0}>
-          <DialogTitle>加载计算数据</DialogTitle>
+          <DialogTitle>{t("flow.loadCalculation.dialogTitle")}</DialogTitle>
         </DialogHeader>
 
         <DialogBody flex={1} overflow="hidden">
@@ -360,13 +368,13 @@ const BaseLoadCalculationDataDialog = <
             {/* 左侧：任务列表 */}
             <Box flex={1} h="full" display="flex" flexDirection="column">
               <Text fontSize="lg" fontWeight="bold" mb={4} flexShrink={0}>
-                计算任务列表
+                {t("flow.loadCalculation.taskListTitle")}
               </Text>
 
               {isLoading ? (
                 <Box textAlign="center" py={8}>
                   <Spinner size="lg" />
-                  <Text mt={2}>加载中...</Text>
+                  <Text mt={2}>{t("common.loading")}</Text>
                 </Box>
               ) : (
                 <Box
@@ -384,9 +392,15 @@ const BaseLoadCalculationDataDialog = <
                       zIndex={1}
                     >
                       <Table.Row>
-                        <Table.ColumnHeader>任务名称</Table.ColumnHeader>
-                        <Table.ColumnHeader>状态</Table.ColumnHeader>
-                        <Table.ColumnHeader>创建时间</Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("flow.loadCalculation.columns.name")}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("flow.loadCalculation.columns.status")}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("flow.loadCalculation.columns.createdAt")}
+                        </Table.ColumnHeader>
                       </Table.Row>
                     </Table.Header>
                     <Table.Body>
@@ -440,7 +454,9 @@ const BaseLoadCalculationDataDialog = <
 
               {!isLoading && jobs.length === 0 && (
                 <Box textAlign="center" py={8}>
-                  <Text color="gray.500">暂无计算任务</Text>
+                  <Text color="gray.500">
+                    {t("flow.loadCalculation.empty")}
+                  </Text>
                 </Box>
               )}
 
@@ -464,9 +480,11 @@ const BaseLoadCalculationDataDialog = <
                     </PaginationRoot>
                   )}
                   <Text fontSize="sm" color="gray.600" textAlign="center">
-                    显示第 {(currentPage - 1) * pageSize + 1} -{" "}
-                    {Math.min(currentPage * pageSize, totalJobs)} 条，共{" "}
-                    {totalJobs} 条记录
+                    {t("flow.loadCalculation.pagination", {
+                      start: pageStart,
+                      end: pageEnd,
+                      total: totalJobs,
+                    })}
                   </Text>
                 </VStack>
               )}
@@ -477,7 +495,7 @@ const BaseLoadCalculationDataDialog = <
               {selectedJob ? (
                 <VStack align="start" gap={4}>
                   <Text fontSize="lg" fontWeight="bold">
-                    任务详情
+                    {t("flow.loadCalculation.detailsTitle")}
                   </Text>
 
                   <Box
@@ -489,11 +507,15 @@ const BaseLoadCalculationDataDialog = <
                   >
                     <VStack align="start" gap={2}>
                       <HStack>
-                        <Text fontWeight="bold">任务名称:</Text>
+                        <Text fontWeight="bold">
+                          {t("flow.loadCalculation.fields.name")}
+                        </Text>
                         <Text>{selectedJob[jobNameField] as string}</Text>
                       </HStack>
                       <HStack>
-                        <Text fontWeight="bold">状态:</Text>
+                        <Text fontWeight="bold">
+                          {t("flow.loadCalculation.fields.status")}
+                        </Text>
                         <Badge
                           colorScheme={getStatusColor(
                             selectedJob[jobStatusField] as string,
@@ -503,14 +525,18 @@ const BaseLoadCalculationDataDialog = <
                         </Badge>
                       </HStack>
                       <HStack>
-                        <Text fontWeight="bold">创建时间:</Text>
+                        <Text fontWeight="bold">
+                          {t("flow.loadCalculation.fields.createdAt")}
+                        </Text>
                         <Text>
                           {formatDate(selectedJob[jobCreatedAtField] as string)}
                         </Text>
                       </HStack>
                       {selectedJob[jobCompletedAtField] && (
                         <HStack>
-                          <Text fontWeight="bold">完成时间:</Text>
+                          <Text fontWeight="bold">
+                            {t("flow.loadCalculation.fields.completedAt")}
+                          </Text>
                           <Text>
                             {formatDate(
                               selectedJob[jobCompletedAtField] as string,
@@ -525,7 +551,7 @@ const BaseLoadCalculationDataDialog = <
                   {isLoadingData ? (
                     <Box textAlign="center" py={4}>
                       <Spinner />
-                      <Text mt={2}>加载详情中...</Text>
+                      <Text mt={2}>{t("flow.loadCalculation.loadingDetails")}</Text>
                     </Box>
                   ) : (
                     resultSummary && (
@@ -537,7 +563,7 @@ const BaseLoadCalculationDataDialog = <
                         borderRadius="md"
                       >
                         <Text fontWeight="bold" mb={3}>
-                          计算结果摘要
+                          {t("flow.loadCalculation.summaryTitle")}
                         </Text>
                         {renderResultSummary
                           ? renderResultSummary(resultSummary)
@@ -548,7 +574,9 @@ const BaseLoadCalculationDataDialog = <
                 </VStack>
               ) : (
                 <Box textAlign="center" py={8}>
-                  <Text color="gray.500">请选择一个计算任务查看详情</Text>
+                  <Text color="gray.500">
+                    {t("flow.loadCalculation.selectPrompt")}
+                  </Text>
                 </Box>
               )}
             </Box>
@@ -563,7 +591,7 @@ const BaseLoadCalculationDataDialog = <
           borderColor="gray.200"
           pt={4}
         >
-          <DialogCloseTrigger aria-label="关闭对话框" />
+          <DialogCloseTrigger aria-label={t("flow.dialog.close")} />
           <Button
             colorScheme="blue"
             onClick={handleLoadJobData}
@@ -571,7 +599,7 @@ const BaseLoadCalculationDataDialog = <
             loading={isLoadingData}
             flexShrink={0}
           >
-            加载数据
+            {t("flow.loadCalculation.loadButton")}
           </Button>
         </DialogFooter>
       </DialogContent>

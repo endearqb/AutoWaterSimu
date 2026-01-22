@@ -1,20 +1,22 @@
 import { Box, HStack, Heading, Image, Text, VStack } from "@chakra-ui/react"
 import { FaCheck } from "react-icons/fa"
+import { useI18n } from "../../i18n"
 
 export function SectionFour() {
+  const { t } = useI18n()
   const invoicingFeatures = [
-    "不同类型的节点拥有不同的模型参数",
-    "中文的模型参数名称",
-    "模型参数描述",
-    "模型参数数值范围",
-    "模型参数默认值",
-    "未来推出自定义模型参数",
+    t("landing.sectionFour.modelFeatures.typeSpecific"),
+    t("landing.sectionFour.modelFeatures.localizedNames"),
+    t("landing.sectionFour.modelFeatures.descriptions"),
+    t("landing.sectionFour.modelFeatures.ranges"),
+    t("landing.sectionFour.modelFeatures.defaults"),
+    t("landing.sectionFour.modelFeatures.customSoon"),
   ]
 
   const inboxFeatures = [
-    "开启时，所有相同类型节点的模型参数同步调整。",
-    "关闭时，每个节点的模型参数独立调整。",
-    "单个模拟运行时，支持不同节点不同的模型参数。",
+    t("landing.sectionFour.switchFeatures.syncOn"),
+    t("landing.sectionFour.switchFeatures.syncOff"),
+    t("landing.sectionFour.switchFeatures.perNode"),
   ]
 
   return (
@@ -62,7 +64,7 @@ export function SectionFour() {
             letterSpacing="tight"
             lineHeight="1.2"
           >
-            模型参数管理
+            {t("landing.sectionFour.modelTitle")}
           </Heading>
 
           <Text
@@ -71,7 +73,7 @@ export function SectionFour() {
             fontSize="sm"
             lineHeight="1.6"
           >
-            管理您的模型参数，通过滑块方便调整模型参数数值。
+            {t("landing.sectionFour.modelDescription")}
           </Text>
 
           <VStack align="start" gap={2}>
@@ -99,7 +101,7 @@ export function SectionFour() {
                 textDecoration: "underline",
               }}
             >
-              直观快速的调整模型参数 →
+              {t("landing.sectionFour.modelCta")}
             </Text>
           </Box>
         </Box>
@@ -111,7 +113,7 @@ export function SectionFour() {
         >
           <Image
             src="/assets/images/image-4.png"
-            alt="发票管理"
+            alt={t("landing.sectionFour.modelImageAlt")}
             // width="100%"
             height="423px"
             objectFit="cover"
@@ -151,7 +153,7 @@ export function SectionFour() {
           letterSpacing="tight"
           lineHeight="1.2"
         >
-          模型参数开关
+          {t("landing.sectionFour.switchTitle")}
         </Heading>
 
         <VStack
@@ -163,13 +165,9 @@ export function SectionFour() {
           lineHeight="relaxed"
           mb={6}
         >
-          <Text as="li">每个节点都要手动调整参数是否太麻烦？</Text>
-          <Text as="li">
-            系统中前后污泥分离且性状不同时，是否需要不同的模型参数？
-          </Text>
-          <Text as="li">
-            你有没有想过可以在一次模拟中比较多种参数的不同效果？
-          </Text>
+          <Text as="li">{t("landing.sectionFour.switchQuestions.first")}</Text>
+          <Text as="li">{t("landing.sectionFour.switchQuestions.second")}</Text>
+          <Text as="li">{t("landing.sectionFour.switchQuestions.third")}</Text>
         </VStack>
 
         <VStack align="start" gap={2} mb={6}>
@@ -189,7 +187,7 @@ export function SectionFour() {
         >
           <Image
             src="/assets/images/image-9.png"
-            alt="发票管理"
+            alt={t("landing.sectionFour.switchImageAlt")}
             width="100%"
             // height="423px"
             objectFit="cover"
@@ -210,7 +208,7 @@ export function SectionFour() {
               textDecoration: "underline",
             }}
           >
-            自由的调整你的模型参数 →
+            {t("landing.sectionFour.switchCta")}
           </Text>
         </Box>
       </Box>

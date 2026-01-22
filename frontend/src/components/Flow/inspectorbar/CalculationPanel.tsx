@@ -1,24 +1,25 @@
-import { Box, Field, HStack, Stack, Text } from "@chakra-ui/react"
+﻿import { Box, Field, HStack, Stack, Text } from "@chakra-ui/react"
 import { Slider } from "@chakra-ui/react"
 import { useState } from "react"
+import { useI18n } from "../../../i18n"
 import useFlowStore from "../../../stores/flowStore"
 import type { RFState } from "../../../stores/flowStore"
 
 interface CalculationPanelProps {
-  store?: () => RFState // 可选的自定义 store
+  store?: () => RFState // 可选的自定义store
 }
 
 function CalculationPanel({ store }: CalculationPanelProps = {}) {
+  const { t } = useI18n()
   const flowStore = store || useFlowStore
   const { selectedNode, updateNodeParameter } = flowStore()
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({})
 
-  // 通用计算参数配置
   const calculationParameters = [
     {
       name: "density",
-      label: "密度",
-      description: "流体密度",
+      label: t("flow.calculationPanel.params.density.label"),
+      description: t("flow.calculationPanel.params.density.description"),
       min: 800,
       max: 1200,
       step: 1,
@@ -27,8 +28,8 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
     },
     {
       name: "viscosity",
-      label: "粘度",
-      description: "动力粘度",
+      label: t("flow.calculationPanel.params.viscosity.label"),
+      description: t("flow.calculationPanel.params.viscosity.description"),
       min: 0.001,
       max: 0.01,
       step: 0.0001,
@@ -37,8 +38,8 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
     },
     {
       name: "temperature",
-      label: "温度",
-      description: "操作温度",
+      label: t("flow.calculationPanel.params.temperature.label"),
+      description: t("flow.calculationPanel.params.temperature.description"),
       min: 0,
       max: 100,
       step: 1,
@@ -47,8 +48,8 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
     },
     {
       name: "pressure",
-      label: "压力",
-      description: "操作压力",
+      label: t("flow.calculationPanel.params.pressure.label"),
+      description: t("flow.calculationPanel.params.pressure.description"),
       min: 80,
       max: 120,
       step: 1,
@@ -57,8 +58,8 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
     },
     {
       name: "efficiency",
-      label: "效率",
-      description: "设备效率",
+      label: t("flow.calculationPanel.params.efficiency.label"),
+      description: t("flow.calculationPanel.params.efficiency.description"),
       min: 0.1,
       max: 1.0,
       step: 0.01,
@@ -77,11 +78,10 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
 
     const numValue = Number.parseFloat(value)
 
-    // 验证参数值 - 只有当值不是NaN且超出范围时才报错
     if (!Number.isNaN(numValue) && (numValue < min || numValue > max)) {
       setParamErrors((prev) => ({
         ...prev,
-        [paramName]: `参数值必须在 ${min} - ${max} 范围内`,
+        [paramName]: t("flow.calculationPanel.rangeError", { min, max }),
       }))
     } else {
       setParamErrors((prev) => {
@@ -90,7 +90,6 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
       })
     }
 
-    // 只有当值是有效数字时才更新
     if (!Number.isNaN(numValue)) {
       updateNodeParameter(selectedNode.id, paramName, numValue)
     }
@@ -99,7 +98,7 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
   if (!selectedNode) {
     return (
       <Box>
-        <Text color="gray.500">请选择一个节点查看计算参数</Text>
+        <Text color="gray.500">{t("flow.calculationPanel.emptyState")}</Text>
       </Box>
     )
   }
@@ -108,7 +107,7 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
     <Stack gap={6} align="stretch">
       <Box>
         <Text fontSize="lg" fontWeight="semibold" mb={4}>
-          计算参数设置
+          {t("flow.calculationPanel.title")}
         </Text>
 
         <Stack gap={4}>
@@ -163,7 +162,7 @@ function CalculationPanel({ store }: CalculationPanelProps = {}) {
 
       <Box>
         <Text fontSize="sm" color="blue.600" fontStyle="italic">
-          💡 提示：这些参数会影响流程计算结果，建议根据实际工艺条件进行设置。
+          {t("flow.calculationPanel.tip")}
         </Text>
       </Box>
     </Stack>

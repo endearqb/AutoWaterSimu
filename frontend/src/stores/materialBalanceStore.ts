@@ -10,7 +10,10 @@ import type {
   MaterialBalanceJobPublic,
   MaterialBalanceJobStatus,
 } from "../client/types.gen"
+import { t } from "../i18n"
 import type { BaseModelState } from "./baseModelStore"
+
+const MODEL_NAME = "Material Balance"
 
 interface MaterialBalanceState
   extends BaseModelState<
@@ -52,7 +55,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to create calculation job"
+              : t("flow.store.model.createJobFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -77,7 +82,12 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
         } catch (error) {
           console.error("Error creating calculation job from flowchart:", error)
           set({
-            error: error instanceof Error ? error.message : "Unknown error",
+            error:
+              error instanceof Error
+                ? error.message
+                : t("flow.store.model.createJobFromFlowchartFailed", {
+                    model: MODEL_NAME,
+                  }),
             isLoading: false,
           })
           throw error
@@ -96,7 +106,7 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get calculation status"
+              : t("flow.store.model.getStatusFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -113,7 +123,7 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get result summary"
+              : t("flow.store.model.getSummaryFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -130,7 +140,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get time series data"
+              : t("flow.store.model.getTimeSeriesFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -148,7 +160,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get final values"
+              : t("flow.store.model.getFinalValuesFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -164,7 +178,11 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           return result
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "Failed to validate input"
+            error instanceof Error
+              ? error.message
+              : t("flow.store.model.validateInputFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -183,7 +201,11 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           return { data: jobs, count }
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "Failed to get user jobs"
+            error instanceof Error
+              ? error.message
+              : t("flow.store.model.getUserJobsFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -200,7 +222,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           })
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "Failed to delete job"
+            error instanceof Error
+              ? error.message
+              : t("flow.store.model.deleteJobFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -313,7 +337,11 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           return response
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "Failed to get flowcharts"
+            error instanceof Error
+              ? error.message
+              : t("flow.store.model.getFlowchartsFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -333,7 +361,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to create flowchart"
+              : t("flow.store.model.createFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -347,7 +377,11 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           return response
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "Failed to get flowchart"
+            error instanceof Error
+              ? error.message
+              : t("flow.store.model.getFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -368,7 +402,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to update flowchart"
+              : t("flow.store.model.updateFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -385,7 +421,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to delete flowchart"
+              : t("flow.store.model.deleteFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -448,16 +486,16 @@ export const getJobStatusColor = (status: MaterialBalanceJobStatus): string => {
 export const getJobStatusText = (status: MaterialBalanceJobStatus): string => {
   switch (status) {
     case "pending":
-      return "等待中"
+      return t("flow.jobStatus.pending")
     case "running":
-      return "计算中"
+      return t("flow.jobStatus.running")
     case "success":
-      return "已完成"
+      return t("flow.jobStatus.success")
     case "failed":
-      return "失败"
+      return t("flow.jobStatus.failed")
     case "cancelled":
-      return "已取消"
+      return t("flow.jobStatus.cancelled")
     default:
-      return "未知"
+      return t("common.unknown")
   }
 }

@@ -14,6 +14,7 @@ import {
 import React, { useEffect, useMemo, useRef } from "react"
 import "@xyflow/react/dist/style.css"
 import { Box } from "@chakra-ui/react"
+import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 import EditableEdge from "./edges/EditableEdge"
 import DefaultNode from "./nodes/DefaultNode"
@@ -35,6 +36,7 @@ const nodeTypes: NodeTypes = {
 }
 
 const Canvas = () => {
+  const { t } = useI18n()
   const { screenToFlowPosition } = useReactFlow()
   const {
     nodes,
@@ -139,14 +141,14 @@ const Canvas = () => {
       data: {
         label:
           nodeType === "custom"
-            ? "双击编辑文本"
+            ? t("flow.canvas.doubleClickEdit")
             : nodeType === "default"
-              ? "默认节点"
+              ? t("flow.node.default")
               : nodeType === "input"
-                ? "进水端"
+                ? t("flow.node.input")
                 : nodeType === "output"
-                  ? "出水端"
-                  : "未知",
+                  ? t("flow.node.output")
+                  : t("common.unknown"),
       },
       // 为所有节点应用自定义样式
       style: {

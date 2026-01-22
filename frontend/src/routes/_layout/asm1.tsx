@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { ReactFlowProvider } from "@xyflow/react"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import "@xyflow/react/dist/style.css"
 
 import type { NodeTypes } from "@xyflow/react"
-import { useEffect } from "react"
 import FlowCanvas from "../../components/Flow/FlowCanvas"
 import type { DefaultNodeDataFactory } from "../../components/Flow/FlowCanvas"
 import FlowInspector from "../../components/Flow/FlowInspector"
@@ -18,6 +17,7 @@ import ASM1Node from "../../components/Flow/nodes/ASM1Node"
 import DefaultNode from "../../components/Flow/nodes/DefaultNode"
 import InputNode from "../../components/Flow/nodes/InputNode"
 import OutputNode from "../../components/Flow/nodes/OutputNode"
+import { useI18n } from "../../i18n"
 import { useASM1FlowStore } from "../../stores/asm1FlowStore"
 import { useASM1Store } from "../../stores/asm1Store"
 import { useThemePaletteStore } from "../../stores/themePaletteStore"
@@ -34,60 +34,59 @@ const createASMNodeTypes = (store: () => any): NodeTypes => ({
   asm1: (props: any) => <ASM1Node {...props} store={store} />,
 })
 
-// 定义 ASM1 默认节点数据工厂函数
-// 注意：ASM1 节点的固定参数现在由 useASM1FlowStore 的 addNode 函数自动添加
-const asm1DefaultNodeDataFactory: DefaultNodeDataFactory = (
-  nodeType: string,
-) => {
-  switch (nodeType) {
-    case "input":
-      return { label: "进水端" }
-    case "output":
-      return { label: "出水端" }
-    case "asm1":
-      return {
-        label: "ASM1节点",
-        // 固定参数由 store 自动添加，无需在此处定义
-      }
-    default:
-      return { label: "默认节点" }
-  }
-}
-
-// 定义 ASM1 检查器配置
-const asm1InspectorConfig = {
-  nodeTabs: [
-    {
-      key: "parameters",
-      label: "参数设置",
-      component: ASM1PropertyPanel,
-      props: { isNode: true },
-    },
-    {
-      key: "calculation",
-      label: "计算参数",
-      component: ASM1CalculationPanel,
-      props: { store: useASM1FlowStore },
-    },
-    {
-      key: "simulation",
-      label: "模拟计算",
-      component: SimulationPanel,
-      props: {
-        store: useASM1FlowStore,
-        modelStore: useASM1Store,
-        modelType: "asm1",
-      },
-    },
-  ],
-  edgePanel: {
-    component: ASM1PropertyPanel,
-    props: { isNode: false },
-  },
-  defaultTab: "parameters",
-}
-
 function ASM1Page() {
+  const { t, language } = useI18n()
+  const asm1DefaultNodeDataFactory = useMemo<DefaultNodeDataFactory>(() => {
+    return (nodeType: string) => {
+      switch (nodeType) {
+        case "input":
+          return { label: t("flow.node.input") }
+        case "output":
+          return { label: t("flow.node.output") }
+        case "asm1":
+          return {
+            label: t("flow.node.asm1"),
+            // 固定参数由 store 自动添加，无需在此处定义
+          }
+        default:
+          return { label: t("flow.node.default") }
+      }
+    }
+  }, [language])
+  const asm1InspectorConfig = useMemo(
+    () => ({
+      nodeTabs: [
+        {
+          key: "parameters",
+          label: t("flow.tab.parameters"),
+          component: ASM1PropertyPanel,
+          props: { isNode: true },
+        },
+        {
+          key: "calculation",
+          label: t("flow.tab.calculation"),
+          component: ASM1CalculationPanel,
+          props: { store: useASM1FlowStore },
+        },
+        {
+          key: "simulation",
+          label: t("flow.tab.simulation"),
+          component: SimulationPanel,
+          props: {
+            store: useASM1FlowStore,
+            modelStore: useASM1Store,
+            modelType: "asm1",
+          },
+        },
+      ],
+      edgePanel: {
+        component: ASM1PropertyPanel,
+        props: { isNode: false },
+      },
+      defaultTab: "parameters",
+    }),
+    [language],
+  )
   // ✅ 使用 useMemo 确保 nodeTypes 引用稳定
   const asm1NodeTypes = useMemo(() => createASMNodeTypes(useASM1FlowStore), [])
   const themeStore = useThemePaletteStore()

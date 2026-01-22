@@ -18,6 +18,7 @@ import type {
   FlowChartUpdate,
 } from "../client/types.gen"
 import { getDefaultCalculationParams } from "../config/simulationConfig"
+import { t } from "../i18n"
 import { useMaterialBalanceStore } from "./materialBalanceStore"
 
 type CustomParameter = {
@@ -126,6 +127,8 @@ type RFState = {
   syncAllParametersToElements?: () => void // ASM1Slim专用方法，可选
 }
 
+const getDefaultFlowchartName = () => t("flow.menu.untitledFlowchart")
+
 const useFlowStore = create<RFState>((set, get) => ({
   nodes: [],
   edges: [],
@@ -134,7 +137,7 @@ const useFlowStore = create<RFState>((set, get) => ({
   customParameters: [], // 初始化自定义参数列表
   edgeParameterConfigs: {}, // 初始化连接线参数配置
   currentFlowChartId: null, // 当前流程图ID
-  currentFlowChartName: "未命名", // 当前流程图名称
+  currentFlowChartName: getDefaultFlowchartName(), // 当前流程图名称
   currentJobId: null, // 当前计算任务ID
   importedFileName: null, // 导入的文件名
 
@@ -646,7 +649,7 @@ const useFlowStore = create<RFState>((set, get) => ({
     try {
       // 验证数据格式
       if (!data || typeof data !== "object") {
-        throw new Error("无效的数据格式")
+        throw new Error(t("flow.store.flowchart.invalidFormat"))
       }
 
       const {
@@ -658,7 +661,7 @@ const useFlowStore = create<RFState>((set, get) => ({
 
       // 基本验证
       if (!Array.isArray(nodes) || !Array.isArray(importedEdges)) {
-        throw new Error("节点或边数据格式错误")
+        throw new Error(t("flow.store.flowchart.invalidGraph"))
       }
 
       // 处理导入的节点数据，确保自定义参数被正确保留
@@ -754,13 +757,14 @@ const useFlowStore = create<RFState>((set, get) => ({
       // 清理物料平衡计算结果
       useMaterialBalanceStore.getState().reset()
 
-      return { success: true, message: "流程图导入成功" }
+      return { success: true, message: t("flow.store.flowchart.importSuccess") }
     } catch (error) {
       console.error("导入流程图失败:", error)
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : "导入失败",
-      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("flow.store.flowchart.importFailed")
+      return { success: false, message }
     }
   },
 
@@ -828,15 +832,24 @@ const useFlowStore = create<RFState>((set, get) => ({
           currentFlowChartId: response.id,
           currentFlowChartName: response.name,
         })
-        return { success: true, message: "流程图保存成功", data: response }
+        return {
+          success: true,
+          message: t("flow.store.flowchart.saveSuccess"),
+          data: response,
+        }
       }
 
-      return { success: false, message: "保存失败：服务器未返回数据" }
-    } catch (error) {
-      console.error("保存流程图时出错:", error)
       return {
         success: false,
-        message: `保存失败：${error instanceof Error ? error.message : "未知错误"}`,
+        message: t("flow.store.flowchart.saveFailedNoData"),
+      }
+    } catch (error) {
+      console.error("保存流程图时出错:", error)
+      const reason =
+        error instanceof Error ? error.message : t("common.unknown")
+      return {
+        success: false,
+        message: t("flow.store.flowchart.saveFailedWithReason", { reason }),
       }
     }
   },
@@ -939,15 +952,20 @@ const useFlowStore = create<RFState>((set, get) => ({
         // 清理物料平衡计算结果
         useMaterialBalanceStore.getState().reset()
 
-        return { success: true, message: "流程图加载成功" }
+        return { success: true, message: t("flow.store.flowchart.loadSuccess") }
       }
 
-      return { success: false, message: "加载失败：流程图数据为空" }
-    } catch (error) {
-      console.error("加载流程图时出错:", error)
       return {
         success: false,
-        message: `加载失败：${error instanceof Error ? error.message : "未知错误"}`,
+        message: t("flow.store.flowchart.loadFailedEmpty"),
+      }
+    } catch (error) {
+      console.error("加载流程图时出错:", error)
+      const reason =
+        error instanceof Error ? error.message : t("common.unknown")
+      return {
+        success: false,
+        message: t("flow.store.flowchart.loadFailedWithReason", { reason }),
       }
     }
   },
@@ -960,17 +978,22 @@ const useFlowStore = create<RFState>((set, get) => ({
       if (response?.data) {
         return {
           success: true,
-          message: "获取流程图列表成功",
+          message: t("flow.store.flowchart.listSuccess"),
           data: response.data,
         }
       }
 
-      return { success: false, message: "获取失败：服务器未返回数据" }
-    } catch (error) {
-      console.error("获取流程图列表时出错:", error)
       return {
         success: false,
-        message: `获取失败：${error instanceof Error ? error.message : "未知错误"}`,
+        message: t("flow.store.flowchart.listFailedNoData"),
+      }
+    } catch (error) {
+      console.error("获取流程图列表时出错:", error)
+      const reason =
+        error instanceof Error ? error.message : t("common.unknown")
+      return {
+        success: false,
+        message: t("flow.store.flowchart.listFailedWithReason", { reason }),
       }
     }
   },
@@ -1020,15 +1043,24 @@ const useFlowStore = create<RFState>((set, get) => ({
       })
 
       if (response) {
-        return { success: true, message: "流程图更新成功", data: response }
+        return {
+          success: true,
+          message: t("flow.store.flowchart.updateSuccess"),
+          data: response,
+        }
       }
 
-      return { success: false, message: "更新失败：服务器未返回数据" }
-    } catch (error) {
-      console.error("更新流程图时出错:", error)
       return {
         success: false,
-        message: `更新失败：${error instanceof Error ? error.message : "未知错误"}`,
+        message: t("flow.store.flowchart.updateFailedNoData"),
+      }
+    } catch (error) {
+      console.error("更新流程图时出错:", error)
+      const reason =
+        error instanceof Error ? error.message : t("common.unknown")
+      return {
+        success: false,
+        message: t("flow.store.flowchart.updateFailedWithReason", { reason }),
       }
     }
   },
@@ -1044,12 +1076,14 @@ const useFlowStore = create<RFState>((set, get) => ({
         set({ currentFlowChartId: null })
       }
 
-      return { success: true, message: "流程图删除成功" }
+      return { success: true, message: t("flow.store.flowchart.deleteSuccess") }
     } catch (error) {
       console.error("删除流程图时出错:", error)
+      const reason =
+        error instanceof Error ? error.message : t("common.unknown")
       return {
         success: false,
-        message: `删除失败：${error instanceof Error ? error.message : "未知错误"}`,
+        message: t("flow.store.flowchart.deleteFailedWithReason", { reason }),
       }
     }
   },
@@ -1069,7 +1103,7 @@ const useFlowStore = create<RFState>((set, get) => ({
       customParameters: [],
       edgeParameterConfigs: {},
       currentFlowChartId: null,
-      currentFlowChartName: "未命名",
+      currentFlowChartName: getDefaultFlowchartName(),
       importedFileName: null,
       showMiniMap: false,
       // 重置计算参数为默认值

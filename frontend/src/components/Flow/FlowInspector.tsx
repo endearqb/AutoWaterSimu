@@ -1,6 +1,7 @@
 import { Box, Heading, Text } from "@chakra-ui/react"
 import { Tabs } from "@chakra-ui/react"
 import type React from "react"
+import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 
 // 标签页配置接口
@@ -34,6 +35,7 @@ interface FlowInspectorProps {
 }
 
 const FlowInspector = ({ config, store }: FlowInspectorProps) => {
+  const { t } = useI18n()
   const flowStore = store || useFlowStore
   const { selectedNode, selectedEdge } = flowStore()
 
@@ -41,8 +43,8 @@ const FlowInspector = ({ config, store }: FlowInspectorProps) => {
     nodeTabs,
     edgePanel,
     defaultTab,
-    title = "属性检查器",
-    emptyStateText = "请选择一个节点或连接线查看其属性",
+    title = t("flow.inspector.title"),
+    emptyStateText = t("flow.inspector.emptyState"),
   } = config
 
   // 如果没有选中任何元素
@@ -107,7 +109,7 @@ const FlowInspector = ({ config, store }: FlowInspectorProps) => {
       return (
         <Box>
           <Heading size="md" mb={4}>
-            连接参数设置
+            {t("flow.inspector.edgeTitle")}
           </Heading>
           <EdgeComponent {...(edgePanel.props || {})} store={flowStore} />
         </Box>

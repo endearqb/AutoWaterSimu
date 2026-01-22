@@ -20,6 +20,7 @@ import {
   TAB10_COLORS,
   generateGroupedColors,
 } from "../nodes/utils/colorSchemes"
+import { useI18n } from "../../../i18n"
 
 interface PanelColorSelectorProps {
   panelType: "basic" | "grouped" | "heatmap" | "enhanced-heatmap" | "custom"
@@ -61,6 +62,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
   defaultExpanded,
   defaultGroupedExpanded,
 }) => {
+  const { t } = useI18n()
   const [isExpanded, setIsExpanded] = useState(!!defaultExpanded)
   const [isGroupedExpanded, setIsGroupedExpanded] = useState(
     !!defaultGroupedExpanded,
@@ -161,7 +163,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
                   onKeyDown={(e) =>
                     handleKeyDown(e, () => onAccentColorChange?.(color))
                   }
-                  aria-label={`选择颜色 ${color}`}
+                  aria-label={t("flow.palette.selectColor", { color })}
                   aria-pressed={isActive}
                   role="button"
                   tabIndex={0}
@@ -188,7 +190,10 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
         {isExpanded && (
           <>
             <Separator />
-            {renderColorGrid(EXTENDED_COLOR_PALETTE, "扩展配色")}
+            {renderColorGrid(
+              EXTENDED_COLOR_PALETTE,
+              t("flow.palette.extendedPalette"),
+            )}
           </>
         )}
         <HStack justify="center" mt={2}>
@@ -196,7 +201,11 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
             size="xs"
             variant="ghost"
             onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={isExpanded ? "收起扩展配色" : "展开扩展配色"}
+            aria-label={
+              isExpanded
+                ? t("flow.palette.collapseExtendedPalette")
+                : t("flow.palette.expandExtendedPalette")
+            }
           >
             {isExpanded ? <LuChevronUp /> : <LuChevronDown />}
           </IconButton>
@@ -255,7 +264,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
                       }
                     })
                   }
-                  aria-label={`选择分组配色 ${color}`}
+                  aria-label={t("flow.palette.selectGroupedColor", { color })}
                   aria-pressed={isActive}
                   role="button"
                   tabIndex={0}
@@ -286,13 +295,17 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
             variant={groupedColorMode === "gradient" ? "solid" : "outline"}
             onClick={() => setGroupedColorMode("gradient")}
           >
-            Mono
+            {t("flow.palette.modeGradient")}
           </Button>
           <IconButton
             size="xs"
             variant="ghost"
             onClick={() => setIsGroupedExpanded(!isGroupedExpanded)}
-            aria-label={isGroupedExpanded ? "收起扩展配色" : "展开扩展配色"}
+            aria-label={
+              isGroupedExpanded
+                ? t("flow.palette.collapseExtendedPalette")
+                : t("flow.palette.expandExtendedPalette")
+            }
           >
             {isGroupedExpanded ? <LuChevronUp /> : <LuChevronDown />}
           </IconButton>
@@ -301,7 +314,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
             variant={groupedColorMode === "sequence" ? "solid" : "outline"}
             onClick={() => setGroupedColorMode("sequence")}
           >
-            Multi
+            {t("flow.palette.modeSequence")}
           </Button>
         </HStack>
       </VStack>
@@ -354,7 +367,9 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
                 onKeyDown={(e) =>
                   handleKeyDown(e, () => onHeatmapSchemeChange?.(schemeKey))
                 }
-                aria-label={`选择热力图配色方案 ${meta.name}`}
+                aria-label={t("flow.palette.selectHeatmapScheme", {
+                  name: meta.name,
+                })}
                 aria-pressed={isActive}
                 role="button"
                 tabIndex={0}
@@ -368,7 +383,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
     return (
       <VStack align="stretch" gap={3}>
         <Text fontSize="xs" fontWeight="medium" color="gray.700">
-          热力图配色
+          {t("flow.palette.heatmapTitle")}
         </Text>
         {renderHeatmapGrid(basicHeatmapSchemes)}
         {isHeatmapExpanded && (
@@ -376,7 +391,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
             <Separator />
             <VStack align="stretch" gap={2}>
               <Text fontSize="xs" fontWeight="medium" color="gray.700">
-                增强配色
+                {t("flow.palette.enhancedPalette")}
               </Text>
               <HStack gap={2} flexWrap="wrap">
                 {Object.keys(ENHANCED_HEATMAP_SCHEMES).map((scheme) => {
@@ -409,7 +424,9 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
                           onEnhancedHeatmapSchemeChange?.(schemeKey),
                         )
                       }
-                      aria-label={`选择增强热力图配色方案 ${meta.name}`}
+                      aria-label={t("flow.palette.selectEnhancedHeatmapScheme", {
+                        name: meta.name,
+                      })}
                       aria-pressed={isActive}
                       role="button"
                       tabIndex={0}
@@ -426,7 +443,11 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
             size="xs"
             variant="ghost"
             onClick={() => setIsHeatmapExpanded(!isHeatmapExpanded)}
-            aria-label={isHeatmapExpanded ? "收起扩展配色" : "展开扩展配色"}
+            aria-label={
+              isHeatmapExpanded
+                ? t("flow.palette.collapseExtendedPalette")
+                : t("flow.palette.expandExtendedPalette")
+            }
           >
             {isHeatmapExpanded ? <LuChevronUp /> : <LuChevronDown />}
           </IconButton>
@@ -469,7 +490,9 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
                     onEnhancedHeatmapSchemeChange?.(schemeKey),
                   )
                 }
-                aria-label={`选择增强热力图配色方案 ${meta.name}`}
+                aria-label={t("flow.palette.selectEnhancedHeatmapScheme", {
+                  name: meta.name,
+                })}
                 aria-pressed={isActive}
                 role="button"
                 tabIndex={0}
@@ -485,7 +508,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
   const renderCustomPalette = () => (
     <VStack align="stretch" gap={3}>
       <Text fontSize="xs" fontWeight="medium" color="gray.700">
-        自定义调色板
+        {t("flow.palette.customPaletteTitle")}
       </Text>
       {customColorPalette && customColorPalette.length > 0 ? (
         <HStack gap={2} flexWrap="wrap">
@@ -505,7 +528,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
         </HStack>
       ) : (
         <Text fontSize="xs" color="gray.500">
-          暂无自定义调色板
+          {t("flow.palette.customPaletteEmpty")}
         </Text>
       )}
     </VStack>
@@ -540,7 +563,7 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
             onClick={onResetToGlobal || onReset}
             colorScheme="gray"
           >
-            重置为全局配置
+            {t("flow.palette.resetToGlobal")}
           </Button>
         </>
       )}

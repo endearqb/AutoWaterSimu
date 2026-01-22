@@ -145,7 +145,7 @@ export class FileValidationConfig {
         .sort()
         .join(", ")
       errors.push(
-        `${t("file.validation.unsupportedExtension")}。支持的格式: ${supportedExts}`,
+        `${t("file.validation.unsupportedExtension")} ${t("file.validation.supportedFormats", { formats: supportedExts })}`,
       )
     } else {
       fileType = FileValidationConfig.getFileTypeByExtension(file.name)
@@ -163,7 +163,10 @@ export class FileValidationConfig {
       const maxSizeMB = maxSize / (1024 * 1024)
       const currentSizeMB = file.size / (1024 * 1024)
       errors.push(
-        `${t("file.validation.sizeExceeded")}。当前: ${currentSizeMB.toFixed(1)}MB，最大: ${maxSizeMB}MB`,
+        `${t("file.validation.sizeExceeded")} ${t("file.validation.sizeExceededDetail", {
+          current: currentSizeMB.toFixed(1),
+          max: maxSizeMB,
+        })}`,
       )
     }
 

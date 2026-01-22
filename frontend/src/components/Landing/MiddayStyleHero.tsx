@@ -12,10 +12,12 @@ import { Link } from "@tanstack/react-router"
 import { motion } from "framer-motion"
 import { useState } from "react"
 import { FaArrowRight } from "react-icons/fa"
+import { useI18n } from "../../i18n"
 import { Metrics } from "./Metrics"
 import { WordAnimation } from "./WordAnimation"
 
 export const MiddayStyleHero = () => {
+  const { t } = useI18n()
   const [isLoaded, setIsLoaded] = useState(false)
 
   return (
@@ -66,8 +68,7 @@ export const MiddayStyleHero = () => {
             color="gray.500"
             maxW="580px"
           >
-            污水处理学习、建模、模拟、优化、时间追踪、浓度管理,
-            提供循序渐进的模型学习路径{" "}
+            {t("landing.hero.headline")}{" "}
             <Box
               as="span"
               fontSize={{ base: "1.1em", md: "1.1em" }}
@@ -94,7 +95,7 @@ export const MiddayStyleHero = () => {
                   }}
                   transition="all 0.2s"
                 >
-                  联系我
+                  {t("landing.hero.contact")}
                 </Button>
               </Link>
 
@@ -109,13 +110,13 @@ export const MiddayStyleHero = () => {
                   }}
                   transition="all 0.2s"
                 >
-                  开始免费试用
+                  {t("landing.hero.startTrial")}
                 </Button>
               </Link>
             </HStack>
 
             <Text fontSize="xs" color="gray.500" fontFamily="mono">
-              开始免费学习试用，无需订阅付费。
+              {t("landing.hero.caption")}
             </Text>
           </VStack>
         </VStack>
@@ -155,7 +156,7 @@ export const MiddayStyleHero = () => {
             >
               <Image
                 src="/assets/images/hero.png"
-                alt="ENVDAMA Dashboard"
+                alt={t("landing.hero.imageAlt")}
                 // 让图片填满上层 Box 的 w
                 w="100%"
                 // 可选：根据 DPR/断点提供不同资源，减少模糊

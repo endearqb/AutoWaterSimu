@@ -1,4 +1,4 @@
-import {
+﻿import {
   Box,
   Button,
   Field,
@@ -11,6 +11,7 @@ import {
 } from "@chakra-ui/react"
 import { useState } from "react"
 import { FiPlus, FiTrash2 } from "react-icons/fi"
+import { useI18n } from "../../../i18n"
 import useFlowStore from "../../../stores/flowStore"
 import {
   DialogActionTrigger,
@@ -27,6 +28,7 @@ interface PropertyPanelProps {
 }
 
 function PropertyPanel({ isNode }: PropertyPanelProps) {
+  const { t } = useI18n()
   const {
     selectedNode,
     selectedEdge,
@@ -37,7 +39,6 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
     updateEdgeFlow,
     updateEdgeParameterConfig,
     addCustomParameter,
-    // removeCustomParameter,
     addNodeParameter,
     removeNodeParameter,
     addEdgeParameter,
@@ -66,7 +67,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
   const handleNodeInputChange = (paramName: string, value: any) => {
     if (selectedNode) {
       if (paramName === "label" && !value.trim()) {
-        setNameError("名称不能为空")
+        setNameError(t("flow.propertyPanel.errors.nameRequired"))
       } else {
         setNameError("")
       }
@@ -74,23 +75,21 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
       if (paramName === "volume") {
         const numValue = Number.parseFloat(value)
         if (Number.isNaN(numValue) || numValue < 0) {
-          setVolumeError("体积必须是非负数")
+          setVolumeError(t("flow.propertyPanel.errors.volumeNonNegative"))
         } else {
           setVolumeError("")
         }
-        // 如果输入为0，自动设置为默认的最小值
         if (numValue === 0) {
           value = "1e-3"
         }
       }
 
-      // 验证自定义参数
       if (customParameters.some((param) => param.name === paramName)) {
         const numValue = Number.parseFloat(value)
         if (value && (Number.isNaN(numValue) || numValue < 0)) {
           setParamErrors((prev) => ({
             ...prev,
-            [paramName]: "参数值必须是非负数",
+            [paramName]: t("flow.propertyPanel.errors.paramNonNegative"),
           }))
         } else {
           setParamErrors((prev) => {
@@ -104,29 +103,11 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
     }
   }
 
-  // const handleEdgeInputChange = (paramName: string, value: any) => {
-  //   if (selectedEdge) {
-  //     // 验证自定义参数
-  //     if (customParameters.some(param => param.name === paramName)) {
-  //       const numValue = parseFloat(value);
-  //       if (value && (isNaN(numValue) || numValue < 0)) {
-  //         setParamErrors(prev => ({ ...prev, [paramName]: '参数值必须是非负数' }));
-  //       } else {
-  //         setParamErrors(prev => {
-  //           const { [paramName]: removed, ...rest } = prev;
-  //           return rest;
-  //         });
-  //       }
-  //     }
-  //     updateEdgeParameter(selectedEdge.id, paramName, value);
-  //   }
-  // };
-
   const handleEdgeFlowChange = (value: string) => {
     if (selectedEdge) {
       const numValue = Number.parseFloat(value)
       if (value && (Number.isNaN(numValue) || numValue < 0)) {
-        setFlowRateError("流量必须是非负数")
+        setFlowRateError(t("flow.propertyPanel.errors.flowNonNegative"))
       } else {
         setFlowRateError("")
       }
@@ -142,21 +123,20 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
   }
 
   const handleSaveNewParameter = () => {
-    // 清除之前的错误
     setNewParamError("")
 
     if (!newParamName.trim()) {
-      setNewParamError("参数名不能为空")
+      setNewParamError(t("flow.propertyPanel.errors.paramNameRequired"))
       return
     }
 
     if (customParameters.some((param) => param.name === newParamName.trim())) {
-      setNewParamError("参数名已存在")
+      setNewParamError(t("flow.propertyPanel.errors.paramNameExists"))
       return
     }
 
     if (["label", "volume"].includes(newParamName.trim())) {
-      setNewParamError("参数名与系统参数冲突")
+      setNewParamError(t("flow.propertyPanel.errors.paramNameConflict"))
       return
     }
 
@@ -184,13 +164,11 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
 
   const handleConfirmAction = () => {
     if (pendingAction === "save") {
-      // 添加到参数定义列表
       addCustomParameter(
         pendingParamName,
         newParamDescription.trim() || undefined,
       )
 
-      // 为当前选中的元素添加参数
       if (isNode && selectedNode) {
         addNodeParameter(
           selectedNode.id,
@@ -212,7 +190,6 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
       setNewParamError("")
       setIsAddingParam(false)
     } else if (pendingAction === "delete" && pendingParamName) {
-      // 从当前选中的元素移除参数
       if (isNode && selectedNode) {
         removeNodeParameter(selectedNode.id, pendingParamName)
       } else if (!isNode && selectedEdge) {
@@ -226,34 +203,35 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
   }
 
   const renderCustomParameters = () => {
-    // 对于节点，显示data中存在的自定义参数
-    // 对于边，显示所有定义的自定义参数（因为边的自定义参数存储在edgeParameterConfigs中）
     const elementParameters = isNode
       ? selectedNode?.data
         ? Object.keys(selectedNode.data).filter((key) =>
             customParameters.some((param) => param.name === key),
           )
         : []
-      : customParameters.map((param) => param.name) // 边显示所有自定义参数
+      : customParameters.map((param) => param.name)
 
     return elementParameters.map((paramName) => {
       const param = customParameters.find((p) => p.name === paramName)
       if (!param) return null
       if (isNode) {
-        // 节点参数的原有逻辑
         const currentValue = (selectedNode?.data?.[param.name] as number) || ""
         const hasError = paramErrors[param.name]
+        const label = t(param.label)
+        const description = param.description
+          ? t(param.description)
+          : t("flow.propertyPanel.customParamPlaceholder")
 
         return (
           <Field.Root key={param.name} invalid={!!hasError}>
             <HStack align="flex-start" gap={4}>
               <HStack minW="80px" pt={2}>
-                <Text>{param.label}</Text>
+                <Text>{label}</Text>
                 <IconButton
                   size="xs"
                   variant="ghost"
                   colorScheme="red"
-                  aria-label="删除参数"
+                  aria-label={t("flow.propertyPanel.deleteParamAriaLabel")}
                   onClick={() => handleDeleteParameter(paramName)}
                 >
                   <FiTrash2 />
@@ -269,9 +247,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
                     handleNodeInputChange(param.name, e.target.value)
                   }
                   className="nodrag"
-                  placeholder={
-                    param.description || "自定义参数，数据类型：浮点数"
-                  }
+                  placeholder={description}
                 />
                 {hasError && <Field.ErrorText>{hasError}</Field.ErrorText>}
               </Box>
@@ -279,7 +255,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
           </Field.Root>
         )
       }
-      // 连接线参数的特殊逻辑
+
       const edgeId = selectedEdge?.id
       const sourceNodeId = selectedEdge?.source
       const sourceNode = nodes.find((node) => node.id === sourceNodeId)
@@ -296,12 +272,9 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
           const numValue = Number.parseFloat(value) || 0
           const newConfig = { ...config, [field]: numValue }
 
-          // a和b互斥逻辑：只能有一个不为0
           if (field === "a" && numValue !== 0) {
-            // 当修改a为非0时，b自动变为0
             newConfig.b = 0
           } else if (field === "b" && numValue !== 0) {
-            // 当修改b为非0时，a自动变为0
             newConfig.a = 0
           }
 
@@ -313,27 +286,27 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
         <Field.Root key={paramName}>
           <HStack align="flex-start" gap={4}>
             <HStack minW="80px" pt={2}>
-              <Text>{param.label}</Text>
+              <Text>{t(param.label)}</Text>
               <IconButton
                 size="xs"
                 variant="ghost"
                 colorScheme="red"
-                aria-label="删除参数"
+                aria-label={t("flow.propertyPanel.deleteParamAriaLabel")}
                 onClick={() => handleDeleteParameter(paramName)}
               >
                 <FiTrash2 />
               </IconButton>
             </HStack>
             <Box flex={1}>
-              {/* 显示计算后的具体数值（不可修改） */}
               <Input
                 value={calculatedValue.toFixed(2)}
                 readOnly
-                placeholder={param.description || `${param.label}，mg/L`}
+                placeholder={
+                  param.description ? t(param.description) : t(param.label)
+                }
                 style={{ backgroundColor: "#f7fafc", cursor: "not-allowed" }}
               />
 
-              {/* a和b系数标签和输入框在同一行 */}
               <HStack gap={2} mt={2} align="center">
                 <Text fontSize="sm" minW="12px">
                   a
@@ -367,16 +340,19 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
     })
   }
 
+  const targetLabel = t(
+    isNode ? "flow.propertyPanel.target.node" : "flow.propertyPanel.target.edge",
+  )
+
   return (
     <>
       <Stack gap={4} align="stretch">
-        {/* 节点基础参数 */}
         {isNode && selectedNode && (
           <>
             <Field.Root required invalid={!!nameError}>
               <HStack align="flex-start" gap={4}>
                 <Field.Label minW="80px" pt={2}>
-                  名称
+                  {t("flow.propertyPanel.nameLabel")}
                 </Field.Label>
                 <Box flex={1}>
                   <Input
@@ -385,7 +361,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
                       handleNodeInputChange("label", e.target.value)
                     }
                     className="nodrag"
-                    placeholder="节点的显示名称"
+                    placeholder={t("flow.propertyPanel.namePlaceholder")}
                   />
                   {nameError && <Field.ErrorText>{nameError}</Field.ErrorText>}
                 </Box>
@@ -395,7 +371,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
             <Field.Root invalid={!!volumeError}>
               <HStack align="flex-start" gap={4}>
                 <Field.Label minW="80px" pt={2}>
-                  体积(m³)
+                  {t("flow.propertyPanel.volumeLabel")}
                 </Field.Label>
                 <Box flex={1}>
                   <Input
@@ -407,7 +383,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
                       handleNodeInputChange("volume", e.target.value)
                     }
                     className="nodrag"
-                    placeholder="节点的体积参数，单位：立方米，最小值：1e-3"
+                    placeholder={t("flow.propertyPanel.volumePlaceholder")}
                   />
                   {volumeError && (
                     <Field.ErrorText>{volumeError}</Field.ErrorText>
@@ -418,12 +394,11 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
           </>
         )}
 
-        {/* 连接线基础参数 */}
         {!isNode && selectedEdge && (
           <Field.Root invalid={!!flowRateError}>
             <HStack align="flex-start" gap={4}>
               <Field.Label minW="80px" pt={2}>
-                流量(m³/h)
+                {t("flow.propertyPanel.flowLabel")}
               </Field.Label>
               <Box flex={1}>
                 <Input
@@ -432,7 +407,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
                   min="0"
                   value={(selectedEdge.data?.flow as number) || ""}
                   onChange={(e) => handleEdgeFlowChange(e.target.value)}
-                  placeholder="连接线的流量参数，单位：立方米/小时"
+                  placeholder={t("flow.propertyPanel.flowPlaceholder")}
                 />
                 {flowRateError && (
                   <Field.ErrorText>{flowRateError}</Field.ErrorText>
@@ -442,22 +417,20 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
           </Field.Root>
         )}
 
-        {/* 渲染自定义参数 */}
         {renderCustomParameters()}
 
-        {/* 添加参数区域 */}
         {isAddingParam ? (
           <Stack gap={3}>
             <Field.Root required invalid={!!newParamError}>
               <HStack align="flex-start" gap={4}>
                 <Field.Label minW="80px" pt={2}>
-                  参数名称
+                  {t("flow.propertyPanel.paramNameLabel")}
                 </Field.Label>
                 <Box flex={1}>
                   <Input
                     value={newParamName}
                     onChange={(e) => setNewParamName(e.target.value)}
-                    placeholder="参数名称"
+                    placeholder={t("flow.propertyPanel.paramNamePlaceholder")}
                     className={isNode ? "nodrag" : ""}
                   />
                   {newParamError && (
@@ -470,13 +443,15 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
             <Field.Root>
               <HStack align="flex-start" gap={4}>
                 <Field.Label minW="80px" pt={2}>
-                  填写说明
+                  {t("flow.propertyPanel.paramDescriptionLabel")}
                 </Field.Label>
                 <Box flex={1}>
                   <Input
                     value={newParamDescription}
                     onChange={(e) => setNewParamDescription(e.target.value)}
-                    placeholder="对参数的详细说明，非必填"
+                    placeholder={t(
+                      "flow.propertyPanel.paramDescriptionPlaceholder",
+                    )}
                     className={isNode ? "nodrag" : ""}
                   />
                 </Box>
@@ -489,21 +464,21 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
                 onClick={handleSaveParameter}
                 size="sm"
               >
-                确认
+                {t("common.confirm")}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleCancelAddParameter}
                 size="sm"
               >
-                取消
+                {t("common.cancel")}
               </Button>
             </HStack>
           </Stack>
         ) : (
           <Button variant="outline" onClick={handleAddParameter} size="sm">
             <FiPlus />
-            增加参数
+            {t("flow.propertyPanel.addParam")}
           </Button>
         )}
       </Stack>
@@ -520,14 +495,22 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {pendingAction === "save" ? "确认添加参数" : "确认删除参数"}
+              {pendingAction === "save"
+                ? t("flow.propertyPanel.addConfirmTitle")
+                : t("flow.propertyPanel.deleteConfirmTitle")}
             </DialogTitle>
           </DialogHeader>
 
           <DialogBody>
             {pendingAction === "save"
-              ? `确定要为当前${isNode ? "节点" : "连接线"}添加参数 "${pendingParamName}" 吗？`
-              : `确定要从当前${isNode ? "节点" : "连接线"}删除参数 "${pendingParamName}" 吗？此操作不可恢复。`}
+              ? t("flow.propertyPanel.addConfirmBody", {
+                  target: targetLabel,
+                  name: pendingParamName,
+                })
+              : t("flow.propertyPanel.deleteConfirmBody", {
+                  target: targetLabel,
+                  name: pendingParamName,
+                })}
           </DialogBody>
 
           <DialogFooter>
@@ -539,11 +522,13 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
                   setPendingAction(null)
                 }}
               >
-                取消
+                {t("common.cancel")}
               </Button>
             </DialogActionTrigger>
             <Button colorScheme="red" onClick={handleConfirmAction}>
-              {pendingAction === "save" ? "添加" : "删除"}
+              {pendingAction === "save"
+                ? t("flow.propertyPanel.addAction")
+                : t("common.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

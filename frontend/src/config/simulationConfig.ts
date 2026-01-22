@@ -1,3 +1,5 @@
+﻿import { t } from "../i18n"
+
 export interface SliderConfig {
   min: number
   max: number
@@ -75,7 +77,10 @@ export const validateCalculationParameters = (
 ): { isValid: boolean; errors: string[] } => {
   const config = simulationConfigs[modelType]
   if (!config) {
-    return { isValid: false, errors: [`Unknown model type: ${modelType}`] }
+    return {
+      isValid: false,
+      errors: [t("flow.simulation.validation.unknownModel", { modelType })],
+    }
   }
 
   const errors: string[] = []
@@ -87,13 +92,21 @@ export const validateCalculationParameters = (
       validation.hours.min !== undefined &&
       params.hours < validation.hours.min
     ) {
-      errors.push(`运行时间不能小于 ${validation.hours.min} 小时`)
+      errors.push(
+        t("flow.simulation.validation.hoursMin", {
+          min: validation.hours.min,
+        }),
+      )
     }
     if (
       validation.hours.max !== undefined &&
       params.hours > validation.hours.max
     ) {
-      errors.push(`运行时间不能大于 ${validation.hours.max} 小时`)
+      errors.push(
+        t("flow.simulation.validation.hoursMax", {
+          max: validation.hours.max,
+        }),
+      )
     }
   }
 
@@ -103,13 +116,21 @@ export const validateCalculationParameters = (
       validation.steps_per_hour.min !== undefined &&
       params.steps_per_hour < validation.steps_per_hour.min
     ) {
-      errors.push(`每小时步数不能小于 ${validation.steps_per_hour.min}`)
+      errors.push(
+        t("flow.simulation.validation.stepsMin", {
+          min: validation.steps_per_hour.min,
+        }),
+      )
     }
     if (
       validation.steps_per_hour.max !== undefined &&
       params.steps_per_hour > validation.steps_per_hour.max
     ) {
-      errors.push(`每小时步数不能大于 ${validation.steps_per_hour.max}`)
+      errors.push(
+        t("flow.simulation.validation.stepsMax", {
+          max: validation.steps_per_hour.max,
+        }),
+      )
     }
   }
 
@@ -119,7 +140,11 @@ export const validateCalculationParameters = (
       validation.solver_method.allowedValues &&
       !validation.solver_method.allowedValues.includes(params.solver_method)
     ) {
-      errors.push(`不支持的求解器方法: ${params.solver_method}`)
+      errors.push(
+        t("flow.simulation.validation.solverMethod", {
+          method: params.solver_method,
+        }),
+      )
     }
   }
 
@@ -129,13 +154,21 @@ export const validateCalculationParameters = (
       validation.tolerance.min !== undefined &&
       params.tolerance < validation.tolerance.min
     ) {
-      errors.push(`计算容差不能小于 ${validation.tolerance.min}`)
+      errors.push(
+        t("flow.simulation.validation.toleranceMin", {
+          min: validation.tolerance.min,
+        }),
+      )
     }
     if (
       validation.tolerance.max !== undefined &&
       params.tolerance > validation.tolerance.max
     ) {
-      errors.push(`计算容差不能大于 ${validation.tolerance.max}`)
+      errors.push(
+        t("flow.simulation.validation.toleranceMax", {
+          max: validation.tolerance.max,
+        }),
+      )
     }
   }
 
@@ -145,13 +178,21 @@ export const validateCalculationParameters = (
       validation.max_iterations.min !== undefined &&
       params.max_iterations < validation.max_iterations.min
     ) {
-      errors.push(`最大迭代次数不能小于 ${validation.max_iterations.min}`)
+      errors.push(
+        t("flow.simulation.validation.maxIterationsMin", {
+          min: validation.max_iterations.min,
+        }),
+      )
     }
     if (
       validation.max_iterations.max !== undefined &&
       params.max_iterations > validation.max_iterations.max
     ) {
-      errors.push(`最大迭代次数不能大于 ${validation.max_iterations.max}`)
+      errors.push(
+        t("flow.simulation.validation.maxIterationsMax", {
+          max: validation.max_iterations.max,
+        }),
+      )
     }
   }
 
@@ -161,30 +202,38 @@ export const validateCalculationParameters = (
       validation.max_memory_mb.min !== undefined &&
       params.max_memory_mb < validation.max_memory_mb.min
     ) {
-      errors.push(`最大内存限制不能小于 ${validation.max_memory_mb.min} MB`)
+      errors.push(
+        t("flow.simulation.validation.maxMemoryMin", {
+          min: validation.max_memory_mb.min,
+        }),
+      )
     }
     if (
       validation.max_memory_mb.max !== undefined &&
       params.max_memory_mb > validation.max_memory_mb.max
     ) {
-      errors.push(`最大内存限制不能大于 ${validation.max_memory_mb.max} MB`)
+      errors.push(
+        t("flow.simulation.validation.maxMemoryMax", {
+          max: validation.max_memory_mb.max,
+        }),
+      )
     }
   }
 
   // 验证 sampling_interval_hours
   if (params.sampling_interval_hours !== undefined) {
     if (params.sampling_interval_hours <= 0) {
-      errors.push("采样间隔必须大于0")
+      errors.push(t("flow.simulation.validation.samplingIntervalPositive"))
     } else if (
       params.hours !== undefined &&
       params.sampling_interval_hours > params.hours
     ) {
-      errors.push("采样间隔不能大于模拟总时间")
+      errors.push(t("flow.simulation.validation.samplingIntervalMax"))
     } else if (
       params.steps_per_hour !== undefined &&
       params.sampling_interval_hours < 1 / params.steps_per_hour
     ) {
-      errors.push("采样间隔不能小于计算步长")
+      errors.push(t("flow.simulation.validation.samplingIntervalMin"))
     }
   }
 
@@ -210,8 +259,8 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 0.5,
       defaultValue: 5,
       visible: true,
-      label: "运行时间",
-      unit: "小时",
+      label: "flow.simulation.hours",
+      unit: "flow.simulation.unit.hours",
     },
     stepsPerHour: {
       min: 20,
@@ -219,7 +268,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 20,
       defaultValue: 60,
       visible: true,
-      label: "每小时步数",
+      label: "flow.simulation.stepsPerHour",
     },
     maxIterations: {
       min: 50,
@@ -227,7 +276,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 50,
       defaultValue: 2000,
       visible: false,
-      label: "最大迭代次数",
+      label: "flow.simulation.maxIterations",
     },
     maxMemoryMb: {
       min: 256,
@@ -235,7 +284,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 128,
       defaultValue: 1024,
       visible: false,
-      label: "最大内存限制",
+      label: "flow.simulation.maxMemory",
       unit: "MB",
     },
     samplingIntervalHours: {
@@ -248,15 +297,15 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       ],
       defaultValue: 1,
       visible: true,
-      label: "采样间隔",
-      unit: "小时",
+      label: "flow.simulation.samplingInterval",
+      unit: "flow.simulation.unit.hours",
     },
     tolerance: {
       type: "number",
       defaultValue: 1e-3,
       step: "1e-4",
       visible: false,
-      label: "计算容差",
+      label: "flow.simulation.tolerance",
       placeholder: "1e-3",
     },
     solverMethod: {
@@ -264,7 +313,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       defaultValue: "euler",
       readOnly: true,
       visible: true,
-      label: "求解器方法",
+      label: "flow.simulation.solverMethod",
       placeholder: "euler",
     },
     defaultCalculationParams: {
@@ -293,8 +342,8 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 0.5,
       defaultValue: 2,
       visible: true,
-      label: "运行时间",
-      unit: "小时",
+      label: "flow.simulation.hours",
+      unit: "flow.simulation.unit.hours",
     },
     stepsPerHour: {
       min: 10,
@@ -302,7 +351,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 10,
       defaultValue: 20,
       visible: true,
-      label: "每小时步数",
+      label: "flow.simulation.stepsPerHour",
     },
     maxIterations: {
       min: 100,
@@ -310,7 +359,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 100,
       defaultValue: 2000,
       visible: false,
-      label: "最大迭代次数",
+      label: "flow.simulation.maxIterations",
     },
     maxMemoryMb: {
       min: 512,
@@ -318,7 +367,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 256,
       defaultValue: 2048,
       visible: false,
-      label: "最大内存限制",
+      label: "flow.simulation.maxMemory",
       unit: "MB",
     },
     samplingIntervalHours: {
@@ -331,15 +380,15 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       ],
       defaultValue: 1,
       visible: true,
-      label: "采样间隔",
-      unit: "小时",
+      label: "flow.simulation.samplingInterval",
+      unit: "flow.simulation.unit.hours",
     },
     tolerance: {
       type: "number",
       defaultValue: 1e-3,
       step: "1e-4",
       visible: false,
-      label: "计算容差",
+      label: "flow.simulation.tolerance",
       placeholder: "1e-3",
     },
     solverMethod: {
@@ -347,7 +396,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       defaultValue: "rk4",
       readOnly: true,
       visible: true,
-      label: "求解器方法",
+      label: "flow.simulation.solverMethod",
       placeholder: "rk4",
     },
     defaultCalculationParams: {
@@ -379,8 +428,8 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 0.5,
       defaultValue: 5,
       visible: true,
-      label: "运行时间",
-      unit: "小时",
+      label: "flow.simulation.hours",
+      unit: "flow.simulation.unit.hours",
     },
     stepsPerHour: {
       min: 10,
@@ -388,7 +437,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 10,
       defaultValue: 20,
       visible: true,
-      label: "每小时步数",
+      label: "flow.simulation.stepsPerHour",
     },
     maxIterations: {
       min: 100,
@@ -396,7 +445,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 100,
       defaultValue: 2000,
       visible: false,
-      label: "最大迭代次数",
+      label: "flow.simulation.maxIterations",
     },
     maxMemoryMb: {
       min: 512,
@@ -404,7 +453,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 256,
       defaultValue: 1024,
       visible: false,
-      label: "最大内存限制",
+      label: "flow.simulation.maxMemory",
       unit: "MB",
     },
     samplingIntervalHours: {
@@ -417,8 +466,8 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       ],
       defaultValue: 1,
       visible: true,
-      label: "采样间隔",
-      unit: "小时",
+      label: "flow.simulation.samplingInterval",
+      unit: "flow.simulation.unit.hours",
     },
     tolerance: {
       type: "number",
@@ -426,7 +475,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: "1e-4",
       readOnly: true,
       visible: false,
-      label: "计算容差",
+      label: "flow.simulation.tolerance",
       placeholder: "1e-3",
     },
     solverMethod: {
@@ -434,7 +483,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       defaultValue: "rk4",
       readOnly: true,
       visible: true,
-      label: "求解器方法",
+      label: "flow.simulation.solverMethod",
       placeholder: "rk4",
     },
     defaultCalculationParams: {
@@ -466,8 +515,8 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 0.5,
       defaultValue: 2,
       visible: true,
-      label: "运行时间",
-      unit: "小时",
+      label: "flow.simulation.hours",
+      unit: "flow.simulation.unit.hours",
     },
     stepsPerHour: {
       min: 10,
@@ -475,7 +524,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 10,
       defaultValue: 20,
       visible: true,
-      label: "每小时步数",
+      label: "flow.simulation.stepsPerHour",
     },
     maxIterations: {
       min: 100,
@@ -483,7 +532,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 100,
       defaultValue: 2000,
       visible: false,
-      label: "最大迭代次数",
+      label: "flow.simulation.maxIterations",
     },
     maxMemoryMb: {
       min: 512,
@@ -491,7 +540,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       step: 256,
       defaultValue: 2048,
       visible: false,
-      label: "最大内存限制",
+      label: "flow.simulation.maxMemory",
       unit: "MB",
     },
     samplingIntervalHours: {
@@ -502,15 +551,15 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       ],
       defaultValue: 1,
       visible: true,
-      label: "采样间隔",
-      unit: "小时",
+      label: "flow.simulation.samplingInterval",
+      unit: "flow.simulation.unit.hours",
     },
     tolerance: {
       type: "number",
       defaultValue: 1e-3,
       step: "1e-4",
       visible: false,
-      label: "计算容差",
+      label: "flow.simulation.tolerance",
       placeholder: "1e-3",
     },
     solverMethod: {
@@ -518,7 +567,7 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       defaultValue: "rk4",
       readOnly: true,
       visible: true,
-      label: "求解器方法",
+      label: "flow.simulation.solverMethod",
       placeholder: "rk4",
     },
     defaultCalculationParams: {
@@ -547,3 +596,4 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
 export const getSimulationConfig = (modelType: string): SimulationConfig => {
   return simulationConfigs[modelType] || simulationConfigs.materialBalance
 }
+

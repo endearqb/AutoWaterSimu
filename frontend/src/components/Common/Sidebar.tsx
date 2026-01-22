@@ -15,6 +15,7 @@ import { FaBars, FaUserAstronaut } from "react-icons/fa"
 import { FiChevronLeft, FiChevronRight, FiLogOut, FiUser } from "react-icons/fi"
 
 import type { UserPublic } from "@/client"
+import { useI18n } from "@/i18n"
 import useAuth from "@/hooks/useAuth"
 import {
   DrawerBackdrop,
@@ -31,6 +32,7 @@ const Sidebar = () => {
   const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
   const { user, logout } = useAuth()
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -73,7 +75,7 @@ const Sidebar = () => {
             variant="ghost"
             color="inherit"
             display={{ base: "flex", md: "none" }}
-            aria-label="Open Menu"
+            aria-label={t("common.openMenu")}
             position="absolute"
             zIndex="100"
             m={4}
@@ -92,7 +94,7 @@ const Sidebar = () => {
                     <Link to="/" onClick={() => setOpen(false)}>
                       <Image
                         src="/assets/images/E-logos-1.png"
-                        alt="ENVDAMA Logo"
+                        alt={t("app.logoAlt")}
                         boxSize={6}
                       />
                       <Heading
@@ -119,7 +121,7 @@ const Sidebar = () => {
                       <FaUserAstronaut fontSize="18" />
                       <Box>
                         <Text fontSize="sm" fontWeight="medium">
-                          {user?.full_name || "User"}
+                          {user?.full_name || t("userMenu.userFallback")}
                         </Text>
                         <Text fontSize="xs" color="gray.500" truncate>
                           {currentUser.email}
@@ -136,7 +138,7 @@ const Sidebar = () => {
                         onClick={() => setOpen(false)}
                       >
                         <FiUser />
-                        <Text fontSize="sm">My Profile</Text>
+                        <Text fontSize="sm">{t("userMenu.profile")}</Text>
                       </Flex>
                     </Link>
                     <Flex
@@ -153,7 +155,7 @@ const Sidebar = () => {
                       w="100%"
                     >
                       <FiLogOut />
-                      <Text fontSize="sm">Log Out</Text>
+                      <Text fontSize="sm">{t("userMenu.logout")}</Text>
                     </Flex>
                   </Flex>
                 )}
@@ -185,7 +187,7 @@ const Sidebar = () => {
               {isCollapsed ? (
                 <Image
                   src="/assets/images/E-logos-1.png"
-                  alt="ENVDAMA Logo"
+                  alt={t("app.logoAlt")}
                   boxSize={6}
                 />
               ) : (
@@ -193,7 +195,7 @@ const Sidebar = () => {
                   <Link to="/">
                     <Image
                       src="/assets/images/E-logos-1.png"
-                      alt="ENVDAMA Logo"
+                      alt={t("app.logoAlt")}
                       boxSize={6}
                     />
                     <Heading
@@ -232,7 +234,9 @@ const Sidebar = () => {
                 variant="ghost"
                 size="sm"
                 onClick={toggleCollapse}
-                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-label={
+                  isCollapsed ? t("common.expandSidebar") : t("common.collapseSidebar")
+                }
                 bg="white"
                 shadow="sm"
                 border="1px"
@@ -266,7 +270,7 @@ const Sidebar = () => {
                       {!isCollapsed && (
                         <Box flex="1" textAlign="left">
                           <Text fontSize="sm" fontWeight="medium" truncate>
-                            {user?.full_name || "User"}
+                            {user?.full_name || t("userMenu.userFallback")}
                           </Text>
                           <Text fontSize="xs" color="gray.500" truncate>
                             {currentUser.email}
@@ -287,7 +291,7 @@ const Sidebar = () => {
                       style={{ cursor: "pointer" }}
                     >
                       <FiUser fontSize="18px" />
-                      <Box flex="1">用户中心</Box>
+                      <Box flex="1">{t("userMenu.profile")}</Box>
                     </MenuItem>
                   </Link>
 
@@ -299,7 +303,7 @@ const Sidebar = () => {
                     style={{ cursor: "pointer" }}
                   >
                     <FiLogOut />
-                    退出登录
+                    {t("userMenu.logout")}
                   </MenuItem>
                 </MenuContent>
               </MenuRoot>

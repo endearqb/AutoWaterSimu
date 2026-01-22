@@ -17,6 +17,7 @@ import ASMslimNode from "../../components/Flow/nodes/ASMslimNode"
 import DefaultNode from "../../components/Flow/nodes/DefaultNode"
 import InputNode from "../../components/Flow/nodes/InputNode"
 import OutputNode from "../../components/Flow/nodes/OutputNode"
+import { useI18n } from "../../i18n"
 import { useASM1SlimFlowStore } from "../../stores/asm1slimFlowStore"
 import { useASM1SlimStore } from "../../stores/asm1slimStore"
 import { useThemePaletteStore } from "../../stores/themePaletteStore"
@@ -33,62 +34,61 @@ const createASM1SlimNodeTypes = (store: () => any): NodeTypes => ({
   asmslim: (props: any) => <ASMslimNode {...props} store={store} />,
 })
 
-// 定义 ASM1Slim 默认节点数据工厂函数
-// 注意：ASM1slim 节点的固定参数现在由 useASM1SlimFlowStore 的 addNode 函数自动添加
-const asm1slimDefaultNodeDataFactory: DefaultNodeDataFactory = (
-  nodeType: string,
-) => {
-  switch (nodeType) {
-    case "input":
-      return { label: "进水端" }
-    case "output":
-      return { label: "出水端" }
-    case "asmslim":
-      return {
-        label: "ASM1slim",
-        // 固定参数由 store 自动添加，无需在此处定义
-      }
-    case "custom":
-      return { label: "自定义节点" }
-    default:
-      return { label: "默认节点" }
-  }
-}
-
-// 定义 ASM1Slim 检查器配置
-const asm1slimInspectorConfig = {
-  nodeTabs: [
-    {
-      key: "parameters",
-      label: "参数设置",
-      component: ASM1SlimPropertyPanel,
-      props: { isNode: true },
-    },
-    {
-      key: "calculation",
-      label: "计算参数",
-      component: ASM1SlimCalculationPanel,
-      props: { store: useASM1SlimFlowStore },
-    },
-    {
-      key: "simulation",
-      label: "模拟计算",
-      component: SimulationPanel,
-      props: {
-        store: useASM1SlimFlowStore,
-        modelStore: useASM1SlimStore,
-        modelType: "asm1slim",
-      },
-    },
-  ],
-  edgePanel: {
-    component: ASM1SlimPropertyPanel,
-    props: { isNode: false },
-  },
-  defaultTab: "parameters",
-}
-
 function ASM1SlimPage() {
+  const { t, language } = useI18n()
+  const asm1slimDefaultNodeDataFactory = useMemo<DefaultNodeDataFactory>(() => {
+    return (nodeType: string) => {
+      switch (nodeType) {
+        case "input":
+          return { label: t("flow.node.input") }
+        case "output":
+          return { label: t("flow.node.output") }
+        case "asmslim":
+          return {
+            label: t("flow.node.asm1slim"),
+            // 固定参数由 store 自动添加，无需在此处定义
+          }
+        case "custom":
+          return { label: t("flow.node.custom") }
+        default:
+          return { label: t("flow.node.default") }
+      }
+    }
+  }, [language])
+  const asm1slimInspectorConfig = useMemo(
+    () => ({
+      nodeTabs: [
+        {
+          key: "parameters",
+          label: t("flow.tab.parameters"),
+          component: ASM1SlimPropertyPanel,
+          props: { isNode: true },
+        },
+        {
+          key: "calculation",
+          label: t("flow.tab.calculation"),
+          component: ASM1SlimCalculationPanel,
+          props: { store: useASM1SlimFlowStore },
+        },
+        {
+          key: "simulation",
+          label: t("flow.tab.simulation"),
+          component: SimulationPanel,
+          props: {
+            store: useASM1SlimFlowStore,
+            modelStore: useASM1SlimStore,
+            modelType: "asm1slim",
+          },
+        },
+      ],
+      edgePanel: {
+        component: ASM1SlimPropertyPanel,
+        props: { isNode: false },
+      },
+      defaultTab: "parameters",
+    }),
+    [language],
+  )
   // ✅ 使用 useMemo 确保 nodeTypes 引用稳定
   const asm1slimNodeTypes = useMemo(
     () => createASM1SlimNodeTypes(useASM1SlimFlowStore),

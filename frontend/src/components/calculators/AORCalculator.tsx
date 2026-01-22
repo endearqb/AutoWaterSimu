@@ -11,6 +11,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React from "react"
+import { useI18n } from "@/i18n"
 
 interface AORValues {
   // 基本参数
@@ -53,6 +54,7 @@ type SORResult = {
 }
 
 const AORCalculator: React.FC = () => {
+  const { t } = useI18n()
   const [aorValues, setAorValues] = React.useState<AORValues>({
     S0: 420,
     Se: 30,
@@ -143,22 +145,46 @@ const AORCalculator: React.FC = () => {
 
   const getAORInterpretation = (value: number) => {
     if (value < 5000) {
-      return { text: "低负荷", color: "green.500", bgColor: "green.50" }
+      return {
+        text: t("calculators.aor.interpretations.aorLow"),
+        color: "green.500",
+        bgColor: "green.50",
+      }
     }
     if (value < 15000) {
-      return { text: "中等负荷", color: "yellow.600", bgColor: "yellow.50" }
+      return {
+        text: t("calculators.aor.interpretations.aorMedium"),
+        color: "yellow.600",
+        bgColor: "yellow.50",
+      }
     }
-    return { text: "高负荷", color: "red.500", bgColor: "red.50" }
+    return {
+      text: t("calculators.aor.interpretations.aorHigh"),
+      color: "red.500",
+      bgColor: "red.50",
+    }
   }
 
   const getAirWaterRatioInterpretation = (ratio: number) => {
     if (ratio < 10) {
-      return { text: "低气水比", color: "blue.500", bgColor: "blue.50" }
+      return {
+        text: t("calculators.aor.interpretations.airWaterLow"),
+        color: "blue.500",
+        bgColor: "blue.50",
+      }
     }
     if (ratio < 20) {
-      return { text: "适中气水比", color: "green.500", bgColor: "green.50" }
+      return {
+        text: t("calculators.aor.interpretations.airWaterMedium"),
+        color: "green.500",
+        bgColor: "green.50",
+      }
     }
-    return { text: "高气水比", color: "orange.500", bgColor: "orange.50" }
+    return {
+      text: t("calculators.aor.interpretations.airWaterHigh"),
+      color: "orange.500",
+      bgColor: "orange.50",
+    }
   }
 
   // 仪表盘旋转角度计算
@@ -185,18 +211,21 @@ const AORCalculator: React.FC = () => {
       <Card.Root bg={cardBg} shadow="md" borderRadius="xl" overflow="hidden">
         <Card.Body p={8}>
           <Text fontSize="3xl" fontWeight="extrabold" color="gray.800" mb={4}>
-            理论需氧量计算器 (AOR & SOR)
+            {t("calculators.aor.title")}
           </Text>
 
           <Text maxW="full" mx="auto" fontSize="lg" color="gray.600" mb={6}>
-            计算污水处理过程中的实际传氧速率（AOR）和标准传氧速率（SOR），用于曝气系统设计和优化。
-            拖动滑块观察实时影响。
+            {t("calculators.aor.description")}
           </Text>
 
           <Tabs.Root defaultValue="aor" variant="enclosed">
             <Tabs.List mb={6}>
-              <Tabs.Trigger value="aor">AOR 参数设置</Tabs.Trigger>
-              <Tabs.Trigger value="sor">SOR 参数设置</Tabs.Trigger>
+              <Tabs.Trigger value="aor">
+                {t("calculators.aor.tabs.aor")}
+              </Tabs.Trigger>
+              <Tabs.Trigger value="sor">
+                {t("calculators.aor.tabs.sor")}
+              </Tabs.Trigger>
             </Tabs.List>
 
             <Grid
@@ -221,7 +250,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">进水BOD₅ (mg/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.s0Influent")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -253,7 +284,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">出水BOD₅ (mg/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.seEffluent")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -285,7 +318,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">进水流量 (m³/d)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.flowRate")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -317,7 +352,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">进水总凯氏氮 (mg/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.nkInfluent")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -349,7 +386,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">出水总凯氏氮 (mg/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.nkeEffluent")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -381,7 +420,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">进水总氮 (mg/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.ntInfluent")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -413,7 +454,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">出水硝态氮 (mg/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.noeEffluent")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -445,7 +488,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">曝气池容积 (m³)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.volume")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -480,7 +525,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">MLVSS (g/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.mlvss")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -515,7 +562,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">设计污泥龄 (d)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.sludgeAge")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -550,7 +599,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">污泥自身氧化率 (1/d)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.bPrime")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -568,7 +619,7 @@ const AORCalculator: React.FC = () => {
                         </Slider.Control>
                       </Slider.Root>
                       <Text fontSize="sm" color="gray.500" mt={1}>
-                        经验取值 0.04–0.10（与活性比例/污泥性质相关）
+                        {t("calculators.aor.hints.bPrime")}
                       </Text>
                     </Box>
                   </VStack>
@@ -589,7 +640,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">氧利用率 EA</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.ea")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -621,7 +674,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">曝气深度 (m)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.depth")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -653,7 +708,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">混合液温度 (°C)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.temperature")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -685,7 +742,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">剩余DO (mg/L)</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.c0")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -720,7 +779,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">α系数</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.alpha")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -738,7 +799,7 @@ const AORCalculator: React.FC = () => {
                         </Slider.Control>
                       </Slider.Root>
                       <Text fontSize="sm" color="gray.500" mt={1}>
-                        混合液中KLa值与清水中KLa值之比，一般0.8~0.85
+                        {t("calculators.aor.hints.alpha")}
                       </Text>
                     </Box>
 
@@ -758,7 +819,9 @@ const AORCalculator: React.FC = () => {
                         width="100%"
                       >
                         <Flex justify="space-between" align="center" mb={2}>
-                          <Text fontWeight="medium">β系数</Text>
+                          <Text fontWeight="medium">
+                            {t("calculators.aor.labels.beta")}
+                          </Text>
                           <Text
                             fontWeight="bold"
                             color="#AF8219"
@@ -776,7 +839,7 @@ const AORCalculator: React.FC = () => {
                         </Slider.Control>
                       </Slider.Root>
                       <Text fontSize="sm" color="gray.500" mt={1}>
-                        混合液的饱和溶解氧值与清水的饱和溶解氧之比，一般0.9~0.97
+                        {t("calculators.aor.hints.beta")}
                       </Text>
                     </Box>
                   </VStack>
@@ -788,9 +851,9 @@ const AORCalculator: React.FC = () => {
                 <VStack align="center" justify="center" p={4} gap={6}>
                   {/* AOR 结果 */}
                   <VStack align="center" gap={3}>
-                    <Text fontSize="lg" fontWeight="semibold">
-                      实际传氧速率 (AOR)
-                    </Text>
+                  <Text fontSize="lg" fontWeight="semibold">
+                    {t("calculators.aor.results.aorTitle")}
+                  </Text>
 
                     {/* AOR 仪表盘 */}
                     <Box position="relative" mb={2}>
@@ -840,7 +903,7 @@ const AORCalculator: React.FC = () => {
                         ? aorResult.total.toFixed(0)
                         : "—"}
                       <Text as="span" fontSize="lg" color="gray.500" ml={2}>
-                        kgO₂/d
+                        {t("calculators.aor.results.unitKgO2PerDay")}
                       </Text>
                     </Text>
 
@@ -865,7 +928,7 @@ const AORCalculator: React.FC = () => {
                       w="100%"
                     >
                       <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                        AOR 分解
+                        {t("calculators.aor.results.aorBreakdown")}
                       </Text>
                       <VStack
                         align="stretch"
@@ -874,32 +937,32 @@ const AORCalculator: React.FC = () => {
                         fontSize="xs"
                       >
                         <Text>
-                          BOD需氧量：
+                          {t("calculators.aor.results.bodDemand")}
                           {Number.isFinite(aorResult.Oa)
                             ? aorResult.Oa.toFixed(0)
                             : "—"}{" "}
-                          kgO₂/d
+                          {t("calculators.aor.results.unitKgO2PerDay")}
                         </Text>
                         <Text>
-                          硝化需氧量：
+                          {t("calculators.aor.results.nitrificationDemand")}
                           {Number.isFinite(aorResult.Ob)
                             ? aorResult.Ob.toFixed(0)
                             : "—"}{" "}
-                          kgO₂/d
+                          {t("calculators.aor.results.unitKgO2PerDay")}
                         </Text>
                         <Text>
-                          内源需氧量：
+                          {t("calculators.aor.results.endogenousDemand")}
                           {Number.isFinite(aorResult.Oc)
                             ? aorResult.Oc.toFixed(0)
                             : "—"}{" "}
-                          kgO₂/d
+                          {t("calculators.aor.results.unitKgO2PerDay")}
                         </Text>
                         <Text>
-                          微生物量：
+                          {t("calculators.aor.results.biomass")}
                           {Number.isFinite(aorResult.deltaXv)
                             ? aorResult.deltaXv.toFixed(0)
                             : "—"}{" "}
-                          kg/d
+                          {t("calculators.aor.results.unitKgPerDay")}
                         </Text>
                       </VStack>
                     </Box>
@@ -907,16 +970,16 @@ const AORCalculator: React.FC = () => {
 
                   {/* SOR 结果 */}
                   <VStack align="center" gap={3}>
-                    <Text fontSize="lg" fontWeight="semibold">
-                      标准传氧速率 (SOR)
-                    </Text>
+                  <Text fontSize="lg" fontWeight="semibold">
+                    {t("calculators.aor.results.sorTitle")}
+                  </Text>
 
                     <Text fontSize="3xl" fontWeight="bold" textAlign="center">
                       {Number.isFinite(sorResult.N0)
                         ? sorResult.N0.toFixed(0)
                         : "—"}
                       <Text as="span" fontSize="lg" color="gray.500" ml={2}>
-                        kgO₂/d
+                        {t("calculators.aor.results.unitKgO2PerDay")}
                       </Text>
                     </Text>
 
@@ -970,7 +1033,7 @@ const AORCalculator: React.FC = () => {
                           ? sorResult.airWaterRatio.toFixed(1)
                           : "—"}
                         <Text as="span" fontSize="md" color="gray.500" ml={1}>
-                          气水比
+                          {t("calculators.aor.results.airWaterRatio")}
                         </Text>
                       </Text>
 
@@ -996,7 +1059,7 @@ const AORCalculator: React.FC = () => {
                       w="100%"
                     >
                       <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                        SOR 分解
+                        {t("calculators.aor.results.sorBreakdown")}
                       </Text>
                       <VStack
                         align="stretch"
@@ -1005,21 +1068,21 @@ const AORCalculator: React.FC = () => {
                         fontSize="xs"
                       >
                         <Text>
-                          逸出含氧：
+                          {t("calculators.aor.results.oxygenOffgas")}
                           {Number.isFinite(sorResult.Ot)
                             ? (sorResult.Ot * 100).toFixed(1)
                             : "—"}
                           %
                         </Text>
                         <Text>
-                          平均DO：
+                          {t("calculators.aor.results.avgDo")}
                           {Number.isFinite(sorResult.Csm)
                             ? sorResult.Csm.toFixed(1)
                             : "—"}{" "}
                           mg/L
                         </Text>
                         <Text>
-                          供气量：
+                          {t("calculators.aor.results.airSupply")}
                           {Number.isFinite(sorResult.Gs)
                             ? sorResult.Gs.toFixed(0)
                             : "—"}{" "}

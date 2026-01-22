@@ -8,6 +8,8 @@
  * - 连接状态管理
  */
 
+import { t } from "@/utils/i18n"
+
 /**
  * 进度更新消息接口
  */
@@ -82,7 +84,7 @@ class WebSocketService {
           if (this.ws?.readyState === WebSocket.OPEN) {
             resolve()
           } else if (!this.isConnecting) {
-            reject(new Error("Connection failed"))
+            reject(new Error(t("api.error.network")))
           } else {
             setTimeout(checkConnection, 100)
           }

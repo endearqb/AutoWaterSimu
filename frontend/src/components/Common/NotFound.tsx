@@ -1,7 +1,10 @@
 import { Button, Center, Flex, Text } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
+import { useI18n } from "@/i18n"
 
 const NotFound = () => {
+  const { t } = useI18n()
+
   return (
     <>
       <Flex
@@ -23,7 +26,7 @@ const NotFound = () => {
               404
             </Text>
             <Text fontSize="2xl" fontWeight="bold" mb={2}>
-              Oops!
+              {t("notFound.title")}
             </Text>
           </Flex>
         </Flex>
@@ -35,7 +38,7 @@ const NotFound = () => {
           textAlign="center"
           zIndex={1}
         >
-          The page you are looking for was not found.
+          {t("notFound.description")}
         </Text>
         <Center zIndex={1}>
           <Link to="/">
@@ -45,7 +48,7 @@ const NotFound = () => {
               mt={4}
               alignSelf="center"
             >
-              Go Back
+              {t("notFound.back")}
             </Button>
           </Link>
         </Center>

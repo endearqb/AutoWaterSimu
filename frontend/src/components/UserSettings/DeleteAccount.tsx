@@ -1,14 +1,17 @@
 import { Container, Heading, Text } from "@chakra-ui/react"
 
+import { useI18n } from "@/i18n"
 import DeleteConfirmation from "./DeleteConfirmation"
 
 const DeleteAccount = () => {
+  const { t } = useI18n()
+
   return (
     <Container maxW="full">
       <Heading size="sm" py={4}>
-        删除账号
+        {t("userSettings.deleteAccountTitle")}
       </Heading>
-      <Text>永久删除您的数据和与您账号关联的所有内容。</Text>
+      <Text>{t("userSettings.deleteAccountDescription")}</Text>
       <DeleteConfirmation />
     </Container>
   )

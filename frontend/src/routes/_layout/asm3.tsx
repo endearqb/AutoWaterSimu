@@ -19,6 +19,7 @@ import ASM3Node from "../../components/Flow/nodes/ASM3Node"
 import DefaultNode from "../../components/Flow/nodes/DefaultNode"
 import InputNode from "../../components/Flow/nodes/InputNode"
 import OutputNode from "../../components/Flow/nodes/OutputNode"
+import { useI18n } from "../../i18n"
 import { useASM3FlowStore } from "../../stores/asm3FlowStore"
 import { useASM3Store } from "../../stores/asm3Store"
 import { useThemePaletteStore } from "../../stores/themePaletteStore"
@@ -59,60 +60,59 @@ const createASM3NodeTypes = (store: () => any): NodeTypes => ({
   asm3: (props: any) => <ASM3Node {...props} store={store} />,
 })
 
-// 定义 ASM3 默认节点数据工厂函数
-// 注意：ASM3 节点的固定参数现在由 useASM3FlowStore 的 addNode 函数自动添加
-const asm3DefaultNodeDataFactory: DefaultNodeDataFactory = (
-  nodeType: string,
-) => {
-  switch (nodeType) {
-    case "input":
-      return { label: "进水端" }
-    case "output":
-      return { label: "出水端" }
-    case "asm3":
-      return {
-        label: "ASM3节点",
-        // 固定参数由 store 自动添加，无需在此处定义
-      }
-    default:
-      return { label: "默认节点" }
-  }
-}
-
-// 定义 ASM3 检查器配置
-const asm3InspectorConfig = {
-  nodeTabs: [
-    {
-      key: "parameters",
-      label: "参数设置",
-      component: ASM3PropertyPanel,
-      props: { isNode: true },
-    },
-    {
-      key: "calculation",
-      label: "计算参数",
-      component: ASM3CalculationPanel,
-      props: { store: useASM3FlowStore },
-    },
-    {
-      key: "simulation",
-      label: "模拟计算",
-      component: SimulationPanel,
-      props: {
-        store: useASM3FlowStore,
-        modelStore: useASM3Store,
-        modelType: "asm3",
-      },
-    },
-  ],
-  edgePanel: {
-    component: ASM3PropertyPanel,
-    props: { isNode: false },
-  },
-  defaultTab: "parameters",
-}
-
 function ASM3Page() {
+  const { t, language } = useI18n()
+  const asm3DefaultNodeDataFactory = useMemo<DefaultNodeDataFactory>(() => {
+    return (nodeType: string) => {
+      switch (nodeType) {
+        case "input":
+          return { label: t("flow.node.input") }
+        case "output":
+          return { label: t("flow.node.output") }
+        case "asm3":
+          return {
+            label: t("flow.node.asm3"),
+            // 固定参数由 store 自动添加，无需在此处定义
+          }
+        default:
+          return { label: t("flow.node.default") }
+      }
+    }
+  }, [language])
+  const asm3InspectorConfig = useMemo(
+    () => ({
+      nodeTabs: [
+        {
+          key: "parameters",
+          label: t("flow.tab.parameters"),
+          component: ASM3PropertyPanel,
+          props: { isNode: true },
+        },
+        {
+          key: "calculation",
+          label: t("flow.tab.calculation"),
+          component: ASM3CalculationPanel,
+          props: { store: useASM3FlowStore },
+        },
+        {
+          key: "simulation",
+          label: t("flow.tab.simulation"),
+          component: SimulationPanel,
+          props: {
+            store: useASM3FlowStore,
+            modelStore: useASM3Store,
+            modelType: "asm3",
+          },
+        },
+      ],
+      edgePanel: {
+        component: ASM3PropertyPanel,
+        props: { isNode: false },
+      },
+      defaultTab: "parameters",
+    }),
+    [language],
+  )
   // ✅ 使用 useMemo 确保 nodeTypes 引用稳定
   const asm3NodeTypes = useMemo(() => createASM3NodeTypes(useASM3FlowStore), [])
   const themeStore = useThemePaletteStore()

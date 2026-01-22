@@ -18,6 +18,7 @@ import {
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
+import { useI18n } from "@/i18n"
 
 const DeleteConfirmation = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -28,11 +29,12 @@ const DeleteConfirmation = () => {
     formState: { isSubmitting },
   } = useForm()
   const { logout } = useAuth()
+  const { t } = useI18n()
 
   const mutation = useMutation({
     mutationFn: () => UsersService.deleteUserMe(),
     onSuccess: () => {
-      showSuccessToast("Your account has been successfully deleted")
+      showSuccessToast(t("userSettings.deleteSuccess"))
       setIsOpen(false)
       logout()
     },
@@ -59,7 +61,7 @@ const DeleteConfirmation = () => {
       >
         <DialogTrigger asChild>
           <Button variant="solid" colorPalette="red" mt={4}>
-            删除
+            {t("common.delete")}
           </Button>
         </DialogTrigger>
 
@@ -67,13 +69,11 @@ const DeleteConfirmation = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogCloseTrigger />
             <DialogHeader>
-              <DialogTitle>确认删除</DialogTitle>
+              <DialogTitle>{t("userSettings.deleteConfirmTitle")}</DialogTitle>
             </DialogHeader>
             <DialogBody>
               <Text mb={4}>
-                所有您的账号数据将被 <strong>永久删除。</strong>{" "}
-                如果您确定，请点击 <strong>"确认"</strong>{" "}
-                继续。此操作无法撤销。
+                {t("userSettings.deleteConfirmBody")}
               </Text>
             </DialogBody>
 
@@ -85,7 +85,7 @@ const DeleteConfirmation = () => {
                     colorPalette="gray"
                     disabled={isSubmitting}
                   >
-                    取消
+                    {t("common.cancel")}
                   </Button>
                 </DialogActionTrigger>
                 <Button
@@ -94,7 +94,7 @@ const DeleteConfirmation = () => {
                   type="submit"
                   loading={isSubmitting}
                 >
-                  删除
+                  {t("common.delete")}
                 </Button>
               </ButtonGroup>
             </DialogFooter>

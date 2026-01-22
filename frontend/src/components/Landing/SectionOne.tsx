@@ -1,6 +1,8 @@
 import { Box, Heading, Text } from "@chakra-ui/react"
+import { useI18n } from "../../i18n"
 
 export function SectionOne() {
+  const { t } = useI18n()
   return (
     <Box
       as="section"
@@ -20,14 +22,14 @@ export function SectionOne() {
         lineHeight="1.2"
         display={{ base: "none", sm: "block" }}
       >
-        为您精心准备的一切
+        {t("landing.sectionOne.title")}
       </Heading>
       <Text mt={{ base: 4, md: 12 }} color="gray.500" fontSize="lg" maxW="5xl">
-        从知识原理到应用实践，
+        {t("landing.sectionOne.bodyPrefix")}
         <Text as="span" color="hsl(212,98%,55%)">
           ENVDAMA
         </Text>
-        为您精心准备的污水处理工艺学习平台，让您的业务更上一层楼。
+        {t("landing.sectionOne.bodySuffix")}
       </Text>
     </Box>
   )

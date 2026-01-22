@@ -16,6 +16,7 @@ import {
   FiUpload,
 } from "react-icons/fi"
 import type { BaseModelState } from "../../../stores/baseModelStore"
+import { useI18n } from "../../../i18n"
 import ConfirmDialog from "./ConfirmDialog"
 
 /**
@@ -95,6 +96,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
   LoadCalculationDataDialogComponent,
   loadCalculationDataDialogConfig,
 }: BaseBubbleMenuProps<TJob, TFlowChart>) => {
+  const { t } = useI18n()
   const [isOpen, setIsOpen] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
     null,
@@ -169,7 +171,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
             const url = URL.createObjectURL(blob)
             const a = document.createElement("a")
             a.href = url
-            a.download = `flowchart-${new Date().toISOString().split("T")[0]}.json`
+            a.download = `${t("flow.menu.defaultFlowchartName")}-${new Date().toISOString().split("T")[0]}.json`
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
@@ -182,7 +184,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
           break
       }
     } catch (error) {
-      console.error("操作失败:", error)
+      console.error(t("flow.menu.actionFailed"), error)
     } finally {
       setConfirmDialog(null)
     }
@@ -197,8 +199,8 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
     if (hasUnsavedContent()) {
       setConfirmDialog({
         isOpen: true,
-        title: "加载流程图",
-        message: "当前流程图是否要保存？",
+        title: t("flow.menu.loadFlowchart"),
+        message: t("flow.menu.confirmSaveMessage"),
         pendingAction: () => {
           handleOpenLoadDialog()
           setIsOpen(false)
@@ -214,8 +216,8 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
     if (hasUnsavedContent()) {
       setConfirmDialog({
         isOpen: true,
-        title: "加载计算数据",
-        message: "当前流程图是否要保存？",
+        title: t("flow.menu.loadCalculationData"),
+        message: t("flow.menu.confirmSaveMessage"),
         pendingAction: () => {
           setIsLoadCalculationDataDialogOpen(true)
           setIsOpen(false)
@@ -231,8 +233,8 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
     if (hasUnsavedContent()) {
       setConfirmDialog({
         isOpen: true,
-        title: "新建流程图",
-        message: "当前流程图是否要保存？",
+        title: t("flow.menu.newFlowchart"),
+        message: t("flow.menu.confirmSaveMessage"),
         pendingAction: () => {
           onNewFlowChart?.()
           setIsOpen(false)
@@ -248,8 +250,8 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
     if (hasUnsavedContent()) {
       setConfirmDialog({
         isOpen: true,
-        title: "导入流程图",
-        message: "当前流程图是否要保存？",
+        title: t("flow.menu.importFlowchart"),
+        message: t("flow.menu.confirmSaveMessage"),
         pendingAction: () => {
           // 触发文件选择
           const fileInput = document.createElement("input")
@@ -315,14 +317,14 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
             justifyContent="flex-start"
           >
             <FiPlus />
-            新建流程图
+            {t("flow.menu.newFlowchart")}
           </Button>
 
           {/* 本地导出按钮 */}
           {enableLocalImportExport && (
             <DownloadTrigger
               data={onExport?.() || ""}
-              fileName={`${currentFlowChartName || "flowchart"}.json`}
+              fileName={`${currentFlowChartName || t("flow.menu.defaultFlowchartName")}.json`}
               mimeType="application/json"
               asChild
             >
@@ -340,7 +342,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
                 justifyContent="flex-start"
               >
                 <FiDownload />
-                本地导出
+                {t("flow.menu.localExport")}
               </Button>
             </DownloadTrigger>
           )}
@@ -362,7 +364,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
               justifyContent="flex-start"
             >
               <FiUpload />
-              本地导入
+              {t("flow.menu.localImport")}
             </Button>
           )}
 
@@ -383,7 +385,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
               justifyContent="flex-start"
             >
               <FiSave />
-              在线保存
+              {t("flow.menu.saveOnline")}
             </Button>
           )}
 
@@ -404,7 +406,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
               justifyContent="flex-start"
             >
               <FiFolder />
-              在线加载
+              {t("flow.menu.loadOnline")}
             </Button>
           )}
 
@@ -425,7 +427,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
               justifyContent="flex-start"
             >
               <FiDatabase />
-              加载计算数据
+              {t("flow.menu.loadCalculationData")}
             </Button>
           )}
         </VStack>
@@ -436,7 +438,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
         size="lg"
         variant="solid"
         colorScheme="blue"
-        aria-label="操作菜单"
+        aria-label={t("flow.menu.actionsAriaLabel")}
         onClick={() => setIsOpen(!isOpen)}
         borderRadius="full"
         boxShadow="lg"

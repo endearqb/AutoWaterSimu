@@ -10,6 +10,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React from "react"
+import { useI18n } from "@/i18n"
 
 interface SliderValues {
   ph: number // pH
@@ -20,6 +21,7 @@ interface SliderValues {
 }
 
 const LSICalculator: React.FC = () => {
+  const { t } = useI18n()
   const [values, setValues] = React.useState<SliderValues>({
     ph: 7.5,
     ta: 100,
@@ -78,35 +80,73 @@ const LSICalculator: React.FC = () => {
 
   const getInterpretation = (lsiValue: number) => {
     if (lsiValue < -0.3) {
-      return { text: "腐蚀性", color: "red.500", bgColor: "red.50" }
+      return {
+        text: t("calculators.lsi.interpretation.corrosive"),
+        color: "red.500",
+        bgColor: "red.50",
+      }
     }
     if (lsiValue > 0.3) {
-      return { text: "结垢性", color: "yellow.600", bgColor: "yellow.50" }
+      return {
+        text: t("calculators.lsi.interpretation.scaling"),
+        color: "yellow.600",
+        bgColor: "yellow.50",
+      }
     }
-    return { text: "平衡", color: "green.500", bgColor: "green.50" }
+    return {
+      text: t("calculators.lsi.interpretation.balanced"),
+      color: "green.500",
+      bgColor: "green.50",
+    }
   }
 
   const getRyznarInterpretation = (irValue: number) => {
     if (irValue < 5) {
-      return { text: "强结垢性", color: "orange.600", bgColor: "orange.50" }
+      return {
+        text: t("calculators.lsi.ryznarInterpretation.strongScaling"),
+        color: "orange.600",
+        bgColor: "orange.50",
+      }
     }
     if (irValue < 6) {
-      return { text: "轻微结垢性", color: "yellow.600", bgColor: "yellow.50" }
+      return {
+        text: t("calculators.lsi.ryznarInterpretation.slightScaling"),
+        color: "yellow.600",
+        bgColor: "yellow.50",
+      }
     }
     if (irValue < 7) {
-      return { text: "平衡状态", color: "green.500", bgColor: "green.50" }
+      return {
+        text: t("calculators.lsi.ryznarInterpretation.balanced"),
+        color: "green.500",
+        bgColor: "green.50",
+      }
     }
     if (irValue < 7.5) {
-      return { text: "轻微腐蚀性", color: "blue.500", bgColor: "blue.50" }
+      return {
+        text: t("calculators.lsi.ryznarInterpretation.slightCorrosive"),
+        color: "blue.500",
+        bgColor: "blue.50",
+      }
     }
     if (irValue < 8) {
-      return { text: "显著腐蚀性", color: "purple.500", bgColor: "purple.50" }
+      return {
+        text: t("calculators.lsi.ryznarInterpretation.significantCorrosive"),
+        color: "purple.500",
+        bgColor: "purple.50",
+      }
     }
-    return { text: "强腐蚀性", color: "red.600", bgColor: "red.50" }
+    return {
+      text: t("calculators.lsi.ryznarInterpretation.strongCorrosive"),
+      color: "red.600",
+      bgColor: "red.50",
+    }
   }
 
   const interpretation = getInterpretation(lsi)
   const ryznarInterpretation = getRyznarInterpretation(ir)
+  const formatValue = (value: number, decimals: number) =>
+    Number.isFinite(value) ? value.toFixed(decimals) : "—"
 
   // 简单仪表：将 LSI ∈ [-2, 2] 映射到 [-90°, 90°]
   const rotation = clamp(lsi * 45, -90, 90)
@@ -118,12 +158,11 @@ const LSICalculator: React.FC = () => {
       <Card.Root bg={cardBg} shadow="md" borderRadius="xl" overflow="hidden">
         <Card.Body p={8}>
           <Text fontSize="3xl" fontWeight="extrabold" color="gray.800" mb={4}>
-            朗格利尔指数 (LSI) & 雷兹纳指数（RSI）交互式计算与分析
+            {t("calculators.lsi.title")}
           </Text>
 
           <Text maxW="full" mx="auto" fontSize="lg" color="gray.600" mb={6}>
-            朗格利尔饱和指数（LSI）和雷兹纳指数（RSI）用于评估水与碳酸钙的平衡趋势。LSI
-            = pH − pHs，RSI = 2×pHs − pH。 拖动滑块观察实时影响。
+            {t("calculators.lsi.description")}
           </Text>
 
           <Grid
@@ -147,7 +186,9 @@ const LSICalculator: React.FC = () => {
                     width="100%"
                   >
                     <Flex justify="space-between" align="center" mb={2}>
-                      <Text fontWeight="medium">pH 值</Text>
+                      <Text fontWeight="medium">
+                        {t("calculators.lsi.labels.ph")}
+                      </Text>
                       <Text
                         fontWeight="bold"
                         color="#AF8219"
@@ -180,7 +221,7 @@ const LSICalculator: React.FC = () => {
                   >
                     <Flex justify="space-between" align="center" mb={2}>
                       <Text fontWeight="medium">
-                        碳酸盐碱度 (mg/L as CaCO₃)
+                        {t("calculators.lsi.labels.ta")}
                       </Text>
                       <Text
                         fontWeight="bold"
@@ -199,7 +240,7 @@ const LSICalculator: React.FC = () => {
                     </Slider.Control>
                   </Slider.Root>
                   <Text fontSize="sm" color="gray.500" mt={1}>
-                    提示：若当前为“总碱度”，请先扣除非碳酸盐碱度（如氰尿酸等）后再参与计算。
+                    {t("calculators.lsi.hints.ta")}
                   </Text>
                 </Box>
 
@@ -216,7 +257,9 @@ const LSICalculator: React.FC = () => {
                     width="100%"
                   >
                     <Flex justify="space-between" align="center" mb={2}>
-                      <Text fontWeight="medium">钙硬度 (mg/L as CaCO₃)</Text>
+                      <Text fontWeight="medium">
+                        {t("calculators.lsi.labels.ch")}
+                      </Text>
                       <Text
                         fontWeight="bold"
                         color="#AF8219"
@@ -248,7 +291,9 @@ const LSICalculator: React.FC = () => {
                     width="100%"
                   >
                     <Flex justify="space-between" align="center" mb={2}>
-                      <Text fontWeight="medium">温度 (°C)</Text>
+                      <Text fontWeight="medium">
+                        {t("calculators.lsi.labels.temp")}
+                      </Text>
                       <Text
                         fontWeight="bold"
                         color="#AF8219"
@@ -280,7 +325,9 @@ const LSICalculator: React.FC = () => {
                     width="100%"
                   >
                     <Flex justify="space-between" align="center" mb={2}>
-                      <Text fontWeight="medium">总溶解固体 TDS (mg/L)</Text>
+                      <Text fontWeight="medium">
+                        {t("calculators.lsi.labels.tds")}
+                      </Text>
                       <Text
                         fontWeight="bold"
                         color="#AF8219"
@@ -307,7 +354,7 @@ const LSICalculator: React.FC = () => {
                 {/* LSI 结果 */}
                 <VStack align="center" gap={3}>
                   <Text fontSize="lg" fontWeight="semibold">
-                    朗格利尔指数 (LSI)
+                    {t("calculators.lsi.sections.lsi")}
                   </Text>
 
                   {/* LSI 仪表盘 */}
@@ -374,7 +421,7 @@ const LSICalculator: React.FC = () => {
                 {/* 雷兹纳指数结果 */}
                 <VStack align="center" gap={3}>
                   <Text fontSize="lg" fontWeight="semibold">
-                    雷兹纳指数 (RSI)
+                    {t("calculators.lsi.sections.rsi")}
                   </Text>
 
                   {/* 雷兹纳指数仪表盘 */}
@@ -449,37 +496,52 @@ const LSICalculator: React.FC = () => {
                 p={4}
               >
                 <Text fontSize="md" fontWeight="semibold" mb={2}>
-                  计算分解
+                  {t("calculators.lsi.sections.breakdown")}
                 </Text>
                 <VStack align="stretch" gap={1} fontFamily="mono" fontSize="sm">
-                  <Text>pH 输入：{ph.toFixed(2)}</Text>
                   <Text>
-                    pHs ：{Number.isFinite(pHs) ? pHs.toFixed(3) : "—"}
+                    {t("calculators.lsi.breakdown.phInput", {
+                      value: ph.toFixed(2),
+                    })}
                   </Text>
                   <Text>
-                    LSI = pH - pHs ={" "}
-                    {Number.isFinite(lsi) ? lsi.toFixed(3) : "—"}
+                    {t("calculators.lsi.breakdown.pHs", {
+                      value: formatValue(pHs, 3),
+                    })}
                   </Text>
                   <Text>
-                    RSI = 2×pHs - pH ={" "}
-                    {Number.isFinite(ir) ? ir.toFixed(3) : "—"}
+                    {t("calculators.lsi.breakdown.lsi", {
+                      value: formatValue(lsi, 3),
+                    })}
                   </Text>
                   <Text>
-                    — A (TDS)：{Number.isFinite(A) ? A.toFixed(4) : "—"}
+                    {t("calculators.lsi.breakdown.rsi", {
+                      value: formatValue(ir, 3),
+                    })}
                   </Text>
                   <Text>
-                    — B (温度)：{Number.isFinite(B) ? B.toFixed(4) : "—"}
+                    {t("calculators.lsi.breakdown.a", {
+                      value: formatValue(A, 4),
+                    })}
                   </Text>
                   <Text>
-                    — C (硬度)：{Number.isFinite(C) ? C.toFixed(4) : "—"}
+                    {t("calculators.lsi.breakdown.b", {
+                      value: formatValue(B, 4),
+                    })}
                   </Text>
                   <Text>
-                    — D (碱度)：{Number.isFinite(D) ? D.toFixed(4) : "—"}
+                    {t("calculators.lsi.breakdown.c", {
+                      value: formatValue(C, 4),
+                    })}
+                  </Text>
+                  <Text>
+                    {t("calculators.lsi.breakdown.d", {
+                      value: formatValue(D, 4),
+                    })}
                   </Text>
                 </VStack>
                 <Text mt={3} color="gray.500" fontSize="xs">
-                  注意：碳酸盐碱度与钙硬度单位均为 mg/L 以 CaCO₃ 计；LSI 和 RSI
-                  用于碳酸钙饱和平衡判断。
+                  {t("calculators.lsi.note")}
                 </Text>
               </Box>
             </GridItem>
