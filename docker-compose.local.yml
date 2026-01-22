@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL 数据库服务
   postgres:
-    image: postgres:15
+    image: postgres:18
     container_name: dataanalysis_postgres_local
     environment:
       POSTGRES_DB: dataanalysis_local
