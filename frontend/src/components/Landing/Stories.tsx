@@ -18,7 +18,7 @@ import {
 import { useState } from "react"
 import { FaPlay } from "react-icons/fa"
 // import { DotGrid } from '../ui/DotGrid';
-import { type Story, stories } from "../../data/stories"
+import { getStories, type Story } from "../../data/stories"
 import { useI18n } from "../../i18n"
 import { DialogContent } from "../ui/dialog"
 
@@ -152,8 +152,9 @@ function VideoPlayer({}: { src: string }) {
 }
 
 export function Stories() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const [selectedStory, setSelectedStory] = useState<Story | null>(null)
+  const stories = getStories(language)
 
   return (
     <DialogRoot>

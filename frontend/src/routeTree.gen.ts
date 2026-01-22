@@ -17,7 +17,6 @@ import { Route as RecoverPasswordImport } from './routes/recover-password'
 import { Route as OpenflowImport } from './routes/openflow'
 import { Route as MiddayStyleImport } from './routes/midday-style'
 import { Route as LoginImport } from './routes/login'
-import { Route as DashboardImport } from './routes/dashboard'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as IndexImport } from './routes/index'
 import { Route as UpdatesIndexImport } from './routes/updates/index'
@@ -68,11 +67,6 @@ const MiddayStyleRoute = MiddayStyleImport.update({
 
 const LoginRoute = LoginImport.update({
   path: '/login',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const DashboardRoute = DashboardImport.update({
-  path: '/dashboard',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -186,10 +180,6 @@ declare module '@tanstack/react-router' {
     }
     '/_layout': {
       preLoaderRoute: typeof LayoutImport
-      parentRoute: typeof rootRoute
-    }
-    '/dashboard': {
-      preLoaderRoute: typeof DashboardImport
       parentRoute: typeof rootRoute
     }
     '/login': {
@@ -310,7 +300,6 @@ export const routeTree = rootRoute.addChildren([
     LayoutKnowledgeIndexRoute,
     LayoutKnowledgeSplatSlugRoute,
   ]),
-  DashboardRoute,
   LoginRoute,
   MiddayStyleRoute,
   OpenflowRoute,

@@ -165,7 +165,12 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         const key = `${nodeName}_${variable}`
         const variableInfo = availableVariables.find((v) => v.name === variable)
         const nodeLabel = resultData.node_data?.[nodeName]?.label || nodeName
-        const label = `${nodeLabel} - ${variableInfo?.label || variable}`
+        const variableLabel = (() => {
+          if (!variableInfo) return variable
+          const translated = t(variableInfo.label)
+          return translated === variableInfo.label ? variable : translated
+        })()
+        const label = `${nodeLabel} - ${variableLabel} (${variable})`
         const color = colors[colorIndex % colors.length]
 
         lines.push(
@@ -192,6 +197,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     resultData.node_data,
     selectedNodes,
     selectedVariables,
+    t,
   ])
 
   if (selectedNodes.length === 0 || selectedVariables.length === 0) {

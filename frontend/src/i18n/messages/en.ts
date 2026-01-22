@@ -87,6 +87,75 @@ export const enMessages: I18nMessages = {
     minute: "min",
     second: "s",
   },
+  updates: {
+    empty: "No updates yet",
+    backToList: "Back to updates",
+    viewMore: "More updates",
+    publishedAt: "Published on {date}",
+  },
+  deepResearch: {
+    hero: {
+      title: "AI Deep Research",
+      tagline: "Explore in-depth wastewater treatment insights",
+      description:
+        "An AI-powered deep research hub for cutting-edge wastewater treatment analysis and insights",
+      note: "Content from AI Deep Research. Learn and stay skeptical.",
+    },
+    search: {
+      placeholder: "Search titles or content...",
+    },
+    filters: {
+      allCategories: "All categories",
+      allTags: "All tags",
+      categoryPlaceholder: "Select category",
+      tagPlaceholder: "Select tag",
+    },
+    stats: {
+      articles: "Articles",
+      categories: "Categories",
+      tags: "Tags",
+    },
+    article: {
+      readFull: "Read full article",
+    },
+    empty: {
+      title: "No matching articles",
+      description: "Try adjusting your search or filters",
+    },
+    state: {
+      loading: "Loading...",
+      loadFailed: "Load failed: {error}",
+    },
+    detail: {
+      back: "Back to AI Deep Research",
+      notFound: {
+        title: "Article not found",
+        description: "The article you are looking for does not exist or has been removed.",
+      },
+      interactiveInProgress: "Interactive content for this article is under development.",
+      about: {
+        title: "About this article",
+        tagsLabel: "Tags",
+        descriptionLabel: "Description",
+      },
+    },
+  },
+  openflow: {
+    hintTitle: "💡 How to use",
+    instructions: {
+      drag: "Drag components from the left toolbar onto the canvas to create nodes",
+      connect: "Connect nodes by dragging from a node edge to another node",
+      click: "Click a node or edge to edit parameters on the right",
+      doubleClick: "Double-click a node or edge to edit its name and flow rate",
+      loginToRun: "Run calculations after logging in; you can export results locally",
+      exportImport: "Import exported files locally",
+      noLoginCompute: "Login-based calculation is not available in this demo",
+      noOnlineSave: "Online save is not available in this demo",
+      noOnlineLoad: "Online load is not available in this demo",
+      noLoadCalcData: "Loading saved calculation data is not available in this demo",
+      deleteKey: "Select an element and press Delete to remove it",
+    },
+  },
   time: {
     relative: {
       justNow: "Just now",
@@ -605,6 +674,12 @@ export const enMessages: I18nMessages = {
       aiReportTitle: "AI Analysis Report",
       concentrationAxisLabel: "Concentration (mg/L)",
       dialogTitle: "Analysis Results",
+      tabs: {
+        t95SteadyCheck: "T95 & Steady State",
+        spatialProfile: "Spatial Profile",
+        edgeConcentration: "Edge Concentration",
+        aiReport: "AI Report",
+      },
       edgeSelection: "Edge Selection",
       emptyData: "No data",
       emptyRange: "No data in selected time range",

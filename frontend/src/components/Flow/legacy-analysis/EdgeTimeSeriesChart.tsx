@@ -236,7 +236,12 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
             ? `${sourceNode.label || edge.source} → ${targetNode.label || edge.target}`
             : edgeId
 
-        const label = `${edgeLabel} - ${variableInfo?.label || variable}`
+        const variableLabel = (() => {
+          if (!variableInfo) return variable
+          const translated = t(variableInfo.label)
+          return translated === variableInfo.label ? variable : translated
+        })()
+        const label = `${edgeLabel} - ${variableLabel} (${variable})`
         const color = colors[colorIndex % colors.length]
 
         lines.push(
@@ -263,6 +268,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
     resultData.node_data,
     selectedEdges,
     filteredSelectedVariables,
+    t,
   ])
 
   // 如果没有数据，显示提示信息

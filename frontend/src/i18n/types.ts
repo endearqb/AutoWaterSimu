@@ -83,6 +83,74 @@ export interface I18nMessages {
     minute: string
     second: string
   }
+  updates: {
+    empty: string
+    backToList: string
+    viewMore: string
+    publishedAt: string
+  }
+  deepResearch: {
+    hero: {
+      title: string
+      tagline: string
+      description: string
+      note: string
+    }
+    search: {
+      placeholder: string
+    }
+    filters: {
+      allCategories: string
+      allTags: string
+      categoryPlaceholder: string
+      tagPlaceholder: string
+    }
+    stats: {
+      articles: string
+      categories: string
+      tags: string
+    }
+    article: {
+      readFull: string
+    }
+    empty: {
+      title: string
+      description: string
+    }
+    state: {
+      loading: string
+      loadFailed: string
+    }
+    detail: {
+      back: string
+      notFound: {
+        title: string
+        description: string
+      }
+      interactiveInProgress: string
+      about: {
+        title: string
+        tagsLabel: string
+        descriptionLabel: string
+      }
+    }
+  }
+  openflow: {
+    hintTitle: string
+    instructions: {
+      drag: string
+      connect: string
+      click: string
+      doubleClick: string
+      loginToRun: string
+      exportImport: string
+      noLoginCompute: string
+      noOnlineSave: string
+      noOnlineLoad: string
+      noLoadCalcData: string
+      deleteKey: string
+    }
+  }
   time: {
     relative: {
       justNow: string
@@ -590,6 +658,12 @@ export interface I18nMessages {
       aiReportTitle: string
       concentrationAxisLabel: string
       dialogTitle: string
+      tabs: {
+        t95SteadyCheck: string
+        spatialProfile: string
+        edgeConcentration: string
+        aiReport: string
+      }
       edgeSelection: string
       emptyData: string
       emptyRange: string

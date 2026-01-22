@@ -40,10 +40,14 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
     return (
       modelConfig?.availableVariables.map((variable) => ({
         name: variable.name,
-        label: `${variable.label} (${variable.name})${variable.unit ? ` [${variable.unit}]` : ""}`,
+        label: (() => {
+          const translated = t(variable.label)
+          const resolved = translated === variable.label ? variable.name : translated
+          return `${resolved} (${variable.name})${variable.unit ? ` [${variable.unit}]` : ""}`
+        })(),
       })) || []
     )
-  }, [modelType, language])
+  }, [modelType, language, t])
 
   const analysisResults = useMemo(() => {
     if (!resultData.node_data || !resultData.timestamps) return []

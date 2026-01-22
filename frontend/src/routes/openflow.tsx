@@ -6,12 +6,28 @@ import Canvas from "../components/Flow/Canvas"
 import Layout from "../components/Flow/Layout"
 import InspectorContainer from "../components/Flow/inspectorbar/InspectorContainer"
 import { MiddayHead } from "../components/Landing"
+import { useI18n } from "@/i18n"
 
 export const Route = createFileRoute("/openflow")({
   component: FlowPage,
 })
 
 function FlowPage() {
+  const { t } = useI18n()
+  const instructions = [
+    t("openflow.instructions.drag"),
+    t("openflow.instructions.connect"),
+    t("openflow.instructions.click"),
+    t("openflow.instructions.doubleClick"),
+    t("openflow.instructions.loginToRun"),
+    t("openflow.instructions.exportImport"),
+    t("openflow.instructions.noLoginCompute"),
+    t("openflow.instructions.noOnlineSave"),
+    t("openflow.instructions.noOnlineLoad"),
+    t("openflow.instructions.noLoadCalcData"),
+    t("openflow.instructions.deleteKey"),
+  ]
+
   return (
     <Box minH="100vh">
       <MiddayHead />
@@ -41,22 +57,10 @@ function FlowPage() {
                 border="1px"
                 borderColor="gray.200"
               >
-                💡 使用说明
+                {t("openflow.hintTitle")}
               </Text>
               <VStack align="start" gap={1} ml={2}>
-                {[
-                  "拖拽左侧工具栏组件到画布创建节点",
-                  "靠近节点边缘连接节点创建连接线",
-                  "单击节点或连接线在右侧设置参数",
-                  "双击节点或连接线可设置节点名和流量",
-                  "计算需登录后执行，可本地导出保存",
-                  "导出后的文件可使用本地导入",
-                  "暂时不提供登录计算功能",
-                  "暂时不提供在线保存功能",
-                  "暂时不提供在线加载功能",
-                  "暂时不提供加载计算数据功能",
-                  "选中后使用键盘Delete键删除",
-                ].map((text, index) => (
+                {instructions.map((text, index) => (
                   <Text
                     key={index}
                     fontSize="xs"

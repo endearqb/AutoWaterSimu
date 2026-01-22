@@ -2,6 +2,7 @@ import { Box, Tabs } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
 import { useState } from "react"
 import type { ASM1ResultData, EdgeParameterConfig } from "./asm1-analysis"
+import { useI18n } from "../../../i18n"
 import {
   AIReportPanel,
   DataQualityPanel,
@@ -28,6 +29,7 @@ const ASM1Analyzer = ({
   edgeParameterConfigs = {},
 }: ASM1AnalyzerProps) => {
   const [activeTab, setActiveTab] = useState(0)
+  const { t } = useI18n()
 
   return (
     <Box w="full" h="full" p={4} overflowY="auto">
@@ -48,10 +50,16 @@ const ASM1Analyzer = ({
         variant="enclosed"
       >
         <Tabs.List>
-          <Tabs.Trigger value="tab-0">T95&稳态检查</Tabs.Trigger>
-          <Tabs.Trigger value="tab-1">空间剖面</Tabs.Trigger>
-          <Tabs.Trigger value="tab-2">连接线浓度</Tabs.Trigger>
-          <Tabs.Trigger value="tab-3">AI报告</Tabs.Trigger>
+          <Tabs.Trigger value="tab-0">
+            {t("flow.analysis.tabs.t95SteadyCheck")}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="tab-1">
+            {t("flow.analysis.tabs.spatialProfile")}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="tab-2">
+            {t("flow.analysis.tabs.edgeConcentration")}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="tab-3">{t("flow.analysis.tabs.aiReport")}</Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="tab-0">

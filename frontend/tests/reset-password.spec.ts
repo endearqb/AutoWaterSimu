@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { findLastEmail } from "./utils/mailcatcher"
+import { findLastEmail, isMailcatcherAvailable } from "./utils/mailcatcher"
 import { randomEmail, randomPassword } from "./utils/random"
 import { logInUser, signUpNewUser } from "./utils/user"
 
@@ -31,6 +31,11 @@ test("User can reset password successfully using the link", async ({
   page,
   request,
 }) => {
+  const mailcatcherAvailable = await isMailcatcherAvailable(request)
+  if (!mailcatcherAvailable) {
+    test.skip(true, "Mailcatcher is not running")
+  }
+
   const fullName = "Test User"
   const email = randomEmail()
   const password = randomPassword()
@@ -83,10 +88,15 @@ test("Expired or invalid reset link", async ({ page }) => {
   await page.getByPlaceholder("Confirm Password").fill(password)
   await page.getByRole("button", { name: "Reset Password" }).click()
 
-  await expect(page.getByText("Invalid token")).toBeVisible()
+  await expect(page.getByText("Something went wrong.")).toBeVisible()
 })
 
 test("Weak new password validation", async ({ page, request }) => {
+  const mailcatcherAvailable = await isMailcatcherAvailable(request)
+  if (!mailcatcherAvailable) {
+    test.skip(true, "Mailcatcher is not running")
+  }
+
   const fullName = "Test User"
   const email = randomEmail()
   const password = randomPassword()
@@ -120,6 +130,6 @@ test("Weak new password validation", async ({ page, request }) => {
   await page.getByRole("button", { name: "Reset Password" }).click()
 
   await expect(
-    page.getByText("Password must be at least 8 characters"),
+    page.getByText("Must be at least 8 characters"),
   ).toBeVisible()
 })

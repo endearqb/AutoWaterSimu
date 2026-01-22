@@ -61,7 +61,10 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
         .filter((variable) => variable.name !== "volume") // 过滤掉体积变量
         .map((variable) => ({
           name: variable.name,
-          label: variable.label,
+          label: (() => {
+            const translated = t(variable.label)
+            return translated === variable.label ? variable.name : translated
+          })(),
         })) || []
 
     // 添加流量作为第一个变量
@@ -220,7 +223,11 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
       return {
         key: variable,
         dataKey: variable,
-        name: variableInfo?.label || variable,
+        name: variableInfo
+          ? variableInfo.name === "flow_rate"
+            ? variableInfo.label
+            : `${variableInfo.label} (${variable})`
+          : variable,
         color: colors[index % colors.length],
       }
     })

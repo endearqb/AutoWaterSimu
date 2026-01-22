@@ -1,4 +1,4 @@
-﻿import type { I18nMessages } from "../types"
+import type { I18nMessages } from "../types"
 
 export const zhMessages: I18nMessages = {
   app: {
@@ -82,6 +82,75 @@ export const zhMessages: I18nMessages = {
     unknown: "未知",
     minute: "分钟",
     second: "秒",
+  },
+  updates: {
+    empty: "暂无更新内容",
+    backToList: "返回更新列表",
+    viewMore: "查看更多更新",
+    publishedAt: "发布于 {date}",
+  },
+  deepResearch: {
+    hero: {
+      title: "AI Deep Research",
+      tagline: "探索污水处理技术的深度解析",
+      description:
+        "基于人工智能的深度研究平台，为您提供污水处理领域的前沿技术分析与洞察",
+      note: "内容来自 AI Deep Research，学习并保持质疑",
+    },
+    search: {
+      placeholder: "搜索文章标题或内容...",
+    },
+    filters: {
+      allCategories: "所有分类",
+      allTags: "所有标签",
+      categoryPlaceholder: "选择分类",
+      tagPlaceholder: "选择标签",
+    },
+    stats: {
+      articles: "篇文章",
+      categories: "个分类",
+      tags: "个标签",
+    },
+    article: {
+      readFull: "阅读全文",
+    },
+    empty: {
+      title: "没有找到匹配的文章",
+      description: "请尝试调整搜索条件或过滤器",
+    },
+    state: {
+      loading: "加载中...",
+      loadFailed: "加载失败：{error}",
+    },
+    detail: {
+      back: "返回 AI Deep Research",
+      notFound: {
+        title: "文章未找到",
+        description: "您访问的文章不存在或已被删除。",
+      },
+      interactiveInProgress: "该文章的交互式内容正在开发中，敬请期待。",
+      about: {
+        title: "关于这篇文章",
+        tagsLabel: "标签",
+        descriptionLabel: "文章描述",
+      },
+    },
+  },
+  openflow: {
+    hintTitle: "💡 使用说明",
+    instructions: {
+      drag: "拖拽左侧工具栏组件到画布创建节点",
+      connect: "靠近节点边缘连接节点创建连接线",
+      click: "单击节点或连接线在右侧设置参数",
+      doubleClick: "双击节点或连接线可设置节点名和流量",
+      loginToRun: "计算需登录后执行，可本地导出保存",
+      exportImport: "导出后的文件可使用本地导入",
+      noLoginCompute: "暂时不提供登录计算功能",
+      noOnlineSave: "暂时不提供在线保存功能",
+      noOnlineLoad: "暂时不提供在线加载功能",
+      noLoadCalcData: "暂时不提供加载计算数据功能",
+      deleteKey: "选中后使用键盘 Delete 键删除",
+    },
   },
   time: {
     relative: {
@@ -594,6 +663,12 @@ export const zhMessages: I18nMessages = {
       aiReportTitle: "AI 分析报告",
       concentrationAxisLabel: "浓度 (mg/L)",
       dialogTitle: "分析结果",
+      tabs: {
+        t95SteadyCheck: "T95&稳态检查",
+        spatialProfile: "空间剖面",
+        edgeConcentration: "连接线浓度",
+        aiReport: "AI报告",
+      },
       edgeSelection: "连接线选择",
       emptyData: "暂无数据",
       emptyRange: "所选时间范围内暂无数据",

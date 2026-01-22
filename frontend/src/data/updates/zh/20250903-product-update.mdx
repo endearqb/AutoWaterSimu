@@ -1,0 +1,27 @@
+---
+
+title: "2025-09-03 更新日志"
+publishedAt: '2025-09-03'
+summary: "更新说明页面组件复用、深色模式适配、ASM1/ASM1Slim 默认参数修复、FlowCanvas 警告 & 双击编辑问题修复等。"
+tag: 'Updates'
+---
+
+# 2025-09-03 更新日志
+
+* 更新说明页与首页视觉风格与交互统一
+* 将**部分页面内容汉化**，优化中文阅读体验
+![](/assets/images/updates/0903-2.png)
+![](/assets/images/updates/0903-1.png)
+* 修复新建节点时**计算参数默认值缺失**的问题
+* 解决因每次渲染创建新 `edgeTypes/nodeTypes` 对象导致的 React 警告
+* 修复流程图连接线**双击无法编辑流量**的问题
+![](/assets/images/updates/0903-4.png)
+![](/assets/images/updates/0903-5.png)
+* 修改时间步数据修改与存储策略，只保存特定时间间隔的数据,优化计算结果数据表存储内容格式提升API性能
+![](/assets/images/updates/0903-6.png)
+![](/assets/images/updates/0903-7.png)
+
+
+*tips：流程图至少有一个出水端或进水端才能计算*
+
+*本次更新完成了更新说明页面的组件复用，并默认参数与 FlowCanvas 交互做出关键修复，整体提升了用户体验与页面一致性。*

@@ -430,17 +430,17 @@ export function getAvailableVariables(
   rd: ASM1ResultData,
 ): Array<{ name: string; label: string }> {
   const variableMap: Record<string, string> = {
-    S_S: "易降解基质",
-    S_NH: "氨氮",
-    S_NO: "硝态氮",
-    S_O: "溶解氧",
-    S_ND: "溶解有机氮",
-    S_ALK: "碱度",
-    X_BH: "异养菌生物量",
-    X_BA: "自养菌生物量",
-    X_S: "缓慢降解基质",
-    X_i: "惰性颗粒物",
-    X_ND: "颗粒有机氮",
+    S_S: "flow.modelParams.asm1.S_S.label",
+    S_NH: "flow.modelParams.asm1.S_NH.label",
+    S_NO: "flow.modelParams.asm1.S_NO.label",
+    S_O: "flow.modelParams.asm1.S_O.label",
+    S_ND: "flow.modelParams.asm1.S_ND.label",
+    S_ALK: "flow.modelParams.asm1.S_ALK.label",
+    X_BH: "flow.modelParams.asm1.X_BH.label",
+    X_BA: "flow.modelParams.asm1.X_BA.label",
+    X_S: "flow.modelParams.asm1.X_S.label",
+    X_i: "flow.modelParams.asm1.X_i.label",
+    X_ND: "flow.modelParams.asm1.X_ND.label",
   }
 
   const availableVars = new Set<string>()

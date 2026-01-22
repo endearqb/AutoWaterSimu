@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import { Article } from "../../components/Updates/Article"
 import { getBlogPosts } from "../../utils/blog"
+import { useI18n } from "@/i18n"
 
 export const Route = createFileRoute("/updates/")({
   component: UpdatesPage,
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/updates/")({
 
 function UpdatesPage() {
   const { posts } = Route.useLoaderData()
+  const { t } = useI18n()
   const sortedPosts = posts.sort(
     (a, b) =>
       new Date(b.metadata.publishedAt).getTime() -
@@ -66,7 +68,7 @@ function UpdatesPage() {
           {sortedPosts.length === 0 && (
             <Box textAlign="center" py={20}>
               <Text fontSize="lg" color="gray.500">
-                暂无更新内容
+                {t("updates.empty")}
               </Text>
             </Box>
           )}

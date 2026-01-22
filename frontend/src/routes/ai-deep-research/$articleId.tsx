@@ -19,10 +19,12 @@ import { DigitalTwinGuide } from "../../components/Knowledge/DigitalTwinGuide"
 import { WaterTreatmentBalance } from "../../components/Knowledge/WaterTreatmentBalance"
 import { Header } from "../../components/Landing"
 import { useArticleData } from "../../hooks/useArticleData"
+import { useI18n } from "@/i18n"
 
 const ArticleDetail: React.FC = () => {
   const { articleId } = Route.useParams()
   const { getArticleById } = useArticleData()
+  const { t } = useI18n()
   const article = getArticleById(articleId)
 
   const bgColor = useColorModeValue("gray.50", "gray.900")
@@ -39,7 +41,7 @@ const ArticleDetail: React.FC = () => {
         return (
           <Alert.Root status="warning" borderRadius="md">
             <Alert.Indicator />
-            <Alert.Title>该文章的交互式内容正在开发中，敬请期待。</Alert.Title>
+            <Alert.Title>{t("deepResearch.detail.interactiveInProgress")}</Alert.Title>
           </Alert.Root>
         )
     }
@@ -62,7 +64,9 @@ const ArticleDetail: React.FC = () => {
                   <FiChevronRight color="gray.500" />
                 </Breadcrumb.Separator>
                 <Breadcrumb.Item>
-                  <Breadcrumb.CurrentLink>文章未找到</Breadcrumb.CurrentLink>
+                  <Breadcrumb.CurrentLink>
+                    {t("deepResearch.detail.notFound.title")}
+                  </Breadcrumb.CurrentLink>
                 </Breadcrumb.Item>
               </Breadcrumb.List>
             </Breadcrumb.Root>
@@ -70,9 +74,9 @@ const ArticleDetail: React.FC = () => {
             <Alert.Root status="error" borderRadius="md" maxW="md">
               <Alert.Indicator />
               <Alert.Content>
-                <Alert.Title>文章未找到</Alert.Title>
+                <Alert.Title>{t("deepResearch.detail.notFound.title")}</Alert.Title>
                 <Alert.Description>
-                  您访问的文章不存在或已被删除。
+                  {t("deepResearch.detail.notFound.description")}
                 </Alert.Description>
               </Alert.Content>
             </Alert.Root>
@@ -81,7 +85,7 @@ const ArticleDetail: React.FC = () => {
               <Link to="/ai-deep-research">
                 <HStack gap={2}>
                   <FiArrowLeft />
-                  <Text>返回AI Deep Research</Text>
+                  <Text>{t("deepResearch.detail.back")}</Text>
                 </HStack>
               </Link>
             </Button>
@@ -126,7 +130,7 @@ const ArticleDetail: React.FC = () => {
           {/* 返回按钮 */}
           <HStack w="100%" justify="space-between">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/ai-deep-research">返回AI Deep Research</Link>
+              <Link to="/ai-deep-research">{t("deepResearch.detail.back")}</Link>
             </Button>
 
             <HStack gap={2}>
@@ -150,10 +154,10 @@ const ArticleDetail: React.FC = () => {
             borderColor="gray.200"
           >
             <VStack gap={4} align="start">
-              <Heading size="md">关于这篇文章</Heading>
+              <Heading size="md">{t("deepResearch.detail.about.title")}</Heading>
               <VStack align="start" gap={2} w="100%">
                 <Text fontSize="sm" fontWeight="bold" color="gray.600">
-                  标签
+                  {t("deepResearch.detail.about.tagsLabel")}
                 </Text>
                 <HStack gap={2} wrap="wrap">
                   {article.tags.map((tag, index) => (
@@ -171,7 +175,7 @@ const ArticleDetail: React.FC = () => {
 
               <VStack align="start" gap={2} w="100%">
                 <Text fontSize="sm" fontWeight="bold" color="gray.600">
-                  文章描述
+                  {t("deepResearch.detail.about.descriptionLabel")}
                 </Text>
                 <Text fontSize="sm" color="gray.700" lineHeight="1.6">
                   {article.description}

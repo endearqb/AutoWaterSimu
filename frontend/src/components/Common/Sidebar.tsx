@@ -263,6 +263,7 @@ const Sidebar = () => {
                     w="100%"
                     h="auto"
                     p={2}
+                    data-testid="user-menu"
                     justifyContent={isCollapsed ? "center" : "flex-start"}
                   >
                     <Flex alignItems="center" gap={2} w="100%">

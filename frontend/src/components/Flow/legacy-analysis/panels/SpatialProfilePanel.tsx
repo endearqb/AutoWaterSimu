@@ -52,10 +52,13 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
     return (
       modelConfig?.availableVariables.map((variable) => ({
         name: variable.name,
-        label: variable.label,
+        label: (() => {
+          const translated = t(variable.label)
+          return translated === variable.label ? variable.name : translated
+        })(),
       })) || []
     )
-  }, [modelType, language])
+  }, [modelType, language, t])
 
   const timestampsLength = resultData.timestamps?.length || 0
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
@@ -192,7 +195,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
       return {
         key: variable,
         dataKey: variable,
-        name: variableInfo?.label || variable,
+        name: variableInfo ? `${variableInfo.label} (${variable})` : variable,
         color: colors[index % colors.length],
       }
     })
@@ -266,7 +269,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
             >
               {availableVariables.map((variable) => (
                 <Checkbox key={variable.name} value={variable.name}>
-                  {variable.label}
+                  {variable.label} ({variable.name})
                 </Checkbox>
               ))}
             </SimpleGrid>

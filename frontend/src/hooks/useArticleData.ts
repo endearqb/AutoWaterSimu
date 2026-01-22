@@ -4,8 +4,10 @@ import {
   getArticleById as getArticleByIdFromData,
 } from "../data/articles/articleData"
 import type { ArticleData } from "../data/articles/types"
+import { useI18n } from "@/i18n"
 
 export const useArticleData = () => {
+  const { language } = useI18n()
   const [articles, setArticles] = useState<ArticleData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,21 +20,21 @@ export const useArticleData = () => {
         // 模拟异步加载
         await new Promise((resolve) => setTimeout(resolve, 500))
 
-        const articlesData = getAllArticles()
+        const articlesData = getAllArticles(language)
         setArticles(articlesData)
         setError(null)
       } catch (err) {
-        setError(err instanceof Error ? err.message : "加载文章失败")
+        setError(err instanceof Error ? err.message : "Failed to load articles")
       } finally {
         setLoading(false)
       }
     }
 
     loadArticles()
-  }, [])
+  }, [language])
 
   const getArticleById = (id: string): ArticleData | undefined => {
-    return getArticleByIdFromData(id)
+    return getArticleByIdFromData(id, language)
   }
 
   return {
