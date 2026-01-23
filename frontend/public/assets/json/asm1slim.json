@@ -1,0 +1,599 @@
+{
+  "nodes": [
+    {
+      "id": "input-1755588587868-v2pfvv46u",
+      "type": "input",
+      "position": {
+        "x": 420,
+        "y": -35
+      },
+      "data": {
+        "volume": "1e-3",
+        "label": "输入节点",
+        "dissolvedOxygen": 0,
+        "cod": 0,
+        "nitrate": 0,
+        "ammonia": 0,
+        "totalAlkalinity": 0
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": true,
+      "dragging": false
+    },
+    {
+      "id": "asmslim-1755588593627-tjdnc25vk",
+      "type": "asm1slim",
+      "position": {
+        "x": 600,
+        "y": 110
+      },
+      "data": {
+        "volume": "1000",
+        "label": "A1",
+        "dissolvedOxygen": "0.2",
+        "cod": "100",
+        "nitrate": "1",
+        "ammonia": "5",
+        "totalAlkalinity": "1"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1slimParameters": {
+        "empiricalDenitrificationRate": "1",
+        "empiricalNitrificationRate": "0",
+        "empiricalCNRatio": 8,
+        "codDenitrificationInfluence": 50,
+        "nitrateDenitrificationInfluence": 1,
+        "ammoniaNitrificationInfluence": 2,
+        "aerobicCODDegradationRate": 0.8
+      }
+    },
+    {
+      "id": "asmslim-1755591194907-8w49rjzmi",
+      "type": "asm1slim",
+      "position": {
+        "x": 420,
+        "y": 110
+      },
+      "data": {
+        "volume": "1000",
+        "label": "A2",
+        "dissolvedOxygen": "0.2",
+        "cod": "100",
+        "nitrate": "1",
+        "ammonia": "5",
+        "totalAlkalinity": "1"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1slimParameters": {
+        "empiricalDenitrificationRate": "20",
+        "empiricalNitrificationRate": "20",
+        "empiricalCNRatio": 0,
+        "codDenitrificationInfluence": 50,
+        "nitrateDenitrificationInfluence": 1,
+        "ammoniaNitrificationInfluence": 2,
+        "aerobicCODDegradationRate": 0.8
+      }
+    },
+    {
+      "id": "asmslim-1755591196079-pzu7t5vpe",
+      "type": "asm1slim",
+      "position": {
+        "x": 750,
+        "y": 200
+      },
+      "data": {
+        "volume": "1333",
+        "label": "O2",
+        "dissolvedOxygen": "2",
+        "cod": "20",
+        "nitrate": "20",
+        "ammonia": "5",
+        "totalAlkalinity": "1"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1slimParameters": {
+        "empiricalDenitrificationRate": 1,
+        "empiricalNitrificationRate": "0",
+        "empiricalCNRatio": 8,
+        "codDenitrificationInfluence": 50,
+        "nitrateDenitrificationInfluence": 1,
+        "ammoniaNitrificationInfluence": 2,
+        "aerobicCODDegradationRate": 0.8
+      }
+    },
+    {
+      "id": "asmslim-1755591197351-o3wi2mnfd",
+      "type": "asm1slim",
+      "position": {
+        "x": 600,
+        "y": 200
+      },
+      "data": {
+        "volume": "1333",
+        "label": "O1",
+        "dissolvedOxygen": "2",
+        "cod": "20",
+        "nitrate": "20",
+        "ammonia": "5",
+        "totalAlkalinity": "1"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1slimParameters": {
+        "empiricalDenitrificationRate": 1,
+        "empiricalNitrificationRate": "0",
+        "empiricalCNRatio": 8,
+        "codDenitrificationInfluence": 50,
+        "nitrateDenitrificationInfluence": 1,
+        "ammoniaNitrificationInfluence": 2,
+        "aerobicCODDegradationRate": 0.8
+      }
+    },
+    {
+      "id": "asmslim-1755591214537-3qejo3j6g",
+      "type": "asm1slim",
+      "position": {
+        "x": 905,
+        "y": 200
+      },
+      "data": {
+        "volume": "1333",
+        "label": "O3",
+        "dissolvedOxygen": "2",
+        "cod": "20",
+        "nitrate": "20",
+        "ammonia": "5",
+        "totalAlkalinity": "1"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1slimParameters": {
+        "empiricalDenitrificationRate": "1",
+        "empiricalNitrificationRate": "0",
+        "empiricalCNRatio": 8,
+        "codDenitrificationInfluence": 50,
+        "nitrateDenitrificationInfluence": 1,
+        "ammoniaNitrificationInfluence": 2,
+        "aerobicCODDegradationRate": 0.8
+      }
+    },
+    {
+      "id": "default-1755591231408-7jytugaud",
+      "type": "default",
+      "position": {
+        "x": 900,
+        "y": 320
+      },
+      "data": {
+        "volume": "6000",
+        "label": "沉淀池",
+        "dissolvedOxygen": "0.2",
+        "cod": "20",
+        "nitrate": "20",
+        "ammonia": "5",
+        "totalAlkalinity": "1"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "output-1755591320330-whnv3sg6j",
+      "type": "output",
+      "position": {
+        "x": 1095,
+        "y": 325
+      },
+      "data": {
+        "volume": "1e-3",
+        "label": "出水",
+        "dissolvedOxygen": 0,
+        "cod": 0,
+        "nitrate": 0,
+        "ammonia": 0,
+        "totalAlkalinity": 0
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "default-1755591231408-7jytugaud",
+      "sourceHandle": "left-source",
+      "target": "asmslim-1755591194907-8w49rjzmi",
+      "targetHandle": "bottom-target",
+      "id": "edge-1755591285915",
+      "data": {
+        "flow": 750,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asmslim-1755591214537-3qejo3j6g",
+      "sourceHandle": "top-source",
+      "target": "asmslim-1755591194907-8w49rjzmi",
+      "targetHandle": "top-target",
+      "id": "edge-1755591295232",
+      "data": {
+        "flow": 3000,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asmslim-1755591194907-8w49rjzmi",
+      "sourceHandle": "right-source",
+      "target": "asmslim-1755588593627-tjdnc25vk",
+      "targetHandle": "left-target",
+      "id": "edge-1755591298551",
+      "data": {
+        "flow": 4500,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asmslim-1755588593627-tjdnc25vk",
+      "sourceHandle": "bottom-source",
+      "target": "asmslim-1755591197351-o3wi2mnfd",
+      "targetHandle": "top-target",
+      "id": "edge-1755591299983",
+      "data": {
+        "flow": 4500,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asmslim-1755591197351-o3wi2mnfd",
+      "sourceHandle": "right-source",
+      "target": "asmslim-1755591196079-pzu7t5vpe",
+      "targetHandle": "left-target",
+      "id": "edge-1755591301769",
+      "data": {
+        "flow": 4500,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asmslim-1755591196079-pzu7t5vpe",
+      "sourceHandle": "right-source",
+      "target": "asmslim-1755591214537-3qejo3j6g",
+      "targetHandle": "left-target",
+      "id": "edge-1755591303359",
+      "data": {
+        "flow": 4500,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asmslim-1755591214537-3qejo3j6g",
+      "sourceHandle": "bottom-source",
+      "target": "default-1755591231408-7jytugaud",
+      "targetHandle": "top-target",
+      "id": "edge-1755591307620",
+      "data": {
+        "flow": 1500,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "input-1755588587868-v2pfvv46u",
+      "sourceHandle": "bottom-source",
+      "target": "asmslim-1755591194907-8w49rjzmi",
+      "targetHandle": "top-target",
+      "id": "edge-1755591310904",
+      "data": {
+        "flow": 750,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 0,
+        "cod_b": 300,
+        "nitrate_a": 0,
+        "nitrate_b": 10,
+        "ammonia_a": 0,
+        "ammonia_b": 60,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "default-1755591231408-7jytugaud",
+      "sourceHandle": "right-source",
+      "target": "output-1755591320330-whnv3sg6j",
+      "targetHandle": "left-target",
+      "id": "edge-1755591324869",
+      "data": {
+        "flow": 750,
+        "dissolvedOxygen_a": 1,
+        "dissolvedOxygen_b": 0,
+        "cod_a": 1,
+        "cod_b": 0,
+        "nitrate_a": 1,
+        "nitrate_b": 0,
+        "ammonia_a": 1,
+        "ammonia_b": 0,
+        "totalAlkalinity_a": 1,
+        "totalAlkalinity_b": 0
+      }
+    }
+  ],
+  "customParameters": [
+    {
+      "name": "dissolvedOxygen",
+      "label": "溶解氧",
+      "description": "溶解氧浓度 (mg/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "cod",
+      "label": "COD",
+      "description": "化学需氧量 (mg/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "nitrate",
+      "label": "硝态氮",
+      "description": "硝态氮浓度 (mg/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "ammonia",
+      "label": "氨氮",
+      "description": "氨氮浓度 (mg/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "totalAlkalinity",
+      "label": "总碱度",
+      "description": "总碱度 (mg/L)",
+      "defaultValue": 0
+    }
+  ],
+  "calculationParameters": {
+    "hours": 1,
+    "steps_per_hour": 20,
+    "solver_method": "rk4",
+    "tolerance": 0.001,
+    "max_iterations": 2000,
+    "sampling_interval_hours": 1,
+    "max_memory_mb": 1024
+  },
+  "exportedAt": "2026-01-23T06:51:02.797Z",
+  "version": "1.0"
+}

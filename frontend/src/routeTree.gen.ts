@@ -12,11 +12,13 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SignupImport } from './routes/signup'
+import { Route as ShowcaseImport } from './routes/showcase'
 import { Route as ResetPasswordImport } from './routes/reset-password'
 import { Route as RecoverPasswordImport } from './routes/recover-password'
 import { Route as OpenflowImport } from './routes/openflow'
 import { Route as MiddayStyleImport } from './routes/midday-style'
 import { Route as LoginImport } from './routes/login'
+import { Route as CanvasHomeImport } from './routes/canvas-home'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as IndexImport } from './routes/index'
 import { Route as UpdatesIndexImport } from './routes/updates/index'
@@ -45,6 +47,11 @@ const SignupRoute = SignupImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const ShowcaseRoute = ShowcaseImport.update({
+  path: '/showcase',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const ResetPasswordRoute = ResetPasswordImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRoute,
@@ -67,6 +74,11 @@ const MiddayStyleRoute = MiddayStyleImport.update({
 
 const LoginRoute = LoginImport.update({
   path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const CanvasHomeRoute = CanvasHomeImport.update({
+  path: '/canvas-home',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -182,6 +194,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutImport
       parentRoute: typeof rootRoute
     }
+    '/canvas-home': {
+      preLoaderRoute: typeof CanvasHomeImport
+      parentRoute: typeof rootRoute
+    }
     '/login': {
       preLoaderRoute: typeof LoginImport
       parentRoute: typeof rootRoute
@@ -200,6 +216,10 @@ declare module '@tanstack/react-router' {
     }
     '/reset-password': {
       preLoaderRoute: typeof ResetPasswordImport
+      parentRoute: typeof rootRoute
+    }
+    '/showcase': {
+      preLoaderRoute: typeof ShowcaseImport
       parentRoute: typeof rootRoute
     }
     '/signup': {
@@ -300,11 +320,13 @@ export const routeTree = rootRoute.addChildren([
     LayoutKnowledgeIndexRoute,
     LayoutKnowledgeSplatSlugRoute,
   ]),
+  CanvasHomeRoute,
   LoginRoute,
   MiddayStyleRoute,
   OpenflowRoute,
   RecoverPasswordRoute,
   ResetPasswordRoute,
+  ShowcaseRoute,
   SignupRoute,
   AiDeepResearchArticleIdRoute,
   UpdatesSlugRoute,

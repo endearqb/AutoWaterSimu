@@ -1,0 +1,1007 @@
+{
+  "nodes": [
+    {
+      "id": "asm1-1756109356796-qz4qd33ae",
+      "type": "asm1",
+      "position": {
+        "x": 390,
+        "y": 265
+      },
+      "data": {
+        "volume": "1000",
+        "label": "A1",
+        "X_BH": "1000",
+        "X_BA": "200",
+        "X_S": "20",
+        "X_i": "1000",
+        "X_ND": "5",
+        "S_O": "0.1",
+        "S_S": "20",
+        "S_NO": "5",
+        "S_NH": "40",
+        "S_ND": "5",
+        "S_ALK": "4"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1Parameters": {
+        "u_H": 5.5,
+        "K_S": 20,
+        "K_OH": 0.2,
+        "K_NO": 0.5,
+        "n_g": 0.8,
+        "b_H": 0.4,
+        "u_A": 0.8,
+        "K_NH": 1,
+        "K_OA": 0.4,
+        "b_A": 0.05,
+        "Y_H": 0.4,
+        "Y_A": 0.24,
+        "i_XB": 0.086,
+        "i_XP": 0.06,
+        "f_P": 0.08,
+        "n_h": 0.4,
+        "K_a": 0.05,
+        "K_h": 3,
+        "K_x": 3
+      }
+    },
+    {
+      "id": "output-1756109479882-15ytjkd2l",
+      "type": "output",
+      "position": {
+        "x": 995,
+        "y": 720
+      },
+      "data": {
+        "volume": "1e-3",
+        "label": "出水端",
+        "X_BH": 0,
+        "X_BA": 0,
+        "X_S": 0,
+        "X_i": 0,
+        "X_ND": 0,
+        "S_O": 0,
+        "S_S": 0,
+        "S_NO": 0,
+        "S_NH": "",
+        "S_ND": 0,
+        "S_ALK": 0
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "default-1756109481058-mmbchf0ah",
+      "type": "default",
+      "position": {
+        "x": 795,
+        "y": 525
+      },
+      "data": {
+        "volume": "1200",
+        "label": "压缩层",
+        "X_BH": "1000",
+        "X_BA": "200",
+        "X_S": "20",
+        "X_i": "1000",
+        "X_ND": "5",
+        "S_O": "0.01",
+        "S_S": "20",
+        "S_NO": "5",
+        "S_NH": "40",
+        "S_ND": "5",
+        "S_ALK": "4"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "asm1-1756109498028-8x9x4wmv2",
+      "type": "asm1",
+      "position": {
+        "x": 585,
+        "y": 265
+      },
+      "data": {
+        "volume": "1000",
+        "label": "A2",
+        "X_BH": "1000",
+        "X_BA": "200",
+        "X_S": "20",
+        "X_i": "1000",
+        "X_ND": "5",
+        "S_O": "0.01",
+        "S_S": "20",
+        "S_NO": "5",
+        "S_NH": "40",
+        "S_ND": "5",
+        "S_ALK": "4"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1Parameters": {
+        "u_H": 5.5,
+        "K_S": 20,
+        "K_OH": 0.2,
+        "K_NO": 0.5,
+        "n_g": 0.8,
+        "b_H": 0.4,
+        "u_A": 0.8,
+        "K_NH": 1,
+        "K_OA": 0.4,
+        "b_A": 0.05,
+        "Y_H": 0.4,
+        "Y_A": 0.24,
+        "i_XB": 0.086,
+        "i_XP": 0.06,
+        "f_P": 0.08,
+        "n_h": 0.4,
+        "K_a": 0.05,
+        "K_h": 3,
+        "K_x": 3
+      }
+    },
+    {
+      "id": "asm1-1756109499134-n6pyzd4yg",
+      "type": "asm1",
+      "position": {
+        "x": 585,
+        "y": 390
+      },
+      "data": {
+        "volume": "1333",
+        "label": "O1",
+        "X_BH": "1000",
+        "X_BA": "200",
+        "X_S": "20",
+        "X_i": "1000",
+        "X_ND": "5",
+        "S_O": "3",
+        "S_S": "20",
+        "S_NO": "5",
+        "S_NH": "40",
+        "S_ND": "5",
+        "S_ALK": "4"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1Parameters": {
+        "u_H": 5.5,
+        "K_S": 20,
+        "K_OH": 0.2,
+        "K_NO": 0.5,
+        "n_g": 0.8,
+        "b_H": 0.4,
+        "u_A": 0.8,
+        "K_NH": 1,
+        "K_OA": 0.4,
+        "b_A": 0.05,
+        "Y_H": 0.4,
+        "Y_A": 0.24,
+        "i_XB": 0.086,
+        "i_XP": 0.06,
+        "f_P": 0.08,
+        "n_h": 0.4,
+        "K_a": 0.05,
+        "K_h": 3,
+        "K_x": 3
+      }
+    },
+    {
+      "id": "asm1-1756109500400-brkswu97l",
+      "type": "asm1",
+      "position": {
+        "x": 800,
+        "y": 390
+      },
+      "data": {
+        "volume": "1333",
+        "label": "O2",
+        "X_BH": "1000",
+        "X_BA": "200",
+        "X_S": "20",
+        "X_i": "1000",
+        "X_ND": "5",
+        "S_O": "3",
+        "S_S": "20",
+        "S_NO": "5",
+        "S_NH": "40",
+        "S_ND": "5",
+        "S_ALK": "4"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1Parameters": {
+        "u_H": 5.5,
+        "K_S": 20,
+        "K_OH": 0.2,
+        "K_NO": 0.5,
+        "n_g": 0.8,
+        "b_H": 0.4,
+        "u_A": 0.8,
+        "K_NH": 1,
+        "K_OA": 0.4,
+        "b_A": 0.05,
+        "Y_H": 0.4,
+        "Y_A": 0.24,
+        "i_XB": 0.086,
+        "i_XP": 0.06,
+        "f_P": 0.08,
+        "n_h": 0.4,
+        "K_a": 0.05,
+        "K_h": 3,
+        "K_x": 3
+      }
+    },
+    {
+      "id": "asm1-1756109501758-4ot74flmj",
+      "type": "asm1",
+      "position": {
+        "x": 995,
+        "y": 390
+      },
+      "data": {
+        "volume": "1333",
+        "label": "O3",
+        "X_BH": "1000",
+        "X_BA": "200",
+        "X_S": "20",
+        "X_i": "1000",
+        "X_ND": "5",
+        "S_O": "3",
+        "S_S": "20",
+        "S_NO": "5",
+        "S_NH": "40",
+        "S_ND": "5",
+        "S_ALK": "4"
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false,
+      "asm1Parameters": {
+        "u_H": 5.5,
+        "K_S": 20,
+        "K_OH": 0.2,
+        "K_NO": 0.5,
+        "n_g": 0.8,
+        "b_H": 0.4,
+        "u_A": 0.8,
+        "K_NH": 1,
+        "K_OA": 0.4,
+        "b_A": 0.05,
+        "Y_H": 0.4,
+        "Y_A": 0.24,
+        "i_XB": 0.086,
+        "i_XP": 0.06,
+        "f_P": 0.08,
+        "n_h": 0.4,
+        "K_a": 0.05,
+        "K_h": 3,
+        "K_x": 3
+      }
+    },
+    {
+      "id": "default-1763451046707-th8zp3kbm",
+      "type": "default",
+      "position": {
+        "x": 995,
+        "y": 525
+      },
+      "data": {
+        "volume": "2400",
+        "label": "污泥毯层",
+        "X_BH": 0,
+        "X_BA": 0,
+        "X_S": 0,
+        "X_i": 0,
+        "X_ND": 0,
+        "S_O": 0,
+        "S_S": 0,
+        "S_NO": 0,
+        "S_NH": 0,
+        "S_ND": 0,
+        "S_ALK": 0
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "default-1763451048049-9z1yewlfb",
+      "type": "default",
+      "position": {
+        "x": 995,
+        "y": 625
+      },
+      "data": {
+        "volume": "2400",
+        "label": "澄清层",
+        "X_BH": 0,
+        "X_BA": 0,
+        "X_S": 0,
+        "X_i": 0,
+        "X_ND": 0,
+        "S_O": 0,
+        "S_S": 0,
+        "S_NO": 0,
+        "S_NH": 0,
+        "S_ND": 0,
+        "S_ALK": 0
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "input-1763454456429-0owgxm4n8",
+      "type": "input",
+      "position": {
+        "x": 390,
+        "y": 120
+      },
+      "data": {
+        "volume": "1e-3",
+        "label": "进水端",
+        "X_BH": 0,
+        "X_BA": 0,
+        "X_S": 0,
+        "X_i": 0,
+        "X_ND": 0,
+        "S_O": 0,
+        "S_S": 0,
+        "S_NO": 0,
+        "S_NH": 0,
+        "S_ND": 0,
+        "S_ALK": 0
+      },
+      "style": {
+        "border": 0,
+        "padding": 0,
+        "background": "transparent",
+        "width": "auto",
+        "height": "auto"
+      },
+      "measured": {
+        "width": 120,
+        "height": 46
+      },
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "default-1756109481058-mmbchf0ah",
+      "sourceHandle": "left-source",
+      "target": "asm1-1756109356796-qz4qd33ae",
+      "targetHandle": "bottom-target",
+      "id": "edge-1756109558881",
+      "data": {
+        "flow": 750,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asm1-1756109356796-qz4qd33ae",
+      "sourceHandle": "right-source",
+      "target": "asm1-1756109498028-8x9x4wmv2",
+      "targetHandle": "left-target",
+      "id": "edge-1756109563843",
+      "data": {
+        "flow": 4500,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asm1-1756109498028-8x9x4wmv2",
+      "sourceHandle": "bottom-source",
+      "target": "asm1-1756109499134-n6pyzd4yg",
+      "targetHandle": "top-target",
+      "id": "edge-1756109566574",
+      "data": {
+        "flow": 4500,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asm1-1756109499134-n6pyzd4yg",
+      "sourceHandle": "right-source",
+      "target": "asm1-1756109500400-brkswu97l",
+      "targetHandle": "left-target",
+      "id": "edge-1756109588235",
+      "data": {
+        "flow": 4500,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asm1-1756109500400-brkswu97l",
+      "sourceHandle": "right-source",
+      "target": "asm1-1756109501758-4ot74flmj",
+      "targetHandle": "left-target",
+      "id": "edge-1756109590003",
+      "data": {
+        "flow": 4500,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asm1-1756109501758-4ot74flmj",
+      "sourceHandle": "top-source",
+      "target": "asm1-1756109356796-qz4qd33ae",
+      "targetHandle": "top-target",
+      "id": "edge-1756109606709",
+      "data": {
+        "flow": 3000,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 0.1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "asm1-1756109501758-4ot74flmj",
+      "sourceHandle": "bottom-source",
+      "target": "default-1763451046707-th8zp3kbm",
+      "targetHandle": "top-target",
+      "id": "edge-1763451067687",
+      "data": {
+        "flow": 1500,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "default-1763451046707-th8zp3kbm",
+      "sourceHandle": "bottom-source",
+      "target": "default-1763451048049-9z1yewlfb",
+      "targetHandle": "top-target",
+      "id": "edge-1763451075912",
+      "data": {
+        "flow": 750,
+        "X_BH_a": 0,
+        "X_BH_b": 10,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 0,
+        "X_i_b": 10,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "default-1763451048049-9z1yewlfb",
+      "sourceHandle": "bottom-source",
+      "target": "output-1756109479882-15ytjkd2l",
+      "targetHandle": "top-target",
+      "id": "edge-1763451077795",
+      "data": {
+        "flow": 750,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      }
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "default-1763451046707-th8zp3kbm",
+      "sourceHandle": "left-source",
+      "target": "default-1756109481058-mmbchf0ah",
+      "targetHandle": "right-target",
+      "id": "edge-1763451080144",
+      "data": {
+        "flow": 750,
+        "X_BH_a": 20,
+        "X_BH_b": 0,
+        "X_BA_a": 20,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 20,
+        "X_i_b": 0,
+        "X_ND_a": 20,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 1,
+        "S_S_b": 0,
+        "S_NO_a": 1,
+        "S_NO_b": 0,
+        "S_NH_a": 1,
+        "S_NH_b": 0,
+        "S_ND_a": 1,
+        "S_ND_b": 0,
+        "S_ALK_a": 1,
+        "S_ALK_b": 0
+      },
+      "selected": false
+    },
+    {
+      "type": "editable",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 20,
+        "height": 20
+      },
+      "style": {
+        "strokeWidth": 1
+      },
+      "source": "input-1763454456429-0owgxm4n8",
+      "sourceHandle": "bottom-source",
+      "target": "asm1-1756109356796-qz4qd33ae",
+      "targetHandle": "top-target",
+      "id": "edge-1763454461522",
+      "data": {
+        "flow": 750,
+        "X_BH_a": 1,
+        "X_BH_b": 0,
+        "X_BA_a": 1,
+        "X_BA_b": 0,
+        "X_S_a": 1,
+        "X_S_b": 0,
+        "X_i_a": 1,
+        "X_i_b": 0,
+        "X_ND_a": 1,
+        "X_ND_b": 0,
+        "S_O_a": 1,
+        "S_O_b": 0,
+        "S_S_a": 0,
+        "S_S_b": 450,
+        "S_NO_a": 0,
+        "S_NO_b": 40,
+        "S_NH_a": 0,
+        "S_NH_b": 40,
+        "S_ND_a": 0,
+        "S_ND_b": 5,
+        "S_ALK_a": 0,
+        "S_ALK_b": 5
+      },
+      "selected": false
+    }
+  ],
+  "customParameters": [
+    {
+      "name": "X_BH",
+      "label": "异养菌生物量",
+      "description": "异养菌生物量浓度 (mg COD/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "X_BA",
+      "label": "自养菌生物量",
+      "description": "自养菌生物量浓度 (mg COD/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "X_S",
+      "label": "缓慢降解基质",
+      "description": "缓慢降解基质浓度 (mg COD/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "X_i",
+      "label": "惰性颗粒物",
+      "description": "惰性颗粒物浓度 (mg COD/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "X_ND",
+      "label": "颗粒有机氮",
+      "description": "颗粒有机氮浓度 (mg N/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "S_O",
+      "label": "溶解氧",
+      "description": "溶解氧浓度 (mg O2/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "S_S",
+      "label": "易降解基质",
+      "description": "易降解基质浓度 (mg COD/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "S_NO",
+      "label": "硝态氮",
+      "description": "硝态氮浓度 (mg N/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "S_NH",
+      "label": "氨氮",
+      "description": "氨氮浓度 (mg N/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "S_ND",
+      "label": "溶解有机氮",
+      "description": "溶解有机氮浓度 (mg N/L)",
+      "defaultValue": 0
+    },
+    {
+      "name": "S_ALK",
+      "label": "碱度",
+      "description": "碱度 (mol HCO3-/L)",
+      "defaultValue": 0
+    }
+  ],
+  "calculationParameters": {
+    "hours": 2,
+    "steps_per_hour": 20,
+    "solver_method": "rk4",
+    "tolerance": 0.001,
+    "max_iterations": 2000,
+    "sampling_interval_hours": 1,
+    "max_memory_mb": 2048
+  },
+  "exportedAt": "2026-01-23T06:48:51.176Z",
+  "version": "1.0"
+}
