@@ -322,45 +322,45 @@ For more details on test commands and configuration, refer to the README or `pac
 
 ## Roadmap
 
-| 项目 | 规划事项 |
-| --- | --- |
-| 1 | Docker Compose 全链路跑通（含 DB） |
-| 2 | 清理敏感/多余数据表与中间文件 |
-| 3 | 最小示例 Case 一键仿真 + 冒烟测试 CI，增加国际化 |
-| 4 | 连续进水（时间序列输入） |
-| 5 | 核心模块初步拆分（core.py 解耦到可维护结构） |
-| 6 | 一维沉淀池模型 |
-| 7 | pH 计算 |
-| 8 | 参数的温度校正 |
-| 9 | 增加更多开源模型 |
-| 10 | 优化模型添加流程 |
-| 11 | 增加添加自定义模型功能 |
-| 12 | 文献数据集 Benchmark Case，与文献曲线对标输出（可复现） |
-| 13 | 多节点张量化表示 + 分组异构模型（每节点可跑不同模型） |
-| 14 | 参数扫掠/方案对比（“一张图跑所有选项”） |
-| 15 | 性能基准与可选 GPU 加速落地 |
-| 16 | 校准/调参工作流（真实项目落地包） |
-| 17 | “Vibe Modeling”自然语言建模入口（远期愿景） |
+| 项目 | 规划事项 | 进度 |
+| --- | --- | --- |
+| 1 | Docker Compose 全链路跑通（含 DB） | 进行中 |
+| 2 | 清理敏感/多余数据表与中间文件 | 进行中 |
+| 3 | 最小示例 Case 一键仿真 + 冒烟测试 CI，增加国际化 | 进行中 |
+| 4 | 连续进水（时间序列输入） |  |
+| 5 | 核心模块初步拆分（core.py 解耦到可维护结构） |  |
+| 6 | 一维沉淀池模型 |  |
+| 7 | pH 计算 |  |
+| 8 | 参数的温度校正 |  |
+| 9 | 增加更多开源模型 |  |
+| 10 | 优化模型添加流程 |  |
+| 11 | 增加添加自定义模型功能 |  |
+| 12 | 文献数据集 Benchmark Case，与文献曲线对标输出（可复现） |  |
+| 13 | 多节点张量化表示 + 分组异构模型（每节点可跑不同模型） |  |
+| 14 | 参数扫掠/方案对比（“一张图跑所有选项”） |  |
+| 15 | 性能基准与可选 GPU 加速落地 |  |
+| 16 | 校准/调参工作流（真实项目落地包） |  |
+| 17 | “Vibe Modeling”自然语言建模入口（远期愿景） |  |
 
-| Item | Planned Work |
-| --- | --- |
-| 1 | Full Docker Compose pipeline running end‑to‑end (including DB) |
-| 2 | Clean up sensitive/redundant tables and intermediate files |
-| 3 | One‑click simulation for a minimal example case + smoke test CI, add i18n |
-| 4 | Continuous influent (time‑series input) |
-| 5 | Initial refactor of core module (decouple `core.py` into maintainable structure) |
-| 6 | One‑dimensional settling tank model |
-| 7 | pH calculation |
-| 8 | Temperature correction for parameters |
-| 9 | Add more open‑source models |
-| 10 | Improve the model addition workflow |
-| 11 | Support adding custom user‑defined models |
-| 12 | Benchmark cases based on literature datasets, with reproducible curve‑matching outputs |
-| 13 | Tensorized multi‑node representation + grouped heterogeneous models (different model per node) |
-| 14 | Parameter sweep / scenario comparison (“run all options in one plot”) |
-| 15 | Performance benchmarks and optional GPU acceleration |
-| 16 | Calibration/tuning workflow for real‑world project deployment |
-| 17 | “Vibe Modeling” natural‑language modeling interface (long‑term vision) |
+| Item | Planned Work | Status |
+| --- | --- | --- |
+| 1 | Full Docker Compose pipeline running end‑to‑end (including DB) | In progress |
+| 2 | Clean up sensitive/redundant tables and intermediate files | In progress |
+| 3 | One‑click simulation for a minimal example case + smoke test CI, add i18n | In progress |
+| 4 | Continuous influent (time‑series input) |  |
+| 5 | Initial refactor of core module (decouple `core.py` into maintainable structure) |  |
+| 6 | One‑dimensional settling tank model |  |
+| 7 | pH calculation |  |
+| 8 | Temperature correction for parameters |  |
+| 9 | Add more open‑source models |  |
+| 10 | Improve the model addition workflow |  |
+| 11 | Support adding custom user‑defined models |  |
+| 12 | Benchmark cases based on literature datasets, with reproducible curve‑matching outputs |  |
+| 13 | Tensorized multi‑node representation + grouped heterogeneous models (different model per node) |  |
+| 14 | Parameter sweep / scenario comparison (“run all options in one plot”) |  |
+| 15 | Performance benchmarks and optional GPU acceleration |  |
+| 16 | Calibration/tuning workflow for real‑world project deployment |  |
+| 17 | “Vibe Modeling” natural‑language modeling interface (long‑term vision) |  |
 
 ---
 
