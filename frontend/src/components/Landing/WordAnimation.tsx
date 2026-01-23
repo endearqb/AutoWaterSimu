@@ -1,16 +1,7 @@
 import { Text } from "@chakra-ui/react"
 import { AnimatePresence, motion } from "framer-motion"
-import { useEffect, useState } from "react"
-
-const words = [
-  "物料平衡",
-  "ASM1Slim",
-  "Classic ASM1",
-  "ASM2D",
-  "ASM3",
-  "自定义模型",
-  "AI & Models",
-]
+import { useEffect, useMemo, useState } from "react"
+import { useI18n } from "../../i18n"
 
 function useWordCycle(words: string[], interval: number) {
   const [index, setIndex] = useState(0)
@@ -33,6 +24,19 @@ function useWordCycle(words: string[], interval: number) {
 }
 
 export function WordAnimation() {
+  const { t, language } = useI18n()
+  const words = useMemo(
+    () => [
+      t("landing.wordAnimation.materialBalance"),
+      t("landing.wordAnimation.asm1Slim"),
+      t("landing.wordAnimation.classicAsm1"),
+      t("landing.wordAnimation.asm2d"),
+      t("landing.wordAnimation.asm3"),
+      t("landing.wordAnimation.customModel"),
+      t("landing.wordAnimation.aiModels"),
+    ],
+    [language],
+  )
   const word = useWordCycle(words, 2100)
 
   return (

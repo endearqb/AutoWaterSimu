@@ -5,6 +5,7 @@ import type {
   ASM1SlimResultData,
   EdgeParameterConfig,
 } from "./asm1slim-analysis"
+import { useI18n } from "../../../i18n"
 import {
   AIReportPanel,
   DataQualityPanel,
@@ -31,6 +32,7 @@ const ASM1SlimAnalyzer = ({
   edgeParameterConfigs = {},
 }: ASM1SlimAnalyzerProps) => {
   const [activeTab, setActiveTab] = useState(0)
+  const { t } = useI18n()
 
   return (
     <Box w="full" h="full" p={4} overflowY="auto">
@@ -51,10 +53,16 @@ const ASM1SlimAnalyzer = ({
         variant="enclosed"
       >
         <Tabs.List>
-          <Tabs.Trigger value="tab-0">T95&稳态检查</Tabs.Trigger>
-          <Tabs.Trigger value="tab-1">空间剖面</Tabs.Trigger>
-          <Tabs.Trigger value="tab-2">连接线浓度</Tabs.Trigger>
-          <Tabs.Trigger value="tab-3">AI报告</Tabs.Trigger>
+          <Tabs.Trigger value="tab-0">
+            {t("flow.analysis.tabs.t95SteadyCheck")}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="tab-1">
+            {t("flow.analysis.tabs.spatialProfile")}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="tab-2">
+            {t("flow.analysis.tabs.edgeConcentration")}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="tab-3">{t("flow.analysis.tabs.aiReport")}</Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="tab-0">

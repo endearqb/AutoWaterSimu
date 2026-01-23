@@ -1,10 +1,12 @@
-import { Box, HStack, Heading, Image, Text, VStack } from "@chakra-ui/react"
+﻿import { Box, HStack, Heading, Image, Text, VStack } from "@chakra-ui/react"
 import { FaCheck } from "react-icons/fa"
+import { useI18n } from "../../i18n"
 
 export function SectionFive() {
+  const { t } = useI18n()
   const vaultFeatures = [
-    "自动命名计算任务，便于搜索和查找",
-    "显示计算任务详情和结果摘要",
+    t("landing.sectionFive.features.autoName"),
+    t("landing.sectionFive.features.summary"),
   ]
 
   return (
@@ -38,7 +40,7 @@ export function SectionFive() {
         <Box w={{ base: "full", lg: "50%" }} mt={{ base: 8, lg: 0 }}>
           <Image
             src="/assets/images/image-8.png"
-            alt="数据加载"
+            alt={t("landing.sectionFive.imageAlt")}
             width="100%"
             height="auto"
             objectFit="contain"
@@ -69,15 +71,15 @@ export function SectionFive() {
             letterSpacing="tight"
             lineHeight="1.2"
           >
-            计算数据加载
+            {t("landing.sectionFive.title")}
           </Heading>
 
           <Text color="gray.500" mb={4} fontSize="sm" lineHeight="1.6">
-            无需在不同路径寻找流程与数据。
+            {t("landing.sectionFive.description")}
           </Text>
 
           <Text color="gray.500" fontSize="sm" lineHeight="1.6">
-            选择导入时清晰的展示数据加载关系与计算任务详情
+            {t("landing.sectionFive.descriptionSecondary")}
           </Text>
 
           <VStack align="start" gap={2} h="full">
@@ -104,7 +106,7 @@ export function SectionFive() {
                   textDecoration: "underline",
                 }}
               >
-                立即加载您的计算结果 →
+                {t("landing.sectionFive.cta")}
               </Text>
             </Box>
           </VStack>
@@ -138,13 +140,11 @@ export function SectionFive() {
           letterSpacing="tight"
           lineHeight="1.2"
         >
-          本地导出
+          {t("landing.sectionFive.exportTitle")}
         </Heading>
 
         <Text color="gray.500" fontSize="sm" mb={8} lineHeight="1.6">
-          当你不想将流程存储与计算结果分离时，本地导出是一个不错的选择。
-          你可以在任何时候导入这些文件，继续之前的工作。
-          你也可以将这些文件分享给他人，与他们合作完成项目。
+          {t("landing.sectionFive.exportDescription")}
         </Text>
 
         <Box mt="auto" mb={8}>
@@ -157,10 +157,10 @@ export function SectionFive() {
             position="relative"
           >
             <Text fontSize="sm" color="green.700" fontWeight="medium">
-              ✓ 导出完成
+              {t("landing.sectionFive.exportStatus")}
             </Text>
             <Text fontSize="xs" color="green.600" mt={1}>
-              json文件已准备就绪，包含所有有效信息
+              {t("landing.sectionFive.exportReady")}
             </Text>
           </Box>
         </Box>
@@ -174,10 +174,11 @@ export function SectionFive() {
               textDecoration: "underline",
             }}
           >
-            立即导出 →
+            {t("landing.sectionFive.exportCta")}
           </Text>
         </Box>
       </Box>
     </Box>
   )
 }
+

@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react"
 import React, { useMemo, useState } from "react"
 import { getModelConfig } from "../../../../config/modelConfigs"
+import { useI18n } from "../../../../i18n"
 import { Checkbox } from "../../../ui/checkbox"
 import ExternalLegendBarChart from "../ExternalLegendBarChart"
 import TimeSeriesChart from "../TimeSeriesChart"
@@ -25,6 +26,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
   resultData,
   modelType = "asm1",
 }) => {
+  const { t, language } = useI18n()
   const yAxisPlotHeight = 450
 
   const prevTimestampsLengthRef = React.useRef(0)
@@ -50,10 +52,13 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
     return (
       modelConfig?.availableVariables.map((variable) => ({
         name: variable.name,
-        label: variable.label,
+        label: (() => {
+          const translated = t(variable.label)
+          return translated === variable.label ? variable.name : translated
+        })(),
       })) || []
     )
-  }, [modelType])
+  }, [modelType, language, t])
 
   const timestampsLength = resultData.timestamps?.length || 0
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
@@ -190,7 +195,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
       return {
         key: variable,
         dataKey: variable,
-        name: variableInfo?.label || variable,
+        name: variableInfo ? `${variableInfo.label} (${variable})` : variable,
         color: colors[index % colors.length],
       }
     })
@@ -231,7 +236,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
 
         {/* 节点选择 */}
         <VStack align="start" gap={4} mb={6}>
-          <Text fontWeight="bold">节点选择</Text>
+          <Text fontWeight="bold">{t("flow.analysis.nodeSelection")}</Text>
           <CheckboxGroup
             value={selectedNodes}
             onValueChange={(values) => setSelectedNodes(values)}
@@ -252,7 +257,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
 
         {/* 变量选择 */}
         <VStack align="start" gap={4} mb={6}>
-          <Text fontWeight="bold">指标选择</Text>
+          <Text fontWeight="bold">{t("flow.analysis.metricSelection")}</Text>
           <CheckboxGroup
             value={selectedVariables}
             onValueChange={(values) => setSelectedVariables(values)}
@@ -264,7 +269,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
             >
               {availableVariables.map((variable) => (
                 <Checkbox key={variable.name} value={variable.name}>
-                  {variable.label}
+                  {variable.label} ({variable.name})
                 </Checkbox>
               ))}
             </SimpleGrid>
@@ -277,9 +282,9 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
           <VStack align="start" gap={4}>
             {/* 条形图：时间选择 */}
             <VStack align="start" gap={2} w="full">
-              <Text fontWeight="bold">时间选择</Text>
+              <Text fontWeight="bold">{t("flow.analysis.timeSelection")}</Text>
               <HStack w="full" gap={4}>
-                <Text minW="60px">时间:</Text>
+                <Text minW="60px">{t("flow.analysis.timeLabel")}</Text>
                 <Slider.Root
                   value={[safeSelectedTimeIndex]}
                   onValueChange={(details) =>
@@ -301,7 +306,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
                 <Text minW="100px">
                   {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) ||
                     0}{" "}
-                  h
+                  {t("flow.simulation.unit.hours")}
                 </Text>
               </HStack>
             </VStack>
@@ -313,7 +318,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
               xAxisHeight={xAxisHeight}
               series={barSeries}
               plotAreaHeight={yAxisPlotHeight}
-              emptyText="暂无数据"
+              emptyText={t("flow.analysis.emptyData")}
             />
           </VStack>
 

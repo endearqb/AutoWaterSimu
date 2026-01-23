@@ -2,6 +2,7 @@ import { Box, HStack, Icon, Text } from "@chakra-ui/react"
 import { Handle, type NodeProps, Position } from "@xyflow/react"
 import { memo, useEffect, useRef, useState } from "react"
 import { FaWallet } from "react-icons/fa"
+import { useI18n } from "../../../i18n"
 import GlassNodeContainer from "./GlassNodeContainer"
 import { isNotSelfConnection } from "./utils/connectionGuards"
 import {
@@ -21,6 +22,7 @@ interface CashWalletData extends Record<string, unknown> {
 }
 
 const CashWalletNode = ({ data, selected, id }: NodeProps<any>) => {
+  const { t } = useI18n()
   const nodeData = data as CashWalletData
   const hoveredNodeId = useHoveredNodeId()
   const isHovered = hoveredNodeId === id
@@ -81,13 +83,13 @@ const CashWalletNode = ({ data, selected, id }: NodeProps<any>) => {
       <HStack gap={3} mb={2} align="center">
         <Icon as={FaWallet} color={accentColor} boxSize={5} />
         <Text fontSize="sm" fontWeight="medium" color={accentColor}>
-          {nodeData.label || "池体"}
+          {nodeData.label || t("flow.node.cashWallet")}
         </Text>
       </HStack>
 
       <Box>
         <Text fontSize="xs" color={accentColor}>
-          {nodeData.currency || "Vol:"}
+          {nodeData.currency || t("flow.node.volumeLabel")}
         </Text>
         <Text fontSize="2xl" fontWeight="bold" color={accentColor}>
           {nodeData.amount || "749.00"}

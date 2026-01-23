@@ -1,6 +1,7 @@
 import { Card, SimpleGrid, Table, Text, VStack } from "@chakra-ui/react"
 import React, { useMemo, useState } from "react"
 import { getModelConfig } from "../../../../config/modelConfigs"
+import { useI18n } from "../../../../i18n"
 import { Radio, RadioGroup } from "../../../ui/radio"
 import type { ASM1ResultData } from "../asm1-analysis"
 
@@ -13,6 +14,7 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
   resultData,
   modelType = "asm1",
 }) => {
+  const { t, language } = useI18n()
   // 可用节点列表
   const availableNodes = useMemo(() => {
     return Object.keys(resultData.node_data || {})
@@ -38,10 +40,14 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
     return (
       modelConfig?.availableVariables.map((variable) => ({
         name: variable.name,
-        label: `${variable.label} (${variable.name})${variable.unit ? ` [${variable.unit}]` : ""}`,
+        label: (() => {
+          const translated = t(variable.label)
+          const resolved = translated === variable.label ? variable.name : translated
+          return `${resolved} (${variable.name})${variable.unit ? ` [${variable.unit}]` : ""}`
+        })(),
       })) || []
     )
-  }, [modelType])
+  }, [modelType, language, t])
 
   const analysisResults = useMemo(() => {
     if (!resultData.node_data || !resultData.timestamps) return []
@@ -127,12 +133,12 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
       <Card.Body>
         <VStack align="start" gap={4}>
           <Text fontSize="sm" color="gray.600">
-            T95时间用于评估变量进入并保持在最终值±5%范围内的速度；稳态检查基于最后20%时间段的相对斜率判断趋势稳定性。
+            {t("flow.analysis.t95Description")}
           </Text>
 
           {/* 节点筛选 */}
           <VStack align="start" gap={2} w="full">
-            <Text fontWeight="bold">节点筛选</Text>
+            <Text fontWeight="bold">{t("flow.analysis.nodeFilter")}</Text>
             <RadioGroup
               value={selectedQualityNode}
               onValueChange={(e) => e.value && setSelectedQualityNode(e.value)}
@@ -154,16 +160,22 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
           {analysisResults.length > 0 ? (
             <VStack align="start" gap={2} w="full">
               <Text fontWeight="bold" color="blue.600">
-                节点:{" "}
+                {t("flow.analysis.nodeLabel")}{" "}
                 {resultData.node_data[selectedQualityNode]?.label ||
                   selectedQualityNode}
               </Text>
               <Table.Root size="sm">
                 <Table.Header>
                   <Table.Row>
-                    <Table.ColumnHeader>指标</Table.ColumnHeader>
-                    <Table.ColumnHeader>T95时间 (h)</Table.ColumnHeader>
-                    <Table.ColumnHeader>稳态检查</Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.analysis.metricColumn")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.analysis.t95Column")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.analysis.steadyStateColumn")}
+                    </Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
@@ -171,7 +183,9 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
                     <Table.Row key={result.variable}>
                       <Table.Cell>{result.variableLabel}</Table.Cell>
                       <Table.Cell>
-                        {result.t95 !== null ? result.t95.toFixed(2) : "N/A"}
+                        {result.t95 !== null
+                          ? result.t95.toFixed(2)
+                          : t("common.notAvailable")}
                       </Table.Cell>
                       <Table.Cell>
                         {result.steadyStatus ? (
@@ -186,16 +200,18 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
                             fontWeight="bold"
                           >
                             {result.steadyStatus === "stable"
-                              ? "稳定"
+                              ? t("flow.analysis.steadyState.stable")
                               : result.steadyStatus === "approaching"
-                                ? "接近稳定"
-                                : "不稳定"}
+                                ? t("flow.analysis.steadyState.approaching")
+                                : t("flow.analysis.steadyState.unstable")}
                             {result.relativeSlope !== null
                               ? `（${result.relativeSlope.toFixed(3)}%）`
                               : null}
                           </Text>
                         ) : (
-                          <Text color="gray.500">N/A</Text>
+                          <Text color="gray.500">
+                            {t("common.notAvailable")}
+                          </Text>
                         )}
                       </Table.Cell>
                     </Table.Row>
@@ -204,15 +220,14 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
               </Table.Root>
 
               <Text mt={2} fontSize="sm" color="gray.600">
-                注: 相对斜率 = 末段斜率 / 中值 ×
-                100%。小于1%为稳定，1-5%为接近稳定，大于5%为不稳定。
+                {t("flow.analysis.steadyStateNote")}
               </Text>
             </VStack>
           ) : (
             <Text fontSize="sm" color="gray.500">
               {!selectedQualityNode
-                ? "请选择节点进行分析"
-                : "所选节点无可用的分析数据"}
+                ? t("flow.analysis.selectNodePrompt")
+                : t("flow.analysis.noAnalysisData")}
             </Text>
           )}
         </VStack>

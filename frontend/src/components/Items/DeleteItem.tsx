@@ -16,11 +16,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useI18n } from "@/i18n"
 
 const DeleteItem = ({ id }: { id: string }) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const { t } = useI18n()
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -33,11 +35,11 @@ const DeleteItem = ({ id }: { id: string }) => {
   const mutation = useMutation({
     mutationFn: deleteItem,
     onSuccess: () => {
-      showSuccessToast("The item was deleted successfully")
+      showSuccessToast(t("items.itemDeletedSuccess"))
       setIsOpen(false)
     },
     onError: () => {
-      showErrorToast("An error occurred while deleting the item")
+      showErrorToast(t("items.itemDeletedError"))
     },
     onSettled: () => {
       queryClient.invalidateQueries()
@@ -59,7 +61,7 @@ const DeleteItem = ({ id }: { id: string }) => {
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" colorPalette="red">
           <FiTrash2 fontSize="16px" />
-          Delete Item
+          {t("items.deleteItem")}
         </Button>
       </DialogTrigger>
 
@@ -67,12 +69,11 @@ const DeleteItem = ({ id }: { id: string }) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogCloseTrigger />
           <DialogHeader>
-            <DialogTitle>Delete Item</DialogTitle>
+            <DialogTitle>{t("items.deleteItemTitle")}</DialogTitle>
           </DialogHeader>
           <DialogBody>
             <Text mb={4}>
-              This item will be permanently deleted. Are you sure? You will not
-              be able to undo this action.
+              {t("items.deleteItemDescription")}
             </Text>
           </DialogBody>
 
@@ -83,7 +84,7 @@ const DeleteItem = ({ id }: { id: string }) => {
                 colorPalette="gray"
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </DialogActionTrigger>
             <Button
@@ -92,7 +93,7 @@ const DeleteItem = ({ id }: { id: string }) => {
               type="submit"
               loading={isSubmitting}
             >
-              Delete
+              {t("common.delete")}
             </Button>
           </DialogFooter>
         </form>

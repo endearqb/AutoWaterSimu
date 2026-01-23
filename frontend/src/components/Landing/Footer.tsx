@@ -1,4 +1,4 @@
-import {
+﻿import {
   Box,
   Flex,
   Grid,
@@ -13,8 +13,10 @@ import {
 } from "@chakra-ui/react"
 import { Link as RouterLink } from "@tanstack/react-router"
 import { FaGithub, FaWeixin } from "react-icons/fa"
+import { useI18n } from "../../i18n"
 
 export const Footer = () => {
+  const { t } = useI18n()
   const socialLinks = [
     { icon: FaGithub, label: "GitHub", href: "https://github.com/endearqb" },
     {
@@ -25,27 +27,27 @@ export const Footer = () => {
   ]
 
   const features = [
-    { name: "物料平衡", href: "/materialbalance" },
-    { name: "ASM1模型", href: "/asm1" },
-    { name: "ASM1Slim", href: "/asm1slim" },
-    { name: "仪表板", href: "/dashboard" },
-    { name: "流程图编辑", href: "/openflow" },
+    { name: t("landing.footer.features.materialBalance"), href: "/materialbalance" },
+    { name: t("landing.footer.features.asm1"), href: "/asm1" },
+    { name: t("landing.footer.features.asm1Slim"), href: "/asm1slim" },
+    { name: t("landing.footer.features.dashboard"), href: "/dashboard" },
+    { name: t("landing.footer.features.flowEditor"), href: "/openflow" },
   ]
 
   const knowledgeCategories = [
-    { name: "污水处理工艺", href: "/knowledge" },
-    { name: "ASM模型理论", href: "/knowledge" },
-    { name: "物料平衡计算", href: "/knowledge" },
-    { name: "工艺设计指南", href: "/knowledge" },
-    { name: "参数配置手册", href: "/knowledge" },
-    { name: "案例分析", href: "/knowledge" },
+    { name: t("landing.footer.knowledge.process"), href: "/knowledge" },
+    { name: t("landing.footer.knowledge.asmTheory"), href: "/knowledge" },
+    { name: t("landing.footer.knowledge.materialBalance"), href: "/knowledge" },
+    { name: t("landing.footer.knowledge.designGuide"), href: "/knowledge" },
+    { name: t("landing.footer.knowledge.parameterGuide"), href: "/knowledge" },
+    { name: t("landing.footer.knowledge.caseStudies"), href: "/knowledge" },
   ]
 
   const company = [
-    { name: "关于我", href: "/about" },
-    { name: "技术团队也是我", href: "/team" },
-    { name: "联系我", href: "/contact" },
-    { name: "开源项目", href: "https://github.com/endearqb" },
+    { name: t("landing.footer.company.about"), href: "/about" },
+    { name: t("landing.footer.company.team"), href: "/team" },
+    { name: t("landing.footer.company.contact"), href: "/contact" },
+    { name: t("landing.footer.company.openSource"), href: "https://github.com/endearqb" },
   ]
 
   return (
@@ -78,7 +80,7 @@ export const Footer = () => {
           <RouterLink to="/">
             <Image
               src="/assets/images/E-logos-1.png"
-              alt="ENVDAMA Logo"
+              alt={t("app.logoAlt")}
               boxSize={12}
             />
           </RouterLink>
@@ -90,7 +92,7 @@ export const Footer = () => {
             color="gray.700"
             _dark={{ color: "gray.300" }}
           >
-            为您精心准备的污水处理工艺学习平台
+            {t("landing.footer.tagline")}
           </Text>
         </Flex>
         <Separator my={8} />
@@ -116,7 +118,7 @@ export const Footer = () => {
                   color="gray.900"
                   _dark={{ color: "white" }}
                 >
-                  功能特性
+                  {t("landing.footer.features.title")}
                 </Text>
                 <VStack align="start" gap={2}>
                   {features.map((feature, index) => (
@@ -147,7 +149,7 @@ export const Footer = () => {
                   color="gray.900"
                   _dark={{ color: "white" }}
                 >
-                  知识库
+                  {t("landing.footer.knowledge.title")}
                 </Text>
                 <VStack align="start" gap={2}>
                   {knowledgeCategories.map((category, index) => (
@@ -178,7 +180,7 @@ export const Footer = () => {
                   color="gray.900"
                   _dark={{ color: "white" }}
                 >
-                  团队信息
+                  {t("landing.footer.company.title")}
                 </Text>
                 <VStack align="start" gap={2}>
                   {company.map((item, index) =>
@@ -238,7 +240,7 @@ export const Footer = () => {
                     color="gray.900"
                     _dark={{ color: "white" }}
                   >
-                    关注我
+                    {t("landing.footer.follow")}
                   </Text>
                   <HStack gap={4}>
                     {socialLinks.map((social, index) => (
@@ -267,7 +269,7 @@ export const Footer = () => {
                     color="gray.900"
                     _dark={{ color: "white" }}
                   >
-                    Everything is Changeable
+                    {t("landing.footer.mottoTitle")}
                   </Text>
                   <Text
                     fontSize="sm"
@@ -275,7 +277,7 @@ export const Footer = () => {
                     _dark={{ color: "gray.400" }}
                     textAlign={{ base: "left", md: "right" }}
                   >
-                    一切皆流，无物常驻
+                    {t("landing.footer.mottoSubtitle")}
                   </Text>
                 </VStack>
               </VStack>
@@ -295,7 +297,7 @@ export const Footer = () => {
                   color="gray.500"
                   _dark={{ color: "gray.500" }}
                 >
-                  © 2025 ENVDAMA. 保留所有权利。
+                  {t("landing.footer.copyright", { year: 2025 })}
                 </Text>
               </HStack>
             </Flex>
@@ -305,3 +307,4 @@ export const Footer = () => {
     </Box>
   )
 }
+

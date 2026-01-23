@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 自定义参数定义
  */
 export interface CustomParameter {
@@ -83,38 +83,49 @@ export interface ModelConfig {
   modelSpecific?: Record<string, any>
 }
 
+const asm1SlimLabel = (name: string) =>
+  `flow.modelParams.asm1slim.${name}.label`
+const asm1SlimDescription = (name: string) =>
+  `flow.modelParams.asm1slim.${name}.description`
+const asm1Label = (name: string) => `flow.modelParams.asm1.${name}.label`
+const asm1Description = (name: string) =>
+  `flow.modelParams.asm1.${name}.description`
+const asm3Label = (name: string) => `flow.modelParams.asm3.${name}.label`
+const asm3Description = (name: string) =>
+  `flow.modelParams.asm3.${name}.description`
+
 // ========== ASM1Slim 配置 ==========
 
 /** ASM1Slim 固定参数定义 */
 const ASM1_SLIM_FIXED_PARAMETERS: CustomParameter[] = [
   {
     name: "dissolvedOxygen",
-    label: "溶解氧",
-    description: "溶解氧浓度 (mg/L)",
+    label: asm1SlimLabel("dissolvedOxygen"),
+    description: asm1SlimDescription("dissolvedOxygen"),
     defaultValue: 0,
   },
   {
     name: "cod",
-    label: "COD",
-    description: "化学需氧量 (mg/L)",
+    label: asm1SlimLabel("cod"),
+    description: asm1SlimDescription("cod"),
     defaultValue: 0,
   },
   {
     name: "nitrate",
-    label: "硝态氮",
-    description: "硝态氮浓度 (mg/L)",
+    label: asm1SlimLabel("nitrate"),
+    description: asm1SlimDescription("nitrate"),
     defaultValue: 0,
   },
   {
     name: "ammonia",
-    label: "氨氮",
-    description: "氨氮浓度 (mg/L)",
+    label: asm1SlimLabel("ammonia"),
+    description: asm1SlimDescription("ammonia"),
     defaultValue: 0,
   },
   {
     name: "totalAlkalinity",
-    label: "总碱度",
-    description: "总碱度 (mg/L)",
+    label: asm1SlimLabel("totalAlkalinity"),
+    description: asm1SlimDescription("totalAlkalinity"),
     defaultValue: 0,
   },
 ]
@@ -126,8 +137,8 @@ const ASM1_SLIM_FIXED_PARAMETERS: CustomParameter[] = [
 const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   {
     name: "empiricalDenitrificationRate",
-    label: "经验反硝化速率",
-    description: "经验反硝化速率常数",
+    label: asm1SlimLabel("empiricalDenitrificationRate"),
+    description: asm1SlimDescription("empiricalDenitrificationRate"),
     defaultValue: 60,
     ui: {
       min: 0,
@@ -138,8 +149,8 @@ const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "empiricalNitrificationRate",
-    label: "经验硝化速率",
-    description: "经验硝化速率常数",
+    label: asm1SlimLabel("empiricalNitrificationRate"),
+    description: asm1SlimDescription("empiricalNitrificationRate"),
     defaultValue: 15,
     ui: {
       min: 0,
@@ -150,8 +161,8 @@ const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "empiricalCNRatio",
-    label: "经验碳氮比",
-    description: "经验碳氮比参数",
+    label: asm1SlimLabel("empiricalCNRatio"),
+    description: asm1SlimDescription("empiricalCNRatio"),
     defaultValue: 5.0, // 统一使用配置文件的值
     ui: {
       min: 0,
@@ -162,8 +173,8 @@ const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "codDenitrificationInfluence",
-    label: "COD浓度对反硝化速率的影响参数",
-    description: "COD浓度对反硝化速率的影响系数",
+    label: asm1SlimLabel("codDenitrificationInfluence"),
+    description: asm1SlimDescription("codDenitrificationInfluence"),
     defaultValue: 20,
     ui: {
       min: 0,
@@ -174,8 +185,8 @@ const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "nitrateDenitrificationInfluence",
-    label: "硝态氮浓度对反硝化速率的影响参数",
-    description: "硝态氮浓度对反硝化速率的影响系数",
+    label: asm1SlimLabel("nitrateDenitrificationInfluence"),
+    description: asm1SlimDescription("nitrateDenitrificationInfluence"),
     defaultValue: 1.0,
     ui: {
       min: 0,
@@ -186,8 +197,8 @@ const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "ammoniaNitrificationInfluence",
-    label: "氨氮浓度对硝化速率的影响参数",
-    description: "氨氮浓度对硝化速率的影响系数",
+    label: asm1SlimLabel("ammoniaNitrificationInfluence"),
+    description: asm1SlimDescription("ammoniaNitrificationInfluence"),
     defaultValue: 2.0,
     ui: {
       min: 0,
@@ -198,8 +209,8 @@ const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "aerobicCODDegradationRate",
-    label: "好氧COD降解速率参数",
-    description: "好氧条件下COD降解速率常数",
+    label: asm1SlimLabel("aerobicCODDegradationRate"),
+    description: asm1SlimDescription("aerobicCODDegradationRate"),
     defaultValue: 0.8,
     ui: {
       min: 0,
@@ -212,14 +223,21 @@ const ASM1_SLIM_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
 
 /** ASM1Slim 可用变量列表 */
 const ASM1_SLIM_AVAILABLE_VARIABLES: AvailableVariable[] = [
-  { name: "dissolvedOxygen", label: "溶解氧", unit: "mg/L" },
-  { name: "cod", label: "COD", unit: "mg/L" },
-  { name: "nitrate", label: "硝态氮", unit: "mg/L" },
-  { name: "ammonia", label: "氨氮", unit: "mg/L" },
-  { name: "totalAlkalinity", label: "总碱度", unit: "mg/L" },
-  { name: "volume", label: "体积", unit: "m³" },
+  {
+    name: "dissolvedOxygen",
+    label: asm1SlimLabel("dissolvedOxygen"),
+    unit: "mg/L",
+  },
+  { name: "cod", label: asm1SlimLabel("cod"), unit: "mg/L" },
+  { name: "nitrate", label: asm1SlimLabel("nitrate"), unit: "mg/L" },
+  { name: "ammonia", label: asm1SlimLabel("ammonia"), unit: "mg/L" },
+  {
+    name: "totalAlkalinity",
+    label: asm1SlimLabel("totalAlkalinity"),
+    unit: "mg/L",
+  },
+  { name: "volume", label: asm1SlimLabel("volume"), unit: "m3" },
 ]
-
 /** ASM1Slim 模型配置 */
 export const ASM1_SLIM_CONFIG: ModelConfig = {
   modelName: "asm1slim",
@@ -246,68 +264,68 @@ export const ASM1_SLIM_CONFIG: ModelConfig = {
 const ASM1_FIXED_PARAMETERS: CustomParameter[] = [
   {
     name: "X_BH",
-    label: "异养菌生物量",
-    description: "异养菌生物量浓度 (mg COD/L)",
+    label: asm1Label("X_BH"),
+    description: asm1Description("X_BH"),
     defaultValue: 0,
   },
   {
     name: "X_BA",
-    label: "自养菌生物量",
-    description: "自养菌生物量浓度 (mg COD/L)",
+    label: asm1Label("X_BA"),
+    description: asm1Description("X_BA"),
     defaultValue: 0,
   },
   {
     name: "X_S",
-    label: "缓慢降解基质",
-    description: "缓慢降解基质浓度 (mg COD/L)",
+    label: asm1Label("X_S"),
+    description: asm1Description("X_S"),
     defaultValue: 0,
   },
   {
     name: "X_i",
-    label: "惰性颗粒物",
-    description: "惰性颗粒物浓度 (mg COD/L)",
+    label: asm1Label("X_i"),
+    description: asm1Description("X_i"),
     defaultValue: 0,
   },
   {
     name: "X_ND",
-    label: "颗粒有机氮",
-    description: "颗粒有机氮浓度 (mg N/L)",
+    label: asm1Label("X_ND"),
+    description: asm1Description("X_ND"),
     defaultValue: 0,
   },
   {
     name: "S_O",
-    label: "溶解氧",
-    description: "溶解氧浓度 (mg O2/L)",
+    label: asm1Label("S_O"),
+    description: asm1Description("S_O"),
     defaultValue: 0,
   },
   {
     name: "S_S",
-    label: "易降解基质",
-    description: "易降解基质浓度 (mg COD/L)",
+    label: asm1Label("S_S"),
+    description: asm1Description("S_S"),
     defaultValue: 0,
   },
   {
     name: "S_NO",
-    label: "硝态氮",
-    description: "硝态氮浓度 (mg N/L)",
+    label: asm1Label("S_NO"),
+    description: asm1Description("S_NO"),
     defaultValue: 0,
   },
   {
     name: "S_NH",
-    label: "氨氮",
-    description: "氨氮浓度 (mg N/L)",
+    label: asm1Label("S_NH"),
+    description: asm1Description("S_NH"),
     defaultValue: 0,
   },
   {
     name: "S_ND",
-    label: "溶解有机氮",
-    description: "溶解有机氮浓度 (mg N/L)",
+    label: asm1Label("S_ND"),
+    description: asm1Description("S_ND"),
     defaultValue: 0,
   },
   {
     name: "S_ALK",
-    label: "碱度",
-    description: "碱度 (mol HCO3-/L)",
+    label: asm1Label("S_ALK"),
+    description: asm1Description("S_ALK"),
     defaultValue: 0,
   },
 ]
@@ -319,8 +337,8 @@ const ASM1_FIXED_PARAMETERS: CustomParameter[] = [
 const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   {
     name: "u_H",
-    label: "μ_H-异养菌最大比增长速率",
-    description: "异养菌最大比增长速率 (1/d)",
+    label: asm1Label("u_H"),
+    description: asm1Description("u_H"),
     defaultValue: 6.0,
     ui: {
       min: 1.0,
@@ -331,8 +349,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_S",
-    label: "K_S-异养菌半饱和系数",
-    description: "异养菌对易降解基质的半饱和常数 (g COD/m3)",
+    label: asm1Label("K_S"),
+    description: asm1Description("K_S"),
     defaultValue: 20.0,
     ui: {
       min: 5.0,
@@ -343,8 +361,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_OH",
-    label: "K_OH-异养菌的氧气半饱和系数",
-    description: "异养菌对氧的半饱和常数 (g O2/m3)",
+    label: asm1Label("K_OH"),
+    description: asm1Description("K_OH"),
     defaultValue: 0.2,
     ui: {
       min: 0.1,
@@ -355,8 +373,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_NO",
-    label: "K_NO-异养菌的硝酸盐氮半饱和系数",
-    description: "硝态氮半饱和常数 (g NO3-N/m3)",
+    label: asm1Label("K_NO"),
+    description: asm1Description("K_NO"),
     defaultValue: 0.5,
     ui: {
       min: 0.1,
@@ -367,8 +385,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "n_g",
-    label: "η_g-缺氧条件下异养菌生长的校正因子η_g",
-    description: "缺氧条件下的修正因子 量纲为1",
+    label: asm1Label("n_g"),
+    description: asm1Description("n_g"),
     defaultValue: 0.8,
     ui: {
       min: 0.1,
@@ -379,8 +397,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_H",
-    label: "b_H-异养菌衰减系数",
-    description: "异养菌衰减系数 (1/d)",
+    label: asm1Label("b_H"),
+    description: asm1Description("b_H"),
     defaultValue: 0.4, // 统一使用配置文件的值
     ui: {
       min: 0.1,
@@ -391,8 +409,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "u_A",
-    label: "μ_A-自养菌最大比增长速率",
-    description: "自养菌最大比增长速率 (1/d)",
+    label: asm1Label("u_A"),
+    description: asm1Description("u_A"),
     defaultValue: 0.8,
     ui: {
       min: 0.1,
@@ -403,8 +421,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_NH",
-    label: "K_NH-自养菌的氨半饱和系数",
-    description: "自养菌对氨氮的半饱和常数 (g NH3-N/m3)",
+    label: asm1Label("K_NH"),
+    description: asm1Description("K_NH"),
     defaultValue: 1.0,
     ui: {
       min: 0.1,
@@ -415,8 +433,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_OA",
-    label: "K_OA-自养菌的氧气半饱和系数",
-    description: "自养菌对氧的半饱和常数 (g O2/m3)",
+    label: asm1Label("K_OA"),
+    description: asm1Description("K_OA"),
     defaultValue: 0.4,
     ui: {
       min: 0.1,
@@ -427,8 +445,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_A",
-    label: "b_A-自养菌衰减系数",
-    description: "自养菌衰减系数 (1/d)",
+    label: asm1Label("b_A"),
+    description: asm1Description("b_A"),
     defaultValue: 0.05,
     ui: {
       min: 0.01,
@@ -439,8 +457,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "Y_H",
-    label: "Y_H-异养菌产率系数",
-    description: "每氧化污水中1gCOD形成的细胞COD质量(gCOD(细胞)/g被氧化的COD)",
+    label: asm1Label("Y_H"),
+    description: asm1Description("Y_H"),
     defaultValue: 0.67,
     ui: {
       min: 0.1,
@@ -451,8 +469,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "Y_A",
-    label: "Y_A-自养菌产率系数",
-    description: "自养菌每氧化1g氨氮形成的细胞COD量 (COD(细胞)/g被氧化的氮)",
+    label: asm1Label("Y_A"),
+    description: asm1Description("Y_A"),
     defaultValue: 0.24,
     ui: {
       min: 0.1,
@@ -463,8 +481,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_XB",
-    label: "i_XB-微生物细胞含氮比例",
-    description: "单位质量细胞质COD所含氮的质量 (gN/ g COD(细胞))",
+    label: asm1Label("i_XB"),
+    description: asm1Description("i_XB"),
     defaultValue: 0.086,
     ui: {
       min: 0.05,
@@ -475,9 +493,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_XP",
-    label: "i_XP-微生物产物含氮比例",
-    description:
-      "微生物衰减后形成的物质中，单位质量 COD 所包含的氮质量 (g(N)/g COD (衰减颗粒态产物))",
+    label: asm1Label("i_XP"),
+    description: asm1Description("i_XP"),
     defaultValue: 0.06,
     ui: {
       min: 0.01,
@@ -488,8 +505,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "f_P",
-    label: "f_P-微生物惰性颗粒比例",
-    description: "衰减后以惰性颗粒产物存在的那部分微生物占总微生物量的比值",
+    label: asm1Label("f_P"),
+    description: asm1Description("f_P"),
     defaultValue: 0.08,
     ui: {
       min: 0.01,
@@ -500,8 +517,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "n_h",
-    label: "n_h-缺氧条件下水解校正因子",
-    description: "缺氧条件下水解校正因子 量纲为1",
+    label: asm1Label("n_h"),
+    description: asm1Description("n_h"),
     defaultValue: 0.4,
     ui: {
       min: 0.1,
@@ -512,8 +529,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_a",
-    label: "K_a-最大比氨化速率",
-    description: "针对有机氨的最大比氨化速率 m3/(g COD(细胞*d)",
+    label: asm1Label("K_a"),
+    description: asm1Description("K_a"),
     defaultValue: 0.05,
     ui: {
       min: 0.01,
@@ -524,8 +541,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_h",
-    label: "K_h-最大比水解速率",
-    description: "最大比水解速率	(g COD/(Xs)/(g(细胞)*d)",
+    label: asm1Label("K_h"),
+    description: asm1Description("K_h"),
     defaultValue: 3.0,
     ui: {
       min: 1.0,
@@ -536,8 +553,8 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_x",
-    label: "K_x-缓慢生物降解底物水解的半饱和系数",
-    description: "缓慢生物降解底物水解的半饱和系数(g COD(Xs)/g(细胞))",
+    label: asm1Label("K_x"),
+    description: asm1Description("K_x"),
     defaultValue: 3.0,
     ui: {
       min: 1.0,
@@ -550,20 +567,19 @@ const ASM1_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
 
 /** ASM1 可用变量列表 */
 const ASM1_AVAILABLE_VARIABLES: AvailableVariable[] = [
-  { name: "S_S", label: "易降解基质", unit: "mg COD/L" },
-  { name: "S_NH", label: "氨氮", unit: "mg N/L" },
-  { name: "S_NO", label: "硝态氮", unit: "mg N/L" },
-  { name: "S_O", label: "溶解氧", unit: "mg O2/L" },
-  { name: "S_ND", label: "溶解有机氮", unit: "mg N/L" },
-  { name: "S_ALK", label: "碱度", unit: "mol HCO3-/L" },
-  { name: "X_BH", label: "异养菌生物量", unit: "mg COD/L" },
-  { name: "X_BA", label: "自养菌生物量", unit: "mg COD/L" },
-  { name: "X_S", label: "缓慢降解基质", unit: "mg COD/L" },
-  { name: "X_i", label: "惰性颗粒物", unit: "mg COD/L" },
-  { name: "X_ND", label: "颗粒有机氮", unit: "mg N/L" },
-  { name: "volume", label: "体积", unit: "m³" },
+  { name: "S_S", label: asm1Label("S_S"), unit: "mg COD/L" },
+  { name: "S_NH", label: asm1Label("S_NH"), unit: "mg N/L" },
+  { name: "S_NO", label: asm1Label("S_NO"), unit: "mg N/L" },
+  { name: "S_O", label: asm1Label("S_O"), unit: "mg O2/L" },
+  { name: "S_ND", label: asm1Label("S_ND"), unit: "mg N/L" },
+  { name: "S_ALK", label: asm1Label("S_ALK"), unit: "mol HCO3-/L" },
+  { name: "X_BH", label: asm1Label("X_BH"), unit: "mg COD/L" },
+  { name: "X_BA", label: asm1Label("X_BA"), unit: "mg COD/L" },
+  { name: "X_S", label: asm1Label("X_S"), unit: "mg COD/L" },
+  { name: "X_i", label: asm1Label("X_i"), unit: "mg COD/L" },
+  { name: "X_ND", label: asm1Label("X_ND"), unit: "mg N/L" },
+  { name: "volume", label: asm1Label("volume"), unit: "m3" },
 ]
-
 export const ASM1_CONFIG: ModelConfig = {
   modelName: "asm1",
   displayName: "ASM1",
@@ -609,90 +625,91 @@ export const ASM2D_CONFIG: ModelConfig = {
 const ASM3_FIXED_PARAMETERS: CustomParameter[] = [
   {
     name: "X_H",
-    label: "异养菌生物量",
-    description: "异养菌生物量浓度 (mg COD/L)",
+    label: asm3Label("X_H"),
+    description: asm3Description("X_H"),
     defaultValue: 30,
   },
   {
     name: "X_A",
-    label: "自养菌生物量",
-    description: "自养菌生物量浓度 (mg COD/L)",
+    label: asm3Label("X_A"),
+    description: asm3Description("X_A"),
     defaultValue: 0,
   },
   {
     name: "X_S",
-    label: "颗粒可降解基质",
-    description: "颗粒可降解有机物浓度 (mg COD/L)",
+    label: asm3Label("X_S"),
+    description: asm3Description("X_S"),
     defaultValue: 25,
   },
   {
     name: "X_I",
-    label: "颗粒惰性物质",
-    description: "颗粒惰性有机物浓度 (mg COD/L)",
+    label: asm3Label("X_I"),
+    description: asm3Description("X_I"),
     defaultValue: 25,
   },
   {
     name: "X_ND",
-    label: "颗粒有机氮",
-    description: "颗粒有机氮浓度 (mg N/L)",
+    label: asm3Label("X_ND"),
+    description: asm3Description("X_ND"),
     defaultValue: 0,
   },
   {
     name: "X_STO",
-    label: "储存产物",
-    description: "细胞内储存产物浓度 (mg COD/L)",
+    label: asm3Label("X_STO"),
+    description: asm3Description("X_STO"),
     defaultValue: 0,
   },
   {
     name: "S_O",
-    label: "溶解氧",
-    description: "溶解氧浓度 (mg O2/L)",
+    label: asm3Label("S_O"),
+    description: asm3Description("S_O"),
     defaultValue: 4,
   },
   {
     name: "S_S",
-    label: "可溶基质",
-    description: "可溶有机物浓度 (mg COD/L)",
+    label: asm3Label("S_S"),
+    description: asm3Description("S_S"),
     defaultValue: 2,
   },
   {
     name: "S_NO",
-    label: "硝酸盐和亚硝酸盐",
-    description: "NOx-N浓度 (mg N/L)",
+    label: asm3Label("S_NO"),
+    description: asm3Description("S_NO"),
     defaultValue: 0,
   },
   {
     name: "S_NH",
-    label: "氨氮",
-    description: "NH4-N浓度 (mg N/L)",
+    label: asm3Label("S_NH"),
+    description: asm3Description("S_NH"),
     defaultValue: 2,
   },
   {
     name: "S_ND",
-    label: "可溶有机氮",
-    description: "可溶有机氮浓度 (mg N/L)",
+    label: asm3Label("S_ND"),
+    description: asm3Description("S_ND"),
     defaultValue: 1,
   },
   {
     name: "S_ALK",
-    label: "碱度",
-    description: "碱度浓度 (mmol/L)",
+    label: asm3Label("S_ALK"),
+    description: asm3Description("S_ALK"),
     defaultValue: 7,
   },
   {
     name: "S_I",
-    label: "可溶惰性物质",
-    description: "可溶惰性有机物浓度 (mg COD/L)",
+    label: asm3Label("S_I"),
+    description: asm3Description("S_I"),
     defaultValue: 30,
   },
 ]
 
 /** ASM3 增强计算参数定义（包含UI配置） - 37个参数 */
 const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
+
   {
     name: "k_H",
-    label: "水解速率常数",
-    description: "颗粒基质水解速率常数 (d⁻¹)",
+    label: asm3Label("k_H"),
+    description: asm3Description("k_H"),
     defaultValue: 3.0,
     ui: {
       min: 0.1,
@@ -703,8 +720,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "k_STO",
-    label: "储存速率常数",
-    description: "储存产物形成速率常数 (d⁻¹)",
+    label: asm3Label("k_STO"),
+    description: asm3Description("k_STO"),
     defaultValue: 5.0,
     ui: {
       min: 1.0,
@@ -715,8 +732,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_S",
-    label: "基质半饱和常数",
-    description: "可溶基质半饱和常数 (mg COD/L)",
+    label: asm3Label("K_S"),
+    description: asm3Description("K_S"),
     defaultValue: 2.0,
     ui: {
       min: 0.1,
@@ -727,8 +744,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_O2H",
-    label: "异养菌氧半饱和常数",
-    description: "异养菌氧半饱和常数 (mg O2/L)",
+    label: asm3Label("K_O2H"),
+    description: asm3Description("K_O2H"),
     defaultValue: 0.2,
     ui: {
       min: 0.01,
@@ -739,8 +756,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_NO",
-    label: "NOx半饱和常数",
-    description: "NOx半饱和常数 (mg N/L)",
+    label: asm3Label("K_NO"),
+    description: asm3Description("K_NO"),
     defaultValue: 0.5,
     ui: {
       min: 0.1,
@@ -751,8 +768,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_NH4H",
-    label: "异养菌氨氮半饱和常数",
-    description: "异养菌氨氮半饱和常数 (mg N/L)",
+    label: asm3Label("K_NH4H"),
+    description: asm3Description("K_NH4H"),
     defaultValue: 0.05,
     ui: {
       min: 0.01,
@@ -763,8 +780,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_ALKH",
-    label: "异养菌碱度半饱和常数",
-    description: "异养菌碱度半饱和常数 (mmol/L)",
+    label: asm3Label("K_ALKH"),
+    description: asm3Description("K_ALKH"),
     defaultValue: 0.1,
     ui: {
       min: 0.01,
@@ -775,8 +792,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_X",
-    label: "水解半饱和常数",
-    description: "水解半饱和常数 (mg COD/mg COD)",
+    label: asm3Label("K_X"),
+    description: asm3Description("K_X"),
     defaultValue: 0.1,
     ui: {
       min: 0.01,
@@ -787,8 +804,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "mu_H",
-    label: "异养菌最大比增长速率",
-    description: "异养菌最大比增长速率 (d⁻¹)",
+    label: asm3Label("mu_H"),
+    description: asm3Description("mu_H"),
     defaultValue: 2.0,
     ui: {
       min: 0.5,
@@ -799,8 +816,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_STO_H",
-    label: "储存产物半饱和常数",
-    description: "储存产物半饱和常数 (mg COD/mg COD)",
+    label: asm3Label("K_STO_H"),
+    description: asm3Description("K_STO_H"),
     defaultValue: 1.0,
     ui: {
       min: 0.1,
@@ -811,8 +828,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_HO2",
-    label: "异养菌好氧衰亡速率",
-    description: "异养菌好氧衰亡速率 (d⁻¹)",
+    label: asm3Label("b_HO2"),
+    description: asm3Description("b_HO2"),
     defaultValue: 0.2,
     ui: {
       min: 0.01,
@@ -823,8 +840,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_HNOX",
-    label: "异养菌缺氧衰亡速率",
-    description: "异养菌缺氧衰亡速率 (d⁻¹)",
+    label: asm3Label("b_HNOX"),
+    description: asm3Description("b_HNOX"),
     defaultValue: 0.1,
     ui: {
       min: 0.01,
@@ -835,8 +852,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_STOO2",
-    label: "储存物好氧氧化速率",
-    description: "储存物好氧氧化速率 (d⁻¹)",
+    label: asm3Label("b_STOO2"),
+    description: asm3Description("b_STOO2"),
     defaultValue: 0.2,
     ui: {
       min: 0.01,
@@ -847,8 +864,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_STONOX",
-    label: "储存物缺氧氧化速率",
-    description: "储存物缺氧氧化速率 (d⁻¹)",
+    label: asm3Label("b_STONOX"),
+    description: asm3Description("b_STONOX"),
     defaultValue: 0.1,
     ui: {
       min: 0.01,
@@ -859,8 +876,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "mu_A",
-    label: "自养菌最大比增长速率",
-    description: "自养菌最大比增长速率 (d⁻¹)",
+    label: asm3Label("mu_A"),
+    description: asm3Description("mu_A"),
     defaultValue: 1.0,
     ui: {
       min: 0.1,
@@ -871,8 +888,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_NH4A",
-    label: "自养菌氨氮半饱和常数",
-    description: "自养菌氨氮半饱和常数 (mg N/L)",
+    label: asm3Label("K_NH4A"),
+    description: asm3Description("K_NH4A"),
     defaultValue: 1.0,
     ui: {
       min: 0.1,
@@ -883,8 +900,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_O2A",
-    label: "自养菌氧半饱和常数",
-    description: "自养菌氧半饱和常数 (mg O2/L)",
+    label: asm3Label("K_O2A"),
+    description: asm3Description("K_O2A"),
     defaultValue: 0.4,
     ui: {
       min: 0.1,
@@ -895,8 +912,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_ALKA",
-    label: "自养菌碱度半饱和常数",
-    description: "自养菌碱度半饱和常数 (mmol/L)",
+    label: asm3Label("K_ALKA"),
+    description: asm3Description("K_ALKA"),
     defaultValue: 0.5,
     ui: {
       min: 0.1,
@@ -907,8 +924,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_AO2",
-    label: "自养菌好氧衰亡速率",
-    description: "自养菌好氧衰亡速率 (d⁻¹)",
+    label: asm3Label("b_AO2"),
+    description: asm3Description("b_AO2"),
     defaultValue: 0.05,
     ui: {
       min: 0.01,
@@ -919,8 +936,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "b_ANOX",
-    label: "自养菌缺氧衰亡速率",
-    description: "自养菌缺氧衰亡速率 (d⁻¹)",
+    label: asm3Label("b_ANOX"),
+    description: asm3Description("b_ANOX"),
     defaultValue: 0.05,
     ui: {
       min: 0.01,
@@ -931,8 +948,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "K_AO2",
-    label: "自养菌氧抑制常数",
-    description: "自养菌氧抑制常数 (mg O2/L)",
+    label: asm3Label("K_AO2"),
+    description: asm3Description("K_AO2"),
     defaultValue: 0.4,
     ui: {
       min: 0.1,
@@ -943,8 +960,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "Y_STOO2",
-    label: "好氧储存产率",
-    description: "好氧储存产率系数 (mg COD/mg COD)",
+    label: asm3Label("Y_STOO2"),
+    description: asm3Description("Y_STOO2"),
     defaultValue: 0.85,
     ui: {
       min: 0.5,
@@ -955,8 +972,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "Y_STONOX",
-    label: "缺氧储存产率",
-    description: "缺氧储存产率系数 (mg COD/mg COD)",
+    label: asm3Label("Y_STONOX"),
+    description: asm3Description("Y_STONOX"),
     defaultValue: 0.8,
     ui: {
       min: 0.5,
@@ -967,8 +984,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "Y_HO2",
-    label: "异养菌好氧产率",
-    description: "异养菌好氧产率系数 (mg COD/mg COD)",
+    label: asm3Label("Y_HO2"),
+    description: asm3Description("Y_HO2"),
     defaultValue: 0.63,
     ui: {
       min: 0.4,
@@ -979,8 +996,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "Y_HNOX",
-    label: "异养菌缺氧产率",
-    description: "异养菌缺氧产率系数 (mg COD/mg COD)",
+    label: asm3Label("Y_HNOX"),
+    description: asm3Description("Y_HNOX"),
     defaultValue: 0.54,
     ui: {
       min: 0.4,
@@ -991,8 +1008,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "Y_A",
-    label: "自养菌产率",
-    description: "自养菌产率系数 (mg COD/mg N)",
+    label: asm3Label("Y_A"),
+    description: asm3Description("Y_A"),
     defaultValue: 0.24,
     ui: {
       min: 0.1,
@@ -1003,8 +1020,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "f_SI",
-    label: "惰性可溶物分数",
-    description: "水解产生的惰性可溶物分数 (mg COD/mg COD)",
+    label: asm3Label("f_SI"),
+    description: asm3Description("f_SI"),
     defaultValue: 0.0,
     ui: {
       min: 0.0,
@@ -1015,8 +1032,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "f_XI",
-    label: "惰性颗粒物分数",
-    description: "衰亡产生的惰性颗粒物分数 (mg COD/mg COD)",
+    label: asm3Label("f_XI"),
+    description: asm3Description("f_XI"),
     defaultValue: 0.1,
     ui: {
       min: 0.05,
@@ -1027,8 +1044,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_NSI",
-    label: "可溶惰性物氮含量",
-    description: "可溶惰性物氮含量 (mg N/mg COD)",
+    label: asm3Label("i_NSI"),
+    description: asm3Description("i_NSI"),
     defaultValue: 0.01,
     ui: {
       min: 0.0,
@@ -1039,8 +1056,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_NSS",
-    label: "可溶基质氮含量",
-    description: "可溶基质氮含量 (mg N/mg COD)",
+    label: asm3Label("i_NSS"),
+    description: asm3Description("i_NSS"),
     defaultValue: 0.03,
     ui: {
       min: 0.0,
@@ -1051,8 +1068,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_NXS",
-    label: "颗粒基质氮含量",
-    description: "颗粒基质氮含量 (mg N/mg COD)",
+    label: asm3Label("i_NXS"),
+    description: asm3Description("i_NXS"),
     defaultValue: 0.04,
     ui: {
       min: 0.0,
@@ -1063,8 +1080,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_NXI",
-    label: "颗粒惰性物氮含量",
-    description: "颗粒惰性物氮含量 (mg N/mg COD)",
+    label: asm3Label("i_NXI"),
+    description: asm3Description("i_NXI"),
     defaultValue: 0.02,
     ui: {
       min: 0.0,
@@ -1075,8 +1092,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_NBM",
-    label: "生物量氮含量",
-    description: "生物量氮含量 (mg N/mg COD)",
+    label: asm3Label("i_NBM"),
+    description: asm3Description("i_NBM"),
     defaultValue: 0.07,
     ui: {
       min: 0.05,
@@ -1087,8 +1104,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "ny_NOX",
-    label: "缺氧修正因子",
-    description: "缺氧条件修正因子",
+    label: asm3Label("ny_NOX"),
+    description: asm3Description("ny_NOX"),
     defaultValue: 0.8,
     ui: {
       min: 0.5,
@@ -1099,8 +1116,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_SSXI",
-    label: "颗粒惰性物TSS含量",
-    description: "颗粒惰性物TSS含量 (mg TSS/mg COD)",
+    label: asm3Label("i_SSXI"),
+    description: asm3Description("i_SSXI"),
     defaultValue: 0.75,
     ui: {
       min: 0.5,
@@ -1111,8 +1128,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_SSBM",
-    label: "生物量TSS含量",
-    description: "生物量TSS含量 (mg TSS/mg COD)",
+    label: asm3Label("i_SSBM"),
+    description: asm3Description("i_SSBM"),
     defaultValue: 0.9,
     ui: {
       min: 0.7,
@@ -1123,8 +1140,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "i_SSSTO",
-    label: "储存产物TSS含量",
-    description: "储存产物TSS含量 (mg TSS/mg COD)",
+    label: asm3Label("i_SSSTO"),
+    description: asm3Description("i_SSSTO"),
     defaultValue: 0.85,
     ui: {
       min: 0.7,
@@ -1135,8 +1152,8 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
   },
   {
     name: "k_a",
-    label: "氨化速率常数",
-    description: "氨化速率常数 (m³/(g COD·d))",
+    label: asm3Label("k_a"),
+    description: asm3Description("k_a"),
     defaultValue: 0.05,
     ui: {
       min: 0.01,
@@ -1145,26 +1162,24 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
       unit: "m³/(g COD·d)",
     },
   },
-]
 
-/** ASM3 可用变量列表 */
+]/** ASM3 可用变量列表 */
 const ASM3_AVAILABLE_VARIABLES: AvailableVariable[] = [
-  { name: "S_S", label: "可溶基质", unit: "mg COD/L" },
-  { name: "S_NH", label: "氨氮", unit: "mg N/L" },
-  { name: "S_NO", label: "硝酸盐和亚硝酸盐", unit: "mg N/L" },
-  { name: "S_O", label: "溶解氧", unit: "mg O2/L" },
-  { name: "S_ND", label: "可溶有机氮", unit: "mg N/L" },
-  { name: "S_ALK", label: "碱度", unit: "mmol/L" },
-  { name: "S_I", label: "可溶惰性物质", unit: "mg COD/L" },
-  { name: "X_H", label: "异养菌生物量", unit: "mg COD/L" },
-  { name: "X_A", label: "自养菌生物量", unit: "mg COD/L" },
-  { name: "X_S", label: "颗粒可降解基质", unit: "mg COD/L" },
-  { name: "X_I", label: "颗粒惰性物质", unit: "mg COD/L" },
-  { name: "X_ND", label: "颗粒有机氮", unit: "mg N/L" },
-  { name: "X_STO", label: "储存产物", unit: "mg COD/L" },
-  { name: "volume", label: "体积", unit: "m³" },
+  { name: "S_S", label: asm3Label("S_S"), unit: "mg COD/L" },
+  { name: "S_NH", label: asm3Label("S_NH"), unit: "mg N/L" },
+  { name: "S_NO", label: asm3Label("S_NO"), unit: "mg N/L" },
+  { name: "S_O", label: asm3Label("S_O"), unit: "mg O2/L" },
+  { name: "S_ND", label: asm3Label("S_ND"), unit: "mg N/L" },
+  { name: "S_ALK", label: asm3Label("S_ALK"), unit: "mmol/L" },
+  { name: "S_I", label: asm3Label("S_I"), unit: "mg COD/L" },
+  { name: "X_H", label: asm3Label("X_H"), unit: "mg COD/L" },
+  { name: "X_A", label: asm3Label("X_A"), unit: "mg COD/L" },
+  { name: "X_S", label: asm3Label("X_S"), unit: "mg COD/L" },
+  { name: "X_I", label: asm3Label("X_I"), unit: "mg COD/L" },
+  { name: "X_ND", label: asm3Label("X_ND"), unit: "mg N/L" },
+  { name: "X_STO", label: asm3Label("X_STO"), unit: "mg COD/L" },
+  { name: "volume", label: asm3Label("volume"), unit: "m3" },
 ]
-
 /** ASM3 模型配置 */
 export const ASM3_CONFIG: ModelConfig = {
   modelName: "asm3",
@@ -1406,3 +1421,7 @@ export function getParameterValidationRange(
     unit: param.ui.unit,
   }
 }
+
+
+
+

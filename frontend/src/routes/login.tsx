@@ -21,6 +21,7 @@ import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
+import { useI18n } from "@/i18n"
 import { emailPattern, passwordRules } from "../utils"
 
 export const Route = createFileRoute("/login")({
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/login")({
 
 function Login() {
   const { loginMutation, error, resetError } = useAuth()
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -98,7 +100,7 @@ function Login() {
             <VStack gap={2}>
               <Image
                 src="/assets/images/E-logos-1.png"
-                alt="ENVDAMA Logo"
+                alt={t("app.logoAlt")}
                 boxSize={8}
               />
               <Heading
@@ -115,7 +117,7 @@ function Login() {
             </VStack>
             <VStack gap={2}>
               <Text color="gray.600" fontSize="md">
-                欢迎回到ENVDAMA，登录您的智能环保数据分析平台
+                {t("auth.welcomeBack")}
               </Text>
             </VStack>
           </VStack>
@@ -127,10 +129,13 @@ function Login() {
               <Input
                 id="username"
                 {...register("username", {
-                  required: "Username is required",
-                  pattern: emailPattern,
+                  required: t("validation.required"),
+                  pattern: {
+                    value: emailPattern.value,
+                    message: t("validation.email"),
+                  },
                 })}
-                placeholder="Email"
+                placeholder={t("auth.emailPlaceholder")}
                 type="email"
               />
             </InputGroup>
@@ -139,11 +144,11 @@ function Login() {
             type="password"
             startElement={<FiLock />}
             {...register("password", passwordRules())}
-            placeholder="Password"
+            placeholder={t("auth.passwordPlaceholder")}
             errors={errors}
           />
           <RouterLink to="/recover-password" className="main-link">
-            忘记密码？
+            {t("auth.forgotPassword")}
           </RouterLink>
           <Button
             variant="solid"
@@ -161,12 +166,12 @@ function Login() {
             }}
             transition="all 0.2s"
           >
-            立即登录
+            {t("auth.loginNow")}
           </Button>
           <Text textAlign="center" color="gray.600">
-            还没有账户？{" "}
+            {t("auth.noAccount")}{" "}
             <RouterLink to="/signup" className="main-link">
-              立即注册
+              {t("auth.signUpNow")}
             </RouterLink>
           </Text>
         </VStack>

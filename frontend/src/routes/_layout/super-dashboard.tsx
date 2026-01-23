@@ -30,6 +30,7 @@ import {
   FiTrendingUp,
   FiUsers,
 } from "react-icons/fi"
+import { useI18n } from "../../i18n"
 
 import { StatsService } from "@/client/sdk.gen"
 import useAuth from "@/hooks/useAuth"
@@ -125,9 +126,16 @@ function StatCard({
 interface JobStatusDistributionProps {
   title: string
   data: Record<string, number>
+  formatStatusLabel: (status: string) => string
+  t: (key: string, params?: Record<string, string | number>) => string
 }
 
-function JobStatusDistribution({ title, data }: JobStatusDistributionProps) {
+function JobStatusDistribution({
+  title,
+  data,
+  formatStatusLabel,
+  t,
+}: JobStatusDistributionProps) {
   const total = Object.values(data).reduce((sum, count) => sum + count, 0)
 
   return (
@@ -147,10 +155,10 @@ function JobStatusDistribution({ title, data }: JobStatusDistributionProps) {
                       colorScheme={getStatusColor(status)}
                       variant="subtle"
                     >
-                      {status}
+                      {formatStatusLabel(status)}
                     </Badge>
                     <Text fontSize="sm" color="gray.600">
-                      {count} 个任务
+                      {t("superDashboard.jobCount", { count })}
                     </Text>
                   </HStack>
                   <Text fontSize="sm" fontWeight="medium">
@@ -173,6 +181,46 @@ function JobStatusDistribution({ title, data }: JobStatusDistributionProps) {
 
 function SuperDashboard() {
   const { user: currentUser } = useAuth()
+  const { t, language } = useI18n()
+  const locale = language === "zh" ? "zh-CN" : "en-US"
+
+  const formatStatusLabel = (status: string) => {
+    const normalized = status.toLowerCase()
+    switch (normalized) {
+      case "completed":
+      case "success":
+        return t("superDashboard.status.completed")
+      case "running":
+      case "in_progress":
+        return t("superDashboard.status.running")
+      case "failed":
+      case "error":
+        return t("superDashboard.status.failed")
+      case "pending":
+      case "queued":
+        return t("superDashboard.status.pending")
+      case "cancelled":
+      case "canceled":
+        return t("superDashboard.status.cancelled")
+      default:
+        return t("superDashboard.status.unknown")
+    }
+  }
+
+  const formatUserType = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "basic":
+        return t("userSettings.userTypeBasic")
+      case "pro":
+        return t("userSettings.userTypePro")
+      case "ultra":
+        return t("userSettings.userTypeUltra")
+      case "enterprise":
+        return t("userSettings.userTypeEnterprise")
+      default:
+        return type
+    }
+  }
 
   const {
     data: dashboardStats,
@@ -198,7 +246,7 @@ function SuperDashboard() {
         <Box pt={12} m={4}>
           <Alert.Root status="error">
             <Alert.Indicator />
-            <Alert.Title>您没有权限访问此页面。</Alert.Title>
+            <Alert.Title>{t("superDashboard.noAccess")}</Alert.Title>
           </Alert.Root>
         </Box>
       </Container>
@@ -210,7 +258,7 @@ function SuperDashboard() {
       <Container maxW="full">
         <Box pt={12} m={4} textAlign="center">
           <Spinner size="xl" />
-          <Text mt={4}>加载统计数据中...</Text>
+          <Text mt={4}>{t("superDashboard.loading")}</Text>
         </Box>
       </Container>
     )
@@ -222,7 +270,9 @@ function SuperDashboard() {
         <Box pt={12} m={4}>
           <Alert.Root status="error">
             <Alert.Indicator />
-            <Alert.Title>加载统计数据失败: {error.message}</Alert.Title>
+            <Alert.Title>
+              {t("superDashboard.loadError", { error: error.message })}
+            </Alert.Title>
           </Alert.Root>
         </Box>
       </Container>
@@ -239,23 +289,27 @@ function SuperDashboard() {
           {/* 欢迎信息 */}
           <Box>
             <Heading size="xl" mb={2}>
-              超级管理员控制台
+              {t("superDashboard.title")}
             </Heading>
             <Text color="gray.600" fontSize="lg">
-              欢迎回来，{currentUser?.full_name || currentUser?.email}！
+              {t("superDashboard.welcome", {
+                name: currentUser?.full_name || currentUser?.email || "",
+              })}
             </Text>
           </Box>
 
           {/* 核心统计指标 */}
           <Box>
             <Heading size="lg" mb={4}>
-              核心指标
+              {t("superDashboard.coreMetrics")}
             </Heading>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
               <StatCard
-                title="总用户数"
+                title={t("superDashboard.totalUsers")}
                 value={stats?.user_stats?.total_users || 0}
-                subtitle={`活跃: ${stats?.user_stats?.active_users || 0}`}
+                subtitle={t("superDashboard.activeUsers", {
+                  count: stats?.user_stats?.active_users || 0,
+                })}
                 icon={FiUsers}
                 colorScheme="blue"
                 trend={{
@@ -264,23 +318,23 @@ function SuperDashboard() {
                 }}
               />
               <StatCard
-                title="总任务数"
+                title={t("superDashboard.totalJobs")}
                 value={stats?.content_stats?.jobs?.total || 0}
-                subtitle="所有类型任务"
+                subtitle={t("superDashboard.allJobTypes")}
                 icon={FiActivity}
                 colorScheme="green"
               />
               <StatCard
-                title="总流程图"
+                title={t("superDashboard.totalFlowcharts")}
                 value={stats?.content_stats?.flowcharts?.total || 0}
-                subtitle="所有类型流程图"
+                subtitle={t("superDashboard.allFlowchartTypes")}
                 icon={FiGitBranch}
                 colorScheme="purple"
               />
               <StatCard
-                title="超级管理员"
+                title={t("superDashboard.superAdmins")}
                 value={stats?.user_stats?.superusers || 0}
-                subtitle="系统管理员"
+                subtitle={t("superDashboard.systemAdmins")}
                 icon={FiSettings}
                 colorScheme="orange"
               />
@@ -294,25 +348,29 @@ function SuperDashboard() {
               <Card.Header>
                 <HStack>
                   <Icon as={FiTarget} />
-                  <Heading size="md">流程图分布</Heading>
+                  <Heading size="md">{t("superDashboard.flowchartDistribution")}</Heading>
                 </HStack>
               </Card.Header>
               <Card.Body>
                 <VStack align="stretch" gap={4}>
                   <Stat.Root>
-                    <Stat.Label>物料平衡流程图</Stat.Label>
+                    <Stat.Label>
+                      {t("superDashboard.materialBalanceFlowcharts")}
+                    </Stat.Label>
                     <Stat.ValueText>
                       {stats?.content_stats?.flowcharts?.material_balance || 0}
                     </Stat.ValueText>
                   </Stat.Root>
                   <Stat.Root>
-                    <Stat.Label>ASM1 流程图</Stat.Label>
+                    <Stat.Label>{t("superDashboard.asm1Flowcharts")}</Stat.Label>
                     <Stat.ValueText>
                       {stats?.content_stats?.flowcharts?.asm1 || 0}
                     </Stat.ValueText>
                   </Stat.Root>
                   <Stat.Root>
-                    <Stat.Label>ASM1 Slim 流程图</Stat.Label>
+                    <Stat.Label>
+                      {t("superDashboard.asm1SlimFlowcharts")}
+                    </Stat.Label>
                     <Stat.ValueText>
                       {stats?.content_stats?.flowcharts?.asm1slim || 0}
                     </Stat.ValueText>
@@ -326,25 +384,27 @@ function SuperDashboard() {
               <Card.Header>
                 <HStack>
                   <Icon as={FiBarChart} />
-                  <Heading size="md">任务分布</Heading>
+                  <Heading size="md">{t("superDashboard.jobDistribution")}</Heading>
                 </HStack>
               </Card.Header>
               <Card.Body>
                 <VStack align="stretch" gap={4}>
                   <Stat.Root>
-                    <Stat.Label>物料平衡任务</Stat.Label>
+                    <Stat.Label>
+                      {t("superDashboard.materialBalanceJobs")}
+                    </Stat.Label>
                     <Stat.ValueText>
                       {stats?.content_stats?.jobs?.material_balance || 0}
                     </Stat.ValueText>
                   </Stat.Root>
                   <Stat.Root>
-                    <Stat.Label>ASM1 任务</Stat.Label>
+                    <Stat.Label>{t("superDashboard.asm1Jobs")}</Stat.Label>
                     <Stat.ValueText>
                       {stats?.content_stats?.jobs?.asm1 || 0}
                     </Stat.ValueText>
                   </Stat.Root>
                   <Stat.Root>
-                    <Stat.Label>ASM1 Slim 任务</Stat.Label>
+                    <Stat.Label>{t("superDashboard.asm1SlimJobs")}</Stat.Label>
                     <Stat.ValueText>
                       {stats?.content_stats?.jobs?.asm1slim || 0}
                     </Stat.ValueText>
@@ -357,7 +417,7 @@ function SuperDashboard() {
           {/* 任务状态分布 */}
           <Box>
             <Heading size="lg" mb={4}>
-              任务状态分布
+              {t("superDashboard.jobStatusDistribution")}
             </Heading>
             <Grid
               templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }}
@@ -365,20 +425,26 @@ function SuperDashboard() {
             >
               {stats?.job_status_stats?.material_balance && (
                 <JobStatusDistribution
-                  title="物料平衡任务状态"
+                  title={t("superDashboard.materialBalanceJobStatus")}
                   data={stats.job_status_stats.material_balance}
+                  formatStatusLabel={formatStatusLabel}
+                  t={t}
                 />
               )}
               {stats?.job_status_stats?.asm1 && (
                 <JobStatusDistribution
-                  title="ASM1 任务状态"
+                  title={t("superDashboard.asm1JobStatus")}
                   data={stats.job_status_stats.asm1}
+                  formatStatusLabel={formatStatusLabel}
+                  t={t}
                 />
               )}
               {stats?.job_status_stats?.asm1slim && (
                 <JobStatusDistribution
-                  title="ASM1 Slim 任务状态"
+                  title={t("superDashboard.asm1SlimJobStatus")}
                   data={stats.job_status_stats.asm1slim}
+                  formatStatusLabel={formatStatusLabel}
+                  t={t}
                 />
               )}
             </Grid>
@@ -389,7 +455,9 @@ function SuperDashboard() {
             <Card.Header>
               <HStack>
                 <Icon as={FiUsers} />
-                <Heading size="md">用户类型分布</Heading>
+                <Heading size="md">
+                  {t("superDashboard.userTypeDistribution")}
+                </Heading>
               </HStack>
             </Card.Header>
             <Card.Body>
@@ -403,7 +471,7 @@ function SuperDashboard() {
                         size="lg"
                         colorScheme="blue"
                       >
-                        {type}: {count as React.ReactNode}
+                        {formatUserType(type)}: {count as React.ReactNode}
                       </Badge>
                     ),
                   )}
@@ -418,7 +486,9 @@ function SuperDashboard() {
                 <Card.Header>
                   <HStack>
                     <Icon as={FiTrendingUp} />
-                    <Heading size="md">用户注册趋势</Heading>
+                    <Heading size="md">
+                      {t("superDashboard.userRegistrationTrend")}
+                    </Heading>
                   </HStack>
                 </Card.Header>
                 <Card.Body>
@@ -440,7 +510,7 @@ function SuperDashboard() {
                             {item.count}
                           </Text>
                           <Text fontSize="xs" color="gray.500">
-                            新用户
+                            {t("superDashboard.newUsers")}
                           </Text>
                         </Box>
                       ))}
@@ -452,7 +522,7 @@ function SuperDashboard() {
           {/* 活跃用户排行 */}
           <Box>
             <Heading size="lg" mb={4}>
-              用户活跃度排行
+              {t("superDashboard.activeUserRanking")}
             </Heading>
             <Grid
               templateColumns={{ base: "1fr", lg: "repeat(2, 1fr)" }}
@@ -462,15 +532,21 @@ function SuperDashboard() {
                 <Card.Header>
                   <HStack>
                     <Icon as={FiGitBranch} />
-                    <Heading size="md">流程图创建排行</Heading>
+                    <Heading size="md">
+                      {t("superDashboard.flowchartCreationRanking")}
+                    </Heading>
                   </HStack>
                 </Card.Header>
                 <Card.Body>
                   <Table.Root size="sm">
                     <Table.Header>
                       <Table.Row>
-                        <Table.ColumnHeader>用户</Table.ColumnHeader>
-                        <Table.ColumnHeader>流程图数量</Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("superDashboard.tableUser")}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("superDashboard.tableFlowchartCount")}
+                        </Table.ColumnHeader>
                       </Table.Row>
                     </Table.Header>
                     <Table.Body>
@@ -502,15 +578,21 @@ function SuperDashboard() {
                 <Card.Header>
                   <HStack>
                     <Icon as={FiActivity} />
-                    <Heading size="md">任务创建排行</Heading>
+                    <Heading size="md">
+                      {t("superDashboard.jobCreationRanking")}
+                    </Heading>
                   </HStack>
                 </Card.Header>
                 <Card.Body>
                   <Table.Root size="sm">
                     <Table.Header>
                       <Table.Row>
-                        <Table.ColumnHeader>用户</Table.ColumnHeader>
-                        <Table.ColumnHeader>任务数量</Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("superDashboard.tableUser")}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("superDashboard.tableJobCount")}
+                        </Table.ColumnHeader>
                       </Table.Row>
                     </Table.Header>
                     <Table.Body>
@@ -546,18 +628,30 @@ function SuperDashboard() {
               <Card.Header>
                 <HStack>
                   <Icon as={FiClock} />
-                  <Heading size="md">最近活跃用户</Heading>
+                  <Heading size="md">
+                    {t("superDashboard.recentActiveUsers")}
+                  </Heading>
                 </HStack>
               </Card.Header>
               <Card.Body>
                 <Table.Root>
                   <Table.Header>
                     <Table.Row>
-                      <Table.ColumnHeader>用户</Table.ColumnHeader>
-                      <Table.ColumnHeader>用户类型</Table.ColumnHeader>
-                      <Table.ColumnHeader>注册时间</Table.ColumnHeader>
-                      <Table.ColumnHeader>活跃度</Table.ColumnHeader>
-                      <Table.ColumnHeader>状态</Table.ColumnHeader>
+                      <Table.ColumnHeader>
+                        {t("superDashboard.tableUser")}
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader>
+                        {t("superDashboard.tableUserType")}
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader>
+                        {t("superDashboard.tableRegisteredAt")}
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader>
+                        {t("superDashboard.tableActivity")}
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader>
+                        {t("superDashboard.tableStatus")}
+                      </Table.ColumnHeader>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
@@ -574,25 +668,31 @@ function SuperDashboard() {
                             </VStack>
                           </Table.Cell>
                           <Table.Cell>
-                            <Badge variant="subtle">{user.user_type}</Badge>
+                            <Badge variant="subtle">
+                              {formatUserType(user.user_type)}
+                            </Badge>
                           </Table.Cell>
                           <Table.Cell>
                             <Text fontSize="sm">
                               {user.created_at
                                 ? new Date(user.created_at).toLocaleDateString(
-                                    "zh-CN",
+                                    locale,
                                   )
-                                : "未知"}
+                                : t("common.unknown")}
                             </Text>
                           </Table.Cell>
                           <Table.Cell>
                             <VStack align="start" gap={0}>
                               <Text fontSize="sm" fontWeight="medium">
-                                总计: {user.activity?.total || 0}
+                                {t("superDashboard.activityTotal", {
+                                  count: user.activity?.total || 0,
+                                })}
                               </Text>
                               <Text fontSize="xs" color="gray.500">
-                                流程图: {user.activity?.flowcharts || 0} | 任务:{" "}
-                                {user.activity?.jobs || 0}
+                                {t("superDashboard.activityDetail", {
+                                  flowcharts: user.activity?.flowcharts || 0,
+                                  jobs: user.activity?.jobs || 0,
+                                })}
                               </Text>
                             </VStack>
                           </Table.Cell>
@@ -601,7 +701,9 @@ function SuperDashboard() {
                               colorScheme={user.is_active ? "green" : "red"}
                               variant="subtle"
                             >
-                              {user.is_active ? "活跃" : "非活跃"}
+                              {user.is_active
+                                ? t("common.active")
+                                : t("common.inactive")}
                             </Badge>
                           </Table.Cell>
                         </Table.Row>

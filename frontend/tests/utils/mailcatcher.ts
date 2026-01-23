@@ -27,6 +27,17 @@ async function findEmail({
   return null
 }
 
+export async function isMailcatcherAvailable(request: APIRequestContext) {
+  const host = process.env.MAILCATCHER_HOST
+  if (!host) return false
+  try {
+    const response = await request.get(`${host}/messages`, { timeout: 1000 })
+    return response.ok()
+  } catch {
+    return false
+  }
+}
+
 export function findLastEmail({
   request,
   filter,

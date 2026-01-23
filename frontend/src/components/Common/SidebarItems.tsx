@@ -16,19 +16,27 @@ import {
 import type { IconType } from "react-icons/lib"
 
 import type { UserPublic } from "@/client"
+import { useI18n } from "@/i18n"
 
-const getFlowingFlowItems = (currentUser: UserPublic | undefined) => {
+const getFlowingFlowItems = (
+  currentUser: UserPublic | undefined,
+  t: (key: string) => string,
+) => {
   const baseChildren = [
-    { icon: FiGitBranch, title: "物料平衡计算", path: "/materialbalance" },
-    { icon: FiGitMerge, title: "简易活性污泥模型", path: "/asm1slim" },
-    { icon: FiGitPullRequest, title: "活性污泥模型 ASM1", path: "/asm1" },
+    {
+      icon: FiGitBranch,
+      title: t("nav.materialBalance"),
+      path: "/materialbalance",
+    },
+    { icon: FiGitMerge, title: t("nav.asm1slim"), path: "/asm1slim" },
+    { icon: FiGitPullRequest, title: t("nav.asm1"), path: "/asm1" },
   ]
 
   // 只有ultra用户和超级管理员才能看到ASM3
   if (currentUser?.user_type === "ultra" || currentUser?.is_superuser) {
     baseChildren.push({
       icon: FiGitPullRequest,
-      title: "活性污泥模型 ASM3",
+      title: t("nav.asm3"),
       path: "/asm3",
     })
   }
@@ -36,16 +44,19 @@ const getFlowingFlowItems = (currentUser: UserPublic | undefined) => {
   return baseChildren
 }
 
-const getItems = (currentUser: UserPublic | undefined) => [
-  { icon: FiHome, title: "首页", path: "/dashboard" },
+const getItems = (
+  currentUser: UserPublic | undefined,
+  t: (key: string) => string,
+) => [
+  { icon: FiHome, title: t("nav.home"), path: "/dashboard" },
   {
     icon: FiLayers,
-    title: "FlowingFlow",
+    title: t("nav.flowingFlow"),
     path: "/flowing-flow",
     isSubmenu: true,
-    children: getFlowingFlowItems(currentUser),
+    children: getFlowingFlowItems(currentUser, t),
   },
-  { icon: FiBook, title: "知识库", path: "/knowledge" },
+  { icon: FiBook, title: t("nav.knowledge"), path: "/knowledge" },
   // { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 
@@ -72,15 +83,20 @@ interface SubItem {
 const SidebarItems = ({ onClose, collapsed = false }: SidebarItemsProps) => {
   const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const { t } = useI18n()
 
-  const baseItems = getItems(currentUser)
+  const baseItems = getItems(currentUser, t)
   const finalItems: Item[] = currentUser?.is_superuser
     ? [
         ...baseItems,
 
-        { icon: FiBarChart, title: "超级管理员看板", path: "/super-dashboard" },
-        { icon: FiBriefcase, title: "Items", path: "/items" },
-        { icon: FiUsers, title: "用户管理", path: "/admin" },
+        {
+          icon: FiBarChart,
+          title: t("nav.superDashboard"),
+          path: "/super-dashboard",
+        },
+        { icon: FiBriefcase, title: t("nav.items"), path: "/items" },
+        { icon: FiUsers, title: t("nav.userManagement"), path: "/admin" },
       ]
     : baseItems
 

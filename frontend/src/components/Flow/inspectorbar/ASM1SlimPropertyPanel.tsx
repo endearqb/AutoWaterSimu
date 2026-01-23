@@ -1,10 +1,18 @@
-import { Box, Field, HStack, Input, Stack, Text } from "@chakra-ui/react"
-import { useEffect, useState } from "react"
+﻿import { Box, Field, HStack, Input, Stack, Text } from "@chakra-ui/react"
+import { useEffect, useMemo, useState } from "react"
+import { ASM1_SLIM_CONFIG } from "../../../config/modelConfigs"
+import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
 
 interface ASM1SlimPropertyPanelProps {
   isNode: boolean
-  store?: () => ModelFlowState<any, any, any> // 可选的自定义 store
+  store?: () => ModelFlowState<any, any, any> // 可选的自定义store
+}
+
+const volumeParam = {
+  name: "volume",
+  label: "flow.modelParams.asm1slim.volume.label",
+  description: "flow.modelParams.asm1slim.volume.description",
 }
 
 function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
@@ -12,6 +20,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
     throw new Error("ASM1SlimPropertyPanel requires a store prop")
   }
 
+  const { t } = useI18n()
   const {
     selectedNode,
     selectedEdge,
@@ -29,7 +38,6 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
   const [tempFlowValue, setTempFlowValue] = useState("")
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({})
 
-  // 同步tempFlowValue与selectedEdge的flow值
   useEffect(() => {
     if (selectedEdge?.data?.flow !== undefined) {
       setTempFlowValue(String(selectedEdge.data.flow))
@@ -38,10 +46,20 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
     }
   }, [selectedEdge?.id, selectedEdge?.data?.flow])
 
+  const getParamLabel = (param: { label: string }) => t(param.label)
+  const getParamDescription = (param: { description?: string }) =>
+    param.description ? t(param.description) : ""
+
+  const fixedParameters = ASM1_SLIM_CONFIG.fixedParameters
+  const fixedParameterNames = useMemo(
+    () => new Set(fixedParameters.map((param) => param.name)),
+    [fixedParameters],
+  )
+
   const handleNodeInputChange = (paramName: string, value: any) => {
     if (selectedNode) {
       if (paramName === "label" && !value.trim()) {
-        setNameError("名称不能为空")
+        setNameError(t("flow.propertyPanel.errors.nameRequired"))
       } else {
         setNameError("")
       }
@@ -49,31 +67,21 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
       if (paramName === "volume") {
         const numValue = Number.parseFloat(value)
         if (Number.isNaN(numValue) || numValue < 0) {
-          setVolumeError("体积必须是非负数")
+          setVolumeError(t("flow.propertyPanel.errors.volumeNonNegative"))
         } else {
           setVolumeError("")
         }
-        // 如果输入为0，自动设置为默认的最小值
         if (numValue === 0) {
           value = "1e-3"
         }
       }
 
-      // 验证其他数值参数
-      if (
-        [
-          "dissolvedOxygen",
-          "cod",
-          "nitrate",
-          "ammonia",
-          "totalAlkalinity",
-        ].includes(paramName)
-      ) {
+      if (fixedParameterNames.has(paramName)) {
         const numValue = Number.parseFloat(value)
         if (value && (Number.isNaN(numValue) || numValue < 0)) {
           setParamErrors((prev) => ({
             ...prev,
-            [paramName]: "参数值必须是非负数",
+            [paramName]: t("flow.propertyPanel.errors.paramNonNegative"),
           }))
         } else {
           setParamErrors((prev) => {
@@ -89,17 +97,15 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
 
   const handleEdgeFlowChange = (value: string) => {
     if (selectedEdge) {
-      // 更新临时输入值
       setTempFlowValue(value)
 
-      // 验证输入
       if (value === "") {
         setFlowRateError("")
         updateEdgeFlow(selectedEdge.id, 0)
       } else {
         const numValue = Number.parseFloat(value)
         if (Number.isNaN(numValue) || numValue < 0) {
-          setFlowRateError("流量必须是非负数")
+          setFlowRateError(t("flow.propertyPanel.errors.flowNonNegative"))
         } else {
           setFlowRateError("")
           updateEdgeFlow(selectedEdge.id, numValue)
@@ -108,15 +114,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
     }
   }
 
-  // ASMslim节点的固定参数配置
-  const asmParameters = [
-    { name: "volume", label: "体积", description: "反应器体积，立方米" },
-    { name: "dissolvedOxygen", label: "溶解氧", description: "mg/L" },
-    { name: "cod", label: "COD", description: "mg/L" },
-    { name: "nitrate", label: "硝态氮", description: "mg/L" },
-    { name: "ammonia", label: "氨氮", description: "mg/L" },
-    { name: "totalAlkalinity", label: "总碱度 ", description: "mmol/L" },
-  ]
+  const allParameters = [volumeParam, ...fixedParameters]
 
   if (isNode && selectedNode) {
     const isASMNode = selectedNode.type === "asmslim"
@@ -124,16 +122,11 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
     return (
       <Stack gap={4} align="stretch">
         <Box>
-          {/* <Text fontSize="lg" fontWeight="semibold" mb={3}>
-            {isASMNode ? 'ASMslim节点参数' : '节点参数'}
-          </Text> */}
-
-          {/* 所有节点参数 */}
           <Stack gap={3}>
             <Field.Root required invalid={!!nameError}>
               <HStack align="flex-start" gap={4}>
                 <Field.Label minW="80px" pt={2}>
-                  名称
+                  {t("flow.propertyPanel.nameLabel")}
                 </Field.Label>
                 <Box flex={1}>
                   <Input
@@ -142,19 +135,20 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                       handleNodeInputChange("label", e.target.value)
                     }
                     className="nodrag"
-                    placeholder="节点名称"
+                    placeholder={t("flow.propertyPanel.namePlaceholder")}
                   />
                   {nameError && <Field.ErrorText>{nameError}</Field.ErrorText>}
                 </Box>
               </HStack>
             </Field.Root>
 
-            {/* ASMslim节点的固定参数 */}
             {isASMNode &&
-              asmParameters.map((param) => {
+              allParameters.map((param) => {
                 const currentValue =
                   (selectedNode.data?.[param.name] as string) || ""
                 const hasError = paramErrors[param.name]
+                const label = getParamLabel(param)
+                const description = getParamDescription(param)
 
                 return (
                   <Field.Root
@@ -165,7 +159,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                   >
                     <HStack align="flex-start" gap={4}>
                       <Field.Label minW="80px" pt={2}>
-                        {param.label}
+                        {label}
                       </Field.Label>
                       <Box flex={1}>
                         <Input
@@ -177,7 +171,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                             handleNodeInputChange(param.name, e.target.value)
                           }
                           className="nodrag"
-                          placeholder={param.description}
+                          placeholder={description}
                         />
                         {hasError && (
                           <Field.ErrorText>{hasError}</Field.ErrorText>
@@ -191,13 +185,12 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                 )
               })}
 
-            {/* 非ASM节点显示体积参数和ASM1Slim固定参数 */}
             {!isASMNode && (
               <>
                 <Field.Root invalid={!!volumeError}>
                   <HStack align="flex-start" gap={4}>
                     <Field.Label minW="80px" pt={2}>
-                      体积(m³)
+                      {t("flow.modelParams.asm1slim.volume.label")}
                     </Field.Label>
                     <Box flex={1}>
                       <Input
@@ -209,7 +202,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                           handleNodeInputChange("volume", e.target.value)
                         }
                         className="nodrag"
-                        placeholder="节点的体积参数，单位：立方米，最小值：1e-3"
+                        placeholder={t("flow.propertyPanel.volumePlaceholder")}
                       />
                       {volumeError && (
                         <Field.ErrorText>{volumeError}</Field.ErrorText>
@@ -218,27 +211,20 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                   </HStack>
                 </Field.Root>
 
-                {/* ASM1Slim固定参数 */}
                 {customParameters
-                  .filter((param: any) =>
-                    [
-                      "dissolvedOxygen",
-                      "cod",
-                      "nitrate",
-                      "ammonia",
-                      "totalAlkalinity",
-                    ].includes(param.name),
-                  )
+                  .filter((param: any) => fixedParameterNames.has(param.name))
                   .map((param: any) => {
                     const currentValue =
                       (selectedNode.data?.[param.name] as string) || ""
                     const hasError = paramErrors[param.name]
+                    const label = getParamLabel(param)
+                    const description = getParamDescription(param)
 
                     return (
                       <Field.Root key={param.name} invalid={!!hasError}>
                         <HStack align="flex-start" gap={4}>
                           <Field.Label minW="80px" pt={2}>
-                            {param.label}
+                            {label}
                           </Field.Label>
                           <Box flex={1}>
                             <Input
@@ -253,7 +239,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                                 )
                               }
                               className="nodrag"
-                              placeholder={param.description}
+                              placeholder={description}
                             />
                             {hasError && (
                               <Field.ErrorText>{hasError}</Field.ErrorText>
@@ -271,7 +257,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
         {isASMNode && (
           <Box>
             <Text fontSize="sm" color="gray.600" fontStyle="italic">
-              注意：ASMslim节点只支持上述固定参数，不能添加自定义参数。
+              {t("flow.propertyPanel.notes.asm1slim")}
             </Text>
           </Box>
         )}
@@ -279,7 +265,6 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
     )
   }
 
-  // 连接线参数设置
   if (!isNode && selectedEdge) {
     const sourceNode = nodes.find((node) => node.id === selectedEdge.source)
     const edgeConfigs = edgeParameterConfigs[selectedEdge.id] || {}
@@ -295,7 +280,6 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
       const newConfig = { ...currentConfig }
       newConfig[field] = numValue
 
-      // a和b互斥逻辑：只能有一个不为0
       if (field === "a" && numValue !== 0) {
         newConfig.b = 0
       } else if (field === "b" && numValue !== 0) {
@@ -305,22 +289,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
       updateEdgeParameterConfig(selectedEdge.id, paramName, newConfig)
     }
 
-    // 只显示ASM1slim的5个固定参数
-    const fixedParameters = [
-      {
-        name: "dissolvedOxygen",
-        label: "溶解氧",
-        description: "溶解氧浓度 (mg/L)",
-      },
-      { name: "cod", label: "COD", description: "化学需氧量 (mg/L)" },
-      { name: "nitrate", label: "硝态氮", description: "硝态氮浓度 (mg/L)" },
-      { name: "ammonia", label: "氨氮", description: "氨氮浓度 (mg/L)" },
-      {
-        name: "totalAlkalinity",
-        label: "总碱度",
-        description: "总碱度 (mg/L)",
-      },
-    ]
+    const fixedParameters = ASM1_SLIM_CONFIG.fixedParameters
 
     const renderEdgeParameters = () => {
       return fixedParameters.map((param) => {
@@ -329,23 +298,23 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
           ? Number.parseFloat(sourceNode.data[param.name] as string) || 0
           : 0
         const calculatedValue = config.a * sourceParamValue + config.b
+        const label = getParamLabel(param)
+        const description = getParamDescription(param)
 
         return (
           <Field.Root key={param.name}>
             <HStack align="flex-start" gap={4}>
               <Field.Label minW="80px" pt={2} fontSize="sm">
-                {param.label}
+                {label}
               </Field.Label>
               <Box flex={1}>
-                {/* 显示计算后的具体数值（不可修改） */}
                 <Input
                   value={calculatedValue.toFixed(2)}
                   readOnly
-                  placeholder={param.description || `${param.label}，mg/L`}
+                  placeholder={description || label}
                   style={{ backgroundColor: "#f7fafc", cursor: "not-allowed" }}
                 />
 
-                {/* a和b系数标签和输入框在同一行 */}
                 <HStack gap={2} mt={2} align="center">
                   <Text fontSize="sm" minW="12px">
                     a
@@ -386,13 +355,11 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
     return (
       <Stack gap={4} align="stretch">
         <Box>
-          {/* <Text fontSize="lg" fontWeight="semibold" mb={3}>连接参数</Text> */}
-
           <Stack gap={3}>
             <Field.Root invalid={!!flowRateError}>
               <HStack align="flex-start" gap={4}>
                 <Field.Label minW="80px" pt={2}>
-                  流量(m³/h)
+                  {t("flow.propertyPanel.flowLabel")}
                 </Field.Label>
                 <Box flex={1}>
                   <Input
@@ -401,7 +368,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
                     min="0"
                     value={tempFlowValue}
                     onChange={(e) => handleEdgeFlowChange(e.target.value)}
-                    placeholder="连接线的流量参数，单位：立方米/小时"
+                    placeholder={t("flow.propertyPanel.flowPlaceholder")}
                   />
                   {flowRateError && (
                     <Field.ErrorText>{flowRateError}</Field.ErrorText>
@@ -412,12 +379,7 @@ function ASM1SlimPropertyPanel({ isNode, store }: ASM1SlimPropertyPanelProps) {
           </Stack>
         </Box>
 
-        {/* ASM1Slim参数配置 */}
         <Box>
-          {/* <Text fontSize="lg" fontWeight="semibold" mb={3}>ASM1Slim参数配置</Text>
-          <Text fontSize="sm" color="gray.600" mb={3}>
-            计算公式：输出值 = a × 源节点参数值 + b（a和b只能有一个不为0）
-          </Text> */}
           <Stack gap={3}>{renderEdgeParameters()}</Stack>
         </Box>
       </Stack>

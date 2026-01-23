@@ -15,6 +15,7 @@ import { Link } from "@tanstack/react-router"
 import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
 import { FaBars, FaTimes } from "react-icons/fa"
+import { useI18n, useLocale } from "../../i18n"
 
 const MotionBox = motion.create(Box)
 const MotionVStack = motion.create(VStack)
@@ -38,10 +39,14 @@ const itemVariant = {
 }
 
 export const MiddayHead = () => {
+  const { t } = useI18n()
+  const { language, setLanguage } = useLocale()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [showBlur, setShowBlur] = useState(false)
   const bgColor = "rgba(255,255,255,0.7)"
   const textColor = "gray.700"
+  const isZh = language === "zh"
+  const isEn = language === "en"
 
   useEffect(() => {
     const setPixelRatio = () => {
@@ -71,25 +76,25 @@ export const MiddayHead = () => {
 
   const links = [
     {
-      title: "知识库",
+      title: t("landing.nav.knowledge"),
       type: "dropdown",
       items: [
         {
-          title: "深度研究(AI)信息图",
+          title: t("landing.nav.deepResearch"),
           path: "/ai-deep-research",
         },
         {
-          title: "水处理计算器",
+          title: t("landing.nav.calculators"),
           path: "/calculators",
         },
       ],
     },
     {
-      title: "流程图",
+      title: t("landing.nav.flow"),
       path: "/openflow",
     },
     {
-      title: "产品更新",
+      title: t("landing.nav.updates"),
       path: "/updates",
     },
   ]
@@ -142,7 +147,7 @@ export const MiddayHead = () => {
             <Link to="/">
               <Image
                 src="/assets/images/E-logos-1.png"
-                alt="ENVDAMA Logo"
+                alt={t("app.logoAlt")}
                 boxSize={6}
               />
               <Heading
@@ -230,21 +235,61 @@ export const MiddayHead = () => {
           {/* 分隔线 */}
           <Box w="1px" h="24px" bg="gray.300" mx={3} />
 
-          {/* Sign in Button */}
-          <Button
-            asChild
-            fontSize="sm"
-            fontWeight="medium"
-            px={3}
-            variant="ghost"
-            border="none" // 移除边框
-            boxShadow="none" // 移除阴影
-            _hover={{}} // 移除hover效果
-            _active={{}}
-            _focus={{}}
-          >
-            <Link to="/login">开始使用</Link>
-          </Button>
+          <HStack gap={1}>
+            <Menu.Root>
+              <Menu.Trigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  fontSize="sm"
+                  fontWeight="medium"
+                  px={3}
+                  py={2}
+                  color={textColor}
+                  _hover={{ opacity: 0.7 }}
+                  aria-label={t("language.label")}
+                >
+                  {t("language.label")}
+                </Button>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item
+                      value="language-zh"
+                      onClick={() => setLanguage("zh")}
+                      fontWeight={isZh ? "semibold" : "normal"}
+                    >
+                      {t("language.zh")}
+                    </Menu.Item>
+                    <Menu.Item
+                      value="language-en"
+                      onClick={() => setLanguage("en")}
+                      fontWeight={isEn ? "semibold" : "normal"}
+                    >
+                      {t("language.en")}
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
+
+            {/* Sign in Button */}
+            <Button
+              asChild
+              fontSize="sm"
+              fontWeight="medium"
+              px={3}
+              variant="ghost"
+              border="none" // 移除边框
+              boxShadow="none" // 移除阴影
+              _hover={{}} // 移除hover效果
+              _active={{}}
+              _focus={{}}
+            >
+              <Link to="/login">{t("landing.nav.getStarted")}</Link>
+            </Button>
+          </HStack>
         </HStack>
 
         {/* Mobile Menu Button */}
@@ -254,7 +299,7 @@ export const MiddayHead = () => {
           display={{ base: "flex", md: "none" }}
           p={2}
           onClick={handleToggleMenu}
-          aria-label="Toggle menu"
+          aria-label={t("landing.nav.toggleMenu")}
         >
           <FaBars />
         </IconButton>
@@ -290,7 +335,7 @@ export const MiddayHead = () => {
             >
               <Image
                 src="/assets/images/E-logos-1.png"
-                alt="ENVDAMA Logo"
+                alt={t("app.logoAlt")}
                 boxSize={6}
               />
             </IconButton>
@@ -304,7 +349,7 @@ export const MiddayHead = () => {
               right="10px"
               top={2}
               onClick={handleToggleMenu}
-              aria-label="Close menu"
+              aria-label={t("landing.nav.closeMenu")}
             >
               <FaTimes />
             </IconButton>
@@ -367,6 +412,41 @@ export const MiddayHead = () => {
                 )
               })}
 
+              <MotionBox variants={itemVariant}>
+                <Text
+                  fontSize="sm"
+                  textTransform="uppercase"
+                  letterSpacing="wide"
+                  color="gray.400"
+                >
+                  {t("language.label")}
+                </Text>
+                <HStack mt={3} gap={3}>
+                  <Button
+                    size="sm"
+                    colorScheme="green"
+                    variant={isZh ? "solid" : "outline"}
+                    onClick={() => {
+                      setLanguage("zh")
+                      handleToggleMenu()
+                    }}
+                  >
+                    {t("language.zh")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    colorScheme="green"
+                    variant={isEn ? "solid" : "outline"}
+                    onClick={() => {
+                      setLanguage("en")
+                      handleToggleMenu()
+                    }}
+                  >
+                    {t("language.en")}
+                  </Button>
+                </HStack>
+              </MotionBox>
+
               <MotionText
                 mt="auto"
                 borderTop="1px"
@@ -378,7 +458,7 @@ export const MiddayHead = () => {
                 cursor="pointer"
                 onClick={handleToggleMenu}
               >
-                <Link to="/login">开始使用</Link>
+                <Link to="/login">{t("landing.nav.getStarted")}</Link>
               </MotionText>
             </MotionVStack>
           </Box>

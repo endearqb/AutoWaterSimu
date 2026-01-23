@@ -1,12 +1,14 @@
 import { Box, HStack, Heading, Image, Text, VStack } from "@chakra-ui/react"
 import { FaCheck } from "react-icons/fa"
+import { useI18n } from "../../i18n"
 
 export function SectionThree() {
+  const { t } = useI18n()
   const features = [
-    "拖拽创建节点,编辑节点数据",
-    "查看节点的模型固定参数,查看计算结果",
-    "自由拖动工具栏的位置",
-    "自适应的工具栏大小调整",
+    t("landing.sectionThree.features.create"),
+    t("landing.sectionThree.features.inspect"),
+    t("landing.sectionThree.features.drag"),
+    t("landing.sectionThree.features.resize"),
   ]
 
   return (
@@ -50,7 +52,7 @@ export function SectionThree() {
               letterSpacing="tight"
               lineHeight="1.2"
             >
-              节点工具栏
+              {t("landing.sectionThree.title")}
             </Heading>
 
             <Text
@@ -59,7 +61,7 @@ export function SectionThree() {
               fontSize="sm"
               lineHeight="1.6"
             >
-              节点工具栏是一个功能强大的工具，它允许您在流程图中创建、编辑节点，查看节点属性及计算结果。
+              {t("landing.sectionThree.description")}
             </Text>
 
             <VStack align="start" gap={2}>
@@ -82,7 +84,7 @@ export function SectionThree() {
                   textDecoration: "underline",
                 }}
               >
-                立即开始时间跟踪 →
+                {t("landing.sectionThree.cta")}
               </Text>
             </Box>
           </Box>
@@ -90,7 +92,7 @@ export function SectionThree() {
           <Box w={{ base: "full", lg: "60%" }}>
             <Image
               src="/assets/images/image-3.png"
-              alt="节点工具栏"
+              alt={t("landing.sectionThree.imageAlt")}
               // height="100%"
               width="100%"
               objectFit="cover"

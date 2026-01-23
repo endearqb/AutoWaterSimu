@@ -1,5 +1,6 @@
 import { Box } from "@chakra-ui/react"
 import React, { type ReactNode, useEffect, useRef, useState } from "react"
+import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 import type { RFState } from "../../stores/flowStore"
 import BaseInspectorContainer, {
@@ -45,6 +46,7 @@ const FlowLayout = ({
   BubbleMenuComponent,
   simulationControlProps,
 }: FlowLayoutProps) => {
+  const { t } = useI18n()
   const themeScopeRef = useRef<HTMLDivElement>(null!)
   const flowStore = store || useFlowStore
   const {
@@ -180,8 +182,8 @@ const FlowLayout = ({
     if (!file.name.endsWith(".json")) {
       const { toaster } = await import("../ui/toaster")
       toaster.create({
-        title: "文件格式错误",
-        description: "请选择JSON格式的文件",
+        title: t("flow.menu.fileFormatErrorTitle"),
+        description: t("flow.menu.fileFormatErrorDescription"),
         type: "error",
         duration: 3000,
       })
@@ -201,7 +203,9 @@ const FlowLayout = ({
 
         const { toaster } = await import("../ui/toaster")
         toaster.create({
-          title: result.success ? "导入成功" : "导入失败",
+          title: result.success
+            ? t("flow.menu.importSuccess")
+            : t("flow.menu.importFailed"),
           description: result.message,
           type: result.success ? "success" : "error",
           duration: 3000,
@@ -209,8 +213,8 @@ const FlowLayout = ({
       } catch (error) {
         const { toaster } = await import("../ui/toaster")
         toaster.create({
-          title: "导入失败",
-          description: "文件格式错误或内容无效",
+          title: t("flow.menu.importFailed"),
+          description: t("flow.menu.importInvalidDescription"),
           type: "error",
           duration: 3000,
         })
@@ -224,16 +228,16 @@ const FlowLayout = ({
       newFlowChart()
       const { toaster } = await import("../ui/toaster")
       toaster.create({
-        title: "新建成功",
-        description: "已创建新的流程图",
+        title: t("flow.menu.newFlowchartSuccessTitle"),
+        description: t("flow.menu.newFlowchartSuccessDescription"),
         type: "success",
         duration: 3000,
       })
     } catch (error) {
       const { toaster } = await import("../ui/toaster")
       toaster.create({
-        title: "新建失败",
-        description: "创建新流程图时出现错误",
+        title: t("flow.menu.newFlowchartFailedTitle"),
+        description: t("flow.menu.newFlowchartFailedDescription"),
         type: "error",
         duration: 3000,
       })

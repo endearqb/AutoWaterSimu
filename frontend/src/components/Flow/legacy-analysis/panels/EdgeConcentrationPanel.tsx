@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react"
 import React, { useMemo, useState } from "react"
 import { getModelConfig } from "../../../../config/modelConfigs"
+import { useI18n } from "../../../../i18n"
 import { Checkbox } from "../../../ui/checkbox"
 import EdgeTimeSeriesChart from "../EdgeTimeSeriesChart"
 import ExternalLegendBarChart from "../ExternalLegendBarChart"
@@ -32,6 +33,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
   edgeParameterConfigs,
   modelType = "asm1",
 }) => {
+  const { t, language } = useI18n()
   const yAxisPlotHeight = 450
 
   const prevTimestampsLengthRef = React.useRef(0)
@@ -59,12 +61,18 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
         .filter((variable) => variable.name !== "volume") // 过滤掉体积变量
         .map((variable) => ({
           name: variable.name,
-          label: variable.label,
+          label: (() => {
+            const translated = t(variable.label)
+            return translated === variable.label ? variable.name : translated
+          })(),
         })) || []
 
     // 添加流量作为第一个变量
-    return [{ name: "flow_rate", label: "流量" }, ...modelVariables]
-  }, [modelType])
+    return [
+      { name: "flow_rate", label: t("flow.analysis.flowRate") },
+      ...modelVariables,
+    ]
+  }, [modelType, language, t])
 
   const timestampsLength = resultData.timestamps?.length || 0
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
@@ -215,7 +223,11 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
       return {
         key: variable,
         dataKey: variable,
-        name: variableInfo?.label || variable,
+        name: variableInfo
+          ? variableInfo.name === "flow_rate"
+            ? variableInfo.label
+            : `${variableInfo.label} (${variable})`
+          : variable,
         color: colors[index % colors.length],
       }
     })
@@ -256,7 +268,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
 
         {/* 连接线选择 */}
         <VStack align="start" gap={4} mb={6}>
-          <Text fontWeight="bold">连接线选择</Text>
+          <Text fontWeight="bold">{t("flow.analysis.edgeSelection")}</Text>
           <CheckboxGroup
             value={selectedEdges}
             onValueChange={(values) => setSelectedEdges(values)}
@@ -290,7 +302,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
 
         {/* 变量选择 */}
         <VStack align="start" gap={4} mb={6}>
-          <Text fontWeight="bold">指标选择</Text>
+          <Text fontWeight="bold">{t("flow.analysis.metricSelection")}</Text>
           <CheckboxGroup
             value={selectedVariables}
             onValueChange={(values) => setSelectedVariables(values)}
@@ -315,9 +327,9 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
           <VStack align="start" gap={4}>
             {/* 条形图：时间选择 */}
             <VStack align="start" gap={2} w="full">
-              <Text fontWeight="bold">时间选择</Text>
+              <Text fontWeight="bold">{t("flow.analysis.timeSelection")}</Text>
               <HStack w="full" gap={4}>
-                <Text minW="60px">时间:</Text>
+                <Text minW="60px">{t("flow.analysis.timeLabel")}</Text>
                 <Slider.Root
                   value={[safeSelectedTimeIndex]}
                   onValueChange={(details) =>
@@ -339,7 +351,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
                 <Text minW="100px">
                   {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) ||
                     0}{" "}
-                  h
+                  {t("flow.simulation.unit.hours")}
                 </Text>
               </HStack>
             </VStack>
@@ -353,7 +365,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
               plotAreaHeight={yAxisPlotHeight}
               xAxisAngle={-45}
               xAxisTextAnchor="end"
-              emptyText="暂无数据"
+              emptyText={t("flow.analysis.emptyData")}
             />
           </VStack>
 

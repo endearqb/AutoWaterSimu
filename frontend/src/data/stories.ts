@@ -1,3 +1,6 @@
+import type { Language } from "@/i18n"
+import { storiesEn } from "./stories.en"
+
 interface StoryContent {
   type: "heading" | "question" | "paragraph"
   content: string
@@ -15,7 +18,7 @@ export interface Story {
   content: StoryContent[]
 }
 
-export const stories: Story[] = [
+export const storiesZh: Story[] = [
   {
     id: 1,
     title: "Material Balance - 基于张量计算的物料平衡模拟器",
@@ -192,3 +195,7 @@ export const stories: Story[] = [
     ],
   },
 ]
+
+export const getStories = (language: Language): Story[] => {
+  return language === "zh" ? storiesZh : storiesEn
+}

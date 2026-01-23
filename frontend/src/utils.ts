@@ -1,26 +1,37 @@
 import type { ApiError } from "./client"
 import useCustomToast from "./hooks/useCustomToast"
+import { t } from "./utils/i18n"
 
 export const emailPattern = {
   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-  message: "Invalid email address",
+  message: t("validation.email"),
 }
 
 export const namePattern = {
   value: /^[A-Za-z\s\u00C0-\u017F]{1,30}$/,
-  message: "Invalid name",
+  message: t("validation.name"),
 }
+
+export const getEmailPattern = () => ({
+  value: emailPattern.value,
+  message: t("validation.email"),
+})
+
+export const getNamePattern = () => ({
+  value: namePattern.value,
+  message: t("validation.name"),
+})
 
 export const passwordRules = (isRequired = true) => {
   const rules: any = {
     minLength: {
       value: 8,
-      message: "Password must be at least 8 characters",
+      message: t("validation.minLength", { min: 8 }),
     },
   }
 
   if (isRequired) {
-    rules.required = "Password is required"
+    rules.required = t("validation.required")
   }
 
   return rules
@@ -33,12 +44,12 @@ export const confirmPasswordRules = (
   const rules: any = {
     validate: (value: string) => {
       const password = getValues().password || getValues().new_password
-      return value === password ? true : "The passwords do not match"
+      return value === password ? true : t("validation.passwordMismatch")
     },
   }
 
   if (isRequired) {
-    rules.required = "Password confirmation is required"
+    rules.required = t("validation.confirmPasswordRequired")
   }
 
   return rules
@@ -47,7 +58,7 @@ export const confirmPasswordRules = (
 export const handleError = (err: ApiError) => {
   const { showErrorToast } = useCustomToast()
   const errDetail = (err.body as any)?.detail
-  let errorMessage = errDetail || "Something went wrong."
+  let errorMessage = errDetail || t("errors.somethingWentWrong")
   if (Array.isArray(errDetail) && errDetail.length > 0) {
     errorMessage = errDetail[0].msg
   }
@@ -73,7 +84,7 @@ export const getDetailedErrorMessage = (error: any): string => {
     if (Array.isArray(detail)) {
       const validationErrors = detail.map((err: any) => {
         const location = err.loc ? err.loc.join(".") : "unknown"
-        const message = err.msg || "Validation error"
+        const message = err.msg || t("errors.validationError")
         const input = err.input
           ? ` (received: ${JSON.stringify(err.input)})`
           : ""
@@ -84,7 +95,7 @@ export const getDetailedErrorMessage = (error: any): string => {
         return validationErrors[0]
       }
 
-      return `Validation errors:\n${validationErrors.map((err) => `• ${err}`).join("\n")}`
+      return `${t("errors.validationErrors")}\n${validationErrors.map((err) => `- ${err}`).join("\n")}`
     }
 
     // 如果是对象，尝试提取有用信息
@@ -99,10 +110,10 @@ export const getDetailedErrorMessage = (error: any): string => {
   }
 
   if (error?.statusText) {
-    return `${error.status || "Unknown"}: ${error.statusText}`
+    return `${error.status || t("common.unknown")}: ${error.statusText}`
   }
 
-  return "An unexpected error occurred"
+  return t("errors.unexpected")
 }
 
 /**
@@ -112,7 +123,7 @@ export const getDetailedErrorMessage = (error: any): string => {
  */
 export const showDetailedError = (
   error: any,
-  defaultMessage = "Operation failed",
+  defaultMessage = t("errors.operationFailed"),
 ) => {
   const { showErrorToast } = useCustomToast()
   const errorMessage = getDetailedErrorMessage(error) || defaultMessage

@@ -4,12 +4,24 @@ import { Link } from "@tanstack/react-router"
 import type { BlogPost } from "../../utils/blog"
 import { mdxComponents } from "../MDX/CustomMDX"
 import { Prose } from "../ui/prose"
+import { useI18n } from "@/i18n"
 
 type Props = {
   data: BlogPost
 }
 
 export function Article({ data }: Props) {
+  const { language } = useI18n()
+  const locale = language === "zh" ? "zh-CN" : "en-US"
+  const publishedAt = new Date(data.metadata.publishedAt)
+  const formattedPublishedAt = Number.isNaN(publishedAt.getTime())
+    ? "-"
+    : new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(publishedAt)
+
   return (
     <Box
       as="article"
@@ -59,11 +71,7 @@ export function Article({ data }: Props) {
 
       {/* Published Date */}
       <Text fontSize="sm" color="gray.500" mb={8}>
-        {new Date(data.metadata.publishedAt).toLocaleDateString("zh-CN", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
+        {formattedPublishedAt}
       </Text>
 
       {/* Content */}

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Alert,
   Box,
   Button,
@@ -47,6 +47,7 @@ import {
   isJobRunning as materialBalanceIsJobRunning,
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
+import { useI18n } from "../../../i18n"
 import { type ModelType, createAnalysisButton } from "../legacy-analysis"
 
 interface SimulationPanelProps {
@@ -60,6 +61,7 @@ function SimulationPanel({
   modelStore,
   modelType = "materialBalance",
 }: SimulationPanelProps = {}) {
+  const { t } = useI18n()
   const portalRef = useRef<HTMLElement>(null!)
   useEffect(() => {
     const el = document.querySelector("[data-flow-theme-scope]")
@@ -237,7 +239,9 @@ function SimulationPanel({
       const flowChartName =
         currentFlowChartName ||
         importedFileName ||
-        `流程图_${new Date().toLocaleString()}`
+        t("flow.simulation.defaultFlowchartName", {
+          timestamp: new Date().toLocaleString(),
+        })
 
       // 在flowData中添加名称信息
       const flowDataWithName = {
@@ -428,8 +432,8 @@ function SimulationPanel({
             >
               <HStack justify="space-between" mb={2}>
                 <Text fontSize="sm">
-                  {config.hours.label}
-                  {config.hours.unit ? ` (${config.hours.unit})` : ""}
+                  {t(config.hours.label)}
+                  {config.hours.unit ? ` (${t(config.hours.unit)})` : ""}
                 </Text>
                 <Slider.ValueText fontSize="sm" />
               </HStack>
@@ -446,9 +450,10 @@ function SimulationPanel({
                 <Alert.Content>
                   <Alert.Description>
                     <Text fontSize="xs">
-                      ❌ 最小可计算时间为{" "}
-                      {calculateVolumeDepletionTime.time.toFixed(2)}{" "}
-                      小时，小于0.5小时，无法进行模拟计算
+                      {t("flow.simulation.minTimeError", {
+                        time: calculateVolumeDepletionTime.time.toFixed(2),
+                        min: 0.5,
+                      })}
                     </Text>
                   </Alert.Description>
                 </Alert.Content>
@@ -457,8 +462,9 @@ function SimulationPanel({
             {calculateVolumeDepletionTime.isValid &&
               maxSimulationTime < config.hours.max && (
                 <Text fontSize="xs" color="orange.500" mt={1}>
-                  ⚠️ 最大运行时间已根据节点体积和流量自动调整为{" "}
-                  {maxSimulationTime} 小时
+                  {t("flow.simulation.maxTimeAdjusted", {
+                    time: maxSimulationTime,
+                  })}
                 </Text>
               )}
           </Field.Root>
@@ -481,9 +487,9 @@ function SimulationPanel({
             >
               <HStack justify="space-between" mb={2}>
                 <Text fontSize="sm">
-                  {config.stepsPerHour.label}
+                  {t(config.stepsPerHour.label)}
                   {config.stepsPerHour.unit
-                    ? ` (${config.stepsPerHour.unit})`
+                    ? ` (${t(config.stepsPerHour.unit)})`
                     : ""}
                 </Text>
                 <Slider.ValueText fontSize="sm" />
@@ -502,7 +508,7 @@ function SimulationPanel({
         {config.solverMethod.visible && (
           <Field.Root mb={4}>
             <HStack justify="space-between" mb={2}>
-              <Text fontSize="sm">{config.solverMethod.label}</Text>
+              <Text fontSize="sm">{t(config.solverMethod.label)}</Text>
             </HStack>
             <Input
               value={solverMethod}
@@ -524,7 +530,7 @@ function SimulationPanel({
         {config.tolerance.visible && (
           <Field.Root mb={4}>
             <HStack justify="space-between" mb={2}>
-              <Text fontSize="sm">{config.tolerance.label}</Text>
+              <Text fontSize="sm">{t(config.tolerance.label)}</Text>
             </HStack>
             <Input
               type={config.tolerance.type}
@@ -559,9 +565,9 @@ function SimulationPanel({
             >
               <HStack justify="space-between" mb={2}>
                 <Text fontSize="sm">
-                  {config.maxIterations.label}
+                  {t(config.maxIterations.label)}
                   {config.maxIterations.unit
-                    ? ` (${config.maxIterations.unit})`
+                    ? ` (${t(config.maxIterations.unit)})`
                     : ""}
                 </Text>
                 <Slider.ValueText fontSize="sm" />
@@ -591,9 +597,9 @@ function SimulationPanel({
             >
               <HStack justify="space-between" mb={2}>
                 <Text fontSize="sm">
-                  {config.maxMemoryMb.label}
+                  {t(config.maxMemoryMb.label)}
                   {config.maxMemoryMb.unit
-                    ? ` (${config.maxMemoryMb.unit})`
+                    ? ` (${t(config.maxMemoryMb.unit)})`
                     : ""}
                 </Text>
                 <Slider.ValueText fontSize="sm" />
@@ -634,14 +640,16 @@ function SimulationPanel({
             >
               <Select.HiddenSelect />
               <Select.Label fontSize="sm">
-                {config.samplingIntervalHours.label}
+                {t(config.samplingIntervalHours.label)}
                 {config.samplingIntervalHours.unit
-                  ? ` (${config.samplingIntervalHours.unit})`
+                  ? ` (${t(config.samplingIntervalHours.unit)})`
                   : ""}
               </Select.Label>
               <Select.Control>
                 <Select.Trigger>
-                  <Select.ValueText placeholder="选择采样间隔" />
+                  <Select.ValueText
+                    placeholder={t("flow.simulation.selectSamplingInterval")}
+                  />
                 </Select.Trigger>
                 <Select.IndicatorGroup>
                   <Select.Indicator />
@@ -676,7 +684,7 @@ function SimulationPanel({
               <FiX />
             </Alert.Indicator>
             <Alert.Content>
-              <Alert.Title>参数验证错误</Alert.Title>
+              <Alert.Title>{t("flow.simulation.validationErrorTitle")}</Alert.Title>
               <Alert.Description>
                 {validationErrors.map((error, index) => (
                   <Text key={index} fontSize="sm">
@@ -699,13 +707,19 @@ function SimulationPanel({
             </Alert.Indicator>
             <Alert.Content>
               <Alert.Title>
-                {isCalculationSuccessful ? "计算完成" : "计算失败"}
+                {isCalculationSuccessful
+                  ? t("flow.simulation.completedTitle")
+                  : t("flow.simulation.failedTitle")}
               </Alert.Title>
               <Alert.Description>
-                状态: {getJobStatusText(finalStore.currentJob?.status)}
+                {t("flow.simulation.statusLabel", {
+                  status: getJobStatusText(finalStore.currentJob?.status),
+                })}
                 {finalStore.currentJob?.error_message && (
                   <Text fontSize="sm" mt={1} color="red.500">
-                    错误信息: {finalStore.currentJob.error_message}
+                    {t("flow.simulation.errorLabel", {
+                      error: finalStore.currentJob.error_message,
+                    })}
                   </Text>
                 )}
               </Alert.Description>
@@ -717,12 +731,12 @@ function SimulationPanel({
         {isJobCurrentlyRunning && (
           <Box mb={4} p={4} borderWidth={1} borderRadius="md" bg="blue.50">
             <Text fontSize="md" fontWeight="bold" mb={3} color="blue.700">
-              计算进行中
+              {t("flow.simulation.inProgress")}
             </Text>
             <Stack gap={2}>
               <HStack justify="space-between">
                 <Text fontSize="sm" color="gray.600">
-                  已用时间:
+                  {t("flow.simulation.elapsedTime")}
                 </Text>
                 <Text fontSize="sm" fontWeight="medium">
                   {formatTime(elapsedTime)}
@@ -730,7 +744,7 @@ function SimulationPanel({
               </HStack>
               <HStack justify="space-between">
                 <Text fontSize="sm" color="gray.600">
-                  预计剩余:
+                  {t("flow.simulation.remainingTime")}
                 </Text>
                 <Text
                   fontSize="sm"
@@ -742,7 +756,7 @@ function SimulationPanel({
               </HStack>
               <HStack justify="space-between">
                 <Text fontSize="sm" color="gray.600">
-                  预计总时间:
+                  {t("flow.simulation.estimatedTotalTime")}
                 </Text>
                 <Text fontSize="sm" fontWeight="medium">
                   {formatTime(estimatedTotalTime)}
@@ -751,7 +765,7 @@ function SimulationPanel({
               <Box mt={2}>
                 <HStack justify="space-between" mb={1}>
                   <Text fontSize="xs" color="gray.500">
-                    进度
+                    {t("flow.simulation.progress")}
                   </Text>
                   <Text fontSize="xs" color="gray.500">
                     {progressPercentage.toFixed(1)}%
@@ -769,7 +783,7 @@ function SimulationPanel({
               </Box>
               {progressPercentage >= 100 && (
                 <Text fontSize="xs" color="orange.600" mt={1}>
-                  ⏰ 计算时间超出预期，请耐心等待...
+                  {t("flow.simulation.overdue")}
                 </Text>
               )}
             </Stack>
@@ -781,7 +795,7 @@ function SimulationPanel({
           colorScheme="blue"
           onClick={handleStartSimulation}
           loading={finalStore.isLoading}
-          loadingText="计算中..."
+          loadingText={t("flow.simulation.loadingButton")}
           size="md"
           disabled={
             !selectedNode ||
@@ -790,7 +804,7 @@ function SimulationPanel({
           }
         >
           <FiPlay />
-          开始模拟计算
+          {t("flow.simulation.startButton")}
         </Button>
 
         {/* 计算结果摘要显示 */}
@@ -799,41 +813,43 @@ function SimulationPanel({
           finalStore.currentJob.status === "success" && (
             <Box mt={4} p={4} borderWidth={1} borderRadius="md" bg="gray.50">
               <Text fontSize="md" fontWeight="bold" mb={3}>
-                计算结果摘要
+                {t("flow.simulation.summaryTitle")}
               </Text>
               <Stack gap={2}>
                 {finalStore.resultSummary.total_time && (
                   <HStack justify="space-between">
                     <Text fontSize="sm" color="gray.600">
-                      总模拟时间:
+                      {t("flow.simulation.totalTime")}
                     </Text>
                     <Text fontSize="sm">
-                      {finalStore.resultSummary.total_time} 小时
+                      {finalStore.resultSummary.total_time}{" "}
+                      {t("flow.simulation.unit.hours")}
                     </Text>
                   </HStack>
                 )}
                 <HStack justify="space-between">
                   <Text fontSize="sm" color="gray.600">
-                    总采样数:
+                    {t("flow.simulation.totalSteps")}
                   </Text>
                   <Text fontSize="sm">
-                    {finalStore.resultSummary.total_steps} 步
+                    {finalStore.resultSummary.total_steps}{" "}
+                    {t("flow.simulation.unit.steps")}
                   </Text>
                 </HStack>
                 <HStack justify="space-between">
                   <Text fontSize="sm" color="gray.600">
-                    计算耗时:
+                    {t("flow.simulation.calculationTime")}
                   </Text>
                   <Text fontSize="sm">
                     {finalStore.resultSummary.calculation_time_seconds.toFixed(
                       3,
                     )}{" "}
-                    秒
+                    {t("flow.simulation.unit.seconds")}
                   </Text>
                 </HStack>
                 <HStack justify="space-between">
                   <Text fontSize="sm" color="gray.600">
-                    收敛状态:
+                    {t("flow.simulation.convergenceStatus")}
                   </Text>
                   <Text
                     fontSize="sm"
@@ -850,7 +866,7 @@ function SimulationPanel({
                 {finalStore.resultSummary.final_mass_balance_error && (
                   <HStack justify="space-between">
                     <Text fontSize="sm" color="gray.600">
-                      最终质量平衡误差:
+                      {t("flow.simulation.finalMassBalanceError")}
                     </Text>
                     <Text fontSize="sm">
                       {finalStore.resultSummary.final_mass_balance_error.toExponential(
@@ -861,7 +877,7 @@ function SimulationPanel({
                 )}
                 <HStack justify="space-between">
                   <Text fontSize="sm" color="gray.600">
-                    最终总体积:
+                    {t("flow.simulation.finalTotalVolume")}
                   </Text>
                   <Text fontSize="sm">
                     {finalStore.resultSummary.final_total_volume.toFixed(6)}
@@ -870,7 +886,7 @@ function SimulationPanel({
                 {finalStore.resultSummary.solver_method && (
                   <HStack justify="space-between">
                     <Text fontSize="sm" color="gray.600">
-                      求解器方法:
+                      {t("flow.simulation.solverMethod")}
                     </Text>
                     <Text fontSize="sm">
                       {finalStore.resultSummary.solver_method}
@@ -880,7 +896,7 @@ function SimulationPanel({
                 {finalStore.resultSummary.error_message && (
                   <HStack justify="space-between">
                     <Text fontSize="sm" color="gray.600">
-                      错误信息:
+                      {t("flow.simulation.errorLabelShort")}
                     </Text>
                     <Text fontSize="sm" color="red.600">
                       {finalStore.resultSummary.error_message}
@@ -899,7 +915,7 @@ function SimulationPanel({
                     {(() => {
                       const AnalysisButton = createAnalysisButton({
                         modelType: (modelType as ModelType) || "other",
-                        label: "分析计算结果",
+                        label: t("flow.simulation.analysisButton"),
                         resultData: finalStore.currentJob.result_data,
                         edges: edges,
                         edgeParameterConfigs: edgeParameterConfigs,
@@ -918,3 +934,5 @@ function SimulationPanel({
 }
 
 export default SimulationPanel
+
+

@@ -1,6 +1,7 @@
 import { HStack, Text, VStack } from "@chakra-ui/react"
 import type React from "react"
 import type { ASM1SlimJobPublic } from "../../../client/types.gen"
+import { useI18n } from "../../../i18n"
 import { asm1SlimService } from "../../../services/asm1slimService"
 import { useASM1SlimFlowStore } from "../../../stores/asm1slimFlowStore"
 import { useASM1SlimStore } from "../../../stores/asm1slimStore"
@@ -23,6 +24,7 @@ const ASM1SlimBubbleMenu: React.FC<ASM1SlimBubbleMenuProps> = ({
   onImport,
   onNewFlowChart,
 }) => {
+  const { t } = useI18n()
   // 自定义加载任务数据的处理函数
   const handleLoadJobData = async (
     job: ASM1SlimJobPublic,
@@ -40,7 +42,7 @@ const ASM1SlimBubbleMenu: React.FC<ASM1SlimBubbleMenuProps> = ({
 
     // 验证数据完整性
     if (!flowchartData) {
-      throw new Error("输入数据为空")
+      throw new Error(t("flow.simulation.validation.inputEmpty"))
     }
 
     console.log("加载数据:", {
@@ -116,7 +118,7 @@ const ASM1SlimBubbleMenu: React.FC<ASM1SlimBubbleMenuProps> = ({
           modelStore.getCalculationStatus?.(jobId),
         ])
       } catch (error) {
-        console.error("加载计算结果数据失败:", error)
+        console.error(t("flow.simulation.loadResultFailed"), error)
         // 不阻止主要的数据加载流程
       }
     }
@@ -127,29 +129,37 @@ const ASM1SlimBubbleMenu: React.FC<ASM1SlimBubbleMenuProps> = ({
     return (
       <VStack align="start" gap={2} fontSize="sm">
         <HStack>
-          <Text fontWeight="bold">总模拟时间:</Text>
-          <Text>{summary.total_time || "N/A"} 小时</Text>
+          <Text fontWeight="bold">{t("flow.simulation.totalTime")}</Text>
+          <Text>
+            {summary.total_time || t("common.notAvailable")}{" "}
+            {t("flow.simulation.unit.hours")}
+          </Text>
         </HStack>
         <HStack>
-          <Text fontWeight="bold">总采样数:</Text>
+          <Text fontWeight="bold">{t("flow.simulation.totalSteps")}</Text>
           <Text>{summary.total_steps}</Text>
         </HStack>
         <HStack>
-          <Text fontWeight="bold">计算耗时:</Text>
-          <Text>{summary.calculation_time_seconds?.toFixed(2)} 秒</Text>
+          <Text fontWeight="bold">{t("flow.simulation.calculationTime")}</Text>
+          <Text>
+            {summary.calculation_time_seconds?.toFixed(2)}{" "}
+            {t("flow.simulation.unit.seconds")}
+          </Text>
         </HStack>
         <HStack>
-          <Text fontWeight="bold">收敛状态:</Text>
+          <Text fontWeight="bold">{t("flow.simulation.convergenceStatus")}</Text>
           <Text>{summary.convergence_status}</Text>
         </HStack>
         {summary.final_mass_balance_error && (
           <HStack>
-            <Text fontWeight="bold">最终质量平衡误差:</Text>
+            <Text fontWeight="bold">
+              {t("flow.simulation.finalMassBalanceError")}
+            </Text>
             <Text>{summary.final_mass_balance_error.toExponential(2)}</Text>
           </HStack>
         )}
         <HStack>
-          <Text fontWeight="bold">最终总体积:</Text>
+          <Text fontWeight="bold">{t("flow.simulation.finalTotalVolume")}</Text>
           <Text>{summary.final_total_volume?.toFixed(2)}</Text>
         </HStack>
       </VStack>
@@ -179,11 +189,11 @@ const ASM1SlimBubbleMenu: React.FC<ASM1SlimBubbleMenuProps> = ({
         jobCreatedAtField: "created_at",
         jobCompletedAtField: "completed_at",
         statusTextMap: {
-          pending: "等待中",
-          running: "计算中",
-          success: "已完成",
-          failed: "失败",
-          cancelled: "已取消",
+          pending: t("flow.jobStatus.pending"),
+          running: t("flow.jobStatus.running"),
+          success: t("flow.jobStatus.success"),
+          failed: t("flow.jobStatus.failed"),
+          cancelled: t("flow.jobStatus.cancelled"),
         },
         statusColorMap: {
           pending: "yellow",

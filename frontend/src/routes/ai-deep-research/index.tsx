@@ -25,9 +25,11 @@ import { FiSearch, FiTag } from "react-icons/fi"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import type { ArticleData } from "../../data/articles/types"
 import { useArticleData } from "../../hooks/useArticleData"
+import { useI18n } from "@/i18n"
 
 const AIDeepResearchIndex: React.FC = () => {
   const { articles, loading, error } = useArticleData()
+  const { t } = useI18n()
   const [searchTerm, setSearchTerm] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState("all")
   const [selectedTag, setSelectedTag] = React.useState("all")
@@ -51,21 +53,21 @@ const AIDeepResearchIndex: React.FC = () => {
   const categoryCollection = React.useMemo(() => {
     return createListCollection({
       items: categories.map((cat) => ({
-        label: cat === "all" ? "所有分类" : cat,
+        label: cat === "all" ? t("deepResearch.filters.allCategories") : cat,
         value: cat,
       })),
     })
-  }, [categories])
+  }, [categories, t])
 
   // 创建标签集合
   const tagCollection = React.useMemo(() => {
     return createListCollection({
       items: tags.map((tag) => ({
-        label: tag === "all" ? "所有标签" : tag,
+        label: tag === "all" ? t("deepResearch.filters.allTags") : tag,
         value: tag,
       })),
     })
-  }, [tags])
+  }, [tags, t])
 
   // 过滤文章
   const filteredArticles = React.useMemo(() => {
@@ -144,7 +146,7 @@ const AIDeepResearchIndex: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              阅读全文
+              {t("deepResearch.article.readFull")}
             </a>
           </Button>
         </VStack>
@@ -156,7 +158,7 @@ const AIDeepResearchIndex: React.FC = () => {
     return (
       <Container maxW="7xl" py={8}>
         <VStack gap={8}>
-          <Text>加载中...</Text>
+          <Text>{t("deepResearch.state.loading")}</Text>
         </VStack>
       </Container>
     )
@@ -166,7 +168,9 @@ const AIDeepResearchIndex: React.FC = () => {
     return (
       <Container maxW="7xl" py={8}>
         <VStack gap={8}>
-          <Text color="red.500">加载失败：{error}</Text>
+          <Text color="red.500">
+            {t("deepResearch.state.loadFailed", { error })}
+          </Text>
         </VStack>
       </Container>
     )
@@ -190,15 +194,15 @@ const AIDeepResearchIndex: React.FC = () => {
               mx="auto"
               mb={2}
             >
-              AI Deep Research
+              {t("deepResearch.hero.title")}
               <br />
-              探索污水处理技术的深度解析
+              {t("deepResearch.hero.tagline")}
             </Text>
             <Text fontSize="lg" color="gray.600" maxW="xl" mx="auto" mb={4}>
-              基于人工智能的深度研究平台，为您提供污水处理领域的前沿技术分析与洞察
+              {t("deepResearch.hero.description")}
             </Text>
             <Text fontSize="sm" color="gray.500" fontStyle="italic">
-              内容来自 AI Deep Research，学习并保持质疑
+              {t("deepResearch.hero.note")}
             </Text>
           </Box>
 
@@ -213,7 +217,7 @@ const AIDeepResearchIndex: React.FC = () => {
                   <InputGroup startElement={<FiSearch color="gray.300" />}>
                     <Input
                       ps="2.5rem"
-                      placeholder="搜索文章标题或内容..."
+                      placeholder={t("deepResearch.search.placeholder")}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -231,7 +235,9 @@ const AIDeepResearchIndex: React.FC = () => {
                     <Select.HiddenSelect />
                     <Select.Control>
                       <Select.Trigger>
-                        <Select.ValueText placeholder="选择分类" />
+                        <Select.ValueText
+                          placeholder={t("deepResearch.filters.categoryPlaceholder")}
+                        />
                       </Select.Trigger>
                       <Select.IndicatorGroup>
                         <Select.Indicator />
@@ -263,7 +269,9 @@ const AIDeepResearchIndex: React.FC = () => {
                     <Select.HiddenSelect />
                     <Select.Control>
                       <Select.Trigger>
-                        <Select.ValueText placeholder="选择标签" />
+                        <Select.ValueText
+                          placeholder={t("deepResearch.filters.tagPlaceholder")}
+                        />
                       </Select.Trigger>
                       <Select.IndicatorGroup>
                         <Select.Indicator />
@@ -294,7 +302,7 @@ const AIDeepResearchIndex: React.FC = () => {
                 {filteredArticles.length}
               </Text>
               <Text fontSize="sm" color="gray.600">
-                篇文章
+                {t("deepResearch.stats.articles")}
               </Text>
             </VStack>
             <VStack>
@@ -302,7 +310,7 @@ const AIDeepResearchIndex: React.FC = () => {
                 {categories.length - 1}
               </Text>
               <Text fontSize="sm" color="gray.600">
-                个分类
+                {t("deepResearch.stats.categories")}
               </Text>
             </VStack>
             <VStack>
@@ -310,7 +318,7 @@ const AIDeepResearchIndex: React.FC = () => {
                 {tags.length - 1}
               </Text>
               <Text fontSize="sm" color="gray.600">
-                个标签
+                {t("deepResearch.stats.tags")}
               </Text>
             </VStack>
           </HStack>
@@ -332,10 +340,10 @@ const AIDeepResearchIndex: React.FC = () => {
             <Card.Root bg={cardBg} p={8} borderRadius="xl" shadow="md" w="100%">
               <Card.Body textAlign="center">
                 <Text fontSize="lg" color="gray.500">
-                  没有找到匹配的文章
+                  {t("deepResearch.empty.title")}
                 </Text>
                 <Text fontSize="sm" color="gray.400" mt={2}>
-                  请尝试调整搜索条件或过滤器
+                  {t("deepResearch.empty.description")}
                 </Text>
               </Card.Body>
             </Card.Root>

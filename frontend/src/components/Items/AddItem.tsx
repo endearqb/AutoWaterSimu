@@ -16,6 +16,7 @@ import { type ItemCreate, ItemsService } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
+import { useI18n } from "@/i18n"
 import {
   DialogBody,
   DialogCloseTrigger,
@@ -31,6 +32,7 @@ const AddItem = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast } = useCustomToast()
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -49,7 +51,7 @@ const AddItem = () => {
     mutationFn: (data: ItemCreate) =>
       ItemsService.createItem({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Item created successfully.")
+      showSuccessToast(t("items.itemCreatedSuccess"))
       reset()
       setIsOpen(false)
     },
@@ -75,29 +77,29 @@ const AddItem = () => {
       <DialogTrigger asChild>
         <Button value="add-item" my={4}>
           <FaPlus fontSize="16px" />
-          Add Item
+          {t("items.addItem")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Add Item</DialogTitle>
+            <DialogTitle>{t("items.addItemTitle")}</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>Fill in the details to add a new item.</Text>
+            <Text mb={4}>{t("items.addItemDescription")}</Text>
             <VStack gap={4}>
               <Field
                 required
                 invalid={!!errors.title}
                 errorText={errors.title?.message}
-                label="Title"
+                label={t("common.title")}
               >
                 <Input
                   id="title"
                   {...register("title", {
-                    required: "Title is required.",
+                    required: t("validation.required"),
                   })}
-                  placeholder="Title"
+                  placeholder={t("common.title")}
                   type="text"
                 />
               </Field>
@@ -105,12 +107,12 @@ const AddItem = () => {
               <Field
                 invalid={!!errors.description}
                 errorText={errors.description?.message}
-                label="Description"
+                label={t("common.description")}
               >
                 <Input
                   id="description"
                   {...register("description")}
-                  placeholder="Description"
+                  placeholder={t("common.description")}
                   type="text"
                 />
               </Field>
@@ -124,7 +126,7 @@ const AddItem = () => {
                 colorPalette="gray"
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </DialogActionTrigger>
             <Button
@@ -133,7 +135,7 @@ const AddItem = () => {
               disabled={!isValid}
               loading={isSubmitting}
             >
-              Save
+              {t("common.save")}
             </Button>
           </DialogFooter>
         </form>

@@ -1,6 +1,7 @@
-import { Box, IconButton } from "@chakra-ui/react"
+﻿import { Box, IconButton } from "@chakra-ui/react"
 import type { ReactNode } from "react"
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi"
+import { useI18n } from "../../../i18n"
 import { getGlassPanelStyles } from "../nodes/utils/glass"
 
 export const INSPECTOR_PANEL_WIDTH = 360
@@ -23,6 +24,7 @@ const BaseInspectorContainer = ({
   topOffset = 8,
   bottomOffset = 8,
 }: BaseInspectorContainerProps) => {
+  const { t } = useI18n()
   const panelGlass = getGlassPanelStyles()
   const { transition: _panelTransition, ...panelSurface } = panelGlass
 
@@ -49,7 +51,11 @@ const BaseInspectorContainer = ({
         transform="translateY(-50%)"
         size="sm"
         variant="ghost"
-        aria-label={isOpen ? "折叠检查器" : "展开检查器"}
+        aria-label={
+          isOpen
+            ? t("flow.inspector.collapse")
+            : t("flow.inspector.expand")
+        }
         onClick={onToggle}
         borderRadius="full"
         bg="rgba(255,255,255,0.7)"

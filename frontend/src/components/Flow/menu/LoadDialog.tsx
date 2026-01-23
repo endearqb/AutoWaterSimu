@@ -9,6 +9,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React from "react"
+import { useI18n } from "../../../i18n"
 
 interface FlowChart {
   id: string
@@ -35,6 +36,7 @@ const LoadDialog: React.FC<LoadDialogProps> = ({
   onLoad,
   onDelete,
 }) => {
+  const { t } = useI18n()
   const portalRef = React.useRef<HTMLElement>(null!)
   React.useEffect(() => {
     const el = document.querySelector("[data-flow-theme-scope]")
@@ -50,7 +52,7 @@ const LoadDialog: React.FC<LoadDialogProps> = ({
         <Dialog.Positioner>
           <Dialog.Content maxW="600px">
             <Dialog.Header>
-              <Dialog.Title>加载流程图</Dialog.Title>
+              <Dialog.Title>{t("flow.menu.loadFlowchartTitle")}</Dialog.Title>
               <Dialog.CloseTrigger asChild>
                 <CloseButton />
               </Dialog.CloseTrigger>
@@ -59,7 +61,7 @@ const LoadDialog: React.FC<LoadDialogProps> = ({
               <VStack gap={3} align="stretch" maxH="400px" overflowY="auto">
                 {flowCharts.length === 0 ? (
                   <Text color="gray.500" textAlign="center" py={8}>
-                    暂无保存的流程图
+                    {t("flow.menu.emptyFlowcharts")}
                   </Text>
                 ) : (
                   flowCharts.map((flowChart) => (
@@ -80,12 +82,12 @@ const LoadDialog: React.FC<LoadDialogProps> = ({
                             </Text>
                           )}
                           <Text fontSize="xs" color="gray.500">
-                            创建时间:{" "}
+                            {t("flow.menu.createdAt")}:{" "}
                             {new Date(flowChart.created_at).toLocaleString()}
                           </Text>
                           {flowChart.updated_at !== flowChart.created_at && (
                             <Text fontSize="xs" color="gray.500">
-                              更新时间:{" "}
+                              {t("flow.menu.updatedAt")}:{" "}
                               {new Date(flowChart.updated_at).toLocaleString()}
                             </Text>
                           )}
@@ -97,7 +99,7 @@ const LoadDialog: React.FC<LoadDialogProps> = ({
                             onClick={() => onLoad(flowChart.id)}
                             loading={isLoading}
                           >
-                            加载
+                            {t("flow.menu.load")}
                           </Button>
                           <Button
                             size="sm"
@@ -106,7 +108,7 @@ const LoadDialog: React.FC<LoadDialogProps> = ({
                             onClick={() => onDelete(flowChart.id)}
                             loading={isLoading}
                           >
-                            删除
+                            {t("common.delete")}
                           </Button>
                         </HStack>
                       </HStack>

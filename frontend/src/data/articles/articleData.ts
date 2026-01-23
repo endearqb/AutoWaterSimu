@@ -1,7 +1,8 @@
 import type { ArticleData } from "./types"
+import { detectDefaultLanguage, type Language } from "@/i18n"
 
 // 简化的文章数据结构，用于链接到HTML文件
-export const articlesData: ArticleData[] = [
+export const articlesDataZh: ArticleData[] = [
   // HTML文件对应的文章条目
   {
     id: "llm-memory-research",
@@ -1794,21 +1795,116 @@ export const articlesData: ArticleData[] = [
 ]
 
 // 根据ID获取文章数据
-export const getArticleById = (id: string): ArticleData | undefined => {
-  return articlesData.find((article) => article.id === id)
+const categoryMap: Record<string, string> = {
+  AI技术: "AI",
+  技术解析: "Technical Analysis",
+  技术评估: "Technology Assessment",
+  数学建模: "Mathematical Modeling",
+  系统设计: "System Design",
+  数字化技术: "Digital Technology",
+  工艺设计: "Process Design",
+  行业研究: "Industry Research",
+  工程实践: "Engineering Practice",
+}
+
+const acronymWords = new Set([
+  "ai",
+  "llm",
+  "rag",
+  "mlops",
+  "ags",
+  "asm",
+  "asm1",
+  "asm2d",
+  "asm3",
+  "aoa",
+  "mbr",
+  "uct",
+  "wwtp",
+  "scada",
+])
+
+const toEnglishTitleFromId = (id: string): string => {
+  return id
+    .split("-")
+    .filter(Boolean)
+    .map((part) => {
+      const lower = part.toLowerCase()
+      if (acronymWords.has(lower)) return lower.toUpperCase()
+      if (/^\d+$/.test(lower)) return lower
+      return lower.charAt(0).toUpperCase() + lower.slice(1)
+    })
+    .join(" ")
+}
+
+const isAscii = (value: string): boolean => /^[\x00-\x7F]+$/.test(value)
+
+const toEnglishCategory = (category: string): string => {
+  return categoryMap[category] ?? "Research"
+}
+
+const toEnglishTags = (tags: string[]): string[] => {
+  const normalized = tags.map((tag) => tag.trim()).filter(Boolean)
+  const asciiTags = normalized.filter(isAscii)
+  return asciiTags.length > 0 ? asciiTags : ["Research"]
+}
+
+export const articlesDataEn: ArticleData[] = articlesDataZh.map((article) => {
+  const title = toEnglishTitleFromId(article.id)
+  return {
+    ...article,
+    title,
+    description: `AI Deep Research article: ${title}`,
+    category: toEnglishCategory(article.category),
+    tags: toEnglishTags(article.tags),
+    content: {
+      ...article.content,
+      sections: article.content.sections.map((section) => ({
+        ...section,
+        title: "HTML Content",
+        content: `Please open the HTML file for the full content: /assets/html/${article.id}.html`,
+      })),
+    },
+  }
+})
+
+const resolveLanguage = (language?: Language): Language => {
+  return language ?? detectDefaultLanguage()
+}
+
+const getArticlesByLanguage = (language?: Language): ArticleData[] => {
+  return resolveLanguage(language) === "zh" ? articlesDataZh : articlesDataEn
+}
+
+// 根据ID获取文章数据
+export const getArticleById = (
+  id: string,
+  language?: Language,
+): ArticleData | undefined => {
+  return getArticlesByLanguage(language).find((article) => article.id === id)
 }
 
 // 获取所有文章列表
-export const getAllArticles = (): ArticleData[] => {
-  return articlesData
+export const getAllArticles = (language?: Language): ArticleData[] => {
+  return getArticlesByLanguage(language)
 }
 
 // 根据分类获取文章
-export const getArticlesByCategory = (category: string): ArticleData[] => {
-  return articlesData.filter((article) => article.category === category)
+export const getArticlesByCategory = (
+  category: string,
+  language?: Language,
+): ArticleData[] => {
+  return getArticlesByLanguage(language).filter(
+    (article) => article.category === category,
+  )
 }
 
 // 根据标签获取文章
-export const getArticlesByTag = (tag: string): ArticleData[] => {
-  return articlesData.filter((article) => article.tags.includes(tag))
+export const getArticlesByTag = (
+  tag: string,
+  language?: Language,
+): ArticleData[] => {
+  return getArticlesByLanguage(language).filter((article) =>
+    article.tags.includes(tag),
+  )
 }

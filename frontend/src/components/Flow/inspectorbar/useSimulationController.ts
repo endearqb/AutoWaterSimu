@@ -33,6 +33,7 @@ import {
   isJobRunning as materialBalanceIsJobRunning,
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
+import { useI18n } from "../../../i18n"
 
 type SimulationModelStore = Pick<
   BaseModelState<any, any, any, any, any>,
@@ -96,6 +97,7 @@ export function useSimulationController(
   props: SimulationControllerProps = {},
 ): SimulationController {
   const { store, modelStore, modelType = "materialBalance" } = props
+  const { t, language } = useI18n()
 
   const config = getSimulationConfig(modelType)
 
@@ -244,10 +246,13 @@ export function useSimulationController(
       }
       setEstimatedTotalTime(estimatedTime)
 
+      const timestamp = new Date().toLocaleString(
+        language === "zh" ? "zh-CN" : "en-US",
+      )
       const flowChartName =
         currentFlowChartName ||
         importedFileName ||
-        `流程图_${new Date().toLocaleString()}`
+        t("flow.simulation.defaultFlowchartName", { timestamp })
 
       const flowDataWithName = {
         ...flowData,
@@ -272,7 +277,7 @@ export function useSimulationController(
         )
       }
     } catch (error) {
-      console.error("模拟计算失败:", error)
+      console.error(t("flow.simulation.startFailed"), error)
     }
   }
 

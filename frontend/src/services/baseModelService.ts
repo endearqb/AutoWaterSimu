@@ -5,6 +5,7 @@ import type {
   MaterialBalanceValidationResponse,
   Message,
 } from "../client/types.gen"
+import { t } from "@/utils/i18n"
 
 /**
  * 通用模型服务接口
@@ -240,7 +241,7 @@ export function createErrorResponse(message: string): ApiResponse<never> {
  */
 export function handleApiError(
   error: any,
-  defaultMessage = "操作失败",
+  defaultMessage = t("errors.operationFailed"),
 ): string {
   if (error?.body?.detail) {
     return typeof error.body.detail === "string"

@@ -16,6 +16,7 @@ import SimulationPanel from "../../components/Flow/inspectorbar/SimulationPanel"
 import DefaultNode from "../../components/Flow/nodes/DefaultNode"
 import InputNode from "../../components/Flow/nodes/InputNode"
 import OutputNode from "../../components/Flow/nodes/OutputNode"
+import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 import { useMaterialBalanceStore } from "../../stores/materialBalanceStore"
 import { useThemePaletteStore } from "../../stores/themePaletteStore"
@@ -31,46 +32,48 @@ const createNodeTypes = (store: () => any): NodeTypes => ({
   output: (props: any) => <OutputNode {...props} store={store} />,
 })
 
-// 定义默认节点数据工厂函数
-const defaultNodeDataFactory: DefaultNodeDataFactory = (nodeType: string) => {
-  switch (nodeType) {
-    case "input":
-      return { label: "进水端" }
-    case "output":
-      return { label: "出水端" }
-    default:
-      return { label: "默认节点" }
-  }
-}
-
-// 定义检查器配置
-const inspectorConfig = {
-  nodeTabs: [
-    {
-      key: "parameters",
-      label: "参数设置",
-      component: PropertyPanel,
-      props: { isNode: true },
-    },
-    {
-      key: "simulation",
-      label: "模拟计算",
-      component: SimulationPanel,
-      props: {
-        store: useFlowStore,
-        modelStore: useMaterialBalanceStore,
-        modelType: "materialBalance",
-      },
-    },
-  ],
-  edgePanel: {
-    component: PropertyPanel,
-    props: { isNode: false },
-  },
-  defaultTab: "parameters",
-}
-
 function MaterialBalancePage() {
+  const { t, language } = useI18n()
+  const defaultNodeDataFactory = useMemo<DefaultNodeDataFactory>(() => {
+    return (nodeType: string) => {
+      switch (nodeType) {
+        case "input":
+          return { label: t("flow.node.input") }
+        case "output":
+          return { label: t("flow.node.output") }
+        default:
+          return { label: t("flow.node.default") }
+      }
+    }
+  }, [language])
+  const inspectorConfig = useMemo(
+    () => ({
+      nodeTabs: [
+        {
+          key: "parameters",
+          label: t("flow.tab.parameters"),
+          component: PropertyPanel,
+          props: { isNode: true },
+        },
+        {
+          key: "simulation",
+          label: t("flow.tab.simulation"),
+          component: SimulationPanel,
+          props: {
+            store: useFlowStore,
+            modelStore: useMaterialBalanceStore,
+            modelType: "materialBalance",
+          },
+        },
+      ],
+      edgePanel: {
+        component: PropertyPanel,
+        props: { isNode: false },
+      },
+      defaultTab: "parameters",
+    }),
+    [language],
+  )
   // ✅ 使用 useMemo 确保 nodeTypes 引用稳定
   const nodeTypes = useMemo(() => createNodeTypes(useFlowStore), [])
   const themeStore = useThemePaletteStore()

@@ -1,6 +1,7 @@
 import { Box, Input, Text } from "@chakra-ui/react"
 import { Handle, type NodeProps, Position } from "@xyflow/react"
 import { memo, useEffect, useRef, useState } from "react"
+import { useI18n } from "../../../i18n"
 import { useASM3FlowStore } from "../../../stores/asm3FlowStore"
 import type { ASM3FlowState } from "../../../stores/asm3FlowStore"
 import GlassNodeContainer from "./GlassNodeContainer"
@@ -40,10 +41,11 @@ interface ASM3NodeProps extends NodeProps<any> {
 
 const ASM3Node = ({ data, selected, id, store }: ASM3NodeProps) => {
   const nodeData = data as ASM3NodeData
+  const { t, language } = useI18n()
   const flowStore = store || useASM3FlowStore
   const { updateNodeParameter } = flowStore()
   const [isEditing, setIsEditing] = useState(false)
-  const [label, setLabel] = useState(nodeData.label || "ASM3 节点")
+  const [label, setLabel] = useState(nodeData.label || t("flow.node.asm3"))
   const hoveredNodeId = useHoveredNodeId()
   const isHovered = hoveredNodeId === id
   const inputRef = useRef<HTMLInputElement>(null)
@@ -62,8 +64,8 @@ const ASM3Node = ({ data, selected, id, store }: ASM3NodeProps) => {
   }, [isEditing])
 
   useEffect(() => {
-    setLabel(nodeData.label || "ASM3 节点")
-  }, [nodeData.label])
+    setLabel(nodeData.label || t("flow.node.asm3"))
+  }, [nodeData.label, language])
 
   const handleDoubleClick = () => setIsEditing(true)
 
@@ -72,7 +74,7 @@ const ASM3Node = ({ data, selected, id, store }: ASM3NodeProps) => {
       setIsEditing(false)
       updateNodeParameter(id, "label", label)
     } else if (e.key === "Escape") {
-      setLabel(nodeData.label || "ASM3 节点")
+      setLabel(nodeData.label || t("flow.node.asm3"))
       setIsEditing(false)
     }
   }

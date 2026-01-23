@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import { useI18n } from "../../../i18n"
 
 export type ExternalLegendBarSeries = {
   key: string
@@ -41,8 +42,10 @@ const ExternalLegendBarChart: React.FC<ExternalLegendBarChartProps> = ({
   margin,
   xAxisAngle,
   xAxisTextAnchor,
-  emptyText = "暂无数据",
+  emptyText,
 }) => {
+  const { t } = useI18n()
+  const resolvedEmptyText = emptyText ?? t("flow.analysis.emptyData")
   const chartMargin = useMemo<ChartMargin>(() => {
     return margin ?? { top: 20, right: 30, left: 20, bottom: 10 }
   }, [margin])
@@ -55,7 +58,7 @@ const ExternalLegendBarChart: React.FC<ExternalLegendBarChartProps> = ({
     return (
       <Box w="full" py={8}>
         <Text color="gray.500" textAlign="center">
-          {emptyText}
+          {resolvedEmptyText}
         </Text>
       </Box>
     )

@@ -1,5 +1,6 @@
 import matter from "gray-matter"
 import type { ComponentType } from "react"
+import { detectDefaultLanguage, type Language } from "@/i18n"
 
 // 保持原有导出名不变，但补充 component 字段，并统一为“MDX 组件渲染”模式
 export type Metadata = {
@@ -32,9 +33,13 @@ function toPosix(p: string): string {
   return p.replace(/\\/g, "/")
 }
 
-export async function getBlogPosts(): Promise<BlogPost[]> {
-  const entries: BlogPost[] = Object.entries(componentModules).map(
-    ([filePath, mod]) => {
+export async function getBlogPosts(language?: Language): Promise<BlogPost[]> {
+  const resolvedLanguage = language ?? detectDefaultLanguage()
+  const localeSegment = `/updates/${resolvedLanguage}/`
+
+  const entries: BlogPost[] = Object.entries(componentModules)
+    .filter(([filePath]) => toPosix(filePath).includes(localeSegment))
+    .map(([filePath, mod]) => {
       const key = toPosix(filePath)
       const fileName = key.split("/").pop()!
       const slug = fileName.replace(/\.mdx$/, "")
@@ -43,8 +48,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 
       const metadata: Metadata = {
         title: data?.title ?? slug,
-        publishedAt:
-          data?.publishedAt ?? data?.date ?? new Date().toISOString(),
+        publishedAt: data?.publishedAt ?? data?.date ?? new Date().toISOString(),
         summary:
           data?.summary ??
           data?.excerpt ??
@@ -66,8 +70,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
         content: content ?? "",
         component: mod.default,
       }
-    },
-  )
+    })
 
   entries.sort((a, b) => {
     const ta = a.metadata.publishedAt ? Date.parse(a.metadata.publishedAt) : 0

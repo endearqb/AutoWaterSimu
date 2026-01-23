@@ -1,6 +1,7 @@
 import { Card, SimpleGrid, Table, Text, VStack } from "@chakra-ui/react"
 import React, { useMemo, useState } from "react"
 import { getModelConfig } from "../../../../config/modelConfigs"
+import { useI18n } from "../../../../i18n"
 import { Radio, RadioGroup } from "../../../ui/radio"
 import type { ASM1ResultData } from "../asm1-analysis"
 
@@ -13,6 +14,7 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
   resultData,
   modelType = "asm1",
 }) => {
+  const { t, language } = useI18n()
   // 可用节点列表
   const availableNodes = useMemo(() => {
     return Object.keys(resultData.node_data || {})
@@ -41,7 +43,7 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
         label: `${variable.label} (${variable.name})${variable.unit ? ` [${variable.unit}]` : ""}`,
       })) || []
     )
-  }, [modelType])
+  }, [modelType, language])
 
   // 稳态检查计算
   const steadyChecksByNode = useMemo(() => {
@@ -130,7 +132,7 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
         <VStack align="start" gap={6}>
           {/* 节点选择 */}
           <VStack align="start" gap={4} w="full">
-            <Text fontWeight="bold">节点选择</Text>
+            <Text fontWeight="bold">{t("flow.analysis.nodeSelection")}</Text>
             <RadioGroup
               value={selectedSteadyNode}
               onValueChange={(e) => e.value && setSelectedSteadyNode(e.value)}
@@ -156,14 +158,20 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
               return (
                 <VStack key={nodeId} align="start" gap={2} w="full">
                   <Text fontWeight="bold" color="blue.600">
-                    节点: {nodeLabel}
+                    {t("flow.analysis.nodeLabel")} {nodeLabel}
                   </Text>
                   <Table.Root size="sm">
                     <Table.Header>
                       <Table.Row>
-                        <Table.ColumnHeader>指标</Table.ColumnHeader>
-                        <Table.ColumnHeader>相对斜率 (%)</Table.ColumnHeader>
-                        <Table.ColumnHeader>状态</Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("flow.analysis.metricColumn")}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("flow.analysis.relativeSlopeColumn")}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {t("flow.analysis.statusColumn")}
+                        </Table.ColumnHeader>
                       </Table.Row>
                     </Table.Header>
                     <Table.Body>
@@ -185,10 +193,10 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
                               fontWeight="bold"
                             >
                               {result.status === "stable"
-                                ? "稳定"
+                                ? t("flow.analysis.steadyState.stable")
                                 : result.status === "approaching"
-                                  ? "接近稳定"
-                                  : "不稳定"}
+                                  ? t("flow.analysis.steadyState.approaching")
+                                  : t("flow.analysis.steadyState.unstable")}
                             </Text>
                           </Table.Cell>
                         </Table.Row>
@@ -201,14 +209,13 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
           ) : (
             <Text fontSize="sm" color="gray.500">
               {!selectedSteadyNode
-                ? "请选择节点进行稳态检查"
-                : "所选节点无可用的稳态检查数据"}
+                ? t("flow.analysis.selectNodeForSteadyState")
+                : t("flow.analysis.noSteadyStateData")}
             </Text>
           )}
 
           <Text mt={4} fontSize="sm" color="gray.600">
-            注: 相对斜率 = 末段斜率 / 中值 ×
-            100%。小于1%为稳定，1-5%为接近稳定，大于5%为不稳定。
+            {t("flow.analysis.steadyStateNote")}
           </Text>
         </VStack>
       </Card.Body>

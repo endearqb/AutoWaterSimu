@@ -11,6 +11,7 @@ import {
 import { Handle, type NodeProps, Position } from "@xyflow/react"
 import { memo, useEffect, useRef, useState } from "react"
 import { FcOrgUnit } from "react-icons/fc"
+import { useI18n } from "../../../i18n"
 import GlassNodeContainer from "./GlassNodeContainer"
 import { isNotSelfConnection } from "./utils/connectionGuards"
 import { INLINE_EDIT_INPUT_PROPS } from "./utils/editableInputProps"
@@ -32,12 +33,16 @@ interface GoalProgressData extends Record<string, unknown> {
 }
 
 const GoalProgressNode = ({ data, selected, id }: NodeProps<any>) => {
+  const { t } = useI18n()
   const nodeData = data as GoalProgressData
   const hoveredNodeId = useHoveredNodeId()
   const isHovered = hoveredNodeId === id
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isEditingAmount, setIsEditingAmount] = useState(false)
-  const [title, setTitle] = useState(nodeData.label || "反应池")
+  const defaultTitle = t("flow.node.goalProgress")
+  const defaultCurrencyLabel = t("flow.node.volumeLabel")
+  const defaultUnitLabel = t("flow.node.volumeUnit")
+  const [title, setTitle] = useState(nodeData.label || defaultTitle)
   const [amount, setAmount] = useState(nodeData.amount || "5,000.00")
   const tint: GlassTint = "goal"
   const accentColor = getAccentColor(tint)
@@ -48,6 +53,15 @@ const GoalProgressNode = ({ data, selected, id }: NodeProps<any>) => {
 
   const endEditTitle = () => setIsEditingTitle(false)
   const endEditAmount = () => setIsEditingAmount(false)
+
+  useEffect(() => {
+    if (!nodeData.label) {
+      setTitle(defaultTitle)
+    }
+  }, [defaultTitle, nodeData.label])
+
+  const currencyLabel = nodeData.currency || defaultCurrencyLabel
+  const unitLabel = nodeData.currency ? "" : ` ${defaultUnitLabel}`
 
   useEffect(() => {
     const active = isHovered || !!selected
@@ -150,7 +164,7 @@ const GoalProgressNode = ({ data, selected, id }: NodeProps<any>) => {
             {isEditingAmount ? (
               <HStack>
                 <Text fontSize="2xs" color={accentColor}>
-                  {nodeData.currency || "Vol:"}
+                  {currencyLabel}
                 </Text>
                 <Input
                   {...INLINE_EDIT_INPUT_PROPS}
@@ -166,7 +180,7 @@ const GoalProgressNode = ({ data, selected, id }: NodeProps<any>) => {
                   w="60px"
                 />
                 <Text fontSize="2xs" color={accentColor}>
-                  {nodeData.currency || " m³"}
+                  {unitLabel}
                 </Text>
               </HStack>
             ) : (
@@ -177,8 +191,8 @@ const GoalProgressNode = ({ data, selected, id }: NodeProps<any>) => {
                 onDoubleClick={() => setIsEditingAmount(true)}
                 cursor="pointer"
               >
-                {nodeData.currency || "Vol:"} {amount}
-                {nodeData.currency ? "" : " m³"}
+                {currencyLabel} {amount}
+                {unitLabel}
               </Text>
             )}
           </HStack>

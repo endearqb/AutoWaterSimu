@@ -12,6 +12,7 @@ import type {
   MaterialBalanceTimeSeriesResponse,
   MaterialBalanceValidationResponse,
 } from "../client/types.gen"
+import { t } from "@/utils/i18n"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
 
@@ -31,6 +32,8 @@ class ASM3ServiceImpl
       ASM3JobInputDataResponse
     >
 {
+  private readonly modelName = "ASM3"
+
   // ========== 计算任务相关方法 ==========
 
   /**
@@ -45,7 +48,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "创建ASM3计算任务失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.createJobFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -60,7 +66,12 @@ class ASM3ServiceImpl
         requestBody: flowchartData,
       })
     } catch (error) {
-      throw handleApiError(error, "从流程图创建计算任务失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.createJobFromFlowchartFailed", {
+          model: this.modelName,
+        }),
+      )
     }
   }
 
@@ -74,7 +85,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3任务状态失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getStatusFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -90,7 +104,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3计算结果摘要失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getSummaryFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -118,7 +135,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3时间序列数据失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getTimeSeriesFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -132,7 +152,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3最终值失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getFinalValuesFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -148,7 +171,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "ASM3输入数据验证失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.validateInputFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -163,7 +189,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3任务列表失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getUserJobsFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -177,7 +206,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "删除ASM3任务失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.deleteJobFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -191,7 +223,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3任务输入数据失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getJobInputFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -209,7 +244,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "创建ASM3流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.createFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -227,7 +265,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3流程图列表失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getFlowchartsFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -241,7 +282,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "获取ASM3流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -259,7 +303,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "更新ASM3流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.updateFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -273,7 +320,10 @@ class ASM3ServiceImpl
       })
       return response
     } catch (error) {
-      throw handleApiError(error, "删除ASM3流程图失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.deleteFlowchartFailed", { model: this.modelName }),
+      )
     }
   }
 
@@ -305,7 +355,10 @@ class ASM3ServiceImpl
         await new Promise((resolve) => setTimeout(resolve, interval))
         attempts++
       } catch (error) {
-        console.error("轮询ASM3任务状态时出错:", error)
+        console.error(
+          t("flow.store.model.pollingError", { model: this.modelName }),
+          error,
+        )
         attempts++
 
         if (attempts >= maxAttempts) {
@@ -316,7 +369,9 @@ class ASM3ServiceImpl
       }
     }
 
-    throw new Error("ASM3任务状态轮询超时")
+    throw new Error(
+      t("flow.store.model.pollingTimeout", { model: this.modelName }),
+    )
   }
 
   /**
@@ -334,7 +389,12 @@ class ASM3ServiceImpl
         finalValues,
       }
     } catch (error) {
-      throw handleApiError(error, "获取ASM3完整计算结果失败")
+      throw handleApiError(
+        error,
+        t("flow.store.model.getCompleteResultsFailed", {
+          model: this.modelName,
+        }),
+      )
     }
   }
 }

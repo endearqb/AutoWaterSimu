@@ -6,6 +6,7 @@ import { FiLock } from "react-icons/fi"
 import { type ApiError, type UpdatePassword, UsersService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
 import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
+import { useI18n } from "@/i18n"
 import { PasswordInput } from "../ui/password-input"
 
 interface UpdatePasswordForm extends UpdatePassword {
@@ -14,6 +15,7 @@ interface UpdatePasswordForm extends UpdatePassword {
 
 const ChangePassword = () => {
   const { showSuccessToast } = useCustomToast()
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -29,7 +31,7 @@ const ChangePassword = () => {
     mutationFn: (data: UpdatePassword) =>
       UsersService.updatePasswordMe({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Password updated successfully.")
+      showSuccessToast(t("userSettings.updatePasswordSuccess"))
       reset()
     },
     onError: (err: ApiError) => {
@@ -45,7 +47,7 @@ const ChangePassword = () => {
     <>
       <Container maxW="full">
         <Heading size="sm" py={4}>
-          修改密码
+          {t("userSettings.changePasswordTitle")}
         </Heading>
         <Box as="form" onSubmit={handleSubmit(onSubmit)}>
           <VStack gap={4} w={{ base: "100%", md: "sm" }}>
@@ -53,21 +55,21 @@ const ChangePassword = () => {
               type="current_password"
               startElement={<FiLock />}
               {...register("current_password", passwordRules())}
-              placeholder="当前密码"
+              placeholder={t("userSettings.currentPasswordPlaceholder")}
               errors={errors}
             />
             <PasswordInput
               type="new_password"
               startElement={<FiLock />}
               {...register("new_password", passwordRules())}
-              placeholder="新密码"
+              placeholder={t("userSettings.newPasswordPlaceholder")}
               errors={errors}
             />
             <PasswordInput
               type="confirm_password"
               startElement={<FiLock />}
               {...register("confirm_password", confirmPasswordRules(getValues))}
-              placeholder="确认新密码"
+              placeholder={t("userSettings.confirmNewPasswordPlaceholder")}
               errors={errors}
             />
           </VStack>
@@ -78,7 +80,7 @@ const ChangePassword = () => {
             loading={isSubmitting}
             disabled={!isValid}
           >
-            保存
+            {t("common.save")}
           </Button>
         </Box>
       </Container>

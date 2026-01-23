@@ -354,12 +354,12 @@ export function getSlimAvailableVariables(
   rd: ASM1SlimResultData,
 ): Array<{ name: string; label: string }> {
   const variableMap: Record<string, string> = {
-    dissolvedOxygen: "溶解氧",
-    cod: "COD",
-    nitrate: "硝态氮",
-    ammonia: "氨氮",
-    totalAlkalinity: "总碱度",
-    volume: "体积",
+    dissolvedOxygen: "flow.modelParams.asm1slim.dissolvedOxygen.label",
+    cod: "flow.modelParams.asm1slim.cod.label",
+    nitrate: "flow.modelParams.asm1slim.nitrate.label",
+    ammonia: "flow.modelParams.asm1slim.ammonia.label",
+    totalAlkalinity: "flow.modelParams.asm1slim.totalAlkalinity.label",
+    volume: "flow.modelParams.asm1slim.volume.label",
   }
 
   const availableVars = new Set<string>()

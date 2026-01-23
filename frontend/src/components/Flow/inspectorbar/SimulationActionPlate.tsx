@@ -27,6 +27,7 @@ import {
   FiUpload,
 } from "react-icons/fi"
 import { MaterialBalanceService } from "../../../client/sdk.gen"
+import { useI18n } from "../../../i18n"
 import { asm1Service } from "../../../services/asm1Service"
 import { asm1SlimService } from "../../../services/asm1slimService"
 import { asm3Service } from "../../../services/asm3Service"
@@ -54,6 +55,7 @@ import { useSimulationController } from "./useSimulationController"
 interface SimulationActionPlateProps extends SimulationControllerProps {}
 
 function SimulationActionPlate(props: SimulationActionPlateProps) {
+  const { t } = useI18n()
   const [hovered, setHovered] = useState(false)
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false)
   const [isStepsOpen, setIsStepsOpen] = useState(false)
@@ -306,7 +308,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
   }
   const handleExportClick = async () => {
     const dataStr = JSON.stringify(exportFlowData?.(), null, 2)
-    const name = currentFlowChartName || "flowchart"
+    const name = currentFlowChartName || t("flow.menu.defaultFlowchartName")
     triggerDownload(dataStr, name)
   }
   const handleOpenSaveDialog = () => setIsSaveDialogOpen(true)
@@ -323,7 +325,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
     const jobName = job?.job_name as string | undefined
 
     if (!jobId) {
-      throw new Error("任务ID为空")
+      throw new Error(t("flow.actionPlate.errors.jobIdMissing"))
     }
 
     let jobDataResponse: any
@@ -346,7 +348,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
 
     const flowchartData = jobDataResponse?.input_data as any
     if (!flowchartData) {
-      throw new Error("输入数据为空")
+      throw new Error(t("flow.actionPlate.errors.inputDataMissing"))
     }
 
     if (flowState) {
@@ -368,7 +370,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
           modelState.getCalculationStatus?.(jobId),
         ])
       } catch (error) {
-        console.error("加载计算结果数据失败:", error)
+        console.error(t("flow.simulation.loadResultFailed"), error)
       }
     }
   }
@@ -389,7 +391,9 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
             const result = importFlowData?.(obj)
             const { toaster } = await import("../../ui/toaster")
             toaster.create({
-              title: result?.success ? "导入成功" : "导入失败",
+              title: result?.success
+                ? t("flow.menu.importSuccess")
+                : t("flow.menu.importFailed"),
               description: result?.message || "",
               type: result?.success ? "success" : "error",
               duration: 3000,
@@ -597,7 +601,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   <Button
                     size="xs"
                     {...getToggleButtonStyles(false)}
-                    aria-label="steps"
+                    aria-label={t("flow.actionPlate.stepsAriaLabel")}
                     ref={stepsBtnRef}
                     onMouseEnter={() => setShowStepsLabel(true)}
                     onMouseLeave={() => setShowStepsLabel(false)}
@@ -625,7 +629,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                           transition: "max-width 0.2s ease, opacity 0.2s ease",
                         }}
                       >
-                        每小时步数
+                        {t("flow.simulation.stepsPerHour")}
                       </Text>
                       <Text
                         fontSize="xs"
@@ -637,7 +641,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                           transition: "max-width 0.2s ease, opacity 0.2s ease",
                         }}
                       >
-                        {simulationSteps}步
+                        {simulationSteps} {t("flow.simulation.unit.steps")}
                       </Text>
                     </HStack>
                   </Button>
@@ -707,7 +711,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   <Button
                     size="xs"
                     {...getToggleButtonStyles(false)}
-                    aria-label="resample"
+                    aria-label={t("flow.actionPlate.resampleAriaLabel")}
                     ref={resampleBtnRef}
                     onMouseEnter={() => setShowResampleLabel(true)}
                     onMouseLeave={() => setShowResampleLabel(false)}
@@ -735,7 +739,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                           transition: "max-width 0.2s ease, opacity 0.2s ease",
                         }}
                       >
-                        重采样间隔
+                        {t("flow.simulation.resampleInterval")}
                       </Text>
                       <Text
                         fontSize="xs"
@@ -749,8 +753,8 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                       >
                         {typeof samplingIntervalHours === "number"
                           ? (1 / samplingIntervalHours).toFixed(1)
-                          : "—"}
-                        h⁻¹
+                          : t("common.notAvailable")}
+                        {t("flow.simulation.unit.perHour")}
                       </Text>
                     </HStack>
                   </Button>
@@ -823,7 +827,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                 <Button
                   size="xs"
                   {...getToggleButtonStyles(false)}
-                  aria-label="hours"
+                  aria-label={t("flow.actionPlate.hoursAriaLabel")}
                   ref={hoursBtnRef}
                   onMouseEnter={() => setShowHoursLabel(true)}
                   onMouseLeave={() => setShowHoursLabel(false)}
@@ -856,7 +860,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         transition: "max-width 0.2s ease, opacity 0.2s ease",
                       }}
                     >
-                      运行时间
+                      {t("flow.simulation.runtime")}
                     </Text>
                     <Text
                       fontSize="xs"
@@ -1030,7 +1034,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
             <Box>
               <HStack gap={2} align="center">
                 <Button
-                  aria-label="menu"
+                  aria-label={t("flow.menu.actionsAriaLabel")}
                   size="xs"
                   {...getToggleButtonStyles(false)}
                   ref={bubbleBtnRef as any}
@@ -1068,7 +1072,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         transition: "max-width 0.2s ease, opacity 0.2s ease",
                       }}
                     >
-                      保存与导入
+                      {t("flow.menu.saveAndImport")}
                     </Text>
                   </HStack>
                 </Button>
@@ -1093,13 +1097,13 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                       const bubbleItems = [
                         {
                           icon: <FiFile />,
-                          label: "新建流程图",
+                          label: t("flow.menu.newFlowchart"),
                           onClick: () => {
                             if (hasUnsaved) {
                               setConfirmDialog({
                                 isOpen: true,
-                                title: "新建流程图",
-                                message: "当前流程图是否要保存？",
+                                title: t("flow.menu.newFlowchart"),
+                                message: t("flow.menu.confirmSaveMessage"),
                                 pendingAction: handleNewFlowChart,
                               })
                             } else {
@@ -1110,7 +1114,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         },
                         {
                           icon: <FiDownload />,
-                          label: "本地导出",
+                          label: t("flow.menu.localExport"),
                           onClick: async () => {
                             await handleExportClick()
                             setIsBubbleOpen(false)
@@ -1118,13 +1122,13 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         },
                         {
                           icon: <FiUpload />,
-                          label: "本地导入",
+                          label: t("flow.menu.localImport"),
                           onClick: () => {
                             if (hasUnsaved) {
                               setConfirmDialog({
                                 isOpen: true,
-                                title: "导入流程图",
-                                message: "当前流程图是否要保存？",
+                                title: t("flow.menu.importFlowchart"),
+                                message: t("flow.menu.confirmSaveMessage"),
                                 pendingAction: handleImportClick,
                               })
                             } else {
@@ -1135,7 +1139,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         },
                         {
                           icon: <FiSave />,
-                          label: "在线保存",
+                          label: t("flow.menu.saveOnline"),
                           onClick: () => {
                             handleOpenSaveDialog()
                             setIsBubbleOpen(false)
@@ -1143,7 +1147,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         },
                         {
                           icon: <FiFolder />,
-                          label: "在线加载",
+                          label: t("flow.menu.loadOnline"),
                           onClick: () => {
                             handleOpenLoadDialog()
                             setIsBubbleOpen(false)
@@ -1151,7 +1155,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         },
                         {
                           icon: <FiDatabase />,
-                          label: "加载计算数据",
+                          label: t("flow.menu.loadCalculationData"),
                           onClick: () => {
                             handleOpenLoadCalcDialog()
                             setIsBubbleOpen(false)
@@ -1209,7 +1213,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                     })()}
                 </Portal>
                 <Button
-                  aria-label="palette"
+                  aria-label={t("flow.themePalette.ariaLabel")}
                   size="xs"
                   {...getToggleButtonStyles(false)}
                   ref={themeBtnRef as any}
@@ -1247,7 +1251,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         transition: "max-width 0.2s ease, opacity 0.2s ease",
                       }}
                     >
-                      主题色板
+                      {t("flow.themePalette.title")}
                     </Text>
                   </HStack>
                 </Button>
@@ -1365,7 +1369,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                                     )
                                   }}
                                 >
-                                  经典主题
+                                  {t("flow.themePalette.classicTheme")}
                                 </Button>
                                 <Button
                                   size="xs"
@@ -1380,21 +1384,21 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                                     )
                                   }}
                                 >
-                                  透明玻璃
+                                  {t("flow.themePalette.classicGlass")}
                                 </Button>
                                 <Button
                                   size="xs"
                                   {...getToggleButtonStyles(activeDefaultGlass)}
                                   onClick={() => themeStore.reset()}
                                 >
-                                  玻璃
+                                  {t("flow.themePalette.glass")}
                                 </Button>
                                 <Button
                                   size="xs"
                                   {...getToggleButtonStyles(false)}
                                   onClick={() => setIsPaletteOpen(false)}
                                 >
-                                  关闭
+                                  {t("common.close")}
                                 </Button>
                               </HStack>
                             </VStack>
@@ -1445,7 +1449,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         transition: "max-width 0.2s ease, opacity 0.2s ease",
                       }}
                     >
-                      分析结果
+                      {t("flow.actionPlate.analysisResult")}
                     </Text>
                   </HStack>
                 </Button>
@@ -1453,7 +1457,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   size="xs"
                   px={2}
                   {...getToggleButtonStyles(showMiniMap)}
-                  aria-label="minimap"
+                  aria-label={t("flow.actionPlate.minimap")}
                   borderRadius="full"
                   h="32px"
                   minW="32px"
@@ -1476,7 +1480,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         transition: "max-width 0.2s ease, opacity 0.2s ease",
                       }}
                     >
-                      小地图
+                      {t("flow.actionPlate.minimap")}
                     </Text>
                   </HStack>
                 </Button>
@@ -1489,7 +1493,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
         <AnalysisDialog
           isOpen={isAnalysisOpen}
           onClose={() => setIsAnalysisOpen(false)}
-          title="计算结果分析"
+          title={t("flow.analysis.dialogTitle")}
           size="cover"
         >
           {hasResultData && modelType === "asm1" && (
@@ -1518,7 +1522,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
             modelType !== "asm1slim" &&
             modelType !== "asm3" && (
               <Text fontSize="sm" color={accentColor} opacity={0.8}>
-                当前模型暂未配置图形化分析视图。
+                {t("flow.analysis.unavailable")}
               </Text>
             )}
         </AnalysisDialog>
@@ -1552,11 +1556,11 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
             jobCreatedAtField: "created_at",
             jobCompletedAtField: "completed_at",
             statusTextMap: {
-              pending: "等待中",
-              running: "计算中",
-              success: "已完成",
-              failed: "失败",
-              cancelled: "已取消",
+              pending: t("flow.jobStatus.pending"),
+              running: t("flow.jobStatus.running"),
+              success: t("flow.jobStatus.success"),
+              failed: t("flow.jobStatus.failed"),
+              cancelled: t("flow.jobStatus.cancelled"),
             },
             statusColorMap: {
               pending: "yellow",

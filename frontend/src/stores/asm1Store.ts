@@ -12,8 +12,11 @@ import type {
   MaterialBalanceTimeSeriesResponse,
   MaterialBalanceValidationResponse,
 } from "../client/types.gen"
+import { t } from "../i18n"
 import { asm1Service } from "../services/asm1Service"
 import type { BaseModelState } from "./baseModelStore"
+
+const MODEL_NAME = "ASM1"
 
 interface ASM1State
   extends BaseModelState<
@@ -64,7 +67,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to create ASM1 calculation job"
+              : t("flow.store.model.createJobFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -90,7 +95,12 @@ export const useASM1Store = create<ASM1State>()(
             error,
           )
           set({
-            error: error instanceof Error ? error.message : "Unknown error",
+            error:
+              error instanceof Error
+                ? error.message
+                : t("flow.store.model.createJobFromFlowchartFailed", {
+                    model: MODEL_NAME,
+                  }),
             isLoading: false,
           })
           throw error
@@ -107,7 +117,7 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 calculation status"
+              : t("flow.store.model.getStatusFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -123,7 +133,7 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 result summary"
+              : t("flow.store.model.getSummaryFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -147,7 +157,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 time series data"
+              : t("flow.store.model.getTimeSeriesFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -163,7 +175,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 final values"
+              : t("flow.store.model.getFinalValuesFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -179,7 +193,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to validate ASM1 input"
+              : t("flow.store.model.validateInputFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -197,7 +213,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 user jobs"
+              : t("flow.store.model.getUserJobsFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -214,7 +232,9 @@ export const useASM1Store = create<ASM1State>()(
           })
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "Failed to delete ASM1 job"
+            error instanceof Error
+              ? error.message
+              : t("flow.store.model.deleteJobFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -230,7 +250,7 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 job input data"
+              : t("flow.store.model.getJobInputFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -323,7 +343,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 flowcharts"
+              : t("flow.store.model.getFlowchartsFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -344,7 +366,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to create ASM1 flowchart"
+              : t("flow.store.model.createFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -360,7 +384,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to get ASM1 flowchart"
+              : t("flow.store.model.getFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -386,7 +412,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to update ASM1 flowchart"
+              : t("flow.store.model.updateFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -407,7 +435,9 @@ export const useASM1Store = create<ASM1State>()(
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Failed to delete ASM1 flowchart"
+              : t("flow.store.model.deleteFlowchartFailed", {
+                  model: MODEL_NAME,
+                })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -489,16 +519,16 @@ export const getJobStatusColor = (status: MaterialBalanceJobStatus): string => {
 export const getJobStatusText = (status: MaterialBalanceJobStatus): string => {
   switch (status) {
     case "pending":
-      return "等待中"
+      return t("flow.jobStatus.pending")
     case "running":
-      return "计算中"
+      return t("flow.jobStatus.running")
     case "success":
-      return "已完成"
+      return t("flow.jobStatus.success")
     case "failed":
-      return "失败"
+      return t("flow.jobStatus.failed")
     case "cancelled":
-      return "已取消"
+      return t("flow.jobStatus.cancelled")
     default:
-      return "未知"
+      return t("common.unknown")
   }
 }

@@ -6,8 +6,11 @@ import AORCalculator from "../../components/calculators/AORCalculator"
 import { DWACalculator } from "../../components/calculators/DWACalculator"
 import { LSICalculator } from "../../components/calculators/LSICalculator"
 import StandardAO from "../../components/calculators/StandardAO"
+import { useI18n } from "@/i18n"
 
 const CalculatorsIndex: React.FC = () => {
+  const { t } = useI18n()
+
   return (
     <Box bg="background.primary" minH="100vh">
       <MiddayHead />
@@ -26,10 +29,10 @@ const CalculatorsIndex: React.FC = () => {
               mx="auto"
               mb={2}
             >
-              专业的水处理计算工具
+              {t("calculators.index.title")}
             </Text>
             <Text fontSize="lg" color="gray.600" maxW="xl" mx="auto" mb={4}>
-              提供专业的水质分析计算工具，帮助您进行精确的水处理参数计算
+              {t("calculators.index.subtitle")}
             </Text>
           </Box>
 

@@ -1,9 +1,11 @@
+import { useI18n } from "@/i18n"
 import { Flex, Image, useBreakpointValue } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
 import UserMenu from "./UserMenu"
 
 function Navbar() {
   const display = useBreakpointValue({ base: "none", md: "flex" })
+  const { t } = useI18n()
 
   return (
     <Flex
@@ -20,7 +22,7 @@ function Navbar() {
       <Link to="/">
         <Image
           src="/assets/images/fastapi-logo.svg"
-          alt="Logo"
+          alt={t("app.logoAlt")}
           maxW="3xs"
           p={2}
         />

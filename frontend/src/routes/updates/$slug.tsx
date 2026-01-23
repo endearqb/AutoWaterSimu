@@ -7,6 +7,7 @@ import { FaArrowLeft } from "react-icons/fa"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import { Prose } from "../../components/ui/prose"
 import { getBlogPosts } from "../../utils/blog"
+import { useI18n } from "@/i18n"
 
 export const Route = createFileRoute("/updates/$slug")({
   component: UpdateDetailPage,
@@ -22,6 +23,16 @@ export const Route = createFileRoute("/updates/$slug")({
 
 function UpdateDetailPage() {
   const { post } = Route.useLoaderData()
+  const { t, language } = useI18n()
+  const locale = language === "zh" ? "zh-CN" : "en-US"
+  const publishedAt = new Date(post.metadata.publishedAt)
+  const formattedPublishedAt = Number.isNaN(publishedAt.getTime())
+    ? "-"
+    : new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(publishedAt)
 
   return (
     <Box
@@ -50,7 +61,7 @@ function UpdateDetailPage() {
             >
               <Link to="/updates">
                 <FaArrowLeft style={{ marginRight: "8px" }} />
-                返回更新列表
+                {t("updates.backToList")}
               </Link>
             </Button>
           </Box>
@@ -100,12 +111,7 @@ function UpdateDetailPage() {
 
             {/* Published Date */}
             <Text fontSize="md" color="gray.500" _dark={{ color: "gray.400" }}>
-              发布于{" "}
-              {new Date(post.metadata.publishedAt).toLocaleDateString("zh-CN", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {t("updates.publishedAt", { date: formattedPublishedAt })}
             </Text>
           </Box>
 
@@ -147,7 +153,7 @@ function UpdateDetailPage() {
             <Button variant="outline" colorScheme="blue" asChild>
               <Link to="/updates">
                 <FaArrowLeft style={{ marginRight: "8px" }} />
-                查看更多更新
+                {t("updates.viewMore")}
               </Link>
             </Button>
           </Box>

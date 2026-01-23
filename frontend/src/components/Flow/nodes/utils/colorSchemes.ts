@@ -1,3 +1,5 @@
+import { t } from "@/utils/i18n"
+
 export const TAB10_COLORS: string[] = [
   "#e69f00",
   "#56b4e9",
@@ -112,7 +114,7 @@ export const HEATMAP_COLOR_SCHEMES = {
       "#b2182b",
       "#67001f",
     ],
-    description: "经典蓝红发散色板，适用于相关性矩阵",
+    description: t("flow.palette.schemeDescriptions.blueRed"),
   },
   coolWarm: {
     name: "Cool-Warm Diverging",
@@ -130,7 +132,7 @@ export const HEATMAP_COLOR_SCHEMES = {
       "#f77737",
       "#f75707",
     ],
-    description: "冷暖色调发散色板，视觉效果柔和",
+    description: t("flow.palette.schemeDescriptions.coolWarm"),
   },
   seabornDiverging: {
     name: "Seaborn Diverging (230, 20)",
@@ -147,7 +149,7 @@ export const HEATMAP_COLOR_SCHEMES = {
       "#ec7063",
       "#e74c3c",
     ],
-    description: "Seaborn diverging_palette(230, 20) 等效色板",
+    description: t("flow.palette.schemeDescriptions.seabornDiverging"),
   },
   greenOrange: {
     name: "Green-Orange Diverging",
@@ -164,7 +166,7 @@ export const HEATMAP_COLOR_SCHEMES = {
       "#d73027",
       "#a50026",
     ],
-    description: "绿橙发散色板，色盲友好设计",
+    description: t("flow.palette.schemeDescriptions.greenOrange"),
   },
 } as const
 
@@ -174,7 +176,7 @@ export const SCIENTIFIC_COLOR_SCHEMES = {
   plasma: {
     name: "Plasma",
     colors: ["#0d0887", "#6a00a8", "#b12a90", "#e16462", "#fca636", "#f0f921"],
-    description: "等感知亮度色板，适用于连续数据",
+    description: t("flow.palette.schemeDescriptions.plasma"),
   },
   viridis: {
     name: "Viridis",
@@ -189,7 +191,7 @@ export const SCIENTIFIC_COLOR_SCHEMES = {
       "#b5de2b",
       "#fde725",
     ],
-    description: "色盲友好的等感知色板",
+    description: t("flow.palette.schemeDescriptions.viridis"),
   },
   cividis: {
     name: "Cividis",
@@ -202,17 +204,17 @@ export const SCIENTIFIC_COLOR_SCHEMES = {
       "#a7d9dd",
       "#d0f0c0",
     ],
-    description: "完全色盲友好的科学色板",
+    description: t("flow.palette.schemeDescriptions.cividis"),
   },
   inferno: {
     name: "Inferno",
     colors: ["#000004", "#420a68", "#932667", "#dd513a", "#fca50a", "#fcffa4"],
-    description: "火焰色板，高对比度",
+    description: t("flow.palette.schemeDescriptions.inferno"),
   },
   magma: {
     name: "Magma",
     colors: ["#000004", "#3b0f70", "#8c2981", "#de4968", "#fe9f6d", "#fcfdbf"],
-    description: "岩浆色板，温暖色调",
+    description: t("flow.palette.schemeDescriptions.magma"),
   },
 } as const
 
@@ -256,7 +258,7 @@ export const ENHANCED_HEATMAP_SCHEMES = {
       "#08519c",
       "#08306b",
     ],
-    description: "单色蓝色渐变，适用于单变量热力图",
+    description: t("flow.palette.schemeDescriptions.singleBlue"),
   },
   singleRed: {
     name: "Single Red",
@@ -271,7 +273,7 @@ export const ENHANCED_HEATMAP_SCHEMES = {
       "#a50f15",
       "#67000d",
     ],
-    description: "单色红色渐变，适用于单变量热力图",
+    description: t("flow.palette.schemeDescriptions.singleRed"),
   },
   singleGreen: {
     name: "Single Green",
@@ -286,7 +288,7 @@ export const ENHANCED_HEATMAP_SCHEMES = {
       "#006d2c",
       "#00441b",
     ],
-    description: "单色绿色渐变，适用于单变量热力图",
+    description: t("flow.palette.schemeDescriptions.singleGreen"),
   },
   colorBlindFriendly: {
     name: "Color Blind Friendly",
@@ -301,7 +303,7 @@ export const ENHANCED_HEATMAP_SCHEMES = {
       "#252525",
       "#000000",
     ],
-    description: "色盲友好的灰度色板，确保所有用户可访问",
+    description: t("flow.palette.schemeDescriptions.colorBlindFriendly"),
   },
 } as const
 

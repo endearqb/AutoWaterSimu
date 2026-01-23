@@ -1,12 +1,16 @@
+﻿import { useI18n } from "../../../i18n"
 import NodePalette from "./NodePalette"
 
-const nodeTypes = [
-  { type: "input", label: "进水节点" },
-  { type: "output", label: "出水节点" },
-  { type: "asm3", label: "ASM3 节点" },
-  { type: "default", label: "默认节点" },
-]
+const ASM3NodesPanel = () => {
+  const { t } = useI18n()
+  const nodeTypes = [
+    { type: "input", label: t("flow.node.input") },
+    { type: "output", label: t("flow.node.output") },
+    { type: "asm3", label: t("flow.node.asm3") },
+    { type: "default", label: t("flow.node.default") },
+  ]
 
-const ASM3NodesPanel = () => <NodePalette nodeTypes={nodeTypes} />
+  return <NodePalette nodeTypes={nodeTypes} />
+}
 
 export default ASM3NodesPanel
