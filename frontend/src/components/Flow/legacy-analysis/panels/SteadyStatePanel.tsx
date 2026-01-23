@@ -40,10 +40,16 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
     return (
       modelConfig?.availableVariables.map((variable) => ({
         name: variable.name,
-        label: `${variable.label} (${variable.name})${variable.unit ? ` [${variable.unit}]` : ""}`,
+        label: (() => {
+          const translated = t(variable.label)
+          const resolved = translated === variable.label ? variable.name : translated
+          const nameSuffix = resolved === variable.name ? "" : ` (${variable.name})`
+          const unitSuffix = variable.unit ? ` [${variable.unit}]` : ""
+          return `${resolved}${nameSuffix}${unitSuffix}`
+        })(),
       })) || []
     )
-  }, [modelType, language])
+  }, [modelType, language, t])
 
   // 稳态检查计算
   const steadyChecksByNode = useMemo(() => {

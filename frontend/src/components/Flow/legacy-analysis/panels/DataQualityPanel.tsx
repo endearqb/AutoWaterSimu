@@ -43,7 +43,9 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
         label: (() => {
           const translated = t(variable.label)
           const resolved = translated === variable.label ? variable.name : translated
-          return `${resolved} (${variable.name})${variable.unit ? ` [${variable.unit}]` : ""}`
+          const nameSuffix = resolved === variable.name ? "" : ` (${variable.name})`
+          const unitSuffix = variable.unit ? ` [${variable.unit}]` : ""
+          return `${resolved}${nameSuffix}${unitSuffix}`
         })(),
       })) || []
     )

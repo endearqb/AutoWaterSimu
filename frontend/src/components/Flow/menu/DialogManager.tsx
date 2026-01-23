@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import type { FlowChartPublic } from "../../../client/types.gen"
+import { useI18n } from "../../../i18n"
 import useFlowStore from "../../../stores/flowStore"
 import LoadDialog from "./LoadDialog"
 import SaveDialog from "./SaveDialog"
@@ -27,6 +28,7 @@ const DialogManager: React.FC<DialogManagerProps> = ({
     deleteFlowChart,
     getFlowCharts,
   } = useFlowStore()
+  const { t } = useI18n()
 
   const [flowChartName, setFlowChartName] = useState("")
   const [flowChartDescription, setFlowChartDescription] = useState("")
@@ -41,10 +43,10 @@ const DialogManager: React.FC<DialogManagerProps> = ({
       } else if (importedFileName) {
         setFlowChartName(importedFileName)
       } else {
-        setFlowChartName("未命名流程图")
+        setFlowChartName(t("flow.menu.untitledFlowchart"))
       }
     }
-  }, [isSaveDialogOpen, currentFlowChartName, importedFileName])
+  }, [isSaveDialogOpen, currentFlowChartName, importedFileName, t])
 
   // 当加载对话框打开时，获取流程图列表
   React.useEffect(() => {

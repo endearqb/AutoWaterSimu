@@ -6,6 +6,7 @@ import {
   Heading,
   IconButton,
   Image,
+  Switch,
   Text,
 } from "@chakra-ui/react"
 import { useQueryClient } from "@tanstack/react-query"
@@ -15,7 +16,7 @@ import { FaBars, FaUserAstronaut } from "react-icons/fa"
 import { FiChevronLeft, FiChevronRight, FiLogOut, FiUser } from "react-icons/fi"
 
 import type { UserPublic } from "@/client"
-import { useI18n } from "@/i18n"
+import { useI18n, useLocale } from "@/i18n"
 import useAuth from "@/hooks/useAuth"
 import {
   DrawerBackdrop,
@@ -33,6 +34,7 @@ const Sidebar = () => {
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
   const { user, logout } = useAuth()
   const { t } = useI18n()
+  const { language, setLanguage } = useLocale()
   const [open, setOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -115,6 +117,30 @@ const Sidebar = () => {
               </Box>
               {/* 移动端用户信息区域 */}
               <Box borderTop="1px" borderColor="gray.200" pt={4}>
+                <HStack justify="space-between" align="center" px={4} pb={4}>
+                  <Text
+                    fontSize="xs"
+                    color={language === "zh" ? "gray.900" : "gray.500"}
+                  >
+                    {t("language.zh")}
+                  </Text>
+                  <Switch.Root
+                    checked={language === "en"}
+                    onCheckedChange={(details) =>
+                      setLanguage(details.checked ? "en" : "zh")
+                    }
+                    colorPalette="gray"
+                  >
+                    <Switch.HiddenInput aria-label={t("language.label")} />
+                    <Switch.Control />
+                  </Switch.Root>
+                  <Text
+                    fontSize="xs"
+                    color={language === "en" ? "gray.900" : "gray.500"}
+                  >
+                    {t("language.en")}
+                  </Text>
+                </HStack>
                 {currentUser && (
                   <Flex direction="column" gap={2}>
                     <Flex alignItems="center" gap={3} px={4} py={2}>
@@ -253,8 +279,44 @@ const Sidebar = () => {
             </Box>
           </Box>
 
-          {/* 用户信息区域 - 底部 */}
           <Box borderTop="1px" borderColor="gray.200" p={2}>
+            <HStack
+              justify={isCollapsed ? "center" : "space-between"}
+              align="center"
+              px={1}
+              py={2}
+            >
+              {!isCollapsed && (
+                <Text
+                  fontSize="xs"
+                  color={language === "zh" ? "gray.900" : "gray.500"}
+                >
+                  {t("language.zh")}
+                </Text>
+              )}
+              <Switch.Root
+                checked={language === "en"}
+                onCheckedChange={(details) =>
+                  setLanguage(details.checked ? "en" : "zh")
+                }
+                colorPalette="gray"
+              >
+                <Switch.HiddenInput aria-label={t("language.label")} />
+                <Switch.Control />
+              </Switch.Root>
+              {!isCollapsed && (
+                <Text
+                  fontSize="xs"
+                  color={language === "en" ? "gray.900" : "gray.500"}
+                >
+                  {t("language.en")}
+                </Text>
+              )}
+            </HStack>
+          </Box>
+
+          {/* 用户信息区域 - 底部 */}
+          <Box p={2}>
             {currentUser && (
               <MenuRoot>
                 <MenuTrigger asChild>
