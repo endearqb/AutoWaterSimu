@@ -72,7 +72,7 @@ services:
       - ./frontend/nginx-backend-not-found.conf:/etc/nginx/extra-conf.d/backend-not-found.conf:ro,Z
 
   adminer:
-    image: adminer:4
+    image: adminer:5
     restart: unless-stopped
     ports:
       - "8080:8080"
