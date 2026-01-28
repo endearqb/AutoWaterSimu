@@ -1,6 +1,7 @@
 import { Box, Button, HStack, Text } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
-import type { NodeProps } from "@xyflow/react"
+import type { Node, NodeProps } from "@xyflow/react"
+import { GROUP_FRAME_STYLE, HEAD_BAR_STYLE } from "./headBarStyles"
 
 export type CaseGroupNodeData = {
   title: string
@@ -10,26 +11,31 @@ export type CaseGroupNodeData = {
   openUrl: string
 }
 
-export function CaseGroupNode({ data, selected }: NodeProps<CaseGroupNodeData>) {
+export function CaseGroupNode({
+  data,
+  selected,
+}: NodeProps<Node<CaseGroupNodeData>>) {
   return (
     <Box
       w="100%"
       h="100%"
-      bg="transparent"
       position="relative"
+      {...GROUP_FRAME_STYLE}
+      borderColor={selected ? "blue.400" : "gray.300"}
+      _dark={{ borderColor: selected ? "blue.300" : "gray.600" }}
     >
       <Box
         position="absolute"
         top={2}
         left={3}
-        bg="white"
-        _dark={{ bg: "gray.900" }}
-        borderRadius="md"
+        {...HEAD_BAR_STYLE}
         px={2}
         py={1}
-        borderWidth="1px"
-        borderColor="gray.200"
-        _dark={{ borderColor: "gray.700" }}
+        borderColor={selected ? "blue.400" : "gray.300"}
+        _dark={{
+          bg: "rgba(17,24,39,0.6)",
+          borderColor: selected ? "blue.300" : "gray.600",
+        }}
       >
         <Text fontSize="xs" fontWeight="semibold" lineHeight="1.2">
           {data.title}

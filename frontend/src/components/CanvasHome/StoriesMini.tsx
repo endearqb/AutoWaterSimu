@@ -22,16 +22,16 @@ export function StoriesMini() {
             borderRadius="md"
             p={3}
           >
-            <Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
+            <Text fontSize="sm" fontWeight="semibold" lineClamp={1}>
               {s.title}
             </Text>
             {s.description ? (
-              <Text fontSize="xs" color="gray.500" noOfLines={2}>
+              <Text fontSize="xs" color="gray.500" lineClamp={2}>
                 {s.description}
               </Text>
             ) : null}
             <HStack mt={2} justify="space-between">
-              <Text fontSize="xs" color="gray.500" noOfLines={1}>
+              <Text fontSize="xs" color="gray.500" lineClamp={1}>
                 {s.name} · {s.company}
               </Text>
             </HStack>

@@ -15,6 +15,9 @@ import { Route as SignupImport } from './routes/signup'
 import { Route as ShowcaseImport } from './routes/showcase'
 import { Route as ResetPasswordImport } from './routes/reset-password'
 import { Route as RecoverPasswordImport } from './routes/recover-password'
+import { Route as PosthogDemoImport } from './routes/posthog-demo'
+import { Route as DocsIndexImport } from './routes/docs/index'
+import { Route as DocsSplatSlugImport } from './routes/docs/$...slug'
 import { Route as OpenflowImport } from './routes/openflow'
 import { Route as MiddayStyleImport } from './routes/midday-style'
 import { Route as LoginImport } from './routes/login'
@@ -59,6 +62,21 @@ const ResetPasswordRoute = ResetPasswordImport.update({
 
 const RecoverPasswordRoute = RecoverPasswordImport.update({
   path: '/recover-password',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const PosthogDemoRoute = PosthogDemoImport.update({
+  path: '/posthog-demo',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DocsIndexRoute = DocsIndexImport.update({
+  path: '/docs',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DocsSplatSlugRoute = DocsSplatSlugImport.update({
+  path: '/docs/$/slug',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -210,6 +228,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OpenflowImport
       parentRoute: typeof rootRoute
     }
+    '/posthog-demo': {
+      preLoaderRoute: typeof PosthogDemoImport
+      parentRoute: typeof rootRoute
+    }
+    '/docs': {
+      preLoaderRoute: typeof DocsIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/docs/$/slug': {
+      preLoaderRoute: typeof DocsSplatSlugImport
+      parentRoute: typeof rootRoute
+    }
     '/recover-password': {
       preLoaderRoute: typeof RecoverPasswordImport
       parentRoute: typeof rootRoute
@@ -324,6 +354,9 @@ export const routeTree = rootRoute.addChildren([
   LoginRoute,
   MiddayStyleRoute,
   OpenflowRoute,
+  PosthogDemoRoute,
+  DocsIndexRoute,
+  DocsSplatSlugRoute,
   RecoverPasswordRoute,
   ResetPasswordRoute,
   ShowcaseRoute,

@@ -1,5 +1,5 @@
 import { Box } from "@chakra-ui/react"
-import type { NodeProps } from "@xyflow/react"
+import type { Node, NodeProps } from "@xyflow/react"
 import { useLayoutEffect, useMemo, useRef, useState } from "react"
 import AORCalculator from "../calculators/AORCalculator"
 import { DWACalculator } from "../calculators/DWACalculator"
@@ -14,7 +14,7 @@ const TARGET_HEIGHT_PX = 500
 const BASE_WIDTH_PX = 740
 const STABLE_EPS_PX = 1
 
-export function CalculatorNode({ data }: NodeProps<CalculatorNodeData>) {
+export function CalculatorNode({ data }: NodeProps<Node<CalculatorNodeData>>) {
   const Calculator = useMemo(() => {
     switch (data.kind) {
       case "lsi":
@@ -24,6 +24,8 @@ export function CalculatorNode({ data }: NodeProps<CalculatorNodeData>) {
       case "aor":
         return AORCalculator
       case "dwa":
+        return DWACalculator
+      default:
         return DWACalculator
     }
   }, [data.kind])

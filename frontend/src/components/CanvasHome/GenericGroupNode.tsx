@@ -1,5 +1,6 @@
 import { Box, Text } from "@chakra-ui/react"
-import type { NodeProps } from "@xyflow/react"
+import type { Node, NodeProps } from "@xyflow/react"
+import { GROUP_FRAME_STYLE, HEAD_BAR_STYLE } from "./headBarStyles"
 
 export type GenericGroupNodeData = {
   title: string
@@ -7,32 +8,31 @@ export type GenericGroupNodeData = {
   variant?: "calculator"
 }
 
-export function GenericGroupNode({ data, selected }: NodeProps<GenericGroupNodeData>) {
-  const isCalculatorGroup = data.variant === "calculator"
+export function GenericGroupNode({
+  data,
+  selected,
+}: NodeProps<Node<GenericGroupNodeData>>) {
   return (
     <Box
       w="100%"
       h="100%"
-      bg="transparent"
       position="relative"
-      borderWidth={isCalculatorGroup ? "2px" : "0px"}
-      borderStyle={isCalculatorGroup ? "solid" : "none"}
+      {...GROUP_FRAME_STYLE}
       borderColor={selected ? "blue.400" : "gray.300"}
       _dark={{ borderColor: selected ? "blue.300" : "gray.600" }}
-      borderRadius={isCalculatorGroup ? "lg" : "0px"}
     >
       <Box
         position="absolute"
         top={2}
         left={3}
-        bg="white"
-        _dark={{ bg: "gray.900" }}
-        borderRadius="md"
+        {...HEAD_BAR_STYLE}
         px={2}
         py={1}
-        borderWidth="1px"
-        borderColor={selected ? "blue.400" : "gray.200"}
-        _dark={{ borderColor: selected ? "blue.300" : "gray.700" }}
+        borderColor={selected ? "blue.400" : "gray.300"}
+        _dark={{
+          bg: "rgba(17,24,39,0.6)",
+          borderColor: selected ? "blue.300" : "gray.600",
+        }}
       >
         <Text fontSize="xs" fontWeight="semibold" lineHeight="1.2">
           {data.title}

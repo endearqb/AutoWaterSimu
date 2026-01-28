@@ -3,6 +3,7 @@
 .idea/
 .trae/
 .vercel/
+.codex/
 my-full-stack.code-workspace
 *.swp
 *.swo

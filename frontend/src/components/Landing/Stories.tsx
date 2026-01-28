@@ -292,3 +292,83 @@ export function Stories() {
     </DialogRoot>
   )
 }
+
+export function StoriesWidget() {
+  const { language } = useI18n()
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null)
+  const stories = getStories(language)
+
+  return (
+    <DialogRoot>
+      <HStack gap={3} flexWrap="wrap" justify="flex-start" className="nodrag">
+        {stories.map((story) => (
+          <DialogTrigger key={story.id} asChild>
+            <Box onClick={() => setSelectedStory(story)}>
+              <StoryCard {...story} onClick={() => setSelectedStory(story)} />
+            </Box>
+          </DialogTrigger>
+        ))}
+      </HStack>
+
+      <DialogContent
+        maxW="700px"
+        p={6}
+        pt={10}
+        maxH="calc(100vh - 200px)"
+        overflowY="auto"
+        backdrop={true}
+      >
+        <DialogHeader>
+          <DialogTitle srOnly>{selectedStory?.title}</DialogTitle>
+        </DialogHeader>
+
+        <DialogBody p={0}>
+          <VStack align="start" gap={6}>
+            <HStack gap={4}>
+              <Avatar.Root size="sm" bg="blue.500">
+                <Avatar.Fallback name={selectedStory?.name || ""} />
+              </Avatar.Root>
+              <VStack align="start" gap={0}>
+                <Text fontWeight="semibold">{selectedStory?.name}</Text>
+                <HStack gap={2} color="gray.500">
+                  <Text fontSize="sm">{selectedStory?.company}</Text>
+                  {selectedStory?.country && (
+                    <>
+                      <Text>•</Text>
+                      <Text fontSize="sm">{selectedStory?.country}</Text>
+                    </>
+                  )}
+                </HStack>
+              </VStack>
+            </HStack>
+
+            {selectedStory?.video && <VideoPlayer src={selectedStory.video} />}
+
+            <VStack align="start" gap={4} w="full">
+              {selectedStory?.content?.map((item, index) =>
+                item.type === "heading" ? (
+                  <Heading
+                    key={index}
+                    fontSize="xl"
+                    fontWeight="medium"
+                    color="gray.800"
+                  >
+                    {item.content}
+                  </Heading>
+                ) : (
+                  <Text
+                    key={index}
+                    color={item.type === "question" ? "gray.500" : "gray.700"}
+                    lineHeight="1.6"
+                  >
+                    {item.content}
+                  </Text>
+                ),
+              )}
+            </VStack>
+          </VStack>
+        </DialogBody>
+      </DialogContent>
+    </DialogRoot>
+  )
+}

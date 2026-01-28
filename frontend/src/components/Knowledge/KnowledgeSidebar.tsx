@@ -9,13 +9,22 @@ type KnowledgeSidebarProps = {
   nodes: KnowledgeTreeNode[]
   activeSlug?: string
   onNavigate?: () => void
+  basePath?: string
 }
 
 const EXCLUDED_ROOT_SEGMENTS = new Set(["guide", "overview", "index"])
 const EXCLUDED_FULL_SLUGS = new Set(["guide/digital-twin", "guide/digital-win"])
 
-const toHref = (slug: string) =>
-  slug === KNOWLEDGE_DEFAULT_SLUG ? "/knowledge" : `/knowledge/${slug}`
+const normalizeBasePath = (basePath?: string) => {
+  if (!basePath?.length) return "/knowledge"
+  if (basePath === "/") return ""
+  return basePath.endsWith("/") ? basePath.slice(0, -1) : basePath
+}
+
+const toHref = (slug: string, basePath?: string) => {
+  const base = normalizeBasePath(basePath)
+  return slug === KNOWLEDGE_DEFAULT_SLUG ? `${base}` : `${base}/${slug}`
+}
 
 const getRootSegment = (slug: string) => slug.split("/")[0] ?? slug
 
@@ -50,9 +59,16 @@ type TreeItemProps = {
   depth: number
   activeSlug?: string
   onNavigate?: () => void
+  basePath?: string
 }
 
-const TreeItem = ({ node, depth, activeSlug, onNavigate }: TreeItemProps) => {
+const TreeItem = ({
+  node,
+  depth,
+  activeSlug,
+  onNavigate,
+  basePath,
+}: TreeItemProps) => {
   const isCurrent = activeSlug === node.slug
   const isActiveBranch =
     !!activeSlug &&
@@ -88,7 +104,7 @@ const TreeItem = ({ node, depth, activeSlug, onNavigate }: TreeItemProps) => {
         pl={paddingLeft}
         asChild
       >
-        <Link to={toHref(node.slug)}>
+        <Link to={toHref(node.slug, basePath)}>
           <Text textAlign="left">{node.title}</Text>
         </Link>
       </Button>
@@ -134,6 +150,7 @@ const TreeItem = ({ node, depth, activeSlug, onNavigate }: TreeItemProps) => {
               depth={depth + 1}
               activeSlug={activeSlug}
               onNavigate={onNavigate}
+              basePath={basePath}
             />
           ))}
         </Box>
@@ -146,6 +163,7 @@ export function KnowledgeSidebar({
   nodes,
   activeSlug,
   onNavigate,
+  basePath,
 }: KnowledgeSidebarProps) {
   const headingColor = useColorModeValue("gray.900", "gray.100")
   const subColor = useColorModeValue("gray.500", "gray.400")
@@ -171,6 +189,7 @@ export function KnowledgeSidebar({
             depth={1}
             activeSlug={activeSlug}
             onNavigate={onNavigate}
+            basePath={basePath}
           />
         ))}
       </Box>

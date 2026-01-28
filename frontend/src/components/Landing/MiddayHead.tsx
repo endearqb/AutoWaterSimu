@@ -63,6 +63,12 @@ export const MiddayHead = () => {
     return () => window.removeEventListener("resize", setPixelRatio)
   }, [])
 
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [])
+
   const handleToggleMenu = () => {
     setIsDrawerOpen((prev) => {
       document.body.style.overflow = prev ? "" : "hidden"
@@ -103,13 +109,14 @@ export const MiddayHead = () => {
     <Box
       as="header"
       position="fixed"
-      top="px"
+      top="0px"
       zIndex="50"
       px={{ base: 2, md: 4 }}
       display="flex"
       justifyContent="center"
       mt={4}
       w="100%"
+      pointerEvents="none"
     >
       {/* 
         Header宽度调整说明：
@@ -136,6 +143,7 @@ export const MiddayHead = () => {
         borderRadius="md"
         maxW="3xl" // 从 container.xl (1280px) 调整为 4xl (896px)
         w={{ base: "95%", md: "90%", lg: "85%" }} // 响应式宽度替代 full
+        pointerEvents="auto"
       >
         {/* Logo */}
         <Box

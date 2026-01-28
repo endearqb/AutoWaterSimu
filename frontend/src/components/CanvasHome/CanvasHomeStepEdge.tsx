@@ -44,10 +44,9 @@ export const CanvasHomeStepEdge = memo(function CanvasHomeStepEdge({
             py={1}
             borderRadius="4px"
             bg="white"
-            _dark={{ bg: "gray.900" }}
             borderWidth="1px"
             borderColor="gray.200"
-            _dark={{ borderColor: "gray.700" }}
+            _dark={{ bg: "gray.900", borderColor: "gray.700" }}
             pointerEvents="none"
           >
             {text}
