@@ -53,3 +53,21 @@
 - `embed` 搜索参数在部分路由中会被解析为 number；使用 `z.coerce.string()` 兼容以避免 TanStack Router 报错页。
 - 为了让示例流程图与 OpenFlow 行为一致，`/openflow` 增加 `src` 参数用于自动加载 JSON，并扩展 Canvas 节点类型以支持 `asm1/asmslim`。
 - updates 与 ai-deep-research 在 embed 模式下隐藏 header，并在页面内跳转时保持 embed 参数。
+
+## 2026-01-29 更新（需求变更）
+- “首页暂时下线 OpenFlow”：仅移除首页桌面图标入口，不影响 `/openflow` 路由本身。
+- 示例流程图弹窗采用更轻量的预览渲染：`/openflow?embed=1&ui=preview&src=...`，仅渲染 Canvas（隐藏节点工具栏/控制按钮），下载按钮由外层弹窗提供。
+- `Flow Components` 弹窗从“路由式导航 + iframe”升级为“弹窗内直接渲染 Canvas + 面板切换”，且点击按钮只渲染对应面板（节点工具栏/参数设置/独立模拟/数据分析）。
+- `home` 弹窗（`/midday-style?embed=1`）增加外链白名单：GitHub / 微信 / 备案号可直接打开，其它链接仍跳转到登录/注册。
+
+## 2026-01-29 更新（DeepResearch 弹窗）
+- AI DeepResearch（embed 弹窗内）不再统一拦截点击跳转登录：文章列表卡片直接在弹窗内打开原有 HTML 页面（`/assets/html/{id}.html`）。
+- 桌面图标命名调整：`Docs` -> `Knowledge (DeepResearch)`；`AI DeepResearch` -> `AI DeepResearch (Web)`。
+
+## 2026-01-29 更新（Header / 气泡说明 / Simulation & Dashboard）
+- header：语言切换按钮与 `Get started — free` 按钮缩小内边距 + 增加阴影，并进一步降低 header 高度。
+- 示例流程图：JSON 下载按钮配色与 `Get started — free` 保持一致（更醒目）。
+- Flow Components：OpenFlow 弹窗支持“点击节点/连线/节点工具栏项”弹出使用说明气泡（国际化）。
+- 桌面图标新增：
+  - Simulation Panel：弹窗展示 `SimulationActionPlate`（点击面板空白处弹出说明气泡）。
+  - `33_dashboard.png`：弹窗展示 `ASM1SlimAnalyzer` 结果看板（示例数据）。

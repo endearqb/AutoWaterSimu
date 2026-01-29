@@ -32,15 +32,6 @@ const aiDeepResearchSearchSchema = z.object({
   embed: z.coerce.string().optional(),
 })
 
-function redirectToAuth() {
-  const target = "/login"
-  try {
-    window.top?.location.assign(target)
-  } catch {
-    window.location.assign(target)
-  }
-}
-
 const AIDeepResearchIndex: React.FC = () => {
   const { embed } = Route.useSearch()
   const isEmbedded = embed === "1" || embed === "true"
@@ -111,9 +102,22 @@ const AIDeepResearchIndex: React.FC = () => {
       borderRadius="xl"
       overflow="hidden"
       transition="all 0.3s"
+      cursor="pointer"
       _hover={{
         transform: "translateY(-4px)",
         shadow: "lg",
+      }}
+      role="button"
+      tabIndex={0}
+      onClick={() => {
+        const url = `/assets/html/${article.id}.html`
+        window.location.assign(url)
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return
+        e.preventDefault()
+        const url = `/assets/html/${article.id}.html`
+        window.location.assign(url)
       }}
     >
       <Card.Body p={6}>
@@ -156,14 +160,18 @@ const AIDeepResearchIndex: React.FC = () => {
             ))}
           </Flex>
 
-          <Button asChild colorScheme="blue" size="sm" alignSelf="start" mt={2}>
-            <a
-              href={`/assets/html/${article.id}.html`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t("deepResearch.article.readFull")}
-            </a>
+          <Button
+            colorScheme="blue"
+            size="sm"
+            alignSelf="start"
+            mt={2}
+            onClick={(e) => {
+              e.stopPropagation()
+              const url = `/assets/html/${article.id}.html`
+              window.location.assign(url)
+            }}
+          >
+            {t("deepResearch.article.readFull")}
           </Button>
         </VStack>
       </Card.Body>
@@ -172,19 +180,7 @@ const AIDeepResearchIndex: React.FC = () => {
 
   if (loading) {
     return (
-      <Box
-        bg={bgColor}
-        minH="100vh"
-        onClickCapture={(e) => {
-          if (!isEmbedded) return
-          const target = e.target as HTMLElement | null
-          const clickable = target?.closest?.('a,button,[role="button"]')
-          if (!clickable) return
-          e.preventDefault()
-          e.stopPropagation()
-          redirectToAuth()
-        }}
-      >
+      <Box bg={bgColor} minH="100vh">
         {isEmbedded ? null : <MiddayHead />}
         <Container maxW="7xl" py={8}>
           <VStack gap={8}>
@@ -197,19 +193,7 @@ const AIDeepResearchIndex: React.FC = () => {
 
   if (error) {
     return (
-      <Box
-        bg={bgColor}
-        minH="100vh"
-        onClickCapture={(e) => {
-          if (!isEmbedded) return
-          const target = e.target as HTMLElement | null
-          const clickable = target?.closest?.('a,button,[role="button"]')
-          if (!clickable) return
-          e.preventDefault()
-          e.stopPropagation()
-          redirectToAuth()
-        }}
-      >
+      <Box bg={bgColor} minH="100vh">
         {isEmbedded ? null : <MiddayHead />}
         <Container maxW="7xl" py={8}>
           <VStack gap={8}>
@@ -226,15 +210,6 @@ const AIDeepResearchIndex: React.FC = () => {
     <Box
       bg={bgColor}
       minH="100vh"
-      onClickCapture={(e) => {
-        if (!isEmbedded) return
-        const target = e.target as HTMLElement | null
-        const clickable = target?.closest?.('a,button,[role="button"]')
-        if (!clickable) return
-        e.preventDefault()
-        e.stopPropagation()
-        redirectToAuth()
-      }}
     >
       {isEmbedded ? null : <MiddayHead />}
       <Container maxW="7xl" py={8}>

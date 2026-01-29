@@ -26,15 +26,6 @@ const aiDeepResearchArticleSearchSchema = z.object({
   embed: z.coerce.string().optional(),
 })
 
-function redirectToAuth() {
-  const target = "/login"
-  try {
-    window.top?.location.assign(target)
-  } catch {
-    window.location.assign(target)
-  }
-}
-
 const ArticleDetail: React.FC = () => {
   const { articleId } = Route.useParams()
   const { embed } = Route.useSearch()
@@ -68,15 +59,6 @@ const ArticleDetail: React.FC = () => {
       <Box
         bg={bgColor}
         minH="100vh"
-        onClickCapture={(e) => {
-          if (!isEmbedded) return
-          const target = e.target as HTMLElement | null
-          const clickable = target?.closest?.('a,button,[role="button"]')
-          if (!clickable) return
-          e.preventDefault()
-          e.stopPropagation()
-          redirectToAuth()
-        }}
       >
         {isEmbedded ? null : <Header />}
         <Container maxW="7xl" py={8}>
@@ -132,15 +114,6 @@ const ArticleDetail: React.FC = () => {
     <Box
       bg={bgColor}
       minH="100vh"
-      onClickCapture={(e) => {
-        if (!isEmbedded) return
-        const target = e.target as HTMLElement | null
-        const clickable = target?.closest?.('a,button,[role="button"]')
-        if (!clickable) return
-        e.preventDefault()
-        e.stopPropagation()
-        redirectToAuth()
-      }}
     >
       {isEmbedded ? null : <Header />}
       <Container maxW="7xl" py={8}>

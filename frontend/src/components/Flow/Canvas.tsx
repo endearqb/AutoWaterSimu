@@ -40,7 +40,11 @@ const nodeTypes: NodeTypes = {
   asm1slim: ASMslimNode as any,
 }
 
-const Canvas = () => {
+type CanvasProps = {
+  showControls?: boolean
+}
+
+const Canvas = ({ showControls = true }: CanvasProps) => {
   const { t } = useI18n()
   const { screenToFlowPosition } = useReactFlow()
   const {
@@ -266,7 +270,7 @@ const Canvas = () => {
           size={1}
           color="hsl(215.4 16.3% 56.9%)"
         />
-        <Controls position="bottom-left" />
+        {showControls ? <Controls position="bottom-left" /> : null}
         {showMiniMap && (
           <MiniMap
             // 根据节点类型设置不同颜色

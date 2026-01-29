@@ -27,7 +27,7 @@ import StandardAO from "@/components/calculators/StandardAO"
 import { POSTHOG_DEMO_CASES } from "@/features/posthogDemo/cases"
 import { useI18n, useLocale } from "@/i18n"
 
-import { FlowComponentsDocs } from "./FlowComponentsDocs"
+import { Asm1SlimDashboardDemo } from "./Asm1SlimDashboardDemo"
 import {
   type CalculatorId,
   type CaseId,
@@ -41,7 +41,7 @@ type WindowView =
   | { kind: "url"; title: string; url: string }
   | { kind: "calculator"; id: CalculatorId }
   | { kind: "case"; id: CaseId }
-  | { kind: "flowDocs" }
+  | { kind: "asm1SlimDashboard" }
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
@@ -55,7 +55,7 @@ function DesktopIcon(props: {
   const content = (
     <VStack
       gap={2}
-      w="92px"
+      w={{ base: "80px", md: "92px" }}
       px={2}
       py={2}
       borderRadius="md"
@@ -79,8 +79,8 @@ function DesktopIcon(props: {
       }
     >
       <Box
-        w="44px"
-        h="44px"
+        w={{ base: "40px", md: "44px" }}
+        h={{ base: "40px", md: "44px" }}
         borderRadius="lg"
         overflow="hidden"
         bg="rgba(255,255,255,0.65)"
@@ -139,6 +139,7 @@ function DesktopWindow(props: {
   title: string
   children: ReactNode
   onClose: () => void
+  maximizedTopInset?: number
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -173,7 +174,7 @@ function DesktopWindow(props: {
       ref={frameRef}
       position="fixed"
       left={isMaximized ? "24px" : "0"}
-      top={isMaximized ? "24px" : "0"}
+      top={isMaximized ? `${props.maximizedTopInset ?? 24}px` : "0"}
       transform={
         isMaximized ? "none" : `translate3d(${x}px, ${y}px, 0)`
       }
@@ -185,10 +186,14 @@ function DesktopWindow(props: {
       maxW={isMaximized ? "calc(100vw - 48px)" : "calc(100vw - 24px)"}
       h={
         isMaximized
-          ? "calc(100vh - 48px)"
+          ? `calc(100vh - ${(props.maximizedTopInset ?? 24) + 24}px)`
           : { base: "calc(100vh - 96px)", md: "740px" }
       }
-      maxH={isMaximized ? "calc(100vh - 48px)" : "calc(100vh - 96px)"}
+      maxH={
+        isMaximized
+          ? `calc(100vh - ${(props.maximizedTopInset ?? 24) + 24}px)`
+          : "calc(100vh - 96px)"
+      }
       borderWidth="1px"
       borderColor="rgba(0,0,0,0.22)"
       borderRadius="md"
@@ -265,7 +270,7 @@ function DesktopWindow(props: {
           </Button>
         </HStack>
       </Flex>
-      <Box h="calc(100% - 38px)" overflow="hidden" bg="white">
+      <Box h="calc(100% - 38px)" overflowY="auto" overflowX="hidden" bg="white">
         {props.children}
       </Box>
     </Box>
@@ -408,6 +413,7 @@ export function PosthogLanding() {
   const { language, setLanguage } = useLocale()
   const [windowOpen, setWindowOpen] = useState(true)
   const [view, setView] = useState<WindowView>({ kind: "home" })
+  const HEADER_H = 40
 
   const caseById = useMemo(() => {
     return new Map(POSTHOG_DEMO_CASES.map((c) => [c.id, c] as const))
@@ -419,7 +425,8 @@ export function PosthogLanding() {
     if (view.kind === "url") return view.title
     if (view.kind === "calculator")
       return t("posthogDemo.window.calculatorTitle", { id: view.id })
-    if (view.kind === "flowDocs") return t("posthogDemo.window.flowComponentsTitle")
+    if (view.kind === "asm1SlimDashboard")
+      return t("posthogDemo.window.dashboardTitle")
     if (view.kind === "case") {
       const spec = caseById.get(view.id)
       return spec ? t(spec.titleKey) : view.id
@@ -469,8 +476,8 @@ export function PosthogLanding() {
     setWindowOpen(true)
   }
 
-  const openFlowDocs = () => {
-    setView({ kind: "flowDocs" })
+  const openDashboard = () => {
+    setView({ kind: "asm1SlimDashboard" })
     setWindowOpen(true)
   }
 
@@ -499,8 +506,8 @@ export function PosthogLanding() {
       )
     }
 
-    if (view.kind === "flowDocs") {
-      return <FlowComponentsDocs />
+    if (view.kind === "asm1SlimDashboard") {
+      return <Asm1SlimDashboardDemo />
     }
 
     if (view.kind === "case") {
@@ -516,41 +523,28 @@ export function PosthogLanding() {
       }
 
       return (
-        <Box w="full" h="full" overflow="hidden" bg="white">
-          <VStack align="stretch" gap={0} h="full">
-            <Flex
-              align="center"
-              gap={3}
-              px={4}
-              py={3}
-              borderBottomWidth="1px"
-              borderBottomColor="rgba(0,0,0,0.12)"
-              bg="rgba(248,247,244,0.92)"
+        <Box w="full" h="full" overflow="hidden" bg="white" position="relative">
+          <Box position="absolute" top={4} right={4} zIndex={2}>
+            <Button
+              asChild
+              size="sm"
+              bg="#e0a73b"
+              color="black"
+              borderWidth="2px"
+              borderColor="rgba(0,0,0,0.25)"
+              _hover={{ bg: "#d99b22" }}
+              boxShadow="sm"
             >
-              <Box>
-                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                  {t(spec.titleKey)}
-                </Text>
-                <Text fontSize="xs" color="gray.600">
-                  {spec.subtitle}
-                </Text>
-              </Box>
-              <Box flex="1" />
-              <Button asChild size="sm" variant="outline">
-                <a href={spec.jsonUrl} download={spec.downloadFilename}>
-                  {t("posthogDemo.case.downloadJson")}
-                </a>
-              </Button>
-            </Flex>
-
-            <Box flex="1" overflow="hidden">
-              <iframe
-                title={t(spec.titleKey)}
-                src={`/openflow?embed=1&src=${encodeURIComponent(spec.jsonUrl)}`}
-                style={{ width: "100%", height: "100%", border: "none" }}
-              />
-            </Box>
-          </VStack>
+              <a href={spec.jsonUrl} download={spec.downloadFilename}>
+                {t("posthogDemo.case.downloadJson")}
+              </a>
+            </Button>
+          </Box>
+          <iframe
+            title={t(spec.titleKey)}
+            src={`/openflow?embed=1&ui=preview&src=${encodeURIComponent(spec.jsonUrl)}`}
+            style={{ width: "100%", height: "100%", border: "none" }}
+          />
         </Box>
       )
     }
@@ -659,8 +653,8 @@ export function PosthogLanding() {
 
   return (
     <Box
-      minH="100vh"
-      bg="#ece3cb"
+      h="100vh"
+      bg="#FAF9F5"
       position="relative"
       overflow="hidden"
       css={{
@@ -674,14 +668,17 @@ export function PosthogLanding() {
         align="center"
         justify="space-between"
         px={{ base: 4, md: 6 }}
-        h="56px"
-        position="sticky"
+        h={`${HEADER_H}px`}
+        position="fixed"
         top="0"
-        zIndex={10}
+        left="0"
+        w="full"
+        zIndex={50}
         bg="rgba(236,227,203,0.92)"
         backdropFilter="blur(10px)"
         borderBottomWidth="1px"
         borderBottomColor="rgba(0,0,0,0.08)"
+        boxShadow="0 6px 18px rgba(0,0,0,0.08)"
       >
         <HStack gap={4} flexWrap="wrap">
           <HStack gap={2} asChild>
@@ -689,10 +686,10 @@ export function PosthogLanding() {
               <Image
                 src="/assets/images/E-logos-1.png"
                 alt={t("app.logoAlt")}
-                boxSize={6}
+                boxSize={5}
               />
               <Heading
-                size="md"
+                size="sm"
                 fontWeight="medium"
                 bgGradient="to-r"
                 gradientFrom="hsl(192,85%,52%)"
@@ -709,28 +706,37 @@ export function PosthogLanding() {
         <HStack gap={2}>
           <HStack gap={2} display={{ base: "none", md: "flex" }}>
             <Button
-              size="sm"
+              size="xs"
               variant={language === "zh" ? "solid" : "outline"}
               onClick={() => setLanguage("zh")}
+              h="28px"
+              px={3}
+              boxShadow="sm"
             >
               {t("language.zh")}
             </Button>
             <Button
-              size="sm"
+              size="xs"
               variant={language === "en" ? "solid" : "outline"}
               onClick={() => setLanguage("en")}
+              h="28px"
+              px={3}
+              boxShadow="sm"
             >
               {t("language.en")}
             </Button>
           </HStack>
           <Button
             asChild
-            size="sm"
+            size="xs"
             bg="#e0a73b"
             color="black"
             borderWidth="2px"
             borderColor="rgba(0,0,0,0.25)"
             _hover={{ bg: "#d99b22" }}
+            h="28px"
+            px={3}
+            boxShadow="sm"
           >
             <Link to="/login">{t("posthogDemo.header.getStartedFree")}</Link>
           </Button>
@@ -738,11 +744,18 @@ export function PosthogLanding() {
       </Flex>
 
       <Box
+        mt={`${HEADER_H}px`}
+        h={`calc(100vh - ${HEADER_H}px)`}
+        overflowY="auto"
+        overflowX="hidden"
+        position="relative"
+      >
+      <Box
         position="absolute"
         right={{ base: 6, md: 10 }}
         bottom={{ base: 8, md: 10 }}
         zIndex={1}
-        display={{ base: "none", md: "block" }}
+        display={{ base: "none", lg: "block" }}
         maxW="520px"
         w="420px"
         pointerEvents="auto"
@@ -775,7 +788,7 @@ export function PosthogLanding() {
         transform="translate(-50%, -50%)"
         zIndex={0}
         pointerEvents="none"
-        display={{ base: "none", md: "block" }}
+        display={{ base: "none", lg: "block" }}
         w="720px"
         maxW="70vw"
         opacity={0.55}
@@ -790,57 +803,16 @@ export function PosthogLanding() {
         />
       </Box>
 
-      <Box
-        position="absolute"
-        left={{ base: 2, md: 6 }}
-        top={{ base: "calc(56px + 48px)", md: "calc(56px + 48px)" }}
-        zIndex={2}
-        display={{ base: "none", md: "block" }}
-      >
+      <Box px={{ base: 4, md: 6 }} py={6}>
+        {/* Mobile: show all icons in a single grid */}
         <Box
-          display="grid"
-          gridTemplateColumns="repeat(2, 92px)"
+          display={{ base: "grid", md: "none" }}
+          gridTemplateColumns={{ base: "repeat(3, 80px)", sm: "repeat(4, 80px)" }}
           gap={3}
+          justifyContent="start"
           alignItems="start"
         >
-          {desktopIconsLeft.map((i) => (
-            <DesktopIcon
-              key={i.id}
-              label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
-              iconSrc={i.iconSrc}
-              disabled={i.disabled}
-              onOpenWindow={
-                i.window
-                  ? () => {
-                    const windowTarget = i.window
-                    if (!windowTarget) return
-
-                    if (windowTarget.kind === "home") openHome()
-                    else if (windowTarget.kind === "calculator")
-                      openCalculator(windowTarget.id)
-                    else if (windowTarget.kind === "url")
-                      openUrl(windowTarget.url, windowTarget.title)
-                    else if (windowTarget.kind === "case")
-                      openCase(windowTarget.id)
-                    else if (windowTarget.kind === "flowDocs") openFlowDocs()
-                    else openPosthog()
-                  }
-                : undefined
-              }
-            />
-          ))}
-        </Box>
-      </Box>
-
-      <Box
-        position="absolute"
-        right={{ base: 2, md: 6 }}
-        top={{ base: "calc(56px + 48px)", md: "calc(56px + 48px)" }}
-        zIndex={2}
-        display={{ base: "none", md: "block" }}
-      >
-        <VStack align="end" gap={1}>
-          {desktopIconsRight.map((i) => (
+          {[...desktopIconsLeft, ...desktopIconsRight].map((i) => (
             <DesktopIcon
               key={i.id}
               label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
@@ -859,24 +831,100 @@ export function PosthogLanding() {
                         openUrl(windowTarget.url, windowTarget.title)
                       else if (windowTarget.kind === "case")
                         openCase(windowTarget.id)
-                      else if (windowTarget.kind === "flowDocs") openFlowDocs()
+                      else if (windowTarget.kind === "asm1SlimDashboard")
+                        openDashboard()
                       else openPosthog()
                     }
                   : undefined
               }
             />
           ))}
-        </VStack>
+        </Box>
+
+        {/* Desktop: split left/right columns */}
+        <Flex
+          display={{ base: "none", md: "flex" }}
+          justify="space-between"
+          align="flex-start"
+          gap={10}
+        >
+          <Box
+            display="grid"
+            gridTemplateColumns="repeat(2, 92px)"
+            gap={3}
+            alignItems="start"
+          >
+            {desktopIconsLeft.map((i) => (
+              <DesktopIcon
+                key={i.id}
+                label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
+                iconSrc={i.iconSrc}
+                disabled={i.disabled}
+                onOpenWindow={
+                  i.window
+                    ? () => {
+                        const windowTarget = i.window
+                        if (!windowTarget) return
+
+                        if (windowTarget.kind === "home") openHome()
+                        else if (windowTarget.kind === "calculator")
+                          openCalculator(windowTarget.id)
+                        else if (windowTarget.kind === "url")
+                          openUrl(windowTarget.url, windowTarget.title)
+                        else if (windowTarget.kind === "case")
+                          openCase(windowTarget.id)
+                        else if (windowTarget.kind === "asm1SlimDashboard")
+                          openDashboard()
+                        else openPosthog()
+                      }
+                    : undefined
+                }
+              />
+            ))}
+          </Box>
+
+          <VStack align="end" gap={1}>
+            {desktopIconsRight.map((i) => (
+              <DesktopIcon
+                key={i.id}
+                label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
+                iconSrc={i.iconSrc}
+                disabled={i.disabled}
+                onOpenWindow={
+                  i.window
+                    ? () => {
+                        const windowTarget = i.window
+                        if (!windowTarget) return
+
+                        if (windowTarget.kind === "home") openHome()
+                        else if (windowTarget.kind === "calculator")
+                          openCalculator(windowTarget.id)
+                        else if (windowTarget.kind === "url")
+                          openUrl(windowTarget.url, windowTarget.title)
+                        else if (windowTarget.kind === "case")
+                          openCase(windowTarget.id)
+                        else if (windowTarget.kind === "asm1SlimDashboard")
+                          openDashboard()
+                        else openPosthog()
+                      }
+                    : undefined
+                }
+              />
+            ))}
+          </VStack>
+        </Flex>
       </Box>
 
       {windowOpen ? (
         <DesktopWindow
           title={windowTitle}
+          maximizedTopInset={HEADER_H + 8}
           onClose={() => setWindowOpen(false)}
         >
           {windowBody}
         </DesktopWindow>
       ) : null}
+      </Box>
     </Box>
   )
 }

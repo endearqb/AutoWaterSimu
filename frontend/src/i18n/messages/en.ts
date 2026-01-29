@@ -18,6 +18,8 @@ export const enMessages: I18nMessages = {
       homeTitle: "Home (original landing)",
       calculatorTitle: "Calculator: {id}",
       flowComponentsTitle: "Flow Components",
+      simulationPanelTitle: "Simulation Panel",
+      dashboardTitle: "Dashboard",
       unknownCase: "Unknown case: {id}",
     },
     case: {
@@ -25,7 +27,7 @@ export const enMessages: I18nMessages = {
     },
     desktop: {
       home: "home",
-      docs: "Docs",
+      docs: "Knowledge (DeepResearch)",
       lsiCalc: "LSI Calc",
       aoDesign: "AO Design",
       aorCalc: "AOR Calc",
@@ -36,11 +38,13 @@ export const enMessages: I18nMessages = {
       asm1slim: "asm1slim",
       zld: "ZLD",
       multiFlow: "multi-flow",
-      aiDeepResearch: "AI DeepResearch",
+      aiDeepResearch: "DeepResearch (Web)",
       signUp: "Sign up",
       whyEnvdama: "Why ENVDAMA?",
       changelog: "Changelog",
       trash: "Trash",
+      simulationPanel: "Simulation Panel",
+      dashboard: "Dashboard",
     },
     cases: {
       asm1: "ASM1 Case",
@@ -55,6 +59,48 @@ export const enMessages: I18nMessages = {
       overview: "Overview",
       canvas: "Canvas",
       nodes: "Nodes",
+      intro:
+        "Canvas is rendered in this popup. Click a button to render only the selected panel.",
+      panels: {
+        nodeToolbar: "Node toolbar",
+        inspector: "Parameter inspector",
+        simulation: "Simulation panel",
+        analysis: "Data analysis panel",
+      },
+      sampleDataDownload: "Download sample JSON",
+      sampleDataHint: "Sample: {name}",
+      bubbles: {
+        inputTitle: "Input node",
+        inputBody: "Use input nodes to define inflow and initial parameters.",
+        outputTitle: "Output node",
+        outputBody: "Use output nodes to represent effluent/outlet points.",
+        defaultTitle: "Process node",
+        defaultBody: "Use process nodes for units/tanks; edit parameters in the inspector.",
+        canvasNodeTitle: "Node clicked",
+        canvasNodeBody:
+          "Tip: click a node/edge, then switch to “Parameter inspector” to edit.",
+        canvasEdgeTitle: "Edge clicked",
+        canvasEdgeBody:
+          "Tip: edge flow/parameters can be edited after selecting the edge.",
+      },
+      panel: {
+        nodeToolbar: {
+          title: "Node toolbar",
+          body: "Drag a node type onto the canvas to create nodes.",
+        },
+        inspector: {
+          title: "Parameter inspector",
+          body: "Click a node/edge on the canvas to edit parameters here.",
+        },
+        simulation: {
+          title: "Simulation panel",
+          body: "Configure run settings and start a simulation (may require login/backend).",
+        },
+        analysis: {
+          title: "Data analysis panel",
+          body: "Browse result tables rendered from example output data.",
+        },
+      },
       overviewDescription:
         "Flow components include the React Flow renderer and node components. This window provides route-style navigation to browse components and usage notes.",
       canvasDescription:
@@ -67,6 +113,11 @@ export const enMessages: I18nMessages = {
       tipTitle: "Tip",
       tipBody:
         "In Posthog-demo popups, prefer a preview-only mode (no model simulation).",
+    },
+    simulationPlate: {
+      bubbleTitle: "Simulation panel",
+      bubbleBody:
+        "This panel is SimulationActionPlate. Click buttons to run simulations, export/import, and open analysis (may require backend/login).",
     },
   },
   nav: {

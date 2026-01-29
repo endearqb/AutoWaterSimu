@@ -159,6 +159,8 @@ export interface I18nMessages {
       homeTitle: string
       calculatorTitle: string
       flowComponentsTitle: string
+      simulationPanelTitle: string
+      dashboardTitle: string
       unknownCase: string
     }
     case: {
@@ -182,6 +184,8 @@ export interface I18nMessages {
       whyEnvdama: string
       changelog: string
       trash: string
+      simulationPanel: string
+      dashboard: string
     }
     cases: {
       asm1: string
@@ -196,6 +200,45 @@ export interface I18nMessages {
       overview: string
       canvas: string
       nodes: string
+      intro: string
+      panels: {
+        nodeToolbar: string
+        inspector: string
+        simulation: string
+        analysis: string
+      }
+      sampleDataDownload: string
+      sampleDataHint: string
+      bubbles: {
+        inputTitle: string
+        inputBody: string
+        outputTitle: string
+        outputBody: string
+        defaultTitle: string
+        defaultBody: string
+        canvasNodeTitle: string
+        canvasNodeBody: string
+        canvasEdgeTitle: string
+        canvasEdgeBody: string
+      }
+      panel: {
+        nodeToolbar: {
+          title: string
+          body: string
+        }
+        inspector: {
+          title: string
+          body: string
+        }
+        simulation: {
+          title: string
+          body: string
+        }
+        analysis: {
+          title: string
+          body: string
+        }
+      }
       overviewDescription: string
       canvasDescription: string
       nodesDescription: string
@@ -204,6 +247,10 @@ export interface I18nMessages {
       pathsNodes: string
       tipTitle: string
       tipBody: string
+    }
+    simulationPlate: {
+      bubbleTitle: string
+      bubbleBody: string
     }
   }
   time: {

@@ -10,6 +10,18 @@
 - posthog-demo 增加 `Flow Components` 图标（弹窗内提供路由式导航 + 组件演示 + 使用说明）。
 - 去掉关闭弹窗后的 “Window is closed / Reopen window” UI；去掉 `Demo.mov` 图标；`home.mdx` 改为 `home` 且 iframe 使用 `?embed=1` 隐藏 header。
 - 弹窗最大化定位调整为距离浏览器窗口顶端 24px。
+- 2026-01-29 需求变更（本次交付）：
+  - 首页暂时下线 OpenFlow：移除桌面图标入口。
+  - 4 个示例流程图弹窗：仅保留下载按钮，移除内层标题栏/JSON 名；OpenFlow 增加 `ui=preview` 预览模式以隐藏节点工具栏/控制按钮。
+  - 首页样式：桌面背景改为 `#FAF9F5`；header 高度减小并增加阴影（保持 header 颜色不变）。
+  - home 弹窗（`/midday-style?embed=1`）：恢复 GitHub / 微信 / 备案号外链可直达，其余仍跳转登录/注册。
+  - Flow Components 弹窗：Canvas 在弹窗内渲染，按钮切换仅渲染一个面板（节点工具栏/参数设置/独立模拟/数据分析），并提供示例数据下载（含 i18n）。
+  - DeepResearch 弹窗：取消 embed 模式下的点击拦截跳转登录；文章卡片点击直接在弹窗内打开原有 HTML 页面（`/assets/html/*.html`）。
+  - 桌面文案：`Docs` -> `Knowledge (DeepResearch)`；`AI DeepResearch` -> `AI DeepResearch (Web)`。
+  - header：语言切换与 `Get started — free` 按钮缩小内边距 + 增加阴影，并进一步降低 header 高度。
+  - 示例流程图：JSON 下载按钮配色与 `Get started — free` 保持一致。
+  - Flow Components：OpenFlow 弹窗中点击节点工具栏项/画布节点/连线弹出使用说明气泡（国际化）。
+  - 桌面图标：新增 Simulation Panel（`SimulationActionPlate`）与 `33_dashboard.png`（`ASM1SlimAnalyzer` 结果展示）。
 
 ## 阶段划分 (Phases)
 

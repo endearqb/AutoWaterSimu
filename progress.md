@@ -101,3 +101,28 @@
   - `Flow Components` 弹窗与桌面图标标签补全 i18n（新增 `posthogDemo.*` keys），并修复 `CaseFlowPreview` 对已删除的 `buildGraph` 引用。
   - 图标图片改为更“铺满”显示；右下角 `handwriting.jpeg` 改为 15/9 倾斜卡片效果。
 - 测试：`cd frontend; npx tsc --noEmit`（通过，2026-01-29）
+
+### posthog-demo：下线 OpenFlow / Header 调整 / Flow 面板弹窗 / 内嵌链接白名单
+- **状态** complete
+- 已采取的操作：
+  - 首页暂时下线 OpenFlow：移除桌面图标入口。
+  - 首页样式：桌面背景改为 `#FAF9F5`；header 高度减小并增加阴影（保持原有 header 颜色）。
+  - 4 个示例流程图弹窗：移除内层标题栏/JSON 名，仅保留下载按钮；OpenFlow 增加 `ui=preview` 预览模式（隐藏节点工具栏/控制按钮）。
+  - home 弹窗（`/midday-style?embed=1`）：恢复 GitHub / 微信 / 备案号外链可直达，其余链接仍跳转到登录/注册。
+  - Flow Components 弹窗：Canvas 在弹窗内渲染，按钮切换仅渲染「节点工具栏 / 参数设置 / 独立模拟 / 数据分析」其中一个面板；提供示例数据下载，并补全 i18n 文案。
+
+### posthog-demo：DeepResearch 弹窗与桌面文案
+- **状态** complete
+- 已采取的操作：
+  - 桌面图标：`Docs` 重命名为 `Knowledge (DeepResearch)`；`AI DeepResearch` 重命名为 `AI DeepResearch (Web)`。
+  - AI DeepResearch（embed 弹窗内）：取消点击拦截跳转登录；文章卡片点击直接在弹窗内打开原有 HTML 页面（`/assets/html/*.html`）。
+- 测试：`cd frontend; npx tsc --noEmit`（通过，2026-01-29）
+
+### posthog-demo：Header 按钮/高度 / 气泡说明 / Simulation & Dashboard 图标
+- **状态** complete
+- 已采取的操作：
+  - header：缩小语言切换与 `Get started — free` 按钮内边距，增加按钮阴影，并进一步降低 header 高度。
+  - 示例流程图：JSON 下载按钮颜色与 `Get started — free` 保持一致。
+  - Flow Components：OpenFlow 弹窗中点击节点工具栏项、画布节点/连线会弹出使用说明气泡（含 i18n）。
+  - 桌面图标：新增「Simulation Panel」弹窗展示 `SimulationActionPlate`（点击面板空白处弹出说明气泡）；新增 `33_dashboard.png` 弹窗展示 `ASM1SlimAnalyzer` 结果看板。
+- 测试：`cd frontend; npx tsc --noEmit`（通过，2026-01-29）

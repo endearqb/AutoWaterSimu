@@ -24,8 +24,7 @@ export const Route = createFileRoute("/midday-style")({
   validateSearch: (search) => landingSearchSchema.parse(search),
 })
 
-function redirectToAuth() {
-  const target = "/login"
+function redirectToAuth(target: "/login" | "/signup" = "/login") {
   try {
     window.top?.location.assign(target)
   } catch {
@@ -37,6 +36,25 @@ function MiddayStyleLanding() {
   const { embed } = Route.useSearch()
   const isEmbedded = embed === "1" || embed === "true"
 
+  const isAllowedEmbedLink = (href: string): boolean => {
+    try {
+      const url = new URL(href, window.location.origin)
+      const host = url.hostname.toLowerCase()
+      if (host === "github.com") return true
+      if (host === "mp.weixin.qq.com") return true
+      if (host === "beian.miit.gov.cn") return true
+      return false
+    } catch {
+      return false
+    }
+  }
+
+  const resolveAuthTarget = (el: Element): "/login" | "/signup" => {
+    const anchor = el.closest("a")
+    const href = anchor?.getAttribute("href") ?? ""
+    return href.includes("/signup") ? "/signup" : "/login"
+  }
+
   return (
     <Box
       minH="100vh"
@@ -47,9 +65,18 @@ function MiddayStyleLanding() {
         const target = e.target as HTMLElement | null
         const clickable = target?.closest?.('a,button,[role="button"]')
         if (!clickable) return
+        if (clickable instanceof HTMLAnchorElement) {
+          const href = clickable.getAttribute("href") ?? ""
+          if (href && isAllowedEmbedLink(href)) return
+        } else {
+          const anchor = clickable.querySelector?.("a[href]")
+          const href = anchor?.getAttribute?.("href") ?? ""
+          if (href && isAllowedEmbedLink(href)) return
+        }
         e.preventDefault()
         e.stopPropagation()
-        redirectToAuth()
+        const authTarget = resolveAuthTarget(clickable)
+        redirectToAuth(authTarget)
       }}
     >
       {isEmbedded ? null : <MiddayHead />}

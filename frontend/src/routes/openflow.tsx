@@ -14,6 +14,7 @@ import useFlowStore from "../stores/flowStore"
 const openflowSearchSchema = z.object({
   embed: z.coerce.string().optional(),
   src: z.coerce.string().optional(),
+  ui: z.coerce.string().optional(),
 })
 
 export const Route = createFileRoute("/openflow")({
@@ -23,8 +24,9 @@ export const Route = createFileRoute("/openflow")({
 
 function FlowPage() {
   const { t } = useI18n()
-  const { embed, src } = Route.useSearch()
+  const { embed, src, ui } = Route.useSearch()
   const isEmbedded = embed === "1" || embed === "true"
+  const isPreviewEmbed = isEmbedded && ui === "preview"
   const { importFlowData, newFlowChart, setImportedFileName, setCurrentFlowChartName } =
     useFlowStore()
 
@@ -74,11 +76,17 @@ function FlowPage() {
       {isEmbedded ? null : <MiddayHead />}
       <ReactFlowProvider>
         <Box position="relative" overflow="hidden" maxH="100%">
-          <Layout
-            canvas={<Canvas />}
-            inspector={<InspectorContainer />}
-            topOffset={isEmbedded ? 24 : 82}
-          />
+          {isPreviewEmbed ? (
+            <Box h="100vh">
+              <Canvas showControls={false} />
+            </Box>
+          ) : (
+            <Layout
+              canvas={<Canvas />}
+              inspector={<InspectorContainer />}
+              topOffset={isEmbedded ? 24 : 82}
+            />
+          )}
 
           {/* 左侧说明文字水印 - 仅在openflow页面显示 */}
           {isEmbedded ? null : (<Box

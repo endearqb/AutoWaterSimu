@@ -284,7 +284,11 @@ export const Footer = () => {
 
               {/* Copyright */}
               <HStack gap={4} align="center">
-                <Link href="https://beian.miit.gov.cn/">
+                <Link
+                  href="https://beian.miit.gov.cn/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   浙ICP备2022029831号-3
                 </Link>
                 <Separator

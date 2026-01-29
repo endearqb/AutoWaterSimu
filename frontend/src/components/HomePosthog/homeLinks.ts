@@ -9,7 +9,7 @@ export type NavLink = {
 export type DesktopIconWindowTarget =
   | { kind: "posthog" | "home" }
   | { kind: "case"; id: CaseId }
-  | { kind: "flowDocs" }
+  | { kind: "asm1SlimDashboard" }
   | { kind: "calculator"; id: CalculatorId }
   | { kind: "url"; title: string; url: string }
 
@@ -35,9 +35,9 @@ export const desktopIconsLeft: DesktopIconLink[] = [
   {
     id: "docs",
     labelKey: "posthogDemo.desktop.docs",
-    label: "Docs",
+    label: "Knowledge (DeepResearch)",
     iconSrc: "/assets/icons/02_docs.png",
-    window: { kind: "url", title: "Docs", url: "/docs" },
+    window: { kind: "url", title: "Knowledge (DeepResearch)", url: "/docs" },
   },
   { id: "lsi", labelKey: "posthogDemo.desktop.lsiCalc", label: "LSI Calc", iconSrc: "/assets/icons/03_lsi_calc.png", window: { kind: "calculator", id: "lsi" } },
   {
@@ -49,37 +49,23 @@ export const desktopIconsLeft: DesktopIconLink[] = [
   },
   { id: "aor", labelKey: "posthogDemo.desktop.aorCalc", label: "AOR Calc", iconSrc: "/assets/icons/05_aor_calc.png", window: { kind: "calculator", id: "aor" } },
   { id: "dwa", labelKey: "posthogDemo.desktop.dwaAo", label: "DWA A/O", iconSrc: "/assets/icons/06_dwa_ao.png", window: { kind: "calculator", id: "dwa" } },
-  {
-    label: "OpenFlow",
-    id: "openflow",
-    labelKey: "posthogDemo.desktop.openflow",
-    iconSrc: "/assets/icons/08_openflow.png",
-    window: { kind: "url", title: "OpenFlow", url: "/openflow" },
-  },
-  {
-    label: "Flow Components",
-    id: "flow-components",
-    labelKey: "posthogDemo.desktop.flowComponents",
-    iconSrc: "/assets/icons/09_flow_components.png",
-    window: { kind: "flowDocs" },
-  },
   { id: "asm1", labelKey: "posthogDemo.desktop.asm1Sst", label: "ASM1-SST", iconSrc: "/assets/icons/10_asm1_sst.png", window: { kind: "case", id: "asm1" } },
   { id: "asm1slim", labelKey: "posthogDemo.desktop.asm1slim", label: "asm1slim", iconSrc: "/assets/icons/11_asm1slim.png", window: { kind: "case", id: "asm1slim" } },
   { id: "material-zld", labelKey: "posthogDemo.desktop.zld", label: "ZLD", iconSrc: "/assets/icons/12_zld.png", window: { kind: "case", id: "material-zld" } },
   { id: "material-multi", labelKey: "posthogDemo.desktop.multiFlow", label: "multi-flow", iconSrc: "/assets/icons/13_multi_flow.png", window: { kind: "case", id: "material-multi" } },
   {
-    label: "AI DeepResearch",
+    label: "Dashboard",
+    id: "dashboard",
+    labelKey: "posthogDemo.desktop.dashboard",
+    iconSrc: "/assets/icons/33_dashboard.png",
+    window: { kind: "asm1SlimDashboard" },
+  },
+  {
+    label: "DeepResearch (Web)",
     id: "ai-deep-research",
     labelKey: "posthogDemo.desktop.aiDeepResearch",
     iconSrc: "/assets/icons/15_ai_deepresearch.png",
-    window: { kind: "url", title: "AI DeepResearch", url: "/ai-deep-research" },
-  },
-  {
-    label: "Sign up",
-    id: "sign-up",
-    labelKey: "posthogDemo.desktop.signUp",
-    iconSrc: "/assets/icons/16_sign_up.png",
-    window: { kind: "url", title: "Sign up", url: "/signup" },
+    window: { kind: "url", title: "DeepResearch (Web)", url: "/ai-deep-research" },
   },
 ]
 

@@ -516,6 +516,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
     >
       <Box
         pointerEvents="auto"
+        data-simulation-action-plate
         {...panelStyles}
         px={4}
         py={4}

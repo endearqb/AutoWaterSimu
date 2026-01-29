@@ -10,13 +10,16 @@ import {
 interface NodeOption {
   type: string
   label: string
+  helpTitle?: string
+  helpBody?: string
 }
 
 interface NodePaletteProps {
   nodeTypes: NodeOption[]
+  onNodeClick?: (node: NodeOption, event: React.MouseEvent) => void
 }
 
-const NodePalette = ({ nodeTypes }: NodePaletteProps) => {
+const NodePalette = ({ nodeTypes, onNodeClick }: NodePaletteProps) => {
   const handleDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData("application/reactflow/type", nodeType)
     event.dataTransfer.effectAllowed = "move"
@@ -24,7 +27,8 @@ const NodePalette = ({ nodeTypes }: NodePaletteProps) => {
 
   return (
     <VStack gap={3} align="stretch">
-      {nodeTypes.map(({ type, label }) => {
+      {nodeTypes.map((node) => {
+        const { type, label } = node
         const tint: GlassTint = resolveTintFromNodeType(type)
         const accentColor = getAccentColor(tint)
         const baseStyles = getGlassNodeStyles({ tint })
@@ -35,6 +39,7 @@ const NodePalette = ({ nodeTypes }: NodePaletteProps) => {
             key={type}
             draggable
             onDragStart={(event) => handleDragStart(event, type)}
+            onClick={(event) => onNodeClick?.(node, event)}
             cursor="grab"
             userSelect="none"
             px={4}

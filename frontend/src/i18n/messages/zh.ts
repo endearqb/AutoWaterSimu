@@ -18,6 +18,8 @@ export const zhMessages: I18nMessages = {
       homeTitle: "Home（原首页）",
       calculatorTitle: "计算器：{id}",
       flowComponentsTitle: "Flow 组件",
+      simulationPanelTitle: "模拟面板",
+      dashboardTitle: "看板",
       unknownCase: "未知示例：{id}",
     },
     case: {
@@ -25,7 +27,7 @@ export const zhMessages: I18nMessages = {
     },
     desktop: {
       home: "home",
-      docs: "文档",
+      docs: "Knowledge (DeepResearch)",
       lsiCalc: "LSI 计算",
       aoDesign: "AO 设计",
       aorCalc: "AOR 计算",
@@ -36,11 +38,13 @@ export const zhMessages: I18nMessages = {
       asm1slim: "asm1slim",
       zld: "ZLD",
       multiFlow: "multi-flow",
-      aiDeepResearch: "AI DeepResearch",
+      aiDeepResearch: "DeepResearch (Web)",
       signUp: "注册",
       whyEnvdama: "Why ENVDAMA?",
       changelog: "更新日志",
       trash: "回收站",
+      simulationPanel: "模拟面板",
+      dashboard: "看板",
     },
     cases: {
       asm1: "ASM1 案例",
@@ -55,6 +59,45 @@ export const zhMessages: I18nMessages = {
       overview: "概览",
       canvas: "画布",
       nodes: "节点",
+      intro: "本弹窗内渲染 Canvas。点击按钮仅渲染对应面板。",
+      panels: {
+        nodeToolbar: "节点工具栏",
+        inspector: "参数设置面板",
+        simulation: "独立模拟面板",
+        analysis: "数据分析面板",
+      },
+      sampleDataDownload: "下载示例 JSON",
+      sampleDataHint: "示例：{name}",
+      bubbles: {
+        inputTitle: "输入节点",
+        inputBody: "用于定义进水/初始参数等输入数据。",
+        outputTitle: "输出节点",
+        outputBody: "用于表示出水/出口等输出点。",
+        defaultTitle: "处理单元节点",
+        defaultBody: "用于表示工艺单元/池体；参数可在右侧面板中调整。",
+        canvasNodeTitle: "已点击节点",
+        canvasNodeBody: "提示：点击节点/连线后，切换到「参数设置面板」即可编辑。",
+        canvasEdgeTitle: "已点击连线",
+        canvasEdgeBody: "提示：选中连线后可调整流量/参数（取决于面板能力）。",
+      },
+      panel: {
+        nodeToolbar: {
+          title: "节点工具栏",
+          body: "从这里拖拽节点类型到画布，创建节点。",
+        },
+        inspector: {
+          title: "参数设置面板",
+          body: "点击画布中的节点/连线，在这里设置参数。",
+        },
+        simulation: {
+          title: "独立模拟面板",
+          body: "配置计算参数并启动模拟（可能需要登录/后端）。",
+        },
+        analysis: {
+          title: "数据分析面板",
+          body: "使用示例输出数据渲染结果表格。",
+        },
+      },
       overviewDescription:
         "Flow 目录包含流程图渲染（React Flow）与节点组件。本窗口提供路由式导航来浏览组件与用法说明。",
       canvasDescription:
@@ -66,6 +109,11 @@ export const zhMessages: I18nMessages = {
       pathsNodes: "Nodes: frontend/src/components/Flow/nodes/*",
       tipTitle: "提示",
       tipBody: "在 Posthog-demo 弹窗中建议只预览（不接入模型模拟/计算）。",
+    },
+    simulationPlate: {
+      bubbleTitle: "模拟面板",
+      bubbleBody:
+        "该面板为 SimulationActionPlate。可用于启动模拟、导入/导出、打开分析等（部分功能可能需要后端/登录）。",
     },
   },
   nav: {
