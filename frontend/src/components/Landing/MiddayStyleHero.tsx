@@ -35,7 +35,7 @@ export const MiddayStyleHero = () => {
         mb={8}
         // ml={{ base: 4, md: 16 }} // 左边距：移动端16px，桌面端32px。可改为 ml={6} 固定值或 px={4} 设置左右边距
       >
-        <VStack align="start" gap={16} maxW="580px">
+        <VStack align="start" gap={8} maxW="580px">
           {/* Version Badge */}
           <Link to="/dashboard">
             <Button
