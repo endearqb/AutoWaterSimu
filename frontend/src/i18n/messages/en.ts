@@ -10,6 +10,65 @@ export const enMessages: I18nMessages = {
     zh: "中文",
     en: "English",
   },
+  posthogDemo: {
+    header: {
+      getStartedFree: "Get started – free",
+    },
+    window: {
+      homeTitle: "Home (original landing)",
+      calculatorTitle: "Calculator: {id}",
+      flowComponentsTitle: "Flow Components",
+      unknownCase: "Unknown case: {id}",
+    },
+    case: {
+      downloadJson: "Download JSON",
+    },
+    desktop: {
+      home: "home",
+      docs: "Docs",
+      lsiCalc: "LSI Calc",
+      aoDesign: "AO Design",
+      aorCalc: "AOR Calc",
+      dwaAo: "DWA A/O",
+      openflow: "OpenFlow",
+      flowComponents: "Flow Components",
+      asm1Sst: "ASM1-SST",
+      asm1slim: "asm1slim",
+      zld: "ZLD",
+      multiFlow: "multi-flow",
+      aiDeepResearch: "AI DeepResearch",
+      signUp: "Sign up",
+      whyEnvdama: "Why ENVDAMA?",
+      changelog: "Changelog",
+      trash: "Trash",
+    },
+    cases: {
+      asm1: "ASM1 Case",
+      asm1slim: "ASM1Slim Case",
+      materialZld: "Material balance case",
+      materialMulti: "Material balance case",
+    },
+    flowDocs: {
+      title: "Flow Components",
+      clickToNavigate: "Click to navigate",
+      routeLabel: "Route",
+      overview: "Overview",
+      canvas: "Canvas",
+      nodes: "Nodes",
+      overviewDescription:
+        "Flow components include the React Flow renderer and node components. This window provides route-style navigation to browse components and usage notes.",
+      canvasDescription:
+        "Canvas is the main OpenFlow canvas component (drag nodes, connect edges, zoom, pan, etc.).",
+      nodesDescription:
+        "Node components live in frontend/src/components/Flow/nodes and are registered via ReactFlow nodeTypes.",
+      pathsTitle: "Paths",
+      pathsCanvas: "Canvas: frontend/src/components/Flow/Canvas.tsx",
+      pathsNodes: "Nodes: frontend/src/components/Flow/nodes/*",
+      tipTitle: "Tip",
+      tipBody:
+        "In Posthog-demo popups, prefer a preview-only mode (no model simulation).",
+    },
+  },
   nav: {
     home: "Home",
     flowingFlow: "FlowingFlow",

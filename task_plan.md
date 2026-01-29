@@ -4,7 +4,12 @@
 将本项目 `frontend` 的首页（`/` 路由）改造成类似 https://posthog.com/ 首页的「复古桌面 + 窗口」视觉样式与信息架构，并保持现有路由/功能可用、类型检查通过（`cd frontend; npx tsc --noEmit`）。
 
 ## 当前阶段 (Current Phase)
-阶段 4：联调与验收（进行中）
+阶段 4：联调与验收（2026-01-29 已完成）
+- posthog-demo 增加 4 个 JSON 示例流程图图标（ASM1-SST / asm1slim / ZLD / multi-flow），弹窗内支持预览与下载。
+- posthog-demo 4 个 JSON 示例弹窗改为直接使用 `/openflow?src=...` 加载（与 OpenFlow 一致、无模拟功能）。
+- posthog-demo 增加 `Flow Components` 图标（弹窗内提供路由式导航 + 组件演示 + 使用说明）。
+- 去掉关闭弹窗后的 “Window is closed / Reopen window” UI；去掉 `Demo.mov` 图标；`home.mdx` 改为 `home` 且 iframe 使用 `?embed=1` 隐藏 header。
+- 弹窗最大化定位调整为距离浏览器窗口顶端 24px。
 
 ## 阶段划分 (Phases)
 

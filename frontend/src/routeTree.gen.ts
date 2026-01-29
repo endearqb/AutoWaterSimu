@@ -16,15 +16,13 @@ import { Route as ShowcaseImport } from './routes/showcase'
 import { Route as ResetPasswordImport } from './routes/reset-password'
 import { Route as RecoverPasswordImport } from './routes/recover-password'
 import { Route as PosthogDemoImport } from './routes/posthog-demo'
-import { Route as DocsIndexImport } from './routes/docs/index'
-import { Route as DocsSplatSlugImport } from './routes/docs/$...slug'
 import { Route as OpenflowImport } from './routes/openflow'
 import { Route as MiddayStyleImport } from './routes/midday-style'
 import { Route as LoginImport } from './routes/login'
-import { Route as CanvasHomeImport } from './routes/canvas-home'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as IndexImport } from './routes/index'
 import { Route as UpdatesIndexImport } from './routes/updates/index'
+import { Route as DocsIndexImport } from './routes/docs/index'
 import { Route as CalculatorsIndexImport } from './routes/calculators/index'
 import { Route as AiDeepResearchIndexImport } from './routes/ai-deep-research/index'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
@@ -41,6 +39,7 @@ import { Route as LayoutAsm1slimImport } from './routes/_layout/asm1slim'
 import { Route as LayoutAsm1Import } from './routes/_layout/asm1'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
 import { Route as LayoutKnowledgeIndexImport } from './routes/_layout/knowledge/index'
+import { Route as DocsSplatSlugImport } from './routes/docs/$...slug'
 import { Route as LayoutKnowledgeSplatSlugImport } from './routes/_layout/knowledge/$...slug'
 
 // Create/Update Routes
@@ -70,16 +69,6 @@ const PosthogDemoRoute = PosthogDemoImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const DocsIndexRoute = DocsIndexImport.update({
-  path: '/docs',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const DocsSplatSlugRoute = DocsSplatSlugImport.update({
-  path: '/docs/$/slug',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const OpenflowRoute = OpenflowImport.update({
   path: '/openflow',
   getParentRoute: () => rootRoute,
@@ -95,11 +84,6 @@ const LoginRoute = LoginImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const CanvasHomeRoute = CanvasHomeImport.update({
-  path: '/canvas-home',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const LayoutRoute = LayoutImport.update({
   id: '/_layout',
   getParentRoute: () => rootRoute,
@@ -112,6 +96,11 @@ const IndexRoute = IndexImport.update({
 
 const UpdatesIndexRoute = UpdatesIndexImport.update({
   path: '/updates/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DocsIndexRoute = DocsIndexImport.update({
+  path: '/docs/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -195,6 +184,11 @@ const LayoutKnowledgeIndexRoute = LayoutKnowledgeIndexImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const DocsSplatSlugRoute = DocsSplatSlugImport.update({
+  path: '/docs/$/slug',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const LayoutKnowledgeSplatSlugRoute = LayoutKnowledgeSplatSlugImport.update({
   path: '/knowledge/$/slug',
   getParentRoute: () => LayoutRoute,
@@ -212,10 +206,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutImport
       parentRoute: typeof rootRoute
     }
-    '/canvas-home': {
-      preLoaderRoute: typeof CanvasHomeImport
-      parentRoute: typeof rootRoute
-    }
     '/login': {
       preLoaderRoute: typeof LoginImport
       parentRoute: typeof rootRoute
@@ -230,14 +220,6 @@ declare module '@tanstack/react-router' {
     }
     '/posthog-demo': {
       preLoaderRoute: typeof PosthogDemoImport
-      parentRoute: typeof rootRoute
-    }
-    '/docs': {
-      preLoaderRoute: typeof DocsIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/docs/$/slug': {
-      preLoaderRoute: typeof DocsSplatSlugImport
       parentRoute: typeof rootRoute
     }
     '/recover-password': {
@@ -316,8 +298,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalculatorsIndexImport
       parentRoute: typeof rootRoute
     }
+    '/docs/': {
+      preLoaderRoute: typeof DocsIndexImport
+      parentRoute: typeof rootRoute
+    }
     '/updates/': {
       preLoaderRoute: typeof UpdatesIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/docs/$/slug': {
+      preLoaderRoute: typeof DocsSplatSlugImport
       parentRoute: typeof rootRoute
     }
     '/_layout/knowledge/': {
@@ -350,13 +340,10 @@ export const routeTree = rootRoute.addChildren([
     LayoutKnowledgeIndexRoute,
     LayoutKnowledgeSplatSlugRoute,
   ]),
-  CanvasHomeRoute,
   LoginRoute,
   MiddayStyleRoute,
   OpenflowRoute,
   PosthogDemoRoute,
-  DocsIndexRoute,
-  DocsSplatSlugRoute,
   RecoverPasswordRoute,
   ResetPasswordRoute,
   ShowcaseRoute,
@@ -365,7 +352,9 @@ export const routeTree = rootRoute.addChildren([
   UpdatesSlugRoute,
   AiDeepResearchIndexRoute,
   CalculatorsIndexRoute,
+  DocsIndexRoute,
   UpdatesIndexRoute,
+  DocsSplatSlugRoute,
 ])
 
 /* prettier-ignore-end */

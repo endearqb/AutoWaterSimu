@@ -1,16 +1,16 @@
 export type CaseSpec = {
   id: string
-  title: string
+  titleKey: string
   subtitle: string
   jsonUrl: string
   downloadFilename: string
   openUrl: string
 }
 
-export const CANVAS_HOME_CASES: CaseSpec[] = [
+export const POSTHOG_DEMO_CASES: CaseSpec[] = [
   {
     id: "asm1",
-    title: "ASM1 模型案例",
+    titleKey: "posthogDemo.cases.asm1",
     subtitle: "ASM1-SST.json",
     jsonUrl: "/assets/json/ASM1-SST.json",
     downloadFilename: "ASM1-SST.json",
@@ -18,7 +18,7 @@ export const CANVAS_HOME_CASES: CaseSpec[] = [
   },
   {
     id: "asm1slim",
-    title: "ASM1Slim 模型案例",
+    titleKey: "posthogDemo.cases.asm1slim",
     subtitle: "asm1slim.json",
     jsonUrl: "/assets/json/asm1slim.json",
     downloadFilename: "asm1slim.json",
@@ -26,7 +26,7 @@ export const CANVAS_HOME_CASES: CaseSpec[] = [
   },
   {
     id: "material-zld",
-    title: "物料平衡案例",
+    titleKey: "posthogDemo.cases.materialZld",
     subtitle: "ZLD.json",
     jsonUrl: "/assets/json/ZLD.json",
     downloadFilename: "ZLD.json",
@@ -34,7 +34,7 @@ export const CANVAS_HOME_CASES: CaseSpec[] = [
   },
   {
     id: "material-multi",
-    title: "物料平衡案例",
+    titleKey: "posthogDemo.cases.materialMulti",
     subtitle: "multi-flow.json",
     jsonUrl: "/assets/json/multi-flow.json",
     downloadFilename: "multi-flow.json",

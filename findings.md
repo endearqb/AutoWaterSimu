@@ -42,3 +42,14 @@
 - 窗口下方有 “Explore apps by company stage” 区块：上方是 Stage Tabs（Startup/Growth/Scale），左侧是功能列表（带小图标），右侧是大预览卡片（蓝色背景、输入框等）。
 - 桌面左右两侧有“桌面图标”式导航入口（Product OS、Pricing、Docs、Changelog、Store、Work here、Trash 等）。
 - 整体风格：圆角不大、边框清晰、轻微投影、按钮有厚边与轻微立体感。
+
+## 2026-01-29 更新（posthog-demo 桌面与弹窗）
+- 增加 4 个 CanvasHome JSON 示例桌面图标：ASM1-SST / asm1slim / ZLD / multi-flow；点击后在弹窗内预览流程图并提供下载按钮。
+- 增加 `Flow Components` 桌面图标：弹窗内以 embed 形式打开 `/openflow` 并附简要说明。
+- 移除关闭弹窗后的 “Window is closed” 卡片与按钮；移除 `Demo.mov` 图标；`home.mdx` 改为 `home`。
+- 弹窗最大化后改为距离浏览器窗口顶端 24px；iframe 访问 `/` 时增加 `?embed=1` 以隐藏页面内 header。
+
+### 追加修复
+- `embed` 搜索参数在部分路由中会被解析为 number；使用 `z.coerce.string()` 兼容以避免 TanStack Router 报错页。
+- 为了让示例流程图与 OpenFlow 行为一致，`/openflow` 增加 `src` 参数用于自动加载 JSON，并扩展 Canvas 节点类型以支持 `asm1/asmslim`。
+- updates 与 ai-deep-research 在 embed 模式下隐藏 header，并在页面内跳转时保持 embed 参数。

@@ -8,6 +8,20 @@ import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import { Prose } from "../../components/ui/prose"
 import { getBlogPosts } from "../../utils/blog"
 import { useI18n } from "@/i18n"
+import { z } from "zod"
+
+const updatesDetailSearchSchema = z.object({
+  embed: z.coerce.string().optional(),
+})
+
+function redirectToAuth() {
+  const target = "/login"
+  try {
+    window.top?.location.assign(target)
+  } catch {
+    window.location.assign(target)
+  }
+}
 
 export const Route = createFileRoute("/updates/$slug")({
   component: UpdateDetailPage,
@@ -19,11 +33,14 @@ export const Route = createFileRoute("/updates/$slug")({
     }
     return { post }
   },
+  validateSearch: (search) => updatesDetailSearchSchema.parse(search),
 })
 
 function UpdateDetailPage() {
   const { post } = Route.useLoaderData()
   const { t, language } = useI18n()
+  const { embed } = Route.useSearch()
+  const isEmbedded = embed === "1" || embed === "true"
   const locale = language === "zh" ? "zh-CN" : "en-US"
   const publishedAt = new Date(post.metadata.publishedAt)
   const formattedPublishedAt = Number.isNaN(publishedAt.getTime())
@@ -39,9 +56,18 @@ function UpdateDetailPage() {
       minH="100vh"
       bg={{ base: "hsl(192,85%,99.5%)", _dark: "gray.900" }}
       overflowX="hidden"
+      onClickCapture={(e) => {
+        if (!isEmbedded) return
+        const target = e.target as HTMLElement | null
+        const clickable = target?.closest?.('a,button,[role="button"]')
+        if (!clickable) return
+        e.preventDefault()
+        e.stopPropagation()
+        redirectToAuth()
+      }}
     >
-      <MiddayHead />
-      <Box pt="82px">
+      {isEmbedded ? null : <MiddayHead />}
+      <Box pt={isEmbedded ? 0 : "82px"}>
         {" "}
         {/* 为固定header留出空间: 50px(header高度) + 16px(top) + 16px(额外间距) */}
         <Container maxW="4xl" py={8}>
@@ -59,7 +85,7 @@ function UpdateDetailPage() {
               }}
               asChild
             >
-              <Link to="/updates">
+              <Link to="/updates" search={isEmbedded ? { embed: "1" } : {}}>
                 <FaArrowLeft style={{ marginRight: "8px" }} />
                 {t("updates.backToList")}
               </Link>
@@ -151,7 +177,7 @@ function UpdateDetailPage() {
             textAlign="center"
           >
             <Button variant="outline" colorScheme="blue" asChild>
-              <Link to="/updates">
+              <Link to="/updates" search={isEmbedded ? { embed: "1" } : {}}>
                 <FaArrowLeft style={{ marginRight: "8px" }} />
                 {t("updates.viewMore")}
               </Link>

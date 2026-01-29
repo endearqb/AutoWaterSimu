@@ -1,10 +1,10 @@
 import {
+  AspectRatio,
   Box,
   Button,
   Flex,
   HStack,
   Heading,
-  Icon,
   Input,
   Image,
   Tabs,
@@ -12,11 +12,10 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
-import type { ElementType, ReactNode } from "react"
+import type { ReactNode } from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
   FaArrowRight,
-  FaSearch,
   FaTimes,
   FaWindowMaximize,
 } from "react-icons/fa"
@@ -25,10 +24,13 @@ import AORCalculator from "@/components/calculators/AORCalculator"
 import { DWACalculator } from "@/components/calculators/DWACalculator"
 import { LSICalculator } from "@/components/calculators/LSICalculator"
 import StandardAO from "@/components/calculators/StandardAO"
-import { useI18n } from "@/i18n"
+import { POSTHOG_DEMO_CASES } from "@/features/posthogDemo/cases"
+import { useI18n, useLocale } from "@/i18n"
 
+import { FlowComponentsDocs } from "./FlowComponentsDocs"
 import {
   type CalculatorId,
+  type CaseId,
   desktopIconsLeft,
   desktopIconsRight,
 } from "./homeLinks"
@@ -38,13 +40,15 @@ type WindowView =
   | { kind: "home" }
   | { kind: "url"; title: string; url: string }
   | { kind: "calculator"; id: CalculatorId }
+  | { kind: "case"; id: CaseId }
+  | { kind: "flowDocs" }
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
 function DesktopIcon(props: {
   label: string
-  icon: ElementType
+  iconSrc: string
   disabled?: boolean
   onOpenWindow?: () => void
 }) {
@@ -78,6 +82,7 @@ function DesktopIcon(props: {
         w="44px"
         h="44px"
         borderRadius="lg"
+        overflow="hidden"
         bg="rgba(255,255,255,0.65)"
         borderWidth="1px"
         borderColor="rgba(0,0,0,0.12)"
@@ -86,7 +91,16 @@ function DesktopIcon(props: {
         alignItems="center"
         justifyContent="center"
       >
-        <Icon as={props.icon} color="gray.700" />
+        <Image
+          src={props.iconSrc}
+          alt={props.label}
+          w="full"
+          h="full"
+          objectFit="cover"
+          transform="scale(1.14)"
+          transformOrigin="center"
+          draggable={false}
+        />
       </Box>
       <Text
         fontSize="xs"
@@ -158,23 +172,23 @@ function DesktopWindow(props: {
     <Box
       ref={frameRef}
       position="fixed"
-      left={isMaximized ? "12px" : "0"}
-      top={isMaximized ? "calc(56px + 12px)" : "0"}
+      left={isMaximized ? "24px" : "0"}
+      top={isMaximized ? "24px" : "0"}
       transform={
         isMaximized ? "none" : `translate3d(${x}px, ${y}px, 0)`
       }
       w={
         isMaximized
-          ? "calc(100vw - 24px)"
+          ? "calc(100vw - 48px)"
           : { base: "calc(100vw - 24px)", md: "1040px" }
       }
-      maxW="calc(100vw - 24px)"
+      maxW={isMaximized ? "calc(100vw - 48px)" : "calc(100vw - 24px)"}
       h={
         isMaximized
-          ? "calc(100vh - 56px - 24px)"
+          ? "calc(100vh - 48px)"
           : { base: "calc(100vh - 96px)", md: "740px" }
       }
-      maxH={isMaximized ? "calc(100vh - 56px - 24px)" : "calc(100vh - 96px)"}
+      maxH={isMaximized ? "calc(100vh - 48px)" : "calc(100vh - 96px)"}
       borderWidth="1px"
       borderColor="rgba(0,0,0,0.22)"
       borderRadius="md"
@@ -391,15 +405,27 @@ function ExploreAppsPanel(props: { onOpenCalculator: (id: CalculatorId) => void 
 
 export function PosthogLanding() {
   const { t } = useI18n()
+  const { language, setLanguage } = useLocale()
   const [windowOpen, setWindowOpen] = useState(true)
-  const [view, setView] = useState<WindowView>({ kind: "posthog" })
+  const [view, setView] = useState<WindowView>({ kind: "home" })
+
+  const caseById = useMemo(() => {
+    return new Map(POSTHOG_DEMO_CASES.map((c) => [c.id, c] as const))
+  }, [])
 
   const windowTitle = useMemo(() => {
-    if (view.kind === "home") return "Home (current /)"
+    if (view.kind === "home" || view.kind === "posthog")
+      return t("posthogDemo.window.homeTitle")
     if (view.kind === "url") return view.title
-    if (view.kind === "calculator") return `Calculator: ${view.id}`
-    return "home.mdx"
-  }, [view])
+    if (view.kind === "calculator")
+      return t("posthogDemo.window.calculatorTitle", { id: view.id })
+    if (view.kind === "flowDocs") return t("posthogDemo.window.flowComponentsTitle")
+    if (view.kind === "case") {
+      const spec = caseById.get(view.id)
+      return spec ? t(spec.titleKey) : view.id
+    }
+    return "home"
+  }, [caseById, t, view])
 
   const openHome = () => {
     setView({ kind: "home" })
@@ -407,8 +433,7 @@ export function PosthogLanding() {
   }
 
   const openPosthog = () => {
-    setView({ kind: "posthog" })
-    setWindowOpen(true)
+    openHome()
   }
 
   const openCalculator = (id: CalculatorId) => {
@@ -417,17 +442,45 @@ export function PosthogLanding() {
   }
 
   const openUrl = (url: string, title: string) => {
-    setView({ kind: "url", url, title })
+    if (url === "/login" || url === "/signup") {
+      window.location.assign(url)
+      return
+    }
+
+    const nextUrl = (() => {
+      if (!url.startsWith("/")) return url
+      try {
+        const u = new URL(url, window.location.origin)
+        if (!u.searchParams.has("embed")) {
+          u.searchParams.set("embed", "1")
+        }
+        return `${u.pathname}${u.search}${u.hash}`
+      } catch {
+        return url
+      }
+    })()
+
+    setView({ kind: "url", url: nextUrl, title })
+    setWindowOpen(true)
+  }
+
+  const openCase = (id: CaseId) => {
+    setView({ kind: "case", id })
+    setWindowOpen(true)
+  }
+
+  const openFlowDocs = () => {
+    setView({ kind: "flowDocs" })
     setWindowOpen(true)
   }
 
   const windowBody = useMemo(() => {
-    if (view.kind === "home") {
+    if (view.kind === "home" || view.kind === "posthog") {
       return (
         <Box w="full" h="full" overflow="hidden" bg="white">
           <iframe
             title="Current home page"
-            src="/"
+            src="/midday-style?embed=1"
             style={{ width: "100%", height: "100%", border: "none" }}
           />
         </Box>
@@ -442,6 +495,62 @@ export function PosthogLanding() {
             src={view.url}
             style={{ width: "100%", height: "100%", border: "none" }}
           />
+        </Box>
+      )
+    }
+
+    if (view.kind === "flowDocs") {
+      return <FlowComponentsDocs />
+    }
+
+    if (view.kind === "case") {
+      const spec = caseById.get(view.id)
+      if (!spec) {
+        return (
+          <Box w="full" h="full" p={6} bg="white">
+            <Text color="red.600" fontSize="sm">
+              {t("posthogDemo.window.unknownCase", { id: view.id })}
+            </Text>
+          </Box>
+        )
+      }
+
+      return (
+        <Box w="full" h="full" overflow="hidden" bg="white">
+          <VStack align="stretch" gap={0} h="full">
+            <Flex
+              align="center"
+              gap={3}
+              px={4}
+              py={3}
+              borderBottomWidth="1px"
+              borderBottomColor="rgba(0,0,0,0.12)"
+              bg="rgba(248,247,244,0.92)"
+            >
+              <Box>
+                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                  {t(spec.titleKey)}
+                </Text>
+                <Text fontSize="xs" color="gray.600">
+                  {spec.subtitle}
+                </Text>
+              </Box>
+              <Box flex="1" />
+              <Button asChild size="sm" variant="outline">
+                <a href={spec.jsonUrl} download={spec.downloadFilename}>
+                  {t("posthogDemo.case.downloadJson")}
+                </a>
+              </Button>
+            </Flex>
+
+            <Box flex="1" overflow="hidden">
+              <iframe
+                title={t(spec.titleKey)}
+                src={`/openflow?embed=1&src=${encodeURIComponent(spec.jsonUrl)}`}
+                style={{ width: "100%", height: "100%", border: "none" }}
+              />
+            </Box>
+          </VStack>
         </Box>
       )
     }
@@ -486,7 +595,7 @@ export function PosthogLanding() {
               borderColor="rgba(0,0,0,0.25)"
               _hover={{ bg: "#d99b22" }}
             >
-              <Link to="/signup">Get started – free</Link>
+              <Link to="/login">{t("posthogDemo.header.getStartedFree")}</Link>
             </Button>
             <Button
               variant="outline"
@@ -546,7 +655,7 @@ export function PosthogLanding() {
         </VStack>
       </Box>
     )
-  }, [openCalculator, view])
+  }, [caseById, openCalculator, view])
 
   return (
     <Box
@@ -576,7 +685,7 @@ export function PosthogLanding() {
       >
         <HStack gap={4} flexWrap="wrap">
           <HStack gap={2} asChild>
-            <Link to="/posthog-demo" style={{ textDecoration: "none" }}>
+            <Link to="/" style={{ textDecoration: "none" }}>
               <Image
                 src="/assets/images/E-logos-1.png"
                 alt={t("app.logoAlt")}
@@ -598,13 +707,22 @@ export function PosthogLanding() {
         </HStack>
 
         <HStack gap={2}>
-          <Button
-            variant="ghost"
-            size="sm"
-            display={{ base: "none", md: "inline-flex" }}
-          >
-            <FaSearch />
-          </Button>
+          <HStack gap={2} display={{ base: "none", md: "flex" }}>
+            <Button
+              size="sm"
+              variant={language === "zh" ? "solid" : "outline"}
+              onClick={() => setLanguage("zh")}
+            >
+              {t("language.zh")}
+            </Button>
+            <Button
+              size="sm"
+              variant={language === "en" ? "solid" : "outline"}
+              onClick={() => setLanguage("en")}
+            >
+              {t("language.en")}
+            </Button>
+          </HStack>
           <Button
             asChild
             size="sm"
@@ -614,15 +732,69 @@ export function PosthogLanding() {
             borderColor="rgba(0,0,0,0.25)"
             _hover={{ bg: "#d99b22" }}
           >
-            <Link to="/signup">Get started – free</Link>
+            <Link to="/login">{t("posthogDemo.header.getStartedFree")}</Link>
           </Button>
         </HStack>
       </Flex>
 
       <Box
         position="absolute"
+        right={{ base: 6, md: 10 }}
+        bottom={{ base: 8, md: 10 }}
+        zIndex={1}
+        display={{ base: "none", md: "block" }}
+        maxW="520px"
+        w="420px"
+        pointerEvents="auto"
+      >
+        <AspectRatio ratio={1}>
+          <Box
+            borderRadius="2xl"
+            overflow="hidden"
+            shadow="2xl"
+            transform="rotate(3deg)"
+            _hover={{ transform: "rotate(0deg)" }}
+            transition="all 0.5s ease"
+          >
+            <Image
+              alt="handwriting"
+              objectFit="contain"
+              w="full"
+              h="full"
+              src="/assets/images/handwriting.jpeg"
+              draggable={false}
+            />
+          </Box>
+        </AspectRatio>
+      </Box>
+
+      <Box
+        position="absolute"
+        left="50%"
+        top="50%"
+        transform="translate(-50%, -50%)"
+        zIndex={0}
+        pointerEvents="none"
+        display={{ base: "none", md: "block" }}
+        w="720px"
+        maxW="70vw"
+        opacity={0.55}
+      >
+        <Image
+          alt="handwriting text"
+          src="/assets/images/text_only_handwriting.png"
+          w="full"
+          h="auto"
+          objectFit="contain"
+          draggable={false}
+        />
+      </Box>
+
+      <Box
+        position="absolute"
         left={{ base: 2, md: 6 }}
         top={{ base: "calc(56px + 48px)", md: "calc(56px + 48px)" }}
+        zIndex={2}
         display={{ base: "none", md: "block" }}
       >
         <Box
@@ -633,9 +805,9 @@ export function PosthogLanding() {
         >
           {desktopIconsLeft.map((i) => (
             <DesktopIcon
-              key={i.label}
-              label={i.label}
-              icon={i.icon}
+              key={i.id}
+              label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
+              iconSrc={i.iconSrc}
               disabled={i.disabled}
               onOpenWindow={
                 i.window
@@ -648,6 +820,9 @@ export function PosthogLanding() {
                       openCalculator(windowTarget.id)
                     else if (windowTarget.kind === "url")
                       openUrl(windowTarget.url, windowTarget.title)
+                    else if (windowTarget.kind === "case")
+                      openCase(windowTarget.id)
+                    else if (windowTarget.kind === "flowDocs") openFlowDocs()
                     else openPosthog()
                   }
                 : undefined
@@ -660,15 +835,16 @@ export function PosthogLanding() {
       <Box
         position="absolute"
         right={{ base: 2, md: 6 }}
-        top={{ base: 84, md: 96 }}
+        top={{ base: "calc(56px + 48px)", md: "calc(56px + 48px)" }}
+        zIndex={2}
         display={{ base: "none", md: "block" }}
       >
         <VStack align="end" gap={1}>
           {desktopIconsRight.map((i) => (
             <DesktopIcon
-              key={i.label}
-              label={i.label}
-              icon={i.icon}
+              key={i.id}
+              label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
+              iconSrc={i.iconSrc}
               disabled={i.disabled}
               onOpenWindow={
                 i.window
@@ -681,6 +857,9 @@ export function PosthogLanding() {
                         openCalculator(windowTarget.id)
                       else if (windowTarget.kind === "url")
                         openUrl(windowTarget.url, windowTarget.title)
+                      else if (windowTarget.kind === "case")
+                        openCase(windowTarget.id)
+                      else if (windowTarget.kind === "flowDocs") openFlowDocs()
                       else openPosthog()
                     }
                   : undefined
@@ -690,41 +869,14 @@ export function PosthogLanding() {
         </VStack>
       </Box>
 
-      {!windowOpen ? (
-        <Flex
-          position="absolute"
-          left="50%"
-          top="50%"
-          transform="translate(-50%, -50%)"
-          align="center"
-          justify="center"
-          direction="column"
-          gap={3}
-          px={6}
-          py={6}
-          borderRadius="lg"
-          borderWidth="1px"
-          borderColor="rgba(0,0,0,0.12)"
-          bg="rgba(255,255,255,0.45)"
-        >
-          <Text color="gray.700">Window is closed.</Text>
-          <Button
-            onClick={() => {
-              setWindowOpen(true)
-              setView({ kind: "posthog" })
-            }}
-          >
-            Reopen window
-          </Button>
-        </Flex>
-      ) : (
+      {windowOpen ? (
         <DesktopWindow
           title={windowTitle}
           onClose={() => setWindowOpen(false)}
         >
           {windowBody}
         </DesktopWindow>
-      )}
+      ) : null}
     </Box>
   )
 }

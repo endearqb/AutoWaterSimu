@@ -17,6 +17,8 @@ import { Box } from "@chakra-ui/react"
 import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 import EditableEdge from "./edges/EditableEdge"
+import ASM1Node from "./nodes/ASM1Node"
+import ASMslimNode from "./nodes/ASMslimNode"
 import DefaultNode from "./nodes/DefaultNode"
 import InputNode from "./nodes/InputNode"
 import OutputNode from "./nodes/OutputNode"
@@ -33,6 +35,9 @@ const nodeTypes: NodeTypes = {
   default: DefaultNode as any,
   input: InputNode as any,
   output: OutputNode as any,
+  asm1: (props: any) => <ASM1Node {...props} store={useFlowStore as any} />,
+  asmslim: ASMslimNode as any,
+  asm1slim: ASMslimNode as any,
 }
 
 const Canvas = () => {

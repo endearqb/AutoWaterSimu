@@ -92,11 +92,11 @@ export const t = (
   return formatMessage(message, params)
 }
 
-export const setLanguage = (language: Language) => {
+const applyLanguage = (language: Language, options?: { persist?: boolean }) => {
   if (language === currentLanguage) return
   currentLanguage = language
 
-  if (typeof window !== "undefined") {
+  if (options?.persist !== false && typeof window !== "undefined") {
     window.localStorage.setItem(STORAGE_KEY, language)
   }
 
@@ -105,6 +105,10 @@ export const setLanguage = (language: Language) => {
   }
 
   listeners.forEach((listener) => listener(language))
+}
+
+export const setLanguage = (language: Language) => {
+  applyLanguage(language, { persist: true })
 }
 
 export const getCurrentLanguage = (): Language => currentLanguage
@@ -126,6 +130,17 @@ export const I18nProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const unsubscribe = subscribe(setLanguageState)
     return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY) return
+      if (e.newValue !== "zh" && e.newValue !== "en") return
+      applyLanguage(e.newValue, { persist: false })
+    }
+    window.addEventListener("storage", onStorage)
+    return () => window.removeEventListener("storage", onStorage)
   }, [])
 
   useEffect(() => {

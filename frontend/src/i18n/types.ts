@@ -151,6 +151,61 @@ export interface I18nMessages {
       deleteKey: string
     }
   }
+  posthogDemo: {
+    header: {
+      getStartedFree: string
+    }
+    window: {
+      homeTitle: string
+      calculatorTitle: string
+      flowComponentsTitle: string
+      unknownCase: string
+    }
+    case: {
+      downloadJson: string
+    }
+    desktop: {
+      home: string
+      docs: string
+      lsiCalc: string
+      aoDesign: string
+      aorCalc: string
+      dwaAo: string
+      openflow: string
+      flowComponents: string
+      asm1Sst: string
+      asm1slim: string
+      zld: string
+      multiFlow: string
+      aiDeepResearch: string
+      signUp: string
+      whyEnvdama: string
+      changelog: string
+      trash: string
+    }
+    cases: {
+      asm1: string
+      asm1slim: string
+      materialZld: string
+      materialMulti: string
+    }
+    flowDocs: {
+      title: string
+      clickToNavigate: string
+      routeLabel: string
+      overview: string
+      canvas: string
+      nodes: string
+      overviewDescription: string
+      canvasDescription: string
+      nodesDescription: string
+      pathsTitle: string
+      pathsCanvas: string
+      pathsNodes: string
+      tipTitle: string
+      tipBody: string
+    }
+  }
   time: {
     relative: {
       justNow: string

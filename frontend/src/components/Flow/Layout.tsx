@@ -10,9 +10,10 @@ import NodesPanel from "./toolbar/NodesPanel"
 interface LayoutProps {
   canvas: ReactNode
   inspector: ReactNode
+  topOffset?: number
 }
 
-const Layout = ({ canvas, inspector }: LayoutProps) => {
+const Layout = ({ canvas, inspector, topOffset = 82 }: LayoutProps) => {
   const { t } = useI18n()
   const {
     selectedNode,
@@ -24,21 +25,21 @@ const Layout = ({ canvas, inspector }: LayoutProps) => {
   } = useFlowStore()
   const [isInspectorOpen, setIsInspectorOpen] = useState(false)
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
-  const [toolbarPosition, setToolbarPosition] = useState({ x: 16, y: 82 }) // 82px = 50px(MiddayHead高度) + 16px(top) + 16px(额外间距)
+  const [toolbarPosition, setToolbarPosition] = useState({ x: 16, y: topOffset })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [sidebarWidth, setSidebarWidth] = useState(240)
   const [isToolbarLocked, setIsToolbarLocked] = useState(true) // 默认锁定状态
 
   // 动态计算默认锁定位置（跟随sidebar右边缘，位于MiddayHead下方）
-  const getDefaultPosition = () => ({ x: sidebarWidth + 16, y: 82 }) // 82px = 50px(MiddayHead高度) + 16px(top) + 16px(额外间距)
+  const getDefaultPosition = () => ({ x: sidebarWidth + 16, y: topOffset })
 
   // 初始化工具栏位置为默认位置（锁定状态）
   useEffect(() => {
     if (isToolbarLocked) {
       setToolbarPosition(getDefaultPosition())
     }
-  }, [isToolbarLocked, sidebarWidth])
+  }, [isToolbarLocked, sidebarWidth, topOffset])
 
   // 当选中节点或连接线时自动打开属性检查器
   useEffect(() => {
@@ -119,7 +120,7 @@ const Layout = ({ canvas, inspector }: LayoutProps) => {
 
       setToolbarPosition({
         x: Math.max(sidebarWidth + 16, Math.min(newX, maxX)),
-        y: Math.max(82, Math.min(newY, maxY)), // 限制最小y坐标为82px，确保不会覆盖MiddayHead
+        y: Math.max(topOffset, Math.min(newY, maxY)),
       })
     }
   }

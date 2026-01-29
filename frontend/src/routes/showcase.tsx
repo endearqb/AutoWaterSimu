@@ -16,11 +16,11 @@ function ShowcasePage() {
             Showcase
           </Text>
           <Text color="gray.600" _dark={{ color: "gray.300" }}>
-            该页面用于展示功能与案例合集。
+            This page is for feature and case showcases.
           </Text>
           <Button asChild>
-            <Link to="/canvas-home" search={{}}>
-              打开画布首页
+            <Link to="/openflow" search={{}}>
+              Open OpenFlow
             </Link>
           </Button>
         </VStack>
@@ -28,4 +28,3 @@ function ShowcasePage() {
     </Box>
   )
 }
-

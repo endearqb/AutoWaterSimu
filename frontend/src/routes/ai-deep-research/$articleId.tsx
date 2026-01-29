@@ -20,9 +20,25 @@ import { WaterTreatmentBalance } from "../../components/Knowledge/WaterTreatment
 import { Header } from "../../components/Landing"
 import { useArticleData } from "../../hooks/useArticleData"
 import { useI18n } from "@/i18n"
+import { z } from "zod"
+
+const aiDeepResearchArticleSearchSchema = z.object({
+  embed: z.coerce.string().optional(),
+})
+
+function redirectToAuth() {
+  const target = "/login"
+  try {
+    window.top?.location.assign(target)
+  } catch {
+    window.location.assign(target)
+  }
+}
 
 const ArticleDetail: React.FC = () => {
   const { articleId } = Route.useParams()
+  const { embed } = Route.useSearch()
+  const isEmbedded = embed === "1" || embed === "true"
   const { getArticleById } = useArticleData()
   const { t } = useI18n()
   const article = getArticleById(articleId)
@@ -49,15 +65,32 @@ const ArticleDetail: React.FC = () => {
 
   if (!article) {
     return (
-      <Box bg={bgColor} minH="100vh">
-        <Header />
+      <Box
+        bg={bgColor}
+        minH="100vh"
+        onClickCapture={(e) => {
+          if (!isEmbedded) return
+          const target = e.target as HTMLElement | null
+          const clickable = target?.closest?.('a,button,[role="button"]')
+          if (!clickable) return
+          e.preventDefault()
+          e.stopPropagation()
+          redirectToAuth()
+        }}
+      >
+        {isEmbedded ? null : <Header />}
         <Container maxW="7xl" py={8}>
           <VStack gap={8}>
             <Breadcrumb.Root>
               <Breadcrumb.List>
                 <Breadcrumb.Item>
                   <Breadcrumb.Link asChild>
-                    <Link to="/ai-deep-research">AI Deep Research</Link>
+                    <Link
+                      to="/ai-deep-research"
+                      search={isEmbedded ? { embed: "1" } : {}}
+                    >
+                      AI Deep Research
+                    </Link>
                   </Breadcrumb.Link>
                 </Breadcrumb.Item>
                 <Breadcrumb.Separator>
@@ -82,7 +115,7 @@ const ArticleDetail: React.FC = () => {
             </Alert.Root>
 
             <Button colorScheme="blue" variant="outline" asChild>
-              <Link to="/ai-deep-research">
+              <Link to="/ai-deep-research" search={isEmbedded ? { embed: "1" } : {}}>
                 <HStack gap={2}>
                   <FiArrowLeft />
                   <Text>{t("deepResearch.detail.back")}</Text>
@@ -96,8 +129,20 @@ const ArticleDetail: React.FC = () => {
   }
 
   return (
-    <Box bg={bgColor} minH="100vh">
-      <Header />
+    <Box
+      bg={bgColor}
+      minH="100vh"
+      onClickCapture={(e) => {
+        if (!isEmbedded) return
+        const target = e.target as HTMLElement | null
+        const clickable = target?.closest?.('a,button,[role="button"]')
+        if (!clickable) return
+        e.preventDefault()
+        e.stopPropagation()
+        redirectToAuth()
+      }}
+    >
+      {isEmbedded ? null : <Header />}
       <Container maxW="7xl" py={8}>
         <VStack gap={8}>
           {/* 面包屑导航 */}
@@ -106,7 +151,12 @@ const ArticleDetail: React.FC = () => {
               <Breadcrumb.List>
                 <Breadcrumb.Item>
                   <Breadcrumb.Link asChild>
-                    <Link to="/ai-deep-research">AI Deep Research</Link>
+                    <Link
+                      to="/ai-deep-research"
+                      search={isEmbedded ? { embed: "1" } : {}}
+                    >
+                      AI Deep Research
+                    </Link>
                   </Breadcrumb.Link>
                 </Breadcrumb.Item>
                 <Breadcrumb.Separator>
@@ -130,7 +180,9 @@ const ArticleDetail: React.FC = () => {
           {/* 返回按钮 */}
           <HStack w="100%" justify="space-between">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/ai-deep-research">{t("deepResearch.detail.back")}</Link>
+              <Link to="/ai-deep-research" search={isEmbedded ? { embed: "1" } : {}}>
+                {t("deepResearch.detail.back")}
+              </Link>
             </Button>
 
             <HStack gap={2}>
@@ -241,4 +293,5 @@ const ArticleDetail: React.FC = () => {
 
 export const Route = createFileRoute("/ai-deep-research/$articleId")({
   component: ArticleDetail,
+  validateSearch: (search) => aiDeepResearchArticleSearchSchema.parse(search),
 })

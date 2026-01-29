@@ -1,19 +1,60 @@
 import { Box, Text, VStack } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import { ReactFlowProvider } from "@xyflow/react"
+import { useEffect } from "react"
+import { z } from "zod"
 import "@xyflow/react/dist/style.css"
 import Canvas from "../components/Flow/Canvas"
 import Layout from "../components/Flow/Layout"
 import InspectorContainer from "../components/Flow/inspectorbar/InspectorContainer"
 import { MiddayHead } from "../components/Landing"
 import { useI18n } from "@/i18n"
+import useFlowStore from "../stores/flowStore"
+
+const openflowSearchSchema = z.object({
+  embed: z.coerce.string().optional(),
+  src: z.coerce.string().optional(),
+})
 
 export const Route = createFileRoute("/openflow")({
   component: FlowPage,
+  validateSearch: (search) => openflowSearchSchema.parse(search),
 })
 
 function FlowPage() {
   const { t } = useI18n()
+  const { embed, src } = Route.useSearch()
+  const isEmbedded = embed === "1" || embed === "true"
+  const { importFlowData, newFlowChart, setImportedFileName, setCurrentFlowChartName } =
+    useFlowStore()
+
+  useEffect(() => {
+    if (!src) return
+    const controller = new AbortController()
+
+    const load = async () => {
+      try {
+        const res = await fetch(src, { signal: controller.signal })
+        if (!res.ok) return
+        const data = (await res.json()) as unknown
+        if (controller.signal.aborted) return
+
+        newFlowChart()
+        const result = importFlowData(data)
+        if (!result.success) return
+
+        const fileName =
+          src.split("/").pop()?.replace(/\.json$/i, "") ?? "imported"
+        setImportedFileName(fileName)
+        setCurrentFlowChartName(fileName)
+      } catch {
+        // ignore
+      }
+    }
+
+    load()
+    return () => controller.abort()
+  }, [importFlowData, newFlowChart, setCurrentFlowChartName, setImportedFileName, src])
   const instructions = [
     t("openflow.instructions.drag"),
     t("openflow.instructions.connect"),
@@ -30,13 +71,17 @@ function FlowPage() {
 
   return (
     <Box minH="100vh">
-      <MiddayHead />
+      {isEmbedded ? null : <MiddayHead />}
       <ReactFlowProvider>
         <Box position="relative" overflow="hidden" maxH="100%">
-          <Layout canvas={<Canvas />} inspector={<InspectorContainer />} />
+          <Layout
+            canvas={<Canvas />}
+            inspector={<InspectorContainer />}
+            topOffset={isEmbedded ? 24 : 82}
+          />
 
           {/* 左侧说明文字水印 - 仅在openflow页面显示 */}
-          <Box
+          {isEmbedded ? null : (<Box
             position="absolute"
             left="20px"
             top="20px"
@@ -76,7 +121,7 @@ function FlowPage() {
                 ))}
               </VStack>
             </VStack>
-          </Box>
+          </Box>)}
         </Box>
       </ReactFlowProvider>
     </Box>

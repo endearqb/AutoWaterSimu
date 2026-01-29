@@ -22,12 +22,28 @@ import { Icon } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import React from "react"
 import { FiSearch, FiTag } from "react-icons/fi"
+import { z } from "zod"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import type { ArticleData } from "../../data/articles/types"
 import { useArticleData } from "../../hooks/useArticleData"
 import { useI18n } from "@/i18n"
 
+const aiDeepResearchSearchSchema = z.object({
+  embed: z.coerce.string().optional(),
+})
+
+function redirectToAuth() {
+  const target = "/login"
+  try {
+    window.top?.location.assign(target)
+  } catch {
+    window.location.assign(target)
+  }
+}
+
 const AIDeepResearchIndex: React.FC = () => {
+  const { embed } = Route.useSearch()
+  const isEmbedded = embed === "1" || embed === "true"
   const { articles, loading, error } = useArticleData()
   const { t } = useI18n()
   const [searchTerm, setSearchTerm] = React.useState("")
@@ -156,29 +172,71 @@ const AIDeepResearchIndex: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxW="7xl" py={8}>
-        <VStack gap={8}>
-          <Text>{t("deepResearch.state.loading")}</Text>
-        </VStack>
-      </Container>
+      <Box
+        bg={bgColor}
+        minH="100vh"
+        onClickCapture={(e) => {
+          if (!isEmbedded) return
+          const target = e.target as HTMLElement | null
+          const clickable = target?.closest?.('a,button,[role="button"]')
+          if (!clickable) return
+          e.preventDefault()
+          e.stopPropagation()
+          redirectToAuth()
+        }}
+      >
+        {isEmbedded ? null : <MiddayHead />}
+        <Container maxW="7xl" py={8}>
+          <VStack gap={8}>
+            <Text>{t("deepResearch.state.loading")}</Text>
+          </VStack>
+        </Container>
+      </Box>
     )
   }
 
   if (error) {
     return (
-      <Container maxW="7xl" py={8}>
-        <VStack gap={8}>
-          <Text color="red.500">
-            {t("deepResearch.state.loadFailed", { error })}
-          </Text>
-        </VStack>
-      </Container>
+      <Box
+        bg={bgColor}
+        minH="100vh"
+        onClickCapture={(e) => {
+          if (!isEmbedded) return
+          const target = e.target as HTMLElement | null
+          const clickable = target?.closest?.('a,button,[role="button"]')
+          if (!clickable) return
+          e.preventDefault()
+          e.stopPropagation()
+          redirectToAuth()
+        }}
+      >
+        {isEmbedded ? null : <MiddayHead />}
+        <Container maxW="7xl" py={8}>
+          <VStack gap={8}>
+            <Text color="red.500">
+              {t("deepResearch.state.loadFailed", { error })}
+            </Text>
+          </VStack>
+        </Container>
+      </Box>
     )
   }
 
   return (
-    <Box bg={bgColor} minH="100vh">
-      <MiddayHead />
+    <Box
+      bg={bgColor}
+      minH="100vh"
+      onClickCapture={(e) => {
+        if (!isEmbedded) return
+        const target = e.target as HTMLElement | null
+        const clickable = target?.closest?.('a,button,[role="button"]')
+        if (!clickable) return
+        e.preventDefault()
+        e.stopPropagation()
+        redirectToAuth()
+      }}
+    >
+      {isEmbedded ? null : <MiddayHead />}
       <Container maxW="7xl" py={8}>
         <VStack gap={8}>
           {/* 页面头部 */}
@@ -365,4 +423,5 @@ const AIDeepResearchIndex: React.FC = () => {
 
 export const Route = createFileRoute("/ai-deep-research/")({
   component: AIDeepResearchIndex,
+  validateSearch: (search) => aiDeepResearchSearchSchema.parse(search),
 })

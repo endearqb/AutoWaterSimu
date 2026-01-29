@@ -8,9 +8,10 @@ import { useI18n } from "@/i18n"
 
 type Props = {
   data: BlogPost
+  embed?: string
 }
 
-export function Article({ data }: Props) {
+export function Article({ data, embed }: Props) {
   const { language } = useI18n()
   const locale = language === "zh" ? "zh-CN" : "en-US"
   const publishedAt = new Date(data.metadata.publishedAt)
@@ -47,7 +48,11 @@ export function Article({ data }: Props) {
       </Badge>
 
       {/* Title with Link */}
-      <Link to="/updates/$slug" params={{ slug: data.slug }}>
+      <Link
+        to="/updates/$slug"
+        params={{ slug: data.slug }}
+        search={embed ? { embed } : {}}
+      >
         <Heading
           as="h2"
           size="xl"

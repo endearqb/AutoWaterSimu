@@ -4,6 +4,20 @@ import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import { Article } from "../../components/Updates/Article"
 import { getBlogPosts } from "../../utils/blog"
 import { useI18n } from "@/i18n"
+import { z } from "zod"
+
+const updatesSearchSchema = z.object({
+  embed: z.coerce.string().optional(),
+})
+
+function redirectToAuth() {
+  const target = "/login"
+  try {
+    window.top?.location.assign(target)
+  } catch {
+    window.location.assign(target)
+  }
+}
 
 export const Route = createFileRoute("/updates/")({
   component: UpdatesPage,
@@ -11,11 +25,14 @@ export const Route = createFileRoute("/updates/")({
     const posts = await getBlogPosts()
     return { posts }
   },
+  validateSearch: (search) => updatesSearchSchema.parse(search),
 })
 
 function UpdatesPage() {
   const { posts } = Route.useLoaderData()
   const { t } = useI18n()
+  const { embed } = Route.useSearch()
+  const isEmbedded = embed === "1" || embed === "true"
   const sortedPosts = posts.sort(
     (a, b) =>
       new Date(b.metadata.publishedAt).getTime() -
@@ -27,9 +44,18 @@ function UpdatesPage() {
       minH="100vh"
       bg={{ base: "hsl(192,85%,99.5%)", _dark: "gray.900" }}
       overflowX="hidden"
+      onClickCapture={(e) => {
+        if (!isEmbedded) return
+        const target = e.target as HTMLElement | null
+        const clickable = target?.closest?.('a,button,[role="button"]')
+        if (!clickable) return
+        e.preventDefault()
+        e.stopPropagation()
+        redirectToAuth()
+      }}
     >
-      <MiddayHead />
-      <Box pt="82px">
+      {isEmbedded ? null : <MiddayHead />}
+      <Box pt={isEmbedded ? 0 : "82px"}>
         {" "}
         {/* 为固定header留出空间: 50px(header高度) + 16px(top) + 16px(额外间距) */}
         <Container maxW="4xl" py={8}>
@@ -60,7 +86,11 @@ function UpdatesPage() {
           {/* Articles */}
           <VStack gap={0} align="stretch">
             {sortedPosts.map((post) => (
-              <Article key={post.slug} data={post} />
+              <Article
+                key={post.slug}
+                data={post}
+                embed={isEmbedded ? "1" : undefined}
+              />
             ))}
           </VStack>
 
