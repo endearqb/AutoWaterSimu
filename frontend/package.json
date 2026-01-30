@@ -29,7 +29,7 @@
     "@visx/scale": "^3.12.0",
     "@visx/shape": "^3.12.0",
     "@visx/tooltip": "^3.12.0",
-    "@xyflow/react": "^12.8.2",
+    "@xyflow/react": "^12.10.0",
     "@zumer/snapdom": "^1.9.14",
     "autoprefixer": "^10.4.21",
     "axios": "^1.12.2",
