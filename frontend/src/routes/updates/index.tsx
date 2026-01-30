@@ -33,11 +33,11 @@ function UpdatesPage() {
   const { t } = useI18n()
   const { embed } = Route.useSearch()
   const isEmbedded = embed === "1" || embed === "true"
-  const sortedPosts = posts.sort(
-    (a, b) =>
-      new Date(b.metadata.publishedAt).getTime() -
-      new Date(a.metadata.publishedAt).getTime(),
-  )
+  const sortedPosts = posts.sort((a, b) => {
+    const ta = a.metadata.publishedAt ? Date.parse(a.metadata.publishedAt) : 0
+    const tb = b.metadata.publishedAt ? Date.parse(b.metadata.publishedAt) : 0
+    return tb - ta
+  })
 
   return (
     <Box

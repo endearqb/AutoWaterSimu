@@ -1,4 +1,16 @@
-# AutoWaterSimu
+﻿# AutoWaterSimu
+
+- English: `README.en.md`
+- 中文：`README.zh.md`
+
+## Core Diagram (AI‑generated)
+
+多池仿真模拟的核心实现逻辑（后端核心代码的手绘计算式，由 AI 生成）：
+
+![](frontend/public/assets/images/handwriting.jpeg)
+
+---
+
 
 一个自动化水循环模拟系统，用于模拟和分析水循环和水处理过程。  
 基于 FastAPI + React 的全栈架构，支持工艺流程建模、ASM 动力学模拟和物料平衡分析。

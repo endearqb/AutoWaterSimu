@@ -24,10 +24,13 @@ const componentModules = import.meta.glob("/src/data/updates/**/*.mdx", {
 }) as Record<string, { default: ComponentType }>
 
 // 原文字符串模块（用于解析 frontmatter）
-const rawModules = import.meta.glob("/src/data/updates/**/*.mdx?raw", {
+// 使用 `query: "?raw"` 以保证 key 与 componentModules 一致。
+// 注意：不同 Vite/插件组合下，`import: "default"` 可能仍返回模块对象而非纯字符串，这里在读取时做兼容处理。
+const rawModules = import.meta.glob("/src/data/updates/**/*.mdx", {
   eager: true,
+  query: "?raw",
   import: "default",
-}) as Record<string, string>
+}) as Record<string, unknown>
 
 function toPosix(p: string): string {
   return p.replace(/\\/g, "/")
@@ -43,8 +46,18 @@ export async function getBlogPosts(language?: Language): Promise<BlogPost[]> {
       const key = toPosix(filePath)
       const fileName = key.split("/").pop()!
       const slug = fileName.replace(/\.mdx$/, "")
-      const raw = rawModules[`${key}?raw`] ?? rawModules[key] ?? ""
-      const { data, content } = matter(raw ?? "")
+      const rawMod = rawModules[key]
+      const raw =
+        typeof rawMod === "string"
+          ? rawMod
+          : rawMod &&
+              typeof rawMod === "object" &&
+              "default" in rawMod &&
+              typeof (rawMod as { default?: unknown }).default === "string"
+            ? ((rawMod as { default: string }).default ?? "")
+            : ""
+
+      const { data, content } = matter(raw)
 
       const metadata: Metadata = {
         title: data?.title ?? slug,
