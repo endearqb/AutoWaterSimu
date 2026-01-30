@@ -1,5 +1,7 @@
 # AutoWaterSimu 发布说明
 
+更新记录记录在  frontend\src\data\updates
+
 本文件用于记录 AutoWaterSimu 项目的版本变更，方便回顾和排查问题。
 
 ## 如何使用本文件
