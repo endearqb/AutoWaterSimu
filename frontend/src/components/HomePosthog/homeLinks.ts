@@ -25,7 +25,7 @@ export type DesktopIconLink = {
 export const topNavLinks: NavLink[] = [
   { label: "Product OS", to: "/openflow" },
   { label: "Pricing", to: "/calculators" },
-  { label: "Docs", to: "/knowledge" },
+  { label: "Knowledge (DeepResearch)", to: "/docs" },
   { label: "Community", to: "/updates" },
   { label: "Company", to: "/showcase" },
 ]
