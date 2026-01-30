@@ -218,12 +218,12 @@ For more details on test commands and configuration, refer to the README or `pac
 
 | Item | Planned Work | Status |
 | --- | --- | --- |
-| 1 | Full Docker Compose pipeline running end‑to‑end (including DB) | In progress |
-| 2 | Clean up sensitive/redundant tables and intermediate files | In progress |
-| 3 | One‑click simulation for a minimal example case + smoke test CI, add i18n | In progress |
+| 1 | Full Docker Compose pipeline running end‑to‑end (including DB) | Complete |
+| 2 | Clean up sensitive/redundant tables and intermediate files | Almost Complete |
+| 3 | One‑click simulation for a minimal example case + smoke test CI, add i18n | Complete |
 | 4 | Continuous influent (time‑series input) |  |
-| 5 | Initial refactor of core module (decouple `core.py` into maintainable structure) |  |
-| 6 | One‑dimensional settling tank model |  |
+| 5 | Initial refactor of core module (decouple `core.py` into maintainable structure) | In progress |
+| 6 | One‑dimensional settling tank model | In progress |
 | 7 | pH calculation |  |
 | 8 | Temperature correction for parameters |  |
 | 9 | Add more open‑source models |  |
