@@ -5,6 +5,7 @@ import {
   getSimulationConfig,
   validateCalculationParameters,
 } from "../../../config/simulationConfig"
+import { useI18n } from "../../../i18n"
 import {
   getJobStatusText as asm1GetJobStatusText,
   isJobCompleted as asm1IsJobCompleted,
@@ -33,7 +34,6 @@ import {
   isJobRunning as materialBalanceIsJobRunning,
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
-import { useI18n } from "../../../i18n"
 
 type SimulationModelStore = Pick<
   BaseModelState<any, any, any, any, any>,

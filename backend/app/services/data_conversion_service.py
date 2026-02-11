@@ -143,6 +143,13 @@ class DataConversionService:
             node_type = node_data.get('type', 'default')
             node_type = NODETYPE_NAME_MAP.get(node_type, node_type)
             data = node_data.get('data', {})
+            udm_model_payload = node_data.get('udmModel') or data.get('udmModel') or {}
+            udm_snapshot_payload = node_data.get('udmModelSnapshot') or data.get('udmModelSnapshot')
+            udm_components_payload = node_data.get('udmComponents') or data.get('udmComponents')
+            if not udm_components_payload and isinstance(udm_snapshot_payload, dict):
+                udm_components_payload = udm_snapshot_payload.get('components')
+            if not udm_components_payload and isinstance(udm_model_payload, dict):
+                udm_components_payload = udm_model_payload.get('components')
             
             # 确定节点类型
             is_inlet = node_type == 'input'
@@ -179,7 +186,17 @@ class DataConversionService:
                     initial_concentrations.append(concentration)
             else:
                 # 如果没有自定义参数，使用默认的单组分系统
-                initial_concentrations = [1.0]
+                if node_type == 'udm' and isinstance(udm_components_payload, list):
+                    for component in udm_components_payload:
+                        if not isinstance(component, dict):
+                            continue
+                        raw_default = component.get('default_value', component.get('defaultValue', 0.0))
+                        try:
+                            initial_concentrations.append(float(raw_default))
+                        except (ValueError, TypeError):
+                            initial_concentrations.append(0.0)
+                if not initial_concentrations:
+                    initial_concentrations = [1.0]
             
             # 获取节点位置信息
             position = node_data.get('position', {'x': 0, 'y': 0})
@@ -276,6 +293,123 @@ class DataConversionService:
                             asm3_parameters.append(0.0)
                     # print(f"节点 {node_id} ASM3参数: {asm3_parameters}")
             
+            # 澶勭悊UDM鍙傛暟锛堜粎瀵筺dm绫诲瀷鑺傜偣锛?
+            udm_model_id = None
+            udm_model_version = None
+            udm_model_hash = None
+            udm_component_names = None
+            udm_processes = None
+            udm_parameter_values = None
+            udm_model_snapshot = None
+
+            if node_type == 'udm':
+                if isinstance(udm_model_payload, dict):
+                    udm_model_id = (
+                        udm_model_payload.get('id')
+                        or udm_model_payload.get('modelId')
+                        or node_data.get('udmModelId')
+                        or data.get('udmModelId')
+                    )
+                    raw_version = (
+                        udm_model_payload.get('version')
+                        or udm_model_payload.get('currentVersion')
+                        or node_data.get('udmModelVersion')
+                        or data.get('udmModelVersion')
+                    )
+                    raw_hash = (
+                        udm_model_payload.get('hash')
+                        or udm_model_payload.get('contentHash')
+                        or udm_model_payload.get('content_hash')
+                        or node_data.get('udmModelHash')
+                        or data.get('udmModelHash')
+                    )
+                    try:
+                        if raw_version is not None and raw_version != "":
+                            udm_model_version = int(raw_version)
+                    except (ValueError, TypeError):
+                        udm_model_version = None
+                    if raw_hash is not None:
+                        udm_model_hash = str(raw_hash)
+
+                raw_component_names = node_data.get('udmComponentNames') or data.get('udmComponentNames')
+                if isinstance(raw_component_names, list):
+                    names = [str(item).strip() for item in raw_component_names if str(item).strip()]
+                    if names:
+                        udm_component_names = names
+
+                if udm_component_names is None and isinstance(udm_components_payload, list):
+                    names = []
+                    for component in udm_components_payload:
+                        if not isinstance(component, dict):
+                            continue
+                        raw_name = component.get('name')
+                        if raw_name is None:
+                            continue
+                        name_str = str(raw_name).strip()
+                        if name_str:
+                            names.append(name_str)
+                    if names:
+                        udm_component_names = names
+
+                raw_processes = node_data.get('udmProcesses') or data.get('udmProcesses')
+                if raw_processes is None and isinstance(udm_snapshot_payload, dict):
+                    raw_processes = udm_snapshot_payload.get('processes')
+                if raw_processes is None and isinstance(udm_model_payload, dict):
+                    raw_processes = udm_model_payload.get('processes')
+                if isinstance(raw_processes, list):
+                    processes = [item for item in raw_processes if isinstance(item, dict)]
+                    if processes:
+                        udm_processes = processes
+
+                raw_param_values = (
+                    node_data.get('udmParameters')
+                    or node_data.get('udmParameterValues')
+                    or data.get('udmParameters')
+                    or data.get('udmParameterValues')
+                )
+                if raw_param_values is None and isinstance(udm_model_payload, dict):
+                    raw_param_values = udm_model_payload.get('parameterValues')
+
+                if isinstance(raw_param_values, dict):
+                    normalized_params = {}
+                    for key, value in raw_param_values.items():
+                        try:
+                            normalized_params[str(key)] = float(value)
+                        except (ValueError, TypeError):
+                            continue
+                    if normalized_params:
+                        udm_parameter_values = normalized_params
+
+                if udm_parameter_values is None and isinstance(udm_model_payload, dict):
+                    param_defs = udm_model_payload.get('parameters')
+                    if isinstance(param_defs, list):
+                        normalized_params = {}
+                        for param in param_defs:
+                            if not isinstance(param, dict):
+                                continue
+                            name = param.get('name')
+                            if not name:
+                                continue
+                            raw_default = param.get('default_value', param.get('defaultValue'))
+                            if raw_default is None:
+                                continue
+                            try:
+                                normalized_params[str(name)] = float(raw_default)
+                            except (ValueError, TypeError):
+                                continue
+                        if normalized_params:
+                            udm_parameter_values = normalized_params
+
+                if isinstance(udm_snapshot_payload, dict):
+                    udm_model_snapshot = udm_snapshot_payload
+                elif isinstance(udm_model_payload, dict):
+                    snapshot = {}
+                    for key in ('id', 'name', 'version', 'hash', 'components', 'parameters', 'processes', 'meta'):
+                        if key in udm_model_payload:
+                            snapshot[key] = udm_model_payload.get(key)
+                    if snapshot:
+                        udm_model_snapshot = snapshot
+
             node = NodeData(
                 node_id=node_id,
                 node_type=node_type,
@@ -286,7 +420,14 @@ class DataConversionService:
                 position=position,
                 asm1slim_parameters=asm1slim_parameters,
                 asm1_parameters=asm1_parameters,
-                asm3_parameters=asm3_parameters
+                asm3_parameters=asm3_parameters,
+                udm_model_id=udm_model_id,
+                udm_model_version=udm_model_version,
+                udm_model_hash=udm_model_hash,
+                udm_component_names=udm_component_names,
+                udm_processes=udm_processes,
+                udm_parameter_values=udm_parameter_values,
+                udm_model_snapshot=udm_model_snapshot,
             )
             nodes.append(node)
         

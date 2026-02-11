@@ -1,4 +1,5 @@
 import { useColorModeValue } from "@/components/ui/color-mode"
+import { useI18n } from "@/i18n"
 import {
   Box,
   Card,
@@ -10,7 +11,6 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React from "react"
-import { useI18n } from "@/i18n"
 
 interface SliderValues {
   ph: number // pH

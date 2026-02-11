@@ -163,10 +163,13 @@ export class FileValidationConfig {
       const maxSizeMB = maxSize / (1024 * 1024)
       const currentSizeMB = file.size / (1024 * 1024)
       errors.push(
-        `${t("file.validation.sizeExceeded")} ${t("file.validation.sizeExceededDetail", {
-          current: currentSizeMB.toFixed(1),
-          max: maxSizeMB,
-        })}`,
+        `${t("file.validation.sizeExceeded")} ${t(
+          "file.validation.sizeExceededDetail",
+          {
+            current: currentSizeMB.toFixed(1),
+            max: maxSizeMB,
+          },
+        )}`,
       )
     }
 

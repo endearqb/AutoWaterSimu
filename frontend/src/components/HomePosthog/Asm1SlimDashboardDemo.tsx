@@ -10,4 +10,3 @@ export function Asm1SlimDashboardDemo() {
     </Box>
   )
 }
-

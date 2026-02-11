@@ -348,7 +348,9 @@ function SuperDashboard() {
               <Card.Header>
                 <HStack>
                   <Icon as={FiTarget} />
-                  <Heading size="md">{t("superDashboard.flowchartDistribution")}</Heading>
+                  <Heading size="md">
+                    {t("superDashboard.flowchartDistribution")}
+                  </Heading>
                 </HStack>
               </Card.Header>
               <Card.Body>
@@ -362,7 +364,9 @@ function SuperDashboard() {
                     </Stat.ValueText>
                   </Stat.Root>
                   <Stat.Root>
-                    <Stat.Label>{t("superDashboard.asm1Flowcharts")}</Stat.Label>
+                    <Stat.Label>
+                      {t("superDashboard.asm1Flowcharts")}
+                    </Stat.Label>
                     <Stat.ValueText>
                       {stats?.content_stats?.flowcharts?.asm1 || 0}
                     </Stat.ValueText>
@@ -384,7 +388,9 @@ function SuperDashboard() {
               <Card.Header>
                 <HStack>
                   <Icon as={FiBarChart} />
-                  <Heading size="md">{t("superDashboard.jobDistribution")}</Heading>
+                  <Heading size="md">
+                    {t("superDashboard.jobDistribution")}
+                  </Heading>
                 </HStack>
               </Card.Header>
               <Card.Body>

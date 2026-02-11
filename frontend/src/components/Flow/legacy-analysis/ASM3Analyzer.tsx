@@ -2,8 +2,8 @@ import { Box, Tabs } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
 import { useState } from "react"
 
-import type { ASM3ResultData } from "./asm3-analysis"
 import { useI18n } from "../../../i18n"
+import type { ASM3ResultData } from "./asm3-analysis"
 import AIReportPanel from "./panels/AIReportPanel"
 import DataQualityPanel from "./panels/DataQualityPanel"
 import EdgeConcentrationPanel from "./panels/EdgeConcentrationPanel"
@@ -54,7 +54,9 @@ const ASM3Analyzer = ({
           <Tabs.Trigger value="tab-2">
             {t("flow.analysis.tabs.edgeConcentration")}
           </Tabs.Trigger>
-          <Tabs.Trigger value="tab-3">{t("flow.analysis.tabs.aiReport")}</Tabs.Trigger>
+          <Tabs.Trigger value="tab-3">
+            {t("flow.analysis.tabs.aiReport")}
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="tab-0">

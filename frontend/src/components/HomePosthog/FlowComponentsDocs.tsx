@@ -1,12 +1,21 @@
-import { Box, Button, Flex, Heading, HStack, Portal, Text, VStack } from "@chakra-ui/react"
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Heading,
+  Portal,
+  Text,
+  VStack,
+} from "@chakra-ui/react"
 import { ReactFlowProvider } from "@xyflow/react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import Canvas from "@/components/Flow/Canvas"
 import InspectorContainer from "@/components/Flow/inspectorbar/InspectorContainer"
 import SimulationPanel from "@/components/Flow/inspectorbar/SimulationPanel"
-import ResultsPanel from "@/components/Flow/toolbar/ResultsPanel"
 import NodePalette from "@/components/Flow/toolbar/NodePalette"
+import ResultsPanel from "@/components/Flow/toolbar/ResultsPanel"
 import { useI18n } from "@/i18n"
 import useFlowStore from "@/stores/flowStore"
 
@@ -14,7 +23,7 @@ type FlowDocsPanelId = "nodeToolbar" | "inspector" | "simulation" | "analysis"
 
 const SAMPLE_JSON_URL = "/assets/json/ZLD.json"
 const SAMPLE_NAME = "ZLD"
-const SAMPLE_MODEL_TYPE: "materialBalance" = "materialBalance"
+const SAMPLE_MODEL_TYPE = "materialBalance" as const
 
 type FlowStoreSnapshot = {
   nodes: unknown
@@ -70,15 +79,12 @@ export function FlowComponentsDocs() {
   const { t } = useI18n()
   const [active, setActive] = useState<FlowDocsPanelId>("nodeToolbar")
   const [sampleFinalValues, setSampleFinalValues] = useState<any>(null)
-  const [bubble, setBubble] = useState<
-    | {
-        x: number
-        y: number
-        title: string
-        body: string
-      }
-    | null
-  >(null)
+  const [bubble, setBubble] = useState<{
+    x: number
+    y: number
+    title: string
+    body: string
+  } | null>(null)
   const snapshotRef = useRef<FlowStoreSnapshot | null>(null)
   const canvasRef = useRef<HTMLDivElement | null>(null)
 
@@ -209,7 +215,9 @@ export function FlowComponentsDocs() {
     document.addEventListener("mousedown", onMouseDown, { capture: true })
     return () => {
       window.removeEventListener("keydown", onKeyDown)
-      document.removeEventListener("mousedown", onMouseDown, { capture: true } as any)
+      document.removeEventListener("mousedown", onMouseDown, {
+        capture: true,
+      } as any)
     }
   }, [bubble])
 
@@ -304,7 +312,12 @@ export function FlowComponentsDocs() {
           <Text fontSize="sm" color="gray.700">
             {t("posthogDemo.flowDocs.panel.inspector.body")}
           </Text>
-          <Box borderWidth="1px" borderColor="rgba(0,0,0,0.12)" borderRadius="md" p={3}>
+          <Box
+            borderWidth="1px"
+            borderColor="rgba(0,0,0,0.12)"
+            borderRadius="md"
+            p={3}
+          >
             <InspectorContainer />
           </Box>
         </VStack>
@@ -327,23 +340,22 @@ export function FlowComponentsDocs() {
 
     return (
       <VStack align="stretch" gap={3}>
-        <Heading size="sm">{t("posthogDemo.flowDocs.panel.analysis.title")}</Heading>
+        <Heading size="sm">
+          {t("posthogDemo.flowDocs.panel.analysis.title")}
+        </Heading>
         <Text fontSize="sm" color="gray.700">
           {t("posthogDemo.flowDocs.panel.analysis.body")}
         </Text>
-        <ResultsPanel modelType={SAMPLE_MODEL_TYPE} modelStore={demoModelStore} />
+        <ResultsPanel
+          modelType={SAMPLE_MODEL_TYPE}
+          modelStore={demoModelStore}
+        />
       </VStack>
     )
   }
 
   return (
-    <Flex
-      w="full"
-      h="full"
-      overflow="hidden"
-      bg="white"
-      data-flow-theme-scope
-    >
+    <Flex w="full" h="full" overflow="hidden" bg="white" data-flow-theme-scope>
       <Box ref={canvasRef} flex="1" minW={0} position="relative" bg="white">
         <ReactFlowProvider>
           <Canvas />
@@ -384,7 +396,12 @@ export function FlowComponentsDocs() {
         bg="rgba(248,247,244,0.92)"
         overflow="hidden"
       >
-        <Box px={4} py={3} borderBottomWidth="1px" borderBottomColor="rgba(0,0,0,0.12)">
+        <Box
+          px={4}
+          py={3}
+          borderBottomWidth="1px"
+          borderBottomColor="rgba(0,0,0,0.12)"
+        >
           <Heading size="sm" color="gray.800">
             {t("posthogDemo.flowDocs.title")}
           </Heading>
@@ -406,7 +423,13 @@ export function FlowComponentsDocs() {
             ))}
           </HStack>
 
-          <HStack gap={2} mt={3} flexWrap="wrap" justify="space-between" align="center">
+          <HStack
+            gap={2}
+            mt={3}
+            flexWrap="wrap"
+            justify="space-between"
+            align="center"
+          >
             <Button
               asChild
               size="xs"

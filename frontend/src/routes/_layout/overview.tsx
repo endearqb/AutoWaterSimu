@@ -268,9 +268,7 @@ function Overview() {
                         : t("overview.predictedWater")
                     return [`${value.toFixed(1)}m³`, label]
                   }}
-                  labelFormatter={(label) =>
-                    t("overview.timeLabel", { label })
-                  }
+                  labelFormatter={(label) => t("overview.timeLabel", { label })}
                   wrapperStyle={{ zIndex: 1000 }}
                 />
                 <Legend

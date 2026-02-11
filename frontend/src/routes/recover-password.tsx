@@ -8,9 +8,9 @@ import { type ApiError, LoginService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
-import { useI18n } from "@/i18n"
 import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useI18n } from "@/i18n"
 import { getEmailPattern, handleError } from "@/utils"
 
 interface FormData {
@@ -73,9 +73,7 @@ function RecoverPassword() {
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
         {t("auth.recoverTitle")}
       </Heading>
-      <Text textAlign="center">
-        {t("auth.recoverDescription")}
-      </Text>
+      <Text textAlign="center">{t("auth.recoverDescription")}</Text>
       <Field invalid={!!errors.email} errorText={errors.email?.message}>
         <InputGroup w="100%" startElement={<FiMail />}>
           <Input

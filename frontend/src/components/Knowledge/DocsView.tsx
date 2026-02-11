@@ -1,6 +1,7 @@
 import { KnowledgeContent } from "@/components/Knowledge/KnowledgeContent"
 import { KnowledgeLayout } from "@/components/Knowledge/KnowledgeLayout"
 import { KnowledgeSidebar } from "@/components/Knowledge/KnowledgeSidebar"
+import { useColorModeValue } from "@/components/ui/color-mode"
 import {
   DrawerBackdrop,
   DrawerBody,
@@ -10,7 +11,6 @@ import {
   DrawerRoot,
   DrawerTitle,
 } from "@/components/ui/drawer"
-import { useColorModeValue } from "@/components/ui/color-mode"
 import {
   KNOWLEDGE_DEFAULT_SLUG,
   knowledgeEntries,

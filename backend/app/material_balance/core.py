@@ -39,6 +39,7 @@ from .asm import (
     asm2d_rates,
     asm2d_dC_dt,
 )
+from .udm_engine import UDMNodeRuntime, build_udm_runtime_payload
 
 
 class MaterialBalanceCalculator:
@@ -206,6 +207,18 @@ class MaterialBalanceCalculator:
                 asm3_param_rows.append(default_param_asm3.tolist())
         asm3_params = torch.tensor(asm3_param_rows, dtype=dtype, device=device)
 
+        # 创建UDM节点掩码并预编译表达式
+        udm_mask = torch.tensor(
+            [n.node_type == 'udm' for n in nodes],
+            dtype=torch.bool, device=device
+        )
+        udm_runtime_payload = build_udm_runtime_payload(
+            nodes=nodes,
+            num_components=n_components,
+            device=device,
+            dtype=dtype,
+        )
+
 
         # 2) 节点映射
         node_map = {node.node_id: i for i, node in enumerate(nodes)}
@@ -230,6 +243,7 @@ class MaterialBalanceCalculator:
                 "asm1slim_mask": asm1slim_mask, "asm1slim_params": asm1slim_params,
                 "asm1_mask": asm1_mask, "asm1_params": asm1_params,
                 "asm3_mask": asm3_mask, "asm3_params": asm3_params,
+                "udm_mask": udm_mask, "udm_runtime_payload": udm_runtime_payload,
                 "sparse_bundle": sparse_bundle
             }
 
@@ -289,6 +303,8 @@ class MaterialBalanceCalculator:
             "asm1_params": asm1_params,
             "asm3_mask": asm3_mask,
             "asm3_params": asm3_params, 
+            "udm_mask": udm_mask,
+            "udm_runtime_payload": udm_runtime_payload,
             "sparse_bundle": sparse_bundle,
         }
     
@@ -329,6 +345,9 @@ class MaterialBalanceCalculator:
             # 获取ASM3相关参数
             asm3_params = tensors.get('asm3_params', None)
             asm3_mask = tensors.get('asm3_mask', None)
+            # 获取UDM相关载荷
+            udm_mask = tensors.get('udm_mask', None)
+            udm_runtime_payload = tensors.get('udm_runtime_payload', None)
             
             # Run simulation
             result = self._run_hours(
@@ -341,6 +360,8 @@ class MaterialBalanceCalculator:
                 asm1_mask=asm1_mask,
                 asm3_params=asm3_params,
                 asm3_mask=asm3_mask,
+                udm_mask=udm_mask,
+                udm_runtime_payload=udm_runtime_payload,
                 sparse_bundle=sparse_bundle,
                 sampling_interval_hours=getattr(params, 'sampling_interval_hours', None)
             )
@@ -704,6 +725,56 @@ class MaterialBalanceCalculator:
         
         return dy_extended
 
+    def _udm_ode_balance(
+        self,
+        t: float,
+        y_extended: torch.Tensor,
+        m: int,
+        prop_a: torch.Tensor,
+        prop_b: torch.Tensor,
+        Q_out: torch.Tensor,
+        compute_mask: torch.Tensor,
+        udm_mask: torch.Tensor,
+        udm_runtime_payload: List[UDMNodeRuntime],
+        sparse_bundle: dict = None,
+    ) -> torch.Tensor:
+        y = y_extended[:, :-1]
+        V_liq = y_extended[:, -1]
+
+        y = torch.clamp(y, min=0)
+        V_liq = torch.clamp(V_liq, min=1e-6)
+
+        if sparse_bundle is not None:
+            delta_m, delta_Q = self._balance_param_sparse(y, sparse_bundle)
+        else:
+            delta_m, delta_Q = self._balance_param(y, Q_out, prop_a, prop_b)[:2]
+
+        dy_extended = torch.zeros_like(y_extended)
+
+        dilution_term = -y * delta_Q.unsqueeze(-1) / V_liq.unsqueeze(-1)
+        concentration_change = delta_m / V_liq.unsqueeze(-1) + dilution_term
+
+        udm_reaction_change = torch.zeros_like(concentration_change)
+        for runtime in udm_runtime_payload:
+            node_idx = runtime.node_index
+            if node_idx < 0 or node_idx >= y.shape[0]:
+                continue
+            if udm_mask is not None and not bool(udm_mask[node_idx].item()):
+                continue
+            reaction = runtime.evaluate_reaction(y[node_idx])
+            udm_reaction_change[node_idx, :] = reaction
+
+        concentration_change = concentration_change + udm_reaction_change
+
+        mask_expanded = compute_mask.unsqueeze(-1).expand_as(concentration_change)
+        dy_extended[:, :-1] = torch.where(
+            mask_expanded,
+            concentration_change,
+            torch.zeros_like(concentration_change),
+        )
+        dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
+        return dy_extended
+
     def _run_hours(self, hours: float, x0: torch.Tensor, Q_out: torch.Tensor, 
                   m: int, steps: int, prop_a: torch.Tensor, prop_b: torch.Tensor,
                   method: str = 'rk4', tolerance: float = 1e-3, 
@@ -711,6 +782,8 @@ class MaterialBalanceCalculator:
                   asm1slim_mask: torch.Tensor = None, sparse_bundle: dict = None,
                   asm1_params: torch.Tensor = None, asm1_mask: torch.Tensor = None,
                   asm3_params: torch.Tensor = None, asm3_mask: torch.Tensor = None,
+                  udm_mask: torch.Tensor = None,
+                  udm_runtime_payload: List[UDMNodeRuntime] = None,
                   sampling_interval_hours: float = None) -> torch.Tensor:
 
         """运行指定小时数的模拟。
@@ -735,6 +808,8 @@ class MaterialBalanceCalculator:
             asm3_params: ASM3 参数
             asm3_mask: ASM3 节点掩码
             sparse_bundle: 稀疏矩阵束
+            udm_mask: UDM 节点掩码
+            udm_runtime_payload: UDM 运行时载荷
 
         Returns:
             时间序列结果张量
@@ -836,6 +911,34 @@ class MaterialBalanceCalculator:
                 return x
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e        
+
+        elif udm_mask is not None and udm_mask.any() and udm_runtime_payload:
+            ode_modified = functools.partial(
+                self._udm_ode_balance,
+                Q_out=Q_out,
+                m=m,
+                prop_a=prop_a,
+                prop_b=prop_b,
+                compute_mask=compute_mask,
+                udm_mask=udm_mask,
+                udm_runtime_payload=udm_runtime_payload,
+                sparse_bundle=sparse_bundle,
+            )
+            try:
+                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
+                x = torch.clamp(x, min=0)
+
+                if sampling_interval_hours is not None and sampling_interval_hours > 0:
+                    sampling_interval = int(sampling_interval_hours * steps)
+                    if sampling_interval > 1:
+                        sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
+                        if sample_indices[-1] != x.shape[0] - 1:
+                            sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
+                        x = x[sample_indices]
+
+                return x
+            except Exception as e:
+                raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
         else:
 

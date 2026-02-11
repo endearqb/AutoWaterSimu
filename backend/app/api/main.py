@@ -1,6 +1,24 @@
 from fastapi import APIRouter
 
-from app.api.routes import asm1, asm1_flowcharts, asm1slim, asm1slim_flowcharts, asm3, asm3_flowcharts, flowcharts, items, login, material_balance, private, stats, users, utils
+from app.api.routes import (
+    asm1,
+    asm1_flowcharts,
+    asm1slim,
+    asm1slim_flowcharts,
+    asm3,
+    asm3_flowcharts,
+    flowcharts,
+    items,
+    login,
+    material_balance,
+    private,
+    stats,
+    udm,
+    udm_flowcharts,
+    udm_models,
+    users,
+    utils,
+)
 from app.api.v1 import simple_websocket
 from app.core.config import settings
 
@@ -17,6 +35,9 @@ api_router.include_router(material_balance.router, prefix="/material-balance", t
 api_router.include_router(asm1slim.router, prefix="/asm1slim", tags=["asm1slim"])
 api_router.include_router(asm1.router, prefix="/asm1", tags=["asm1"])
 api_router.include_router(asm3.router, prefix="/asm3", tags=["asm3"])
+api_router.include_router(udm.router, prefix="/udm", tags=["udm"])
+api_router.include_router(udm_flowcharts.router)
+api_router.include_router(udm_models.router)
 api_router.include_router(simple_websocket.router, prefix="/simple-ws", tags=["simple-websocket"])
 api_router.include_router(stats.router)
 

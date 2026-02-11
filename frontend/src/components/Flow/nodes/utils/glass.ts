@@ -15,6 +15,7 @@ export type GlassTint =
   | "asm1"
   | "asm3"
   | "asmslim"
+  | "udm"
   | "cash"
   | "goal"
   | "traffic"
@@ -32,6 +33,7 @@ const GLASS_BG: Record<GlassTint, string> = {
   asm1: "var(--chakra-colors-glass-tint-asm1, hsla(143,58%,46%,0.45))",
   asm3: "var(--chakra-colors-glass-tint-asm3, hsla(224,64%,56%,0.45))",
   asmslim: "var(--chakra-colors-glass-tint-asmslim, hsla(142,54%,58%,0.45))",
+  udm: "var(--chakra-colors-glass-tint-udm, hsla(24,72%,56%,0.45))",
   cash: "var(--chakra-colors-glass-tint-cash, hsla(158,58%,58%,0.45))",
   goal: "var(--chakra-colors-glass-tint-goal, hsla(38,78%,60%,0.45))",
   traffic: "var(--chakra-colors-glass-tint-traffic, hsla(158,58%,56%,0.45))",
@@ -46,6 +48,7 @@ const OUTLINE_COLORS: Record<GlassTint, string> = {
   asm3: "var(--chakra-colors-glass-outline-asm3, hsla(224, 64%, 56%, 0.7))",
   asmslim:
     "var(--chakra-colors-glass-outline-asmslim, hsla(142, 54%, 58%, 0.7))",
+  udm: "var(--chakra-colors-glass-outline-udm, hsla(24, 72%, 56%, 0.72))",
   cash: "var(--chakra-colors-glass-outline-cash, hsla(158, 58%, 58%, 0.7))",
   goal: "var(--chakra-colors-glass-outline-goal, hsla(38, 78%, 60%, 0.7))",
   traffic:
@@ -61,6 +64,7 @@ const ACCENT_COLORS: Record<GlassTint, string> = {
   asm3: "var(--chakra-colors-glass-accent-asm3, hsla(224, 70%, 55%, 0.7))",
   asmslim:
     "var(--chakra-colors-glass-accent-asmslim, hsla(142, 65%, 50%, 0.7))",
+  udm: "var(--chakra-colors-glass-accent-udm, hsla(24, 78%, 52%, 0.78))",
   cash: "var(--chakra-colors-glass-accent-cash, hsla(158, 60%, 50%, 0.7))",
   goal: "var(--chakra-colors-glass-accent-goal, hsla(38, 80%, 55%, 0.75))",
   traffic:
@@ -76,6 +80,7 @@ const HANDLE_COLORS: Record<GlassTint, string> = {
   asm3: "var(--chakra-colors-glass-handle-asm3, hsla(224, 70%, 55%, 0.9))",
   asmslim:
     "var(--chakra-colors-glass-handle-asmslim, hsla(142, 65%, 52%, 0.9))",
+  udm: "var(--chakra-colors-glass-handle-udm, hsla(24, 80%, 50%, 0.92))",
   cash: "var(--chakra-colors-glass-handle-cash, hsla(158, 60%, 52%, 0.9))",
   goal: "var(--chakra-colors-glass-handle-goal, hsla(38, 80%, 55%, 0.9))",
   traffic:
@@ -320,6 +325,7 @@ const NODE_TINT_MAP: Record<string, GlassTint> = {
   asm1: "asm1",
   asm3: "asm3",
   asmslim: "asmslim",
+  udm: "udm",
   cashWallet: "cash",
   goalProgress: "goal",
   trafficStats: "traffic",

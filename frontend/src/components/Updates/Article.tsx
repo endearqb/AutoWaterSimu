@@ -1,10 +1,10 @@
+import { useI18n } from "@/i18n"
 import { Badge, Box, Heading, Text } from "@chakra-ui/react"
 import { MDXProvider } from "@mdx-js/react"
 import { Link } from "@tanstack/react-router"
 import type { BlogPost } from "../../utils/blog"
 import { mdxComponents } from "../MDX/CustomMDX"
 import { Prose } from "../ui/prose"
-import { useI18n } from "@/i18n"
 
 type Props = {
   data: BlogPost

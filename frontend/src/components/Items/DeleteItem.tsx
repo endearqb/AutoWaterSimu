@@ -72,9 +72,7 @@ const DeleteItem = ({ id }: { id: string }) => {
             <DialogTitle>{t("items.deleteItemTitle")}</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>
-              {t("items.deleteItemDescription")}
-            </Text>
+            <Text mb={4}>{t("items.deleteItemDescription")}</Text>
           </DialogBody>
 
           <DialogFooter gap={2}>

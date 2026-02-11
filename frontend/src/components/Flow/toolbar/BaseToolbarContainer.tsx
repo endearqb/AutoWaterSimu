@@ -10,8 +10,8 @@
 import { useState } from "react"
 import type { ComponentType } from "react"
 import { FiChevronDown, FiChevronUp, FiLock, FiUnlock } from "react-icons/fi"
-import type { BaseModelState } from "../../../stores/baseModelStore"
 import { useI18n } from "../../../i18n"
+import type { BaseModelState } from "../../../stores/baseModelStore"
 import useFlowStore from "../../../stores/flowStore"
 import type { RFState } from "../../../stores/flowStore"
 import { createAnalysisButton } from "../legacy-analysis/AnalysisButtonFactory"
@@ -32,7 +32,7 @@ interface BaseToolbarContainerProps {
   store?: () => RFState // 可选的自定义store
   modelStore?: () => BaseModelState<any, any, any, any, any> // 可选的模型计算store
   nodesPanelComponent: ComponentType // 节点面板组件
-  modelType?: "asm1" | "asm1slim" | "materialBalance" | "asm3" // 模型类型
+  modelType?: "asm1" | "asm1slim" | "materialBalance" | "asm3" | "udm" // 模型类型
 }
 
 const BaseToolbarContainer = ({
@@ -65,20 +65,57 @@ const BaseToolbarContainer = ({
   const untitled = t("flow.menu.untitledFlowchart")
   const displayName = currentFlowChartName || untitled
 
+  const getUdmComponentCount = () => {
+    const seen = new Set<string>()
+    nodes.forEach((node) => {
+      if (node.type !== "udm") return
+      const nodeData = (node.data || {}) as Record<string, unknown>
+
+      const fromNames = nodeData.udmComponentNames
+      if (Array.isArray(fromNames)) {
+        fromNames.forEach((item) => {
+          const name = String(item || "").trim()
+          if (name) seen.add(name)
+        })
+      }
+
+      const fromComponents =
+        (nodeData.udmComponents as unknown[]) ||
+        ((nodeData.udmModelSnapshot as Record<string, unknown> | undefined)
+          ?.components as unknown[]) ||
+        ((nodeData.udmModel as Record<string, unknown> | undefined)
+          ?.components as unknown[])
+
+      if (Array.isArray(fromComponents)) {
+        fromComponents.forEach((item) => {
+          if (!item || typeof item !== "object") return
+          const name = String((item as Record<string, unknown>).name || "").trim()
+          if (name) seen.add(name)
+        })
+      }
+    })
+    return seen.size
+  }
+
   const getToolbarWidth = () => {
     if (toolbarView === "nodes") return "250px"
     if (toolbarView === "data" || toolbarView === "results") {
-      const allParamKeys = new Set<string>()
-      nodes.forEach((node) => {
-        if (node.data) {
-          Object.keys(node.data).forEach((key) => {
-            if (key !== "label" && key !== "volume") {
-              allParamKeys.add(key)
-            }
-          })
-        }
-      })
-      const paramCount = allParamKeys.size
+      const paramCount =
+        modelType === "udm"
+          ? getUdmComponentCount()
+          : (() => {
+              const allParamKeys = new Set<string>()
+              nodes.forEach((node) => {
+                if (node.data) {
+                  Object.keys(node.data).forEach((key) => {
+                    if (key !== "label" && key !== "volume") {
+                      allParamKeys.add(key)
+                    }
+                  })
+                }
+              })
+              return allParamKeys.size
+            })()
       const baseWidth = 120 + 80
       const paramWidth = paramCount * 80
       const totalWidth = baseWidth + paramWidth
@@ -175,9 +212,11 @@ const BaseToolbarContainer = ({
                     ? "green.500"
                     : modelType === "asm3"
                       ? "blue.700"
-                      : modelType === "materialBalance"
-                        ? "purple.600"
-                        : "gray.600"
+                      : modelType === "udm"
+                        ? "orange.600"
+                        : modelType === "materialBalance"
+                          ? "purple.600"
+                          : "gray.600"
               }
               border="1px solid"
               borderColor={
@@ -187,9 +226,11 @@ const BaseToolbarContainer = ({
                     ? "green.600"
                     : modelType === "asm3"
                       ? "blue.800"
-                      : modelType === "materialBalance"
-                        ? "purple.700"
-                        : "gray.700"
+                      : modelType === "udm"
+                        ? "orange.700"
+                        : modelType === "materialBalance"
+                          ? "purple.700"
+                          : "gray.700"
               }
             >
               {modelType === "asm1"
@@ -198,9 +239,11 @@ const BaseToolbarContainer = ({
                   ? "ASM1Slim"
                   : modelType === "asm3"
                     ? "ASM3"
-                    : modelType === "materialBalance"
-                      ? "MBalance"
-                      : "Flow"}
+                    : modelType === "udm"
+                      ? "UDM"
+                      : modelType === "materialBalance"
+                        ? "MBalance"
+                        : "Flow"}
             </Box>
 
             {isEditingName ? (

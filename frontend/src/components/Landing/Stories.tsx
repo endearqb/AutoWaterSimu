@@ -18,7 +18,7 @@ import {
 import { useState } from "react"
 import { FaPlay } from "react-icons/fa"
 // import { DotGrid } from '../ui/DotGrid';
-import { getStories, type Story } from "../../data/stories"
+import { type Story, getStories } from "../../data/stories"
 import { useI18n } from "../../i18n"
 import { DialogContent } from "../ui/dialog"
 

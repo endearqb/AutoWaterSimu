@@ -25,7 +25,10 @@ const Layout = ({ canvas, inspector, topOffset = 82 }: LayoutProps) => {
   } = useFlowStore()
   const [isInspectorOpen, setIsInspectorOpen] = useState(false)
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
-  const [toolbarPosition, setToolbarPosition] = useState({ x: 16, y: topOffset })
+  const [toolbarPosition, setToolbarPosition] = useState({
+    x: 16,
+    y: topOffset,
+  })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [sidebarWidth, setSidebarWidth] = useState(240)

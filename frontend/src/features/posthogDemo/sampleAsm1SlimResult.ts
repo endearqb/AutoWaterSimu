@@ -41,4 +41,3 @@ export const SAMPLE_ASM1SLIM_RESULT: ASM1SlimResultData = {
     convergence_status: "ok",
   },
 }
-

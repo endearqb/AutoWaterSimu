@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/dialog"
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
 import { useI18n } from "@/i18n"
+import { handleError } from "@/utils"
 
 const DeleteConfirmation = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -72,9 +72,7 @@ const DeleteConfirmation = () => {
               <DialogTitle>{t("userSettings.deleteConfirmTitle")}</DialogTitle>
             </DialogHeader>
             <DialogBody>
-              <Text mb={4}>
-                {t("userSettings.deleteConfirmBody")}
-              </Text>
+              <Text mb={4}>{t("userSettings.deleteConfirmBody")}</Text>
             </DialogBody>
 
             <DialogFooter gap={2}>

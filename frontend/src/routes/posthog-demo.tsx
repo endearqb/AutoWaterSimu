@@ -9,4 +9,3 @@ export const Route = createFileRoute("/posthog-demo")({
 function PosthogDemoPage() {
   return <PosthogLanding />
 }
-

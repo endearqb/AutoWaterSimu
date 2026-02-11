@@ -1,8 +1,8 @@
 import { Box, Tabs } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
 import { useState } from "react"
-import type { ASM1ResultData, EdgeParameterConfig } from "./asm1-analysis"
 import { useI18n } from "../../../i18n"
+import type { ASM1ResultData, EdgeParameterConfig } from "./asm1-analysis"
 import {
   AIReportPanel,
   DataQualityPanel,
@@ -59,7 +59,9 @@ const ASM1Analyzer = ({
           <Tabs.Trigger value="tab-2">
             {t("flow.analysis.tabs.edgeConcentration")}
           </Tabs.Trigger>
-          <Tabs.Trigger value="tab-3">{t("flow.analysis.tabs.aiReport")}</Tabs.Trigger>
+          <Tabs.Trigger value="tab-3">
+            {t("flow.analysis.tabs.aiReport")}
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="tab-0">

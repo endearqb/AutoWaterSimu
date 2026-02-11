@@ -132,9 +132,7 @@ test.describe("Edit user with invalid data", () => {
     await page.getByRole("button", { name: "Edit" }).click()
     await page.getByLabel("Email").fill(updatedEmail)
     await page.getByRole("button", { name: "Cancel" }).first().click()
-    await expect(
-      profilePanel.getByText(email, { exact: true }),
-    ).toBeVisible()
+    await expect(profilePanel.getByText(email, { exact: true })).toBeVisible()
   })
 })
 
@@ -156,7 +154,9 @@ test.describe("Change password successfully", () => {
     await page.goto("/settings")
     await page.getByRole("tab", { name: "Change Password" }).click()
     await page.getByPlaceholder("Current Password").fill(password)
-    await page.getByPlaceholder("New Password", { exact: true }).fill(NewPassword)
+    await page
+      .getByPlaceholder("New Password", { exact: true })
+      .fill(NewPassword)
     await page.getByPlaceholder("Confirm New Password").fill(NewPassword)
     await page.getByRole("button", { name: "Save" }).click()
     await expect(page.getByText("Password updated successfully.")).toBeVisible()
@@ -189,9 +189,7 @@ test.describe("Change password with invalid data", () => {
       .fill(weakPassword)
     await page.getByPlaceholder("Confirm New Password").fill(weakPassword)
     await page.locator("body").click()
-    await expect(
-      page.getByText("Must be at least 8 characters"),
-    ).toBeVisible()
+    await expect(page.getByText("Must be at least 8 characters")).toBeVisible()
   })
 
   test("New password and confirmation password do not match", async ({
@@ -234,7 +232,9 @@ test.describe("Change password with invalid data", () => {
     await page.getByPlaceholder("Confirm New Password").fill(password)
     await page.getByRole("button", { name: "Save" }).click()
     await expect(
-      page.getByText(/New password cannot be the same as the current one|Something went wrong\./),
+      page.getByText(
+        /New password cannot be the same as the current one|Something went wrong\./,
+      ),
     ).toBeVisible()
   })
 })

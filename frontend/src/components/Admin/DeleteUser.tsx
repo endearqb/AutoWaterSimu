@@ -70,9 +70,7 @@ const DeleteUser = ({ id }: { id: string }) => {
             <DialogTitle>{t("admin.deleteUserTitle")}</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>
-              {t("admin.deleteUserDescription")}
-            </Text>
+            <Text mb={4}>{t("admin.deleteUserDescription")}</Text>
           </DialogBody>
 
           <DialogFooter gap={2}>

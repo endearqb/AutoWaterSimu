@@ -15,8 +15,8 @@ import {
   FiSave,
   FiUpload,
 } from "react-icons/fi"
-import type { BaseModelState } from "../../../stores/baseModelStore"
 import { useI18n } from "../../../i18n"
+import type { BaseModelState } from "../../../stores/baseModelStore"
 import ConfirmDialog from "./ConfirmDialog"
 
 /**
@@ -65,6 +65,13 @@ export interface BaseBubbleMenuProps<TJob, TFlowChart> {
   LoadCalculationDataDialogComponent?: React.ComponentType<any>
   /** 加载计算数据对话框配置 */
   loadCalculationDataDialogConfig?: any
+  /** 额外菜单动作（用于模型特定入口） */
+  extraMenuItems?: Array<{
+    key: string
+    label: string
+    icon?: ReactNode
+    onClick: () => void
+  }>
 }
 
 /**
@@ -95,6 +102,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
   DialogManagerComponent,
   LoadCalculationDataDialogComponent,
   loadCalculationDataDialogConfig,
+  extraMenuItems = [],
 }: BaseBubbleMenuProps<TJob, TFlowChart>) => {
   const { t } = useI18n()
   const [isOpen, setIsOpen] = useState(false)
@@ -301,6 +309,30 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
       {/* 气泡菜单展开的选项 */}
       {isOpen && (
         <VStack gap={2} mb={3} align="start">
+          {extraMenuItems.map((item) => (
+            <Button
+              key={item.key}
+              size="sm"
+              variant="solid"
+              colorScheme="blue"
+              onClick={() => {
+                item.onClick()
+                setIsOpen(false)
+              }}
+              bg="white"
+              color="gray.700"
+              border="1px"
+              borderColor="gray.200"
+              boxShadow="md"
+              _hover={{ bg: "gray.50" }}
+              minW="120px"
+              justifyContent="flex-start"
+            >
+              {item.icon}
+              {item.label}
+            </Button>
+          ))}
+
           {/* 新建流程图按钮 */}
           <Button
             size="sm"

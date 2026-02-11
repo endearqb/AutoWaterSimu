@@ -591,9 +591,92 @@ export const simulationConfigs: Record<string, SimulationConfig> = {
       max_memory_mb: { min: 512, max: 4096, required: true },
     },
   },
+
+  udm: {
+    hours: {
+      min: 0.5,
+      max: 120,
+      step: 0.5,
+      defaultValue: 2,
+      visible: true,
+      label: "flow.simulation.hours",
+      unit: "flow.simulation.unit.hours",
+    },
+    stepsPerHour: {
+      min: 10,
+      max: 60,
+      step: 10,
+      defaultValue: 20,
+      visible: true,
+      label: "flow.simulation.stepsPerHour",
+    },
+    maxIterations: {
+      min: 100,
+      max: 5000,
+      step: 100,
+      defaultValue: 2000,
+      visible: false,
+      label: "flow.simulation.maxIterations",
+    },
+    maxMemoryMb: {
+      min: 512,
+      max: 4096,
+      step: 256,
+      defaultValue: 2048,
+      visible: false,
+      label: "flow.simulation.maxMemory",
+      unit: "MB",
+    },
+    samplingIntervalHours: {
+      type: "select",
+      options: [
+        { value: 0.5, label: "0.5" },
+        { value: 1, label: "1" },
+      ],
+      defaultValue: 1,
+      visible: true,
+      label: "flow.simulation.samplingInterval",
+      unit: "flow.simulation.unit.hours",
+    },
+    tolerance: {
+      type: "number",
+      defaultValue: 1e-3,
+      step: "1e-4",
+      visible: false,
+      label: "flow.simulation.tolerance",
+      placeholder: "1e-3",
+    },
+    solverMethod: {
+      type: "text",
+      defaultValue: "rk4",
+      readOnly: true,
+      visible: true,
+      label: "flow.simulation.solverMethod",
+      placeholder: "rk4",
+    },
+    defaultCalculationParams: {
+      hours: 2.0,
+      steps_per_hour: 20,
+      solver_method: "rk4",
+      tolerance: 1e-3,
+      max_iterations: 2000,
+      sampling_interval_hours: 1.0,
+      max_memory_mb: 2048,
+    },
+    validation: {
+      hours: { min: 0.5, max: 120, required: true },
+      steps_per_hour: { min: 10, max: 60, required: true },
+      solver_method: {
+        allowedValues: ["rk4", "scipy_solver", "euler"],
+        required: true,
+      },
+      tolerance: { min: 1e-6, max: 1e-2, required: true },
+      max_iterations: { min: 100, max: 5000, required: true },
+      max_memory_mb: { min: 512, max: 4096, required: true },
+    },
+  },
 }
 
 export const getSimulationConfig = (modelType: string): SimulationConfig => {
   return simulationConfigs[modelType] || simulationConfigs.materialBalance
 }
-

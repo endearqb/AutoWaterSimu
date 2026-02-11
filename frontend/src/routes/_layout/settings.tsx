@@ -9,10 +9,22 @@ import useAuth from "@/hooks/useAuth"
 import { useI18n } from "@/i18n"
 
 const tabsConfig = (t: (key: string) => string) => [
-  { value: "my-profile", title: t("userSettings.tabProfile"), component: UserInformation },
-  { value: "password", title: t("userSettings.tabPassword"), component: ChangePassword },
+  {
+    value: "my-profile",
+    title: t("userSettings.tabProfile"),
+    component: UserInformation,
+  },
+  {
+    value: "password",
+    title: t("userSettings.tabPassword"),
+    component: ChangePassword,
+  },
   // { value: "appearance", title: "Appearance", component: Appearance },
-  { value: "danger-zone", title: t("userSettings.tabDanger"), component: DeleteAccount },
+  {
+    value: "danger-zone",
+    title: t("userSettings.tabDanger"),
+    component: DeleteAccount,
+  },
 ]
 
 export const Route = createFileRoute("/_layout/settings")({
@@ -23,9 +35,7 @@ function UserSettings() {
   const { user: currentUser } = useAuth()
   const { t } = useI18n()
   const baseTabs = tabsConfig(t)
-  const finalTabs = currentUser?.is_superuser
-    ? baseTabs.slice(0, 2)
-    : baseTabs
+  const finalTabs = currentUser?.is_superuser ? baseTabs.slice(0, 2) : baseTabs
 
   if (!currentUser) {
     return null

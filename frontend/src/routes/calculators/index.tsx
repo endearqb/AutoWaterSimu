@@ -1,3 +1,4 @@
+import { useI18n } from "@/i18n"
 import { Box, Container, Text, VStack } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import type React from "react"
@@ -6,7 +7,6 @@ import AORCalculator from "../../components/calculators/AORCalculator"
 import { DWACalculator } from "../../components/calculators/DWACalculator"
 import { LSICalculator } from "../../components/calculators/LSICalculator"
 import StandardAO from "../../components/calculators/StandardAO"
-import { useI18n } from "@/i18n"
 
 const CalculatorsIndex: React.FC = () => {
   const { t } = useI18n()

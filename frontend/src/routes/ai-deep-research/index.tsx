@@ -1,4 +1,5 @@
 import { useColorModeValue } from "@/components/ui/color-mode"
+import { useI18n } from "@/i18n"
 import {
   Badge,
   Box,
@@ -26,7 +27,6 @@ import { z } from "zod"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import type { ArticleData } from "../../data/articles/types"
 import { useArticleData } from "../../hooks/useArticleData"
-import { useI18n } from "@/i18n"
 
 const aiDeepResearchSearchSchema = z.object({
   embed: z.coerce.string().optional(),
@@ -207,10 +207,7 @@ const AIDeepResearchIndex: React.FC = () => {
   }
 
   return (
-    <Box
-      bg={bgColor}
-      minH="100vh"
-    >
+    <Box bg={bgColor} minH="100vh">
       {isEmbedded ? null : <MiddayHead />}
       <Container maxW="7xl" py={8}>
         <VStack gap={8}>
@@ -269,7 +266,9 @@ const AIDeepResearchIndex: React.FC = () => {
                     <Select.Control>
                       <Select.Trigger>
                         <Select.ValueText
-                          placeholder={t("deepResearch.filters.categoryPlaceholder")}
+                          placeholder={t(
+                            "deepResearch.filters.categoryPlaceholder",
+                          )}
                         />
                       </Select.Trigger>
                       <Select.IndicatorGroup>

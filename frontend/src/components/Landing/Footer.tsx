@@ -27,7 +27,10 @@ export const Footer = () => {
   ]
 
   const features = [
-    { name: t("landing.footer.features.materialBalance"), href: "/materialbalance" },
+    {
+      name: t("landing.footer.features.materialBalance"),
+      href: "/materialbalance",
+    },
     { name: t("landing.footer.features.asm1"), href: "/asm1" },
     { name: t("landing.footer.features.asm1Slim"), href: "/asm1slim" },
     { name: t("landing.footer.features.dashboard"), href: "/dashboard" },
@@ -47,7 +50,10 @@ export const Footer = () => {
     { name: t("landing.footer.company.about"), href: "/about" },
     { name: t("landing.footer.company.team"), href: "/team" },
     { name: t("landing.footer.company.contact"), href: "/contact" },
-    { name: t("landing.footer.company.openSource"), href: "https://github.com/endearqb" },
+    {
+      name: t("landing.footer.company.openSource"),
+      href: "https://github.com/endearqb",
+    },
   ]
 
   return (
@@ -311,4 +317,3 @@ export const Footer = () => {
     </Box>
   )
 }
-

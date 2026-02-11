@@ -20,13 +20,9 @@ import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
-import { useI18n } from "@/i18n"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
-import {
-  confirmPasswordRules,
-  getEmailPattern,
-  passwordRules,
-} from "@/utils"
+import { useI18n } from "@/i18n"
+import { confirmPasswordRules, getEmailPattern, passwordRules } from "@/utils"
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,

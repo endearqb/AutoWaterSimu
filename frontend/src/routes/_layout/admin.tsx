@@ -7,13 +7,13 @@ import { type UserPublic, UsersService } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
 import { UserActionsMenu } from "@/components/Common/UserActionsMenu"
 import PendingUsers from "@/components/Pending/PendingUsers"
-import { useI18n } from "@/i18n"
 import {
   PaginationItems,
   PaginationNextTrigger,
   PaginationPrevTrigger,
   PaginationRoot,
 } from "@/components/ui/pagination.tsx"
+import { useI18n } from "@/i18n"
 
 const usersSearchSchema = z.object({
   page: z.number().catch(1),
@@ -63,12 +63,20 @@ function UsersTable() {
       <Table.Root size={{ base: "sm", md: "md" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader w="sm">{t("admin.fullNameLabel")}</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">{t("admin.emailLabel")}</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">
+              {t("admin.fullNameLabel")}
+            </Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">
+              {t("admin.emailLabel")}
+            </Table.ColumnHeader>
             <Table.ColumnHeader w="sm">{t("common.role")}</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">{t("admin.userTypeLabel")}</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">
+              {t("admin.userTypeLabel")}
+            </Table.ColumnHeader>
             <Table.ColumnHeader w="sm">{t("common.status")}</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">{t("common.actions")}</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">
+              {t("common.actions")}
+            </Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -86,7 +94,9 @@ function UsersTable() {
                 {user.email}
               </Table.Cell>
               <Table.Cell>
-                {user.is_superuser ? t("admin.roleSuperuser") : t("admin.roleUser")}
+                {user.is_superuser
+                  ? t("admin.roleSuperuser")
+                  : t("admin.roleUser")}
               </Table.Cell>
               <Table.Cell>
                 <Badge

@@ -4,9 +4,11 @@ import ASM1AnalysisButton from "./ASM1AnalysisButton"
 import ASM1SlimAnalysisButton from "./ASM1SlimAnalysisButton"
 import ASM3AnalysisButton from "./ASM3AnalysisButton"
 import AnalysisButton from "./AnalysisButton"
+import UDMAnalysisButton from "./UDMAnalysisButton"
 import type { ASM1ResultData } from "./asm1-analysis"
 import type { ASM1SlimResultData } from "./asm1slim-analysis"
 import type { ASM3ResultData } from "./asm3-analysis"
+import type { UDMResultData } from "./udm-analysis"
 
 interface EdgeParameterConfig {
   a: number
@@ -24,6 +26,8 @@ export type ModelType =
   | "ASM2d"
   | "ASM3"
   | "ADM1"
+  | "udm"
+  | "UDM"
   | "other"
 
 interface CreateAnalysisButtonProps {
@@ -97,6 +101,18 @@ export const createAnalysisButton = ({
           disabled={disabled}
           loading={loading}
           resultData={resultData as ASM3ResultData}
+          edges={edges}
+          edgeParameterConfigs={edgeParameterConfigs}
+        />
+      )
+    case "udm":
+    case "UDM":
+      return () => (
+        <UDMAnalysisButton
+          label={label || "分析UDM数据"}
+          disabled={disabled}
+          loading={loading}
+          resultData={resultData as UDMResultData}
           edges={edges}
           edgeParameterConfigs={edgeParameterConfigs}
         />

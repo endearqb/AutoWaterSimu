@@ -1,14 +1,14 @@
 import { mdxComponents } from "@/components/MDX/CustomMDX"
+import { useI18n } from "@/i18n"
 import { Badge, Box, Button, Container, Heading, Text } from "@chakra-ui/react"
 import { MDXProvider } from "@mdx-js/react"
 import { createFileRoute, notFound } from "@tanstack/react-router"
 import { Link } from "@tanstack/react-router"
 import { FaArrowLeft } from "react-icons/fa"
+import { z } from "zod"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import { Prose } from "../../components/ui/prose"
 import { getBlogPosts } from "../../utils/blog"
-import { useI18n } from "@/i18n"
-import { z } from "zod"
 
 const updatesDetailSearchSchema = z.object({
   embed: z.coerce.string().optional(),

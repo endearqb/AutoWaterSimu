@@ -5,228 +5,219 @@ import { OpenAPI } from "./core/OpenAPI"
 import { request as __request } from "./core/request"
 import type {
   Asm1CreateCalculationJobData,
+  Asm1CreateCalculationJobResponse,
   Asm1CreateCalculationJobFromFlowchartData,
   Asm1CreateCalculationJobFromFlowchartResponse,
-  Asm1CreateCalculationJobResponse,
-  Asm1DeleteCalculationJobData,
-  Asm1DeleteCalculationJobResponse,
-  Asm1FlowchartsCreateAsm1FlowchartData,
-  Asm1FlowchartsCreateAsm1FlowchartResponse,
-  Asm1FlowchartsDeleteAsm1FlowchartData,
-  Asm1FlowchartsDeleteAsm1FlowchartResponse,
-  Asm1FlowchartsReadAsm1FlowchartData,
-  Asm1FlowchartsReadAsm1FlowchartResponse,
-  Asm1FlowchartsReadAsm1FlowchartsData,
-  Asm1FlowchartsReadAsm1FlowchartsResponse,
-  Asm1FlowchartsUpdateAsm1FlowchartData,
-  Asm1FlowchartsUpdateAsm1FlowchartResponse,
-  Asm1GetCalculationFinalValuesData,
-  Asm1GetCalculationFinalValuesResponse,
   Asm1GetCalculationResultSummaryData,
   Asm1GetCalculationResultSummaryResponse,
-  Asm1GetCalculationStatusData,
-  Asm1GetCalculationStatusResponse,
+  Asm1GetCalculationFinalValuesData,
+  Asm1GetCalculationFinalValuesResponse,
   Asm1GetCalculationTimeseriesData,
   Asm1GetCalculationTimeseriesResponse,
-  Asm1GetJobInputDataData,
-  Asm1GetJobInputDataResponse,
-  Asm1GetUserCalculationJobsData,
-  Asm1GetUserCalculationJobsResponse,
-  Asm1SlimCreateCalculationJobData,
-  Asm1SlimCreateCalculationJobFromFlowchartData,
-  Asm1SlimCreateCalculationJobFromFlowchartResponse,
-  Asm1SlimCreateCalculationJobResponse,
-  Asm1SlimDeleteCalculationJobData,
-  Asm1SlimDeleteCalculationJobResponse,
-  Asm1SlimFlowchartsCreateAsm1SlimFlowchartData,
-  Asm1SlimFlowchartsCreateAsm1SlimFlowchartResponse,
-  Asm1SlimFlowchartsDeleteAsm1SlimFlowchartData,
-  Asm1SlimFlowchartsDeleteAsm1SlimFlowchartResponse,
-  Asm1SlimFlowchartsReadAsm1SlimFlowchartData,
-  Asm1SlimFlowchartsReadAsm1SlimFlowchartResponse,
-  Asm1SlimFlowchartsReadAsm1SlimFlowchartsData,
-  Asm1SlimFlowchartsReadAsm1SlimFlowchartsResponse,
-  Asm1SlimFlowchartsUpdateAsm1SlimFlowchartData,
-  Asm1SlimFlowchartsUpdateAsm1SlimFlowchartResponse,
-  Asm1SlimGetCalculationFinalValuesData,
-  Asm1SlimGetCalculationFinalValuesResponse,
-  Asm1SlimGetCalculationResultSummaryData,
-  Asm1SlimGetCalculationResultSummaryResponse,
-  Asm1SlimGetCalculationStatusData,
-  Asm1SlimGetCalculationStatusResponse,
-  Asm1SlimGetCalculationTimeseriesData,
-  Asm1SlimGetCalculationTimeseriesResponse,
-  Asm1SlimGetJobInputDataData,
-  Asm1SlimGetJobInputDataResponse,
-  Asm1SlimGetUserCalculationJobsData,
-  Asm1SlimGetUserCalculationJobsResponse,
-  Asm1SlimValidateCalculationInputData,
-  Asm1SlimValidateCalculationInputResponse,
+  Asm1GetCalculationStatusData,
+  Asm1GetCalculationStatusResponse,
   Asm1ValidateCalculationInputData,
   Asm1ValidateCalculationInputResponse,
+  Asm1GetUserCalculationJobsData,
+  Asm1GetUserCalculationJobsResponse,
+  Asm1DeleteCalculationJobData,
+  Asm1DeleteCalculationJobResponse,
+  Asm1GetJobInputDataData,
+  Asm1GetJobInputDataResponse,
+  Asm1FlowchartsReadAsm1FlowchartsData,
+  Asm1FlowchartsReadAsm1FlowchartsResponse,
+  Asm1FlowchartsCreateAsm1FlowchartData,
+  Asm1FlowchartsCreateAsm1FlowchartResponse,
+  Asm1FlowchartsReadAsm1FlowchartData,
+  Asm1FlowchartsReadAsm1FlowchartResponse,
+  Asm1FlowchartsUpdateAsm1FlowchartData,
+  Asm1FlowchartsUpdateAsm1FlowchartResponse,
+  Asm1FlowchartsDeleteAsm1FlowchartData,
+  Asm1FlowchartsDeleteAsm1FlowchartResponse,
+  Asm1SlimCreateCalculationJobData,
+  Asm1SlimCreateCalculationJobResponse,
+  Asm1SlimCreateCalculationJobFromFlowchartData,
+  Asm1SlimCreateCalculationJobFromFlowchartResponse,
+  Asm1SlimGetCalculationResultSummaryData,
+  Asm1SlimGetCalculationResultSummaryResponse,
+  Asm1SlimGetCalculationFinalValuesData,
+  Asm1SlimGetCalculationFinalValuesResponse,
+  Asm1SlimGetCalculationTimeseriesData,
+  Asm1SlimGetCalculationTimeseriesResponse,
+  Asm1SlimGetCalculationStatusData,
+  Asm1SlimGetCalculationStatusResponse,
+  Asm1SlimValidateCalculationInputData,
+  Asm1SlimValidateCalculationInputResponse,
+  Asm1SlimGetUserCalculationJobsData,
+  Asm1SlimGetUserCalculationJobsResponse,
+  Asm1SlimDeleteCalculationJobData,
+  Asm1SlimDeleteCalculationJobResponse,
+  Asm1SlimGetJobInputDataData,
+  Asm1SlimGetJobInputDataResponse,
+  Asm1SlimFlowchartsReadAsm1SlimFlowchartsData,
+  Asm1SlimFlowchartsReadAsm1SlimFlowchartsResponse,
+  Asm1SlimFlowchartsCreateAsm1SlimFlowchartData,
+  Asm1SlimFlowchartsCreateAsm1SlimFlowchartResponse,
+  Asm1SlimFlowchartsReadAsm1SlimFlowchartData,
+  Asm1SlimFlowchartsReadAsm1SlimFlowchartResponse,
+  Asm1SlimFlowchartsUpdateAsm1SlimFlowchartData,
+  Asm1SlimFlowchartsUpdateAsm1SlimFlowchartResponse,
+  Asm1SlimFlowchartsDeleteAsm1SlimFlowchartData,
+  Asm1SlimFlowchartsDeleteAsm1SlimFlowchartResponse,
   Asm3CreateCalculationJobData,
+  Asm3CreateCalculationJobResponse,
   Asm3CreateCalculationJobFromFlowchartData,
   Asm3CreateCalculationJobFromFlowchartResponse,
-  Asm3CreateCalculationJobResponse,
-  Asm3DeleteCalculationJobData,
-  Asm3DeleteCalculationJobResponse,
-  Asm3FlowchartsCreateAsm3FlowchartData,
-  Asm3FlowchartsCreateAsm3FlowchartResponse,
-  Asm3FlowchartsDeleteAsm3FlowchartData,
-  Asm3FlowchartsDeleteAsm3FlowchartResponse,
-  Asm3FlowchartsReadAsm3FlowchartData,
-  Asm3FlowchartsReadAsm3FlowchartResponse,
-  Asm3FlowchartsReadAsm3FlowchartsData,
-  Asm3FlowchartsReadAsm3FlowchartsResponse,
-  Asm3FlowchartsUpdateAsm3FlowchartData,
-  Asm3FlowchartsUpdateAsm3FlowchartResponse,
-  Asm3GetCalculationFinalValuesData,
-  Asm3GetCalculationFinalValuesResponse,
   Asm3GetCalculationResultSummaryData,
   Asm3GetCalculationResultSummaryResponse,
-  Asm3GetCalculationStatusData,
-  Asm3GetCalculationStatusResponse,
+  Asm3GetCalculationFinalValuesData,
+  Asm3GetCalculationFinalValuesResponse,
   Asm3GetCalculationTimeseriesData,
   Asm3GetCalculationTimeseriesResponse,
-  Asm3GetJobInputDataData,
-  Asm3GetJobInputDataResponse,
-  Asm3GetUserCalculationJobsData,
-  Asm3GetUserCalculationJobsResponse,
+  Asm3GetCalculationStatusData,
+  Asm3GetCalculationStatusResponse,
   Asm3ValidateCalculationInputData,
   Asm3ValidateCalculationInputResponse,
-  DataAnalysisCancelAnalysisTaskData,
-  DataAnalysisCancelAnalysisTaskResponse,
-  DataAnalysisCreateAnalysisTaskAliasData,
-  DataAnalysisCreateAnalysisTaskAliasResponse,
-  DataAnalysisCreateAnalysisTaskData,
-  DataAnalysisCreateAnalysisTaskResponse,
-  DataAnalysisDeleteAnalysisTaskData,
-  DataAnalysisDeleteAnalysisTaskResponse,
-  DataAnalysisDeleteFileEndpointData,
-  DataAnalysisDeleteFileEndpointResponse,
-  DataAnalysisDownloadExportData,
-  DataAnalysisDownloadExportResponse,
-  DataAnalysisExportResultData,
-  DataAnalysisExportResultResponse,
-  DataAnalysisGetAnalysisStatsResponse,
-  DataAnalysisGetAnalysisTaskData,
-  DataAnalysisGetAnalysisTaskResponse,
-  DataAnalysisGetAnalysisTasksData,
-  DataAnalysisGetAnalysisTasksResponse,
-  DataAnalysisGetBasicStatsData,
-  DataAnalysisGetBasicStatsResponse,
-  DataAnalysisGetFileData,
-  DataAnalysisGetFileResponse,
-  DataAnalysisGetFileSchemaData,
-  DataAnalysisGetFileSchemaResponse,
-  DataAnalysisGetFilesData,
-  DataAnalysisGetFilesResponse,
-  DataAnalysisGetResultData,
-  DataAnalysisGetResultResponse,
-  DataAnalysisGetSystemHealthResponse,
-  DataAnalysisGetTaskProgressEndpointData,
-  DataAnalysisGetTaskProgressEndpointResponse,
-  DataAnalysisGetTaskResultsData,
-  DataAnalysisGetTaskResultsQuickData,
-  DataAnalysisGetTaskResultsQuickResponse,
-  DataAnalysisGetTaskResultsResponse,
-  DataAnalysisGetTaskStatusQuickData,
-  DataAnalysisGetTaskStatusQuickResponse,
-  DataAnalysisGetUploadPolicyResponse,
-  DataAnalysisPreviewFileData,
-  DataAnalysisPreviewFileResponse,
-  DataAnalysisUpdateAnalysisTaskData,
-  DataAnalysisUpdateAnalysisTaskResponse,
-  DataAnalysisUploadFileAliasData,
-  DataAnalysisUploadFileAliasResponse,
-  DataAnalysisUploadFileData,
-  DataAnalysisUploadFileResponse,
-  DataAnalysisValidateAnalysisConfigData,
-  DataAnalysisValidateAnalysisConfigResponse,
-  FlowchartsCreateFlowchartData,
-  FlowchartsCreateFlowchartResponse,
-  FlowchartsDeleteFlowchartData,
-  FlowchartsDeleteFlowchartResponse,
-  FlowchartsReadFlowchartData,
-  FlowchartsReadFlowchartResponse,
+  Asm3GetUserCalculationJobsData,
+  Asm3GetUserCalculationJobsResponse,
+  Asm3DeleteCalculationJobData,
+  Asm3DeleteCalculationJobResponse,
+  Asm3GetJobInputDataData,
+  Asm3GetJobInputDataResponse,
+  Asm3FlowchartsReadAsm3FlowchartsData,
+  Asm3FlowchartsReadAsm3FlowchartsResponse,
+  Asm3FlowchartsCreateAsm3FlowchartData,
+  Asm3FlowchartsCreateAsm3FlowchartResponse,
+  Asm3FlowchartsReadAsm3FlowchartData,
+  Asm3FlowchartsReadAsm3FlowchartResponse,
+  Asm3FlowchartsUpdateAsm3FlowchartData,
+  Asm3FlowchartsUpdateAsm3FlowchartResponse,
+  Asm3FlowchartsDeleteAsm3FlowchartData,
+  Asm3FlowchartsDeleteAsm3FlowchartResponse,
   FlowchartsReadFlowchartsData,
   FlowchartsReadFlowchartsResponse,
+  FlowchartsCreateFlowchartData,
+  FlowchartsCreateFlowchartResponse,
+  FlowchartsReadFlowchartData,
+  FlowchartsReadFlowchartResponse,
   FlowchartsUpdateFlowchartData,
   FlowchartsUpdateFlowchartResponse,
-  ItemsCreateItemData,
-  ItemsCreateItemResponse,
-  ItemsDeleteItemData,
-  ItemsDeleteItemResponse,
-  ItemsReadItemData,
-  ItemsReadItemResponse,
+  FlowchartsDeleteFlowchartData,
+  FlowchartsDeleteFlowchartResponse,
   ItemsReadItemsData,
   ItemsReadItemsResponse,
+  ItemsCreateItemData,
+  ItemsCreateItemResponse,
+  ItemsReadItemData,
+  ItemsReadItemResponse,
   ItemsUpdateItemData,
   ItemsUpdateItemResponse,
+  ItemsDeleteItemData,
+  ItemsDeleteItemResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenResponse,
+  LoginTestTokenResponse,
   LoginRecoverPasswordData,
-  LoginRecoverPasswordHtmlContentData,
-  LoginRecoverPasswordHtmlContentResponse,
   LoginRecoverPasswordResponse,
   LoginResetPasswordData,
   LoginResetPasswordResponse,
-  LoginTestTokenResponse,
+  LoginRecoverPasswordHtmlContentData,
+  LoginRecoverPasswordHtmlContentResponse,
   MaterialBalanceCreateCalculationJobData,
+  MaterialBalanceCreateCalculationJobResponse,
   MaterialBalanceCreateCalculationJobFromFlowchartData,
   MaterialBalanceCreateCalculationJobFromFlowchartResponse,
-  MaterialBalanceCreateCalculationJobResponse,
-  MaterialBalanceDeleteCalculationJobData,
-  MaterialBalanceDeleteCalculationJobResponse,
-  MaterialBalanceGetCalculationFinalValuesData,
-  MaterialBalanceGetCalculationFinalValuesResponse,
   MaterialBalanceGetCalculationResultSummaryData,
   MaterialBalanceGetCalculationResultSummaryResponse,
-  MaterialBalanceGetCalculationStatusData,
-  MaterialBalanceGetCalculationStatusResponse,
+  MaterialBalanceGetCalculationFinalValuesData,
+  MaterialBalanceGetCalculationFinalValuesResponse,
   MaterialBalanceGetCalculationTimeseriesData,
   MaterialBalanceGetCalculationTimeseriesResponse,
-  MaterialBalanceGetJobInputDataData,
-  MaterialBalanceGetJobInputDataResponse,
-  MaterialBalanceGetUserCalculationJobsData,
-  MaterialBalanceGetUserCalculationJobsResponse,
+  MaterialBalanceGetCalculationStatusData,
+  MaterialBalanceGetCalculationStatusResponse,
   MaterialBalanceValidateCalculationInputData,
   MaterialBalanceValidateCalculationInputResponse,
+  MaterialBalanceGetUserCalculationJobsData,
+  MaterialBalanceGetUserCalculationJobsResponse,
+  MaterialBalanceDeleteCalculationJobData,
+  MaterialBalanceDeleteCalculationJobResponse,
+  MaterialBalanceGetJobInputDataData,
+  MaterialBalanceGetJobInputDataResponse,
   PrivateCreateUserData,
   PrivateCreateUserResponse,
-  SimpleWebsocketBroadcastMessageData,
-  SimpleWebsocketBroadcastMessageResponse,
   SimpleWebsocketGetTaskConnectionsData,
   SimpleWebsocketGetTaskConnectionsResponse,
+  SimpleWebsocketBroadcastMessageData,
+  SimpleWebsocketBroadcastMessageResponse,
   SimpleWebsocketWebsocketHealthResponse,
   StatsGetDashboardStatsResponse,
   StatsGetUserStatsResponse,
-  UsersCreateUserData,
-  UsersCreateUserResponse,
-  UsersDeleteUserData,
-  UsersDeleteUserMeResponse,
-  UsersDeleteUserResponse,
-  UsersReadUserByIdData,
-  UsersReadUserByIdResponse,
-  UsersReadUserMeResponse,
+  UdmCreateCalculationJobData,
+  UdmCreateCalculationJobResponse,
+  UdmCreateCalculationJobFromFlowchartData,
+  UdmCreateCalculationJobFromFlowchartResponse,
+  UdmGetCalculationResultSummaryData,
+  UdmGetCalculationResultSummaryResponse,
+  UdmGetCalculationFinalValuesData,
+  UdmGetCalculationFinalValuesResponse,
+  UdmGetCalculationTimeseriesData,
+  UdmGetCalculationTimeseriesResponse,
+  UdmGetCalculationStatusData,
+  UdmGetCalculationStatusResponse,
+  UdmValidateCalculationInputData,
+  UdmValidateCalculationInputResponse,
+  UdmGetUserCalculationJobsData,
+  UdmGetUserCalculationJobsResponse,
+  UdmDeleteCalculationJobData,
+  UdmDeleteCalculationJobResponse,
+  UdmGetJobInputDataData,
+  UdmGetJobInputDataResponse,
+  UdmFlowchartsReadUdmFlowchartsData,
+  UdmFlowchartsReadUdmFlowchartsResponse,
+  UdmFlowchartsCreateUdmFlowchartData,
+  UdmFlowchartsCreateUdmFlowchartResponse,
+  UdmFlowchartsReadUdmFlowchartData,
+  UdmFlowchartsReadUdmFlowchartResponse,
+  UdmFlowchartsUpdateUdmFlowchartData,
+  UdmFlowchartsUpdateUdmFlowchartResponse,
+  UdmFlowchartsDeleteUdmFlowchartData,
+  UdmFlowchartsDeleteUdmFlowchartResponse,
+  UdmModelsGetUdmTemplatesResponse,
+  UdmModelsValidateUdmModelDefinitionData,
+  UdmModelsValidateUdmModelDefinitionResponse,
+  UdmModelsCreateUdmModelData,
+  UdmModelsCreateUdmModelResponse,
+  UdmModelsReadUdmModelsData,
+  UdmModelsReadUdmModelsResponse,
+  UdmModelsCreateUdmModelFromTemplateData,
+  UdmModelsCreateUdmModelFromTemplateResponse,
+  UdmModelsReadUdmModelData,
+  UdmModelsReadUdmModelResponse,
+  UdmModelsUpdateUdmModelData,
+  UdmModelsUpdateUdmModelResponse,
+  UdmModelsDeleteUdmModelData,
+  UdmModelsDeleteUdmModelResponse,
   UsersReadUsersData,
   UsersReadUsersResponse,
-  UsersRegisterUserData,
-  UsersRegisterUserResponse,
-  UsersUpdatePasswordMeData,
-  UsersUpdatePasswordMeResponse,
-  UsersUpdateUserData,
+  UsersCreateUserData,
+  UsersCreateUserResponse,
+  UsersReadUserMeResponse,
+  UsersDeleteUserMeResponse,
   UsersUpdateUserMeData,
   UsersUpdateUserMeResponse,
+  UsersUpdatePasswordMeData,
+  UsersUpdatePasswordMeResponse,
+  UsersRegisterUserData,
+  UsersRegisterUserResponse,
+  UsersReadUserByIdData,
+  UsersReadUserByIdResponse,
+  UsersUpdateUserData,
   UsersUpdateUserResponse,
-  UtilsHealthCheckResponse,
+  UsersDeleteUserData,
+  UsersDeleteUserResponse,
   UtilsTestEmailData,
   UtilsTestEmailResponse,
-  WebsocketGetWebsocketStatsResponse,
-  WebsocketTestSendCompletionData,
-  WebsocketTestSendCompletionResponse,
-  WebsocketTestSendProgressData,
-  WebsocketTestSendProgressResponse,
+  UtilsHealthCheckResponse,
 } from "./types.gen"
 
 export class Asm1Service {
@@ -1327,612 +1318,6 @@ export class Asm3FlowchartsService {
   }
 }
 
-export class DataAnalysisService {
-  /**
-   * Get Upload Policy
-   * 获取前端文件上传策略（支持的扩展、MIME 类型与最大大小）。
-   * 供前端展示与本地校验使用，确保与后端配置一致。
-   * @returns unknown Successful Response
-   * @throws ApiError
-   */
-  public static getUploadPolicy(): CancelablePromise<DataAnalysisGetUploadPolicyResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/upload-policy",
-    })
-  }
-
-  /**
-   * Upload File
-   * 上传数据文件
-   * @param data The data for the request.
-   * @param data.formData
-   * @returns FileUploadResponse Successful Response
-   * @throws ApiError
-   */
-  public static uploadFile(
-    data: DataAnalysisUploadFileData,
-  ): CancelablePromise<DataAnalysisUploadFileResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/data-analysis/files/upload",
-      formData: data.formData,
-      mediaType: "multipart/form-data",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Files
-   * 获取用户的文件列表
-   * @param data The data for the request.
-   * @param data.skip
-   * @param data.limit
-   * @param data.status
-   * @returns FilesPublic Successful Response
-   * @throws ApiError
-   */
-  public static getFiles(
-    data: DataAnalysisGetFilesData = {},
-  ): CancelablePromise<DataAnalysisGetFilesResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/files",
-      query: {
-        skip: data.skip,
-        limit: data.limit,
-        status: data.status,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get File
-   * 获取文件详细信息
-   * @param data The data for the request.
-   * @param data.fileId
-   * @returns FileDetail Successful Response
-   * @throws ApiError
-   */
-  public static getFile(
-    data: DataAnalysisGetFileData,
-  ): CancelablePromise<DataAnalysisGetFileResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/files/{file_id}",
-      path: {
-        file_id: data.fileId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Delete File Endpoint
-   * 删除文件
-   * @param data The data for the request.
-   * @param data.fileId
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static deleteFileEndpoint(
-    data: DataAnalysisDeleteFileEndpointData,
-  ): CancelablePromise<DataAnalysisDeleteFileEndpointResponse> {
-    return __request(OpenAPI, {
-      method: "DELETE",
-      url: "/api/v1/data-analysis/files/{file_id}",
-      path: {
-        file_id: data.fileId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get File Schema
-   * 获取文件Schema（列名与dtype、总行数、可选编码信息）。并在缺失时回填到file_metadata中
-   * @param data The data for the request.
-   * @param data.fileId
-   * @returns FileSchema Successful Response
-   * @throws ApiError
-   */
-  public static getFileSchema(
-    data: DataAnalysisGetFileSchemaData,
-  ): CancelablePromise<DataAnalysisGetFileSchemaResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/files/{file_id}/schema",
-      path: {
-        file_id: data.fileId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Preview File
-   * 分页预览文件数据，支持单列排序
-   * @param data The data for the request.
-   * @param data.fileId
-   * @param data.skip
-   * @param data.limit
-   * @param data.sortBy
-   * @param data.order
-   * @returns DataPreview Successful Response
-   * @throws ApiError
-   */
-  public static previewFile(
-    data: DataAnalysisPreviewFileData,
-  ): CancelablePromise<DataAnalysisPreviewFileResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/files/{file_id}/preview",
-      path: {
-        file_id: data.fileId,
-      },
-      query: {
-        skip: data.skip,
-        limit: data.limit,
-        sort_by: data.sortBy,
-        order: data.order,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Basic Stats
-   * 返回基础统计（shape、dtypes、null_counts、类型列分组）
-   * @param data The data for the request.
-   * @param data.fileId
-   * @returns BasicStats Successful Response
-   * @throws ApiError
-   */
-  public static getBasicStats(
-    data: DataAnalysisGetBasicStatsData,
-  ): CancelablePromise<DataAnalysisGetBasicStatsResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/files/{file_id}/basic-stats",
-      path: {
-        file_id: data.fileId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Create Analysis Task
-   * 创建分析任务
-   * @param data The data for the request.
-   * @param data.requestBody
-   * @returns AnalysisTaskPublic Successful Response
-   * @throws ApiError
-   */
-  public static createAnalysisTask(
-    data: DataAnalysisCreateAnalysisTaskData,
-  ): CancelablePromise<DataAnalysisCreateAnalysisTaskResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/data-analysis/tasks",
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Analysis Tasks
-   * 获取分析任务列表
-   * @param data The data for the request.
-   * @param data.skip
-   * @param data.limit
-   * @param data.status
-   * @param data.analysisType
-   * @param data.xTimezone
-   * @returns AnalysisTasksPublic Successful Response
-   * @throws ApiError
-   */
-  public static getAnalysisTasks(
-    data: DataAnalysisGetAnalysisTasksData = {},
-  ): CancelablePromise<DataAnalysisGetAnalysisTasksResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/tasks",
-      headers: {
-        "X-Timezone": data.xTimezone,
-      },
-      query: {
-        skip: data.skip,
-        limit: data.limit,
-        status: data.status,
-        analysis_type: data.analysisType,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Analysis Task
-   * 获取分析任务详细信息
-   * @param data The data for the request.
-   * @param data.taskId
-   * @returns AnalysisTaskDetail Successful Response
-   * @throws ApiError
-   */
-  public static getAnalysisTask(
-    data: DataAnalysisGetAnalysisTaskData,
-  ): CancelablePromise<DataAnalysisGetAnalysisTaskResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/tasks/{task_id}",
-      path: {
-        task_id: data.taskId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Update Analysis Task
-   * 更新分析任务
-   * @param data The data for the request.
-   * @param data.taskId
-   * @param data.requestBody
-   * @returns AnalysisTaskPublic Successful Response
-   * @throws ApiError
-   */
-  public static updateAnalysisTask(
-    data: DataAnalysisUpdateAnalysisTaskData,
-  ): CancelablePromise<DataAnalysisUpdateAnalysisTaskResponse> {
-    return __request(OpenAPI, {
-      method: "PUT",
-      url: "/api/v1/data-analysis/tasks/{task_id}",
-      path: {
-        task_id: data.taskId,
-      },
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Delete Analysis Task
-   * 删除分析任务
-   * @param data The data for the request.
-   * @param data.taskId
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static deleteAnalysisTask(
-    data: DataAnalysisDeleteAnalysisTaskData,
-  ): CancelablePromise<DataAnalysisDeleteAnalysisTaskResponse> {
-    return __request(OpenAPI, {
-      method: "DELETE",
-      url: "/api/v1/data-analysis/tasks/{task_id}",
-      path: {
-        task_id: data.taskId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Task Progress Endpoint
-   * 获取任务进度
-   * @param data The data for the request.
-   * @param data.taskId
-   * @returns TaskProgressResponse Successful Response
-   * @throws ApiError
-   */
-  public static getTaskProgressEndpoint(
-    data: DataAnalysisGetTaskProgressEndpointData,
-  ): CancelablePromise<DataAnalysisGetTaskProgressEndpointResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/tasks/{task_id}/progress",
-      path: {
-        task_id: data.taskId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Cancel Analysis Task
-   * 取消分析任务
-   * @param data The data for the request.
-   * @param data.taskId
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static cancelAnalysisTask(
-    data: DataAnalysisCancelAnalysisTaskData,
-  ): CancelablePromise<DataAnalysisCancelAnalysisTaskResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/data-analysis/tasks/{task_id}/cancel",
-      path: {
-        task_id: data.taskId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Task Results
-   * 获取任务结果列表
-   * @param data The data for the request.
-   * @param data.taskId
-   * @param data.skip
-   * @param data.limit
-   * @returns AnalysisResultsDetail Successful Response
-   * @throws ApiError
-   */
-  public static getTaskResults(
-    data: DataAnalysisGetTaskResultsData,
-  ): CancelablePromise<DataAnalysisGetTaskResultsResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/tasks/{task_id}/results",
-      path: {
-        task_id: data.taskId,
-      },
-      query: {
-        skip: data.skip,
-        limit: data.limit,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Result
-   * 获取单个结果详情
-   * @param data The data for the request.
-   * @param data.resultId
-   * @returns AnalysisResultPublic Successful Response
-   * @throws ApiError
-   */
-  public static getResult(
-    data: DataAnalysisGetResultData,
-  ): CancelablePromise<DataAnalysisGetResultResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/results/{result_id}",
-      path: {
-        result_id: data.resultId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Export Result
-   * 导出分析结果
-   * @param data The data for the request.
-   * @param data.resultId
-   * @param data.requestBody
-   * @returns ExportResponse Successful Response
-   * @throws ApiError
-   */
-  public static exportResult(
-    data: DataAnalysisExportResultData,
-  ): CancelablePromise<DataAnalysisExportResultResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/data-analysis/results/{result_id}/export",
-      path: {
-        result_id: data.resultId,
-      },
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Download Export
-   * 下载导出的文件
-   * @param data The data for the request.
-   * @param data.filename
-   * @returns unknown Successful Response
-   * @throws ApiError
-   */
-  public static downloadExport(
-    data: DataAnalysisDownloadExportData,
-  ): CancelablePromise<DataAnalysisDownloadExportResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/exports/{filename}",
-      path: {
-        filename: data.filename,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Validate Analysis Config
-   * 验证分析配置
-   * @param data The data for the request.
-   * @param data.requestBody
-   * @returns AnalysisValidationResponse Successful Response
-   * @throws ApiError
-   */
-  public static validateAnalysisConfig(
-    data: DataAnalysisValidateAnalysisConfigData,
-  ): CancelablePromise<DataAnalysisValidateAnalysisConfigResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/data-analysis/validate",
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Analysis Stats
-   * 获取分析统计信息
-   * @returns AnalysisStats Successful Response
-   * @throws ApiError
-   */
-  public static getAnalysisStats(): CancelablePromise<DataAnalysisGetAnalysisStatsResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/stats",
-    })
-  }
-
-  /**
-   * Get System Health
-   * 获取系统健康状态
-   * @returns SystemHealth Successful Response
-   * @throws ApiError
-   */
-  public static getSystemHealth(): CancelablePromise<DataAnalysisGetSystemHealthResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/health",
-    })
-  }
-
-  /**
-   * Get Task Status Quick
-   * 快速获取任务状态（仅从缓存）
-   * @param data The data for the request.
-   * @param data.taskId
-   * @returns unknown Successful Response
-   * @throws ApiError
-   */
-  public static getTaskStatusQuick(
-    data: DataAnalysisGetTaskStatusQuickData,
-  ): CancelablePromise<DataAnalysisGetTaskStatusQuickResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/tasks/{task_id}/status-quick",
-      path: {
-        task_id: data.taskId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Get Task Results Quick
-   * 从缓存获取任务结果
-   * @param data The data for the request.
-   * @param data.taskId
-   * @returns unknown Successful Response
-   * @throws ApiError
-   */
-  public static getTaskResultsQuick(
-    data: DataAnalysisGetTaskResultsQuickData,
-  ): CancelablePromise<DataAnalysisGetTaskResultsQuickResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/data-analysis/tasks/{task_id}/results-quick",
-      path: {
-        task_id: data.taskId,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Upload File Alias
-   * 上传数据文件 (简化端点别名)
-   *
-   * 这是 /files/upload 的别名，提供更简洁的API路径
-   * @param data The data for the request.
-   * @param data.formData
-   * @returns FileUploadResponse Successful Response
-   * @throws ApiError
-   */
-  public static uploadFileAlias(
-    data: DataAnalysisUploadFileAliasData,
-  ): CancelablePromise<DataAnalysisUploadFileAliasResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/data-analysis/upload",
-      formData: data.formData,
-      mediaType: "multipart/form-data",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Create Analysis Task Alias
-   * 创建分析任务 (简化端点别名)
-   *
-   * 这是 /tasks 的别名，提供更简洁的API路径
-   * @param data The data for the request.
-   * @param data.requestBody
-   * @returns AnalysisTaskPublic Successful Response
-   * @throws ApiError
-   */
-  public static createAnalysisTaskAlias(
-    data: DataAnalysisCreateAnalysisTaskAliasData,
-  ): CancelablePromise<DataAnalysisCreateAnalysisTaskAliasResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/data-analysis/analyze",
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-}
-
 export class FlowchartsService {
   /**
    * Read Flowcharts
@@ -2658,6 +2043,544 @@ export class StatsService {
   }
 }
 
+export class UdmService {
+  /**
+   * Create Calculation Job
+   * 创建UDM计算任务
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns UDMJobPublic Successful Response
+   * @throws ApiError
+   */
+  public static createCalculationJob(
+    data: UdmCreateCalculationJobData,
+  ): CancelablePromise<UdmCreateCalculationJobResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm/calculate",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Create Calculation Job From Flowchart
+   * 从流程图数据创建UDM计算任务
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns UDMJobPublic Successful Response
+   * @throws ApiError
+   */
+  public static createCalculationJobFromFlowchart(
+    data: UdmCreateCalculationJobFromFlowchartData,
+  ): CancelablePromise<UdmCreateCalculationJobFromFlowchartResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm/calculate-from-flowchart",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get Calculation Result Summary
+   * 获取UDM计算结果摘要
+   * @param data The data for the request.
+   * @param data.jobId
+   * @returns MaterialBalanceResultSummary Successful Response
+   * @throws ApiError
+   */
+  public static getCalculationResultSummary(
+    data: UdmGetCalculationResultSummaryData,
+  ): CancelablePromise<UdmGetCalculationResultSummaryResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm/result/{job_id}",
+      path: {
+        job_id: data.jobId,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get Calculation Final Values
+   * 获取UDM计算的最终值
+   * @param data The data for the request.
+   * @param data.jobId
+   * @returns unknown Successful Response
+   * @throws ApiError
+   */
+  public static getCalculationFinalValues(
+    data: UdmGetCalculationFinalValuesData,
+  ): CancelablePromise<UdmGetCalculationFinalValuesResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm/result/{job_id}/final-values",
+      path: {
+        job_id: data.jobId,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get Calculation Timeseries
+   * 获取UDM计算的时间序列数据
+   * @param data The data for the request.
+   * @param data.jobId
+   * @param data.startTime 开始时间 (小时)
+   * @param data.endTime 结束时间 (小时)
+   * @param data.page 页码
+   * @param data.pageSize 每页数据量
+   * @param data.nodeIds 指定节点ID列表
+   * @param data.edgeIds 指定边ID列表
+   * @returns MaterialBalanceTimeSeriesResponse Successful Response
+   * @throws ApiError
+   */
+  public static getCalculationTimeseries(
+    data: UdmGetCalculationTimeseriesData,
+  ): CancelablePromise<UdmGetCalculationTimeseriesResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm/result/{job_id}/timeseries",
+      path: {
+        job_id: data.jobId,
+      },
+      query: {
+        start_time: data.startTime,
+        end_time: data.endTime,
+        page: data.page,
+        page_size: data.pageSize,
+        node_ids: data.nodeIds,
+        edge_ids: data.edgeIds,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get Calculation Status
+   * 获取UDM计算任务状态
+   * @param data The data for the request.
+   * @param data.jobId
+   * @returns UDMJobPublic Successful Response
+   * @throws ApiError
+   */
+  public static getCalculationStatus(
+    data: UdmGetCalculationStatusData,
+  ): CancelablePromise<UdmGetCalculationStatusResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm/status/{job_id}",
+      path: {
+        job_id: data.jobId,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Validate Calculation Input
+   * 验证UDM计算输入数据
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns MaterialBalanceValidationResponse Successful Response
+   * @throws ApiError
+   */
+  public static validateCalculationInput(
+    data: UdmValidateCalculationInputData,
+  ): CancelablePromise<UdmValidateCalculationInputResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm/validate",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get User Calculation Jobs
+   * 获取用户的UDM计算任务列表
+   * @param data The data for the request.
+   * @param data.skip 跳过的记录数
+   * @param data.limit 返回的记录数
+   * @returns UDMJobsPublic Successful Response
+   * @throws ApiError
+   */
+  public static getUserCalculationJobs(
+    data: UdmGetUserCalculationJobsData = {},
+  ): CancelablePromise<UdmGetUserCalculationJobsResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm/jobs",
+      query: {
+        skip: data.skip,
+        limit: data.limit,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Delete Calculation Job
+   * 删除UDM计算任务
+   * @param data The data for the request.
+   * @param data.jobId
+   * @returns Message Successful Response
+   * @throws ApiError
+   */
+  public static deleteCalculationJob(
+    data: UdmDeleteCalculationJobData,
+  ): CancelablePromise<UdmDeleteCalculationJobResponse> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: "/api/v1/udm/jobs/{job_id}",
+      path: {
+        job_id: data.jobId,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get Job Input Data
+   * 获取UDM计算任务的输入数据
+   * @param data The data for the request.
+   * @param data.jobId
+   * @returns UDMJobInputDataResponse Successful Response
+   * @throws ApiError
+   */
+  public static getJobInputData(
+    data: UdmGetJobInputDataData,
+  ): CancelablePromise<UdmGetJobInputDataResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm/jobs/{job_id}/input-data",
+      path: {
+        job_id: data.jobId,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+}
+
+export class UdmFlowchartsService {
+  /**
+   * Read Udm Flowcharts
+   * Retrieve UDM flowcharts.
+   * @param data The data for the request.
+   * @param data.skip
+   * @param data.limit
+   * @returns UDMFlowChartsPublic Successful Response
+   * @throws ApiError
+   */
+  public static readUdmFlowcharts(
+    data: UdmFlowchartsReadUdmFlowchartsData = {},
+  ): CancelablePromise<UdmFlowchartsReadUdmFlowchartsResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm-flowcharts/",
+      query: {
+        skip: data.skip,
+        limit: data.limit,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Create Udm Flowchart
+   * Create new UDM flowchart.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns UDMFlowChartPublic Successful Response
+   * @throws ApiError
+   */
+  public static createUdmFlowchart(
+    data: UdmFlowchartsCreateUdmFlowchartData,
+  ): CancelablePromise<UdmFlowchartsCreateUdmFlowchartResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm-flowcharts/",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Read Udm Flowchart
+   * Get UDM flowchart by ID.
+   * @param data The data for the request.
+   * @param data.id
+   * @returns UDMFlowChartPublic Successful Response
+   * @throws ApiError
+   */
+  public static readUdmFlowchart(
+    data: UdmFlowchartsReadUdmFlowchartData,
+  ): CancelablePromise<UdmFlowchartsReadUdmFlowchartResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm-flowcharts/{id}",
+      path: {
+        id: data.id,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Update Udm Flowchart
+   * Update an UDM flowchart.
+   * @param data The data for the request.
+   * @param data.id
+   * @param data.requestBody
+   * @returns UDMFlowChartPublic Successful Response
+   * @throws ApiError
+   */
+  public static updateUdmFlowchart(
+    data: UdmFlowchartsUpdateUdmFlowchartData,
+  ): CancelablePromise<UdmFlowchartsUpdateUdmFlowchartResponse> {
+    return __request(OpenAPI, {
+      method: "PUT",
+      url: "/api/v1/udm-flowcharts/{id}",
+      path: {
+        id: data.id,
+      },
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Delete Udm Flowchart
+   * Delete an UDM flowchart.
+   * @param data The data for the request.
+   * @param data.id
+   * @returns Message Successful Response
+   * @throws ApiError
+   */
+  public static deleteUdmFlowchart(
+    data: UdmFlowchartsDeleteUdmFlowchartData,
+  ): CancelablePromise<UdmFlowchartsDeleteUdmFlowchartResponse> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: "/api/v1/udm-flowcharts/{id}",
+      path: {
+        id: data.id,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+}
+
+export class UdmModelsService {
+  /**
+   * Get Udm Templates
+   * @returns unknown Successful Response
+   * @throws ApiError
+   */
+  public static getUdmTemplates(): CancelablePromise<UdmModelsGetUdmTemplatesResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm-models/templates",
+    })
+  }
+
+  /**
+   * Validate Udm Model Definition
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns UDMValidationResponse Successful Response
+   * @throws ApiError
+   */
+  public static validateUdmModelDefinition(
+    data: UdmModelsValidateUdmModelDefinitionData,
+  ): CancelablePromise<UdmModelsValidateUdmModelDefinitionResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm-models/validate",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Create Udm Model
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns UDMModelDetailPublic Successful Response
+   * @throws ApiError
+   */
+  public static createUdmModel(
+    data: UdmModelsCreateUdmModelData,
+  ): CancelablePromise<UdmModelsCreateUdmModelResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm-models/",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Read Udm Models
+   * @param data The data for the request.
+   * @param data.skip
+   * @param data.limit
+   * @param data.q Search by model name
+   * @returns UDMModelsPublic Successful Response
+   * @throws ApiError
+   */
+  public static readUdmModels(
+    data: UdmModelsReadUdmModelsData = {},
+  ): CancelablePromise<UdmModelsReadUdmModelsResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm-models/",
+      query: {
+        skip: data.skip,
+        limit: data.limit,
+        q: data.q,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Create Udm Model From Template
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns UDMModelDetailPublic Successful Response
+   * @throws ApiError
+   */
+  public static createUdmModelFromTemplate(
+    data: UdmModelsCreateUdmModelFromTemplateData,
+  ): CancelablePromise<UdmModelsCreateUdmModelFromTemplateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm-models/from-template",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Read Udm Model
+   * @param data The data for the request.
+   * @param data.modelId
+   * @returns UDMModelDetailPublic Successful Response
+   * @throws ApiError
+   */
+  public static readUdmModel(
+    data: UdmModelsReadUdmModelData,
+  ): CancelablePromise<UdmModelsReadUdmModelResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/udm-models/{model_id}",
+      path: {
+        model_id: data.modelId,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Update Udm Model
+   * @param data The data for the request.
+   * @param data.modelId
+   * @param data.requestBody
+   * @returns UDMModelDetailPublic Successful Response
+   * @throws ApiError
+   */
+  public static updateUdmModel(
+    data: UdmModelsUpdateUdmModelData,
+  ): CancelablePromise<UdmModelsUpdateUdmModelResponse> {
+    return __request(OpenAPI, {
+      method: "PUT",
+      url: "/api/v1/udm-models/{model_id}",
+      path: {
+        model_id: data.modelId,
+      },
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Delete Udm Model
+   * @param data The data for the request.
+   * @param data.modelId
+   * @returns Message Successful Response
+   * @throws ApiError
+   */
+  public static deleteUdmModel(
+    data: UdmModelsDeleteUdmModelData,
+  ): CancelablePromise<UdmModelsDeleteUdmModelResponse> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: "/api/v1/udm-models/{model_id}",
+      path: {
+        model_id: data.modelId,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+}
+
 export class UsersService {
   /**
    * Read Users
@@ -2904,76 +2827,6 @@ export class UtilsService {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/v1/utils/health-check/",
-    })
-  }
-}
-
-export class WebsocketService {
-  /**
-   * Get Websocket Stats
-   * 获取WebSocket连接统计信息
-   * @returns unknown Successful Response
-   * @throws ApiError
-   */
-  public static getWebsocketStats(): CancelablePromise<WebsocketGetWebsocketStatsResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/ws/stats",
-    })
-  }
-
-  /**
-   * Test Send Progress
-   * 手动发送进度更新（测试用）
-   * @param data The data for the request.
-   * @param data.taskId
-   * @param data.progress
-   * @param data.message
-   * @returns unknown Successful Response
-   * @throws ApiError
-   */
-  public static testSendProgress(
-    data: WebsocketTestSendProgressData,
-  ): CancelablePromise<WebsocketTestSendProgressResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/ws/test/send-progress/{task_id}",
-      path: {
-        task_id: data.taskId,
-      },
-      query: {
-        progress: data.progress,
-        message: data.message,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Test Send Completion
-   * 手动发送任务完成消息（测试用）
-   * @param data The data for the request.
-   * @param data.taskId
-   * @param data.requestBody
-   * @returns unknown Successful Response
-   * @throws ApiError
-   */
-  public static testSendCompletion(
-    data: WebsocketTestSendCompletionData,
-  ): CancelablePromise<WebsocketTestSendCompletionResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/ws/test/send-completion/{task_id}",
-      path: {
-        task_id: data.taskId,
-      },
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
     })
   }
 }

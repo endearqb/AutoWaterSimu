@@ -19,6 +19,7 @@ import {
   getSimulationConfig,
   validateCalculationParameters,
 } from "../../../config/simulationConfig"
+import { useI18n } from "../../../i18n"
 import {
   getJobStatusText as asm1GetJobStatusText,
   isJobCompleted as asm1IsJobCompleted,
@@ -47,7 +48,6 @@ import {
   isJobRunning as materialBalanceIsJobRunning,
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
-import { useI18n } from "../../../i18n"
 import { type ModelType, createAnalysisButton } from "../legacy-analysis"
 
 interface SimulationPanelProps {
@@ -684,7 +684,9 @@ function SimulationPanel({
               <FiX />
             </Alert.Indicator>
             <Alert.Content>
-              <Alert.Title>{t("flow.simulation.validationErrorTitle")}</Alert.Title>
+              <Alert.Title>
+                {t("flow.simulation.validationErrorTitle")}
+              </Alert.Title>
               <Alert.Description>
                 {validationErrors.map((error, index) => (
                   <Text key={index} fontSize="sm">
@@ -934,5 +936,3 @@ function SimulationPanel({
 }
 
 export default SimulationPanel
-
-

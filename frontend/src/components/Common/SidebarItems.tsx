@@ -30,6 +30,8 @@ const getFlowingFlowItems = (
     },
     { icon: FiGitMerge, title: t("nav.asm1slim"), path: "/asm1slim" },
     { icon: FiGitPullRequest, title: t("nav.asm1"), path: "/asm1" },
+    { icon: FiGitPullRequest, title: "UDM", path: "/udm" },
+    { icon: FiGitPullRequest, title: "UDM Models", path: "/udmModels" },
   ]
 
   // 只有ultra用户和超级管理员才能看到ASM3

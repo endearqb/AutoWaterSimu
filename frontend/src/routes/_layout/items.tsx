@@ -15,13 +15,13 @@ import { ItemsService } from "@/client"
 import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
 import AddItem from "@/components/Items/AddItem"
 import PendingItems from "@/components/Pending/PendingItems"
-import { useI18n } from "@/i18n"
 import {
   PaginationItems,
   PaginationNextTrigger,
   PaginationPrevTrigger,
   PaginationRoot,
 } from "@/components/ui/pagination.tsx"
+import { useI18n } from "@/i18n"
 
 const itemsSearchSchema = z.object({
   page: z.number().catch(1),
@@ -73,7 +73,9 @@ function ItemsTable() {
           </EmptyState.Indicator>
           <VStack textAlign="center">
             <EmptyState.Title>{t("items.emptyTitle")}</EmptyState.Title>
-            <EmptyState.Description>{t("items.emptyDescription")}</EmptyState.Description>
+            <EmptyState.Description>
+              {t("items.emptyDescription")}
+            </EmptyState.Description>
           </VStack>
         </EmptyState.Content>
       </EmptyState.Root>
@@ -87,8 +89,12 @@ function ItemsTable() {
           <Table.Row>
             <Table.ColumnHeader w="sm">{t("common.id")}</Table.ColumnHeader>
             <Table.ColumnHeader w="sm">{t("common.title")}</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">{t("common.description")}</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">{t("common.actions")}</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">
+              {t("common.description")}
+            </Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">
+              {t("common.actions")}
+            </Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>

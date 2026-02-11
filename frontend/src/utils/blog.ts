@@ -1,6 +1,6 @@
+import { type Language, detectDefaultLanguage } from "@/i18n"
 import matter from "gray-matter"
 import type { ComponentType } from "react"
-import { detectDefaultLanguage, type Language } from "@/i18n"
 
 // 保持原有导出名不变，但补充 component 字段，并统一为“MDX 组件渲染”模式
 export type Metadata = {
@@ -61,7 +61,8 @@ export async function getBlogPosts(language?: Language): Promise<BlogPost[]> {
 
       const metadata: Metadata = {
         title: data?.title ?? slug,
-        publishedAt: data?.publishedAt ?? data?.date ?? new Date().toISOString(),
+        publishedAt:
+          data?.publishedAt ?? data?.date ?? new Date().toISOString(),
         summary:
           data?.summary ??
           data?.excerpt ??

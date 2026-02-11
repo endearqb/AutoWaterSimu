@@ -13,8 +13,8 @@ import { FaExchangeAlt } from "react-icons/fa"
 
 import { type ApiError, type ItemPublic, ItemsService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
 import { useI18n } from "@/i18n"
+import { handleError } from "@/utils"
 import {
   DialogBody,
   DialogCloseTrigger,

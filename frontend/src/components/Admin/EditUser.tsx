@@ -18,8 +18,13 @@ import { FaExchangeAlt } from "react-icons/fa"
 import { type UserPublic, type UserUpdate, UsersService } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
-import { confirmPasswordRules, getEmailPattern, handleError, passwordRules } from "@/utils"
 import { useI18n } from "@/i18n"
+import {
+  confirmPasswordRules,
+  getEmailPattern,
+  handleError,
+  passwordRules,
+} from "@/utils"
 import { Checkbox } from "../ui/checkbox"
 import {
   DialogBody,
@@ -173,7 +178,9 @@ const EditUser = ({ user }: EditUserProps) => {
                     <option value="basic">{t("admin.userTypeBasic")}</option>
                     <option value="pro">{t("admin.userTypePro")}</option>
                     <option value="ultra">{t("admin.userTypeUltra")}</option>
-                    <option value="enterprise">{t("admin.userTypeEnterprise")}</option>
+                    <option value="enterprise">
+                      {t("admin.userTypeEnterprise")}
+                    </option>
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>

@@ -1,4 +1,5 @@
 import { useColorModeValue } from "@/components/ui/color-mode"
+import { useI18n } from "@/i18n"
 import {
   Alert,
   Badge,
@@ -15,12 +16,11 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Link } from "@tanstack/react-router"
 import type React from "react"
 import { FiArrowLeft, FiChevronRight } from "react-icons/fi"
+import { z } from "zod"
 import { DigitalTwinGuide } from "../../components/Knowledge/DigitalTwinGuide"
 import { WaterTreatmentBalance } from "../../components/Knowledge/WaterTreatmentBalance"
 import { Header } from "../../components/Landing"
 import { useArticleData } from "../../hooks/useArticleData"
-import { useI18n } from "@/i18n"
-import { z } from "zod"
 
 const aiDeepResearchArticleSearchSchema = z.object({
   embed: z.coerce.string().optional(),
@@ -48,7 +48,9 @@ const ArticleDetail: React.FC = () => {
         return (
           <Alert.Root status="warning" borderRadius="md">
             <Alert.Indicator />
-            <Alert.Title>{t("deepResearch.detail.interactiveInProgress")}</Alert.Title>
+            <Alert.Title>
+              {t("deepResearch.detail.interactiveInProgress")}
+            </Alert.Title>
           </Alert.Root>
         )
     }
@@ -56,10 +58,7 @@ const ArticleDetail: React.FC = () => {
 
   if (!article) {
     return (
-      <Box
-        bg={bgColor}
-        minH="100vh"
-      >
+      <Box bg={bgColor} minH="100vh">
         {isEmbedded ? null : <Header />}
         <Container maxW="7xl" py={8}>
           <VStack gap={8}>
@@ -89,7 +88,9 @@ const ArticleDetail: React.FC = () => {
             <Alert.Root status="error" borderRadius="md" maxW="md">
               <Alert.Indicator />
               <Alert.Content>
-                <Alert.Title>{t("deepResearch.detail.notFound.title")}</Alert.Title>
+                <Alert.Title>
+                  {t("deepResearch.detail.notFound.title")}
+                </Alert.Title>
                 <Alert.Description>
                   {t("deepResearch.detail.notFound.description")}
                 </Alert.Description>
@@ -97,7 +98,10 @@ const ArticleDetail: React.FC = () => {
             </Alert.Root>
 
             <Button colorScheme="blue" variant="outline" asChild>
-              <Link to="/ai-deep-research" search={isEmbedded ? { embed: "1" } : {}}>
+              <Link
+                to="/ai-deep-research"
+                search={isEmbedded ? { embed: "1" } : {}}
+              >
                 <HStack gap={2}>
                   <FiArrowLeft />
                   <Text>{t("deepResearch.detail.back")}</Text>
@@ -111,10 +115,7 @@ const ArticleDetail: React.FC = () => {
   }
 
   return (
-    <Box
-      bg={bgColor}
-      minH="100vh"
-    >
+    <Box bg={bgColor} minH="100vh">
       {isEmbedded ? null : <Header />}
       <Container maxW="7xl" py={8}>
         <VStack gap={8}>
@@ -153,7 +154,10 @@ const ArticleDetail: React.FC = () => {
           {/* 返回按钮 */}
           <HStack w="100%" justify="space-between">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/ai-deep-research" search={isEmbedded ? { embed: "1" } : {}}>
+              <Link
+                to="/ai-deep-research"
+                search={isEmbedded ? { embed: "1" } : {}}
+              >
                 {t("deepResearch.detail.back")}
               </Link>
             </Button>
@@ -179,7 +183,9 @@ const ArticleDetail: React.FC = () => {
             borderColor="gray.200"
           >
             <VStack gap={4} align="start">
-              <Heading size="md">{t("deepResearch.detail.about.title")}</Heading>
+              <Heading size="md">
+                {t("deepResearch.detail.about.title")}
+              </Heading>
               <VStack align="start" gap={2} w="100%">
                 <Text fontSize="sm" fontWeight="bold" color="gray.600">
                   {t("deepResearch.detail.about.tagsLabel")}

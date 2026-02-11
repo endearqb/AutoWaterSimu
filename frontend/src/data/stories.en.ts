@@ -150,7 +150,8 @@ export const storiesEn: Story[] = [
       },
       {
         type: "question",
-        content: "How can multiple biological models be mixed in one flowchart?",
+        content:
+          "How can multiple biological models be mixed in one flowchart?",
       },
       {
         type: "paragraph",

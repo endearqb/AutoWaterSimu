@@ -71,6 +71,11 @@ class User(UserBase, table=True):
     asm3_flowcharts: list["ASM3FlowChart"] = Relationship(back_populates="owner", cascade_delete=True)
     asm3_jobs: list["ASM3Job"] = Relationship(back_populates="owner", cascade_delete=True)
     material_balance_jobs: list["MaterialBalanceJob"] = Relationship(back_populates="owner", cascade_delete=True)
+    # UDM相关关系
+    udm_models: list["UDMModel"] = Relationship(back_populates="owner", cascade_delete=True)
+    udm_model_versions: list["UDMModelVersion"] = Relationship(back_populates="owner", cascade_delete=True)
+    udm_flowcharts: list["UDMFlowChart"] = Relationship(back_populates="owner", cascade_delete=True)
+    udm_jobs: list["UDMJob"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -218,6 +223,13 @@ class NodeData(SQLModel):
     asm1slim_parameters: Optional[List[float]] = Field(default=None, description="ASM1 Slim模型参数 [dSNOmax, dSNHmax, CNRatio, K_S, K_NO, n_g, K_NH]")
     asm1_parameters: Optional[List[float]] = Field(default=None, description="ASM1模型参数 [u_H, K_S, K_OH, K_NO, n_g, b_H, u_A, K_NH, K_OA, b_A, Y_H, Y_A, i_XB, i_XP, f_P, n_h, K_a, K_h, K_x]")
     asm3_parameters: Optional[List[float]] = Field(default=None, description="ASM3模型参数 [k_H, K_X, k_STO, ny_NOX, K_O2, K_NOX, K_S, K_STO, mu_H, K_NH4, K_ALK, b_HO2, b_HNOX, b_STOO2, b_STONOX, mu_A, K_ANH4, K_AO2, K_AALK, b_AO2, b_ANOX, f_SI, Y_STOO2, Y_STONOX, Y_HO2, Y_HNOX, Y_A, f_XI, i_NSI, i_NSS, i_NXI, i_NXS, i_NBM, i_SSXI, i_SSXS, i_SSBM, i_SSSTO]")
+    udm_model_id: Optional[str] = Field(default=None, description="UDM模型ID")
+    udm_model_version: Optional[int] = Field(default=None, description="UDM模型版本")
+    udm_model_hash: Optional[str] = Field(default=None, description="UDM模型内容哈希")
+    udm_component_names: Optional[List[str]] = Field(default=None, description="UDM状态组分名称列表")
+    udm_processes: Optional[List[Dict[str, Any]]] = Field(default=None, description="UDM过程定义列表，包含rate_expr与stoich")
+    udm_parameter_values: Optional[Dict[str, float]] = Field(default=None, description="UDM参数值映射")
+    udm_model_snapshot: Optional[Dict[str, Any]] = Field(default=None, description="UDM模型快照，用于任务可复现")
     
     @validator('initial_concentrations')
     def validate_concentrations(cls, v):
@@ -250,6 +262,16 @@ class NodeData(SQLModel):
                 raise ValueError("ASM3 parameters must contain exactly 37 values: [k_H, K_X, k_STO, ny_NOX, K_O2, K_NOX, K_S, K_STO, mu_H, K_NH4, K_ALK, b_HO2, b_HNOX, b_STOO2, b_STONOX, mu_A, K_ANH4, K_AO2, K_AALK, b_AO2, b_ANOX, f_SI, Y_STOO2, Y_STONOX, Y_HO2, Y_HNOX, Y_A, f_XI, i_NSI, i_NSS, i_NXI, i_NXS, i_NBM, i_SSXI, i_SSXS, i_SSBM, i_SSSTO]")
             if not all(param >= 0 for param in v):
                 raise ValueError("ASM3 parameters must be non-negative")
+        return v
+
+    @validator('udm_component_names')
+    def validate_udm_component_names(cls, v):
+        if v is None:
+            return v
+        if len(v) == 0:
+            raise ValueError("UDM component names cannot be empty")
+        if len(v) != len(set(v)):
+            raise ValueError("UDM component names must be unique")
         return v
 
 
@@ -817,5 +839,272 @@ class ASM3JobInputDataResponse(SQLModel):
     input_data: Dict[str, Any] = Field(description="输入数据")
     result_data: Dict[str, Any] = Field(description="计算结果数据")
     status: MaterialBalanceJobStatus = Field(description="任务状态")
+
+
+# ============================================================================
+# UDM 相关模型
+# ============================================================================
+
+
+class UDMScaleType(str, Enum):
+    """UDM参数缩放类型"""
+    lin = "lin"
+    log = "log"
+
+
+class UDMComponentDefinition(SQLModel):
+    """UDM组分定义"""
+    name: str = Field(min_length=1, max_length=120, description="组分唯一标识")
+    label: Optional[str] = Field(default=None, max_length=120, description="组分显示名称")
+    unit: Optional[str] = Field(default=None, max_length=60, description="组分单位")
+    default_value: Optional[float] = Field(default=None, description="组分默认初值")
+
+
+class UDMParameterDefinition(SQLModel):
+    """UDM参数定义"""
+    name: str = Field(min_length=1, max_length=120, description="参数唯一标识")
+    unit: Optional[str] = Field(default=None, max_length=60, description="参数单位")
+    default_value: Optional[float] = Field(default=None, description="参数默认值")
+    min_value: Optional[float] = Field(default=None, description="参数最小值")
+    max_value: Optional[float] = Field(default=None, description="参数最大值")
+    scale: UDMScaleType = Field(default=UDMScaleType.lin, description="参数缩放类型")
+    note: Optional[str] = Field(default=None, max_length=500, description="参数备注")
+
+
+class UDMProcessDefinition(SQLModel):
+    """UDM过程定义"""
+    name: str = Field(min_length=1, max_length=120, description="过程名称")
+    rate_expr: str = Field(min_length=1, description="过程速率表达式")
+    stoich_expr: Dict[str, str] = Field(default_factory=dict, description="计量系数表达式映射，key=component.name")
+    stoich: Dict[str, float] = Field(default_factory=dict, description="计量系数映射，key=component.name")
+    note: Optional[str] = Field(default=None, max_length=500, description="过程备注")
+
+
+class UDMModelBase(SQLModel):
+    """UDM模型基础信息"""
+    name: str = Field(min_length=1, max_length=255, description="模型名称")
+    description: Optional[str] = Field(default=None, max_length=2000, description="模型描述")
+    tags: List[str] = Field(default_factory=list, description="模型标签")
+
+
+class UDMModelDefinitionDraft(UDMModelBase):
+    """UDM模型草稿定义"""
+    components: List[UDMComponentDefinition] = Field(default_factory=list, description="组分定义")
+    parameters: List[UDMParameterDefinition] = Field(default_factory=list, description="参数定义")
+    processes: List[UDMProcessDefinition] = Field(default_factory=list, description="过程定义")
+    meta: Optional[Dict[str, Any]] = Field(default=None, description="扩展元信息")
+
+
+class UDMModelCreate(UDMModelDefinitionDraft):
+    """创建UDM模型请求"""
+    seed_source: Optional[str] = Field(default=None, max_length=60, description="模板来源")
+
+
+class UDMModelUpdate(SQLModel):
+    """更新UDM模型请求"""
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=2000)
+    tags: Optional[List[str]] = Field(default=None)
+    components: Optional[List[UDMComponentDefinition]] = Field(default=None)
+    parameters: Optional[List[UDMParameterDefinition]] = Field(default=None)
+    processes: Optional[List[UDMProcessDefinition]] = Field(default=None)
+    meta: Optional[Dict[str, Any]] = Field(default=None)
+    is_published: Optional[bool] = Field(default=None, description="是否发布")
+
+
+class UDMModelCreateFromTemplate(SQLModel):
+    """通过模板创建UDM模型请求"""
+    template_key: str = Field(min_length=1, max_length=60, description="模板标识")
+    name: Optional[str] = Field(default=None, max_length=255, description="可选覆盖模型名")
+    description: Optional[str] = Field(default=None, max_length=2000, description="可选覆盖模型描述")
+
+
+class UDMValidationIssue(SQLModel):
+    """UDM校验项"""
+    code: str = Field(description="错误/警告编码")
+    message: str = Field(description="错误/警告消息")
+    process: Optional[str] = Field(default=None, description="关联过程")
+
+
+class UDMValidationResponse(SQLModel):
+    """UDM模型定义校验响应"""
+    ok: bool = Field(description="是否通过校验")
+    errors: List[UDMValidationIssue] = Field(default_factory=list, description="错误列表")
+    warnings: List[UDMValidationIssue] = Field(default_factory=list, description="警告列表")
+    extracted_parameters: List[str] = Field(default_factory=list, description="从表达式提取的参数名")
+
+
+class UDMModel(SQLModel, table=True):
+    """UDM模型主表（稳定ID）"""
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(min_length=1, max_length=255, description="模型名称")
+    description: Optional[str] = Field(default=None, max_length=2000, description="模型描述")
+    tags: List[str] = Field(default_factory=list, sa_column=Column(JSON), description="模型标签")
+    current_version: int = Field(default=1, ge=1, description="当前版本号")
+    is_published: bool = Field(default=False, description="是否发布")
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship(back_populates="udm_models")
+    versions: List["UDMModelVersion"] = Relationship(back_populates="model", cascade_delete=True)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class UDMModelVersion(SQLModel, table=True):
+    """UDM模型版本表（可复现快照）"""
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    model_id: uuid.UUID = Field(
+        foreign_key="udmmodel.id", nullable=False, ondelete="CASCADE"
+    )
+    version: int = Field(ge=1, description="版本号")
+    content_hash: str = Field(max_length=128, index=True, description="内容哈希")
+    components: List[Dict[str, Any]] = Field(default_factory=list, sa_column=Column(JSON), description="组分快照")
+    parameters: List[Dict[str, Any]] = Field(default_factory=list, sa_column=Column(JSON), description="参数快照")
+    processes: List[Dict[str, Any]] = Field(default_factory=list, sa_column=Column(JSON), description="过程快照")
+    meta: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON), description="元信息快照")
+    validation_ok: bool = Field(default=True, description="是否通过校验")
+    validation_errors: List[Dict[str, Any]] = Field(default_factory=list, sa_column=Column(JSON), description="校验错误")
+    seed_source: Optional[str] = Field(default=None, max_length=60, description="模板来源")
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship(back_populates="udm_model_versions")
+    model: UDMModel | None = Relationship(back_populates="versions")
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class UDMModelPublic(UDMModelBase):
+    """UDM模型公开信息"""
+    id: uuid.UUID
+    current_version: int
+    is_published: bool
+    owner_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class UDMModelsPublic(SQLModel):
+    """UDM模型列表响应"""
+    data: List[UDMModelPublic] = Field(default_factory=list)
+    count: int
+
+
+class UDMModelVersionPublic(SQLModel):
+    """UDM模型版本公开信息"""
+    id: uuid.UUID
+    model_id: uuid.UUID
+    version: int
+    content_hash: str
+    components: List[Dict[str, Any]] = Field(default_factory=list)
+    parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    processes: List[Dict[str, Any]] = Field(default_factory=list)
+    meta: Optional[Dict[str, Any]] = Field(default=None)
+    validation_ok: bool
+    validation_errors: List[Dict[str, Any]] = Field(default_factory=list)
+    seed_source: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+class UDMModelDetailPublic(UDMModelPublic):
+    """UDM模型详情响应"""
+    latest_version: Optional[UDMModelVersionPublic] = Field(default=None)
+    versions: List[UDMModelVersionPublic] = Field(default_factory=list)
+
+
+class UDMFlowChart(SQLModel, table=True):
+    """UDM流程图数据库模型"""
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(min_length=1, max_length=255, description="流程图名称")
+    description: Optional[str] = Field(default=None, max_length=1000, description="流程图描述")
+    flow_data: dict = Field(sa_column=Column(JSON), description="完整的流程图数据，包括节点、边和配置")
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship(back_populates="udm_flowcharts")
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class UDMFlowChartBase(SQLModel):
+    """UDM流程图基础模型"""
+    name: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=1000)
+
+
+class UDMFlowChartCreate(UDMFlowChartBase):
+    """创建UDM流程图请求"""
+    flow_data: dict = Field(description="完整的流程图数据")
+
+
+class UDMFlowChartUpdate(UDMFlowChartBase):
+    """更新UDM流程图请求"""
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    flow_data: Optional[dict] = Field(default=None, description="完整的流程图数据")
+
+
+class UDMFlowChartPublic(UDMFlowChartBase):
+    """UDM流程图公开信息"""
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    flow_data: dict
+
+
+class UDMFlowChartsPublic(SQLModel):
+    """UDM流程图列表响应"""
+    data: List[UDMFlowChartPublic] = Field(default_factory=list)
+    count: int
+
+
+class UDMJob(SQLModel, table=True):
+    """UDM计算任务数据库模型"""
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    job_id: str = Field(unique=True, index=True, description="任务唯一标识符")
+    job_name: str = Field(description="任务名称，格式：流程图名称+年月日时分")
+    status: MaterialBalanceJobStatus = Field(default=MaterialBalanceJobStatus.pending, description="任务状态")
+    input_data: dict = Field(sa_column=Column(JSON), description="输入数据")
+    result_data: Optional[dict] = Field(default=None, sa_column=Column(JSON), description="计算结果")
+    summary_data: Optional[dict] = Field(default=None, sa_column=Column(JSON), description="计算摘要数据")
+    error_message: Optional[str] = Field(default=None, description="错误信息")
+    created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
+    started_at: Optional[datetime] = Field(default=None, description="开始计算时间")
+    completed_at: Optional[datetime] = Field(default=None, description="完成时间")
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship(back_populates="udm_jobs")
+
+
+class UDMJobPublic(SQLModel):
+    """UDM任务公开信息"""
+    id: uuid.UUID
+    job_id: str
+    job_name: str
+    status: MaterialBalanceJobStatus
+    created_at: datetime
+    started_at: Optional[datetime]
+    completed_at: Optional[datetime]
+    error_message: Optional[str]
+    result_data: Optional[Dict[str, Any]] = Field(default=None, description="计算结果数据")
+
+
+class UDMJobsPublic(SQLModel):
+    """UDM任务列表"""
+    data: List[UDMJobPublic]
+    count: int
+
+
+class UDMJobInputDataResponse(SQLModel):
+    """UDM任务输入数据响应"""
+    job_id: str = Field(description="计算任务ID")
+    input_data: Dict[str, Any] = Field(description="输入数据")
+    result_data: Dict[str, Any] = Field(description="计算结果数据")
+    status: MaterialBalanceJobStatus = Field(description="任务状态")
+
 
 

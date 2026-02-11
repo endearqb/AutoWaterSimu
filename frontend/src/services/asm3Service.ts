@@ -1,3 +1,4 @@
+import { t } from "@/utils/i18n"
 import { Asm3FlowchartsService, Asm3Service } from "../client/sdk.gen"
 import type {
   ASM3FlowChartCreate,
@@ -12,7 +13,6 @@ import type {
   MaterialBalanceTimeSeriesResponse,
   MaterialBalanceValidationResponse,
 } from "../client/types.gen"
-import { t } from "@/utils/i18n"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
 

@@ -75,7 +75,8 @@ export const enMessages: I18nMessages = {
         outputTitle: "Output node",
         outputBody: "Use output nodes to represent effluent/outlet points.",
         defaultTitle: "Process node",
-        defaultBody: "Use process nodes for units/tanks; edit parameters in the inspector.",
+        defaultBody:
+          "Use process nodes for units/tanks; edit parameters in the inspector.",
         canvasNodeTitle: "Node clicked",
         canvasNodeBody:
           "Tip: click a node/edge, then switch to “Parameter inspector” to edit.",
@@ -240,9 +241,11 @@ export const enMessages: I18nMessages = {
       back: "Back to AI Deep Research",
       notFound: {
         title: "Article not found",
-        description: "The article you are looking for does not exist or has been removed.",
+        description:
+          "The article you are looking for does not exist or has been removed.",
       },
-      interactiveInProgress: "Interactive content for this article is under development.",
+      interactiveInProgress:
+        "Interactive content for this article is under development.",
       about: {
         title: "About this article",
         tagsLabel: "Tags",
@@ -257,12 +260,14 @@ export const enMessages: I18nMessages = {
       connect: "Connect nodes by dragging from a node edge to another node",
       click: "Click a node or edge to edit parameters on the right",
       doubleClick: "Double-click a node or edge to edit its name and flow rate",
-      loginToRun: "Run calculations after logging in; you can export results locally",
+      loginToRun:
+        "Run calculations after logging in; you can export results locally",
       exportImport: "Import exported files locally",
       noLoginCompute: "Login-based calculation is not available in this demo",
       noOnlineSave: "Online save is not available in this demo",
       noOnlineLoad: "Online load is not available in this demo",
-      noLoadCalcData: "Loading saved calculation data is not available in this demo",
+      noLoadCalcData:
+        "Loading saved calculation data is not available in this demo",
       deleteKey: "Select an element and press Delete to remove it",
     },
   },
@@ -410,7 +415,8 @@ export const enMessages: I18nMessages = {
     title: "Users Management",
     addUser: "Add User",
     addUserTitle: "Add User",
-    addUserDescription: "Fill in the form below to add a new user to the system.",
+    addUserDescription:
+      "Fill in the form below to add a new user to the system.",
     editUser: "Edit User",
     editUserTitle: "Edit User",
     editUserDescription: "Update the user details below.",
@@ -509,9 +515,9 @@ export const enMessages: I18nMessages = {
       addConfirmTitle: "Confirm add parameter",
       deleteConfirmTitle: "Confirm delete parameter",
       addConfirmBody:
-        "Are you sure you want to add parameter \"{name}\" to this {target}?",
+        'Are you sure you want to add parameter "{name}" to this {target}?',
       deleteConfirmBody:
-        "Are you sure you want to remove parameter \"{name}\" from this {target}? This cannot be undone.",
+        'Are you sure you want to remove parameter "{name}" from this {target}? This cannot be undone.',
       deleteParamAriaLabel: "Delete parameter",
       customParamPlaceholder: "Custom parameter, numeric value",
       target: {
@@ -712,7 +718,8 @@ export const enMessages: I18nMessages = {
       localImport: "Import Local",
       networkError: "Network error or server issue",
       newFlowchart: "New Flowchart",
-      newFlowchartFailedDescription: "An error occurred while creating a new flowchart",
+      newFlowchartFailedDescription:
+        "An error occurred while creating a new flowchart",
       newFlowchartFailedTitle: "Create failed",
       newFlowchartSuccessDescription: "Created a new flowchart",
       newFlowchartSuccessTitle: "Created",
@@ -907,105 +914,375 @@ export const enMessages: I18nMessages = {
     },
     modelParams: {
       asm1slim: {
-        volume: { label: "Volume (m3)", description: "Reactor volume, unit: m3" },
-        aerobicCODDegradationRate: { label: "Aerobic COD degradation rate", description: "COD degradation rate constant under aerobic conditions" },
-        ammonia: { label: "Ammonia nitrogen", description: "Ammonia concentration (mg/L)" },
-        ammoniaNitrificationInfluence: { label: "Ammonia impact on nitrification rate", description: "Influence coefficient of ammonia on nitrification rate" },
+        volume: {
+          label: "Volume (m3)",
+          description: "Reactor volume, unit: m3",
+        },
+        aerobicCODDegradationRate: {
+          label: "Aerobic COD degradation rate",
+          description: "COD degradation rate constant under aerobic conditions",
+        },
+        ammonia: {
+          label: "Ammonia nitrogen",
+          description: "Ammonia concentration (mg/L)",
+        },
+        ammoniaNitrificationInfluence: {
+          label: "Ammonia impact on nitrification rate",
+          description: "Influence coefficient of ammonia on nitrification rate",
+        },
         cod: { label: "COD", description: "Chemical oxygen demand (mg/L)" },
-        codDenitrificationInfluence: { label: "COD impact on denitrification rate", description: "Influence coefficient of COD on denitrification rate" },
-        dissolvedOxygen: { label: "Dissolved oxygen", description: "Dissolved oxygen concentration (mg/L)" },
-        empiricalCNRatio: { label: "Empirical C/N ratio", description: "Empirical carbon-to-nitrogen ratio" },
-        empiricalDenitrificationRate: { label: "Empirical denitrification rate", description: "Empirical denitrification rate constant" },
-        empiricalNitrificationRate: { label: "Empirical nitrification rate", description: "Empirical nitrification rate constant" },
-        nitrate: { label: "Nitrate nitrogen", description: "Nitrate concentration (mg/L)" },
-        nitrateDenitrificationInfluence: { label: "Nitrate impact on denitrification rate", description: "Influence coefficient of nitrate on denitrification rate" },
-        totalAlkalinity: { label: "Total alkalinity", description: "Total alkalinity (mg/L)" },
+        codDenitrificationInfluence: {
+          label: "COD impact on denitrification rate",
+          description: "Influence coefficient of COD on denitrification rate",
+        },
+        dissolvedOxygen: {
+          label: "Dissolved oxygen",
+          description: "Dissolved oxygen concentration (mg/L)",
+        },
+        empiricalCNRatio: {
+          label: "Empirical C/N ratio",
+          description: "Empirical carbon-to-nitrogen ratio",
+        },
+        empiricalDenitrificationRate: {
+          label: "Empirical denitrification rate",
+          description: "Empirical denitrification rate constant",
+        },
+        empiricalNitrificationRate: {
+          label: "Empirical nitrification rate",
+          description: "Empirical nitrification rate constant",
+        },
+        nitrate: {
+          label: "Nitrate nitrogen",
+          description: "Nitrate concentration (mg/L)",
+        },
+        nitrateDenitrificationInfluence: {
+          label: "Nitrate impact on denitrification rate",
+          description:
+            "Influence coefficient of nitrate on denitrification rate",
+        },
+        totalAlkalinity: {
+          label: "Total alkalinity",
+          description: "Total alkalinity (mg/L)",
+        },
       },
       asm1: {
         volume: { label: "volume", description: "Reactor volume, unit: m3" },
-        K_NH: { label: "K_NH", description: "Half-saturation constant for ammonia (g NH3-N/m3)" },
-        K_NO: { label: "K_NO", description: "Half-saturation constant for nitrate (g NO3-N/m3)" },
-        K_OA: { label: "K_OA", description: "Half-saturation constant for oxygen (g O2/m3)" },
-        K_OH: { label: "K_OH", description: "Half-saturation constant for oxygen (g O2/m3)" },
-        K_S: { label: "K_S", description: "Half-saturation constant for readily biodegradable substrate (g COD/m3)" },
-        K_a: { label: "K_a", description: "Maximum ammonification rate for organic nitrogen (m3/(g COD*d))" },
-        K_h: { label: "K_h", description: "Maximum hydrolysis rate (g COD/(X_S)/(g COD*d))" },
-        K_x: { label: "K_x", description: "Half-saturation for hydrolysis of slowly biodegradable substrate (g COD(Xs)/g COD)" },
+        K_NH: {
+          label: "K_NH",
+          description: "Half-saturation constant for ammonia (g NH3-N/m3)",
+        },
+        K_NO: {
+          label: "K_NO",
+          description: "Half-saturation constant for nitrate (g NO3-N/m3)",
+        },
+        K_OA: {
+          label: "K_OA",
+          description: "Half-saturation constant for oxygen (g O2/m3)",
+        },
+        K_OH: {
+          label: "K_OH",
+          description: "Half-saturation constant for oxygen (g O2/m3)",
+        },
+        K_S: {
+          label: "K_S",
+          description:
+            "Half-saturation constant for readily biodegradable substrate (g COD/m3)",
+        },
+        K_a: {
+          label: "K_a",
+          description:
+            "Maximum ammonification rate for organic nitrogen (m3/(g COD*d))",
+        },
+        K_h: {
+          label: "K_h",
+          description: "Maximum hydrolysis rate (g COD/(X_S)/(g COD*d))",
+        },
+        K_x: {
+          label: "K_x",
+          description:
+            "Half-saturation for hydrolysis of slowly biodegradable substrate (g COD(Xs)/g COD)",
+        },
         S_ALK: { label: "S_ALK", description: "Alkalinity (mol HCO3-/L)" },
-        S_ND: { label: "S_ND", description: "Soluble organic nitrogen concentration (mg N/L)" },
+        S_ND: {
+          label: "S_ND",
+          description: "Soluble organic nitrogen concentration (mg N/L)",
+        },
         S_NH: { label: "S_NH", description: "Ammonia concentration (mg N/L)" },
         S_NO: { label: "S_NO", description: "Nitrate concentration (mg N/L)" },
-        S_O: { label: "S_O", description: "Dissolved oxygen concentration (mg O2/L)" },
-        S_S: { label: "S_S", description: "Readily biodegradable substrate concentration (mg COD/L)" },
-        X_BA: { label: "X_BA", description: "Autotrophic biomass concentration (mg COD/L)" },
-        X_BH: { label: "X_BH", description: "Heterotrophic biomass concentration (mg COD/L)" },
-        X_ND: { label: "X_ND", description: "Particulate organic nitrogen concentration (mg N/L)" },
-        X_S: { label: "X_S", description: "Slowly biodegradable substrate concentration (mg COD/L)" },
-        X_i: { label: "X_i", description: "Inert particulate matter concentration (mg COD/L)" },
-        Y_A: { label: "Y_A", description: "Biomass COD formed per g NH3-N oxidized (COD(cell)/g N oxidized)" },
-        Y_H: { label: "Y_H", description: "Biomass COD formed per g COD oxidized (g COD(cell)/g COD oxidized)" },
+        S_O: {
+          label: "S_O",
+          description: "Dissolved oxygen concentration (mg O2/L)",
+        },
+        S_S: {
+          label: "S_S",
+          description:
+            "Readily biodegradable substrate concentration (mg COD/L)",
+        },
+        X_BA: {
+          label: "X_BA",
+          description: "Autotrophic biomass concentration (mg COD/L)",
+        },
+        X_BH: {
+          label: "X_BH",
+          description: "Heterotrophic biomass concentration (mg COD/L)",
+        },
+        X_ND: {
+          label: "X_ND",
+          description: "Particulate organic nitrogen concentration (mg N/L)",
+        },
+        X_S: {
+          label: "X_S",
+          description:
+            "Slowly biodegradable substrate concentration (mg COD/L)",
+        },
+        X_i: {
+          label: "X_i",
+          description: "Inert particulate matter concentration (mg COD/L)",
+        },
+        Y_A: {
+          label: "Y_A",
+          description:
+            "Biomass COD formed per g NH3-N oxidized (COD(cell)/g N oxidized)",
+        },
+        Y_H: {
+          label: "Y_H",
+          description:
+            "Biomass COD formed per g COD oxidized (g COD(cell)/g COD oxidized)",
+        },
         b_A: { label: "b_A", description: "Autotrophic decay rate (1/d)" },
         b_H: { label: "b_H", description: "Heterotrophic decay rate (1/d)" },
-        f_P: { label: "f_P", description: "Fraction of biomass converted to inert particulates upon decay" },
-        i_XB: { label: "i_XB", description: "Nitrogen content per COD of biomass (g N/g COD(cell))" },
-        i_XP: { label: "i_XP", description: "Nitrogen content per COD of decay products (g N/g COD decay products)" },
-        n_g: { label: "n_g", description: "Anoxic correction factor (dimensionless)" },
-        n_h: { label: "n_h", description: "Anoxic hydrolysis correction factor (dimensionless)" },
+        f_P: {
+          label: "f_P",
+          description:
+            "Fraction of biomass converted to inert particulates upon decay",
+        },
+        i_XB: {
+          label: "i_XB",
+          description: "Nitrogen content per COD of biomass (g N/g COD(cell))",
+        },
+        i_XP: {
+          label: "i_XP",
+          description:
+            "Nitrogen content per COD of decay products (g N/g COD decay products)",
+        },
+        n_g: {
+          label: "n_g",
+          description: "Anoxic correction factor (dimensionless)",
+        },
+        n_h: {
+          label: "n_h",
+          description: "Anoxic hydrolysis correction factor (dimensionless)",
+        },
         u_A: { label: "u_A", description: "Max autotrophic growth rate (1/d)" },
-        u_H: { label: "u_H", description: "Max heterotrophic growth rate (1/d)" },
+        u_H: {
+          label: "u_H",
+          description: "Max heterotrophic growth rate (1/d)",
+        },
       },
       asm3: {
         volume: { label: "volume", description: "Reactor volume, unit: m3" },
-        K_ALKA: { label: "K_ALKA", description: "Alkalinity half-saturation constant (mmol/L)" },
-        K_ALKH: { label: "K_ALKH", description: "Alkalinity half-saturation constant (mmol/L)" },
-        K_AO2: { label: "K_AO2", description: "Oxygen inhibition constant (mg O2/L)" },
-        K_NH4A: { label: "K_NH4A", description: "Ammonia half-saturation constant (mg N/L)" },
-        K_NH4H: { label: "K_NH4H", description: "Ammonia half-saturation constant (mg N/L)" },
-        K_NO: { label: "K_NO", description: "NOx half-saturation constant (mg N/L)" },
-        K_O2A: { label: "K_O2A", description: "Oxygen half-saturation constant (mg O2/L)" },
-        K_O2H: { label: "K_O2H", description: "Oxygen half-saturation constant (mg O2/L)" },
-        K_S: { label: "K_S", description: "Soluble substrate half-saturation constant (mg COD/L)" },
-        K_STO_H: { label: "K_STO_H", description: "Storage product half-saturation constant (mg COD/mg COD)" },
-        K_X: { label: "K_X", description: "Hydrolysis half-saturation constant (mg COD/mg COD)" },
-        S_ALK: { label: "S_ALK", description: "Alkalinity concentration (mmol/L)" },
-        S_I: { label: "S_I", description: "Soluble inert organic concentration (mg COD/L)" },
-        S_ND: { label: "S_ND", description: "Soluble organic nitrogen concentration (mg N/L)" },
+        K_ALKA: {
+          label: "K_ALKA",
+          description: "Alkalinity half-saturation constant (mmol/L)",
+        },
+        K_ALKH: {
+          label: "K_ALKH",
+          description: "Alkalinity half-saturation constant (mmol/L)",
+        },
+        K_AO2: {
+          label: "K_AO2",
+          description: "Oxygen inhibition constant (mg O2/L)",
+        },
+        K_NH4A: {
+          label: "K_NH4A",
+          description: "Ammonia half-saturation constant (mg N/L)",
+        },
+        K_NH4H: {
+          label: "K_NH4H",
+          description: "Ammonia half-saturation constant (mg N/L)",
+        },
+        K_NO: {
+          label: "K_NO",
+          description: "NOx half-saturation constant (mg N/L)",
+        },
+        K_O2A: {
+          label: "K_O2A",
+          description: "Oxygen half-saturation constant (mg O2/L)",
+        },
+        K_O2H: {
+          label: "K_O2H",
+          description: "Oxygen half-saturation constant (mg O2/L)",
+        },
+        K_S: {
+          label: "K_S",
+          description: "Soluble substrate half-saturation constant (mg COD/L)",
+        },
+        K_STO_H: {
+          label: "K_STO_H",
+          description:
+            "Storage product half-saturation constant (mg COD/mg COD)",
+        },
+        K_X: {
+          label: "K_X",
+          description: "Hydrolysis half-saturation constant (mg COD/mg COD)",
+        },
+        S_ALK: {
+          label: "S_ALK",
+          description: "Alkalinity concentration (mmol/L)",
+        },
+        S_I: {
+          label: "S_I",
+          description: "Soluble inert organic concentration (mg COD/L)",
+        },
+        S_ND: {
+          label: "S_ND",
+          description: "Soluble organic nitrogen concentration (mg N/L)",
+        },
         S_NH: { label: "S_NH", description: "NH4-N concentration (mg N/L)" },
         S_NO: { label: "S_NO", description: "NOx-N concentration (mg N/L)" },
-        S_O: { label: "S_O", description: "Dissolved oxygen concentration (mg O2/L)" },
-        S_S: { label: "S_S", description: "Soluble organic substrate concentration (mg COD/L)" },
-        X_A: { label: "X_A", description: "Autotrophic biomass concentration (mg COD/L)" },
-        X_H: { label: "X_H", description: "Heterotrophic biomass concentration (mg COD/L)" },
-        X_I: { label: "X_I", description: "Particulate inert organic concentration (mg COD/L)" },
-        X_ND: { label: "X_ND", description: "Particulate organic nitrogen concentration (mg N/L)" },
-        X_S: { label: "X_S", description: "Particulate biodegradable substrate concentration (mg COD/L)" },
-        X_STO: { label: "X_STO", description: "Intracellular storage products concentration (mg COD/L)" },
-        Y_A: { label: "Y_A", description: "Autotrophic yield coefficient (mg COD/mg N)" },
-        Y_HNOX: { label: "Y_HNOX", description: "Anoxic heterotrophic yield coefficient (mg COD/mg COD)" },
-        Y_HO2: { label: "Y_HO2", description: "Aerobic heterotrophic yield coefficient (mg COD/mg COD)" },
-        Y_STONOX: { label: "Y_STONOX", description: "Anoxic storage yield coefficient (mg COD/mg COD)" },
-        Y_STOO2: { label: "Y_STOO2", description: "Aerobic storage yield coefficient (mg COD/mg COD)" },
-        b_ANOX: { label: "b_ANOX", description: "Anoxic decay rate of autotrophs (d-1)" },
-        b_AO2: { label: "b_AO2", description: "Aerobic decay rate of autotrophs (d-1)" },
-        b_HNOX: { label: "b_HNOX", description: "Anoxic decay rate of heterotrophs (d-1)" },
-        b_HO2: { label: "b_HO2", description: "Aerobic decay rate of heterotrophs (d-1)" },
-        b_STONOX: { label: "b_STONOX", description: "Anoxic oxidation rate of storage products (d-1)" },
-        b_STOO2: { label: "b_STOO2", description: "Aerobic oxidation rate of storage products (d-1)" },
-        f_SI: { label: "f_SI", description: "Fraction of inert soluble products from hydrolysis (mg COD/mg COD)" },
-        f_XI: { label: "f_XI", description: "Fraction of inert particulate products from decay (mg COD/mg COD)" },
-        i_NBM: { label: "i_NBM", description: "Nitrogen content of biomass (mg N/mg COD)" },
-        i_NSI: { label: "i_NSI", description: "Nitrogen content of soluble inert matter (mg N/mg COD)" },
-        i_NSS: { label: "i_NSS", description: "Nitrogen content of soluble substrate (mg N/mg COD)" },
-        i_NXI: { label: "i_NXI", description: "Nitrogen content of particulate inert (mg N/mg COD)" },
-        i_NXS: { label: "i_NXS", description: "Nitrogen content of particulate substrate (mg N/mg COD)" },
-        i_SSBM: { label: "i_SSBM", description: "TSS content of biomass (mg TSS/mg COD)" },
-        i_SSSTO: { label: "i_SSSTO", description: "TSS content of storage products (mg TSS/mg COD)" },
-        i_SSXI: { label: "i_SSXI", description: "TSS content of particulate inert (mg TSS/mg COD)" },
-        k_H: { label: "k_H", description: "Hydrolysis rate constant for particulate substrate (d-1)" },
-        k_STO: { label: "k_STO", description: "Formation rate constant of storage products (d-1)" },
-        k_a: { label: "k_a", description: "Ammonification rate constant (m3/(g COD*d))" },
-        mu_A: { label: "mu_A", description: "Max autotrophic growth rate (d-1)" },
-        mu_H: { label: "mu_H", description: "Max heterotrophic growth rate (d-1)" },
+        S_O: {
+          label: "S_O",
+          description: "Dissolved oxygen concentration (mg O2/L)",
+        },
+        S_S: {
+          label: "S_S",
+          description: "Soluble organic substrate concentration (mg COD/L)",
+        },
+        X_A: {
+          label: "X_A",
+          description: "Autotrophic biomass concentration (mg COD/L)",
+        },
+        X_H: {
+          label: "X_H",
+          description: "Heterotrophic biomass concentration (mg COD/L)",
+        },
+        X_I: {
+          label: "X_I",
+          description: "Particulate inert organic concentration (mg COD/L)",
+        },
+        X_ND: {
+          label: "X_ND",
+          description: "Particulate organic nitrogen concentration (mg N/L)",
+        },
+        X_S: {
+          label: "X_S",
+          description:
+            "Particulate biodegradable substrate concentration (mg COD/L)",
+        },
+        X_STO: {
+          label: "X_STO",
+          description:
+            "Intracellular storage products concentration (mg COD/L)",
+        },
+        Y_A: {
+          label: "Y_A",
+          description: "Autotrophic yield coefficient (mg COD/mg N)",
+        },
+        Y_HNOX: {
+          label: "Y_HNOX",
+          description: "Anoxic heterotrophic yield coefficient (mg COD/mg COD)",
+        },
+        Y_HO2: {
+          label: "Y_HO2",
+          description:
+            "Aerobic heterotrophic yield coefficient (mg COD/mg COD)",
+        },
+        Y_STONOX: {
+          label: "Y_STONOX",
+          description: "Anoxic storage yield coefficient (mg COD/mg COD)",
+        },
+        Y_STOO2: {
+          label: "Y_STOO2",
+          description: "Aerobic storage yield coefficient (mg COD/mg COD)",
+        },
+        b_ANOX: {
+          label: "b_ANOX",
+          description: "Anoxic decay rate of autotrophs (d-1)",
+        },
+        b_AO2: {
+          label: "b_AO2",
+          description: "Aerobic decay rate of autotrophs (d-1)",
+        },
+        b_HNOX: {
+          label: "b_HNOX",
+          description: "Anoxic decay rate of heterotrophs (d-1)",
+        },
+        b_HO2: {
+          label: "b_HO2",
+          description: "Aerobic decay rate of heterotrophs (d-1)",
+        },
+        b_STONOX: {
+          label: "b_STONOX",
+          description: "Anoxic oxidation rate of storage products (d-1)",
+        },
+        b_STOO2: {
+          label: "b_STOO2",
+          description: "Aerobic oxidation rate of storage products (d-1)",
+        },
+        f_SI: {
+          label: "f_SI",
+          description:
+            "Fraction of inert soluble products from hydrolysis (mg COD/mg COD)",
+        },
+        f_XI: {
+          label: "f_XI",
+          description:
+            "Fraction of inert particulate products from decay (mg COD/mg COD)",
+        },
+        i_NBM: {
+          label: "i_NBM",
+          description: "Nitrogen content of biomass (mg N/mg COD)",
+        },
+        i_NSI: {
+          label: "i_NSI",
+          description: "Nitrogen content of soluble inert matter (mg N/mg COD)",
+        },
+        i_NSS: {
+          label: "i_NSS",
+          description: "Nitrogen content of soluble substrate (mg N/mg COD)",
+        },
+        i_NXI: {
+          label: "i_NXI",
+          description: "Nitrogen content of particulate inert (mg N/mg COD)",
+        },
+        i_NXS: {
+          label: "i_NXS",
+          description:
+            "Nitrogen content of particulate substrate (mg N/mg COD)",
+        },
+        i_SSBM: {
+          label: "i_SSBM",
+          description: "TSS content of biomass (mg TSS/mg COD)",
+        },
+        i_SSSTO: {
+          label: "i_SSSTO",
+          description: "TSS content of storage products (mg TSS/mg COD)",
+        },
+        i_SSXI: {
+          label: "i_SSXI",
+          description: "TSS content of particulate inert (mg TSS/mg COD)",
+        },
+        k_H: {
+          label: "k_H",
+          description:
+            "Hydrolysis rate constant for particulate substrate (d-1)",
+        },
+        k_STO: {
+          label: "k_STO",
+          description: "Formation rate constant of storage products (d-1)",
+        },
+        k_a: {
+          label: "k_a",
+          description: "Ammonification rate constant (m3/(g COD*d))",
+        },
+        mu_A: {
+          label: "mu_A",
+          description: "Max autotrophic growth rate (d-1)",
+        },
+        mu_H: {
+          label: "mu_H",
+          description: "Max heterotrophic growth rate (d-1)",
+        },
         ny_NOX: { label: "ny_NOX", description: "Anoxic correction factor" },
       },
     },
@@ -1017,7 +1294,8 @@ export const enMessages: I18nMessages = {
         "Professional water quality analysis tools to help compute precise treatment parameters.",
     },
     lsi: {
-      title: "Langelier Index (LSI) & Ryznar Index (RSI) Interactive Calculator",
+      title:
+        "Langelier Index (LSI) & Ryznar Index (RSI) Interactive Calculator",
       description:
         "The Langelier Saturation Index (LSI) and Ryznar Stability Index (RSI) assess the balance tendency between water and calcium carbonate. LSI = pH − pHs, RSI = 2×pHs − pH. Drag the sliders to see real-time impact.",
       labels: {
@@ -1058,8 +1336,7 @@ export const enMessages: I18nMessages = {
         c: "— C (Hardness): {value}",
         d: "— D (Alkalinity): {value}",
       },
-      note:
-        "Note: Carbonate alkalinity and calcium hardness are in mg/L as CaCO₃. LSI and RSI indicate calcium carbonate saturation balance.",
+      note: "Note: Carbonate alkalinity and calcium hardness are in mg/L as CaCO₃. LSI and RSI indicate calcium carbonate saturation balance.",
     },
     ao: {
       title: "AO Anoxic/Aerobic Volume & Mixed Liquor Return Calculator",
@@ -1129,8 +1406,7 @@ export const enMessages: I18nMessages = {
         mu: "μ = 0.47 · (Na / (Kn + Na)) · exp[0.098·(T − 15)]",
         theta: "θco = F / μ",
         vo: "Vo = Q · (So − Se) · θco · Yt / (1000·X)",
-        qriOriginal:
-          "Q_Ri (original) = 1000·Vn·Kde(T)·X / (Nte − Nke) − Q·R",
+        qriOriginal: "Q_Ri (original) = 1000·Vn·Kde(T)·X / (Nte − Nke) − Q·R",
         qriAlt: "Q_Ri (adjusted) = [(Nt − Nte)/(Nte − Nke) − R] · Q",
       },
     },
@@ -1323,7 +1599,7 @@ export const enMessages: I18nMessages = {
         },
       },
       emptyState: {
-        prompt: "Click \"Start calculation\" to compute results",
+        prompt: 'Click "Start calculation" to compute results',
         start: "Start calculation",
         calculating: "Calculating...",
       },
@@ -1507,10 +1783,8 @@ export const enMessages: I18nMessages = {
       switchTitle: "Switches that stay coordinated",
     },
     sectionOne: {
-      bodyPrefix:
-        "From monitoring to optimization, ",
-      bodySuffix:
-        " helps teams deliver safe water with smarter decisions.",
+      bodyPrefix: "From monitoring to optimization, ",
+      bodySuffix: " helps teams deliver safe water with smarter decisions.",
       title: "A modern operating system for water utilities",
     },
     sectionThree: {

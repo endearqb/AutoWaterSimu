@@ -28,15 +28,12 @@ type FlowStoreSnapshot = {
 
 export function SimulationPlateDemo() {
   const { t } = useI18n()
-  const [bubble, setBubble] = useState<
-    | {
-        x: number
-        y: number
-        title: string
-        body: string
-      }
-    | null
-  >(null)
+  const [bubble, setBubble] = useState<{
+    x: number
+    y: number
+    title: string
+    body: string
+  } | null>(null)
 
   const snapshotRef = useRef<FlowStoreSnapshot | null>(null)
 
@@ -172,7 +169,9 @@ export function SimulationPlateDemo() {
     document.addEventListener("mousedown", onMouseDown, { capture: true })
     return () => {
       window.removeEventListener("keydown", onKeyDown)
-      document.removeEventListener("mousedown", onMouseDown, { capture: true } as any)
+      document.removeEventListener("mousedown", onMouseDown, {
+        capture: true,
+      } as any)
     }
   }, [bubble])
 
@@ -211,4 +210,3 @@ export function SimulationPlateDemo() {
     </Box>
   )
 }
-

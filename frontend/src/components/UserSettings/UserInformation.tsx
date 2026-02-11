@@ -20,8 +20,8 @@ import {
 } from "@/client"
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
-import { getEmailPattern, handleError } from "@/utils"
 import { useI18n } from "@/i18n"
+import { getEmailPattern, handleError } from "@/utils"
 import { Field } from "../ui/field"
 
 const UserInformation = () => {

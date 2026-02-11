@@ -10,6 +10,7 @@ import {
 import type React from "react"
 import { useState } from "react"
 import { LuChevronDown, LuChevronUp } from "react-icons/lu"
+import { useI18n } from "../../../i18n"
 import {
   ENHANCED_HEATMAP_SCHEMES,
   EXTENDED_COLOR_PALETTE,
@@ -20,7 +21,6 @@ import {
   TAB10_COLORS,
   generateGroupedColors,
 } from "../nodes/utils/colorSchemes"
-import { useI18n } from "../../../i18n"
 
 interface PanelColorSelectorProps {
   panelType: "basic" | "grouped" | "heatmap" | "enhanced-heatmap" | "custom"
@@ -424,9 +424,12 @@ export const PanelColorSelector: React.FC<PanelColorSelectorProps> = ({
                           onEnhancedHeatmapSchemeChange?.(schemeKey),
                         )
                       }
-                      aria-label={t("flow.palette.selectEnhancedHeatmapScheme", {
-                        name: meta.name,
-                      })}
+                      aria-label={t(
+                        "flow.palette.selectEnhancedHeatmapScheme",
+                        {
+                          name: meta.name,
+                        },
+                      )}
                       aria-pressed={isActive}
                       role="button"
                       tabIndex={0}

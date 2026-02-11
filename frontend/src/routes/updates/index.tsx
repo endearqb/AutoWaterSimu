@@ -1,10 +1,10 @@
+import { useI18n } from "@/i18n"
 import { Box, Container, Text, VStack } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
+import { z } from "zod"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
 import { Article } from "../../components/Updates/Article"
 import { getBlogPosts } from "../../utils/blog"
-import { useI18n } from "@/i18n"
-import { z } from "zod"
 
 const updatesSearchSchema = z.object({
   embed: z.coerce.string().optional(),

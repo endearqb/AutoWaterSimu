@@ -1,10 +1,10 @@
+import { useI18n } from "@/i18n"
 import { useEffect, useState } from "react"
 import {
   getAllArticles,
   getArticleById as getArticleByIdFromData,
 } from "../data/articles/articleData"
 import type { ArticleData } from "../data/articles/types"
-import { useI18n } from "@/i18n"
 
 export const useArticleData = () => {
   const { language } = useI18n()

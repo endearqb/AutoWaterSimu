@@ -49,6 +49,7 @@ const TINT_ORDER_DEFAULT: string[] = [
   "asm1",
   "asm3",
   "asmslim",
+  "udm",
   "default",
   "cash",
   "goal",
@@ -186,6 +187,8 @@ export const useThemePaletteStore = create<State>((set, get) => ({
           return "asm3"
         case "asm1slim":
           return "asmslim"
+        case "udm":
+          return "udm"
         case "materialBalance":
           return "default"
         default:
@@ -233,6 +236,8 @@ export const useThemePaletteStore = create<State>((set, get) => ({
           return "asm3"
         case "asm1slim":
           return "asmslim"
+        case "udm":
+          return "udm"
         case "materialBalance":
           return "default"
         default:

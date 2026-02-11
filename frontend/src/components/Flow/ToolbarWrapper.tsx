@@ -6,6 +6,7 @@ import ASM1SlimNodesPanel from "./toolbar/ASM1SlimNodesPanel"
 import ASM3NodesPanel from "./toolbar/ASM3NodesPanel"
 import BaseToolbarContainer from "./toolbar/BaseToolbarContainer"
 import NodesPanel from "./toolbar/NodesPanel"
+import UDMNodesPanel from "./toolbar/UDMNodesPanel"
 
 // 工具栏属性接口
 interface ToolbarProps {
@@ -61,6 +62,17 @@ export const ASM3ToolbarWrapper = (props: ToolbarProps) => {
       {...props}
       nodesPanelComponent={ASM3NodesPanel}
       modelType="asm3"
+    />
+  )
+}
+
+// UDM 宸ュ叿鏍忓寘瑁呯粍浠?
+export const UDMToolbarWrapper = (props: ToolbarProps) => {
+  return (
+    <BaseToolbarContainer
+      {...props}
+      nodesPanelComponent={UDMNodesPanel}
+      modelType="udm"
     />
   )
 }

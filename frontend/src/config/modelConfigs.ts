@@ -705,7 +705,6 @@ const ASM3_FIXED_PARAMETERS: CustomParameter[] = [
 
 /** ASM3 增强计算参数定义（包含UI配置） - 37个参数 */
 const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
-
   {
     name: "k_H",
     label: asm3Label("k_H"),
@@ -1162,8 +1161,7 @@ const ASM3_ENHANCED_CALCULATION_PARAMETERS: EnhancedCustomParameter[] = [
       unit: "m³/(g COD·d)",
     },
   },
-
-]/** ASM3 可用变量列表 */
+] /** ASM3 可用变量列表 */
 const ASM3_AVAILABLE_VARIABLES: AvailableVariable[] = [
   { name: "S_S", label: asm3Label("S_S"), unit: "mg COD/L" },
   { name: "S_NH", label: asm3Label("S_NH"), unit: "mg N/L" },
@@ -1198,6 +1196,30 @@ export const ASM3_CONFIG: ModelConfig = {
   },
 }
 
+/** UDM 模型配置（用户自定义模型） */
+const UDM_FIXED_PARAMETERS: CustomParameter[] = []
+
+const UDM_AVAILABLE_VARIABLES: AvailableVariable[] = [
+  { name: "volume", label: "volume", unit: "m3" },
+]
+
+export const UDM_CONFIG: ModelConfig = {
+  modelName: "udm",
+  displayName: "UDM",
+  description: "UDM 用户自定义模型",
+  // UDM 参数由节点绑定的模型快照动态提供，不在此处硬编码。
+  fixedParameters: UDM_FIXED_PARAMETERS,
+  calculationParameters: [],
+  enhancedCalculationParameters: [],
+  nodeTypes: ["DefaultNode", "InputNode", "OutputNode", "UDMNode", "udm"],
+  availableVariables: UDM_AVAILABLE_VARIABLES,
+  modelSpecific: {
+    supportedSolverMethods: ["rk4", "scipy_solver", "euler"],
+    seedTemplateKeys: ["asm1", "asm1slim", "asm3"],
+    defaultEdgeParameterConfigs: {},
+  },
+}
+
 // ========== 配置工具函数 ==========
 
 /**
@@ -1210,11 +1232,13 @@ export function getAllModelConfigs(): Record<string, ModelConfig> {
     asm1: ASM1_CONFIG,
     asm2d: ASM2D_CONFIG,
     asm3: ASM3_CONFIG,
+    udm: UDM_CONFIG,
     // 保持向后兼容性
     ASM1Slim: ASM1_SLIM_CONFIG,
     ASM1: ASM1_CONFIG,
     ASM2D: ASM2D_CONFIG,
     ASM3: ASM3_CONFIG,
+    UDM: UDM_CONFIG,
   }
 }
 
@@ -1421,7 +1445,3 @@ export function getParameterValidationRange(
     unit: param.ui.unit,
   }
 }
-
-
-
-

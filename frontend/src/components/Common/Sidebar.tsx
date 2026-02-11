@@ -16,8 +16,8 @@ import { FaBars, FaUserAstronaut } from "react-icons/fa"
 import { FiChevronLeft, FiChevronRight, FiLogOut, FiUser } from "react-icons/fi"
 
 import type { UserPublic } from "@/client"
-import { useI18n, useLocale } from "@/i18n"
 import useAuth from "@/hooks/useAuth"
+import { useI18n, useLocale } from "@/i18n"
 import {
   DrawerBackdrop,
   DrawerBody,
@@ -261,7 +261,9 @@ const Sidebar = () => {
                 size="sm"
                 onClick={toggleCollapse}
                 aria-label={
-                  isCollapsed ? t("common.expandSidebar") : t("common.collapseSidebar")
+                  isCollapsed
+                    ? t("common.expandSidebar")
+                    : t("common.collapseSidebar")
                 }
                 bg="white"
                 shadow="sm"

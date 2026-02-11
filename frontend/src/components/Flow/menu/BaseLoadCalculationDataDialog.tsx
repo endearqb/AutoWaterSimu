@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "../../ui/dialog"
 
+import { useI18n } from "../../../i18n"
 import type { BaseModelState } from "../../../stores/baseModelStore"
 import type { RFState } from "../../../stores/flowStore"
 import {
@@ -28,7 +29,6 @@ import {
   PaginationPrevTrigger,
   PaginationRoot,
 } from "../../ui/pagination"
-import { useI18n } from "../../../i18n"
 
 /**
  * 通用LoadCalculationDataDialog组件的Props接口
@@ -551,7 +551,9 @@ const BaseLoadCalculationDataDialog = <
                   {isLoadingData ? (
                     <Box textAlign="center" py={4}>
                       <Spinner />
-                      <Text mt={2}>{t("flow.loadCalculation.loadingDetails")}</Text>
+                      <Text mt={2}>
+                        {t("flow.loadCalculation.loadingDetails")}
+                      </Text>
                     </Box>
                   ) : (
                     resultSummary && (

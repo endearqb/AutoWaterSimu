@@ -1,3 +1,4 @@
+import { t } from "@/utils/i18n"
 import type {
   MaterialBalanceInput,
   MaterialBalanceResultSummary,
@@ -5,7 +6,6 @@ import type {
   MaterialBalanceValidationResponse,
   Message,
 } from "../client/types.gen"
-import { t } from "@/utils/i18n"
 
 /**
  * 通用模型服务接口

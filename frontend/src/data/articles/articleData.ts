@@ -1,5 +1,5 @@
+import { type Language, detectDefaultLanguage } from "@/i18n"
 import type { ArticleData } from "./types"
-import { detectDefaultLanguage, type Language } from "@/i18n"
 
 // 简化的文章数据结构，用于链接到HTML文件
 export const articlesDataZh: ArticleData[] = [

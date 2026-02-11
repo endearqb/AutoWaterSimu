@@ -10,6 +10,13 @@ interface ModelParametersPanelProps {
   store?: () => RFState
 }
 
+interface ParameterRowDef {
+  key: string
+  name: string
+  label: string
+  kind: "model" | "static"
+}
+
 const getModelTypeFromNode = (nodeType: string): string => {
   switch (nodeType) {
     case "asmslim":
@@ -24,6 +31,9 @@ const getModelTypeFromNode = (nodeType: string): string => {
     case "asm3":
     case "ASM3Node":
       return "asm3"
+    case "udm":
+    case "UDMNode":
+      return "udm"
     case "input":
     case "output":
     case "default":
@@ -34,6 +44,41 @@ const getModelTypeFromNode = (nodeType: string): string => {
       console.log("未识别的节点类型:", nodeType)
       return ""
   }
+}
+
+const getUdmModelParameterDefs = (
+  nodeData: Record<string, unknown>,
+): Array<{ name: string; label: string }> => {
+  const candidates: unknown[] = [
+    (nodeData.udmModelSnapshot as Record<string, unknown> | undefined)
+      ?.parameters,
+    (nodeData.udmModel as Record<string, unknown> | undefined)?.parameters,
+  ]
+
+  for (const source of candidates) {
+    if (!Array.isArray(source)) continue
+
+    const parsed = source
+      .map((item) => {
+        if (!item || typeof item !== "object") return null
+        const raw = item as Record<string, unknown>
+        const name = String(raw.name || "").trim()
+        if (!name) return null
+        return { name, label: name }
+      })
+      .filter((item): item is { name: string; label: string } => !!item)
+
+    if (parsed.length > 0) return parsed
+  }
+
+  return []
+}
+
+const toDisplayValue = (value: unknown): string => {
+  if (value === undefined || value === null || value === "") return "-"
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "-"
+  if (typeof value === "string") return value
+  return String(value)
 }
 
 export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
@@ -49,23 +94,47 @@ export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
     })
   }, [allNodes])
 
-  const allModelParameters = useMemo(() => {
-    const parameterMap = new Map<string, any>()
+  const parameterRows = useMemo<ParameterRowDef[]>(() => {
+    const rowMap = new Map<string, ParameterRowDef>()
 
     modelNodes.forEach((node) => {
       const nodeModelType = getModelTypeFromNode(node.type || "")
-      const modelConfig = getModelConfig(nodeModelType)
+      const nodeData = (node.data || {}) as Record<string, unknown>
 
-      if (modelConfig?.enhancedCalculationParameters) {
-        modelConfig.enhancedCalculationParameters.forEach((param) => {
-          if (!parameterMap.has(param.name)) {
-            parameterMap.set(param.name, param)
+      if (nodeModelType === "udm") {
+        const modelParams = getUdmModelParameterDefs(nodeData)
+        modelParams.forEach((param) => {
+          const key = `model:${param.name}`
+          if (!rowMap.has(key)) {
+            rowMap.set(key, {
+              key,
+              name: param.name,
+              label: param.label,
+              kind: "model",
+            })
           }
         })
+
+        return
       }
+
+      const modelConfig = getModelConfig(nodeModelType)
+      if (!modelConfig?.enhancedCalculationParameters) return
+
+      modelConfig.enhancedCalculationParameters.forEach((param) => {
+        const key = `static:${param.name}`
+        if (!rowMap.has(key)) {
+          rowMap.set(key, {
+            key,
+            name: param.name,
+            label: param.label,
+            kind: "static",
+          })
+        }
+      })
     })
 
-    return Array.from(parameterMap.values())
+    return Array.from(rowMap.values())
   }, [modelNodes])
 
   if (modelNodes.length === 0) {
@@ -76,27 +145,10 @@ export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
     )
   }
 
-  if (allModelParameters.length === 0) {
+  if (parameterRows.length === 0) {
     return (
       <Stack gap={4} align="stretch">
-        <Text color="gray.500">
-          {t("flow.modelParametersPanel.noParameters")}
-        </Text>
-        <Text fontSize="xs" color="gray.400">
-          {t("flow.modelParametersPanel.noParametersDetail", {
-            count: modelNodes.length,
-          })}
-        </Text>
-        <Text fontSize="xs" color="gray.400">
-          {t("flow.modelParametersPanel.modelNodeTypes", {
-            types: modelNodes
-              .map(
-                (node) =>
-                  `${node.type} (${getModelTypeFromNode(node.type || "")})`,
-              )
-              .join(", "),
-          })}
-        </Text>
+        <Text color="gray.500">{t("flow.modelParametersPanel.noParameters")}</Text>
       </Stack>
     )
   }
@@ -110,7 +162,7 @@ export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
         <Text fontSize="xs" color="gray.500">
           {t("flow.modelParametersPanel.summary", {
             nodes: modelNodes.length,
-            params: allModelParameters.length,
+            params: parameterRows.length,
           })}
         </Text>
       </HStack>
@@ -129,27 +181,63 @@ export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {allModelParameters.map((param) => (
-            <Table.Row key={param.label}>
+          {parameterRows.map((row) => (
+            <Table.Row key={row.key}>
               <Table.Cell>
                 <Text fontSize="sm" fontWeight="medium">
-                  {t(param.label)}
+                  {row.kind === "static" && row.label.startsWith("flow.")
+                    ? t(row.label)
+                    : row.label}
                 </Text>
               </Table.Cell>
               {modelNodes.map((node) => {
                 const nodeModelType = getModelTypeFromNode(node.type || "")
-                const modelConfig = getModelConfig(nodeModelType)
-                const hasParameter =
-                  modelConfig?.enhancedCalculationParameters?.some(
-                    (p) => p.name === param.name,
+                const nodeData = (node.data || {}) as Record<string, unknown>
+
+                if (nodeModelType === "udm") {
+                  if (row.kind === "model") {
+                    const defs = getUdmModelParameterDefs(nodeData)
+                    const hasParam = defs.some((item) => item.name === row.name)
+                    const valueFromMap = (nodeData.udmParameterValues as
+                      | Record<string, unknown>
+                      | undefined)?.[row.name]
+                    return (
+                      <Table.Cell key={`${row.key}-${node.id}`}>
+                        <Text fontSize="sm">
+                          {hasParam
+                            ? toDisplayValue(valueFromMap ?? nodeData[row.name])
+                            : "-"}
+                        </Text>
+                      </Table.Cell>
+                    )
+                  }
+
+                  return (
+                    <Table.Cell key={`${row.key}-${node.id}`}>
+                      <Text fontSize="sm">-</Text>
+                    </Table.Cell>
                   )
-                const paramValue = hasParameter
-                  ? ((node.data as any)?.[param.name] ?? param.defaultValue)
+                }
+
+                if (row.kind !== "static") {
+                  return (
+                    <Table.Cell key={`${row.key}-${node.id}`}>
+                      <Text fontSize="sm">-</Text>
+                    </Table.Cell>
+                  )
+                }
+
+                const modelConfig = getModelConfig(nodeModelType)
+                const staticParam = modelConfig?.enhancedCalculationParameters?.find(
+                  (p) => p.name === row.name,
+                )
+                const value = staticParam
+                  ? ((node.data as any)?.[row.name] ?? staticParam.defaultValue)
                   : "-"
 
                 return (
-                  <Table.Cell key={`${param.name}-${node.id}`}>
-                    <Text fontSize="sm">{hasParameter ? paramValue : "-"}</Text>
+                  <Table.Cell key={`${row.key}-${node.id}`}>
+                    <Text fontSize="sm">{toDisplayValue(value)}</Text>
                   </Table.Cell>
                 )
               })}

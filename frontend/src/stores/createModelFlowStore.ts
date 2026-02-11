@@ -21,18 +21,18 @@ import {
   getDefaultCalculationParams,
 } from "../config/simulationConfig"
 import { t } from "../i18n"
-// import type { BaseModelService } from '../services/baseModelService' // 暂时注释掉未使用的导入
+// import type { BaseModelService } from '../services/baseModelService' // 暂时注释掉未使用的导�?
 
 /**
- * 通用流程图状态接口
- * 基于RFState但支持泛型配置
+ * 通用流程图状态接�?
+ * 基于RFState但支持泛型配�?
  */
 export interface ModelFlowState<
   TFlowChart,
   _TFlowChartCreate,
   _TFlowChartUpdate,
 > {
-  // ========== 基础状态 ==========
+  // ========== 基础状�?==========
   nodes: Node[]
   edges: Edge[]
   selectedNode: Node | null
@@ -95,7 +95,7 @@ export interface ModelFlowState<
   importFlowData: (data: any) => { success: boolean; message: string }
   setImportedFileName: (fileName: string | null) => void
 
-  // ========== 流程图管理 ==========
+  // ========== 流程图管�?==========
   saveFlowChart: (
     name: string,
     description?: string,
@@ -125,7 +125,7 @@ export interface ModelFlowState<
 }
 
 /**
- * 流程图服务接口
+ * 流程图服务接�?
  * 用于抽象不同模型的流程图API调用
  */
 export interface FlowChartService<
@@ -152,9 +152,9 @@ export interface FlowChartService<
 const getDefaultFlowchartName = () => t("flow.menu.untitledFlowchart")
 
 /**
- * 创建模型流程图Store的工厂函数
+ * 创建模型流程图Store的工厂函�?
  * @param config 模型配置
- * @param flowChartService 流程图服务
+ * @param flowChartService 流程图服�?
  * @returns Zustand store hook
  */
 export function createModelFlowStore<
@@ -174,7 +174,7 @@ export function createModelFlowStore<
 ) {
   return create<ModelFlowState<TFlowChart, TFlowChartCreate, TFlowChartUpdate>>(
     (set, get) => ({
-      // ========== 初始状态 ==========
+      // ========== 初始状�?==========
       nodes: [],
       edges: [],
       selectedNode: null,
@@ -232,15 +232,15 @@ export function createModelFlowStore<
           data: { flow: 0 },
         }
 
-        // 为新连接线添加参数配置
+        // 为新连接线添加参数配�?
         const newEdgeParameterConfigs = { ...state.edgeParameterConfigs }
         newEdgeParameterConfigs[newEdge.id] = {}
 
-        // 为每个固定参数创建默认配置
+        // 为每个固定参数创建默认配�?
         config.fixedParameters.forEach((param) => {
           newEdgeParameterConfigs[newEdge.id][param.name] = {
             a: 1, // 默认比例系数
-            b: 0, // 默认常数项
+            b: 0, // 默认常数�?
           }
         })
 
@@ -248,7 +248,7 @@ export function createModelFlowStore<
         state.customParameters.forEach((param) => {
           newEdgeParameterConfigs[newEdge.id][param.name] = {
             a: 1, // 默认比例系数
-            b: 0, // 默认常数项
+            b: 0, // 默认常数�?
           }
         })
 
@@ -401,7 +401,7 @@ export function createModelFlowStore<
       addCustomParameter: (paramName: string, description?: string) => {
         const { customParameters } = get()
         if (customParameters.find((p) => p.name === paramName)) {
-          return // 参数已存在
+          return // 参数已存�?
         }
 
         const newParam: CustomParameter = {
@@ -415,7 +415,7 @@ export function createModelFlowStore<
           customParameters: [...customParameters, newParam],
         })
 
-        // 同步到所有节点
+        // 同步到所有节�?
         const { nodes, edges, edgeParameterConfigs } = get()
         set({
           nodes: nodes.map((node) => ({
@@ -440,7 +440,7 @@ export function createModelFlowStore<
                   ...edgeParameterConfigs[edge.id],
                   [paramName]: {
                     a: 1, // 默认比例系数
-                    b: 0, // 默认常数项
+                    b: 0, // 默认常数�?
                   },
                 }
                 return configs
@@ -454,7 +454,7 @@ export function createModelFlowStore<
       removeCustomParameter: (paramName: string) => {
         const { customParameters, nodes, edges, edgeParameterConfigs } = get()
 
-        // 检查是否为固定参数或计算参数
+        // 检查是否为固定参数或计算参�?
         const isFixedParam = config.fixedParameters.some(
           (p) => p.name === paramName,
         )
@@ -463,10 +463,10 @@ export function createModelFlowStore<
         )
 
         if (isFixedParam || isCalcParam) {
-          return // 不能删除模型定义的参数
+          return // 不能删除模型定义的参�?
         }
 
-        // 从 edgeParameterConfigs 中移除对应的配置
+        // �?edgeParameterConfigs 中移除对应的配置
         const updatedEdgeParameterConfigs = { ...edgeParameterConfigs }
         Object.keys(updatedEdgeParameterConfigs).forEach((edgeId) => {
           if (updatedEdgeParameterConfigs[edgeId][paramName]) {
@@ -582,18 +582,82 @@ export function createModelFlowStore<
       // ========== 数据导入导出 ==========
       exportFlowData: () => {
         const state = get()
+        const isUDMModel = config.modelName === "udm"
 
-        // 获取计算参数的名称列表 - 使用enhancedCalculationParameters替代空的calculationParameters
+        // 获取计算参数的名称列�?- 使用enhancedCalculationParameters替代空的calculationParameters
         const calculationParamNames =
           config.enhancedCalculationParameters?.map((param) => param.name) ||
           config.calculationParameters.map((param) => param.name)
-        // 获取固定参数的名称列表
+        // 获取固定参数的名称列�?
         const fixedParamNames = config.fixedParameters.map(
           (param) => param.name,
         )
 
         // 处理节点数据
         const processedNodes = state.nodes.map((node) => {
+          if (isUDMModel && node.type === "udm" && node.data) {
+            const nodeAny = node as any
+            const udmDataKeys = [
+              "udmModel",
+              "udmModelSnapshot",
+              "udmComponents",
+              "udmComponentNames",
+              "udmProcesses",
+              "udmParameters",
+              "udmParameterValues",
+              "udmModelId",
+              "udmModelVersion",
+              "udmModelHash",
+            ] as const
+
+            const exportedData: any = {
+              volume: (node.data as any).volume ?? "1e-3",
+              label: (node.data as any).label,
+            }
+
+            state.customParameters.forEach((param) => {
+              const value = (node.data as any)[param.name]
+              exportedData[param.name] =
+                value !== undefined ? value : param.defaultValue
+            })
+
+            udmDataKeys.forEach((key) => {
+              if ((node.data as any)[key] !== undefined) {
+                exportedData[key] = (node.data as any)[key]
+              }
+            })
+
+            const exportedNode: any = {
+              ...node,
+              data: exportedData,
+            }
+
+            udmDataKeys.forEach((key) => {
+              if (nodeAny[key] !== undefined) {
+                exportedNode[key] = nodeAny[key]
+              }
+            })
+
+            if (
+              !exportedNode.udmComponentNames &&
+              Array.isArray(exportedData.udmComponents)
+            ) {
+              exportedNode.udmComponentNames = exportedData.udmComponents
+                .map((item: any) =>
+                  typeof item?.name === "string" ? item.name : undefined,
+                )
+                .filter((name: string | undefined): name is string => !!name)
+            }
+            if (
+              !exportedData.udmComponentNames &&
+              Array.isArray(exportedNode.udmComponentNames)
+            ) {
+              exportedData.udmComponentNames = exportedNode.udmComponentNames
+            }
+
+            return exportedNode
+          }
+
           if (
             (node.type === "asmslim" || node.type === "asm1slim") &&
             node.data
@@ -641,12 +705,12 @@ export function createModelFlowStore<
             }
           }
           if (node.type === "asm3" && node.data) {
-            // ASM3节点：分离固定参数和ASM3状态变量参数
+            // ASM3节点：分离固定参数和ASM3状态变量参�?
             const { volume, label, ...nodeData } = node.data
             const fixedParams: any = { volume: volume ?? "1e-3", label }
             const modelParams: any = {}
 
-            // 遍历节点数据，分离ASM3状态变量参数
+            // 遍历节点数据，分离ASM3状态变量参�?
             Object.keys(nodeData).forEach((key) => {
               if (calculationParamNames.includes(key)) {
                 modelParams[key] = nodeData[key]
@@ -662,7 +726,7 @@ export function createModelFlowStore<
             }
           }
           if (node.data) {
-            // 非ASM1slim节点：只保留固定参数，移除计算参数
+            // 非ASM1slim节点：只保留固定参数，移除计算参�?
             const { volume, ...nodeData } = node.data
             const filteredData: any = { volume: volume ?? "1e-3" }
 
@@ -679,7 +743,7 @@ export function createModelFlowStore<
             }
           }
 
-          // 没有data的节点保持原样
+          // 没有data的节点保持原�?
           return node
         })
 
@@ -687,6 +751,9 @@ export function createModelFlowStore<
         const processedEdges = state.edges.map((edge) => {
           const { flow } = edge.data || {}
           const edgeConfigs = state.edgeParameterConfigs[edge.id] || {}
+          const edgeParameters = isUDMModel
+            ? state.customParameters
+            : config.fixedParameters
 
           // 构建新的data对象，包含flow和固定参数的a、b配置
           const newData: any = {
@@ -694,7 +761,7 @@ export function createModelFlowStore<
           }
 
           // 只为固定参数添加a和b配置，不包含计算参数
-          config.fixedParameters.forEach((param) => {
+          edgeParameters.forEach((param) => {
             const configItem = edgeConfigs[param.name] || { a: 1, b: 0 }
             newData[`${param.name}_a`] = configItem.a
             newData[`${param.name}_b`] = configItem.b
@@ -709,7 +776,9 @@ export function createModelFlowStore<
         return {
           nodes: processedNodes,
           edges: processedEdges,
-          customParameters: config.fixedParameters, // 只导出固定参数，不包含计算参数
+          customParameters: isUDMModel
+            ? state.customParameters
+            : config.fixedParameters, // export fixed parameters only (exclude calculation params)
           calculationParameters: state.calculationParameters,
           exportedAt: new Date().toISOString(),
           version: "1.0",
@@ -746,7 +815,7 @@ export function createModelFlowStore<
             }
           }
 
-          // 处理导入的节点数据，将asm1slimParameters、modelParameters或asm1Parameters合并到data中
+          // 处理导入的节点数据，将asm1slimParameters、modelParameters或asm1Parameters合并到data�?
           const processedNodes = nodes.map((node: any) => {
             if (
               (node.type === "asm1slim" || node.type === "asmslim") &&
@@ -767,7 +836,7 @@ export function createModelFlowStore<
               }
             }
             if (node.type === "asm1" && node.asm1Parameters) {
-              // 将asm1Parameters合并到data中
+              // 将asm1Parameters合并到data�?
               return {
                 ...node,
                 data: {
@@ -818,7 +887,7 @@ export function createModelFlowStore<
               })
             }
 
-            // 添加处理后的边
+            // 添加处理后的�?
             processedEdges.push({
               ...edge,
               data: newEdgeData,
@@ -828,23 +897,28 @@ export function createModelFlowStore<
           // 合并自定义参数（保留模型定义的参数）
           const enhancedCalculationParams =
             config.enhancedCalculationParameters || config.calculationParameters
-          const mergedCustomParameters = customParameters
-            ? [
-                ...config.fixedParameters,
-                ...enhancedCalculationParams,
-                ...customParameters.filter(
-                  (param: CustomParameter) =>
-                    !config.fixedParameters.some(
-                      (fp) => fp.name === param.name,
-                    ) &&
-                    !enhancedCalculationParams.some(
-                      (cp) => cp.name === param.name,
+          const mergedCustomParameters =
+            config.modelName === "udm"
+              ? customParameters
+                ? [...customParameters]
+                : [...get().customParameters]
+              : customParameters
+                ? [
+                    ...config.fixedParameters,
+                    ...enhancedCalculationParams,
+                    ...customParameters.filter(
+                      (param: CustomParameter) =>
+                        !config.fixedParameters.some(
+                          (fp) => fp.name === param.name,
+                        ) &&
+                        !enhancedCalculationParams.some(
+                          (cp) => cp.name === param.name,
+                        ),
                     ),
-                ),
-              ]
-            : [...config.fixedParameters, ...enhancedCalculationParams]
+                  ]
+                : [...config.fixedParameters, ...enhancedCalculationParams]
 
-          // 合并边参数配置：优先使用从边数据中提取的配置，然后使用导入数据中的配置
+          // 合并边参数配置：优先使用从边数据中提取的配置，然后使用导入数据中的配�?
           const finalEdgeParameterConfigs = {
             ...edgeParameterConfigs,
             ...newEdgeParameterConfigs,
@@ -855,7 +929,7 @@ export function createModelFlowStore<
             edges: processedEdges,
             customParameters: mergedCustomParameters,
             edgeParameterConfigs: finalEdgeParameterConfigs,
-            // 保持当前的计算参数，不使用导入数据中的参数
+            // 保持当前的计算参数，不使用导入数据中的参�?
             // calculationParameters: calculationParameters || getDefaultCalculationParams(config.modelName as any),
             selectedNode: null,
             selectedEdge: null,
@@ -866,7 +940,7 @@ export function createModelFlowStore<
             message: t("flow.store.flowchart.importSuccess"),
           }
         } catch (error) {
-          console.error("导入流程图失败:", error)
+          console.error("导入流程图失�?", error)
           const message =
             error instanceof Error
               ? error.message
@@ -879,14 +953,14 @@ export function createModelFlowStore<
         set({ importedFileName: fileName })
       },
 
-      // ========== 流程图管理 ==========
+      // ========== 流程图管�?==========
       saveFlowChart: async (name: string, description?: string) => {
         try {
           const flowData = get().exportFlowData()
           const { currentFlowChartId } = get()
 
           if (currentFlowChartId) {
-            // 更新现有流程图
+            // 更新现有流程�?
             const result = await flowChartService.updateFlowchart({
               id: currentFlowChartId,
               requestBody: {
@@ -922,11 +996,9 @@ export function createModelFlowStore<
             data: result,
           }
         } catch (error: any) {
-          console.error("保存流程图失败:", error)
+          console.error("保存流程图失�?", error)
           const reason =
-            error?.body?.detail ||
-            error?.message ||
-            t("common.unknown")
+            error?.body?.detail || error?.message || t("common.unknown")
           return {
             success: false,
             message: t("flow.store.flowchart.saveFailedWithReason", {
@@ -967,11 +1039,9 @@ export function createModelFlowStore<
             message: t("flow.store.flowchart.loadFailedEmpty"),
           }
         } catch (error: any) {
-          console.error("加载流程图失败:", error)
+          console.error("加载流程图失�?", error)
           const reason =
-            error?.body?.detail ||
-            error?.message ||
-            t("common.unknown")
+            error?.body?.detail || error?.message || t("common.unknown")
           return {
             success: false,
             message: t("flow.store.flowchart.loadFailedWithReason", { reason }),
@@ -991,11 +1061,9 @@ export function createModelFlowStore<
             data: (response as any).data || [],
           }
         } catch (error: any) {
-          console.error("获取流程图列表失败:", error)
+          console.error("获取流程图列表失�?", error)
           const reason =
-            error?.body?.detail ||
-            error?.message ||
-            t("common.unknown")
+            error?.body?.detail || error?.message || t("common.unknown")
           return {
             success: false,
             message: t("flow.store.flowchart.listFailedWithReason", { reason }),
@@ -1029,11 +1097,9 @@ export function createModelFlowStore<
             data: result,
           }
         } catch (error: any) {
-          console.error("更新流程图失败:", error)
+          console.error("更新流程图失�?", error)
           const reason =
-            error?.body?.detail ||
-            error?.message ||
-            t("common.unknown")
+            error?.body?.detail || error?.message || t("common.unknown")
           return {
             success: false,
             message: t("flow.store.flowchart.updateFailedWithReason", {
@@ -1056,11 +1122,9 @@ export function createModelFlowStore<
             message: t("flow.store.flowchart.deleteSuccess"),
           }
         } catch (error: any) {
-          console.error("删除流程图失败:", error)
+          console.error("删除流程图失�?", error)
           const reason =
-            error?.body?.detail ||
-            error?.message ||
-            t("common.unknown")
+            error?.body?.detail || error?.message || t("common.unknown")
           return {
             success: false,
             message: t("flow.store.flowchart.deleteFailedWithReason", {
@@ -1189,7 +1253,7 @@ export function createModelFlowStore<
         const updatedNodes = state.nodes.map((node) => {
           const updatedData = { ...node.data }
 
-          // 检查并添加缺失的参数
+          // 检查并添加缺失的参�?
           allParameters.forEach((param) => {
             if (!(param.name in updatedData)) {
               updatedData[param.name] = param.defaultValue
@@ -1202,11 +1266,11 @@ export function createModelFlowStore<
           }
         })
 
-        // 为所有现有连接线添加缺失的参数
+        // 为所有现有连接线添加缺失的参�?
         const updatedEdges = state.edges.map((edge) => {
           const updatedData = { ...edge.data }
 
-          // 检查并添加缺失的参数
+          // 检查并添加缺失的参�?
           allParameters.forEach((param) => {
             if (!(param.name in updatedData)) {
               updatedData[param.name] = param.defaultValue
@@ -1231,7 +1295,7 @@ export function createModelFlowStore<
             if (!updatedEdgeParameterConfigs[edge.id][param.name]) {
               updatedEdgeParameterConfigs[edge.id][param.name] = {
                 a: 1, // 默认比例系数
-                b: 0, // 默认常数项
+                b: 0, // 默认常数�?
               }
             }
           })
@@ -1250,7 +1314,7 @@ export function createModelFlowStore<
         const enhancedCalculationParams =
           config.enhancedCalculationParameters || config.calculationParameters
 
-        // 重置所有节点参数为默认值
+        // 重置所有节点参数为默认�?
         const resetNodes = nodes.map((node) => {
           const resetData = { ...node.data }
           config.fixedParameters.forEach((param) => {
@@ -1265,7 +1329,7 @@ export function createModelFlowStore<
           }
         })
 
-        // 重置所有边参数为默认值
+        // 重置所有边参数为默认�?
         const resetEdges = edges.map((edge) => {
           const resetData = { ...edge.data }
           config.fixedParameters.forEach((param) => {

@@ -4,8 +4,13 @@ import { Controller, type SubmitHandler, useForm } from "react-hook-form"
 import { type UserCreate, type UserType, UsersService } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
-import { confirmPasswordRules, getEmailPattern, handleError, passwordRules } from "@/utils"
 import { useI18n } from "@/i18n"
+import {
+  confirmPasswordRules,
+  getEmailPattern,
+  handleError,
+  passwordRules,
+} from "@/utils"
 import {
   Button,
   DialogActionTrigger,
@@ -99,9 +104,7 @@ const AddUser = () => {
             <DialogTitle>{t("admin.addUserTitle")}</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>
-              {t("admin.addUserDescription")}
-            </Text>
+            <Text mb={4}>{t("admin.addUserDescription")}</Text>
             <VStack gap={4}>
               <Field
                 required
@@ -155,7 +158,10 @@ const AddUser = () => {
               >
                 <Input
                   id="confirm_password"
-                  {...register("confirm_password", confirmPasswordRules(getValues))}
+                  {...register(
+                    "confirm_password",
+                    confirmPasswordRules(getValues),
+                  )}
                   placeholder={t("auth.confirmPasswordPlaceholder")}
                   type="password"
                 />
@@ -174,7 +180,9 @@ const AddUser = () => {
                     <option value="basic">{t("admin.userTypeBasic")}</option>
                     <option value="pro">{t("admin.userTypePro")}</option>
                     <option value="ultra">{t("admin.userTypeUltra")}</option>
-                    <option value="enterprise">{t("admin.userTypeEnterprise")}</option>
+                    <option value="enterprise">
+                      {t("admin.userTypeEnterprise")}
+                    </option>
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>

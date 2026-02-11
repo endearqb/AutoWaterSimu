@@ -147,7 +147,9 @@ const ASM1SlimBubbleMenu: React.FC<ASM1SlimBubbleMenuProps> = ({
           </Text>
         </HStack>
         <HStack>
-          <Text fontWeight="bold">{t("flow.simulation.convergenceStatus")}</Text>
+          <Text fontWeight="bold">
+            {t("flow.simulation.convergenceStatus")}
+          </Text>
           <Text>{summary.convergence_status}</Text>
         </HStack>
         {summary.final_mass_balance_error && (

@@ -15,8 +15,8 @@ import { FaPlus } from "react-icons/fa"
 import { type ItemCreate, ItemsService } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
 import { useI18n } from "@/i18n"
+import { handleError } from "@/utils"
 import {
   DialogBody,
   DialogCloseTrigger,

@@ -37,9 +37,7 @@ const ASMslimNode = ({ data, selected, id, store }: ASMslimNodeProps) => {
   const flowStore = store || useFlowStore
   const { updateNodeParameter } = flowStore()
   const [isEditing, setIsEditing] = useState(false)
-  const [label, setLabel] = useState(
-    nodeData.label || t("flow.node.asm1slim"),
-  )
+  const [label, setLabel] = useState(nodeData.label || t("flow.node.asm1slim"))
   const hoveredNodeId = useHoveredNodeId()
   const isHovered = hoveredNodeId === id
   const inputRef = useRef<HTMLInputElement>(null)

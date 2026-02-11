@@ -1,4 +1,5 @@
 import { useColorModeValue } from "@/components/ui/color-mode"
+import { useI18n } from "@/i18n"
 import {
   Box,
   Card,
@@ -11,7 +12,6 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React from "react"
-import { useI18n } from "@/i18n"
 
 interface AORValues {
   // 基本参数
@@ -851,9 +851,9 @@ const AORCalculator: React.FC = () => {
                 <VStack align="center" justify="center" p={4} gap={6}>
                   {/* AOR 结果 */}
                   <VStack align="center" gap={3}>
-                  <Text fontSize="lg" fontWeight="semibold">
-                    {t("calculators.aor.results.aorTitle")}
-                  </Text>
+                    <Text fontSize="lg" fontWeight="semibold">
+                      {t("calculators.aor.results.aorTitle")}
+                    </Text>
 
                     {/* AOR 仪表盘 */}
                     <Box position="relative" mb={2}>
@@ -970,9 +970,9 @@ const AORCalculator: React.FC = () => {
 
                   {/* SOR 结果 */}
                   <VStack align="center" gap={3}>
-                  <Text fontSize="lg" fontWeight="semibold">
-                    {t("calculators.aor.results.sorTitle")}
-                  </Text>
+                    <Text fontSize="lg" fontWeight="semibold">
+                      {t("calculators.aor.results.sorTitle")}
+                    </Text>
 
                     <Text fontSize="3xl" fontWeight="bold" textAlign="center">
                       {Number.isFinite(sorResult.N0)

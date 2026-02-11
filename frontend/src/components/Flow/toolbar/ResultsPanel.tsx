@@ -1,7 +1,7 @@
 ﻿import { Box, Table, Text, VStack } from "@chakra-ui/react"
-import type { BaseModelState } from "../../../stores/baseModelStore"
 import { getModelConfig } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
+import type { BaseModelState } from "../../../stores/baseModelStore"
 import useFlowStore from "../../../stores/flowStore"
 import type { RFState } from "../../../stores/flowStore"
 import { Tooltip } from "../../ui/tooltip"
@@ -9,7 +9,7 @@ import { Tooltip } from "../../ui/tooltip"
 interface ResultsPanelProps {
   store?: () => RFState // 流程图store
   modelStore?: () => BaseModelState<any, any, any, any, any> // 模型计算store
-  modelType?: "asm1" | "asm1slim" | "materialBalance" | "asm3" // 模型类型
+  modelType?: "asm1" | "asm1slim" | "materialBalance" | "asm3" | "udm" // 模型类型
 }
 
 const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
@@ -19,7 +19,12 @@ const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
 
   const finalValues = modelStore ? modelStore().finalValues : null
 
-  const detectModelType = (): "asm1" | "asm1slim" | "asm3" | undefined => {
+  const detectModelType = ():
+    | "asm1"
+    | "asm1slim"
+    | "asm3"
+    | "udm"
+    | undefined => {
     if (modelType && modelType !== "materialBalance") {
       return modelType
     }
@@ -51,12 +56,17 @@ const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
     : undefined
 
   const getParameterLabel = (paramName: string): string => {
+    if (resolvedModelType === "udm") {
+      return paramName.startsWith("concentration_")
+        ? paramName.replace("concentration_", "")
+        : paramName
+    }
+
     const normalizedName = paramName.startsWith("concentration_")
       ? paramName.replace("concentration_", "")
       : paramName
 
-    const lookupName =
-      normalizedName === "X_i" ? "X_I" : normalizedName
+    const lookupName = normalizedName === "X_i" ? "X_I" : normalizedName
 
     const param = modelConfig?.fixedParameters.find(
       (item) => item.name === lookupName,
@@ -73,6 +83,47 @@ const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
     return (node?.data?.label as string) || nodeId
   }
 
+  const getUdmComponentNames = (): string[] => {
+    const names: string[] = []
+    const seen = new Set<string>()
+
+    nodes.forEach((node) => {
+      if (node.type !== "udm") return
+      const nodeData = (node.data || {}) as Record<string, unknown>
+
+      const fromNames = nodeData.udmComponentNames
+      if (Array.isArray(fromNames)) {
+        fromNames.forEach((item) => {
+          const name = String(item || "").trim()
+          if (name && !seen.has(name)) {
+            seen.add(name)
+            names.push(name)
+          }
+        })
+      }
+
+      const fromComponents =
+        (nodeData.udmComponents as unknown[]) ||
+        ((nodeData.udmModelSnapshot as Record<string, unknown> | undefined)
+          ?.components as unknown[]) ||
+        ((nodeData.udmModel as Record<string, unknown> | undefined)
+          ?.components as unknown[])
+
+      if (Array.isArray(fromComponents)) {
+        fromComponents.forEach((item) => {
+          if (!item || typeof item !== "object") return
+          const name = String((item as Record<string, unknown>).name || "").trim()
+          if (name && !seen.has(name)) {
+            seen.add(name)
+            names.push(name)
+          }
+        })
+      }
+    })
+
+    return names
+  }
+
   const getAllParameterNames = () => {
     const nodeData = finalValues?.final_values?.nodes || finalValues?.node_data
     if (!nodeData) return []
@@ -85,6 +136,14 @@ const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
         }
       })
     })
+
+    if (resolvedModelType === "udm") {
+      const udmComponentNames = getUdmComponentNames()
+      return udmComponentNames.map((name) => {
+        const concentrationKey = `concentration_${name}`
+        return allParams.has(concentrationKey) ? concentrationKey : name
+      })
+    }
 
     const orderedParams: string[] = []
     const baseParams = modelConfig?.fixedParameters.map((param) => param.name)

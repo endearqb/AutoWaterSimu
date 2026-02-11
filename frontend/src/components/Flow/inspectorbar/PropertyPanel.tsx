@@ -341,7 +341,9 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
   }
 
   const targetLabel = t(
-    isNode ? "flow.propertyPanel.target.node" : "flow.propertyPanel.target.edge",
+    isNode
+      ? "flow.propertyPanel.target.node"
+      : "flow.propertyPanel.target.edge",
   )
 
   return (

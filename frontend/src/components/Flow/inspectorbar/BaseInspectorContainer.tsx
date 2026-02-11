@@ -52,9 +52,7 @@ const BaseInspectorContainer = ({
         size="sm"
         variant="ghost"
         aria-label={
-          isOpen
-            ? t("flow.inspector.collapse")
-            : t("flow.inspector.expand")
+          isOpen ? t("flow.inspector.collapse") : t("flow.inspector.expand")
         }
         onClick={onToggle}
         borderRadius="full"

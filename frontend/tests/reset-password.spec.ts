@@ -129,7 +129,5 @@ test("Weak new password validation", async ({ page, request }) => {
   await page.getByPlaceholder("Confirm Password").fill(weakPassword)
   await page.getByRole("button", { name: "Reset Password" }).click()
 
-  await expect(
-    page.getByText("Must be at least 8 characters"),
-  ).toBeVisible()
+  await expect(page.getByText("Must be at least 8 characters")).toBeVisible()
 })

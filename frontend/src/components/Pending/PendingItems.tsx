@@ -1,5 +1,5 @@
-import { Table } from "@chakra-ui/react"
 import { useI18n } from "@/i18n"
+import { Table } from "@chakra-ui/react"
 import { SkeletonText } from "../ui/skeleton"
 
 const PendingItems = () => {
@@ -11,7 +11,9 @@ const PendingItems = () => {
         <Table.Row>
           <Table.ColumnHeader w="sm">{t("common.id")}</Table.ColumnHeader>
           <Table.ColumnHeader w="sm">{t("common.title")}</Table.ColumnHeader>
-          <Table.ColumnHeader w="sm">{t("common.description")}</Table.ColumnHeader>
+          <Table.ColumnHeader w="sm">
+            {t("common.description")}
+          </Table.ColumnHeader>
           <Table.ColumnHeader w="sm">{t("common.actions")}</Table.ColumnHeader>
         </Table.Row>
       </Table.Header>

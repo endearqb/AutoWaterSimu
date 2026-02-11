@@ -3,12 +3,12 @@ import {
   Background,
   BackgroundVariant,
   Controls,
+  type Edge,
   MarkerType,
   MiniMap,
-  ReactFlow,
-  type Edge,
   type Node,
   type NodeTypes,
+  ReactFlow,
   useEdgesState,
   useNodesState,
 } from "@xyflow/react"
@@ -101,11 +101,10 @@ export function CaseFlowPreview(props: { jsonUrl: string }) {
   }, [props.jsonUrl, setEdges, setNodes])
 
   const readOnlyStore = useMemo(
-    () =>
-      () =>
-        ({
-          updateNodeParameter: () => {},
-        }) as any,
+    () => () =>
+      ({
+        updateNodeParameter: () => {},
+      }) as any,
     [],
   )
 

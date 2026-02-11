@@ -5,8 +5,8 @@ import {
   Flex,
   HStack,
   Heading,
-  Input,
   Image,
+  Input,
   Tabs,
   Text,
   VStack,
@@ -14,11 +14,7 @@ import {
 import { Link } from "@tanstack/react-router"
 import type { ReactNode } from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
-import {
-  FaArrowRight,
-  FaTimes,
-  FaWindowMaximize,
-} from "react-icons/fa"
+import { FaArrowRight, FaTimes, FaWindowMaximize } from "react-icons/fa"
 
 import AORCalculator from "@/components/calculators/AORCalculator"
 import { DWACalculator } from "@/components/calculators/DWACalculator"
@@ -175,9 +171,7 @@ function DesktopWindow(props: {
       position="fixed"
       left={isMaximized ? "24px" : "0"}
       top={isMaximized ? `${props.maximizedTopInset ?? 24}px` : "0"}
-      transform={
-        isMaximized ? "none" : `translate3d(${x}px, ${y}px, 0)`
-      }
+      transform={isMaximized ? "none" : `translate3d(${x}px, ${y}px, 0)`}
       w={
         isMaximized
           ? "calc(100vw - 48px)"
@@ -277,7 +271,9 @@ function DesktopWindow(props: {
   )
 }
 
-function ExploreAppsPanel(props: { onOpenCalculator: (id: CalculatorId) => void }) {
+function ExploreAppsPanel(props: {
+  onOpenCalculator: (id: CalculatorId) => void
+}) {
   return (
     <Box mt={{ base: 8, md: 10 }}>
       <Flex align="baseline" justify="space-between" gap={4} mb={3}>
@@ -287,13 +283,8 @@ function ExploreAppsPanel(props: { onOpenCalculator: (id: CalculatorId) => void 
             by company stage
           </Text>
         </Heading>
-        <Text
-          asChild
-          fontSize="sm"
-          color="gray.700"
-          textDecoration="underline"
-        >
-          <Link to="/showcase">Browse app library</Link>
+        <Text asChild fontSize="sm" color="gray.700" textDecoration="underline">
+          <Link to="/openflow">Browse app library</Link>
         </Text>
       </Flex>
 
@@ -306,11 +297,7 @@ function ExploreAppsPanel(props: { onOpenCalculator: (id: CalculatorId) => void 
 
         <Tabs.Content value="startup">
           <Flex gap={4} mt={4} direction={{ base: "column", md: "row" }}>
-            <VStack
-              align="stretch"
-              w={{ base: "full", md: "260px" }}
-              gap={2}
-            >
+            <VStack align="stretch" w={{ base: "full", md: "260px" }} gap={2}>
               {[
                 { id: "lsi", label: "LSI Calculator" },
                 { id: "standardAO", label: "AO 设计" },
@@ -325,7 +312,9 @@ function ExploreAppsPanel(props: { onOpenCalculator: (id: CalculatorId) => void 
                   borderColor="rgba(0,0,0,0.10)"
                   bg="rgba(255,255,255,0.55)"
                   _hover={{ bg: "rgba(255,255,255,0.85)" }}
-                  onClick={() => props.onOpenCalculator(item.id as CalculatorId)}
+                  onClick={() =>
+                    props.onOpenCalculator(item.id as CalculatorId)
+                  }
                 >
                   {item.label}
                 </Button>
@@ -569,7 +558,13 @@ export function PosthogLanding() {
     }
 
     return (
-      <Box w="full" h="full" overflow="auto" p={{ base: 4, md: 6 }} bg="transparent">
+      <Box
+        w="full"
+        h="full"
+        overflow="auto"
+        p={{ base: 4, md: 6 }}
+        bg="transparent"
+      >
         <VStack align="start" gap={5}>
           <Text fontSize="sm" color="gray.700">
             Demo page: PostHog-style landing (WIP)
@@ -625,7 +620,7 @@ export function PosthogLanding() {
               fontWeight="semibold"
               textDecoration="underline"
             >
-              <Link to="/showcase">talk to a human</Link>
+              <Link to="/openflow">talk to a human</Link>
             </Text>
           </HStack>
 
@@ -750,111 +745,72 @@ export function PosthogLanding() {
         overflowX="hidden"
         position="relative"
       >
-      <Box
-        position="absolute"
-        right={{ base: 6, md: 10 }}
-        bottom={{ base: 8, md: 10 }}
-        zIndex={1}
-        display={{ base: "none", lg: "block" }}
-        maxW="520px"
-        w="420px"
-        pointerEvents="auto"
-      >
-        <AspectRatio ratio={1}>
-          <Box
-            borderRadius="2xl"
-            overflow="hidden"
-            shadow="2xl"
-            transform="rotate(3deg)"
-            _hover={{ transform: "rotate(0deg)" }}
-            transition="all 0.5s ease"
-          >
-            <Image
-              alt="handwriting"
-              objectFit="contain"
-              w="full"
-              h="full"
-              src="/assets/images/handwriting.jpeg"
-              draggable={false}
-            />
-          </Box>
-        </AspectRatio>
-      </Box>
-
-      <Box
-        position="absolute"
-        left="50%"
-        top="50%"
-        transform="translate(-50%, -50%)"
-        zIndex={0}
-        pointerEvents="none"
-        display={{ base: "none", lg: "block" }}
-        w="720px"
-        maxW="70vw"
-        opacity={0.55}
-      >
-        <Image
-          alt="handwriting text"
-          src="/assets/images/text_only_handwriting.png"
-          w="full"
-          h="auto"
-          objectFit="contain"
-          draggable={false}
-        />
-      </Box>
-
-      <Box px={{ base: 4, md: 6 }} py={6}>
-        {/* Mobile: show all icons in a single grid */}
         <Box
-          display={{ base: "grid", md: "none" }}
-          gridTemplateColumns={{ base: "repeat(3, 80px)", sm: "repeat(4, 80px)" }}
-          gap={3}
-          justifyContent="start"
-          alignItems="start"
+          position="absolute"
+          right={{ base: 6, md: 10 }}
+          bottom={{ base: 8, md: 10 }}
+          zIndex={1}
+          display={{ base: "none", lg: "block" }}
+          maxW="520px"
+          w="420px"
+          pointerEvents="auto"
         >
-          {[...desktopIconsLeft, ...desktopIconsRight].map((i) => (
-            <DesktopIcon
-              key={i.id}
-              label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
-              iconSrc={i.iconSrc}
-              disabled={i.disabled}
-              onOpenWindow={
-                i.window
-                  ? () => {
-                      const windowTarget = i.window
-                      if (!windowTarget) return
-
-                      if (windowTarget.kind === "home") openHome()
-                      else if (windowTarget.kind === "calculator")
-                        openCalculator(windowTarget.id)
-                      else if (windowTarget.kind === "url")
-                        openUrl(windowTarget.url, windowTarget.title)
-                      else if (windowTarget.kind === "case")
-                        openCase(windowTarget.id)
-                      else if (windowTarget.kind === "asm1SlimDashboard")
-                        openDashboard()
-                      else openPosthog()
-                    }
-                  : undefined
-              }
-            />
-          ))}
+          <AspectRatio ratio={1}>
+            <Box
+              borderRadius="2xl"
+              overflow="hidden"
+              shadow="2xl"
+              transform="rotate(3deg)"
+              _hover={{ transform: "rotate(0deg)" }}
+              transition="all 0.5s ease"
+            >
+              <Image
+                alt="handwriting"
+                objectFit="contain"
+                w="full"
+                h="full"
+                src="/assets/images/handwriting.jpeg"
+                draggable={false}
+              />
+            </Box>
+          </AspectRatio>
         </Box>
 
-        {/* Desktop: split left/right columns */}
-        <Flex
-          display={{ base: "none", md: "flex" }}
-          justify="space-between"
-          align="flex-start"
-          gap={10}
+        <Box
+          position="absolute"
+          left="50%"
+          top="50%"
+          transform="translate(-50%, -50%)"
+          zIndex={0}
+          pointerEvents="none"
+          display={{ base: "none", lg: "block" }}
+          w="720px"
+          maxW="70vw"
+          opacity={0.55}
         >
+          <Image
+            alt="handwriting text"
+            src="/assets/images/text_only_handwriting.png"
+            w="full"
+            h="auto"
+            objectFit="contain"
+            draggable={false}
+          />
+        </Box>
+
+        <Box px={{ base: 4, md: 6 }} py={6}>
+          {/* Mobile: show all icons in a single grid */}
           <Box
-            display="grid"
-            gridTemplateColumns="repeat(2, 92px)"
+            display={{ base: "grid", md: "none" }}
+            gridTemplateColumns={{
+              base: "repeat(3, 80px)",
+              sm: "repeat(4, 80px)",
+            }}
             gap={3}
+            justifyContent="start"
             alignItems="start"
           >
-            {desktopIconsLeft.map((i) => (
+            {[...desktopIconsLeft, ...desktopIconsRight].map((i) => (
               <DesktopIcon
                 key={i.id}
                 label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
@@ -883,47 +839,89 @@ export function PosthogLanding() {
             ))}
           </Box>
 
-          <VStack align="end" gap={1}>
-            {desktopIconsRight.map((i) => (
-              <DesktopIcon
-                key={i.id}
-                label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
-                iconSrc={i.iconSrc}
-                disabled={i.disabled}
-                onOpenWindow={
-                  i.window
-                    ? () => {
-                        const windowTarget = i.window
-                        if (!windowTarget) return
+          {/* Desktop: split left/right columns */}
+          <Flex
+            display={{ base: "none", md: "flex" }}
+            justify="space-between"
+            align="flex-start"
+            gap={10}
+          >
+            <Box
+              display="grid"
+              gridTemplateColumns="repeat(2, 92px)"
+              gap={3}
+              alignItems="start"
+            >
+              {desktopIconsLeft.map((i) => (
+                <DesktopIcon
+                  key={i.id}
+                  label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
+                  iconSrc={i.iconSrc}
+                  disabled={i.disabled}
+                  onOpenWindow={
+                    i.window
+                      ? () => {
+                          const windowTarget = i.window
+                          if (!windowTarget) return
 
-                        if (windowTarget.kind === "home") openHome()
-                        else if (windowTarget.kind === "calculator")
-                          openCalculator(windowTarget.id)
-                        else if (windowTarget.kind === "url")
-                          openUrl(windowTarget.url, windowTarget.title)
-                        else if (windowTarget.kind === "case")
-                          openCase(windowTarget.id)
-                        else if (windowTarget.kind === "asm1SlimDashboard")
-                          openDashboard()
-                        else openPosthog()
-                      }
-                    : undefined
-                }
-              />
-            ))}
-          </VStack>
-        </Flex>
-      </Box>
+                          if (windowTarget.kind === "home") openHome()
+                          else if (windowTarget.kind === "calculator")
+                            openCalculator(windowTarget.id)
+                          else if (windowTarget.kind === "url")
+                            openUrl(windowTarget.url, windowTarget.title)
+                          else if (windowTarget.kind === "case")
+                            openCase(windowTarget.id)
+                          else if (windowTarget.kind === "asm1SlimDashboard")
+                            openDashboard()
+                          else openPosthog()
+                        }
+                      : undefined
+                  }
+                />
+              ))}
+            </Box>
 
-      {windowOpen ? (
-        <DesktopWindow
-          title={windowTitle}
-          maximizedTopInset={HEADER_H + 8}
-          onClose={() => setWindowOpen(false)}
-        >
-          {windowBody}
-        </DesktopWindow>
-      ) : null}
+            <VStack align="end" gap={1}>
+              {desktopIconsRight.map((i) => (
+                <DesktopIcon
+                  key={i.id}
+                  label={i.labelKey ? t(i.labelKey) : (i.label ?? i.id)}
+                  iconSrc={i.iconSrc}
+                  disabled={i.disabled}
+                  onOpenWindow={
+                    i.window
+                      ? () => {
+                          const windowTarget = i.window
+                          if (!windowTarget) return
+
+                          if (windowTarget.kind === "home") openHome()
+                          else if (windowTarget.kind === "calculator")
+                            openCalculator(windowTarget.id)
+                          else if (windowTarget.kind === "url")
+                            openUrl(windowTarget.url, windowTarget.title)
+                          else if (windowTarget.kind === "case")
+                            openCase(windowTarget.id)
+                          else if (windowTarget.kind === "asm1SlimDashboard")
+                            openDashboard()
+                          else openPosthog()
+                        }
+                      : undefined
+                  }
+                />
+              ))}
+            </VStack>
+          </Flex>
+        </Box>
+
+        {windowOpen ? (
+          <DesktopWindow
+            title={windowTitle}
+            maximizedTopInset={HEADER_H + 8}
+            onClose={() => setWindowOpen(false)}
+          >
+            {windowBody}
+          </DesktopWindow>
+        ) : null}
       </Box>
     </Box>
   )

@@ -1202,25 +1202,33 @@ export const DWACalculator: React.FC = () => {
                       </Text>
                       <Grid templateColumns="1fr 1fr" gap={4}>
                         <StatCard
-                          label={t("calculators.dwa.results.labels.totalBioVolume")}
+                          label={t(
+                            "calculators.dwa.results.labels.totalBioVolume",
+                          )}
                           value={result.V_bioT}
                           unit="m³"
                           color="blue"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.aerobicVolume")}
+                          label={t(
+                            "calculators.dwa.results.labels.aerobicVolume",
+                          )}
                           value={result.V_aero}
                           unit="m³"
                           color="blue"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.anoxicVolume")}
+                          label={t(
+                            "calculators.dwa.results.labels.anoxicVolume",
+                          )}
                           value={result.V_D}
                           unit="m³"
                           color="blue"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.anaerobicVolume")}
+                          label={t(
+                            "calculators.dwa.results.labels.anaerobicVolume",
+                          )}
                           value={result.V_an}
                           unit="m³"
                           color="blue"
@@ -1274,19 +1282,25 @@ export const DWACalculator: React.FC = () => {
                           color="green"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.returnRatio")}
+                          label={t(
+                            "calculators.dwa.results.labels.returnRatio",
+                          )}
                           value={result.RF}
                           unit=""
                           color="green"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.internalReturnRatio")}
+                          label={t(
+                            "calculators.dwa.results.labels.internalReturnRatio",
+                          )}
                           value={result.RZ}
                           unit=""
                           color="green"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.excessSludge")}
+                          label={t(
+                            "calculators.dwa.results.labels.excessSludge",
+                          )}
                           value={result.US_d_r}
                           unit="kg/d"
                           color="green"
@@ -1328,19 +1342,25 @@ export const DWACalculator: React.FC = () => {
                           color="purple"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.influentSludge")}
+                          label={t(
+                            "calculators.dwa.results.labels.influentSludge",
+                          )}
                           value={sstResult.TS_BB}
                           unit="kg/m³"
                           color="purple"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.returnSludge")}
+                          label={t(
+                            "calculators.dwa.results.labels.returnSludge",
+                          )}
                           value={sstResult.TS_RS}
                           unit="kg/m³"
                           color="purple"
                         />
                         <StatCard
-                          label={t("calculators.dwa.results.labels.sludgeLoading")}
+                          label={t(
+                            "calculators.dwa.results.labels.sludgeLoading",
+                          )}
                           value={sstResult.q_sv}
                           unit="L/(m³·h)"
                           color="purple"
@@ -1429,25 +1449,44 @@ export const DWACalculator: React.FC = () => {
                           borderRadius="md"
                         >
                           <Text fontSize="sm" color="gray.600" lineHeight={1.6}>
-                            <strong>{t("calculators.dwa.details.calculationTitle")}</strong>
+                            <strong>
+                              {t("calculators.dwa.details.calculationTitle")}
+                            </strong>
                             <br />
-                            {t("calculators.dwa.details.calculationItems.item1")}
+                            {t(
+                              "calculators.dwa.details.calculationItems.item1",
+                            )}
                             <br />
-                            {t("calculators.dwa.details.calculationItems.item2")}
+                            {t(
+                              "calculators.dwa.details.calculationItems.item2",
+                            )}
                             <br />
-                            {t("calculators.dwa.details.calculationItems.item3")}
+                            {t(
+                              "calculators.dwa.details.calculationItems.item3",
+                            )}
                             <br />
-                            {t("calculators.dwa.details.calculationItems.item4")}
+                            {t(
+                              "calculators.dwa.details.calculationItems.item4",
+                            )}
                             <br />
-                            {t("calculators.dwa.details.calculationItems.item5")}
+                            {t(
+                              "calculators.dwa.details.calculationItems.item5",
+                            )}
                             <br />
-                            {t("calculators.dwa.details.calculationItems.item6")}
+                            {t(
+                              "calculators.dwa.details.calculationItems.item6",
+                            )}
                             <br />
                             <br />
-                            <strong>{t("calculators.dwa.details.noticeTitle")}</strong>
-                            <br />• {t("calculators.dwa.details.noticeItems.item1")}
-                            <br />• {t("calculators.dwa.details.noticeItems.item2")}
-                            <br />• {t("calculators.dwa.details.noticeItems.item3")}
+                            <strong>
+                              {t("calculators.dwa.details.noticeTitle")}
+                            </strong>
+                            <br />•{" "}
+                            {t("calculators.dwa.details.noticeItems.item1")}
+                            <br />•{" "}
+                            {t("calculators.dwa.details.noticeItems.item2")}
+                            <br />•{" "}
+                            {t("calculators.dwa.details.noticeItems.item3")}
                             <br />
                           </Text>
                         </Box>

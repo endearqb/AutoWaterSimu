@@ -76,7 +76,8 @@ export const zhMessages: I18nMessages = {
         defaultTitle: "处理单元节点",
         defaultBody: "用于表示工艺单元/池体；参数可在右侧面板中调整。",
         canvasNodeTitle: "已点击节点",
-        canvasNodeBody: "提示：点击节点/连线后，切换到「参数设置面板」即可编辑。",
+        canvasNodeBody:
+          "提示：点击节点/连线后，切换到「参数设置面板」即可编辑。",
         canvasEdgeTitle: "已点击连线",
         canvasEdgeBody: "提示：选中连线后可调整流量/参数（取决于面板能力）。",
       },
@@ -498,9 +499,9 @@ export const zhMessages: I18nMessages = {
       addAction: "添加",
       addConfirmTitle: "确认添加参数",
       deleteConfirmTitle: "确认删除参数",
-      addConfirmBody: "确定要为当前{target}添加参数 \"{name}\" 吗？",
+      addConfirmBody: '确定要为当前{target}添加参数 "{name}" 吗？',
       deleteConfirmBody:
-        "确定要从当前{target}删除参数 \"{name}\" 吗？此操作不可恢复。",
+        '确定要从当前{target}删除参数 "{name}" 吗？此操作不可恢复。',
       deleteParamAriaLabel: "删除参数",
       customParamPlaceholder: "自定义参数，数据类型：浮点数",
       target: {
@@ -893,104 +894,321 @@ export const zhMessages: I18nMessages = {
     modelParams: {
       asm1slim: {
         volume: { label: "体积(m³)", description: "反应器体积，单位：立方米" },
-        aerobicCODDegradationRate: { label: "好氧COD降解速率参数", description: "好氧条件下COD降解速率常数" },
+        aerobicCODDegradationRate: {
+          label: "好氧COD降解速率参数",
+          description: "好氧条件下COD降解速率常数",
+        },
         ammonia: { label: "氨氮", description: "氨氮浓度 (mg/L)" },
-        ammoniaNitrificationInfluence: { label: "氨氮浓度对硝化速率的影响参数", description: "氨氮浓度对硝化速率的影响系数" },
+        ammoniaNitrificationInfluence: {
+          label: "氨氮浓度对硝化速率的影响参数",
+          description: "氨氮浓度对硝化速率的影响系数",
+        },
         cod: { label: "COD", description: "化学需氧量 (mg/L)" },
-        codDenitrificationInfluence: { label: "COD浓度对反硝化速率的影响参数", description: "COD浓度对反硝化速率的影响系数" },
+        codDenitrificationInfluence: {
+          label: "COD浓度对反硝化速率的影响参数",
+          description: "COD浓度对反硝化速率的影响系数",
+        },
         dissolvedOxygen: { label: "溶解氧", description: "溶解氧浓度 (mg/L)" },
-        empiricalCNRatio: { label: "经验碳氮比", description: "经验碳氮比参数" },
-        empiricalDenitrificationRate: { label: "经验反硝化速率", description: "经验反硝化速率常数" },
-        empiricalNitrificationRate: { label: "经验硝化速率", description: "经验硝化速率常数" },
+        empiricalCNRatio: {
+          label: "经验碳氮比",
+          description: "经验碳氮比参数",
+        },
+        empiricalDenitrificationRate: {
+          label: "经验反硝化速率",
+          description: "经验反硝化速率常数",
+        },
+        empiricalNitrificationRate: {
+          label: "经验硝化速率",
+          description: "经验硝化速率常数",
+        },
         nitrate: { label: "硝态氮", description: "硝态氮浓度 (mg/L)" },
-        nitrateDenitrificationInfluence: { label: "硝态氮浓度对反硝化速率的影响参数", description: "硝态氮浓度对反硝化速率的影响系数" },
+        nitrateDenitrificationInfluence: {
+          label: "硝态氮浓度对反硝化速率的影响参数",
+          description: "硝态氮浓度对反硝化速率的影响系数",
+        },
         totalAlkalinity: { label: "总碱度", description: "总碱度 (mg/L)" },
       },
       asm1: {
         volume: { label: "体积(m³)", description: "反应器体积，单位：立方米" },
-        K_NH: { label: "K_NH-自养菌的氨半饱和系数", description: "自养菌对氨氮的半饱和常数 (g NH3-N/m3)" },
-        K_NO: { label: "K_NO-异养菌的硝酸盐氮半饱和系数", description: "硝态氮半饱和常数 (g NO3-N/m3)" },
-        K_OA: { label: "K_OA-自养菌的氧气半饱和系数", description: "自养菌对氧的半饱和常数 (g O2/m3)" },
-        K_OH: { label: "K_OH-异养菌的氧气半饱和系数", description: "异养菌对氧的半饱和常数 (g O2/m3)" },
-        K_S: { label: "K_S-异养菌半饱和系数", description: "异养菌对易降解基质的半饱和常数 (g COD/m3)" },
-        K_a: { label: "K_a-最大比氨化速率", description: "针对有机氨的最大比氨化速率 m3/(g COD(细胞*d)" },
-        K_h: { label: "K_h-最大比水解速率", description: "最大比水解速率 (g COD/(Xs)/(g(细胞)*d)" },
-        K_x: { label: "K_x-缓慢生物降解底物水解的半饱和系数", description: "缓慢生物降解底物水解的半饱和系数(g COD(Xs)/g(细胞))" },
+        K_NH: {
+          label: "K_NH-自养菌的氨半饱和系数",
+          description: "自养菌对氨氮的半饱和常数 (g NH3-N/m3)",
+        },
+        K_NO: {
+          label: "K_NO-异养菌的硝酸盐氮半饱和系数",
+          description: "硝态氮半饱和常数 (g NO3-N/m3)",
+        },
+        K_OA: {
+          label: "K_OA-自养菌的氧气半饱和系数",
+          description: "自养菌对氧的半饱和常数 (g O2/m3)",
+        },
+        K_OH: {
+          label: "K_OH-异养菌的氧气半饱和系数",
+          description: "异养菌对氧的半饱和常数 (g O2/m3)",
+        },
+        K_S: {
+          label: "K_S-异养菌半饱和系数",
+          description: "异养菌对易降解基质的半饱和常数 (g COD/m3)",
+        },
+        K_a: {
+          label: "K_a-最大比氨化速率",
+          description: "针对有机氨的最大比氨化速率 m3/(g COD(细胞*d)",
+        },
+        K_h: {
+          label: "K_h-最大比水解速率",
+          description: "最大比水解速率 (g COD/(Xs)/(g(细胞)*d)",
+        },
+        K_x: {
+          label: "K_x-缓慢生物降解底物水解的半饱和系数",
+          description: "缓慢生物降解底物水解的半饱和系数(g COD(Xs)/g(细胞))",
+        },
         S_ALK: { label: "碱度", description: "碱度 (mol HCO3-/L)" },
         S_ND: { label: "溶解有机氮", description: "溶解有机氮浓度 (mg N/L)" },
         S_NH: { label: "氨氮", description: "氨氮浓度 (mg N/L)" },
         S_NO: { label: "硝态氮", description: "硝态氮浓度 (mg N/L)" },
         S_O: { label: "溶解氧", description: "溶解氧浓度 (mg O2/L)" },
         S_S: { label: "易降解基质", description: "易降解基质浓度 (mg COD/L)" },
-        X_BA: { label: "自养菌生物量", description: "自养菌生物量浓度 (mg COD/L)" },
-        X_BH: { label: "异养菌生物量", description: "异养菌生物量浓度 (mg COD/L)" },
+        X_BA: {
+          label: "自养菌生物量",
+          description: "自养菌生物量浓度 (mg COD/L)",
+        },
+        X_BH: {
+          label: "异养菌生物量",
+          description: "异养菌生物量浓度 (mg COD/L)",
+        },
         X_ND: { label: "颗粒有机氮", description: "颗粒有机氮浓度 (mg N/L)" },
-        X_S: { label: "缓慢降解基质", description: "缓慢降解基质浓度 (mg COD/L)" },
+        X_S: {
+          label: "缓慢降解基质",
+          description: "缓慢降解基质浓度 (mg COD/L)",
+        },
         X_i: { label: "惰性颗粒物", description: "惰性颗粒物浓度 (mg COD/L)" },
-        Y_A: { label: "Y_A-自养菌产率系数", description: "自养菌每氧化1g氨氮形成的细胞COD量 (COD(细胞)/g被氧化的氮)" },
-        Y_H: { label: "Y_H-异养菌产率系数", description: "每氧化污水中1gCOD形成的细胞COD质量(gCOD(细胞)/g被氧化的COD)" },
-        b_A: { label: "b_A-自养菌衰减系数", description: "自养菌衰减系数 (1/d)" },
-        b_H: { label: "b_H-异养菌衰减系数", description: "异养菌衰减系数 (1/d)" },
-        f_P: { label: "f_P-微生物惰性颗粒比例", description: "衰减后以惰性颗粒产物存在的那部分微生物占总微生物量的比值" },
-        i_XB: { label: "i_XB-微生物细胞含氮比例", description: "单位质量细胞质COD所含氮的质量 (gN/ g COD(细胞))" },
-        i_XP: { label: "i_XP-微生物产物含氮比例", description: "微生物衰减后形成的物质中，单位质量 COD 所包含的氮质量 (g(N)/g COD (衰减颗粒态产物))" },
-        n_g: { label: "η_g-缺氧条件下异养菌生长的校正因子η_g", description: "缺氧条件下的修正因子 量纲为1" },
-        n_h: { label: "n_h-缺氧条件下水解校正因子", description: "缺氧条件下水解校正因子 量纲为1" },
-        u_A: { label: "μ_A-自养菌最大比增长速率", description: "自养菌最大比增长速率 (1/d)" },
-        u_H: { label: "μ_H-异养菌最大比增长速率", description: "异养菌最大比增长速率 (1/d)" },
+        Y_A: {
+          label: "Y_A-自养菌产率系数",
+          description:
+            "自养菌每氧化1g氨氮形成的细胞COD量 (COD(细胞)/g被氧化的氮)",
+        },
+        Y_H: {
+          label: "Y_H-异养菌产率系数",
+          description:
+            "每氧化污水中1gCOD形成的细胞COD质量(gCOD(细胞)/g被氧化的COD)",
+        },
+        b_A: {
+          label: "b_A-自养菌衰减系数",
+          description: "自养菌衰减系数 (1/d)",
+        },
+        b_H: {
+          label: "b_H-异养菌衰减系数",
+          description: "异养菌衰减系数 (1/d)",
+        },
+        f_P: {
+          label: "f_P-微生物惰性颗粒比例",
+          description:
+            "衰减后以惰性颗粒产物存在的那部分微生物占总微生物量的比值",
+        },
+        i_XB: {
+          label: "i_XB-微生物细胞含氮比例",
+          description: "单位质量细胞质COD所含氮的质量 (gN/ g COD(细胞))",
+        },
+        i_XP: {
+          label: "i_XP-微生物产物含氮比例",
+          description:
+            "微生物衰减后形成的物质中，单位质量 COD 所包含的氮质量 (g(N)/g COD (衰减颗粒态产物))",
+        },
+        n_g: {
+          label: "η_g-缺氧条件下异养菌生长的校正因子η_g",
+          description: "缺氧条件下的修正因子 量纲为1",
+        },
+        n_h: {
+          label: "n_h-缺氧条件下水解校正因子",
+          description: "缺氧条件下水解校正因子 量纲为1",
+        },
+        u_A: {
+          label: "μ_A-自养菌最大比增长速率",
+          description: "自养菌最大比增长速率 (1/d)",
+        },
+        u_H: {
+          label: "μ_H-异养菌最大比增长速率",
+          description: "异养菌最大比增长速率 (1/d)",
+        },
       },
       asm3: {
         volume: { label: "体积(m³)", description: "反应器体积，单位：立方米" },
-        K_ALKA: { label: "自养菌碱度半饱和常数", description: "自养菌碱度半饱和常数 (mmol/L)" },
-        K_ALKH: { label: "异养菌碱度半饱和常数", description: "异养菌碱度半饱和常数 (mmol/L)" },
-        K_AO2: { label: "自养菌氧抑制常数", description: "自养菌氧抑制常数 (mg O2/L)" },
-        K_NH4A: { label: "自养菌氨氮半饱和常数", description: "自养菌氨氮半饱和常数 (mg N/L)" },
-        K_NH4H: { label: "异养菌氨氮半饱和常数", description: "异养菌氨氮半饱和常数 (mg N/L)" },
+        K_ALKA: {
+          label: "自养菌碱度半饱和常数",
+          description: "自养菌碱度半饱和常数 (mmol/L)",
+        },
+        K_ALKH: {
+          label: "异养菌碱度半饱和常数",
+          description: "异养菌碱度半饱和常数 (mmol/L)",
+        },
+        K_AO2: {
+          label: "自养菌氧抑制常数",
+          description: "自养菌氧抑制常数 (mg O2/L)",
+        },
+        K_NH4A: {
+          label: "自养菌氨氮半饱和常数",
+          description: "自养菌氨氮半饱和常数 (mg N/L)",
+        },
+        K_NH4H: {
+          label: "异养菌氨氮半饱和常数",
+          description: "异养菌氨氮半饱和常数 (mg N/L)",
+        },
         K_NO: { label: "NOx半饱和常数", description: "NOx半饱和常数 (mg N/L)" },
-        K_O2A: { label: "自养菌氧半饱和常数", description: "自养菌氧半饱和常数 (mg O2/L)" },
-        K_O2H: { label: "异养菌氧半饱和常数", description: "异养菌氧半饱和常数 (mg O2/L)" },
-        K_S: { label: "基质半饱和常数", description: "可溶基质半饱和常数 (mg COD/L)" },
-        K_STO_H: { label: "储存产物半饱和常数", description: "储存产物半饱和常数 (mg COD/mg COD)" },
-        K_X: { label: "水解半饱和常数", description: "水解半饱和常数 (mg COD/mg COD)" },
+        K_O2A: {
+          label: "自养菌氧半饱和常数",
+          description: "自养菌氧半饱和常数 (mg O2/L)",
+        },
+        K_O2H: {
+          label: "异养菌氧半饱和常数",
+          description: "异养菌氧半饱和常数 (mg O2/L)",
+        },
+        K_S: {
+          label: "基质半饱和常数",
+          description: "可溶基质半饱和常数 (mg COD/L)",
+        },
+        K_STO_H: {
+          label: "储存产物半饱和常数",
+          description: "储存产物半饱和常数 (mg COD/mg COD)",
+        },
+        K_X: {
+          label: "水解半饱和常数",
+          description: "水解半饱和常数 (mg COD/mg COD)",
+        },
         S_ALK: { label: "碱度", description: "碱度浓度 (mmol/L)" },
-        S_I: { label: "可溶惰性物质", description: "可溶惰性有机物浓度 (mg COD/L)" },
+        S_I: {
+          label: "可溶惰性物质",
+          description: "可溶惰性有机物浓度 (mg COD/L)",
+        },
         S_ND: { label: "可溶有机氮", description: "可溶有机氮浓度 (mg N/L)" },
         S_NH: { label: "氨氮", description: "NH4-N浓度 (mg N/L)" },
         S_NO: { label: "硝酸盐和亚硝酸盐", description: "NOx-N浓度 (mg N/L)" },
         S_O: { label: "溶解氧", description: "溶解氧浓度 (mg O2/L)" },
         S_S: { label: "可溶基质", description: "可溶有机物浓度 (mg COD/L)" },
-        X_A: { label: "自养菌生物量", description: "自养菌生物量浓度 (mg COD/L)" },
-        X_H: { label: "异养菌生物量", description: "异养菌生物量浓度 (mg COD/L)" },
-        X_I: { label: "颗粒惰性物质", description: "颗粒惰性有机物浓度 (mg COD/L)" },
+        X_A: {
+          label: "自养菌生物量",
+          description: "自养菌生物量浓度 (mg COD/L)",
+        },
+        X_H: {
+          label: "异养菌生物量",
+          description: "异养菌生物量浓度 (mg COD/L)",
+        },
+        X_I: {
+          label: "颗粒惰性物质",
+          description: "颗粒惰性有机物浓度 (mg COD/L)",
+        },
         X_ND: { label: "颗粒有机氮", description: "颗粒有机氮浓度 (mg N/L)" },
-        X_S: { label: "颗粒可降解基质", description: "颗粒可降解有机物浓度 (mg COD/L)" },
-        X_STO: { label: "储存产物", description: "细胞内储存产物浓度 (mg COD/L)" },
-        Y_A: { label: "自养菌产率", description: "自养菌产率系数 (mg COD/mg N)" },
-        Y_HNOX: { label: "异养菌缺氧产率", description: "异养菌缺氧产率系数 (mg COD/mg COD)" },
-        Y_HO2: { label: "异养菌好氧产率", description: "异养菌好氧产率系数 (mg COD/mg COD)" },
-        Y_STONOX: { label: "缺氧储存产率", description: "缺氧储存产率系数 (mg COD/mg COD)" },
-        Y_STOO2: { label: "好氧储存产率", description: "好氧储存产率系数 (mg COD/mg COD)" },
-        b_ANOX: { label: "自养菌缺氧衰亡速率", description: "自养菌缺氧衰亡速率 (d⁻¹)" },
-        b_AO2: { label: "自养菌好氧衰亡速率", description: "自养菌好氧衰亡速率 (d⁻¹)" },
-        b_HNOX: { label: "异养菌缺氧衰亡速率", description: "异养菌缺氧衰亡速率 (d⁻¹)" },
-        b_HO2: { label: "异养菌好氧衰亡速率", description: "异养菌好氧衰亡速率 (d⁻¹)" },
-        b_STONOX: { label: "储存物缺氧氧化速率", description: "储存物缺氧氧化速率 (d⁻¹)" },
-        b_STOO2: { label: "储存物好氧氧化速率", description: "储存物好氧氧化速率 (d⁻¹)" },
-        f_SI: { label: "惰性可溶物分数", description: "水解产生的惰性可溶物分数 (mg COD/mg COD)" },
-        f_XI: { label: "惰性颗粒物分数", description: "衰亡产生的惰性颗粒物分数 (mg COD/mg COD)" },
-        i_NBM: { label: "生物量氮含量", description: "生物量氮含量 (mg N/mg COD)" },
-        i_NSI: { label: "可溶惰性物氮含量", description: "可溶惰性物氮含量 (mg N/mg COD)" },
-        i_NSS: { label: "可溶基质氮含量", description: "可溶基质氮含量 (mg N/mg COD)" },
-        i_NXI: { label: "颗粒惰性物氮含量", description: "颗粒惰性物氮含量 (mg N/mg COD)" },
-        i_NXS: { label: "颗粒基质氮含量", description: "颗粒基质氮含量 (mg N/mg COD)" },
-        i_SSBM: { label: "生物量TSS含量", description: "生物量TSS含量 (mg TSS/mg COD)" },
-        i_SSSTO: { label: "储存产物TSS含量", description: "储存产物TSS含量 (mg TSS/mg COD)" },
-        i_SSXI: { label: "颗粒惰性物TSS含量", description: "颗粒惰性物TSS含量 (mg TSS/mg COD)" },
-        k_H: { label: "水解速率常数", description: "颗粒基质水解速率常数 (d⁻¹)" },
-        k_STO: { label: "储存速率常数", description: "储存产物形成速率常数 (d⁻¹)" },
-        k_a: { label: "氨化速率常数", description: "氨化速率常数 (m³/(g COD·d))" },
-        mu_A: { label: "自养菌最大比增长速率", description: "自养菌最大比增长速率 (d⁻¹)" },
-        mu_H: { label: "异养菌最大比增长速率", description: "异养菌最大比增长速率 (d⁻¹)" },
+        X_S: {
+          label: "颗粒可降解基质",
+          description: "颗粒可降解有机物浓度 (mg COD/L)",
+        },
+        X_STO: {
+          label: "储存产物",
+          description: "细胞内储存产物浓度 (mg COD/L)",
+        },
+        Y_A: {
+          label: "自养菌产率",
+          description: "自养菌产率系数 (mg COD/mg N)",
+        },
+        Y_HNOX: {
+          label: "异养菌缺氧产率",
+          description: "异养菌缺氧产率系数 (mg COD/mg COD)",
+        },
+        Y_HO2: {
+          label: "异养菌好氧产率",
+          description: "异养菌好氧产率系数 (mg COD/mg COD)",
+        },
+        Y_STONOX: {
+          label: "缺氧储存产率",
+          description: "缺氧储存产率系数 (mg COD/mg COD)",
+        },
+        Y_STOO2: {
+          label: "好氧储存产率",
+          description: "好氧储存产率系数 (mg COD/mg COD)",
+        },
+        b_ANOX: {
+          label: "自养菌缺氧衰亡速率",
+          description: "自养菌缺氧衰亡速率 (d⁻¹)",
+        },
+        b_AO2: {
+          label: "自养菌好氧衰亡速率",
+          description: "自养菌好氧衰亡速率 (d⁻¹)",
+        },
+        b_HNOX: {
+          label: "异养菌缺氧衰亡速率",
+          description: "异养菌缺氧衰亡速率 (d⁻¹)",
+        },
+        b_HO2: {
+          label: "异养菌好氧衰亡速率",
+          description: "异养菌好氧衰亡速率 (d⁻¹)",
+        },
+        b_STONOX: {
+          label: "储存物缺氧氧化速率",
+          description: "储存物缺氧氧化速率 (d⁻¹)",
+        },
+        b_STOO2: {
+          label: "储存物好氧氧化速率",
+          description: "储存物好氧氧化速率 (d⁻¹)",
+        },
+        f_SI: {
+          label: "惰性可溶物分数",
+          description: "水解产生的惰性可溶物分数 (mg COD/mg COD)",
+        },
+        f_XI: {
+          label: "惰性颗粒物分数",
+          description: "衰亡产生的惰性颗粒物分数 (mg COD/mg COD)",
+        },
+        i_NBM: {
+          label: "生物量氮含量",
+          description: "生物量氮含量 (mg N/mg COD)",
+        },
+        i_NSI: {
+          label: "可溶惰性物氮含量",
+          description: "可溶惰性物氮含量 (mg N/mg COD)",
+        },
+        i_NSS: {
+          label: "可溶基质氮含量",
+          description: "可溶基质氮含量 (mg N/mg COD)",
+        },
+        i_NXI: {
+          label: "颗粒惰性物氮含量",
+          description: "颗粒惰性物氮含量 (mg N/mg COD)",
+        },
+        i_NXS: {
+          label: "颗粒基质氮含量",
+          description: "颗粒基质氮含量 (mg N/mg COD)",
+        },
+        i_SSBM: {
+          label: "生物量TSS含量",
+          description: "生物量TSS含量 (mg TSS/mg COD)",
+        },
+        i_SSSTO: {
+          label: "储存产物TSS含量",
+          description: "储存产物TSS含量 (mg TSS/mg COD)",
+        },
+        i_SSXI: {
+          label: "颗粒惰性物TSS含量",
+          description: "颗粒惰性物TSS含量 (mg TSS/mg COD)",
+        },
+        k_H: {
+          label: "水解速率常数",
+          description: "颗粒基质水解速率常数 (d⁻¹)",
+        },
+        k_STO: {
+          label: "储存速率常数",
+          description: "储存产物形成速率常数 (d⁻¹)",
+        },
+        k_a: {
+          label: "氨化速率常数",
+          description: "氨化速率常数 (m³/(g COD·d))",
+        },
+        mu_A: {
+          label: "自养菌最大比增长速率",
+          description: "自养菌最大比增长速率 (d⁻¹)",
+        },
+        mu_H: {
+          label: "异养菌最大比增长速率",
+          description: "异养菌最大比增长速率 (d⁻¹)",
+        },
         ny_NOX: { label: "缺氧修正因子", description: "缺氧条件修正因子" },
       },
     },
@@ -1051,7 +1269,8 @@ export const zhMessages: I18nMessages = {
       tooltip: "说明",
       warnIfNull: "分母接近 0，无法可靠计算",
       toast: {
-        denominatorWarning: "Nte 与 Nke 过于接近，混合液回流量计算将变得不稳定。",
+        denominatorWarning:
+          "Nte 与 Nke 过于接近，混合液回流量计算将变得不稳定。",
         denominatorNotice:
           "提示：Nte 与 Nke过近导致分母趋零，回流量结果不可靠；请调整指标目标或采用工程上限约束。",
       },
@@ -1298,7 +1517,7 @@ export const zhMessages: I18nMessages = {
         },
       },
       emptyState: {
-        prompt: "请点击\"开始计算\"按钮进行计算",
+        prompt: '请点击"开始计算"按钮进行计算',
         start: "开始计算",
         calculating: "计算中...",
       },

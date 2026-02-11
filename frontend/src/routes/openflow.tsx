@@ -4,11 +4,11 @@ import { ReactFlowProvider } from "@xyflow/react"
 import { useEffect } from "react"
 import { z } from "zod"
 import "@xyflow/react/dist/style.css"
+import { useI18n } from "@/i18n"
 import Canvas from "../components/Flow/Canvas"
 import Layout from "../components/Flow/Layout"
 import InspectorContainer from "../components/Flow/inspectorbar/InspectorContainer"
 import { MiddayHead } from "../components/Landing"
-import { useI18n } from "@/i18n"
 import useFlowStore from "../stores/flowStore"
 
 const openflowSearchSchema = z.object({
@@ -27,8 +27,12 @@ function FlowPage() {
   const { embed, src, ui } = Route.useSearch()
   const isEmbedded = embed === "1" || embed === "true"
   const isPreviewEmbed = isEmbedded && ui === "preview"
-  const { importFlowData, newFlowChart, setImportedFileName, setCurrentFlowChartName } =
-    useFlowStore()
+  const {
+    importFlowData,
+    newFlowChart,
+    setImportedFileName,
+    setCurrentFlowChartName,
+  } = useFlowStore()
 
   useEffect(() => {
     if (!src) return
@@ -46,7 +50,10 @@ function FlowPage() {
         if (!result.success) return
 
         const fileName =
-          src.split("/").pop()?.replace(/\.json$/i, "") ?? "imported"
+          src
+            .split("/")
+            .pop()
+            ?.replace(/\.json$/i, "") ?? "imported"
         setImportedFileName(fileName)
         setCurrentFlowChartName(fileName)
       } catch {
@@ -56,7 +63,13 @@ function FlowPage() {
 
     load()
     return () => controller.abort()
-  }, [importFlowData, newFlowChart, setCurrentFlowChartName, setImportedFileName, src])
+  }, [
+    importFlowData,
+    newFlowChart,
+    setCurrentFlowChartName,
+    setImportedFileName,
+    src,
+  ])
   const instructions = [
     t("openflow.instructions.drag"),
     t("openflow.instructions.connect"),
@@ -89,47 +102,49 @@ function FlowPage() {
           )}
 
           {/* 左侧说明文字水印 - 仅在openflow页面显示 */}
-          {isEmbedded ? null : (<Box
-            position="absolute"
-            left="20px"
-            top="20px"
-            zIndex={100}
-            pointerEvents="none"
-            opacity={0.6}
-          >
-            <VStack align="start" gap={2}>
-              <Text
-                fontSize="sm"
-                color="gray.600"
-                fontWeight="medium"
-                bg="white"
-                px={3}
-                py={2}
-                borderRadius="md"
-                boxShadow="sm"
-                border="1px"
-                borderColor="gray.200"
-              >
-                {t("openflow.hintTitle")}
-              </Text>
-              <VStack align="start" gap={1} ml={2}>
-                {instructions.map((text, index) => (
-                  <Text
-                    key={index}
-                    fontSize="xs"
-                    color="gray.500"
-                    bg="white"
-                    px={2}
-                    py={1}
-                    borderRadius="sm"
-                    boxShadow="xs"
-                  >
-                    • {text}
-                  </Text>
-                ))}
+          {isEmbedded ? null : (
+            <Box
+              position="absolute"
+              left="20px"
+              top="20px"
+              zIndex={100}
+              pointerEvents="none"
+              opacity={0.6}
+            >
+              <VStack align="start" gap={2}>
+                <Text
+                  fontSize="sm"
+                  color="gray.600"
+                  fontWeight="medium"
+                  bg="white"
+                  px={3}
+                  py={2}
+                  borderRadius="md"
+                  boxShadow="sm"
+                  border="1px"
+                  borderColor="gray.200"
+                >
+                  {t("openflow.hintTitle")}
+                </Text>
+                <VStack align="start" gap={1} ml={2}>
+                  {instructions.map((text, index) => (
+                    <Text
+                      key={index}
+                      fontSize="xs"
+                      color="gray.500"
+                      bg="white"
+                      px={2}
+                      py={1}
+                      borderRadius="sm"
+                      boxShadow="xs"
+                    >
+                      • {text}
+                    </Text>
+                  ))}
+                </VStack>
               </VStack>
-            </VStack>
-          </Box>)}
+            </Box>
+          )}
         </Box>
       </ReactFlowProvider>
     </Box>

@@ -12,7 +12,6 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SignupImport } from './routes/signup'
-import { Route as ShowcaseImport } from './routes/showcase'
 import { Route as ResetPasswordImport } from './routes/reset-password'
 import { Route as RecoverPasswordImport } from './routes/recover-password'
 import { Route as PosthogDemoImport } from './routes/posthog-demo'
@@ -28,6 +27,9 @@ import { Route as AiDeepResearchIndexImport } from './routes/ai-deep-research/in
 import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as UpdatesSlugImport } from './routes/updates/$slug'
 import { Route as AiDeepResearchArticleIdImport } from './routes/ai-deep-research/$articleId'
+import { Route as LayoutUdmModelsImport } from './routes/_layout/udmModels'
+import { Route as LayoutUdmModelEditorImport } from './routes/_layout/udmModelEditor'
+import { Route as LayoutUdmImport } from './routes/_layout/udm'
 import { Route as LayoutSuperDashboardImport } from './routes/_layout/super-dashboard'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutOverviewImport } from './routes/_layout/overview'
@@ -46,11 +48,6 @@ import { Route as LayoutKnowledgeSplatSlugImport } from './routes/_layout/knowle
 
 const SignupRoute = SignupImport.update({
   path: '/signup',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const ShowcaseRoute = ShowcaseImport.update({
-  path: '/showcase',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -127,6 +124,21 @@ const UpdatesSlugRoute = UpdatesSlugImport.update({
 const AiDeepResearchArticleIdRoute = AiDeepResearchArticleIdImport.update({
   path: '/ai-deep-research/$articleId',
   getParentRoute: () => rootRoute,
+} as any)
+
+const LayoutUdmModelsRoute = LayoutUdmModelsImport.update({
+  path: '/udmModels',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutUdmModelEditorRoute = LayoutUdmModelEditorImport.update({
+  path: '/udmModelEditor',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutUdmRoute = LayoutUdmImport.update({
+  path: '/udm',
+  getParentRoute: () => LayoutRoute,
 } as any)
 
 const LayoutSuperDashboardRoute = LayoutSuperDashboardImport.update({
@@ -230,10 +242,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordImport
       parentRoute: typeof rootRoute
     }
-    '/showcase': {
-      preLoaderRoute: typeof ShowcaseImport
-      parentRoute: typeof rootRoute
-    }
     '/signup': {
       preLoaderRoute: typeof SignupImport
       parentRoute: typeof rootRoute
@@ -276,6 +284,18 @@ declare module '@tanstack/react-router' {
     }
     '/_layout/super-dashboard': {
       preLoaderRoute: typeof LayoutSuperDashboardImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/udm': {
+      preLoaderRoute: typeof LayoutUdmImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/udmModelEditor': {
+      preLoaderRoute: typeof LayoutUdmModelEditorImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/udmModels': {
+      preLoaderRoute: typeof LayoutUdmModelsImport
       parentRoute: typeof LayoutImport
     }
     '/ai-deep-research/$articleId': {
@@ -336,6 +356,9 @@ export const routeTree = rootRoute.addChildren([
     LayoutOverviewRoute,
     LayoutSettingsRoute,
     LayoutSuperDashboardRoute,
+    LayoutUdmRoute,
+    LayoutUdmModelEditorRoute,
+    LayoutUdmModelsRoute,
     LayoutIndexRoute,
     LayoutKnowledgeIndexRoute,
     LayoutKnowledgeSplatSlugRoute,
@@ -346,7 +369,6 @@ export const routeTree = rootRoute.addChildren([
   PosthogDemoRoute,
   RecoverPasswordRoute,
   ResetPasswordRoute,
-  ShowcaseRoute,
   SignupRoute,
   AiDeepResearchArticleIdRoute,
   UpdatesSlugRoute,

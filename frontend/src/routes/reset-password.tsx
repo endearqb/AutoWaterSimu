@@ -7,9 +7,9 @@ import { FiLock } from "react-icons/fi"
 import { type ApiError, LoginService, type NewPassword } from "@/client"
 import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/ui/password-input"
-import { useI18n } from "@/i18n"
 import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useI18n } from "@/i18n"
 import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
 
 interface NewPasswordForm extends NewPassword {
@@ -83,9 +83,7 @@ function ResetPassword() {
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
         {t("auth.resetTitle")}
       </Heading>
-      <Text textAlign="center">
-        {t("auth.resetDescription")}
-      </Text>
+      <Text textAlign="center">{t("auth.resetDescription")}</Text>
       <PasswordInput
         startElement={<FiLock />}
         type="new_password"

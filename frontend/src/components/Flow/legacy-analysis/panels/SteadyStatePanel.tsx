@@ -42,8 +42,10 @@ const SteadyStatePanel: React.FC<SteadyStatePanelProps> = ({
         name: variable.name,
         label: (() => {
           const translated = t(variable.label)
-          const resolved = translated === variable.label ? variable.name : translated
-          const nameSuffix = resolved === variable.name ? "" : ` (${variable.name})`
+          const resolved =
+            translated === variable.label ? variable.name : translated
+          const nameSuffix =
+            resolved === variable.name ? "" : ` (${variable.name})`
           const unitSuffix = variable.unit ? ` [${variable.unit}]` : ""
           return `${resolved}${nameSuffix}${unitSuffix}`
         })(),

@@ -1,5 +1,5 @@
-import { Table } from "@chakra-ui/react"
 import { useI18n } from "@/i18n"
+import { Table } from "@chakra-ui/react"
 import { SkeletonText } from "../ui/skeleton"
 
 const PendingUsers = () => {
@@ -12,7 +12,9 @@ const PendingUsers = () => {
           <Table.ColumnHeader w="sm">
             {t("admin.fullNameLabel")}
           </Table.ColumnHeader>
-          <Table.ColumnHeader w="sm">{t("admin.emailLabel")}</Table.ColumnHeader>
+          <Table.ColumnHeader w="sm">
+            {t("admin.emailLabel")}
+          </Table.ColumnHeader>
           <Table.ColumnHeader w="sm">{t("common.role")}</Table.ColumnHeader>
           <Table.ColumnHeader w="sm">{t("common.status")}</Table.ColumnHeader>
           <Table.ColumnHeader w="sm">{t("common.actions")}</Table.ColumnHeader>

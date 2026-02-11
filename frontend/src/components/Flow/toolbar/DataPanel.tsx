@@ -7,7 +7,7 @@ import { Tooltip } from "../../ui/tooltip"
 
 interface DataPanelProps {
   store?: () => RFState // 可选的自定义store
-  modelType?: "asm1" | "asm1slim" | "materialBalance" | "asm3" // 模型类型
+  modelType?: "asm1" | "asm1slim" | "materialBalance" | "asm3" | "udm" // 模型类型
 }
 
 const DataPanel = ({ store, modelType }: DataPanelProps) => {
@@ -15,7 +15,53 @@ const DataPanel = ({ store, modelType }: DataPanelProps) => {
   const flowStore = store || useFlowStore
   const { nodes, setNodes, updateNodeParameter } = flowStore()
 
-  const detectModelType = (): "asm1" | "asm1slim" | "asm3" | "unknown" => {
+  const getUdmComponentNames = (): string[] => {
+    const names: string[] = []
+    const seen = new Set<string>()
+
+    nodes.forEach((node) => {
+      if (node.type !== "udm") return
+      const nodeData = (node.data || {}) as Record<string, unknown>
+
+      const fromNames = nodeData.udmComponentNames
+      if (Array.isArray(fromNames)) {
+        fromNames.forEach((item) => {
+          const name = String(item || "").trim()
+          if (name && !seen.has(name)) {
+            seen.add(name)
+            names.push(name)
+          }
+        })
+      }
+
+      const fromComponents =
+        (nodeData.udmComponents as unknown[]) ||
+        ((nodeData.udmModelSnapshot as Record<string, unknown> | undefined)
+          ?.components as unknown[]) ||
+        ((nodeData.udmModel as Record<string, unknown> | undefined)
+          ?.components as unknown[])
+
+      if (Array.isArray(fromComponents)) {
+        fromComponents.forEach((item) => {
+          if (!item || typeof item !== "object") return
+          const name = String((item as Record<string, unknown>).name || "").trim()
+          if (name && !seen.has(name)) {
+            seen.add(name)
+            names.push(name)
+          }
+        })
+      }
+    })
+
+    return names
+  }
+
+  const detectModelType = ():
+    | "asm1"
+    | "asm1slim"
+    | "asm3"
+    | "udm"
+    | "unknown" => {
     if (modelType && modelType !== "materialBalance") {
       return modelType
     }
@@ -30,6 +76,9 @@ const DataPanel = ({ store, modelType }: DataPanelProps) => {
 
     const hasASM3Node = nodes.some((node) => node.type === "asm3")
     if (hasASM3Node) return "asm3"
+
+    const hasUDMNode = nodes.some((node) => node.type === "udm")
+    if (hasUDMNode) return "udm"
 
     const firstNode = nodes[0]
     if (firstNode?.data) {
@@ -90,6 +139,9 @@ const DataPanel = ({ store, modelType }: DataPanelProps) => {
       : getModelConfig(resolvedModelType)
 
   const getNodeParameters = (): string[] => {
+    if (resolvedModelType === "udm") {
+      return getUdmComponentNames()
+    }
     if (!modelConfig) return []
     return modelConfig.fixedParameters.map((param) => param.name)
   }
