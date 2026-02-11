@@ -226,9 +226,9 @@ For more details on test commands and configuration, refer to the README or `pac
 | 6 | One‑dimensional settling tank model | In progress |
 | 7 | pH calculation |  |
 | 8 | Temperature correction for parameters |  |
-| 9 | Add more open‑source models |  |
-| 10 | Improve the model addition workflow |  |
-| 11 | Support adding custom user‑defined models |  |
+| 9 | Add more open‑source models | Deprecated |
+| 10 | Improve the model addition workflow | Deprecated |
+| 11 | Support adding custom user‑defined models | In progress, beta version completed |
 | 12 | Benchmark cases based on literature datasets, with reproducible curve‑matching outputs |  |
 | 13 | Tensorized multi‑node representation + grouped heterogeneous models (different model per node) |  |
 | 14 | Parameter sweep / scenario comparison (“run all options in one plot”) |  |
