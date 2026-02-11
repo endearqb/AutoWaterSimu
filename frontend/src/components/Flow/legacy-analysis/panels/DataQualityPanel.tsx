@@ -1,13 +1,17 @@
 import { Card, SimpleGrid, Table, Text, VStack } from "@chakra-ui/react"
 import React, { useMemo, useState } from "react"
+
 import { getModelConfig } from "../../../../config/modelConfigs"
 import { useI18n } from "../../../../i18n"
 import { Radio, RadioGroup } from "../../../ui/radio"
 import type { ASM1ResultData } from "../asm1-analysis"
+import { getUDMAvailableVariables, type UDMResultData } from "../udm-analysis"
+
+type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
 
 interface DataQualityPanelProps {
-  resultData: ASM1ResultData
-  modelType?: "asm1" | "asm1slim" | "asm3" // 添加模型类型参数
+  resultData: ASM1ResultData | UDMResultData
+  modelType?: AnalyzerModelType
 }
 
 const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
@@ -15,45 +19,55 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
   modelType = "asm1",
 }) => {
   const { t, language } = useI18n()
-  // 可用节点列表
-  const availableNodes = useMemo(() => {
-    return Object.keys(resultData.node_data || {})
-  }, [resultData])
 
-  // 节点筛选状态 - 默认选择第一个节点
+  const availableNodes = useMemo(
+    () => Object.keys(resultData.node_data || {}),
+    [resultData],
+  )
+
   const [selectedQualityNode, setSelectedQualityNode] = useState<string>(() => {
     const nodes = Object.keys(resultData.node_data || {})
     return nodes.length > 0 ? nodes[0] : ""
   })
 
-  // 当resultData变化时，更新默认选择
   React.useEffect(() => {
     const nodes = Object.keys(resultData.node_data || {})
-    if (nodes.length > 0 && !selectedQualityNode) {
+    if (nodes.length === 0) {
+      setSelectedQualityNode("")
+      return
+    }
+    if (!selectedQualityNode || !nodes.includes(selectedQualityNode)) {
       setSelectedQualityNode(nodes[0])
     }
   }, [resultData, selectedQualityNode])
 
-  // 可用变量列表 - 从模型配置中动态获取
   const availableVariables = useMemo(() => {
+    if (modelType === "udm") {
+      return getUDMAvailableVariables(resultData as UDMResultData, {
+        exclude: ["volume"],
+      })
+    }
+
     const modelConfig = getModelConfig(modelType)
     return (
       modelConfig?.availableVariables.map((variable) => ({
         name: variable.name,
         label: (() => {
           const translated = t(variable.label)
-          const resolved = translated === variable.label ? variable.name : translated
-          const nameSuffix = resolved === variable.name ? "" : ` (${variable.name})`
+          const resolved =
+            translated === variable.label ? variable.name : translated
+          const nameSuffix =
+            resolved === variable.name ? "" : ` (${variable.name})`
           const unitSuffix = variable.unit ? ` [${variable.unit}]` : ""
           return `${resolved}${nameSuffix}${unitSuffix}`
         })(),
       })) || []
     )
-  }, [modelType, language, t])
+  }, [modelType, resultData, language, t])
 
   const analysisResults = useMemo(() => {
-    if (!resultData.node_data || !resultData.timestamps) return []
-    if (!selectedQualityNode) return []
+    if (!resultData.node_data || !resultData.timestamps || !selectedQualityNode)
+      return []
 
     const nodeData = resultData.node_data[selectedQualityNode]
     if (!nodeData) return []
@@ -67,8 +81,7 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
       const timeSeries = nodeData[
         variable.name as keyof typeof nodeData
       ] as number[]
-      if (!timeSeries || !Array.isArray(timeSeries) || timeSeries.length === 0)
-        return []
+      if (!Array.isArray(timeSeries) || timeSeries.length === 0) return []
 
       const finalValue = timeSeries[timeSeries.length - 1]
       const threshold = Math.abs(finalValue) * 0.05
@@ -80,6 +93,7 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
           break
         }
       }
+
       const t95Time =
         t95Index >= 0 && t95Index < resultData.timestamps.length
           ? resultData.timestamps[t95Index]
@@ -103,13 +117,9 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
 
             if (median !== 0) {
               relativeSlope = Math.abs(slope / median) * 100
-              if (relativeSlope < 1) {
-                steadyStatus = "stable"
-              } else if (relativeSlope < 5) {
-                steadyStatus = "approaching"
-              } else {
-                steadyStatus = "unstable"
-              }
+              if (relativeSlope < 1) steadyStatus = "stable"
+              else if (relativeSlope < 5) steadyStatus = "approaching"
+              else steadyStatus = "unstable"
             }
           }
         }
@@ -129,16 +139,12 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
 
   return (
     <Card.Root>
-      {/* <Card.Header>
-        <Card.Title>T95 时间分析</Card.Title>
-      </Card.Header> */}
       <Card.Body>
         <VStack align="start" gap={4}>
           <Text fontSize="sm" color="gray.600">
             {t("flow.analysis.t95Description")}
           </Text>
 
-          {/* 节点筛选 */}
           <VStack align="start" gap={2} w="full">
             <Text fontWeight="bold">{t("flow.analysis.nodeFilter")}</Text>
             <RadioGroup
@@ -207,7 +213,7 @@ const DataQualityPanel: React.FC<DataQualityPanelProps> = ({
                                 ? t("flow.analysis.steadyState.approaching")
                                 : t("flow.analysis.steadyState.unstable")}
                             {result.relativeSlope !== null
-                              ? `（${result.relativeSlope.toFixed(3)}%）`
+                              ? ` (${result.relativeSlope.toFixed(3)}%)`
                               : null}
                           </Text>
                         ) : (

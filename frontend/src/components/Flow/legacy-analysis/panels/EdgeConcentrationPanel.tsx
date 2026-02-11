@@ -9,6 +9,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React, { useMemo, useState } from "react"
+
 import { getModelConfig } from "../../../../config/modelConfigs"
 import { useI18n } from "../../../../i18n"
 import { Checkbox } from "../../../ui/checkbox"
@@ -18,13 +19,20 @@ import {
   type ASM1ResultData,
   calculateEdgeConcentrations,
 } from "../asm1-analysis"
+import {
+  calculateUDMEdgeConcentrations,
+  getUDMAvailableVariables,
+  type UDMResultData,
+} from "../udm-analysis"
 import { normalizeIndex, normalizeIndexRange } from "../sliderUtils"
 
+type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
+
 interface EdgeConcentrationPanelProps {
-  resultData: ASM1ResultData
+  resultData: ASM1ResultData | UDMResultData
   edges: Array<{ id: string; source: string; target: string }>
   edgeParameterConfigs: { [key: string]: any }
-  modelType?: "asm1" | "asm1slim" | "asm3" // 添加模型类型参数
+  modelType?: AnalyzerModelType
 }
 
 const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
@@ -40,7 +48,6 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
   const userTouchedTimeRef = React.useRef(false)
   const userTouchedRangeRef = React.useRef(false)
 
-  // 状态管理
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0)
   const [selectedEdges, setSelectedEdges] = useState<string[]>([])
   const [selectedVariables, setSelectedVariables] = useState<string[]>([])
@@ -48,17 +55,23 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
     [number, number]
   >([0, 0])
 
-  // 可用连接线列表
-  const availableEdges = useMemo(() => {
-    return Object.keys(resultData.edge_data || {})
-  }, [resultData])
+  const availableEdges = useMemo(
+    () => Object.keys(resultData.edge_data || {}),
+    [resultData],
+  )
 
-  // 可用变量列表 - 从模型配置中动态获取，并添加流量作为第一个变量，过滤掉体积变量
   const availableVariables = useMemo(() => {
+    if (modelType === "udm") {
+      const udmVariables = getUDMAvailableVariables(resultData as UDMResultData, {
+        exclude: ["volume"],
+      })
+      return [{ name: "flow_rate", label: t("flow.analysis.flowRate") }, ...udmVariables]
+    }
+
     const modelConfig = getModelConfig(modelType)
     const modelVariables =
       modelConfig?.availableVariables
-        .filter((variable) => variable.name !== "volume") // 过滤掉体积变量
+        .filter((variable) => variable.name !== "volume")
         .map((variable) => ({
           name: variable.name,
           label: (() => {
@@ -67,34 +80,32 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
           })(),
         })) || []
 
-    // 添加流量作为第一个变量
-    return [
-      { name: "flow_rate", label: t("flow.analysis.flowRate") },
-      ...modelVariables,
-    ]
-  }, [modelType, language, t])
+    return [{ name: "flow_rate", label: t("flow.analysis.flowRate") }, ...modelVariables]
+  }, [modelType, resultData, language, t])
 
   const timestampsLength = resultData.timestamps?.length || 0
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
   const lastDataIndex = timestampsLength > 0 ? timestampsLength - 1 : 0
   const isSliderDisabled = timestampsLength <= 1
 
-  const minStepsBetween = useMemo(() => {
-    return Math.min(2, maxTimeIndex)
-  }, [maxTimeIndex])
-  const effectiveMinStepsBetween = useMemo(() => {
-    return isSliderDisabled ? 0 : minStepsBetween
-  }, [isSliderDisabled, minStepsBetween])
-  const safeSelectedTimeIndex = useMemo(() => {
-    return normalizeIndex(selectedTimeIndex, maxTimeIndex)
-  }, [selectedTimeIndex, maxTimeIndex])
-  const safeEdgeTimeSeriesRange = useMemo(() => {
-    return normalizeIndexRange(
-      edgeTimeSeriesRange,
-      maxTimeIndex,
-      effectiveMinStepsBetween,
-    )
-  }, [edgeTimeSeriesRange, maxTimeIndex, effectiveMinStepsBetween])
+  const minStepsBetween = useMemo(() => Math.min(2, maxTimeIndex), [maxTimeIndex])
+  const effectiveMinStepsBetween = useMemo(
+    () => (isSliderDisabled ? 0 : minStepsBetween),
+    [isSliderDisabled, minStepsBetween],
+  )
+  const safeSelectedTimeIndex = useMemo(
+    () => normalizeIndex(selectedTimeIndex, maxTimeIndex),
+    [selectedTimeIndex, maxTimeIndex],
+  )
+  const safeEdgeTimeSeriesRange = useMemo(
+    () =>
+      normalizeIndexRange(
+        edgeTimeSeriesRange,
+        maxTimeIndex,
+        effectiveMinStepsBetween,
+      ),
+    [edgeTimeSeriesRange, maxTimeIndex, effectiveMinStepsBetween],
+  )
 
   React.useEffect(() => {
     const prevLen = prevTimestampsLengthRef.current
@@ -117,28 +128,29 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
   }, [lastDataIndex, timestampsLength])
 
   React.useEffect(() => {
-    if (selectedEdges.length === 0 && availableEdges.length > 0) {
-      const defaultEdges = availableEdges.slice(0, 3)
-      setSelectedEdges(defaultEdges)
-    }
+    const validEdgeSet = new Set(availableEdges)
+    const validVariableSet = new Set(availableVariables.map((v) => v.name))
 
-    if (selectedVariables.length === 0 && availableVariables.length > 0) {
+    setSelectedEdges((prev) => {
+      const filtered = prev.filter((edge) => validEdgeSet.has(edge))
+      if (filtered.length > 0 || availableEdges.length === 0) return filtered
+      return availableEdges.slice(0, 3)
+    })
+
+    setSelectedVariables((prev) => {
+      const filtered = prev.filter((variable) => validVariableSet.has(variable))
+      if (filtered.length > 0 || availableVariables.length === 0) return filtered
+
       const nonFlowVariables = availableVariables.filter(
-        (v) => v.name !== "flow_rate",
+        (item) => item.name !== "flow_rate",
       )
       const variablesSource =
         nonFlowVariables.length > 0 ? nonFlowVariables : availableVariables
-      const defaultVariables = variablesSource
+      return variablesSource
         .slice(0, Math.min(5, variablesSource.length))
         .map((v) => v.name)
-      setSelectedVariables(defaultVariables)
-    }
-  }, [
-    availableEdges,
-    availableVariables,
-    selectedEdges.length,
-    selectedVariables.length,
-  ])
+    })
+  }, [availableEdges, availableVariables])
 
   const handleSelectedTimeIndexChange = React.useCallback((next: number) => {
     userTouchedTimeRef.current = true
@@ -153,7 +165,6 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
     [],
   )
 
-  // 连接线浓度数据
   const edgeConcentrationData = useMemo(() => {
     if (
       !resultData.timestamps ||
@@ -163,23 +174,19 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
       return []
     }
 
-    // DEBUG: 打印EdgeConcentrationPanel传入的参数
-    console.log(
-      "🔍 [DEBUG] EdgeConcentrationPanel 调用 calculateEdgeConcentrations:",
-    )
-    console.log(
-      "  - resultData.edge_data keys:",
-      Object.keys(resultData.edge_data || {}),
-    )
-    console.log("  - edgeParameterConfigs:", edgeParameterConfigs)
-    console.log("  - selectedVariables:", selectedVariables)
-    console.log("  - selectedTimeIndex:", selectedTimeIndex)
-    console.log("  - edges:", edges)
-    console.log("  - selectedEdges:", selectedEdges)
+    if (modelType === "udm") {
+      return calculateUDMEdgeConcentrations(
+        resultData as UDMResultData,
+        edgeParameterConfigs || {},
+        selectedVariables,
+        safeSelectedTimeIndex,
+        edges,
+        selectedEdges,
+      )
+    }
 
-    // 使用calculateEdgeConcentrations函数计算连接线浓度
     return calculateEdgeConcentrations(
-      resultData,
+      resultData as ASM1ResultData,
       edgeParameterConfigs || {},
       selectedVariables,
       safeSelectedTimeIndex,
@@ -188,6 +195,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
     )
   }, [
     resultData,
+    modelType,
     selectedEdges,
     selectedVariables,
     safeSelectedTimeIndex,
@@ -226,7 +234,9 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
         name: variableInfo
           ? variableInfo.name === "flow_rate"
             ? variableInfo.label
-            : `${variableInfo.label} (${variable})`
+            : variableInfo.label !== variable
+              ? `${variableInfo.label} (${variable})`
+              : variable
           : variable,
         color: colors[index % colors.length],
       }
@@ -235,38 +245,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
 
   return (
     <Card.Root>
-      {/* <Card.Header>
-        <Card.Title>连接线浓度剖面</Card.Title>
-      </Card.Header> */}
       <Card.Body>
-        {/* 时间选择滑块 */}
-        {/* <VStack align="start" gap={4} mb={6}>
-          <Text fontWeight="bold">时间选择</Text>
-          <HStack w="full" gap={4}>
-            <Text minW="60px">时间:</Text>
-            <Slider.Root
-              value={[safeSelectedTimeIndex]}
-              onValueChange={(details) => setSelectedTimeIndex(details.value[0])}
-              min={0}
-              max={maxTimeIndex}
-              step={1}
-              flex={1}
-              disabled={isSliderDisabled}
-            >
-              <Slider.Control>
-                <Slider.Track>
-                  <Slider.Range />
-                </Slider.Track>
-                <Slider.Thumbs />
-              </Slider.Control>
-            </Slider.Root>
-            <Text minW="100px">
-              {resultData.timestamps?.[selectedTimeIndex]?.toFixed(2) || 0} h
-            </Text>
-          </HStack>
-        </VStack> */}
-
-        {/* 连接线选择 */}
         <VStack align="start" gap={4} mb={6}>
           <Text fontWeight="bold">{t("flow.analysis.edgeSelection")}</Text>
           <CheckboxGroup
@@ -279,16 +258,12 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
               w="full"
             >
               {availableEdges.map((edgeId) => {
-                const edge = edges.find((e) => e.id === edgeId)
-                const sourceNode = edge
-                  ? resultData.node_data[edge.source]
-                  : null
-                const targetNode = edge
-                  ? resultData.node_data[edge.target]
-                  : null
+                const edge = edges.find((item) => item.id === edgeId)
+                const sourceNode = edge ? resultData.node_data[edge.source] : null
+                const targetNode = edge ? resultData.node_data[edge.target] : null
                 const edgeLabel =
                   sourceNode && targetNode && edge
-                    ? `${sourceNode.label || edge.source} → ${targetNode.label || edge.target}`
+                    ? `${sourceNode.label || edge.source} -> ${targetNode.label || edge.target}`
                     : edgeId
                 return (
                   <Checkbox key={edgeId} value={edgeId}>
@@ -300,7 +275,6 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
           </CheckboxGroup>
         </VStack>
 
-        {/* 变量选择 */}
         <VStack align="start" gap={4} mb={6}>
           <Text fontWeight="bold">{t("flow.analysis.metricSelection")}</Text>
           <CheckboxGroup
@@ -325,7 +299,6 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
 
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} alignItems="stretch">
           <VStack align="start" gap={4}>
-            {/* 条形图：时间选择 */}
             <VStack align="start" gap={2} w="full">
               <Text fontWeight="bold">{t("flow.analysis.timeSelection")}</Text>
               <HStack w="full" gap={4}>
@@ -349,14 +322,12 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
                   </Slider.Control>
                 </Slider.Root>
                 <Text minW="100px">
-                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) ||
-                    0}{" "}
+                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) || 0}{" "}
                   {t("flow.simulation.unit.hours")}
                 </Text>
               </HStack>
             </VStack>
 
-            {/* 条形图 */}
             <ExternalLegendBarChart
               data={edgeConcentrationData}
               xDataKey="edge"
@@ -369,7 +340,6 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
             />
           </VStack>
 
-          {/* 折线图：时间范围选择 + 时序图 */}
           <EdgeTimeSeriesChart
             resultData={resultData}
             selectedEdges={selectedEdges}

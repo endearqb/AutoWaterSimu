@@ -9,17 +9,24 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import React, { useMemo, useState } from "react"
+
 import { getModelConfig } from "../../../../config/modelConfigs"
 import { useI18n } from "../../../../i18n"
 import { Checkbox } from "../../../ui/checkbox"
 import ExternalLegendBarChart from "../ExternalLegendBarChart"
 import TimeSeriesChart from "../TimeSeriesChart"
 import type { ASM1ResultData } from "../asm1-analysis"
+import {
+  getUDMAvailableVariables,
+  type UDMResultData,
+} from "../udm-analysis"
 import { normalizeIndex, normalizeIndexRange } from "../sliderUtils"
 
+type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
+
 interface SpatialProfilePanelProps {
-  resultData: ASM1ResultData
-  modelType?: "asm1" | "asm1slim" | "asm3" // 添加模型类型参数
+  resultData: ASM1ResultData | UDMResultData
+  modelType?: AnalyzerModelType
 }
 
 const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
@@ -33,7 +40,6 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
   const userTouchedTimeRef = React.useRef(false)
   const userTouchedRangeRef = React.useRef(false)
 
-  // 状态管理
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0)
   const [selectedNodes, setSelectedNodes] = useState<string[]>([])
   const [selectedVariables, setSelectedVariables] = useState<string[]>([])
@@ -41,13 +47,18 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
     0, 0,
   ])
 
-  // 可用节点列表
-  const availableNodes = useMemo(() => {
-    return Object.keys(resultData.node_data || {})
-  }, [resultData])
+  const availableNodes = useMemo(
+    () => Object.keys(resultData.node_data || {}),
+    [resultData],
+  )
 
-  // 可用变量列表 - 从模型配置中动态获取
   const availableVariables = useMemo(() => {
+    if (modelType === "udm") {
+      return getUDMAvailableVariables(resultData as UDMResultData, {
+        exclude: ["volume"],
+      })
+    }
+
     const modelConfig = getModelConfig(modelType)
     return (
       modelConfig?.availableVariables.map((variable) => ({
@@ -58,32 +69,33 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
         })(),
       })) || []
     )
-  }, [modelType, language, t])
+  }, [modelType, resultData, language, t])
 
   const timestampsLength = resultData.timestamps?.length || 0
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
   const lastDataIndex = timestampsLength > 0 ? timestampsLength - 1 : 0
   const isSliderDisabled = timestampsLength <= 1
 
-  const minStepsBetween = useMemo(() => {
-    return Math.min(2, maxTimeIndex)
-  }, [maxTimeIndex])
+  const minStepsBetween = useMemo(() => Math.min(2, maxTimeIndex), [maxTimeIndex])
+  const effectiveMinStepsBetween = useMemo(
+    () => (isSliderDisabled ? 0 : minStepsBetween),
+    [isSliderDisabled, minStepsBetween],
+  )
 
-  const effectiveMinStepsBetween = useMemo(() => {
-    return isSliderDisabled ? 0 : minStepsBetween
-  }, [isSliderDisabled, minStepsBetween])
+  const safeSelectedTimeIndex = useMemo(
+    () => normalizeIndex(selectedTimeIndex, maxTimeIndex),
+    [selectedTimeIndex, maxTimeIndex],
+  )
 
-  const safeSelectedTimeIndex = useMemo(() => {
-    return normalizeIndex(selectedTimeIndex, maxTimeIndex)
-  }, [selectedTimeIndex, maxTimeIndex])
-
-  const safeTimeSeriesRange = useMemo(() => {
-    return normalizeIndexRange(
-      timeSeriesRange,
-      maxTimeIndex,
-      effectiveMinStepsBetween,
-    )
-  }, [timeSeriesRange, maxTimeIndex, effectiveMinStepsBetween])
+  const safeTimeSeriesRange = useMemo(
+    () =>
+      normalizeIndexRange(
+        timeSeriesRange,
+        maxTimeIndex,
+        effectiveMinStepsBetween,
+      ),
+    [timeSeriesRange, maxTimeIndex, effectiveMinStepsBetween],
+  )
 
   React.useEffect(() => {
     const prevLen = prevTimestampsLengthRef.current
@@ -98,7 +110,6 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
       userTouchedTimeRef.current = false
       userTouchedRangeRef.current = false
     }
-
     prevTimestampsLengthRef.current = timestampsLength
 
     if (!userTouchedTimeRef.current) setSelectedTimeIndex(lastDataIndex)
@@ -106,23 +117,23 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
   }, [lastDataIndex, timestampsLength])
 
   React.useEffect(() => {
-    if (selectedNodes.length === 0 && availableNodes.length > 0) {
-      const defaultNodes = availableNodes.slice(0, 3)
-      setSelectedNodes(defaultNodes)
-    }
+    const validNodeSet = new Set(availableNodes)
+    const validVariableSet = new Set(availableVariables.map((v) => v.name))
 
-    if (selectedVariables.length === 0 && availableVariables.length > 0) {
-      const defaultVariables = availableVariables
+    setSelectedNodes((prev) => {
+      const filtered = prev.filter((node) => validNodeSet.has(node))
+      if (filtered.length > 0 || availableNodes.length === 0) return filtered
+      return availableNodes.slice(0, 3)
+    })
+
+    setSelectedVariables((prev) => {
+      const filtered = prev.filter((variable) => validVariableSet.has(variable))
+      if (filtered.length > 0 || availableVariables.length === 0) return filtered
+      return availableVariables
         .slice(0, Math.min(5, availableVariables.length))
         .map((v) => v.name)
-      setSelectedVariables(defaultVariables)
-    }
-  }, [
-    availableNodes,
-    availableVariables,
-    selectedNodes.length,
-    selectedVariables.length,
-  ])
+    })
+  }, [availableNodes, availableVariables])
 
   const handleSelectedTimeIndexChange = React.useCallback((next: number) => {
     userTouchedTimeRef.current = true
@@ -137,12 +148,10 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
     [],
   )
 
-  // 当前时间点的空间剖面数据
   const currentProfileData = useMemo(() => {
     if (!resultData.node_data || !resultData.timestamps) return []
 
     const data: Array<{ node: string; [key: string]: any }> = []
-
     selectedNodes.forEach((nodeId) => {
       const nodeData = resultData.node_data[nodeId]
       if (!nodeData) return
@@ -156,7 +165,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
         const variableData = nodeData[
           variable as keyof typeof nodeData
         ] as number[]
-        if (variableData && safeSelectedTimeIndex < variableData.length) {
+        if (Array.isArray(variableData) && safeSelectedTimeIndex < variableData.length) {
           dataPoint[variable] = variableData[safeSelectedTimeIndex]
         }
       })
@@ -195,7 +204,10 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
       return {
         key: variable,
         dataKey: variable,
-        name: variableInfo ? `${variableInfo.label} (${variable})` : variable,
+        name:
+          variableInfo && variableInfo.label !== variable
+            ? `${variableInfo.label} (${variable})`
+            : variable,
         color: colors[index % colors.length],
       }
     })
@@ -203,38 +215,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
 
   return (
     <Card.Root>
-      {/* <Card.Header>
-        <Card.Title>空间剖面分析</Card.Title>
-      </Card.Header> */}
       <Card.Body>
-        {/* 时间选择滑块 */}
-        {/* <VStack align="start" gap={4} mb={6}>
-          <Text fontWeight="bold">时间选择</Text>
-          <HStack w="full" gap={4}>
-            <Text minW="60px">时间:</Text>
-            <Slider.Root
-              value={[selectedTimeIndex]}
-              onValueChange={(details) => setSelectedTimeIndex(details.value[0])}
-              min={0}
-              max={maxTimeIndex}
-              step={1}
-              flex={1}
-              disabled={isSliderDisabled}
-            >
-              <Slider.Control>
-                <Slider.Track>
-                  <Slider.Range />
-                </Slider.Track>
-                <Slider.Thumbs/>
-              </Slider.Control>
-            </Slider.Root>
-            <Text minW="100px">
-              {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) || 0} h
-            </Text>
-          </HStack>
-        </VStack> */}
-
-        {/* 节点选择 */}
         <VStack align="start" gap={4} mb={6}>
           <Text fontWeight="bold">{t("flow.analysis.nodeSelection")}</Text>
           <CheckboxGroup
@@ -255,7 +236,6 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
           </CheckboxGroup>
         </VStack>
 
-        {/* 变量选择 */}
         <VStack align="start" gap={4} mb={6}>
           <Text fontWeight="bold">{t("flow.analysis.metricSelection")}</Text>
           <CheckboxGroup
@@ -269,7 +249,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
             >
               {availableVariables.map((variable) => (
                 <Checkbox key={variable.name} value={variable.name}>
-                  {variable.label} ({variable.name})
+                  {variable.label}
                 </Checkbox>
               ))}
             </SimpleGrid>
@@ -280,7 +260,6 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
 
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} alignItems="stretch">
           <VStack align="start" gap={4}>
-            {/* 条形图：时间选择 */}
             <VStack align="start" gap={2} w="full">
               <Text fontWeight="bold">{t("flow.analysis.timeSelection")}</Text>
               <HStack w="full" gap={4}>
@@ -304,14 +283,12 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
                   </Slider.Control>
                 </Slider.Root>
                 <Text minW="100px">
-                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) ||
-                    0}{" "}
+                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) || 0}{" "}
                   {t("flow.simulation.unit.hours")}
                 </Text>
               </HStack>
             </VStack>
 
-            {/* 条形图 */}
             <ExternalLegendBarChart
               data={currentProfileData}
               xDataKey="node"
@@ -322,7 +299,6 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
             />
           </VStack>
 
-          {/* 折线图：时间范围选择 + 时序图 */}
           <TimeSeriesChart
             resultData={resultData}
             selectedNodes={selectedNodes}

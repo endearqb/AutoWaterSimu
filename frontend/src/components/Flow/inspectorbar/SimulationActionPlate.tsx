@@ -37,6 +37,7 @@ import ASM1Analyzer from "../legacy-analysis/ASM1Analyzer"
 import ASM1SlimAnalyzer from "../legacy-analysis/ASM1SlimAnalyzer"
 import ASM3Analyzer from "../legacy-analysis/ASM3Analyzer"
 import AnalysisDialog from "../legacy-analysis/AnalysisDialog"
+import UDMAnalyzer from "../legacy-analysis/UDMAnalyzer"
 import BaseDialogManager from "../menu/BaseDialogManager"
 import BaseLoadCalculationDataDialog from "../menu/BaseLoadCalculationDataDialog"
 import ConfirmDialog from "../menu/ConfirmDialog"
@@ -1518,10 +1519,18 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
               edgeParameterConfigs={edgeParameterConfigs}
             />
           )}
+          {hasResultData && modelType === "udm" && (
+            <UDMAnalyzer
+              resultData={finalStore.currentJob?.result_data}
+              edges={edges}
+              edgeParameterConfigs={edgeParameterConfigs}
+            />
+          )}
           {hasResultData &&
             modelType !== "asm1" &&
             modelType !== "asm1slim" &&
-            modelType !== "asm3" && (
+            modelType !== "asm3" &&
+            modelType !== "udm" && (
               <Text fontSize="sm" color={accentColor} opacity={0.8}>
                 {t("flow.analysis.unavailable")}
               </Text>

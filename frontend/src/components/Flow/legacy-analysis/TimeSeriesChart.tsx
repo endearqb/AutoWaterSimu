@@ -10,39 +10,33 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+
 import { useI18n } from "../../../i18n"
 import { type ASM1ResultData, getAvailableVariables } from "./asm1-analysis"
 import {
   type ASM1SlimResultData,
   getSlimAvailableVariables,
 } from "./asm1slim-analysis"
+import {
+  getUDMAvailableVariables,
+  type UDMResultData,
+} from "./udm-analysis"
 import { normalizeIndexRange } from "./sliderUtils"
 
+type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
+
 interface TimeSeriesChartProps {
-  /** 计算结果数据 */
-  resultData: ASM1ResultData | ASM1SlimResultData
-  /** 选中的节点 */
+  resultData: ASM1ResultData | ASM1SlimResultData | UDMResultData
   selectedNodes: string[]
-  /** 选中的变量 */
   selectedVariables: string[]
-  /** 时间范围 */
   timeRange: [number, number]
-  /** 时间范围变化回调 */
   onTimeRangeChange: (range: [number, number]) => void
-  /** 是否显示时间范围选择滑块 */
   showTimeRangeSlider?: boolean
-  /** 绘图区高度 */
   chartHeight?: string | number
-  /** y 轴绘图区高度 */
   yAxisHeight?: number
-  /** 模型类型 */
-  modelType?: "asm1" | "asm1slim" | "asm3"
+  modelType?: AnalyzerModelType
 }
 
-/**
- * 时序图组件
- * 用于显示选定节点和变量在指定时间范围内的时序变化
- */
 const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   resultData,
   selectedNodes,
@@ -55,6 +49,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   modelType = "asm1",
 }) => {
   const { t, language } = useI18n()
+
   const plotAreaHeight = useMemo(() => {
     if (typeof yAxisHeight === "number") return yAxisHeight
     if (typeof chartHeight === "number") return chartHeight
@@ -62,17 +57,19 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   }, [chartHeight, yAxisHeight])
 
   const xAxisHeight = 50
+  const chartMargin = useMemo(
+    () => ({ top: 20, right: 30, left: 20, bottom: 10 }),
+    [],
+  )
+  const chartAreaHeight = useMemo(
+    () => plotAreaHeight + chartMargin.top + chartMargin.bottom + xAxisHeight,
+    [chartMargin.bottom, chartMargin.top, plotAreaHeight],
+  )
 
-  const chartMargin = useMemo(() => {
-    return { top: 20, right: 30, left: 20, bottom: 10 }
-  }, [])
-
-  const chartAreaHeight = useMemo(() => {
-    return plotAreaHeight + chartMargin.top + chartMargin.bottom + xAxisHeight
-  }, [chartMargin.bottom, chartMargin.top, plotAreaHeight])
-
-  // 获取可用变量信息
   const availableVariables = useMemo(() => {
+    if (modelType === "udm") {
+      return getUDMAvailableVariables(resultData as UDMResultData)
+    }
     if (modelType === "asm1slim") {
       return getSlimAvailableVariables(resultData as ASM1SlimResultData)
     }
@@ -83,21 +80,17 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
   const isSliderDisabled = timestampsLength <= 1
 
-  const minStepsBetween = useMemo(() => {
-    return Math.min(2, maxTimeIndex)
-  }, [maxTimeIndex])
-  const effectiveMinStepsBetween = useMemo(() => {
-    return isSliderDisabled ? 0 : minStepsBetween
-  }, [isSliderDisabled, minStepsBetween])
-  const safeTimeRange = useMemo(() => {
-    return normalizeIndexRange(
-      timeRange,
-      maxTimeIndex,
-      effectiveMinStepsBetween,
-    )
-  }, [timeRange, maxTimeIndex, effectiveMinStepsBetween])
+  const minStepsBetween = useMemo(() => Math.min(2, maxTimeIndex), [maxTimeIndex])
+  const effectiveMinStepsBetween = useMemo(
+    () => (isSliderDisabled ? 0 : minStepsBetween),
+    [isSliderDisabled, minStepsBetween],
+  )
+  const safeTimeRange = useMemo(
+    () =>
+      normalizeIndexRange(timeRange, maxTimeIndex, effectiveMinStepsBetween),
+    [timeRange, maxTimeIndex, effectiveMinStepsBetween],
+  )
 
-  // 生成时序图数据
   const timeSeriesData = useMemo(() => {
     if (
       !resultData.timestamps ||
@@ -109,27 +102,24 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
     const startIndex = Math.max(0, safeTimeRange[0])
     const endIndex = Math.min(maxTimeIndex, safeTimeRange[1])
-
-    const data: any[] = []
+    const data: Array<Record<string, any>> = []
 
     for (let i = startIndex; i <= endIndex; i++) {
-      const point: any = {
+      const point: Record<string, any> = {
         time: resultData.timestamps[i],
         timeIndex: i,
       }
 
-      // 为每个选中的节点和变量添加数据
       selectedNodes.forEach((nodeName) => {
         const nodeData = resultData.node_data?.[nodeName]
-        if (nodeData) {
-          selectedVariables.forEach((variable) => {
-            const variableData = nodeData[variable]
-            if (variableData && variableData[i] !== undefined) {
-              const key = `${nodeName}_${variable}`
-              point[key] = variableData[i]
-            }
-          })
-        }
+        if (!nodeData) return
+
+        selectedVariables.forEach((variable) => {
+          const variableSeries = nodeData[variable]
+          if (Array.isArray(variableSeries) && variableSeries[i] !== undefined) {
+            point[`${nodeName}_${variable}`] = variableSeries[i]
+          }
+        })
       })
 
       data.push(point)
@@ -144,7 +134,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     maxTimeIndex,
   ])
 
-  // 生成图表线条
   const chartSeries = useMemo(() => {
     const colors = [
       "#8884d8",
@@ -170,7 +159,10 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           const translated = t(variableInfo.label)
           return translated === variableInfo.label ? variable : translated
         })()
-        const label = `${nodeLabel} - ${variableLabel} (${variable})`
+        const label =
+          variableLabel === variable
+            ? `${nodeLabel} - ${variable}`
+            : `${nodeLabel} - ${variableLabel} (${variable})`
         const color = colors[colorIndex % colors.length]
 
         lines.push(
@@ -186,8 +178,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         )
 
         legendItems.push({ key, label, color })
-
-        colorIndex++
+        colorIndex += 1
       })
     })
 
@@ -220,7 +211,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   return (
     <VStack w="full" align="start" gap={4}>
-      {/* 时间范围选择滑块 */}
       {showTimeRangeSlider && (
         <VStack align="start" gap={2} w="full">
           <Text fontWeight="bold">{t("flow.analysis.timeRange")}</Text>
@@ -254,7 +244,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         </VStack>
       )}
 
-      {/* 时序图 */}
       <Box
         w="full"
         h={chartAreaHeight}
