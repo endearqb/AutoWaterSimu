@@ -28,6 +28,7 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { getDefaultCalculationParams } from "../../config/simulationConfig"
 import { udmService } from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
+import ExpressionCellEditorDialog from "./ExpressionCellEditorDialog"
 
 type ComponentRow = {
   name: string
@@ -52,6 +53,17 @@ type ProcessRow = {
   note: string
   stoich: Record<string, string>
 }
+
+type ProcessEditorTarget =
+  | {
+      cellType: "rateExpr"
+      rowIndex: number
+    }
+  | {
+      cellType: "stoich"
+      rowIndex: number
+      componentName: string
+    }
 
 interface UDMModelEditorFormProps {
   modelId?: string
@@ -118,6 +130,12 @@ const INITIAL_FORM_SIGNATURE = buildFormSignature({
   parameterRows: [],
 })
 
+const PROCESS_NAME_COL_W = "180px"
+const RATE_EXPR_COL_W = "320px"
+const STOICH_COL_MIN_W = "140px"
+const NOTE_COL_W = "180px"
+const ACTION_COL_W = "96px"
+
 export function UDMModelEditorForm({
   modelId,
   onModelIdChange,
@@ -149,11 +167,15 @@ export function UDMModelEditorForm({
   const [baselineSignature, setBaselineSignature] = useState(
     INITIAL_FORM_SIGNATURE,
   )
+  const [editorTarget, setEditorTarget] = useState<ProcessEditorTarget | null>(
+    null,
+  )
 
   const processNameInputRefs = useRef<Record<number, HTMLInputElement | null>>(
     {},
   )
   const stoichInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const rateExprInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   useEffect(() => {
     setCurrentModelId(modelId)
@@ -256,6 +278,10 @@ export function UDMModelEditorForm({
     () => componentRows.map((row) => row.name.trim()).filter(Boolean),
     [componentRows],
   )
+  const parameterNames = useMemo(
+    () => parameterRows.map((row) => row.name.trim()).filter(Boolean),
+    [parameterRows],
+  )
 
   const currentSignature = useMemo(
     () =>
@@ -287,6 +313,20 @@ export function UDMModelEditorForm({
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [isDirty])
+
+  useEffect(() => {
+    if (!editorTarget) return
+    if (editorTarget.rowIndex >= processRows.length) {
+      setEditorTarget(null)
+      return
+    }
+    if (
+      editorTarget.cellType === "stoich" &&
+      !componentNames.includes(editorTarget.componentName)
+    ) {
+      setEditorTarget(null)
+    }
+  }, [editorTarget, processRows.length, componentNames])
 
   const buildDraft = (): UDMModelDefinitionDraft => {
     const normalizedComponents = componentRows
@@ -677,6 +717,44 @@ export function UDMModelEditorForm({
     )
   }
 
+  const openRateExprEditor = (rowIndex: number) => {
+    setEditorTarget({
+      cellType: "rateExpr",
+      rowIndex,
+    })
+  }
+
+  const openStoichEditor = (rowIndex: number, componentName: string) => {
+    setEditorTarget({
+      cellType: "stoich",
+      rowIndex,
+      componentName,
+    })
+  }
+
+  const closeEditor = () => {
+    setEditorTarget(null)
+  }
+
+  const saveEditorValue = (nextValue: string) => {
+    if (!editorTarget) return
+    setProcessRows((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== editorTarget.rowIndex) return item
+        if (editorTarget.cellType === "rateExpr") {
+          return { ...item, rateExpr: nextValue }
+        }
+        return {
+          ...item,
+          stoich: {
+            ...item.stoich,
+            [editorTarget.componentName]: nextValue,
+          },
+        }
+      }),
+    )
+  }
+
   const resolveProcessIndex = (issue: ValidationIssue): number => {
     if (issue.process) {
       const byName = processRows.findIndex(
@@ -694,8 +772,10 @@ export function UDMModelEditorForm({
   }
 
   const resolveComponentNameFromMessage = (message: string): string | null => {
-    const match = message.match(/组分\s*([^\s的，,:]+)/)
-    return match?.[1] || null
+    const zhMatch = message.match(/组分\s*([^\s的，,:]+)/)
+    if (zhMatch?.[1]) return zhMatch[1]
+    const enMatch = message.match(/component\s+([A-Za-z_][A-Za-z0-9_]*)/i)
+    return enMatch?.[1] || null
   }
 
   const jumpToIssue = (issue: ValidationIssue) => {
@@ -705,15 +785,46 @@ export function UDMModelEditorForm({
     const componentName = resolveComponentNameFromMessage(issue.message || "")
     if (componentName) {
       const stoichKey = `${processIndex}:${componentName}`
-      const targetInput = stoichInputRefs.current[stoichKey]
-      if (targetInput) {
-        targetInput.scrollIntoView({
+      const targetCell = stoichInputRefs.current[stoichKey]
+      if (targetCell) {
+        targetCell.scrollIntoView({
           behavior: "smooth",
           block: "center",
           inline: "center",
         })
-        targetInput.focus()
-        targetInput.select()
+        targetCell.focus()
+        openStoichEditor(processIndex, componentName)
+        return
+      }
+    }
+
+    if (!componentName && issue.code.startsWith("STOICH_") && componentNames[0]) {
+      const fallbackComponent = componentNames[0]
+      const fallbackCell = stoichInputRefs.current[
+        `${processIndex}:${fallbackComponent}`
+      ]
+      if (fallbackCell) {
+        fallbackCell.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        })
+        fallbackCell.focus()
+      }
+      openStoichEditor(processIndex, fallbackComponent)
+      return
+    }
+
+    if (issue.code !== "DUPLICATE_PROCESS") {
+      const rateExprInput = rateExprInputRefs.current[processIndex]
+      if (rateExprInput) {
+        rateExprInput.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        })
+        rateExprInput.focus()
+        openRateExprEditor(processIndex)
         return
       }
     }
@@ -788,6 +899,21 @@ export function UDMModelEditorForm({
       onBack()
     }
   }
+
+  const editorInitialValue = useMemo(() => {
+    if (!editorTarget) return ""
+    const currentRow = processRows[editorTarget.rowIndex]
+    if (!currentRow) return ""
+    if (editorTarget.cellType === "rateExpr") {
+      return currentRow.rateExpr || ""
+    }
+    return currentRow.stoich[editorTarget.componentName] || "0"
+  }, [editorTarget, processRows])
+
+  const editorProcessName = useMemo(() => {
+    if (!editorTarget) return ""
+    return processRows[editorTarget.rowIndex]?.name || ""
+  }, [editorTarget, processRows])
 
   return (
     <Container maxW={containerMaxW} pb={10}>
@@ -918,14 +1044,7 @@ export function UDMModelEditorForm({
         </Table.Root>
       </Box>
 
-      <Box
-        mt={6}
-        borderWidth="1px"
-        borderRadius="md"
-        p={4}
-        overflow="auto"
-        maxH="520px"
-      >
+      <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
           <Heading size="sm">Processes（行）+ Stoich + rateExpr</Heading>
           <HStack>
@@ -953,172 +1072,171 @@ export function UDMModelEditorForm({
             </Button>
           </HStack>
         </Flex>
-        <Table.Root size="sm" style={{ tableLayout: "fixed" }}>
-          <Table.Header>
-            <Table.Row>
-              <Table.ColumnHeader
-                minW="160px"
-                position="sticky"
-                top={0}
-                left={0}
-                zIndex={4}
-                bg="white"
-              >
-                process name
-              </Table.ColumnHeader>
-              <Table.ColumnHeader
-                minW="260px"
-                position="sticky"
-                top={0}
-                left="160px"
-                zIndex={4}
-                bg="white"
-              >
-                rateExpr
-              </Table.ColumnHeader>
-              {componentNames.map((compName) => (
+        <Table.ScrollArea borderWidth="1px" rounded="md" maxW="100%" maxH="520px">
+          <Table.Root
+            size="sm"
+            stickyHeader
+            css={{
+              "& [data-sticky]": {
+                position: "sticky",
+                bg: "bg",
+              },
+              "& thead [data-sticky]": {
+                zIndex: 4,
+              },
+              "& tbody [data-sticky]": {
+                zIndex: 2,
+              },
+              "& [data-sticky='start-last']": {
+                _after: {
+                  content: '""',
+                  position: "absolute",
+                  insetInlineEnd: "0",
+                  top: "0",
+                  bottom: "-1px",
+                  width: "24px",
+                  translate: "100% 0",
+                  pointerEvents: "none",
+                  boxShadow: "inset 8px 0px 8px -8px rgba(0, 0, 0, 0.22)",
+                },
+              },
+            }}
+          >
+            <Table.Header>
+              <Table.Row>
                 <Table.ColumnHeader
-                  key={`stoich-header-${compName}`}
-                  minW="120px"
-                  position="sticky"
-                  top={0}
-                  zIndex={3}
-                  bg="white"
+                  minW={PROCESS_NAME_COL_W}
+                  data-sticky="start-first"
+                  left="0"
                 >
-                  {compName}
+                  process name
                 </Table.ColumnHeader>
-              ))}
-              <Table.ColumnHeader
-                minW="160px"
-                position="sticky"
-                top={0}
-                zIndex={3}
-                bg="white"
-              >
-                note
-              </Table.ColumnHeader>
-              <Table.ColumnHeader
-                minW="80px"
-                position="sticky"
-                top={0}
-                zIndex={3}
-                bg="white"
-              >
-                操作
-              </Table.ColumnHeader>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {processRows.map((row, rowIndex) => (
-              <Table.Row key={`process-${rowIndex}`}>
-                <Table.Cell
-                  minW="160px"
-                  position="sticky"
-                  left={0}
-                  zIndex={2}
-                  bg="white"
+                <Table.ColumnHeader
+                  minW={RATE_EXPR_COL_W}
+                  data-sticky="start-last"
+                  left={PROCESS_NAME_COL_W}
                 >
-                  <Input
-                    size="sm"
-                    value={row.name}
-                    ref={(el) => {
-                      processNameInputRefs.current[rowIndex] = el
-                    }}
-                    onChange={(e) =>
-                      setProcessRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex ? { ...item, name: e.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell
-                  minW="260px"
-                  position="sticky"
-                  left="160px"
-                  zIndex={2}
-                  bg="white"
-                >
-                  <Input
-                    size="sm"
-                    value={row.rateExpr}
-                    onChange={(e) =>
-                      setProcessRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, rateExpr: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
+                  rateExpr
+                </Table.ColumnHeader>
                 {componentNames.map((compName) => (
-                  <Table.Cell key={`stoich-cell-${rowIndex}-${compName}`}>
+                  <Table.ColumnHeader
+                    key={`stoich-header-${compName}`}
+                    minW={STOICH_COL_MIN_W}
+                  >
+                    {compName}
+                  </Table.ColumnHeader>
+                ))}
+                <Table.ColumnHeader minW={NOTE_COL_W}>note</Table.ColumnHeader>
+                <Table.ColumnHeader minW={ACTION_COL_W}>操作</Table.ColumnHeader>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {processRows.map((row, rowIndex) => (
+                <Table.Row key={`process-${rowIndex}`}>
+                  <Table.Cell minW={PROCESS_NAME_COL_W} data-sticky="start-first" left="0">
                     <Input
                       size="sm"
-                      type="text"
-                      value={row.stoich[compName] || "0"}
-                      placeholder="e.g. -1, Y_A, 1/Y_H"
+                      value={row.name}
                       ref={(el) => {
-                        stoichInputRefs.current[`${rowIndex}:${compName}`] = el
+                        processNameInputRefs.current[rowIndex] = el
                       }}
-                      onPaste={(event) =>
-                        handleStoichPaste(event, rowIndex, compName)
-                      }
                       onChange={(e) =>
                         setProcessRows((prev) =>
                           prev.map((item, idx) =>
-                            idx === rowIndex
-                              ? {
-                                  ...item,
-                                  stoich: {
-                                    ...item.stoich,
-                                    [compName]: e.target.value,
-                                  },
-                                }
-                              : item,
+                            idx === rowIndex ? { ...item, name: e.target.value } : item,
                           ),
                         )
                       }
                     />
                   </Table.Cell>
-                ))}
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    value={row.note}
-                    onChange={(e) =>
-                      setProcessRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex ? { ...item, note: e.target.value } : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Button
-                    size="xs"
-                    variant="subtle"
-                    colorPalette="red"
-                    onClick={() =>
-                      setProcessRows((prev) =>
-                        prev.length > 1
-                          ? prev.filter((_, idx) => idx !== rowIndex)
-                          : prev,
-                      )
-                    }
-                    disabled={processRows.length <= 1}
+                  <Table.Cell
+                    minW={RATE_EXPR_COL_W}
+                    data-sticky="start-last"
+                    left={PROCESS_NAME_COL_W}
                   >
-                    删除
-                  </Button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
+                    <Input
+                      size="sm"
+                      readOnly
+                      cursor="pointer"
+                      value={row.rateExpr}
+                      placeholder="点击编辑 rateExpr"
+                      title={row.rateExpr}
+                      ref={(el) => {
+                        rateExprInputRefs.current[rowIndex] = el
+                      }}
+                      onClick={() => openRateExprEditor(rowIndex)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault()
+                          openRateExprEditor(rowIndex)
+                        }
+                      }}
+                    />
+                  </Table.Cell>
+                  {componentNames.map((compName) => (
+                    <Table.Cell
+                      key={`stoich-cell-${rowIndex}-${compName}`}
+                      minW={STOICH_COL_MIN_W}
+                    >
+                      <Input
+                        size="sm"
+                        readOnly
+                        cursor="pointer"
+                        type="text"
+                        value={row.stoich[compName] || "0"}
+                        placeholder="e.g. -1, Y_A, 1/Y_H"
+                        title={row.stoich[compName] || "0"}
+                        ref={(el) => {
+                          stoichInputRefs.current[`${rowIndex}:${compName}`] = el
+                        }}
+                        onClick={() => openStoichEditor(rowIndex, compName)}
+                        onPaste={(event) =>
+                          handleStoichPaste(event, rowIndex, compName)
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault()
+                            openStoichEditor(rowIndex, compName)
+                          }
+                        }}
+                      />
+                    </Table.Cell>
+                  ))}
+                  <Table.Cell minW={NOTE_COL_W}>
+                    <Input
+                      size="sm"
+                      value={row.note}
+                      onChange={(e) =>
+                        setProcessRows((prev) =>
+                          prev.map((item, idx) =>
+                            idx === rowIndex ? { ...item, note: e.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </Table.Cell>
+                  <Table.Cell minW={ACTION_COL_W}>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      colorPalette="red"
+                      onClick={() =>
+                        setProcessRows((prev) =>
+                          prev.length > 1
+                            ? prev.filter((_, idx) => idx !== rowIndex)
+                            : prev,
+                        )
+                      }
+                      disabled={processRows.length <= 1}
+                    >
+                      删除
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </Table.ScrollArea>
       </Box>
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
@@ -1355,6 +1473,25 @@ export function UDMModelEditorForm({
           </Button>
         ) : null}
       </Flex>
+
+      {editorTarget ? (
+        <ExpressionCellEditorDialog
+          open={!!editorTarget}
+          cellType={editorTarget.cellType}
+          processIndex={editorTarget.rowIndex}
+          processName={editorProcessName}
+          componentName={
+            editorTarget.cellType === "stoich"
+              ? editorTarget.componentName
+              : undefined
+          }
+          initialValue={editorInitialValue}
+          componentNames={componentNames}
+          parameterNames={parameterNames}
+          onSave={saveEditorValue}
+          onClose={closeEditor}
+        />
+      ) : null}
     </Container>
   )
 }
