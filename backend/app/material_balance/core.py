@@ -40,6 +40,7 @@ from .asm import (
     asm2d_dC_dt,
 )
 from .udm_engine import UDMNodeRuntime, build_udm_runtime_payload
+from .udm_ode import udm_ode_balance
 
 
 class MaterialBalanceCalculator:
@@ -725,56 +726,6 @@ class MaterialBalanceCalculator:
         
         return dy_extended
 
-    def _udm_ode_balance(
-        self,
-        t: float,
-        y_extended: torch.Tensor,
-        m: int,
-        prop_a: torch.Tensor,
-        prop_b: torch.Tensor,
-        Q_out: torch.Tensor,
-        compute_mask: torch.Tensor,
-        udm_mask: torch.Tensor,
-        udm_runtime_payload: List[UDMNodeRuntime],
-        sparse_bundle: dict = None,
-    ) -> torch.Tensor:
-        y = y_extended[:, :-1]
-        V_liq = y_extended[:, -1]
-
-        y = torch.clamp(y, min=0)
-        V_liq = torch.clamp(V_liq, min=1e-6)
-
-        if sparse_bundle is not None:
-            delta_m, delta_Q = self._balance_param_sparse(y, sparse_bundle)
-        else:
-            delta_m, delta_Q = self._balance_param(y, Q_out, prop_a, prop_b)[:2]
-
-        dy_extended = torch.zeros_like(y_extended)
-
-        dilution_term = -y * delta_Q.unsqueeze(-1) / V_liq.unsqueeze(-1)
-        concentration_change = delta_m / V_liq.unsqueeze(-1) + dilution_term
-
-        udm_reaction_change = torch.zeros_like(concentration_change)
-        for runtime in udm_runtime_payload:
-            node_idx = runtime.node_index
-            if node_idx < 0 or node_idx >= y.shape[0]:
-                continue
-            if udm_mask is not None and not bool(udm_mask[node_idx].item()):
-                continue
-            reaction = runtime.evaluate_reaction(y[node_idx])
-            udm_reaction_change[node_idx, :] = reaction
-
-        concentration_change = concentration_change + udm_reaction_change
-
-        mask_expanded = compute_mask.unsqueeze(-1).expand_as(concentration_change)
-        dy_extended[:, :-1] = torch.where(
-            mask_expanded,
-            concentration_change,
-            torch.zeros_like(concentration_change),
-        )
-        dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
-        return dy_extended
-
     def _run_hours(self, hours: float, x0: torch.Tensor, Q_out: torch.Tensor, 
                   m: int, steps: int, prop_a: torch.Tensor, prop_b: torch.Tensor,
                   method: str = 'rk4', tolerance: float = 1e-3, 
@@ -914,7 +865,7 @@ class MaterialBalanceCalculator:
 
         elif udm_mask is not None and udm_mask.any() and udm_runtime_payload:
             ode_modified = functools.partial(
-                self._udm_ode_balance,
+                udm_ode_balance,
                 Q_out=Q_out,
                 m=m,
                 prop_a=prop_a,
@@ -923,6 +874,8 @@ class MaterialBalanceCalculator:
                 udm_mask=udm_mask,
                 udm_runtime_payload=udm_runtime_payload,
                 sparse_bundle=sparse_bundle,
+                balance_param=self._balance_param,
+                balance_param_sparse=self._balance_param_sparse,
             )
             try:
                 x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)

@@ -7,6 +7,7 @@
   Heading,
   HStack,
   Input,
+  Switch,
   Table,
   Text,
   Textarea,
@@ -25,6 +26,7 @@ import type {
   UDMValidationResponse,
 } from "@/client/types.gen"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useI18n } from "@/i18n"
 import { getDefaultCalculationParams } from "../../config/simulationConfig"
 import { udmService } from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
@@ -35,6 +37,7 @@ type ComponentRow = {
   label: string
   unit: string
   defaultValue: string
+  isFixed: boolean
 }
 
 type ParameterRow = {
@@ -91,6 +94,7 @@ const emptyComponent = (): ComponentRow => ({
   label: "",
   unit: "",
   defaultValue: "0",
+  isFixed: false,
 })
 
 const emptyParameter = (): ParameterRow => ({
@@ -142,12 +146,18 @@ export function UDMModelEditorForm({
   onModelSaved,
   onBack,
   onGeneratedFlowchart,
-  headingText = "UDM 模型编辑器",
-  descriptionText = "在此维护 Petersen 矩阵、速率表达式、参数范围，并一键生成默认画布。",
+  headingText,
+  descriptionText,
   hideBackButton = false,
   containerMaxW = "full",
 }: UDMModelEditorFormProps) {
+  const { t } = useI18n()
   const { showErrorToast, showSuccessToast, showWarningToast } = useCustomToast()
+
+  const resolvedHeadingText =
+    headingText ?? t("flow.udmEditor.form.headingDefault")
+  const resolvedDescriptionText =
+    descriptionText ?? t("flow.udmEditor.form.descriptionDefault")
 
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -213,6 +223,7 @@ export function UDMModelEditorForm({
           defaultValue: String(
             item?.default_value ?? item?.defaultValue ?? "0",
           ),
+          isFixed: Boolean(item?.is_fixed ?? item?.isFixed ?? false),
         }
       })
       .filter((item): item is ComponentRow => !!item)
@@ -338,6 +349,7 @@ export function UDMModelEditorForm({
           label: row.label.trim() || compName,
           unit: row.unit.trim() || null,
           default_value: parseNumOrNull(row.defaultValue) ?? 0,
+          is_fixed: row.isFixed,
         }
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
@@ -409,7 +421,11 @@ export function UDMModelEditorForm({
       const minV = parseNumOrNull(row.minValue)
       const maxV = parseNumOrNull(row.maxValue)
       if (minV !== null && maxV !== null && minV >= maxV) {
-        errors.push(`${paramName}: min must be smaller than max`)
+        errors.push(
+          t("flow.udmEditor.form.rangeErrors.minLessThanMax", {
+            name: paramName,
+          }),
+        )
       }
       if (
         minV !== null &&
@@ -417,10 +433,18 @@ export function UDMModelEditorForm({
         defaultV !== null &&
         !(minV < defaultV && defaultV < maxV)
       ) {
-        errors.push(`${paramName}: require min < default < max`)
+        errors.push(
+          t("flow.udmEditor.form.rangeErrors.minDefaultMaxOrder", {
+            name: paramName,
+          }),
+        )
       }
       if (row.scale === "log" && minV !== null && minV <= 0) {
-        errors.push(`${paramName}: min must be > 0 for log scale`)
+        errors.push(
+          t("flow.udmEditor.form.rangeErrors.logScaleMinPositive", {
+            name: paramName,
+          }),
+        )
       }
     })
     return errors
@@ -432,19 +456,23 @@ export function UDMModelEditorForm({
       const result = await udmService.validateModelDefinition(draft)
       setValidation(result)
       if (result.ok) {
-        showSuccessToast("模型定义校验通过")
+        showSuccessToast(t("flow.udmEditor.validation.toast.validationPassed"))
       } else {
-        showWarningToast("模型定义存在问题，请修正后再保存")
+        showWarningToast(t("flow.udmEditor.validation.toast.validationHasIssues"))
       }
     } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : "校验失败")
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmEditor.validation.toast.validationFailed"),
+      )
     }
   }
 
   const mergeExtractedParameters = () => {
     const extracted = validation?.extracted_parameters || []
     if (extracted.length === 0) {
-      showWarningToast("当前没有可应用的抽取参数")
+      showWarningToast(t("flow.udmEditor.validation.toast.noExtractedParameters"))
       return
     }
     const existing = new Map(parameterRows.map((row) => [row.name, row]))
@@ -457,7 +485,7 @@ export function UDMModelEditorForm({
       }
     })
     setParameterRows(Array.from(existing.values()))
-    showSuccessToast("已按抽取结果补齐参数表")
+    showSuccessToast(t("flow.udmEditor.validation.toast.parametersMerged"))
   }
 
   const saveModel = async (): Promise<UDMModelDetailPublic | null> => {
@@ -469,7 +497,7 @@ export function UDMModelEditorForm({
 
     const draft = buildDraft()
     if (!draft.name.trim()) {
-      showErrorToast("模型名称不能为空")
+      showErrorToast(t("flow.udmEditor.form.toast.modelNameRequired"))
       return null
     }
 
@@ -496,12 +524,16 @@ export function UDMModelEditorForm({
         setCurrentModelId(saved.id)
         onModelIdChange?.(saved.id)
       }
-      showSuccessToast("模型保存成功")
+      showSuccessToast(t("flow.udmEditor.form.toast.saveSuccess"))
       onModelSaved?.(saved)
       setBaselineSignature(currentSignature)
       return saved
     } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : "模型保存失败")
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmEditor.form.toast.saveFailed"),
+      )
       return null
     } finally {
       setIsSaving(false)
@@ -511,7 +543,7 @@ export function UDMModelEditorForm({
   const buildDefaultFlowData = (model: UDMModelDetailPublic) => {
     const latest = model.latest_version
     if (!latest) {
-      throw new Error("模型没有版本数据，无法生成画布")
+      throw new Error(t("flow.udmEditor.form.toast.missingVersionForFlow"))
     }
 
     const components = (latest.components || []) as Array<Record<string, any>>
@@ -662,7 +694,7 @@ export function UDMModelEditorForm({
       const flowName = `${savedModel.name}-default-flow`
       const createdFlowchart = await udmService.createFlowchart({
         name: flowName,
-        description: "Auto generated from UDM model editor",
+        description: t("flow.udmEditor.form.flowchart.autoDescription"),
         flow_data: flowData,
       })
 
@@ -675,14 +707,18 @@ export function UDMModelEditorForm({
       flowStore.setCurrentFlowChartId(createdFlowchart.id)
       flowStore.setCurrentFlowChartName(createdFlowchart.name)
 
-      showSuccessToast("已生成并应用默认画布")
+      showSuccessToast(t("flow.udmEditor.form.toast.generateFlowSuccess"))
       onGeneratedFlowchart?.({
         savedModel,
         flowData: flowData as Record<string, unknown>,
         flowchart: createdFlowchart,
       })
     } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : "生成画布失败")
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmEditor.form.toast.generateFlowFailed"),
+      )
     }
   }
 
@@ -894,7 +930,9 @@ export function UDMModelEditorForm({
       onBack()
       return
     }
-    const confirmed = window.confirm("存在未保存改动，确认离开当前页面吗？")
+    const confirmed = window.confirm(
+      t("flow.udmEditor.form.confirm.unsavedChangesLeave"),
+    )
     if (confirmed) {
       onBack()
     }
@@ -917,62 +955,63 @@ export function UDMModelEditorForm({
 
   return (
     <Container maxW={containerMaxW} pb={10}>
-      {headingText ? (
+      {resolvedHeadingText ? (
         <Heading size="lg" pt={12}>
-          {headingText}
+          {resolvedHeadingText}
         </Heading>
       ) : null}
-      {descriptionText ? (
+      {resolvedDescriptionText ? (
         <Text mt={2} color="gray.600">
-          {descriptionText}
+          {resolvedDescriptionText}
         </Text>
       ) : null}
 
       {detailQuery.isLoading && currentModelId ? (
         <Text mt={4} color="gray.500">
-          模型加载中...
+          {t("flow.udmEditor.form.loading")}
         </Text>
       ) : null}
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Heading size="sm" mb={3}>
-          模型基础信息
+          {t("flow.udmEditor.form.sections.basicInfo")}
         </Heading>
         <VStack align="stretch" gap={3}>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="模型名称"
+            placeholder={t("flow.udmEditor.form.placeholders.modelName")}
           />
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="模型描述"
+            placeholder={t("flow.udmEditor.form.placeholders.modelDescription")}
             rows={3}
           />
           <Input
             value={tagsText}
             onChange={(e) => setTagsText(e.target.value)}
-            placeholder="标签，逗号分隔"
+            placeholder={t("flow.udmEditor.form.placeholders.tags")}
           />
         </VStack>
       </Box>
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">Components（列）</Heading>
+          <Heading size="sm">{t("flow.udmEditor.form.sections.components")}</Heading>
           <Button size="sm" onClick={() => setComponentRows((prev) => [...prev, emptyComponent()])}>
-            新增 Component
+            {t("flow.udmEditor.form.actions.addComponent")}
           </Button>
         </Flex>
         <Table.Root size="sm">
           <Table.Header>
             <Table.Row>
-              <Table.ColumnHeader>name</Table.ColumnHeader>
-              <Table.ColumnHeader>label</Table.ColumnHeader>
-              <Table.ColumnHeader>unit</Table.ColumnHeader>
-              <Table.ColumnHeader>default</Table.ColumnHeader>
-              <Table.ColumnHeader>操作</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.name")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.label")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.unit")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.defaultValue")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.allowChange")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.actions")}</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -1028,6 +1067,25 @@ export function UDMModelEditorForm({
                   />
                 </Table.Cell>
                 <Table.Cell>
+                  <Switch.Root
+                    checked={!row.isFixed}
+                    onCheckedChange={(details) =>
+                      setComponentRows((prev) =>
+                        prev.map((item, idx) =>
+                          idx === index ? { ...item, isFixed: !details.checked } : item,
+                        ),
+                      )
+                    }
+                  >
+                    <Switch.HiddenInput
+                      aria-label={t("flow.udmEditor.form.aria.allowChange", {
+                        index: index + 1,
+                      })}
+                    />
+                    <Switch.Control />
+                  </Switch.Root>
+                </Table.Cell>
+                <Table.Cell>
                   <Button
                     size="xs"
                     variant="subtle"
@@ -1035,7 +1093,7 @@ export function UDMModelEditorForm({
                     onClick={() => removeComponent(index)}
                     disabled={componentRows.length <= 1}
                   >
-                    删除
+                    {t("common.delete")}
                   </Button>
                 </Table.Cell>
               </Table.Row>
@@ -1046,7 +1104,7 @@ export function UDMModelEditorForm({
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">Processes（行）+ Stoich + rateExpr</Heading>
+          <Heading size="sm">{t("flow.udmEditor.form.sections.processes")}</Heading>
           <HStack>
             <Button
               size="sm"
@@ -1062,13 +1120,13 @@ export function UDMModelEditorForm({
                 )
               }
             >
-              Stoich 全部清零
+              {t("flow.udmEditor.form.actions.clearAllStoich")}
             </Button>
             <Button
               size="sm"
               onClick={() => setProcessRows((prev) => [...prev, emptyProcess()])}
             >
-              新增 Process
+              {t("flow.udmEditor.form.actions.addProcess")}
             </Button>
           </HStack>
         </Flex>
@@ -1109,14 +1167,14 @@ export function UDMModelEditorForm({
                   data-sticky="start-first"
                   left="0"
                 >
-                  process name
+                  {t("flow.udmEditor.form.columns.processName")}
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
                   minW={RATE_EXPR_COL_W}
                   data-sticky="start-last"
                   left={PROCESS_NAME_COL_W}
                 >
-                  rateExpr
+                  {t("flow.udmEditor.form.columns.rateExpr")}
                 </Table.ColumnHeader>
                 {componentNames.map((compName) => (
                   <Table.ColumnHeader
@@ -1126,8 +1184,12 @@ export function UDMModelEditorForm({
                     {compName}
                   </Table.ColumnHeader>
                 ))}
-                <Table.ColumnHeader minW={NOTE_COL_W}>note</Table.ColumnHeader>
-                <Table.ColumnHeader minW={ACTION_COL_W}>操作</Table.ColumnHeader>
+                <Table.ColumnHeader minW={NOTE_COL_W}>
+                  {t("flow.udmEditor.form.columns.note")}
+                </Table.ColumnHeader>
+                <Table.ColumnHeader minW={ACTION_COL_W}>
+                  {t("flow.udmEditor.form.columns.actions")}
+                </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -1159,7 +1221,7 @@ export function UDMModelEditorForm({
                       readOnly
                       cursor="pointer"
                       value={row.rateExpr}
-                      placeholder="点击编辑 rateExpr"
+                      placeholder={t("flow.udmEditor.form.placeholders.clickEditRateExpr")}
                       title={row.rateExpr}
                       ref={(el) => {
                         rateExprInputRefs.current[rowIndex] = el
@@ -1184,7 +1246,7 @@ export function UDMModelEditorForm({
                         cursor="pointer"
                         type="text"
                         value={row.stoich[compName] || "0"}
-                        placeholder="e.g. -1, Y_A, 1/Y_H"
+                        placeholder={t("flow.udmEditor.form.placeholders.stoichExample")}
                         title={row.stoich[compName] || "0"}
                         ref={(el) => {
                           stoichInputRefs.current[`${rowIndex}:${compName}`] = el
@@ -1229,7 +1291,7 @@ export function UDMModelEditorForm({
                       }
                       disabled={processRows.length <= 1}
                     >
-                      删除
+                      {t("common.delete")}
                     </Button>
                   </Table.Cell>
                 </Table.Row>
@@ -1241,13 +1303,13 @@ export function UDMModelEditorForm({
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">模型校验与参数抽取</Heading>
+          <Heading size="sm">{t("flow.udmEditor.validation.sectionTitle")}</Heading>
           <HStack>
             <Button size="sm" variant="subtle" onClick={runValidate}>
-              解析 / 校验
+              {t("flow.udmEditor.validation.actions.parseValidate")}
             </Button>
             <Button size="sm" onClick={mergeExtractedParameters}>
-              应用抽取参数
+              {t("flow.udmEditor.validation.actions.applyExtractedParams")}
             </Button>
           </HStack>
         </Flex>
@@ -1255,10 +1317,13 @@ export function UDMModelEditorForm({
           <VStack align="stretch" gap={2}>
             <HStack>
               <Badge colorPalette={validation.ok ? "green" : "red"}>
-                {validation.ok ? "校验通过" : "校验失败"}
+                {validation.ok
+                  ? t("flow.udmEditor.validation.status.passed")
+                  : t("flow.udmEditor.validation.status.failed")}
               </Badge>
               <Text fontSize="sm">
-                extracted: {(validation.extracted_parameters || []).join(", ") || "-"}
+                {t("flow.udmEditor.validation.extractedLabel")}{" "}
+                {(validation.extracted_parameters || []).join(", ") || "-"}
               </Text>
             </HStack>
             {(validation.errors || []).map((err, idx) => (
@@ -1269,7 +1334,7 @@ export function UDMModelEditorForm({
                 justifyContent="flex-start"
                 colorPalette="red"
                 onClick={() => jumpToIssue(err)}
-                title="点击跳转到对应 process / stoich 单元格"
+                title={t("flow.udmEditor.validation.jumpToCellTitle")}
               >
                 [{err.code}] {err.message}
                 {err.process ? ` (${err.process})` : ""}
@@ -1283,7 +1348,7 @@ export function UDMModelEditorForm({
                 justifyContent="flex-start"
                 colorPalette="orange"
                 onClick={() => jumpToIssue(warn)}
-                title="点击跳转到对应 process / stoich 单元格"
+                title={t("flow.udmEditor.validation.jumpToCellTitle")}
               >
                 [{warn.code}] {warn.message}
                 {warn.process ? ` (${warn.process})` : ""}
@@ -1292,29 +1357,29 @@ export function UDMModelEditorForm({
           </VStack>
         ) : (
           <Text color="gray.500" fontSize="sm">
-            点击“解析 / 校验”后查看错误、警告和抽取参数。
+            {t("flow.udmEditor.validation.emptyHint")}
           </Text>
         )}
       </Box>
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">参数范围向导</Heading>
+          <Heading size="sm">{t("flow.udmEditor.form.sections.parameterWizard")}</Heading>
           <Button size="sm" onClick={() => setParameterRows((prev) => [...prev, emptyParameter()])}>
-            新增参数
+            {t("flow.udmEditor.form.actions.addParameter")}
           </Button>
         </Flex>
         <Table.Root size="sm">
           <Table.Header>
             <Table.Row>
-              <Table.ColumnHeader>name</Table.ColumnHeader>
-              <Table.ColumnHeader>unit</Table.ColumnHeader>
-              <Table.ColumnHeader>default</Table.ColumnHeader>
-              <Table.ColumnHeader>min</Table.ColumnHeader>
-              <Table.ColumnHeader>max</Table.ColumnHeader>
-              <Table.ColumnHeader>scale</Table.ColumnHeader>
-              <Table.ColumnHeader>note</Table.ColumnHeader>
-              <Table.ColumnHeader>操作</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.name")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.unit")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.defaultValue")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.min")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.max")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.scale")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.note")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.actions")}</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -1438,7 +1503,7 @@ export function UDMModelEditorForm({
                       )
                     }
                   >
-                    删除
+                    {t("common.delete")}
                   </Button>
                 </Table.Cell>
               </Table.Row>
@@ -1450,26 +1515,26 @@ export function UDMModelEditorForm({
       <Flex mt={8} gap={3} wrap="wrap">
         {isDirty ? (
           <Badge colorPalette="orange" variant="subtle" alignSelf="center">
-            有未保存变更
+            {t("flow.udmEditor.status.unsaved")}
           </Badge>
         ) : (
           <Badge colorPalette="green" variant="subtle" alignSelf="center">
-            已保存
+            {t("flow.udmEditor.status.saved")}
           </Badge>
         )}
         <Button loading={isSaving} onClick={saveModel}>
-          保存模型
+          {t("flow.udmEditor.actions.saveModel")}
         </Button>
         <Button
           colorPalette="blue"
           loading={isSaving}
           onClick={saveAndGenerateFlowchart}
         >
-          保存并生成默认画布
+          {t("flow.udmEditor.actions.saveAndGenerateFlow")}
         </Button>
         {!hideBackButton ? (
           <Button variant="subtle" onClick={handleBackClick}>
-            返回模型库
+            {t("flow.udmEditor.actions.backToLibrary")}
           </Button>
         ) : null}
       </Flex>

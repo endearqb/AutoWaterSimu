@@ -858,6 +858,7 @@ class UDMComponentDefinition(SQLModel):
     label: Optional[str] = Field(default=None, max_length=120, description="组分显示名称")
     unit: Optional[str] = Field(default=None, max_length=60, description="组分单位")
     default_value: Optional[float] = Field(default=None, description="组分默认初值")
+    is_fixed: bool = Field(default=False, description="是否冻结该组分变化（dC/dt=0）")
 
 
 class UDMParameterDefinition(SQLModel):

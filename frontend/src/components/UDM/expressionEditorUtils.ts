@@ -37,6 +37,10 @@ export interface ExpressionIssue {
   code: string
   message: string
   severity: "warning"
+  meta?: {
+    symbols?: string[]
+    pairs?: string[]
+  }
 }
 
 export interface ExpressionAnalysisResult {
@@ -248,7 +252,7 @@ const buildParenthesisIssues = (tokens: ExpressionToken[]): ExpressionIssue[] =>
     if (stack.length === 0) {
       issues.push({
         code: "UNMATCHED_RIGHT_PAREN",
-        message: "Unmatched right parenthesis ')'.",
+        message: "",
         severity: "warning",
       })
       return
@@ -259,7 +263,7 @@ const buildParenthesisIssues = (tokens: ExpressionToken[]): ExpressionIssue[] =>
   if (stack.length > 0) {
     issues.push({
       code: "UNMATCHED_LEFT_PAREN",
-      message: "Unmatched left parenthesis '('.",
+      message: "",
       severity: "warning",
     })
   }
@@ -313,14 +317,16 @@ const buildImplicitWhitespaceIssues = (
   if (pairPreviewSet.size === 0) {
     return []
   }
+  const pairs = Array.from(pairPreviewSet)
 
   return [
     {
       code: "MISSING_OPERATOR_BETWEEN_SYMBOLS",
-      message: `检测到仅由空白分隔的相邻符号: ${Array.from(
-        pairPreviewSet,
-      ).join(", ")}。请补充运算符（如 *, +, -, /）。`,
+      message: "",
       severity: "warning",
+      meta: {
+        pairs,
+      },
     },
   ]
 }
@@ -410,7 +416,7 @@ export const analyzeExpression = (
   if (!input.trim()) {
     issues.push({
       code: "EMPTY_EXPRESSION",
-      message: "Expression is empty. Save is allowed but backend validation may fail.",
+      message: "",
       severity: "warning",
     })
   }
@@ -421,30 +427,38 @@ export const analyzeExpression = (
   )
 
   if (unknownChars.size > 0) {
+    const symbols = Array.from(unknownChars)
     issues.push({
       code: "UNKNOWN_CHAR",
-      message: `Invalid character(s): ${Array.from(unknownChars).join(" ")}`,
+      message: "",
       severity: "warning",
+      meta: {
+        symbols,
+      },
     })
   }
 
   if (unknownSymbols.size > 0) {
+    const symbols = Array.from(unknownSymbols).sort()
     issues.push({
       code: "UNKNOWN_SYMBOL",
-      message: `Unknown symbol(s): ${Array.from(unknownSymbols).sort().join(", ")}`,
+      message: "",
       severity: "warning",
+      meta: {
+        symbols,
+      },
     })
   }
 
   if (stoichComponentRefs.size > 0) {
+    const symbols = Array.from(stoichComponentRefs).sort()
     issues.push({
       code: "STOICH_COMPONENT_REF",
-      message: `Stoich expression references component(s): ${Array.from(
-        stoichComponentRefs,
-      )
-        .sort()
-        .join(", ")}`,
+      message: "",
       severity: "warning",
+      meta: {
+        symbols,
+      },
     })
   }
 

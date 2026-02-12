@@ -891,6 +891,151 @@ export const zhMessages: I18nMessages = {
     dialog: {
       close: "关闭对话框",
     },
+    udmEditor: {
+      form: {
+        headingDefault: "UDM 模型编辑器",
+        descriptionDefault:
+          "在此维护 Petersen 矩阵、速率表达式、参数范围，并一键生成默认画布。",
+        loading: "模型加载中...",
+        sections: {
+          basicInfo: "模型基础信息",
+          components: "Components（列）",
+          processes: "Processes（行）+ Stoich + rateExpr",
+          parameterWizard: "参数范围向导",
+        },
+        placeholders: {
+          modelName: "模型名称",
+          modelDescription: "模型描述",
+          tags: "标签，逗号分隔",
+          clickEditRateExpr: "点击编辑 rateExpr",
+          stoichExample: "例如：-1, Y_A, 1/Y_H",
+        },
+        actions: {
+          addComponent: "新增 Component",
+          clearAllStoich: "Stoich 全部清零",
+          addProcess: "新增 Process",
+          addParameter: "新增参数",
+        },
+        columns: {
+          name: "name",
+          label: "label",
+          unit: "unit",
+          defaultValue: "default",
+          allowChange: "允许变化",
+          actions: "操作",
+          processName: "process name",
+          rateExpr: "rateExpr",
+          note: "note",
+          min: "min",
+          max: "max",
+          scale: "scale",
+        },
+        aria: {
+          allowChange: "允许变化-{index}",
+        },
+        rangeErrors: {
+          minLessThanMax: "{name}: min 必须小于 max",
+          minDefaultMaxOrder: "{name}: 需满足 min < default < max",
+          logScaleMinPositive: "{name}: log scale 下 min 必须大于 0",
+        },
+        toast: {
+          modelNameRequired: "模型名称不能为空",
+          saveSuccess: "模型保存成功",
+          saveFailed: "模型保存失败",
+          missingVersionForFlow: "模型没有版本数据，无法生成画布",
+          generateFlowSuccess: "已生成并应用默认画布",
+          generateFlowFailed: "生成画布失败",
+        },
+        confirm: {
+          unsavedChangesLeave: "存在未保存改动，确认离开当前页面吗？",
+        },
+        flowchart: {
+          autoDescription: "由 UDM 模型编辑器自动生成",
+        },
+      },
+      validation: {
+        sectionTitle: "模型校验与参数抽取",
+        actions: {
+          parseValidate: "解析 / 校验",
+          applyExtractedParams: "应用抽取参数",
+        },
+        status: {
+          passed: "校验通过",
+          failed: "校验失败",
+        },
+        extractedLabel: "extracted:",
+        jumpToCellTitle: "点击跳转到对应 process / stoich 单元格",
+        emptyHint: "点击“解析 / 校验”后查看错误、警告和抽取参数。",
+        toast: {
+          validationPassed: "模型定义校验通过",
+          validationHasIssues: "模型定义存在问题，请修正后再保存",
+          validationFailed: "校验失败",
+          noExtractedParameters: "当前没有可应用的抽取参数",
+          parametersMerged: "已按抽取结果补齐参数表",
+        },
+      },
+      status: {
+        unsaved: "有未保存变更",
+        saved: "已保存",
+      },
+      actions: {
+        saveModel: "保存模型",
+        saveAndGenerateFlow: "保存并生成默认画布",
+        backToLibrary: "返回模型库",
+      },
+      dialog: {
+        title: "UDM 模型编辑器",
+        formDescription: "在弹窗中编辑模型，保存后可直接应用默认画布。",
+        activeModelId: "当前模型ID: {id}",
+        newMode: "当前为新建模式",
+        actions: {
+          newBlankModel: "新建空白模型",
+          editBoundModel: "编辑当前绑定模型",
+          applyToCurrentNode: "应用到当前UDM节点",
+          applyToAllNodes: "应用到全部UDM节点",
+        },
+        toast: {
+          saveBeforeApply: "请先保存模型，再应用到画布节点",
+          missingVersion: "当前模型缺少版本数据，无法应用",
+          appliedToCurrent: "已应用到当前 UDM 节点",
+          appliedToAll: "已应用到全部 UDM 节点",
+        },
+      },
+      expressionEditor: {
+        title: {
+          rateExpr: "编辑 rateExpr - Process {processIndex}",
+          stoich: "编辑 stoich - Process {processIndex} / {componentName}",
+        },
+        processFallback: "process_{processIndex}",
+        heading: "表达式编辑器",
+        emptyHint: "请输入表达式，例如：u_H*(S_S/(K_S+S_S))*X_BH",
+        shortcuts: {
+          save: "Ctrl/Cmd + Enter 保存",
+          cancel: "Esc 取消",
+        },
+        validation: {
+          heading: "实时校验（仅提示 Warning）",
+          noIssues: "未发现明显问题。",
+          emptyExpression: "表达式为空。允许保存，但后端校验可能失败。",
+          unmatchedRightParen: "存在未匹配的右括号 ')'.",
+          unmatchedLeftParen: "存在未匹配的左括号 '('.",
+          unknownChar: "存在非法字符：{symbols}",
+          unknownSymbol: "存在未知符号：{symbols}",
+          stoichComponentRef: "Stoich 表达式引用了组分：{symbols}",
+          missingOperatorBetweenSymbols:
+            "检测到仅由空白分隔的相邻符号：{pairs}。请补充运算符（如 *, +, -, /）。",
+          unknownIssue: "未识别的校验问题：{code}",
+        },
+        variables: {
+          title: "Variables",
+          empty: "暂无可用变量。",
+        },
+        parameters: {
+          title: "Parameters",
+          empty: "暂无可用参数。",
+        },
+      },
+    },
     modelParams: {
       asm1slim: {
         volume: { label: "体积(m³)", description: "反应器体积，单位：立方米" },

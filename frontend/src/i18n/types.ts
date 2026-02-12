@@ -879,6 +879,149 @@ export interface I18nMessages {
     dialog: {
       close: string
     }
+    udmEditor: {
+      form: {
+        headingDefault: string
+        descriptionDefault: string
+        loading: string
+        sections: {
+          basicInfo: string
+          components: string
+          processes: string
+          parameterWizard: string
+        }
+        placeholders: {
+          modelName: string
+          modelDescription: string
+          tags: string
+          clickEditRateExpr: string
+          stoichExample: string
+        }
+        actions: {
+          addComponent: string
+          clearAllStoich: string
+          addProcess: string
+          addParameter: string
+        }
+        columns: {
+          name: string
+          label: string
+          unit: string
+          defaultValue: string
+          allowChange: string
+          actions: string
+          processName: string
+          rateExpr: string
+          note: string
+          min: string
+          max: string
+          scale: string
+        }
+        aria: {
+          allowChange: string
+        }
+        rangeErrors: {
+          minLessThanMax: string
+          minDefaultMaxOrder: string
+          logScaleMinPositive: string
+        }
+        toast: {
+          modelNameRequired: string
+          saveSuccess: string
+          saveFailed: string
+          missingVersionForFlow: string
+          generateFlowSuccess: string
+          generateFlowFailed: string
+        }
+        confirm: {
+          unsavedChangesLeave: string
+        }
+        flowchart: {
+          autoDescription: string
+        }
+      }
+      validation: {
+        sectionTitle: string
+        actions: {
+          parseValidate: string
+          applyExtractedParams: string
+        }
+        status: {
+          passed: string
+          failed: string
+        }
+        extractedLabel: string
+        jumpToCellTitle: string
+        emptyHint: string
+        toast: {
+          validationPassed: string
+          validationHasIssues: string
+          validationFailed: string
+          noExtractedParameters: string
+          parametersMerged: string
+        }
+      }
+      status: {
+        unsaved: string
+        saved: string
+      }
+      actions: {
+        saveModel: string
+        saveAndGenerateFlow: string
+        backToLibrary: string
+      }
+      dialog: {
+        title: string
+        formDescription: string
+        activeModelId: string
+        newMode: string
+        actions: {
+          newBlankModel: string
+          editBoundModel: string
+          applyToCurrentNode: string
+          applyToAllNodes: string
+        }
+        toast: {
+          saveBeforeApply: string
+          missingVersion: string
+          appliedToCurrent: string
+          appliedToAll: string
+        }
+      }
+      expressionEditor: {
+        title: {
+          rateExpr: string
+          stoich: string
+        }
+        processFallback: string
+        heading: string
+        emptyHint: string
+        shortcuts: {
+          save: string
+          cancel: string
+        }
+        validation: {
+          heading: string
+          noIssues: string
+          emptyExpression: string
+          unmatchedRightParen: string
+          unmatchedLeftParen: string
+          unknownChar: string
+          unknownSymbol: string
+          stoichComponentRef: string
+          missingOperatorBetweenSymbols: string
+          unknownIssue: string
+        }
+        variables: {
+          title: string
+          empty: string
+        }
+        parameters: {
+          title: string
+          empty: string
+        }
+      }
+    }
     modelParams: {
       asm1: Record<string, { label: string; description?: string }>
       asm1slim: Record<string, { label: string; description?: string }>

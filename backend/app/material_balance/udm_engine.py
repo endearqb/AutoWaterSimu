@@ -15,6 +15,7 @@ class UDMNodeRuntime:
     parameter_values: Dict[str, float]
     rate_evaluators: List[Callable[[Dict[str, Any]], Any]]
     stoich_matrix: torch.Tensor  # [P, M]
+    fixed_component_mask: torch.Tensor  # [M], bool
 
     def evaluate_reaction(self, concentrations: torch.Tensor) -> torch.Tensor:
         """
@@ -69,6 +70,56 @@ def _normalize_parameter_values(parameters: Dict[str, Any]) -> Dict[str, float]:
     return normalized
 
 
+def _to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return False
+
+
+def _extract_fixed_component_names(node: Any) -> set[str]:
+    snapshot = getattr(node, "udm_model_snapshot", None)
+    if not isinstance(snapshot, dict):
+        return set()
+
+    components = snapshot.get("components")
+    if not isinstance(components, list):
+        return set()
+
+    fixed_names: set[str] = set()
+    for component in components:
+        if not isinstance(component, dict):
+            continue
+        raw_name = component.get("name")
+        if raw_name is None:
+            continue
+        component_name = str(raw_name).strip()
+        if not component_name:
+            continue
+        raw_fixed = component.get("is_fixed")
+        if raw_fixed is None:
+            raw_fixed = component.get("isFixed")
+        if _to_bool(raw_fixed):
+            fixed_names.add(component_name)
+    return fixed_names
+
+
+def _build_fixed_component_mask(
+    component_names: List[str],
+    fixed_names: set[str],
+    *,
+    device: torch.device,
+) -> torch.Tensor:
+    mask = torch.zeros(len(component_names), dtype=torch.bool, device=device)
+    for idx, component_name in enumerate(component_names):
+        if component_name in fixed_names:
+            mask[idx] = True
+    return mask
+
+
 def build_udm_runtime_payload(
     *,
     nodes: Iterable[Any],
@@ -89,6 +140,12 @@ def build_udm_runtime_payload(
         process_rows = getattr(node, "udm_processes", None) or []
         parameter_values = _normalize_parameter_values(
             getattr(node, "udm_parameter_values", None) or {}
+        )
+        fixed_component_names = _extract_fixed_component_names(node)
+        fixed_component_mask = _build_fixed_component_mask(
+            component_names,
+            fixed_component_names,
+            device=device,
         )
 
         if len(process_rows) == 0:
@@ -153,6 +210,7 @@ def build_udm_runtime_payload(
                 parameter_values=parameter_values,
                 rate_evaluators=rate_evaluators,
                 stoich_matrix=stoich_matrix,
+                fixed_component_mask=fixed_component_mask,
             )
         )
 

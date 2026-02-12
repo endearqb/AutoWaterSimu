@@ -23,7 +23,9 @@ import {
   analyzeExpression,
   type DecoratedExpressionToken,
   type ExpressionCellType,
+  type ExpressionIssue,
 } from "./expressionEditorUtils"
+import { useI18n } from "@/i18n"
 
 interface ExpressionCellEditorDialogProps {
   open: boolean
@@ -78,6 +80,7 @@ function ExpressionCellEditorDialog({
   onSave,
   onClose,
 }: ExpressionCellEditorDialogProps) {
+  const { t } = useI18n()
   const [draftValue, setDraftValue] = useState(initialValue)
   const highlightLayerRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -106,10 +109,57 @@ function ExpressionCellEditorDialog({
 
   const dialogTitle =
     cellType === "rateExpr"
-      ? `Edit rateExpr - Process ${processIndex + 1}`
-      : `Edit stoich - Process ${processIndex + 1} / ${componentName || "-"}`
+      ? t("flow.udmEditor.expressionEditor.title.rateExpr", {
+          processIndex: processIndex + 1,
+        })
+      : t("flow.udmEditor.expressionEditor.title.stoich", {
+          processIndex: processIndex + 1,
+          componentName: componentName || "-",
+        })
 
-  const processLabel = processName.trim() || `process_${processIndex + 1}`
+  const processLabel =
+    processName.trim() ||
+    t("flow.udmEditor.expressionEditor.processFallback", {
+      processIndex: processIndex + 1,
+    })
+
+  const formatIssueMessage = (issue: ExpressionIssue): string => {
+    if (issue.code === "EMPTY_EXPRESSION") {
+      return t("flow.udmEditor.expressionEditor.validation.emptyExpression")
+    }
+    if (issue.code === "UNMATCHED_RIGHT_PAREN") {
+      return t("flow.udmEditor.expressionEditor.validation.unmatchedRightParen")
+    }
+    if (issue.code === "UNMATCHED_LEFT_PAREN") {
+      return t("flow.udmEditor.expressionEditor.validation.unmatchedLeftParen")
+    }
+    if (issue.code === "UNKNOWN_CHAR") {
+      return t("flow.udmEditor.expressionEditor.validation.unknownChar", {
+        symbols: issue.meta?.symbols?.join(" ") || "-",
+      })
+    }
+    if (issue.code === "UNKNOWN_SYMBOL") {
+      return t("flow.udmEditor.expressionEditor.validation.unknownSymbol", {
+        symbols: issue.meta?.symbols?.join(", ") || "-",
+      })
+    }
+    if (issue.code === "STOICH_COMPONENT_REF") {
+      return t("flow.udmEditor.expressionEditor.validation.stoichComponentRef", {
+        symbols: issue.meta?.symbols?.join(", ") || "-",
+      })
+    }
+    if (issue.code === "MISSING_OPERATOR_BETWEEN_SYMBOLS") {
+      return t(
+        "flow.udmEditor.expressionEditor.validation.missingOperatorBetweenSymbols",
+        {
+          pairs: issue.meta?.pairs?.join(", ") || "-",
+        },
+      )
+    }
+    return t("flow.udmEditor.expressionEditor.validation.unknownIssue", {
+      code: issue.code,
+    })
+  }
 
   const insertSymbolAtCursor = (symbol: string) => {
     const textarea = textareaRef.current
@@ -169,7 +219,9 @@ function ExpressionCellEditorDialog({
           <Dialog.Body>
             <Flex direction={{ base: "column", lg: "row" }} gap={4} align="stretch">
               <VStack align="stretch" gap={3} flex="1 1 auto" minW={0}>
-                <Heading size="xs">Expression Editor</Heading>
+                <Heading size="xs">
+                  {t("flow.udmEditor.expressionEditor.heading")}
+                </Heading>
                 <Box
                   position="relative"
                   minH="280px"
@@ -194,7 +246,7 @@ function ExpressionCellEditorDialog({
                       renderDecoratedTokens(analysis.tokens)
                     ) : (
                       <Text color="fg.muted">
-                        Enter expression, e.g. u_H*(S_S/(K_S+S_S))*X_BH
+                        {t("flow.udmEditor.expressionEditor.emptyHint")}
                       </Text>
                     )}
                     {draftValue.endsWith("\n") ? "\n" : null}
@@ -225,10 +277,10 @@ function ExpressionCellEditorDialog({
 
                 <HStack gap={2} wrap="wrap">
                   <Badge colorPalette="gray" variant="outline">
-                    Ctrl/Cmd + Enter to save
+                    {t("flow.udmEditor.expressionEditor.shortcuts.save")}
                   </Badge>
                   <Badge colorPalette="gray" variant="outline">
-                    Esc to cancel
+                    {t("flow.udmEditor.expressionEditor.shortcuts.cancel")}
                   </Badge>
                 </HStack>
 
@@ -242,18 +294,20 @@ function ExpressionCellEditorDialog({
                   maxH="180px"
                   overflowY="auto"
                 >
-                  <Heading size="xs">Real-time Validation (Warning only)</Heading>
+                  <Heading size="xs">
+                    {t("flow.udmEditor.expressionEditor.validation.heading")}
+                  </Heading>
                   {analysis.issues.length === 0 ? (
                     <Text fontSize="sm" color="green.600">
-                      No obvious issues found.
+                      {t("flow.udmEditor.expressionEditor.validation.noIssues")}
                     </Text>
                   ) : (
-                    analysis.issues.map((issue) => (
-                      <HStack key={`${issue.code}-${issue.message}`} align="start">
+                    analysis.issues.map((issue, index) => (
+                      <HStack key={`${issue.code}-${index}`} align="start">
                         <Badge colorPalette="orange" variant="subtle" mt={0.5}>
-                          Warning
+                          {t("common.warning")}
                         </Badge>
-                        <Text fontSize="sm">{issue.message}</Text>
+                        <Text fontSize="sm">{formatIssueMessage(issue)}</Text>
                       </HStack>
                     ))
                   )}
@@ -268,12 +322,12 @@ function ExpressionCellEditorDialog({
               >
                 <Box borderWidth="1px" borderRadius="md" p={3}>
                   <Heading size="xs" mb={2}>
-                    Variables
+                    {t("flow.udmEditor.expressionEditor.variables.title")}
                   </Heading>
                   <VStack align="stretch" gap={2} maxH="180px" overflowY="auto">
                     {componentNames.length === 0 ? (
                       <Text fontSize="sm" color="fg.muted">
-                        No variables available.
+                        {t("flow.udmEditor.expressionEditor.variables.empty")}
                       </Text>
                     ) : (
                       componentNames.map((name) => (
@@ -293,12 +347,12 @@ function ExpressionCellEditorDialog({
 
                 <Box borderWidth="1px" borderRadius="md" p={3}>
                   <Heading size="xs" mb={2}>
-                    Parameters
+                    {t("flow.udmEditor.expressionEditor.parameters.title")}
                   </Heading>
                   <VStack align="stretch" gap={2} maxH="220px" overflowY="auto">
                     {parameterNames.length === 0 ? (
                       <Text fontSize="sm" color="fg.muted">
-                        No parameters available.
+                        {t("flow.udmEditor.expressionEditor.parameters.empty")}
                       </Text>
                     ) : (
                       parameterNames.map((name) => (
@@ -322,7 +376,7 @@ function ExpressionCellEditorDialog({
           <Dialog.Footer>
             <HStack gap={2}>
               <Button variant="subtle" onClick={onClose}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 onClick={() => {
@@ -330,7 +384,7 @@ function ExpressionCellEditorDialog({
                   onClose()
                 }}
               >
-                Save
+                {t("common.save")}
               </Button>
             </HStack>
           </Dialog.Footer>

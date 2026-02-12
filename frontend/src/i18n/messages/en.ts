@@ -912,6 +912,159 @@ export const enMessages: I18nMessages = {
     dialog: {
       close: "Close dialog",
     },
+    udmEditor: {
+      form: {
+        headingDefault: "UDM Model Editor",
+        descriptionDefault:
+          "Maintain the Petersen matrix, rate expressions, and parameter ranges, then generate a default flowchart in one click.",
+        loading: "Loading model...",
+        sections: {
+          basicInfo: "Model Basics",
+          components: "Components (columns)",
+          processes: "Processes (rows) + Stoich + rateExpr",
+          parameterWizard: "Parameter Range Wizard",
+        },
+        placeholders: {
+          modelName: "Model name",
+          modelDescription: "Model description",
+          tags: "Tags, separated by commas",
+          clickEditRateExpr: "Click to edit rateExpr",
+          stoichExample: "e.g. -1, Y_A, 1/Y_H",
+        },
+        actions: {
+          addComponent: "Add Component",
+          clearAllStoich: "Reset All Stoich to 0",
+          addProcess: "Add Process",
+          addParameter: "Add Parameter",
+        },
+        columns: {
+          name: "name",
+          label: "label",
+          unit: "unit",
+          defaultValue: "default",
+          allowChange: "Allow Change",
+          actions: "Actions",
+          processName: "process name",
+          rateExpr: "rateExpr",
+          note: "note",
+          min: "min",
+          max: "max",
+          scale: "scale",
+        },
+        aria: {
+          allowChange: "allow-change-{index}",
+        },
+        rangeErrors: {
+          minLessThanMax: "{name}: min must be smaller than max",
+          minDefaultMaxOrder: "{name}: require min < default < max",
+          logScaleMinPositive: "{name}: min must be > 0 for log scale",
+        },
+        toast: {
+          modelNameRequired: "Model name cannot be empty",
+          saveSuccess: "Model saved successfully",
+          saveFailed: "Failed to save model",
+          missingVersionForFlow:
+            "Model has no version data and cannot generate flowchart",
+          generateFlowSuccess: "Default flowchart generated and applied",
+          generateFlowFailed: "Failed to generate flowchart",
+        },
+        confirm: {
+          unsavedChangesLeave:
+            "You have unsaved changes. Leave this page anyway?",
+        },
+        flowchart: {
+          autoDescription: "Auto generated from UDM model editor",
+        },
+      },
+      validation: {
+        sectionTitle: "Model Validation & Parameter Extraction",
+        actions: {
+          parseValidate: "Parse / Validate",
+          applyExtractedParams: "Apply Extracted Parameters",
+        },
+        status: {
+          passed: "Validation passed",
+          failed: "Validation failed",
+        },
+        extractedLabel: "extracted:",
+        jumpToCellTitle: "Click to jump to target process / stoich cell",
+        emptyHint:
+          'Click "Parse / Validate" to view errors, warnings, and extracted parameters.',
+        toast: {
+          validationPassed: "Model definition validation passed",
+          validationHasIssues:
+            "Model definition has issues. Please fix them before saving.",
+          validationFailed: "Validation failed",
+          noExtractedParameters: "No extracted parameters to apply",
+          parametersMerged: "Parameter table updated from extracted parameters",
+        },
+      },
+      status: {
+        unsaved: "Unsaved changes",
+        saved: "Saved",
+      },
+      actions: {
+        saveModel: "Save Model",
+        saveAndGenerateFlow: "Save and Generate Default Flowchart",
+        backToLibrary: "Back to Model Library",
+      },
+      dialog: {
+        title: "UDM Model Editor",
+        formDescription:
+          "Edit the model in this dialog. After saving, you can directly apply the default flowchart.",
+        activeModelId: "Current Model ID: {id}",
+        newMode: "Creating a new model",
+        actions: {
+          newBlankModel: "Create Blank Model",
+          editBoundModel: "Edit Bound Model",
+          applyToCurrentNode: "Apply to Current UDM Node",
+          applyToAllNodes: "Apply to All UDM Nodes",
+        },
+        toast: {
+          saveBeforeApply: "Save the model before applying it to nodes",
+          missingVersion: "Current model has no version data and cannot be applied",
+          appliedToCurrent: "Applied to current UDM node",
+          appliedToAll: "Applied to all UDM nodes",
+        },
+      },
+      expressionEditor: {
+        title: {
+          rateExpr: "Edit rateExpr - Process {processIndex}",
+          stoich:
+            "Edit stoich - Process {processIndex} / {componentName}",
+        },
+        processFallback: "process_{processIndex}",
+        heading: "Expression Editor",
+        emptyHint: "Enter expression, e.g. u_H*(S_S/(K_S+S_S))*X_BH",
+        shortcuts: {
+          save: "Ctrl/Cmd + Enter to save",
+          cancel: "Esc to cancel",
+        },
+        validation: {
+          heading: "Real-time Validation (Warning only)",
+          noIssues: "No obvious issues found.",
+          emptyExpression:
+            "Expression is empty. Save is allowed but backend validation may fail.",
+          unmatchedRightParen: "Unmatched right parenthesis ')'.",
+          unmatchedLeftParen: "Unmatched left parenthesis '('.",
+          unknownChar: "Invalid character(s): {symbols}",
+          unknownSymbol: "Unknown symbol(s): {symbols}",
+          stoichComponentRef:
+            "Stoich expression references component(s): {symbols}",
+          missingOperatorBetweenSymbols:
+            "Detected adjacent symbols separated only by spaces: {pairs}. Add an operator (for example *, +, -, /).",
+          unknownIssue: "Unrecognized validation issue: {code}",
+        },
+        variables: {
+          title: "Variables",
+          empty: "No variables available.",
+        },
+        parameters: {
+          title: "Parameters",
+          empty: "No parameters available.",
+        },
+      },
+    },
     modelParams: {
       asm1slim: {
         volume: {

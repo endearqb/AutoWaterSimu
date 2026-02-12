@@ -775,6 +775,10 @@ export type UDMComponentDefinition = {
    * 组分默认初值
    */
   default_value?: number | null
+  /**
+   * 是否冻结该组分变化（dC/dt=0）
+   */
+  is_fixed?: boolean
 }
 
 /**

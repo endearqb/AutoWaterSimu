@@ -8,6 +8,7 @@
 } from "@chakra-ui/react"
 import type { UDMModelDetailPublic } from "@/client/types.gen"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useI18n } from "@/i18n"
 import { useEffect, useState } from "react"
 
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
@@ -24,6 +25,7 @@ function UDMModelEditorDialog({
   onClose,
   initialModelId,
 }: UDMModelEditorDialogProps) {
+  const { t } = useI18n()
   const { showSuccessToast, showWarningToast } = useCustomToast()
   const [activeModelId, setActiveModelId] = useState<string | undefined>(
     initialModelId,
@@ -113,13 +115,13 @@ function UDMModelEditorDialog({
 
   const applyModelToNodes = (target: "selected" | "all") => {
     if (!lastSavedModel) {
-      showWarningToast("请先保存模型，再应用到画布节点")
+      showWarningToast(t("flow.udmEditor.dialog.toast.saveBeforeApply"))
       return
     }
 
     const modelData = buildNodeModelData(lastSavedModel)
     if (!modelData) {
-      showWarningToast("当前模型缺少版本数据，无法应用")
+      showWarningToast(t("flow.udmEditor.dialog.toast.missingVersion"))
       return
     }
 
@@ -146,8 +148,8 @@ function UDMModelEditorDialog({
     setNodes(updatedNodes)
     showSuccessToast(
       target === "selected"
-        ? "已应用到当前 UDM 节点"
-        : "已应用到全部 UDM 节点",
+        ? t("flow.udmEditor.dialog.toast.appliedToCurrent")
+        : t("flow.udmEditor.dialog.toast.appliedToAll"),
     )
   }
 
@@ -162,14 +164,14 @@ function UDMModelEditorDialog({
         <Dialog.Content maxW="95vw" maxH="95vh" overflow="hidden">
           <Dialog.Header>
             <VStack align="stretch" gap={3}>
-              <Dialog.Title>UDM 模型编辑器</Dialog.Title>
+              <Dialog.Title>{t("flow.udmEditor.dialog.title")}</Dialog.Title>
               <HStack gap={2} wrap="wrap">
                 <Button
                   size="sm"
                   variant="subtle"
                   onClick={() => setActiveModelId(undefined)}
                 >
-                  新建空白模型
+                  {t("flow.udmEditor.dialog.actions.newBlankModel")}
                 </Button>
                 {initialModelId ? (
                   <Button
@@ -177,16 +179,18 @@ function UDMModelEditorDialog({
                     variant="subtle"
                     onClick={() => setActiveModelId(initialModelId)}
                   >
-                    编辑当前绑定模型
+                    {t("flow.udmEditor.dialog.actions.editBoundModel")}
                   </Button>
                 ) : null}
                 {activeModelId ? (
                   <Text fontSize="xs" color="gray.600">
-                    当前模型ID: {activeModelId}
+                    {t("flow.udmEditor.dialog.activeModelId", {
+                      id: activeModelId,
+                    })}
                   </Text>
                 ) : (
                   <Text fontSize="xs" color="gray.600">
-                    当前为新建模式
+                    {t("flow.udmEditor.dialog.newMode")}
                   </Text>
                 )}
               </HStack>
@@ -203,7 +207,7 @@ function UDMModelEditorDialog({
                 hideBackButton
                 containerMaxW="100%"
                 headingText=""
-                descriptionText="在弹窗中编辑模型，保存后可直接应用默认画布。"
+                descriptionText={t("flow.udmEditor.dialog.formDescription")}
               />
             </Box>
           </Dialog.Body>
@@ -217,7 +221,7 @@ function UDMModelEditorDialog({
                   onClick={() => applyModelToNodes("selected")}
                   disabled={!lastSavedModel || selectedNode?.type !== "udm"}
                 >
-                  应用到当前UDM节点
+                  {t("flow.udmEditor.dialog.actions.applyToCurrentNode")}
                 </Button>
                 <Button
                   size="sm"
@@ -225,11 +229,11 @@ function UDMModelEditorDialog({
                   onClick={() => applyModelToNodes("all")}
                   disabled={!lastSavedModel}
                 >
-                  应用到全部UDM节点
+                  {t("flow.udmEditor.dialog.actions.applyToAllNodes")}
                 </Button>
               </HStack>
               <Button variant="subtle" onClick={onClose}>
-                关闭
+                {t("common.close")}
               </Button>
             </HStack>
           </Dialog.Footer>

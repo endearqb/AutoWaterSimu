@@ -1,2 +1,2 @@
-cd backend;.venv\Scripts\activate; fastapi dev app/main.py
+cd backend;.venv\Scripts\activate; uv run uvicorn app.main:app --reload
 cd frontend; npm run dev
