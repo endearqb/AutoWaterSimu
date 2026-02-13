@@ -8,8 +8,8 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react"
-import type { Edge } from "@xyflow/react"
-import { useMemo, useState } from "react"
+import type { Edge, Node } from "@xyflow/react"
+import { useMemo } from "react"
 import { useI18n } from "../../../i18n"
 import {
   type SegmentEdgeOverride,
@@ -20,6 +20,7 @@ import {
 interface TimeSegmentPlanEditorProps {
   timeSegments: TimeSegment[]
   edges: Edge[]
+  nodes: Node[]
   parameterNames: string[]
   simulationHours: number
   setTimeSegments?: (segments: TimeSegment[]) => void
@@ -38,28 +39,56 @@ const parseOptionalNumber = (raw: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-const removeEmptyOverride = (
+const getNodeDisplayName = (node: Node): string => {
+  const data = (node.data || {}) as Record<string, unknown>
+  const label = typeof data.label === "string" ? data.label.trim() : ""
+  if (label) return label
+  const name = typeof data.name === "string" ? data.name.trim() : ""
+  if (name) return name
+  return node.id
+}
+
+const buildEdgeLabel = (
+  edge: Edge,
+  nodeNameById: Map<string, string>,
+): string => {
+  const sourceName = nodeNameById.get(edge.source) || edge.source
+  const targetName = nodeNameById.get(edge.target) || edge.target
+  return `${sourceName} -> ${targetName}`
+}
+
+const normalizeOverride = (
   override?: SegmentEdgeOverride,
 ): SegmentEdgeOverride | undefined => {
   if (!override) return undefined
-  const factors = override.factors || {}
-  const hasFactor = Object.keys(factors).length > 0
-  const hasFlow = typeof override.flow === "number"
-  if (!hasFactor && !hasFlow) {
-    return undefined
-  }
-  return override
-}
 
-const buildEdgeLabel = (edge: Edge): string => {
-  const fallbackId = edge.id || `${edge.source}-${edge.target}`
-  return `${fallbackId} (${edge.source} -> ${edge.target})`
+  const hasFlow = typeof override.flow === "number"
+  const normalizedFactors: Record<string, { a?: number; b?: number }> = {}
+
+  Object.entries(override.factors || {}).forEach(([paramName, factor]) => {
+    if (!factor) return
+    const nextFactor: { a?: number; b?: number } = {}
+    if (typeof factor.a === "number") nextFactor.a = factor.a
+    if (typeof factor.b === "number") nextFactor.b = factor.b
+    if (typeof nextFactor.a === "number" || typeof nextFactor.b === "number") {
+      normalizedFactors[paramName] = nextFactor
+    }
+  })
+
+  const hasFactors = Object.keys(normalizedFactors).length > 0
+  if (!hasFlow && !hasFactors) return undefined
+
+  const normalized: SegmentEdgeOverride = {}
+  if (hasFlow) normalized.flow = override.flow
+  if (hasFactors) normalized.factors = normalizedFactors
+  return normalized
 }
 
 function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
   const {
     timeSegments,
     edges,
+    nodes,
     parameterNames,
     simulationHours,
     setTimeSegments,
@@ -70,9 +99,6 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     reorderTimeSegments,
   } = props
   const { t } = useI18n()
-  const [edgePickerBySegment, setEdgePickerBySegment] = useState<
-    Record<string, string>
-  >({})
 
   const edgeIdList = useMemo(
     () =>
@@ -82,14 +108,22 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     [edges],
   )
 
+  const nodeNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    nodes.forEach((node) => {
+      map.set(node.id, getNodeDisplayName(node))
+    })
+    return map
+  }, [nodes])
+
   const edgeLabelById = useMemo(() => {
     const map = new Map<string, string>()
     edges.forEach((edge) => {
       const edgeId = edge.id || `${edge.source}-${edge.target}`
-      map.set(edgeId, buildEdgeLabel(edge))
+      map.set(edgeId, buildEdgeLabel(edge, nodeNameById))
     })
     return map
-  }, [edges])
+  }, [edges, nodeNameById])
 
   const validationErrors = useMemo(
     () =>
@@ -140,7 +174,7 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     if (!segment) return
 
     const nextOverrides = { ...(segment.edgeOverrides || {}) }
-    const nextOverride = removeEmptyOverride(updater(nextOverrides[edgeId]))
+    const nextOverride = normalizeOverride(updater(nextOverrides[edgeId]))
 
     if (!nextOverride) {
       delete nextOverrides[edgeId]
@@ -149,21 +183,6 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     }
 
     updateTimeSegment(segmentId, { edgeOverrides: nextOverrides })
-  }
-
-  const addEdgeOverrideToSegment = (segmentId: string) => {
-    const segment = segmentMap.get(segmentId)
-    if (!segment || !updateTimeSegment) return
-
-    const usedEdgeIds = new Set(Object.keys(segment.edgeOverrides || {}))
-    const selectedEdgeId =
-      edgePickerBySegment[segmentId] ||
-      edgeIdList.find((edgeId) => !usedEdgeIds.has(edgeId)) ||
-      ""
-
-    if (!selectedEdgeId) return
-
-    withUpdatedEdgeOverride(segmentId, selectedEdgeId, (current) => current || {})
   }
 
   const setEdgeFlowOverride = (
@@ -212,343 +231,329 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     })
   }
 
-  const removeEdgeOverrideFromSegment = (segmentId: string, edgeId: string) => {
-    withUpdatedEdgeOverride(segmentId, edgeId, () => undefined)
-  }
-
   return (
     <VStack align="stretch" gap={3}>
-      <HStack justify="space-between" align="center">
-        <VStack align="start" gap={0}>
-          <Text fontSize="sm" fontWeight="bold">
-            {t("flow.simulation.timeSegments.title")}
-          </Text>
-          <Text fontSize="xs" color="gray.600">
-            {t("flow.simulation.timeSegments.subtitle", {
-              hours: simulationHours.toFixed(2),
-            })}
-          </Text>
-        </VStack>
-        <Button size="xs" onClick={handleAddSegment} disabled={!addTimeSegment}>
-          {t("flow.simulation.timeSegments.addSegment")}
-        </Button>
-      </HStack>
-
-      {validationErrors.length > 0 ? (
-        <Box
-          borderWidth="1px"
-          borderColor="red.200"
-          bg="red.50"
-          borderRadius="md"
-          p={2}
-        >
-          <Text fontSize="xs" color="red.700" fontWeight="bold" mb={1}>
-            {t("flow.simulation.timeSegments.validationFailed", {
-              count: validationErrors.length,
-            })}
-          </Text>
-          <VStack align="start" gap={1}>
-            {validationErrors.map((error, index) => (
-              <Text key={`${error.code}-${index}`} fontSize="xs" color="red.700">
-                {error.code}: {error.message}
+      <Box
+        position="sticky"
+        top="0"
+        zIndex={10}
+        bg="hsla(0,0%,100%,0.96)"
+        borderBottomWidth="1px"
+        borderColor="gray.100"
+        pt={1}
+        pb={3}
+      >
+        <VStack align="stretch" gap={3}>
+          <HStack justify="space-between" align="center">
+            <VStack align="start" gap={0}>
+              <Text fontSize="sm" fontWeight="bold">
+                {t("flow.simulation.timeSegments.title")}
               </Text>
-            ))}
-          </VStack>
-        </Box>
-      ) : (
-        <Box
-          borderWidth="1px"
-          borderColor="green.200"
-          bg="green.50"
-          borderRadius="md"
-          p={2}
-        >
-          <Text fontSize="xs" color="green.700" fontWeight="bold">
-            {timeSegments.length > 0
-              ? t("flow.simulation.timeSegments.validationPassed")
-              : t("flow.simulation.timeSegments.emptyHint")}
-          </Text>
-        </Box>
-      )}
+              <Text fontSize="xs" color="gray.600">
+                {t("flow.simulation.timeSegments.subtitle", {
+                  hours: simulationHours.toFixed(2),
+                })}
+              </Text>
+            </VStack>
+            <Button size="xs" onClick={handleAddSegment} disabled={!addTimeSegment}>
+              {t("flow.simulation.timeSegments.addSegment")}
+            </Button>
+          </HStack>
 
-      {timeSegments.length === 0 && (
-        <Box borderWidth="1px" borderStyle="dashed" borderColor="gray.300" p={3}>
-          <Text fontSize="sm" color="gray.600">
-            {t("flow.simulation.timeSegments.empty")}
-          </Text>
-        </Box>
-      )}
+          {validationErrors.length > 0 ? (
+            <Box
+              borderWidth="1px"
+              borderColor="red.200"
+              bg="red.50"
+              borderRadius="md"
+              p={2}
+            >
+              <Text fontSize="xs" color="red.700" fontWeight="bold" mb={1}>
+                {t("flow.simulation.timeSegments.validationFailed", {
+                  count: validationErrors.length,
+                })}
+              </Text>
+              <VStack align="start" gap={1}>
+                {validationErrors.map((error, index) => (
+                  <Text key={`${error.code}-${index}`} fontSize="xs" color="red.700">
+                    {error.code}: {error.message}
+                  </Text>
+                ))}
+              </VStack>
+            </Box>
+          ) : (
+            <Box
+              borderWidth="1px"
+              borderColor="green.200"
+              bg="green.50"
+              borderRadius="md"
+              p={2}
+            >
+              <Text fontSize="xs" color="green.700" fontWeight="bold">
+                {timeSegments.length > 0
+                  ? t("flow.simulation.timeSegments.validationPassed")
+                  : t("flow.simulation.timeSegments.emptyHint")}
+              </Text>
+            </Box>
+          )}
 
-      {timeSegments.map((segment, index) => {
-        const edgeOverrides = segment.edgeOverrides || {}
-        const usedEdgeIds = new Set(Object.keys(edgeOverrides))
-        const selectableEdgeIds = edgeIdList.filter(
-          (edgeId) => !usedEdgeIds.has(edgeId),
-        )
-        const selectedEdgeId =
-          edgePickerBySegment[segment.id] || selectableEdgeIds[0] || ""
-        return (
-          <Box key={segment.id} borderWidth="1px" borderColor="gray.200" p={3}>
-            <VStack align="stretch" gap={3}>
-              <HStack justify="space-between" align="center">
-                <Text fontSize="sm" fontWeight="bold">
-                  {t("flow.simulation.timeSegments.segmentLabel", {
-                    index: index + 1,
-                    id: segment.id,
-                  })}
-                </Text>
-                <HStack gap={1}>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => reorderTimeSegments?.(index, index - 1)}
-                    disabled={!reorderTimeSegments || index === 0}
+          {timeSegments.length === 0 && (
+            <Box borderWidth="1px" borderStyle="dashed" borderColor="gray.300" p={3}>
+              <Text fontSize="sm" color="gray.600">
+                {t("flow.simulation.timeSegments.empty")}
+              </Text>
+            </Box>
+          )}
+
+          {timeSegments.length > 0 && (
+            <Box overflowX="auto">
+              <HStack align="stretch" gap={3} minW="max-content">
+                {timeSegments.map((segment, index) => (
+                  <Box
+                    key={segment.id}
+                    minW="300px"
+                    borderWidth="1px"
+                    borderColor="gray.200"
+                    p={3}
                   >
-                    {t("flow.simulation.timeSegments.moveUp")}
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => reorderTimeSegments?.(index, index + 1)}
-                    disabled={
-                      !reorderTimeSegments || index >= timeSegments.length - 1
-                    }
-                  >
-                    {t("flow.simulation.timeSegments.moveDown")}
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => copyTimeSegment?.(segment.id)}
-                    disabled={!copyTimeSegment}
-                  >
-                    {t("flow.simulation.timeSegments.copy")}
-                  </Button>
-                  <Button
-                    size="xs"
-                    colorPalette="red"
-                    variant="subtle"
-                    onClick={() => removeTimeSegment?.(segment.id)}
-                    disabled={!removeTimeSegment}
-                  >
-                    {t("flow.simulation.timeSegments.remove")}
-                  </Button>
-                </HStack>
-              </HStack>
-
-              <HStack align="end" wrap="wrap">
-                <Field.Root maxW="160px">
-                  <Field.Label fontSize="xs">
-                    {t("flow.simulation.timeSegments.startHour")}
-                  </Field.Label>
-                  <Input
-                    size="xs"
-                    type="number"
-                    step="any"
-                    value={segment.startHour}
-                    onChange={(event) =>
-                      updateSegmentField(
-                        segment.id,
-                        "startHour",
-                        event.target.value,
-                      )
-                    }
-                  />
-                </Field.Root>
-                <Field.Root maxW="160px">
-                  <Field.Label fontSize="xs">
-                    {t("flow.simulation.timeSegments.endHour")}
-                  </Field.Label>
-                  <Input
-                    size="xs"
-                    type="number"
-                    step="any"
-                    value={segment.endHour}
-                    onChange={(event) =>
-                      updateSegmentField(segment.id, "endHour", event.target.value)
-                    }
-                  />
-                </Field.Root>
-                <Field.Root maxW="260px">
-                  <Field.Label fontSize="xs">
-                    {t("flow.simulation.timeSegments.selectEdge")}
-                  </Field.Label>
-                  <HStack>
-                    <select
-                      value={selectedEdgeId}
-                      onChange={(event) =>
-                        setEdgePickerBySegment((previous) => ({
-                          ...previous,
-                          [segment.id]: event.target.value,
-                        }))
-                      }
-                      style={{
-                        fontSize: "12px",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "6px",
-                        padding: "0 8px",
-                        height: "32px",
-                        flex: 1,
-                        minWidth: "180px",
-                      }}
-                    >
-                      {selectableEdgeIds.length === 0 && (
-                        <option value="">
-                          {t("flow.simulation.timeSegments.noMoreEdges")}
-                        </option>
-                      )}
-                      {selectableEdgeIds.map((edgeId) => (
-                        <option key={edgeId} value={edgeId}>
-                          {edgeLabelById.get(edgeId) || edgeId}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => addEdgeOverrideToSegment(segment.id)}
-                      disabled={selectableEdgeIds.length === 0}
-                    >
-                      {t("flow.simulation.timeSegments.addEdgeOverride")}
-                    </Button>
-                  </HStack>
-                </Field.Root>
-              </HStack>
-
-              <Separator />
-
-              {Object.keys(edgeOverrides).length === 0 ? (
-                <Text fontSize="xs" color="gray.500">
-                  {t("flow.simulation.timeSegments.noEdgeOverride")}
-                </Text>
-              ) : (
-                <VStack align="stretch" gap={2}>
-                  {Object.entries(edgeOverrides).map(([edgeId, override]) => (
-                    <Box
-                      key={edgeId}
-                      borderWidth="1px"
-                      borderColor="gray.100"
-                      bg="gray.50"
-                      p={2}
-                    >
-                      <VStack align="stretch" gap={2}>
-                        <HStack justify="space-between" align="center">
-                          <Text fontSize="xs" fontWeight="semibold">
-                            {edgeLabelById.get(edgeId) || edgeId}
-                          </Text>
+                    <VStack align="stretch" gap={3}>
+                      <HStack justify="space-between" align="center">
+                        <Text fontSize="sm" fontWeight="bold">
+                          {t("flow.simulation.timeSegments.segmentLabel", {
+                            index: index + 1,
+                            id: segment.id,
+                          })}
+                        </Text>
+                        <HStack gap={1}>
                           <Button
                             size="xs"
-                            variant="subtle"
-                            colorPalette="red"
-                            onClick={() =>
-                              removeEdgeOverrideFromSegment(segment.id, edgeId)
+                            variant="outline"
+                            onClick={() => reorderTimeSegments?.(index, index - 1)}
+                            disabled={!reorderTimeSegments || index === 0}
+                          >
+                            {t("flow.simulation.timeSegments.moveUp")}
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => reorderTimeSegments?.(index, index + 1)}
+                            disabled={
+                              !reorderTimeSegments || index >= timeSegments.length - 1
                             }
                           >
-                            {t("flow.simulation.timeSegments.removeEdgeOverride")}
+                            {t("flow.simulation.timeSegments.moveDown")}
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => copyTimeSegment?.(segment.id)}
+                            disabled={!copyTimeSegment}
+                          >
+                            {t("flow.simulation.timeSegments.copy")}
+                          </Button>
+                          <Button
+                            size="xs"
+                            colorPalette="red"
+                            variant="subtle"
+                            onClick={() => removeTimeSegment?.(segment.id)}
+                            disabled={!removeTimeSegment}
+                          >
+                            {t("flow.simulation.timeSegments.remove")}
                           </Button>
                         </HStack>
-
-                        <Field.Root maxW="160px">
+                      </HStack>
+                      <HStack align="end" wrap="wrap">
+                        <Field.Root maxW="140px">
                           <Field.Label fontSize="xs">
-                            {t("flow.simulation.timeSegments.flowOverride")}
+                            {t("flow.simulation.timeSegments.startHour")}
                           </Field.Label>
                           <Input
                             size="xs"
                             type="number"
                             step="any"
-                            min={0}
-                            placeholder={t(
-                              "flow.simulation.timeSegments.inheritPlaceholder",
-                            )}
-                            value={override.flow ?? ""}
+                            value={segment.startHour}
                             onChange={(event) =>
-                              setEdgeFlowOverride(
+                              updateSegmentField(
                                 segment.id,
-                                edgeId,
+                                "startHour",
                                 event.target.value,
                               )
                             }
                           />
                         </Field.Root>
+                        <Field.Root maxW="140px">
+                          <Field.Label fontSize="xs">
+                            {t("flow.simulation.timeSegments.endHour")}
+                          </Field.Label>
+                          <Input
+                            size="xs"
+                            type="number"
+                            step="any"
+                            value={segment.endHour}
+                            onChange={(event) =>
+                              updateSegmentField(segment.id, "endHour", event.target.value)
+                            }
+                          />
+                        </Field.Root>
+                      </HStack>
+                    </VStack>
+                  </Box>
+                ))}
+              </HStack>
+            </Box>
+          )}
+        </VStack>
+      </Box>
 
-                        {parameterNames.length > 0 && (
-                          <VStack align="stretch" gap={1}>
-                            {parameterNames.map((parameterName) => {
-                              const factor = override.factors?.[parameterName] || {}
-                              return (
-                                <HStack
-                                  key={`${edgeId}-${parameterName}`}
-                                  align="end"
-                                  wrap="wrap"
-                                >
-                                  <Text
-                                    fontSize="xs"
-                                    color="gray.600"
-                                    minW="80px"
-                                    pt={1}
-                                  >
-                                    {parameterName}
-                                  </Text>
-                                  <Field.Root maxW="120px">
-                                    <Field.Label fontSize="xs">
-                                      {t("flow.simulation.timeSegments.factorA")}
-                                    </Field.Label>
-                                    <Input
-                                      size="xs"
-                                      type="number"
-                                      step="any"
-                                      placeholder={t(
-                                        "flow.simulation.timeSegments.inheritPlaceholder",
-                                      )}
-                                      value={factor.a ?? ""}
-                                      onChange={(event) =>
-                                        setEdgeFactorOverride(
-                                          segment.id,
-                                          edgeId,
-                                          parameterName,
-                                          "a",
-                                          event.target.value,
-                                        )
-                                      }
-                                    />
-                                  </Field.Root>
-                                  <Field.Root maxW="120px">
-                                    <Field.Label fontSize="xs">
-                                      {t("flow.simulation.timeSegments.factorB")}
-                                    </Field.Label>
-                                    <Input
-                                      size="xs"
-                                      type="number"
-                                      step="any"
-                                      placeholder={t(
-                                        "flow.simulation.timeSegments.inheritPlaceholder",
-                                      )}
-                                      value={factor.b ?? ""}
-                                      onChange={(event) =>
-                                        setEdgeFactorOverride(
-                                          segment.id,
-                                          edgeId,
-                                          parameterName,
-                                          "b",
-                                          event.target.value,
-                                        )
-                                      }
-                                    />
-                                  </Field.Root>
-                                </HStack>
-                              )
-                            })}
-                          </VStack>
-                        )}
-                      </VStack>
+      {timeSegments.length > 0 && (
+        <>
+          <Separator />
+
+          {edgeIdList.length === 0 ? (
+            <Text fontSize="xs" color="gray.500">
+              {t("flow.simulation.timeSegments.noEdgeOverride")}
+            </Text>
+          ) : (
+            <VStack align="stretch" gap={3}>
+              {edgeIdList.map((edgeId) => (
+                <Box
+                  key={edgeId}
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                  borderRadius="md"
+                  p={2}
+                >
+                  <VStack align="stretch" gap={2}>
+                    <Text fontSize="sm" fontWeight="semibold">
+                      {edgeLabelById.get(edgeId) || edgeId}
+                    </Text>
+
+                    <Box overflowX="auto">
+                      <HStack align="stretch" gap={3} minW="max-content">
+                        {timeSegments.map((segment, index) => {
+                          const override = segment.edgeOverrides?.[edgeId]
+                          return (
+                            <Box
+                              key={`${edgeId}-${segment.id}`}
+                              minW="260px"
+                              borderWidth="1px"
+                              borderColor="gray.100"
+                              bg="gray.50"
+                              p={2}
+                            >
+                              <VStack align="stretch" gap={2}>
+                                <Text fontSize="xs" color="gray.600">
+                                  {t("flow.simulation.timeSegments.segmentLabel", {
+                                    index: index + 1,
+                                    id: segment.id,
+                                  })}
+                                </Text>
+                                <Field.Root>
+                                  <Field.Label fontSize="xs">
+                                    {t("flow.simulation.timeSegments.flowOverride")}
+                                  </Field.Label>
+                                  <Input
+                                    size="xs"
+                                    type="number"
+                                    step="any"
+                                    min={0}
+                                    placeholder={t(
+                                      "flow.simulation.timeSegments.inheritPlaceholder",
+                                    )}
+                                    value={override?.flow ?? ""}
+                                    onChange={(event) =>
+                                      setEdgeFlowOverride(
+                                        segment.id,
+                                        edgeId,
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                </Field.Root>
+
+                                {parameterNames.length > 0 && (
+                                  <VStack align="stretch" gap={1}>
+                                    {parameterNames.map((parameterName) => {
+                                      const factor =
+                                        override?.factors?.[parameterName] || {}
+                                      return (
+                                        <HStack
+                                          key={`${edgeId}-${segment.id}-${parameterName}`}
+                                          align="end"
+                                          wrap="wrap"
+                                        >
+                                          <Text
+                                            fontSize="xs"
+                                            color="gray.600"
+                                            minW="70px"
+                                            pt={1}
+                                          >
+                                            {parameterName}
+                                          </Text>
+                                          <Field.Root maxW="92px">
+                                            <Field.Label fontSize="xs">
+                                              {t("flow.simulation.timeSegments.factorA")}
+                                            </Field.Label>
+                                            <Input
+                                              size="xs"
+                                              type="number"
+                                              step="any"
+                                              placeholder={t(
+                                                "flow.simulation.timeSegments.inheritPlaceholder",
+                                              )}
+                                              value={factor.a ?? ""}
+                                              onChange={(event) =>
+                                                setEdgeFactorOverride(
+                                                  segment.id,
+                                                  edgeId,
+                                                  parameterName,
+                                                  "a",
+                                                  event.target.value,
+                                                )
+                                              }
+                                            />
+                                          </Field.Root>
+                                          <Field.Root maxW="92px">
+                                            <Field.Label fontSize="xs">
+                                              {t("flow.simulation.timeSegments.factorB")}
+                                            </Field.Label>
+                                            <Input
+                                              size="xs"
+                                              type="number"
+                                              step="any"
+                                              placeholder={t(
+                                                "flow.simulation.timeSegments.inheritPlaceholder",
+                                              )}
+                                              value={factor.b ?? ""}
+                                              onChange={(event) =>
+                                                setEdgeFactorOverride(
+                                                  segment.id,
+                                                  edgeId,
+                                                  parameterName,
+                                                  "b",
+                                                  event.target.value,
+                                                )
+                                              }
+                                            />
+                                          </Field.Root>
+                                        </HStack>
+                                      )
+                                    })}
+                                  </VStack>
+                                )}
+                              </VStack>
+                            </Box>
+                          )
+                        })}
+                      </HStack>
                     </Box>
-                  ))}
-                </VStack>
-              )}
+                  </VStack>
+                </Box>
+              ))}
             </VStack>
-          </Box>
-        )
-      })}
+          )}
+        </>
+      )}
 
       {setTimeSegments && timeSegments.length > 0 && (
         <HStack justify="flex-end">

@@ -870,7 +870,12 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                 </Field.Root>
               )}
 
-              {supportsTimeSegments && (
+              
+            </HStack>
+          </Box>
+
+          <Box display="flex" justifyContent="flex-end" gap={2}>
+            {supportsTimeSegments && (
                 <Field.Root display="inline-flex" w="auto">
                   <Button
                     size="xs"
@@ -925,21 +930,33 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   <Portal container={portalRef}>
                     {isSegmentsOpen &&
                       (() => {
-                        const panelRect = panelRef.current?.getBoundingClientRect()
+                        const canvasRect =
+                          canvasContainerRef.current?.getBoundingClientRect()
+                        const frameLeft = canvasRect?.left ?? 12
+                        const frameTop = canvasRect?.top ?? 12
+                        const frameWidth =
+                          canvasRect?.width ?? Math.max(420, window.innerWidth - 24)
+                        const frameHeight =
+                          canvasRect?.height ?? Math.max(360, window.innerHeight - 24)
                         const desiredWidth = Math.min(
-                          860,
-                          Math.max(420, window.innerWidth - 24),
+                          window.innerWidth - 24,
+                          Math.round(frameWidth * 0.8),
                         )
-                        const left = Math.max(
-                          12,
-                          Math.min(
-                            window.innerWidth - desiredWidth - 12,
-                            (panelRect?.left ?? 12) - 40,
-                          ),
+                        const desiredHeight = Math.min(
+                          window.innerHeight - 24,
+                          Math.round(frameHeight * 0.8),
                         )
-                        const top = Math.max(
-                          12,
-                          (panelRect?.top ?? 0) - Math.min(540, window.innerHeight - 96),
+                        const centeredLeft =
+                          frameLeft + Math.max(0, (frameWidth - desiredWidth) / 2)
+                        const centeredTop =
+                          frameTop + Math.max(0, (frameHeight - desiredHeight) / 2)
+                        const left = Math.min(
+                          Math.max(12, centeredLeft),
+                          Math.max(12, window.innerWidth - desiredWidth - 12),
+                        )
+                        const top = Math.min(
+                          Math.max(12, centeredTop),
+                          Math.max(12, window.innerHeight - desiredHeight - 12),
                         )
                         return (
                           <Box
@@ -948,6 +965,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                             left={`${left}px`}
                             top={`${top}px`}
                             width={`${desiredWidth}px`}
+                            height={`${desiredHeight}px`}
                             zIndex={2000}
                             pointerEvents="auto"
                             animation={`${isSegmentsClosing ? fadeOutUp : fadeInUp} 180ms ease`}
@@ -959,12 +977,13 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                               borderWidth="1px"
                               borderColor="whiteAlpha.700"
                               p={3}
-                              maxH="70vh"
+                              h="100%"
                               overflowY="auto"
                             >
                               <TimeSegmentPlanEditor
                                 timeSegments={timeSegments}
                                 edges={flowEdges}
+                                nodes={flowNodes}
                                 parameterNames={segmentParameterNames}
                                 simulationHours={simulationHours}
                                 setTimeSegments={setTimeSegments}
@@ -981,10 +1000,6 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   </Portal>
                 </Field.Root>
               )}
-            </HStack>
-          </Box>
-
-          <Box display="flex" justifyContent="flex-end">
             {config.hours.visible && (
               <Field.Root>
                 <Button
