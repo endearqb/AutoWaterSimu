@@ -18,6 +18,7 @@ import { useMemo, useState } from "react"
 import { FiSearch } from "react-icons/fi"
 
 import useCustomToast from "@/hooks/useCustomToast"
+import { useI18n } from "@/i18n"
 import { udmService } from "../../services/udmService"
 
 export const Route = createFileRoute("/_layout/udmModels")({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/_layout/udmModels")({
 })
 
 function UDMModelsPage() {
+  const { t, language } = useI18n()
   const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
@@ -51,7 +53,11 @@ function UDMModelsPage() {
     mutationFn: async (templateKey: string) =>
       udmService.createModelFromTemplate({ template_key: templateKey }),
     onSuccess: (created) => {
-      showSuccessToast(`模板模型创建成功：${created.name}`)
+      showSuccessToast(
+        t("flow.udmModels.toast.createTemplateSuccess", {
+          name: created.name,
+        }),
+      )
       navigate({
         to: "/udmModelEditor",
         search: { modelId: created.id },
@@ -59,7 +65,9 @@ function UDMModelsPage() {
     },
     onError: (error) => {
       showErrorToast(
-        error instanceof Error ? error.message : "创建模板模型失败",
+        error instanceof Error
+          ? error.message
+          : t("flow.udmModels.toast.createTemplateFailed"),
       )
     },
   })
@@ -67,22 +75,34 @@ function UDMModelsPage() {
   const duplicateModel = useMutation({
     mutationFn: async (modelId: string) => udmService.duplicateModel(modelId),
     onSuccess: (created) => {
-      showSuccessToast(`模型复制成功：${created.name}`)
+      showSuccessToast(
+        t("flow.udmModels.toast.duplicateSuccess", {
+          name: created.name,
+        }),
+      )
       queryClient.invalidateQueries({ queryKey: ["udm-models"] })
     },
     onError: (error) => {
-      showErrorToast(error instanceof Error ? error.message : "复制模型失败")
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmModels.toast.duplicateFailed"),
+      )
     },
   })
 
   const deleteModel = useMutation({
     mutationFn: async (modelId: string) => udmService.deleteModel(modelId),
     onSuccess: () => {
-      showSuccessToast("模型删除成功")
+      showSuccessToast(t("flow.udmModels.toast.deleteSuccess"))
       queryClient.invalidateQueries({ queryKey: ["udm-models"] })
     },
     onError: (error) => {
-      showErrorToast(error instanceof Error ? error.message : "删除模型失败")
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmModels.toast.deleteFailed"),
+      )
     },
   })
 
@@ -91,12 +111,18 @@ function UDMModelsPage() {
       udmService.updateModel(args.modelId, { is_published: args.nextPublished }),
     onSuccess: (updated) => {
       showSuccessToast(
-        updated.is_published ? "模型已发布" : "模型已取消发布",
+        updated.is_published
+          ? t("flow.udmModels.toast.publishSuccess")
+          : t("flow.udmModels.toast.unpublishSuccess"),
       )
       queryClient.invalidateQueries({ queryKey: ["udm-models"] })
     },
     onError: (error) => {
-      showErrorToast(error instanceof Error ? error.message : "更新发布状态失败")
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmModels.toast.publishUpdateFailed"),
+      )
     },
   })
 
@@ -106,20 +132,24 @@ function UDMModelsPage() {
     [templatesQuery.data],
   )
 
+  const dateLocale = language === "zh" ? "zh-CN" : "en-US"
+
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
-        UDM 模型库
+        {t("flow.udmModels.title")}
       </Heading>
 
       <Flex mt={6} gap={3} wrap="wrap" align="center">
         <Input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="按模型名称搜索"
+          placeholder={t("flow.udmModels.searchPlaceholder")}
           maxW="360px"
         />
-        <Button onClick={() => setSearchText(searchInput.trim())}>搜索</Button>
+        <Button onClick={() => setSearchText(searchInput.trim())}>
+          {t("flow.udmModels.actions.search")}
+        </Button>
         <Button
           variant="subtle"
           colorPalette="gray"
@@ -128,24 +158,24 @@ function UDMModelsPage() {
             setSearchText("")
           }}
         >
-          清空
+          {t("flow.udmModels.actions.clear")}
         </Button>
         <Button
           colorPalette="blue"
           onClick={() => navigate({ to: "/udmModelEditor" })}
         >
-          新建空白模型
+          {t("flow.udmModels.actions.createBlankModel")}
         </Button>
       </Flex>
 
       <Box mt={8}>
         <Heading size="md" mb={3}>
-          模板快速创建
+          {t("flow.udmModels.sections.templateQuickCreate")}
         </Heading>
         {templatesQuery.isLoading ? (
-          <Text color="gray.500">模板加载中...</Text>
+          <Text color="gray.500">{t("flow.udmModels.state.templatesLoading")}</Text>
         ) : templates.length === 0 ? (
-          <Text color="gray.500">暂无模板</Text>
+          <Text color="gray.500">{t("flow.udmModels.state.templatesEmpty")}</Text>
         ) : (
           <VStack align="stretch" gap={3}>
             {templates.map((tpl) => (
@@ -161,7 +191,7 @@ function UDMModelsPage() {
                 <Box>
                   <Text fontWeight="semibold">{tpl.name}</Text>
                   <Text fontSize="sm" color="gray.600">
-                    {tpl.description || "无描述"}
+                    {tpl.description || t("flow.udmModels.template.noDescription")}
                   </Text>
                   <HStack mt={2} gap={2}>
                     {(tpl.tags || []).map((tag) => (
@@ -170,8 +200,11 @@ function UDMModelsPage() {
                       </Badge>
                     ))}
                     <Text fontSize="xs" color="gray.500">
-                      C:{tpl.components_count || 0} P:{tpl.processes_count || 0}{" "}
-                      θ:{tpl.parameters_count || 0}
+                      {t("flow.udmModels.template.stats", {
+                        components: tpl.components_count || 0,
+                        processes: tpl.processes_count || 0,
+                        parameters: tpl.parameters_count || 0,
+                      })}
                     </Text>
                   </HStack>
                 </Box>
@@ -182,7 +215,7 @@ function UDMModelsPage() {
                   }
                   onClick={() => createFromTemplate.mutate(tpl.key)}
                 >
-                  使用模板创建
+                  {t("flow.udmModels.actions.createFromTemplate")}
                 </Button>
               </Flex>
             ))}
@@ -192,10 +225,10 @@ function UDMModelsPage() {
 
       <Box mt={10} pb={8}>
         <Heading size="md" mb={3}>
-          我的模型
+          {t("flow.udmModels.sections.myModels")}
         </Heading>
         {modelsQuery.isLoading ? (
-          <Text color="gray.500">模型列表加载中...</Text>
+          <Text color="gray.500">{t("flow.udmModels.state.modelsLoading")}</Text>
         ) : models.length === 0 ? (
           <EmptyState.Root>
             <EmptyState.Content>
@@ -203,9 +236,11 @@ function UDMModelsPage() {
                 <FiSearch />
               </EmptyState.Indicator>
               <VStack textAlign="center">
-                <EmptyState.Title>暂无模型</EmptyState.Title>
+                <EmptyState.Title>
+                  {t("flow.udmModels.state.modelsEmptyTitle")}
+                </EmptyState.Title>
                 <EmptyState.Description>
-                  你可以点击“新建空白模型”或通过模板快速创建
+                  {t("flow.udmModels.state.modelsEmptyDescription")}
                 </EmptyState.Description>
               </VStack>
             </EmptyState.Content>
@@ -214,11 +249,21 @@ function UDMModelsPage() {
           <Table.Root size={{ base: "sm", md: "md" }}>
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>模型名</Table.ColumnHeader>
-                <Table.ColumnHeader>版本</Table.ColumnHeader>
-                <Table.ColumnHeader>发布状态</Table.ColumnHeader>
-                <Table.ColumnHeader>更新时间</Table.ColumnHeader>
-                <Table.ColumnHeader>操作</Table.ColumnHeader>
+                <Table.ColumnHeader>
+                  {t("flow.udmModels.table.headers.modelName")}
+                </Table.ColumnHeader>
+                <Table.ColumnHeader>
+                  {t("flow.udmModels.table.headers.version")}
+                </Table.ColumnHeader>
+                <Table.ColumnHeader>
+                  {t("flow.udmModels.table.headers.publishStatus")}
+                </Table.ColumnHeader>
+                <Table.ColumnHeader>
+                  {t("flow.udmModels.table.headers.updatedAt")}
+                </Table.ColumnHeader>
+                <Table.ColumnHeader>
+                  {t("flow.udmModels.table.headers.actions")}
+                </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -228,10 +273,14 @@ function UDMModelsPage() {
                   <Table.Cell>v{model.current_version}</Table.Cell>
                   <Table.Cell>
                     <Badge colorPalette={model.is_published ? "green" : "gray"}>
-                      {model.is_published ? "已发布" : "未发布"}
+                      {model.is_published
+                        ? t("flow.udmModels.table.published")
+                        : t("flow.udmModels.table.unpublished")}
                     </Badge>
                   </Table.Cell>
-                  <Table.Cell>{new Date(model.updated_at).toLocaleString()}</Table.Cell>
+                  <Table.Cell>
+                    {new Date(model.updated_at).toLocaleString(dateLocale)}
+                  </Table.Cell>
                   <Table.Cell>
                     <HStack gap={2} wrap="wrap">
                       <Button
@@ -243,14 +292,14 @@ function UDMModelsPage() {
                           })
                         }
                       >
-                        编辑
+                        {t("flow.udmModels.actions.edit")}
                       </Button>
                       <Button
                         size="xs"
                         variant="subtle"
                         onClick={() => duplicateModel.mutate(model.id)}
                       >
-                        复制
+                        {t("flow.udmModels.actions.duplicate")}
                       </Button>
                       <Button
                         size="xs"
@@ -262,7 +311,9 @@ function UDMModelsPage() {
                           })
                         }
                       >
-                        {model.is_published ? "取消发布" : "发布"}
+                        {model.is_published
+                          ? t("flow.udmModels.actions.unpublish")
+                          : t("flow.udmModels.actions.publish")}
                       </Button>
                       <Button
                         size="xs"
@@ -270,14 +321,16 @@ function UDMModelsPage() {
                         variant="subtle"
                         onClick={() => {
                           const ok = window.confirm(
-                            `确认删除模型「${model.name}」吗？`,
+                            t("flow.udmModels.confirm.deleteModel", {
+                              name: model.name,
+                            }),
                           )
                           if (ok) {
                             deleteModel.mutate(model.id)
                           }
                         }}
                       >
-                        删除
+                        {t("flow.udmModels.actions.delete")}
                       </Button>
                     </HStack>
                   </Table.Cell>

@@ -3,6 +3,7 @@ import {
   Button,
   Field,
   HStack,
+  IconButton,
   Input,
   Separator,
   Text,
@@ -10,6 +11,8 @@ import {
 } from "@chakra-ui/react"
 import type { Edge, Node } from "@xyflow/react"
 import { useMemo } from "react"
+import { FiChevronDown, FiChevronUp, FiCopy, FiTrash2 } from "react-icons/fi"
+import type { EdgeParameterConfig } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import {
   type SegmentEdgeOverride,
@@ -23,6 +26,7 @@ interface TimeSegmentPlanEditorProps {
   nodes: Node[]
   parameterNames: string[]
   simulationHours: number
+  edgeParameterConfigs?: Record<string, Record<string, EdgeParameterConfig>>
   setTimeSegments?: (segments: TimeSegment[]) => void
   addTimeSegment?: (segment?: Partial<TimeSegment>) => void
   updateTimeSegment?: (segmentId: string, patch: Partial<TimeSegment>) => void
@@ -31,12 +35,32 @@ interface TimeSegmentPlanEditorProps {
   reorderTimeSegments?: (fromIndex: number, toIndex: number) => void
 }
 
+type EffectiveSegmentValues = {
+  flow: number
+  factors: Record<string, { a: number; b: number }>
+}
+
 const parseOptionalNumber = (raw: string): number | undefined => {
   if (raw.trim() === "") {
     return undefined
   }
   const parsed = Number(raw)
   return Number.isFinite(parsed) ? parsed : undefined
+}
+
+const asFiniteNumber = (value: unknown, fallback: number): number => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value
+  }
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+const toInputValue = (value: number | undefined): string => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return ""
+  }
+  return String(value)
 }
 
 const getNodeDisplayName = (node: Node): string => {
@@ -91,6 +115,7 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     nodes,
     parameterNames,
     simulationHours,
+    edgeParameterConfigs = {},
     setTimeSegments,
     addTimeSegment,
     updateTimeSegment,
@@ -141,6 +166,77 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     timeSegments.forEach((segment) => map.set(segment.id, segment))
     return map
   }, [timeSegments])
+
+  const edgeById = useMemo(() => {
+    const map = new Map<string, Edge>()
+    edges.forEach((edge) => {
+      const edgeId = edge.id || `${edge.source}-${edge.target}`
+      map.set(edgeId, edge)
+    })
+    return map
+  }, [edges])
+
+  const effectiveValueByEdgeAndSegment = useMemo(() => {
+    const edgeMap = new Map<string, Map<string, EffectiveSegmentValues>>()
+
+    edgeIdList.forEach((edgeId) => {
+      const edge = edgeById.get(edgeId)
+      const baseFlow = asFiniteNumber(
+        (edge?.data as Record<string, unknown> | undefined)?.flow,
+        0,
+      )
+
+      const edgeConfig = edgeParameterConfigs[edgeId] || {}
+      let currentFlow = baseFlow
+      let currentFactors: Record<string, { a: number; b: number }> = {}
+
+      parameterNames.forEach((parameterName) => {
+        const config = edgeConfig[parameterName]
+        currentFactors[parameterName] = {
+          a: asFiniteNumber(config?.a, 1),
+          b: asFiniteNumber(config?.b, 0),
+        }
+      })
+
+      const segmentValues = new Map<string, EffectiveSegmentValues>()
+      timeSegments.forEach((segment) => {
+        const override = segment.edgeOverrides?.[edgeId]
+        if (
+          typeof override?.flow === "number" &&
+          Number.isFinite(override.flow)
+        ) {
+          currentFlow = override.flow
+        }
+
+        const nextFactors: Record<string, { a: number; b: number }> = {}
+        parameterNames.forEach((parameterName) => {
+          const prev = currentFactors[parameterName] || { a: 1, b: 0 }
+          const overrideFactor = override?.factors?.[parameterName]
+          nextFactors[parameterName] = {
+            a:
+              typeof overrideFactor?.a === "number" &&
+              Number.isFinite(overrideFactor.a)
+                ? overrideFactor.a
+                : prev.a,
+            b:
+              typeof overrideFactor?.b === "number" &&
+              Number.isFinite(overrideFactor.b)
+                ? overrideFactor.b
+                : prev.b,
+          }
+        })
+        currentFactors = nextFactors
+        segmentValues.set(segment.id, {
+          flow: currentFlow,
+          factors: nextFactors,
+        })
+      })
+
+      edgeMap.set(edgeId, segmentValues)
+    })
+
+    return edgeMap
+  }, [edgeById, edgeIdList, edgeParameterConfigs, parameterNames, timeSegments])
 
   const handleAddSegment = () => {
     if (!addTimeSegment) return
@@ -321,45 +417,48 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                         <Text fontSize="sm" fontWeight="bold">
                           {t("flow.simulation.timeSegments.segmentLabel", {
                             index: index + 1,
-                            id: segment.id,
                           })}
                         </Text>
                         <HStack gap={1}>
-                          <Button
+                          <IconButton
                             size="xs"
-                            variant="outline"
+                            variant="ghost"
+                            aria-label={t("flow.simulation.timeSegments.moveUp")}
                             onClick={() => reorderTimeSegments?.(index, index - 1)}
                             disabled={!reorderTimeSegments || index === 0}
                           >
-                            {t("flow.simulation.timeSegments.moveUp")}
-                          </Button>
-                          <Button
+                            <FiChevronUp />
+                          </IconButton>
+                          <IconButton
                             size="xs"
-                            variant="outline"
+                            variant="ghost"
+                            aria-label={t("flow.simulation.timeSegments.moveDown")}
                             onClick={() => reorderTimeSegments?.(index, index + 1)}
                             disabled={
                               !reorderTimeSegments || index >= timeSegments.length - 1
                             }
                           >
-                            {t("flow.simulation.timeSegments.moveDown")}
-                          </Button>
-                          <Button
+                            <FiChevronDown />
+                          </IconButton>
+                          <IconButton
                             size="xs"
-                            variant="outline"
+                            variant="ghost"
+                            aria-label={t("flow.simulation.timeSegments.copy")}
                             onClick={() => copyTimeSegment?.(segment.id)}
                             disabled={!copyTimeSegment}
                           >
-                            {t("flow.simulation.timeSegments.copy")}
-                          </Button>
-                          <Button
+                            <FiCopy />
+                          </IconButton>
+                          <IconButton
                             size="xs"
+                            variant="ghost"
                             colorPalette="red"
-                            variant="subtle"
+                            aria-label={t("flow.simulation.timeSegments.remove")}
                             onClick={() => removeTimeSegment?.(segment.id)}
                             disabled={!removeTimeSegment}
                           >
-                            {t("flow.simulation.timeSegments.remove")}
-                          </Button>
+                            <FiTrash2 />
+                          </IconButton>
                         </HStack>
                       </HStack>
                       <HStack align="end" wrap="wrap">
@@ -432,6 +531,13 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                       <HStack align="stretch" gap={3} minW="max-content">
                         {timeSegments.map((segment, index) => {
                           const override = segment.edgeOverrides?.[edgeId]
+                          const effectiveValues = effectiveValueByEdgeAndSegment
+                            .get(edgeId)
+                            ?.get(segment.id)
+                          const flowInherited = override?.flow === undefined
+                          const flowValue = flowInherited
+                            ? toInputValue(effectiveValues?.flow)
+                            : toInputValue(override?.flow)
                           return (
                             <Box
                               key={`${edgeId}-${segment.id}`}
@@ -445,22 +551,28 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                 <Text fontSize="xs" color="gray.600">
                                   {t("flow.simulation.timeSegments.segmentLabel", {
                                     index: index + 1,
-                                    id: segment.id,
                                   })}
                                 </Text>
                                 <Field.Root>
-                                  <Field.Label fontSize="xs">
-                                    {t("flow.simulation.timeSegments.flowOverride")}
-                                  </Field.Label>
+                                  <HStack justify="space-between" align="center">
+                                    <Field.Label fontSize="xs">
+                                      {t("flow.simulation.timeSegments.flowOverride")}
+                                    </Field.Label>
+                                    {flowInherited && (
+                                      <Text fontSize="xs" color="gray.500">
+                                        {t(
+                                          "flow.simulation.timeSegments.inheritedBadge",
+                                        )}
+                                      </Text>
+                                    )}
+                                  </HStack>
                                   <Input
                                     size="xs"
                                     type="number"
                                     step="any"
                                     min={0}
-                                    placeholder={t(
-                                      "flow.simulation.timeSegments.inheritPlaceholder",
-                                    )}
-                                    value={override?.flow ?? ""}
+                                    value={flowValue}
+                                    onFocus={(event) => event.currentTarget.select()}
                                     onChange={(event) =>
                                       setEdgeFlowOverride(
                                         segment.id,
@@ -468,14 +580,28 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                         event.target.value,
                                       )
                                     }
+                                    color={flowInherited ? "gray.500" : "gray.900"}
+                                    bg={flowInherited ? "gray.100" : "white"}
                                   />
                                 </Field.Root>
 
                                 {parameterNames.length > 0 && (
                                   <VStack align="stretch" gap={1}>
                                     {parameterNames.map((parameterName) => {
-                                      const factor =
-                                        override?.factors?.[parameterName] || {}
+                                      const factorOverride =
+                                        override?.factors?.[parameterName]
+                                      const effectiveFactor =
+                                        effectiveValues?.factors?.[parameterName]
+                                      const aInherited =
+                                        factorOverride?.a === undefined
+                                      const bInherited =
+                                        factorOverride?.b === undefined
+                                      const aValue = aInherited
+                                        ? toInputValue(effectiveFactor?.a)
+                                        : toInputValue(factorOverride?.a)
+                                      const bValue = bInherited
+                                        ? toInputValue(effectiveFactor?.b)
+                                        : toInputValue(factorOverride?.b)
                                       return (
                                         <HStack
                                           key={`${edgeId}-${segment.id}-${parameterName}`}
@@ -491,17 +617,26 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                             {parameterName}
                                           </Text>
                                           <Field.Root maxW="92px">
-                                            <Field.Label fontSize="xs">
-                                              {t("flow.simulation.timeSegments.factorA")}
-                                            </Field.Label>
+                                            <HStack justify="space-between" align="center">
+                                              <Field.Label fontSize="xs">
+                                                {t("flow.simulation.timeSegments.factorA")}
+                                              </Field.Label>
+                                              {aInherited && (
+                                                <Text fontSize="xs" color="gray.500">
+                                                  {t(
+                                                    "flow.simulation.timeSegments.inheritedBadge",
+                                                  )}
+                                                </Text>
+                                              )}
+                                            </HStack>
                                             <Input
                                               size="xs"
                                               type="number"
                                               step="any"
-                                              placeholder={t(
-                                                "flow.simulation.timeSegments.inheritPlaceholder",
-                                              )}
-                                              value={factor.a ?? ""}
+                                              value={aValue}
+                                              onFocus={(event) =>
+                                                event.currentTarget.select()
+                                              }
                                               onChange={(event) =>
                                                 setEdgeFactorOverride(
                                                   segment.id,
@@ -511,20 +646,31 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                                   event.target.value,
                                                 )
                                               }
+                                              color={aInherited ? "gray.500" : "gray.900"}
+                                              bg={aInherited ? "gray.100" : "white"}
                                             />
                                           </Field.Root>
                                           <Field.Root maxW="92px">
-                                            <Field.Label fontSize="xs">
-                                              {t("flow.simulation.timeSegments.factorB")}
-                                            </Field.Label>
+                                            <HStack justify="space-between" align="center">
+                                              <Field.Label fontSize="xs">
+                                                {t("flow.simulation.timeSegments.factorB")}
+                                              </Field.Label>
+                                              {bInherited && (
+                                                <Text fontSize="xs" color="gray.500">
+                                                  {t(
+                                                    "flow.simulation.timeSegments.inheritedBadge",
+                                                  )}
+                                                </Text>
+                                              )}
+                                            </HStack>
                                             <Input
                                               size="xs"
                                               type="number"
                                               step="any"
-                                              placeholder={t(
-                                                "flow.simulation.timeSegments.inheritPlaceholder",
-                                              )}
-                                              value={factor.b ?? ""}
+                                              value={bValue}
+                                              onFocus={(event) =>
+                                                event.currentTarget.select()
+                                              }
                                               onChange={(event) =>
                                                 setEdgeFactorOverride(
                                                   segment.id,
@@ -534,6 +680,8 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                                   event.target.value,
                                                 )
                                               }
+                                              color={bInherited ? "gray.500" : "gray.900"}
+                                              bg={bInherited ? "gray.100" : "white"}
                                             />
                                           </Field.Root>
                                         </HStack>

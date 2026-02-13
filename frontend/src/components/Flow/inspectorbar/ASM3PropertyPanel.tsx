@@ -1,8 +1,9 @@
 ﻿import { Box, Field, HStack, Input, Stack, Text } from "@chakra-ui/react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ASM3_CONFIG } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
+import EdgeTimeSegmentEditor from "./EdgeTimeSegmentEditor"
 
 interface ASM3PropertyPanelProps {
   isNode: boolean
@@ -28,7 +29,16 @@ function ASM3PropertyPanel({ isNode, store }: ASM3PropertyPanelProps) {
     updateEdgeFlow,
     updateEdgeParameterConfig,
     edgeParameterConfigs,
+    edges,
     nodes,
+    timeSegments,
+    addTimeSegment,
+    updateTimeSegment,
+    removeTimeSegment,
+    copyTimeSegment,
+    reorderTimeSegments,
+    calculationParameters,
+    isEdgeTimeSegmentMode,
   } = store()
 
   const [nameError, setNameError] = useState("")
@@ -37,13 +47,21 @@ function ASM3PropertyPanel({ isNode, store }: ASM3PropertyPanelProps) {
   const [tempFlowValue, setTempFlowValue] = useState("")
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({})
 
+  const currentEdge = useMemo(
+    () =>
+      selectedEdge
+        ? edges.find((edge) => edge.id === selectedEdge.id) || selectedEdge
+        : null,
+    [edges, selectedEdge],
+  )
+
   useEffect(() => {
-    if (selectedEdge?.data?.flow !== undefined) {
-      setTempFlowValue(String(selectedEdge.data.flow))
+    if (currentEdge?.data?.flow !== undefined) {
+      setTempFlowValue(String(currentEdge.data.flow))
     } else {
       setTempFlowValue("")
     }
-  }, [selectedEdge?.id, selectedEdge?.data?.flow])
+  }, [currentEdge?.id, currentEdge?.data?.flow])
 
   const getParamLabel = (param: { label: string }) => t(param.label)
   const getParamDescription = (param: { description?: string }) =>
@@ -104,19 +122,19 @@ function ASM3PropertyPanel({ isNode, store }: ASM3PropertyPanelProps) {
   }
 
   const handleEdgeFlowChange = (value: string) => {
-    if (selectedEdge) {
+    if (currentEdge) {
       setTempFlowValue(value)
 
       if (value === "") {
         setFlowRateError("")
-        updateEdgeFlow(selectedEdge.id, 0)
+        updateEdgeFlow(currentEdge.id, 0)
       } else {
         const numValue = Number.parseFloat(value)
         if (Number.isNaN(numValue) || numValue < 0) {
           setFlowRateError(t("flow.propertyPanel.errors.flowNonNegative"))
         } else {
           setFlowRateError("")
-          updateEdgeFlow(selectedEdge.id, numValue)
+          updateEdgeFlow(currentEdge.id, numValue)
         }
       }
     }
@@ -244,7 +262,8 @@ function ASM3PropertyPanel({ isNode, store }: ASM3PropertyPanelProps) {
   }
 
   if (!isNode && selectedEdge) {
-    const sourceNode = nodes.find((node) => node.id === selectedEdge.source)
+    const activeEdge = currentEdge || selectedEdge
+    const sourceNode = nodes.find((node) => node.id === activeEdge.source)
     const edgeConfigs = edgeParameterConfigs[selectedEdge.id] || {}
 
     const handleConfigChange = (
@@ -268,6 +287,30 @@ function ASM3PropertyPanel({ isNode, store }: ASM3PropertyPanelProps) {
     }
 
     const fixedParameters = ASM3_CONFIG.fixedParameters
+    const segmentParameters = fixedParameters.map((param) => ({
+      name: param.name,
+      label: getParamLabel(param),
+      description: getParamDescription(param),
+    }))
+
+    if (isEdgeTimeSegmentMode) {
+      const rawFlow = Number((activeEdge.data as Record<string, unknown>)?.flow)
+      return (
+        <EdgeTimeSegmentEditor
+          edgeId={selectedEdge.id}
+          edgeFlow={Number.isFinite(rawFlow) ? rawFlow : 0}
+          parameterDescriptors={segmentParameters}
+          edgeConfigs={edgeConfigs}
+          timeSegments={timeSegments}
+          simulationHours={calculationParameters.hours}
+          addTimeSegment={addTimeSegment}
+          updateTimeSegment={updateTimeSegment}
+          removeTimeSegment={removeTimeSegment}
+          copyTimeSegment={copyTimeSegment}
+          reorderTimeSegments={reorderTimeSegments}
+        />
+      )
+    }
 
     const renderEdgeParameters = () => {
       return fixedParameters.map((param) => {

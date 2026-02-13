@@ -473,6 +473,7 @@ export const enMessages: I18nMessages = {
       output: "Output",
       default: "Default Node",
       custom: "Custom Node",
+      udm: "UDM Node",
       asm1: "ASM1 Node",
       asm3: "ASM3 Node",
       asm1slim: "ASM1 Slim",
@@ -493,6 +494,7 @@ export const enMessages: I18nMessages = {
       title: "Inspector",
       emptyState: "Select a node or edge to view its properties",
       edgeTitle: "Edge parameters",
+      timeSegmentButton: "Time segment settings",
       expand: "Expand inspector",
       collapse: "Collapse inspector",
     },
@@ -520,6 +522,9 @@ export const enMessages: I18nMessages = {
         'Are you sure you want to remove parameter "{name}" from this {target}? This cannot be undone.',
       deleteParamAriaLabel: "Delete parameter",
       customParamPlaceholder: "Custom parameter, numeric value",
+      udmNoComponents:
+        "No UDM components detected. Load a UDM model flowchart first.",
+      unitWithValue: "Unit: {unit}",
       target: {
         node: "node",
         edge: "edge",
@@ -529,6 +534,7 @@ export const enMessages: I18nMessages = {
         asm1slim:
           "Note: ASM1 Slim nodes only support the fixed parameters above and cannot add custom parameters.",
         asm3: "Note: ASM3 nodes only support the fixed parameters above and cannot add custom parameters.",
+        udm: "UDM node parameters are driven by the current UDM model definition.",
       },
       errors: {
         nameRequired: "Name is required",
@@ -580,6 +586,23 @@ export const enMessages: I18nMessages = {
         "The following parameters are used for {model} biochemical calculations. Adjust them based on actual process conditions.",
       tip: "💡 Tip: These parameters affect {model} calculation results. Calibrate using actual process data.",
       rangeError: "Parameter value must be between {min} and {max}",
+    },
+    udmCalc: {
+      empty: {
+        selectNode: "Select a UDM node before editing parameters.",
+        onlyUdmNode: "This panel is available only for UDM nodes.",
+        noEditableParams:
+          "No editable UDM model parameters are bound to the current node.",
+      },
+      title: "UDM Model Parameters",
+      description:
+        "Parameters are from the UDM model snapshot bound to the current node, not from static hardcoded model config.",
+      syncAllNodes: "Sync all UDM nodes",
+      rangeLabel: "range: {min} - {max}",
+      errors: {
+        numberRequired: "Please enter a number",
+        rangeOutOfBounds: "Value must be between {min} and {max}",
+      },
     },
     toolbar: {
       lock: "Lock toolbar",
@@ -694,7 +717,7 @@ export const enMessages: I18nMessages = {
         addSegment: "Add Segment",
         empty: "No segments configured. Add one segment to start multi-period setup.",
         emptyHint: "No segments configured. Simulation uses baseline edge values.",
-        segmentLabel: "Segment {index}: {id}",
+        segmentLabel: "Segment {index}",
         startHour: "Start (h)",
         endHour: "End (h)",
         moveUp: "Up",
@@ -709,6 +732,7 @@ export const enMessages: I18nMessages = {
         flowOverride: "Flow",
         factorA: "a",
         factorB: "b",
+        inheritedBadge: "Inherited",
         inheritPlaceholder: "inherit",
         sortByTime: "Sort by start hour",
         validationPassed: "Segment coverage validation passed.",
@@ -1014,6 +1038,13 @@ export const enMessages: I18nMessages = {
         flowchart: {
           autoDescription: "Auto generated from UDM model editor",
         },
+        defaults: {
+          unnamedModel: "Unnamed UDM Model",
+          influentNode: "Influent",
+          reactorNode: "UDM Reactor",
+          effluentNode: "Effluent",
+          defaultFlowSuffix: "-default-flow",
+        },
       },
       validation: {
         sectionTitle: "Model Validation & Parameter Extraction",
@@ -1046,6 +1077,7 @@ export const enMessages: I18nMessages = {
         saveModel: "Save Model",
         saveAndGenerateFlow: "Save and Generate Default Flowchart",
         backToLibrary: "Back to Model Library",
+        openModelEditor: "UDM Model Editor",
       },
       dialog: {
         title: "UDM Model Editor",
@@ -1102,6 +1134,62 @@ export const enMessages: I18nMessages = {
           title: "Parameters",
           empty: "No parameters available.",
         },
+      },
+    },
+    udmModels: {
+      title: "UDM Model Library",
+      searchPlaceholder: "Search by model name",
+      actions: {
+        search: "Search",
+        clear: "Clear",
+        createBlankModel: "Create Blank Model",
+        createFromTemplate: "Create from Template",
+        edit: "Edit",
+        duplicate: "Duplicate",
+        publish: "Publish",
+        unpublish: "Unpublish",
+        delete: "Delete",
+      },
+      sections: {
+        templateQuickCreate: "Template Quick Create",
+        myModels: "My Models",
+      },
+      state: {
+        templatesLoading: "Loading templates...",
+        templatesEmpty: "No templates available",
+        modelsLoading: "Loading models...",
+        modelsEmptyTitle: "No models found",
+        modelsEmptyDescription:
+          "Create a blank model or generate one from template.",
+      },
+      template: {
+        noDescription: "No description",
+        stats: "Components: {components} | Processes: {processes} | Parameters: {parameters}",
+      },
+      table: {
+        headers: {
+          modelName: "Model Name",
+          version: "Version",
+          publishStatus: "Publish Status",
+          updatedAt: "Updated At",
+          actions: "Actions",
+        },
+        published: "Published",
+        unpublished: "Draft",
+      },
+      toast: {
+        createTemplateSuccess: "Template model created: {name}",
+        createTemplateFailed: "Failed to create model from template",
+        duplicateSuccess: "Model duplicated: {name}",
+        duplicateFailed: "Failed to duplicate model",
+        deleteSuccess: "Model deleted",
+        deleteFailed: "Failed to delete model",
+        publishSuccess: "Model published",
+        unpublishSuccess: "Model unpublished",
+        publishUpdateFailed: "Failed to update publish status",
+      },
+      confirm: {
+        deleteModel: 'Delete model "{name}"? This action cannot be undone.',
       },
     },
     modelParams: {

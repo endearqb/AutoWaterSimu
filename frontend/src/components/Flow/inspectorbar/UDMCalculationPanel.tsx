@@ -10,6 +10,7 @@
 } from "@chakra-ui/react"
 import { useMemo, useState } from "react"
 
+import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
 
 interface UDMCalculationPanelProps {
@@ -106,6 +107,7 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
     throw new Error("UDMCalculationPanel requires a store prop")
   }
 
+  const { t } = useI18n()
   const { selectedNode, nodes, updateNodeParameter } = store()
   const [syncParameters, setSyncParameters] = useState(true)
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({})
@@ -142,7 +144,10 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
     if (!selectedNode || selectedNode.type !== "udm") return
 
     if (!Number.isFinite(value)) {
-      setParamErrors((prev) => ({ ...prev, [param.name]: "请输入数字" }))
+      setParamErrors((prev) => ({
+        ...prev,
+        [param.name]: t("flow.udmCalc.errors.numberRequired"),
+      }))
       return
     }
 
@@ -153,7 +158,10 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
     ) {
       setParamErrors((prev) => ({
         ...prev,
-        [param.name]: `取值范围应在 ${param.min} - ${param.max}`,
+        [param.name]: t("flow.udmCalc.errors.rangeOutOfBounds", {
+          min: param.min ?? "",
+          max: param.max ?? "",
+        }),
       }))
     } else {
       setParamErrors((prev) => {
@@ -177,7 +185,7 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
   if (!selectedNode) {
     return (
       <Box>
-        <Text color="gray.500">请选择一个 UDM 节点后再编辑参数。</Text>
+        <Text color="gray.500">{t("flow.udmCalc.empty.selectNode")}</Text>
       </Box>
     )
   }
@@ -185,7 +193,7 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
   if (selectedNode.type !== "udm") {
     return (
       <Box>
-        <Text color="gray.500">该面板仅适用于 UDM 节点。</Text>
+        <Text color="gray.500">{t("flow.udmCalc.empty.onlyUdmNode")}</Text>
       </Box>
     )
   }
@@ -193,7 +201,7 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
   if (parameterDefs.length === 0) {
     return (
       <Box>
-        <Text color="gray.500">当前节点未绑定可编辑的 UDM 模型参数。</Text>
+        <Text color="gray.500">{t("flow.udmCalc.empty.noEditableParams")}</Text>
       </Box>
     )
   }
@@ -202,17 +210,17 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
     <Stack gap={5}>
       <Box>
         <Text fontSize="lg" fontWeight="semibold" mb={2}>
-          UDM 模型参数
+          {t("flow.udmCalc.title")}
         </Text>
         <Text fontSize="sm" color="gray.600">
-          参数来源于当前节点绑定的 UDM 模型快照，不依赖静态硬编码模型配置。
+          {t("flow.udmCalc.description")}
         </Text>
       </Box>
 
       <Box p={3} borderWidth="1px" borderRadius="md">
         <HStack justify="space-between">
           <Text fontSize="sm" color="gray.700">
-            同步所有 UDM 节点
+            {t("flow.udmCalc.syncAllNodes")}
           </Text>
           <Switch.Root
             checked={syncParameters}
@@ -251,7 +259,10 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
                   >
                     <HStack justify="space-between" mb={2}>
                       <Text fontSize="sm" color="gray.600">
-                        range: {bounds.min.toFixed(4)} - {bounds.max.toFixed(4)}
+                        {t("flow.udmCalc.rangeLabel", {
+                          min: bounds.min.toFixed(4),
+                          max: bounds.max.toFixed(4),
+                        })}
                       </Text>
                       <Slider.ValueText fontSize="sm" />
                     </HStack>

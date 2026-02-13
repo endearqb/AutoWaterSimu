@@ -6,7 +6,7 @@ const UDMNodesPanel = () => {
   const nodeTypes = [
     { type: "input", label: t("flow.node.input") },
     { type: "output", label: t("flow.node.output") },
-    { type: "udm", label: "UDM" },
+    { type: "udm", label: t("flow.node.udm") },
     { type: "default", label: t("flow.node.default") },
   ]
 

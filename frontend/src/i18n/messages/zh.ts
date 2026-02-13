@@ -1,4 +1,4 @@
-import type { I18nMessages } from "../types"
+﻿import type { I18nMessages } from "../types"
 
 export const zhMessages: I18nMessages = {
   app: {
@@ -458,6 +458,7 @@ export const zhMessages: I18nMessages = {
       output: "出水端",
       default: "默认节点",
       custom: "自定义节点",
+      udm: "UDM 节点",
       asm1: "ASM1 节点",
       asm3: "ASM3 节点",
       asm1slim: "ASM1 Slim",
@@ -478,6 +479,7 @@ export const zhMessages: I18nMessages = {
       title: "属性检查器",
       emptyState: "请选择一个节点或连接线查看其属性",
       edgeTitle: "连接参数设置",
+      timeSegmentButton: "时间分段设置",
       expand: "展开检查器",
       collapse: "折叠检查器",
     },
@@ -504,6 +506,8 @@ export const zhMessages: I18nMessages = {
         '确定要从当前{target}删除参数 "{name}" 吗？此操作不可恢复。',
       deleteParamAriaLabel: "删除参数",
       customParamPlaceholder: "自定义参数，数据类型：浮点数",
+      udmNoComponents: "未检测到 UDM 组分，请先加载 UDM 模型流程图。",
+      unitWithValue: "单位: {unit}",
       target: {
         node: "节点",
         edge: "连接线",
@@ -512,6 +516,7 @@ export const zhMessages: I18nMessages = {
         asm1: "注意：ASM1节点只支持上述固定参数，不能添加自定义参数。",
         asm1slim: "注意：ASM1Slim节点只支持上述固定参数，不能添加自定义参数。",
         asm3: "注意：ASM3节点只支持上述固定参数，不能添加自定义参数。",
+        udm: "UDM 节点参数由当前绑定的 UDM 模型定义驱动。",
       },
       errors: {
         nameRequired: "名称不能为空",
@@ -563,6 +568,21 @@ export const zhMessages: I18nMessages = {
         "以下参数用于{model}模型的生化反应计算，请根据实际工艺条件调整参数值。",
       tip: "💡 提示：这些参数会影响{model}模型的计算结果，建议根据实际污水处理工艺的运行数据进行校准。",
       rangeError: "参数值必须在 {min} - {max} 范围内",
+    },
+    udmCalc: {
+      empty: {
+        selectNode: "请选择 UDM 节点后再编辑参数。",
+        onlyUdmNode: "该面板仅适用于 UDM 节点。",
+        noEditableParams: "当前节点未绑定可编辑的 UDM 模型参数。",
+      },
+      title: "UDM 模型参数",
+      description: "参数来源于当前节点绑定的 UDM 模型快照，不依赖静态硬编码模型配置。",
+      syncAllNodes: "同步所有 UDM 节点",
+      rangeLabel: "范围: {min} - {max}",
+      errors: {
+        numberRequired: "请输入数字",
+        rangeOutOfBounds: "取值范围应在 {min} - {max}",
+      },
     },
     toolbar: {
       lock: "锁定工具栏",
@@ -676,7 +696,7 @@ export const zhMessages: I18nMessages = {
         addSegment: "新增时段",
         empty: "当前未配置时段。新增时段后可进行多时段设置。",
         emptyHint: "未配置时段时，仿真将使用基线边参数。",
-        segmentLabel: "时段 {index}: {id}",
+        segmentLabel: "时段 {index}",
         startHour: "起始 (h)",
         endHour: "结束 (h)",
         moveUp: "上移",
@@ -691,6 +711,7 @@ export const zhMessages: I18nMessages = {
         flowOverride: "流量",
         factorA: "a",
         factorB: "b",
+        inheritedBadge: "继承",
         inheritPlaceholder: "继承",
         sortByTime: "按起始时间排序",
         validationPassed: "时段覆盖校验通过。",
@@ -991,6 +1012,13 @@ export const zhMessages: I18nMessages = {
         flowchart: {
           autoDescription: "由 UDM 模型编辑器自动生成",
         },
+        defaults: {
+          unnamedModel: "未命名 UDM 模型",
+          influentNode: "进水",
+          reactorNode: "UDM 反应器",
+          effluentNode: "出水",
+          defaultFlowSuffix: "-默认流程图",
+        },
       },
       validation: {
         sectionTitle: "模型校验与参数抽取",
@@ -1021,6 +1049,7 @@ export const zhMessages: I18nMessages = {
         saveModel: "保存模型",
         saveAndGenerateFlow: "保存并生成默认画布",
         backToLibrary: "返回模型库",
+        openModelEditor: "UDM 模型编辑器",
       },
       dialog: {
         title: "UDM 模型编辑器",
@@ -1073,6 +1102,61 @@ export const zhMessages: I18nMessages = {
           title: "Parameters",
           empty: "暂无可用参数。",
         },
+      },
+    },
+    udmModels: {
+      title: "UDM 模型库",
+      searchPlaceholder: "按模型名称搜索",
+      actions: {
+        search: "搜索",
+        clear: "清空",
+        createBlankModel: "新建空白模型",
+        createFromTemplate: "从模板创建",
+        edit: "编辑",
+        duplicate: "复制",
+        publish: "发布",
+        unpublish: "取消发布",
+        delete: "删除",
+      },
+      sections: {
+        templateQuickCreate: "模板快速创建",
+        myModels: "我的模型",
+      },
+      state: {
+        templatesLoading: "模板加载中...",
+        templatesEmpty: "暂无可用模板",
+        modelsLoading: "模型加载中...",
+        modelsEmptyTitle: "未找到模型",
+        modelsEmptyDescription: "可先新建空白模型，或基于模板快速创建。",
+      },
+      template: {
+        noDescription: "暂无描述",
+        stats: "组分: {components} | 过程: {processes} | 参数: {parameters}",
+      },
+      table: {
+        headers: {
+          modelName: "模型名称",
+          version: "版本",
+          publishStatus: "发布状态",
+          updatedAt: "更新时间",
+          actions: "操作",
+        },
+        published: "已发布",
+        unpublished: "草稿",
+      },
+      toast: {
+        createTemplateSuccess: "已创建模板模型：{name}",
+        createTemplateFailed: "从模板创建模型失败",
+        duplicateSuccess: "已复制模型：{name}",
+        duplicateFailed: "复制模型失败",
+        deleteSuccess: "模型已删除",
+        deleteFailed: "删除模型失败",
+        publishSuccess: "模型已发布",
+        unpublishSuccess: "模型已取消发布",
+        publishUpdateFailed: "更新发布状态失败",
+      },
+      confirm: {
+        deleteModel: "确认删除模型“{name}”？此操作不可恢复。",
       },
     },
     modelParams: {

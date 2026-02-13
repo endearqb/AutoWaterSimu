@@ -986,6 +986,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                                 nodes={flowNodes}
                                 parameterNames={segmentParameterNames}
                                 simulationHours={simulationHours}
+                                edgeParameterConfigs={edgeParameterConfigs}
                                 setTimeSegments={setTimeSegments}
                                 addTimeSegment={addTimeSegment}
                                 updateTimeSegment={updateTimeSegment}

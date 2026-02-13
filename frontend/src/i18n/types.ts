@@ -450,6 +450,7 @@ export interface I18nMessages {
       output: string
       default: string
       custom: string
+      udm: string
       asm1: string
       asm3: string
       asm1slim: string
@@ -470,6 +471,7 @@ export interface I18nMessages {
       title: string
       emptyState: string
       edgeTitle: string
+      timeSegmentButton: string
       expand: string
       collapse: string
     }
@@ -495,6 +497,8 @@ export interface I18nMessages {
       deleteConfirmBody: string
       deleteParamAriaLabel: string
       customParamPlaceholder: string
+      udmNoComponents: string
+      unitWithValue: string
       target: {
         node: string
         edge: string
@@ -503,6 +507,7 @@ export interface I18nMessages {
         asm1: string
         asm1slim: string
         asm3: string
+        udm: string
       }
       errors: {
         nameRequired: string
@@ -553,6 +558,21 @@ export interface I18nMessages {
       description: string
       tip: string
       rangeError: string
+    }
+    udmCalc: {
+      empty: {
+        selectNode: string
+        onlyUdmNode: string
+        noEditableParams: string
+      }
+      title: string
+      description: string
+      syncAllNodes: string
+      rangeLabel: string
+      errors: {
+        numberRequired: string
+        rangeOutOfBounds: string
+      }
     }
     toolbar: {
       lock: string
@@ -681,6 +701,7 @@ export interface I18nMessages {
         flowOverride: string
         factorA: string
         factorB: string
+        inheritedBadge: string
         inheritPlaceholder: string
         sortByTime: string
         validationPassed: string
@@ -977,6 +998,13 @@ export interface I18nMessages {
         flowchart: {
           autoDescription: string
         }
+        defaults: {
+          unnamedModel: string
+          influentNode: string
+          reactorNode: string
+          effluentNode: string
+          defaultFlowSuffix: string
+        }
       }
       validation: {
         sectionTitle: string
@@ -1007,6 +1035,7 @@ export interface I18nMessages {
         saveModel: string
         saveAndGenerateFlow: string
         backToLibrary: string
+        openModelEditor: string
       }
       dialog: {
         title: string
@@ -1058,6 +1087,61 @@ export interface I18nMessages {
           title: string
           empty: string
         }
+      }
+    }
+    udmModels: {
+      title: string
+      searchPlaceholder: string
+      actions: {
+        search: string
+        clear: string
+        createBlankModel: string
+        createFromTemplate: string
+        edit: string
+        duplicate: string
+        publish: string
+        unpublish: string
+        delete: string
+      }
+      sections: {
+        templateQuickCreate: string
+        myModels: string
+      }
+      state: {
+        templatesLoading: string
+        templatesEmpty: string
+        modelsLoading: string
+        modelsEmptyTitle: string
+        modelsEmptyDescription: string
+      }
+      template: {
+        noDescription: string
+        stats: string
+      }
+      table: {
+        headers: {
+          modelName: string
+          version: string
+          publishStatus: string
+          updatedAt: string
+          actions: string
+        }
+        published: string
+        unpublished: string
+      }
+      toast: {
+        createTemplateSuccess: string
+        createTemplateFailed: string
+        duplicateSuccess: string
+        duplicateFailed: string
+        deleteSuccess: string
+        deleteFailed: string
+        publishSuccess: string
+        unpublishSuccess: string
+        publishUpdateFailed: string
+      }
+      confirm: {
+        deleteModel: string
       }
     }
     modelParams: {

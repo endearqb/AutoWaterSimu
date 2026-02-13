@@ -45,7 +45,7 @@ function UDMPage() {
           return { label: t("flow.node.output") }
         case "udm":
           return {
-            label: "UDM",
+            label: t("flow.node.udm"),
             // 鍥哄畾鍙傛暟鐢?store 鑷姩娣诲姞锛屾棤闇€鍦ㄦ澶勫畾涔?
           }
         default:

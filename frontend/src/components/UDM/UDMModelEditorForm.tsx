@@ -397,7 +397,7 @@ export function UDMModelEditorForm({
       .filter((item): item is NonNullable<typeof item> => !!item)
 
     return {
-      name: name.trim() || "Unnamed UDM Model",
+      name: name.trim() || t("flow.udmEditor.form.defaults.unnamedModel"),
       description: description.trim() || null,
       tags: tagsText
         .split(",")
@@ -560,7 +560,11 @@ export function UDMModelEditorForm({
         return {
           name: compName,
           label: String(item.label || compName),
-          description: item.unit ? `Unit: ${String(item.unit)}` : undefined,
+          description: item.unit
+            ? t("flow.propertyPanel.unitWithValue", {
+                unit: String(item.unit),
+              })
+            : undefined,
           defaultValue: Number.isFinite(defaultValue) ? defaultValue : 0,
         }
       })
@@ -616,14 +620,14 @@ export function UDMModelEditorForm({
           id: "udm-input-1",
           type: "input",
           position: { x: 40, y: 220 },
-          data: buildNodeData("Influent"),
+          data: buildNodeData(t("flow.udmEditor.form.defaults.influentNode")),
         },
         {
           id: "udm-reactor-1",
           type: "udm",
           position: { x: 360, y: 220 },
           data: {
-            ...buildNodeData("UDM Reactor"),
+            ...buildNodeData(t("flow.udmEditor.form.defaults.reactorNode")),
             udmModel: {
               id: model.id,
               name: model.name,
@@ -649,7 +653,7 @@ export function UDMModelEditorForm({
           id: "udm-output-1",
           type: "output",
           position: { x: 690, y: 220 },
-          data: buildNodeData("Effluent"),
+          data: buildNodeData(t("flow.udmEditor.form.defaults.effluentNode")),
         },
       ],
       edges: [
@@ -691,7 +695,7 @@ export function UDMModelEditorForm({
 
     try {
       const flowData = buildDefaultFlowData(savedModel)
-      const flowName = `${savedModel.name}-default-flow`
+      const flowName = `${savedModel.name}${t("flow.udmEditor.form.defaults.defaultFlowSuffix")}`
       const createdFlowchart = await udmService.createFlowchart({
         name: flowName,
         description: t("flow.udmEditor.form.flowchart.autoDescription"),

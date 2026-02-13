@@ -50,6 +50,7 @@ export interface ModelFlowState<
   currentFlowChartName: string | null
   currentJobId: string | null
   showMiniMap: boolean
+  isEdgeTimeSegmentMode: boolean
 
   // ========== 妯″瀷閰嶇疆 ==========
   modelConfig: ModelConfig
@@ -100,6 +101,9 @@ export interface ModelFlowState<
   removeTimeSegment: (segmentId: string) => void
   copyTimeSegment: (segmentId: string) => void
   reorderTimeSegments: (fromIndex: number, toIndex: number) => void
+  setEdgeTimeSegmentMode: (enabled: boolean) => void
+  toggleEdgeTimeSegmentMode: () => void
+  ensureDefaultTimeSegment: () => void
 
   // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
   exportFlowData: () => any
@@ -206,6 +210,7 @@ export function createModelFlowStore<
       timeSegments: [],
       modelConfig: config,
       showMiniMap: false,
+      isEdgeTimeSegmentMode: false,
 
       // ========== 鍩虹鎿嶄綔 ==========
       setNodes: (nodes) => set({ nodes }),
@@ -678,6 +683,35 @@ export function createModelFlowStore<
         set({ timeSegments: segments })
       },
 
+      setEdgeTimeSegmentMode: (enabled: boolean) => {
+        set({ isEdgeTimeSegmentMode: enabled })
+      },
+
+      toggleEdgeTimeSegmentMode: () => {
+        set((state) => ({
+          isEdgeTimeSegmentMode: !state.isEdgeTimeSegmentMode,
+        }))
+      },
+
+      ensureDefaultTimeSegment: () => {
+        const { timeSegments, calculationParameters } = get()
+        if (timeSegments.length > 0) return
+
+        const rawHours = Number(calculationParameters.hours)
+        const safeHours = Number.isFinite(rawHours) && rawHours > 0 ? rawHours : 24
+
+        set({
+          timeSegments: [
+            {
+              id: `seg_${Date.now()}`,
+              startHour: 0,
+              endHour: safeHours,
+              edgeOverrides: {},
+            },
+          ],
+        })
+      },
+
       // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
       exportFlowData: () => {
         const state = get()
@@ -1031,6 +1065,7 @@ export function createModelFlowStore<
             customParameters: mergedCustomParameters,
             edgeParameterConfigs: finalEdgeParameterConfigs,
             timeSegments: normalizeTimeSegments(timeSegments),
+            isEdgeTimeSegmentMode: false,
             // 淇濇寔褰撳墠鐨勮绠楀弬鏁帮紝涓嶄娇鐢ㄥ鍏ユ暟鎹腑鐨勫弬锟?
             // calculationParameters: calculationParameters || getDefaultCalculationParams(config.modelName as any),
             selectedNode: null,
@@ -1273,6 +1308,7 @@ export function createModelFlowStore<
             config.modelName as any,
           ),
           timeSegments: [],
+          isEdgeTimeSegmentMode: false,
         })
       },
 
@@ -1459,6 +1495,7 @@ export function createModelFlowStore<
           ],
           edgeParameterConfigs: {},
           timeSegments: [],
+          isEdgeTimeSegmentMode: false,
         })
       },
     }),

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { CustomParameter } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
+import EdgeTimeSegmentEditor from "./EdgeTimeSegmentEditor"
 
 interface UDMPropertyPanelProps {
   isNode: boolean
@@ -23,6 +24,7 @@ const toNumber = (value: unknown): number | null => {
 
 const extractUDMComponentParameters = (
   sourceData: Record<string, unknown> | undefined,
+  formatUnitDescription?: (unit: string) => string,
 ): CustomParameter[] => {
   if (!sourceData) return []
 
@@ -51,7 +53,11 @@ const extractUDMComponentParameters = (
         return {
           name,
           label,
-          description: unit ? `Unit: ${unit}` : undefined,
+          description: unit
+            ? formatUnitDescription
+              ? formatUnitDescription(unit)
+              : unit
+            : undefined,
           defaultValue,
         } as CustomParameter
       })
@@ -78,8 +84,17 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     updateEdgeFlow,
     updateEdgeParameterConfig,
     edgeParameterConfigs,
+    edges,
     customParameters,
     nodes,
+    timeSegments,
+    addTimeSegment,
+    updateTimeSegment,
+    removeTimeSegment,
+    copyTimeSegment,
+    reorderTimeSegments,
+    calculationParameters,
+    isEdgeTimeSegmentMode,
   } = store()
 
   const [nameError, setNameError] = useState("")
@@ -88,21 +103,33 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
   const [tempFlowValue, setTempFlowValue] = useState("")
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({})
 
+  const currentEdge = useMemo(
+    () =>
+      selectedEdge
+        ? edges.find((edge) => edge.id === selectedEdge.id) || selectedEdge
+        : null,
+    [edges, selectedEdge],
+  )
+
   useEffect(() => {
-    if (selectedEdge?.data?.flow !== undefined) {
-      setTempFlowValue(String(selectedEdge.data.flow))
+    if (currentEdge?.data?.flow !== undefined) {
+      setTempFlowValue(String(currentEdge.data.flow))
     } else {
       setTempFlowValue("")
     }
-  }, [selectedEdge?.id, selectedEdge?.data?.flow])
+  }, [currentEdge?.id, currentEdge?.data?.flow])
 
   const udmParameters = useMemo<CustomParameter[]>(() => {
+    const formatUnitDescription = (unit: string) =>
+      t("flow.propertyPanel.unitWithValue", { unit })
+
     if (customParameters && customParameters.length > 0) {
       return customParameters
     }
 
     const fromSelected = extractUDMComponentParameters(
       selectedNode?.data as Record<string, unknown> | undefined,
+      formatUnitDescription,
     )
     if (fromSelected.length > 0) {
       return fromSelected
@@ -111,8 +138,9 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     const firstUdmNode = nodes.find((node) => node.type === "udm")
     return extractUDMComponentParameters(
       firstUdmNode?.data as Record<string, unknown> | undefined,
+      formatUnitDescription,
     )
-  }, [customParameters, selectedNode?.id, selectedNode?.data, nodes])
+  }, [customParameters, selectedNode?.id, selectedNode?.data, nodes, t])
 
   const allParameters = useMemo(
     () => [volumeParam, ...udmParameters],
@@ -130,6 +158,10 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     if (!param.description) return ""
     if (param.description.startsWith("flow.")) {
       return t(param.description)
+    }
+    if (param.description.startsWith("Unit: ")) {
+      const unitValue = param.description.slice("Unit: ".length).trim()
+      return t("flow.propertyPanel.unitWithValue", { unit: unitValue })
     }
     return param.description
   }
@@ -178,13 +210,13 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
   }
 
   const handleEdgeFlowChange = (value: string) => {
-    if (!selectedEdge) return
+    if (!currentEdge) return
 
     setTempFlowValue(value)
 
     if (value === "") {
       setFlowRateError("")
-      updateEdgeFlow(selectedEdge.id, 0)
+      updateEdgeFlow(currentEdge.id, 0)
       return
     }
 
@@ -195,7 +227,7 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     }
 
     setFlowRateError("")
-    updateEdgeFlow(selectedEdge.id, numValue)
+    updateEdgeFlow(currentEdge.id, numValue)
   }
 
   if (isNode && selectedNode) {
@@ -268,8 +300,7 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
         {isUDMNode && (
           <Box>
             <Text fontSize="sm" color="gray.600" fontStyle="italic">
-              UDM node parameters are driven by the current UDM model
-              definition.
+              {t("flow.propertyPanel.notes.udm")}
             </Text>
           </Box>
         )}
@@ -278,7 +309,8 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
   }
 
   if (!isNode && selectedEdge) {
-    const sourceNode = nodes.find((node) => node.id === selectedEdge.source)
+    const activeEdge = currentEdge || selectedEdge
+    const sourceNode = nodes.find((node) => node.id === activeEdge.source)
     const edgeConfigs = edgeParameterConfigs[selectedEdge.id] || {}
 
     const handleConfigChange = (
@@ -301,11 +333,37 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
       updateEdgeParameterConfig(selectedEdge.id, paramName, newConfig)
     }
 
+    const segmentParameters = udmParameters.map((param) => ({
+      name: param.name,
+      label: getParamLabel(param),
+      description: getParamDescription(param),
+    }))
+
+    if (isEdgeTimeSegmentMode) {
+      const rawFlow = Number((activeEdge.data as Record<string, unknown>)?.flow)
+      return (
+        <EdgeTimeSegmentEditor
+          edgeId={selectedEdge.id}
+          edgeFlow={Number.isFinite(rawFlow) ? rawFlow : 0}
+          parameterDescriptors={segmentParameters}
+          edgeConfigs={edgeConfigs}
+          timeSegments={timeSegments}
+          simulationHours={calculationParameters.hours}
+          emptyParameterMessage={t("flow.propertyPanel.udmNoComponents")}
+          addTimeSegment={addTimeSegment}
+          updateTimeSegment={updateTimeSegment}
+          removeTimeSegment={removeTimeSegment}
+          copyTimeSegment={copyTimeSegment}
+          reorderTimeSegments={reorderTimeSegments}
+        />
+      )
+    }
+
     const renderEdgeParameters = () => {
       if (udmParameters.length === 0) {
         return (
           <Text fontSize="sm" color="gray.500">
-            No UDM components detected. Load a UDM model flowchart first.
+            {t("flow.propertyPanel.udmNoComponents")}
           </Text>
         )
       }

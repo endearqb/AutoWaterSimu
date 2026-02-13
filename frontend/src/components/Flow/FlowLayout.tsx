@@ -1,5 +1,5 @@
 import { Box } from "@chakra-ui/react"
-import React, { type ReactNode, useEffect, useRef, useState } from "react"
+import React, { type ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 import type { RFState } from "../../stores/flowStore"
@@ -49,6 +49,7 @@ const FlowLayout = ({
   const { t } = useI18n()
   const themeScopeRef = useRef<HTMLDivElement>(null!)
   const flowStore = store || useFlowStore
+  const flowState = flowStore() as any
   const {
     selectedNode,
     selectedEdge,
@@ -57,7 +58,11 @@ const FlowLayout = ({
     setImportedFileName,
     setCurrentFlowChartName,
     newFlowChart,
-  } = flowStore()
+  } = flowState
+  const isEdgeTimeSegmentMode = !!flowState.isEdgeTimeSegmentMode
+  const timeSegments = Array.isArray(flowState.timeSegments)
+    ? flowState.timeSegments
+    : []
 
   const [isInspectorOpen, setIsInspectorOpen] = useState(false)
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
@@ -66,6 +71,7 @@ const FlowLayout = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [sidebarWidth, setSidebarWidth] = useState(240)
   const [isToolbarLocked, setIsToolbarLocked] = useState(true)
+  const [layoutWidth, setLayoutWidth] = useState(0)
 
   const getDefaultPosition = () => ({ x: sidebarWidth + 16, y: 16 })
 
@@ -110,6 +116,34 @@ const FlowLayout = ({
       observer.disconnect()
     }
   }, [])
+
+  useEffect(() => {
+    const host = themeScopeRef.current
+    if (!host) return
+
+    const syncLayoutWidth = () => {
+      setLayoutWidth(host.getBoundingClientRect().width)
+    }
+
+    syncLayoutWidth()
+    const observer = new ResizeObserver(syncLayoutWidth)
+    observer.observe(host)
+    return () => observer.disconnect()
+  }, [])
+
+  const segmentCount = timeSegments.length
+  const shouldExpandInspector =
+    !!selectedEdge && isEdgeTimeSegmentMode && segmentCount >= 2
+  const inspectorWidth = useMemo(() => {
+    if (!shouldExpandInspector) return INSPECTOR_PANEL_WIDTH
+
+    const desiredWidth = INSPECTOR_PANEL_WIDTH + (segmentCount - 1) * 280
+    const viewportWidth =
+      typeof window !== "undefined" ? window.innerWidth : INSPECTOR_PANEL_WIDTH
+    const containerWidth = layoutWidth > 0 ? layoutWidth : viewportWidth
+    const maxWidth = Math.floor(containerWidth * 0.8)
+    return Math.max(INSPECTOR_PANEL_WIDTH, Math.min(desiredWidth, maxWidth))
+  }, [layoutWidth, segmentCount, shouldExpandInspector])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isToolbarLocked) return
@@ -269,7 +303,7 @@ const FlowLayout = ({
         h="100%"
         position="relative"
         transition="margin-right 0.1s ease"
-        marginRight={isInspectorOpen ? `${INSPECTOR_PANEL_WIDTH}px` : "0"}
+        marginRight={isInspectorOpen ? `${inspectorWidth}px` : "0"}
       >
         {canvas}
         {simulationControlProps && (
@@ -306,6 +340,7 @@ const FlowLayout = ({
       <BaseInspectorContainer
         isOpen={isInspectorOpen}
         onToggle={() => setIsInspectorOpen(!isInspectorOpen)}
+        width={inspectorWidth}
       >
         {inspector}
       </BaseInspectorContainer>

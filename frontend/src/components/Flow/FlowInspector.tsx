@@ -1,4 +1,4 @@
-import { Box, Heading, Text } from "@chakra-ui/react"
+import { Box, Button, Heading, HStack, Text } from "@chakra-ui/react"
 import { Tabs } from "@chakra-ui/react"
 import type React from "react"
 import { useI18n } from "../../i18n"
@@ -37,7 +37,30 @@ interface FlowInspectorProps {
 const FlowInspector = ({ config, store }: FlowInspectorProps) => {
   const { t } = useI18n()
   const flowStore = store || useFlowStore
-  const { selectedNode, selectedEdge } = flowStore()
+  const {
+    selectedNode,
+    selectedEdge,
+    isEdgeTimeSegmentMode = false,
+    toggleEdgeTimeSegmentMode,
+    ensureDefaultTimeSegment,
+    timeSegments = [],
+  } = flowStore() as any
+
+  const supportsEdgeTimeSegmentMode =
+    typeof toggleEdgeTimeSegmentMode === "function"
+
+  const handleToggleEdgeTimeSegmentMode = () => {
+    if (!supportsEdgeTimeSegmentMode) return
+    if (
+      !isEdgeTimeSegmentMode &&
+      Array.isArray(timeSegments) &&
+      timeSegments.length === 0 &&
+      typeof ensureDefaultTimeSegment === "function"
+    ) {
+      ensureDefaultTimeSegment()
+    }
+    toggleEdgeTimeSegmentMode()
+  }
 
   const {
     nodeTabs,
@@ -108,9 +131,19 @@ const FlowInspector = ({ config, store }: FlowInspectorProps) => {
       const EdgeComponent = edgePanel.component
       return (
         <Box>
-          <Heading size="md" mb={4}>
-            {t("flow.inspector.edgeTitle")}
-          </Heading>
+          <HStack justify="space-between" align="center" mb={4}>
+            <Heading size="md">{t("flow.inspector.edgeTitle")}</Heading>
+            {supportsEdgeTimeSegmentMode && (
+              <Button
+                size="xs"
+                variant={isEdgeTimeSegmentMode ? "solid" : "outline"}
+                colorPalette="blue"
+                onClick={handleToggleEdgeTimeSegmentMode}
+              >
+                {t("flow.inspector.timeSegmentButton")}
+              </Button>
+            )}
+          </HStack>
           <EdgeComponent {...(edgePanel.props || {})} store={flowStore} />
         </Box>
       )

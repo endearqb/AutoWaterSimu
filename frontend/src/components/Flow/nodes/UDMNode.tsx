@@ -27,11 +27,11 @@ interface UDMNodeProps extends NodeProps<any> {
 
 const UDMNode = ({ data, selected, id, store }: UDMNodeProps) => {
   const nodeData = data as UDMNodeData
-  const { language } = useI18n()
+  const { t, language } = useI18n()
   const flowStore = store || useUDMFlowStore
   const { updateNodeParameter } = flowStore()
   const [isEditing, setIsEditing] = useState(false)
-  const defaultLabel = "UDM"
+  const defaultLabel = t("flow.node.udm")
   const [label, setLabel] = useState(nodeData.label || defaultLabel)
   const hoveredNodeId = useHoveredNodeId()
   const isHovered = hoveredNodeId === id
