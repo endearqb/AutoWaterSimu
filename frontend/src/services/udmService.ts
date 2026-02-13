@@ -5,6 +5,7 @@ import {
   UdmService,
 } from "../client/sdk.gen"
 import type {
+  HybridUDMValidationResponse,
   MaterialBalanceInput,
   MaterialBalanceResultSummary,
   MaterialBalanceTimeSeriesResponse,
@@ -93,6 +94,18 @@ class UDMServiceImpl
           model: this.modelName,
         }),
       )
+    }
+  }
+
+  async validateHybridFlowchart(
+    flowchartData: Record<string, unknown>,
+  ): Promise<HybridUDMValidationResponse> {
+    try {
+      return await UdmService.validateHybridUdmFlowchart({
+        requestBody: flowchartData,
+      })
+    } catch (error) {
+      throw handleApiError(error, "Failed to validate hybrid UDM flowchart")
     }
   }
 

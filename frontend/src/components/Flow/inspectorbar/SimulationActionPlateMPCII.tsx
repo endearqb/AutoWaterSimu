@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react"
 import { useState } from "react"
 import { FiPlay, FiSettings } from "react-icons/fi"
+import { useI18n } from "../../../i18n"
 import ASM1Analyzer from "../legacy-analysis/ASM1Analyzer"
 import ASM1SlimAnalyzer from "../legacy-analysis/ASM1SlimAnalyzer"
 import ASM3Analyzer from "../legacy-analysis/ASM3Analyzer"
@@ -26,6 +27,7 @@ import { useSimulationController } from "./useSimulationController"
 interface SimulationActionPlateMPCIIProps extends SimulationControllerProps {}
 
 function SimulationActionPlateMPCII(props: SimulationActionPlateMPCIIProps) {
+  const { t } = useI18n()
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false)
   const [ev, setEv] = useState(0)
   const [priority, setPriority] = useState<"M" | "S" | "I">("S")
@@ -271,6 +273,7 @@ function SimulationActionPlateMPCII(props: SimulationActionPlateMPCIIProps) {
             </HStack>
             <Box
               as="button"
+              aria-label={t("flow.simulation.startButton")}
               w="60px"
               h="60px"
               borderRadius="full"

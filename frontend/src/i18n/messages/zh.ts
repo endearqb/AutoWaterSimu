@@ -512,6 +512,15 @@ export const zhMessages: I18nMessages = {
         node: "节点",
         edge: "连接线",
       },
+      hybrid: {
+        modelLabel: "混合模型",
+        selectModelPlaceholder: "请选择模型",
+        errors: {
+          bindModelRequired: "请先为该节点绑定 Hybrid 模型。",
+          currentModelNotInSetup: "当前节点绑定模型不在 Hybrid 配置中。",
+          selectedModelInvalid: "所选 Hybrid 模型无效。",
+        },
+      },
       notes: {
         asm1: "注意：ASM1节点只支持上述固定参数，不能添加自定义参数。",
         asm1slim: "注意：ASM1Slim节点只支持上述固定参数，不能添加自定义参数。",
@@ -716,6 +725,23 @@ export const zhMessages: I18nMessages = {
         sortByTime: "按起始时间排序",
         validationPassed: "时段覆盖校验通过。",
         validationFailed: "发现 {count} 项时段校验问题",
+      },
+    },
+    hybridSetup: {
+      title: "Hybrid 配置",
+      description: "为当前混合流程图选择 UDM 模型。",
+      loadingModels: "正在加载 UDM 模型...",
+      pairMappingTitle: "模型对映射（源模型变量 -> 目标焦集变量）",
+      pairMappingEmpty: "至少选择 2 个模型后才可配置跨模型映射。",
+      targetNoFocal: "目标模型未检测到焦集变量。",
+      localExempt: "本地豁免",
+      applyButton: "应用 Hybrid 配置",
+      toasts: {
+        loadModelsFailed: "加载 Hybrid UDM 模型列表失败",
+        fetchModelDetailFailed: "加载 UDM 模型详情失败",
+        mappingIncomplete: "Hybrid 映射尚未完整配置",
+        applied: "Hybrid UDM 配置已应用",
+        applyFailed: "应用 Hybrid 配置失败",
       },
     },
     menu: {

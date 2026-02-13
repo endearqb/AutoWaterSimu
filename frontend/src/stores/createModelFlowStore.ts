@@ -25,6 +25,7 @@ import {
   normalizeTimeSegments,
   type TimeSegment,
 } from "../utils/timeSegmentValidation"
+import type { HybridUDMConfig } from "../types/hybridUdm"
 // import type { BaseModelService } from '../services/baseModelService' // 鏆傛椂娉ㄩ噴鎺夋湭浣跨敤鐨勫锟?
 
 /**
@@ -46,6 +47,7 @@ export interface ModelFlowState<
   importedFileName: string | null
   calculationParameters: CalculationParameters
   timeSegments: TimeSegment[]
+  hybridConfig: HybridUDMConfig | null
   currentFlowChartId: string | null
   currentFlowChartName: string | null
   currentJobId: string | null
@@ -104,6 +106,11 @@ export interface ModelFlowState<
   setEdgeTimeSegmentMode: (enabled: boolean) => void
   toggleEdgeTimeSegmentMode: () => void
   ensureDefaultTimeSegment: () => void
+  setHybridConfig: (config: HybridUDMConfig | null) => void
+  applyHybridSetup: (
+    config: HybridUDMConfig,
+    canonicalParameters: CustomParameter[],
+  ) => void
 
   // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
   exportFlowData: () => any
@@ -208,6 +215,7 @@ export function createModelFlowStore<
         config.modelName as any,
       ),
       timeSegments: [],
+      hybridConfig: null,
       modelConfig: config,
       showMiniMap: false,
       isEdgeTimeSegmentMode: false,
@@ -712,6 +720,93 @@ export function createModelFlowStore<
         })
       },
 
+      setHybridConfig: (config: HybridUDMConfig | null) => {
+        set({ hybridConfig: config })
+      },
+
+      applyHybridSetup: (
+        config: HybridUDMConfig,
+        canonicalParameters: CustomParameter[],
+      ) => {
+        const state = get()
+        const safeParameters = (canonicalParameters || []).filter(
+          (param) => !!param?.name,
+        )
+        const uniqueParamMap = new Map<string, CustomParameter>()
+        safeParameters.forEach((param) => {
+          if (!uniqueParamMap.has(param.name)) {
+            uniqueParamMap.set(param.name, {
+              name: param.name,
+              label: param.label || param.name,
+              description: param.description,
+              defaultValue:
+                Number.isFinite(param.defaultValue) &&
+                typeof param.defaultValue === "number"
+                  ? param.defaultValue
+                  : 0,
+            })
+          }
+        })
+        const finalParameters = Array.from(uniqueParamMap.values())
+        const finalNames = new Set(finalParameters.map((param) => param.name))
+
+        const updatedNodes = state.nodes.map((node) => {
+          const updatedData = { ...(node.data as Record<string, any>) }
+          finalParameters.forEach((param) => {
+            if (!(param.name in updatedData)) {
+              updatedData[param.name] = String(param.defaultValue ?? 0)
+            }
+          })
+          return {
+            ...node,
+            data: updatedData,
+          }
+        })
+
+        const updatedEdges = state.edges.map((edge) => {
+          const updatedData = { ...(edge.data as Record<string, any>) }
+          finalParameters.forEach((param) => {
+            if (!(param.name in updatedData)) {
+              updatedData[param.name] = param.defaultValue
+            }
+            if (!(`${param.name}_a` in updatedData)) {
+              updatedData[`${param.name}_a`] = 1
+            }
+            if (!(`${param.name}_b` in updatedData)) {
+              updatedData[`${param.name}_b`] = 0
+            }
+          })
+          return {
+            ...edge,
+            data: updatedData,
+          }
+        })
+
+        const updatedEdgeParameterConfigs = { ...state.edgeParameterConfigs }
+        state.edges.forEach((edge) => {
+          const currentConfigs = { ...(updatedEdgeParameterConfigs[edge.id] || {}) }
+          finalParameters.forEach((param) => {
+            if (!currentConfigs[param.name]) {
+              currentConfigs[param.name] = { a: 1, b: 0 }
+            }
+          })
+          Object.keys(currentConfigs).forEach((name) => {
+            if (!finalNames.has(name)) {
+              delete currentConfigs[name]
+            }
+          })
+          updatedEdgeParameterConfigs[edge.id] = currentConfigs
+        })
+
+        set({
+          hybridConfig: config,
+          customParameters: finalParameters,
+          nodes: updatedNodes,
+          edges: updatedEdges,
+          edgeParameterConfigs: updatedEdgeParameterConfigs,
+        })
+      },
+
       // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
       exportFlowData: () => {
         const state = get()
@@ -914,6 +1009,7 @@ export function createModelFlowStore<
             : config.fixedParameters, // export fixed parameters only (exclude calculation params)
           calculationParameters: state.calculationParameters,
           timeSegments: state.timeSegments,
+          hybrid_config: isUDMModel ? state.hybridConfig : null,
           exportedAt: new Date().toISOString(),
           version: "1.0",
         }
@@ -940,7 +1036,11 @@ export function createModelFlowStore<
             customParameters,
             edgeParameterConfigs,
             timeSegments,
+            hybrid_config: importedHybridConfigSnake,
+            hybridConfig: importedHybridConfigCamel,
           } = data
+          const importedHybridConfig =
+            importedHybridConfigSnake ?? importedHybridConfigCamel ?? null
 
           // 鍩烘湰楠岃瘉
           if (!Array.isArray(nodes) || !Array.isArray(importedEdges)) {
@@ -1065,6 +1165,7 @@ export function createModelFlowStore<
             customParameters: mergedCustomParameters,
             edgeParameterConfigs: finalEdgeParameterConfigs,
             timeSegments: normalizeTimeSegments(timeSegments),
+            hybridConfig: importedHybridConfig,
             isEdgeTimeSegmentMode: false,
             // 淇濇寔褰撳墠鐨勮绠楀弬鏁帮紝涓嶄娇鐢ㄥ鍏ユ暟鎹腑鐨勫弬锟?
             // calculationParameters: calculationParameters || getDefaultCalculationParams(config.modelName as any),
@@ -1308,6 +1409,7 @@ export function createModelFlowStore<
             config.modelName as any,
           ),
           timeSegments: [],
+          hybridConfig: null,
           isEdgeTimeSegmentMode: false,
         })
       },
@@ -1495,6 +1597,7 @@ export function createModelFlowStore<
           ],
           edgeParameterConfigs: {},
           timeSegments: [],
+          hybridConfig: null,
           isEdgeTimeSegmentMode: false,
         })
       },

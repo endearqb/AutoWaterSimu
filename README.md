@@ -230,7 +230,7 @@ For more details on test commands and configuration, refer to the README or `pac
 | 10 | Improve the model addition workflow | Deprecated |
 | 11 | Support adding custom user‑defined models | In progress, beta version completed |
 | 12 | Benchmark cases based on literature datasets, with reproducible curve‑matching outputs |  |
-| 13 | Tensorized multi‑node representation + grouped heterogeneous models (different model per node) |  |
+| 13 | Tensorized multi‑node representation + grouped heterogeneous models (different model per node) | In progress |
 | 14 | Parameter sweep / scenario comparison (“run all options in one plot”) |  |
 | 15 | Performance benchmarks and optional GPU acceleration |  |
 | 16 | Calibration/tuning workflow for real‑world project deployment |  |

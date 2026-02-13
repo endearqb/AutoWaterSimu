@@ -1,8 +1,17 @@
-﻿import { Box, Field, HStack, Input, Stack, Text } from "@chakra-ui/react"
+import {
+  Box,
+  Field,
+  HStack,
+  Input,
+  NativeSelect,
+  Stack,
+  Text,
+} from "@chakra-ui/react"
 import { useEffect, useMemo, useState } from "react"
 import type { CustomParameter } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
+import type { HybridUDMSelectedModel } from "../../../types/hybridUdm"
 import EdgeTimeSegmentEditor from "./EdgeTimeSegmentEditor"
 
 interface UDMPropertyPanelProps {
@@ -21,6 +30,13 @@ const toNumber = (value: unknown): number | null => {
   const num = Number.parseFloat(String(value))
   return Number.isNaN(num) ? null : num
 }
+
+const toInteger = (value: unknown): number | null => {
+  const num = Number.parseInt(String(value), 10)
+  return Number.isNaN(num) ? null : num
+}
+
+const buildModelKey = (modelId: string, version: number) => `${modelId}@${version}`
 
 const extractUDMComponentParameters = (
   sourceData: Record<string, unknown> | undefined,
@@ -71,6 +87,92 @@ const extractUDMComponentParameters = (
   return []
 }
 
+const getSelectedNodeModelKey = (
+  sourceData: Record<string, unknown> | undefined,
+): string => {
+  if (!sourceData) return ""
+  const udmModel = (sourceData.udmModel as Record<string, unknown> | undefined) || {}
+  const modelId = String(
+    sourceData.udmModelId || udmModel.id || udmModel.modelId || "",
+  ).trim()
+  const version = toInteger(
+    sourceData.udmModelVersion || udmModel.version || udmModel.currentVersion,
+  )
+  if (!modelId || version === null) return ""
+  return buildModelKey(modelId, version)
+}
+
+const buildNodeModelData = (
+  model: HybridUDMSelectedModel,
+  currentNodeData: Record<string, unknown>,
+): Record<string, unknown> => {
+  const modelName = String(model.name || model.model_id || "UDM").trim()
+  const components = Array.isArray(model.components) ? model.components : []
+  const parameters = Array.isArray(model.parameters) ? model.parameters : []
+  const processes = Array.isArray(model.processes) ? model.processes : []
+
+  const parameterValues: Record<string, number> = {}
+  parameters.forEach((param) => {
+    if (!param || typeof param !== "object") return
+    const raw = param as Record<string, unknown>
+    const name = String(raw.name || "").trim()
+    if (!name) return
+    const defaultValue =
+      toNumber(raw.default_value) ?? toNumber(raw.defaultValue) ?? 0
+    parameterValues[name] = defaultValue
+  })
+
+  const componentValues: Record<string, string> = {}
+  const componentNames: string[] = []
+  components.forEach((component) => {
+    if (!component || typeof component !== "object") return
+    const raw = component as Record<string, unknown>
+    const name = String(raw.name || "").trim()
+    if (!name) return
+    componentNames.push(name)
+    const existingValue = currentNodeData[name]
+    if (existingValue !== undefined && existingValue !== null && existingValue !== "") {
+      componentValues[name] = String(existingValue)
+      return
+    }
+    const defaultValue =
+      toNumber(raw.default_value) ?? toNumber(raw.defaultValue) ?? 0
+    componentValues[name] = String(defaultValue)
+  })
+
+  return {
+    ...componentValues,
+    udmModel: {
+      id: model.model_id,
+      name: modelName,
+      version: model.version,
+      hash: model.hash || "",
+      components,
+      parameters,
+      processes,
+      parameterValues,
+    },
+    udmModelSnapshot: {
+      id: model.model_id,
+      name: modelName,
+      version: model.version,
+      hash: model.hash || "",
+      components,
+      parameters,
+      processes,
+      meta: model.meta || {},
+    },
+    udmComponents: components,
+    udmComponentNames: componentNames,
+    udmProcesses: processes,
+    udmParameters: parameterValues,
+    udmParameterValues: parameterValues,
+    udmModelId: model.model_id,
+    udmModelVersion: model.version,
+    udmModelHash: model.hash || "",
+  }
+}
+
 function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
   if (!store) {
     throw new Error("UDMPropertyPanel requires a store prop")
@@ -95,6 +197,9 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     reorderTimeSegments,
     calculationParameters,
     isEdgeTimeSegmentMode,
+    hybridConfig,
+    setNodes,
+    setSelectedNode,
   } = store()
 
   const [nameError, setNameError] = useState("")
@@ -102,6 +207,7 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
   const [flowRateError, setFlowRateError] = useState("")
   const [tempFlowValue, setTempFlowValue] = useState("")
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({})
+  const [hybridModelError, setHybridModelError] = useState("")
 
   const currentEdge = useMemo(
     () =>
@@ -118,6 +224,63 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
       setTempFlowValue("")
     }
   }, [currentEdge?.id, currentEdge?.data?.flow])
+
+  const hybridModels = useMemo<HybridUDMSelectedModel[]>(() => {
+    if (hybridConfig?.mode !== "udm_only") return []
+    return (hybridConfig.selected_models || []).filter(
+      (model) =>
+        !!model &&
+        typeof model === "object" &&
+        !!String(model.model_id || "").trim() &&
+        Number.isInteger(model.version),
+    )
+  }, [hybridConfig])
+
+  const hybridModelMap = useMemo(() => {
+    const next = new Map<string, HybridUDMSelectedModel>()
+    hybridModels.forEach((model) => {
+      const key = buildModelKey(model.model_id, model.version)
+      next.set(key, model)
+    })
+    return next
+  }, [hybridModels])
+
+  const selectedNodeModelKey = useMemo(
+    () =>
+      getSelectedNodeModelKey(
+        (selectedNode?.data as Record<string, unknown> | undefined) || undefined,
+      ),
+    [selectedNode?.id, selectedNode?.data],
+  )
+
+  useEffect(() => {
+    if (!selectedNode || selectedNode.type !== "udm") {
+      setHybridModelError("")
+      return
+    }
+    if (hybridModels.length === 0) {
+      setHybridModelError("")
+      return
+    }
+    if (!selectedNodeModelKey) {
+      setHybridModelError(t("flow.propertyPanel.hybrid.errors.bindModelRequired"))
+      return
+    }
+    if (!hybridModelMap.has(selectedNodeModelKey)) {
+      setHybridModelError(
+        t("flow.propertyPanel.hybrid.errors.currentModelNotInSetup"),
+      )
+      return
+    }
+    setHybridModelError("")
+  }, [
+    selectedNode?.id,
+    selectedNode?.type,
+    hybridModels.length,
+    hybridModelMap,
+    selectedNodeModelKey,
+    t,
+  ])
 
   const udmParameters = useMemo<CustomParameter[]>(() => {
     const formatUnitDescription = (unit: string) =>
@@ -164,6 +327,36 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
       return t("flow.propertyPanel.unitWithValue", { unit: unitValue })
     }
     return param.description
+  }
+
+  const handleHybridModelChange = (nextModelKey: string) => {
+    if (!selectedNode || selectedNode.type !== "udm") return
+    const model = hybridModelMap.get(nextModelKey)
+    if (!model) {
+      setHybridModelError(t("flow.propertyPanel.hybrid.errors.selectedModelInvalid"))
+      return
+    }
+
+    const currentNodeData =
+      (selectedNode.data as Record<string, unknown> | undefined) || {}
+    const nodeModelData = buildNodeModelData(model, currentNodeData)
+
+    const updatedNodes = nodes.map((node) => {
+      if (node.id !== selectedNode.id) return node
+      return {
+        ...node,
+        data: {
+          ...(node.data as Record<string, unknown>),
+          ...nodeModelData,
+        },
+      }
+    })
+    setNodes(updatedNodes)
+
+    const updatedSelectedNode =
+      updatedNodes.find((node) => node.id === selectedNode.id) || null
+    setSelectedNode(updatedSelectedNode)
+    setHybridModelError("")
   }
 
   const handleNodeInputChange = (paramName: string, value: string) => {
@@ -255,6 +448,40 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
                 </Box>
               </HStack>
             </Field.Root>
+
+            {isUDMNode && hybridModels.length > 0 && (
+              <Field.Root invalid={!!hybridModelError}>
+                <HStack align="flex-start" gap={4}>
+                  <Field.Label minW="100px" pt={2}>
+                    {t("flow.propertyPanel.hybrid.modelLabel")}
+                  </Field.Label>
+                  <Box flex={1}>
+                    <NativeSelect.Root>
+                      <NativeSelect.Field
+                        value={selectedNodeModelKey}
+                        onChange={(e) => handleHybridModelChange(e.target.value)}
+                      >
+                        <option value="" disabled>
+                          {t("flow.propertyPanel.hybrid.selectModelPlaceholder")}
+                        </option>
+                        {hybridModels.map((model) => {
+                          const key = buildModelKey(model.model_id, model.version)
+                          return (
+                            <option key={key} value={key}>
+                              {model.name || model.model_id} (v{model.version})
+                            </option>
+                          )
+                        })}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                    {hybridModelError && (
+                      <Field.ErrorText>{hybridModelError}</Field.ErrorText>
+                    )}
+                  </Box>
+                </HStack>
+              </Field.Root>
+            )}
 
             {allParameters.map((param) => {
               const nodeValue = selectedNode.data?.[param.name] as string

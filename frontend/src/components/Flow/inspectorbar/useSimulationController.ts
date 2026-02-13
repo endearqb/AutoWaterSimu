@@ -34,6 +34,7 @@ import {
   isJobRunning as materialBalanceIsJobRunning,
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
+import { udmService } from "../../../services/udmService"
 import { validateTimeSegments } from "../../../utils/timeSegmentValidation"
 
 type SimulationModelStore = Pick<
@@ -145,6 +146,7 @@ export function useSimulationController(
     calculationParameters,
     updateCalculationParameters,
     exportFlowData,
+    setHybridConfig,
     setCurrentJobId,
     currentFlowChartName,
     importedFileName,
@@ -250,6 +252,38 @@ export function useSimulationController(
         return
       }
       setValidationErrors([])
+
+      const hybridConfig =
+        (flowData.hybrid_config as Record<string, unknown> | undefined) ||
+        (flowData.hybridConfig as Record<string, unknown> | undefined)
+      if (
+        modelType === "udm" &&
+        hybridConfig &&
+        hybridConfig.mode === "udm_only"
+      ) {
+        const validation = await udmService.validateHybridFlowchart(flowData)
+        if (!validation.is_valid) {
+          const errors =
+            validation.errors && validation.errors.length > 0
+              ? validation.errors
+              : ["Hybrid mapping validation failed"]
+          setValidationErrors(errors)
+          const { toaster } = await import("../../ui/toaster")
+          toaster.create({
+            title: t("flow.simulation.validationFailed"),
+            description: errors.join(" | "),
+            type: "error",
+            duration: 8000,
+          })
+          return
+        }
+
+        if (validation.normalized_hybrid_config) {
+          flowData.hybrid_config = validation.normalized_hybrid_config
+          flowData.hybridConfig = validation.normalized_hybrid_config
+          setHybridConfig?.(validation.normalized_hybrid_config as any)
+        }
+      }
 
       const nodeCount = flowData.nodes?.length || 0
       const edgeCount = flowData.edges?.length || 0

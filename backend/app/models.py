@@ -210,6 +210,56 @@ class SolverMethod(str, Enum):
     adaptive_heun = "adaptive_heun"
 
 
+class HybridUDMVariableMapItem(SQLModel):
+    """Hybrid UDM 模型对变量映射项。"""
+
+    source_var: Optional[str] = Field(default=None, description="源模型变量名")
+    target_var: str = Field(description="目标模型变量名")
+    enabled: bool = Field(default=True, description="是否启用该映射")
+    local_exempt: bool = Field(
+        default=False,
+        description="是否本地豁免（不跨模型映射，保留目标变量本地语义）",
+    )
+    mode: Optional[str] = Field(default=None, description="映射模式，可选 local_exempt")
+
+
+class HybridUDMModelPairMapping(SQLModel):
+    """Hybrid UDM 模型对映射定义。"""
+
+    source_model_id: str = Field(description="源模型ID")
+    source_version: int = Field(description="源模型版本")
+    target_model_id: str = Field(description="目标模型ID")
+    target_version: int = Field(description="目标模型版本")
+    variable_map: List[HybridUDMVariableMapItem] = Field(
+        default_factory=list, description="变量映射列表"
+    )
+
+
+class HybridUDMSelectedModel(SQLModel):
+    """Hybrid UDM 已选择模型快照。"""
+
+    model_id: str = Field(description="模型ID")
+    version: int = Field(description="模型版本")
+    name: Optional[str] = Field(default=None, description="模型名称")
+    hash: Optional[str] = Field(default=None, description="模型内容哈希")
+    components: List[Dict[str, Any]] = Field(default_factory=list, description="组分快照")
+    parameters: List[Dict[str, Any]] = Field(default_factory=list, description="参数快照")
+    processes: List[Dict[str, Any]] = Field(default_factory=list, description="过程快照")
+    meta: Optional[Dict[str, Any]] = Field(default=None, description="模型元信息")
+
+
+class HybridUDMConfig(SQLModel):
+    """Hybrid UDM 配置。"""
+
+    mode: str = Field(default="udm_only", description="Hybrid 模式，当前仅支持 udm_only")
+    selected_models: List[HybridUDMSelectedModel] = Field(
+        default_factory=list, description="参与本次 Hybrid 的模型列表"
+    )
+    model_pair_mappings: Dict[str, HybridUDMModelPairMapping] = Field(
+        default_factory=dict, description="模型对映射字典"
+    )
+
+
 # Node and Edge data structures for Material Balance
 class NodeData(SQLModel):
     """流程图节点数据"""
@@ -230,6 +280,10 @@ class NodeData(SQLModel):
     udm_processes: Optional[List[Dict[str, Any]]] = Field(default=None, description="UDM过程定义列表，包含rate_expr与stoich")
     udm_parameter_values: Optional[Dict[str, float]] = Field(default=None, description="UDM参数值映射")
     udm_model_snapshot: Optional[Dict[str, Any]] = Field(default=None, description="UDM模型快照，用于任务可复现")
+    udm_variable_bindings: Optional[List[Dict[str, str]]] = Field(
+        default=None,
+        description="UDM局部变量到全局规范变量的绑定关系 [{local_var, canonical_var}]",
+    )
     
     @validator('initial_concentrations')
     def validate_concentrations(cls, v):
@@ -338,6 +392,9 @@ class MaterialBalanceInput(SQLModel):
     parameters: CalculationParameters = Field(description="计算参数")
     time_segments: List[TimeSegment] = Field(
         default_factory=list, description="多时段边参数覆盖配置"
+    )
+    hybrid_config: Optional[HybridUDMConfig] = Field(
+        default=None, description="Hybrid UDM 配置（可选）"
     )
     original_flowchart_data: Optional[Dict[str, Any]] = Field(default=None, description="原始流程图数据，用于保留原始参数名称")
     
@@ -491,6 +548,19 @@ class MaterialBalanceValidationResponse(SQLModel):
     warnings: List[str] = Field(default_factory=list, description="警告信息列表")
     estimated_memory_mb: float = Field(description="预估内存使用 (MB)")
     estimated_time_seconds: float = Field(description="预估计算时间 (秒)")
+
+
+class HybridUDMValidationResponse(SQLModel):
+    """Hybrid UDM 流程图校验响应。"""
+
+    is_valid: bool = Field(description="是否通过校验")
+    errors: List[str] = Field(default_factory=list, description="错误列表")
+    warnings: List[str] = Field(default_factory=list, description="警告列表")
+    details: Dict[str, Any] = Field(default_factory=dict, description="诊断信息")
+    normalized_hybrid_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="标准化后的 hybrid_config（用于前端回显/修复）",
+    )
 
 
 class MaterialBalanceJobInputDataResponse(SQLModel):

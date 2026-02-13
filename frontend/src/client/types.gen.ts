@@ -428,6 +428,154 @@ export type HTTPValidationError = {
   detail?: Array<ValidationError>
 }
 
+/**
+ * Hybrid UDM 配置。
+ */
+export type HybridUDMConfig = {
+  /**
+   * Hybrid 模式，当前仅支持 udm_only
+   */
+  mode?: string
+  /**
+   * 参与本次 Hybrid 的模型列表
+   */
+  selected_models?: Array<HybridUDMSelectedModel>
+  /**
+   * 模型对映射字典
+   */
+  model_pair_mappings?: {
+    [key: string]: HybridUDMModelPairMapping
+  }
+}
+
+/**
+ * Hybrid UDM 模型对映射定义。
+ */
+export type HybridUDMModelPairMapping = {
+  /**
+   * 源模型ID
+   */
+  source_model_id: string
+  /**
+   * 源模型版本
+   */
+  source_version: number
+  /**
+   * 目标模型ID
+   */
+  target_model_id: string
+  /**
+   * 目标模型版本
+   */
+  target_version: number
+  /**
+   * 变量映射列表
+   */
+  variable_map?: Array<HybridUDMVariableMapItem>
+}
+
+/**
+ * Hybrid UDM 已选择模型快照。
+ */
+export type HybridUDMSelectedModel = {
+  /**
+   * 模型ID
+   */
+  model_id: string
+  /**
+   * 模型版本
+   */
+  version: number
+  /**
+   * 模型名称
+   */
+  name?: string | null
+  /**
+   * 模型内容哈希
+   */
+  hash?: string | null
+  /**
+   * 组分快照
+   */
+  components?: Array<{
+    [key: string]: unknown
+  }>
+  /**
+   * 参数快照
+   */
+  parameters?: Array<{
+    [key: string]: unknown
+  }>
+  /**
+   * 过程快照
+   */
+  processes?: Array<{
+    [key: string]: unknown
+  }>
+  /**
+   * 模型元信息
+   */
+  meta?: {
+    [key: string]: unknown
+  } | null
+}
+
+/**
+ * Hybrid UDM 流程图校验响应。
+ */
+export type HybridUDMValidationResponse = {
+  /**
+   * 是否通过校验
+   */
+  is_valid: boolean
+  /**
+   * 错误列表
+   */
+  errors?: Array<string>
+  /**
+   * 警告列表
+   */
+  warnings?: Array<string>
+  /**
+   * 诊断信息
+   */
+  details?: {
+    [key: string]: unknown
+  }
+  /**
+   * 标准化后的 hybrid_config（用于前端回显/修复）
+   */
+  normalized_hybrid_config?: {
+    [key: string]: unknown
+  } | null
+}
+
+/**
+ * Hybrid UDM 模型对变量映射项。
+ */
+export type HybridUDMVariableMapItem = {
+  /**
+   * 源模型变量名
+   */
+  source_var?: string | null
+  /**
+   * 目标模型变量名
+   */
+  target_var: string
+  /**
+   * 是否启用该映射
+   */
+  enabled?: boolean
+  /**
+   * 是否本地豁免（不跨模型映射，保留目标变量本地语义）
+   */
+  local_exempt?: boolean
+  /**
+   * 映射模式，可选 local_exempt
+   */
+  mode?: string | null
+}
+
 export type ItemCreate = {
   title: string
   description?: string | null
@@ -467,6 +615,10 @@ export type MaterialBalanceInput = {
    * 多时段边参数覆盖配置
    */
   time_segments?: Array<TimeSegment>
+  /**
+   * Hybrid UDM 配置（可选）
+   */
+  hybrid_config?: HybridUDMConfig | null
   /**
    * 原始流程图数据，用于保留原始参数名称
    */
@@ -748,6 +900,12 @@ export type NodeData = {
   udm_model_snapshot?: {
     [key: string]: unknown
   } | null
+  /**
+   * UDM局部变量到全局规范变量的绑定关系 [{local_var, canonical_var}]
+   */
+  udm_variable_bindings?: Array<{
+    [key: string]: string
+  }> | null
 }
 
 export type PrivateUserCreate = {
@@ -1967,6 +2125,14 @@ export type UdmCreateCalculationJobFromFlowchartData = {
 }
 
 export type UdmCreateCalculationJobFromFlowchartResponse = UDMJobPublic
+
+export type UdmValidateHybridUdmFlowchartData = {
+  requestBody: {
+    [key: string]: unknown
+  }
+}
+
+export type UdmValidateHybridUdmFlowchartResponse = HybridUDMValidationResponse
 
 export type UdmGetCalculationResultSummaryData = {
   jobId: string

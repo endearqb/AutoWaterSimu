@@ -145,6 +145,10 @@ class MaterialBalanceCalculator:
         if n_nodes == 0:
             raise ValueError("nodes is empty")
         n_components = len(nodes[0].initial_concentrations)
+        global_component_names = self._resolve_parameter_names(
+            input_data=input_data,
+            n_components=n_components,
+        )
 
         # 1) 鑺傜偣寮犻噺锛氫竴娆℃€у垪琛ㄦ帹瀵?-> 寮犻噺
         V_liq = torch.tensor(
@@ -222,7 +226,7 @@ class MaterialBalanceCalculator:
         )
         udm_runtime_payload = build_udm_runtime_payload(
             nodes=nodes,
-            num_components=n_components,
+            global_component_names=global_component_names,
             device=device,
             dtype=dtype,
         )

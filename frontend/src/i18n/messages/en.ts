@@ -529,6 +529,16 @@ export const enMessages: I18nMessages = {
         node: "node",
         edge: "edge",
       },
+      hybrid: {
+        modelLabel: "Hybrid Model",
+        selectModelPlaceholder: "Select model",
+        errors: {
+          bindModelRequired: "Please bind a Hybrid model for this node.",
+          currentModelNotInSetup:
+            "Current node model is not included in the Hybrid setup.",
+          selectedModelInvalid: "Selected Hybrid model is invalid.",
+        },
+      },
       notes: {
         asm1: "Note: ASM1 nodes only support the fixed parameters above and cannot add custom parameters.",
         asm1slim:
@@ -737,6 +747,24 @@ export const enMessages: I18nMessages = {
         sortByTime: "Sort by start hour",
         validationPassed: "Segment coverage validation passed.",
         validationFailed: "{count} segment validation issues found",
+      },
+    },
+    hybridSetup: {
+      title: "Hybrid Setup",
+      description: "Select UDM models for this hybrid flowchart.",
+      loadingModels: "Loading UDM models...",
+      pairMappingTitle:
+        "Pair Mapping (source model variable -> target focal variable)",
+      pairMappingEmpty: "Select at least 2 models to configure cross-model mappings.",
+      targetNoFocal: "Target model has no detected focal variables.",
+      localExempt: "Local exempt",
+      applyButton: "Apply Hybrid Setup",
+      toasts: {
+        loadModelsFailed: "Failed to load UDM models for hybrid setup",
+        fetchModelDetailFailed: "Failed to fetch UDM model detail",
+        mappingIncomplete: "Hybrid mapping is incomplete",
+        applied: "Hybrid UDM configuration applied",
+        applyFailed: "Failed to apply hybrid setup",
       },
     },
     menu: {

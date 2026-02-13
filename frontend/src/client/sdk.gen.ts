@@ -156,6 +156,8 @@ import type {
   UdmCreateCalculationJobResponse,
   UdmCreateCalculationJobFromFlowchartData,
   UdmCreateCalculationJobFromFlowchartResponse,
+  UdmValidateHybridUdmFlowchartData,
+  UdmValidateHybridUdmFlowchartResponse,
   UdmGetCalculationResultSummaryData,
   UdmGetCalculationResultSummaryResponse,
   UdmGetCalculationFinalValuesData,
@@ -2080,6 +2082,28 @@ export class UdmService {
     return __request(OpenAPI, {
       method: "POST",
       url: "/api/v1/udm/calculate-from-flowchart",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Validate Hybrid Udm Flowchart
+   * 校验 Hybrid UDM 流程图配置（模型选择、模型对映射、节点绑定与变量覆盖）。
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns HybridUDMValidationResponse Successful Response
+   * @throws ApiError
+   */
+  public static validateHybridUdmFlowchart(
+    data: UdmValidateHybridUdmFlowchartData,
+  ): CancelablePromise<UdmValidateHybridUdmFlowchartResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/udm/validate-hybrid-flowchart",
       body: data.requestBody,
       mediaType: "application/json",
       errors: {

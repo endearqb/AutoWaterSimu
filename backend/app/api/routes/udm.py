@@ -19,6 +19,7 @@ from app.models import (
     MaterialBalanceTimeSeriesResponse,
     MaterialBalanceValidationRequest,
     MaterialBalanceValidationResponse,
+    HybridUDMValidationResponse,
     UDMJob,
     UDMJobPublic,
     UDMJobsPublic,
@@ -28,6 +29,10 @@ from app.models import (
 )
 from app.services.udm_service import UDMService
 from app.services.data_conversion_service import DataConversionService
+from app.services.hybrid_udm_validation import (
+    build_hybrid_runtime_info,
+    validate_hybrid_flowchart,
+)
 from app.services.time_segment_validation import validate_time_segments
 
 router = APIRouter()
@@ -128,9 +133,24 @@ def create_calculation_job_from_flowchart(
                 },
             )
 
+        try:
+            hybrid_runtime_info = build_hybrid_runtime_info(
+                flowchart_data,
+                strict=True,
+            )
+        except ValueError as validation_error:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "HYBRID_UDM_VALIDATION_FAILED",
+                    "errors": [str(validation_error)],
+                },
+            )
+
         calculation_input = (
             data_conversion_service.convert_flowchart_to_material_balance_input(
-                flowchart_data
+                flowchart_data,
+                hybrid_runtime=hybrid_runtime_info,
             )
         )
         
@@ -182,6 +202,29 @@ def create_calculation_job_from_flowchart(
             status_code=400,
             detail=f"Failed to convert flowchart data: {str(e)}"
         )
+
+
+@router.post(
+    "/validate-hybrid-flowchart",
+    response_model=HybridUDMValidationResponse,
+)
+def validate_hybrid_udm_flowchart(
+    *,
+    current_user: CurrentUser,
+    flowchart_data: Dict[str, Any],
+) -> Any:
+    """
+    校验 Hybrid UDM 流程图配置（模型选择、模型对映射、节点绑定与变量覆盖）。
+    """
+    _ = current_user
+    validation_result = validate_hybrid_flowchart(flowchart_data)
+    return HybridUDMValidationResponse(
+        is_valid=validation_result.get("is_valid", False),
+        errors=validation_result.get("errors", []) or [],
+        warnings=validation_result.get("warnings", []) or [],
+        details=validation_result.get("details", {}) or {},
+        normalized_hybrid_config=validation_result.get("normalized_hybrid_config"),
+    )
 
 
 @router.get("/result/{job_id}", response_model=MaterialBalanceResultSummary)

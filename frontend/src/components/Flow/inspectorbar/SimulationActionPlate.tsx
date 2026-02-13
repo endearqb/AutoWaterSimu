@@ -1152,6 +1152,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
             <VStack gap={1}>
               <Box
                 as="button"
+                aria-label={t("flow.simulation.startButton")}
                 w="54px"
                 h="54px"
                 borderRadius="full"

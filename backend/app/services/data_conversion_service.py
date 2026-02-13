@@ -17,6 +17,11 @@ from app.services.time_segment_validation import (
     convert_time_segments_to_input,
     normalize_time_segments,
 )
+from app.services.hybrid_udm_validation import (
+    HybridRuntimeInfo,
+    build_hybrid_runtime_info,
+    build_model_key,
+)
 NODETYPE_NAME_MAP = {
     'asmslim': 'asm1slim'
 }
@@ -30,7 +35,8 @@ class DataConversionService:
     def convert_flowchart_to_material_balance_input(
         self,
         flowchart_data: Dict[str, Any],
-        calculation_params: Optional[Dict[str, Any]] = None
+        calculation_params: Optional[Dict[str, Any]] = None,
+        hybrid_runtime: Optional[HybridRuntimeInfo] = None,
     ) -> MaterialBalanceInput:
         """
         灏嗗墠绔祦绋嬪浘鏁版嵁杞崲涓篗aterialBalanceInput鏍煎紡
@@ -51,8 +57,17 @@ class DataConversionService:
             # 鎻愬彇鏁版嵁
             nodes_data = flowchart_data.get('nodes', [])
             edges_data = flowchart_data.get('edges', [])
-            custom_parameters = flowchart_data.get('customParameters', [])
+            raw_custom_parameters = flowchart_data.get('customParameters', [])
             edge_parameter_configs = flowchart_data.get('edgeParameterConfigs', {})
+
+            runtime_info = hybrid_runtime
+            if runtime_info is None:
+                runtime_info = build_hybrid_runtime_info(flowchart_data, strict=False)
+            custom_parameters = self._resolve_custom_parameters(
+                raw_custom_parameters,
+                runtime_info,
+            )
+            selected_model_snapshots = self._build_hybrid_snapshot_index(runtime_info)
             
             # print(f"鎻愬彇鍒扮殑鏁版嵁: 鑺傜偣{len(nodes_data)}涓? 杈箋len(edges_data)}鏉? 鑷畾涔夊弬鏁皗len(custom_parameters)}涓?)
             
@@ -69,7 +84,14 @@ class DataConversionService:
             # 杞崲鑺傜偣鏁版嵁
             # print("\n=== 寮€濮嬭浆鎹㈣妭鐐规暟鎹?===")
             nodes = self._convert_nodes(
-                nodes_data, param_map, num_components, custom_parameters
+                nodes_data,
+                param_map,
+                num_components,
+                custom_parameters,
+                node_variable_bindings=runtime_info.node_variable_bindings
+                if runtime_info is not None
+                else None,
+                selected_model_snapshots=selected_model_snapshots,
             )
             # print(f"鎴愬姛杞崲{len(nodes)}涓妭鐐?)
             
@@ -113,6 +135,10 @@ class DataConversionService:
                 edges=edges,
                 parameters=parameters,
                 time_segments=converted_time_segments,
+                hybrid_config=flowchart_data.get(
+                    "hybrid_config",
+                    flowchart_data.get("hybridConfig"),
+                ),
             )
             
             # 淇濆瓨鍘熷flowchart鏁版嵁浠ヤ究鍦ㄧ粨鏋滆浆鎹㈡椂浣跨敤
@@ -138,13 +164,139 @@ class DataConversionService:
                     # print(f"    杈撳叆鍊? {error.get('input', 'unknown')}")
             
             raise ValueError(f"Failed to convert flowchart data: {str(e)}")
+
+    def _resolve_custom_parameters(
+        self,
+        raw_custom_parameters: List[Dict[str, Any]],
+        runtime_info: Optional[HybridRuntimeInfo],
+    ) -> List[Dict[str, Any]]:
+        normalized_raw: List[Dict[str, Any]] = []
+        raw_map: Dict[str, Dict[str, Any]] = {}
+
+        for item in raw_custom_parameters or []:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name", "")).strip()
+            if not name:
+                continue
+            default_value = item.get("defaultValue", item.get("default_value", 0.0))
+            try:
+                default_value = float(default_value)
+            except (ValueError, TypeError):
+                default_value = 0.0
+            normalized_item = {
+                "name": name,
+                "label": item.get("label") or name,
+                "description": item.get("description"),
+                "defaultValue": default_value,
+            }
+            normalized_raw.append(normalized_item)
+            raw_map[name] = normalized_item
+
+        if runtime_info is None or not runtime_info.is_hybrid:
+            return normalized_raw
+
+        canonical_names = runtime_info.canonical_components or list(raw_map.keys())
+        if not canonical_names:
+            return normalized_raw
+
+        fallback_component_meta: Dict[str, Dict[str, Any]] = {}
+        for model in runtime_info.selected_models.values():
+            for component in model.components:
+                if not isinstance(component, dict):
+                    continue
+                component_name = str(component.get("name", "")).strip()
+                if not component_name:
+                    continue
+                if component_name in fallback_component_meta:
+                    continue
+                default_value = component.get("default_value", component.get("defaultValue", 0.0))
+                try:
+                    default_value = float(default_value)
+                except (ValueError, TypeError):
+                    default_value = 0.0
+                label = component.get("label") or component_name
+                unit = component.get("unit")
+                fallback_component_meta[component_name] = {
+                    "label": label,
+                    "unit": str(unit).strip() if unit is not None else "",
+                    "defaultValue": default_value,
+                }
+
+        resolved: List[Dict[str, Any]] = []
+        for name in canonical_names:
+            raw_item = raw_map.get(name)
+            fallback_meta = fallback_component_meta.get(name, {})
+            label = (
+                (raw_item or {}).get("label")
+                or fallback_meta.get("label")
+                or name
+            )
+            description = (raw_item or {}).get("description")
+            if not description and fallback_meta.get("unit"):
+                description = f"Unit: {fallback_meta.get('unit')}"
+            default_value = (raw_item or {}).get(
+                "defaultValue",
+                fallback_meta.get("defaultValue", 0.0),
+            )
+            try:
+                default_value = float(default_value)
+            except (ValueError, TypeError):
+                default_value = 0.0
+            resolved.append(
+                {
+                    "name": name,
+                    "label": label,
+                    "description": description,
+                    "defaultValue": default_value,
+                }
+            )
+        return resolved
+
+    def _build_hybrid_snapshot_index(
+        self,
+        runtime_info: Optional[HybridRuntimeInfo],
+    ) -> Dict[str, Dict[str, Any]]:
+        snapshot_map: Dict[str, Dict[str, Any]] = {}
+        if runtime_info is None:
+            return snapshot_map
+        hybrid_config = runtime_info.normalized_hybrid_config or {}
+        selected_models = hybrid_config.get("selected_models")
+        if not isinstance(selected_models, list):
+            return snapshot_map
+
+        for model in selected_models:
+            if not isinstance(model, dict):
+                continue
+            model_id = str(model.get("model_id", "")).strip()
+            raw_version = model.get("version")
+            try:
+                version = int(raw_version)
+            except (ValueError, TypeError):
+                continue
+            if not model_id:
+                continue
+            snapshot_map[build_model_key(model_id, version)] = {
+                "id": model_id,
+                "name": model.get("name"),
+                "version": version,
+                "hash": model.get("hash"),
+                "components": model.get("components", []),
+                "parameters": model.get("parameters", []),
+                "processes": model.get("processes", []),
+                "meta": model.get("meta", {}),
+                "parameter_values": model.get("parameter_values", {}),
+            }
+        return snapshot_map
     
     def _convert_nodes(
         self,
         nodes_data: List[Dict[str, Any]],
         param_map: Dict[str, int],
         num_components: int,
-        custom_parameters: List[Dict[str, Any]]
+        custom_parameters: List[Dict[str, Any]],
+        node_variable_bindings: Optional[Dict[str, List[Dict[str, str]]]] = None,
+        selected_model_snapshots: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> List[NodeData]:
         """
         杞崲鑺傜偣鏁版嵁
@@ -159,8 +311,43 @@ class DataConversionService:
             udm_model_payload = node_data.get('udmModel') or data.get('udmModel') or {}
             udm_snapshot_payload = node_data.get('udmModelSnapshot') or data.get('udmModelSnapshot')
             udm_components_payload = node_data.get('udmComponents') or data.get('udmComponents')
+            selected_snapshot_payload: Optional[Dict[str, Any]] = None
+
+            if node_type == 'udm' and selected_model_snapshots:
+                selected_model_id = (
+                    node_data.get('udmModelId')
+                    or data.get('udmModelId')
+                    or (udm_model_payload.get('id') if isinstance(udm_model_payload, dict) else None)
+                    or (udm_model_payload.get('modelId') if isinstance(udm_model_payload, dict) else None)
+                )
+                raw_selected_version = (
+                    node_data.get('udmModelVersion')
+                    or data.get('udmModelVersion')
+                    or (udm_model_payload.get('version') if isinstance(udm_model_payload, dict) else None)
+                    or (udm_model_payload.get('currentVersion') if isinstance(udm_model_payload, dict) else None)
+                )
+                try:
+                    selected_version = (
+                        int(raw_selected_version)
+                        if raw_selected_version is not None and raw_selected_version != ""
+                        else None
+                    )
+                except (ValueError, TypeError):
+                    selected_version = None
+                if selected_model_id and selected_version is not None:
+                    selected_snapshot_payload = selected_model_snapshots.get(
+                        build_model_key(str(selected_model_id), int(selected_version))
+                    )
+
+            if (
+                not udm_snapshot_payload
+                and selected_snapshot_payload
+            ):
+                udm_snapshot_payload = selected_snapshot_payload
             if not udm_components_payload and isinstance(udm_snapshot_payload, dict):
                 udm_components_payload = udm_snapshot_payload.get('components')
+            if not udm_components_payload and selected_snapshot_payload:
+                udm_components_payload = selected_snapshot_payload.get('components')
             if not udm_components_payload and isinstance(udm_model_payload, dict):
                 udm_components_payload = udm_model_payload.get('components')
             
@@ -314,6 +501,7 @@ class DataConversionService:
             udm_processes = None
             udm_parameter_values = None
             udm_model_snapshot = None
+            udm_variable_bindings = None
 
             if node_type == 'udm':
                 if isinstance(udm_model_payload, dict):
@@ -344,6 +532,37 @@ class DataConversionService:
                     if raw_hash is not None:
                         udm_model_hash = str(raw_hash)
 
+                if (
+                    selected_snapshot_payload
+                    and (udm_model_id is None or udm_model_version is None)
+                ):
+                    selected_id = (
+                        selected_snapshot_payload.get('id')
+                        or selected_snapshot_payload.get('model_id')
+                        or selected_snapshot_payload.get('modelId')
+                    )
+                    selected_version = (
+                        selected_snapshot_payload.get('version')
+                        or selected_snapshot_payload.get('current_version')
+                        or selected_snapshot_payload.get('currentVersion')
+                    )
+                    if udm_model_id is None and selected_id is not None:
+                        udm_model_id = str(selected_id)
+                    if udm_model_version is None:
+                        try:
+                            if selected_version is not None and selected_version != "":
+                                udm_model_version = int(selected_version)
+                        except (ValueError, TypeError):
+                            udm_model_version = None
+                    if udm_model_hash is None:
+                        raw_selected_hash = (
+                            selected_snapshot_payload.get('hash')
+                            or selected_snapshot_payload.get('content_hash')
+                            or selected_snapshot_payload.get('contentHash')
+                        )
+                        if raw_selected_hash is not None:
+                            udm_model_hash = str(raw_selected_hash)
+
                 raw_component_names = node_data.get('udmComponentNames') or data.get('udmComponentNames')
                 if isinstance(raw_component_names, list):
                     names = [str(item).strip() for item in raw_component_names if str(item).strip()]
@@ -367,6 +586,8 @@ class DataConversionService:
                 raw_processes = node_data.get('udmProcesses') or data.get('udmProcesses')
                 if raw_processes is None and isinstance(udm_snapshot_payload, dict):
                     raw_processes = udm_snapshot_payload.get('processes')
+                if raw_processes is None and selected_snapshot_payload:
+                    raw_processes = selected_snapshot_payload.get('processes')
                 if raw_processes is None and isinstance(udm_model_payload, dict):
                     raw_processes = udm_model_payload.get('processes')
                 if isinstance(raw_processes, list):
@@ -382,6 +603,11 @@ class DataConversionService:
                 )
                 if raw_param_values is None and isinstance(udm_model_payload, dict):
                     raw_param_values = udm_model_payload.get('parameterValues')
+                if raw_param_values is None and selected_snapshot_payload:
+                    raw_param_values = (
+                        selected_snapshot_payload.get('parameter_values')
+                        or selected_snapshot_payload.get('parameterValues')
+                    )
 
                 if isinstance(raw_param_values, dict):
                     normalized_params = {}
@@ -413,8 +639,30 @@ class DataConversionService:
                         if normalized_params:
                             udm_parameter_values = normalized_params
 
+                if udm_parameter_values is None and selected_snapshot_payload:
+                    param_defs = selected_snapshot_payload.get('parameters')
+                    if isinstance(param_defs, list):
+                        normalized_params = {}
+                        for param in param_defs:
+                            if not isinstance(param, dict):
+                                continue
+                            name = param.get('name')
+                            if not name:
+                                continue
+                            raw_default = param.get('default_value', param.get('defaultValue'))
+                            if raw_default is None:
+                                continue
+                            try:
+                                normalized_params[str(name)] = float(raw_default)
+                            except (ValueError, TypeError):
+                                continue
+                        if normalized_params:
+                            udm_parameter_values = normalized_params
+
                 if isinstance(udm_snapshot_payload, dict):
                     udm_model_snapshot = udm_snapshot_payload
+                elif selected_snapshot_payload:
+                    udm_model_snapshot = selected_snapshot_payload
                 elif isinstance(udm_model_payload, dict):
                     snapshot = {}
                     for key in ('id', 'name', 'version', 'hash', 'components', 'parameters', 'processes', 'meta'):
@@ -422,6 +670,23 @@ class DataConversionService:
                             snapshot[key] = udm_model_payload.get(key)
                     if snapshot:
                         udm_model_snapshot = snapshot
+
+                if node_variable_bindings and node_id in node_variable_bindings:
+                    normalized_bindings = []
+                    for item in node_variable_bindings.get(node_id) or []:
+                        if not isinstance(item, dict):
+                            continue
+                        local_var = str(item.get("local_var", "")).strip()
+                        canonical_var = str(item.get("canonical_var", "")).strip()
+                        if local_var and canonical_var:
+                            normalized_bindings.append(
+                                {
+                                    "local_var": local_var,
+                                    "canonical_var": canonical_var,
+                                }
+                            )
+                    if normalized_bindings:
+                        udm_variable_bindings = normalized_bindings
 
             node = NodeData(
                 node_id=node_id,
@@ -441,6 +706,7 @@ class DataConversionService:
                 udm_processes=udm_processes,
                 udm_parameter_values=udm_parameter_values,
                 udm_model_snapshot=udm_model_snapshot,
+                udm_variable_bindings=udm_variable_bindings,
             )
             nodes.append(node)
         

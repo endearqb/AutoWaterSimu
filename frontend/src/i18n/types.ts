@@ -503,6 +503,15 @@ export interface I18nMessages {
         node: string
         edge: string
       }
+      hybrid: {
+        modelLabel: string
+        selectModelPlaceholder: string
+        errors: {
+          bindModelRequired: string
+          currentModelNotInSetup: string
+          selectedModelInvalid: string
+        }
+      }
       notes: {
         asm1: string
         asm1slim: string
@@ -706,6 +715,23 @@ export interface I18nMessages {
         sortByTime: string
         validationPassed: string
         validationFailed: string
+      }
+    }
+    hybridSetup: {
+      title: string
+      description: string
+      loadingModels: string
+      pairMappingTitle: string
+      pairMappingEmpty: string
+      targetNoFocal: string
+      localExempt: string
+      applyButton: string
+      toasts: {
+        loadModelsFailed: string
+        fetchModelDetailFailed: string
+        mappingIncomplete: string
+        applied: string
+        applyFailed: string
       }
     }
     menu: {

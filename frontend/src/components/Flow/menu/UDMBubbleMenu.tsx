@@ -1,13 +1,14 @@
 import { HStack, Text, VStack } from "@chakra-ui/react"
 import type React from "react"
 import { useState } from "react"
-import { FiEdit3 } from "react-icons/fi"
+import { FiEdit3, FiGitMerge } from "react-icons/fi"
 
 import type { UDMJobPublic } from "../../../client/types.gen"
 import { useI18n } from "../../../i18n"
 import { udmService } from "../../../services/udmService"
 import { useUDMFlowStore } from "../../../stores/udmFlowStore"
 import { useUDMStore } from "../../../stores/udmStore"
+import HybridUDMSetupDialog from "../../UDM/HybridUDMSetupDialog"
 import UDMModelEditorDialog from "../../UDM/UDMModelEditorDialog"
 import BaseBubbleMenu from "./BaseBubbleMenu"
 import BaseDialogManager from "./BaseDialogManager"
@@ -26,6 +27,7 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
 }) => {
   const { t } = useI18n()
   const [isModelEditorOpen, setIsModelEditorOpen] = useState(false)
+  const [isHybridSetupOpen, setIsHybridSetupOpen] = useState(false)
 
   const selectedNode = useUDMFlowStore((state) => state.selectedNode)
   const selectedModelId =
@@ -176,6 +178,12 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
         }}
         extraMenuItems={[
           {
+            key: "udm-hybrid-setup",
+            label: t("flow.hybridSetup.title"),
+            icon: <FiGitMerge />,
+            onClick: () => setIsHybridSetupOpen(true),
+          },
+          {
             key: "udm-model-editor",
             label: t("flow.udmEditor.actions.openModelEditor"),
             icon: <FiEdit3 />,
@@ -213,6 +221,10 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
         isOpen={isModelEditorOpen}
         onClose={() => setIsModelEditorOpen(false)}
         initialModelId={selectedModelId}
+      />
+      <HybridUDMSetupDialog
+        isOpen={isHybridSetupOpen}
+        onClose={() => setIsHybridSetupOpen(false)}
       />
     </>
   )
