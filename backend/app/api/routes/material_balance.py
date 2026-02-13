@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+﻿from typing import Any, Dict, List, Optional
 from uuid import uuid4
 import asyncio
 from datetime import datetime
@@ -28,6 +28,7 @@ from app.models import (
 )
 from app.services.material_balance_service import MaterialBalanceService
 from app.services.data_conversion_service import DataConversionService
+from app.services.time_segment_validation import validate_time_segments
 
 router = APIRouter()
 
@@ -45,7 +46,7 @@ def create_calculation_job(
     calculation_input: MaterialBalanceInput,
 ) -> Any:
     """
-    创建物料平衡计算任务
+    鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
     """
     # Generate unique job ID
     job_id = str(uuid4())
@@ -55,7 +56,7 @@ def create_calculation_job(
     job_name = f"unknown_{current_time}"
     
     # Create job record
-    # 如果calculation_input包含original_flowchart_data，优先保存原始流程图数据
+    # 濡傛灉calculation_input鍖呭惈original_flowchart_data锛屼紭鍏堜繚瀛樺師濮嬫祦绋嬪浘鏁版嵁
     if calculation_input.original_flowchart_data:
         input_data = calculation_input.original_flowchart_data
     else:
@@ -102,132 +103,83 @@ def create_calculation_job_from_flowchart(
     flowchart_data: Dict[str, Any],
 ) -> Any:
     """
-    从流程图数据创建物料平衡计算任务
+    浠庢祦绋嬪浘鏁版嵁鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
     """
     try:
-        # 调试：打印接收到的数据结构
-        print(f"\n=== 接收到的flowchart_data ===")
-        print(f"顶级字段: {list(flowchart_data.keys())}")
-        
-        if 'nodes' in flowchart_data:
-            print(f"节点数量: {len(flowchart_data['nodes'])}")
-            if flowchart_data['nodes']:
-                first_node = flowchart_data['nodes'][0]
-                print(f"第一个节点: {first_node.get('id', 'N/A')}, 类型: {first_node.get('type', 'N/A')}")
-                print(f"节点数据字段: {list(first_node.get('data', {}).keys())}")
-        
-        if 'edges' in flowchart_data:
-            print(f"边数量: {len(flowchart_data['edges'])}")
-            if flowchart_data['edges']:
-                first_edge = flowchart_data['edges'][0]
-                print(f"第一条边: {first_edge.get('id', 'N/A')}")
-                print(f"边数据字段: {list(first_edge.get('data', {}).keys())}")
-        
-        if 'customParameters' in flowchart_data:
-            print(f"自定义参数数量: {len(flowchart_data['customParameters'])}")
-        
-        if 'calculationParameters' in flowchart_data:
-            print(f"计算参数: {flowchart_data['calculationParameters']}")
-        
-        print("=== 开始转换数据 ===")
-        
-        # 转换flowchart数据为MaterialBalanceInput格式
+        calculation_params = flowchart_data.get("calculationParameters", {})
+        time_segment_errors = validate_time_segments(
+            time_segments=flowchart_data.get(
+                "timeSegments",
+                flowchart_data.get("time_segments"),
+            ),
+            total_hours=calculation_params.get("hours"),
+            edge_ids=[
+                str(edge.get("id"))
+                for edge in flowchart_data.get("edges", [])
+                if isinstance(edge, dict) and edge.get("id") is not None
+            ],
+            parameter_names=[
+                str(param.get("name"))
+                for param in flowchart_data.get("customParameters", [])
+                if isinstance(param, dict) and param.get("name") is not None
+            ],
+        )
+        if time_segment_errors:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "TIME_SEGMENT_VALIDATION_FAILED",
+                    "errors": time_segment_errors,
+                },
+            )
+
         calculation_input = data_conversion_service.convert_flowchart_to_material_balance_input(
             flowchart_data=flowchart_data,
-            calculation_params=flowchart_data.get('calculationParameters')
-        )
-        
-        print(f"=== 数据转换成功，开始创建任务 ===")
-        
-        # Generate unique job ID
-        job_id = str(uuid4())
-        
-        # Generate job name from flowchart name and timestamp
-        current_time = datetime.now().strftime("%Y%m%d%H%M")
-        flowchart_name = flowchart_data.get('name', 'unknown')
-        if not flowchart_name or flowchart_name.strip() == '':
-            flowchart_name = 'unknown'
-        job_name = f"{flowchart_name}_{current_time}"
-        
-        # 尝试序列化calculation_input
-        try:
-            input_data_dict = calculation_input.model_dump()
-            print(f"calculation_input序列化成功")
-        except Exception as e:
-            print(f"calculation_input序列化失败: {type(e).__name__}: {str(e)}")
-            if hasattr(e, 'errors'):
-                print(f"序列化错误详情:")
-                for error in e.errors():
-                    print(f"  - 字段: {error.get('loc', 'unknown')}")
-                    print(f"    错误类型: {error.get('type', 'unknown')}")
-                    print(f"    错误信息: {error.get('msg', 'unknown')}")
-            raise
-        
-        # Create job record
-        try:
-            print(f"=== 开始创建数据库记录 ===")
-            job = MaterialBalanceJob(
-                job_id=job_id,
-                job_name=job_name,
-                status=MaterialBalanceJobStatus.pending,
-                input_data=flowchart_data,
-                owner_id=current_user.id,
-            )
-            print(f"MaterialBalanceJob对象创建成功")
-            
-            session.add(job)
-            print(f"已添加到session")
-            
-            session.commit()
-            print(f"数据库提交成功")
-            
-            session.refresh(job)
-            print(f"数据库记录刷新成功，job.id={job.id}")
-            
-        except Exception as db_error:
-            print(f"数据库操作失败: {type(db_error).__name__}: {str(db_error)}")
-            session.rollback()
-            raise
-        
-        # Start background calculation
-        try:
-            print(f"=== 开始启动后台计算任务 ===")
-            background_tasks.add_task(
-                material_balance_service.run_calculation,
-                session,
-                job_id,
-                calculation_input
-            )
-            print(f"后台任务启动成功")
-        except Exception as task_error:
-            print(f"后台任务启动失败: {type(task_error).__name__}: {str(task_error)}")
-            raise
-        
-        # Create response
-        try:
-            print(f"=== 开始创建响应对象 ===")
-            response = MaterialBalanceJobPublic(
-                id=job.id,
-                job_id=job.job_id,
-                job_name=job.job_name,
-                status=job.status,
-                created_at=job.created_at,
-                started_at=job.started_at,
-                completed_at=job.completed_at,
-                error_message=job.error_message,
-            )
-            print(f"响应对象创建成功")
-            return response
-        except Exception as response_error:
-            print(f"响应对象创建失败: {type(response_error).__name__}: {str(response_error)}")
-            raise
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Failed to process flowchart data: {str(e)}"
+            calculation_params=calculation_params,
         )
 
+        job_id = str(uuid4())
+        current_time = datetime.now().strftime("%Y%m%d%H%M")
+        flowchart_name = flowchart_data.get("name", "unknown") or "unknown"
+        job_name = f"{flowchart_name}_{current_time}"
+
+        job = MaterialBalanceJob(
+            job_id=job_id,
+            job_name=job_name,
+            status=MaterialBalanceJobStatus.pending,
+            input_data=flowchart_data,
+            owner_id=current_user.id,
+        )
+
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        background_tasks.add_task(
+            material_balance_service.run_calculation,
+            session,
+            job_id,
+            calculation_input,
+        )
+
+        return MaterialBalanceJobPublic(
+            id=job.id,
+            job_id=job.job_id,
+            job_name=job.job_name,
+            status=job.status,
+            created_at=job.created_at,
+            started_at=job.started_at,
+            completed_at=job.completed_at,
+            error_message=job.error_message,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to process flowchart data: {str(e)}",
+        )
 
 @router.get("/result/{job_id}", response_model=MaterialBalanceResultSummary)
 def get_calculation_result_summary(
@@ -237,7 +189,7 @@ def get_calculation_result_summary(
     job_id: str,
 ) -> Any:
     """
-    获取计算结果摘要
+    鑾峰彇璁＄畻缁撴灉鎽樿
     """
     statement = select(MaterialBalanceJob).where(
         MaterialBalanceJob.job_id == job_id,
@@ -260,6 +212,8 @@ def get_calculation_result_summary(
                 final_mass_balance_error=None,
                 final_total_volume=0.0,
                 solver_method=None,
+                segment_count=None,
+                parameter_change_event_count=None,
                 error_message=job.error_message,
             )
         else:
@@ -273,6 +227,8 @@ def get_calculation_result_summary(
                 final_mass_balance_error=None,
                 final_total_volume=0.0,
                 solver_method=None,
+                segment_count=None,
+                parameter_change_event_count=None,
                 error_message=None,
             )
     
@@ -294,6 +250,8 @@ def get_calculation_result_summary(
         final_mass_balance_error=summary.get("final_mass_balance_error"),
         final_total_volume=summary.get("final_total_volume", 0.0),
         solver_method=summary.get("solver_method"),
+        segment_count=summary.get("segment_count"),
+        parameter_change_event_count=summary.get("parameter_change_event_count"),
         error_message=job.error_message,
     )
 
@@ -306,7 +264,7 @@ def get_calculation_final_values(
     job_id: str,
 ) -> Any:
     """
-    获取计算结果中数组的最后一位数据（最终状态）
+    鑾峰彇璁＄畻缁撴灉涓暟缁勭殑鏈€鍚庝竴浣嶆暟鎹紙鏈€缁堢姸鎬侊級
     """
     statement = select(MaterialBalanceJob).where(
         MaterialBalanceJob.job_id == job_id,
@@ -334,16 +292,16 @@ def get_calculation_final_values(
     if not timestamps:
         raise HTTPException(status_code=404, detail="No time series data found")
     
-    # 提取每个节点和边的最后一位数据
+    # 鎻愬彇姣忎釜鑺傜偣鍜岃竟鐨勬渶鍚庝竴浣嶆暟鎹?
     final_node_data = {}
     for node_id, data in node_data.items():
         final_node_data[node_id] = {}
         for param_name, values in data.items():
-            # 跳过label字段，因为它不是时间序列数据
+            # 璺宠繃label瀛楁锛屽洜涓哄畠涓嶆槸鏃堕棿搴忓垪鏁版嵁
             if param_name == "label":
                 continue
             if values and len(values) > 0:
-                final_node_data[node_id][param_name] = values[-1]  # 获取数组的最后一位
+                final_node_data[node_id][param_name] = values[-1]  # 鑾峰彇鏁扮粍鐨勬渶鍚庝竴浣?
             else:
                 final_node_data[node_id][param_name] = 0.0
     
@@ -352,7 +310,7 @@ def get_calculation_final_values(
         final_edge_data[edge_id] = {}
         for param_name, values in data.items():
             if values and len(values) > 0:
-                final_edge_data[edge_id][param_name] = values[-1]  # 获取数组的最后一位
+                final_edge_data[edge_id][param_name] = values[-1]  # 鑾峰彇鏁扮粍鐨勬渶鍚庝竴浣?
             else:
                 final_edge_data[edge_id][param_name] = 0.0
     
@@ -371,15 +329,15 @@ def get_calculation_timeseries(
     session: SessionDep,
     current_user: CurrentUser,
     job_id: str,
-    start_time: Optional[float] = Query(None, description="开始时间 (小时)"),
-    end_time: Optional[float] = Query(None, description="结束时间 (小时)"),
-    page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(100, ge=1, le=1000, description="每页数据量"),
-    node_ids: Optional[List[str]] = Query(None, description="指定节点ID列表"),
-    edge_ids: Optional[List[str]] = Query(None, description="指定边ID列表"),
+    start_time: Optional[float] = Query(None, description="寮€濮嬫椂闂?(灏忔椂)"),
+    end_time: Optional[float] = Query(None, description="缁撴潫鏃堕棿 (灏忔椂)"),
+    page: int = Query(1, ge=1, description="椤电爜"),
+    page_size: int = Query(100, ge=1, le=1000, description="Page size"),
+    node_ids: Optional[List[str]] = Query(None, description="鎸囧畾鑺傜偣ID鍒楄〃"),
+    edge_ids: Optional[List[str]] = Query(None, description="鎸囧畾杈笽D鍒楄〃"),
 ) -> Any:
     """
-    分页获取时间序列数据
+    鍒嗛〉鑾峰彇鏃堕棿搴忓垪鏁版嵁
     """
     statement = select(MaterialBalanceJob).where(
         MaterialBalanceJob.job_id == job_id,
@@ -423,7 +381,7 @@ def get_calculation_status(
     job_id: str,
 ) -> Any:
     """
-    查询计算状态
+    鏌ヨ璁＄畻鐘舵€?
     """
     statement = select(MaterialBalanceJob).where(
         MaterialBalanceJob.job_id == job_id,
@@ -453,7 +411,7 @@ def validate_calculation_input(
     validation_request: MaterialBalanceValidationRequest,
 ) -> Any:
     """
-    验证输入参数
+    楠岃瘉杈撳叆鍙傛暟
     """
     try:
         # Validate input data structure
@@ -485,11 +443,11 @@ def get_user_calculation_jobs(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    skip: int = Query(0, ge=0, description="跳过的记录数"),
-    limit: int = Query(100, ge=1, le=1000, description="返回的记录数"),
+    skip: int = Query(0, ge=0, description="璺宠繃鐨勮褰曟暟"),
+    limit: int = Query(100, ge=1, le=1000, description="杩斿洖鐨勮褰曟暟"),
 ) -> Any:
     """
-    获取用户的计算任务列表
+    鑾峰彇鐢ㄦ埛鐨勮绠椾换鍔″垪琛?
     """
     statement = (
         select(MaterialBalanceJob)
@@ -534,7 +492,7 @@ def delete_calculation_job(
     job_id: str,
 ) -> Any:
     """
-    删除计算任务
+    鍒犻櫎璁＄畻浠诲姟
     """
     statement = select(MaterialBalanceJob).where(
         MaterialBalanceJob.job_id == job_id,
@@ -559,7 +517,7 @@ def get_job_input_data(
     job_id: str,
 ) -> Any:
     """
-    获取计算任务的输入数据
+    鑾峰彇璁＄畻浠诲姟鐨勮緭鍏ユ暟鎹?
     """
     statement = select(MaterialBalanceJob).where(
         MaterialBalanceJob.job_id == job_id,

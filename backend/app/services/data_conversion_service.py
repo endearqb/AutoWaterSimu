@@ -1,4 +1,4 @@
-import math
+﻿import math
 import numpy as np
 import torch
 from typing import Any, Dict, List, Optional, Tuple
@@ -13,6 +13,10 @@ from app.models import (
 )
 
 
+from app.services.time_segment_validation import (
+    convert_time_segments_to_input,
+    normalize_time_segments,
+)
 NODETYPE_NAME_MAP = {
     'asmslim': 'asm1slim'
 }
@@ -20,7 +24,7 @@ NODETYPE_NAME_MAP = {
 
 class DataConversionService:
     """
-    数据转换服务：处理流程图JSON数据与PyTorch Tensor之间的转换
+    鏁版嵁杞崲鏈嶅姟锛氬鐞嗘祦绋嬪浘JSON鏁版嵁涓嶱yTorch Tensor涔嬮棿鐨勮浆鎹?
     """
     
     def convert_flowchart_to_material_balance_input(
@@ -29,100 +33,109 @@ class DataConversionService:
         calculation_params: Optional[Dict[str, Any]] = None
     ) -> MaterialBalanceInput:
         """
-        将前端流程图数据转换为MaterialBalanceInput格式
+        灏嗗墠绔祦绋嬪浘鏁版嵁杞崲涓篗aterialBalanceInput鏍煎紡
         
         Args:
-            flowchart_data: 前端流程图数据，包含nodes, edges, customParameters等
-            calculation_params: 可选的计算参数，如果不提供则使用默认值
+            flowchart_data: 鍓嶇娴佺▼鍥炬暟鎹紝鍖呭惈nodes, edges, customParameters绛?
+            calculation_params: 鍙€夌殑璁＄畻鍙傛暟锛屽鏋滀笉鎻愪緵鍒欎娇鐢ㄩ粯璁ゅ€?
             
         Returns:
-            MaterialBalanceInput: 转换后的物料平衡输入数据
+            MaterialBalanceInput: 杞崲鍚庣殑鐗╂枡骞宠　杈撳叆鏁版嵁
             
         Raises:
-            ValueError: 当数据格式不正确或缺少必要信息时
+            ValueError: 褰撴暟鎹牸寮忎笉姝ｇ‘鎴栫己灏戝繀瑕佷俊鎭椂
         """
         try:
-            # print("\n=== 数据转换服务开始处理 ===")
+            # print("\n=== 鏁版嵁杞崲鏈嶅姟寮€濮嬪鐞?===")
             
-            # 提取数据
+            # 鎻愬彇鏁版嵁
             nodes_data = flowchart_data.get('nodes', [])
             edges_data = flowchart_data.get('edges', [])
             custom_parameters = flowchart_data.get('customParameters', [])
             edge_parameter_configs = flowchart_data.get('edgeParameterConfigs', {})
             
-            # print(f"提取到的数据: 节点{len(nodes_data)}个, 边{len(edges_data)}条, 自定义参数{len(custom_parameters)}个")
+            # print(f"鎻愬彇鍒扮殑鏁版嵁: 鑺傜偣{len(nodes_data)}涓? 杈箋len(edges_data)}鏉? 鑷畾涔夊弬鏁皗len(custom_parameters)}涓?)
             
             if not nodes_data:
                 raise ValueError("No nodes found in flowchart data")
             
-            # 创建参数名称到索引的映射
+            # 鍒涘缓鍙傛暟鍚嶇О鍒扮储寮曠殑鏄犲皠
             param_map = {param['name']: i for i, param in enumerate(custom_parameters)}
             num_components = len(custom_parameters) if custom_parameters else 1
             
-            # print(f"参数映射: {param_map}")
-            # print(f"组分数量: {num_components}")
+            # print(f"鍙傛暟鏄犲皠: {param_map}")
+            # print(f"缁勫垎鏁伴噺: {num_components}")
             
-            # 转换节点数据
-            # print("\n=== 开始转换节点数据 ===")
+            # 杞崲鑺傜偣鏁版嵁
+            # print("\n=== 寮€濮嬭浆鎹㈣妭鐐规暟鎹?===")
             nodes = self._convert_nodes(
                 nodes_data, param_map, num_components, custom_parameters
             )
-            # print(f"成功转换{len(nodes)}个节点")
+            # print(f"鎴愬姛杞崲{len(nodes)}涓妭鐐?)
             
-            # 转换边数据
-            # print("\n=== 开始转换边数据 ===")
+            # 杞崲杈规暟鎹?
+            # print("\n=== 寮€濮嬭浆鎹㈣竟鏁版嵁 ===")
             edges = self._convert_edges(
                 edges_data, param_map, num_components, custom_parameters
             )
-            # print(f"成功转换{len(edges)}条边")
+            raw_time_segments = flowchart_data.get(
+                "timeSegments",
+                flowchart_data.get("time_segments", []),
+            )
+            normalized_time_segments = normalize_time_segments(raw_time_segments)
+            converted_time_segments = convert_time_segments_to_input(
+                normalized_time_segments
+            )
+            # print(f"鎴愬姛杞崲{len(edges)}鏉¤竟")
             
-            # 创建计算参数 - 优先使用flowchart中的calculationParameters
+            # 鍒涘缓璁＄畻鍙傛暟 - 浼樺厛浣跨敤flowchart涓殑calculationParameters
             calc_params = flowchart_data.get('calculationParameters', {})
             if calculation_params:
                 calc_params.update(calculation_params)
             parameters = self._create_calculation_parameters(calc_params)
-            # print(f"计算参数: {parameters}")
+            # print(f"璁＄畻鍙傛暟: {parameters}")
             
-            # print("\n=== 创建MaterialBalanceInput对象 ===")
+            # print("\n=== 鍒涘缓MaterialBalanceInput瀵硅薄 ===")
             
-            # 打印详细的输入数据用于调试
-            # print(f"节点数据详情:")
+            # 鎵撳嵃璇︾粏鐨勮緭鍏ユ暟鎹敤浜庤皟璇?
+            # print(f"鑺傜偣鏁版嵁璇︽儏:")
             # for i, node in enumerate(nodes):
-                # print(f"  节点{i+1}: id={node.node_id}, type={node.node_type}, is_inlet={node.is_inlet}, is_outlet={node.is_outlet}")
+                # print(f"  鑺傜偣{i+1}: id={node.node_id}, type={node.node_type}, is_inlet={node.is_inlet}, is_outlet={node.is_outlet}")
                 # print(f"    volume={node.initial_volume}, concentrations={node.initial_concentrations}")
             
-            # print(f"边数据详情:")
+            # print(f"杈规暟鎹鎯?")
             # for i, edge in enumerate(edges):
-                # print(f"  边{i+1}: id={edge.edge_id}, source={edge.source_node_id}, target={edge.target_node_id}")
+                # print(f"  杈箋i+1}: id={edge.edge_id}, source={edge.source_node_id}, target={edge.target_node_id}")
                 # print(f"    flow_rate={edge.flow_rate}, factor_a={edge.concentration_factor_a}, factor_b={edge.concentration_factor_b}")
             
             result = MaterialBalanceInput(
                 nodes=nodes,
                 edges=edges,
-                parameters=parameters
+                parameters=parameters,
+                time_segments=converted_time_segments,
             )
             
-            # 保存原始flowchart数据以便在结果转换时使用
+            # 淇濆瓨鍘熷flowchart鏁版嵁浠ヤ究鍦ㄧ粨鏋滆浆鎹㈡椂浣跨敤
             result.original_flowchart_data = flowchart_data
-            # print("MaterialBalanceInput对象创建成功")
+            # print("MaterialBalanceInput瀵硅薄鍒涘缓鎴愬姛")
             
             return result
             
         except Exception as e:
-            # print(f"\n=== 数据转换失败 ===")
-            # print(f"错误类型: {type(e).__name__}")
-            # print(f"错误信息: {str(e)}")
+            # print(f"\n=== 鏁版嵁杞崲澶辫触 ===")
+            # print(f"閿欒绫诲瀷: {type(e).__name__}")
+            # print(f"閿欒淇℃伅: {str(e)}")
             # import traceback
-            # # print(f"错误堆栈: {traceback.format_exc()}")
+            # # print(f"閿欒鍫嗘爤: {traceback.format_exc()}")
             
-            # # 如果是Pydantic验证错误，打印详细信息
+            # # 濡傛灉鏄疨ydantic楠岃瘉閿欒锛屾墦鍗拌缁嗕俊鎭?
             # if hasattr(e, 'errors'):
-            #     # print(f"Pydantic验证错误详情:")
+            #     # print(f"Pydantic楠岃瘉閿欒璇︽儏:")
             #     for error in e.errors():
-                    # print(f"  - 字段: {error.get('loc', 'unknown')}")
-                    # print(f"    错误类型: {error.get('type', 'unknown')}")
-                    # print(f"    错误信息: {error.get('msg', 'unknown')}")
-                    # print(f"    输入值: {error.get('input', 'unknown')}")
+                    # print(f"  - 瀛楁: {error.get('loc', 'unknown')}")
+                    # print(f"    閿欒绫诲瀷: {error.get('type', 'unknown')}")
+                    # print(f"    閿欒淇℃伅: {error.get('msg', 'unknown')}")
+                    # print(f"    杈撳叆鍊? {error.get('input', 'unknown')}")
             
             raise ValueError(f"Failed to convert flowchart data: {str(e)}")
     
@@ -134,7 +147,7 @@ class DataConversionService:
         custom_parameters: List[Dict[str, Any]]
     ) -> List[NodeData]:
         """
-        转换节点数据
+        杞崲鑺傜偣鏁版嵁
         """
         nodes = []
         
@@ -151,28 +164,28 @@ class DataConversionService:
             if not udm_components_payload and isinstance(udm_model_payload, dict):
                 udm_components_payload = udm_model_payload.get('components')
             
-            # 确定节点类型
+            # 纭畾鑺傜偣绫诲瀷
             is_inlet = node_type == 'input'
             is_outlet = node_type == 'output'
             
-            # 获取体积
+            # 鑾峰彇浣撶Н
             volume_str = data.get('volume', '1e-6')
 
             try:
                 initial_volume = float(volume_str)
-                # 确保体积不为负值或零
+                # 纭繚浣撶Н涓嶄负璐熷€兼垨闆?
                 if initial_volume <= 0:
                     initial_volume = 1e-6
             except (ValueError, TypeError):
-                initial_volume = 1e-6  # 默认值
+                initial_volume = 1e-6  # 榛樿鍊?
             
-            # 构建初始浓度数组
+            # 鏋勫缓鍒濆娴撳害鏁扮粍
             initial_concentrations = []
             
             if custom_parameters:
                 for param in custom_parameters:
                     param_name = param['name']
-                    # 从节点数据中获取参数值
+                    # 浠庤妭鐐规暟鎹腑鑾峰彇鍙傛暟鍊?
                     param_value = data.get(param_name)
                     
                     if param_value is not None and param_value != "":
@@ -185,7 +198,7 @@ class DataConversionService:
                     
                     initial_concentrations.append(concentration)
             else:
-                # 如果没有自定义参数，使用默认的单组分系统
+                # 濡傛灉娌℃湁鑷畾涔夊弬鏁帮紝浣跨敤榛樿鐨勫崟缁勫垎绯荤粺
                 if node_type == 'udm' and isinstance(udm_components_payload, list):
                     for component in udm_components_payload:
                         if not isinstance(component, dict):
@@ -198,16 +211,16 @@ class DataConversionService:
                 if not initial_concentrations:
                     initial_concentrations = [1.0]
             
-            # 获取节点位置信息
+            # 鑾峰彇鑺傜偣浣嶇疆淇℃伅
             position = node_data.get('position', {'x': 0, 'y': 0})
             
-            # 处理ASM1 Slim参数（仅对asm1slim类型节点）
+            # 澶勭悊ASM1 Slim鍙傛暟锛堜粎瀵筧sm1slim绫诲瀷鑺傜偣锛?
             asm1slim_parameters = None
             if node_type == 'asm1slim':
-                # ASM1 Slim参数在节点根级别，不在data字段内
+                # ASM1 Slim鍙傛暟鍦ㄨ妭鐐规牴绾у埆锛屼笉鍦╠ata瀛楁鍐?
                 asm1slim_params_data = node_data.get('asm1slimParameters', {})
                 if asm1slim_params_data:
-                    # ASM1 Slim参数顺序：[empiricalDenitrificationRate, empiricalNitrificationRate, empiricalCNRatio, codDenitrificationInfluence, nitrateDenitrificationInfluence, ammoniaNitrificationInfluence, aerobicCODDegradationRate]
+                    # ASM1 Slim鍙傛暟椤哄簭锛歔empiricalDenitrificationRate, empiricalNitrificationRate, empiricalCNRatio, codDenitrificationInfluence, nitrateDenitrificationInfluence, ammoniaNitrificationInfluence, aerobicCODDegradationRate]
                     param_names = [
                         'empiricalDenitrificationRate', 
                         'empiricalNitrificationRate', 
@@ -227,14 +240,14 @@ class DataConversionService:
                         except (ValueError, TypeError):
                             asm1slim_parameters.append(0.0)
                     
-                    # print(f"节点 {node_id} ASM1 Slim参数: {asm1slim_parameters}")
-            # 处理ASM1参数（仅对asm1类型节点）
+                    # print(f"鑺傜偣 {node_id} ASM1 Slim鍙傛暟: {asm1slim_parameters}")
+            # 澶勭悊ASM1鍙傛暟锛堜粎瀵筧sm1绫诲瀷鑺傜偣锛?
             asm1_parameters = None
             if node_type == 'asm1':
-                # ASM1参数在节点根级别，不在data字段内
+                # ASM1鍙傛暟鍦ㄨ妭鐐规牴绾у埆锛屼笉鍦╠ata瀛楁鍐?
                 asm1_params_data = node_data.get('asm1Parameters', {})
                 if asm1_params_data:
-                    # ASM1参数顺序：[u_H, K_S, K_OH, K_NO, n_g, b_H, u_A, K_NH, K_OA, b_A, Y_H, Y_A, i_XB, i_XP, f_P, n_h, K_a, K_h, K_x]
+                    # ASM1鍙傛暟椤哄簭锛歔u_H, K_S, K_OH, K_NO, n_g, b_H, u_A, K_NH, K_OA, b_A, Y_H, Y_A, i_XB, i_XP, f_P, n_h, K_a, K_h, K_x]
                     asm1_param_names = [
                         'u_H', 
                         'K_S', 
@@ -265,15 +278,15 @@ class DataConversionService:
                             asm1_parameters.append(asm1_param_float)
                         except (ValueError, TypeError):
                             asm1_parameters.append(0.0)
-                    # print(f"节点 {node_id} ASM1参数: {asm1_parameters}")
+                    # print(f"鑺傜偣 {node_id} ASM1鍙傛暟: {asm1_parameters}")
             
-            # 处理ASM3参数（仅对asm3类型节点）
+            # 澶勭悊ASM3鍙傛暟锛堜粎瀵筧sm3绫诲瀷鑺傜偣锛?
             asm3_parameters = None
             if node_type == 'asm3':
-                # ASM3参数在节点根级别，不在data字段内
+                # ASM3鍙傛暟鍦ㄨ妭鐐规牴绾у埆锛屼笉鍦╠ata瀛楁鍐?
                 asm3_params_data = node_data.get('asm3Parameters', {})
                 if asm3_params_data:
-                    # ASM3参数顺序：[k_H, K_X, k_STO, ny_NOX, K_O2, K_NOX, K_S, K_STO, mu_H, K_NH4, K_ALK, b_HO2, b_HNOX, b_STOO2, b_STONOX, mu_A, K_ANH4, K_AO2, K_AALK, b_AO2, b_ANOX, f_SI, Y_STOO2, Y_STONOX, Y_HO2, Y_HNOX, Y_A, f_XI, i_NSI, i_NSS, i_NXI, i_NXS, i_NBM, i_SSXI, i_SSXS, i_SSBM, i_SSSTO]
+                    # ASM3鍙傛暟椤哄簭锛歔k_H, K_X, k_STO, ny_NOX, K_O2, K_NOX, K_S, K_STO, mu_H, K_NH4, K_ALK, b_HO2, b_HNOX, b_STOO2, b_STONOX, mu_A, K_ANH4, K_AO2, K_AALK, b_AO2, b_ANOX, f_SI, Y_STOO2, Y_STONOX, Y_HO2, Y_HNOX, Y_A, f_XI, i_NSI, i_NSS, i_NXI, i_NXS, i_NBM, i_SSXI, i_SSXS, i_SSBM, i_SSSTO]
                     asm3_param_names = [
                         'k_H', 'K_X', 'k_STO', 'ny_NOX', 'K_O2', 'K_NOX', 'K_S', 'K_STO',
                         'mu_H', 'K_NH4', 'K_ALK', 'b_HO2', 'b_HNOX', 'b_STOO2', 'b_STONOX',
@@ -291,9 +304,9 @@ class DataConversionService:
                             asm3_parameters.append(asm3_param_float)
                         except (ValueError, TypeError):
                             asm3_parameters.append(0.0)
-                    # print(f"节点 {node_id} ASM3参数: {asm3_parameters}")
+                    # print(f"鑺傜偣 {node_id} ASM3鍙傛暟: {asm3_parameters}")
             
-            # 澶勭悊UDM鍙傛暟锛堜粎瀵筺dm绫诲瀷鑺傜偣锛?
+            # 婢跺嫮鎮奤DM閸欏倹鏆熼敍鍫滅矌鐎电dm缁鐎烽懞鍌滃仯閿?
             udm_model_id = None
             udm_model_version = None
             udm_model_hash = None
@@ -441,7 +454,7 @@ class DataConversionService:
         custom_parameters: List[Dict[str, Any]]
     ) -> List[EdgeData]:
         """
-        转换边数据
+        杞崲杈规暟鎹?
         """
         edges = []
         
@@ -451,21 +464,21 @@ class DataConversionService:
             target_node_id = edge_data['target']
             data = edge_data.get('data', {})
             
-            # 获取流量 - 从data.flow字段获取
+            # 鑾峰彇娴侀噺 - 浠巇ata.flow瀛楁鑾峰彇
             flow_rate = data.get('flow', 1000.0)
             try:
                 flow_rate = float(flow_rate)
             except (ValueError, TypeError):
-                flow_rate = 1000.0  # 默认值
+                flow_rate = 1000.0  # 榛樿鍊?
             
-            # 构建浓度因子
+            # 鏋勫缓娴撳害鍥犲瓙
             concentration_factor_a = []
             concentration_factor_b = []
             
             if custom_parameters:
                 for param in custom_parameters:
                     param_name = param['name']
-                    # 从边数据中获取浓度因子 - 使用param_name_a和param_name_b格式
+                    # 浠庤竟鏁版嵁涓幏鍙栨祿搴﹀洜瀛?- 浣跨敤param_name_a鍜宲aram_name_b鏍煎紡
                     param_a_key = f"{param_name}_a"
                     param_b_key = f"{param_name}_b"
                     
@@ -482,7 +495,7 @@ class DataConversionService:
                     concentration_factor_a.append(factor_a)
                     concentration_factor_b.append(factor_b)
             else:
-                # 默认单组分系统
+                # 榛樿鍗曠粍鍒嗙郴缁?
                 concentration_factor_a = [1.0]
                 concentration_factor_b = [0.0]
             
@@ -503,7 +516,7 @@ class DataConversionService:
         params: Optional[Dict[str, Any]] = None
     ) -> CalculationParameters:
         """
-        创建计算参数
+        鍒涘缓璁＄畻鍙傛暟
         """
         if params is None:
             params = {}
@@ -523,19 +536,19 @@ class DataConversionService:
         flowchart_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        验证前端流程图数据的有效性
+        楠岃瘉鍓嶇娴佺▼鍥炬暟鎹殑鏈夋晥鎬?
         
         Args:
-            flowchart_data: 前端流程图数据
+            flowchart_data: 鍓嶇娴佺▼鍥炬暟鎹?
             
         Returns:
-            Dict: 验证结果，包含is_valid, errors, warnings等
+            Dict: 楠岃瘉缁撴灉锛屽寘鍚玦s_valid, errors, warnings绛?
         """
         errors = []
         warnings = []
         
         try:
-            # 检查基本结构
+            # 妫€鏌ュ熀鏈粨鏋?
             nodes_data = flowchart_data.get('nodes', [])
             edges_data = flowchart_data.get('edges', [])
             
@@ -546,7 +559,7 @@ class DataConversionService:
             if len(nodes_data) < 2:
                 errors.append("At least 2 nodes are required")
             
-            # 检查节点类型
+            # 妫€鏌ヨ妭鐐圭被鍨?
             node_types = [node.get('type', 'default') for node in nodes_data]
             has_inlet = 'input' in node_types
             has_outlet = 'output' in node_types
@@ -556,12 +569,12 @@ class DataConversionService:
             if not has_outlet:
                 warnings.append("No outlet (output) node found")
             
-            # 检查节点ID唯一性
+            # 妫€鏌ヨ妭鐐笽D鍞竴鎬?
             node_ids = [node['id'] for node in nodes_data]
             if len(node_ids) != len(set(node_ids)):
                 errors.append("Node IDs must be unique")
             
-            # 检查边的连接
+            # 妫€鏌ヨ竟鐨勮繛鎺?
             node_id_set = set(node_ids)
             for edge in edges_data:
                 source = edge.get('source')
@@ -572,7 +585,7 @@ class DataConversionService:
                 if target not in node_id_set:
                     errors.append(f"Edge references unknown target node: {target}")
             
-            # 检查数据完整性
+            # 妫€鏌ユ暟鎹畬鏁存€?
             for node in nodes_data:
                 data = node.get('data', {})
                 if node.get('type') != 'output' and 'volume' not in data:
@@ -600,7 +613,7 @@ class DataConversionService:
         input_data: MaterialBalanceInput
     ) -> Dict[str, Any]:
         """
-        将输入数据转换为计算格式
+        灏嗚緭鍏ユ暟鎹浆鎹负璁＄畻鏍煎紡
         """
         nodes = input_data.nodes
         edges = input_data.edges
@@ -686,7 +699,7 @@ class DataConversionService:
         calculation_time: float
     ) -> Dict[str, Any]:
         """
-        将计算结果转换为输出格式，使用原始参数名称
+        灏嗚绠楃粨鏋滆浆鎹负杈撳嚭鏍煎紡锛屼娇鐢ㄥ師濮嬪弬鏁板悕绉?
         """
         # Extract calculation results
         timestamps = calculation_result["timestamps"]
@@ -697,7 +710,7 @@ class DataConversionService:
         
         # Get original parameter names from flowchart data
         original_param_names = self._get_original_parameter_names(input_data)
-        # print(f"[DEBUG] 获取到的原始参数名称: {original_param_names}")
+        # print(f"[DEBUG] 鑾峰彇鍒扮殑鍘熷鍙傛暟鍚嶇О: {original_param_names}")
         
         # Process node data with original parameter names
         node_data_dict = {}
@@ -706,7 +719,7 @@ class DataConversionService:
             for param_name, values in data.items():
                 # Convert generic parameter names to original names
                 original_param_name = self._convert_to_original_param_name(param_name, original_param_names)
-                # print(f"[DEBUG] 参数名称转换: {param_name} -> {original_param_name}")
+                # print(f"[DEBUG] 鍙傛暟鍚嶇О杞崲: {param_name} -> {original_param_name}")
                 
                 if hasattr(values, 'tolist'):
                     node_data_dict[node_id][original_param_name] = values.tolist()
@@ -737,7 +750,7 @@ class DataConversionService:
     
     def _get_original_parameter_names(self, input_data: MaterialBalanceInput) -> List[str]:
         """
-        从原始流程图数据中提取参数名称
+        浠庡師濮嬫祦绋嬪浘鏁版嵁涓彁鍙栧弬鏁板悕绉?
         """
         if not input_data.original_flowchart_data:
             return []
@@ -747,20 +760,20 @@ class DataConversionService:
     
     def _convert_to_original_param_name(self, generic_name: str, original_names: List[str]) -> str:
         """
-        将通用参数名称转换为原始参数名称
+        灏嗛€氱敤鍙傛暟鍚嶇О杞崲涓哄師濮嬪弬鏁板悕绉?
         
         Args:
-            generic_name: 通用参数名称，如 'concentration_0', 'concentration_1'
-            original_names: 原始参数名称列表，如 ['C1', 'C2']
+            generic_name: 閫氱敤鍙傛暟鍚嶇О锛屽 'concentration_0', 'concentration_1'
+            original_names: 鍘熷鍙傛暟鍚嶇О鍒楄〃锛屽 ['C1', 'C2']
             
         Returns:
-            原始参数名称，如果找不到则返回通用名称
+            鍘熷鍙傛暟鍚嶇О锛屽鏋滄壘涓嶅埌鍒欒繑鍥為€氱敤鍚嶇О
         """
-        # 如果没有原始参数名称，返回通用名称
+        # 濡傛灉娌℃湁鍘熷鍙傛暟鍚嶇О锛岃繑鍥為€氱敤鍚嶇О
         if not original_names:
             return generic_name
         
-        # 解析通用参数名称中的索引
+        # 瑙ｆ瀽閫氱敤鍙傛暟鍚嶇О涓殑绱㈠紩
         if generic_name.startswith('concentration_'):
             try:
                 index = int(generic_name.split('_')[1])
@@ -769,7 +782,7 @@ class DataConversionService:
             except (ValueError, IndexError):
                 pass
         
-        # 如果无法转换，返回通用名称
+        # 濡傛灉鏃犳硶杞崲锛岃繑鍥為€氱敤鍚嶇О
         return generic_name
     
     def _calculate_edge_data(
@@ -779,7 +792,7 @@ class DataConversionService:
         timestamps: List[float]
     ) -> Dict[str, Dict[str, List[float]]]:
         """
-        计算边的时间序列数据
+        璁＄畻杈圭殑鏃堕棿搴忓垪鏁版嵁
         """
         edge_data = {}
         
@@ -814,7 +827,7 @@ class DataConversionService:
         calculation_time: float
     ) -> Dict[str, Any]:
         """
-        计算摘要统计信息
+        璁＄畻鎽樿缁熻淇℃伅
         """
         # Calculate total volume at final time
         final_total_volume = 0.0
@@ -845,7 +858,7 @@ class DataConversionService:
         query: MaterialBalanceTimeSeriesQuery
     ) -> MaterialBalanceTimeSeriesResponse:
         """
-        从结果数据中提取时间序列数据（支持分页）
+        浠庣粨鏋滄暟鎹腑鎻愬彇鏃堕棿搴忓垪鏁版嵁锛堟敮鎸佸垎椤碉級
         """
         timestamps = result_data["timestamps"]
         node_data = result_data["node_data"]
@@ -907,7 +920,7 @@ class DataConversionService:
     
     def _find_time_index(self, timestamps: List[float], target_time: float) -> int:
         """
-        找到最接近目标时间的索引
+        鎵惧埌鏈€鎺ヨ繎鐩爣鏃堕棿鐨勭储寮?
         """
         for i, t in enumerate(timestamps):
             if t >= target_time:
@@ -916,7 +929,7 @@ class DataConversionService:
     
     def validate_input_data(self, input_data: MaterialBalanceInput) -> Dict[str, Any]:
         """
-        验证输入数据并估算资源需求
+        楠岃瘉杈撳叆鏁版嵁骞朵及绠楄祫婧愰渶姹?
         """
         errors = []
         warnings = []
@@ -997,7 +1010,7 @@ class DataConversionService:
     
     def _validation_error_response(self, errors: List[str]) -> Dict[str, Any]:
         """
-        返回验证错误响应
+        杩斿洖楠岃瘉閿欒鍝嶅簲
         """
         return {
             "is_valid": False,
@@ -1006,3 +1019,4 @@ class DataConversionService:
             "estimated_memory_mb": 0.0,
             "estimated_time_seconds": 0.0,
         }
+

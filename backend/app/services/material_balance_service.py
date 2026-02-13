@@ -1,6 +1,6 @@
 import asyncio
+import logging
 import time
-import traceback
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -13,6 +13,8 @@ from app.models import (
 )
 from app.services.data_conversion_service import DataConversionService
 from app.material_balance.core import MaterialBalanceCalculator
+
+logger = logging.getLogger(__name__)
 
 
 class MaterialBalanceService:
@@ -62,7 +64,15 @@ class MaterialBalanceService:
             complexity_factor = (total_steps * num_nodes * num_components) / 1000
             timeout_seconds = min(base_timeout + complexity_factor * 10, 600)  # Max 10 minutes
             
-            print(f"Starting calculation for job {job_id}: {total_steps} steps, {num_nodes} nodes, timeout: {timeout_seconds:.1f}s")
+            logger.info(
+                "material balance calculation started",
+                extra={
+                    "job_id": job_id,
+                    "steps": total_steps,
+                    "nodes": num_nodes,
+                    "timeout_seconds": round(timeout_seconds, 2),
+                },
+            )
             
             # Run calculation with timeout
             try:
@@ -79,19 +89,25 @@ class MaterialBalanceService:
             
             # Calculate execution time
             calculation_time = time.time() - start_time
-            print(f"Calculation completed for job {job_id} in {calculation_time:.2f} seconds")
+            logger.info(
+                "material balance calculation completed",
+                extra={
+                    "job_id": job_id,
+                    "calculation_time_seconds": round(calculation_time, 2),
+                },
+            )
             
             # Convert MaterialBalanceResult to dict format for database storage
-            print(f"Converting MaterialBalanceResult to dict for job {job_id}")
             output_data = {
                 "job_id": result.job_id,
                 "status": result.status,
                 "timestamps": result.timestamps,
                 "node_data": result.node_data,
                 "edge_data": result.edge_data,
-                "summary": result.summary
+                "segment_markers": result.segment_markers,
+                "parameter_change_events": result.parameter_change_events,
+                "summary": result.summary,
             }
-            print(f"Result conversion completed for job {job_id}")
             
             # Update job with results
             job.status = MaterialBalanceJobStatus.success
@@ -103,7 +119,9 @@ class MaterialBalanceService:
             
         except asyncio.CancelledError:
             # Handle cancellation (e.g., server shutdown)
-            print(f"Material balance calculation cancelled for job {job_id}")
+            logger.warning(
+                "material balance calculation cancelled", extra={"job_id": job_id}
+            )
             job.status = MaterialBalanceJobStatus.cancelled
             job.completed_at = datetime.now()
             job.error_message = "Calculation cancelled due to server shutdown"
@@ -113,8 +131,10 @@ class MaterialBalanceService:
         except Exception as e:
             # Handle calculation error
             error_message = f"Calculation failed: {str(e)}"
-            print(f"Material balance calculation error for job {job_id}: {error_message}")
-            print(f"Traceback: {traceback.format_exc()}")
+            logger.exception(
+                "material balance calculation failed",
+                extra={"job_id": job_id, "error_message": error_message},
+            )
             
             job.status = MaterialBalanceJobStatus.failed
             job.completed_at = datetime.now()

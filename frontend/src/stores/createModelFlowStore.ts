@@ -1,4 +1,4 @@
-import {
+﻿import {
   type Connection,
   type Edge,
   type EdgeChange,
@@ -21,18 +21,22 @@ import {
   getDefaultCalculationParams,
 } from "../config/simulationConfig"
 import { t } from "../i18n"
-// import type { BaseModelService } from '../services/baseModelService' // 暂时注释掉未使用的导�?
+import {
+  normalizeTimeSegments,
+  type TimeSegment,
+} from "../utils/timeSegmentValidation"
+// import type { BaseModelService } from '../services/baseModelService' // 鏆傛椂娉ㄩ噴鎺夋湭浣跨敤鐨勫锟?
 
 /**
- * 通用流程图状态接�?
- * 基于RFState但支持泛型配�?
+ * 閫氱敤娴佺▼鍥剧姸鎬佹帴锟?
+ * 鍩轰簬RFState浣嗘敮鎸佹硾鍨嬮厤锟?
  */
 export interface ModelFlowState<
   TFlowChart,
   _TFlowChartCreate,
   _TFlowChartUpdate,
 > {
-  // ========== 基础状�?==========
+  // ========== 鍩虹鐘讹拷?==========
   nodes: Node[]
   edges: Edge[]
   selectedNode: Node | null
@@ -41,15 +45,16 @@ export interface ModelFlowState<
   edgeParameterConfigs: Record<string, Record<string, EdgeParameterConfig>>
   importedFileName: string | null
   calculationParameters: CalculationParameters
+  timeSegments: TimeSegment[]
   currentFlowChartId: string | null
   currentFlowChartName: string | null
   currentJobId: string | null
   showMiniMap: boolean
 
-  // ========== 模型配置 ==========
+  // ========== 妯″瀷閰嶇疆 ==========
   modelConfig: ModelConfig
 
-  // ========== 基础操作 ==========
+  // ========== 鍩虹鎿嶄綔 ==========
   setNodes: (nodes: Node[]) => void
   setEdges: (edges: Edge[]) => void
   onNodesChange: OnNodesChange
@@ -71,7 +76,7 @@ export interface ModelFlowState<
   deleteSelectedEdge: () => void
   deleteSelectedNode: () => void
 
-  // ========== 参数管理 ==========
+  // ========== 鍙傛暟绠＄悊 ==========
   addCustomParameter: (paramName: string, description?: string) => void
   removeCustomParameter: (paramName: string) => void
   addNodeParameter: (
@@ -89,13 +94,19 @@ export interface ModelFlowState<
   ) => void
   removeEdgeParameter: (edgeId: string, paramName: string) => void
   updateCalculationParameters: (params: Partial<CalculationParameters>) => void
+  setTimeSegments: (segments: TimeSegment[]) => void
+  addTimeSegment: (segment?: Partial<TimeSegment>) => void
+  updateTimeSegment: (segmentId: string, patch: Partial<TimeSegment>) => void
+  removeTimeSegment: (segmentId: string) => void
+  copyTimeSegment: (segmentId: string) => void
+  reorderTimeSegments: (fromIndex: number, toIndex: number) => void
 
-  // ========== 数据导入导出 ==========
+  // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
   exportFlowData: () => any
   importFlowData: (data: any) => { success: boolean; message: string }
   setImportedFileName: (fileName: string | null) => void
 
-  // ========== 流程图管�?==========
+  // ========== 娴佺▼鍥剧锟?==========
   saveFlowChart: (
     name: string,
     description?: string,
@@ -119,14 +130,14 @@ export interface ModelFlowState<
   setCurrentJobId: (jobId: string | null) => void
   newFlowChart: () => void
 
-  // ========== 模型特定方法 ==========
+  // ========== 妯″瀷鐗瑰畾鏂规硶 ==========
   syncAllParametersToElements: () => void
   resetToModelDefaults: () => void
 }
 
 /**
- * 流程图服务接�?
- * 用于抽象不同模型的流程图API调用
+ * 娴佺▼鍥炬湇鍔℃帴锟?
+ * 鐢ㄤ簬鎶借薄涓嶅悓妯″瀷鐨勬祦绋嬪浘API璋冪敤
  */
 export interface FlowChartService<
   TFlowChart,
@@ -152,9 +163,9 @@ export interface FlowChartService<
 const getDefaultFlowchartName = () => t("flow.menu.untitledFlowchart")
 
 /**
- * 创建模型流程图Store的工厂函�?
- * @param config 模型配置
- * @param flowChartService 流程图服�?
+ * 鍒涘缓妯″瀷娴佺▼鍥維tore鐨勫伐鍘傚嚱锟?
+ * @param config 妯″瀷閰嶇疆
+ * @param flowChartService 娴佺▼鍥炬湇锟?
  * @returns Zustand store hook
  */
 export function createModelFlowStore<
@@ -174,7 +185,7 @@ export function createModelFlowStore<
 ) {
   return create<ModelFlowState<TFlowChart, TFlowChartCreate, TFlowChartUpdate>>(
     (set, get) => ({
-      // ========== 初始状�?==========
+      // ========== 鍒濆鐘讹拷?==========
       nodes: [],
       edges: [],
       selectedNode: null,
@@ -192,10 +203,11 @@ export function createModelFlowStore<
       calculationParameters: getDefaultCalculationParams(
         config.modelName as any,
       ),
+      timeSegments: [],
       modelConfig: config,
       showMiniMap: false,
 
-      // ========== 基础操作 ==========
+      // ========== 鍩虹鎿嶄綔 ==========
       setNodes: (nodes) => set({ nodes }),
       setEdges: (edges) => set({ edges }),
 
@@ -232,23 +244,23 @@ export function createModelFlowStore<
           data: { flow: 0 },
         }
 
-        // 为新连接线添加参数配�?
+        // 涓烘柊杩炴帴绾挎坊鍔犲弬鏁伴厤锟?
         const newEdgeParameterConfigs = { ...state.edgeParameterConfigs }
         newEdgeParameterConfigs[newEdge.id] = {}
 
-        // 为每个固定参数创建默认配�?
+        // 涓烘瘡涓浐瀹氬弬鏁板垱寤洪粯璁ら厤锟?
         config.fixedParameters.forEach((param) => {
           newEdgeParameterConfigs[newEdge.id][param.name] = {
-            a: 1, // 默认比例系数
-            b: 0, // 默认常数�?
+            a: 1, // 榛樿姣斾緥绯绘暟
+            b: 0, // 榛樿甯告暟锟?
           }
         })
 
-        // 为每个自定义参数创建默认配置
+        // 涓烘瘡涓嚜瀹氫箟鍙傛暟鍒涘缓榛樿閰嶇疆
         state.customParameters.forEach((param) => {
           newEdgeParameterConfigs[newEdge.id][param.name] = {
-            a: 1, // 默认比例系数
-            b: 0, // 默认常数�?
+            a: 1, // 榛樿姣斾緥绯绘暟
+            b: 0, // 榛樿甯告暟锟?
           }
         })
 
@@ -257,13 +269,13 @@ export function createModelFlowStore<
           edgeParameterConfigs: newEdgeParameterConfigs,
         })
 
-        // 同步所有参数到现有元素（确保新连接线包含所有参数）
+        // 鍚屾鎵€鏈夊弬鏁板埌鐜版湁鍏冪礌锛堢‘淇濇柊杩炴帴绾垮寘鍚墍鏈夊弬鏁帮級
         get().syncAllParametersToElements()
       },
 
       addNode: (node: Node) => {
         set({ nodes: [...get().nodes, node] })
-        // 同步所有参数到新添加的节点（确保新节点包含所有固定参数）
+        // 鍚屾鎵€鏈夊弬鏁板埌鏂版坊鍔犵殑鑺傜偣锛堢‘淇濇柊鑺傜偣鍖呭惈鎵€鏈夊浐瀹氬弬鏁帮級
         get().syncAllParametersToElements()
       },
 
@@ -281,7 +293,7 @@ export function createModelFlowStore<
             : node,
         )
 
-        // 如果更新的节点是当前选中的节点，也更新selectedNode
+        // 濡傛灉鏇存柊鐨勮妭鐐规槸褰撳墠閫変腑鐨勮妭鐐癸紝涔熸洿鏂皊electedNode
         const updatedSelectedNode =
           state.selectedNode?.id === nodeId
             ? updatedNodes.find((node) => node.id === nodeId) ||
@@ -397,11 +409,11 @@ export function createModelFlowStore<
         }
       },
 
-      // ========== 参数管理 ==========
+      // ========== 鍙傛暟绠＄悊 ==========
       addCustomParameter: (paramName: string, description?: string) => {
         const { customParameters } = get()
         if (customParameters.find((p) => p.name === paramName)) {
-          return // 参数已存�?
+          return // 鍙傛暟宸插瓨锟?
         }
 
         const newParam: CustomParameter = {
@@ -415,7 +427,7 @@ export function createModelFlowStore<
           customParameters: [...customParameters, newParam],
         })
 
-        // 同步到所有节�?
+        // 鍚屾鍒版墍鏈夎妭锟?
         const { nodes, edges, edgeParameterConfigs } = get()
         set({
           nodes: nodes.map((node) => ({
@@ -439,8 +451,8 @@ export function createModelFlowStore<
                 configs[edge.id] = {
                   ...edgeParameterConfigs[edge.id],
                   [paramName]: {
-                    a: 1, // 默认比例系数
-                    b: 0, // 默认常数�?
+                    a: 1, // 榛樿姣斾緥绯绘暟
+                    b: 0, // 榛樿甯告暟锟?
                   },
                 }
                 return configs
@@ -454,7 +466,7 @@ export function createModelFlowStore<
       removeCustomParameter: (paramName: string) => {
         const { customParameters, nodes, edges, edgeParameterConfigs } = get()
 
-        // 检查是否为固定参数或计算参�?
+        // 妫€鏌ユ槸鍚︿负鍥哄畾鍙傛暟鎴栬绠楀弬锟?
         const isFixedParam = config.fixedParameters.some(
           (p) => p.name === paramName,
         )
@@ -463,10 +475,10 @@ export function createModelFlowStore<
         )
 
         if (isFixedParam || isCalcParam) {
-          return // 不能删除模型定义的参�?
+          return // 涓嶈兘鍒犻櫎妯″瀷瀹氫箟鐨勫弬锟?
         }
 
-        // �?edgeParameterConfigs 中移除对应的配置
+        // 锟?edgeParameterConfigs 涓Щ闄ゅ搴旂殑閰嶇疆
         const updatedEdgeParameterConfigs = { ...edgeParameterConfigs }
         Object.keys(updatedEdgeParameterConfigs).forEach((edgeId) => {
           if (updatedEdgeParameterConfigs[edgeId][paramName]) {
@@ -579,21 +591,108 @@ export function createModelFlowStore<
         })
       },
 
-      // ========== 数据导入导出 ==========
+      setTimeSegments: (segments: TimeSegment[]) => {
+        set({
+          timeSegments: [...segments].sort(
+            (a, b) => a.startHour - b.startHour,
+          ),
+        })
+      },
+
+      addTimeSegment: (segment?: Partial<TimeSegment>) => {
+        const state = get()
+        const nextSegment: TimeSegment = {
+          id: segment?.id || `seg_${Date.now()}`,
+          startHour:
+            typeof segment?.startHour === "number"
+              ? segment.startHour
+              : state.timeSegments.length > 0
+                ? state.timeSegments[state.timeSegments.length - 1].endHour
+                : 0,
+          endHour:
+            typeof segment?.endHour === "number"
+              ? segment.endHour
+              : state.calculationParameters.hours,
+          edgeOverrides: segment?.edgeOverrides || {},
+        }
+
+        set({
+          timeSegments: [...state.timeSegments, nextSegment].sort(
+            (a, b) => a.startHour - b.startHour,
+          ),
+        })
+      },
+
+      updateTimeSegment: (
+        segmentId: string,
+        patch: Partial<TimeSegment>,
+      ) => {
+        set({
+          timeSegments: get().timeSegments
+            .map((segment) =>
+              segment.id === segmentId ? { ...segment, ...patch } : segment,
+            )
+            .sort((a, b) => a.startHour - b.startHour),
+        })
+      },
+
+      removeTimeSegment: (segmentId: string) => {
+        set({
+          timeSegments: get().timeSegments.filter(
+            (segment) => segment.id !== segmentId,
+          ),
+        })
+      },
+
+      copyTimeSegment: (segmentId: string) => {
+        const state = get()
+        const sourceSegment = state.timeSegments.find(
+          (segment) => segment.id === segmentId,
+        )
+        if (!sourceSegment) return
+
+        const copiedSegment: TimeSegment = {
+          ...sourceSegment,
+          id: `${sourceSegment.id}_copy_${Date.now()}`,
+          edgeOverrides: JSON.parse(JSON.stringify(sourceSegment.edgeOverrides)),
+        }
+        set({
+          timeSegments: [...state.timeSegments, copiedSegment].sort(
+            (a, b) => a.startHour - b.startHour,
+          ),
+        })
+      },
+
+      reorderTimeSegments: (fromIndex: number, toIndex: number) => {
+        const segments = [...get().timeSegments]
+        if (
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= segments.length ||
+          toIndex >= segments.length
+        ) {
+          return
+        }
+        const [moved] = segments.splice(fromIndex, 1)
+        segments.splice(toIndex, 0, moved)
+        set({ timeSegments: segments })
+      },
+
+      // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
       exportFlowData: () => {
         const state = get()
         const isUDMModel = config.modelName === "udm"
 
-        // 获取计算参数的名称列�?- 使用enhancedCalculationParameters替代空的calculationParameters
+        // 鑾峰彇璁＄畻鍙傛暟鐨勫悕绉板垪锟?- 浣跨敤enhancedCalculationParameters鏇夸唬绌虹殑calculationParameters
         const calculationParamNames =
           config.enhancedCalculationParameters?.map((param) => param.name) ||
           config.calculationParameters.map((param) => param.name)
-        // 获取固定参数的名称列�?
+        // 鑾峰彇鍥哄畾鍙傛暟鐨勫悕绉板垪锟?
         const fixedParamNames = config.fixedParameters.map(
           (param) => param.name,
         )
 
-        // 处理节点数据
+        // 澶勭悊鑺傜偣鏁版嵁
         const processedNodes = state.nodes.map((node) => {
           if (isUDMModel && node.type === "udm" && node.data) {
             const nodeAny = node as any
@@ -662,12 +761,12 @@ export function createModelFlowStore<
             (node.type === "asmslim" || node.type === "asm1slim") &&
             node.data
           ) {
-            // ASM1slim节点：分离固定参数和计算参数
+            // ASM1slim鑺傜偣锛氬垎绂诲浐瀹氬弬鏁板拰璁＄畻鍙傛暟
             const { volume, ...nodeData } = node.data
             const fixedParams: any = { volume: volume ?? "1e-3" }
             const modelParams: any = {}
 
-            // 遍历节点数据，分离固定参数和计算参数
+            // 閬嶅巻鑺傜偣鏁版嵁锛屽垎绂诲浐瀹氬弬鏁板拰璁＄畻鍙傛暟
             Object.keys(nodeData).forEach((key) => {
               if (calculationParamNames.includes(key)) {
                 modelParams[key] = nodeData[key]
@@ -684,12 +783,12 @@ export function createModelFlowStore<
             }
           }
           if (node.type === "asm1" && node.data) {
-            // ASM1节点：分离固定参数和计算参数
+            // ASM1鑺傜偣锛氬垎绂诲浐瀹氬弬鏁板拰璁＄畻鍙傛暟
             const { volume, ...nodeData } = node.data
             const fixedParams: any = { volume: volume ?? "1e-3" }
             const modelParams: any = {}
 
-            // 遍历节点数据，分离固定参数和计算参数
+            // 閬嶅巻鑺傜偣鏁版嵁锛屽垎绂诲浐瀹氬弬鏁板拰璁＄畻鍙傛暟
             Object.keys(nodeData).forEach((key) => {
               if (calculationParamNames.includes(key)) {
                 modelParams[key] = nodeData[key]
@@ -705,12 +804,12 @@ export function createModelFlowStore<
             }
           }
           if (node.type === "asm3" && node.data) {
-            // ASM3节点：分离固定参数和ASM3状态变量参�?
+            // ASM3鑺傜偣锛氬垎绂诲浐瀹氬弬鏁板拰ASM3鐘舵€佸彉閲忓弬锟?
             const { volume, label, ...nodeData } = node.data
             const fixedParams: any = { volume: volume ?? "1e-3", label }
             const modelParams: any = {}
 
-            // 遍历节点数据，分离ASM3状态变量参�?
+            // 閬嶅巻鑺傜偣鏁版嵁锛屽垎绂籄SM3鐘舵€佸彉閲忓弬锟?
             Object.keys(nodeData).forEach((key) => {
               if (calculationParamNames.includes(key)) {
                 modelParams[key] = nodeData[key]
@@ -726,11 +825,11 @@ export function createModelFlowStore<
             }
           }
           if (node.data) {
-            // 非ASM1slim节点：只保留固定参数，移除计算参�?
+            // 闈濧SM1slim鑺傜偣锛氬彧淇濈暀鍥哄畾鍙傛暟锛岀Щ闄よ绠楀弬锟?
             const { volume, ...nodeData } = node.data
             const filteredData: any = { volume: volume ?? "1e-3" }
 
-            // 只保留固定参数和label
+            // 鍙繚鐣欏浐瀹氬弬鏁板拰label
             Object.keys(nodeData).forEach((key) => {
               if (fixedParamNames.includes(key) || key === "label") {
                 filteredData[key] = nodeData[key]
@@ -743,11 +842,11 @@ export function createModelFlowStore<
             }
           }
 
-          // 没有data的节点保持原�?
+          // 娌℃湁data鐨勮妭鐐逛繚鎸佸師锟?
           return node
         })
 
-        // 处理边数据，只导出固定参数的a和b配置
+        // 澶勭悊杈规暟鎹紝鍙鍑哄浐瀹氬弬鏁扮殑a鍜宐閰嶇疆
         const processedEdges = state.edges.map((edge) => {
           const { flow } = edge.data || {}
           const edgeConfigs = state.edgeParameterConfigs[edge.id] || {}
@@ -755,12 +854,12 @@ export function createModelFlowStore<
             ? state.customParameters
             : config.fixedParameters
 
-          // 构建新的data对象，包含flow和固定参数的a、b配置
+          // 鏋勫缓鏂扮殑data瀵硅薄锛屽寘鍚玣low鍜屽浐瀹氬弬鏁扮殑a銆乥閰嶇疆
           const newData: any = {
             flow: flow || 0,
           }
 
-          // 只为固定参数添加a和b配置，不包含计算参数
+          // 鍙负鍥哄畾鍙傛暟娣诲姞a鍜宐閰嶇疆锛屼笉鍖呭惈璁＄畻鍙傛暟
           edgeParameters.forEach((param) => {
             const configItem = edgeConfigs[param.name] || { a: 1, b: 0 }
             newData[`${param.name}_a`] = configItem.a
@@ -780,6 +879,7 @@ export function createModelFlowStore<
             ? state.customParameters
             : config.fixedParameters, // export fixed parameters only (exclude calculation params)
           calculationParameters: state.calculationParameters,
+          timeSegments: state.timeSegments,
           exportedAt: new Date().toISOString(),
           version: "1.0",
         }
@@ -787,12 +887,12 @@ export function createModelFlowStore<
 
       importFlowData: (data: any) => {
         try {
-          // 清理模型计算结果
+          // 娓呯悊妯″瀷璁＄畻缁撴灉
           if (modelStore) {
             modelStore.getState().reset()
           }
 
-          // 验证数据格式
+          // 楠岃瘉鏁版嵁鏍煎紡
           if (!data || typeof data !== "object") {
             return {
               success: false,
@@ -805,9 +905,10 @@ export function createModelFlowStore<
             edges: importedEdges,
             customParameters,
             edgeParameterConfigs,
+            timeSegments,
           } = data
 
-          // 基本验证
+          // 鍩烘湰楠岃瘉
           if (!Array.isArray(nodes) || !Array.isArray(importedEdges)) {
             return {
               success: false,
@@ -815,42 +916,42 @@ export function createModelFlowStore<
             }
           }
 
-          // 处理导入的节点数据，将asm1slimParameters、modelParameters或asm1Parameters合并到data�?
+          // 澶勭悊瀵煎叆鐨勮妭鐐规暟鎹紝灏哸sm1slimParameters銆乵odelParameters鎴朼sm1Parameters鍚堝苟鍒癲ata锟?
           const processedNodes = nodes.map((node: any) => {
             if (
               (node.type === "asm1slim" || node.type === "asmslim") &&
               (node.asm1slimParameters || node.modelParameters)
             ) {
-              // 将asm1slimParameters或modelParameters合并到data中（兼容旧格式）
+              // 灏哸sm1slimParameters鎴杕odelParameters鍚堝苟鍒癲ata涓紙鍏煎鏃ф牸寮忥級
               const parameters = node.asm1slimParameters || node.modelParameters
               return {
                 ...node,
-                type: "asmslim", // 内部统一使用asmslim类型
+                type: "asmslim", // 鍐呴儴缁熶竴浣跨敤asmslim绫诲瀷
                 data: {
                   ...node.data,
                   ...parameters,
                 },
-                // 移除参数字段
+                // 绉婚櫎鍙傛暟瀛楁
                 asm1slimParameters: undefined,
                 modelParameters: undefined,
               }
             }
             if (node.type === "asm1" && node.asm1Parameters) {
-              // 将asm1Parameters合并到data�?
+              // 灏哸sm1Parameters鍚堝苟鍒癲ata锟?
               return {
                 ...node,
                 data: {
                   ...node.data,
                   ...node.asm1Parameters,
                 },
-                // 移除参数字段
+                // 绉婚櫎鍙傛暟瀛楁
                 asm1Parameters: undefined,
               }
             }
             return node
           })
 
-          // 处理导入的边数据，从data中提取自定义参数的a和b配置
+          // 澶勭悊瀵煎叆鐨勮竟鏁版嵁锛屼粠data涓彁鍙栬嚜瀹氫箟鍙傛暟鐨刟鍜宐閰嶇疆
           const processedEdges: any[] = []
           const newEdgeParameterConfigs: Record<
             string,
@@ -863,16 +964,16 @@ export function createModelFlowStore<
               return
             }
 
-            // 提取flow参数
+            // 鎻愬彇flow鍙傛暟
             const { flow, ...otherData } = edge.data
 
-            // 创建新的边数据对象，只包含flow
+            // 鍒涘缓鏂扮殑杈规暟鎹璞★紝鍙寘鍚玣low
             const newEdgeData: any = { flow: flow || 0 }
 
-            // 为每条边创建参数配置对象
+            // 涓烘瘡鏉¤竟鍒涘缓鍙傛暟閰嶇疆瀵硅薄
             newEdgeParameterConfigs[edge.id] = {}
 
-            // 处理自定义参数的a和b配置
+            // 澶勭悊鑷畾涔夊弬鏁扮殑a鍜宐閰嶇疆
             if (Array.isArray(customParameters)) {
               customParameters.forEach((param: any) => {
                 const aKey = `${param.name}_a`
@@ -887,14 +988,14 @@ export function createModelFlowStore<
               })
             }
 
-            // 添加处理后的�?
+            // 娣诲姞澶勭悊鍚庣殑锟?
             processedEdges.push({
               ...edge,
               data: newEdgeData,
             })
           })
 
-          // 合并自定义参数（保留模型定义的参数）
+          // 鍚堝苟鑷畾涔夊弬鏁帮紙淇濈暀妯″瀷瀹氫箟鐨勫弬鏁帮級
           const enhancedCalculationParams =
             config.enhancedCalculationParameters || config.calculationParameters
           const mergedCustomParameters =
@@ -918,7 +1019,7 @@ export function createModelFlowStore<
                   ]
                 : [...config.fixedParameters, ...enhancedCalculationParams]
 
-          // 合并边参数配置：优先使用从边数据中提取的配置，然后使用导入数据中的配�?
+          // 鍚堝苟杈瑰弬鏁伴厤缃細浼樺厛浣跨敤浠庤竟鏁版嵁涓彁鍙栫殑閰嶇疆锛岀劧鍚庝娇鐢ㄥ鍏ユ暟鎹腑鐨勯厤锟?
           const finalEdgeParameterConfigs = {
             ...edgeParameterConfigs,
             ...newEdgeParameterConfigs,
@@ -929,7 +1030,8 @@ export function createModelFlowStore<
             edges: processedEdges,
             customParameters: mergedCustomParameters,
             edgeParameterConfigs: finalEdgeParameterConfigs,
-            // 保持当前的计算参数，不使用导入数据中的参�?
+            timeSegments: normalizeTimeSegments(timeSegments),
+            // 淇濇寔褰撳墠鐨勮绠楀弬鏁帮紝涓嶄娇鐢ㄥ鍏ユ暟鎹腑鐨勫弬锟?
             // calculationParameters: calculationParameters || getDefaultCalculationParams(config.modelName as any),
             selectedNode: null,
             selectedEdge: null,
@@ -940,7 +1042,7 @@ export function createModelFlowStore<
             message: t("flow.store.flowchart.importSuccess"),
           }
         } catch (error) {
-          console.error("导入流程图失�?", error)
+          console.error("瀵煎叆娴佺▼鍥惧け锟?", error)
           const message =
             error instanceof Error
               ? error.message
@@ -953,14 +1055,14 @@ export function createModelFlowStore<
         set({ importedFileName: fileName })
       },
 
-      // ========== 流程图管�?==========
+      // ========== 娴佺▼鍥剧锟?==========
       saveFlowChart: async (name: string, description?: string) => {
         try {
           const flowData = get().exportFlowData()
           const { currentFlowChartId } = get()
 
           if (currentFlowChartId) {
-            // 更新现有流程�?
+            // 鏇存柊鐜版湁娴佺▼锟?
             const result = await flowChartService.updateFlowchart({
               id: currentFlowChartId,
               requestBody: {
@@ -977,7 +1079,7 @@ export function createModelFlowStore<
               data: result,
             }
           }
-          // 创建新流程图
+          // 鍒涘缓鏂版祦绋嬪浘
           const result = await flowChartService.createFlowchart({
             requestBody: {
               name,
@@ -996,7 +1098,7 @@ export function createModelFlowStore<
             data: result,
           }
         } catch (error: any) {
-          console.error("保存流程图失�?", error)
+          console.error("淇濆瓨娴佺▼鍥惧け锟?", error)
           const reason =
             error?.body?.detail || error?.message || t("common.unknown")
           return {
@@ -1039,7 +1141,7 @@ export function createModelFlowStore<
             message: t("flow.store.flowchart.loadFailedEmpty"),
           }
         } catch (error: any) {
-          console.error("加载流程图失�?", error)
+          console.error("鍔犺浇娴佺▼鍥惧け锟?", error)
           const reason =
             error?.body?.detail || error?.message || t("common.unknown")
           return {
@@ -1061,7 +1163,7 @@ export function createModelFlowStore<
             data: (response as any).data || [],
           }
         } catch (error: any) {
-          console.error("获取流程图列表失�?", error)
+          console.error("鑾峰彇娴佺▼鍥惧垪琛ㄥけ锟?", error)
           const reason =
             error?.body?.detail || error?.message || t("common.unknown")
           return {
@@ -1097,7 +1199,7 @@ export function createModelFlowStore<
             data: result,
           }
         } catch (error: any) {
-          console.error("更新流程图失�?", error)
+          console.error("鏇存柊娴佺▼鍥惧け锟?", error)
           const reason =
             error?.body?.detail || error?.message || t("common.unknown")
           return {
@@ -1122,7 +1224,7 @@ export function createModelFlowStore<
             message: t("flow.store.flowchart.deleteSuccess"),
           }
         } catch (error: any) {
-          console.error("删除流程图失�?", error)
+          console.error("鍒犻櫎娴佺▼鍥惧け锟?", error)
           const reason =
             error?.body?.detail || error?.message || t("common.unknown")
           return {
@@ -1147,7 +1249,7 @@ export function createModelFlowStore<
       },
 
       newFlowChart: () => {
-        // 清理模型计算结果
+        // 娓呯悊妯″瀷璁＄畻缁撴灉
         if (modelStore) {
           modelStore.getState().reset()
         }
@@ -1170,6 +1272,7 @@ export function createModelFlowStore<
           calculationParameters: getDefaultCalculationParams(
             config.modelName as any,
           ),
+          timeSegments: [],
         })
       },
 
@@ -1237,10 +1340,10 @@ export function createModelFlowStore<
       //   set({ edges: updatedEdges })
       // },
 
-      // ========== 模型特定方法 ==========
+      // ========== 妯″瀷鐗瑰畾鏂规硶 ==========
       syncAllParametersToElements: () => {
         const state = get()
-        // 使用enhancedCalculationParameters替代空的calculationParameters
+        // 浣跨敤enhancedCalculationParameters鏇夸唬绌虹殑calculationParameters
         const enhancedCalculationParams =
           config.enhancedCalculationParameters || config.calculationParameters
         const allParameters = [
@@ -1249,11 +1352,11 @@ export function createModelFlowStore<
           ...state.customParameters,
         ]
 
-        // 为所有现有节点添加缺失的参数
+        // 涓烘墍鏈夌幇鏈夎妭鐐规坊鍔犵己澶辩殑鍙傛暟
         const updatedNodes = state.nodes.map((node) => {
           const updatedData = { ...node.data }
 
-          // 检查并添加缺失的参�?
+          // 妫€鏌ュ苟娣诲姞缂哄け鐨勫弬锟?
           allParameters.forEach((param) => {
             if (!(param.name in updatedData)) {
               updatedData[param.name] = param.defaultValue
@@ -1266,11 +1369,11 @@ export function createModelFlowStore<
           }
         })
 
-        // 为所有现有连接线添加缺失的参�?
+        // 涓烘墍鏈夌幇鏈夎繛鎺ョ嚎娣诲姞缂哄け鐨勫弬锟?
         const updatedEdges = state.edges.map((edge) => {
           const updatedData = { ...edge.data }
 
-          // 检查并添加缺失的参�?
+          // 妫€鏌ュ苟娣诲姞缂哄け鐨勫弬锟?
           allParameters.forEach((param) => {
             if (!(param.name in updatedData)) {
               updatedData[param.name] = param.defaultValue
@@ -1283,19 +1386,19 @@ export function createModelFlowStore<
           }
         })
 
-        // 为所有现有连接线添加缺失的ab配置
+        // 涓烘墍鏈夌幇鏈夎繛鎺ョ嚎娣诲姞缂哄け鐨刟b閰嶇疆
         const updatedEdgeParameterConfigs = { ...state.edgeParameterConfigs }
         state.edges.forEach((edge) => {
           if (!updatedEdgeParameterConfigs[edge.id]) {
             updatedEdgeParameterConfigs[edge.id] = {}
           }
 
-          // 为所有参数添加ab配置
+          // 涓烘墍鏈夊弬鏁版坊鍔燼b閰嶇疆
           allParameters.forEach((param) => {
             if (!updatedEdgeParameterConfigs[edge.id][param.name]) {
               updatedEdgeParameterConfigs[edge.id][param.name] = {
-                a: 1, // 默认比例系数
-                b: 0, // 默认常数�?
+                a: 1, // 榛樿姣斾緥绯绘暟
+                b: 0, // 榛樿甯告暟锟?
               }
             }
           })
@@ -1310,11 +1413,11 @@ export function createModelFlowStore<
 
       resetToModelDefaults: () => {
         const { nodes, edges } = get()
-        // 使用enhancedCalculationParameters替代空的calculationParameters
+        // 浣跨敤enhancedCalculationParameters鏇夸唬绌虹殑calculationParameters
         const enhancedCalculationParams =
           config.enhancedCalculationParameters || config.calculationParameters
 
-        // 重置所有节点参数为默认�?
+        // 閲嶇疆鎵€鏈夎妭鐐瑰弬鏁颁负榛樿锟?
         const resetNodes = nodes.map((node) => {
           const resetData = { ...node.data }
           config.fixedParameters.forEach((param) => {
@@ -1329,7 +1432,7 @@ export function createModelFlowStore<
           }
         })
 
-        // 重置所有边参数为默认�?
+        // 閲嶇疆鎵€鏈夎竟鍙傛暟涓洪粯璁わ拷?
         const resetEdges = edges.map((edge) => {
           const resetData = { ...edge.data }
           config.fixedParameters.forEach((param) => {
@@ -1355,12 +1458,13 @@ export function createModelFlowStore<
             ...enhancedCalculationParams,
           ],
           edgeParameterConfigs: {},
+          timeSegments: [],
         })
       },
     }),
   )
 }
 
-// 导出类型
-// 导出类型（避免重复导出）
+// 瀵煎嚭绫诲瀷
+// 瀵煎嚭绫诲瀷锛堥伩鍏嶉噸澶嶅鍑猴級
 // export type { ModelFlowState, FlowChartService }

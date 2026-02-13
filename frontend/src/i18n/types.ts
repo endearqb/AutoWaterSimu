@@ -626,6 +626,7 @@ export interface I18nMessages {
       solverMethod: string
       startButton: string
       startFailed: string
+      validationFailed: string
       statusLabel: string
       stepsPerHour: string
       summaryTitle: string
@@ -657,6 +658,34 @@ export interface I18nMessages {
         unknownModel: string
       }
       validationErrorTitle: string
+      timeSegments: {
+        title: string
+        subtitle: string
+        shortLabel: string
+        segmentCountSuffix: string
+        addSegment: string
+        empty: string
+        emptyHint: string
+        segmentLabel: string
+        startHour: string
+        endHour: string
+        moveUp: string
+        moveDown: string
+        copy: string
+        remove: string
+        selectEdge: string
+        noMoreEdges: string
+        addEdgeOverride: string
+        noEdgeOverride: string
+        removeEdgeOverride: string
+        flowOverride: string
+        factorA: string
+        factorB: string
+        inheritPlaceholder: string
+        sortByTime: string
+        validationPassed: string
+        validationFailed: string
+      }
     }
     menu: {
       actionFailed: string
@@ -797,6 +826,14 @@ export interface I18nMessages {
       timeRange: string
       timeSelection: string
       timeTooltipLabel: string
+      segmentDisplay: {
+        title: string
+        showSegmentLines: string
+        showParamChanges: string
+        segmentMarkerLabel: string
+        changeMarkerLabel: string
+        changeMarkerSummary: string
+      }
       unavailable: string
     }
     actionPlate: {
@@ -805,6 +842,7 @@ export interface I18nMessages {
       stepsAriaLabel: string
       resampleAriaLabel: string
       hoursAriaLabel: string
+      segmentsAriaLabel: string
       errors: {
         inputDataMissing: string
         jobIdMissing: string

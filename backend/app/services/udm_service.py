@@ -1,6 +1,6 @@
 import asyncio
+import logging
 import time
-import traceback
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -10,6 +10,8 @@ from app.material_balance.core import MaterialBalanceCalculator
 from app.material_balance.models import MaterialBalanceResult
 from app.models import MaterialBalanceInput, MaterialBalanceJobStatus, UDMJob
 from app.services.data_conversion_service import DataConversionService
+
+logger = logging.getLogger(__name__)
 
 
 class UDMService:
@@ -47,9 +49,14 @@ class UDMService:
             complexity_factor = (total_steps * num_nodes * num_components) / 1000
             timeout_seconds = min(base_timeout + complexity_factor * 10, 600)
 
-            print(
-                f"Starting UDM calculation for job {job_id}: "
-                f"{total_steps} steps, {num_nodes} nodes, timeout: {timeout_seconds:.1f}s"
+            logger.info(
+                "udm calculation started",
+                extra={
+                    "job_id": job_id,
+                    "steps": total_steps,
+                    "nodes": num_nodes,
+                    "timeout_seconds": round(timeout_seconds, 2),
+                },
             )
 
             try:
@@ -68,7 +75,13 @@ class UDMService:
                 )
 
             calculation_time = time.time() - start_time
-            print(f"UDM calculation completed for job {job_id} in {calculation_time:.2f} seconds")
+            logger.info(
+                "udm calculation completed",
+                extra={
+                    "job_id": job_id,
+                    "calculation_time_seconds": round(calculation_time, 2),
+                },
+            )
 
             output_data = {
                 "job_id": result.job_id,
@@ -76,6 +89,8 @@ class UDMService:
                 "timestamps": result.timestamps,
                 "node_data": result.node_data,
                 "edge_data": result.edge_data,
+                "segment_markers": result.segment_markers,
+                "parameter_change_events": result.parameter_change_events,
                 "summary": result.summary,
             }
 
@@ -86,7 +101,7 @@ class UDMService:
             job.error_message = None
 
         except asyncio.CancelledError:
-            print(f"UDM calculation cancelled for job {job_id}")
+            logger.warning("udm calculation cancelled", extra={"job_id": job_id})
             job.status = MaterialBalanceJobStatus.cancelled
             job.completed_at = datetime.now()
             job.error_message = "UDM calculation cancelled due to server shutdown"
@@ -94,8 +109,10 @@ class UDMService:
             raise
         except Exception as e:
             error_message = f"UDM calculation failed: {str(e)}"
-            print(f"UDM calculation error for job {job_id}: {error_message}")
-            print(f"Traceback: {traceback.format_exc()}")
+            logger.exception(
+                "udm calculation failed",
+                extra={"job_id": job_id, "error_message": error_message},
+            )
 
             job.status = MaterialBalanceJobStatus.failed
             job.completed_at = datetime.now()
@@ -171,4 +188,3 @@ class UDMService:
             return True
 
         return False
-

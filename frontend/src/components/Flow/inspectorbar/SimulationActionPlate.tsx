@@ -10,7 +10,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { keyframes } from "@emotion/react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { FaChartLine, FaPalette } from "react-icons/fa"
 import {
   FiBarChart2,
@@ -24,6 +24,7 @@ import {
   FiPlay,
   FiRepeat,
   FiSave,
+  FiSliders,
   FiUpload,
 } from "react-icons/fi"
 import { MaterialBalanceService } from "../../../client/sdk.gen"
@@ -50,6 +51,7 @@ import {
   getOutlineColor,
 } from "../nodes/utils/glass"
 import PanelColorSelector from "./PanelColorSelector"
+import TimeSegmentPlanEditor from "./TimeSegmentPlanEditor"
 import type { SimulationControllerProps } from "./useSimulationController"
 import { useSimulationController } from "./useSimulationController"
 
@@ -70,6 +72,9 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
   const [showHoursLabel, setShowHoursLabel] = useState(false)
   const [isHoursOpen, setIsHoursOpen] = useState(false)
   const [isHoursClosing, setIsHoursClosing] = useState(false)
+  const [showSegmentsLabel, setShowSegmentsLabel] = useState(false)
+  const [isSegmentsOpen, setIsSegmentsOpen] = useState(false)
+  const [isSegmentsClosing, setIsSegmentsClosing] = useState(false)
   const [isBubbleOpen, setIsBubbleOpen] = useState(false)
   const [isBubbleClosing, setIsBubbleClosing] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -102,11 +107,13 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
   const stepsBtnRef = useRef<HTMLButtonElement | null>(null)
   const resampleBtnRef = useRef<HTMLButtonElement | null>(null)
   const hoursBtnRef = useRef<HTMLButtonElement | null>(null)
+  const segmentsBtnRef = useRef<HTMLButtonElement | null>(null)
   const bubbleBtnRef = useRef<HTMLButtonElement | null>(null)
   const themeBtnRef = useRef<HTMLButtonElement | null>(null)
   const stepsOverlayRef = useRef<HTMLDivElement | null>(null)
   const resampleOverlayRef = useRef<HTMLDivElement | null>(null)
   const hoursOverlayRef = useRef<HTMLDivElement | null>(null)
+  const segmentsOverlayRef = useRef<HTMLDivElement | null>(null)
   const bubbleOverlayRef = useRef<HTMLDivElement | null>(null)
   const themeOverlayRef = useRef<HTMLDivElement | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
@@ -148,12 +155,33 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
     setShowMiniMap,
     nodes: flowNodes,
     edges: flowEdges,
+    timeSegments = [],
+    setTimeSegments,
+    addTimeSegment,
+    updateTimeSegment,
+    removeTimeSegment,
+    copyTimeSegment,
+    reorderTimeSegments,
     exportFlowData,
     importFlowData,
     setCurrentFlowChartName,
     newFlowChart,
     currentFlowChartName,
-  } = flowStore()
+  } = flowStore() as any
+
+  const segmentParameterNames = useMemo(() => {
+    const exportedData = exportFlowData?.()
+    const exportedParameters = exportedData?.customParameters
+    if (!Array.isArray(exportedParameters)) return [] as string[]
+    return exportedParameters
+      .map((param: any) => String(param?.name || ""))
+      .filter(Boolean)
+  }, [exportFlowData, flowNodes, flowEdges, timeSegments])
+
+  const supportsTimeSegments =
+    typeof addTimeSegment === "function" &&
+    typeof updateTimeSegment === "function" &&
+    typeof removeTimeSegment === "function"
 
   const themeStore = useThemePaletteStore()
 
@@ -451,6 +479,15 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
       }, 180)
     }
   }
+  const closeSegments = () => {
+    if (isSegmentsOpen) {
+      setIsSegmentsClosing(true)
+      setTimeout(() => {
+        setIsSegmentsOpen(false)
+        setIsSegmentsClosing(false)
+      }, 180)
+    }
+  }
   const closeBubble = () => {
     if (isBubbleOpen) {
       setIsBubbleClosing(true)
@@ -477,11 +514,13 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
         stepsOverlayRef.current?.contains(target) ||
         resampleOverlayRef.current?.contains(target) ||
         hoursOverlayRef.current?.contains(target) ||
+        segmentsOverlayRef.current?.contains(target) ||
         bubbleOverlayRef.current?.contains(target) ||
         themeOverlayRef.current?.contains(target) ||
         stepsBtnRef.current?.contains(target) ||
         resampleBtnRef.current?.contains(target) ||
         hoursBtnRef.current?.contains(target) ||
+        segmentsBtnRef.current?.contains(target) ||
         bubbleBtnRef.current?.contains(target) ||
         themeBtnRef.current?.contains(target)
       ) {
@@ -493,6 +532,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
         closeSteps()
         closeResample()
         closeHours()
+        closeSegments()
         closeBubble()
         closePalette()
       }
@@ -502,7 +542,14 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
       document.removeEventListener("mousedown", handler, {
         capture: true,
       } as any)
-  }, [isStepsOpen, isResampleOpen, isHoursOpen, isBubbleOpen, isPaletteOpen])
+  }, [
+    isStepsOpen,
+    isResampleOpen,
+    isHoursOpen,
+    isSegmentsOpen,
+    isBubbleOpen,
+    isPaletteOpen,
+  ])
 
   return (
     <Box
@@ -613,6 +660,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         setIsStepsClosing(false)
                         closeResample()
                         closeHours()
+                        closeSegments()
                         closeBubble()
                       } else {
                         closeSteps()
@@ -723,6 +771,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                         setIsResampleClosing(false)
                         closeSteps()
                         closeHours()
+                        closeSegments()
                         closeBubble()
                       } else {
                         closeResample()
@@ -820,6 +869,118 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   </Portal>
                 </Field.Root>
               )}
+
+              {supportsTimeSegments && (
+                <Field.Root display="inline-flex" w="auto">
+                  <Button
+                    size="xs"
+                    {...getToggleButtonStyles(isSegmentsOpen)}
+                    aria-label={t("flow.actionPlate.segmentsAriaLabel")}
+                    ref={segmentsBtnRef}
+                    onMouseEnter={() => setShowSegmentsLabel(true)}
+                    onMouseLeave={() => setShowSegmentsLabel(false)}
+                    onClick={() => {
+                      if (!isSegmentsOpen) {
+                        setIsSegmentsOpen(true)
+                        setIsSegmentsClosing(false)
+                        closeSteps()
+                        closeResample()
+                        closeHours()
+                        closeBubble()
+                        closePalette()
+                      } else {
+                        closeSegments()
+                      }
+                    }}
+                  >
+                    <HStack gap={1}>
+                      <FiSliders />
+                      <Text
+                        fontSize="xs"
+                        whiteSpace="nowrap"
+                        overflow="hidden"
+                        style={{
+                          maxWidth: showSegmentsLabel ? "84px" : "0px",
+                          opacity: showSegmentsLabel ? 1 : 0,
+                          transition: "max-width 0.2s ease, opacity 0.2s ease",
+                        }}
+                      >
+                        {t("flow.simulation.timeSegments.shortLabel")}
+                      </Text>
+                      <Text
+                        fontSize="xs"
+                        whiteSpace="nowrap"
+                        overflow="hidden"
+                        style={{
+                          maxWidth: showSegmentsLabel ? "0px" : "110px",
+                          opacity: showSegmentsLabel ? 0 : 1,
+                          transition: "max-width 0.2s ease, opacity 0.2s ease",
+                        }}
+                      >
+                        {timeSegments.length}{" "}
+                        {t("flow.simulation.timeSegments.segmentCountSuffix")}
+                      </Text>
+                    </HStack>
+                  </Button>
+                  <Portal container={portalRef}>
+                    {isSegmentsOpen &&
+                      (() => {
+                        const panelRect = panelRef.current?.getBoundingClientRect()
+                        const desiredWidth = Math.min(
+                          860,
+                          Math.max(420, window.innerWidth - 24),
+                        )
+                        const left = Math.max(
+                          12,
+                          Math.min(
+                            window.innerWidth - desiredWidth - 12,
+                            (panelRect?.left ?? 12) - 40,
+                          ),
+                        )
+                        const top = Math.max(
+                          12,
+                          (panelRect?.top ?? 0) - Math.min(540, window.innerHeight - 96),
+                        )
+                        return (
+                          <Box
+                            ref={segmentsOverlayRef}
+                            position="fixed"
+                            left={`${left}px`}
+                            top={`${top}px`}
+                            width={`${desiredWidth}px`}
+                            zIndex={2000}
+                            pointerEvents="auto"
+                            animation={`${isSegmentsClosing ? fadeOutUp : fadeInUp} 180ms ease`}
+                          >
+                            <Box
+                              {...getGlassPanelStyles({ hovered: true })}
+                              bg="hsla(0,0%,100%,0.88)"
+                              borderRadius="xl"
+                              borderWidth="1px"
+                              borderColor="whiteAlpha.700"
+                              p={3}
+                              maxH="70vh"
+                              overflowY="auto"
+                            >
+                              <TimeSegmentPlanEditor
+                                timeSegments={timeSegments}
+                                edges={flowEdges}
+                                parameterNames={segmentParameterNames}
+                                simulationHours={simulationHours}
+                                setTimeSegments={setTimeSegments}
+                                addTimeSegment={addTimeSegment}
+                                updateTimeSegment={updateTimeSegment}
+                                removeTimeSegment={removeTimeSegment}
+                                copyTimeSegment={copyTimeSegment}
+                                reorderTimeSegments={reorderTimeSegments}
+                              />
+                            </Box>
+                          </Box>
+                        )
+                      })()}
+                  </Portal>
+                </Field.Root>
+              )}
             </HStack>
           </Box>
 
@@ -843,6 +1004,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                             setIsHoursClosing(false)
                             closeSteps()
                             closeResample()
+                            closeSegments()
                             closeBubble()
                           } else {
                             closeHours()
@@ -1054,6 +1216,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                       closeSteps()
                       closeResample()
                       closeHours()
+                      closeSegments()
                       closePalette()
                     } else {
                       closeBubble()
@@ -1233,6 +1396,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                       closeSteps()
                       closeResample()
                       closeHours()
+                      closeSegments()
                       closeBubble()
                     } else {
                       closePalette()

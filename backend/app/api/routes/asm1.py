@@ -28,6 +28,7 @@ from app.models import (
 )
 from app.services.asm1_service import ASM1Service
 from app.services.data_conversion_service import DataConversionService
+from app.services.time_segment_validation import validate_time_segments
 
 router = APIRouter()
 
@@ -100,8 +101,38 @@ def create_calculation_job_from_flowchart(
     从流程图数据创建ASM1计算任务
     """
     try:
-        # Convert flowchart data to MaterialBalanceInput
-        calculation_input = data_conversion_service.convert_flowchart_to_material_balance_input(flowchart_data)
+        calculation_params = flowchart_data.get("calculationParameters", {})
+        time_segment_errors = validate_time_segments(
+            time_segments=flowchart_data.get(
+                "timeSegments",
+                flowchart_data.get("time_segments"),
+            ),
+            total_hours=calculation_params.get("hours"),
+            edge_ids=[
+                str(edge.get("id"))
+                for edge in flowchart_data.get("edges", [])
+                if isinstance(edge, dict) and edge.get("id") is not None
+            ],
+            parameter_names=[
+                str(param.get("name"))
+                for param in flowchart_data.get("customParameters", [])
+                if isinstance(param, dict) and param.get("name") is not None
+            ],
+        )
+        if time_segment_errors:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "TIME_SEGMENT_VALIDATION_FAILED",
+                    "errors": time_segment_errors,
+                },
+            )
+
+        calculation_input = (
+            data_conversion_service.convert_flowchart_to_material_balance_input(
+                flowchart_data
+            )
+        )
         
         # Generate unique job ID
         job_id = str(uuid4())
@@ -144,6 +175,8 @@ def create_calculation_job_from_flowchart(
             result_data=job.result_data,
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -203,6 +236,8 @@ def get_calculation_result_summary(
         final_mass_balance_error=summary_data.get('final_mass_balance_error', 0.0),
         final_total_volume=summary_data.get('final_total_volume', 0.0),
         solver_method=summary_data.get('solver_method', None),
+        segment_count=summary_data.get("segment_count"),
+        parameter_change_event_count=summary_data.get("parameter_change_event_count"),
         error_message=job.error_message,
     )
 

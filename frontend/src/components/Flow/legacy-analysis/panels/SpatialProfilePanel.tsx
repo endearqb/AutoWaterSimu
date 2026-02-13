@@ -1,4 +1,5 @@
 import {
+  Button,
   Card,
   CheckboxGroup,
   HStack,
@@ -43,6 +44,9 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0)
   const [selectedNodes, setSelectedNodes] = useState<string[]>([])
   const [selectedVariables, setSelectedVariables] = useState<string[]>([])
+  const [showSegmentLines, setShowSegmentLines] = useState(true)
+  const [showParamChangeAnnotations, setShowParamChangeAnnotations] =
+    useState(true)
   const [timeSeriesRange, setTimeSeriesRange] = useState<[number, number]>([
     0, 0,
   ])
@@ -256,6 +260,28 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
           </CheckboxGroup>
         </VStack>
 
+        <HStack gap={2} wrap="wrap" mb={2}>
+          <Text fontWeight="bold" fontSize="sm">
+            {t("flow.analysis.segmentDisplay.title")}
+          </Text>
+          <Button
+            size="xs"
+            variant={showSegmentLines ? "solid" : "outline"}
+            onClick={() => setShowSegmentLines((previous) => !previous)}
+          >
+            {t("flow.analysis.segmentDisplay.showSegmentLines")}
+          </Button>
+          <Button
+            size="xs"
+            variant={showParamChangeAnnotations ? "solid" : "outline"}
+            onClick={() =>
+              setShowParamChangeAnnotations((previous) => !previous)
+            }
+          >
+            {t("flow.analysis.segmentDisplay.showParamChanges")}
+          </Button>
+        </HStack>
+
         <Separator my={4} />
 
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} alignItems="stretch">
@@ -305,6 +331,8 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
             selectedVariables={selectedVariables}
             timeRange={safeTimeSeriesRange}
             onTimeRangeChange={handleTimeSeriesRangeChange}
+            showSegmentLines={showSegmentLines}
+            showParamChangeAnnotations={showParamChangeAnnotations}
             yAxisHeight={yAxisPlotHeight}
             modelType={modelType}
           />

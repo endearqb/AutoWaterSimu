@@ -6,6 +6,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -43,9 +44,22 @@ interface EdgeTimeSeriesChartProps {
   edgeParameterConfigs?: Record<string, Record<string, LinearEdgeParameterConfig>>
   edges?: Edge[]
   showTimeRangeSlider?: boolean
+  showSegmentLines?: boolean
+  showParamChangeAnnotations?: boolean
   chartHeight?: string | number
   yAxisHeight?: number
   modelType?: AnalyzerModelType
+}
+
+type ParameterChangeEvent = {
+  atHour: number
+  edgeId: string
+  changed: string[]
+}
+
+const toFiniteNumber = (value: unknown): number | undefined => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : undefined
 }
 
 const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
@@ -57,6 +71,8 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
   edgeParameterConfigs,
   edges = [],
   showTimeRangeSlider = true,
+  showSegmentLines = true,
+  showParamChangeAnnotations = true,
   chartHeight = "500px",
   yAxisHeight,
   modelType = "asm1",
@@ -164,6 +180,98 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
     edges,
     edgeParameterConfigs,
   ])
+
+  const visibleRangeHours = useMemo(() => {
+    const startHour = toFiniteNumber(resultData.timestamps?.[safeTimeRange[0]])
+    const endHour = toFiniteNumber(resultData.timestamps?.[safeTimeRange[1]])
+    if (startHour === undefined || endHour === undefined) {
+      return null
+    }
+    return {
+      start: Math.min(startHour, endHour),
+      end: Math.max(startHour, endHour),
+    }
+  }, [resultData.timestamps, safeTimeRange])
+
+  const visibleSegmentMarkers = useMemo(() => {
+    const rawMarkers = Array.isArray((resultData as any).segment_markers)
+      ? ((resultData as any).segment_markers as unknown[])
+      : []
+    const markers = rawMarkers
+      .map(toFiniteNumber)
+      .filter((value): value is number => value !== undefined)
+
+    if (!visibleRangeHours) {
+      return markers
+    }
+
+    return markers.filter(
+      (marker) =>
+        marker >= visibleRangeHours.start && marker <= visibleRangeHours.end,
+    )
+  }, [resultData, visibleRangeHours])
+
+  const visibleChangeEvents = useMemo(() => {
+    const rawEvents = Array.isArray((resultData as any).parameter_change_events)
+      ? ((resultData as any).parameter_change_events as any[])
+      : []
+    const parsedEvents: ParameterChangeEvent[] = rawEvents
+      .map((event) => {
+        const atHour = toFiniteNumber(event?.atHour ?? event?.at_hour)
+        if (atHour === undefined) return null
+        return {
+          atHour,
+          edgeId: String(event?.edgeId ?? event?.edge_id ?? ""),
+          changed: Array.isArray(event?.changed)
+            ? event.changed.map((item: unknown) => String(item))
+            : [],
+        }
+      })
+      .filter((event): event is ParameterChangeEvent => !!event)
+
+    if (!visibleRangeHours) {
+      return parsedEvents
+    }
+
+    return parsedEvents.filter(
+      (event) =>
+        event.atHour >= visibleRangeHours.start &&
+        event.atHour <= visibleRangeHours.end,
+    )
+  }, [resultData, visibleRangeHours])
+
+  const groupedChangeEvents = useMemo(() => {
+    const grouped = new Map<
+      string,
+      { atHour: number; edgeCount: number; changedCount: number; label: string }
+    >()
+
+    visibleChangeEvents.forEach((event) => {
+      const key = event.atHour.toFixed(6)
+      const current = grouped.get(key)
+      const changeCount = event.changed.length
+      if (!current) {
+        grouped.set(key, {
+          atHour: event.atHour,
+          edgeCount: event.edgeId ? 1 : 0,
+          changedCount: changeCount,
+          label: "",
+        })
+        return
+      }
+      current.edgeCount += event.edgeId ? 1 : 0
+      current.changedCount += changeCount
+    })
+
+    return Array.from(grouped.values())
+      .map((item, idx) => ({
+        ...item,
+        label: t("flow.analysis.segmentDisplay.changeMarkerLabel", {
+          index: idx + 1,
+        }),
+      }))
+      .sort((a, b) => a.atHour - b.atHour)
+  }, [visibleChangeEvents, t])
 
   const chartSeries = useMemo(() => {
     const colors = [
@@ -306,10 +414,69 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
                 name,
               ]}
             />
+            {showSegmentLines &&
+              visibleSegmentMarkers.map((marker, index) => (
+                <ReferenceLine
+                  key={`segment-marker-${marker}-${index}`}
+                  x={marker}
+                  stroke="#2563eb"
+                  strokeDasharray="5 4"
+                  ifOverflow="visible"
+                  label={{
+                    value: t("flow.analysis.segmentDisplay.segmentMarkerLabel", {
+                      index: index + 1,
+                    }),
+                    position: "top",
+                    fill: "#1d4ed8",
+                    fontSize: 10,
+                  }}
+                />
+              ))}
+            {showParamChangeAnnotations &&
+              groupedChangeEvents.map((event, index) => (
+                <ReferenceLine
+                  key={`param-change-${event.atHour}-${index}`}
+                  x={event.atHour}
+                  stroke="#f97316"
+                  strokeDasharray="2 2"
+                  ifOverflow="visible"
+                  label={{
+                    value: event.label,
+                    position: "insideTopRight",
+                    fill: "#c2410c",
+                    fontSize: 10,
+                  }}
+                />
+              ))}
             {chartSeries.lines}
           </LineChart>
         </ResponsiveContainer>
       </Box>
+
+      {showParamChangeAnnotations && groupedChangeEvents.length > 0 && (
+        <Box
+          w="full"
+          px={2}
+          py={1}
+          borderWidth="1px"
+          borderColor="orange.100"
+          bg="orange.50"
+          borderRadius="md"
+          display="flex"
+          flexWrap="wrap"
+          gap={2}
+        >
+          {groupedChangeEvents.map((event) => (
+            <Text key={`event-desc-${event.atHour}`} fontSize="xs" color="orange.800">
+              {t("flow.analysis.segmentDisplay.changeMarkerSummary", {
+                hour: event.atHour.toFixed(2),
+                edgeCount: event.edgeCount,
+                changedCount: event.changedCount,
+              })}
+            </Text>
+          ))}
+        </Box>
+      )}
 
       <Box w="full" display="flex" flexWrap="wrap" gap={2}>
         {chartSeries.legendItems.map((item) => (

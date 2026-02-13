@@ -34,6 +34,7 @@ import {
   isJobRunning as materialBalanceIsJobRunning,
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
+import { validateTimeSegments } from "../../../utils/timeSegmentValidation"
 
 type SimulationModelStore = Pick<
   BaseModelState<any, any, any, any, any>,
@@ -138,6 +139,7 @@ export function useSimulationController(
     getModelHelpers(modelType)
 
   const flowStore = store || useFlowStore
+  const flowState = flowStore() as any
   const {
     selectedNode,
     calculationParameters,
@@ -150,7 +152,7 @@ export function useSimulationController(
     nodes,
     edges,
     edgeParameterConfigs,
-  } = flowStore()
+  } = flowState
 
   const {
     hours: simulationHours,
@@ -222,6 +224,32 @@ export function useSimulationController(
       setElapsedTime(0)
 
       const flowData = exportFlowData()
+      const segmentErrors = validateTimeSegments({
+        timeSegments: flowData.timeSegments,
+        hours: flowData.calculationParameters?.hours || 0,
+        edgeIds: (flowData.edges || [])
+          .map((edge: any) => edge?.id)
+          .filter(Boolean),
+        parameterNames: (flowData.customParameters || [])
+          .map((param: any) => param?.name)
+          .filter(Boolean),
+      })
+      if (segmentErrors.length > 0) {
+        setValidationErrors(
+          segmentErrors.map((error) => `${error.code}: ${error.message}`),
+        )
+        const { toaster } = await import("../../ui/toaster")
+        toaster.create({
+          title: t("flow.simulation.validationFailed"),
+          description: segmentErrors
+            .map((error) => `${error.code}: ${error.message}`)
+            .join(" | "),
+          type: "error",
+          duration: 6000,
+        })
+        return
+      }
+      setValidationErrors([])
 
       const nodeCount = flowData.nodes?.length || 0
       const edgeCount = flowData.edges?.length || 0

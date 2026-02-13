@@ -1668,7 +1668,7 @@ export class LoginService {
 export class MaterialBalanceService {
   /**
    * Create Calculation Job
-   * 创建物料平衡计算任务
+   * 鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
    * @param data The data for the request.
    * @param data.requestBody
    * @returns MaterialBalanceJobPublic Successful Response
@@ -1690,7 +1690,7 @@ export class MaterialBalanceService {
 
   /**
    * Create Calculation Job From Flowchart
-   * 从流程图数据创建物料平衡计算任务
+   * 浠庢祦绋嬪浘鏁版嵁鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
    * @param data The data for the request.
    * @param data.requestBody
    * @returns MaterialBalanceJobPublic Successful Response
@@ -1712,7 +1712,7 @@ export class MaterialBalanceService {
 
   /**
    * Get Calculation Result Summary
-   * 获取计算结果摘要
+   * 鑾峰彇璁＄畻缁撴灉鎽樿
    * @param data The data for the request.
    * @param data.jobId
    * @returns MaterialBalanceResultSummary Successful Response
@@ -1735,7 +1735,7 @@ export class MaterialBalanceService {
 
   /**
    * Get Calculation Final Values
-   * 获取计算结果中数组的最后一位数据（最终状态）
+   * 鑾峰彇璁＄畻缁撴灉涓暟缁勭殑鏈€鍚庝竴浣嶆暟鎹紙鏈€缁堢姸鎬侊級
    * @param data The data for the request.
    * @param data.jobId
    * @returns unknown Successful Response
@@ -1758,15 +1758,15 @@ export class MaterialBalanceService {
 
   /**
    * Get Calculation Timeseries
-   * 分页获取时间序列数据
+   * 鍒嗛〉鑾峰彇鏃堕棿搴忓垪鏁版嵁
    * @param data The data for the request.
    * @param data.jobId
-   * @param data.startTime 开始时间 (小时)
-   * @param data.endTime 结束时间 (小时)
-   * @param data.page 页码
-   * @param data.pageSize 每页数据量
-   * @param data.nodeIds 指定节点ID列表
-   * @param data.edgeIds 指定边ID列表
+   * @param data.startTime 寮€濮嬫椂闂?(灏忔椂)
+   * @param data.endTime 缁撴潫鏃堕棿 (灏忔椂)
+   * @param data.page 椤电爜
+   * @param data.pageSize Page size
+   * @param data.nodeIds 鎸囧畾鑺傜偣ID鍒楄〃
+   * @param data.edgeIds 鎸囧畾杈笽D鍒楄〃
    * @returns MaterialBalanceTimeSeriesResponse Successful Response
    * @throws ApiError
    */
@@ -1795,7 +1795,7 @@ export class MaterialBalanceService {
 
   /**
    * Get Calculation Status
-   * 查询计算状态
+   * 鏌ヨ璁＄畻鐘舵€?
    * @param data The data for the request.
    * @param data.jobId
    * @returns MaterialBalanceJobPublic Successful Response
@@ -1818,7 +1818,7 @@ export class MaterialBalanceService {
 
   /**
    * Validate Calculation Input
-   * 验证输入参数
+   * 楠岃瘉杈撳叆鍙傛暟
    * @param data The data for the request.
    * @param data.requestBody
    * @returns MaterialBalanceValidationResponse Successful Response
@@ -1840,10 +1840,10 @@ export class MaterialBalanceService {
 
   /**
    * Get User Calculation Jobs
-   * 获取用户的计算任务列表
+   * 鑾峰彇鐢ㄦ埛鐨勮绠椾换鍔″垪琛?
    * @param data The data for the request.
-   * @param data.skip 跳过的记录数
-   * @param data.limit 返回的记录数
+   * @param data.skip 璺宠繃鐨勮褰曟暟
+   * @param data.limit 杩斿洖鐨勮褰曟暟
    * @returns MaterialBalanceJobsPublic Successful Response
    * @throws ApiError
    */
@@ -1865,7 +1865,7 @@ export class MaterialBalanceService {
 
   /**
    * Delete Calculation Job
-   * 删除计算任务
+   * 鍒犻櫎璁＄畻浠诲姟
    * @param data The data for the request.
    * @param data.jobId
    * @returns Message Successful Response
@@ -1888,7 +1888,7 @@ export class MaterialBalanceService {
 
   /**
    * Get Job Input Data
-   * 获取计算任务的输入数据
+   * 鑾峰彇璁＄畻浠诲姟鐨勮緭鍏ユ暟鎹?
    * @param data The data for the request.
    * @param data.jobId
    * @returns MaterialBalanceJobInputDataResponse Successful Response

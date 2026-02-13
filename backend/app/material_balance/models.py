@@ -75,6 +75,30 @@ class EdgeData(BaseModel):
         return v
 
 
+class SegmentFactorAB(BaseModel):
+    a: Optional[float] = None
+    b: Optional[float] = None
+
+
+class SegmentEdgeOverride(BaseModel):
+    flow: Optional[float] = Field(default=None, ge=0)
+    factors: Dict[str, SegmentFactorAB] = Field(default_factory=dict)
+
+
+class TimeSegment(BaseModel):
+    id: str
+    start_hour: float = Field(ge=0)
+    end_hour: float = Field(gt=0)
+    edge_overrides: Dict[str, SegmentEdgeOverride] = Field(default_factory=dict)
+
+    @validator("end_hour")
+    def validate_end_after_start(cls, v, values):
+        start_hour = values.get("start_hour")
+        if start_hour is not None and v <= start_hour:
+            raise ValueError("end_hour must be greater than start_hour")
+        return v
+
+
 class CalculationParameters(BaseModel):
     """物料平衡计算的参数配置。
     
@@ -109,6 +133,7 @@ class MaterialBalanceInput(BaseModel):
     nodes: List[NodeData]
     edges: List[EdgeData]
     parameters: CalculationParameters
+    time_segments: List[TimeSegment] = Field(default_factory=list)
     original_flowchart_data: Optional[Dict[str, Any]] = Field(default=None, description="Original flowchart data for preserving parameter names")
     
     @validator('nodes')
@@ -180,6 +205,8 @@ class MaterialBalanceResult(BaseModel):
     edge_data: Dict[str, Dict[str, List[float]]] = Field(
         description="Edge data: {edge_id: {parameter: [values]}}"
     )
+    segment_markers: Optional[List[float]] = None
+    parameter_change_events: Optional[List[Dict[str, Any]]] = None
     summary: Dict[str, Any] = Field(
         description="Calculation summary (total_time, steps, convergence_status, etc.)"
     )

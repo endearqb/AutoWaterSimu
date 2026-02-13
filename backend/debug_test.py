@@ -3,10 +3,20 @@
 import sys
 sys.path.append('.')
 
-from app.tests.test_flowchart_conversion import TestFlowchartConversion
+__test__ = False
+
 from app.models import MaterialBalanceInput
 
+try:
+    from app.tests.test_flowchart_conversion import TestFlowchartConversion
+except ModuleNotFoundError:
+    TestFlowchartConversion = None
+
 def debug_test():
+    if TestFlowchartConversion is None:
+        raise RuntimeError(
+            "app.tests.test_flowchart_conversion is not available in this environment"
+        )
     test = TestFlowchartConversion()
     test.setup_method()
     

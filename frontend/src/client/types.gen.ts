@@ -464,6 +464,10 @@ export type MaterialBalanceInput = {
   edges: Array<EdgeData>
   parameters: CalculationParameters
   /**
+   * 多时段边参数覆盖配置
+   */
+  time_segments?: Array<TimeSegment>
+  /**
    * 原始流程图数据，用于保留原始参数名称
    */
   original_flowchart_data?: {
@@ -569,6 +573,14 @@ export type MaterialBalanceResultSummary = {
    * 求解器方法
    */
   solver_method?: string | null
+  /**
+   * 时段总数
+   */
+  segment_count?: number | null
+  /**
+   * 参数变更事件总数
+   */
+  parameter_change_event_count?: number | null
   /**
    * 错误信息
    */
@@ -746,9 +758,63 @@ export type PrivateUserCreate = {
 }
 
 /**
+ * 时段内单条边的覆盖配置。
+ */
+export type SegmentEdgeOverride = {
+  /**
+   * 边流量覆盖值
+   */
+  flow?: number | null
+  /**
+   * 边参数系数覆盖（键为参数名）
+   */
+  factors?: {
+    [key: string]: SegmentFactorAB
+  }
+}
+
+/**
+ * 时段内边参数系数覆盖。
+ */
+export type SegmentFactorAB = {
+  /**
+   * 系数 a 覆盖值
+   */
+  a?: number | null
+  /**
+   * 系数 b 覆盖值
+   */
+  b?: number | null
+}
+
+/**
  * ODE求解器方法
  */
 export type SolverMethod = "scipy_solver" | "euler" | "rk4" | "adaptive_heun"
+
+/**
+ * 时段定义。
+ */
+export type TimeSegment = {
+  /**
+   * 时段ID
+   */
+  id: string
+  /**
+   * 时段起始小时
+   */
+  start_hour: number
+  /**
+   * 时段结束小时
+   */
+  end_hour: number
+  /**
+   * 时段内边覆盖配置（键为边ID）
+   */
+  edge_overrides?: {
+    [key: string]: SegmentEdgeOverride
+  }
+}
 
 export type Token = {
   access_token: string
@@ -1787,28 +1853,28 @@ export type MaterialBalanceGetCalculationFinalValuesResponse = {
 
 export type MaterialBalanceGetCalculationTimeseriesData = {
   /**
-   * 指定边ID列表
+   * 鎸囧畾杈笽D鍒楄〃
    */
   edgeIds?: Array<string> | null
   /**
-   * 结束时间 (小时)
+   * 缁撴潫鏃堕棿 (灏忔椂)
    */
   endTime?: number | null
   jobId: string
   /**
-   * 指定节点ID列表
+   * 鎸囧畾鑺傜偣ID鍒楄〃
    */
   nodeIds?: Array<string> | null
   /**
-   * 页码
+   * 椤电爜
    */
   page?: number
   /**
-   * 每页数据量
+   * Page size
    */
   pageSize?: number
   /**
-   * 开始时间 (小时)
+   * 寮€濮嬫椂闂?(灏忔椂)
    */
   startTime?: number | null
 }
@@ -1832,11 +1898,11 @@ export type MaterialBalanceValidateCalculationInputResponse =
 
 export type MaterialBalanceGetUserCalculationJobsData = {
   /**
-   * 返回的记录数
+   * 杩斿洖鐨勮褰曟暟
    */
   limit?: number
   /**
-   * 跳过的记录数
+   * 璺宠繃鐨勮褰曟暟
    */
   skip?: number
 }

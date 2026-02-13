@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from enum import Enum
@@ -285,6 +285,40 @@ class EdgeData(SQLModel):
     concentration_factor_b: List[float] = Field(default_factory=list, description="浓度偏移因子")
 
 
+class SegmentFactorAB(SQLModel):
+    """时段内边参数系数覆盖。"""
+
+    a: Optional[float] = Field(default=None, description="系数 a 覆盖值")
+    b: Optional[float] = Field(default=None, description="系数 b 覆盖值")
+
+
+class SegmentEdgeOverride(SQLModel):
+    """时段内单条边的覆盖配置。"""
+
+    flow: Optional[float] = Field(default=None, ge=0, description="边流量覆盖值")
+    factors: Dict[str, SegmentFactorAB] = Field(
+        default_factory=dict, description="边参数系数覆盖（键为参数名）"
+    )
+
+
+class TimeSegment(SQLModel):
+    """时段定义。"""
+
+    id: str = Field(description="时段ID")
+    start_hour: float = Field(ge=0, description="时段起始小时")
+    end_hour: float = Field(gt=0, description="时段结束小时")
+    edge_overrides: Dict[str, SegmentEdgeOverride] = Field(
+        default_factory=dict, description="时段内边覆盖配置（键为边ID）"
+    )
+
+    @validator("end_hour")
+    def validate_end_after_start(cls, v, values):
+        start_hour = values.get("start_hour")
+        if start_hour is not None and v <= start_hour:
+            raise ValueError("end_hour must be greater than start_hour")
+        return v
+
+
 class CalculationParameters(SQLModel):
     """计算参数"""
     hours: float = Field(gt=0, le=1000, default=4.0, description="模拟时间 (小时)")
@@ -302,6 +336,9 @@ class MaterialBalanceInput(SQLModel):
     nodes: List[NodeData] = Field(description="节点数据列表")
     edges: List[EdgeData] = Field(description="边数据列表")
     parameters: CalculationParameters = Field(description="计算参数")
+    time_segments: List[TimeSegment] = Field(
+        default_factory=list, description="多时段边参数覆盖配置"
+    )
     original_flowchart_data: Optional[Dict[str, Any]] = Field(default=None, description="原始流程图数据，用于保留原始参数名称")
     
     @validator('nodes')
@@ -355,6 +392,12 @@ class MaterialBalanceResult(SQLModel):
     edge_data: Dict[str, Dict[str, List[float]]] = Field(
         description="边时间序列数据 {edge_id: {parameter: [values]}}"
     )
+    segment_markers: Optional[List[float]] = Field(
+        default=None, description="时段分界点（小时）"
+    )
+    parameter_change_events: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="时段切换参数变更事件"
+    )
     summary: Dict[str, Any] = Field(description="计算摘要信息")
     error_message: Optional[str] = Field(default=None, description="错误信息")
 
@@ -370,6 +413,10 @@ class MaterialBalanceResultSummary(SQLModel):
     final_mass_balance_error: Optional[float] = Field(default=None, description="最终质量平衡误差")
     final_total_volume: float = Field(description="最终总体积")
     solver_method: Optional[str] = Field(default=None, description="求解器方法")
+    segment_count: Optional[int] = Field(default=None, description="时段总数")
+    parameter_change_event_count: Optional[int] = Field(
+        default=None, description="参数变更事件总数"
+    )
     error_message: Optional[str] = Field(default=None, description="错误信息")
 
 

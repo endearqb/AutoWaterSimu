@@ -19,7 +19,7 @@ from material_balance.models import (
 )
 from material_balance.core import MaterialBalanceCalculator
 
-def test_simple_case():
+def run_simple_case():
     """使用简单的4节点系统进行测试，匹配原始示例。
     
     创建一个包含入口节点、两个储罐节点和出口节点的系统，
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     print("Material Balance Simple Test")
     print("=============================")
     
-    success = test_simple_case()
+    success = run_simple_case()
     
     if success:
         print("\n✓ All tests passed!")

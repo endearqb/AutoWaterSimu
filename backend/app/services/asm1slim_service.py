@@ -1,6 +1,6 @@
 import asyncio
+import logging
 import time
-import traceback
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -13,6 +13,8 @@ from app.models import (
 )
 from app.services.data_conversion_service import DataConversionService
 from app.material_balance.core import MaterialBalanceCalculator
+
+logger = logging.getLogger(__name__)
 
 
 class ASM1SlimService:
@@ -62,7 +64,15 @@ class ASM1SlimService:
             complexity_factor = (total_steps * num_nodes * num_components) / 1000
             timeout_seconds = min(base_timeout + complexity_factor * 10, 600)  # Max 10 minutes
             
-            print(f"Starting ASM1slim calculation for job {job_id}: {total_steps} steps, {num_nodes} nodes, timeout: {timeout_seconds:.1f}s")
+            logger.info(
+                "asm1slim calculation started",
+                extra={
+                    "job_id": job_id,
+                    "steps": total_steps,
+                    "nodes": num_nodes,
+                    "timeout_seconds": round(timeout_seconds, 2),
+                },
+            )
             
             # Run calculation with timeout
             try:
@@ -79,19 +89,25 @@ class ASM1SlimService:
             
             # Calculate execution time
             calculation_time = time.time() - start_time
-            print(f"ASM1slim calculation completed for job {job_id} in {calculation_time:.2f} seconds")
+            logger.info(
+                "asm1slim calculation completed",
+                extra={
+                    "job_id": job_id,
+                    "calculation_time_seconds": round(calculation_time, 2),
+                },
+            )
             
             # Convert MaterialBalanceResult to dict format for database storage
-            print(f"Converting ASM1slim result to dict for job {job_id}")
             output_data = {
                 "job_id": result.job_id,
                 "status": result.status,
                 "timestamps": result.timestamps,
                 "node_data": result.node_data,
                 "edge_data": result.edge_data,
-                "summary": result.summary
+                "segment_markers": result.segment_markers,
+                "parameter_change_events": result.parameter_change_events,
+                "summary": result.summary,
             }
-            print(f"ASM1slim result conversion completed for job {job_id}")
             
             # Update job with results
             job.status = MaterialBalanceJobStatus.success
@@ -102,7 +118,7 @@ class ASM1SlimService:
             
         except asyncio.CancelledError:
             # Handle cancellation (e.g., server shutdown)
-            print(f"ASM1slim calculation cancelled for job {job_id}")
+            logger.warning("asm1slim calculation cancelled", extra={"job_id": job_id})
             job.status = MaterialBalanceJobStatus.cancelled
             job.completed_at = datetime.now()
             job.error_message = "ASM1slim calculation cancelled due to server shutdown"
@@ -112,8 +128,10 @@ class ASM1SlimService:
         except Exception as e:
             # Handle calculation error
             error_message = f"ASM1slim calculation failed: {str(e)}"
-            print(f"ASM1slim calculation error for job {job_id}: {error_message}")
-            print(f"Traceback: {traceback.format_exc()}")
+            logger.exception(
+                "asm1slim calculation failed",
+                extra={"job_id": job_id, "error_message": error_message},
+            )
             
             job.status = MaterialBalanceJobStatus.failed
             job.completed_at = datetime.now()
