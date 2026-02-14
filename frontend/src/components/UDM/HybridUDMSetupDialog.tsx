@@ -10,7 +10,11 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react"
-import type { UDMModelDetailPublic, UDMModelPublic } from "@/client/types.gen"
+import type {
+  UDMHybridConfigPublic,
+  UDMModelDetailPublic,
+  UDMModelPublic,
+} from "@/client/types.gen"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
 import { useEffect, useMemo, useState } from "react"
@@ -21,141 +25,55 @@ import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import type {
   HybridUDMConfig,
   HybridUDMModelPairMapping,
-  HybridUDMSelectedModel,
 } from "../../types/hybridUdm"
+import {
+  LOCAL_EXEMPT_TOKEN,
+  buildCanonicalParametersFromModelDetails,
+  buildCanonicalParametersFromSelectedModels,
+  buildHybridPairKey,
+  extractHybridComponentNamesFromDetail,
+  extractHybridFocalVarsFromDetail,
+  toHybridConfigFromUnknown,
+  toHybridSelectedModel,
+  uniqueStrings,
+} from "../../utils/hybridUdm"
 import { Checkbox } from "../ui/checkbox"
 
 interface HybridUDMSetupDialogProps {
   isOpen: boolean
   onClose: () => void
+  initialConfig?: HybridUDMConfig | null
+  onApply?: (
+    config: HybridUDMConfig,
+    canonicalParameters: CustomParameter[],
+  ) => void
+  applyButtonLabel?: string
+  showSavedConfigSelector?: boolean
+  onOpenHybridPage?: () => void
 }
 
 type MappingSelectionMap = Record<string, Record<string, string>>
 
-const LOCAL_EXEMPT_TOKEN = "__local__"
-
-const modelKey = (modelId: string, version: number) => `${modelId}@${version}`
-const pairKey = (
-  sourceModelId: string,
-  sourceVersion: number,
-  targetModelId: string,
-  targetVersion: number,
-) => `${modelKey(sourceModelId, sourceVersion)}->${modelKey(targetModelId, targetVersion)}`
-
-const unique = (items: string[]) => {
-  const seen = new Set<string>()
-  const output: string[] = []
-  items.forEach((item) => {
-    const normalized = String(item || "").trim()
-    if (!normalized || seen.has(normalized)) return
-    seen.add(normalized)
-    output.push(normalized)
-  })
-  return output
-}
-
-const extractComponents = (
-  detail: UDMModelDetailPublic | undefined,
-): Array<Record<string, unknown>> => {
-  const latest = (detail?.latest_version || {}) as Record<string, unknown>
-  const components = latest.components
-  return Array.isArray(components)
-    ? (components.filter((item) => !!item && typeof item === "object") as Array<
-        Record<string, unknown>
-      >)
-    : []
-}
-
-const extractProcesses = (
-  detail: UDMModelDetailPublic | undefined,
-): Array<Record<string, unknown>> => {
-  const latest = (detail?.latest_version || {}) as Record<string, unknown>
-  const processes = latest.processes
-  return Array.isArray(processes)
-    ? (processes.filter((item) => !!item && typeof item === "object") as Array<
-        Record<string, unknown>
-      >)
-    : []
-}
-
-const extractComponentNames = (detail: UDMModelDetailPublic | undefined): string[] =>
-  unique(
-    extractComponents(detail).map((component) => String(component.name || "").trim()),
-  )
-
-const extractFocalVars = (detail: UDMModelDetailPublic | undefined): string[] => {
-  const componentNames = new Set(extractComponentNames(detail))
-  if (componentNames.size === 0) return []
-
-  const ids = new Set<string>()
-  const regex = /[A-Za-z_][A-Za-z0-9_]*/g
-  extractProcesses(detail).forEach((processRow) => {
-    const rawExpr = processRow.rate_expr ?? processRow.rateExpr
-    const expr = String(rawExpr || "").trim()
-    if (!expr) return
-    const matches = expr.match(regex) || []
-    matches.forEach((token) => {
-      if (componentNames.has(token)) {
-        ids.add(token)
-      }
-    })
-  })
-  return Array.from(ids)
-}
-
-const toHybridSelectedModel = (detail: UDMModelDetailPublic): HybridUDMSelectedModel => {
-  const latest = (detail.latest_version || {}) as Record<string, unknown>
-  return {
-    model_id: detail.id,
-    version: detail.current_version,
-    name: detail.name,
-    hash: String(
-      latest.content_hash || latest.hash || "",
-    ).trim(),
-    components: extractComponents(detail),
-    parameters: Array.isArray(latest.parameters)
-      ? (latest.parameters as Array<Record<string, unknown>>)
-      : [],
-    processes: extractProcesses(detail),
-    meta:
-      latest.meta && typeof latest.meta === "object"
-        ? (latest.meta as Record<string, unknown>)
-        : null,
-  }
-}
-
-const buildCanonicalParameters = (
-  details: UDMModelDetailPublic[],
-): CustomParameter[] => {
-  const paramMap = new Map<string, CustomParameter>()
-  details.forEach((detail) => {
-    extractComponents(detail).forEach((component) => {
-      const name = String(component.name || "").trim()
-      if (!name || paramMap.has(name)) return
-      const defaultValueRaw = Number.parseFloat(
-        String(component.default_value ?? component.defaultValue ?? "0"),
-      )
-      const defaultValue = Number.isFinite(defaultValueRaw) ? defaultValueRaw : 0
-      const unit = String(component.unit || "").trim()
-      paramMap.set(name, {
-        name,
-        label: String(component.label || name),
-        description: unit ? `Unit: ${unit}` : undefined,
-        defaultValue,
-      })
-    })
-  })
-  return Array.from(paramMap.values())
-}
-
-function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
+function HybridUDMSetupDialog({
+  isOpen,
+  onClose,
+  initialConfig,
+  onApply,
+  applyButtonLabel,
+  showSavedConfigSelector = true,
+  onOpenHybridPage,
+}: HybridUDMSetupDialogProps) {
   const { t } = useI18n()
   const { showErrorToast, showSuccessToast } = useCustomToast()
-  const hybridConfig = useUDMFlowStore((state) => state.hybridConfig)
+  const storeHybridConfig = useUDMFlowStore((state) => state.hybridConfig)
   const applyHybridSetup = useUDMFlowStore((state) => state.applyHybridSetup)
+  const effectiveHybridConfig = initialConfig ?? storeHybridConfig
 
   const [isLoadingModels, setIsLoadingModels] = useState(false)
+  const [isLoadingSavedConfigs, setIsLoadingSavedConfigs] = useState(false)
   const [availableModels, setAvailableModels] = useState<UDMModelPublic[]>([])
+  const [savedConfigs, setSavedConfigs] = useState<UDMHybridConfigPublic[]>([])
+  const [selectedSavedConfigId, setSelectedSavedConfigId] = useState("")
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>([])
   const [modelDetails, setModelDetails] = useState<Record<string, UDMModelDetailPublic>>(
     {},
@@ -184,7 +102,7 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
     selectedDetails.forEach((source) => {
       selectedDetails.forEach((target) => {
         if (source.id === target.id) return
-        const key = pairKey(
+        const key = buildHybridPairKey(
           source.id,
           source.current_version,
           target.id,
@@ -194,8 +112,8 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
           key,
           source,
           target,
-          sourceComponents: extractComponentNames(source),
-          targetFocalVars: extractFocalVars(target),
+          sourceComponents: extractHybridComponentNamesFromDetail(source),
+          targetFocalVars: extractHybridFocalVarsFromDetail(target),
         })
       })
     })
@@ -220,6 +138,17 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
     return detail
   }
 
+  const handleApplyConfig = (
+    nextConfig: HybridUDMConfig,
+    canonicalParameters: CustomParameter[],
+  ) => {
+    if (onApply) {
+      onApply(nextConfig, canonicalParameters)
+      return
+    }
+    applyHybridSetup(nextConfig, canonicalParameters)
+  }
+
   useEffect(() => {
     if (!isOpen) return
 
@@ -232,9 +161,9 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
         setAvailableModels(response.data || [])
 
         const initialSelected =
-          hybridConfig?.mode === "udm_only"
-            ? unique(
-                (hybridConfig.selected_models || []).map((item) =>
+          effectiveHybridConfig?.mode === "udm_only"
+            ? uniqueStrings(
+                (effectiveHybridConfig.selected_models || []).map((item) =>
                   String(item.model_id || ""),
                 ),
               )
@@ -258,10 +187,36 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
     }
 
     void load()
+
+    if (showSavedConfigSelector) {
+      const loadSavedConfigs = async () => {
+        try {
+          setIsLoadingSavedConfigs(true)
+          const response = await udmService.getHybridConfigs(0, 200)
+          if (!isMounted) return
+          setSavedConfigs(response.data || [])
+        } catch (error) {
+          showErrorToast(
+            error instanceof Error
+              ? error.message
+              : t("flow.hybridSetup.toasts.loadSavedConfigsFailed"),
+          )
+        } finally {
+          if (isMounted) {
+            setIsLoadingSavedConfigs(false)
+          }
+        }
+      }
+      void loadSavedConfigs()
+    } else {
+      setSavedConfigs([])
+      setSelectedSavedConfigId("")
+    }
+
     return () => {
       isMounted = false
     }
-  }, [isOpen])
+  }, [isOpen, effectiveHybridConfig, showSavedConfigSelector])
 
   useEffect(() => {
     if (!isOpen) return
@@ -269,7 +224,7 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
     setMappingSelections((prev) => {
       const next: MappingSelectionMap = {}
       pairDescriptors.forEach((pair) => {
-        const pairExisting = hybridConfig?.model_pair_mappings?.[pair.key]
+        const pairExisting = effectiveHybridConfig?.model_pair_mappings?.[pair.key]
         const existingRows = Array.isArray(pairExisting?.variable_map)
           ? pairExisting.variable_map
           : []
@@ -298,11 +253,11 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
       })
       return next
     })
-  }, [isOpen, pairDescriptors, hybridConfig?.model_pair_mappings])
+  }, [isOpen, pairDescriptors, effectiveHybridConfig?.model_pair_mappings])
 
   const toggleModelSelection = async (modelId: string, checked: boolean) => {
     if (checked) {
-      setSelectedModelIds((prev) => unique([...prev, modelId]))
+      setSelectedModelIds((prev) => uniqueStrings([...prev, modelId]))
       try {
         await fetchModelDetail(modelId)
       } catch (error) {
@@ -334,6 +289,28 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
         [targetVar]: sourceVar,
       },
     }))
+  }
+
+  const applySelectedSavedConfig = () => {
+    if (!selectedSavedConfigId) return
+    const selectedSaved = savedConfigs.find((item) => item.id === selectedSavedConfigId)
+    if (!selectedSaved) {
+      showErrorToast(t("flow.hybridSetup.toasts.savedConfigNotFound"))
+      return
+    }
+
+    const normalizedConfig = toHybridConfigFromUnknown(selectedSaved.hybrid_config)
+    if (!normalizedConfig) {
+      showErrorToast(t("flow.hybridSetup.toasts.savedConfigInvalid"))
+      return
+    }
+
+    const canonicalParameters = buildCanonicalParametersFromSelectedModels(
+      normalizedConfig.selected_models || [],
+    )
+    handleApplyConfig(normalizedConfig, canonicalParameters)
+    showSuccessToast(t("flow.hybridSetup.toasts.savedConfigApplied"))
+    onClose()
   }
 
   const applySetup = async () => {
@@ -381,8 +358,8 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
         selected_models: selected,
         model_pair_mappings: pairMappings,
       }
-      const canonicalParameters = buildCanonicalParameters(selectedDetails)
-      applyHybridSetup(hybridPayload, canonicalParameters)
+      const canonicalParameters = buildCanonicalParametersFromModelDetails(selectedDetails)
+      handleApplyConfig(hybridPayload, canonicalParameters)
       showSuccessToast(t("flow.hybridSetup.toasts.applied"))
       onClose()
     } catch (error) {
@@ -406,6 +383,46 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
           </Dialog.Header>
           <Dialog.Body>
             <VStack align="stretch" gap={5}>
+              {showSavedConfigSelector && (
+                <Box>
+                  <Text fontSize="sm" fontWeight="semibold" mb={3}>
+                    {t("flow.hybridSetup.savedConfigs.title")}
+                  </Text>
+                  <HStack align="stretch">
+                    <NativeSelect.Root size="sm" flex="1">
+                      <NativeSelect.Field
+                        value={selectedSavedConfigId}
+                        onChange={(e) => setSelectedSavedConfigId(e.target.value)}
+                      >
+                        <option value="">
+                          {isLoadingSavedConfigs
+                            ? t("flow.hybridSetup.savedConfigs.loading")
+                            : t("flow.hybridSetup.savedConfigs.placeholder")}
+                        </option>
+                        {savedConfigs.map((savedConfig) => (
+                          <option key={savedConfig.id} value={savedConfig.id}>
+                            {savedConfig.name}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                    <Button
+                      variant="subtle"
+                      onClick={applySelectedSavedConfig}
+                      disabled={!selectedSavedConfigId}
+                    >
+                      {t("flow.hybridSetup.savedConfigs.applyButton")}
+                    </Button>
+                    {onOpenHybridPage && (
+                      <Button variant="outline" onClick={onOpenHybridPage}>
+                        {t("flow.hybridSetup.savedConfigs.manageButton")}
+                      </Button>
+                    )}
+                  </HStack>
+                </Box>
+              )}
+
               <Box>
                 <Text fontSize="sm" color="gray.600" mb={3}>
                   {t("flow.hybridSetup.description")}
@@ -524,7 +541,7 @@ function HybridUDMSetupDialog({ isOpen, onClose }: HybridUDMSetupDialogProps) {
                 loading={isApplying}
                 disabled={!isReadyForApply}
               >
-                {t("flow.hybridSetup.applyButton")}
+                {applyButtonLabel || t("flow.hybridSetup.applyButton")}
               </Button>
             </HStack>
           </Dialog.Footer>

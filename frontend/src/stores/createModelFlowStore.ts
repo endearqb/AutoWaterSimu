@@ -749,6 +749,23 @@ export function createModelFlowStore<
         })
         const finalParameters = Array.from(uniqueParamMap.values())
         const finalNames = new Set(finalParameters.map((param) => param.name))
+        const selectedModelKeys = new Set(
+          (config.selected_models || []).map(
+            (item) => `${String(item.model_id || "").trim()}@${item.version}`,
+          ),
+        )
+        const udmModelDataKeys = [
+          "udmModel",
+          "udmModelSnapshot",
+          "udmComponents",
+          "udmComponentNames",
+          "udmProcesses",
+          "udmParameters",
+          "udmParameterValues",
+          "udmModelId",
+          "udmModelVersion",
+          "udmModelHash",
+        ] as const
 
         const updatedNodes = state.nodes.map((node) => {
           const updatedData = { ...(node.data as Record<string, any>) }
@@ -757,6 +774,27 @@ export function createModelFlowStore<
               updatedData[param.name] = String(param.defaultValue ?? 0)
             }
           })
+
+          if (node.type === "udm" && selectedModelKeys.size > 0) {
+            const udmModel = (updatedData.udmModel as Record<string, unknown>) || {}
+            const modelId = String(
+              updatedData.udmModelId || udmModel.id || udmModel.modelId || "",
+            ).trim()
+            const versionRaw =
+              updatedData.udmModelVersion ||
+              udmModel.version ||
+              udmModel.currentVersion
+            const version = Number.parseInt(String(versionRaw), 10)
+            if (modelId && Number.isInteger(version)) {
+              const boundKey = `${modelId}@${version}`
+              if (!selectedModelKeys.has(boundKey)) {
+                udmModelDataKeys.forEach((key) => {
+                  delete updatedData[key]
+                })
+              }
+            }
+          }
+
           return {
             ...node,
             data: updatedData,

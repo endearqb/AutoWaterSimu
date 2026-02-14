@@ -1,4 +1,5 @@
 import { HStack, Text, VStack } from "@chakra-ui/react"
+import { useNavigate } from "@tanstack/react-router"
 import type React from "react"
 import { useState } from "react"
 import { FiEdit3, FiGitMerge } from "react-icons/fi"
@@ -26,6 +27,7 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
   onNewFlowChart,
 }) => {
   const { t } = useI18n()
+  const navigate = useNavigate()
   const [isModelEditorOpen, setIsModelEditorOpen] = useState(false)
   const [isHybridSetupOpen, setIsHybridSetupOpen] = useState(false)
 
@@ -225,6 +227,10 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
       <HybridUDMSetupDialog
         isOpen={isHybridSetupOpen}
         onClose={() => setIsHybridSetupOpen(false)}
+        onOpenHybridPage={() => {
+          setIsHybridSetupOpen(false)
+          navigate({ to: "/hybrid" })
+        }}
       />
     </>
   )

@@ -1,6 +1,7 @@
 import { t } from "@/utils/i18n"
 import {
   UdmFlowchartsService,
+  UdmHybridConfigsService,
   UdmModelsService,
   UdmService,
 } from "../client/sdk.gen"
@@ -21,6 +22,10 @@ import type {
   UDMFlowChartPublic,
   UDMFlowChartUpdate,
   UDMFlowChartsPublic,
+  UDMHybridConfigCreate,
+  UDMHybridConfigPublic,
+  UDMHybridConfigsPublic,
+  UDMHybridConfigUpdate,
   UDMJobInputDataResponse,
   UDMJobPublic,
   UDMJobsPublic,
@@ -358,6 +363,68 @@ class UDMServiceImpl
         error,
         t("flow.store.model.deleteFlowchartFailed", { model: this.modelName }),
       )
+    }
+  }
+
+  // ========== Hybrid配置相关方法 ==========
+
+  async getHybridConfigs(
+    skip?: number,
+    limit?: number,
+  ): Promise<UDMHybridConfigsPublic> {
+    try {
+      return await UdmHybridConfigsService.readUdmHybridConfigs({
+        skip,
+        limit,
+      })
+    } catch (error) {
+      throw handleApiError(error, "Failed to fetch UDM hybrid config list")
+    }
+  }
+
+  async getHybridConfig(id: string): Promise<UDMHybridConfigPublic> {
+    try {
+      return await UdmHybridConfigsService.readUdmHybridConfig({
+        id,
+      })
+    } catch (error) {
+      throw handleApiError(error, "Failed to fetch UDM hybrid config detail")
+    }
+  }
+
+  async createHybridConfig(
+    payload: UDMHybridConfigCreate,
+  ): Promise<UDMHybridConfigPublic> {
+    try {
+      return await UdmHybridConfigsService.createUdmHybridConfig({
+        requestBody: payload,
+      })
+    } catch (error) {
+      throw handleApiError(error, "Failed to create UDM hybrid config")
+    }
+  }
+
+  async updateHybridConfig(
+    id: string,
+    payload: UDMHybridConfigUpdate,
+  ): Promise<UDMHybridConfigPublic> {
+    try {
+      return await UdmHybridConfigsService.updateUdmHybridConfig({
+        id,
+        requestBody: payload,
+      })
+    } catch (error) {
+      throw handleApiError(error, "Failed to update UDM hybrid config")
+    }
+  }
+
+  async deleteHybridConfig(id: string): Promise<{ message: string }> {
+    try {
+      return await UdmHybridConfigsService.deleteUdmHybridConfig({
+        id,
+      })
+    } catch (error) {
+      throw handleApiError(error, "Failed to delete UDM hybrid config")
     }
   }
 

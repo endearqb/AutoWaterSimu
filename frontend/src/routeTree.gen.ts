@@ -35,6 +35,7 @@ import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutOverviewImport } from './routes/_layout/overview'
 import { Route as LayoutMaterialbalanceImport } from './routes/_layout/materialbalance'
 import { Route as LayoutItemsImport } from './routes/_layout/items'
+import { Route as LayoutHybridImport } from './routes/_layout/hybrid'
 import { Route as LayoutDashboardImport } from './routes/_layout/dashboard'
 import { Route as LayoutAsm3Import } from './routes/_layout/asm3'
 import { Route as LayoutAsm1slimImport } from './routes/_layout/asm1slim'
@@ -166,6 +167,11 @@ const LayoutItemsRoute = LayoutItemsImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutHybridRoute = LayoutHybridImport.update({
+  path: '/hybrid',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutDashboardRoute = LayoutDashboardImport.update({
   path: '/dashboard',
   getParentRoute: () => LayoutRoute,
@@ -266,6 +272,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutDashboardImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/hybrid': {
+      preLoaderRoute: typeof LayoutHybridImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/items': {
       preLoaderRoute: typeof LayoutItemsImport
       parentRoute: typeof LayoutImport
@@ -351,6 +361,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutAsm1slimRoute,
     LayoutAsm3Route,
     LayoutDashboardRoute,
+    LayoutHybridRoute,
     LayoutItemsRoute,
     LayoutMaterialbalanceRoute,
     LayoutOverviewRoute,

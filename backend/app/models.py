@@ -74,6 +74,7 @@ class User(UserBase, table=True):
     # UDM相关关系
     udm_models: list["UDMModel"] = Relationship(back_populates="owner", cascade_delete=True)
     udm_model_versions: list["UDMModelVersion"] = Relationship(back_populates="owner", cascade_delete=True)
+    udm_hybrid_configs: list["UDMHybridConfig"] = Relationship(back_populates="owner", cascade_delete=True)
     udm_flowcharts: list["UDMFlowChart"] = Relationship(back_populates="owner", cascade_delete=True)
     udm_jobs: list["UDMJob"] = Relationship(back_populates="owner", cascade_delete=True)
 
@@ -1150,6 +1151,59 @@ class UDMFlowChartBase(SQLModel):
     """UDM流程图基础模型"""
     name: str = Field(min_length=1, max_length=255)
     description: Optional[str] = Field(default=None, max_length=1000)
+
+
+class UDMHybridConfig(SQLModel, table=True):
+    """UDM Hybrid配置数据库模型"""
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(min_length=1, max_length=255, description="Hybrid配置名称")
+    description: Optional[str] = Field(default=None, max_length=1000, description="Hybrid配置描述")
+    hybrid_config: dict = Field(sa_column=Column(JSON), description="Hybrid配置内容")
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship(back_populates="udm_hybrid_configs")
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class UDMHybridConfigBase(SQLModel):
+    """UDM Hybrid配置基础模型"""
+
+    name: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=1000)
+
+
+class UDMHybridConfigCreate(UDMHybridConfigBase):
+    """创建UDM Hybrid配置请求"""
+
+    hybrid_config: HybridUDMConfig = Field(description="Hybrid配置内容")
+
+
+class UDMHybridConfigUpdate(UDMHybridConfigBase):
+    """更新UDM Hybrid配置请求"""
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    hybrid_config: Optional[HybridUDMConfig] = Field(default=None, description="Hybrid配置内容")
+
+
+class UDMHybridConfigPublic(UDMHybridConfigBase):
+    """UDM Hybrid配置公开信息"""
+
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    hybrid_config: HybridUDMConfig
+
+
+class UDMHybridConfigsPublic(SQLModel):
+    """UDM Hybrid配置列表响应"""
+
+    data: List[UDMHybridConfigPublic] = Field(default_factory=list)
+    count: int
 
 
 class UDMFlowChartCreate(UDMFlowChartBase):

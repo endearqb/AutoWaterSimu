@@ -17,6 +17,7 @@ export interface I18nMessages {
     asm1slim: string
     asm1: string
     asm3: string
+    hybrid: string
     knowledge: string
     superDashboard: string
     items: string
@@ -726,12 +727,73 @@ export interface I18nMessages {
       targetNoFocal: string
       localExempt: string
       applyButton: string
+      savedConfigs: {
+        title: string
+        loading: string
+        placeholder: string
+        applyButton: string
+        manageButton: string
+      }
       toasts: {
         loadModelsFailed: string
+        loadSavedConfigsFailed: string
         fetchModelDetailFailed: string
         mappingIncomplete: string
         applied: string
+        savedConfigApplied: string
+        savedConfigNotFound: string
+        savedConfigInvalid: string
         applyFailed: string
+      }
+    }
+    hybridConfigs: {
+      title: string
+      description: string
+      savedListTitle: string
+      fields: {
+        name: string
+        namePlaceholder: string
+        description: string
+        descriptionPlaceholder: string
+      }
+      actions: {
+        newConfig: string
+        configure: string
+        saveNew: string
+        saveChanges: string
+        applyToFlow: string
+        edit: string
+        delete: string
+        useAsDraft: string
+      }
+      state: {
+        draftReady: string
+        draftEmpty: string
+        loading: string
+        empty: string
+      }
+      table: {
+        name: string
+        updatedAt: string
+        actions: string
+      }
+      confirm: {
+        delete: string
+      }
+      toasts: {
+        draftMissing: string
+        nameRequired: string
+        selectConfigFirst: string
+        createSuccess: string
+        createFailed: string
+        updateSuccess: string
+        updateFailed: string
+        deleteSuccess: string
+        deleteFailed: string
+        configNotFound: string
+        savedConfigInvalid: string
+        applyToFlowSuccess: string
+        draftUpdated: string
       }
     }
     menu: {

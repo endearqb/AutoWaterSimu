@@ -31,6 +31,7 @@ const getFlowingFlowItems = (
     { icon: FiGitMerge, title: t("nav.asm1slim"), path: "/asm1slim" },
     { icon: FiGitPullRequest, title: t("nav.asm1"), path: "/asm1" },
     { icon: FiGitPullRequest, title: "UDM", path: "/udm" },
+    { icon: FiGitMerge, title: t("nav.hybrid"), path: "/hybrid" },
     { icon: FiGitPullRequest, title: "UDM Models", path: "/udmModels" },
   ]
 

@@ -4,2362 +4,2429 @@
  * 创建ASM1流程图请求
  */
 export type ASM1FlowChartCreate = {
-  name: string
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * ASM1流程图公开信息
  */
 export type ASM1FlowChartPublic = {
-  name: string
-  description?: string | null
-  id: string
-  owner_id: string
-  created_at: string
-  updated_at: string
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * ASM1流程图列表
  */
 export type ASM1FlowChartsPublic = {
-  data?: Array<ASM1FlowChartPublic>
-  count: number
-}
+    data?: Array<ASM1FlowChartPublic>;
+    count: number;
+};
 
 /**
  * 更新ASM1流程图请求
  */
 export type ASM1FlowChartUpdate = {
-  name?: string | null
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data?: {
-    [key: string]: unknown
-  } | null
-}
+    name?: (string | null);
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * ASM1任务输入数据响应
  */
 export type ASM1JobInputDataResponse = {
-  /**
-   * 计算任务ID
-   */
-  job_id: string
-  /**
-   * 输入数据
-   */
-  input_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 计算结果数据
-   */
-  result_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 任务状态
-   */
-  status: MaterialBalanceJobStatus
-}
+    /**
+     * 计算任务ID
+     */
+    job_id: string;
+    /**
+     * 输入数据
+     */
+    input_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 计算结果数据
+     */
+    result_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 任务状态
+     */
+    status: MaterialBalanceJobStatus;
+};
 
 /**
  * ASM1任务公开信息
  */
 export type ASM1JobPublic = {
-  id: string
-  job_id: string
-  job_name: string
-  status: MaterialBalanceJobStatus
-  created_at: string
-  started_at: string | null
-  completed_at: string | null
-  error_message: string | null
-  /**
-   * 计算结果数据
-   */
-  result_data?: {
-    [key: string]: unknown
-  } | null
-}
+    id: string;
+    job_id: string;
+    job_name: string;
+    status: MaterialBalanceJobStatus;
+    created_at: string;
+    started_at: (string | null);
+    completed_at: (string | null);
+    error_message: (string | null);
+    /**
+     * 计算结果数据
+     */
+    result_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * ASM1任务列表
  */
 export type ASM1JobsPublic = {
-  data: Array<ASM1JobPublic>
-  count: number
-}
+    data: Array<ASM1JobPublic>;
+    count: number;
+};
 
 /**
  * 创建ASM1slim流程图请求
  */
 export type ASM1SlimFlowChartCreate = {
-  name: string
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * ASM1slim流程图公开信息
  */
 export type ASM1SlimFlowChartPublic = {
-  name: string
-  description?: string | null
-  id: string
-  owner_id: string
-  created_at: string
-  updated_at: string
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * ASM1slim流程图列表
  */
 export type ASM1SlimFlowChartsPublic = {
-  data: Array<ASM1SlimFlowChartPublic>
-  count: number
-}
+    data: Array<ASM1SlimFlowChartPublic>;
+    count: number;
+};
 
 /**
  * 更新ASM1slim流程图请求
  */
 export type ASM1SlimFlowChartUpdate = {
-  name?: string | null
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data?: {
-    [key: string]: unknown
-  } | null
-}
+    name?: (string | null);
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * ASM1slim任务输入数据响应
  */
 export type ASM1SlimJobInputDataResponse = {
-  /**
-   * 计算任务ID
-   */
-  job_id: string
-  /**
-   * 输入数据
-   */
-  input_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 计算结果数据
-   */
-  result_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 任务状态
-   */
-  status: MaterialBalanceJobStatus
-}
+    /**
+     * 计算任务ID
+     */
+    job_id: string;
+    /**
+     * 输入数据
+     */
+    input_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 计算结果数据
+     */
+    result_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 任务状态
+     */
+    status: MaterialBalanceJobStatus;
+};
 
 /**
  * ASM1slim任务公开信息
  */
 export type ASM1SlimJobPublic = {
-  id: string
-  job_id: string
-  job_name: string
-  status: MaterialBalanceJobStatus
-  created_at: string
-  started_at: string | null
-  completed_at: string | null
-  error_message: string | null
-  /**
-   * 计算结果数据
-   */
-  result_data?: {
-    [key: string]: unknown
-  } | null
-}
+    id: string;
+    job_id: string;
+    job_name: string;
+    status: MaterialBalanceJobStatus;
+    created_at: string;
+    started_at: (string | null);
+    completed_at: (string | null);
+    error_message: (string | null);
+    /**
+     * 计算结果数据
+     */
+    result_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * ASM1slim任务列表
  */
 export type ASM1SlimJobsPublic = {
-  data: Array<ASM1SlimJobPublic>
-  count: number
-}
+    data: Array<ASM1SlimJobPublic>;
+    count: number;
+};
 
 /**
  * ASM3流程图创建模型
  */
 export type ASM3FlowChartCreate = {
-  name: string
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * ASM3流程图公开模型
  */
 export type ASM3FlowChartPublic = {
-  name: string
-  description?: string | null
-  id: string
-  owner_id: string
-  created_at: string
-  updated_at: string
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * ASM3流程图列表
  */
 export type ASM3FlowChartsPublic = {
-  data?: Array<ASM3FlowChartPublic>
-  count: number
-}
+    data?: Array<ASM3FlowChartPublic>;
+    count: number;
+};
 
 /**
  * ASM3流程图更新模型
  */
 export type ASM3FlowChartUpdate = {
-  name?: string | null
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data?: {
-    [key: string]: unknown
-  } | null
-}
+    name?: (string | null);
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * ASM3任务输入数据响应
  */
 export type ASM3JobInputDataResponse = {
-  /**
-   * 计算任务ID
-   */
-  job_id: string
-  /**
-   * 输入数据
-   */
-  input_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 计算结果数据
-   */
-  result_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 任务状态
-   */
-  status: MaterialBalanceJobStatus
-}
+    /**
+     * 计算任务ID
+     */
+    job_id: string;
+    /**
+     * 输入数据
+     */
+    input_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 计算结果数据
+     */
+    result_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 任务状态
+     */
+    status: MaterialBalanceJobStatus;
+};
 
 /**
  * ASM3任务公开模型
  */
 export type ASM3JobPublic = {
-  id: string
-  job_id: string
-  job_name: string
-  status: MaterialBalanceJobStatus
-  created_at: string
-  started_at: string | null
-  completed_at: string | null
-  error_message: string | null
-  /**
-   * 计算结果数据
-   */
-  result_data?: {
-    [key: string]: unknown
-  } | null
-}
+    id: string;
+    job_id: string;
+    job_name: string;
+    status: MaterialBalanceJobStatus;
+    created_at: string;
+    started_at: (string | null);
+    completed_at: (string | null);
+    error_message: (string | null);
+    /**
+     * 计算结果数据
+     */
+    result_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * ASM3任务列表
  */
 export type ASM3JobsPublic = {
-  data: Array<ASM3JobPublic>
-  count: number
-}
+    data: Array<ASM3JobPublic>;
+    count: number;
+};
 
 export type Body_login_login_access_token = {
-  grant_type?: string | null
-  username: string
-  password: string
-  scope?: string
-  client_id?: string | null
-  client_secret?: string | null
-}
+    grant_type?: (string | null);
+    username: string;
+    password: string;
+    scope?: string;
+    client_id?: (string | null);
+    client_secret?: (string | null);
+};
 
 /**
  * 计算参数
  */
 export type CalculationParameters = {
-  /**
-   * 模拟时间 (小时)
-   */
-  hours?: number
-  /**
-   * 每小时步数
-   */
-  steps_per_hour?: number
-  solver_method?: SolverMethod
-  /**
-   * 求解精度
-   */
-  tolerance?: number
-  /**
-   * 最大迭代次数
-   */
-  max_iterations?: number
-  /**
-   * 最大内存使用 (MB)
-   */
-  max_memory_mb?: number
-  /**
-   * 采样间隔 (小时)，用于数据存储优化
-   */
-  sampling_interval_hours?: number | null
-}
+    /**
+     * 模拟时间 (小时)
+     */
+    hours?: number;
+    /**
+     * 每小时步数
+     */
+    steps_per_hour?: number;
+    solver_method?: SolverMethod;
+    /**
+     * 求解精度
+     */
+    tolerance?: number;
+    /**
+     * 最大迭代次数
+     */
+    max_iterations?: number;
+    /**
+     * 最大内存使用 (MB)
+     */
+    max_memory_mb?: number;
+    /**
+     * 采样间隔 (小时)，用于数据存储优化
+     */
+    sampling_interval_hours?: (number | null);
+};
 
 /**
  * 流程图边数据
  */
 export type EdgeData = {
-  /**
-   * 边唯一标识符
-   */
-  edge_id: string
-  /**
-   * 源节点ID
-   */
-  source_node_id: string
-  /**
-   * 目标节点ID
-   */
-  target_node_id: string
-  /**
-   * 流量 (m³/h)
-   */
-  flow_rate: number
-  /**
-   * 浓度比例因子
-   */
-  concentration_factor_a?: Array<number>
-  /**
-   * 浓度偏移因子
-   */
-  concentration_factor_b?: Array<number>
-}
+    /**
+     * 边唯一标识符
+     */
+    edge_id: string;
+    /**
+     * 源节点ID
+     */
+    source_node_id: string;
+    /**
+     * 目标节点ID
+     */
+    target_node_id: string;
+    /**
+     * 流量 (m³/h)
+     */
+    flow_rate: number;
+    /**
+     * 浓度比例因子
+     */
+    concentration_factor_a?: Array<(number)>;
+    /**
+     * 浓度偏移因子
+     */
+    concentration_factor_b?: Array<(number)>;
+};
 
 export type FlowChartCreate = {
-  name: string
-  description?: string | null
-  /**
-   * Complete flow chart data including nodes, edges, and configurations
-   */
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    /**
+     * Complete flow chart data including nodes, edges, and configurations
+     */
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 export type FlowChartPublic = {
-  name: string
-  description?: string | null
-  id: string
-  owner_id: string
-  created_at: string
-  updated_at: string
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 export type FlowChartsPublic = {
-  data: Array<FlowChartPublic>
-  count: number
-}
+    data: Array<FlowChartPublic>;
+    count: number;
+};
 
 export type FlowChartUpdate = {
-  name?: string | null
-  description?: string | null
-  /**
-   * Complete flow chart data including nodes, edges, and configurations
-   */
-  flow_data?: {
-    [key: string]: unknown
-  } | null
-}
+    name?: (string | null);
+    description?: (string | null);
+    /**
+     * Complete flow chart data including nodes, edges, and configurations
+     */
+    flow_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 export type HTTPValidationError = {
-  detail?: Array<ValidationError>
-}
+    detail?: Array<ValidationError>;
+};
 
 /**
  * Hybrid UDM 配置。
  */
-export type HybridUDMConfig = {
-  /**
-   * Hybrid 模式，当前仅支持 udm_only
-   */
-  mode?: string
-  /**
-   * 参与本次 Hybrid 的模型列表
-   */
-  selected_models?: Array<HybridUDMSelectedModel>
-  /**
-   * 模型对映射字典
-   */
-  model_pair_mappings?: {
-    [key: string]: HybridUDMModelPairMapping
-  }
-}
+export type HybridUDMConfig_Input = {
+    /**
+     * Hybrid 模式，当前仅支持 udm_only
+     */
+    mode?: string;
+    /**
+     * 参与本次 Hybrid 的模型列表
+     */
+    selected_models?: Array<HybridUDMSelectedModel>;
+    /**
+     * 模型对映射字典
+     */
+    model_pair_mappings?: {
+        [key: string]: HybridUDMModelPairMapping;
+    };
+};
+
+/**
+ * Hybrid UDM 配置。
+ */
+export type HybridUDMConfig_Output = {
+    /**
+     * Hybrid 模式，当前仅支持 udm_only
+     */
+    mode?: string;
+    /**
+     * 参与本次 Hybrid 的模型列表
+     */
+    selected_models?: Array<HybridUDMSelectedModel>;
+    /**
+     * 模型对映射字典
+     */
+    model_pair_mappings?: {
+        [key: string]: HybridUDMModelPairMapping;
+    };
+};
 
 /**
  * Hybrid UDM 模型对映射定义。
  */
 export type HybridUDMModelPairMapping = {
-  /**
-   * 源模型ID
-   */
-  source_model_id: string
-  /**
-   * 源模型版本
-   */
-  source_version: number
-  /**
-   * 目标模型ID
-   */
-  target_model_id: string
-  /**
-   * 目标模型版本
-   */
-  target_version: number
-  /**
-   * 变量映射列表
-   */
-  variable_map?: Array<HybridUDMVariableMapItem>
-}
+    /**
+     * 源模型ID
+     */
+    source_model_id: string;
+    /**
+     * 源模型版本
+     */
+    source_version: number;
+    /**
+     * 目标模型ID
+     */
+    target_model_id: string;
+    /**
+     * 目标模型版本
+     */
+    target_version: number;
+    /**
+     * 变量映射列表
+     */
+    variable_map?: Array<HybridUDMVariableMapItem>;
+};
 
 /**
  * Hybrid UDM 已选择模型快照。
  */
 export type HybridUDMSelectedModel = {
-  /**
-   * 模型ID
-   */
-  model_id: string
-  /**
-   * 模型版本
-   */
-  version: number
-  /**
-   * 模型名称
-   */
-  name?: string | null
-  /**
-   * 模型内容哈希
-   */
-  hash?: string | null
-  /**
-   * 组分快照
-   */
-  components?: Array<{
-    [key: string]: unknown
-  }>
-  /**
-   * 参数快照
-   */
-  parameters?: Array<{
-    [key: string]: unknown
-  }>
-  /**
-   * 过程快照
-   */
-  processes?: Array<{
-    [key: string]: unknown
-  }>
-  /**
-   * 模型元信息
-   */
-  meta?: {
-    [key: string]: unknown
-  } | null
-}
+    /**
+     * 模型ID
+     */
+    model_id: string;
+    /**
+     * 模型版本
+     */
+    version: number;
+    /**
+     * 模型名称
+     */
+    name?: (string | null);
+    /**
+     * 模型内容哈希
+     */
+    hash?: (string | null);
+    /**
+     * 组分快照
+     */
+    components?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * 参数快照
+     */
+    parameters?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * 过程快照
+     */
+    processes?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * 模型元信息
+     */
+    meta?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * Hybrid UDM 流程图校验响应。
  */
 export type HybridUDMValidationResponse = {
-  /**
-   * 是否通过校验
-   */
-  is_valid: boolean
-  /**
-   * 错误列表
-   */
-  errors?: Array<string>
-  /**
-   * 警告列表
-   */
-  warnings?: Array<string>
-  /**
-   * 诊断信息
-   */
-  details?: {
-    [key: string]: unknown
-  }
-  /**
-   * 标准化后的 hybrid_config（用于前端回显/修复）
-   */
-  normalized_hybrid_config?: {
-    [key: string]: unknown
-  } | null
-}
+    /**
+     * 是否通过校验
+     */
+    is_valid: boolean;
+    /**
+     * 错误列表
+     */
+    errors?: Array<(string)>;
+    /**
+     * 警告列表
+     */
+    warnings?: Array<(string)>;
+    /**
+     * 诊断信息
+     */
+    details?: {
+        [key: string]: unknown;
+    };
+    /**
+     * 标准化后的 hybrid_config（用于前端回显/修复）
+     */
+    normalized_hybrid_config?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * Hybrid UDM 模型对变量映射项。
  */
 export type HybridUDMVariableMapItem = {
-  /**
-   * 源模型变量名
-   */
-  source_var?: string | null
-  /**
-   * 目标模型变量名
-   */
-  target_var: string
-  /**
-   * 是否启用该映射
-   */
-  enabled?: boolean
-  /**
-   * 是否本地豁免（不跨模型映射，保留目标变量本地语义）
-   */
-  local_exempt?: boolean
-  /**
-   * 映射模式，可选 local_exempt
-   */
-  mode?: string | null
-}
+    /**
+     * 源模型变量名
+     */
+    source_var?: (string | null);
+    /**
+     * 目标模型变量名
+     */
+    target_var: string;
+    /**
+     * 是否启用该映射
+     */
+    enabled?: boolean;
+    /**
+     * 是否本地豁免（不跨模型映射，保留目标变量本地语义）
+     */
+    local_exempt?: boolean;
+    /**
+     * 映射模式，可选 local_exempt
+     */
+    mode?: (string | null);
+};
 
 export type ItemCreate = {
-  title: string
-  description?: string | null
-}
+    title: string;
+    description?: (string | null);
+};
 
 export type ItemPublic = {
-  title: string
-  description?: string | null
-  id: string
-  owner_id: string
-}
+    title: string;
+    description?: (string | null);
+    id: string;
+    owner_id: string;
+};
 
 export type ItemsPublic = {
-  data: Array<ItemPublic>
-  count: number
-}
+    data: Array<ItemPublic>;
+    count: number;
+};
 
 export type ItemUpdate = {
-  title?: string | null
-  description?: string | null
-}
+    title?: (string | null);
+    description?: (string | null);
+};
 
 /**
  * 物料平衡计算输入数据模型
  */
 export type MaterialBalanceInput = {
-  /**
-   * 节点数据列表
-   */
-  nodes: Array<NodeData>
-  /**
-   * 边数据列表
-   */
-  edges: Array<EdgeData>
-  parameters: CalculationParameters
-  /**
-   * 多时段边参数覆盖配置
-   */
-  time_segments?: Array<TimeSegment>
-  /**
-   * Hybrid UDM 配置（可选）
-   */
-  hybrid_config?: HybridUDMConfig | null
-  /**
-   * 原始流程图数据，用于保留原始参数名称
-   */
-  original_flowchart_data?: {
-    [key: string]: unknown
-  } | null
-}
+    /**
+     * 节点数据列表
+     */
+    nodes: Array<NodeData>;
+    /**
+     * 边数据列表
+     */
+    edges: Array<EdgeData>;
+    parameters: CalculationParameters;
+    /**
+     * 多时段边参数覆盖配置
+     */
+    time_segments?: Array<TimeSegment>;
+    /**
+     * Hybrid UDM 配置（可选）
+     */
+    hybrid_config?: (HybridUDMConfig_Input | null);
+    /**
+     * 原始流程图数据，用于保留原始参数名称
+     */
+    original_flowchart_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * 物料平衡任务输入数据响应
  */
 export type MaterialBalanceJobInputDataResponse = {
-  /**
-   * 计算任务ID
-   */
-  job_id: string
-  /**
-   * 输入数据
-   */
-  input_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 计算结果数据
-   */
-  result_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 任务状态
-   */
-  status: MaterialBalanceJobStatus
-}
+    /**
+     * 计算任务ID
+     */
+    job_id: string;
+    /**
+     * 输入数据
+     */
+    input_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 计算结果数据
+     */
+    result_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 任务状态
+     */
+    status: MaterialBalanceJobStatus;
+};
 
 /**
  * 物料平衡任务公开信息
  */
 export type MaterialBalanceJobPublic = {
-  id: string
-  job_id: string
-  job_name: string
-  status: MaterialBalanceJobStatus
-  created_at: string
-  started_at: string | null
-  completed_at: string | null
-  error_message: string | null
-}
+    id: string;
+    job_id: string;
+    job_name: string;
+    status: MaterialBalanceJobStatus;
+    created_at: string;
+    started_at: (string | null);
+    completed_at: (string | null);
+    error_message: (string | null);
+};
 
 /**
  * 物料平衡任务列表
  */
 export type MaterialBalanceJobsPublic = {
-  data: Array<MaterialBalanceJobPublic>
-  count: number
-}
+    data: Array<MaterialBalanceJobPublic>;
+    count: number;
+};
 
 /**
  * 物料平衡计算任务状态
  */
-export type MaterialBalanceJobStatus =
-  | "pending"
-  | "running"
-  | "success"
-  | "failed"
-  | "cancelled"
+export type MaterialBalanceJobStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
 
 /**
  * 物料平衡计算结果摘要
  */
 export type MaterialBalanceResultSummary = {
-  /**
-   * 计算任务ID
-   */
-  job_id: string
-  /**
-   * 计算状态
-   */
-  status: MaterialBalanceJobStatus
-  /**
-   * 总模拟时间 (小时)
-   */
-  total_time?: number | null
-  /**
-   * 总步数
-   */
-  total_steps: number
-  /**
-   * 计算耗时 (秒)
-   */
-  calculation_time_seconds: number
-  /**
-   * 收敛状态
-   */
-  convergence_status: string
-  /**
-   * 最终质量平衡误差
-   */
-  final_mass_balance_error?: number | null
-  /**
-   * 最终总体积
-   */
-  final_total_volume: number
-  /**
-   * 求解器方法
-   */
-  solver_method?: string | null
-  /**
-   * 时段总数
-   */
-  segment_count?: number | null
-  /**
-   * 参数变更事件总数
-   */
-  parameter_change_event_count?: number | null
-  /**
-   * 错误信息
-   */
-  error_message?: string | null
-}
+    /**
+     * 计算任务ID
+     */
+    job_id: string;
+    /**
+     * 计算状态
+     */
+    status: MaterialBalanceJobStatus;
+    /**
+     * 总模拟时间 (小时)
+     */
+    total_time?: (number | null);
+    /**
+     * 总步数
+     */
+    total_steps: number;
+    /**
+     * 计算耗时 (秒)
+     */
+    calculation_time_seconds: number;
+    /**
+     * 收敛状态
+     */
+    convergence_status: string;
+    /**
+     * 最终质量平衡误差
+     */
+    final_mass_balance_error?: (number | null);
+    /**
+     * 最终总体积
+     */
+    final_total_volume: number;
+    /**
+     * 求解器方法
+     */
+    solver_method?: (string | null);
+    /**
+     * 时段总数
+     */
+    segment_count?: (number | null);
+    /**
+     * 参数变更事件总数
+     */
+    parameter_change_event_count?: (number | null);
+    /**
+     * 错误信息
+     */
+    error_message?: (string | null);
+};
 
 /**
  * 时间序列数据响应
  */
 export type MaterialBalanceTimeSeriesResponse = {
-  /**
-   * 计算任务ID
-   */
-  job_id: string
-  /**
-   * 当前页时间点数组
-   */
-  timestamps: Array<number>
-  /**
-   * 节点时间序列数据
-   */
-  node_data: {
-    [key: string]: {
-      [key: string]: Array<number>
-    }
-  }
-  /**
-   * 边时间序列数据
-   */
-  edge_data: {
-    [key: string]: {
-      [key: string]: Array<number>
-    }
-  }
-  /**
-   * 分页信息
-   */
-  pagination: {
-    [key: string]: unknown
-  }
-}
+    /**
+     * 计算任务ID
+     */
+    job_id: string;
+    /**
+     * 当前页时间点数组
+     */
+    timestamps: Array<(number)>;
+    /**
+     * 节点时间序列数据
+     */
+    node_data: {
+        [key: string]: {
+            [key: string]: Array<(number)>;
+        };
+    };
+    /**
+     * 边时间序列数据
+     */
+    edge_data: {
+        [key: string]: {
+            [key: string]: Array<(number)>;
+        };
+    };
+    /**
+     * 分页信息
+     */
+    pagination: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * 物料平衡参数验证请求
  */
 export type MaterialBalanceValidationRequest = {
-  /**
-   * 待验证的输入数据
-   */
-  input_data: MaterialBalanceInput
-}
+    /**
+     * 待验证的输入数据
+     */
+    input_data: MaterialBalanceInput;
+};
 
 /**
  * 物料平衡参数验证响应
  */
 export type MaterialBalanceValidationResponse = {
-  /**
-   * 是否有效
-   */
-  is_valid: boolean
-  /**
-   * 验证错误列表
-   */
-  errors?: Array<string>
-  /**
-   * 警告信息列表
-   */
-  warnings?: Array<string>
-  /**
-   * 预估内存使用 (MB)
-   */
-  estimated_memory_mb: number
-  /**
-   * 预估计算时间 (秒)
-   */
-  estimated_time_seconds: number
-}
+    /**
+     * 是否有效
+     */
+    is_valid: boolean;
+    /**
+     * 验证错误列表
+     */
+    errors?: Array<(string)>;
+    /**
+     * 警告信息列表
+     */
+    warnings?: Array<(string)>;
+    /**
+     * 预估内存使用 (MB)
+     */
+    estimated_memory_mb: number;
+    /**
+     * 预估计算时间 (秒)
+     */
+    estimated_time_seconds: number;
+};
 
 export type Message = {
-  message: string
-}
+    message: string;
+};
 
 export type NewPassword = {
-  token: string
-  new_password: string
-}
+    token: string;
+    new_password: string;
+};
 
 /**
  * 流程图节点数据
  */
 export type NodeData = {
-  /**
-   * 节点唯一标识符
-   */
-  node_id: string
-  /**
-   * 节点类型 (inlet, outlet, default, asm1slim, asm1等)
-   */
-  node_type: string
-  /**
-   * 是否为入口节点
-   */
-  is_inlet?: boolean
-  /**
-   * 是否为出口节点
-   */
-  is_outlet?: boolean
-  /**
-   * 初始体积 (m³)，最小值为1e-6
-   */
-  initial_volume: number
-  /**
-   * 初始浓度列表 (g/m³)
-   */
-  initial_concentrations: Array<number>
-  /**
-   * 节点在流程图中的位置
-   */
-  position?: {
-    [key: string]: number
-  }
-  /**
-   * ASM1 Slim模型参数 [dSNOmax, dSNHmax, CNRatio, K_S, K_NO, n_g, K_NH]
-   */
-  asm1slim_parameters?: Array<number> | null
-  /**
-   * ASM1模型参数 [u_H, K_S, K_OH, K_NO, n_g, b_H, u_A, K_NH, K_OA, b_A, Y_H, Y_A, i_XB, i_XP, f_P, n_h, K_a, K_h, K_x]
-   */
-  asm1_parameters?: Array<number> | null
-  /**
-   * ASM3模型参数 [k_H, K_X, k_STO, ny_NOX, K_O2, K_NOX, K_S, K_STO, mu_H, K_NH4, K_ALK, b_HO2, b_HNOX, b_STOO2, b_STONOX, mu_A, K_ANH4, K_AO2, K_AALK, b_AO2, b_ANOX, f_SI, Y_STOO2, Y_STONOX, Y_HO2, Y_HNOX, Y_A, f_XI, i_NSI, i_NSS, i_NXI, i_NXS, i_NBM, i_SSXI, i_SSXS, i_SSBM, i_SSSTO]
-   */
-  asm3_parameters?: Array<number> | null
-  /**
-   * UDM模型ID
-   */
-  udm_model_id?: string | null
-  /**
-   * UDM模型版本
-   */
-  udm_model_version?: number | null
-  /**
-   * UDM模型内容哈希
-   */
-  udm_model_hash?: string | null
-  /**
-   * UDM状态组分名称列表
-   */
-  udm_component_names?: Array<string> | null
-  /**
-   * UDM过程定义列表，包含rate_expr与stoich
-   */
-  udm_processes?: Array<{
-    [key: string]: unknown
-  }> | null
-  /**
-   * UDM参数值映射
-   */
-  udm_parameter_values?: {
-    [key: string]: number
-  } | null
-  /**
-   * UDM模型快照，用于任务可复现
-   */
-  udm_model_snapshot?: {
-    [key: string]: unknown
-  } | null
-  /**
-   * UDM局部变量到全局规范变量的绑定关系 [{local_var, canonical_var}]
-   */
-  udm_variable_bindings?: Array<{
-    [key: string]: string
-  }> | null
-}
+    /**
+     * 节点唯一标识符
+     */
+    node_id: string;
+    /**
+     * 节点类型 (inlet, outlet, default, asm1slim, asm1等)
+     */
+    node_type: string;
+    /**
+     * 是否为入口节点
+     */
+    is_inlet?: boolean;
+    /**
+     * 是否为出口节点
+     */
+    is_outlet?: boolean;
+    /**
+     * 初始体积 (m³)，最小值为1e-6
+     */
+    initial_volume: number;
+    /**
+     * 初始浓度列表 (g/m³)
+     */
+    initial_concentrations: Array<(number)>;
+    /**
+     * 节点在流程图中的位置
+     */
+    position?: {
+        [key: string]: (number);
+    };
+    /**
+     * ASM1 Slim模型参数 [dSNOmax, dSNHmax, CNRatio, K_S, K_NO, n_g, K_NH]
+     */
+    asm1slim_parameters?: (Array<(number)> | null);
+    /**
+     * ASM1模型参数 [u_H, K_S, K_OH, K_NO, n_g, b_H, u_A, K_NH, K_OA, b_A, Y_H, Y_A, i_XB, i_XP, f_P, n_h, K_a, K_h, K_x]
+     */
+    asm1_parameters?: (Array<(number)> | null);
+    /**
+     * ASM3模型参数 [k_H, K_X, k_STO, ny_NOX, K_O2, K_NOX, K_S, K_STO, mu_H, K_NH4, K_ALK, b_HO2, b_HNOX, b_STOO2, b_STONOX, mu_A, K_ANH4, K_AO2, K_AALK, b_AO2, b_ANOX, f_SI, Y_STOO2, Y_STONOX, Y_HO2, Y_HNOX, Y_A, f_XI, i_NSI, i_NSS, i_NXI, i_NXS, i_NBM, i_SSXI, i_SSXS, i_SSBM, i_SSSTO]
+     */
+    asm3_parameters?: (Array<(number)> | null);
+    /**
+     * UDM模型ID
+     */
+    udm_model_id?: (string | null);
+    /**
+     * UDM模型版本
+     */
+    udm_model_version?: (number | null);
+    /**
+     * UDM模型内容哈希
+     */
+    udm_model_hash?: (string | null);
+    /**
+     * UDM状态组分名称列表
+     */
+    udm_component_names?: (Array<(string)> | null);
+    /**
+     * UDM过程定义列表，包含rate_expr与stoich
+     */
+    udm_processes?: (Array<{
+    [key: string]: unknown;
+}> | null);
+    /**
+     * UDM参数值映射
+     */
+    udm_parameter_values?: ({
+    [key: string]: (number);
+} | null);
+    /**
+     * UDM模型快照，用于任务可复现
+     */
+    udm_model_snapshot?: ({
+    [key: string]: unknown;
+} | null);
+    /**
+     * UDM局部变量到全局规范变量的绑定关系 [{local_var, canonical_var}]
+     */
+    udm_variable_bindings?: (Array<{
+    [key: string]: (string);
+}> | null);
+};
 
 export type PrivateUserCreate = {
-  email: string
-  password: string
-  full_name: string
-  is_verified?: boolean
-}
+    email: string;
+    password: string;
+    full_name: string;
+    is_verified?: boolean;
+};
 
 /**
  * 时段内单条边的覆盖配置。
  */
 export type SegmentEdgeOverride = {
-  /**
-   * 边流量覆盖值
-   */
-  flow?: number | null
-  /**
-   * 边参数系数覆盖（键为参数名）
-   */
-  factors?: {
-    [key: string]: SegmentFactorAB
-  }
-}
+    /**
+     * 边流量覆盖值
+     */
+    flow?: (number | null);
+    /**
+     * 边参数系数覆盖（键为参数名）
+     */
+    factors?: {
+        [key: string]: SegmentFactorAB;
+    };
+};
 
 /**
  * 时段内边参数系数覆盖。
  */
 export type SegmentFactorAB = {
-  /**
-   * 系数 a 覆盖值
-   */
-  a?: number | null
-  /**
-   * 系数 b 覆盖值
-   */
-  b?: number | null
-}
+    /**
+     * 系数 a 覆盖值
+     */
+    a?: (number | null);
+    /**
+     * 系数 b 覆盖值
+     */
+    b?: (number | null);
+};
 
 /**
  * ODE求解器方法
  */
-export type SolverMethod = "scipy_solver" | "euler" | "rk4" | "adaptive_heun"
+export type SolverMethod = 'scipy_solver' | 'euler' | 'rk4' | 'adaptive_heun';
 
 /**
  * 时段定义。
  */
 export type TimeSegment = {
-  /**
-   * 时段ID
-   */
-  id: string
-  /**
-   * 时段起始小时
-   */
-  start_hour: number
-  /**
-   * 时段结束小时
-   */
-  end_hour: number
-  /**
-   * 时段内边覆盖配置（键为边ID）
-   */
-  edge_overrides?: {
-    [key: string]: SegmentEdgeOverride
-  }
-}
+    /**
+     * 时段ID
+     */
+    id: string;
+    /**
+     * 时段起始小时
+     */
+    start_hour: number;
+    /**
+     * 时段结束小时
+     */
+    end_hour: number;
+    /**
+     * 时段内边覆盖配置（键为边ID）
+     */
+    edge_overrides?: {
+        [key: string]: SegmentEdgeOverride;
+    };
+};
 
 export type Token = {
-  access_token: string
-  token_type?: string
-}
+    access_token: string;
+    token_type?: string;
+};
 
 /**
  * UDM组分定义
  */
 export type UDMComponentDefinition = {
-  /**
-   * 组分唯一标识
-   */
-  name: string
-  /**
-   * 组分显示名称
-   */
-  label?: string | null
-  /**
-   * 组分单位
-   */
-  unit?: string | null
-  /**
-   * 组分默认初值
-   */
-  default_value?: number | null
-  /**
-   * 是否冻结该组分变化（dC/dt=0）
-   */
-  is_fixed?: boolean
-}
+    /**
+     * 组分唯一标识
+     */
+    name: string;
+    /**
+     * 组分显示名称
+     */
+    label?: (string | null);
+    /**
+     * 组分单位
+     */
+    unit?: (string | null);
+    /**
+     * 组分默认初值
+     */
+    default_value?: (number | null);
+    /**
+     * 是否冻结该组分变化（dC/dt=0）
+     */
+    is_fixed?: boolean;
+};
 
 /**
  * 创建UDM流程图请求
  */
 export type UDMFlowChartCreate = {
-  name: string
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * UDM流程图公开信息
  */
 export type UDMFlowChartPublic = {
-  name: string
-  description?: string | null
-  id: string
-  owner_id: string
-  created_at: string
-  updated_at: string
-  flow_data: {
-    [key: string]: unknown
-  }
-}
+    name: string;
+    description?: (string | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    flow_data: {
+        [key: string]: unknown;
+    };
+};
 
 /**
  * UDM流程图列表响应
  */
 export type UDMFlowChartsPublic = {
-  data?: Array<UDMFlowChartPublic>
-  count: number
-}
+    data?: Array<UDMFlowChartPublic>;
+    count: number;
+};
 
 /**
  * 更新UDM流程图请求
  */
 export type UDMFlowChartUpdate = {
-  name?: string | null
-  description?: string | null
-  /**
-   * 完整的流程图数据
-   */
-  flow_data?: {
-    [key: string]: unknown
-  } | null
-}
+    name?: (string | null);
+    description?: (string | null);
+    /**
+     * 完整的流程图数据
+     */
+    flow_data?: ({
+    [key: string]: unknown;
+} | null);
+};
+
+/**
+ * 创建UDM Hybrid配置请求
+ */
+export type UDMHybridConfigCreate = {
+    name: string;
+    description?: (string | null);
+    /**
+     * Hybrid配置内容
+     */
+    hybrid_config: HybridUDMConfig_Input;
+};
+
+/**
+ * UDM Hybrid配置公开信息
+ */
+export type UDMHybridConfigPublic = {
+    name: string;
+    description?: (string | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    hybrid_config: HybridUDMConfig_Output;
+};
+
+/**
+ * UDM Hybrid配置列表响应
+ */
+export type UDMHybridConfigsPublic = {
+    data?: Array<UDMHybridConfigPublic>;
+    count: number;
+};
+
+/**
+ * 更新UDM Hybrid配置请求
+ */
+export type UDMHybridConfigUpdate = {
+    name?: (string | null);
+    description?: (string | null);
+    /**
+     * Hybrid配置内容
+     */
+    hybrid_config?: (HybridUDMConfig_Input | null);
+};
 
 /**
  * UDM任务输入数据响应
  */
 export type UDMJobInputDataResponse = {
-  /**
-   * 计算任务ID
-   */
-  job_id: string
-  /**
-   * 输入数据
-   */
-  input_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 计算结果数据
-   */
-  result_data: {
-    [key: string]: unknown
-  }
-  /**
-   * 任务状态
-   */
-  status: MaterialBalanceJobStatus
-}
+    /**
+     * 计算任务ID
+     */
+    job_id: string;
+    /**
+     * 输入数据
+     */
+    input_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 计算结果数据
+     */
+    result_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * 任务状态
+     */
+    status: MaterialBalanceJobStatus;
+};
 
 /**
  * UDM任务公开信息
  */
 export type UDMJobPublic = {
-  id: string
-  job_id: string
-  job_name: string
-  status: MaterialBalanceJobStatus
-  created_at: string
-  started_at: string | null
-  completed_at: string | null
-  error_message: string | null
-  /**
-   * 计算结果数据
-   */
-  result_data?: {
-    [key: string]: unknown
-  } | null
-}
+    id: string;
+    job_id: string;
+    job_name: string;
+    status: MaterialBalanceJobStatus;
+    created_at: string;
+    started_at: (string | null);
+    completed_at: (string | null);
+    error_message: (string | null);
+    /**
+     * 计算结果数据
+     */
+    result_data?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * UDM任务列表
  */
 export type UDMJobsPublic = {
-  data: Array<UDMJobPublic>
-  count: number
-}
+    data: Array<UDMJobPublic>;
+    count: number;
+};
 
 /**
  * 创建UDM模型请求
  */
 export type UDMModelCreate = {
-  /**
-   * 模型名称
-   */
-  name: string
-  /**
-   * 模型描述
-   */
-  description?: string | null
-  /**
-   * 模型标签
-   */
-  tags?: Array<string>
-  /**
-   * 组分定义
-   */
-  components?: Array<UDMComponentDefinition>
-  /**
-   * 参数定义
-   */
-  parameters?: Array<UDMParameterDefinition>
-  /**
-   * 过程定义
-   */
-  processes?: Array<UDMProcessDefinition>
-  /**
-   * 扩展元信息
-   */
-  meta?: {
-    [key: string]: unknown
-  } | null
-  /**
-   * 模板来源
-   */
-  seed_source?: string | null
-}
+    /**
+     * 模型名称
+     */
+    name: string;
+    /**
+     * 模型描述
+     */
+    description?: (string | null);
+    /**
+     * 模型标签
+     */
+    tags?: Array<(string)>;
+    /**
+     * 组分定义
+     */
+    components?: Array<UDMComponentDefinition>;
+    /**
+     * 参数定义
+     */
+    parameters?: Array<UDMParameterDefinition>;
+    /**
+     * 过程定义
+     */
+    processes?: Array<UDMProcessDefinition>;
+    /**
+     * 扩展元信息
+     */
+    meta?: ({
+    [key: string]: unknown;
+} | null);
+    /**
+     * 模板来源
+     */
+    seed_source?: (string | null);
+};
 
 /**
  * 通过模板创建UDM模型请求
  */
 export type UDMModelCreateFromTemplate = {
-  /**
-   * 模板标识
-   */
-  template_key: string
-  /**
-   * 可选覆盖模型名
-   */
-  name?: string | null
-  /**
-   * 可选覆盖模型描述
-   */
-  description?: string | null
-}
+    /**
+     * 模板标识
+     */
+    template_key: string;
+    /**
+     * 可选覆盖模型名
+     */
+    name?: (string | null);
+    /**
+     * 可选覆盖模型描述
+     */
+    description?: (string | null);
+};
 
 /**
  * UDM模型草稿定义
  */
 export type UDMModelDefinitionDraft = {
-  /**
-   * 模型名称
-   */
-  name: string
-  /**
-   * 模型描述
-   */
-  description?: string | null
-  /**
-   * 模型标签
-   */
-  tags?: Array<string>
-  /**
-   * 组分定义
-   */
-  components?: Array<UDMComponentDefinition>
-  /**
-   * 参数定义
-   */
-  parameters?: Array<UDMParameterDefinition>
-  /**
-   * 过程定义
-   */
-  processes?: Array<UDMProcessDefinition>
-  /**
-   * 扩展元信息
-   */
-  meta?: {
-    [key: string]: unknown
-  } | null
-}
+    /**
+     * 模型名称
+     */
+    name: string;
+    /**
+     * 模型描述
+     */
+    description?: (string | null);
+    /**
+     * 模型标签
+     */
+    tags?: Array<(string)>;
+    /**
+     * 组分定义
+     */
+    components?: Array<UDMComponentDefinition>;
+    /**
+     * 参数定义
+     */
+    parameters?: Array<UDMParameterDefinition>;
+    /**
+     * 过程定义
+     */
+    processes?: Array<UDMProcessDefinition>;
+    /**
+     * 扩展元信息
+     */
+    meta?: ({
+    [key: string]: unknown;
+} | null);
+};
 
 /**
  * UDM模型详情响应
  */
 export type UDMModelDetailPublic = {
-  /**
-   * 模型名称
-   */
-  name: string
-  /**
-   * 模型描述
-   */
-  description?: string | null
-  /**
-   * 模型标签
-   */
-  tags?: Array<string>
-  id: string
-  current_version: number
-  is_published: boolean
-  owner_id: string
-  created_at: string
-  updated_at: string
-  latest_version?: UDMModelVersionPublic | null
-  versions?: Array<UDMModelVersionPublic>
-}
+    /**
+     * 模型名称
+     */
+    name: string;
+    /**
+     * 模型描述
+     */
+    description?: (string | null);
+    /**
+     * 模型标签
+     */
+    tags?: Array<(string)>;
+    id: string;
+    current_version: number;
+    is_published: boolean;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    latest_version?: (UDMModelVersionPublic | null);
+    versions?: Array<UDMModelVersionPublic>;
+};
 
 /**
  * UDM模型公开信息
  */
 export type UDMModelPublic = {
-  /**
-   * 模型名称
-   */
-  name: string
-  /**
-   * 模型描述
-   */
-  description?: string | null
-  /**
-   * 模型标签
-   */
-  tags?: Array<string>
-  id: string
-  current_version: number
-  is_published: boolean
-  owner_id: string
-  created_at: string
-  updated_at: string
-}
+    /**
+     * 模型名称
+     */
+    name: string;
+    /**
+     * 模型描述
+     */
+    description?: (string | null);
+    /**
+     * 模型标签
+     */
+    tags?: Array<(string)>;
+    id: string;
+    current_version: number;
+    is_published: boolean;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+};
 
 /**
  * UDM模型列表响应
  */
 export type UDMModelsPublic = {
-  data?: Array<UDMModelPublic>
-  count: number
-}
+    data?: Array<UDMModelPublic>;
+    count: number;
+};
 
 /**
  * 更新UDM模型请求
  */
 export type UDMModelUpdate = {
-  name?: string | null
-  description?: string | null
-  tags?: Array<string> | null
-  components?: Array<UDMComponentDefinition> | null
-  parameters?: Array<UDMParameterDefinition> | null
-  processes?: Array<UDMProcessDefinition> | null
-  meta?: {
-    [key: string]: unknown
-  } | null
-  /**
-   * 是否发布
-   */
-  is_published?: boolean | null
-}
+    name?: (string | null);
+    description?: (string | null);
+    tags?: (Array<(string)> | null);
+    components?: (Array<UDMComponentDefinition> | null);
+    parameters?: (Array<UDMParameterDefinition> | null);
+    processes?: (Array<UDMProcessDefinition> | null);
+    meta?: ({
+    [key: string]: unknown;
+} | null);
+    /**
+     * 是否发布
+     */
+    is_published?: (boolean | null);
+};
 
 /**
  * UDM模型版本公开信息
  */
 export type UDMModelVersionPublic = {
-  id: string
-  model_id: string
-  version: number
-  content_hash: string
-  components?: Array<{
-    [key: string]: unknown
-  }>
-  parameters?: Array<{
-    [key: string]: unknown
-  }>
-  processes?: Array<{
-    [key: string]: unknown
-  }>
-  meta?: {
-    [key: string]: unknown
-  } | null
-  validation_ok: boolean
-  validation_errors?: Array<{
-    [key: string]: unknown
-  }>
-  seed_source: string | null
-  created_at: string
-  updated_at: string
-}
+    id: string;
+    model_id: string;
+    version: number;
+    content_hash: string;
+    components?: Array<{
+        [key: string]: unknown;
+    }>;
+    parameters?: Array<{
+        [key: string]: unknown;
+    }>;
+    processes?: Array<{
+        [key: string]: unknown;
+    }>;
+    meta?: ({
+    [key: string]: unknown;
+} | null);
+    validation_ok: boolean;
+    validation_errors?: Array<{
+        [key: string]: unknown;
+    }>;
+    seed_source: (string | null);
+    created_at: string;
+    updated_at: string;
+};
 
 /**
  * UDM参数定义
  */
 export type UDMParameterDefinition = {
-  /**
-   * 参数唯一标识
-   */
-  name: string
-  /**
-   * 参数单位
-   */
-  unit?: string | null
-  /**
-   * 参数默认值
-   */
-  default_value?: number | null
-  /**
-   * 参数最小值
-   */
-  min_value?: number | null
-  /**
-   * 参数最大值
-   */
-  max_value?: number | null
-  /**
-   * 参数缩放类型
-   */
-  scale?: UDMScaleType
-  /**
-   * 参数备注
-   */
-  note?: string | null
-}
+    /**
+     * 参数唯一标识
+     */
+    name: string;
+    /**
+     * 参数单位
+     */
+    unit?: (string | null);
+    /**
+     * 参数默认值
+     */
+    default_value?: (number | null);
+    /**
+     * 参数最小值
+     */
+    min_value?: (number | null);
+    /**
+     * 参数最大值
+     */
+    max_value?: (number | null);
+    /**
+     * 参数缩放类型
+     */
+    scale?: UDMScaleType;
+    /**
+     * 参数备注
+     */
+    note?: (string | null);
+};
 
 /**
  * UDM过程定义
  */
 export type UDMProcessDefinition = {
-  /**
-   * 过程名称
-   */
-  name: string
-  /**
-   * 过程速率表达式
-   */
-  rate_expr: string
-  /**
-   * 计量系数表达式映射，key=component.name
-   */
-  stoich_expr?: {
-    [key: string]: string
-  }
-  /**
-   * 计量系数映射，key=component.name
-   */
-  stoich?: {
-    [key: string]: number
-  }
-  /**
-   * 过程备注
-   */
-  note?: string | null
-}
+    /**
+     * 过程名称
+     */
+    name: string;
+    /**
+     * 过程速率表达式
+     */
+    rate_expr: string;
+    /**
+     * 计量系数表达式映射，key=component.name
+     */
+    stoich_expr?: {
+        [key: string]: (string);
+    };
+    /**
+     * 计量系数映射，key=component.name
+     */
+    stoich?: {
+        [key: string]: (number);
+    };
+    /**
+     * 过程备注
+     */
+    note?: (string | null);
+};
 
 /**
  * UDM参数缩放类型
  */
-export type UDMScaleType = "lin" | "log"
+export type UDMScaleType = 'lin' | 'log';
 
 /**
  * UDM校验项
  */
 export type UDMValidationIssue = {
-  /**
-   * 错误/警告编码
-   */
-  code: string
-  /**
-   * 错误/警告消息
-   */
-  message: string
-  /**
-   * 关联过程
-   */
-  process?: string | null
-}
+    /**
+     * 错误/警告编码
+     */
+    code: string;
+    /**
+     * 错误/警告消息
+     */
+    message: string;
+    /**
+     * 关联过程
+     */
+    process?: (string | null);
+};
 
 /**
  * UDM模型定义校验响应
  */
 export type UDMValidationResponse = {
-  /**
-   * 是否通过校验
-   */
-  ok: boolean
-  /**
-   * 错误列表
-   */
-  errors?: Array<UDMValidationIssue>
-  /**
-   * 警告列表
-   */
-  warnings?: Array<UDMValidationIssue>
-  /**
-   * 从表达式提取的参数名
-   */
-  extracted_parameters?: Array<string>
-}
+    /**
+     * 是否通过校验
+     */
+    ok: boolean;
+    /**
+     * 错误列表
+     */
+    errors?: Array<UDMValidationIssue>;
+    /**
+     * 警告列表
+     */
+    warnings?: Array<UDMValidationIssue>;
+    /**
+     * 从表达式提取的参数名
+     */
+    extracted_parameters?: Array<(string)>;
+};
 
 export type UpdatePassword = {
-  current_password: string
-  new_password: string
-}
+    current_password: string;
+    new_password: string;
+};
 
 export type UserCreate = {
-  email: string
-  is_active?: boolean
-  is_superuser?: boolean
-  full_name?: string | null
-  /**
-   * 用户类型级别
-   */
-  user_type?: UserType
-  password: string
-}
+    email: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    full_name?: (string | null);
+    /**
+     * 用户类型级别
+     */
+    user_type?: UserType;
+    password: string;
+};
 
 export type UserPublic = {
-  email: string
-  is_active?: boolean
-  is_superuser?: boolean
-  full_name?: string | null
-  /**
-   * 用户类型级别
-   */
-  user_type?: UserType
-  id: string
-  created_at: string
-  updated_at: string
-}
+    email: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    full_name?: (string | null);
+    /**
+     * 用户类型级别
+     */
+    user_type?: UserType;
+    id: string;
+    created_at: string;
+    updated_at: string;
+};
 
 export type UserRegister = {
-  email: string
-  password: string
-  full_name?: string | null
-}
+    email: string;
+    password: string;
+    full_name?: (string | null);
+};
 
 export type UsersPublic = {
-  data: Array<UserPublic>
-  count: number
-}
+    data: Array<UserPublic>;
+    count: number;
+};
 
 /**
  * 用户类型枚举
  */
-export type UserType = "basic" | "pro" | "ultra" | "enterprise"
+export type UserType = 'basic' | 'pro' | 'ultra' | 'enterprise';
 
 export type UserUpdate = {
-  email?: string | null
-  is_active?: boolean
-  is_superuser?: boolean
-  full_name?: string | null
-  /**
-   * 用户类型级别
-   */
-  user_type?: UserType
-  password?: string | null
-}
+    email?: (string | null);
+    is_active?: boolean;
+    is_superuser?: boolean;
+    full_name?: (string | null);
+    /**
+     * 用户类型级别
+     */
+    user_type?: UserType;
+    password?: (string | null);
+};
 
 export type UserUpdateMe = {
-  full_name?: string | null
-  email?: string | null
-  /**
-   * 用户类型级别
-   */
-  user_type?: UserType | null
-}
+    full_name?: (string | null);
+    email?: (string | null);
+    /**
+     * 用户类型级别
+     */
+    user_type?: (UserType | null);
+};
 
 export type ValidationError = {
-  loc: Array<string | number>
-  msg: string
-  type: string
-}
+    loc: Array<(string | number)>;
+    msg: string;
+    type: string;
+};
 
 export type Asm1CreateCalculationJobData = {
-  requestBody: MaterialBalanceInput
-}
+    requestBody: MaterialBalanceInput;
+};
 
-export type Asm1CreateCalculationJobResponse = ASM1JobPublic
+export type Asm1CreateCalculationJobResponse = (ASM1JobPublic);
 
 export type Asm1CreateCalculationJobFromFlowchartData = {
-  requestBody: {
-    [key: string]: unknown
-  }
-}
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
 
-export type Asm1CreateCalculationJobFromFlowchartResponse = ASM1JobPublic
+export type Asm1CreateCalculationJobFromFlowchartResponse = (ASM1JobPublic);
 
 export type Asm1GetCalculationResultSummaryData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1GetCalculationResultSummaryResponse =
-  MaterialBalanceResultSummary
+export type Asm1GetCalculationResultSummaryResponse = (MaterialBalanceResultSummary);
 
 export type Asm1GetCalculationFinalValuesData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1GetCalculationFinalValuesResponse = {
-  [key: string]: unknown
-}
+export type Asm1GetCalculationFinalValuesResponse = ({
+    [key: string]: unknown;
+});
 
 export type Asm1GetCalculationTimeseriesData = {
-  /**
-   * 指定边ID列表
-   */
-  edgeIds?: Array<string> | null
-  /**
-   * 结束时间 (小时)
-   */
-  endTime?: number | null
-  jobId: string
-  /**
-   * 指定节点ID列表
-   */
-  nodeIds?: Array<string> | null
-  /**
-   * 页码
-   */
-  page?: number
-  /**
-   * 每页数据量
-   */
-  pageSize?: number
-  /**
-   * 开始时间 (小时)
-   */
-  startTime?: number | null
-}
+    /**
+     * 指定边ID列表
+     */
+    edgeIds?: (Array<(string)> | null);
+    /**
+     * 结束时间 (小时)
+     */
+    endTime?: (number | null);
+    jobId: string;
+    /**
+     * 指定节点ID列表
+     */
+    nodeIds?: (Array<(string)> | null);
+    /**
+     * 页码
+     */
+    page?: number;
+    /**
+     * 每页数据量
+     */
+    pageSize?: number;
+    /**
+     * 开始时间 (小时)
+     */
+    startTime?: (number | null);
+};
 
-export type Asm1GetCalculationTimeseriesResponse =
-  MaterialBalanceTimeSeriesResponse
+export type Asm1GetCalculationTimeseriesResponse = (MaterialBalanceTimeSeriesResponse);
 
 export type Asm1GetCalculationStatusData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1GetCalculationStatusResponse = ASM1JobPublic
+export type Asm1GetCalculationStatusResponse = (ASM1JobPublic);
 
 export type Asm1ValidateCalculationInputData = {
-  requestBody: MaterialBalanceValidationRequest
-}
+    requestBody: MaterialBalanceValidationRequest;
+};
 
-export type Asm1ValidateCalculationInputResponse =
-  MaterialBalanceValidationResponse
+export type Asm1ValidateCalculationInputResponse = (MaterialBalanceValidationResponse);
 
 export type Asm1GetUserCalculationJobsData = {
-  /**
-   * 返回的记录数
-   */
-  limit?: number
-  /**
-   * 跳过的记录数
-   */
-  skip?: number
-}
+    /**
+     * 返回的记录数
+     */
+    limit?: number;
+    /**
+     * 跳过的记录数
+     */
+    skip?: number;
+};
 
-export type Asm1GetUserCalculationJobsResponse = ASM1JobsPublic
+export type Asm1GetUserCalculationJobsResponse = (ASM1JobsPublic);
 
 export type Asm1DeleteCalculationJobData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1DeleteCalculationJobResponse = Message
+export type Asm1DeleteCalculationJobResponse = (Message);
 
 export type Asm1GetJobInputDataData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1GetJobInputDataResponse = ASM1JobInputDataResponse
+export type Asm1GetJobInputDataResponse = (ASM1JobInputDataResponse);
 
 export type Asm1FlowchartsReadAsm1FlowchartsData = {
-  limit?: number
-  skip?: number
-}
+    limit?: number;
+    skip?: number;
+};
 
-export type Asm1FlowchartsReadAsm1FlowchartsResponse = ASM1FlowChartsPublic
+export type Asm1FlowchartsReadAsm1FlowchartsResponse = (ASM1FlowChartsPublic);
 
 export type Asm1FlowchartsCreateAsm1FlowchartData = {
-  requestBody: ASM1FlowChartCreate
-}
+    requestBody: ASM1FlowChartCreate;
+};
 
-export type Asm1FlowchartsCreateAsm1FlowchartResponse = ASM1FlowChartPublic
+export type Asm1FlowchartsCreateAsm1FlowchartResponse = (ASM1FlowChartPublic);
 
 export type Asm1FlowchartsReadAsm1FlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type Asm1FlowchartsReadAsm1FlowchartResponse = ASM1FlowChartPublic
+export type Asm1FlowchartsReadAsm1FlowchartResponse = (ASM1FlowChartPublic);
 
 export type Asm1FlowchartsUpdateAsm1FlowchartData = {
-  id: string
-  requestBody: ASM1FlowChartUpdate
-}
+    id: string;
+    requestBody: ASM1FlowChartUpdate;
+};
 
-export type Asm1FlowchartsUpdateAsm1FlowchartResponse = ASM1FlowChartPublic
+export type Asm1FlowchartsUpdateAsm1FlowchartResponse = (ASM1FlowChartPublic);
 
 export type Asm1FlowchartsDeleteAsm1FlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type Asm1FlowchartsDeleteAsm1FlowchartResponse = Message
+export type Asm1FlowchartsDeleteAsm1FlowchartResponse = (Message);
 
 export type Asm1SlimCreateCalculationJobData = {
-  requestBody: MaterialBalanceInput
-}
+    requestBody: MaterialBalanceInput;
+};
 
-export type Asm1SlimCreateCalculationJobResponse = ASM1SlimJobPublic
+export type Asm1SlimCreateCalculationJobResponse = (ASM1SlimJobPublic);
 
 export type Asm1SlimCreateCalculationJobFromFlowchartData = {
-  requestBody: {
-    [key: string]: unknown
-  }
-}
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
 
-export type Asm1SlimCreateCalculationJobFromFlowchartResponse =
-  ASM1SlimJobPublic
+export type Asm1SlimCreateCalculationJobFromFlowchartResponse = (ASM1SlimJobPublic);
 
 export type Asm1SlimGetCalculationResultSummaryData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1SlimGetCalculationResultSummaryResponse =
-  MaterialBalanceResultSummary
+export type Asm1SlimGetCalculationResultSummaryResponse = (MaterialBalanceResultSummary);
 
 export type Asm1SlimGetCalculationFinalValuesData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1SlimGetCalculationFinalValuesResponse = {
-  [key: string]: unknown
-}
+export type Asm1SlimGetCalculationFinalValuesResponse = ({
+    [key: string]: unknown;
+});
 
 export type Asm1SlimGetCalculationTimeseriesData = {
-  /**
-   * 指定边ID列表
-   */
-  edgeIds?: Array<string> | null
-  /**
-   * 结束时间 (小时)
-   */
-  endTime?: number | null
-  jobId: string
-  /**
-   * 指定节点ID列表
-   */
-  nodeIds?: Array<string> | null
-  /**
-   * 页码
-   */
-  page?: number
-  /**
-   * 每页数据量
-   */
-  pageSize?: number
-  /**
-   * 开始时间 (小时)
-   */
-  startTime?: number | null
-}
+    /**
+     * 指定边ID列表
+     */
+    edgeIds?: (Array<(string)> | null);
+    /**
+     * 结束时间 (小时)
+     */
+    endTime?: (number | null);
+    jobId: string;
+    /**
+     * 指定节点ID列表
+     */
+    nodeIds?: (Array<(string)> | null);
+    /**
+     * 页码
+     */
+    page?: number;
+    /**
+     * 每页数据量
+     */
+    pageSize?: number;
+    /**
+     * 开始时间 (小时)
+     */
+    startTime?: (number | null);
+};
 
-export type Asm1SlimGetCalculationTimeseriesResponse =
-  MaterialBalanceTimeSeriesResponse
+export type Asm1SlimGetCalculationTimeseriesResponse = (MaterialBalanceTimeSeriesResponse);
 
 export type Asm1SlimGetCalculationStatusData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1SlimGetCalculationStatusResponse = ASM1SlimJobPublic
+export type Asm1SlimGetCalculationStatusResponse = (ASM1SlimJobPublic);
 
 export type Asm1SlimValidateCalculationInputData = {
-  requestBody: MaterialBalanceValidationRequest
-}
+    requestBody: MaterialBalanceValidationRequest;
+};
 
-export type Asm1SlimValidateCalculationInputResponse =
-  MaterialBalanceValidationResponse
+export type Asm1SlimValidateCalculationInputResponse = (MaterialBalanceValidationResponse);
 
 export type Asm1SlimGetUserCalculationJobsData = {
-  /**
-   * 返回的记录数
-   */
-  limit?: number
-  /**
-   * 跳过的记录数
-   */
-  skip?: number
-}
+    /**
+     * 返回的记录数
+     */
+    limit?: number;
+    /**
+     * 跳过的记录数
+     */
+    skip?: number;
+};
 
-export type Asm1SlimGetUserCalculationJobsResponse = ASM1SlimJobsPublic
+export type Asm1SlimGetUserCalculationJobsResponse = (ASM1SlimJobsPublic);
 
 export type Asm1SlimDeleteCalculationJobData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1SlimDeleteCalculationJobResponse = Message
+export type Asm1SlimDeleteCalculationJobResponse = (Message);
 
 export type Asm1SlimGetJobInputDataData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm1SlimGetJobInputDataResponse = ASM1SlimJobInputDataResponse
+export type Asm1SlimGetJobInputDataResponse = (ASM1SlimJobInputDataResponse);
 
 export type Asm1SlimFlowchartsReadAsm1SlimFlowchartsData = {
-  limit?: number
-  skip?: number
-}
+    limit?: number;
+    skip?: number;
+};
 
-export type Asm1SlimFlowchartsReadAsm1SlimFlowchartsResponse =
-  ASM1SlimFlowChartsPublic
+export type Asm1SlimFlowchartsReadAsm1SlimFlowchartsResponse = (ASM1SlimFlowChartsPublic);
 
 export type Asm1SlimFlowchartsCreateAsm1SlimFlowchartData = {
-  requestBody: ASM1SlimFlowChartCreate
-}
+    requestBody: ASM1SlimFlowChartCreate;
+};
 
-export type Asm1SlimFlowchartsCreateAsm1SlimFlowchartResponse =
-  ASM1SlimFlowChartPublic
+export type Asm1SlimFlowchartsCreateAsm1SlimFlowchartResponse = (ASM1SlimFlowChartPublic);
 
 export type Asm1SlimFlowchartsReadAsm1SlimFlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type Asm1SlimFlowchartsReadAsm1SlimFlowchartResponse =
-  ASM1SlimFlowChartPublic
+export type Asm1SlimFlowchartsReadAsm1SlimFlowchartResponse = (ASM1SlimFlowChartPublic);
 
 export type Asm1SlimFlowchartsUpdateAsm1SlimFlowchartData = {
-  id: string
-  requestBody: ASM1SlimFlowChartUpdate
-}
+    id: string;
+    requestBody: ASM1SlimFlowChartUpdate;
+};
 
-export type Asm1SlimFlowchartsUpdateAsm1SlimFlowchartResponse =
-  ASM1SlimFlowChartPublic
+export type Asm1SlimFlowchartsUpdateAsm1SlimFlowchartResponse = (ASM1SlimFlowChartPublic);
 
 export type Asm1SlimFlowchartsDeleteAsm1SlimFlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type Asm1SlimFlowchartsDeleteAsm1SlimFlowchartResponse = Message
+export type Asm1SlimFlowchartsDeleteAsm1SlimFlowchartResponse = (Message);
 
 export type Asm3CreateCalculationJobData = {
-  requestBody: MaterialBalanceInput
-}
+    requestBody: MaterialBalanceInput;
+};
 
-export type Asm3CreateCalculationJobResponse = ASM3JobPublic
+export type Asm3CreateCalculationJobResponse = (ASM3JobPublic);
 
 export type Asm3CreateCalculationJobFromFlowchartData = {
-  requestBody: {
-    [key: string]: unknown
-  }
-}
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
 
-export type Asm3CreateCalculationJobFromFlowchartResponse = ASM3JobPublic
+export type Asm3CreateCalculationJobFromFlowchartResponse = (ASM3JobPublic);
 
 export type Asm3GetCalculationResultSummaryData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm3GetCalculationResultSummaryResponse =
-  MaterialBalanceResultSummary
+export type Asm3GetCalculationResultSummaryResponse = (MaterialBalanceResultSummary);
 
 export type Asm3GetCalculationFinalValuesData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm3GetCalculationFinalValuesResponse = {
-  [key: string]: unknown
-}
+export type Asm3GetCalculationFinalValuesResponse = ({
+    [key: string]: unknown;
+});
 
 export type Asm3GetCalculationTimeseriesData = {
-  /**
-   * 指定边ID列表
-   */
-  edgeIds?: Array<string> | null
-  /**
-   * 结束时间 (小时)
-   */
-  endTime?: number | null
-  jobId: string
-  /**
-   * 指定节点ID列表
-   */
-  nodeIds?: Array<string> | null
-  /**
-   * 页码
-   */
-  page?: number
-  /**
-   * 每页数据量
-   */
-  pageSize?: number
-  /**
-   * 开始时间 (小时)
-   */
-  startTime?: number | null
-}
+    /**
+     * 指定边ID列表
+     */
+    edgeIds?: (Array<(string)> | null);
+    /**
+     * 结束时间 (小时)
+     */
+    endTime?: (number | null);
+    jobId: string;
+    /**
+     * 指定节点ID列表
+     */
+    nodeIds?: (Array<(string)> | null);
+    /**
+     * 页码
+     */
+    page?: number;
+    /**
+     * 每页数据量
+     */
+    pageSize?: number;
+    /**
+     * 开始时间 (小时)
+     */
+    startTime?: (number | null);
+};
 
-export type Asm3GetCalculationTimeseriesResponse =
-  MaterialBalanceTimeSeriesResponse
+export type Asm3GetCalculationTimeseriesResponse = (MaterialBalanceTimeSeriesResponse);
 
 export type Asm3GetCalculationStatusData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm3GetCalculationStatusResponse = ASM3JobPublic
+export type Asm3GetCalculationStatusResponse = (ASM3JobPublic);
 
 export type Asm3ValidateCalculationInputData = {
-  requestBody: MaterialBalanceValidationRequest
-}
+    requestBody: MaterialBalanceValidationRequest;
+};
 
-export type Asm3ValidateCalculationInputResponse =
-  MaterialBalanceValidationResponse
+export type Asm3ValidateCalculationInputResponse = (MaterialBalanceValidationResponse);
 
 export type Asm3GetUserCalculationJobsData = {
-  /**
-   * 返回的记录数
-   */
-  limit?: number
-  /**
-   * 跳过的记录数
-   */
-  skip?: number
-}
+    /**
+     * 返回的记录数
+     */
+    limit?: number;
+    /**
+     * 跳过的记录数
+     */
+    skip?: number;
+};
 
-export type Asm3GetUserCalculationJobsResponse = ASM3JobsPublic
+export type Asm3GetUserCalculationJobsResponse = (ASM3JobsPublic);
 
 export type Asm3DeleteCalculationJobData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm3DeleteCalculationJobResponse = Message
+export type Asm3DeleteCalculationJobResponse = (Message);
 
 export type Asm3GetJobInputDataData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type Asm3GetJobInputDataResponse = ASM3JobInputDataResponse
+export type Asm3GetJobInputDataResponse = (ASM3JobInputDataResponse);
 
 export type Asm3FlowchartsReadAsm3FlowchartsData = {
-  limit?: number
-  skip?: number
-}
+    limit?: number;
+    skip?: number;
+};
 
-export type Asm3FlowchartsReadAsm3FlowchartsResponse = ASM3FlowChartsPublic
+export type Asm3FlowchartsReadAsm3FlowchartsResponse = (ASM3FlowChartsPublic);
 
 export type Asm3FlowchartsCreateAsm3FlowchartData = {
-  requestBody: ASM3FlowChartCreate
-}
+    requestBody: ASM3FlowChartCreate;
+};
 
-export type Asm3FlowchartsCreateAsm3FlowchartResponse = ASM3FlowChartPublic
+export type Asm3FlowchartsCreateAsm3FlowchartResponse = (ASM3FlowChartPublic);
 
 export type Asm3FlowchartsReadAsm3FlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type Asm3FlowchartsReadAsm3FlowchartResponse = ASM3FlowChartPublic
+export type Asm3FlowchartsReadAsm3FlowchartResponse = (ASM3FlowChartPublic);
 
 export type Asm3FlowchartsUpdateAsm3FlowchartData = {
-  id: string
-  requestBody: ASM3FlowChartUpdate
-}
+    id: string;
+    requestBody: ASM3FlowChartUpdate;
+};
 
-export type Asm3FlowchartsUpdateAsm3FlowchartResponse = ASM3FlowChartPublic
+export type Asm3FlowchartsUpdateAsm3FlowchartResponse = (ASM3FlowChartPublic);
 
 export type Asm3FlowchartsDeleteAsm3FlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type Asm3FlowchartsDeleteAsm3FlowchartResponse = Message
+export type Asm3FlowchartsDeleteAsm3FlowchartResponse = (Message);
 
 export type FlowchartsReadFlowchartsData = {
-  limit?: number
-  skip?: number
-}
+    limit?: number;
+    skip?: number;
+};
 
-export type FlowchartsReadFlowchartsResponse = FlowChartsPublic
+export type FlowchartsReadFlowchartsResponse = (FlowChartsPublic);
 
 export type FlowchartsCreateFlowchartData = {
-  requestBody: FlowChartCreate
-}
+    requestBody: FlowChartCreate;
+};
 
-export type FlowchartsCreateFlowchartResponse = FlowChartPublic
+export type FlowchartsCreateFlowchartResponse = (FlowChartPublic);
 
 export type FlowchartsReadFlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type FlowchartsReadFlowchartResponse = FlowChartPublic
+export type FlowchartsReadFlowchartResponse = (FlowChartPublic);
 
 export type FlowchartsUpdateFlowchartData = {
-  id: string
-  requestBody: FlowChartUpdate
-}
+    id: string;
+    requestBody: FlowChartUpdate;
+};
 
-export type FlowchartsUpdateFlowchartResponse = FlowChartPublic
+export type FlowchartsUpdateFlowchartResponse = (FlowChartPublic);
 
 export type FlowchartsDeleteFlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type FlowchartsDeleteFlowchartResponse = Message
+export type FlowchartsDeleteFlowchartResponse = (Message);
 
 export type ItemsReadItemsData = {
-  limit?: number
-  skip?: number
-}
+    limit?: number;
+    skip?: number;
+};
 
-export type ItemsReadItemsResponse = ItemsPublic
+export type ItemsReadItemsResponse = (ItemsPublic);
 
 export type ItemsCreateItemData = {
-  requestBody: ItemCreate
-}
+    requestBody: ItemCreate;
+};
 
-export type ItemsCreateItemResponse = ItemPublic
+export type ItemsCreateItemResponse = (ItemPublic);
 
 export type ItemsReadItemData = {
-  id: string
-}
+    id: string;
+};
 
-export type ItemsReadItemResponse = ItemPublic
+export type ItemsReadItemResponse = (ItemPublic);
 
 export type ItemsUpdateItemData = {
-  id: string
-  requestBody: ItemUpdate
-}
+    id: string;
+    requestBody: ItemUpdate;
+};
 
-export type ItemsUpdateItemResponse = ItemPublic
+export type ItemsUpdateItemResponse = (ItemPublic);
 
 export type ItemsDeleteItemData = {
-  id: string
-}
+    id: string;
+};
 
-export type ItemsDeleteItemResponse = Message
+export type ItemsDeleteItemResponse = (Message);
 
 export type LoginLoginAccessTokenData = {
-  formData: Body_login_login_access_token
-}
+    formData: Body_login_login_access_token;
+};
 
-export type LoginLoginAccessTokenResponse = Token
+export type LoginLoginAccessTokenResponse = (Token);
 
-export type LoginTestTokenResponse = UserPublic
+export type LoginTestTokenResponse = (UserPublic);
 
 export type LoginRecoverPasswordData = {
-  email: string
-}
+    email: string;
+};
 
-export type LoginRecoverPasswordResponse = Message
+export type LoginRecoverPasswordResponse = (Message);
 
 export type LoginResetPasswordData = {
-  requestBody: NewPassword
-}
+    requestBody: NewPassword;
+};
 
-export type LoginResetPasswordResponse = Message
+export type LoginResetPasswordResponse = (Message);
 
 export type LoginRecoverPasswordHtmlContentData = {
-  email: string
-}
+    email: string;
+};
 
-export type LoginRecoverPasswordHtmlContentResponse = string
+export type LoginRecoverPasswordHtmlContentResponse = (string);
 
 export type MaterialBalanceCreateCalculationJobData = {
-  requestBody: MaterialBalanceInput
-}
+    requestBody: MaterialBalanceInput;
+};
 
-export type MaterialBalanceCreateCalculationJobResponse =
-  MaterialBalanceJobPublic
+export type MaterialBalanceCreateCalculationJobResponse = (MaterialBalanceJobPublic);
 
 export type MaterialBalanceCreateCalculationJobFromFlowchartData = {
-  requestBody: {
-    [key: string]: unknown
-  }
-}
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
 
-export type MaterialBalanceCreateCalculationJobFromFlowchartResponse =
-  MaterialBalanceJobPublic
+export type MaterialBalanceCreateCalculationJobFromFlowchartResponse = (MaterialBalanceJobPublic);
 
 export type MaterialBalanceGetCalculationResultSummaryData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type MaterialBalanceGetCalculationResultSummaryResponse =
-  MaterialBalanceResultSummary
+export type MaterialBalanceGetCalculationResultSummaryResponse = (MaterialBalanceResultSummary);
 
 export type MaterialBalanceGetCalculationFinalValuesData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type MaterialBalanceGetCalculationFinalValuesResponse = {
-  [key: string]: unknown
-}
+export type MaterialBalanceGetCalculationFinalValuesResponse = ({
+    [key: string]: unknown;
+});
 
 export type MaterialBalanceGetCalculationTimeseriesData = {
-  /**
-   * 鎸囧畾杈笽D鍒楄〃
-   */
-  edgeIds?: Array<string> | null
-  /**
-   * 缁撴潫鏃堕棿 (灏忔椂)
-   */
-  endTime?: number | null
-  jobId: string
-  /**
-   * 鎸囧畾鑺傜偣ID鍒楄〃
-   */
-  nodeIds?: Array<string> | null
-  /**
-   * 椤电爜
-   */
-  page?: number
-  /**
-   * Page size
-   */
-  pageSize?: number
-  /**
-   * 寮€濮嬫椂闂?(灏忔椂)
-   */
-  startTime?: number | null
-}
+    /**
+     * 鎸囧畾杈笽D鍒楄〃
+     */
+    edgeIds?: (Array<(string)> | null);
+    /**
+     * 缁撴潫鏃堕棿 (灏忔椂)
+     */
+    endTime?: (number | null);
+    jobId: string;
+    /**
+     * 鎸囧畾鑺傜偣ID鍒楄〃
+     */
+    nodeIds?: (Array<(string)> | null);
+    /**
+     * 椤电爜
+     */
+    page?: number;
+    /**
+     * Page size
+     */
+    pageSize?: number;
+    /**
+     * 寮€濮嬫椂闂?(灏忔椂)
+     */
+    startTime?: (number | null);
+};
 
-export type MaterialBalanceGetCalculationTimeseriesResponse =
-  MaterialBalanceTimeSeriesResponse
+export type MaterialBalanceGetCalculationTimeseriesResponse = (MaterialBalanceTimeSeriesResponse);
 
 export type MaterialBalanceGetCalculationStatusData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type MaterialBalanceGetCalculationStatusResponse =
-  MaterialBalanceJobPublic
+export type MaterialBalanceGetCalculationStatusResponse = (MaterialBalanceJobPublic);
 
 export type MaterialBalanceValidateCalculationInputData = {
-  requestBody: MaterialBalanceValidationRequest
-}
+    requestBody: MaterialBalanceValidationRequest;
+};
 
-export type MaterialBalanceValidateCalculationInputResponse =
-  MaterialBalanceValidationResponse
+export type MaterialBalanceValidateCalculationInputResponse = (MaterialBalanceValidationResponse);
 
 export type MaterialBalanceGetUserCalculationJobsData = {
-  /**
-   * 杩斿洖鐨勮褰曟暟
-   */
-  limit?: number
-  /**
-   * 璺宠繃鐨勮褰曟暟
-   */
-  skip?: number
-}
+    /**
+     * 杩斿洖鐨勮褰曟暟
+     */
+    limit?: number;
+    /**
+     * 璺宠繃鐨勮褰曟暟
+     */
+    skip?: number;
+};
 
-export type MaterialBalanceGetUserCalculationJobsResponse =
-  MaterialBalanceJobsPublic
+export type MaterialBalanceGetUserCalculationJobsResponse = (MaterialBalanceJobsPublic);
 
 export type MaterialBalanceDeleteCalculationJobData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type MaterialBalanceDeleteCalculationJobResponse = Message
+export type MaterialBalanceDeleteCalculationJobResponse = (Message);
 
 export type MaterialBalanceGetJobInputDataData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type MaterialBalanceGetJobInputDataResponse =
-  MaterialBalanceJobInputDataResponse
+export type MaterialBalanceGetJobInputDataResponse = (MaterialBalanceJobInputDataResponse);
 
 export type PrivateCreateUserData = {
-  requestBody: PrivateUserCreate
-}
+    requestBody: PrivateUserCreate;
+};
 
-export type PrivateCreateUserResponse = UserPublic
+export type PrivateCreateUserResponse = (UserPublic);
 
 export type SimpleWebsocketGetTaskConnectionsData = {
-  taskId: string
-}
+    taskId: string;
+};
 
-export type SimpleWebsocketGetTaskConnectionsResponse = unknown
+export type SimpleWebsocketGetTaskConnectionsResponse = (unknown);
 
 export type SimpleWebsocketBroadcastMessageData = {
-  requestBody: {
-    [key: string]: unknown
-  }
-  taskId: string
-}
+    requestBody: {
+        [key: string]: unknown;
+    };
+    taskId: string;
+};
 
-export type SimpleWebsocketBroadcastMessageResponse = unknown
+export type SimpleWebsocketBroadcastMessageResponse = (unknown);
 
-export type SimpleWebsocketWebsocketHealthResponse = unknown
+export type SimpleWebsocketWebsocketHealthResponse = (unknown);
 
-export type StatsGetDashboardStatsResponse = {
-  [key: string]: unknown
-}
+export type StatsGetDashboardStatsResponse = ({
+    [key: string]: unknown;
+});
 
-export type StatsGetUserStatsResponse = {
-  [key: string]: unknown
-}
+export type StatsGetUserStatsResponse = ({
+    [key: string]: unknown;
+});
 
 export type UdmCreateCalculationJobData = {
-  requestBody: MaterialBalanceInput
-}
+    requestBody: MaterialBalanceInput;
+};
 
-export type UdmCreateCalculationJobResponse = UDMJobPublic
+export type UdmCreateCalculationJobResponse = (UDMJobPublic);
 
 export type UdmCreateCalculationJobFromFlowchartData = {
-  requestBody: {
-    [key: string]: unknown
-  }
-}
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
 
-export type UdmCreateCalculationJobFromFlowchartResponse = UDMJobPublic
+export type UdmCreateCalculationJobFromFlowchartResponse = (UDMJobPublic);
 
 export type UdmValidateHybridUdmFlowchartData = {
-  requestBody: {
-    [key: string]: unknown
-  }
-}
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
 
-export type UdmValidateHybridUdmFlowchartResponse = HybridUDMValidationResponse
+export type UdmValidateHybridUdmFlowchartResponse = (HybridUDMValidationResponse);
 
 export type UdmGetCalculationResultSummaryData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type UdmGetCalculationResultSummaryResponse =
-  MaterialBalanceResultSummary
+export type UdmGetCalculationResultSummaryResponse = (MaterialBalanceResultSummary);
 
 export type UdmGetCalculationFinalValuesData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type UdmGetCalculationFinalValuesResponse = {
-  [key: string]: unknown
-}
+export type UdmGetCalculationFinalValuesResponse = ({
+    [key: string]: unknown;
+});
 
 export type UdmGetCalculationTimeseriesData = {
-  /**
-   * 指定边ID列表
-   */
-  edgeIds?: Array<string> | null
-  /**
-   * 结束时间 (小时)
-   */
-  endTime?: number | null
-  jobId: string
-  /**
-   * 指定节点ID列表
-   */
-  nodeIds?: Array<string> | null
-  /**
-   * 页码
-   */
-  page?: number
-  /**
-   * 每页数据量
-   */
-  pageSize?: number
-  /**
-   * 开始时间 (小时)
-   */
-  startTime?: number | null
-}
+    /**
+     * 指定边ID列表
+     */
+    edgeIds?: (Array<(string)> | null);
+    /**
+     * 结束时间 (小时)
+     */
+    endTime?: (number | null);
+    jobId: string;
+    /**
+     * 指定节点ID列表
+     */
+    nodeIds?: (Array<(string)> | null);
+    /**
+     * 页码
+     */
+    page?: number;
+    /**
+     * 每页数据量
+     */
+    pageSize?: number;
+    /**
+     * 开始时间 (小时)
+     */
+    startTime?: (number | null);
+};
 
-export type UdmGetCalculationTimeseriesResponse =
-  MaterialBalanceTimeSeriesResponse
+export type UdmGetCalculationTimeseriesResponse = (MaterialBalanceTimeSeriesResponse);
 
 export type UdmGetCalculationStatusData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type UdmGetCalculationStatusResponse = UDMJobPublic
+export type UdmGetCalculationStatusResponse = (UDMJobPublic);
 
 export type UdmValidateCalculationInputData = {
-  requestBody: MaterialBalanceValidationRequest
-}
+    requestBody: MaterialBalanceValidationRequest;
+};
 
-export type UdmValidateCalculationInputResponse =
-  MaterialBalanceValidationResponse
+export type UdmValidateCalculationInputResponse = (MaterialBalanceValidationResponse);
 
 export type UdmGetUserCalculationJobsData = {
-  /**
-   * 返回的记录数
-   */
-  limit?: number
-  /**
-   * 跳过的记录数
-   */
-  skip?: number
-}
+    /**
+     * 返回的记录数
+     */
+    limit?: number;
+    /**
+     * 跳过的记录数
+     */
+    skip?: number;
+};
 
-export type UdmGetUserCalculationJobsResponse = UDMJobsPublic
+export type UdmGetUserCalculationJobsResponse = (UDMJobsPublic);
 
 export type UdmDeleteCalculationJobData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type UdmDeleteCalculationJobResponse = Message
+export type UdmDeleteCalculationJobResponse = (Message);
 
 export type UdmGetJobInputDataData = {
-  jobId: string
-}
+    jobId: string;
+};
 
-export type UdmGetJobInputDataResponse = UDMJobInputDataResponse
+export type UdmGetJobInputDataResponse = (UDMJobInputDataResponse);
 
 export type UdmFlowchartsReadUdmFlowchartsData = {
-  limit?: number
-  skip?: number
-}
+    limit?: number;
+    skip?: number;
+};
 
-export type UdmFlowchartsReadUdmFlowchartsResponse = UDMFlowChartsPublic
+export type UdmFlowchartsReadUdmFlowchartsResponse = (UDMFlowChartsPublic);
 
 export type UdmFlowchartsCreateUdmFlowchartData = {
-  requestBody: UDMFlowChartCreate
-}
+    requestBody: UDMFlowChartCreate;
+};
 
-export type UdmFlowchartsCreateUdmFlowchartResponse = UDMFlowChartPublic
+export type UdmFlowchartsCreateUdmFlowchartResponse = (UDMFlowChartPublic);
 
 export type UdmFlowchartsReadUdmFlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type UdmFlowchartsReadUdmFlowchartResponse = UDMFlowChartPublic
+export type UdmFlowchartsReadUdmFlowchartResponse = (UDMFlowChartPublic);
 
 export type UdmFlowchartsUpdateUdmFlowchartData = {
-  id: string
-  requestBody: UDMFlowChartUpdate
-}
+    id: string;
+    requestBody: UDMFlowChartUpdate;
+};
 
-export type UdmFlowchartsUpdateUdmFlowchartResponse = UDMFlowChartPublic
+export type UdmFlowchartsUpdateUdmFlowchartResponse = (UDMFlowChartPublic);
 
 export type UdmFlowchartsDeleteUdmFlowchartData = {
-  id: string
-}
+    id: string;
+};
 
-export type UdmFlowchartsDeleteUdmFlowchartResponse = Message
+export type UdmFlowchartsDeleteUdmFlowchartResponse = (Message);
 
-export type UdmModelsGetUdmTemplatesResponse = Array<{
-  [key: string]: unknown
-}>
+export type UdmHybridConfigsReadUdmHybridConfigsData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type UdmHybridConfigsReadUdmHybridConfigsResponse = (UDMHybridConfigsPublic);
+
+export type UdmHybridConfigsCreateUdmHybridConfigData = {
+    requestBody: UDMHybridConfigCreate;
+};
+
+export type UdmHybridConfigsCreateUdmHybridConfigResponse = (UDMHybridConfigPublic);
+
+export type UdmHybridConfigsReadUdmHybridConfigData = {
+    id: string;
+};
+
+export type UdmHybridConfigsReadUdmHybridConfigResponse = (UDMHybridConfigPublic);
+
+export type UdmHybridConfigsUpdateUdmHybridConfigData = {
+    id: string;
+    requestBody: UDMHybridConfigUpdate;
+};
+
+export type UdmHybridConfigsUpdateUdmHybridConfigResponse = (UDMHybridConfigPublic);
+
+export type UdmHybridConfigsDeleteUdmHybridConfigData = {
+    id: string;
+};
+
+export type UdmHybridConfigsDeleteUdmHybridConfigResponse = (Message);
+
+export type UdmModelsGetUdmTemplatesResponse = (Array<{
+    [key: string]: unknown;
+}>);
 
 export type UdmModelsValidateUdmModelDefinitionData = {
-  requestBody: UDMModelDefinitionDraft
-}
+    requestBody: UDMModelDefinitionDraft;
+};
 
-export type UdmModelsValidateUdmModelDefinitionResponse = UDMValidationResponse
+export type UdmModelsValidateUdmModelDefinitionResponse = (UDMValidationResponse);
 
 export type UdmModelsCreateUdmModelData = {
-  requestBody: UDMModelCreate
-}
+    requestBody: UDMModelCreate;
+};
 
-export type UdmModelsCreateUdmModelResponse = UDMModelDetailPublic
+export type UdmModelsCreateUdmModelResponse = (UDMModelDetailPublic);
 
 export type UdmModelsReadUdmModelsData = {
-  limit?: number
-  /**
-   * Search by model name
-   */
-  q?: string | null
-  skip?: number
-}
+    limit?: number;
+    /**
+     * Search by model name
+     */
+    q?: (string | null);
+    skip?: number;
+};
 
-export type UdmModelsReadUdmModelsResponse = UDMModelsPublic
+export type UdmModelsReadUdmModelsResponse = (UDMModelsPublic);
 
 export type UdmModelsCreateUdmModelFromTemplateData = {
-  requestBody: UDMModelCreateFromTemplate
-}
+    requestBody: UDMModelCreateFromTemplate;
+};
 
-export type UdmModelsCreateUdmModelFromTemplateResponse = UDMModelDetailPublic
+export type UdmModelsCreateUdmModelFromTemplateResponse = (UDMModelDetailPublic);
 
 export type UdmModelsReadUdmModelData = {
-  modelId: string
-}
+    modelId: string;
+};
 
-export type UdmModelsReadUdmModelResponse = UDMModelDetailPublic
+export type UdmModelsReadUdmModelResponse = (UDMModelDetailPublic);
 
 export type UdmModelsUpdateUdmModelData = {
-  modelId: string
-  requestBody: UDMModelUpdate
-}
+    modelId: string;
+    requestBody: UDMModelUpdate;
+};
 
-export type UdmModelsUpdateUdmModelResponse = UDMModelDetailPublic
+export type UdmModelsUpdateUdmModelResponse = (UDMModelDetailPublic);
 
 export type UdmModelsDeleteUdmModelData = {
-  modelId: string
-}
+    modelId: string;
+};
 
-export type UdmModelsDeleteUdmModelResponse = Message
+export type UdmModelsDeleteUdmModelResponse = (Message);
 
 export type UsersReadUsersData = {
-  limit?: number
-  skip?: number
-}
+    limit?: number;
+    skip?: number;
+};
 
-export type UsersReadUsersResponse = UsersPublic
+export type UsersReadUsersResponse = (UsersPublic);
 
 export type UsersCreateUserData = {
-  requestBody: UserCreate
-}
+    requestBody: UserCreate;
+};
 
-export type UsersCreateUserResponse = UserPublic
+export type UsersCreateUserResponse = (UserPublic);
 
-export type UsersReadUserMeResponse = UserPublic
+export type UsersReadUserMeResponse = (UserPublic);
 
-export type UsersDeleteUserMeResponse = Message
+export type UsersDeleteUserMeResponse = (Message);
 
 export type UsersUpdateUserMeData = {
-  requestBody: UserUpdateMe
-}
+    requestBody: UserUpdateMe;
+};
 
-export type UsersUpdateUserMeResponse = UserPublic
+export type UsersUpdateUserMeResponse = (UserPublic);
 
 export type UsersUpdatePasswordMeData = {
-  requestBody: UpdatePassword
-}
+    requestBody: UpdatePassword;
+};
 
-export type UsersUpdatePasswordMeResponse = Message
+export type UsersUpdatePasswordMeResponse = (Message);
 
 export type UsersRegisterUserData = {
-  requestBody: UserRegister
-}
+    requestBody: UserRegister;
+};
 
-export type UsersRegisterUserResponse = UserPublic
+export type UsersRegisterUserResponse = (UserPublic);
 
 export type UsersReadUserByIdData = {
-  userId: string
-}
+    userId: string;
+};
 
-export type UsersReadUserByIdResponse = UserPublic
+export type UsersReadUserByIdResponse = (UserPublic);
 
 export type UsersUpdateUserData = {
-  requestBody: UserUpdate
-  userId: string
-}
+    requestBody: UserUpdate;
+    userId: string;
+};
 
-export type UsersUpdateUserResponse = UserPublic
+export type UsersUpdateUserResponse = (UserPublic);
 
 export type UsersDeleteUserData = {
-  userId: string
-}
+    userId: string;
+};
 
-export type UsersDeleteUserResponse = Message
+export type UsersDeleteUserResponse = (Message);
 
 export type UtilsTestEmailData = {
-  emailTo: string
-}
+    emailTo: string;
+};
 
-export type UtilsTestEmailResponse = Message
+export type UtilsTestEmailResponse = (Message);
 
-export type UtilsHealthCheckResponse = boolean
+export type UtilsHealthCheckResponse = (boolean);
