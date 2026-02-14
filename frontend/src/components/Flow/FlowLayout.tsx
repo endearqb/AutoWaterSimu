@@ -318,7 +318,11 @@ const FlowLayout = ({
           : toolbar}
 
       {(() => {
-        const { showBubbleMenu } = flowStore()
+        const flowSnapshot = flowStore() as { showBubbleMenu?: boolean }
+        const showBubbleMenu =
+          typeof flowSnapshot.showBubbleMenu === "boolean"
+            ? flowSnapshot.showBubbleMenu
+            : true
         if (!showBubbleMenu) return null
         return BubbleMenuComponent ? (
           <BubbleMenuComponent

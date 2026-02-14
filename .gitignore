@@ -111,6 +111,7 @@ app.db
 # Docker
 .dockerignore
 docker-compose.override.yml
+docker-compose.yml
 
 # Logs
 logs/
