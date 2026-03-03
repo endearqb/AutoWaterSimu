@@ -9,6 +9,17 @@ Built on a full‑stack FastAPI + React architecture, supporting process flow mo
 
 ---
 
+## Sponsors
+
+We sincerely thank the following sponsor for supporting the development and maintenance of this project:
+
+[![pipellm.ai](docs/logo-DWhD8xlx.svg)](https://pipellm.ai)
+
+**[pipellm.ai](https://pipellm.ai)**  
+Thank you for providing API resource support.
+
+---
+
 ## Screenshots & Diagrams
 
 ### Landing Page

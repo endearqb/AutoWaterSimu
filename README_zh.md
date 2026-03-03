@@ -12,6 +12,16 @@
 
 
 ---
+## 赞助支持（Sponsors）
+
+感谢以下赞助方对本项目开发与维护的支持：
+
+[![pipellm.ai](docs/logo-DWhD8xlx.svg)](https://pipellm.ai)
+
+**[pipellm.ai](https://pipellm.ai)**  
+感谢提供 API 资源支持。
+
+---
 ## 截图与示意图
 
 ### Landing Page
