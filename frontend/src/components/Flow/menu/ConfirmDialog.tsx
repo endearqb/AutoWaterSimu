@@ -8,18 +8,21 @@ import {
 } from "@chakra-ui/react"
 import React, { useState } from "react"
 import { useI18n } from "../../../i18n"
+import { confirmDebug } from "../../../utils/confirmDebug"
 
 interface ConfirmDialogProps {
   isOpen: boolean
-  onClose: () => void
-  onConfirm: (action: "save" | "export" | "skip") => void
+  onDismiss: () => void
+  onConfirm: (
+    action: "save" | "export" | "skip",
+  ) => void | Promise<void>
   title: string
   message: string
 }
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
-  onClose,
+  onDismiss,
   onConfirm,
   title,
   message,
@@ -27,6 +30,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const { t } = useI18n()
   const [isLoading, setIsLoading] = useState(false)
   const portalRef = React.useRef<HTMLElement>(null!)
+  const isConfirmingRef = React.useRef(false)
+  const suppressDismissRef = React.useRef(false)
+  const scope = "ConfirmDialog"
 
   React.useEffect(() => {
     const el = document.querySelector("[data-flow-theme-scope]")
@@ -36,26 +42,75 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   }, [])
 
   const handleConfirm = async (action: "save" | "export" | "skip") => {
+    confirmDebug(
+      scope,
+      "handleConfirm-start",
+      { action, isOpen, isLoading, isConfirming: isConfirmingRef.current },
+      { breakpoint: true },
+    )
+    suppressDismissRef.current = true
+    isConfirmingRef.current = true
     setIsLoading(true)
     try {
       await onConfirm(action)
+      confirmDebug(scope, "handleConfirm-success", { action })
+    } catch (error) {
+      confirmDebug(scope, "handleConfirm-error", {
+        action,
+        error: error instanceof Error ? error.message : String(error),
+      })
     } finally {
       setIsLoading(false)
-      onClose()
+      // 某些场景下 onOpenChange(!open) 会在确认完成后异步触发，
+      // 这里延迟释放标记，避免把“确认关闭”误判成“取消关闭”。
+      window.setTimeout(() => {
+        isConfirmingRef.current = false
+        suppressDismissRef.current = false
+      }, 300)
     }
   }
 
+  const handleDismiss = (reason: string) => {
+    confirmDebug(scope, "dismiss", { reason })
+    if (isConfirmingRef.current || suppressDismissRef.current || isLoading) {
+      return
+    }
+    onDismiss()
+  }
+
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()}>
+    <Dialog.Root
+      open={isOpen}
+      closeOnInteractOutside={false}
+      onOpenChange={(e) => {
+        confirmDebug(scope, "onOpenChange", {
+          open: e.open,
+          isConfirming: isConfirmingRef.current,
+          suppressDismiss: suppressDismissRef.current,
+        })
+        if (!e.open && !isConfirmingRef.current && !suppressDismissRef.current) {
+          confirmDebug(scope, "dismiss-via-onOpenChange")
+          onDismiss()
+        }
+      }}
+    >
       <Portal container={portalRef}>
-        <Dialog.Backdrop />
+        <Dialog.Backdrop
+          data-confirm-dialog-backdrop
+          onClick={(e) => {
+            e.stopPropagation()
+            handleDismiss("backdrop-click")
+          }}
+        />
         <Dialog.Positioner>
-          <Dialog.Content>
+          <Dialog.Content data-confirm-dialog-content>
             <Dialog.Header>
               <Dialog.Title>{title}</Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
+              <CloseButton
+                onClick={() => {
+                  handleDismiss("close-button")
+                }}
+              />
             </Dialog.Header>
 
             <Dialog.Body>
@@ -69,20 +124,29 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <Stack direction="row" gap={2}>
                 <Button
                   variant="outline"
-                  onClick={() => handleConfirm("skip")}
+                  onClick={() => {
+                    confirmDebug(scope, "click-skip")
+                    handleConfirm("skip")
+                  }}
                   disabled={isLoading}
                 >
                   {t("flow.menu.skipSave")}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => handleConfirm("export")}
+                  onClick={() => {
+                    confirmDebug(scope, "click-export")
+                    handleConfirm("export")
+                  }}
                   disabled={isLoading}
                 >
                   {t("flow.menu.localExport")}
                 </Button>
                 <Button
-                  onClick={() => handleConfirm("save")}
+                  onClick={() => {
+                    confirmDebug(scope, "click-save")
+                    handleConfirm("save")
+                  }}
                   disabled={isLoading}
                   loading={isLoading}
                 >

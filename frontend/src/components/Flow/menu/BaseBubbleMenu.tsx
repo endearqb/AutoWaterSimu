@@ -5,7 +5,7 @@ import {
   IconButton,
   VStack,
 } from "@chakra-ui/react"
-import { type ReactNode, useEffect, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 import {
   FiDatabase,
   FiDownload,
@@ -17,6 +17,7 @@ import {
 } from "react-icons/fi"
 import { useI18n } from "../../../i18n"
 import type { BaseModelState } from "../../../stores/baseModelStore"
+import { confirmDebug } from "../../../utils/confirmDebug"
 import ConfirmDialog from "./ConfirmDialog"
 
 /**
@@ -81,8 +82,9 @@ interface ConfirmDialogState {
   isOpen: boolean
   title: string
   message: string
-  pendingAction: () => void
 }
+
+type PendingActionKind = "import" | "generic"
 
 /**
  * 通用BubbleMenu组件
@@ -105,6 +107,7 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
   extraMenuItems = [],
 }: BaseBubbleMenuProps<TJob, TFlowChart>) => {
   const { t } = useI18n()
+  const scope = "BaseBubbleMenu"
   const [isOpen, setIsOpen] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
     null,
@@ -113,6 +116,9 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false)
   const [isLoadCalculationDataDialogOpen, setIsLoadCalculationDataDialogOpen] =
     useState(false)
+  const pendingActionRef = useRef<(() => void) | null>(null)
+  const pendingActionKindRef = useRef<PendingActionKind | null>(null)
+  const confirmDialogOpenRef = useRef(false)
 
   // 默认配置
   const {
@@ -131,9 +137,25 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
 
   // 点击外部区域关闭气泡菜单
   useEffect(() => {
+    confirmDialogOpenRef.current = Boolean(confirmDialog?.isOpen)
+  }, [confirmDialog?.isOpen])
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (confirmDialogOpenRef.current) {
+        return
+      }
       const target = event.target as HTMLElement
       const bubbleMenu = document.querySelector("[data-bubble-menu]")
+      // 不关闭气泡菜单如果点击在 Dialog 中（Portal 渲染的内容）
+      if (
+        target.closest("[data-confirm-dialog-content]") ||
+        target.closest("[data-confirm-dialog-backdrop]") ||
+        target.closest("[role='dialog']") ||
+        target.closest("[data-dialog-backdrop]")
+      ) {
+        return
+      }
       if (isOpen && bubbleMenu && !bubbleMenu.contains(target)) {
         setIsOpen(false)
       }
@@ -145,15 +167,58 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
         document.removeEventListener("mousedown", handleClickOutside)
       }
     }
-  }, [isOpen])
+  }, [isOpen, confirmDialog?.isOpen])
 
   // 检查是否有未保存的内容
   const hasUnsavedContent = () => {
     return nodes.length > 0 || edges.length > 0
   }
 
+  const clearPendingAction = () => {
+    pendingActionRef.current = null
+    pendingActionKindRef.current = null
+  }
+
+  const openImportFilePicker = () => {
+    const fileInput = document.createElement("input")
+    fileInput.type = "file"
+    fileInput.accept = ".json"
+    fileInput.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files
+      if (files && files.length > 0) {
+        // 导入时使用文件名作为流程图名称
+        const fileName = files[0].name.replace(/\.json$/, "")
+        setCurrentFlowChartName?.(fileName)
+        onImport?.(Array.from(files))
+      }
+    }
+    fileInput.click()
+    setIsOpen(false)
+  }
+
+  // 统一设置 confirmDialog state 和 pendingActionRef
+  const showConfirmDialog = (
+    title: string,
+    message: string,
+    action: () => void,
+    kind: PendingActionKind = "generic",
+  ) => {
+    confirmDebug(
+      scope,
+      "showConfirmDialog",
+      { title, kind, isOpen, hasPending: !!pendingActionRef.current },
+      { breakpoint: true },
+    )
+    confirmDialogOpenRef.current = true
+    pendingActionRef.current = action
+    pendingActionKindRef.current = kind
+    setIsOpen(false)
+    setConfirmDialog({ isOpen: true, title, message })
+  }
+
   // 处理保存按钮点击
   const handleOpenSaveDialog = () => {
+    confirmDebug(scope, "openSaveDialog")
     setIsSaveDialogOpen(true)
   }
 
@@ -164,15 +229,27 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
 
   // 处理确认对话框的确认操作
   const handleConfirmAction = async (action: "save" | "export" | "skip") => {
-    if (!confirmDialog) return
+    const pendingAction = pendingActionRef.current
+    confirmDebug(
+      scope,
+      "handleConfirmAction-start",
+      {
+        action,
+        hasPending: !!pendingAction,
+        pendingKind: pendingActionKindRef.current,
+      },
+      { breakpoint: true },
+    )
 
     try {
       switch (action) {
         case "save":
+          // 保存成功后由 onSaveSuccess 决定是否执行 pending action
           handleOpenSaveDialog()
           break
         case "export":
           // 触发导出
+          confirmDebug(scope, "handleConfirmAction-export-before")
           if (onExport) {
             const exportData = onExport()
             const blob = new Blob([exportData], { type: "application/json" })
@@ -185,35 +262,92 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
             document.body.removeChild(a)
             URL.revokeObjectURL(url)
           }
+          // 导出后执行 pending action
+          pendingAction?.()
+          confirmDebug(scope, "handleConfirmAction-export-after", {
+            executedPending: !!pendingAction,
+          })
+          clearPendingAction()
           break
         case "skip":
           // 不保存，直接执行待处理的操作
-          confirmDialog.pendingAction()
+          pendingAction?.()
+          confirmDebug(scope, "handleConfirmAction-skip-after", {
+            executedPending: !!pendingAction,
+          })
+          clearPendingAction()
           break
       }
     } catch (error) {
+      confirmDebug(scope, "handleConfirmAction-error", {
+        action,
+        error: error instanceof Error ? error.message : String(error),
+      })
       console.error(t("flow.menu.actionFailed"), error)
+      clearPendingAction()
     } finally {
+      confirmDebug(scope, "handleConfirmAction-finally-closeConfirm")
+      confirmDialogOpenRef.current = false
       setConfirmDialog(null)
     }
   }
 
+  const handleSaveSuccess = async () => {
+    try {
+      const pendingAction = pendingActionRef.current
+      const pendingActionKind = pendingActionKindRef.current
+      confirmDebug(
+        scope,
+        "handleSaveSuccess-start",
+        {
+          hasPending: !!pendingAction,
+          pendingActionKind,
+        },
+        { breakpoint: true },
+      )
+      if (!pendingAction || !pendingActionKind) return
+
+      if (pendingActionKind === "import") {
+        const { toaster } = await import("../../ui/toaster")
+        toaster.create({
+          title: t("flow.menu.importFlowchart"),
+          description: t("flow.menu.importRetryAfterSave"),
+          type: "info",
+          duration: 3000,
+        })
+        confirmDebug(scope, "handleSaveSuccess-import-toast")
+        clearPendingAction()
+        return
+      }
+
+      pendingAction()
+      confirmDebug(scope, "handleSaveSuccess-executed-pending")
+      clearPendingAction()
+    } catch (error) {
+      confirmDebug(scope, "handleSaveSuccess-error", {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      console.error(t("flow.menu.actionFailed"), error)
+      clearPendingAction()
+    }
+  }
+
   const handleSaveClick = () => {
+    clearPendingAction()
     handleOpenSaveDialog()
     setIsOpen(false)
   }
 
   const handleLoadClick = () => {
     if (hasUnsavedContent()) {
-      setConfirmDialog({
-        isOpen: true,
-        title: t("flow.menu.loadFlowchart"),
-        message: t("flow.menu.confirmSaveMessage"),
-        pendingAction: () => {
+      showConfirmDialog(
+        t("flow.menu.loadFlowchart"),
+        t("flow.menu.confirmSaveMessage"),
+        () => {
           handleOpenLoadDialog()
           setIsOpen(false)
         },
-      })
+      )
     } else {
       handleOpenLoadDialog()
       setIsOpen(false)
@@ -222,15 +356,14 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
 
   const handleLoadCalculationData = () => {
     if (hasUnsavedContent()) {
-      setConfirmDialog({
-        isOpen: true,
-        title: t("flow.menu.loadCalculationData"),
-        message: t("flow.menu.confirmSaveMessage"),
-        pendingAction: () => {
+      showConfirmDialog(
+        t("flow.menu.loadCalculationData"),
+        t("flow.menu.confirmSaveMessage"),
+        () => {
           setIsLoadCalculationDataDialogOpen(true)
           setIsOpen(false)
         },
-      })
+      )
     } else {
       setIsLoadCalculationDataDialogOpen(true)
       setIsOpen(false)
@@ -239,15 +372,14 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
 
   const handleNewFlowChartClick = () => {
     if (hasUnsavedContent()) {
-      setConfirmDialog({
-        isOpen: true,
-        title: t("flow.menu.newFlowchart"),
-        message: t("flow.menu.confirmSaveMessage"),
-        pendingAction: () => {
+      showConfirmDialog(
+        t("flow.menu.newFlowchart"),
+        t("flow.menu.confirmSaveMessage"),
+        () => {
           onNewFlowChart?.()
           setIsOpen(false)
         },
-      })
+      )
     } else {
       onNewFlowChart?.()
       setIsOpen(false)
@@ -256,44 +388,16 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
 
   const handleImportClick = () => {
     if (hasUnsavedContent()) {
-      setConfirmDialog({
-        isOpen: true,
-        title: t("flow.menu.importFlowchart"),
-        message: t("flow.menu.confirmSaveMessage"),
-        pendingAction: () => {
-          // 触发文件选择
-          const fileInput = document.createElement("input")
-          fileInput.type = "file"
-          fileInput.accept = ".json"
-          fileInput.onchange = (e) => {
-            const files = (e.target as HTMLInputElement).files
-            if (files && files.length > 0) {
-              // 导入时使用文件名作为流程图名称
-              const fileName = files[0].name.replace(/\.json$/, "")
-              setCurrentFlowChartName?.(fileName)
-              onImport?.(Array.from(files))
-            }
-          }
-          fileInput.click()
-          setIsOpen(false)
+      showConfirmDialog(
+        t("flow.menu.importFlowchart"),
+        t("flow.menu.confirmSaveMessage"),
+        () => {
+          openImportFilePicker()
         },
-      })
+        "import",
+      )
     } else {
-      // 直接触发文件选择
-      const fileInput = document.createElement("input")
-      fileInput.type = "file"
-      fileInput.accept = ".json"
-      fileInput.onchange = (e) => {
-        const files = (e.target as HTMLInputElement).files
-        if (files && files.length > 0) {
-          // 导入时使用文件名作为流程图名称
-          const fileName = files[0].name.replace(/\.json$/, "")
-          setCurrentFlowChartName?.(fileName)
-          onImport?.(Array.from(files))
-        }
-      }
-      fileInput.click()
-      setIsOpen(false)
+      openImportFilePicker()
     }
   }
 
@@ -484,7 +588,12 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
       {confirmDialog && (
         <ConfirmDialog
           isOpen={confirmDialog.isOpen}
-          onClose={() => setConfirmDialog(null)}
+          onDismiss={() => {
+            confirmDebug(scope, "confirmDialog-dismiss")
+            confirmDialogOpenRef.current = false
+            setConfirmDialog(null)
+            clearPendingAction()
+          }}
           onConfirm={handleConfirmAction}
           title={confirmDialog.title}
           message={confirmDialog.message}
@@ -499,7 +608,12 @@ const BaseBubbleMenu = <TJob, TFlowChart>({
           modelStore={modelStore}
           isSaveDialogOpen={isSaveDialogOpen}
           isLoadDialogOpen={isLoadDialogOpen}
-          onCloseSaveDialog={() => setIsSaveDialogOpen(false)}
+          onSaveSuccess={handleSaveSuccess}
+          onCloseSaveDialog={() => {
+            confirmDebug(scope, "closeSaveDialog")
+            setIsSaveDialogOpen(false)
+            clearPendingAction()
+          }}
           onCloseLoadDialog={() => setIsLoadDialogOpen(false)}
         />
       )}

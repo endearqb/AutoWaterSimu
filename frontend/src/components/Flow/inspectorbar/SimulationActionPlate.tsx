@@ -34,6 +34,7 @@ import { asm1SlimService } from "../../../services/asm1slimService"
 import { asm3Service } from "../../../services/asm3Service"
 import useFlowStore from "../../../stores/flowStore"
 import { useThemePaletteStore } from "../../../stores/themePaletteStore"
+import { confirmDebug } from "../../../utils/confirmDebug"
 import ASM1Analyzer from "../legacy-analysis/ASM1Analyzer"
 import ASM1SlimAnalyzer from "../legacy-analysis/ASM1SlimAnalyzer"
 import ASM3Analyzer from "../legacy-analysis/ASM3Analyzer"
@@ -57,8 +58,17 @@ import { useSimulationController } from "./useSimulationController"
 
 interface SimulationActionPlateProps extends SimulationControllerProps {}
 
+interface ConfirmDialogState {
+  isOpen: boolean
+  title: string
+  message: string
+}
+
+type PendingActionKind = "import" | "generic"
+
 function SimulationActionPlate(props: SimulationActionPlateProps) {
   const { t } = useI18n()
+  const scope = "SimulationActionPlate"
   const [hovered, setHovered] = useState(false)
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false)
   const [isStepsOpen, setIsStepsOpen] = useState(false)
@@ -77,12 +87,9 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
   const [isSegmentsClosing, setIsSegmentsClosing] = useState(false)
   const [isBubbleOpen, setIsBubbleOpen] = useState(false)
   const [isBubbleClosing, setIsBubbleClosing] = useState(false)
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean
-    title: string
-    message: string
-    pendingAction: () => void
-  } | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null,
+  )
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false)
   const [isLoadCalculationDataDialogOpen, setIsLoadCalculationDataDialogOpen] =
@@ -119,6 +126,9 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const canvasContainerRef = useRef<HTMLElement | null>(null)
   const portalRef = useRef<HTMLElement>(null!)
+  const pendingActionRef = useRef<(() => void) | null>(null)
+  const pendingActionKindRef = useRef<PendingActionKind | null>(null)
+  const confirmDialogOpenRef = useRef(false)
   useEffect(() => {
     canvasContainerRef.current =
       (document.querySelector(".react-flow") as HTMLElement) || document.body
@@ -340,7 +350,10 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
     const name = currentFlowChartName || t("flow.menu.defaultFlowchartName")
     triggerDownload(dataStr, name)
   }
-  const handleOpenSaveDialog = () => setIsSaveDialogOpen(true)
+  const handleOpenSaveDialog = () => {
+    confirmDebug(scope, "openSaveDialog")
+    setIsSaveDialogOpen(true)
+  }
   const handleOpenLoadDialog = () => setIsLoadDialogOpen(true)
   const handleOpenLoadCalcDialog = () =>
     setIsLoadCalculationDataDialogOpen(true)
@@ -437,19 +450,125 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
   const handleNewFlowChart = () => {
     newFlowChart?.()
   }
+
+  const clearPendingAction = () => {
+    pendingActionRef.current = null
+    pendingActionKindRef.current = null
+  }
+
+  useEffect(() => {
+    confirmDialogOpenRef.current = Boolean(confirmDialog?.isOpen)
+  }, [confirmDialog?.isOpen])
+
+  const showConfirmDialog = (
+    title: string,
+    message: string,
+    action: () => void,
+    kind: PendingActionKind = "generic",
+  ) => {
+    confirmDebug(
+      scope,
+      "showConfirmDialog",
+      { title, kind, hasPending: !!pendingActionRef.current },
+      { breakpoint: true },
+    )
+    confirmDialogOpenRef.current = true
+    pendingActionRef.current = action
+    pendingActionKindRef.current = kind
+    setConfirmDialog({
+      isOpen: true,
+      title,
+      message,
+    })
+  }
+
   const handleConfirmAction = async (action: "save" | "export" | "skip") => {
-    switch (action) {
-      case "save":
-        handleOpenSaveDialog()
-        break
-      case "export":
-        await handleExportClick()
-        break
-      case "skip":
-        confirmDialog?.pendingAction()
-        break
+    const pendingAction = pendingActionRef.current
+    confirmDebug(
+      scope,
+      "handleConfirmAction-start",
+      {
+        action,
+        hasPending: !!pendingAction,
+        pendingKind: pendingActionKindRef.current,
+      },
+      { breakpoint: true },
+    )
+
+    try {
+      switch (action) {
+        case "save":
+          handleOpenSaveDialog()
+          break
+        case "export":
+          confirmDebug(scope, "handleConfirmAction-export-before")
+          await handleExportClick()
+          pendingAction?.()
+          confirmDebug(scope, "handleConfirmAction-export-after", {
+            executedPending: !!pendingAction,
+          })
+          clearPendingAction()
+          break
+        case "skip":
+          pendingAction?.()
+          confirmDebug(scope, "handleConfirmAction-skip-after", {
+            executedPending: !!pendingAction,
+          })
+          clearPendingAction()
+          break
+      }
+    } catch (error) {
+      confirmDebug(scope, "handleConfirmAction-error", {
+        action,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      console.error(t("flow.menu.actionFailed"), error)
+      clearPendingAction()
+    } finally {
+      confirmDebug(scope, "handleConfirmAction-finally-closeConfirm")
+      confirmDialogOpenRef.current = false
+      setConfirmDialog(null)
     }
-    setConfirmDialog(null)
+  }
+
+  const handleSaveSuccess = async () => {
+    try {
+      const pendingAction = pendingActionRef.current
+      const pendingActionKind = pendingActionKindRef.current
+      confirmDebug(
+        scope,
+        "handleSaveSuccess-start",
+        {
+          hasPending: !!pendingAction,
+          pendingActionKind,
+        },
+        { breakpoint: true },
+      )
+      if (!pendingAction || !pendingActionKind) return
+
+      if (pendingActionKind === "import") {
+        const { toaster } = await import("../../ui/toaster")
+        toaster.create({
+          title: t("flow.menu.importFlowchart"),
+          description: t("flow.menu.importRetryAfterSave"),
+          type: "info",
+          duration: 3000,
+        })
+        confirmDebug(scope, "handleSaveSuccess-import-toast")
+        clearPendingAction()
+        return
+      }
+
+      pendingAction()
+      confirmDebug(scope, "handleSaveSuccess-executed-pending")
+      clearPendingAction()
+    } catch (error) {
+      confirmDebug(scope, "handleSaveSuccess-error", {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      console.error(t("flow.menu.actionFailed"), error)
+      clearPendingAction()
+    }
   }
 
   const closeSteps = () => {
@@ -509,7 +628,16 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      const target = e.target as Node
+      if (confirmDialogOpenRef.current) {
+        return
+      }
+      const target = e.target as HTMLElement
+      if (
+        target.closest("[data-confirm-dialog-content]") ||
+        target.closest("[data-confirm-dialog-backdrop]")
+      ) {
+        return
+      }
       if (
         stepsOverlayRef.current?.contains(target) ||
         resampleOverlayRef.current?.contains(target) ||
@@ -1282,12 +1410,11 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                           label: t("flow.menu.newFlowchart"),
                           onClick: () => {
                             if (hasUnsaved) {
-                              setConfirmDialog({
-                                isOpen: true,
-                                title: t("flow.menu.newFlowchart"),
-                                message: t("flow.menu.confirmSaveMessage"),
-                                pendingAction: handleNewFlowChart,
-                              })
+                              showConfirmDialog(
+                                t("flow.menu.newFlowchart"),
+                                t("flow.menu.confirmSaveMessage"),
+                                handleNewFlowChart,
+                              )
                             } else {
                               handleNewFlowChart()
                             }
@@ -1307,12 +1434,12 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                           label: t("flow.menu.localImport"),
                           onClick: () => {
                             if (hasUnsaved) {
-                              setConfirmDialog({
-                                isOpen: true,
-                                title: t("flow.menu.importFlowchart"),
-                                message: t("flow.menu.confirmSaveMessage"),
-                                pendingAction: handleImportClick,
-                              })
+                              showConfirmDialog(
+                                t("flow.menu.importFlowchart"),
+                                t("flow.menu.confirmSaveMessage"),
+                                handleImportClick,
+                                "import",
+                              )
                             } else {
                               handleImportClick()
                             }
@@ -1323,6 +1450,7 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                           icon: <FiSave />,
                           label: t("flow.menu.saveOnline"),
                           onClick: () => {
+                            clearPendingAction()
                             handleOpenSaveDialog()
                             setIsBubbleOpen(false)
                           },
@@ -1720,7 +1848,12 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
         {confirmDialog && (
           <ConfirmDialog
             isOpen={confirmDialog.isOpen}
-            onClose={() => setConfirmDialog(null)}
+            onDismiss={() => {
+              confirmDebug(scope, "confirmDialog-dismiss")
+              confirmDialogOpenRef.current = false
+              setConfirmDialog(null)
+              clearPendingAction()
+            }}
             onConfirm={handleConfirmAction}
             title={confirmDialog.title}
             message={confirmDialog.message}
@@ -1731,7 +1864,12 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
           modelStore={props.modelStore as any}
           isSaveDialogOpen={isSaveDialogOpen}
           isLoadDialogOpen={isLoadDialogOpen}
-          onCloseSaveDialog={() => setIsSaveDialogOpen(false)}
+          onSaveSuccess={handleSaveSuccess}
+          onCloseSaveDialog={() => {
+            confirmDebug(scope, "closeSaveDialog")
+            setIsSaveDialogOpen(false)
+            clearPendingAction()
+          }}
           onCloseLoadDialog={() => setIsLoadDialogOpen(false)}
         />
         <BaseLoadCalculationDataDialog

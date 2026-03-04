@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { useI18n } from "../../../i18n"
 import type { BaseModelState } from "../../../stores/baseModelStore"
 import type { RFState } from "../../../stores/flowStore"
+import { confirmDebug } from "../../../utils/confirmDebug"
 import LoadDialog from "./LoadDialog"
 import SaveDialog from "./SaveDialog"
 
@@ -20,6 +21,8 @@ export interface BaseDialogManagerProps<TFlowChart> {
   isLoadDialogOpen: boolean
   /** 关闭保存对话框回调 */
   onCloseSaveDialog: () => void
+  /** 保存成功回调（用于执行保存后的待处理动作） */
+  onSaveSuccess?: () => void | Promise<void>
   /** 关闭加载对话框回调 */
   onCloseLoadDialog: () => void
 }
@@ -37,9 +40,11 @@ const BaseDialogManager = <
   isSaveDialogOpen,
   isLoadDialogOpen,
   onCloseSaveDialog,
+  onSaveSuccess,
   onCloseLoadDialog,
 }: BaseDialogManagerProps<TFlowChart>) => {
   const { t } = useI18n()
+  const scope = "BaseDialogManager"
   const [flowChartName, setFlowChartName] = useState("")
   const [flowChartDescription, setFlowChartDescription] = useState("")
   const [flowCharts, setFlowCharts] = useState<TFlowChart[]>([])
@@ -88,6 +93,12 @@ const BaseDialogManager = <
 
   // 处理保存流程图
   const handleSave = async () => {
+    confirmDebug(
+      scope,
+      "handleSave-start",
+      { isSaveDialogOpen, hasFlowChartName: !!flowChartName.trim() },
+      { breakpoint: true },
+    )
     if (!flowChartName.trim()) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
@@ -152,13 +163,20 @@ const BaseDialogManager = <
         type: result.success ? "success" : "error",
         duration: 3000,
       })
+      confirmDebug(scope, "handleSave-result", { success: result?.success })
 
       if (result.success) {
+        confirmDebug(scope, "handleSave-before-onSaveSuccess")
+        await onSaveSuccess?.()
+        confirmDebug(scope, "handleSave-after-onSaveSuccess")
         onCloseSaveDialog()
         setFlowChartName("")
         setFlowChartDescription("")
       }
     } catch (error) {
+      confirmDebug(scope, "handleSave-error", {
+        error: error instanceof Error ? error.message : String(error),
+      })
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
         title: t("flow.menu.saveFailed"),
@@ -173,6 +191,12 @@ const BaseDialogManager = <
 
   // 处理另存为流程图
   const handleSaveAs = async () => {
+    confirmDebug(
+      scope,
+      "handleSaveAs-start",
+      { isSaveDialogOpen, hasFlowChartName: !!flowChartName.trim() },
+      { breakpoint: true },
+    )
     if (!flowChartName.trim()) {
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
@@ -215,13 +239,20 @@ const BaseDialogManager = <
         type: result.success ? "success" : "error",
         duration: 3000,
       })
+      confirmDebug(scope, "handleSaveAs-result", { success: result?.success })
 
       if (result.success) {
+        confirmDebug(scope, "handleSaveAs-before-onSaveSuccess")
+        await onSaveSuccess?.()
+        confirmDebug(scope, "handleSaveAs-after-onSaveSuccess")
         onCloseSaveDialog()
         setFlowChartName("")
         setFlowChartDescription("")
       }
     } catch (error) {
+      confirmDebug(scope, "handleSaveAs-error", {
+        error: error instanceof Error ? error.message : String(error),
+      })
       const { toaster } = await import("../../ui/toaster")
       toaster.create({
         title: t("flow.menu.saveAsFailed"),

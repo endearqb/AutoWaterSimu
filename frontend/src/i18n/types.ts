@@ -816,7 +816,10 @@ export interface I18nMessages {
       importFailed: string
       importInvalidDescription: string
       importFlowchart: string
+      importRetryAfterSave: string
       importSuccess: string
+      importCalcParamsTitle: string
+      importCalcParamsMessage: string
       load: string
       loadCalculationData: string
       loadFailed: string
@@ -844,6 +847,8 @@ export interface I18nMessages {
       saveOnline: string
       saveSuccess: string
       skipSave: string
+      useFileParams: string
+      keepCurrentParams: string
       untitledFlowchart: string
       updateFlowchartTitle: string
       updateSuccess: string
