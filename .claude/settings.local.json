@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(xxd:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(uv run:*)"
+    ]
+  }
+}

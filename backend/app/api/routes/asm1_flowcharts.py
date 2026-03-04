@@ -59,7 +59,7 @@ def read_asm1_flowchart(session: SessionDep, current_user: CurrentUser, id: uuid
     if not flowchart:
         raise HTTPException(status_code=404, detail="ASM1 FlowChart not found")
     if not current_user.is_superuser and (flowchart.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     return flowchart
 
 
@@ -112,7 +112,7 @@ def update_asm1_flowchart(
     if not flowchart:
         raise HTTPException(status_code=404, detail="ASM1 FlowChart not found")
     if not current_user.is_superuser and (flowchart.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     
     update_dict = flowchart_in.model_dump(exclude_unset=True)
     # Always update the updated_at timestamp
@@ -136,7 +136,7 @@ def delete_asm1_flowchart(
     if not flowchart:
         raise HTTPException(status_code=404, detail="ASM1 FlowChart not found")
     if not current_user.is_superuser and (flowchart.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     session.delete(flowchart)
     session.commit()
     return Message(message="ASM1 FlowChart deleted successfully")

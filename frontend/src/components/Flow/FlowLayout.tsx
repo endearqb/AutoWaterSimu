@@ -9,6 +9,7 @@ import BaseInspectorContainer, {
 import SimulationActionPlate from "./inspectorbar/SimulationActionPlate"
 import type { SimulationControllerProps } from "./inspectorbar/useSimulationController"
 import BubbleMenu from "./menu/BubbleMenu"
+import ImportCalcParamsDialog from "./menu/ImportCalcParamsDialog"
 
 interface BubbleMenuProps {
   onExport: () => string
@@ -72,6 +73,10 @@ const FlowLayout = ({
   const [sidebarWidth, setSidebarWidth] = useState(240)
   const [isToolbarLocked, setIsToolbarLocked] = useState(true)
   const [layoutWidth, setLayoutWidth] = useState(0)
+  const [pendingImport, setPendingImport] = useState<{
+    flowData: any
+    fileName: string
+  } | null>(null)
 
   const getDefaultPosition = () => ({ x: sidebarWidth + 16, y: 16 })
 
@@ -229,9 +234,15 @@ const FlowLayout = ({
       try {
         const content = e.target?.result as string
         const flowData = JSON.parse(content)
+        const fileName = file.name.replace(/\.json$/, "")
+
+        if (flowData.calculationParameters) {
+          setPendingImport({ flowData, fileName })
+          return
+        }
+
         const result = importFlowData(flowData)
 
-        const fileName = file.name.replace(/\.json$/, "")
         setImportedFileName(fileName)
         setCurrentFlowChartName(fileName)
 
@@ -276,6 +287,27 @@ const FlowLayout = ({
         duration: 3000,
       })
     }
+  }
+
+  const handleCalcParamsChoice = async (restoreParams: boolean) => {
+    if (!pendingImport) return
+    const { flowData, fileName } = pendingImport
+    setPendingImport(null)
+
+    const result = importFlowData(flowData, { restoreCalculationParams: restoreParams })
+
+    setImportedFileName(fileName)
+    setCurrentFlowChartName(fileName)
+
+    const { toaster } = await import("../ui/toaster")
+    toaster.create({
+      title: result.success
+        ? t("flow.menu.importSuccess")
+        : t("flow.menu.importFailed"),
+      description: result.message,
+      type: result.success ? "success" : "error",
+      duration: 3000,
+    })
   }
 
   const toolbarProps = {
@@ -348,6 +380,11 @@ const FlowLayout = ({
       >
         {inspector}
       </BaseInspectorContainer>
+
+      <ImportCalcParamsDialog
+        isOpen={!!pendingImport}
+        onChoice={handleCalcParamsChoice}
+      />
     </Box>
   )
 }

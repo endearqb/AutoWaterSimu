@@ -114,7 +114,7 @@ export interface ModelFlowState<
 
   // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
   exportFlowData: () => any
-  importFlowData: (data: any) => { success: boolean; message: string }
+  importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => { success: boolean; message: string }
   setImportedFileName: (fileName: string | null) => void
 
   // ========== 娴佺▼鍥剧锟?==========
@@ -1053,7 +1053,7 @@ export function createModelFlowStore<
         }
       },
 
-      importFlowData: (data: any) => {
+      importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => {
         try {
           // 娓呯悊妯″瀷璁＄畻缁撴灉
           if (modelStore) {
@@ -1076,6 +1076,7 @@ export function createModelFlowStore<
             timeSegments,
             hybrid_config: importedHybridConfigSnake,
             hybridConfig: importedHybridConfigCamel,
+            calculationParameters: importedCalcParams,
           } = data
           const importedHybridConfig =
             importedHybridConfigSnake ?? importedHybridConfigCamel ?? null
@@ -1205,8 +1206,9 @@ export function createModelFlowStore<
             timeSegments: normalizeTimeSegments(timeSegments),
             hybridConfig: importedHybridConfig,
             isEdgeTimeSegmentMode: false,
-            // 淇濇寔褰撳墠鐨勮绠楀弬鏁帮紝涓嶄娇鐢ㄥ鍏ユ暟鎹腑鐨勫弬锟?
-            // calculationParameters: calculationParameters || getDefaultCalculationParams(config.modelName as any),
+            calculationParameters: options?.restoreCalculationParams && importedCalcParams
+              ? importedCalcParams
+              : get().calculationParameters,
             selectedNode: null,
             selectedEdge: null,
           })

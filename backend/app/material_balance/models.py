@@ -11,7 +11,7 @@
 """
 
 from typing import List, Dict, Optional, Any, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 import torch
 
 
@@ -27,7 +27,8 @@ class NodeData(BaseModel):
     is_inlet: bool = False
     is_outlet: bool = False
     
-    @validator('initial_concentrations')
+    @field_validator('initial_concentrations')
+    @classmethod
     def validate_concentrations(cls, v):
         """验证初始浓度数据的有效性。
         
@@ -53,7 +54,8 @@ class EdgeData(BaseModel):
     concentration_factors_a: List[float] = Field(description="Concentration multiplication factors")
     concentration_factors_b: List[float] = Field(default_factory=list, description="Concentration addition factors")
     
-    @validator('concentration_factors_a')
+    @field_validator('concentration_factors_a')
+    @classmethod
     def validate_factors_a(cls, v):
         """验证浓度乘法因子的有效性。
         
@@ -63,14 +65,15 @@ class EdgeData(BaseModel):
             raise ValueError("At least one concentration factor is required")
         return v
     
-    @validator('concentration_factors_b')
-    def validate_factors_b(cls, v, values):
+    @field_validator('concentration_factors_b')
+    @classmethod
+    def validate_factors_b(cls, v, info):
         """验证浓度加法因子的有效性。
-        
+
         确保加法因子与乘法因子的长度一致。
         """
-        if v and 'concentration_factors_a' in values:
-            if len(v) != len(values['concentration_factors_a']):
+        if v and 'concentration_factors_a' in info.data:
+            if len(v) != len(info.data['concentration_factors_a']):
                 raise ValueError("Factors A and B must have the same length")
         return v
 
@@ -91,9 +94,10 @@ class TimeSegment(BaseModel):
     end_hour: float = Field(gt=0)
     edge_overrides: Dict[str, SegmentEdgeOverride] = Field(default_factory=dict)
 
-    @validator("end_hour")
-    def validate_end_after_start(cls, v, values):
-        start_hour = values.get("start_hour")
+    @field_validator("end_hour")
+    @classmethod
+    def validate_end_after_start(cls, v, info):
+        start_hour = info.data.get("start_hour")
         if start_hour is not None and v <= start_hour:
             raise ValueError("end_hour must be greater than start_hour")
         return v
@@ -112,7 +116,8 @@ class CalculationParameters(BaseModel):
     max_iterations: int = Field(default=1000, description="Maximum solver iterations")
     sampling_interval_hours: Optional[float] = Field(default=None, description="Sampling interval in hours for data storage optimization")
     
-    @validator('solver_method')
+    @field_validator('solver_method')
+    @classmethod
     def validate_solver(cls, v):
         """验证求解器方法的有效性。
         
@@ -136,7 +141,8 @@ class MaterialBalanceInput(BaseModel):
     time_segments: List[TimeSegment] = Field(default_factory=list)
     original_flowchart_data: Optional[Dict[str, Any]] = Field(default=None, description="Original flowchart data for preserving parameter names")
     
-    @validator('nodes')
+    @field_validator('nodes')
+    @classmethod
     def validate_nodes(cls, v):
         """验证节点数据的有效性。
         
@@ -156,27 +162,28 @@ class MaterialBalanceInput(BaseModel):
         
         return v
     
-    @validator('edges')
-    def validate_edges(cls, v, values):
+    @field_validator('edges')
+    @classmethod
+    def validate_edges(cls, v, info):
         """验证边数据的有效性。
-        
+
         检查边的数量、ID唯一性和节点引用的有效性。
         """
         if not v:
             raise ValueError("At least one edge is required")
-        
-        if 'nodes' in values:
-            node_ids = {node.node_id for node in values['nodes']}
+
+        if 'nodes' in info.data:
+            node_ids = {node.node_id for node in info.data['nodes']}
             for edge in v:
                 if edge.from_node not in node_ids:
                     raise ValueError(f"Edge references unknown from_node: {edge.from_node}")
                 if edge.to_node not in node_ids:
                     raise ValueError(f"Edge references unknown to_node: {edge.to_node}")
-        
+
         edge_ids = [edge.edge_id for edge in v]
         if len(edge_ids) != len(set(edge_ids)):
             raise ValueError("Edge IDs must be unique")
-        
+
         return v
 
 
@@ -211,9 +218,9 @@ class MaterialBalanceResult(BaseModel):
         description="Calculation summary (total_time, steps, convergence_status, etc.)"
     )
     error_message: Optional[str] = None
-    
-    class Config:
-        schema_extra = {
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "job_id": "calc_123",
                 "status": "success",
@@ -238,3 +245,4 @@ class MaterialBalanceResult(BaseModel):
                 }
             }
         }
+    )

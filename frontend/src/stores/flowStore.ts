@@ -97,7 +97,7 @@ type RFState = {
   ) => void
   removeEdgeParameter: (edgeId: string, paramName: string) => void
   exportFlowData: () => any
-  importFlowData: (data: any) => { success: boolean; message: string }
+  importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => { success: boolean; message: string }
   setImportedFileName: (fileName: string | null) => void
   updateCalculationParameters: (params: Partial<CalculationParameters>) => void
 
@@ -144,7 +144,7 @@ const useFlowStore = create<RFState>((set, get) => ({
   // 初始化计算参数 - 使用统一配置
   calculationParameters: getDefaultCalculationParams("materialBalance"),
   showMiniMap: false,
-  showBubbleMenu: false,
+  showBubbleMenu: true,
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -645,7 +645,7 @@ const useFlowStore = create<RFState>((set, get) => ({
   },
 
   // 导入流程图数据
-  importFlowData: (data: any) => {
+  importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => {
     try {
       // 验证数据格式
       if (!data || typeof data !== "object") {
@@ -657,6 +657,7 @@ const useFlowStore = create<RFState>((set, get) => ({
         edges: importedEdges,
         customParameters,
         edgeParameterConfigs,
+        calculationParameters: importedCalcParams,
       } = data
 
       // 基本验证
@@ -748,8 +749,9 @@ const useFlowStore = create<RFState>((set, get) => ({
         edges: processedEdges,
         customParameters: customParameters || [],
         edgeParameterConfigs: edgeParameterConfigs || newEdgeParameterConfigs,
-        // 保持当前的计算参数，不使用导入数据中的参数
-        // calculationParameters: calculationParameters || getDefaultCalculationParams('materialBalance'),
+        calculationParameters: options?.restoreCalculationParams && importedCalcParams
+          ? importedCalcParams
+          : get().calculationParameters,
         selectedNode: null,
         selectedEdge: null,
       })

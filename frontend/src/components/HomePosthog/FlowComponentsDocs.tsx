@@ -37,6 +37,9 @@ type FlowStoreSnapshot = {
   currentFlowChartId: unknown
   currentFlowChartName: unknown
   currentJobId: unknown
+  timeSegments: unknown
+  hybridConfig: unknown
+  isEdgeTimeSegmentMode: boolean
   showMiniMap: boolean
   showBubbleMenu: boolean
 }
@@ -111,6 +114,9 @@ export function FlowComponentsDocs() {
       currentFlowChartId: prev.currentFlowChartId,
       currentFlowChartName: prev.currentFlowChartName,
       currentJobId: prev.currentJobId,
+      timeSegments: prev.timeSegments,
+      hybridConfig: prev.hybridConfig,
+      isEdgeTimeSegmentMode: prev.isEdgeTimeSegmentMode,
       showMiniMap: prev.showMiniMap,
       showBubbleMenu: prev.showBubbleMenu,
     }
@@ -158,6 +164,9 @@ export function FlowComponentsDocs() {
         currentFlowChartId: snapshot.currentFlowChartId as any,
         currentFlowChartName: snapshot.currentFlowChartName as any,
         currentJobId: snapshot.currentJobId as any,
+        timeSegments: snapshot.timeSegments as any,
+        hybridConfig: snapshot.hybridConfig as any,
+        isEdgeTimeSegmentMode: snapshot.isEdgeTimeSegmentMode,
         showMiniMap: snapshot.showMiniMap,
         showBubbleMenu: snapshot.showBubbleMenu,
       })

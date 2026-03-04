@@ -87,7 +87,7 @@ def read_udm_hybrid_config(
     if not hybrid_config:
         raise HTTPException(status_code=404, detail="UDM Hybrid config not found")
     if not current_user.is_superuser and (hybrid_config.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     return hybrid_config
 
 
@@ -134,7 +134,7 @@ def update_udm_hybrid_config(
     if not hybrid_config:
         raise HTTPException(status_code=404, detail="UDM Hybrid config not found")
     if not current_user.is_superuser and (hybrid_config.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
 
     update_dict = config_in.model_dump(exclude_unset=True)
     if "hybrid_config" in update_dict and update_dict["hybrid_config"] is not None:
@@ -165,7 +165,7 @@ def delete_udm_hybrid_config(
     if not hybrid_config:
         raise HTTPException(status_code=404, detail="UDM Hybrid config not found")
     if not current_user.is_superuser and (hybrid_config.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     session.delete(hybrid_config)
     session.commit()
     return Message(message="UDM Hybrid config deleted successfully")

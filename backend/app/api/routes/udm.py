@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from app.api.deps import (
     CurrentUser,
@@ -566,10 +566,12 @@ def get_user_calculation_jobs(
     获取用户的UDM计算任务列表
     """
     # Get total count
-    count_statement = select(UDMJob).where(
-        UDMJob.owner_id == current_user.id
+    count_statement = (
+        select(func.count())
+        .select_from(UDMJob)
+        .where(UDMJob.owner_id == current_user.id)
     )
-    total_count = len(session.exec(count_statement).all())
+    total_count = session.exec(count_statement).one()
     
     # Get jobs with pagination
     statement = (
