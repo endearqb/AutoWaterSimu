@@ -4,6 +4,13 @@ import type { HybridUDMConfig, HybridUDMSelectedModel } from "../types/hybridUdm
 
 export const LOCAL_EXEMPT_TOKEN = "__local__"
 
+/** Built-in function / constant names that must never be treated as focal variables.
+ *  Mirrors backend `udm_expression.py` ALLOWED_FUNCTIONS + RESERVED_CONSTANTS. */
+const KNOWN_BUILTINS = new Set([
+  "exp", "log", "sqrt", "pow", "min", "max", "abs", "clip",
+  "pi", "e",
+])
+
 export const buildHybridModelKey = (modelId: string, version: number) =>
   `${modelId}@${version}`
 
@@ -77,7 +84,7 @@ export const extractHybridFocalVarsFromDetail = (
     if (!expr) return
     const matches = expr.match(regex) || []
     matches.forEach((token) => {
-      if (componentNames.has(token)) {
+      if (componentNames.has(token) && !KNOWN_BUILTINS.has(token)) {
         ids.add(token)
       }
     })

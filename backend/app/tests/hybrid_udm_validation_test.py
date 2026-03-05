@@ -264,3 +264,98 @@ def test_data_conversion_injects_hybrid_node_variable_bindings() -> None:
     }
     assert binding_map["B1"] == "A1"
     assert binding_map["B2"] == "A2"
+
+
+def test_extract_focal_variables_excludes_builtins():
+    """Builtin function/constant names should never be focal variables,
+    even when a component shares the same name."""
+    from app.services.hybrid_udm_validation import _extract_focal_variables
+
+    component_names = {"S1", "exp", "pi"}
+    processes = [
+        {"rate_expr": "exp(S1) + pi * S1"},
+    ]
+    result = _extract_focal_variables(
+        component_names=component_names,
+        processes=processes,
+    )
+    assert "S1" in result
+    assert "exp" not in result
+    assert "pi" not in result
+
+
+def test_hybrid_runtime_does_not_require_mapping_for_builtin_named_component():
+    """When a component is named after a builtin (e.g., 'exp'),
+    it should not appear in focal_vars and thus not require mapping."""
+    model_a = _build_model_snapshot("model_a", 1, ["A1", "A2"], "A1 + A2")
+    # model_b has a component named 'exp' — a builtin function name
+    model_b = _build_model_snapshot("model_b", 1, ["B1", "exp"], "exp(B1)")
+
+    flowchart_data = {
+        "nodes": [
+            {
+                "id": "node_a",
+                "type": "udm",
+                "data": {
+                    "label": "A reactor",
+                    "volume": "1.0",
+                    "udmModelId": "model_a",
+                    "udmModelVersion": 1,
+                    "udmModelSnapshot": {
+                        "id": "model_a",
+                        "version": 1,
+                        "hash": model_a["hash"],
+                        "components": model_a["components"],
+                        "parameters": model_a["parameters"],
+                        "processes": model_a["processes"],
+                    },
+                },
+            },
+            {
+                "id": "node_b",
+                "type": "udm",
+                "data": {
+                    "label": "B reactor",
+                    "volume": "1.0",
+                    "udmModelId": "model_b",
+                    "udmModelVersion": 1,
+                    "udmModelSnapshot": {
+                        "id": "model_b",
+                        "version": 1,
+                        "hash": model_b["hash"],
+                        "components": model_b["components"],
+                        "parameters": model_b["parameters"],
+                        "processes": model_b["processes"],
+                    },
+                },
+            },
+        ],
+        "edges": [
+            {"id": "edge_ab", "source": "node_a", "target": "node_b", "data": {"flow": 100.0}},
+        ],
+        "customParameters": [
+            {"name": "A1", "label": "A1", "defaultValue": 0},
+            {"name": "A2", "label": "A2", "defaultValue": 0},
+            {"name": "B1", "label": "B1", "defaultValue": 0},
+        ],
+        "hybrid_config": {
+            "mode": "udm_only",
+            "selected_models": [model_a, model_b],
+            "model_pair_mappings": {
+                "model_a@1->model_b@1": {
+                    "source_model_id": "model_a",
+                    "source_version": 1,
+                    "target_model_id": "model_b",
+                    "target_version": 1,
+                    "variable_map": [
+                        {"source_var": "A1", "target_var": "B1", "enabled": True},
+                        # 'exp' is NOT mapped — it should not be required as a focal var
+                    ],
+                }
+            },
+        },
+    }
+
+    runtime = build_hybrid_runtime_info(flowchart_data, strict=False)
+    # 'exp' should not be in focal_vars, so missing mapping should not cause errors
+    assert runtime.errors == [], f"Unexpected errors: {runtime.errors}"

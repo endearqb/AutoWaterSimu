@@ -533,6 +533,7 @@ export const enMessages: I18nMessages = {
       hybrid: {
         modelLabel: "Hybrid Model",
         selectModelPlaceholder: "Select model",
+        unbindModel: "Not bound",
         errors: {
           bindModelRequired: "Please bind a Hybrid model for this node.",
           currentModelNotInSetup:
@@ -762,7 +763,21 @@ export const enMessages: I18nMessages = {
         "Pair Mapping (source model variable -> target focal variable)",
       pairMappingEmpty: "Select at least 2 models to configure cross-model mappings.",
       targetNoFocal: "Target model has no detected focal variables.",
-      localExempt: "Local exempt",
+      localExempt: "Use own model value",
+      localExemptTooltip: "This variable will use its value from the local model instead of receiving it from the upstream model.",
+      tabs: {
+        selectModels: "Select Models",
+        pairMapping: "Pair Mapping",
+      },
+      modelPreview: {
+        components: "Components: {list}",
+        processes: "Processes: {count}",
+        notLoaded: "Detail not loaded yet",
+      },
+      mappingProgress: {
+        overall: "Mapped {mapped}/{total}",
+        mapped: "{mapped}/{total}",
+      },
       applyButton: "Apply Hybrid Setup",
       savedConfigs: {
         title: "Saved Configs",

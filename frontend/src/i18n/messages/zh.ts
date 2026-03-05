@@ -516,6 +516,7 @@ export const zhMessages: I18nMessages = {
       hybrid: {
         modelLabel: "混合模型",
         selectModelPlaceholder: "请选择模型",
+        unbindModel: "未绑定",
         errors: {
           bindModelRequired: "请先为该节点绑定 Hybrid 模型。",
           currentModelNotInSetup: "当前节点绑定模型不在 Hybrid 配置中。",
@@ -739,7 +740,21 @@ export const zhMessages: I18nMessages = {
       pairMappingTitle: "模型对映射（源模型变量 -> 目标焦集变量）",
       pairMappingEmpty: "至少选择 2 个模型后才可配置跨模型映射。",
       targetNoFocal: "目标模型未检测到焦集变量。",
-      localExempt: "本地豁免",
+      localExempt: "使用本模型自有值",
+      localExemptTooltip: "该变量将使用本模型自身的值，而非从上游模型接收。",
+      tabs: {
+        selectModels: "选择模型",
+        pairMapping: "模型对映射",
+      },
+      modelPreview: {
+        components: "组分：{list}",
+        processes: "过程数量：{count}",
+        notLoaded: "详情尚未加载",
+      },
+      mappingProgress: {
+        overall: "已映射 {mapped}/{total}",
+        mapped: "{mapped}/{total}",
+      },
       applyButton: "应用 Hybrid 配置",
       savedConfigs: {
         title: "已保存配置",
