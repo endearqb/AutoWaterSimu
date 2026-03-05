@@ -726,6 +726,10 @@ export const zhMessages: I18nMessages = {
         sortByTime: "按起始时间排序",
         validationPassed: "时段覆盖校验通过。",
         validationFailed: "发现 {count} 项时段校验问题",
+        quickSplit: "快速分段",
+        splitCount: "分段数量",
+        splitConfirm: "分割",
+        splitCancel: "取消",
       },
     },
     hybridSetup: {
@@ -1195,6 +1199,12 @@ export const zhMessages: I18nMessages = {
           title: "Parameters",
           empty: "暂无可用参数。",
         },
+        functions: {
+          title: "函数",
+        },
+        constants: {
+          title: "常量",
+        },
       },
     },
     udmModels: {
@@ -1249,7 +1259,13 @@ export const zhMessages: I18nMessages = {
         publishUpdateFailed: "更新发布状态失败",
       },
       confirm: {
+        deleteTitle: "确认删除",
         deleteModel: "确认删除模型「{name}」？此操作不可恢复。",
+      },
+      pagination: {
+        prev: "上一页",
+        next: "下一页",
+        info: "第 {current} / {total} 页",
       },
     },
     modelParams: {

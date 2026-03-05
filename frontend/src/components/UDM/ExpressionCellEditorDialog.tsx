@@ -2,10 +2,11 @@ import {
   Badge,
   Box,
   Button,
+  Collapsible,
   Dialog,
   Flex,
-  Heading,
   HStack,
+  Heading,
   Text,
   Textarea,
   VStack,
@@ -19,13 +20,33 @@ import {
   useState,
 } from "react"
 
+import { useI18n } from "@/i18n"
 import {
-  analyzeExpression,
   type DecoratedExpressionToken,
   type ExpressionCellType,
   type ExpressionIssue,
+  analyzeExpression,
 } from "./expressionEditorUtils"
-import { useI18n } from "@/i18n"
+
+const EXPRESSION_FUNCTIONS: {
+  name: string
+  insert: string
+  signature: string
+}[] = [
+  { name: "exp", insert: "exp()", signature: "exp(x)" },
+  { name: "log", insert: "log()", signature: "log(x)" },
+  { name: "sqrt", insert: "sqrt()", signature: "sqrt(x)" },
+  { name: "pow", insert: "pow(,)", signature: "pow(base, exp)" },
+  { name: "min", insert: "min(,)", signature: "min(a, b)" },
+  { name: "max", insert: "max(,)", signature: "max(a, b)" },
+  { name: "abs", insert: "abs()", signature: "abs(x)" },
+  { name: "clip", insert: "clip(,,)", signature: "clip(x, min, max)" },
+]
+
+const EXPRESSION_CONSTANTS: { name: string; label: string }[] = [
+  { name: "pi", label: "pi (\u03C0)" },
+  { name: "e", label: "e (Euler)" },
+]
 
 interface ExpressionCellEditorDialogProps {
   open: boolean
@@ -144,9 +165,12 @@ function ExpressionCellEditorDialog({
       })
     }
     if (issue.code === "STOICH_COMPONENT_REF") {
-      return t("flow.udmEditor.expressionEditor.validation.stoichComponentRef", {
-        symbols: issue.meta?.symbols?.join(", ") || "-",
-      })
+      return t(
+        "flow.udmEditor.expressionEditor.validation.stoichComponentRef",
+        {
+          symbols: issue.meta?.symbols?.join(", ") || "-",
+        },
+      )
     }
     if (issue.code === "MISSING_OPERATOR_BETWEEN_SYMBOLS") {
       return t(
@@ -172,7 +196,10 @@ function ExpressionCellEditorDialog({
     setDraftValue(nextValue)
     requestAnimationFrame(() => {
       textarea.focus()
-      const nextCursor = start + symbol.length
+      // Place cursor inside parentheses for function templates like "exp()"
+      const parenIndex = symbol.indexOf("(")
+      const nextCursor =
+        parenIndex >= 0 ? start + parenIndex + 1 : start + symbol.length
       textarea.setSelectionRange(nextCursor, nextCursor)
     })
   }
@@ -198,7 +225,11 @@ function ExpressionCellEditorDialog({
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()} size="xl">
+    <Dialog.Root
+      open={open}
+      onOpenChange={(e) => !e.open && onClose()}
+      size="xl"
+    >
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content maxW="min(1200px, 96vw)" maxH="90vh" overflow="hidden">
@@ -217,7 +248,11 @@ function ExpressionCellEditorDialog({
           </Dialog.Header>
 
           <Dialog.Body>
-            <Flex direction={{ base: "column", lg: "row" }} gap={4} align="stretch">
+            <Flex
+              direction={{ base: "column", lg: "row" }}
+              gap={4}
+              align="stretch"
+            >
               <VStack align="stretch" gap={3} flex="1 1 auto" minW={0}>
                 <Heading size="xs">
                   {t("flow.udmEditor.expressionEditor.heading")}
@@ -369,6 +404,72 @@ function ExpressionCellEditorDialog({
                     )}
                   </VStack>
                 </Box>
+
+                <Collapsible.Root defaultOpen>
+                  <Box borderWidth="1px" borderRadius="md" p={3}>
+                    <Collapsible.Trigger asChild>
+                      <Heading
+                        size="xs"
+                        mb={2}
+                        cursor="pointer"
+                        _hover={{ color: "blue.500" }}
+                      >
+                        {t("flow.udmEditor.expressionEditor.functions.title")}
+                      </Heading>
+                    </Collapsible.Trigger>
+                    <Collapsible.Content>
+                      <VStack align="stretch" gap={1}>
+                        {EXPRESSION_FUNCTIONS.map((fn) => (
+                          <Button
+                            key={`fn-${fn.name}`}
+                            size="xs"
+                            variant="subtle"
+                            justifyContent="flex-start"
+                            onClick={() => insertSymbolAtCursor(fn.insert)}
+                            title={fn.signature}
+                          >
+                            <HStack gap={2}>
+                              <Text fontFamily="mono">{fn.name}</Text>
+                              <Text fontSize="xs" color="fg.muted">
+                                {fn.signature}
+                              </Text>
+                            </HStack>
+                          </Button>
+                        ))}
+                      </VStack>
+                    </Collapsible.Content>
+                  </Box>
+                </Collapsible.Root>
+
+                <Collapsible.Root defaultOpen>
+                  <Box borderWidth="1px" borderRadius="md" p={3}>
+                    <Collapsible.Trigger asChild>
+                      <Heading
+                        size="xs"
+                        mb={2}
+                        cursor="pointer"
+                        _hover={{ color: "blue.500" }}
+                      >
+                        {t("flow.udmEditor.expressionEditor.constants.title")}
+                      </Heading>
+                    </Collapsible.Trigger>
+                    <Collapsible.Content>
+                      <VStack align="stretch" gap={1}>
+                        {EXPRESSION_CONSTANTS.map((c) => (
+                          <Button
+                            key={`const-${c.name}`}
+                            size="xs"
+                            variant="subtle"
+                            justifyContent="flex-start"
+                            onClick={() => insertSymbolAtCursor(c.name)}
+                          >
+                            <Text fontFamily="mono">{c.label}</Text>
+                          </Button>
+                        ))}
+                      </VStack>
+                    </Collapsible.Content>
+                  </Box>
+                </Collapsible.Root>
               </VStack>
             </Flex>
           </Dialog.Body>

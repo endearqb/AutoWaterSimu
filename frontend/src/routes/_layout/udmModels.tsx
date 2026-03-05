@@ -3,10 +3,11 @@ import {
   Box,
   Button,
   Container,
+  Dialog,
   EmptyState,
   Flex,
-  Heading,
   HStack,
+  Heading,
   Input,
   Table,
   Text,
@@ -14,7 +15,7 @@ import {
 } from "@chakra-ui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { FiSearch } from "react-icons/fi"
 
 import useCustomToast from "@/hooks/useCustomToast"
@@ -33,13 +34,31 @@ function UDMModelsPage() {
 
   const [searchInput, setSearchInput] = useState("")
   const [searchText, setSearchText] = useState("")
+  const [page, setPage] = useState(1)
+  const [modelToDelete, setModelToDelete] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const pageSize = 20
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounced auto-search
+  useEffect(() => {
+    debounceTimerRef.current = setTimeout(() => {
+      setSearchText(searchInput.trim())
+      setPage(1)
+    }, 300)
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    }
+  }, [searchInput])
 
   const modelsQuery = useQuery({
-    queryKey: ["udm-models", searchText],
+    queryKey: ["udm-models", searchText, page],
     queryFn: () =>
       udmService.getModels({
-        skip: 0,
-        limit: 200,
+        skip: (page - 1) * pageSize,
+        limit: pageSize,
         q: searchText || undefined,
       }),
   })
@@ -108,7 +127,9 @@ function UDMModelsPage() {
 
   const togglePublish = useMutation({
     mutationFn: async (args: { modelId: string; nextPublished: boolean }) =>
-      udmService.updateModel(args.modelId, { is_published: args.nextPublished }),
+      udmService.updateModel(args.modelId, {
+        is_published: args.nextPublished,
+      }),
     onSuccess: (updated) => {
       showSuccessToast(
         updated.is_published
@@ -127,12 +148,21 @@ function UDMModelsPage() {
   })
 
   const models = useMemo(() => modelsQuery.data?.data || [], [modelsQuery.data])
+  const totalCount = modelsQuery.data?.count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const templates = useMemo(
     () => templatesQuery.data || [],
     [templatesQuery.data],
   )
 
   const dateLocale = language === "zh" ? "zh-CN" : "en-US"
+
+  // Auto-correct page when current page overshoots (e.g. after deleting last item on last page)
+  useEffect(() => {
+    if (totalCount > 0 && models.length === 0 && page > 1) {
+      setPage(Math.max(1, Math.ceil(totalCount / pageSize)))
+    }
+  }, [totalCount, models.length, page])
 
   return (
     <Container maxW="full">
@@ -144,18 +174,24 @@ function UDMModelsPage() {
         <Input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (debounceTimerRef.current)
+                clearTimeout(debounceTimerRef.current)
+              setSearchText(searchInput.trim())
+              setPage(1)
+            }
+          }}
           placeholder={t("flow.udmModels.searchPlaceholder")}
           maxW="360px"
         />
-        <Button onClick={() => setSearchText(searchInput.trim())}>
-          {t("flow.udmModels.actions.search")}
-        </Button>
         <Button
           variant="subtle"
           colorPalette="gray"
           onClick={() => {
             setSearchInput("")
             setSearchText("")
+            setPage(1)
           }}
         >
           {t("flow.udmModels.actions.clear")}
@@ -173,9 +209,13 @@ function UDMModelsPage() {
           {t("flow.udmModels.sections.templateQuickCreate")}
         </Heading>
         {templatesQuery.isLoading ? (
-          <Text color="gray.500">{t("flow.udmModels.state.templatesLoading")}</Text>
+          <Text color="gray.500">
+            {t("flow.udmModels.state.templatesLoading")}
+          </Text>
         ) : templates.length === 0 ? (
-          <Text color="gray.500">{t("flow.udmModels.state.templatesEmpty")}</Text>
+          <Text color="gray.500">
+            {t("flow.udmModels.state.templatesEmpty")}
+          </Text>
         ) : (
           <VStack align="stretch" gap={3}>
             {templates.map((tpl) => (
@@ -191,7 +231,8 @@ function UDMModelsPage() {
                 <Box>
                   <Text fontWeight="semibold">{tpl.name}</Text>
                   <Text fontSize="sm" color="gray.600">
-                    {tpl.description || t("flow.udmModels.template.noDescription")}
+                    {tpl.description ||
+                      t("flow.udmModels.template.noDescription")}
                   </Text>
                   <HStack mt={2} gap={2}>
                     {(tpl.tags || []).map((tag) => (
@@ -228,7 +269,9 @@ function UDMModelsPage() {
           {t("flow.udmModels.sections.myModels")}
         </Heading>
         {modelsQuery.isLoading ? (
-          <Text color="gray.500">{t("flow.udmModels.state.modelsLoading")}</Text>
+          <Text color="gray.500">
+            {t("flow.udmModels.state.modelsLoading")}
+          </Text>
         ) : models.length === 0 ? (
           <EmptyState.Root>
             <EmptyState.Content>
@@ -246,101 +289,171 @@ function UDMModelsPage() {
             </EmptyState.Content>
           </EmptyState.Root>
         ) : (
-          <Table.Root size={{ base: "sm", md: "md" }}>
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader>
-                  {t("flow.udmModels.table.headers.modelName")}
-                </Table.ColumnHeader>
-                <Table.ColumnHeader>
-                  {t("flow.udmModels.table.headers.version")}
-                </Table.ColumnHeader>
-                <Table.ColumnHeader>
-                  {t("flow.udmModels.table.headers.publishStatus")}
-                </Table.ColumnHeader>
-                <Table.ColumnHeader>
-                  {t("flow.udmModels.table.headers.updatedAt")}
-                </Table.ColumnHeader>
-                <Table.ColumnHeader>
-                  {t("flow.udmModels.table.headers.actions")}
-                </Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {models.map((model) => (
-                <Table.Row key={model.id}>
-                  <Table.Cell>{model.name}</Table.Cell>
-                  <Table.Cell>v{model.current_version}</Table.Cell>
-                  <Table.Cell>
-                    <Badge colorPalette={model.is_published ? "green" : "gray"}>
-                      {model.is_published
-                        ? t("flow.udmModels.table.published")
-                        : t("flow.udmModels.table.unpublished")}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {new Date(model.updated_at).toLocaleString(dateLocale)}
-                  </Table.Cell>
-                  <Table.Cell>
-                    <HStack gap={2} wrap="wrap">
-                      <Button
-                        size="xs"
-                        onClick={() =>
-                          navigate({
-                            to: "/udmModelEditor",
-                            search: { modelId: model.id },
-                          })
-                        }
-                      >
-                        {t("flow.udmModels.actions.edit")}
-                      </Button>
-                      <Button
-                        size="xs"
-                        variant="subtle"
-                        onClick={() => duplicateModel.mutate(model.id)}
-                      >
-                        {t("flow.udmModels.actions.duplicate")}
-                      </Button>
-                      <Button
-                        size="xs"
-                        variant="subtle"
-                        onClick={() =>
-                          togglePublish.mutate({
-                            modelId: model.id,
-                            nextPublished: !model.is_published,
-                          })
-                        }
+          <>
+            <Table.Root size={{ base: "sm", md: "md" }}>
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader>
+                    {t("flow.udmModels.table.headers.modelName")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmModels.table.headers.version")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmModels.table.headers.publishStatus")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmModels.table.headers.updatedAt")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmModels.table.headers.actions")}
+                  </Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {models.map((model) => (
+                  <Table.Row key={model.id}>
+                    <Table.Cell>{model.name}</Table.Cell>
+                    <Table.Cell>v{model.current_version}</Table.Cell>
+                    <Table.Cell>
+                      <Badge
+                        colorPalette={model.is_published ? "green" : "gray"}
                       >
                         {model.is_published
-                          ? t("flow.udmModels.actions.unpublish")
-                          : t("flow.udmModels.actions.publish")}
-                      </Button>
-                      <Button
-                        size="xs"
-                        colorPalette="red"
-                        variant="subtle"
-                        onClick={() => {
-                          const ok = window.confirm(
-                            t("flow.udmModels.confirm.deleteModel", {
-                              name: model.name,
-                            }),
-                          )
-                          if (ok) {
-                            deleteModel.mutate(model.id)
+                          ? t("flow.udmModels.table.published")
+                          : t("flow.udmModels.table.unpublished")}
+                      </Badge>
+                    </Table.Cell>
+                    <Table.Cell>
+                      {new Date(model.updated_at).toLocaleString(dateLocale)}
+                    </Table.Cell>
+                    <Table.Cell>
+                      <HStack gap={2} wrap="wrap">
+                        <Button
+                          size="xs"
+                          onClick={() =>
+                            navigate({
+                              to: "/udmModelEditor",
+                              search: { modelId: model.id },
+                            })
                           }
-                        }}
-                      >
-                        {t("flow.udmModels.actions.delete")}
-                      </Button>
-                    </HStack>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
+                        >
+                          {t("flow.udmModels.actions.edit")}
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          onClick={() => duplicateModel.mutate(model.id)}
+                        >
+                          {t("flow.udmModels.actions.duplicate")}
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          onClick={() =>
+                            togglePublish.mutate({
+                              modelId: model.id,
+                              nextPublished: !model.is_published,
+                            })
+                          }
+                        >
+                          {model.is_published
+                            ? t("flow.udmModels.actions.unpublish")
+                            : t("flow.udmModels.actions.publish")}
+                        </Button>
+                        <Button
+                          size="xs"
+                          colorPalette="red"
+                          variant="subtle"
+                          onClick={() =>
+                            setModelToDelete({ id: model.id, name: model.name })
+                          }
+                        >
+                          {t("flow.udmModels.actions.delete")}
+                        </Button>
+                      </HStack>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </>
+        )}
+
+        {totalPages > 1 && (
+          <Flex mt={4} justify="center" align="center" gap={3}>
+            <Button
+              size="sm"
+              variant="subtle"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              {t("flow.udmModels.pagination.prev")}
+            </Button>
+            <Text fontSize="sm" color="fg.muted">
+              {t("flow.udmModels.pagination.info", {
+                current: page,
+                total: totalPages,
+              })}
+            </Text>
+            <Button
+              size="sm"
+              variant="subtle"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              {t("flow.udmModels.pagination.next")}
+            </Button>
+          </Flex>
         )}
       </Box>
+
+      <Dialog.Root
+        open={!!modelToDelete}
+        onOpenChange={(e) => {
+          if (!e.open) setModelToDelete(null)
+        }}
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>
+                {t("flow.udmModels.confirm.deleteTitle")}
+              </Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              <Text>
+                {modelToDelete
+                  ? t("flow.udmModels.confirm.deleteModel", {
+                      name: modelToDelete.name,
+                    })
+                  : ""}
+              </Text>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <HStack gap={2}>
+                <Button variant="subtle" onClick={() => setModelToDelete(null)}>
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  colorPalette="red"
+                  loading={deleteModel.isPending}
+                  onClick={() => {
+                    if (modelToDelete) {
+                      deleteModel.mutate(modelToDelete.id, {
+                        onSuccess: () => setModelToDelete(null),
+                      })
+                    }
+                  }}
+                >
+                  {t("common.delete")}
+                </Button>
+              </HStack>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
     </Container>
   )
 }
-

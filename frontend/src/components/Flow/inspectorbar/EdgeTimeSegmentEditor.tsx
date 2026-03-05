@@ -10,13 +10,19 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { useMemo } from "react"
-import { FiChevronDown, FiChevronUp, FiCopy, FiTrash2 } from "react-icons/fi"
+import { FiChevronDown, FiChevronUp, FiCopy, FiLink, FiTrash2 } from "react-icons/fi"
 import type { EdgeParameterConfig } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import type {
   SegmentEdgeOverride,
   TimeSegment,
 } from "../../../utils/timeSegmentValidation"
+import {
+  asFiniteNumber,
+  normalizeOverride,
+  parseOptionalNumber,
+  toInputValue,
+} from "../../../utils/timeSegmentHelpers"
 
 type SegmentParameterDescriptor = {
   name: string
@@ -42,60 +48,6 @@ interface EdgeTimeSegmentEditorProps {
 type EffectiveSegmentValues = {
   flow: number
   factors: Record<string, { a: number; b: number }>
-}
-
-const parseOptionalNumber = (raw: string): number | undefined => {
-  if (raw.trim() === "") {
-    return undefined
-  }
-  const parsed = Number(raw)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-const asFiniteNumber = (value: unknown, fallback: number): number => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value
-  }
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : fallback
-}
-
-const toInputValue = (value: number | undefined): string => {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return ""
-  }
-  return String(value)
-}
-
-const normalizeOverride = (
-  override?: SegmentEdgeOverride,
-): SegmentEdgeOverride | undefined => {
-  if (!override) return undefined
-
-  const hasFlow = typeof override.flow === "number" && Number.isFinite(override.flow)
-  const normalizedFactors: Record<string, { a?: number; b?: number }> = {}
-
-  Object.entries(override.factors || {}).forEach(([paramName, factor]) => {
-    if (!factor) return
-    const nextFactor: { a?: number; b?: number } = {}
-    if (typeof factor.a === "number" && Number.isFinite(factor.a)) {
-      nextFactor.a = factor.a
-    }
-    if (typeof factor.b === "number" && Number.isFinite(factor.b)) {
-      nextFactor.b = factor.b
-    }
-    if (nextFactor.a !== undefined || nextFactor.b !== undefined) {
-      normalizedFactors[paramName] = nextFactor
-    }
-  })
-
-  const hasFactors = Object.keys(normalizedFactors).length > 0
-  if (!hasFlow && !hasFactors) return undefined
-
-  const normalized: SegmentEdgeOverride = {}
-  if (hasFlow) normalized.flow = override.flow
-  if (hasFactors) normalized.factors = normalizedFactors
-  return normalized
 }
 
 function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
@@ -256,9 +208,16 @@ function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
   return (
     <VStack align="stretch" gap={3}>
       <HStack justify="space-between" align="center">
-        <Text fontSize="sm" fontWeight="bold">
-          {t("flow.simulation.timeSegments.title")}
-        </Text>
+        <VStack align="start" gap={0}>
+          <Text fontSize="sm" fontWeight="bold">
+            {t("flow.simulation.timeSegments.title")}
+          </Text>
+          <Text fontSize="xs" color="gray.600">
+            {t("flow.simulation.timeSegments.subtitle", {
+              hours: simulationHours.toFixed(2),
+            })}
+          </Text>
+        </VStack>
         <Button size="xs" onClick={handleAddSegment} disabled={!addTimeSegment}>
           {t("flow.simulation.timeSegments.addSegment")}
         </Button>
@@ -386,9 +345,12 @@ function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
                         {t("flow.simulation.timeSegments.flowOverride")}
                       </Field.Label>
                       {flowInherited && (
-                        <Text fontSize="xs" color="gray.500">
-                          {t("flow.simulation.timeSegments.inheritedBadge")}
-                        </Text>
+                        <HStack gap={0.5}>
+                          <FiLink size={10} color="var(--chakra-colors-gray-500)" />
+                          <Text fontSize="xs" color="gray.500">
+                            {t("flow.simulation.timeSegments.inheritedBadge")}
+                          </Text>
+                        </HStack>
                       )}
                     </HStack>
                     <Input
@@ -403,6 +365,8 @@ function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
                       }
                       color={flowInherited ? "gray.500" : "gray.900"}
                       bg={flowInherited ? "gray.100" : "white"}
+                      borderStyle={flowInherited ? "dashed" : "solid"}
+                      borderColor={flowInherited ? "gray.300" : undefined}
                     />
                   </Field.Root>
 
@@ -439,9 +403,12 @@ function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
                                     {t("flow.simulation.timeSegments.factorA")}
                                   </Field.Label>
                                   {aInherited && (
-                                    <Text fontSize="xs" color="gray.500">
-                                      {t("flow.simulation.timeSegments.inheritedBadge")}
-                                    </Text>
+                                    <HStack gap={0.5}>
+                                      <FiLink size={10} color="var(--chakra-colors-gray-500)" />
+                                      <Text fontSize="xs" color="gray.500">
+                                        {t("flow.simulation.timeSegments.inheritedBadge")}
+                                      </Text>
+                                    </HStack>
                                   )}
                                 </HStack>
                                 <Input
@@ -460,6 +427,8 @@ function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
                                   }
                                   color={aInherited ? "gray.500" : "gray.900"}
                                   bg={aInherited ? "gray.100" : "white"}
+                                  borderStyle={aInherited ? "dashed" : "solid"}
+                                  borderColor={aInherited ? "gray.300" : undefined}
                                 />
                               </Field.Root>
 
@@ -469,9 +438,12 @@ function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
                                     {t("flow.simulation.timeSegments.factorB")}
                                   </Field.Label>
                                   {bInherited && (
-                                    <Text fontSize="xs" color="gray.500">
-                                      {t("flow.simulation.timeSegments.inheritedBadge")}
-                                    </Text>
+                                    <HStack gap={0.5}>
+                                      <FiLink size={10} color="var(--chakra-colors-gray-500)" />
+                                      <Text fontSize="xs" color="gray.500">
+                                        {t("flow.simulation.timeSegments.inheritedBadge")}
+                                      </Text>
+                                    </HStack>
                                   )}
                                 </HStack>
                                 <Input
@@ -490,6 +462,8 @@ function EdgeTimeSegmentEditor(props: EdgeTimeSegmentEditorProps) {
                                   }
                                   color={bInherited ? "gray.500" : "gray.900"}
                                   bg={bInherited ? "gray.100" : "white"}
+                                  borderStyle={bInherited ? "dashed" : "solid"}
+                                  borderColor={bInherited ? "gray.300" : undefined}
                                 />
                               </Field.Root>
                             </HStack>

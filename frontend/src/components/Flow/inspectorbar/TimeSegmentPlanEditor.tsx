@@ -10,8 +10,8 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import type { Edge, Node } from "@xyflow/react"
-import { useMemo } from "react"
-import { FiChevronDown, FiChevronUp, FiCopy, FiTrash2 } from "react-icons/fi"
+import { useMemo, useState } from "react"
+import { FiChevronDown, FiChevronUp, FiCopy, FiLink, FiTrash2 } from "react-icons/fi"
 import type { EdgeParameterConfig } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import {
@@ -19,6 +19,12 @@ import {
   type TimeSegment,
   validateTimeSegments,
 } from "../../../utils/timeSegmentValidation"
+import {
+  asFiniteNumber,
+  normalizeOverride,
+  parseOptionalNumber,
+  toInputValue,
+} from "../../../utils/timeSegmentHelpers"
 
 interface TimeSegmentPlanEditorProps {
   timeSegments: TimeSegment[]
@@ -40,29 +46,6 @@ type EffectiveSegmentValues = {
   factors: Record<string, { a: number; b: number }>
 }
 
-const parseOptionalNumber = (raw: string): number | undefined => {
-  if (raw.trim() === "") {
-    return undefined
-  }
-  const parsed = Number(raw)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-const asFiniteNumber = (value: unknown, fallback: number): number => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value
-  }
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : fallback
-}
-
-const toInputValue = (value: number | undefined): string => {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return ""
-  }
-  return String(value)
-}
-
 const getNodeDisplayName = (node: Node): string => {
   const data = (node.data || {}) as Record<string, unknown>
   const label = typeof data.label === "string" ? data.label.trim() : ""
@@ -81,33 +64,6 @@ const buildEdgeLabel = (
   return `${sourceName} -> ${targetName}`
 }
 
-const normalizeOverride = (
-  override?: SegmentEdgeOverride,
-): SegmentEdgeOverride | undefined => {
-  if (!override) return undefined
-
-  const hasFlow = typeof override.flow === "number"
-  const normalizedFactors: Record<string, { a?: number; b?: number }> = {}
-
-  Object.entries(override.factors || {}).forEach(([paramName, factor]) => {
-    if (!factor) return
-    const nextFactor: { a?: number; b?: number } = {}
-    if (typeof factor.a === "number") nextFactor.a = factor.a
-    if (typeof factor.b === "number") nextFactor.b = factor.b
-    if (typeof nextFactor.a === "number" || typeof nextFactor.b === "number") {
-      normalizedFactors[paramName] = nextFactor
-    }
-  })
-
-  const hasFactors = Object.keys(normalizedFactors).length > 0
-  if (!hasFlow && !hasFactors) return undefined
-
-  const normalized: SegmentEdgeOverride = {}
-  if (hasFlow) normalized.flow = override.flow
-  if (hasFactors) normalized.factors = normalizedFactors
-  return normalized
-}
-
 function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
   const {
     timeSegments,
@@ -124,6 +80,9 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     reorderTimeSegments,
   } = props
   const { t } = useI18n()
+
+  const [isSplitMode, setIsSplitMode] = useState(false)
+  const [splitCount, setSplitCount] = useState(3)
 
   const edgeIdList = useMemo(
     () =>
@@ -249,6 +208,26 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     })
   }
 
+  const handleQuickSplit = () => {
+    if (!setTimeSegments || simulationHours <= 0 || splitCount < 1) return
+    const n = Math.max(1, Math.round(splitCount))
+    const step = simulationHours / n
+    const segments: Partial<TimeSegment>[] = Array.from({ length: n }, (_, i) => ({
+      startHour: Math.round(step * i * 1e6) / 1e6,
+      endHour: i === n - 1 ? simulationHours : Math.round(step * (i + 1) * 1e6) / 1e6,
+      edgeOverrides: {},
+    }))
+    setTimeSegments(
+      segments.map((s, i) => ({
+        id: `seg-${Date.now()}-${i}`,
+        startHour: s.startHour ?? 0,
+        endHour: s.endHour ?? simulationHours,
+        edgeOverrides: s.edgeOverrides ?? {},
+      })),
+    )
+    setIsSplitMode(false)
+  }
+
   const updateSegmentField = (
     segmentId: string,
     field: "startHour" | "endHour",
@@ -351,9 +330,48 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                 })}
               </Text>
             </VStack>
-            <Button size="xs" onClick={handleAddSegment} disabled={!addTimeSegment}>
-              {t("flow.simulation.timeSegments.addSegment")}
-            </Button>
+            <HStack gap={1}>
+              {isSplitMode ? (
+                <>
+                  <Input
+                    size="xs"
+                    type="number"
+                    min={1}
+                    w="60px"
+                    value={splitCount}
+                    onChange={(e) => setSplitCount(Number(e.target.value))}
+                  />
+                  <Button
+                    size="xs"
+                    onClick={handleQuickSplit}
+                    disabled={!setTimeSegments || simulationHours <= 0 || splitCount < 1}
+                  >
+                    {t("flow.simulation.timeSegments.splitConfirm")}
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => setIsSplitMode(false)}
+                  >
+                    {t("flow.simulation.timeSegments.splitCancel")}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => setIsSplitMode(true)}
+                    disabled={!setTimeSegments || simulationHours <= 0}
+                  >
+                    {t("flow.simulation.timeSegments.quickSplit")}
+                  </Button>
+                  <Button size="xs" onClick={handleAddSegment} disabled={!addTimeSegment}>
+                    {t("flow.simulation.timeSegments.addSegment")}
+                  </Button>
+                </>
+              )}
+            </HStack>
           </HStack>
 
           {validationErrors.length > 0 ? (
@@ -559,11 +577,14 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                       {t("flow.simulation.timeSegments.flowOverride")}
                                     </Field.Label>
                                     {flowInherited && (
-                                      <Text fontSize="xs" color="gray.500">
-                                        {t(
-                                          "flow.simulation.timeSegments.inheritedBadge",
-                                        )}
-                                      </Text>
+                                      <HStack gap={0.5}>
+                                        <FiLink size={10} color="var(--chakra-colors-gray-500)" />
+                                        <Text fontSize="xs" color="gray.500">
+                                          {t(
+                                            "flow.simulation.timeSegments.inheritedBadge",
+                                          )}
+                                        </Text>
+                                      </HStack>
                                     )}
                                   </HStack>
                                   <Input
@@ -582,6 +603,8 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                     }
                                     color={flowInherited ? "gray.500" : "gray.900"}
                                     bg={flowInherited ? "gray.100" : "white"}
+                                    borderStyle={flowInherited ? "dashed" : "solid"}
+                                    borderColor={flowInherited ? "gray.300" : undefined}
                                   />
                                 </Field.Root>
 
@@ -622,11 +645,14 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                                 {t("flow.simulation.timeSegments.factorA")}
                                               </Field.Label>
                                               {aInherited && (
-                                                <Text fontSize="xs" color="gray.500">
-                                                  {t(
-                                                    "flow.simulation.timeSegments.inheritedBadge",
-                                                  )}
-                                                </Text>
+                                                <HStack gap={0.5}>
+                                                  <FiLink size={10} color="var(--chakra-colors-gray-500)" />
+                                                  <Text fontSize="xs" color="gray.500">
+                                                    {t(
+                                                      "flow.simulation.timeSegments.inheritedBadge",
+                                                    )}
+                                                  </Text>
+                                                </HStack>
                                               )}
                                             </HStack>
                                             <Input
@@ -648,6 +674,8 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                               }
                                               color={aInherited ? "gray.500" : "gray.900"}
                                               bg={aInherited ? "gray.100" : "white"}
+                                              borderStyle={aInherited ? "dashed" : "solid"}
+                                              borderColor={aInherited ? "gray.300" : undefined}
                                             />
                                           </Field.Root>
                                           <Field.Root maxW="92px">
@@ -656,11 +684,14 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                                 {t("flow.simulation.timeSegments.factorB")}
                                               </Field.Label>
                                               {bInherited && (
-                                                <Text fontSize="xs" color="gray.500">
-                                                  {t(
-                                                    "flow.simulation.timeSegments.inheritedBadge",
-                                                  )}
-                                                </Text>
+                                                <HStack gap={0.5}>
+                                                  <FiLink size={10} color="var(--chakra-colors-gray-500)" />
+                                                  <Text fontSize="xs" color="gray.500">
+                                                    {t(
+                                                      "flow.simulation.timeSegments.inheritedBadge",
+                                                    )}
+                                                  </Text>
+                                                </HStack>
                                               )}
                                             </HStack>
                                             <Input
@@ -682,6 +713,8 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                                               }
                                               color={bInherited ? "gray.500" : "gray.900"}
                                               bg={bInherited ? "gray.100" : "white"}
+                                              borderStyle={bInherited ? "dashed" : "solid"}
+                                              borderColor={bInherited ? "gray.300" : undefined}
                                             />
                                           </Field.Root>
                                         </HStack>

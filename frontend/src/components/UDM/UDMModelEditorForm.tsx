@@ -1,12 +1,14 @@
-﻿import {
+﻿import type { UDMFlowChartPublic } from "@/client/types.gen"
+import {
   Badge,
   Box,
   Button,
   Container,
   Flex,
-  Heading,
   HStack,
+  Heading,
   Input,
+  NativeSelect,
   Switch,
   Table,
   Text,
@@ -14,8 +16,13 @@
   VStack,
 } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
-import type { UDMFlowChartPublic } from "@/client/types.gen"
-import { type ClipboardEvent, useEffect, useMemo, useRef, useState } from "react"
+import {
+  type ClipboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 
 import type {
   UDMModelCreate,
@@ -33,6 +40,7 @@ import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import ExpressionCellEditorDialog from "./ExpressionCellEditorDialog"
 
 type ComponentRow = {
+  _rowId: string
   name: string
   label: string
   unit: string
@@ -41,6 +49,7 @@ type ComponentRow = {
 }
 
 type ParameterRow = {
+  _rowId: string
   name: string
   unit: string
   defaultValue: string
@@ -51,6 +60,7 @@ type ParameterRow = {
 }
 
 type ProcessRow = {
+  _rowId: string
   name: string
   rateExpr: string
   note: string
@@ -90,6 +100,7 @@ const parseNumOrNull = (value: string): number | null => {
 }
 
 const emptyComponent = (): ComponentRow => ({
+  _rowId: crypto.randomUUID() as string,
   name: "",
   label: "",
   unit: "",
@@ -98,6 +109,7 @@ const emptyComponent = (): ComponentRow => ({
 })
 
 const emptyParameter = (): ParameterRow => ({
+  _rowId: crypto.randomUUID() as string,
   name: "",
   unit: "",
   defaultValue: "1",
@@ -108,6 +120,7 @@ const emptyParameter = (): ParameterRow => ({
 })
 
 const emptyProcess = (): ProcessRow => ({
+  _rowId: crypto.randomUUID() as string,
   name: "",
   rateExpr: "",
   note: "",
@@ -123,7 +136,13 @@ const buildFormSignature = (payload: {
   componentRows: ComponentRow[]
   processRows: ProcessRow[]
   parameterRows: ParameterRow[]
-}) => JSON.stringify(payload)
+}) =>
+  JSON.stringify({
+    ...payload,
+    componentRows: payload.componentRows.map(({ _rowId, ...rest }) => rest),
+    processRows: payload.processRows.map(({ _rowId, ...rest }) => rest),
+    parameterRows: payload.parameterRows.map(({ _rowId, ...rest }) => rest),
+  })
 
 const INITIAL_FORM_SIGNATURE = buildFormSignature({
   name: "",
@@ -152,7 +171,8 @@ export function UDMModelEditorForm({
   containerMaxW = "full",
 }: UDMModelEditorFormProps) {
   const { t } = useI18n()
-  const { showErrorToast, showSuccessToast, showWarningToast } = useCustomToast()
+  const { showErrorToast, showSuccessToast, showWarningToast } =
+    useCustomToast()
 
   const resolvedHeadingText =
     headingText ?? t("flow.udmEditor.form.headingDefault")
@@ -217,6 +237,7 @@ export function UDMModelEditorForm({
         const compName = String(item?.name || "").trim()
         if (!compName) return null
         return {
+          _rowId: crypto.randomUUID() as string,
           name: compName,
           label: String(item?.label || compName),
           unit: String(item?.unit || ""),
@@ -235,15 +256,16 @@ export function UDMModelEditorForm({
 
     const loadedProcesses: ProcessRow[] = (latest.processes || [])
       .map((item: any) => ({
+        _rowId: crypto.randomUUID() as string,
         name: String(item?.name || ""),
         rateExpr: String(item?.rate_expr ?? item?.rateExpr ?? ""),
         note: String(item?.note || ""),
         stoich: Object.fromEntries(
           Object.entries(
-            ((item?.stoich_expr || item?.stoichExpr || item?.stoich || {}) as Record<
-              string,
-              unknown
-            >),
+            (item?.stoich_expr ||
+              item?.stoichExpr ||
+              item?.stoich ||
+              {}) as Record<string, unknown>,
           ).map(([k, v]) => [k, String(v)]),
         ),
       }))
@@ -259,6 +281,7 @@ export function UDMModelEditorForm({
         const paramName = String(item?.name || "").trim()
         if (!paramName) return null
         return {
+          _rowId: crypto.randomUUID() as string,
           name: paramName,
           unit: String(item?.unit || ""),
           defaultValue: String(
@@ -304,14 +327,7 @@ export function UDMModelEditorForm({
         processRows,
         parameterRows,
       }),
-    [
-      name,
-      description,
-      tagsText,
-      componentRows,
-      processRows,
-      parameterRows,
-    ],
+    [name, description, tagsText, componentRows, processRows, parameterRows],
   )
   const isDirty = currentSignature !== baselineSignature
 
@@ -366,8 +382,7 @@ export function UDMModelEditorForm({
           stoichExpr[compName] = raw || "0"
           const num = Number.parseFloat(raw)
           const isNumeric =
-            raw.length > 0 &&
-            /^[-+]?\\d*\\.?\\d+(?:[eE][-+]?\\d+)?$/.test(raw)
+            raw.length > 0 && /^[-+]?\\d*\\.?\\d+(?:[eE][-+]?\\d+)?$/.test(raw)
           stoich[compName] = isNumeric && Number.isFinite(num) ? num : 0
         })
         return {
@@ -458,7 +473,9 @@ export function UDMModelEditorForm({
       if (result.ok) {
         showSuccessToast(t("flow.udmEditor.validation.toast.validationPassed"))
       } else {
-        showWarningToast(t("flow.udmEditor.validation.toast.validationHasIssues"))
+        showWarningToast(
+          t("flow.udmEditor.validation.toast.validationHasIssues"),
+        )
       }
     } catch (error) {
       showErrorToast(
@@ -472,7 +489,9 @@ export function UDMModelEditorForm({
   const mergeExtractedParameters = () => {
     const extracted = validation?.extracted_parameters || []
     if (extracted.length === 0) {
-      showWarningToast(t("flow.udmEditor.validation.toast.noExtractedParameters"))
+      showWarningToast(
+        t("flow.udmEditor.validation.toast.noExtractedParameters"),
+      )
       return
     }
     const existing = new Map(parameterRows.map((row) => [row.name, row]))
@@ -838,11 +857,14 @@ export function UDMModelEditorForm({
       }
     }
 
-    if (!componentName && issue.code.startsWith("STOICH_") && componentNames[0]) {
+    if (
+      !componentName &&
+      issue.code.startsWith("STOICH_") &&
+      componentNames[0]
+    ) {
       const fallbackComponent = componentNames[0]
-      const fallbackCell = stoichInputRefs.current[
-        `${processIndex}:${fallbackComponent}`
-      ]
+      const fallbackCell =
+        stoichInputRefs.current[`${processIndex}:${fallbackComponent}`]
       if (fallbackCell) {
         fallbackCell.scrollIntoView({
           behavior: "smooth",
@@ -1002,25 +1024,44 @@ export function UDMModelEditorForm({
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">{t("flow.udmEditor.form.sections.components")}</Heading>
-          <Button size="sm" onClick={() => setComponentRows((prev) => [...prev, emptyComponent()])}>
+          <Heading size="sm">
+            {t("flow.udmEditor.form.sections.components")}
+          </Heading>
+          <Button
+            size="sm"
+            onClick={() =>
+              setComponentRows((prev) => [...prev, emptyComponent()])
+            }
+          >
             {t("flow.udmEditor.form.actions.addComponent")}
           </Button>
         </Flex>
         <Table.Root size="sm">
           <Table.Header>
             <Table.Row>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.name")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.label")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.unit")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.defaultValue")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.allowChange")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.actions")}</Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.name")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.label")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.unit")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.defaultValue")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.allowChange")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.actions")}
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {componentRows.map((row, index) => (
-              <Table.Row key={`component-${index}`}>
+              <Table.Row key={row._rowId}>
                 <Table.Cell>
                   <Input
                     size="sm"
@@ -1035,7 +1076,9 @@ export function UDMModelEditorForm({
                     onChange={(e) =>
                       setComponentRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === index ? { ...item, label: e.target.value } : item,
+                          idx === index
+                            ? { ...item, label: e.target.value }
+                            : item,
                         ),
                       )
                     }
@@ -1048,7 +1091,9 @@ export function UDMModelEditorForm({
                     onChange={(e) =>
                       setComponentRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === index ? { ...item, unit: e.target.value } : item,
+                          idx === index
+                            ? { ...item, unit: e.target.value }
+                            : item,
                         ),
                       )
                     }
@@ -1076,7 +1121,9 @@ export function UDMModelEditorForm({
                     onCheckedChange={(details) =>
                       setComponentRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === index ? { ...item, isFixed: !details.checked } : item,
+                          idx === index
+                            ? { ...item, isFixed: !details.checked }
+                            : item,
                         ),
                       )
                     }
@@ -1108,7 +1155,9 @@ export function UDMModelEditorForm({
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">{t("flow.udmEditor.form.sections.processes")}</Heading>
+          <Heading size="sm">
+            {t("flow.udmEditor.form.sections.processes")}
+          </Heading>
           <HStack>
             <Button
               size="sm"
@@ -1128,13 +1177,20 @@ export function UDMModelEditorForm({
             </Button>
             <Button
               size="sm"
-              onClick={() => setProcessRows((prev) => [...prev, emptyProcess()])}
+              onClick={() =>
+                setProcessRows((prev) => [...prev, emptyProcess()])
+              }
             >
               {t("flow.udmEditor.form.actions.addProcess")}
             </Button>
           </HStack>
         </Flex>
-        <Table.ScrollArea borderWidth="1px" rounded="md" maxW="100%" maxH="520px">
+        <Table.ScrollArea
+          borderWidth="1px"
+          rounded="md"
+          maxW="100%"
+          maxH="520px"
+        >
           <Table.Root
             size="sm"
             stickyHeader
@@ -1198,8 +1254,12 @@ export function UDMModelEditorForm({
             </Table.Header>
             <Table.Body>
               {processRows.map((row, rowIndex) => (
-                <Table.Row key={`process-${rowIndex}`}>
-                  <Table.Cell minW={PROCESS_NAME_COL_W} data-sticky="start-first" left="0">
+                <Table.Row key={row._rowId}>
+                  <Table.Cell
+                    minW={PROCESS_NAME_COL_W}
+                    data-sticky="start-first"
+                    left="0"
+                  >
                     <Input
                       size="sm"
                       value={row.name}
@@ -1209,7 +1269,9 @@ export function UDMModelEditorForm({
                       onChange={(e) =>
                         setProcessRows((prev) =>
                           prev.map((item, idx) =>
-                            idx === rowIndex ? { ...item, name: e.target.value } : item,
+                            idx === rowIndex
+                              ? { ...item, name: e.target.value }
+                              : item,
                           ),
                         )
                       }
@@ -1225,7 +1287,9 @@ export function UDMModelEditorForm({
                       readOnly
                       cursor="pointer"
                       value={row.rateExpr}
-                      placeholder={t("flow.udmEditor.form.placeholders.clickEditRateExpr")}
+                      placeholder={t(
+                        "flow.udmEditor.form.placeholders.clickEditRateExpr",
+                      )}
                       title={row.rateExpr}
                       ref={(el) => {
                         rateExprInputRefs.current[rowIndex] = el
@@ -1250,10 +1314,13 @@ export function UDMModelEditorForm({
                         cursor="pointer"
                         type="text"
                         value={row.stoich[compName] || "0"}
-                        placeholder={t("flow.udmEditor.form.placeholders.stoichExample")}
+                        placeholder={t(
+                          "flow.udmEditor.form.placeholders.stoichExample",
+                        )}
                         title={row.stoich[compName] || "0"}
                         ref={(el) => {
-                          stoichInputRefs.current[`${rowIndex}:${compName}`] = el
+                          stoichInputRefs.current[`${rowIndex}:${compName}`] =
+                            el
                         }}
                         onClick={() => openStoichEditor(rowIndex, compName)}
                         onPaste={(event) =>
@@ -1275,7 +1342,9 @@ export function UDMModelEditorForm({
                       onChange={(e) =>
                         setProcessRows((prev) =>
                           prev.map((item, idx) =>
-                            idx === rowIndex ? { ...item, note: e.target.value } : item,
+                            idx === rowIndex
+                              ? { ...item, note: e.target.value }
+                              : item,
                           ),
                         )
                       }
@@ -1307,7 +1376,9 @@ export function UDMModelEditorForm({
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">{t("flow.udmEditor.validation.sectionTitle")}</Heading>
+          <Heading size="sm">
+            {t("flow.udmEditor.validation.sectionTitle")}
+          </Heading>
           <HStack>
             <Button size="sm" variant="subtle" onClick={runValidate}>
               {t("flow.udmEditor.validation.actions.parseValidate")}
@@ -1368,27 +1439,50 @@ export function UDMModelEditorForm({
 
       <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
         <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">{t("flow.udmEditor.form.sections.parameterWizard")}</Heading>
-          <Button size="sm" onClick={() => setParameterRows((prev) => [...prev, emptyParameter()])}>
+          <Heading size="sm">
+            {t("flow.udmEditor.form.sections.parameterWizard")}
+          </Heading>
+          <Button
+            size="sm"
+            onClick={() =>
+              setParameterRows((prev) => [...prev, emptyParameter()])
+            }
+          >
             {t("flow.udmEditor.form.actions.addParameter")}
           </Button>
         </Flex>
         <Table.Root size="sm">
           <Table.Header>
             <Table.Row>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.name")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.unit")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.defaultValue")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.min")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.max")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.scale")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.note")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("flow.udmEditor.form.columns.actions")}</Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.name")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.unit")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.defaultValue")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.min")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.max")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.scale")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.note")}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {t("flow.udmEditor.form.columns.actions")}
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {parameterRows.map((row, rowIndex) => (
-              <Table.Row key={`parameter-${rowIndex}`}>
+              <Table.Row key={row._rowId}>
                 <Table.Cell>
                   <Input
                     size="sm"
@@ -1396,7 +1490,9 @@ export function UDMModelEditorForm({
                     onChange={(e) =>
                       setParameterRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === rowIndex ? { ...item, name: e.target.value } : item,
+                          idx === rowIndex
+                            ? { ...item, name: e.target.value }
+                            : item,
                         ),
                       )
                     }
@@ -1409,7 +1505,9 @@ export function UDMModelEditorForm({
                     onChange={(e) =>
                       setParameterRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === rowIndex ? { ...item, unit: e.target.value } : item,
+                          idx === rowIndex
+                            ? { ...item, unit: e.target.value }
+                            : item,
                         ),
                       )
                     }
@@ -1439,7 +1537,9 @@ export function UDMModelEditorForm({
                     onChange={(e) =>
                       setParameterRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === rowIndex ? { ...item, minValue: e.target.value } : item,
+                          idx === rowIndex
+                            ? { ...item, minValue: e.target.value }
+                            : item,
                         ),
                       )
                     }
@@ -1453,35 +1553,36 @@ export function UDMModelEditorForm({
                     onChange={(e) =>
                       setParameterRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === rowIndex ? { ...item, maxValue: e.target.value } : item,
+                          idx === rowIndex
+                            ? { ...item, maxValue: e.target.value }
+                            : item,
                         ),
                       )
                     }
                   />
                 </Table.Cell>
                 <Table.Cell>
-                  <select
-                    value={row.scale}
-                    onChange={(e) =>
-                      setParameterRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, scale: e.target.value as "lin" | "log" }
-                            : item,
-                        ),
-                      )
-                    }
-                    style={{
-                      width: "100%",
-                      border: "1px solid #CBD5E0",
-                      borderRadius: "6px",
-                      padding: "4px 8px",
-                      height: "32px",
-                    }}
-                  >
-                    <option value="lin">lin</option>
-                    <option value="log">log</option>
-                  </select>
+                  <NativeSelect.Root size="sm">
+                    <NativeSelect.Field
+                      value={row.scale}
+                      onChange={(e) =>
+                        setParameterRows((prev) =>
+                          prev.map((item, idx) =>
+                            idx === rowIndex
+                              ? {
+                                  ...item,
+                                  scale: e.target.value as "lin" | "log",
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="lin">lin</option>
+                      <option value="log">log</option>
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
                 </Table.Cell>
                 <Table.Cell>
                   <Input
@@ -1490,7 +1591,9 @@ export function UDMModelEditorForm({
                     onChange={(e) =>
                       setParameterRows((prev) =>
                         prev.map((item, idx) =>
-                          idx === rowIndex ? { ...item, note: e.target.value } : item,
+                          idx === rowIndex
+                            ? { ...item, note: e.target.value }
+                            : item,
                         ),
                       )
                     }

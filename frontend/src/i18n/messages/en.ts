@@ -748,6 +748,10 @@ export const enMessages: I18nMessages = {
         sortByTime: "Sort by start hour",
         validationPassed: "Segment coverage validation passed.",
         validationFailed: "{count} segment validation issues found",
+        quickSplit: "Quick Split",
+        splitCount: "Number of segments",
+        splitConfirm: "Split",
+        splitCancel: "Cancel",
       },
     },
     hybridSetup: {
@@ -1230,6 +1234,12 @@ export const enMessages: I18nMessages = {
           title: "Parameters",
           empty: "No parameters available.",
         },
+        functions: {
+          title: "Functions",
+        },
+        constants: {
+          title: "Constants",
+        },
       },
     },
     udmModels: {
@@ -1285,7 +1295,13 @@ export const enMessages: I18nMessages = {
         publishUpdateFailed: "Failed to update publish status",
       },
       confirm: {
+        deleteTitle: "Confirm Delete",
         deleteModel: 'Delete model "{name}"? This action cannot be undone.',
+      },
+      pagination: {
+        prev: "Previous",
+        next: "Next",
+        info: "Page {current} / {total}",
       },
     },
     modelParams: {

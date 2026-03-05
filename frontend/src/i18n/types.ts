@@ -716,6 +716,10 @@ export interface I18nMessages {
         sortByTime: string
         validationPassed: string
         validationFailed: string
+        quickSplit: string
+        splitCount: string
+        splitConfirm: string
+        splitCancel: string
       }
     }
     hybridSetup: {
@@ -1180,6 +1184,12 @@ export interface I18nMessages {
           title: string
           empty: string
         }
+        functions: {
+          title: string
+        }
+        constants: {
+          title: string
+        }
       }
     }
     udmModels: {
@@ -1234,7 +1244,13 @@ export interface I18nMessages {
         publishUpdateFailed: string
       }
       confirm: {
+        deleteTitle: string
         deleteModel: string
+      }
+      pagination: {
+        prev: string
+        next: string
+        info: string
       }
     }
     modelParams: {
