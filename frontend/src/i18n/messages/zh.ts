@@ -1,4 +1,4 @@
-﻿import type { I18nMessages } from "../types"
+import type { I18nMessages } from "../types"
 
 export const zhMessages: I18nMessages = {
   app: {
@@ -384,7 +384,7 @@ export const zhMessages: I18nMessages = {
     deleteAccountDescription: "永久删除您的数据和与您账号关联的所有内容。",
     deleteConfirmTitle: "确认删除",
     deleteConfirmBody:
-      "所有您的账号数据将被永久删除。如果您确定，请点击“确认”继续。此操作无法撤销。",
+      "所有您的账号数据将被永久删除。如果您确定，请点击「确认」继续。此操作无法撤销。",
     deleteSuccess: "您的账号已成功删除",
     userNameLabel: "用户名",
     emailLabel: "邮箱",
@@ -823,13 +823,13 @@ export const zhMessages: I18nMessages = {
       fileFormatErrorTitle: "文件格式错误",
       flowchartName: "流程图名称",
       flowchartNamePlaceholder: "请输入流程图名称",
-      importFailed: “导入失败”,
-      importInvalidDescription: “文件格式错误或内容无效”,
-      importFlowchart: “导入流程图”,
-      importRetryAfterSave: “保存成功。请再次点击”本地导入”继续。”,
-      importSuccess: “导入成功”,
-      importCalcParamsTitle: “导入计算参数”,
-      importCalcParamsMessage: “导入文件包含计算参数，是否使用？”,
+      importFailed: "导入失败",
+      importInvalidDescription: "文件格式错误或内容无效",
+      importFlowchart: "导入流程图",
+      importRetryAfterSave: "保存成功。请再次点击「本地导入」继续。",
+      importSuccess: "导入成功",
+      importCalcParamsTitle: "导入计算参数",
+      importCalcParamsMessage: "导入文件包含计算参数，是否使用？",
       load: "加载",
       loadCalculationData: "加载计算数据",
       loadFailed: "加载失败",
@@ -1125,7 +1125,7 @@ export const zhMessages: I18nMessages = {
         },
         extractedLabel: "extracted:",
         jumpToCellTitle: "点击跳转到对应 process / stoich 单元格",
-        emptyHint: "点击“解析 / 校验”后查看错误、警告和抽取参数。",
+        emptyHint: "点击「解析 / 校验」后查看错误、警告和抽取参数。",
         toast: {
           validationPassed: "模型定义校验通过",
           validationHasIssues: "模型定义存在问题，请修正后再保存",
@@ -1249,7 +1249,7 @@ export const zhMessages: I18nMessages = {
         publishUpdateFailed: "更新发布状态失败",
       },
       confirm: {
-        deleteModel: "确认删除模型“{name}”？此操作不可恢复。",
+        deleteModel: "确认删除模型「{name}」？此操作不可恢复。",
       },
     },
     modelParams: {
@@ -1591,7 +1591,7 @@ export const zhMessages: I18nMessages = {
         tds: "总溶解固体 TDS (mg/L)",
       },
       hints: {
-        ta: "提示：若当前为“总碱度”，请先扣除非碳酸盐碱度（如氰尿酸等）后再参与计算。",
+        ta: "提示：若当前为「总碱度」，请先扣除非碳酸盐碱度（如氰尿酸等）后再参与计算。",
       },
       sections: {
         lsi: "朗格利尔指数 (LSI)",

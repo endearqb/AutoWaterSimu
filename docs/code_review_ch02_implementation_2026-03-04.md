@@ -72,6 +72,10 @@
   - 若存在，暂存数据并显示对话框
   - 对话框回调 `handleCalcParamsChoice` 完成导入
 
+#### 范围说明：openflow 旧 Layout
+- `frontend/src/routes/openflow.tsx` 当前仍引用 `components/Flow/Layout.tsx`（旧实现）。
+- 该路径用于兼容/展示场景，当前版本评审口径中标记为“范围外”，不纳入本轮修复项。
+
 #### 修改 4：i18n 文案
 - `frontend/src/i18n/types.ts`：添加 4 个 key 类型
 - `frontend/src/i18n/messages/zh.ts`：添加中文文案
@@ -88,4 +92,23 @@
 ## 验证
 
 - **ruff lint**：通过（仅有 pre-existing 警告：W293 空白行、UP006/UP007 typing 旧写法、I001 import 排序）
-- **tsc --noEmit**：通过（exit 0）（pre-existing 编码问题：zh.ts 中文引号 TS1127）
+- **tsc --noEmit**：通过（exit 0，无错误）
+
+## 额外修复
+
+### zh.ts 编码问题（附带修复）
+
+**问题**：`frontend/src/i18n/messages/zh.ts` 包含 UTF-8 BOM 和 Unicode 智能引号（U+201C/U+201D），导致 Vite SWC 解析失败。
+
+**修复**：
+- 移除 UTF-8 BOM
+- 将所有智能引号（`"` `"`）替换为 ASCII 双引号
+- 5 处嵌套引号改用中文书名号 `「」` 避免 JS 字符串语法冲突
+
+### flowStore.ts 类型补齐
+
+**问题**：`FlowComponentsDocs.tsx` 快照引用 `timeSegments`、`hybridConfig`、`isEdgeTimeSegmentMode`，但 `RFState` 类型和初始状态缺少这些字段。
+
+**修复**：
+- `RFState` 类型添加 `timeSegments: any[]`、`hybridConfig: any`、`isEdgeTimeSegmentMode: boolean`
+- 初始状态添加默认值 `timeSegments: []`、`hybridConfig: null`、`isEdgeTimeSegmentMode: false`

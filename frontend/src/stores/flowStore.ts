@@ -55,6 +55,9 @@ type RFState = {
   currentFlowChartId: string | null
   currentFlowChartName: string | null // 当前流程图名称
   currentJobId: string | null // 当前计算任务ID
+  timeSegments: any[]
+  hybridConfig: any
+  isEdgeTimeSegmentMode: boolean
   showMiniMap: boolean
   showBubbleMenu: boolean
 
@@ -143,6 +146,9 @@ const useFlowStore = create<RFState>((set, get) => ({
 
   // 初始化计算参数 - 使用统一配置
   calculationParameters: getDefaultCalculationParams("materialBalance"),
+  timeSegments: [],
+  hybridConfig: null,
+  isEdgeTimeSegmentMode: false,
   showMiniMap: false,
   showBubbleMenu: true,
 
