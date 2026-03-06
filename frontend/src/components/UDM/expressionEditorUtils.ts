@@ -239,7 +239,9 @@ export const tokenizeExpression = (input: string): ExpressionToken[] => {
   return tokens
 }
 
-const buildParenthesisIssues = (tokens: ExpressionToken[]): ExpressionIssue[] => {
+const buildParenthesisIssues = (
+  tokens: ExpressionToken[],
+): ExpressionIssue[] => {
   const stack: number[] = []
   const issues: ExpressionIssue[] = []
 

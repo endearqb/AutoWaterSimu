@@ -17,11 +17,8 @@ import { Checkbox } from "../../../ui/checkbox"
 import ExternalLegendBarChart from "../ExternalLegendBarChart"
 import TimeSeriesChart from "../TimeSeriesChart"
 import type { ASM1ResultData } from "../asm1-analysis"
-import {
-  getUDMAvailableVariables,
-  type UDMResultData,
-} from "../udm-analysis"
 import { normalizeIndex, normalizeIndexRange } from "../sliderUtils"
+import { type UDMResultData, getUDMAvailableVariables } from "../udm-analysis"
 
 type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
 
@@ -80,7 +77,10 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
   const lastDataIndex = timestampsLength > 0 ? timestampsLength - 1 : 0
   const isSliderDisabled = timestampsLength <= 1
 
-  const minStepsBetween = useMemo(() => Math.min(2, maxTimeIndex), [maxTimeIndex])
+  const minStepsBetween = useMemo(
+    () => Math.min(2, maxTimeIndex),
+    [maxTimeIndex],
+  )
   const effectiveMinStepsBetween = useMemo(
     () => (isSliderDisabled ? 0 : minStepsBetween),
     [isSliderDisabled, minStepsBetween],
@@ -132,7 +132,8 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
 
     setSelectedVariables((prev) => {
       const filtered = prev.filter((variable) => validVariableSet.has(variable))
-      if (filtered.length > 0 || availableVariables.length === 0) return filtered
+      if (filtered.length > 0 || availableVariables.length === 0)
+        return filtered
       return availableVariables
         .slice(0, Math.min(5, availableVariables.length))
         .map((v) => v.name)
@@ -169,7 +170,10 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
         const variableData = nodeData[
           variable as keyof typeof nodeData
         ] as number[]
-        if (Array.isArray(variableData) && safeSelectedTimeIndex < variableData.length) {
+        if (
+          Array.isArray(variableData) &&
+          safeSelectedTimeIndex < variableData.length
+        ) {
           dataPoint[variable] = variableData[safeSelectedTimeIndex]
         }
       })
@@ -309,7 +313,8 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
                   </Slider.Control>
                 </Slider.Root>
                 <Text minW="100px">
-                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) || 0}{" "}
+                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) ||
+                    0}{" "}
                   {t("flow.simulation.unit.hours")}
                 </Text>
               </HStack>

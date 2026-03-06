@@ -343,6 +343,10 @@ function UDMModelsPage() {
                         <Button
                           size="xs"
                           variant="subtle"
+                          loading={
+                            duplicateModel.isPending &&
+                            duplicateModel.variables === model.id
+                          }
                           onClick={() => duplicateModel.mutate(model.id)}
                         >
                           {t("flow.udmModels.actions.duplicate")}
@@ -350,6 +354,10 @@ function UDMModelsPage() {
                         <Button
                           size="xs"
                           variant="subtle"
+                          loading={
+                            togglePublish.isPending &&
+                            togglePublish.variables?.modelId === model.id
+                          }
                           onClick={() =>
                             togglePublish.mutate({
                               modelId: model.id,

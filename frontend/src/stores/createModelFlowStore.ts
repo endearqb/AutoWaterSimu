@@ -21,11 +21,11 @@ import {
   getDefaultCalculationParams,
 } from "../config/simulationConfig"
 import { t } from "../i18n"
-import {
-  normalizeTimeSegments,
-  type TimeSegment,
-} from "../utils/timeSegmentValidation"
 import type { HybridUDMConfig } from "../types/hybridUdm"
+import {
+  type TimeSegment,
+  normalizeTimeSegments,
+} from "../utils/timeSegmentValidation"
 // import type { BaseModelService } from '../services/baseModelService' // 鏆傛椂娉ㄩ噴鎺夋湭浣跨敤鐨勫锟?
 
 /**
@@ -114,7 +114,10 @@ export interface ModelFlowState<
 
   // ========== 鏁版嵁瀵煎叆瀵煎嚭 ==========
   exportFlowData: () => any
-  importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => { success: boolean; message: string }
+  importFlowData: (
+    data: any,
+    options?: { restoreCalculationParams?: boolean },
+  ) => { success: boolean; message: string }
   setImportedFileName: (fileName: string | null) => void
 
   // ========== 娴佺▼鍥剧锟?==========
@@ -606,9 +609,7 @@ export function createModelFlowStore<
 
       setTimeSegments: (segments: TimeSegment[]) => {
         set({
-          timeSegments: [...segments].sort(
-            (a, b) => a.startHour - b.startHour,
-          ),
+          timeSegments: [...segments].sort((a, b) => a.startHour - b.startHour),
         })
       },
 
@@ -636,13 +637,10 @@ export function createModelFlowStore<
         })
       },
 
-      updateTimeSegment: (
-        segmentId: string,
-        patch: Partial<TimeSegment>,
-      ) => {
+      updateTimeSegment: (segmentId: string, patch: Partial<TimeSegment>) => {
         set({
-          timeSegments: get().timeSegments
-            .map((segment) =>
+          timeSegments: get()
+            .timeSegments.map((segment) =>
               segment.id === segmentId ? { ...segment, ...patch } : segment,
             )
             .sort((a, b) => a.startHour - b.startHour),
@@ -667,7 +665,9 @@ export function createModelFlowStore<
         const copiedSegment: TimeSegment = {
           ...sourceSegment,
           id: `${sourceSegment.id}_copy_${Date.now()}`,
-          edgeOverrides: JSON.parse(JSON.stringify(sourceSegment.edgeOverrides)),
+          edgeOverrides: JSON.parse(
+            JSON.stringify(sourceSegment.edgeOverrides),
+          ),
         }
         set({
           timeSegments: [...state.timeSegments, copiedSegment].sort(
@@ -706,7 +706,8 @@ export function createModelFlowStore<
         if (timeSegments.length > 0) return
 
         const rawHours = Number(calculationParameters.hours)
-        const safeHours = Number.isFinite(rawHours) && rawHours > 0 ? rawHours : 24
+        const safeHours =
+          Number.isFinite(rawHours) && rawHours > 0 ? rawHours : 24
 
         set({
           timeSegments: [
@@ -776,7 +777,8 @@ export function createModelFlowStore<
           })
 
           if (node.type === "udm" && selectedModelKeys.size > 0) {
-            const udmModel = (updatedData.udmModel as Record<string, unknown>) || {}
+            const udmModel =
+              (updatedData.udmModel as Record<string, unknown>) || {}
             const modelId = String(
               updatedData.udmModelId || udmModel.id || udmModel.modelId || "",
             ).trim()
@@ -822,7 +824,9 @@ export function createModelFlowStore<
 
         const updatedEdgeParameterConfigs = { ...state.edgeParameterConfigs }
         state.edges.forEach((edge) => {
-          const currentConfigs = { ...(updatedEdgeParameterConfigs[edge.id] || {}) }
+          const currentConfigs = {
+            ...(updatedEdgeParameterConfigs[edge.id] || {}),
+          }
           finalParameters.forEach((param) => {
             if (!currentConfigs[param.name]) {
               currentConfigs[param.name] = { a: 1, b: 0 }
@@ -1053,7 +1057,10 @@ export function createModelFlowStore<
         }
       },
 
-      importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => {
+      importFlowData: (
+        data: any,
+        options?: { restoreCalculationParams?: boolean },
+      ) => {
         try {
           // 娓呯悊妯″瀷璁＄畻缁撴灉
           if (modelStore) {
@@ -1206,9 +1213,10 @@ export function createModelFlowStore<
             timeSegments: normalizeTimeSegments(timeSegments),
             hybridConfig: importedHybridConfig,
             isEdgeTimeSegmentMode: false,
-            calculationParameters: options?.restoreCalculationParams && importedCalcParams
-              ? importedCalcParams
-              : get().calculationParameters,
+            calculationParameters:
+              options?.restoreCalculationParams && importedCalcParams
+                ? importedCalcParams
+                : get().calculationParameters,
             selectedNode: null,
             selectedEdge: null,
           })

@@ -1,5 +1,11 @@
 import { Box } from "@chakra-ui/react"
-import React, { type ReactNode, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
 import type { RFState } from "../../stores/flowStore"
@@ -294,7 +300,9 @@ const FlowLayout = ({
     const { flowData, fileName } = pendingImport
     setPendingImport(null)
 
-    const result = importFlowData(flowData, { restoreCalculationParams: restoreParams })
+    const result = importFlowData(flowData, {
+      restoreCalculationParams: restoreParams,
+    })
 
     setImportedFileName(fileName)
     setCurrentFlowChartName(fileName)

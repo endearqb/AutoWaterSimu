@@ -14,19 +14,13 @@ import {
 } from "recharts"
 
 import { useI18n } from "../../../i18n"
-import {
-  type ASM1ResultData,
-  getAvailableVariables,
-} from "./asm1-analysis"
+import { type ASM1ResultData, getAvailableVariables } from "./asm1-analysis"
 import {
   type ASM1SlimResultData,
   getSlimAvailableVariables,
 } from "./asm1slim-analysis"
-import {
-  getUDMAvailableVariables,
-  type UDMResultData,
-} from "./udm-analysis"
 import { normalizeIndexRange } from "./sliderUtils"
+import { type UDMResultData, getUDMAvailableVariables } from "./udm-analysis"
 
 interface LinearEdgeParameterConfig {
   a: number
@@ -41,7 +35,10 @@ interface EdgeTimeSeriesChartProps {
   selectedVariables: string[]
   timeRange: [number, number]
   onTimeRangeChange: (range: [number, number]) => void
-  edgeParameterConfigs?: Record<string, Record<string, LinearEdgeParameterConfig>>
+  edgeParameterConfigs?: Record<
+    string,
+    Record<string, LinearEdgeParameterConfig>
+  >
   edges?: Edge[]
   showTimeRangeSlider?: boolean
   showSegmentLines?: boolean
@@ -98,7 +95,8 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
   const filteredSelectedVariables = useMemo(
     () =>
       selectedVariables.filter(
-        (value) => value !== "flow_rate" && value !== "flowrate" && value !== "flow",
+        (value) =>
+          value !== "flow_rate" && value !== "flowrate" && value !== "flow",
       ),
     [selectedVariables],
   )
@@ -117,7 +115,10 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
   const isSliderDisabled = timestampsLength <= 1
 
-  const minStepsBetween = useMemo(() => Math.min(2, maxTimeIndex), [maxTimeIndex])
+  const minStepsBetween = useMemo(
+    () => Math.min(2, maxTimeIndex),
+    [maxTimeIndex],
+  )
   const effectiveMinStepsBetween = useMemo(
     () => (isSliderDisabled ? 0 : minStepsBetween),
     [isSliderDisabled, minStepsBetween],
@@ -148,7 +149,9 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
       }
 
       selectedEdges.forEach((edgeId) => {
-        const edge = edges.find((item) => (item.id || `${item.source}-${item.target}`) === edgeId)
+        const edge = edges.find(
+          (item) => (item.id || `${item.source}-${item.target}`) === edgeId,
+        )
         if (!edge) return
 
         const sourceData = resultData.node_data?.[edge.source]
@@ -156,7 +159,8 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
 
         filteredSelectedVariables.forEach((variable) => {
           const sourceSeries = sourceData[variable]
-          if (!Array.isArray(sourceSeries) || sourceSeries[i] === undefined) return
+          if (!Array.isArray(sourceSeries) || sourceSeries[i] === undefined)
+            return
 
           const edgeConfig = edgeParameterConfigs?.[edgeId]?.[variable] || {
             a: 1,
@@ -291,9 +295,13 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
     selectedEdges.forEach((edgeId) => {
       filteredSelectedVariables.forEach((variable) => {
         const key = `${edgeId}_${variable}`
-        const variableInfo = availableVariables.find((item) => item.name === variable)
+        const variableInfo = availableVariables.find(
+          (item) => item.name === variable,
+        )
 
-        const edge = edges.find((item) => (item.id || `${item.source}-${item.target}`) === edgeId)
+        const edge = edges.find(
+          (item) => (item.id || `${item.source}-${item.target}`) === edgeId,
+        )
         const sourceNode = edge ? resultData.node_data?.[edge.source] : null
         const targetNode = edge ? resultData.node_data?.[edge.target] : null
         const edgeLabel =
@@ -423,9 +431,12 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
                   strokeDasharray="5 4"
                   ifOverflow="visible"
                   label={{
-                    value: t("flow.analysis.segmentDisplay.segmentMarkerLabel", {
-                      index: index + 1,
-                    }),
+                    value: t(
+                      "flow.analysis.segmentDisplay.segmentMarkerLabel",
+                      {
+                        index: index + 1,
+                      },
+                    ),
                     position: "top",
                     fill: "#1d4ed8",
                     fontSize: 10,
@@ -467,7 +478,11 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
           gap={2}
         >
           {groupedChangeEvents.map((event) => (
-            <Text key={`event-desc-${event.atHour}`} fontSize="xs" color="orange.800">
+            <Text
+              key={`event-desc-${event.atHour}`}
+              fontSize="xs"
+              color="orange.800"
+            >
               {t("flow.analysis.segmentDisplay.changeMarkerSummary", {
                 hour: event.atHour.toFixed(2),
                 edgeCount: event.edgeCount,

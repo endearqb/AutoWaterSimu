@@ -3,11 +3,11 @@ import type { Edge } from "@xyflow/react"
 import { useState } from "react"
 
 import { useI18n } from "../../../i18n"
-import type { UDMResultData } from "./udm-analysis"
 import AIReportPanel from "./panels/AIReportPanel"
 import DataQualityPanel from "./panels/DataQualityPanel"
 import EdgeConcentrationPanel from "./panels/EdgeConcentrationPanel"
 import SpatialProfilePanel from "./panels/SpatialProfilePanel"
+import type { UDMResultData } from "./udm-analysis"
 
 interface EdgeParameterConfig {
   a: number

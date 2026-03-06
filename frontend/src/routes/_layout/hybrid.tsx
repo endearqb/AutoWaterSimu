@@ -2,8 +2,8 @@ import {
   Box,
   Button,
   Container,
-  Heading,
   HStack,
+  Heading,
   Input,
   Table,
   Text,
@@ -47,7 +47,10 @@ function HybridConfigPage() {
     queryFn: () => udmService.getHybridConfigs(0, 500),
   })
 
-  const configs = useMemo(() => configsQuery.data?.data || [], [configsQuery.data])
+  const configs = useMemo(
+    () => configsQuery.data?.data || [],
+    [configsQuery.data],
+  )
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -268,17 +271,24 @@ function HybridConfigPage() {
               {configs.map((item) => (
                 <Table.Row key={item.id}>
                   <Table.Cell>{item.name}</Table.Cell>
-                  <Table.Cell>{new Date(item.updated_at).toLocaleString()}</Table.Cell>
+                  <Table.Cell>
+                    {new Date(item.updated_at).toLocaleString()}
+                  </Table.Cell>
                   <Table.Cell>
                     <HStack gap={2} wrap="wrap">
-                      <Button size="xs" onClick={() => loadConfigForEdit(item.id)}>
+                      <Button
+                        size="xs"
+                        onClick={() => loadConfigForEdit(item.id)}
+                      >
                         {t("flow.hybridConfigs.actions.edit")}
                       </Button>
                       <Button
                         size="xs"
                         variant="subtle"
                         onClick={() => {
-                          const parsed = toHybridConfigFromUnknown(item.hybrid_config)
+                          const parsed = toHybridConfigFromUnknown(
+                            item.hybrid_config,
+                          )
                           if (!parsed) {
                             showErrorToast(
                               t("flow.hybridConfigs.toasts.savedConfigInvalid"),

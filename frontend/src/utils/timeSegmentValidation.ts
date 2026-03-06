@@ -134,81 +134,85 @@ export const validateTimeSegments = (params: {
       }
     }
 
-    Object.entries(segment.edgeOverrides || {}).forEach(([edgeId, override]) => {
-      if (validEdgeIds.size > 0 && !validEdgeIds.has(edgeId)) {
-        errors.push({
-          code: "SEGMENT_EDGE_NOT_FOUND",
-          message: `Edge override references unknown edge: ${edgeId}`,
-          segmentId,
-          edgeId,
-        })
-      }
-
-      if (!override || typeof override !== "object") {
-        errors.push({
-          code: "SEGMENT_INVALID_VALUE",
-          message: "Edge override must be an object",
-          segmentId,
-          edgeId,
-        })
-        return
-      }
-
-      if (override.flow !== undefined) {
-        const parsedFlow = Number(override.flow)
-        if (!isFiniteNumber(parsedFlow) || parsedFlow < 0) {
+    Object.entries(segment.edgeOverrides || {}).forEach(
+      ([edgeId, override]) => {
+        if (validEdgeIds.size > 0 && !validEdgeIds.has(edgeId)) {
           errors.push({
-            code: "SEGMENT_INVALID_VALUE",
-            message: "Override flow must be a finite number >= 0",
+            code: "SEGMENT_EDGE_NOT_FOUND",
+            message: `Edge override references unknown edge: ${edgeId}`,
             segmentId,
             edgeId,
           })
         }
-      }
 
-      Object.entries(override.factors || {}).forEach(([paramName, factor]) => {
-        if (validParamNames.size > 0 && !validParamNames.has(paramName)) {
+        if (!override || typeof override !== "object") {
           errors.push({
-            code: "SEGMENT_PARAM_NOT_FOUND",
-            message: `Override references unknown parameter: ${paramName}`,
+            code: "SEGMENT_INVALID_VALUE",
+            message: "Edge override must be an object",
             segmentId,
             edgeId,
-            paramName,
           })
           return
         }
 
-        if (!factor || typeof factor !== "object") {
-          errors.push({
-            code: "SEGMENT_INVALID_VALUE",
-            message: "Override factor must be an object",
-            segmentId,
-            edgeId,
-            paramName,
-          })
-          return
+        if (override.flow !== undefined) {
+          const parsedFlow = Number(override.flow)
+          if (!isFiniteNumber(parsedFlow) || parsedFlow < 0) {
+            errors.push({
+              code: "SEGMENT_INVALID_VALUE",
+              message: "Override flow must be a finite number >= 0",
+              segmentId,
+              edgeId,
+            })
+          }
         }
 
-        if (factor.a !== undefined && !isFiniteNumber(Number(factor.a))) {
-          errors.push({
-            code: "SEGMENT_INVALID_VALUE",
-            message: "Override factor 'a' must be a finite number",
-            segmentId,
-            edgeId,
-            paramName,
-          })
-        }
-        if (factor.b !== undefined && !isFiniteNumber(Number(factor.b))) {
-          errors.push({
-            code: "SEGMENT_INVALID_VALUE",
-            message: "Override factor 'b' must be a finite number",
-            segmentId,
-            edgeId,
-            paramName,
-          })
-        }
-      })
-    })
+        Object.entries(override.factors || {}).forEach(
+          ([paramName, factor]) => {
+            if (validParamNames.size > 0 && !validParamNames.has(paramName)) {
+              errors.push({
+                code: "SEGMENT_PARAM_NOT_FOUND",
+                message: `Override references unknown parameter: ${paramName}`,
+                segmentId,
+                edgeId,
+                paramName,
+              })
+              return
+            }
+
+            if (!factor || typeof factor !== "object") {
+              errors.push({
+                code: "SEGMENT_INVALID_VALUE",
+                message: "Override factor must be an object",
+                segmentId,
+                edgeId,
+                paramName,
+              })
+              return
+            }
+
+            if (factor.a !== undefined && !isFiniteNumber(Number(factor.a))) {
+              errors.push({
+                code: "SEGMENT_INVALID_VALUE",
+                message: "Override factor 'a' must be a finite number",
+                segmentId,
+                edgeId,
+                paramName,
+              })
+            }
+            if (factor.b !== undefined && !isFiniteNumber(Number(factor.b))) {
+              errors.push({
+                code: "SEGMENT_INVALID_VALUE",
+                message: "Override factor 'b' must be a finite number",
+                segmentId,
+                edgeId,
+                paramName,
+              })
+            }
+          },
+        )
+      },
+    )
 
     return {
       id: segmentId,

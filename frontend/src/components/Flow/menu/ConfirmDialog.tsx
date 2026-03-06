@@ -13,9 +13,7 @@ import { confirmDebug } from "../../../utils/confirmDebug"
 interface ConfirmDialogProps {
   isOpen: boolean
   onDismiss: () => void
-  onConfirm: (
-    action: "save" | "export" | "skip",
-  ) => void | Promise<void>
+  onConfirm: (action: "save" | "export" | "skip") => void | Promise<void>
   title: string
   message: string
 }
@@ -88,7 +86,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           isConfirming: isConfirmingRef.current,
           suppressDismiss: suppressDismissRef.current,
         })
-        if (!e.open && !isConfirmingRef.current && !suppressDismissRef.current) {
+        if (
+          !e.open &&
+          !isConfirmingRef.current &&
+          !suppressDismissRef.current
+        ) {
           confirmDebug(scope, "dismiss-via-onOpenChange")
           onDismiss()
         }

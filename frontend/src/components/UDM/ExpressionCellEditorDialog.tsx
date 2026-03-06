@@ -371,6 +371,10 @@ function ExpressionCellEditorDialog({
                           size="xs"
                           variant="subtle"
                           justifyContent="flex-start"
+                          aria-label={t(
+                            "flow.udmEditor.expressionEditor.aria.insertVariable",
+                            { name },
+                          )}
                           onClick={() => insertSymbolAtCursor(name)}
                         >
                           {name}
@@ -396,6 +400,10 @@ function ExpressionCellEditorDialog({
                           size="xs"
                           variant="subtle"
                           justifyContent="flex-start"
+                          aria-label={t(
+                            "flow.udmEditor.expressionEditor.aria.insertParameter",
+                            { name },
+                          )}
                           onClick={() => insertSymbolAtCursor(name)}
                         >
                           {name}
@@ -425,6 +433,10 @@ function ExpressionCellEditorDialog({
                             size="xs"
                             variant="subtle"
                             justifyContent="flex-start"
+                            aria-label={t(
+                              "flow.udmEditor.expressionEditor.aria.insertFunction",
+                              { name: fn.name },
+                            )}
                             onClick={() => insertSymbolAtCursor(fn.insert)}
                             title={fn.signature}
                           >
@@ -461,6 +473,10 @@ function ExpressionCellEditorDialog({
                             size="xs"
                             variant="subtle"
                             justifyContent="flex-start"
+                            aria-label={t(
+                              "flow.udmEditor.expressionEditor.aria.insertConstant",
+                              { name: c.name },
+                            )}
                             onClick={() => insertSymbolAtCursor(c.name)}
                           >
                             <Text fontFamily="mono">{c.label}</Text>

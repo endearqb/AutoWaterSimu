@@ -4,13 +4,14 @@ import { Link as RouterLink } from "@tanstack/react-router"
 
 import {
   FiBarChart,
-  FiBook,
   FiBriefcase,
+  FiDatabase,
   FiGitBranch,
   FiGitMerge,
   FiGitPullRequest,
   FiHome,
   FiLayers,
+  FiSliders,
   FiUsers,
 } from "react-icons/fi"
 import type { IconType } from "react-icons/lib"
@@ -31,8 +32,6 @@ const getFlowingFlowItems = (
     { icon: FiGitMerge, title: t("nav.asm1slim"), path: "/asm1slim" },
     { icon: FiGitPullRequest, title: t("nav.asm1"), path: "/asm1" },
     { icon: FiGitPullRequest, title: "UDM", path: "/udm" },
-    { icon: FiGitMerge, title: t("nav.hybrid"), path: "/hybrid" },
-    { icon: FiGitPullRequest, title: "UDM Models", path: "/udmModels" },
   ]
 
   // 只有ultra用户和超级管理员才能看到ASM3
@@ -52,6 +51,8 @@ const getItems = (
   t: (key: string) => string,
 ) => [
   { icon: FiHome, title: t("nav.home"), path: "/dashboard" },
+  { icon: FiSliders, title: t("nav.hybrid"), path: "/hybrid" },
+  { icon: FiDatabase, title: t("nav.udmModels"), path: "/udmModels" },
   {
     icon: FiLayers,
     title: t("nav.flowingFlow"),
@@ -59,7 +60,6 @@ const getItems = (
     isSubmenu: true,
     children: getFlowingFlowItems(currentUser, t),
   },
-  { icon: FiBook, title: t("nav.knowledge"), path: "/knowledge" },
   // { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 

@@ -129,6 +129,7 @@ export const enMessages: I18nMessages = {
     asm1: "ASM1",
     asm3: "ASM3",
     hybrid: "Hybrid Config",
+    udmModels: "UDM Models",
     knowledge: "Knowledge",
     superDashboard: "Super Dashboard",
     items: "Items",
@@ -475,6 +476,7 @@ export const enMessages: I18nMessages = {
       default: "Default Node",
       custom: "Custom Node",
       udm: "UDM Node",
+      udmUnbound: "No model bound",
       asm1: "ASM1 Node",
       asm3: "ASM3 Node",
       asm1slim: "ASM1 Slim",
@@ -727,8 +729,10 @@ export const enMessages: I18nMessages = {
         shortLabel: "Segments",
         segmentCountSuffix: "segments",
         addSegment: "Add Segment",
-        empty: "No segments configured. Add one segment to start multi-period setup.",
-        emptyHint: "No segments configured. Simulation uses baseline edge values.",
+        empty:
+          "No segments configured. Add one segment to start multi-period setup.",
+        emptyHint:
+          "No segments configured. Simulation uses baseline edge values.",
         segmentLabel: "Segment {index}",
         startHour: "Start (h)",
         endHour: "End (h)",
@@ -761,10 +765,12 @@ export const enMessages: I18nMessages = {
       loadingModels: "Loading UDM models...",
       pairMappingTitle:
         "Pair Mapping (source model variable -> target focal variable)",
-      pairMappingEmpty: "Select at least 2 models to configure cross-model mappings.",
+      pairMappingEmpty:
+        "Select at least 2 models to configure cross-model mappings.",
       targetNoFocal: "Target model has no detected focal variables.",
       localExempt: "Use own model value",
-      localExemptTooltip: "This variable will use its value from the local model instead of receiving it from the upstream model.",
+      localExemptTooltip:
+        "This variable will use its value from the local model instead of receiving it from the upstream model.",
       tabs: {
         selectModels: "Select Models",
         pairMapping: "Pair Mapping",
@@ -800,7 +806,8 @@ export const enMessages: I18nMessages = {
     },
     hybridConfigs: {
       title: "Hybrid Config Management",
-      description: "Edit, save, and reuse Hybrid configs from a dedicated page.",
+      description:
+        "Edit, save, and reuse Hybrid configs from a dedicated page.",
       savedListTitle: "Saved Configs",
       fields: {
         name: "Config Name",
@@ -830,7 +837,7 @@ export const enMessages: I18nMessages = {
         actions: "Actions",
       },
       confirm: {
-        delete: "Delete config \"{name}\"?",
+        delete: 'Delete config "{name}"?',
       },
       toasts: {
         draftMissing: "Please create a Hybrid draft first",
@@ -872,7 +879,8 @@ export const enMessages: I18nMessages = {
         'Saved successfully. Click "Import Local" again to continue.',
       importSuccess: "Import succeeded",
       importCalcParamsTitle: "Import Calculation Parameters",
-      importCalcParamsMessage: "The imported file contains calculation parameters. Use them?",
+      importCalcParamsMessage:
+        "The imported file contains calculation parameters. Use them?",
       load: "Load",
       loadCalculationData: "Load Calculation Data",
       loadFailed: "Load failed",
@@ -1208,7 +1216,8 @@ export const enMessages: I18nMessages = {
         },
         toast: {
           saveBeforeApply: "Save the model before applying it to nodes",
-          missingVersion: "Current model has no version data and cannot be applied",
+          missingVersion:
+            "Current model has no version data and cannot be applied",
           appliedToCurrent: "Applied to current UDM node",
           appliedToAll: "Applied to all UDM nodes",
         },
@@ -1216,8 +1225,7 @@ export const enMessages: I18nMessages = {
       expressionEditor: {
         title: {
           rateExpr: "Edit rateExpr - Process {processIndex}",
-          stoich:
-            "Edit stoich - Process {processIndex} / {componentName}",
+          stoich: "Edit stoich - Process {processIndex} / {componentName}",
         },
         processFallback: "process_{processIndex}",
         heading: "Expression Editor",
@@ -1255,6 +1263,12 @@ export const enMessages: I18nMessages = {
         constants: {
           title: "Constants",
         },
+        aria: {
+          insertVariable: "Insert variable {name}",
+          insertParameter: "Insert parameter {name}",
+          insertFunction: "Insert function {name}",
+          insertConstant: "Insert constant {name}",
+        },
       },
     },
     udmModels: {
@@ -1285,7 +1299,8 @@ export const enMessages: I18nMessages = {
       },
       template: {
         noDescription: "No description",
-        stats: "Components: {components} | Processes: {processes} | Parameters: {parameters}",
+        stats:
+          "Components: {components} | Processes: {processes} | Parameters: {parameters}",
       },
       table: {
         headers: {

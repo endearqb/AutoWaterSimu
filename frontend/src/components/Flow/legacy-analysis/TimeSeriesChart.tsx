@@ -18,11 +18,8 @@ import {
   type ASM1SlimResultData,
   getSlimAvailableVariables,
 } from "./asm1slim-analysis"
-import {
-  getUDMAvailableVariables,
-  type UDMResultData,
-} from "./udm-analysis"
 import { normalizeIndexRange } from "./sliderUtils"
+import { type UDMResultData, getUDMAvailableVariables } from "./udm-analysis"
 
 type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
 
@@ -96,7 +93,10 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   const maxTimeIndex = timestampsLength > 1 ? timestampsLength - 1 : 1
   const isSliderDisabled = timestampsLength <= 1
 
-  const minStepsBetween = useMemo(() => Math.min(2, maxTimeIndex), [maxTimeIndex])
+  const minStepsBetween = useMemo(
+    () => Math.min(2, maxTimeIndex),
+    [maxTimeIndex],
+  )
   const effectiveMinStepsBetween = useMemo(
     () => (isSliderDisabled ? 0 : minStepsBetween),
     [isSliderDisabled, minStepsBetween],
@@ -132,7 +132,10 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
         selectedVariables.forEach((variable) => {
           const variableSeries = nodeData[variable]
-          if (Array.isArray(variableSeries) && variableSeries[i] !== undefined) {
+          if (
+            Array.isArray(variableSeries) &&
+            variableSeries[i] !== undefined
+          ) {
             point[`${nodeName}_${variable}`] = variableSeries[i]
           }
         })
@@ -402,9 +405,12 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                     strokeDasharray="5 4"
                     ifOverflow="visible"
                     label={{
-                      value: t("flow.analysis.segmentDisplay.segmentMarkerLabel", {
-                        index: index + 1,
-                      }),
+                      value: t(
+                        "flow.analysis.segmentDisplay.segmentMarkerLabel",
+                        {
+                          index: index + 1,
+                        },
+                      ),
                       position: "top",
                       fill: "#1d4ed8",
                       fontSize: 10,
@@ -453,7 +459,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           gap={2}
         >
           {groupedChangeEvents.map((event) => (
-            <Text key={`event-desc-${event.atHour}`} fontSize="xs" color="orange.800">
+            <Text
+              key={`event-desc-${event.atHour}`}
+              fontSize="xs"
+              color="orange.800"
+            >
               {t("flow.analysis.segmentDisplay.changeMarkerSummary", {
                 hour: event.atHour.toFixed(2),
                 edgeCount: event.edgeCount,

@@ -1,57 +1,53 @@
-# 任务计划 (Task Plan): ASM 多时段输入需求梳理与文档落地
+# 任务计划 (Task Plan): ch06 跨模块修复完成情况 Review
 
 ## 目标 (Goal)
-基于现有前端流程图交互、后端计算链路与数据库结构，完成“ASM 模拟支持多时段多组输入”的可落地需求文档（先讨论、后开发）。
+基于 `tasks/code_review_optimization_2026-03-03_ch06.md` 与 `tasks/ch06-cross-module-fixes-2026-03-06.md`，核对本轮 ch06 修复的实际落地情况，审查代码与验证覆盖，输出一份以缺陷、风险和测试缺口为主的 review 报告。
 
 ## 当前阶段 (Current Phase)
-阶段 1
+阶段 5
 
 ## 阶段划分 (Phases)
 
-### 阶段 1：现状探索（前端/后端/数据结构）
-- [ ] 梳理前端流程图与模拟提交入口
-- [ ] 梳理后端 ASM 计算入口与请求模型
-- [ ] 梳理数据库表与结果存储结构
-- [ ] 将发现记录在 `findings.md`
+### 阶段 1：需求与上下文梳理
+- [x] 阅读计划文档与完成报告
+- [x] 确认本轮 review 关注范围与涉及文件
+- [x] 将关键发现同步到 `findings.md`
+- **状态:** complete
+
+### 阶段 2：代码与行为核对
+- [x] 对照计划核查实际代码改动
+- [x] 识别功能缺陷、行为回归与遗漏实现
+- [x] 记录需要进一步验证的点
+- **状态:** complete
+
+### 阶段 3：验证与证据收集
+- [x] 检查现有测试/类型生成/静态校验是否覆盖关键变更
+- [x] 运行必要的局部验证命令
+- [x] 记录未执行或无法执行的验证项
+- **状态:** complete
+
+### 阶段 4：形成 review 结论
+- [x] 按严重度整理 findings
+- [x] 撰写 review 报告文件
+- [x] 同步结论到 `progress.md` 与工作日志
+- **状态:** complete
+
+### 阶段 5：交付
+- [x] 检查引用的文件与证据是否完整
+- [ ] 向用户汇报结论与风险
+- [x] 更新 `updatenote/2026-03-06.md`
 - **状态:** in_progress
 
-### 阶段 2：需求抽象与边界定义
-- [ ] 明确“多时段输入”的业务语义（时间段、步长、覆盖字段）
-- [ ] 明确与现有单组输入的兼容策略
-- [ ] 定义核心约束与校验规则
-- **状态:** pending
-
-### 阶段 3：方案设计（不编码）
-- [ ] 设计前端交互草案（时段编辑、校验、预览）
-- [ ] 设计后端 API/Schema 草案
-- [ ] 设计数据库结构演进方案
-- [ ] 设计计算引擎执行语义（分段、过渡、结果聚合）
-- **状态:** pending
-
-### 阶段 4：需求文档落地
-- [ ] 输出需求文档初稿（范围、术语、流程、数据模型、非功能）
-- [ ] 输出迭代建议（MVP/增强阶段）
-- [ ] 标注风险与待确认事项
-- **状态:** pending
-
-### 阶段 5：与你评审并定稿
-- [ ] 逐条确认关键决策
-- [ ] 根据反馈修订文档
-- [ ] 形成可进入开发的版本
-- **状态:** pending
-
 ## 关键问题 (Key Questions)
-1. 多时段配置是否只作用于 Input 节点，还是也覆盖回流边/运行参数？
-2. 时段定义采用“绝对时间戳”还是“相对小时偏移”？
-3. 段与段交界处使用“阶跃变化”还是“线性过渡”？
-4. 输出结果是否需要按时段聚合展示（除逐步时序外）？
-5. 历史任务与历史流程图如何无缝兼容旧格式？
+1. 完成报告中声称已修复/已验证的事项，代码里是否真实落地？
+2. 是否存在“文档看起来完成，但行为上仍有回归/缺口”的问题？
+3. 关键变更是否具备对应测试或至少有可重复的验证证据？
 
 ## 决策记录 (Decisions Made)
 | 决策 | 理由 |
 |----------|-----------|
-| 先做需求与结构评审，不直接编码 | 用户明确要求先讨论并落地需求文档 |
-| 先从现有前后端与数据库真实结构反推方案 | 避免脱离当前实现做抽象设计，减少后续返工 |
+| 先做文档与代码双向核对，再下结论 | 避免只根据完成报告判断“已完成” |
+| Review 以缺陷/风险/验证缺口为主 | 符合项目 review 习惯与用户请求 |
 
 ## 遇到的错误 (Errors Encountered)
 | 错误 | 尝试次数 | 解决方法 |
@@ -59,38 +55,6 @@
 |       | 1       |            |
 
 ## 备注 (Notes)
-- 每完成一个阶段更新状态：pending → in_progress → complete
-- 关键发现同步沉淀到 `findings.md`
-- 过程日志同步写入 `progress.md`
-
-## 2026-02-12 Update (Multi-Segment Requirement Confirmed)
-
-### Phase Status Update
-- Phase 1: complete
-- Phase 2: complete
-- Phase 3: complete
-- Phase 4: complete
-- Phase 5: in_progress
-
-### Confirmed Scope
-1. Variable range only includes edge `flow`, `param_a`, `param_b`.
-2. Segment boundary uses step change.
-3. Segments must fully cover the whole simulation duration.
-4. Periodic template is out of phase 1 scope.
-5. All edges are configurable; default behavior is inherit baseline (no override).
-6. Result chart must support toggleable segment lines and parameter-change annotations.
-
-### Requirement Artifact
-- `docs/asm_multi_period_edge_input_requirement_2026-02-12.md`
-
-## 2026-02-12 Update (API Field Checklist + Task Breakdown)
-- Output artifact: `docs/asm_multi_period_edge_input_api_and_tasks_2026-02-12.md`
-- Added frontend field-level checklist (`timeSegments`, edge overrides, display toggles, validation codes).
-- Added backend endpoint-level checklist (request/response/storage/error contract).
-- Added executable work breakdown (FE/BE/QA/DX) with file-level landing points.
-- Phase 5 can proceed to implementation planning confirmation.
-
-## 2026-02-12 Update (Development Schedule Version)
-- Added schedule artifact: `docs/asm_multi_period_edge_input_dev_schedule_2026-02-12.md`
-- Included dated milestones (M0~M4), week-by-week plan (W0~W4), dependency path, risk buffer, and optional accelerated plan.
-- Phase 5 status suggestion: ready for implementation kickoff.
+- 这是 review 任务，不主动修改业务代码，除非用户后续要求修复
+- 如果发现报告与代码不一致，优先以代码和可验证行为为准
+- 发现需要附文件路径与行号证据

@@ -18,6 +18,7 @@ export interface I18nMessages {
     asm1: string
     asm3: string
     hybrid: string
+    udmModels: string
     knowledge: string
     superDashboard: string
     items: string
@@ -452,6 +453,7 @@ export interface I18nMessages {
       default: string
       custom: string
       udm: string
+      udmUnbound: string
       asm1: string
       asm3: string
       asm1slim: string
@@ -1204,6 +1206,12 @@ export interface I18nMessages {
         }
         constants: {
           title: string
+        }
+        aria: {
+          insertVariable: string
+          insertParameter: string
+          insertFunction: string
+          insertConstant: string
         }
       }
     }

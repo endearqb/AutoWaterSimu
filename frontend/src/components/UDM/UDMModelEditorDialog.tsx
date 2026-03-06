@@ -1,14 +1,12 @@
-﻿import {
-  Box,
-  Button,
-  Dialog,
-  HStack,
-  Text,
-  VStack,
-} from "@chakra-ui/react"
-import type { UDMModelDetailPublic } from "@/client/types.gen"
+﻿import type {
+  UDMComponentDefinition,
+  UDMModelDetailPublic,
+  UDMParameterDefinition,
+  UDMProcessDefinition,
+} from "@/client/types.gen"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
+import { Box, Button, Dialog, HStack, Text, VStack } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
@@ -38,7 +36,9 @@ function UDMModelEditorDialog({
   const nodes = useUDMFlowStore((state) => state.nodes)
   const setNodes = useUDMFlowStore((state) => state.setNodes)
   const customParameters = useUDMFlowStore((state) => state.customParameters)
-  const addCustomParameter = useUDMFlowStore((state) => state.addCustomParameter)
+  const addCustomParameter = useUDMFlowStore(
+    (state) => state.addCustomParameter,
+  )
 
   useEffect(() => {
     if (isOpen) {
@@ -51,17 +51,15 @@ function UDMModelEditorDialog({
     const latest = model.latest_version
     if (!latest) return null
 
-    const components = (latest.components || []) as Array<Record<string, any>>
-    const parameters = (latest.parameters || []) as Array<Record<string, any>>
-    const processes = (latest.processes || []) as Array<Record<string, any>>
+    const components = (latest.components || []) as UDMComponentDefinition[]
+    const parameters = (latest.parameters || []) as UDMParameterDefinition[]
+    const processes = (latest.processes || []) as UDMProcessDefinition[]
 
     const parameterValues: Record<string, number> = {}
     parameters.forEach((param) => {
       const name = String(param.name || "").trim()
       if (!name) return
-      const value = Number.parseFloat(
-        String(param.default_value ?? param.defaultValue ?? "0"),
-      )
+      const value = Number.parseFloat(String(param.default_value ?? "0"))
       parameterValues[name] = Number.isFinite(value) ? value : 0
     })
 
@@ -71,9 +69,7 @@ function UDMModelEditorDialog({
       const name = String(component.name || "").trim()
       if (!name) return
       componentNames.push(name)
-      const value = Number.parseFloat(
-        String(component.default_value ?? component.defaultValue ?? "0"),
-      )
+      const value = Number.parseFloat(String(component.default_value ?? "0"))
       componentValues[name] = String(Number.isFinite(value) ? value : 0)
     })
 

@@ -240,6 +240,7 @@ const FlowCanvas = ({
           onDragOver={onDragOver}
           onDrop={onDrop}
           fitView
+          fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           // 启用网格对齐功能

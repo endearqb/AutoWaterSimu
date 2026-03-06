@@ -100,7 +100,10 @@ type RFState = {
   ) => void
   removeEdgeParameter: (edgeId: string, paramName: string) => void
   exportFlowData: () => any
-  importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => { success: boolean; message: string }
+  importFlowData: (
+    data: any,
+    options?: { restoreCalculationParams?: boolean },
+  ) => { success: boolean; message: string }
   setImportedFileName: (fileName: string | null) => void
   updateCalculationParameters: (params: Partial<CalculationParameters>) => void
 
@@ -651,7 +654,10 @@ const useFlowStore = create<RFState>((set, get) => ({
   },
 
   // 导入流程图数据
-  importFlowData: (data: any, options?: { restoreCalculationParams?: boolean }) => {
+  importFlowData: (
+    data: any,
+    options?: { restoreCalculationParams?: boolean },
+  ) => {
     try {
       // 验证数据格式
       if (!data || typeof data !== "object") {
@@ -755,9 +761,10 @@ const useFlowStore = create<RFState>((set, get) => ({
         edges: processedEdges,
         customParameters: customParameters || [],
         edgeParameterConfigs: edgeParameterConfigs || newEdgeParameterConfigs,
-        calculationParameters: options?.restoreCalculationParams && importedCalcParams
-          ? importedCalcParams
-          : get().calculationParameters,
+        calculationParameters:
+          options?.restoreCalculationParams && importedCalcParams
+            ? importedCalcParams
+            : get().calculationParameters,
         selectedNode: null,
         selectedEdge: null,
       })

@@ -1,66 +1,60 @@
 # 发现与决策 (Findings & Decisions)
 
-## 需求分析 (Requirements)
-- 用户目标：ASM 系列模拟当前仅支持单组输入，新增多时段多组输入能力。
-- 典型场景：
-  - 前 12 小时使用一组输入，后 12 小时切换另一组输入。
-  - 每隔 N 小时动态调整进水浓度、进水流量、回流流量等关键量。
-- 工作方式要求：先讨论需求并形成文档，不立即进入编码开发。
+## 当前任务
+- 任务：review ch06 跨模块修复的完成情况，并输出 review 报告。
+- 依据文档：
+  - `tasks/code_review_optimization_2026-03-03_ch06.md`
+  - `tasks/ch06-cross-module-fixes-2026-03-06.md`
 
-## 研究发现 (Research Findings)
-- 当前代码中流程图与模拟相关前端目录主要在 `frontend/src/components/Flow` 与 `frontend/src/stores`。
-- 已定位与“加载/回填模拟任务数据”相关组件：
-  - `frontend/src/components/Flow/menu/MaterialBalanceBubbleMenu.tsx`
-  - `frontend/src/components/Flow/menu/LoadCalculationDataDialog.tsx`
-- 后端存在 ASM1Slim 作业与状态相关结构迹象（如 `asm1slimjob`），后续需继续精读模型与 API。
+## 已知上下文
+- 当前工作区存在大量未提交改动，明显与 ch06 修复相关，review 时需要避免覆盖这些文件。
+- 仓库当前还有与本次 review 无关的 Git 状态变更：
+  - `.gitignore` 已修改
+  - `.claude/settings.local.json` 已从索引移除但本地保留
 
-## 技术决策 (Technical Decisions)
+## 技术决策
 | 决策 | 理由 |
 |----------|-----------|
-| 采用“先现状后方案”顺序 | 先确保需求文档与真实实现一致，再提改造方案 |
-| 文档化记录所有关键发现 | 该任务跨前端、后端、数据库，避免上下文丢失 |
+| 优先审查已修改文件与文档宣称项之间的一致性 | 这是判断“完成情况”的最直接证据 |
+| 如验证命令成本过高，先做定向检查 | 减少对脏工作区的额外干扰 |
 
-## 遇到的问题 (Issues Encountered)
-| 问题 | 解决方法 |
-|-------|------------|
-| 初次全局检索命中量过大 | 改为按模块和关键词分段检索，逐层收敛 |
+## 待补充发现
+- 计划文档包含 5 个跨模块修复项（C-1 ~ C-5），分别覆盖：
+  - 后端错误消息语言统一
+  - TypeScript 类型安全
+  - UDM 节点 Hybrid 绑定视觉反馈
+  - 全局/关键操作 loading 状态
+  - 键盘可访问性与 `aria-label`
+- 完成报告声称这 5 项已全部完成，并给出了 13 个修改文件与 3 项验证结论：
+  - `pnpm build` 通过
+  - Biome 无新增错误
+  - 后端用户可见错误消息中不再有中文
+- 需要重点核查“已完成”与“已验证”是否有过度表述：
+  - C-4 只提到了 `udmModels.tsx` 两个按钮，不一定等于“跨模块共性问题”已解决
+  - C-5 只提到了部分 `aria-label`，未证明键盘导航与拖拽可访问性已覆盖
+  - C-2 的 `any -> unknown` 可能只是收紧表层签名，未必真正建立类型模型
 
-## 资源链接 (Resources)
-- `frontend/src/components/Flow/menu/MaterialBalanceBubbleMenu.tsx`
-- `frontend/src/components/Flow/menu/LoadCalculationDataDialog.tsx`
-- `frontend/src/stores/flowStore.ts`
-- `backend/app/`
-- `backend/app/alembic/versions/`
-- `AGENTS.md`
+## 关键代码发现
+- C-3 引入了一个新的 UI 回归风险：
+  - `frontend/src/components/Flow/nodes/UDMNode.tsx` 新增了绑定状态副标题，但 `useHandlePositionSync(id, [label])` 仍只在主标题变化时更新 React Flow node internals。
+  - `frontend/src/components/Flow/nodes/utils/useHandlePositionSync.ts` 的行为依赖传入的依赖数组，意味着绑定/解绑、模型名变化、语言切换导致的节点高度变化不会触发 handle 重算。
+- C-5 的无障碍修复没有走 i18n：
+  - `frontend/src/components/Common/ItemActionsMenu.tsx` 和 `frontend/src/components/UDM/ExpressionCellEditorDialog.tsx` 中新增的 `aria-label` 全是硬编码英文。
+  - 仓库已有 `flow.menu.actionsAriaLabel` 的中英翻译，但新实现没有复用。
+- C-2 更像“局部去掉 any”，不是“完成类型建模”：
+  - `UDMModelEditorDialog.tsx`、`UDMModelEditorForm.tsx` 仍主要靠 `Record<string, unknown>` 遍历。
+  - 同一条 UDM 流程中的 `frontend/src/components/Flow/menu/UDMBubbleMenu.tsx` 仍保留多处 `any`，说明“跨模块类型安全问题已完成”这一表述偏乐观。
 
-## 视觉/浏览器发现 (Visual/Browser Findings)
-- 本轮无图片/PDF 浏览结果。
+## 验证结果
+- 已复跑 `frontend` 校验：
+  - `npx tsc --noEmit` 通过
+  - `pnpm build` 通过
+- 后端中文检索结果：
+  - `backend/app/services/udm_expression.py` 仅剩中文注释，用户可见错误消息已英文化
+- 自动化测试覆盖：
+  - 本轮 diff 中未见针对 C-1 / C-3 / C-5 新增的自动化测试
 
----
-*每进行 2 次查看/浏览器/搜索操作后更新此文件*
-
-## 2026-02-12 Confirmed Decisions (User Aligned)
-- Feature scope narrowed to edge-side variables only: `flow`, `param_a`, `param_b`.
-- Segment switching policy: step change at boundaries.
-- Full coverage rule is mandatory for all segments.
-- Periodic templates are deferred (planned for later phase).
-- Every edge can be overridden per segment; default is no override.
-- Visualization must provide optional segment split lines and parameter-change notes.
-
-## New Requirement Document
-- `docs/asm_multi_period_edge_input_requirement_2026-02-12.md`
-
-## 2026-02-12 Artifact Added
-- New delivery doc: `docs/asm_multi_period_edge_input_api_and_tasks_2026-02-12.md`
-- Document includes:
-  - Frontend persisted fields and validation code list
-  - Backend API request/response/storage field contract
-  - Detailed implementation work packages and acceptance checkpoints
-
-## 2026-02-12 Schedule Artifact
-- New document: `docs/asm_multi_period_edge_input_dev_schedule_2026-02-12.md`
-- Contains:
-  - Baseline timeline with concrete dates
-  - Milestone gates and acceptance checkpoints
-  - Critical path and parallelization guidance
-  - Risk/contingency and acceleration option
+## 资源链接
+- `tasks/code_review_optimization_2026-03-03_ch06.md`
+- `tasks/ch06-cross-module-fixes-2026-03-06.md`
+- `git status --short --branch`

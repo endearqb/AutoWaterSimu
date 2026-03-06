@@ -25,11 +25,13 @@ import {
 } from "react"
 
 import type {
+  UDMComponentDefinition,
   UDMModelCreate,
   UDMModelDefinitionDraft,
   UDMModelDetailPublic,
   UDMModelUpdate,
   UDMParameterDefinition,
+  UDMProcessDefinition,
   UDMValidationResponse,
 } from "@/client/types.gen"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -232,8 +234,10 @@ export function UDMModelEditorForm({
     const latest = detail.latest_version
     if (!latest) return
 
-    const loadedComponents: ComponentRow[] = (latest.components || [])
-      .map((item: any) => {
+    const loadedComponents: ComponentRow[] = (
+      (latest.components || []) as UDMComponentDefinition[]
+    )
+      .map((item) => {
         const compName = String(item?.name || "").trim()
         if (!compName) return null
         return {
@@ -241,10 +245,8 @@ export function UDMModelEditorForm({
           name: compName,
           label: String(item?.label || compName),
           unit: String(item?.unit || ""),
-          defaultValue: String(
-            item?.default_value ?? item?.defaultValue ?? "0",
-          ),
-          isFixed: Boolean(item?.is_fixed ?? item?.isFixed ?? false),
+          defaultValue: String(item?.default_value ?? "0"),
+          isFixed: Boolean(item?.is_fixed ?? false),
         }
       })
       .filter((item): item is ComponentRow => !!item)
@@ -254,18 +256,20 @@ export function UDMModelEditorForm({
       : [emptyComponent()]
     setComponentRows(nextComponentRows)
 
-    const loadedProcesses: ProcessRow[] = (latest.processes || [])
-      .map((item: any) => ({
+    const loadedProcesses: ProcessRow[] = (
+      (latest.processes || []) as UDMProcessDefinition[]
+    )
+      .map((item) => ({
         _rowId: crypto.randomUUID() as string,
         name: String(item?.name || ""),
-        rateExpr: String(item?.rate_expr ?? item?.rateExpr ?? ""),
+        rateExpr: String(item?.rate_expr ?? ""),
         note: String(item?.note || ""),
         stoich: Object.fromEntries(
           Object.entries(
-            (item?.stoich_expr ||
-              item?.stoichExpr ||
-              item?.stoich ||
-              {}) as Record<string, unknown>,
+            (item?.stoich_expr || item?.stoich || {}) as Record<
+              string,
+              unknown
+            >,
           ).map(([k, v]) => [k, String(v)]),
         ),
       }))
@@ -276,19 +280,19 @@ export function UDMModelEditorForm({
       : [emptyProcess()]
     setProcessRows(nextProcessRows)
 
-    const loadedParameters: ParameterRow[] = (latest.parameters || [])
-      .map((item: any) => {
+    const loadedParameters: ParameterRow[] = (
+      (latest.parameters || []) as UDMParameterDefinition[]
+    )
+      .map((item) => {
         const paramName = String(item?.name || "").trim()
         if (!paramName) return null
         return {
           _rowId: crypto.randomUUID() as string,
           name: paramName,
           unit: String(item?.unit || ""),
-          defaultValue: String(
-            item?.default_value ?? item?.defaultValue ?? "1",
-          ),
-          minValue: String(item?.min_value ?? item?.minValue ?? "0.1"),
-          maxValue: String(item?.max_value ?? item?.maxValue ?? "10"),
+          defaultValue: String(item?.default_value ?? "1"),
+          minValue: String(item?.min_value ?? "0.1"),
+          maxValue: String(item?.max_value ?? "10"),
           scale: item?.scale === "log" ? "log" : "lin",
           note: String(item?.note || ""),
         }
@@ -565,16 +569,16 @@ export function UDMModelEditorForm({
       throw new Error(t("flow.udmEditor.form.toast.missingVersionForFlow"))
     }
 
-    const components = (latest.components || []) as Array<Record<string, any>>
-    const parameters = (latest.parameters || []) as Array<Record<string, any>>
-    const processes = (latest.processes || []) as Array<Record<string, any>>
+    const components = (latest.components || []) as UDMComponentDefinition[]
+    const parameters = (latest.parameters || []) as UDMParameterDefinition[]
+    const processes = (latest.processes || []) as UDMProcessDefinition[]
 
     const customParameters = components
       .map((item) => {
         const compName = String(item.name || "").trim()
         if (!compName) return null
         const defaultValue = Number.parseFloat(
-          String(item.default_value ?? item.defaultValue ?? "0"),
+          String(item.default_value ?? "0"),
         )
         return {
           name: compName,
@@ -594,7 +598,7 @@ export function UDMModelEditorForm({
       const paramName = String(param.name || "").trim()
       if (!paramName) return
       const value = Number.parseFloat(
-        String(param.default_value ?? param.defaultValue ?? "0"),
+        String(param.default_value ?? "0"),
       )
       parameterValues[paramName] = Number.isFinite(value) ? value : 0
     })

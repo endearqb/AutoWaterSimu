@@ -12,11 +12,12 @@ import type { CustomParameter } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
 import type { HybridUDMSelectedModel } from "../../../types/hybridUdm"
+import type { UDMNodeData } from "../../../types/udmNodeData"
 import EdgeTimeSegmentEditor from "./EdgeTimeSegmentEditor"
 
 interface UDMPropertyPanelProps {
   isNode: boolean
-  store?: () => ModelFlowState<any, any, any>
+  store?: () => ModelFlowState<unknown, unknown, unknown>
 }
 
 const volumeParam: CustomParameter = {
@@ -36,19 +37,19 @@ const toInteger = (value: unknown): number | null => {
   return Number.isNaN(num) ? null : num
 }
 
-const buildModelKey = (modelId: string, version: number) => `${modelId}@${version}`
+const buildModelKey = (modelId: string, version: number) =>
+  `${modelId}@${version}`
 
 const extractUDMComponentParameters = (
-  sourceData: Record<string, unknown> | undefined,
+  sourceData: UDMNodeData | undefined,
   formatUnitDescription?: (unit: string) => string,
 ): CustomParameter[] => {
   if (!sourceData) return []
 
   const componentSources: unknown[] = [
     sourceData.udmComponents,
-    (sourceData.udmModelSnapshot as Record<string, unknown> | undefined)
-      ?.components,
-    (sourceData.udmModel as Record<string, unknown> | undefined)?.components,
+    sourceData.udmModelSnapshot?.components,
+    sourceData.udmModel?.components,
   ]
 
   for (const source of componentSources) {
@@ -88,16 +89,12 @@ const extractUDMComponentParameters = (
 }
 
 const getSelectedNodeModelKey = (
-  sourceData: Record<string, unknown> | undefined,
+  sourceData: UDMNodeData | undefined,
 ): string => {
   if (!sourceData) return ""
-  const udmModel = (sourceData.udmModel as Record<string, unknown> | undefined) || {}
-  const modelId = String(
-    sourceData.udmModelId || udmModel.id || udmModel.modelId || "",
-  ).trim()
-  const version = toInteger(
-    sourceData.udmModelVersion || udmModel.version || udmModel.currentVersion,
-  )
+  const udmModel = sourceData.udmModel || {}
+  const modelId = String(sourceData.udmModelId || udmModel.id || "").trim()
+  const version = toInteger(sourceData.udmModelVersion || udmModel.version)
   if (!modelId || version === null) return ""
   return buildModelKey(modelId, version)
 }
@@ -131,7 +128,11 @@ const buildNodeModelData = (
     if (!name) return
     componentNames.push(name)
     const existingValue = currentNodeData[name]
-    if (existingValue !== undefined && existingValue !== null && existingValue !== "") {
+    if (
+      existingValue !== undefined &&
+      existingValue !== null &&
+      existingValue !== ""
+    ) {
       componentValues[name] = String(existingValue)
       return
     }
@@ -248,7 +249,7 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
   const selectedNodeModelKey = useMemo(
     () =>
       getSelectedNodeModelKey(
-        (selectedNode?.data as Record<string, unknown> | undefined) || undefined,
+        (selectedNode?.data as UDMNodeData | undefined) || undefined,
       ),
     [selectedNode?.id, selectedNode?.data],
   )
@@ -263,7 +264,9 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
       return
     }
     if (!selectedNodeModelKey) {
-      setHybridModelError(t("flow.propertyPanel.hybrid.errors.bindModelRequired"))
+      setHybridModelError(
+        t("flow.propertyPanel.hybrid.errors.bindModelRequired"),
+      )
       return
     }
     if (!hybridModelMap.has(selectedNodeModelKey)) {
@@ -291,7 +294,7 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     }
 
     const fromSelected = extractUDMComponentParameters(
-      selectedNode?.data as Record<string, unknown> | undefined,
+      selectedNode?.data as UDMNodeData | undefined,
       formatUnitDescription,
     )
     if (fromSelected.length > 0) {
@@ -300,7 +303,7 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
 
     const firstUdmNode = nodes.find((node) => node.type === "udm")
     return extractUDMComponentParameters(
-      firstUdmNode?.data as Record<string, unknown> | undefined,
+      firstUdmNode?.data as UDMNodeData | undefined,
       formatUnitDescription,
     )
   }, [customParameters, selectedNode?.id, selectedNode?.data, nodes, t])
@@ -335,14 +338,23 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     // Unbind: clear all UDM-related data keys
     if (!nextModelKey) {
       const keysToRemove = [
-        "udmModel", "udmModelSnapshot", "udmComponents",
-        "udmComponentNames", "udmProcesses", "udmParameters",
-        "udmParameterValues", "udmModelId", "udmModelVersion", "udmModelHash",
+        "udmModel",
+        "udmModelSnapshot",
+        "udmComponents",
+        "udmComponentNames",
+        "udmProcesses",
+        "udmParameters",
+        "udmParameterValues",
+        "udmModelId",
+        "udmModelVersion",
+        "udmModelHash",
       ]
       const updatedNodes = nodes.map((node) => {
         if (node.id !== selectedNode.id) return node
         const cleaned = { ...(node.data as Record<string, unknown>) }
-        keysToRemove.forEach((k) => { delete cleaned[k] })
+        keysToRemove.forEach((k) => {
+          delete cleaned[k]
+        })
         return { ...node, data: cleaned }
       })
       setNodes(updatedNodes)
@@ -355,7 +367,9 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
 
     const model = hybridModelMap.get(nextModelKey)
     if (!model) {
-      setHybridModelError(t("flow.propertyPanel.hybrid.errors.selectedModelInvalid"))
+      setHybridModelError(
+        t("flow.propertyPanel.hybrid.errors.selectedModelInvalid"),
+      )
       return
     }
 
@@ -481,13 +495,18 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
                     <NativeSelect.Root>
                       <NativeSelect.Field
                         value={selectedNodeModelKey}
-                        onChange={(e) => handleHybridModelChange(e.target.value)}
+                        onChange={(e) =>
+                          handleHybridModelChange(e.target.value)
+                        }
                       >
                         <option value="">
                           {t("flow.propertyPanel.hybrid.unbindModel")}
                         </option>
                         {hybridModels.map((model) => {
-                          const key = buildModelKey(model.model_id, model.version)
+                          const key = buildModelKey(
+                            model.model_id,
+                            model.version,
+                          )
                           return (
                             <option key={key} value={key}>
                               {model.name || model.model_id} (v{model.version})

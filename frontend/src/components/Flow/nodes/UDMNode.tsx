@@ -1,9 +1,10 @@
 import { Box, Input, Text } from "@chakra-ui/react"
-import { Handle, type NodeProps, Position } from "@xyflow/react"
+import { Handle, type Node, type NodeProps, Position } from "@xyflow/react"
 import { memo, useEffect, useRef, useState } from "react"
 import { useI18n } from "../../../i18n"
 import { useUDMFlowStore } from "../../../stores/udmFlowStore"
 import type { UDMFlowState } from "../../../stores/udmFlowStore"
+import type { UDMNodeData } from "../../../types/udmNodeData"
 import GlassNodeContainer from "./GlassNodeContainer"
 import { isNotSelfConnection } from "./utils/connectionGuards"
 import { INLINE_EDIT_INPUT_PROPS } from "./utils/editableInputProps"
@@ -17,16 +18,12 @@ import {
 import { useHoveredNodeId } from "./utils/hoverContext"
 import useHandlePositionSync from "./utils/useHandlePositionSync"
 
-interface UDMNodeData extends Record<string, unknown> {
-  label?: string
-}
-
-interface UDMNodeProps extends NodeProps<any> {
+interface UDMNodeProps extends NodeProps<Node<UDMNodeData>> {
   store?: () => UDMFlowState
 }
 
 const UDMNode = ({ data, selected, id, store }: UDMNodeProps) => {
-  const nodeData = data as UDMNodeData
+  const nodeData = data
   const { t, language } = useI18n()
   const flowStore = store || useUDMFlowStore
   const { updateNodeParameter } = flowStore()
@@ -41,7 +38,12 @@ const UDMNode = ({ data, selected, id, store }: UDMNodeProps) => {
   const hideTimerRef = useRef<number | null>(null)
   const [showHandles, setShowHandles] = useState<boolean>(!!selected)
   const handlesVisible = showHandles
-  useHandlePositionSync(id, [label])
+  const boundModelName = nodeData.udmModel
+    ? String(nodeData.udmModel.name || "")
+    : ""
+  const isBound = !!nodeData.udmModelId || !!boundModelName
+
+  useHandlePositionSync(id, [label, isBound, boundModelName])
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -110,6 +112,7 @@ const UDMNode = ({ data, selected, id, store }: UDMNodeProps) => {
       position="relative"
       onDoubleClick={handleDoubleClick}
       cursor={isEditing ? "text" : "pointer"}
+      borderStyle={!isBound ? "dashed" : undefined}
     >
       <Box
         position="absolute"
@@ -169,6 +172,29 @@ const UDMNode = ({ data, selected, id, store }: UDMNodeProps) => {
             {label}
           </Text>
         )}
+        {!isEditing &&
+          (isBound ? (
+            <Text
+              fontSize="2xs"
+              color="gray.500"
+              textAlign="center"
+              mt={0.5}
+              userSelect="none"
+              truncate
+            >
+              {boundModelName || "UDM"}
+            </Text>
+          ) : (
+            <Text
+              fontSize="2xs"
+              color="orange.400"
+              textAlign="center"
+              mt={0.5}
+              userSelect="none"
+            >
+              {t("flow.node.udmUnbound")}
+            </Text>
+          ))}
       </Box>
 
       {["right-target", "right-source"].map((handleId) => (

@@ -1,4 +1,4 @@
-import { Box, Button, Heading, HStack, Text } from "@chakra-ui/react"
+import { Box, Button, HStack, Heading, Text } from "@chakra-ui/react"
 import { Tabs } from "@chakra-ui/react"
 import type React from "react"
 import { useI18n } from "../../i18n"

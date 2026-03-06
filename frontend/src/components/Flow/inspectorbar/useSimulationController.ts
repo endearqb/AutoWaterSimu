@@ -6,6 +6,7 @@ import {
   validateCalculationParameters,
 } from "../../../config/simulationConfig"
 import { useI18n } from "../../../i18n"
+import { udmService } from "../../../services/udmService"
 import {
   getJobStatusText as asm1GetJobStatusText,
   isJobCompleted as asm1IsJobCompleted,
@@ -34,7 +35,6 @@ import {
   isJobRunning as materialBalanceIsJobRunning,
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
-import { udmService } from "../../../services/udmService"
 import { validateTimeSegments } from "../../../utils/timeSegmentValidation"
 
 type SimulationModelStore = Pick<

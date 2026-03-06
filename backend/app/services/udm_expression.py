@@ -19,6 +19,8 @@ ALLOWED_FUNCTIONS = {
 }
 RESERVED_CONSTANTS = {"pi", "e"}
 
+MAX_AST_DEPTH = 50
+
 
 @dataclass
 class ValidationIssue:
@@ -66,7 +68,7 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
                 issues.append(
                     ValidationIssue(
                         code="DISALLOWED_OPERATOR",
-                        message=f"不允许的运算符: {type(node.op).__name__}",
+                        message=f"Disallowed operator: {type(node.op).__name__}",
                         process=process_name,
                     )
                 )
@@ -76,7 +78,7 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
                 issues.append(
                     ValidationIssue(
                         code="DISALLOWED_OPERATOR",
-                        message=f"不允许的一元运算符: {type(node.op).__name__}",
+                        message=f"Disallowed unary operator: {type(node.op).__name__}",
                         process=process_name,
                     )
                 )
@@ -86,7 +88,7 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
                 issues.append(
                     ValidationIssue(
                         code="DISALLOWED_CALL",
-                        message="只允许白名单函数调用",
+                        message="Only allowlisted function calls are permitted",
                         process=process_name,
                     )
                 )
@@ -95,7 +97,7 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
                 issues.append(
                     ValidationIssue(
                         code="DISALLOWED_FUNC",
-                        message=f"函数 {node.func.id} 不被允许",
+                        message=f"Function {node.func.id} is not allowed",
                         process=process_name,
                     )
                 )
@@ -108,7 +110,7 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
             issues.append(
                 ValidationIssue(
                     code="NON_NUMERIC_LITERAL",
-                    message="仅允许数值字面量",
+                    message="Only numeric literals are allowed",
                     process=process_name,
                 )
             )
@@ -142,7 +144,7 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
             issues.append(
                 ValidationIssue(
                     code="DISALLOWED_SYNTAX",
-                    message=f"不允许的语法结构: {type(node).__name__}",
+                    message=f"Disallowed syntax construct: {type(node).__name__}",
                     process=process_name,
                 )
             )
@@ -166,12 +168,12 @@ def validate_udm_definition(
 
     if len(component_set) == 0:
         errors.append(
-            ValidationIssue(code="NO_COMPONENTS", message="至少需要一个组分定义")
+            ValidationIssue(code="NO_COMPONENTS", message="At least one component definition is required")
         )
 
     if len(component_set) != len(component_list):
         errors.append(
-            ValidationIssue(code="DUPLICATE_COMPONENT", message="组分名称不能重复")
+            ValidationIssue(code="DUPLICATE_COMPONENT", message="Component names must be unique")
         )
 
     process_name_seen: Set[str] = set()
@@ -181,7 +183,7 @@ def validate_udm_definition(
             errors.append(
                 ValidationIssue(
                     code="DUPLICATE_PROCESS",
-                    message=f"过程名称重复: {process_name}",
+                    message=f"Duplicate process name: {process_name}",
                     process=process_name,
                 )
             )
@@ -195,7 +197,7 @@ def validate_udm_definition(
             errors.append(
                 ValidationIssue(
                     code="EMPTY_RATE_EXPR",
-                    message="过程速率表达式不能为空",
+                    message="Process rate expression must not be empty",
                     process=process_name,
                 )
             )
@@ -207,7 +209,7 @@ def validate_udm_definition(
             errors.append(
                 ValidationIssue(
                     code="INVALID_SYNTAX",
-                    message=f"表达式语法错误: {ex.msg}",
+                    message=f"Expression syntax error: {ex.msg}",
                     process=process_name,
                 )
             )
@@ -231,7 +233,7 @@ def validate_udm_definition(
                 errors.append(
                     ValidationIssue(
                         code="UNDEFINED_SYMBOL",
-                        message=f"未定义符号 {symbol}",
+                        message=f"Undefined symbol: {symbol}",
                         process=process_name,
                     )
                 )
@@ -248,7 +250,7 @@ def validate_udm_definition(
             errors.append(
                 ValidationIssue(
                     code="INVALID_STOICH",
-                    message="stoich_expr/stoich 必须为对象映射",
+                    message="stoich_expr/stoich must be an object mapping",
                     process=process_name,
                 )
             )
@@ -260,7 +262,7 @@ def validate_udm_definition(
                 errors.append(
                     ValidationIssue(
                         code="UNKNOWN_COMPONENT",
-                        message=f"未知组分 {component_name}",
+                        message=f"Unknown component: {component_name}",
                         process=process_name,
                     )
                 )
@@ -271,7 +273,7 @@ def validate_udm_definition(
                 errors.append(
                     ValidationIssue(
                         code="INVALID_STOICH_EXPR",
-                        message=f"组分 {component_name} 的计量表达式语法错误: {ex.msg}",
+                        message=f"Stoichiometry syntax error for component {component_name}: {ex.msg}",
                         process=process_name,
                     )
                 )
@@ -282,7 +284,7 @@ def validate_udm_definition(
                 errors.append(
                     ValidationIssue(
                         code=f"STOICH_{issue.code}",
-                        message=f"组分 {component_name} 的计量表达式非法: {issue.message}",
+                        message=f"Invalid stoichiometry for component {component_name}: {issue.message}",
                         process=process_name,
                     )
                 )
@@ -303,7 +305,7 @@ def validate_udm_definition(
                     errors.append(
                         ValidationIssue(
                             code="UNDEFINED_SYMBOL",
-                            message=f"未定义符号 {symbol}",
+                            message=f"Undefined symbol: {symbol}",
                             process=process_name,
                         )
                     )
@@ -315,7 +317,7 @@ def validate_udm_definition(
                 errors.append(
                     ValidationIssue(
                         code="STOICH_COMPONENT_REF",
-                        message=f"计量表达式不允许引用组分变量 {symbol}",
+                        message=f"Stoichiometry must not reference component variable: {symbol}",
                         process=process_name,
                     )
                 )
@@ -332,7 +334,7 @@ def validate_udm_definition(
             warnings.append(
                 ValidationIssue(
                     code="ZERO_STOICH",
-                    message="该过程对所有组分的计量系数均为 0",
+                    message="All stoichiometric coefficients for this process are zero",
                     process=process_name,
                 )
             )
@@ -388,9 +390,11 @@ def _apply_function(name: str, args: List[Any]) -> Any:
     raise UnsafeExpressionError(f"Unsupported function: {name}")
 
 
-def _evaluate_ast(node: ast.AST, variables: Dict[str, Any]) -> Any:
+def _evaluate_ast(node: ast.AST, variables: Dict[str, Any], _depth: int = 0) -> Any:
+    if _depth > MAX_AST_DEPTH:
+        raise UnsafeExpressionError(f"Expression exceeds maximum nesting depth ({MAX_AST_DEPTH})")
     if isinstance(node, ast.Expression):
-        return _evaluate_ast(node.body, variables)
+        return _evaluate_ast(node.body, variables, _depth + 1)
     if _is_numeric_constant(node):
         return float(node.value)
     if isinstance(node, ast.Name):
@@ -400,8 +404,8 @@ def _evaluate_ast(node: ast.AST, variables: Dict[str, Any]) -> Any:
             raise UnsafeExpressionError(f"Unknown symbol: {node.id}")
         return variables[node.id]
     if isinstance(node, ast.BinOp):
-        left = _evaluate_ast(node.left, variables)
-        right = _evaluate_ast(node.right, variables)
+        left = _evaluate_ast(node.left, variables, _depth + 1)
+        right = _evaluate_ast(node.right, variables, _depth + 1)
         if isinstance(node.op, ast.Add):
             return left + right
         if isinstance(node.op, ast.Sub):
@@ -419,7 +423,7 @@ def _evaluate_ast(node: ast.AST, variables: Dict[str, Any]) -> Any:
             return torch.pow(_ensure_tensor(left, _first_tensor([left, right])), _ensure_tensor(right, _first_tensor([left, right])))
         raise UnsafeExpressionError(f"Unsupported binary operator: {type(node.op).__name__}")
     if isinstance(node, ast.UnaryOp):
-        operand = _evaluate_ast(node.operand, variables)
+        operand = _evaluate_ast(node.operand, variables, _depth + 1)
         if isinstance(node.op, ast.UAdd):
             return operand
         if isinstance(node.op, ast.USub):
@@ -431,7 +435,7 @@ def _evaluate_ast(node: ast.AST, variables: Dict[str, Any]) -> Any:
         fn_name = node.func.id
         if fn_name not in ALLOWED_FUNCTIONS:
             raise UnsafeExpressionError(f"Function {fn_name} is not allowed")
-        args = [_evaluate_ast(arg, variables) for arg in node.args]
+        args = [_evaluate_ast(arg, variables, _depth + 1) for arg in node.args]
         return _apply_function(fn_name, args)
 
     raise UnsafeExpressionError(f"Unsupported AST node: {type(node).__name__}")

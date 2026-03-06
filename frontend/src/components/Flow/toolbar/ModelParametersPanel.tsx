@@ -76,7 +76,8 @@ const getUdmModelParameterDefs = (
 
 const toDisplayValue = (value: unknown): string => {
   if (value === undefined || value === null || value === "") return "-"
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "-"
+  if (typeof value === "number")
+    return Number.isFinite(value) ? String(value) : "-"
   if (typeof value === "string") return value
   return String(value)
 }
@@ -148,7 +149,9 @@ export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
   if (parameterRows.length === 0) {
     return (
       <Stack gap={4} align="stretch">
-        <Text color="gray.500">{t("flow.modelParametersPanel.noParameters")}</Text>
+        <Text color="gray.500">
+          {t("flow.modelParametersPanel.noParameters")}
+        </Text>
       </Stack>
     )
   }
@@ -198,9 +201,11 @@ export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
                   if (row.kind === "model") {
                     const defs = getUdmModelParameterDefs(nodeData)
                     const hasParam = defs.some((item) => item.name === row.name)
-                    const valueFromMap = (nodeData.udmParameterValues as
-                      | Record<string, unknown>
-                      | undefined)?.[row.name]
+                    const valueFromMap = (
+                      nodeData.udmParameterValues as
+                        | Record<string, unknown>
+                        | undefined
+                    )?.[row.name]
                     return (
                       <Table.Cell key={`${row.key}-${node.id}`}>
                         <Text fontSize="sm">
@@ -228,9 +233,10 @@ export const ModelParametersPanel: React.FC<ModelParametersPanelProps> = ({
                 }
 
                 const modelConfig = getModelConfig(nodeModelType)
-                const staticParam = modelConfig?.enhancedCalculationParameters?.find(
-                  (p) => p.name === row.name,
-                )
+                const staticParam =
+                  modelConfig?.enhancedCalculationParameters?.find(
+                    (p) => p.name === row.name,
+                  )
                 const value = staticParam
                   ? ((node.data as any)?.[row.name] ?? staticParam.defaultValue)
                   : "-"

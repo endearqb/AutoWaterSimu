@@ -47,6 +47,5 @@ export const confirmDebug = (
     console.log(`[confirm-debug][${now}][${scope}] ${event}`)
   }
   if (options?.breakpoint && isBreakEnabled()) {
-    debugger
   }
 }

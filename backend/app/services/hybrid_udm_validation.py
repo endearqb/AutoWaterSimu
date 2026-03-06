@@ -217,7 +217,7 @@ def _normalize_model_info(raw_model: Dict[str, Any]) -> Tuple[Optional[HybridMod
     model_id = _normalize_name(raw_model.get("model_id") or raw_model.get("modelId"))
     version = _to_int(raw_model.get("version"))
     if not model_id or version is None:
-        return None, "selected_models 包含缺失 model_id/version 的条目"
+        return None, "selected_models contains entry missing model_id/version"
 
     payload = _extract_snapshot_payload(raw_model)
     components = _to_list(
@@ -334,69 +334,66 @@ def _normalize_custom_parameter_names(flowchart_data: Dict[str, Any]) -> List[st
     return names
 
 
-def build_hybrid_runtime_info(
-    flowchart_data: Dict[str, Any],
-    *,
-    strict: bool = False,
-) -> HybridRuntimeInfo:
-    hybrid_config = _to_dict(
-        flowchart_data.get("hybrid_config") or flowchart_data.get("hybridConfig")
-    )
-    mode = _normalize_name(hybrid_config.get("mode"))
-    is_hybrid = mode == "udm_only"
-    runtime = HybridRuntimeInfo(is_hybrid=is_hybrid)
+@dataclass
+class _BuildContext:
+    flowchart_data: Dict[str, Any]
+    hybrid_config: Dict[str, Any]
+    mode: str
+    is_hybrid: bool
+    strict: bool
+    runtime: HybridRuntimeInfo
+    selected_models: Dict[str, HybridModelInfo] = field(default_factory=dict)
+    udm_node_model_by_id: Dict[str, str] = field(default_factory=dict)
+    nodes: List[Any] = field(default_factory=list)
+    normalized_pair_mappings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    compiled_target_binding: Dict[str, Dict[str, Dict[str, Any]]] = field(default_factory=dict)
+    required_pairs: Set[str] = field(default_factory=set)
+    node_bindings: Dict[str, List[Dict[str, str]]] = field(default_factory=dict)
+    canonical_components: List[str] = field(default_factory=list)
 
-    if not hybrid_config:
-        return runtime
 
-    if mode and mode != "udm_only":
-        runtime.errors.append(f"Unsupported hybrid mode: {mode}")
-        if strict:
-            raise ValueError("; ".join(runtime.errors))
-        return runtime
-
+def _load_selected_models(ctx: _BuildContext) -> None:
     raw_selected_models = _to_list(
-        hybrid_config.get("selected_models") or hybrid_config.get("selectedModels")
+        ctx.hybrid_config.get("selected_models") or ctx.hybrid_config.get("selectedModels")
     )
-    if is_hybrid and not raw_selected_models:
-        runtime.errors.append("hybrid_config.selected_models cannot be empty")
+    if ctx.is_hybrid and not raw_selected_models:
+        ctx.runtime.errors.append("hybrid_config.selected_models cannot be empty")
 
-    selected_models: Dict[str, HybridModelInfo] = {}
     for raw in raw_selected_models:
         if not isinstance(raw, dict):
-            runtime.errors.append("selected_models contains non-object entry")
+            ctx.runtime.errors.append("selected_models contains non-object entry")
             continue
         model_info, error = _normalize_model_info(raw)
         if error:
-            runtime.errors.append(error)
+            ctx.runtime.errors.append(error)
             continue
         if model_info is None:
             continue
-        selected_models[model_info.key] = model_info
+        ctx.selected_models[model_info.key] = model_info
 
-    # Enrich selected model snapshots from UDM nodes if selected model payload lacks details.
-    nodes = _to_list(flowchart_data.get("nodes"))
-    udm_node_model_by_id: Dict[str, str] = {}
-    for node in nodes:
+
+def _enrich_models_from_nodes(ctx: _BuildContext) -> None:
+    ctx.nodes = _to_list(ctx.flowchart_data.get("nodes"))
+    for node in ctx.nodes:
         if not isinstance(node, dict):
             continue
         if _normalize_name(node.get("type")) != "udm":
             continue
         node_id, model_id, version = _extract_udm_model_binding(node)
         if model_id is None or version is None:
-            if is_hybrid:
-                runtime.errors.append(
+            if ctx.is_hybrid:
+                ctx.runtime.errors.append(
                     f"UDM node {node_id or '<unknown>'} missing udmModelId/udmModelVersion"
                 )
             continue
 
         model_key = build_model_key(model_id, version)
-        udm_node_model_by_id[node_id] = model_key
+        ctx.udm_node_model_by_id[node_id] = model_key
         snapshot = _extract_node_udm_snapshot(node)
-        if model_key not in selected_models:
+        if model_key not in ctx.selected_models:
             continue
 
-        info = selected_models[model_key]
+        info = ctx.selected_models[model_key]
         if not info.components:
             info.components = [
                 item for item in _to_list(snapshot.get("components")) if isinstance(item, dict)
@@ -423,31 +420,31 @@ def build_hybrid_runtime_info(
                 processes=info.processes,
             )
 
-    if is_hybrid:
-        for model_key in udm_node_model_by_id.values():
-            if model_key not in selected_models:
-                runtime.errors.append(
+    if ctx.is_hybrid:
+        for model_key in ctx.udm_node_model_by_id.values():
+            if model_key not in ctx.selected_models:
+                ctx.runtime.errors.append(
                     f"UDM node bound model {model_key} is not in hybrid_config.selected_models"
                 )
 
+
+def _normalize_pair_mappings(ctx: _BuildContext) -> None:
     raw_pair_mappings = _to_dict(
-        hybrid_config.get("model_pair_mappings") or hybrid_config.get("modelPairMappings")
+        ctx.hybrid_config.get("model_pair_mappings") or ctx.hybrid_config.get("modelPairMappings")
     )
-    normalized_pair_mappings: Dict[str, Dict[str, Any]] = {}
-    compiled_target_binding: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
     for raw_key, raw_mapping in raw_pair_mappings.items():
         if not isinstance(raw_mapping, dict):
-            runtime.errors.append(f"model_pair_mappings[{raw_key}] must be object")
+            ctx.runtime.errors.append(f"model_pair_mappings[{raw_key}] must be object")
             continue
         pair_key = _normalize_pair_mapping_key(str(raw_key), raw_mapping)
         if not pair_key:
-            runtime.errors.append(f"model_pair_mappings[{raw_key}] missing source/target model info")
+            ctx.runtime.errors.append(f"model_pair_mappings[{raw_key}] missing source/target model info")
             continue
         normalized_variable_map = _normalize_variable_map_items(
             _to_list(raw_mapping.get("variable_map") or raw_mapping.get("variableMap"))
         )
-        normalized_pair_mappings[pair_key] = {
+        ctx.normalized_pair_mappings[pair_key] = {
             "source_model_id": _normalize_name(
                 raw_mapping.get("source_model_id") or raw_mapping.get("sourceModelId")
             ),
@@ -469,22 +466,23 @@ def build_hybrid_runtime_info(
                 continue
             target_var = item["target_var"]
             if not target_var:
-                runtime.errors.append(f"{pair_key}: variable_map contains empty target_var")
+                ctx.runtime.errors.append(f"{pair_key}: variable_map contains empty target_var")
                 continue
             if target_var in target_map:
                 previous = target_map[target_var]
                 if previous.get("source_var") != item.get("source_var") or previous.get(
                     "local_exempt"
                 ) != item.get("local_exempt"):
-                    runtime.errors.append(
+                    ctx.runtime.errors.append(
                         f"{pair_key}: duplicated mapping for target_var={target_var}"
                     )
                 continue
             target_map[target_var] = item
-        compiled_target_binding[pair_key] = target_map
+        ctx.compiled_target_binding[pair_key] = target_map
 
-    # Validate mapping variable existence.
-    for pair_key, pair_payload in normalized_pair_mappings.items():
+
+def _validate_pair_variables(ctx: _BuildContext) -> None:
+    for pair_key, pair_payload in ctx.normalized_pair_mappings.items():
         source_model_id = _normalize_name(pair_payload.get("source_model_id"))
         source_version = _to_int(pair_payload.get("source_version"))
         target_model_id = _normalize_name(pair_payload.get("target_model_id"))
@@ -501,79 +499,80 @@ def build_hybrid_runtime_info(
 
         source_key = build_model_key(source_model_id, source_version)
         target_key = build_model_key(target_model_id, target_version)
-        source_model = selected_models.get(source_key)
-        target_model = selected_models.get(target_key)
+        source_model = ctx.selected_models.get(source_key)
+        target_model = ctx.selected_models.get(target_key)
         if source_model is None:
-            runtime.errors.append(f"{pair_key}: source model {source_key} not found in selected_models")
+            ctx.runtime.errors.append(f"{pair_key}: source model {source_key} not found in selected_models")
             continue
         if target_model is None:
-            runtime.errors.append(f"{pair_key}: target model {target_key} not found in selected_models")
+            ctx.runtime.errors.append(f"{pair_key}: target model {target_key} not found in selected_models")
             continue
 
         source_components = set(source_model.component_names)
         target_components = set(target_model.component_names)
-        for item in compiled_target_binding.get(pair_key, {}).values():
+        for item in ctx.compiled_target_binding.get(pair_key, {}).values():
             target_var = item.get("target_var") or ""
             source_var = item.get("source_var") or ""
             local_exempt = bool(item.get("local_exempt"))
 
             if target_var and target_var not in target_components:
-                runtime.errors.append(f"{pair_key}: target_var {target_var} not found in target model")
+                ctx.runtime.errors.append(f"{pair_key}: target_var {target_var} not found in target model")
             if not local_exempt:
                 if not source_var:
-                    runtime.errors.append(
+                    ctx.runtime.errors.append(
                         f"{pair_key}: target_var {target_var} requires source_var or local_exempt=true"
                     )
                 elif source_var not in source_components:
-                    runtime.errors.append(
+                    ctx.runtime.errors.append(
                         f"{pair_key}: source_var {source_var} not found in source model"
                     )
 
-    # Build graph-required model pairs.
-    required_pairs: Set[str] = set()
-    for edge in _to_list(flowchart_data.get("edges")):
+
+def _find_required_pairs(ctx: _BuildContext) -> None:
+    for edge in _to_list(ctx.flowchart_data.get("edges")):
         if not isinstance(edge, dict):
             continue
         source_node_id = _normalize_name(edge.get("source"))
         target_node_id = _normalize_name(edge.get("target"))
-        source_model_key = udm_node_model_by_id.get(source_node_id)
-        target_model_key = udm_node_model_by_id.get(target_node_id)
+        source_model_key = ctx.udm_node_model_by_id.get(source_node_id)
+        target_model_key = ctx.udm_node_model_by_id.get(target_node_id)
         if not source_model_key or not target_model_key:
             continue
         if source_model_key == target_model_key:
             continue
-        required_pairs.add(f"{source_model_key}->{target_model_key}")
+        ctx.required_pairs.add(f"{source_model_key}->{target_model_key}")
 
-    # Validate required pair coverage and focal variable coverage.
-    for pair_key in required_pairs:
-        if pair_key not in compiled_target_binding:
-            runtime.errors.append(f"Missing model_pair_mapping for graph edge pair {pair_key}")
+
+def _validate_pair_coverage(ctx: _BuildContext) -> None:
+    for pair_key in ctx.required_pairs:
+        if pair_key not in ctx.compiled_target_binding:
+            ctx.runtime.errors.append(f"Missing model_pair_mapping for graph edge pair {pair_key}")
             continue
 
         source_key, target_key = pair_key.split("->", 1)
-        target_model = selected_models.get(target_key)
+        target_model = ctx.selected_models.get(target_key)
         if target_model is None:
             continue
         target_focal_vars = set(target_model.focal_vars)
         if not target_focal_vars:
             continue
-        covered_targets = set(compiled_target_binding[pair_key].keys())
+        covered_targets = set(ctx.compiled_target_binding[pair_key].keys())
         missing_targets = sorted(target_focal_vars - covered_targets)
         for target_var in missing_targets:
-            runtime.errors.append(
+            ctx.runtime.errors.append(
                 f"{pair_key}: focal variable {target_var} is not mapped and not exempted"
             )
 
-    # Compile node-level local->canonical bindings.
-    node_bindings: Dict[str, List[Dict[str, str]]] = {}
+
+def _build_node_bindings(ctx: _BuildContext) -> None:
     incoming_pairs_by_target_node: Dict[str, Set[str]] = {}
-    for edge in _to_list(flowchart_data.get("edges")):
+    for edge in _to_list(ctx.flowchart_data.get("edges")):
         if not isinstance(edge, dict):
             continue
         source_node_id = _normalize_name(edge.get("source"))
         target_node_id = _normalize_name(edge.get("target"))
-        source_model_key = udm_node_model_by_id.get(source_node_id)
-        target_model_key = udm_node_model_by_id.get(target_node_id)
+        source_model_key = ctx.udm_node_model_by_id.get(source_node_id)
+        target_model_key = ctx.udm_node_model_by_id.get(target_node_id)
         if not source_model_key or not target_model_key:
             continue
         if source_model_key == target_model_key:
@@ -582,16 +581,16 @@ def build_hybrid_runtime_info(
             f"{source_model_key}->{target_model_key}"
         )
 
-    for node in nodes:
+    for node in ctx.nodes:
         if not isinstance(node, dict):
             continue
         if _normalize_name(node.get("type")) != "udm":
             continue
         node_id = _normalize_name(node.get("id"))
-        model_key = udm_node_model_by_id.get(node_id)
+        model_key = ctx.udm_node_model_by_id.get(node_id)
         if not model_key:
             continue
-        model_info = selected_models.get(model_key)
+        model_info = ctx.selected_models.get(model_key)
         if model_info is None:
             continue
 
@@ -599,7 +598,7 @@ def build_hybrid_runtime_info(
             component_name: component_name for component_name in model_info.component_names
         }
         for pair_key in incoming_pairs_by_target_node.get(node_id, set()):
-            item_map = compiled_target_binding.get(pair_key, {})
+            item_map = ctx.compiled_target_binding.get(pair_key, {})
             for target_var, item in item_map.items():
                 if target_var not in local_to_canonical:
                     continue
@@ -609,36 +608,79 @@ def build_hybrid_runtime_info(
                     continue
                 prev = local_to_canonical.get(target_var)
                 if prev and prev != canonical_var and prev != target_var:
-                    runtime.errors.append(
+                    ctx.runtime.errors.append(
                         f"{pair_key}: node {node_id} target_var {target_var} has conflicting canonical source ({prev} vs {canonical_var})"
                     )
                     continue
                 local_to_canonical[target_var] = canonical_var
 
-        node_bindings[node_id] = [
+        ctx.node_bindings[node_id] = [
             {"local_var": local_var, "canonical_var": canonical_var}
             for local_var, canonical_var in local_to_canonical.items()
         ]
 
-    canonical_components = _normalize_custom_parameter_names(flowchart_data)
-    seen_canonical = set(canonical_components)
 
-    for component_name in _build_default_components_from_models(selected_models):
+def _build_canonical_components(ctx: _BuildContext) -> None:
+    ctx.canonical_components = _normalize_custom_parameter_names(ctx.flowchart_data)
+    seen_canonical = set(ctx.canonical_components)
+
+    for component_name in _build_default_components_from_models(ctx.selected_models):
         if component_name in seen_canonical:
             continue
         seen_canonical.add(component_name)
-        canonical_components.append(component_name)
+        ctx.canonical_components.append(component_name)
 
-    for bindings in node_bindings.values():
+    for bindings in ctx.node_bindings.values():
         for binding in bindings:
             canonical_var = _normalize_name(binding.get("canonical_var"))
             if not canonical_var or canonical_var in seen_canonical:
                 continue
             seen_canonical.add(canonical_var)
-            canonical_components.append(canonical_var)
+            ctx.canonical_components.append(canonical_var)
 
+
+def build_hybrid_runtime_info(
+    flowchart_data: Dict[str, Any],
+    *,
+    strict: bool = False,
+) -> HybridRuntimeInfo:
+    hybrid_config = _to_dict(
+        flowchart_data.get("hybrid_config") or flowchart_data.get("hybridConfig")
+    )
+    mode = _normalize_name(hybrid_config.get("mode"))
+    is_hybrid = mode == "udm_only"
+    runtime = HybridRuntimeInfo(is_hybrid=is_hybrid)
+
+    if not hybrid_config:
+        return runtime
+
+    if mode and mode != "udm_only":
+        runtime.errors.append(f"Unsupported hybrid mode: {mode}")
+        if strict:
+            raise ValueError("; ".join(runtime.errors))
+        return runtime
+
+    ctx = _BuildContext(
+        flowchart_data=flowchart_data,
+        hybrid_config=hybrid_config,
+        mode=mode,
+        is_hybrid=is_hybrid,
+        strict=strict,
+        runtime=runtime,
+    )
+
+    _load_selected_models(ctx)
+    _enrich_models_from_nodes(ctx)
+    _normalize_pair_mappings(ctx)
+    _validate_pair_variables(ctx)
+    _find_required_pairs(ctx)
+    _validate_pair_coverage(ctx)
+    _build_node_bindings(ctx)
+    _build_canonical_components(ctx)
+
+    # Assemble final result.
     normalized_selected_models = []
-    for model in selected_models.values():
+    for model in ctx.selected_models.values():
         normalized_selected_models.append(
             {
                 "model_id": model.model_id,
@@ -652,14 +694,14 @@ def build_hybrid_runtime_info(
             }
         )
 
-    runtime.selected_models = selected_models
+    runtime.selected_models = ctx.selected_models
     runtime.normalized_hybrid_config = {
         "mode": "udm_only" if is_hybrid else mode,
         "selected_models": normalized_selected_models,
-        "model_pair_mappings": normalized_pair_mappings,
+        "model_pair_mappings": ctx.normalized_pair_mappings,
     }
-    runtime.canonical_components = canonical_components
-    runtime.node_variable_bindings = node_bindings
+    runtime.canonical_components = ctx.canonical_components
+    runtime.node_variable_bindings = ctx.node_bindings
 
     if strict and runtime.errors:
         raise ValueError("; ".join(runtime.errors))

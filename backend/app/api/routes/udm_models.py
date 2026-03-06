@@ -412,6 +412,7 @@ def delete_udm_model(
     model_id: uuid.UUID,
 ) -> Any:
     model = _get_model_or_404(session, current_user, model_id)
+    # Associated UDMModelVersion rows are cascade-deleted via ORM + DB FK.
     session.delete(model)
     session.commit()
     return Message(message="UDM model deleted successfully")

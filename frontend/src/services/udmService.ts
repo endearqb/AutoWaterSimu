@@ -11,24 +11,27 @@ import type {
   MaterialBalanceResultSummary,
   MaterialBalanceTimeSeriesResponse,
   MaterialBalanceValidationResponse,
-  UDMModelCreate,
-  UDMModelCreateFromTemplate,
-  UDMModelDefinitionDraft,
-  UDMModelDetailPublic,
-  UDMModelsPublic,
-  UDMModelUpdate,
-  UDMValidationResponse,
+  UDMComponentDefinition,
   UDMFlowChartCreate,
   UDMFlowChartPublic,
   UDMFlowChartUpdate,
   UDMFlowChartsPublic,
   UDMHybridConfigCreate,
   UDMHybridConfigPublic,
-  UDMHybridConfigsPublic,
   UDMHybridConfigUpdate,
+  UDMHybridConfigsPublic,
   UDMJobInputDataResponse,
   UDMJobPublic,
   UDMJobsPublic,
+  UDMModelCreate,
+  UDMModelCreateFromTemplate,
+  UDMModelDefinitionDraft,
+  UDMModelDetailPublic,
+  UDMModelUpdate,
+  UDMModelsPublic,
+  UDMParameterDefinition,
+  UDMProcessDefinition,
+  UDMValidationResponse,
 } from "../client/types.gen"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
@@ -86,7 +89,7 @@ class UDMServiceImpl
    * 从流程图数据创建计算任务
    */
   async createCalculationJobFromFlowchart(
-    flowchartData: any,
+    flowchartData: Record<string, unknown>,
   ): Promise<UDMJobPublic> {
     try {
       return await UdmService.createCalculationJobFromFlowchart({
@@ -184,7 +187,9 @@ class UDMServiceImpl
   /**
    * 获取最终值
    */
-  async getCalculationFinalValues(jobId: string): Promise<any> {
+  async getCalculationFinalValues(
+    jobId: string,
+  ): Promise<Record<string, unknown>> {
     try {
       const response = await UdmService.getCalculationFinalValues({
         jobId,
@@ -558,10 +563,10 @@ class UDMServiceImpl
       name: nameOverride || `${detail.name} Copy`,
       description: detail.description || "",
       tags: detail.tags || [],
-      components: (latest.components || []) as any,
-      parameters: (latest.parameters || []) as any,
-      processes: (latest.processes || []) as any,
-      meta: (latest.meta || null) as any,
+      components: (latest.components || []) as Array<UDMComponentDefinition>,
+      parameters: (latest.parameters || []) as Array<UDMParameterDefinition>,
+      processes: (latest.processes || []) as Array<UDMProcessDefinition>,
+      meta: (latest.meta || null) as { [key: string]: unknown } | null,
       seed_source: latest.seed_source || null,
     }
     return await this.createModel(payload)

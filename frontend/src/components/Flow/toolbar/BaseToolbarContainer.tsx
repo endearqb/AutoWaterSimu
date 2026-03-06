@@ -89,7 +89,9 @@ const BaseToolbarContainer = ({
       if (Array.isArray(fromComponents)) {
         fromComponents.forEach((item) => {
           if (!item || typeof item !== "object") return
-          const name = String((item as Record<string, unknown>).name || "").trim()
+          const name = String(
+            (item as Record<string, unknown>).name || "",
+          ).trim()
           if (name) seen.add(name)
         })
       }

@@ -55,16 +55,10 @@ const ImportCalcParamsDialog: React.FC<ImportCalcParamsDialogProps> = ({
 
             <Dialog.Footer>
               <Stack direction="row" gap={2}>
-                <Button
-                  variant="outline"
-                  onClick={() => onChoice(false)}
-                >
+                <Button variant="outline" onClick={() => onChoice(false)}>
                   {t("flow.menu.keepCurrentParams")}
                 </Button>
-                <Button
-                  colorPalette="blue"
-                  onClick={() => onChoice(true)}
-                >
+                <Button colorPalette="blue" onClick={() => onChoice(true)}>
                   {t("flow.menu.useFileParams")}
                 </Button>
               </Stack>

@@ -28,7 +28,8 @@ export const normalizeOverride = (
 ): SegmentEdgeOverride | undefined => {
   if (!override) return undefined
 
-  const hasFlow = typeof override.flow === "number" && Number.isFinite(override.flow)
+  const hasFlow =
+    typeof override.flow === "number" && Number.isFinite(override.flow)
   const normalizedFactors: Record<string, { a?: number; b?: number }> = {}
 
   Object.entries(override.factors || {}).forEach(([paramName, factor]) => {

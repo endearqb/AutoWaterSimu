@@ -125,6 +125,7 @@ export const zhMessages: I18nMessages = {
     asm1: "活性污泥模型 ASM1",
     asm3: "活性污泥模型 ASM3",
     hybrid: "Hybrid 配置",
+    udmModels: "UDM 模型库",
     knowledge: "知识库",
     superDashboard: "超级管理员看板",
     items: "项目",
@@ -460,6 +461,7 @@ export const zhMessages: I18nMessages = {
       default: "默认节点",
       custom: "自定义节点",
       udm: "UDM 节点",
+      udmUnbound: "未绑定模型",
       asm1: "ASM1 节点",
       asm3: "ASM3 节点",
       asm1slim: "ASM1 Slim",
@@ -587,7 +589,8 @@ export const zhMessages: I18nMessages = {
         noEditableParams: "当前节点未绑定可编辑的 UDM 模型参数。",
       },
       title: "UDM 模型参数",
-      description: "参数来源于当前节点绑定的 UDM 模型快照，不依赖静态硬编码模型配置。",
+      description:
+        "参数来源于当前节点绑定的 UDM 模型快照，不依赖静态硬编码模型配置。",
       syncAllNodes: "同步所有 UDM 节点",
       rangeLabel: "范围: {min} - {max}",
       errors: {
@@ -1219,6 +1222,12 @@ export const zhMessages: I18nMessages = {
         },
         constants: {
           title: "常量",
+        },
+        aria: {
+          insertVariable: "插入变量 {name}",
+          insertParameter: "插入参数 {name}",
+          insertFunction: "插入函数 {name}",
+          insertConstant: "插入常量 {name}",
         },
       },
     },

@@ -1,14 +1,25 @@
 import type { UDMModelDetailPublic } from "@/client/types.gen"
 import type { CustomParameter } from "../config/modelConfigs"
-import type { HybridUDMConfig, HybridUDMSelectedModel } from "../types/hybridUdm"
+import type {
+  HybridUDMConfig,
+  HybridUDMSelectedModel,
+} from "../types/hybridUdm"
 
 export const LOCAL_EXEMPT_TOKEN = "__local__"
 
 /** Built-in function / constant names that must never be treated as focal variables.
  *  Mirrors backend `udm_expression.py` ALLOWED_FUNCTIONS + RESERVED_CONSTANTS. */
 const KNOWN_BUILTINS = new Set([
-  "exp", "log", "sqrt", "pow", "min", "max", "abs", "clip",
-  "pi", "e",
+  "exp",
+  "log",
+  "sqrt",
+  "pow",
+  "min",
+  "max",
+  "abs",
+  "clip",
+  "pi",
+  "e",
 ])
 
 export const buildHybridModelKey = (modelId: string, version: number) =>

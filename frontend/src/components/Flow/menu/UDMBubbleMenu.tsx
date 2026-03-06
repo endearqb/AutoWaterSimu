@@ -4,11 +4,16 @@ import type React from "react"
 import { useState } from "react"
 import { FiEdit3, FiGitMerge } from "react-icons/fi"
 
-import type { UDMJobPublic } from "../../../client/types.gen"
+import type {
+  MaterialBalanceResultSummary,
+  UDMJobPublic,
+} from "../../../client/types.gen"
+import type { EdgeParameterConfig } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import { udmService } from "../../../services/udmService"
 import { useUDMFlowStore } from "../../../stores/udmFlowStore"
 import { useUDMStore } from "../../../stores/udmStore"
+import type { UDMNodeData } from "../../../types/udmNodeData"
 import HybridUDMSetupDialog from "../../UDM/HybridUDMSetupDialog"
 import UDMModelEditorDialog from "../../UDM/UDMModelEditorDialog"
 import BaseBubbleMenu from "./BaseBubbleMenu"
@@ -34,22 +39,53 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
   const selectedNode = useUDMFlowStore((state) => state.selectedNode)
   const flowEdges = useUDMFlowStore((state) => state.edges)
   const flowNodes = useUDMFlowStore((state) => state.nodes)
-  const selectedModelId =
+  const udmNodeData =
     selectedNode?.type === "udm"
-      ? (((selectedNode.data as any)?.udmModelId ||
-          (selectedNode.data as any)?.udmModel?.id) as string | undefined)
+      ? (selectedNode.data as UDMNodeData)
       : undefined
+  const selectedModelId = udmNodeData?.udmModelId || udmNodeData?.udmModel?.id
 
   const handleLoadJobData = async (
     job: UDMJobPublic,
-    flowStore?: any,
-    modelStore?: any,
+    flowStore?: {
+      importFlowData?: (data: Record<string, unknown>) => {
+        success: boolean
+        message?: string
+      }
+      customParameters?: Array<{ name: string }>
+      removeCustomParameter?: (name: string) => void
+      addCustomParameter?: (name: string, description?: string) => void
+      setNodes?: (nodes: unknown[]) => void
+      setEdges?: (edges: unknown[]) => void
+      updateEdgeParameterConfig?: (
+        edgeId: string,
+        paramName: string,
+        config: EdgeParameterConfig,
+      ) => void
+      setCurrentFlowChartName?: (name: string) => void
+      setCurrentJobId?: (jobId: string) => void
+    },
+    modelStore?: {
+      getResultSummary?: (jobId: string) => Promise<unknown>
+      getFinalValues?: (jobId: string) => Promise<unknown>
+      getCalculationStatus?: (jobId: string) => Promise<unknown>
+    },
   ) => {
     const jobId = job.job_id
     const jobName = job.job_name
 
     const jobDataResponse = await udmService.getJobInputData(jobId)
-    const flowchartData = jobDataResponse.input_data as any
+    const flowchartData = jobDataResponse.input_data as
+      | {
+          nodes?: unknown[]
+          edges?: unknown[]
+          customParameters?: Array<{ name: string; description?: string }>
+          edgeParameterConfigs?: Record<
+            string,
+            Record<string, EdgeParameterConfig>
+          >
+        }
+      | undefined
 
     if (!flowchartData) {
       throw new Error(t("flow.simulation.validation.inputEmpty"))
@@ -75,11 +111,11 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
           Array.isArray(flowchartData.customParameters)
         ) {
           const currentParams = [...(flowStore.customParameters || [])]
-          currentParams.forEach((param: any) => {
+          currentParams.forEach((param) => {
             flowStore.removeCustomParameter?.(param.name)
           })
 
-          flowchartData.customParameters.forEach((param: any) => {
+          flowchartData.customParameters.forEach((param) => {
             flowStore.addCustomParameter?.(param.name, param.description)
           })
         }
@@ -89,9 +125,12 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
 
         if (flowchartData.edgeParameterConfigs) {
           Object.entries(flowchartData.edgeParameterConfigs).forEach(
-            ([edgeId, configs]: [string, any]) => {
+            ([edgeId, configs]: [
+              string,
+              Record<string, EdgeParameterConfig>,
+            ]) => {
               Object.entries(configs).forEach(
-                ([paramName, config]: [string, any]) => {
+                ([paramName, config]: [string, EdgeParameterConfig]) => {
                   flowStore.updateEdgeParameterConfig?.(
                     edgeId,
                     paramName,
@@ -123,13 +162,13 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
     }
   }
 
-  const renderResultSummary = (summary: any) => {
+  const renderResultSummary = (summary: MaterialBalanceResultSummary) => {
     return (
       <VStack align="start" gap={2} fontSize="sm">
         <HStack>
           <Text fontWeight="bold">{t("flow.simulation.totalTime")}</Text>
           <Text>
-            {summary.total_time || t("common.notAvailable")} {" "}
+            {summary.total_time || t("common.notAvailable")}{" "}
             {t("flow.simulation.unit.hours")}
           </Text>
         </HStack>
@@ -140,7 +179,7 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
         <HStack>
           <Text fontWeight="bold">{t("flow.simulation.calculationTime")}</Text>
           <Text>
-            {summary.calculation_time_seconds?.toFixed(2)} {" "}
+            {summary.calculation_time_seconds?.toFixed(2)}{" "}
             {t("flow.simulation.unit.seconds")}
           </Text>
         </HStack>

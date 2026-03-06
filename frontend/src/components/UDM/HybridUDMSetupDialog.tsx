@@ -1,3 +1,10 @@
+import type {
+  UDMHybridConfigPublic,
+  UDMModelDetailPublic,
+  UDMModelPublic,
+} from "@/client/types.gen"
+import useCustomToast from "@/hooks/useCustomToast"
+import { useI18n } from "@/i18n"
 import {
   Badge,
   Box,
@@ -13,13 +20,6 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import type { Edge, Node } from "@xyflow/react"
-import type {
-  UDMHybridConfigPublic,
-  UDMModelDetailPublic,
-  UDMModelPublic,
-} from "@/client/types.gen"
-import useCustomToast from "@/hooks/useCustomToast"
-import { useI18n } from "@/i18n"
 import { useEffect, useMemo, useState } from "react"
 import { FiInfo } from "react-icons/fi"
 
@@ -86,12 +86,11 @@ function HybridUDMSetupDialog({
   const [savedConfigs, setSavedConfigs] = useState<UDMHybridConfigPublic[]>([])
   const [selectedSavedConfigId, setSelectedSavedConfigId] = useState("")
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>([])
-  const [modelDetails, setModelDetails] = useState<Record<string, UDMModelDetailPublic>>(
-    {},
-  )
-  const [mappingSelections, setMappingSelections] = useState<MappingSelectionMap>(
-    {},
-  )
+  const [modelDetails, setModelDetails] = useState<
+    Record<string, UDMModelDetailPublic>
+  >({})
+  const [mappingSelections, setMappingSelections] =
+    useState<MappingSelectionMap>({})
   const [isApplying, setIsApplying] = useState(false)
 
   const selectedDetails = useMemo(
@@ -125,9 +124,7 @@ function HybridUDMSetupDialog({
       // Parse model key back to id@version
       const [srcId, srcVer] = sourceKey.split("@")
       const [tgtId, tgtVer] = targetKey.split("@")
-      keys.add(
-        buildHybridPairKey(srcId, Number(srcVer), tgtId, Number(tgtVer)),
-      )
+      keys.add(buildHybridPairKey(srcId, Number(srcVer), tgtId, Number(tgtVer)))
     })
     return keys
   }, [flowEdges, flowNodes])
@@ -290,7 +287,8 @@ function HybridUDMSetupDialog({
     setMappingSelections((prev) => {
       const next: MappingSelectionMap = {}
       pairDescriptors.forEach((pair) => {
-        const pairExisting = effectiveHybridConfig?.model_pair_mappings?.[pair.key]
+        const pairExisting =
+          effectiveHybridConfig?.model_pair_mappings?.[pair.key]
         const existingRows = Array.isArray(pairExisting?.variable_map)
           ? pairExisting.variable_map
           : []
@@ -302,7 +300,9 @@ function HybridUDMSetupDialog({
             nextVarMap[targetVar] = prevValue
             return
           }
-          const existing = existingRows.find((item) => item.target_var === targetVar)
+          const existing = existingRows.find(
+            (item) => item.target_var === targetVar,
+          )
           if (existing) {
             if (existing.local_exempt || !existing.source_var) {
               nextVarMap[targetVar] = LOCAL_EXEMPT_TOKEN
@@ -347,7 +347,11 @@ function HybridUDMSetupDialog({
     })
   }
 
-  const updatePairMapping = (pairMappingKey: string, targetVar: string, sourceVar: string) => {
+  const updatePairMapping = (
+    pairMappingKey: string,
+    targetVar: string,
+    sourceVar: string,
+  ) => {
     setMappingSelections((prev) => ({
       ...prev,
       [pairMappingKey]: {
@@ -359,13 +363,17 @@ function HybridUDMSetupDialog({
 
   const applySelectedSavedConfig = () => {
     if (!selectedSavedConfigId) return
-    const selectedSaved = savedConfigs.find((item) => item.id === selectedSavedConfigId)
+    const selectedSaved = savedConfigs.find(
+      (item) => item.id === selectedSavedConfigId,
+    )
     if (!selectedSaved) {
       showErrorToast(t("flow.hybridSetup.toasts.savedConfigNotFound"))
       return
     }
 
-    const normalizedConfig = toHybridConfigFromUnknown(selectedSaved.hybrid_config)
+    const normalizedConfig = toHybridConfigFromUnknown(
+      selectedSaved.hybrid_config,
+    )
     if (!normalizedConfig) {
       showErrorToast(t("flow.hybridSetup.toasts.savedConfigInvalid"))
       return
@@ -387,7 +395,9 @@ function HybridUDMSetupDialog({
 
     try {
       setIsApplying(true)
-      const selected = selectedDetails.map((detail) => toHybridSelectedModel(detail))
+      const selected = selectedDetails.map((detail) =>
+        toHybridSelectedModel(detail),
+      )
       const pairMappings: Record<string, HybridUDMModelPairMapping> = {}
 
       pairDescriptors.forEach((pair) => {
@@ -424,7 +434,8 @@ function HybridUDMSetupDialog({
         selected_models: selected,
         model_pair_mappings: pairMappings,
       }
-      const canonicalParameters = buildCanonicalParametersFromModelDetails(selectedDetails)
+      const canonicalParameters =
+        buildCanonicalParametersFromModelDetails(selectedDetails)
       handleApplyConfig(hybridPayload, canonicalParameters)
       showSuccessToast(t("flow.hybridSetup.toasts.applied"))
       onClose()
@@ -474,7 +485,11 @@ function HybridUDMSetupDialog({
   const isPairMappingDisabled = selectedDetails.length < 2
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl">
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(e) => !e.open && onClose()}
+      size="xl"
+    >
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content maxW="90vw">
@@ -487,21 +502,25 @@ function HybridUDMSetupDialog({
                 <Tabs.Trigger value="selectModels">
                   {t("flow.hybridSetup.tabs.selectModels")}
                 </Tabs.Trigger>
-                <Tabs.Trigger value="pairMapping" disabled={isPairMappingDisabled}>
+                <Tabs.Trigger
+                  value="pairMapping"
+                  disabled={isPairMappingDisabled}
+                >
                   <HStack gap={2}>
                     <Text>{t("flow.hybridSetup.tabs.pairMapping")}</Text>
-                    {!isPairMappingDisabled && mappingProgress.totalVars > 0 && (
-                      <Badge
-                        size="sm"
-                        colorPalette={getMappingBadgeColor()}
-                        variant="solid"
-                      >
-                        {t("flow.hybridSetup.mappingProgress.mapped", {
-                          mapped: String(mappingProgress.mappedVars),
-                          total: String(mappingProgress.totalVars),
-                        })}
-                      </Badge>
-                    )}
+                    {!isPairMappingDisabled &&
+                      mappingProgress.totalVars > 0 && (
+                        <Badge
+                          size="sm"
+                          colorPalette={getMappingBadgeColor()}
+                          variant="solid"
+                        >
+                          {t("flow.hybridSetup.mappingProgress.mapped", {
+                            mapped: String(mappingProgress.mappedVars),
+                            total: String(mappingProgress.totalVars),
+                          })}
+                        </Badge>
+                      )}
                   </HStack>
                 </Tabs.Trigger>
               </Tabs.List>
@@ -518,15 +537,22 @@ function HybridUDMSetupDialog({
                         <NativeSelect.Root size="sm" flex="1">
                           <NativeSelect.Field
                             value={selectedSavedConfigId}
-                            onChange={(e) => setSelectedSavedConfigId(e.target.value)}
+                            onChange={(e) =>
+                              setSelectedSavedConfigId(e.target.value)
+                            }
                           >
                             <option value="">
                               {isLoadingSavedConfigs
                                 ? t("flow.hybridSetup.savedConfigs.loading")
-                                : t("flow.hybridSetup.savedConfigs.placeholder")}
+                                : t(
+                                    "flow.hybridSetup.savedConfigs.placeholder",
+                                  )}
                             </option>
                             {savedConfigs.map((savedConfig) => (
-                              <option key={savedConfig.id} value={savedConfig.id}>
+                              <option
+                                key={savedConfig.id}
+                                value={savedConfig.id}
+                              >
                                 {savedConfig.name}
                               </option>
                             ))}
@@ -556,10 +582,17 @@ function HybridUDMSetupDialog({
                     {isLoadingModels ? (
                       <HStack>
                         <Spinner size="sm" />
-                        <Text fontSize="sm">{t("flow.hybridSetup.loadingModels")}</Text>
+                        <Text fontSize="sm">
+                          {t("flow.hybridSetup.loadingModels")}
+                        </Text>
                       </HStack>
                     ) : (
-                      <VStack align="stretch" gap={2} maxH="220px" overflowY="auto">
+                      <VStack
+                        align="stretch"
+                        gap={2}
+                        maxH="220px"
+                        overflowY="auto"
+                      >
                         {availableModels.map((model) => {
                           const checked = selectedModelIds.includes(model.id)
                           const loadedDetail = modelDetails[model.id]
@@ -579,7 +612,10 @@ function HybridUDMSetupDialog({
                                 <Checkbox
                                   checked={checked}
                                   onCheckedChange={({ checked: next }) =>
-                                    toggleModelSelection(model.id, Boolean(next))
+                                    toggleModelSelection(
+                                      model.id,
+                                      Boolean(next),
+                                    )
                                   }
                                 >
                                   <HStack gap={2}>
@@ -587,7 +623,9 @@ function HybridUDMSetupDialog({
                                       {model.name}
                                     </Text>
                                     <Badge variant="subtle">
-                                      v{loadedDetail?.current_version || model.current_version}
+                                      v
+                                      {loadedDetail?.current_version ||
+                                        model.current_version}
                                     </Badge>
                                   </HStack>
                                 </Checkbox>
@@ -623,15 +661,27 @@ function HybridUDMSetupDialog({
                         {t("flow.hybridSetup.pairMappingEmpty")}
                       </Text>
                     ) : (
-                      <VStack align="stretch" gap={4} maxH="420px" overflowY="auto">
+                      <VStack
+                        align="stretch"
+                        gap={4}
+                        maxH="420px"
+                        overflowY="auto"
+                      >
                         {pairDescriptors.map((pair) => {
                           const pairProgress = mappingProgress.perPair[pair.key]
                           return (
-                            <Box key={pair.key} borderWidth="1px" borderRadius="md" p={3}>
+                            <Box
+                              key={pair.key}
+                              borderWidth="1px"
+                              borderRadius="md"
+                              p={3}
+                            >
                               <HStack justify="space-between" mb={2}>
                                 <Text fontSize="sm" fontWeight="medium">
-                                  {pair.source.name} (v{pair.source.current_version}) {"->"}{" "}
-                                  {pair.target.name} (v{pair.target.current_version})
+                                  {pair.source.name} (v
+                                  {pair.source.current_version}) {"->"}{" "}
+                                  {pair.target.name} (v
+                                  {pair.target.current_version})
                                 </Text>
                                 {/* F-3.2: Per-pair progress badge */}
                                 {pairProgress && pairProgress.total > 0 && (
@@ -646,10 +696,13 @@ function HybridUDMSetupDialog({
                                     }
                                     variant="subtle"
                                   >
-                                    {t("flow.hybridSetup.mappingProgress.mapped", {
-                                      mapped: String(pairProgress.mapped),
-                                      total: String(pairProgress.total),
-                                    })}
+                                    {t(
+                                      "flow.hybridSetup.mappingProgress.mapped",
+                                      {
+                                        mapped: String(pairProgress.mapped),
+                                        total: String(pairProgress.total),
+                                      },
+                                    )}
                                   </Badge>
                                 )}
                               </HStack>
@@ -661,7 +714,11 @@ function HybridUDMSetupDialog({
                               ) : (
                                 <VStack align="stretch" gap={2}>
                                   {pair.targetFocalVars.map((targetVar) => (
-                                    <Flex key={`${pair.key}:${targetVar}`} align="center" gap={3}>
+                                    <Flex
+                                      key={`${pair.key}:${targetVar}`}
+                                      align="center"
+                                      gap={3}
+                                    >
                                       <Box minW="120px">
                                         <Text fontSize="sm">{targetVar}</Text>
                                       </Box>
@@ -669,8 +726,9 @@ function HybridUDMSetupDialog({
                                       <NativeSelect.Root size="sm" flex="1">
                                         <NativeSelect.Field
                                           value={
-                                            mappingSelections[pair.key]?.[targetVar] ||
-                                            LOCAL_EXEMPT_TOKEN
+                                            mappingSelections[pair.key]?.[
+                                              targetVar
+                                            ] || LOCAL_EXEMPT_TOKEN
                                           }
                                           onChange={(e) =>
                                             updatePairMapping(
@@ -683,22 +741,31 @@ function HybridUDMSetupDialog({
                                           <option value={LOCAL_EXEMPT_TOKEN}>
                                             {t("flow.hybridSetup.localExempt")}
                                           </option>
-                                          {pair.sourceComponents.map((sourceVar) => (
-                                            <option key={sourceVar} value={sourceVar}>
-                                              {sourceVar}
-                                            </option>
-                                          ))}
+                                          {pair.sourceComponents.map(
+                                            (sourceVar) => (
+                                              <option
+                                                key={sourceVar}
+                                                value={sourceVar}
+                                              >
+                                                {sourceVar}
+                                              </option>
+                                            ),
+                                          )}
                                         </NativeSelect.Field>
                                         <NativeSelect.Indicator />
                                       </NativeSelect.Root>
                                       <Tooltip
-                                        content={t("flow.hybridSetup.localExemptTooltip")}
+                                        content={t(
+                                          "flow.hybridSetup.localExemptTooltip",
+                                        )}
                                         placement="top"
                                       >
                                         <IconButton
                                           variant="ghost"
                                           size="2xs"
-                                          aria-label={t("flow.hybridSetup.localExemptTooltip")}
+                                          aria-label={t(
+                                            "flow.hybridSetup.localExemptTooltip",
+                                          )}
                                         >
                                           <FiInfo />
                                         </IconButton>

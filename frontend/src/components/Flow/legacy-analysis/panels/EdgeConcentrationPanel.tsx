@@ -20,12 +20,12 @@ import {
   type ASM1ResultData,
   calculateEdgeConcentrations,
 } from "../asm1-analysis"
+import { normalizeIndex, normalizeIndexRange } from "../sliderUtils"
 import {
+  type UDMResultData,
   calculateUDMEdgeConcentrations,
   getUDMAvailableVariables,
-  type UDMResultData,
 } from "../udm-analysis"
-import { normalizeIndex, normalizeIndexRange } from "../sliderUtils"
 
 type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
 
@@ -66,10 +66,16 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
 
   const availableVariables = useMemo(() => {
     if (modelType === "udm") {
-      const udmVariables = getUDMAvailableVariables(resultData as UDMResultData, {
-        exclude: ["volume"],
-      })
-      return [{ name: "flow_rate", label: t("flow.analysis.flowRate") }, ...udmVariables]
+      const udmVariables = getUDMAvailableVariables(
+        resultData as UDMResultData,
+        {
+          exclude: ["volume"],
+        },
+      )
+      return [
+        { name: "flow_rate", label: t("flow.analysis.flowRate") },
+        ...udmVariables,
+      ]
     }
 
     const modelConfig = getModelConfig(modelType)
@@ -84,7 +90,10 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
           })(),
         })) || []
 
-    return [{ name: "flow_rate", label: t("flow.analysis.flowRate") }, ...modelVariables]
+    return [
+      { name: "flow_rate", label: t("flow.analysis.flowRate") },
+      ...modelVariables,
+    ]
   }, [modelType, resultData, language, t])
 
   const timestampsLength = resultData.timestamps?.length || 0
@@ -92,7 +101,10 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
   const lastDataIndex = timestampsLength > 0 ? timestampsLength - 1 : 0
   const isSliderDisabled = timestampsLength <= 1
 
-  const minStepsBetween = useMemo(() => Math.min(2, maxTimeIndex), [maxTimeIndex])
+  const minStepsBetween = useMemo(
+    () => Math.min(2, maxTimeIndex),
+    [maxTimeIndex],
+  )
   const effectiveMinStepsBetween = useMemo(
     () => (isSliderDisabled ? 0 : minStepsBetween),
     [isSliderDisabled, minStepsBetween],
@@ -143,7 +155,8 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
 
     setSelectedVariables((prev) => {
       const filtered = prev.filter((variable) => validVariableSet.has(variable))
-      if (filtered.length > 0 || availableVariables.length === 0) return filtered
+      if (filtered.length > 0 || availableVariables.length === 0)
+        return filtered
 
       const nonFlowVariables = availableVariables.filter(
         (item) => item.name !== "flow_rate",
@@ -263,8 +276,12 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
             >
               {availableEdges.map((edgeId) => {
                 const edge = edges.find((item) => item.id === edgeId)
-                const sourceNode = edge ? resultData.node_data[edge.source] : null
-                const targetNode = edge ? resultData.node_data[edge.target] : null
+                const sourceNode = edge
+                  ? resultData.node_data[edge.source]
+                  : null
+                const targetNode = edge
+                  ? resultData.node_data[edge.target]
+                  : null
                 const edgeLabel =
                   sourceNode && targetNode && edge
                     ? `${sourceNode.label || edge.source} -> ${targetNode.label || edge.target}`
@@ -348,7 +365,8 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
                   </Slider.Control>
                 </Slider.Root>
                 <Text minW="100px">
-                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) || 0}{" "}
+                  {resultData.timestamps?.[safeSelectedTimeIndex]?.toFixed(2) ||
+                    0}{" "}
                   {t("flow.simulation.unit.hours")}
                 </Text>
               </HStack>

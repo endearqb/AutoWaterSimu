@@ -25,7 +25,6 @@ export type DesktopIconLink = {
 export const topNavLinks: NavLink[] = [
   { label: "Product OS", to: "/openflow" },
   { label: "Pricing", to: "/calculators" },
-  { label: "Knowledge (DeepResearch)", to: "/docs" },
   { label: "Community", to: "/updates" },
   { label: "Company", to: "/showcase" },
 ]
@@ -37,13 +36,6 @@ export const desktopIconsLeft: DesktopIconLink[] = [
     label: "home",
     iconSrc: "/assets/icons/01_home.png",
     window: { kind: "home" },
-  },
-  {
-    id: "docs",
-    labelKey: "posthogDemo.desktop.docs",
-    label: "Knowledge (DeepResearch)",
-    iconSrc: "/assets/icons/02_docs.png",
-    window: { kind: "url", title: "Knowledge (DeepResearch)", url: "/docs" },
   },
   {
     id: "lsi",
@@ -107,17 +99,6 @@ export const desktopIconsLeft: DesktopIconLink[] = [
     labelKey: "posthogDemo.desktop.dashboard",
     iconSrc: "/assets/icons/33_dashboard.png",
     window: { kind: "asm1SlimDashboard" },
-  },
-  {
-    label: "DeepResearch (Web)",
-    id: "ai-deep-research",
-    labelKey: "posthogDemo.desktop.aiDeepResearch",
-    iconSrc: "/assets/icons/15_ai_deepresearch.png",
-    window: {
-      kind: "url",
-      title: "DeepResearch (Web)",
-      url: "/ai-deep-research",
-    },
   },
 ]
 

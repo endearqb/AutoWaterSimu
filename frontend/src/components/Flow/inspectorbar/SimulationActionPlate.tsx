@@ -997,138 +997,139 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   </Portal>
                 </Field.Root>
               )}
-
-              
             </HStack>
           </Box>
 
           <Box display="flex" justifyContent="flex-end" gap={2}>
             {supportsTimeSegments && (
-                <Field.Root display="inline-flex" w="auto">
-                  <Button
-                    size="xs"
-                    {...getToggleButtonStyles(isSegmentsOpen)}
-                    aria-label={t("flow.actionPlate.segmentsAriaLabel")}
-                    ref={segmentsBtnRef}
-                    onMouseEnter={() => setShowSegmentsLabel(true)}
-                    onMouseLeave={() => setShowSegmentsLabel(false)}
-                    onClick={() => {
-                      if (!isSegmentsOpen) {
-                        setIsSegmentsOpen(true)
-                        setIsSegmentsClosing(false)
-                        closeSteps()
-                        closeResample()
-                        closeHours()
-                        closeBubble()
-                        closePalette()
-                      } else {
-                        closeSegments()
-                      }
-                    }}
-                  >
-                    <HStack gap={1}>
-                      <FiSliders />
-                      <Text
-                        fontSize="xs"
-                        whiteSpace="nowrap"
-                        overflow="hidden"
-                        style={{
-                          maxWidth: showSegmentsLabel ? "84px" : "0px",
-                          opacity: showSegmentsLabel ? 1 : 0,
-                          transition: "max-width 0.2s ease, opacity 0.2s ease",
-                        }}
-                      >
-                        {t("flow.simulation.timeSegments.shortLabel")}
-                      </Text>
-                      <Text
-                        fontSize="xs"
-                        whiteSpace="nowrap"
-                        overflow="hidden"
-                        style={{
-                          maxWidth: showSegmentsLabel ? "0px" : "110px",
-                          opacity: showSegmentsLabel ? 0 : 1,
-                          transition: "max-width 0.2s ease, opacity 0.2s ease",
-                        }}
-                      >
-                        {timeSegments.length}{" "}
-                        {t("flow.simulation.timeSegments.segmentCountSuffix")}
-                      </Text>
-                    </HStack>
-                  </Button>
-                  <Portal container={portalRef}>
-                    {isSegmentsOpen &&
-                      (() => {
-                        const canvasRect =
-                          canvasContainerRef.current?.getBoundingClientRect()
-                        const frameLeft = canvasRect?.left ?? 12
-                        const frameTop = canvasRect?.top ?? 12
-                        const frameWidth =
-                          canvasRect?.width ?? Math.max(420, window.innerWidth - 24)
-                        const frameHeight =
-                          canvasRect?.height ?? Math.max(360, window.innerHeight - 24)
-                        const desiredWidth = Math.min(
-                          window.innerWidth - 24,
-                          Math.round(frameWidth * 0.8),
-                        )
-                        const desiredHeight = Math.min(
-                          window.innerHeight - 24,
-                          Math.round(frameHeight * 0.8),
-                        )
-                        const centeredLeft =
-                          frameLeft + Math.max(0, (frameWidth - desiredWidth) / 2)
-                        const centeredTop =
-                          frameTop + Math.max(0, (frameHeight - desiredHeight) / 2)
-                        const left = Math.min(
-                          Math.max(12, centeredLeft),
-                          Math.max(12, window.innerWidth - desiredWidth - 12),
-                        )
-                        const top = Math.min(
-                          Math.max(12, centeredTop),
-                          Math.max(12, window.innerHeight - desiredHeight - 12),
-                        )
-                        return (
+              <Field.Root display="inline-flex" w="auto">
+                <Button
+                  size="xs"
+                  {...getToggleButtonStyles(isSegmentsOpen)}
+                  aria-label={t("flow.actionPlate.segmentsAriaLabel")}
+                  ref={segmentsBtnRef}
+                  onMouseEnter={() => setShowSegmentsLabel(true)}
+                  onMouseLeave={() => setShowSegmentsLabel(false)}
+                  onClick={() => {
+                    if (!isSegmentsOpen) {
+                      setIsSegmentsOpen(true)
+                      setIsSegmentsClosing(false)
+                      closeSteps()
+                      closeResample()
+                      closeHours()
+                      closeBubble()
+                      closePalette()
+                    } else {
+                      closeSegments()
+                    }
+                  }}
+                >
+                  <HStack gap={1}>
+                    <FiSliders />
+                    <Text
+                      fontSize="xs"
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                      style={{
+                        maxWidth: showSegmentsLabel ? "84px" : "0px",
+                        opacity: showSegmentsLabel ? 1 : 0,
+                        transition: "max-width 0.2s ease, opacity 0.2s ease",
+                      }}
+                    >
+                      {t("flow.simulation.timeSegments.shortLabel")}
+                    </Text>
+                    <Text
+                      fontSize="xs"
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                      style={{
+                        maxWidth: showSegmentsLabel ? "0px" : "110px",
+                        opacity: showSegmentsLabel ? 0 : 1,
+                        transition: "max-width 0.2s ease, opacity 0.2s ease",
+                      }}
+                    >
+                      {timeSegments.length}{" "}
+                      {t("flow.simulation.timeSegments.segmentCountSuffix")}
+                    </Text>
+                  </HStack>
+                </Button>
+                <Portal container={portalRef}>
+                  {isSegmentsOpen &&
+                    (() => {
+                      const canvasRect =
+                        canvasContainerRef.current?.getBoundingClientRect()
+                      const frameLeft = canvasRect?.left ?? 12
+                      const frameTop = canvasRect?.top ?? 12
+                      const frameWidth =
+                        canvasRect?.width ??
+                        Math.max(420, window.innerWidth - 24)
+                      const frameHeight =
+                        canvasRect?.height ??
+                        Math.max(360, window.innerHeight - 24)
+                      const desiredWidth = Math.min(
+                        window.innerWidth - 24,
+                        Math.round(frameWidth * 0.8),
+                      )
+                      const desiredHeight = Math.min(
+                        window.innerHeight - 24,
+                        Math.round(frameHeight * 0.8),
+                      )
+                      const centeredLeft =
+                        frameLeft + Math.max(0, (frameWidth - desiredWidth) / 2)
+                      const centeredTop =
+                        frameTop +
+                        Math.max(0, (frameHeight - desiredHeight) / 2)
+                      const left = Math.min(
+                        Math.max(12, centeredLeft),
+                        Math.max(12, window.innerWidth - desiredWidth - 12),
+                      )
+                      const top = Math.min(
+                        Math.max(12, centeredTop),
+                        Math.max(12, window.innerHeight - desiredHeight - 12),
+                      )
+                      return (
+                        <Box
+                          ref={segmentsOverlayRef}
+                          position="fixed"
+                          left={`${left}px`}
+                          top={`${top}px`}
+                          width={`${desiredWidth}px`}
+                          height={`${desiredHeight}px`}
+                          zIndex={2000}
+                          pointerEvents="auto"
+                          animation={`${isSegmentsClosing ? fadeOutUp : fadeInUp} 180ms ease`}
+                        >
                           <Box
-                            ref={segmentsOverlayRef}
-                            position="fixed"
-                            left={`${left}px`}
-                            top={`${top}px`}
-                            width={`${desiredWidth}px`}
-                            height={`${desiredHeight}px`}
-                            zIndex={2000}
-                            pointerEvents="auto"
-                            animation={`${isSegmentsClosing ? fadeOutUp : fadeInUp} 180ms ease`}
+                            {...getGlassPanelStyles({ hovered: true })}
+                            bg="hsla(0,0%,100%,0.88)"
+                            borderRadius="xl"
+                            borderWidth="1px"
+                            borderColor="whiteAlpha.700"
+                            p={3}
+                            h="100%"
+                            overflowY="auto"
                           >
-                            <Box
-                              {...getGlassPanelStyles({ hovered: true })}
-                              bg="hsla(0,0%,100%,0.88)"
-                              borderRadius="xl"
-                              borderWidth="1px"
-                              borderColor="whiteAlpha.700"
-                              p={3}
-                              h="100%"
-                              overflowY="auto"
-                            >
-                              <TimeSegmentPlanEditor
-                                timeSegments={timeSegments}
-                                edges={flowEdges}
-                                nodes={flowNodes}
-                                parameterNames={segmentParameterNames}
-                                simulationHours={simulationHours}
-                                edgeParameterConfigs={edgeParameterConfigs}
-                                setTimeSegments={setTimeSegments}
-                                addTimeSegment={addTimeSegment}
-                                updateTimeSegment={updateTimeSegment}
-                                removeTimeSegment={removeTimeSegment}
-                                copyTimeSegment={copyTimeSegment}
-                                reorderTimeSegments={reorderTimeSegments}
-                              />
-                            </Box>
+                            <TimeSegmentPlanEditor
+                              timeSegments={timeSegments}
+                              edges={flowEdges}
+                              nodes={flowNodes}
+                              parameterNames={segmentParameterNames}
+                              simulationHours={simulationHours}
+                              edgeParameterConfigs={edgeParameterConfigs}
+                              setTimeSegments={setTimeSegments}
+                              addTimeSegment={addTimeSegment}
+                              updateTimeSegment={updateTimeSegment}
+                              removeTimeSegment={removeTimeSegment}
+                              copyTimeSegment={copyTimeSegment}
+                              reorderTimeSegments={reorderTimeSegments}
+                            />
                           </Box>
-                        )
-                      })()}
-                  </Portal>
-                </Field.Root>
-              )}
+                        </Box>
+                      )
+                    })()}
+                </Portal>
+              </Field.Root>
+            )}
             {config.hours.visible && (
               <Field.Root>
                 <Button

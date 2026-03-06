@@ -82,20 +82,6 @@ export const MiddayHead = () => {
 
   const links = [
     {
-      title: t("landing.nav.knowledge"),
-      type: "dropdown",
-      items: [
-        {
-          title: t("landing.nav.deepResearch"),
-          path: "/ai-deep-research",
-        },
-        {
-          title: t("landing.nav.calculators"),
-          path: "/calculators",
-        },
-      ],
-    },
-    {
       title: t("landing.nav.flow"),
       path: "/openflow",
     },
@@ -179,43 +165,6 @@ export const MiddayHead = () => {
           {/* Desktop Navigation */}
           <HStack gap={2} fontWeight="medium" fontSize="sm">
             {links.map((link) => {
-              if (link.type === "dropdown") {
-                return (
-                  <Menu.Root key={link.title}>
-                    <Menu.Trigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        fontSize="sm"
-                        fontWeight="medium"
-                        px={3}
-                        py={2}
-                        color={textColor}
-                        _hover={{ opacity: 0.7 }}
-                      >
-                        {link.title}
-                      </Button>
-                    </Menu.Trigger>
-                    <Portal>
-                      <Menu.Positioner>
-                        <Menu.Content>
-                          {link.items?.map((item) => (
-                            <Menu.Item
-                              key={item.path}
-                              value={item.path}
-                              asChild
-                            >
-                              <Link to={item.path} onClick={handleOnClick}>
-                                {item.title}
-                              </Link>
-                            </Menu.Item>
-                          ))}
-                        </Menu.Content>
-                      </Menu.Positioner>
-                    </Portal>
-                  </Menu.Root>
-                )
-              }
               return (
                 <Text
                   key={link.path}
@@ -378,35 +327,6 @@ export const MiddayHead = () => {
               align="stretch"
             >
               {links.map((link) => {
-                if (link.type === "dropdown") {
-                  return (
-                    <Box key={link.title}>
-                      <MotionText
-                        variants={itemVariant}
-                        fontSize="xl"
-                        color="gray.600"
-                        fontWeight="semibold"
-                        mb={2}
-                      >
-                        {link.title}
-                      </MotionText>
-                      {link.items?.map((item) => (
-                        <MotionText
-                          key={item.path}
-                          variants={itemVariant}
-                          asChild
-                          cursor="pointer"
-                          onClick={handleToggleMenu}
-                          ml={4}
-                          fontSize="lg"
-                          color="gray.500"
-                        >
-                          <Link to={item.path}>{item.title}</Link>
-                        </MotionText>
-                      ))}
-                    </Box>
-                  )
-                }
                 return (
                   <MotionText
                     key={link.path}

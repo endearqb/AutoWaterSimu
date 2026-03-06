@@ -35,7 +35,8 @@ const toNumber = (value: unknown): number | null => {
 
 const getSliderBounds = (param: UDMParameterDef, value: number) => {
   const min = param.min ?? Math.min(0, param.defaultValue, value)
-  const max = param.max ?? Math.max(1, param.defaultValue * 2, value * 2, min + 1)
+  const max =
+    param.max ?? Math.max(1, param.defaultValue * 2, value * 2, min + 1)
   const safeMax = max > min ? max : min + 1
   const step = Math.max(
     (safeMax - min) / 200,
@@ -127,10 +128,10 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
   const getParameterValue = (param: UDMParameterDef): number => {
     if (!selectedNode?.data) return param.defaultValue
 
-    const paramValues = (selectedNode.data.udmParameterValues as
-      | Record<string, number>
-      | undefined) ||
-      {}
+    const paramValues =
+      (selectedNode.data.udmParameterValues as
+        | Record<string, number>
+        | undefined) || {}
     const fromMap = toNumber(paramValues[param.name])
     if (fromMap !== null) return fromMap
 

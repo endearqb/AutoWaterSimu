@@ -37,15 +37,6 @@ export const Footer = () => {
     { name: t("landing.footer.features.flowEditor"), href: "/openflow" },
   ]
 
-  const knowledgeCategories = [
-    { name: t("landing.footer.knowledge.process"), href: "/knowledge" },
-    { name: t("landing.footer.knowledge.asmTheory"), href: "/knowledge" },
-    { name: t("landing.footer.knowledge.materialBalance"), href: "/knowledge" },
-    { name: t("landing.footer.knowledge.designGuide"), href: "/knowledge" },
-    { name: t("landing.footer.knowledge.parameterGuide"), href: "/knowledge" },
-    { name: t("landing.footer.knowledge.caseStudies"), href: "/knowledge" },
-  ]
-
   const company = [
     { name: t("landing.footer.company.about"), href: "/about" },
     { name: t("landing.footer.company.team"), href: "/team" },
@@ -141,37 +132,6 @@ export const Footer = () => {
                         cursor="pointer"
                       >
                         {feature.name}
-                      </Text>
-                    </RouterLink>
-                  ))}
-                </VStack>
-              </VStack>
-
-              {/* Knowledge */}
-              <VStack align="start" gap={4}>
-                <Text
-                  fontWeight="medium"
-                  fontSize="lg"
-                  color="gray.900"
-                  _dark={{ color: "white" }}
-                >
-                  {t("landing.footer.knowledge.title")}
-                </Text>
-                <VStack align="start" gap={2}>
-                  {knowledgeCategories.map((category, index) => (
-                    <RouterLink key={index} to={category.href}>
-                      <Text
-                        color="gray.600"
-                        _dark={{ color: "gray.400" }}
-                        _hover={{
-                          color: "blue.600",
-                          _dark: { color: "blue.400" },
-                        }}
-                        transition="color 0.2s ease"
-                        fontSize="sm"
-                        cursor="pointer"
-                      >
-                        {category.name}
                       </Text>
                     </RouterLink>
                   ))}

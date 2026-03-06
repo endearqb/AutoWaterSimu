@@ -5,7 +5,7 @@ import { getModelConfig } from "../../../../config/modelConfigs"
 import { useI18n } from "../../../../i18n"
 import { Radio, RadioGroup } from "../../../ui/radio"
 import type { ASM1ResultData } from "../asm1-analysis"
-import { getUDMAvailableVariables, type UDMResultData } from "../udm-analysis"
+import { type UDMResultData, getUDMAvailableVariables } from "../udm-analysis"
 
 type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
 
