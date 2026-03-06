@@ -507,6 +507,7 @@ export interface I18nMessages {
       hybrid: {
         modelLabel: string
         selectModelPlaceholder: string
+        unbindModel: string
         errors: {
           bindModelRequired: string
           currentModelNotInSetup: string
@@ -730,6 +731,20 @@ export interface I18nMessages {
       pairMappingEmpty: string
       targetNoFocal: string
       localExempt: string
+      localExemptTooltip: string
+      tabs: {
+        selectModels: string
+        pairMapping: string
+      }
+      modelPreview: {
+        components: string
+        processes: string
+        notLoaded: string
+      }
+      mappingProgress: {
+        overall: string
+        mapped: string
+      }
       applyButton: string
       savedConfigs: {
         title: string

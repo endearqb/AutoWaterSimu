@@ -331,6 +331,28 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
 
   const handleHybridModelChange = (nextModelKey: string) => {
     if (!selectedNode || selectedNode.type !== "udm") return
+
+    // Unbind: clear all UDM-related data keys
+    if (!nextModelKey) {
+      const keysToRemove = [
+        "udmModel", "udmModelSnapshot", "udmComponents",
+        "udmComponentNames", "udmProcesses", "udmParameters",
+        "udmParameterValues", "udmModelId", "udmModelVersion", "udmModelHash",
+      ]
+      const updatedNodes = nodes.map((node) => {
+        if (node.id !== selectedNode.id) return node
+        const cleaned = { ...(node.data as Record<string, unknown>) }
+        keysToRemove.forEach((k) => { delete cleaned[k] })
+        return { ...node, data: cleaned }
+      })
+      setNodes(updatedNodes)
+      const updatedSelectedNode =
+        updatedNodes.find((node) => node.id === selectedNode.id) || null
+      setSelectedNode(updatedSelectedNode)
+      setHybridModelError("")
+      return
+    }
+
     const model = hybridModelMap.get(nextModelKey)
     if (!model) {
       setHybridModelError(t("flow.propertyPanel.hybrid.errors.selectedModelInvalid"))
@@ -461,8 +483,8 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
                         value={selectedNodeModelKey}
                         onChange={(e) => handleHybridModelChange(e.target.value)}
                       >
-                        <option value="" disabled>
-                          {t("flow.propertyPanel.hybrid.selectModelPlaceholder")}
+                        <option value="">
+                          {t("flow.propertyPanel.hybrid.unbindModel")}
                         </option>
                         {hybridModels.map((model) => {
                           const key = buildModelKey(model.model_id, model.version)

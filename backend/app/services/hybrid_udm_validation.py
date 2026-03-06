@@ -4,6 +4,10 @@ import ast
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
+from app.services.udm_expression import ALLOWED_FUNCTIONS, RESERVED_CONSTANTS
+
+_BUILTIN_SYMBOLS = ALLOWED_FUNCTIONS | RESERVED_CONSTANTS
+
 
 def build_model_key(model_id: str, version: int) -> str:
     return f"{model_id}@{version}"
@@ -97,7 +101,10 @@ def _extract_focal_variables(
         if not expr:
             continue
         identifiers = _extract_identifiers(expr)
-        focal_vars.update(name for name in identifiers if name in component_names)
+        focal_vars.update(
+            name for name in identifiers
+            if name in component_names and name not in _BUILTIN_SYMBOLS
+        )
     return focal_vars
 
 

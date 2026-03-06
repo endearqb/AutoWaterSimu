@@ -259,7 +259,7 @@ export const validateTimeSegments = (params: {
   if (!isClose(lastSegment.endHour, parsedHours)) {
     errors.push({
       code: "SEGMENT_END_NOT_EQUAL_HOURS",
-      message: "Segments must end exactly at simulation hours",
+      message: `Segments must end exactly at simulation hours (${parsedHours}h)`,
       segmentId: lastSegment.id,
     })
   }

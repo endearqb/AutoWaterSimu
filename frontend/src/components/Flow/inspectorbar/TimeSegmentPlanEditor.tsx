@@ -208,8 +208,12 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
     })
   }
 
+  const MAX_SPLIT_COUNT = 100
+  const isSplitValid =
+    Number.isFinite(splitCount) && splitCount >= 1 && splitCount <= MAX_SPLIT_COUNT
+
   const handleQuickSplit = () => {
-    if (!setTimeSegments || simulationHours <= 0 || splitCount < 1) return
+    if (!setTimeSegments || simulationHours <= 0 || !isSplitValid) return
     const n = Math.max(1, Math.round(splitCount))
     const step = simulationHours / n
     const segments: Partial<TimeSegment>[] = Array.from({ length: n }, (_, i) => ({
@@ -337,14 +341,18 @@ function TimeSegmentPlanEditor(props: TimeSegmentPlanEditorProps) {
                     size="xs"
                     type="number"
                     min={1}
+                    max={MAX_SPLIT_COUNT}
                     w="60px"
                     value={splitCount}
-                    onChange={(e) => setSplitCount(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      setSplitCount(Number.isFinite(val) ? val : 1)
+                    }}
                   />
                   <Button
                     size="xs"
                     onClick={handleQuickSplit}
-                    disabled={!setTimeSegments || simulationHours <= 0 || splitCount < 1}
+                    disabled={!setTimeSegments || simulationHours <= 0 || !isSplitValid}
                   >
                     {t("flow.simulation.timeSegments.splitConfirm")}
                   </Button>

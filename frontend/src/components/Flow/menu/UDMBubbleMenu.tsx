@@ -32,6 +32,8 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
   const [isHybridSetupOpen, setIsHybridSetupOpen] = useState(false)
 
   const selectedNode = useUDMFlowStore((state) => state.selectedNode)
+  const flowEdges = useUDMFlowStore((state) => state.edges)
+  const flowNodes = useUDMFlowStore((state) => state.nodes)
   const selectedModelId =
     selectedNode?.type === "udm"
       ? (((selectedNode.data as any)?.udmModelId ||
@@ -227,6 +229,8 @@ const UDMBubbleMenu: React.FC<UDMBubbleMenuProps> = ({
       <HybridUDMSetupDialog
         isOpen={isHybridSetupOpen}
         onClose={() => setIsHybridSetupOpen(false)}
+        flowEdges={flowEdges}
+        flowNodes={flowNodes}
         onOpenHybridPage={() => {
           setIsHybridSetupOpen(false)
           navigate({ to: "/hybrid" })
