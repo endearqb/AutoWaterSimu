@@ -28,9 +28,6 @@ Thank you for providing API resource support.
 ### Flow Theme & Simulation Panel
 ![](frontend/public/assets/images/newflowtheme.png)
 
-### DeepResearch Knowledge
-![](frontend/public/assets/images/knowledge.png)
-
 ### Backend Core Logic (AI‑generated handwritten derivation)
 This diagram illustrates the core logic used for multi‑tank simulation computations.
 
@@ -102,7 +99,6 @@ The repository root is the AutoWaterSimu project root. The core structure is:
 - `frontend/`: frontend React single‑page app
   - `src/components/Flow/`: flow editor and related UI
   - `src/routes/`: page routes (material balance pages, model config pages, etc.)
-  - `content/knowledge/`: knowledge content related to environmental engineering and water treatment
 - `docs/`: usage and development documentation
 - `scripts/`: helper scripts (build, test, DB initialization, etc.)
 - Others:

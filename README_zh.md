@@ -30,9 +30,6 @@
 ### 流程图新主题与模拟面板
 ![](frontend/public/assets/images/newflowtheme.png)
 
-### DeepResearch 知识库
-![](frontend/public/assets/images/knowledge.png)
-
 ### 后端核心逻辑（AI 生成的手绘推导式）
 该图用于展示多池仿真模拟计算的核心实现逻辑（后端核心代码对应的推导思路）。
 
@@ -102,7 +99,6 @@
 - `frontend/`：前端 React 单页应用
   - `src/components/Flow/`：流程图编辑器与相关 UI
   - `src/routes/`：页面路由（含物料平衡页面、模型配置页面等）
-  - `content/knowledge/`：与环境工程、水处理相关的知识库内容
 - `docs/`：项目使用与开发文档
 - `scripts/`：辅助脚本（构建、测试、数据库初始化等）
 - 其他：
