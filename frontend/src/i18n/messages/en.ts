@@ -1334,6 +1334,50 @@ export const enMessages: I18nMessages = {
         info: "Page {current} / {total}",
       },
     },
+    tutorial: {
+      sectionTitle: "Petersen Matrix Tutorial",
+      sectionSubtitle:
+        "From intuitive understanding to online simulation — master activated sludge models step by step",
+      continueLearning: "Continue Learning",
+      startLearning: "Start Learning",
+      viewAnswer: "View Answer",
+      runCase: "Run Case",
+      comingSoon: "Coming Soon",
+      prerequisite: "Requires: {name}",
+      completed: "Completed",
+      minutes: "{n} min",
+      difficulty: {
+        beginner: "Beginner",
+        intermediate: "Intermediate",
+        full: "Full",
+      },
+      templateType: {
+        exercise: "Exercise",
+        answer: "Answer",
+        case: "Case",
+        guide: "Guide",
+      },
+      chapters: {
+        "chapter-1": {
+          title: "Ledger Intuition: Arrow Matrix",
+          subtitle:
+            "Understand what increases and decreases in a reaction process",
+        },
+        "chapter-2": {
+          title: "Your First Real Matrix",
+          subtitle: "Understand Y_H yield coefficient and Monod kinetics",
+        },
+        "chapter-3": {
+          title: "Continuity Check: COD/N Reconciliation",
+          subtitle:
+            "Learn to verify matrix correctness with conservation principles",
+        },
+        "chapter-7": {
+          title: "Basic CSTR Simulation",
+          subtitle: "From matrix to a runnable simulation model",
+        },
+      },
+    },
     modelParams: {
       asm1slim: {
         volume: {

@@ -1276,6 +1276,36 @@ export interface I18nMessages {
         info: string
       }
     }
+    tutorial: {
+      sectionTitle: string
+      sectionSubtitle: string
+      continueLearning: string
+      startLearning: string
+      viewAnswer: string
+      runCase: string
+      comingSoon: string
+      prerequisite: string
+      completed: string
+      minutes: string
+      difficulty: {
+        beginner: string
+        intermediate: string
+        full: string
+      }
+      templateType: {
+        exercise: string
+        answer: string
+        case: string
+        guide: string
+      }
+      chapters: Record<
+        string,
+        {
+          title: string
+          subtitle: string
+        }
+      >
+    }
     modelParams: {
       asm1: Record<string, { label: string; description?: string }>
       asm1slim: Record<string, { label: string; description?: string }>

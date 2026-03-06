@@ -1292,6 +1292,47 @@ export const zhMessages: I18nMessages = {
         info: "第 {current} / {total} 页",
       },
     },
+    tutorial: {
+      sectionTitle: "Petersen 矩阵教程",
+      sectionSubtitle: "从直觉理解到在线仿真，逐步掌握活性污泥模型",
+      continueLearning: "继续学习",
+      startLearning: "开始学习",
+      viewAnswer: "查看答案",
+      runCase: "运行案例",
+      comingSoon: "即将推出",
+      prerequisite: "需先完成: {name}",
+      completed: "已完成",
+      minutes: "{n} 分钟",
+      difficulty: {
+        beginner: "入门",
+        intermediate: "进阶",
+        full: "完整",
+      },
+      templateType: {
+        exercise: "练习",
+        answer: "答案",
+        case: "案例",
+        guide: "讲解",
+      },
+      chapters: {
+        "chapter-1": {
+          title: "记账本直觉：箭头矩阵",
+          subtitle: "理解反应过程中谁增加、谁减少",
+        },
+        "chapter-2": {
+          title: "你的第一张真矩阵",
+          subtitle: "理解 Y_H 产率系数与 Monod 动力学",
+        },
+        "chapter-3": {
+          title: "连续性检查：COD/N 对账",
+          subtitle: "学会用守恒原理验证矩阵正确性",
+        },
+        "chapter-7": {
+          title: "基础 CSTR 仿真",
+          subtitle: "从矩阵到可运行的仿真模型",
+        },
+      },
+    },
     modelParams: {
       asm1slim: {
         volume: { label: "体积(m³)", description: "反应器体积，单位：立方米" },

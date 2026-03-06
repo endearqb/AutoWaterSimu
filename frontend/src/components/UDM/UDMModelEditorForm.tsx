@@ -82,6 +82,7 @@ type ProcessEditorTarget =
 
 interface UDMModelEditorFormProps {
   modelId?: string
+  lessonKey?: string
   onModelIdChange?: (modelId: string) => void
   onModelSaved?: (model: UDMModelDetailPublic) => void
   onBack?: () => void
@@ -163,6 +164,7 @@ const ACTION_COL_W = "96px"
 
 export function UDMModelEditorForm({
   modelId,
+  lessonKey: _lessonKey,
   onModelIdChange,
   onModelSaved,
   onBack,
@@ -597,9 +599,7 @@ export function UDMModelEditorForm({
     parameters.forEach((param) => {
       const paramName = String(param.name || "").trim()
       if (!paramName) return
-      const value = Number.parseFloat(
-        String(param.default_value ?? "0"),
-      )
+      const value = Number.parseFloat(String(param.default_value ?? "0"))
       parameterValues[paramName] = Number.isFinite(value) ? value : 0
     })
 

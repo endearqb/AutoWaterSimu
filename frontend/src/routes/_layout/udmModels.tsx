@@ -18,6 +18,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { FiSearch } from "react-icons/fi"
 
+import TutorialLessonsSection from "@/components/UDM/TutorialLessonsSection"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
 import { udmService } from "../../services/udmService"
@@ -169,6 +170,12 @@ function UDMModelsPage() {
       <Heading size="lg" pt={12}>
         {t("flow.udmModels.title")}
       </Heading>
+
+      <TutorialLessonsSection
+        onNavigateToEditor={(lessonKey) =>
+          navigate({ to: "/udmModelEditor", search: { lessonKey } })
+        }
+      />
 
       <Flex mt={6} gap={3} wrap="wrap" align="center">
         <Input

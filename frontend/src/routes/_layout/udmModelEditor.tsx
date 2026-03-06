@@ -5,6 +5,7 @@ import UDMModelEditorForm from "../../components/UDM/UDMModelEditorForm"
 
 const searchSchema = z.object({
   modelId: z.string().optional().catch(undefined),
+  lessonKey: z.string().optional().catch(undefined),
 })
 
 export const Route = createFileRoute("/_layout/udmModelEditor")({
@@ -14,11 +15,12 @@ export const Route = createFileRoute("/_layout/udmModelEditor")({
 
 function UDMModelEditorPage() {
   const navigate = useNavigate({ from: Route.fullPath })
-  const { modelId } = Route.useSearch()
+  const { modelId, lessonKey } = Route.useSearch()
 
   return (
     <UDMModelEditorForm
       modelId={modelId}
+      lessonKey={lessonKey}
       onModelIdChange={(nextModelId) =>
         navigate({
           to: "/udmModelEditor",
