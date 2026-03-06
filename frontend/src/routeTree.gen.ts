@@ -21,12 +21,9 @@ import { Route as LoginImport } from './routes/login'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as IndexImport } from './routes/index'
 import { Route as UpdatesIndexImport } from './routes/updates/index'
-import { Route as DocsIndexImport } from './routes/docs/index'
 import { Route as CalculatorsIndexImport } from './routes/calculators/index'
-import { Route as AiDeepResearchIndexImport } from './routes/ai-deep-research/index'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as UpdatesSlugImport } from './routes/updates/$slug'
-import { Route as AiDeepResearchArticleIdImport } from './routes/ai-deep-research/$articleId'
 import { Route as LayoutUdmModelsImport } from './routes/_layout/udmModels'
 import { Route as LayoutUdmModelEditorImport } from './routes/_layout/udmModelEditor'
 import { Route as LayoutUdmImport } from './routes/_layout/udm'
@@ -41,9 +38,6 @@ import { Route as LayoutAsm3Import } from './routes/_layout/asm3'
 import { Route as LayoutAsm1slimImport } from './routes/_layout/asm1slim'
 import { Route as LayoutAsm1Import } from './routes/_layout/asm1'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
-import { Route as LayoutKnowledgeIndexImport } from './routes/_layout/knowledge/index'
-import { Route as DocsSplatSlugImport } from './routes/docs/$...slug'
-import { Route as LayoutKnowledgeSplatSlugImport } from './routes/_layout/knowledge/$...slug'
 
 // Create/Update Routes
 
@@ -97,18 +91,8 @@ const UpdatesIndexRoute = UpdatesIndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const DocsIndexRoute = DocsIndexImport.update({
-  path: '/docs/',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const CalculatorsIndexRoute = CalculatorsIndexImport.update({
   path: '/calculators/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const AiDeepResearchIndexRoute = AiDeepResearchIndexImport.update({
-  path: '/ai-deep-research/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -119,11 +103,6 @@ const LayoutIndexRoute = LayoutIndexImport.update({
 
 const UpdatesSlugRoute = UpdatesSlugImport.update({
   path: '/updates/$slug',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const AiDeepResearchArticleIdRoute = AiDeepResearchArticleIdImport.update({
-  path: '/ai-deep-research/$articleId',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -194,21 +173,6 @@ const LayoutAsm1Route = LayoutAsm1Import.update({
 
 const LayoutAdminRoute = LayoutAdminImport.update({
   path: '/admin',
-  getParentRoute: () => LayoutRoute,
-} as any)
-
-const LayoutKnowledgeIndexRoute = LayoutKnowledgeIndexImport.update({
-  path: '/knowledge/',
-  getParentRoute: () => LayoutRoute,
-} as any)
-
-const DocsSplatSlugRoute = DocsSplatSlugImport.update({
-  path: '/docs/$/slug',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const LayoutKnowledgeSplatSlugRoute = LayoutKnowledgeSplatSlugImport.update({
-  path: '/knowledge/$/slug',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -308,10 +272,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutUdmModelsImport
       parentRoute: typeof LayoutImport
     }
-    '/ai-deep-research/$articleId': {
-      preLoaderRoute: typeof AiDeepResearchArticleIdImport
-      parentRoute: typeof rootRoute
-    }
     '/updates/$slug': {
       preLoaderRoute: typeof UpdatesSlugImport
       parentRoute: typeof rootRoute
@@ -320,33 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexImport
       parentRoute: typeof LayoutImport
     }
-    '/ai-deep-research/': {
-      preLoaderRoute: typeof AiDeepResearchIndexImport
-      parentRoute: typeof rootRoute
-    }
     '/calculators/': {
       preLoaderRoute: typeof CalculatorsIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/docs/': {
-      preLoaderRoute: typeof DocsIndexImport
       parentRoute: typeof rootRoute
     }
     '/updates/': {
       preLoaderRoute: typeof UpdatesIndexImport
       parentRoute: typeof rootRoute
-    }
-    '/docs/$/slug': {
-      preLoaderRoute: typeof DocsSplatSlugImport
-      parentRoute: typeof rootRoute
-    }
-    '/_layout/knowledge/': {
-      preLoaderRoute: typeof LayoutKnowledgeIndexImport
-      parentRoute: typeof LayoutImport
-    }
-    '/_layout/knowledge/$/slug': {
-      preLoaderRoute: typeof LayoutKnowledgeSplatSlugImport
-      parentRoute: typeof LayoutImport
     }
   }
 }
@@ -371,8 +311,6 @@ export const routeTree = rootRoute.addChildren([
     LayoutUdmModelEditorRoute,
     LayoutUdmModelsRoute,
     LayoutIndexRoute,
-    LayoutKnowledgeIndexRoute,
-    LayoutKnowledgeSplatSlugRoute,
   ]),
   LoginRoute,
   MiddayStyleRoute,
@@ -381,13 +319,9 @@ export const routeTree = rootRoute.addChildren([
   RecoverPasswordRoute,
   ResetPasswordRoute,
   SignupRoute,
-  AiDeepResearchArticleIdRoute,
   UpdatesSlugRoute,
-  AiDeepResearchIndexRoute,
   CalculatorsIndexRoute,
-  DocsIndexRoute,
   UpdatesIndexRoute,
-  DocsSplatSlugRoute,
 ])
 
 /* prettier-ignore-end */
