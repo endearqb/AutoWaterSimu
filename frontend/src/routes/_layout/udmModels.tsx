@@ -176,7 +176,9 @@ function UDMModelsPage() {
         return
       }
 
-      const created = await createFromTemplate.mutateAsync(lesson.seedTemplateKey)
+      const created = await createFromTemplate.mutateAsync(
+        lesson.seedTemplateKey,
+      )
       attachLessonModel(lesson.lessonKey, created.id)
       showSuccessToast(
         t("flow.udmModels.toast.createTemplateSuccess", {
@@ -218,9 +220,7 @@ function UDMModelsPage() {
         {t("flow.udmModels.title")}
       </Heading>
 
-      <TutorialLessonsSection
-        onOpenLesson={openTutorialLesson}
-      />
+      <TutorialLessonsSection onOpenLesson={openTutorialLesson} />
 
       <Flex mt={6} gap={3} wrap="wrap" align="center">
         <Input

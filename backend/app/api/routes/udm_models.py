@@ -25,6 +25,7 @@ from app.models import (
     UDMValidationResponse,
 )
 from app.services.udm_expression import validate_udm_definition
+from app.services.petersen_continuity import check_continuity
 from app.services.udm_seed_templates import (
     get_udm_seed_template,
     list_udm_seed_templates,
@@ -55,6 +56,7 @@ def _validate_definition_payload(
     components: list[dict[str, Any]],
     parameters: list[dict[str, Any]],
     processes: list[dict[str, Any]],
+    validation_mode: str = "teaching",
 ) -> UDMValidationResponse:
     component_names = [str(item.get("name", "")).strip() for item in components]
     parameter_names = [str(item.get("name", "")).strip() for item in parameters]
@@ -63,6 +65,13 @@ def _validate_definition_payload(
         components=component_names,
         processes=processes,
         declared_parameters=parameter_names,
+    )
+
+    continuity_checks = check_continuity(
+        components=components,
+        processes=processes,
+        parameters=parameters,
+        mode=validation_mode,
     )
 
     return UDMValidationResponse(
@@ -94,6 +103,7 @@ def _validate_definition_payload(
             for issue in result.warnings
         ],
         extracted_parameters=result.extracted_parameters,
+        continuity_checks=continuity_checks,
     )
 
 
@@ -239,6 +249,7 @@ def get_udm_templates(
 def validate_udm_model_definition(
     *,
     draft: UDMModelDefinitionDraft,
+    validation_mode: str = Query("teaching", description="连续性检查模式：strict / teaching / off"),
 ) -> Any:
     components = [item.model_dump() for item in draft.components]
     parameters = [item.model_dump() for item in draft.parameters]
@@ -248,6 +259,7 @@ def validate_udm_model_definition(
         components=components,
         parameters=parameters,
         processes=processes,
+        validation_mode=validation_mode,
     )
 
 

@@ -1317,6 +1317,29 @@ export const zhMessages: I18nMessages = {
         validation: "校验",
       },
       processHelp: "解释这个过程",
+      continuity: {
+        sectionTitle: "连续性检查",
+        dimensionLabels: {
+          COD: "COD 守恒",
+          N: "N 守恒",
+          ALK: "ALK 守恒",
+        },
+        statusLabels: {
+          pass: "通过",
+          warn: "警告",
+          error: "错误",
+        },
+        emptyHint: "点击「校验」后将显示连续性检查结果",
+        jumpToProcess: "跳到该过程",
+        balanceLabel: "平衡值",
+        explanationLabel: "说明",
+        suggestionLabel: "建议",
+        teachingHints: {
+          whyFailed: "为什么不平衡？",
+          howToFix: "怎么修正？",
+          reference: "查阅相关章节",
+        },
+      },
       recipeBar: {
         title: "表达式配方",
       },
@@ -1408,7 +1431,8 @@ export const zhMessages: I18nMessages = {
           processes: {
             aerobic_cod_removal: {
               title: "好氧 COD 去除",
-              story: "异养菌消耗可溶性基质和溶解氧，并把其中一部分转化为生物量。",
+              story:
+                "异养菌消耗可溶性基质和溶解氧，并把其中一部分转化为生物量。",
               mistakes: {
                 0: "如果基质和生物量的符号方向一样，你很可能在描述堆积而不是增长。",
               },
@@ -1492,7 +1516,8 @@ export const zhMessages: I18nMessages = {
           processes: {
             anoxic_denitrification: {
               title: "缺氧反硝化",
-              story: "在缺氧条件下，异养菌使用硝酸盐作为电子受体，同时消耗基质。",
+              story:
+                "在缺氧条件下，异养菌使用硝酸盐作为电子受体，同时消耗基质。",
               mistakes: {
                 0: "如果速率仍然被溶解氧激活，这个过程就不是真正的缺氧过程。",
               },

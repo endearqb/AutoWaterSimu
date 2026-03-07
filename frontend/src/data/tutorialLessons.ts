@@ -52,6 +52,7 @@ export interface TutorialLesson {
   processTeaching: TutorialProcessTeaching[]
   completionRule: TutorialCompletionRule
   comingSoon?: boolean
+  continuityProfiles?: string[]
 }
 
 export const TUTORIAL_STEP_ORDER: TutorialStep[] = [1, 2, 3, 4, 5]
@@ -283,6 +284,7 @@ export const TUTORIAL_LESSONS: TutorialLesson[] = [
       },
     ],
     completionRule: "validation-pass-last-step",
+    continuityProfiles: ["COD", "N"],
   },
   {
     lessonKey: "chapter-7",
@@ -329,6 +331,7 @@ export const TUTORIAL_LESSONS: TutorialLesson[] = [
     processTeaching: [],
     completionRule: "validation-pass-last-step",
     comingSoon: true,
+    continuityProfiles: ["COD", "N", "ALK"],
   },
 ]
 

@@ -1371,6 +1371,30 @@ export const enMessages: I18nMessages = {
         validation: "validation",
       },
       processHelp: "Explain this process",
+      continuity: {
+        sectionTitle: "Continuity Check",
+        dimensionLabels: {
+          COD: "COD Conservation",
+          N: "N Conservation",
+          ALK: "ALK Conservation",
+        },
+        statusLabels: {
+          pass: "Pass",
+          warn: "Warning",
+          error: "Error",
+        },
+        emptyHint:
+          "Continuity check results will appear after clicking Validate",
+        jumpToProcess: "Jump to process",
+        balanceLabel: "Balance value",
+        explanationLabel: "Explanation",
+        suggestionLabel: "Suggestion",
+        teachingHints: {
+          whyFailed: "Why is it imbalanced?",
+          howToFix: "How to fix?",
+          reference: "See related chapter",
+        },
+      },
       recipeBar: {
         title: "Recipe snippets",
       },
@@ -1433,28 +1457,23 @@ export const enMessages: I18nMessages = {
           steps: {
             1: {
               title: "List the actors",
-              body:
-                "Confirm the components and process names before touching any numbers. The goal is to understand who participates in the reaction.",
+              body: "Confirm the components and process names before touching any numbers. The goal is to understand who participates in the reaction.",
             },
             2: {
               title: "Read the arrows",
-              body:
-                "Use the sign-only matrix to tell which components are consumed or produced in each process.",
+              body: "Use the sign-only matrix to tell which components are consumed or produced in each process.",
             },
             3: {
               title: "Preview rate expressions",
-              body:
-                "This chapter keeps rate formulas closed. Skim the placeholder so you know where kinetics will appear later.",
+              body: "This chapter keeps rate formulas closed. Skim the placeholder so you know where kinetics will appear later.",
             },
             4: {
               title: "Preview parameters",
-              body:
-                "Parameters stay locked here. Notice where they will be extracted once expressions become richer.",
+              body: "Parameters stay locked here. Notice where they will be extracted once expressions become richer.",
             },
             5: {
               title: "Preview validation",
-              body:
-                "Validation also stays for later chapters. The important outcome here is learning the matrix reading habit.",
+              body: "Validation also stays for later chapters. The important outcome here is learning the matrix reading habit.",
             },
           },
           processes: {
@@ -1477,28 +1496,23 @@ export const enMessages: I18nMessages = {
           steps: {
             1: {
               title: "Start from the template",
-              body:
-                "Check the preloaded components and processes, then decide which row represents heterotrophic growth.",
+              body: "Check the preloaded components and processes, then decide which row represents heterotrophic growth.",
             },
             2: {
               title: "Balance the stoichiometry",
-              body:
-                "Use negative terms for what the process consumes and positive terms for what it creates. Y_H usually appears in the biomass/substrate pair.",
+              body: "Use negative terms for what the process consumes and positive terms for what it creates. Y_H usually appears in the biomass/substrate pair.",
             },
             3: {
               title: "Compose the rate law",
-              body:
-                "Build the kinetic term from growth rate, substrate availability, and oxygen availability.",
+              body: "Build the kinetic term from growth rate, substrate availability, and oxygen availability.",
             },
             4: {
               title: "Promote constants to parameters",
-              body:
-                "Move constants like mu_H, K_S, K_OH, and Y_H into the parameter table so the model stays reusable.",
+              body: "Move constants like mu_H, K_S, K_OH, and Y_H into the parameter table so the model stays reusable.",
             },
             5: {
               title: "Validate the lesson",
-              body:
-                "Run validation, fix any naming or expression errors, and reach a clean pass on the full row.",
+              body: "Run validation, fix any naming or expression errors, and reach a clean pass on the full row.",
             },
           },
           processes: {
@@ -1530,28 +1544,23 @@ export const enMessages: I18nMessages = {
           steps: {
             1: {
               title: "Map the nitrogen story",
-              body:
-                "Identify which rows move ammonia toward nitrate and which rows remove nitrate under anoxic conditions.",
+              body: "Identify which rows move ammonia toward nitrate and which rows remove nitrate under anoxic conditions.",
             },
             2: {
               title: "Complete the stoichiometry",
-              body:
-                "Use the matrix to encode COD, oxygen, ammonia, nitrate, and alkalinity directions together.",
+              body: "Use the matrix to encode COD, oxygen, ammonia, nitrate, and alkalinity directions together.",
             },
             3: {
               title: "Layer the kinetics",
-              body:
-                "Add substrate, nitrate, and switching terms without mixing up the biological meaning.",
+              body: "Add substrate, nitrate, and switching terms without mixing up the biological meaning.",
             },
             4: {
               title: "Parameterize for comparison",
-              body:
-                "Pull shared constants into the parameter list so aerobic and anoxic rows can be tuned side by side.",
+              body: "Pull shared constants into the parameter list so aerobic and anoxic rows can be tuned side by side.",
             },
             5: {
               title: "Close with continuity checks",
-              body:
-                "Run validation and use issue jumps to repair any broken symbols or malformed cells.",
+              body: "Run validation and use issue jumps to repair any broken symbols or malformed cells.",
             },
           },
           processes: {
@@ -1582,28 +1591,23 @@ export const enMessages: I18nMessages = {
           steps: {
             1: {
               title: "Inspect the reactor state",
-              body:
-                "Review the tutorial seed and confirm the species and processes that will enter the CSTR case.",
+              body: "Review the tutorial seed and confirm the species and processes that will enter the CSTR case.",
             },
             2: {
               title: "Review the stoichiometry",
-              body:
-                "Check the row directions before the simulation chapter opens for editing.",
+              body: "Check the row directions before the simulation chapter opens for editing.",
             },
             3: {
               title: "Review the kinetics",
-              body:
-                "Inspect the prepared rate expressions and note how switching terms map to reactor behavior.",
+              body: "Inspect the prepared rate expressions and note how switching terms map to reactor behavior.",
             },
             4: {
               title: "Review the parameter set",
-              body:
-                "Check the seed parameters that will drive the first simulation scenario.",
+              body: "Check the seed parameters that will drive the first simulation scenario.",
             },
             5: {
               title: "Prepare for simulation",
-              body:
-                "Use validation to make sure the seed is consistent before the simulation walkthrough lands.",
+              body: "Use validation to make sure the seed is consistent before the simulation walkthrough lands.",
             },
           },
           processes: {},

@@ -20,7 +20,10 @@ import { useEffect, useMemo, useState } from "react"
 import { FiInfo } from "react-icons/fi"
 
 import type { CustomParameter } from "../../config/modelConfigs"
-import { type UDMHybridConfigPublic, udmService } from "../../services/udmService"
+import {
+  type UDMHybridConfigPublic,
+  udmService,
+} from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import type {
   HybridUDMConfig,

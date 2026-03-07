@@ -356,6 +356,42 @@ export type CalculationParameters = {
 }
 
 /**
+ * 连续性检查结果项
+ */
+export type ContinuityCheckItem = {
+  /**
+   * 过程名称
+   */
+  process_name: string
+  /**
+   * 守恒维度：COD / N / ALK
+   */
+  dimension: string
+  /**
+   * 平衡值（应为0）
+   */
+  balance_value: number
+  /**
+   * 状态：pass / warn / error
+   */
+  status: string
+  /**
+   * 可读的逐项拆解说明
+   */
+  explanation: string
+  /**
+   * 修复建议
+   */
+  suggestion?: string | null
+  /**
+   * 各组分贡献明细
+   */
+  details?: {
+    [key: string]: unknown
+  } | null
+}
+
+/**
  * 流程图边数据
  */
 export type EdgeData = {
@@ -1023,6 +1059,12 @@ export type UDMComponentDefinition = {
    * 是否冻结该组分变化（dC/dt=0）
    */
   is_fixed?: boolean
+  /**
+   * 守恒维度换算系数，如 {'COD': -1.0, 'N': 0.0, 'ALK': 0.0}
+   */
+  conversion_factors?: {
+    [key: string]: number
+  } | null
 }
 
 /**
@@ -1512,6 +1554,10 @@ export type UDMValidationResponse = {
    * 从表达式提取的参数名
    */
   extracted_parameters?: Array<string>
+  /**
+   * 连续性检查结果
+   */
+  continuity_checks?: Array<ContinuityCheckItem>
 }
 
 export type UpdatePassword = {
@@ -2397,6 +2443,10 @@ export type UdmModelsGetUdmTemplatesResponse = Array<{
 
 export type UdmModelsValidateUdmModelDefinitionData = {
   requestBody: UDMModelDefinitionDraft
+  /**
+   * 连续性检查模式：strict / teaching / off
+   */
+  validationMode?: string
 }
 
 export type UdmModelsValidateUdmModelDefinitionResponse = UDMValidationResponse

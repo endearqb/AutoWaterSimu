@@ -50,6 +50,7 @@ import { udmService } from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import ExpressionCellEditorDialog from "./ExpressionCellEditorDialog"
 import ArrowMatrixView from "./tutorial/ArrowMatrixView"
+import ContinuityCheckPanel from "./tutorial/ContinuityCheckPanel"
 import ProcessTeachingPopover from "./tutorial/ProcessTeachingPopover"
 import RecipeBar from "./tutorial/RecipeBar"
 import TutorialGuidePanel from "./tutorial/TutorialGuidePanel"
@@ -62,6 +63,7 @@ type ComponentRow = {
   unit: string
   defaultValue: string
   isFixed: boolean
+  conversion_factors?: Record<string, number> | null
 }
 
 type ParameterRow = {
@@ -123,6 +125,7 @@ const emptyComponent = (): ComponentRow => ({
   unit: "",
   defaultValue: "0",
   isFixed: false,
+  conversion_factors: null,
 })
 
 const emptyParameter = (): ParameterRow => ({
@@ -351,10 +354,10 @@ export function UDMModelEditorForm({
     }
     setReadonlyFromMeta(metaLearning?.readonlyMode === true)
 
-    const loadedComponents: ComponentRow[] = (
+    const loadedComponents = (
       (latest.components || []) as UDMComponentDefinition[]
     )
-      .map((item) => {
+      .map((item): ComponentRow | null => {
         const compName = String(item?.name || "").trim()
         if (!compName) return null
         return {
@@ -364,6 +367,7 @@ export function UDMModelEditorForm({
           unit: String(item?.unit || ""),
           defaultValue: String(item?.default_value ?? "0"),
           isFixed: Boolean(item?.is_fixed ?? false),
+          conversion_factors: (item as any)?.conversion_factors ?? null,
         }
       })
       .filter((item): item is ComponentRow => !!item)
@@ -521,6 +525,9 @@ export function UDMModelEditorForm({
           unit: row.unit.trim() || null,
           default_value: parseNumOrNull(row.defaultValue) ?? 0,
           is_fixed: row.isFixed,
+          ...(row.conversion_factors
+            ? { conversion_factors: row.conversion_factors }
+            : {}),
         }
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
@@ -1798,6 +1805,34 @@ export function UDMModelEditorForm({
             </Box>
           ) : null}
 
+          {showValidationSection && (
+            <Box mt={4}>
+              <ContinuityCheckPanel
+                continuityChecks={(validation?.continuity_checks as any) ?? []}
+                onJumpToProcess={(processName) => {
+                  const idx = processRows.findIndex(
+                    (r) => r.name.trim() === processName.trim(),
+                  )
+                  if (idx < 0) return
+                  if (isTutorialModel && !showStoichSection) {
+                    handleTutorialStepChange(
+                      Math.min(2, maxTutorialStep) as TutorialStep,
+                    )
+                  }
+                  const el = processNameInputRefs.current[idx]
+                  if (el) {
+                    el.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    })
+                    el.focus()
+                    el.select()
+                  }
+                }}
+              />
+            </Box>
+          )}
+
           {showParameterSection ? (
             <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
               <Flex align="center" justify="space-between" mb={3}>
@@ -1997,7 +2032,11 @@ export function UDMModelEditorForm({
                 {t("flow.udmEditor.status.saved")}
               </Badge>
             )}
-            <Button loading={isSaving} onClick={saveModel} disabled={isReadonlyMode}>
+            <Button
+              loading={isSaving}
+              onClick={saveModel}
+              disabled={isReadonlyMode}
+            >
               {t("flow.udmEditor.actions.saveModel")}
             </Button>
             <Button

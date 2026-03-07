@@ -9,17 +9,17 @@ UDM_SEED_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "description": "基于 ASM1 的 Petersen 矩阵初始模板",
         "tags": ["asm1", "petersen", "seed"],
         "components": [
-            {"name": "X_BH", "label": "X_BH", "unit": "gCOD/m3", "default_value": 1000.0},
-            {"name": "X_BA", "label": "X_BA", "unit": "gCOD/m3", "default_value": 200.0},
-            {"name": "X_S", "label": "X_S", "unit": "gCOD/m3", "default_value": 1000.0},
-            {"name": "X_i", "label": "X_i", "unit": "gCOD/m3", "default_value": 100.0},
-            {"name": "X_ND", "label": "X_ND", "unit": "gN/m3", "default_value": 20.0},
-            {"name": "S_O", "label": "S_O", "unit": "gO2/m3", "default_value": 2.0},
-            {"name": "S_S", "label": "S_S", "unit": "gCOD/m3", "default_value": 200.0},
-            {"name": "S_NO", "label": "S_NO", "unit": "gN/m3", "default_value": 10.0},
-            {"name": "S_NH", "label": "S_NH", "unit": "gN/m3", "default_value": 25.0},
-            {"name": "S_ND", "label": "S_ND", "unit": "gN/m3", "default_value": 6.0},
-            {"name": "S_ALK", "label": "S_ALK", "unit": "mol/m3", "default_value": 7.0},
+            {"name": "X_BH", "label": "X_BH", "unit": "gCOD/m3", "default_value": 1000.0, "conversion_factors": {"COD": 1.0, "N": 0.086}},
+            {"name": "X_BA", "label": "X_BA", "unit": "gCOD/m3", "default_value": 200.0, "conversion_factors": {"COD": 1.0, "N": 0.086}},
+            {"name": "X_S", "label": "X_S", "unit": "gCOD/m3", "default_value": 1000.0, "conversion_factors": {"COD": 1.0}},
+            {"name": "X_i", "label": "X_i", "unit": "gCOD/m3", "default_value": 100.0, "conversion_factors": {"COD": 1.0, "N": 0.06}},
+            {"name": "X_ND", "label": "X_ND", "unit": "gN/m3", "default_value": 20.0, "conversion_factors": {"N": 1.0}},
+            {"name": "S_O", "label": "S_O", "unit": "gO2/m3", "default_value": 2.0, "conversion_factors": {"COD": -1.0}},
+            {"name": "S_S", "label": "S_S", "unit": "gCOD/m3", "default_value": 200.0, "conversion_factors": {"COD": 1.0}},
+            {"name": "S_NO", "label": "S_NO", "unit": "gN/m3", "default_value": 10.0, "conversion_factors": {"COD": -2.86, "N": 1.0}},
+            {"name": "S_NH", "label": "S_NH", "unit": "gN/m3", "default_value": 25.0, "conversion_factors": {"N": 1.0}},
+            {"name": "S_ND", "label": "S_ND", "unit": "gN/m3", "default_value": 6.0, "conversion_factors": {"N": 1.0}},
+            {"name": "S_ALK", "label": "S_ALK", "unit": "mol/m3", "default_value": 7.0, "conversion_factors": {"ALK": 1.0}},
         ],
         "parameters": [
             {"name": "u_H", "default_value": 6.0, "min_value": 0.1, "max_value": 20.0, "scale": "lin"},
@@ -172,11 +172,11 @@ UDM_SEED_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "description": "基于 ASM1Slim 的简化 Petersen 矩阵初始模板",
         "tags": ["asm1slim", "petersen", "seed"],
         "components": [
-            {"name": "dissolvedOxygen", "label": "DO", "unit": "mg/L", "default_value": 2.0},
-            {"name": "cod", "label": "COD", "unit": "mg/L", "default_value": 200.0},
-            {"name": "nitrate", "label": "NO3-N", "unit": "mg/L", "default_value": 10.0},
-            {"name": "ammonia", "label": "NH4-N", "unit": "mg/L", "default_value": 25.0},
-            {"name": "totalAlkalinity", "label": "ALK", "unit": "mg/L", "default_value": 100.0},
+            {"name": "dissolvedOxygen", "label": "DO", "unit": "mg/L", "default_value": 2.0, "conversion_factors": {"COD": -1.0}},
+            {"name": "cod", "label": "COD", "unit": "mg/L", "default_value": 200.0, "conversion_factors": {"COD": 1.0}},
+            {"name": "nitrate", "label": "NO3-N", "unit": "mg/L", "default_value": 10.0, "conversion_factors": {"COD": -2.86, "N": 1.0}},
+            {"name": "ammonia", "label": "NH4-N", "unit": "mg/L", "default_value": 25.0, "conversion_factors": {"N": 1.0}},
+            {"name": "totalAlkalinity", "label": "ALK", "unit": "mg/L", "default_value": 100.0, "conversion_factors": {"ALK": 1.0}},
         ],
         "parameters": [
             {"name": "empiricalDenitrificationRate", "default_value": 60.0, "min_value": 0.0, "max_value": 500.0, "scale": "lin"},
@@ -397,6 +397,7 @@ TUTORIAL_TEMPLATE_SPECS: List[Dict[str, Any]] = [
         "prerequisites": ["chapter-2"],
         "step_config": {"defaultStep": 1, "maxStep": 5},
         "recommended_charts": ["cod", "ammonia", "nitrate"],
+        "continuity_profiles": ["COD", "N"],
     },
     {
         "key": "petersen-chapter-7",
@@ -410,6 +411,7 @@ TUTORIAL_TEMPLATE_SPECS: List[Dict[str, Any]] = [
         "prerequisites": ["chapter-3"],
         "step_config": {"defaultStep": 1, "maxStep": 5},
         "recommended_charts": ["S_S", "X_BH", "S_O", "S_NH", "S_NO"],
+        "continuity_profiles": ["COD", "N", "ALK"],
     },
 ]
 
@@ -431,6 +433,8 @@ def _build_tutorial_seed_template(spec: Dict[str, Any]) -> Dict[str, Any]:
         "recommendedCharts": spec["recommended_charts"],
         "readonlyMode": False,
     }
+    if spec.get("continuity_profiles"):
+        base_meta["learning"]["continuityProfiles"] = spec["continuity_profiles"]
     tutorial_tags = list(dict.fromkeys([*base_template.get("tags", []), "tutorial", "petersen-tutorial", spec["lesson_key"]]))
     base_template.update(
         {

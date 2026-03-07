@@ -977,6 +977,10 @@ class UDMComponentDefinition(SQLModel):
     unit: Optional[str] = Field(default=None, max_length=60, description="组分单位")
     default_value: Optional[float] = Field(default=None, description="组分默认初值")
     is_fixed: bool = Field(default=False, description="是否冻结该组分变化（dC/dt=0）")
+    conversion_factors: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="守恒维度换算系数，如 {'COD': -1.0, 'N': 0.0, 'ALK': 0.0}",
+    )
 
 
 class UDMParameterDefinition(SQLModel):
@@ -1055,12 +1059,24 @@ class UDMValidationIssue(SQLModel):
     location: Optional[UDMValidationLocation] = Field(default=None, description="问题定位信息")
 
 
+class ContinuityCheckItem(SQLModel):
+    """连续性检查结果项"""
+    process_name: str = Field(description="过程名称")
+    dimension: str = Field(description="守恒维度：COD / N / ALK")
+    balance_value: float = Field(description="平衡值（应为0）")
+    status: str = Field(description="状态：pass / warn / error")
+    explanation: str = Field(description="可读的逐项拆解说明")
+    suggestion: Optional[str] = Field(default=None, description="修复建议")
+    details: Optional[Dict[str, Any]] = Field(default=None, description="各组分贡献明细")
+
+
 class UDMValidationResponse(SQLModel):
     """UDM模型定义校验响应"""
     ok: bool = Field(description="是否通过校验")
     errors: List[UDMValidationIssue] = Field(default_factory=list, description="错误列表")
     warnings: List[UDMValidationIssue] = Field(default_factory=list, description="警告列表")
     extracted_parameters: List[str] = Field(default_factory=list, description="从表达式提取的参数名")
+    continuity_checks: List[ContinuityCheckItem] = Field(default_factory=list, description="连续性检查结果")
 
 
 class UDMModel(SQLModel, table=True):
