@@ -1293,6 +1293,51 @@ export const zhMessages: I18nMessages = {
       },
     },
     tutorial: {
+      currentStep: "当前步骤：{step}",
+      stepLabel: "Step {step}",
+      modeDescription: "教学模式会按照课程顺序逐步开放编辑器。",
+      mode: {
+        guided: "教学模式",
+        expert: "专家模式",
+      },
+      modeToggle: "切换教程编辑模式",
+      guide: {
+        chapterLabel: "当前章节",
+        objectivesTitle: "学习目标",
+        currentStepTitle: "步骤 {step} 重点",
+        focusAreas: "关注区域",
+        watchTitle: "常见误区",
+      },
+      focusAreas: {
+        components: "组分",
+        processes: "过程",
+        stoich: "化学计量",
+        rateExpr: "速率表达式",
+        parameters: "参数",
+        validation: "校验",
+      },
+      processHelp: "解释这个过程",
+      recipeBar: {
+        title: "表达式配方",
+      },
+      recipes: {
+        monodSubstrate: {
+          label: "Monod 基质项",
+          description: "插入一个受基质限制的 Monod 表达式。",
+        },
+        oxygenSwitch: {
+          label: "溶解氧开关",
+          description: "插入好氧条件下的溶解氧限制项。",
+        },
+        yieldConsumption: {
+          label: "产率系数耗分",
+          description: "插入异养菌经典的基质耗分因子。",
+        },
+        alkBalance: {
+          label: "碱度平衡",
+          description: "插入一个简单的碱度换算因子。",
+        },
+      },
       sectionTitle: "Petersen 矩阵教程",
       sectionSubtitle: "从直觉理解到在线仿真，逐步掌握活性污泥模型",
       continueLearning: "继续学习",
@@ -1330,6 +1375,166 @@ export const zhMessages: I18nMessages = {
         "chapter-7": {
           title: "基础 CSTR 仿真",
           subtitle: "从矩阵到可运行的仿真模型",
+        },
+      },
+      lessonContent: {
+        "chapter-1": {
+          objectives: {
+            0: "先分清“组分”是物种，“过程”是转化。",
+            1: "在编写公式之前，先会用符号矩阵阅读谁增加、谁减少。",
+          },
+          steps: {
+            1: {
+              title: "先看清参与者",
+              body: "先确认组分和过程名称，暂时不要改数字。目标是理解谁参与了反应。",
+            },
+            2: {
+              title: "读矩阵上的符号",
+              body: "利用仅显示增减方向的矩阵，判断每个过程中哪些组分被耗分，哪些被生成。",
+            },
+            3: {
+              title: "预览速率表达式",
+              body: "本章暂不开放速率公式，但可以先看看这个位置，理解后面动力学会放在哪里。",
+            },
+            4: {
+              title: "预览参数区",
+              body: "本章参数区仍然锁定。先熟悉位置，后续再把常量提取成参数。",
+            },
+            5: {
+              title: "预览校验",
+              body: "校验区会在后面的章节才真正开放。这一章的关键是养成先读矩阵的习惯。",
+            },
+          },
+          processes: {
+            aerobic_cod_removal: {
+              title: "好氧 COD 去除",
+              story: "异养菌消耗可溶性基质和溶解氧，并把其中一部分转化为生物量。",
+              mistakes: {
+                0: "如果基质和生物量的符号方向一样，你很可能在描述堆积而不是增长。",
+              },
+            },
+          },
+        },
+        "chapter-2": {
+          objectives: {
+            0: "完成一条完整的好氧异养生长行。",
+            1: "把 Monod 动力学与过程含义对应起来。",
+            2: "把常量提升为可复用参数，而不是写死在公式里。",
+          },
+          steps: {
+            1: {
+              title: "从模板开始",
+              body: "先检查预加载的组分和过程，然后找出代表异养菌生长的那一行。",
+            },
+            2: {
+              title: "平衡化学计量",
+              body: "被耗分的写负，被生成的写正。Y_H 通常就体现在“生物量 / 基质”的对应关系里。",
+            },
+            3: {
+              title: "组合速率公式",
+              body: "用增长速率、基质可利用性和溶解氧可利用性组成这个过程的动力学表达式。",
+            },
+            4: {
+              title: "把常量提升为参数",
+              body: "把 mu_H、K_S、K_OH 和 Y_H 移到参数表中，让模型可复用。",
+            },
+            5: {
+              title: "完成本章校验",
+              body: "运行校验，修复命名或表达式问题，并让整个过程行成功通过。",
+            },
+          },
+          processes: {
+            aerobic_cod_removal: {
+              title: "好氧异养生长",
+              story: "这一行代表好氧异养菌生长：基质和溶解氧下降，生物量上升。",
+              mistakes: {
+                0: "如果基质系数是正的，就表示这个过程在“生成食物”而不是“消耗食物”。",
+                1: "如果只把 Y_H 写在速率公式里，就会把矩阵应该教会的质量关系隐藏掉。",
+              },
+            },
+            nitrification: {
+              title: "硝化",
+              story: "自养菌在好氧条件下将氨氮氧化为硝酸盐。",
+              mistakes: {
+                0: "如果硝化不消耗氧，这个过程的含义就不完整。",
+              },
+            },
+          },
+        },
+        "chapter-3": {
+          objectives: {
+            0: "在多个过程之间检查 COD 和氮的连续性。",
+            1: "在比较好氧和缺氧路径时依然保持符号纪律。",
+            2: "利用校验反馈直接跳到有问题的单元格。",
+          },
+          steps: {
+            1: {
+              title: "理清氮的故事线",
+              body: "先看出哪些过程会把氮从氨推向硝酸盐，哪些过程在缺氧条件下会去除硝酸氧。",
+            },
+            2: {
+              title: "完成化学计量",
+              body: "在矩阵中同时编码 COD、氧、氨、硝酸氧和碱度的方向关系。",
+            },
+            3: {
+              title: "叠加动力学",
+              body: "加入基质、硝酸氧和开关因子，但不要混淆生物学含义。",
+            },
+            4: {
+              title: "为对比调参做准备",
+              body: "把共用的常数拉到参数表里，让好氧和缺氧过程可以并排比较。",
+            },
+            5: {
+              title: "用连续性检查收尾",
+              body: "运行校验，利用问题跳转功能修复错误的符号、名称或单元格。",
+            },
+          },
+          processes: {
+            anoxic_denitrification: {
+              title: "缺氧反硝化",
+              story: "在缺氧条件下，异养菌使用硝酸盐作为电子受体，同时消耗基质。",
+              mistakes: {
+                0: "如果速率仍然被溶解氧激活，这个过程就不是真正的缺氧过程。",
+              },
+            },
+            nitrification: {
+              title: "硝化",
+              story: "硝化将氨氮转化为硝酸盐，通常还会使碱度下降。",
+              mistakes: {
+                0: "氨和硝酸盐符号写反，是最容易打破氮平衡的错误。",
+                1: "如果碱度始终不变，这个硝化过程就缺了一个很重要的教学信号。",
+              },
+            },
+          },
+        },
+        "chapter-7": {
+          objectives: {
+            0: "在运行仿真之前，先检查适合教学用途的 seed 模型。",
+            1: "把矩阵、参数和校验与可运行的 CSTR 案例联系起来。",
+          },
+          steps: {
+            1: {
+              title: "先看反应器状态",
+              body: "查看教程 seed，确认这个 CSTR 案例将使用的组分和过程。",
+            },
+            2: {
+              title: "回看化学计量",
+              body: "在仿真章节正式开放编辑前，先检查每一行的方向是否合理。",
+            },
+            3: {
+              title: "回看动力学",
+              body: "查看预置的速率表达式，注意其中的开关项如何对应反应器行为。",
+            },
+            4: {
+              title: "回看参数集",
+              body: "确认这个 seed 模型携带的参数集，为第一个仿真情景做准备。",
+            },
+            5: {
+              title: "为仿真做准备",
+              body: "先用校验确保 seed 内容一致，等待后续的仿真讲解开放。",
+            },
+          },
+          processes: {},
         },
       },
     },

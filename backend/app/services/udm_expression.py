@@ -27,6 +27,16 @@ class ValidationIssue:
     code: str
     message: str
     process: Optional[str] = None
+    location: Optional["ValidationLocation"] = None
+
+
+@dataclass
+class ValidationLocation:
+    section: Optional[str] = None
+    processName: Optional[str] = None
+    componentName: Optional[str] = None
+    parameterName: Optional[str] = None
+    cellKey: Optional[str] = None
 
 
 @dataclass
@@ -51,6 +61,49 @@ def _extract_identifiers(tree: ast.AST) -> Set[str]:
         if isinstance(node, ast.Name):
             identifiers.add(node.id)
     return identifiers
+
+
+def _with_location(issue: ValidationIssue, location: Optional[ValidationLocation]) -> ValidationIssue:
+    return ValidationIssue(
+        code=issue.code,
+        message=issue.message,
+        process=issue.process,
+        location=location,
+    )
+
+
+def _process_location(process_name: str) -> ValidationLocation:
+    return ValidationLocation(section="processes", processName=process_name)
+
+
+def _rate_expr_location(
+    process_name: str,
+    parameter_name: Optional[str] = None,
+) -> ValidationLocation:
+    return ValidationLocation(
+        section="rateExpr",
+        processName=process_name,
+        parameterName=parameter_name,
+        cellKey=f"{process_name}:rateExpr",
+    )
+
+
+def _stoich_location(
+    process_name: str,
+    component_name: Optional[str] = None,
+    parameter_name: Optional[str] = None,
+) -> ValidationLocation:
+    return ValidationLocation(
+        section="stoich",
+        processName=process_name,
+        componentName=component_name,
+        parameterName=parameter_name,
+        cellKey=f"{process_name}:{component_name}" if component_name else None,
+    )
+
+
+def _parameter_location(parameter_name: str) -> ValidationLocation:
+    return ValidationLocation(section="parameters", parameterName=parameter_name)
 
 
 def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
@@ -168,12 +221,20 @@ def validate_udm_definition(
 
     if len(component_set) == 0:
         errors.append(
-            ValidationIssue(code="NO_COMPONENTS", message="At least one component definition is required")
+            ValidationIssue(
+                code="NO_COMPONENTS",
+                message="At least one component definition is required",
+                location=ValidationLocation(section="components"),
+            )
         )
 
     if len(component_set) != len(component_list):
         errors.append(
-            ValidationIssue(code="DUPLICATE_COMPONENT", message="Component names must be unique")
+            ValidationIssue(
+                code="DUPLICATE_COMPONENT",
+                message="Component names must be unique",
+                location=ValidationLocation(section="components"),
+            )
         )
 
     process_name_seen: Set[str] = set()
@@ -185,6 +246,7 @@ def validate_udm_definition(
                     code="DUPLICATE_PROCESS",
                     message=f"Duplicate process name: {process_name}",
                     process=process_name,
+                    location=_process_location(process_name),
                 )
             )
         process_name_seen.add(process_name)
@@ -199,6 +261,7 @@ def validate_udm_definition(
                     code="EMPTY_RATE_EXPR",
                     message="Process rate expression must not be empty",
                     process=process_name,
+                    location=_rate_expr_location(process_name),
                 )
             )
             continue
@@ -211,11 +274,15 @@ def validate_udm_definition(
                     code="INVALID_SYNTAX",
                     message=f"Expression syntax error: {ex.msg}",
                     process=process_name,
+                    location=_rate_expr_location(process_name),
                 )
             )
             continue
 
-        errors.extend(_validate_ast(tree, process_name))
+        errors.extend(
+            _with_location(issue, _rate_expr_location(process_name))
+            for issue in _validate_ast(tree, process_name)
+        )
 
         identifiers = _extract_identifiers(tree)
         extracted_params = {
@@ -235,6 +302,7 @@ def validate_udm_definition(
                         code="UNDEFINED_SYMBOL",
                         message=f"Undefined symbol: {symbol}",
                         process=process_name,
+                        location=_rate_expr_location(process_name, parameter_name=symbol),
                     )
                 )
 
@@ -252,6 +320,7 @@ def validate_udm_definition(
                     code="INVALID_STOICH",
                     message="stoich_expr/stoich must be an object mapping",
                     process=process_name,
+                    location=_stoich_location(process_name),
                 )
             )
             continue
@@ -264,6 +333,7 @@ def validate_udm_definition(
                         code="UNKNOWN_COMPONENT",
                         message=f"Unknown component: {component_name}",
                         process=process_name,
+                        location=_stoich_location(process_name, component_name=component_name),
                     )
                 )
             expr_text = str(coeff_expr or "").strip() or "0"
@@ -275,6 +345,7 @@ def validate_udm_definition(
                         code="INVALID_STOICH_EXPR",
                         message=f"Stoichiometry syntax error for component {component_name}: {ex.msg}",
                         process=process_name,
+                        location=_stoich_location(process_name, component_name=component_name),
                     )
                 )
                 continue
@@ -286,6 +357,7 @@ def validate_udm_definition(
                         code=f"STOICH_{issue.code}",
                         message=f"Invalid stoichiometry for component {component_name}: {issue.message}",
                         process=process_name,
+                        location=_stoich_location(process_name, component_name=component_name),
                     )
                 )
 
@@ -307,6 +379,11 @@ def validate_udm_definition(
                             code="UNDEFINED_SYMBOL",
                             message=f"Undefined symbol: {symbol}",
                             process=process_name,
+                            location=_stoich_location(
+                                process_name,
+                                component_name=component_name,
+                                parameter_name=symbol,
+                            ),
                         )
                     )
 
@@ -319,6 +396,7 @@ def validate_udm_definition(
                         code="STOICH_COMPONENT_REF",
                         message=f"Stoichiometry must not reference component variable: {symbol}",
                         process=process_name,
+                        location=_stoich_location(process_name, component_name=component_name),
                     )
                 )
 
@@ -336,6 +414,7 @@ def validate_udm_definition(
                     code="ZERO_STOICH",
                     message="All stoichiometric coefficients for this process are zero",
                     process=process_name,
+                    location=_stoich_location(process_name),
                 )
             )
 

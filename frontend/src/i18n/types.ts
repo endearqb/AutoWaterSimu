@@ -1277,6 +1277,7 @@ export interface I18nMessages {
       }
     }
     tutorial: {
+      [key: string]: unknown
       sectionTitle: string
       sectionSubtitle: string
       continueLearning: string

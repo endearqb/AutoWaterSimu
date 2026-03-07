@@ -34,12 +34,26 @@ import type {
   UDMProcessDefinition,
   UDMValidationResponse,
 } from "@/client/types.gen"
+import {
+  type TutorialMode,
+  type TutorialProcessTeaching,
+  type TutorialRecipe,
+  type TutorialStep,
+  getEnabledTutorialSteps,
+  getTutorialLesson,
+} from "@/data/tutorialLessons"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
+import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
 import { getDefaultCalculationParams } from "../../config/simulationConfig"
 import { udmService } from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import ExpressionCellEditorDialog from "./ExpressionCellEditorDialog"
+import ArrowMatrixView from "./tutorial/ArrowMatrixView"
+import ProcessTeachingPopover from "./tutorial/ProcessTeachingPopover"
+import RecipeBar from "./tutorial/RecipeBar"
+import TutorialGuidePanel from "./tutorial/TutorialGuidePanel"
+import TutorialStepper from "./tutorial/TutorialStepper"
 
 type ComponentRow = {
   _rowId: string
@@ -131,6 +145,7 @@ const emptyProcess = (): ProcessRow => ({
 })
 
 type ValidationIssue = NonNullable<UDMValidationResponse["errors"]>[number]
+type ValidationLocation = NonNullable<ValidationIssue["location"]>
 
 const buildFormSignature = (payload: {
   name: string
@@ -204,16 +219,104 @@ export function UDMModelEditorForm({
   const [editorTarget, setEditorTarget] = useState<ProcessEditorTarget | null>(
     null,
   )
+  const [lessonKeyFromMeta, setLessonKeyFromMeta] = useState<
+    string | undefined
+  >()
+  const [readonlyFromMeta, setReadonlyFromMeta] = useState(false)
+  const [tutorialMode, setTutorialMode] = useState<TutorialMode>("expert")
+  const [currentTutorialStep, setCurrentTutorialStep] =
+    useState<TutorialStep>(1)
+
+  const tutorialLessonKey = _lessonKey ?? lessonKeyFromMeta
+  const tutorialLesson = useMemo(
+    () => getTutorialLesson(tutorialLessonKey),
+    [tutorialLessonKey],
+  )
+  const enabledTutorialSteps = useMemo(
+    () => (tutorialLesson ? getEnabledTutorialSteps(tutorialLesson) : []),
+    [tutorialLesson],
+  )
+  const tutorialProgress = useTutorialProgressStore((state) =>
+    tutorialLesson ? state.lessonProgress[tutorialLesson.lessonKey] : undefined,
+  )
+  const startTutorialLesson = useTutorialProgressStore(
+    (state) => state.startLesson,
+  )
+  const attachLessonModel = useTutorialProgressStore(
+    (state) => state.attachLessonModel,
+  )
+  const updateLessonStep = useTutorialProgressStore(
+    (state) => state.updateLessonStep,
+  )
+  const setLessonMode = useTutorialProgressStore((state) => state.setLessonMode)
+  const markValidationResult = useTutorialProgressStore(
+    (state) => state.markValidationResult,
+  )
+  const completeLesson = useTutorialProgressStore(
+    (state) => state.completeLesson,
+  )
+  const recordSimulationRun = useTutorialProgressStore(
+    (state) => state.recordSimulationRun,
+  )
+  const isTutorialModel = !!tutorialLesson
+  const isGuidedMode = isTutorialModel && tutorialMode === "guided"
+  const isReadonlyMode = isGuidedMode && readonlyFromMeta
+  const maxTutorialStep = tutorialLesson?.stepConfig.maxStep ?? 5
+  const activeRecipes = tutorialLesson?.recipes ?? []
+  const processTeachingMap = useMemo(
+    () =>
+      new Map(
+        (tutorialLesson?.processTeaching || []).map((item) => [
+          item.processName,
+          item,
+        ]),
+      ),
+    [tutorialLesson],
+  )
 
   const processNameInputRefs = useRef<Record<number, HTMLInputElement | null>>(
     {},
   )
   const stoichInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const rateExprInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
+  const parameterNameInputRefs = useRef<
+    Record<number, HTMLInputElement | null>
+  >({})
 
   useEffect(() => {
     setCurrentModelId(modelId)
   }, [modelId])
+
+  useEffect(() => {
+    if (!tutorialLesson) {
+      setTutorialMode("expert")
+      setCurrentTutorialStep(1)
+      return
+    }
+
+    startTutorialLesson(tutorialLesson.lessonKey, {
+      modelId: currentModelId ?? tutorialProgress?.modelId,
+      defaultStep: tutorialLesson.stepConfig.defaultStep,
+      mode: tutorialProgress?.mode ?? "guided",
+    })
+    setTutorialMode(tutorialProgress?.mode ?? "guided")
+    setCurrentTutorialStep(
+      (tutorialProgress?.currentStep ??
+        tutorialLesson.stepConfig.defaultStep) as TutorialStep,
+    )
+  }, [
+    currentModelId,
+    startTutorialLesson,
+    tutorialLesson,
+    tutorialProgress?.currentStep,
+    tutorialProgress?.mode,
+    tutorialProgress?.modelId,
+  ])
+
+  useEffect(() => {
+    if (!tutorialLesson || !currentModelId) return
+    attachLessonModel(tutorialLesson.lessonKey, currentModelId)
+  }, [attachLessonModel, currentModelId, tutorialLesson])
 
   const detailQuery = useQuery({
     queryKey: ["udm-model-detail", currentModelId],
@@ -235,6 +338,18 @@ export function UDMModelEditorForm({
 
     const latest = detail.latest_version
     if (!latest) return
+
+    const metaLearning = (latest.meta?.learning || null) as {
+      lessonKey?: string
+      chapter?: string
+      readonlyMode?: boolean
+    } | null
+    if (!_lessonKey) {
+      setLessonKeyFromMeta(
+        metaLearning?.lessonKey || metaLearning?.chapter || undefined,
+      )
+    }
+    setReadonlyFromMeta(metaLearning?.readonlyMode === true)
 
     const loadedComponents: ComponentRow[] = (
       (latest.components || []) as UDMComponentDefinition[]
@@ -322,6 +437,34 @@ export function UDMModelEditorForm({
     () => parameterRows.map((row) => row.name.trim()).filter(Boolean),
     [parameterRows],
   )
+  const showArrowMatrix = isGuidedMode && currentTutorialStep === 1
+  const showStoichSection = !isGuidedMode || currentTutorialStep >= 2
+  const showRateExprSection = !isGuidedMode || currentTutorialStep >= 3
+  const showParameterSection = !isGuidedMode || currentTutorialStep >= 4
+  const showValidationSection = !isGuidedMode || currentTutorialStep >= 5
+  const showAdvancedFields = !isGuidedMode || currentTutorialStep >= 5
+  const showRecipeBar =
+    isGuidedMode && currentTutorialStep >= 3 && activeRecipes.length > 0
+
+  const handleTutorialStepChange = (step: TutorialStep) => {
+    const nextStep = Math.min(step, maxTutorialStep) as TutorialStep
+    setCurrentTutorialStep(nextStep)
+    if (tutorialLesson) {
+      updateLessonStep(tutorialLesson.lessonKey, nextStep)
+    }
+  }
+
+  const handleTutorialModeChange = (mode: TutorialMode) => {
+    setTutorialMode(mode)
+    if (tutorialLesson) {
+      setLessonMode(tutorialLesson.lessonKey, mode)
+    }
+  }
+
+  const getProcessTeaching = (
+    processName: string,
+  ): TutorialProcessTeaching | undefined =>
+    processTeachingMap.get(processName.trim())
 
   const currentSignature = useMemo(
     () =>
@@ -362,6 +505,12 @@ export function UDMModelEditorForm({
   }, [editorTarget, processRows.length, componentNames])
 
   const buildDraft = (): UDMModelDefinitionDraft => {
+    const existingMeta = {
+      ...(((detailQuery.data?.latest_version?.meta || {}) as Record<
+        string,
+        unknown
+      >) || {}),
+    }
     const normalizedComponents = componentRows
       .map((row) => {
         const compName = row.name.trim()
@@ -417,6 +566,21 @@ export function UDMModelEditorForm({
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
 
+    const tutorialLearningMeta = tutorialLesson
+      ? {
+          track: "petersen",
+          lessonKey: tutorialLesson.lessonKey,
+          chapter: tutorialLesson.chapter,
+          difficulty: tutorialLesson.difficulty,
+          templateType: tutorialLesson.templateType,
+          estimatedMinutes: tutorialLesson.estimatedMinutes,
+          prerequisites: tutorialLesson.prerequisites,
+          stepConfig: tutorialLesson.stepConfig,
+          recommendedCharts: tutorialLesson.recommendedCharts,
+          readonlyMode: false,
+        }
+      : null
+
     return {
       name: name.trim() || t("flow.udmEditor.form.defaults.unnamedModel"),
       description: description.trim() || null,
@@ -428,7 +592,9 @@ export function UDMModelEditorForm({
       parameters: normalizedParameters as UDMParameterDefinition[],
       processes: normalizedProcesses,
       meta: {
-        source: "manual",
+        ...existingMeta,
+        source: tutorialLesson ? "seed-template" : "manual",
+        ...(tutorialLearningMeta ? { learning: tutorialLearningMeta } : {}),
       },
     }
   }
@@ -476,6 +642,16 @@ export function UDMModelEditorForm({
       const draft = buildDraft()
       const result = await udmService.validateModelDefinition(draft)
       setValidation(result)
+      if (tutorialLesson) {
+        markValidationResult(tutorialLesson.lessonKey, result.ok)
+        if (
+          result.ok &&
+          currentTutorialStep === maxTutorialStep &&
+          enabledTutorialSteps.includes(currentTutorialStep)
+        ) {
+          completeLesson(tutorialLesson.lessonKey)
+        }
+      }
       if (result.ok) {
         showSuccessToast(t("flow.udmEditor.validation.toast.validationPassed"))
       } else {
@@ -489,6 +665,9 @@ export function UDMModelEditorForm({
           ? error.message
           : t("flow.udmEditor.validation.toast.validationFailed"),
       )
+      if (tutorialLesson) {
+        markValidationResult(tutorialLesson.lessonKey, false)
+      }
     }
   }
 
@@ -735,6 +914,9 @@ export function UDMModelEditorForm({
       flowStore.setCurrentFlowChartName(createdFlowchart.name)
 
       showSuccessToast(t("flow.udmEditor.form.toast.generateFlowSuccess"))
+      if (tutorialLesson) {
+        recordSimulationRun(tutorialLesson.lessonKey)
+      }
       onGeneratedFlowchart?.({
         savedModel,
         flowData: flowData as Record<string, unknown>,
@@ -781,6 +963,7 @@ export function UDMModelEditorForm({
   }
 
   const openRateExprEditor = (rowIndex: number) => {
+    if (isReadonlyMode) return
     setEditorTarget({
       cellType: "rateExpr",
       rowIndex,
@@ -788,6 +971,7 @@ export function UDMModelEditorForm({
   }
 
   const openStoichEditor = (rowIndex: number, componentName: string) => {
+    if (isReadonlyMode) return
     setEditorTarget({
       cellType: "stoich",
       rowIndex,
@@ -819,19 +1003,27 @@ export function UDMModelEditorForm({
   }
 
   const resolveProcessIndex = (issue: ValidationIssue): number => {
-    if (issue.process) {
+    const processName = issue.location?.processName || issue.process
+    if (processName) {
       const byName = processRows.findIndex(
-        (row) => row.name.trim() === issue.process?.trim(),
+        (row) => row.name.trim() === processName.trim(),
       )
       if (byName >= 0) return byName
 
-      const match = issue.process.match(/process_(\d+)/i)
+      const match = processName.match(/process_(\d+)/i)
       if (match) {
         const idx = Number.parseInt(match[1], 10) - 1
         if (idx >= 0 && idx < processRows.length) return idx
       }
     }
     return -1
+  }
+
+  const resolveParameterIndex = (parameterName?: string | null): number => {
+    if (!parameterName) return -1
+    return parameterRows.findIndex(
+      (row) => row.name.trim() === parameterName.trim(),
+    )
   }
 
   const resolveComponentNameFromMessage = (message: string): string | null => {
@@ -842,11 +1034,35 @@ export function UDMModelEditorForm({
   }
 
   const jumpToIssue = (issue: ValidationIssue) => {
+    const location = (issue.location || null) as ValidationLocation | null
     const processIndex = resolveProcessIndex(issue)
+    const componentName =
+      location?.componentName ||
+      resolveComponentNameFromMessage(issue.message || "")
+
+    const parameterIndex = resolveParameterIndex(location?.parameterName)
+    if (
+      (location?.section === "parameters" || parameterIndex >= 0) &&
+      parameterIndex >= 0
+    ) {
+      if (isTutorialModel && !showParameterSection) {
+        handleTutorialStepChange(Math.min(4, maxTutorialStep) as TutorialStep)
+      }
+      const parameterInput = parameterNameInputRefs.current[parameterIndex]
+      if (parameterInput) {
+        parameterInput.scrollIntoView({ behavior: "smooth", block: "center" })
+        parameterInput.focus()
+        parameterInput.select()
+      }
+      return
+    }
+
     if (processIndex < 0) return
 
-    const componentName = resolveComponentNameFromMessage(issue.message || "")
     if (componentName) {
+      if (isTutorialModel && !showStoichSection) {
+        handleTutorialStepChange(Math.min(2, maxTutorialStep) as TutorialStep)
+      }
       const stoichKey = `${processIndex}:${componentName}`
       const targetCell = stoichInputRefs.current[stoichKey]
       if (targetCell) {
@@ -866,6 +1082,9 @@ export function UDMModelEditorForm({
       issue.code.startsWith("STOICH_") &&
       componentNames[0]
     ) {
+      if (isTutorialModel && !showStoichSection) {
+        handleTutorialStepChange(Math.min(2, maxTutorialStep) as TutorialStep)
+      }
       const fallbackComponent = componentNames[0]
       const fallbackCell =
         stoichInputRefs.current[`${processIndex}:${fallbackComponent}`]
@@ -881,7 +1100,13 @@ export function UDMModelEditorForm({
       return
     }
 
-    if (issue.code !== "DUPLICATE_PROCESS") {
+    if (
+      location?.section === "rateExpr" ||
+      issue.code !== "DUPLICATE_PROCESS"
+    ) {
+      if (isTutorialModel && !showRateExprSection) {
+        handleTutorialStepChange(Math.min(3, maxTutorialStep) as TutorialStep)
+      }
       const rateExprInput = rateExprInputRefs.current[processIndex]
       if (rateExprInput) {
         rateExprInput.scrollIntoView({
@@ -983,6 +1208,25 @@ export function UDMModelEditorForm({
     return processRows[editorTarget.rowIndex]?.name || ""
   }, [editorTarget, processRows])
 
+  const insertRecipeIntoRateExpr = (recipe: TutorialRecipe) => {
+    if (processRows.length === 0) return
+    const targetRowIndex =
+      editorTarget?.cellType === "rateExpr" ? editorTarget.rowIndex : 0
+    setProcessRows((prev) =>
+      prev.map((row, idx) =>
+        idx === targetRowIndex
+          ? {
+              ...row,
+              rateExpr: row.rateExpr
+                ? `${row.rateExpr} * ${recipe.template}`
+                : recipe.template,
+            }
+          : row,
+      ),
+    )
+    openRateExprEditor(targetRowIndex)
+  }
+
   return (
     <Container maxW={containerMaxW} pb={10}>
       {resolvedHeadingText ? (
@@ -1002,652 +1246,775 @@ export function UDMModelEditorForm({
         </Text>
       ) : null}
 
-      <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
-        <Heading size="sm" mb={3}>
-          {t("flow.udmEditor.form.sections.basicInfo")}
-        </Heading>
-        <VStack align="stretch" gap={3}>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("flow.udmEditor.form.placeholders.modelName")}
-          />
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("flow.udmEditor.form.placeholders.modelDescription")}
-            rows={3}
-          />
-          <Input
-            value={tagsText}
-            onChange={(e) => setTagsText(e.target.value)}
-            placeholder={t("flow.udmEditor.form.placeholders.tags")}
-          />
-        </VStack>
-      </Box>
-
-      <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
-        <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">
-            {t("flow.udmEditor.form.sections.components")}
-          </Heading>
-          <Button
-            size="sm"
-            onClick={() =>
-              setComponentRows((prev) => [...prev, emptyComponent()])
-            }
-          >
-            {t("flow.udmEditor.form.actions.addComponent")}
-          </Button>
-        </Flex>
-        <Table.Root size="sm">
-          <Table.Header>
-            <Table.Row>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.name")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.label")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.unit")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.defaultValue")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.allowChange")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.actions")}
-              </Table.ColumnHeader>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {componentRows.map((row, index) => (
-              <Table.Row key={row._rowId}>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    value={row.name}
-                    onChange={(e) => setComponentName(index, e.target.value)}
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    value={row.label}
-                    onChange={(e) =>
-                      setComponentRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === index
-                            ? { ...item, label: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    value={row.unit}
-                    onChange={(e) =>
-                      setComponentRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === index
-                            ? { ...item, unit: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    type="number"
-                    value={row.defaultValue}
-                    onChange={(e) =>
-                      setComponentRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === index
-                            ? { ...item, defaultValue: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Switch.Root
-                    checked={!row.isFixed}
-                    onCheckedChange={(details) =>
-                      setComponentRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === index
-                            ? { ...item, isFixed: !details.checked }
-                            : item,
-                        ),
-                      )
-                    }
-                  >
-                    <Switch.HiddenInput
-                      aria-label={t("flow.udmEditor.form.aria.allowChange", {
-                        index: index + 1,
-                      })}
-                    />
-                    <Switch.Control />
-                  </Switch.Root>
-                </Table.Cell>
-                <Table.Cell>
-                  <Button
-                    size="xs"
-                    variant="subtle"
-                    colorPalette="red"
-                    onClick={() => removeComponent(index)}
-                    disabled={componentRows.length <= 1}
-                  >
-                    {t("common.delete")}
-                  </Button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      </Box>
-
-      <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
-        <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">
-            {t("flow.udmEditor.form.sections.processes")}
-          </Heading>
-          <HStack>
-            <Button
-              size="sm"
-              variant="subtle"
-              onClick={() =>
-                setProcessRows((prev) =>
-                  prev.map((row) => ({
-                    ...row,
-                    stoich: Object.fromEntries(
-                      componentNames.map((compName) => [compName, "0"]),
-                    ),
-                  })),
-                )
-              }
-            >
-              {t("flow.udmEditor.form.actions.clearAllStoich")}
-            </Button>
-            <Button
-              size="sm"
-              onClick={() =>
-                setProcessRows((prev) => [...prev, emptyProcess()])
-              }
-            >
-              {t("flow.udmEditor.form.actions.addProcess")}
-            </Button>
-          </HStack>
-        </Flex>
-        <Table.ScrollArea
-          borderWidth="1px"
-          rounded="md"
-          maxW="100%"
-          maxH="520px"
-        >
-          <Table.Root
-            size="sm"
-            stickyHeader
-            css={{
-              "& [data-sticky]": {
-                position: "sticky",
-                bg: "bg",
-              },
-              "& thead [data-sticky]": {
-                zIndex: 4,
-              },
-              "& tbody [data-sticky]": {
-                zIndex: 2,
-              },
-              "& [data-sticky='start-last']": {
-                _after: {
-                  content: '""',
-                  position: "absolute",
-                  insetInlineEnd: "0",
-                  top: "0",
-                  bottom: "-1px",
-                  width: "24px",
-                  translate: "100% 0",
-                  pointerEvents: "none",
-                  boxShadow: "inset 8px 0px 8px -8px rgba(0, 0, 0, 0.22)",
-                },
-              },
-            }}
-          >
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader
-                  minW={PROCESS_NAME_COL_W}
-                  data-sticky="start-first"
-                  left="0"
+      {isTutorialModel ? (
+        <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
+          <VStack align="stretch" gap={3}>
+            <Flex align="center" justify="space-between" wrap="wrap" gap={3}>
+              <Box>
+                <Heading size="sm">
+                  {t(`flow.tutorial.chapters.${tutorialLesson.chapter}.title`)}
+                </Heading>
+                <Text fontSize="sm" color="fg.muted">
+                  {t("flow.tutorial.modeDescription")}
+                </Text>
+              </Box>
+              <HStack>
+                <Text fontSize="sm">{t("flow.tutorial.mode.guided")}</Text>
+                <Switch.Root
+                  checked={tutorialMode === "guided"}
+                  onCheckedChange={(details) =>
+                    handleTutorialModeChange(
+                      details.checked ? "guided" : "expert",
+                    )
+                  }
                 >
-                  {t("flow.udmEditor.form.columns.processName")}
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  minW={RATE_EXPR_COL_W}
-                  data-sticky="start-last"
-                  left={PROCESS_NAME_COL_W}
-                >
-                  {t("flow.udmEditor.form.columns.rateExpr")}
-                </Table.ColumnHeader>
-                {componentNames.map((compName) => (
-                  <Table.ColumnHeader
-                    key={`stoich-header-${compName}`}
-                    minW={STOICH_COL_MIN_W}
-                  >
-                    {compName}
+                  <Switch.HiddenInput
+                    aria-label={t("flow.tutorial.modeToggle")}
+                  />
+                  <Switch.Control />
+                </Switch.Root>
+                <Text fontSize="sm">{t("flow.tutorial.mode.expert")}</Text>
+              </HStack>
+            </Flex>
+            <TutorialStepper
+              currentStep={currentTutorialStep}
+              maxStep={maxTutorialStep}
+              onStepChange={handleTutorialStepChange}
+            />
+          </VStack>
+        </Box>
+      ) : null}
+
+      <Flex
+        mt={6}
+        gap={6}
+        align="start"
+        direction={{ base: "column", xl: "row" }}
+      >
+        {isTutorialModel ? (
+          <Box flex={{ base: "1 1 auto", xl: "0 0 280px" }} w="full">
+            <TutorialGuidePanel
+              lesson={tutorialLesson}
+              currentStep={currentTutorialStep}
+            />
+          </Box>
+        ) : null}
+
+        <Box flex="1" minW={0}>
+          <Box borderWidth="1px" borderRadius="md" p={4}>
+            <Heading size="sm" mb={3}>
+              {t("flow.udmEditor.form.sections.basicInfo")}
+            </Heading>
+            <VStack align="stretch" gap={3}>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("flow.udmEditor.form.placeholders.modelName")}
+              />
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t(
+                  "flow.udmEditor.form.placeholders.modelDescription",
+                )}
+                rows={3}
+              />
+              <Input
+                value={tagsText}
+                onChange={(e) => setTagsText(e.target.value)}
+                placeholder={t("flow.udmEditor.form.placeholders.tags")}
+              />
+            </VStack>
+          </Box>
+
+          {showArrowMatrix ? (
+            <Box mt={6}>
+              <ArrowMatrixView
+                componentNames={componentNames}
+                processRows={processRows.map((row) => ({
+                  name: row.name,
+                  stoich: row.stoich,
+                }))}
+              />
+            </Box>
+          ) : null}
+
+          <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
+            <Flex align="center" justify="space-between" mb={3}>
+              <Heading size="sm">
+                {t("flow.udmEditor.form.sections.components")}
+              </Heading>
+              <Button
+                size="sm"
+                onClick={() =>
+                  setComponentRows((prev) => [...prev, emptyComponent()])
+                }
+                disabled={isReadonlyMode}
+              >
+                {t("flow.udmEditor.form.actions.addComponent")}
+              </Button>
+            </Flex>
+            <Table.Root size="sm">
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader>
+                    {t("flow.udmEditor.form.columns.name")}
                   </Table.ColumnHeader>
-                ))}
-                <Table.ColumnHeader minW={NOTE_COL_W}>
-                  {t("flow.udmEditor.form.columns.note")}
-                </Table.ColumnHeader>
-                <Table.ColumnHeader minW={ACTION_COL_W}>
-                  {t("flow.udmEditor.form.columns.actions")}
-                </Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {processRows.map((row, rowIndex) => (
-                <Table.Row key={row._rowId}>
-                  <Table.Cell
-                    minW={PROCESS_NAME_COL_W}
-                    data-sticky="start-first"
-                    left="0"
-                  >
-                    <Input
-                      size="sm"
-                      value={row.name}
-                      ref={(el) => {
-                        processNameInputRefs.current[rowIndex] = el
-                      }}
-                      onChange={(e) =>
-                        setProcessRows((prev) =>
-                          prev.map((item, idx) =>
-                            idx === rowIndex
-                              ? { ...item, name: e.target.value }
-                              : item,
-                          ),
-                        )
-                      }
-                    />
-                  </Table.Cell>
-                  <Table.Cell
-                    minW={RATE_EXPR_COL_W}
-                    data-sticky="start-last"
-                    left={PROCESS_NAME_COL_W}
-                  >
-                    <Input
-                      size="sm"
-                      readOnly
-                      cursor="pointer"
-                      value={row.rateExpr}
-                      placeholder={t(
-                        "flow.udmEditor.form.placeholders.clickEditRateExpr",
-                      )}
-                      title={row.rateExpr}
-                      ref={(el) => {
-                        rateExprInputRefs.current[rowIndex] = el
-                      }}
-                      onClick={() => openRateExprEditor(rowIndex)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault()
-                          openRateExprEditor(rowIndex)
-                        }
-                      }}
-                    />
-                  </Table.Cell>
-                  {componentNames.map((compName) => (
-                    <Table.Cell
-                      key={`stoich-cell-${rowIndex}-${compName}`}
-                      minW={STOICH_COL_MIN_W}
-                    >
+                  <Table.ColumnHeader>
+                    {t("flow.udmEditor.form.columns.label")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmEditor.form.columns.unit")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmEditor.form.columns.defaultValue")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmEditor.form.columns.allowChange")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
+                    {t("flow.udmEditor.form.columns.actions")}
+                  </Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {componentRows.map((row, index) => (
+                  <Table.Row key={row._rowId}>
+                    <Table.Cell>
                       <Input
                         size="sm"
-                        readOnly
-                        cursor="pointer"
-                        type="text"
-                        value={row.stoich[compName] || "0"}
-                        placeholder={t(
-                          "flow.udmEditor.form.placeholders.stoichExample",
-                        )}
-                        title={row.stoich[compName] || "0"}
-                        ref={(el) => {
-                          stoichInputRefs.current[`${rowIndex}:${compName}`] =
-                            el
-                        }}
-                        onClick={() => openStoichEditor(rowIndex, compName)}
-                        onPaste={(event) =>
-                          handleStoichPaste(event, rowIndex, compName)
+                        value={row.name}
+                        onChange={(e) =>
+                          setComponentName(index, e.target.value)
                         }
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault()
-                            openStoichEditor(rowIndex, compName)
-                          }
-                        }}
                       />
                     </Table.Cell>
-                  ))}
-                  <Table.Cell minW={NOTE_COL_W}>
-                    <Input
-                      size="sm"
-                      value={row.note}
-                      onChange={(e) =>
-                        setProcessRows((prev) =>
-                          prev.map((item, idx) =>
-                            idx === rowIndex
-                              ? { ...item, note: e.target.value }
-                              : item,
-                          ),
-                        )
-                      }
-                    />
-                  </Table.Cell>
-                  <Table.Cell minW={ACTION_COL_W}>
-                    <Button
-                      size="xs"
-                      variant="subtle"
-                      colorPalette="red"
-                      onClick={() =>
-                        setProcessRows((prev) =>
-                          prev.length > 1
-                            ? prev.filter((_, idx) => idx !== rowIndex)
-                            : prev,
-                        )
-                      }
-                      disabled={processRows.length <= 1}
-                    >
-                      {t("common.delete")}
-                    </Button>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </Table.ScrollArea>
-      </Box>
+                    <Table.Cell>
+                      <Input
+                        size="sm"
+                        value={row.label}
+                        onChange={(e) =>
+                          setComponentRows((prev) =>
+                            prev.map((item, idx) =>
+                              idx === index
+                                ? { ...item, label: e.target.value }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Input
+                        size="sm"
+                        value={row.unit}
+                        onChange={(e) =>
+                          setComponentRows((prev) =>
+                            prev.map((item, idx) =>
+                              idx === index
+                                ? { ...item, unit: e.target.value }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Input
+                        size="sm"
+                        type="number"
+                        value={row.defaultValue}
+                        onChange={(e) =>
+                          setComponentRows((prev) =>
+                            prev.map((item, idx) =>
+                              idx === index
+                                ? { ...item, defaultValue: e.target.value }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Switch.Root
+                        checked={!row.isFixed}
+                        onCheckedChange={(details) =>
+                          setComponentRows((prev) =>
+                            prev.map((item, idx) =>
+                              idx === index
+                                ? { ...item, isFixed: !details.checked }
+                                : item,
+                            ),
+                          )
+                        }
+                      >
+                        <Switch.HiddenInput
+                          aria-label={t(
+                            "flow.udmEditor.form.aria.allowChange",
+                            {
+                              index: index + 1,
+                            },
+                          )}
+                        />
+                        <Switch.Control />
+                      </Switch.Root>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        colorPalette="red"
+                        onClick={() => removeComponent(index)}
+                        disabled={componentRows.length <= 1 || isReadonlyMode}
+                      >
+                        {t("common.delete")}
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </Box>
 
-      <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
-        <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">
-            {t("flow.udmEditor.validation.sectionTitle")}
-          </Heading>
-          <HStack>
-            <Button size="sm" variant="subtle" onClick={runValidate}>
-              {t("flow.udmEditor.validation.actions.parseValidate")}
-            </Button>
-            <Button size="sm" onClick={mergeExtractedParameters}>
-              {t("flow.udmEditor.validation.actions.applyExtractedParams")}
-            </Button>
-          </HStack>
-        </Flex>
-        {validation ? (
-          <VStack align="stretch" gap={2}>
-            <HStack>
-              <Badge colorPalette={validation.ok ? "green" : "red"}>
-                {validation.ok
-                  ? t("flow.udmEditor.validation.status.passed")
-                  : t("flow.udmEditor.validation.status.failed")}
-              </Badge>
-              <Text fontSize="sm">
-                {t("flow.udmEditor.validation.extractedLabel")}{" "}
-                {(validation.extracted_parameters || []).join(", ") || "-"}
-              </Text>
-            </HStack>
-            {(validation.errors || []).map((err, idx) => (
-              <Button
-                key={`err-${idx}`}
-                size="xs"
-                variant="ghost"
-                justifyContent="flex-start"
-                colorPalette="red"
-                onClick={() => jumpToIssue(err)}
-                title={t("flow.udmEditor.validation.jumpToCellTitle")}
-              >
-                [{err.code}] {err.message}
-                {err.process ? ` (${err.process})` : ""}
-              </Button>
-            ))}
-            {(validation.warnings || []).map((warn, idx) => (
-              <Button
-                key={`warn-${idx}`}
-                size="xs"
-                variant="ghost"
-                justifyContent="flex-start"
-                colorPalette="orange"
-                onClick={() => jumpToIssue(warn)}
-                title={t("flow.udmEditor.validation.jumpToCellTitle")}
-              >
-                [{warn.code}] {warn.message}
-                {warn.process ? ` (${warn.process})` : ""}
-              </Button>
-            ))}
-          </VStack>
-        ) : (
-          <Text color="gray.500" fontSize="sm">
-            {t("flow.udmEditor.validation.emptyHint")}
-          </Text>
-        )}
-      </Box>
-
-      <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
-        <Flex align="center" justify="space-between" mb={3}>
-          <Heading size="sm">
-            {t("flow.udmEditor.form.sections.parameterWizard")}
-          </Heading>
-          <Button
-            size="sm"
-            onClick={() =>
-              setParameterRows((prev) => [...prev, emptyParameter()])
-            }
-          >
-            {t("flow.udmEditor.form.actions.addParameter")}
-          </Button>
-        </Flex>
-        <Table.Root size="sm">
-          <Table.Header>
-            <Table.Row>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.name")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.unit")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.defaultValue")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.min")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.max")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.scale")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.note")}
-              </Table.ColumnHeader>
-              <Table.ColumnHeader>
-                {t("flow.udmEditor.form.columns.actions")}
-              </Table.ColumnHeader>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {parameterRows.map((row, rowIndex) => (
-              <Table.Row key={row._rowId}>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    value={row.name}
-                    onChange={(e) =>
-                      setParameterRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, name: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    value={row.unit}
-                    onChange={(e) =>
-                      setParameterRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, unit: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    type="number"
-                    value={row.defaultValue}
-                    onChange={(e) =>
-                      setParameterRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, defaultValue: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    type="number"
-                    value={row.minValue}
-                    onChange={(e) =>
-                      setParameterRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, minValue: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    type="number"
-                    value={row.maxValue}
-                    onChange={(e) =>
-                      setParameterRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, maxValue: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <NativeSelect.Root size="sm">
-                    <NativeSelect.Field
-                      value={row.scale}
-                      onChange={(e) =>
-                        setParameterRows((prev) =>
-                          prev.map((item, idx) =>
-                            idx === rowIndex
-                              ? {
-                                  ...item,
-                                  scale: e.target.value as "lin" | "log",
-                                }
-                              : item,
-                          ),
-                        )
-                      }
-                    >
-                      <option value="lin">lin</option>
-                      <option value="log">log</option>
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
-                </Table.Cell>
-                <Table.Cell>
-                  <Input
-                    size="sm"
-                    value={row.note}
-                    onChange={(e) =>
-                      setParameterRows((prev) =>
-                        prev.map((item, idx) =>
-                          idx === rowIndex
-                            ? { ...item, note: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
+          <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
+            <Flex align="center" justify="space-between" mb={3}>
+              <Heading size="sm">
+                {t("flow.udmEditor.form.sections.processes")}
+              </Heading>
+              <HStack>
+                {showStoichSection ? (
                   <Button
-                    size="xs"
+                    size="sm"
                     variant="subtle"
-                    colorPalette="red"
+                    disabled={isReadonlyMode}
                     onClick={() =>
-                      setParameterRows((prev) =>
-                        prev.filter((_, idx) => idx !== rowIndex),
+                      setProcessRows((prev) =>
+                        prev.map((row) => ({
+                          ...row,
+                          stoich: Object.fromEntries(
+                            componentNames.map((compName) => [compName, "0"]),
+                          ),
+                        })),
                       )
                     }
                   >
-                    {t("common.delete")}
+                    {t("flow.udmEditor.form.actions.clearAllStoich")}
                   </Button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      </Box>
+                ) : null}
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    setProcessRows((prev) => [...prev, emptyProcess()])
+                  }
+                  disabled={isReadonlyMode}
+                >
+                  {t("flow.udmEditor.form.actions.addProcess")}
+                </Button>
+              </HStack>
+            </Flex>
+            <Table.ScrollArea
+              borderWidth="1px"
+              rounded="md"
+              maxW="100%"
+              maxH="520px"
+            >
+              <Table.Root
+                size="sm"
+                stickyHeader
+                css={{
+                  "& [data-sticky]": {
+                    position: "sticky",
+                    bg: "bg",
+                  },
+                  "& thead [data-sticky]": {
+                    zIndex: 4,
+                  },
+                  "& tbody [data-sticky]": {
+                    zIndex: 2,
+                  },
+                  "& [data-sticky='start-last']": {
+                    _after: {
+                      content: '""',
+                      position: "absolute",
+                      insetInlineEnd: "0",
+                      top: "0",
+                      bottom: "-1px",
+                      width: "24px",
+                      translate: "100% 0",
+                      pointerEvents: "none",
+                      boxShadow: "inset 8px 0px 8px -8px rgba(0, 0, 0, 0.22)",
+                    },
+                  },
+                }}
+              >
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader
+                      minW={PROCESS_NAME_COL_W}
+                      data-sticky="start-first"
+                      left="0"
+                    >
+                      {t("flow.udmEditor.form.columns.processName")}
+                    </Table.ColumnHeader>
+                    {showRateExprSection ? (
+                      <Table.ColumnHeader
+                        minW={RATE_EXPR_COL_W}
+                        data-sticky="start-last"
+                        left={PROCESS_NAME_COL_W}
+                      >
+                        {t("flow.udmEditor.form.columns.rateExpr")}
+                      </Table.ColumnHeader>
+                    ) : null}
+                    {showStoichSection
+                      ? componentNames.map((compName) => (
+                          <Table.ColumnHeader
+                            key={`stoich-header-${compName}`}
+                            minW={STOICH_COL_MIN_W}
+                          >
+                            {compName}
+                          </Table.ColumnHeader>
+                        ))
+                      : null}
+                    {showAdvancedFields ? (
+                      <Table.ColumnHeader minW={NOTE_COL_W}>
+                        {t("flow.udmEditor.form.columns.note")}
+                      </Table.ColumnHeader>
+                    ) : null}
+                    <Table.ColumnHeader minW={ACTION_COL_W}>
+                      {t("flow.udmEditor.form.columns.actions")}
+                    </Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {processRows.map((row, rowIndex) => (
+                    <Table.Row key={row._rowId}>
+                      <Table.Cell
+                        minW={PROCESS_NAME_COL_W}
+                        data-sticky="start-first"
+                        left="0"
+                      >
+                        <HStack>
+                          <Input
+                            size="sm"
+                            value={row.name}
+                            ref={(el) => {
+                              processNameInputRefs.current[rowIndex] = el
+                            }}
+                            onChange={(e) =>
+                              setProcessRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, name: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                          <ProcessTeachingPopover
+                            teaching={getProcessTeaching(row.name)}
+                          />
+                        </HStack>
+                      </Table.Cell>
+                      {showRateExprSection ? (
+                        <Table.Cell
+                          minW={RATE_EXPR_COL_W}
+                          data-sticky="start-last"
+                          left={PROCESS_NAME_COL_W}
+                        >
+                          <Input
+                            size="sm"
+                            readOnly
+                            cursor="pointer"
+                            value={row.rateExpr}
+                            placeholder={t(
+                              "flow.udmEditor.form.placeholders.clickEditRateExpr",
+                            )}
+                            title={row.rateExpr}
+                            ref={(el) => {
+                              rateExprInputRefs.current[rowIndex] = el
+                            }}
+                            onClick={() => openRateExprEditor(rowIndex)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault()
+                                openRateExprEditor(rowIndex)
+                              }
+                            }}
+                          />
+                        </Table.Cell>
+                      ) : null}
+                      {showStoichSection
+                        ? componentNames.map((compName) => (
+                            <Table.Cell
+                              key={`stoich-cell-${rowIndex}-${compName}`}
+                              minW={STOICH_COL_MIN_W}
+                            >
+                              <Input
+                                size="sm"
+                                readOnly
+                                cursor="pointer"
+                                type="text"
+                                value={row.stoich[compName] || "0"}
+                                placeholder={t(
+                                  "flow.udmEditor.form.placeholders.stoichExample",
+                                )}
+                                title={row.stoich[compName] || "0"}
+                                ref={(el) => {
+                                  stoichInputRefs.current[
+                                    `${rowIndex}:${compName}`
+                                  ] = el
+                                }}
+                                onClick={() =>
+                                  openStoichEditor(rowIndex, compName)
+                                }
+                                onPaste={(event) =>
+                                  handleStoichPaste(event, rowIndex, compName)
+                                }
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") {
+                                    event.preventDefault()
+                                    openStoichEditor(rowIndex, compName)
+                                  }
+                                }}
+                              />
+                            </Table.Cell>
+                          ))
+                        : null}
+                      {showAdvancedFields ? (
+                        <Table.Cell minW={NOTE_COL_W}>
+                          <Input
+                            size="sm"
+                            value={row.note}
+                            onChange={(e) =>
+                              setProcessRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, note: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </Table.Cell>
+                      ) : null}
+                      <Table.Cell minW={ACTION_COL_W}>
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          colorPalette="red"
+                          onClick={() =>
+                            setProcessRows((prev) =>
+                              prev.length > 1
+                                ? prev.filter((_, idx) => idx !== rowIndex)
+                                : prev,
+                            )
+                          }
+                          disabled={processRows.length <= 1 || isReadonlyMode}
+                        >
+                          {t("common.delete")}
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Table.ScrollArea>
+          </Box>
 
-      <Flex mt={8} gap={3} wrap="wrap">
-        {isDirty ? (
-          <Badge colorPalette="orange" variant="subtle" alignSelf="center">
-            {t("flow.udmEditor.status.unsaved")}
-          </Badge>
-        ) : (
-          <Badge colorPalette="green" variant="subtle" alignSelf="center">
-            {t("flow.udmEditor.status.saved")}
-          </Badge>
-        )}
-        <Button loading={isSaving} onClick={saveModel}>
-          {t("flow.udmEditor.actions.saveModel")}
-        </Button>
-        <Button
-          colorPalette="blue"
-          loading={isSaving}
-          onClick={saveAndGenerateFlowchart}
-        >
-          {t("flow.udmEditor.actions.saveAndGenerateFlow")}
-        </Button>
-        {!hideBackButton ? (
-          <Button variant="subtle" onClick={handleBackClick}>
-            {t("flow.udmEditor.actions.backToLibrary")}
-          </Button>
-        ) : null}
+          {showRecipeBar ? (
+            <Box mt={6}>
+              <RecipeBar
+                recipes={activeRecipes}
+                onInsert={insertRecipeIntoRateExpr}
+              />
+            </Box>
+          ) : null}
+
+          {showValidationSection ? (
+            <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
+              <Flex align="center" justify="space-between" mb={3}>
+                <Heading size="sm">
+                  {t("flow.udmEditor.validation.sectionTitle")}
+                </Heading>
+                <HStack>
+                  <Button size="sm" variant="subtle" onClick={runValidate}>
+                    {t("flow.udmEditor.validation.actions.parseValidate")}
+                  </Button>
+                  <Button size="sm" onClick={mergeExtractedParameters}>
+                    {t(
+                      "flow.udmEditor.validation.actions.applyExtractedParams",
+                    )}
+                  </Button>
+                </HStack>
+              </Flex>
+              {validation ? (
+                <VStack align="stretch" gap={2}>
+                  <HStack>
+                    <Badge colorPalette={validation.ok ? "green" : "red"}>
+                      {validation.ok
+                        ? t("flow.udmEditor.validation.status.passed")
+                        : t("flow.udmEditor.validation.status.failed")}
+                    </Badge>
+                    <Text fontSize="sm">
+                      {t("flow.udmEditor.validation.extractedLabel")}{" "}
+                      {(validation.extracted_parameters || []).join(", ") ||
+                        "-"}
+                    </Text>
+                  </HStack>
+                  {(validation.errors || []).map((err, idx) => (
+                    <Button
+                      key={`err-${idx}`}
+                      size="xs"
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      colorPalette="red"
+                      onClick={() => jumpToIssue(err)}
+                      title={t("flow.udmEditor.validation.jumpToCellTitle")}
+                    >
+                      [{err.code}] {err.message}
+                      {err.process ? ` (${err.process})` : ""}
+                    </Button>
+                  ))}
+                  {(validation.warnings || []).map((warn, idx) => (
+                    <Button
+                      key={`warn-${idx}`}
+                      size="xs"
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      colorPalette="orange"
+                      onClick={() => jumpToIssue(warn)}
+                      title={t("flow.udmEditor.validation.jumpToCellTitle")}
+                    >
+                      [{warn.code}] {warn.message}
+                      {warn.process ? ` (${warn.process})` : ""}
+                    </Button>
+                  ))}
+                </VStack>
+              ) : (
+                <Text color="gray.500" fontSize="sm">
+                  {t("flow.udmEditor.validation.emptyHint")}
+                </Text>
+              )}
+            </Box>
+          ) : null}
+
+          {showParameterSection ? (
+            <Box mt={6} borderWidth="1px" borderRadius="md" p={4}>
+              <Flex align="center" justify="space-between" mb={3}>
+                <Heading size="sm">
+                  {t("flow.udmEditor.form.sections.parameterWizard")}
+                </Heading>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    setParameterRows((prev) => [...prev, emptyParameter()])
+                  }
+                  disabled={isReadonlyMode}
+                >
+                  {t("flow.udmEditor.form.actions.addParameter")}
+                </Button>
+              </Flex>
+              <Table.Root size="sm">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.name")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.unit")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.defaultValue")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.min")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.max")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.scale")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.note")}
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.actions")}
+                    </Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {parameterRows.map((row, rowIndex) => (
+                    <Table.Row key={row._rowId}>
+                      <Table.Cell>
+                        <Input
+                          size="sm"
+                          value={row.name}
+                          ref={(el) => {
+                            parameterNameInputRefs.current[rowIndex] = el
+                          }}
+                          onChange={(e) =>
+                            setParameterRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === rowIndex
+                                  ? { ...item, name: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          size="sm"
+                          value={row.unit}
+                          onChange={(e) =>
+                            setParameterRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === rowIndex
+                                  ? { ...item, unit: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          size="sm"
+                          type="number"
+                          value={row.defaultValue}
+                          onChange={(e) =>
+                            setParameterRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === rowIndex
+                                  ? { ...item, defaultValue: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          size="sm"
+                          type="number"
+                          value={row.minValue}
+                          onChange={(e) =>
+                            setParameterRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === rowIndex
+                                  ? { ...item, minValue: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          size="sm"
+                          type="number"
+                          value={row.maxValue}
+                          onChange={(e) =>
+                            setParameterRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === rowIndex
+                                  ? { ...item, maxValue: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <NativeSelect.Root size="sm">
+                          <NativeSelect.Field
+                            value={row.scale}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? {
+                                        ...item,
+                                        scale: e.target.value as "lin" | "log",
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                          >
+                            <option value="lin">lin</option>
+                            <option value="log">log</option>
+                          </NativeSelect.Field>
+                          <NativeSelect.Indicator />
+                        </NativeSelect.Root>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          size="sm"
+                          value={row.note}
+                          onChange={(e) =>
+                            setParameterRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === rowIndex
+                                  ? { ...item, note: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          colorPalette="red"
+                          onClick={() =>
+                            setParameterRows((prev) =>
+                              prev.filter((_, idx) => idx !== rowIndex),
+                            )
+                          }
+                          disabled={isReadonlyMode}
+                        >
+                          {t("common.delete")}
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Box>
+          ) : null}
+
+          <Flex mt={8} gap={3} wrap="wrap">
+            {isDirty ? (
+              <Badge colorPalette="orange" variant="subtle" alignSelf="center">
+                {t("flow.udmEditor.status.unsaved")}
+              </Badge>
+            ) : (
+              <Badge colorPalette="green" variant="subtle" alignSelf="center">
+                {t("flow.udmEditor.status.saved")}
+              </Badge>
+            )}
+            <Button loading={isSaving} onClick={saveModel} disabled={isReadonlyMode}>
+              {t("flow.udmEditor.actions.saveModel")}
+            </Button>
+            <Button
+              colorPalette="blue"
+              loading={isSaving}
+              onClick={saveAndGenerateFlowchart}
+              disabled={isReadonlyMode}
+            >
+              {t("flow.udmEditor.actions.saveAndGenerateFlow")}
+            </Button>
+            {!hideBackButton ? (
+              <Button variant="subtle" onClick={handleBackClick}>
+                {t("flow.udmEditor.actions.backToLibrary")}
+              </Button>
+            ) : null}
+          </Flex>
+        </Box>
       </Flex>
 
       {editorTarget ? (
@@ -1664,6 +2031,11 @@ export function UDMModelEditorForm({
           initialValue={editorInitialValue}
           componentNames={componentNames}
           parameterNames={parameterNames}
+          recipes={
+            editorTarget.cellType === "rateExpr" && showRateExprSection
+              ? activeRecipes
+              : undefined
+          }
           onSave={saveEditorValue}
           onClose={closeEditor}
         />

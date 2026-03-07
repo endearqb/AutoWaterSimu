@@ -1345,7 +1345,54 @@ export const enMessages: I18nMessages = {
       comingSoon: "Coming Soon",
       prerequisite: "Requires: {name}",
       completed: "Completed",
+      currentStep: "Current step: {step}",
       minutes: "{n} min",
+      stepLabel: "Step {step}",
+      modeDescription:
+        "Guided mode reveals the editor in the same order as the lesson.",
+      mode: {
+        guided: "Guided",
+        expert: "Expert",
+      },
+      modeToggle: "Toggle tutorial editor mode",
+      guide: {
+        chapterLabel: "Current chapter",
+        objectivesTitle: "Objectives",
+        currentStepTitle: "Step {step} focus",
+        focusAreas: "Focus areas",
+        watchTitle: "Common pitfalls",
+      },
+      focusAreas: {
+        components: "components",
+        processes: "processes",
+        stoich: "stoichiometry",
+        rateExpr: "rate expressions",
+        parameters: "parameters",
+        validation: "validation",
+      },
+      processHelp: "Explain this process",
+      recipeBar: {
+        title: "Recipe snippets",
+      },
+      recipes: {
+        monodSubstrate: {
+          label: "Monod substrate term",
+          description: "Insert a substrate-limited Monod expression.",
+        },
+        oxygenSwitch: {
+          label: "Oxygen switch",
+          description: "Insert an aerobic oxygen limitation term.",
+        },
+        yieldConsumption: {
+          label: "Yield-based consumption",
+          description:
+            "Insert the classic heterotroph substrate consumption factor.",
+        },
+        alkBalance: {
+          label: "Alkalinity balance",
+          description: "Insert a simple alkalinity conversion factor.",
+        },
+      },
       difficulty: {
         beginner: "Beginner",
         intermediate: "Intermediate",
@@ -1375,6 +1422,191 @@ export const enMessages: I18nMessages = {
         "chapter-7": {
           title: "Basic CSTR Simulation",
           subtitle: "From matrix to a runnable simulation model",
+        },
+      },
+      lessonContent: {
+        "chapter-1": {
+          objectives: {
+            0: "Recognize components as species and processes as transformations.",
+            1: "Read a stoichiometric sign table before editing any formulas.",
+          },
+          steps: {
+            1: {
+              title: "List the actors",
+              body:
+                "Confirm the components and process names before touching any numbers. The goal is to understand who participates in the reaction.",
+            },
+            2: {
+              title: "Read the arrows",
+              body:
+                "Use the sign-only matrix to tell which components are consumed or produced in each process.",
+            },
+            3: {
+              title: "Preview rate expressions",
+              body:
+                "This chapter keeps rate formulas closed. Skim the placeholder so you know where kinetics will appear later.",
+            },
+            4: {
+              title: "Preview parameters",
+              body:
+                "Parameters stay locked here. Notice where they will be extracted once expressions become richer.",
+            },
+            5: {
+              title: "Preview validation",
+              body:
+                "Validation also stays for later chapters. The important outcome here is learning the matrix reading habit.",
+            },
+          },
+          processes: {
+            aerobic_cod_removal: {
+              title: "Aerobic COD removal",
+              story:
+                "Heterotrophs consume soluble substrate and oxygen, then convert part of it into biomass.",
+              mistakes: {
+                0: "If substrate and biomass point in the same direction, you are probably describing accumulation instead of growth.",
+              },
+            },
+          },
+        },
+        "chapter-2": {
+          objectives: {
+            0: "Fill a complete aerobic heterotrophic growth row.",
+            1: "Connect Monod kinetics to the process meaning.",
+            2: "Extract reusable kinetic parameters instead of hard-coding constants.",
+          },
+          steps: {
+            1: {
+              title: "Start from the template",
+              body:
+                "Check the preloaded components and processes, then decide which row represents heterotrophic growth.",
+            },
+            2: {
+              title: "Balance the stoichiometry",
+              body:
+                "Use negative terms for what the process consumes and positive terms for what it creates. Y_H usually appears in the biomass/substrate pair.",
+            },
+            3: {
+              title: "Compose the rate law",
+              body:
+                "Build the kinetic term from growth rate, substrate availability, and oxygen availability.",
+            },
+            4: {
+              title: "Promote constants to parameters",
+              body:
+                "Move constants like mu_H, K_S, K_OH, and Y_H into the parameter table so the model stays reusable.",
+            },
+            5: {
+              title: "Validate the lesson",
+              body:
+                "Run validation, fix any naming or expression errors, and reach a clean pass on the full row.",
+            },
+          },
+          processes: {
+            aerobic_cod_removal: {
+              title: "Aerobic heterotrophic growth",
+              story:
+                "This row represents aerobic heterotrophic growth: substrate and oxygen go down, biomass goes up.",
+              mistakes: {
+                0: "A positive substrate coefficient means the process is generating food instead of consuming it.",
+                1: "Leaving Y_H only inside the rate law hides the mass relationship that the matrix is supposed to teach.",
+              },
+            },
+            nitrification: {
+              title: "Nitrification",
+              story:
+                "Autotrophs oxidize ammonia under aerobic conditions and generate nitrate.",
+              mistakes: {
+                0: "If nitrification does not consume oxygen, the process meaning is incomplete.",
+              },
+            },
+          },
+        },
+        "chapter-3": {
+          objectives: {
+            0: "Check COD and nitrogen continuity across multiple processes.",
+            1: "Compare aerobic and anoxic pathways without losing sign discipline.",
+            2: "Use validation feedback to jump directly to the broken cell.",
+          },
+          steps: {
+            1: {
+              title: "Map the nitrogen story",
+              body:
+                "Identify which rows move ammonia toward nitrate and which rows remove nitrate under anoxic conditions.",
+            },
+            2: {
+              title: "Complete the stoichiometry",
+              body:
+                "Use the matrix to encode COD, oxygen, ammonia, nitrate, and alkalinity directions together.",
+            },
+            3: {
+              title: "Layer the kinetics",
+              body:
+                "Add substrate, nitrate, and switching terms without mixing up the biological meaning.",
+            },
+            4: {
+              title: "Parameterize for comparison",
+              body:
+                "Pull shared constants into the parameter list so aerobic and anoxic rows can be tuned side by side.",
+            },
+            5: {
+              title: "Close with continuity checks",
+              body:
+                "Run validation and use issue jumps to repair any broken symbols or malformed cells.",
+            },
+          },
+          processes: {
+            anoxic_denitrification: {
+              title: "Anoxic denitrification",
+              story:
+                "Under anoxic conditions, heterotrophs use nitrate as the electron acceptor while consuming substrate.",
+              mistakes: {
+                0: "If oxygen still activates the rate, the row is not truly anoxic.",
+              },
+            },
+            nitrification: {
+              title: "Nitrification",
+              story:
+                "Nitrification converts ammonia to nitrate and usually reduces alkalinity.",
+              mistakes: {
+                0: "Mixing ammonia and nitrate signs is the fastest way to break nitrogen continuity.",
+                1: "If alkalinity never changes, the nitrification row is missing an important teaching signal.",
+              },
+            },
+          },
+        },
+        "chapter-7": {
+          objectives: {
+            0: "Inspect the full tutorial-ready seed model before simulation.",
+            1: "Connect matrix structure, parameters, and validation to a runnable CSTR case.",
+          },
+          steps: {
+            1: {
+              title: "Inspect the reactor state",
+              body:
+                "Review the tutorial seed and confirm the species and processes that will enter the CSTR case.",
+            },
+            2: {
+              title: "Review the stoichiometry",
+              body:
+                "Check the row directions before the simulation chapter opens for editing.",
+            },
+            3: {
+              title: "Review the kinetics",
+              body:
+                "Inspect the prepared rate expressions and note how switching terms map to reactor behavior.",
+            },
+            4: {
+              title: "Review the parameter set",
+              body:
+                "Check the seed parameters that will drive the first simulation scenario.",
+            },
+            5: {
+              title: "Prepare for simulation",
+              body:
+                "Use validation to make sure the seed is consistent before the simulation walkthrough lands.",
+            },
+          },
+          processes: {},
         },
       },
     },

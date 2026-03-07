@@ -1,7 +1,8 @@
 import { t } from "@/utils/i18n"
+import { OpenAPI } from "../client/core/OpenAPI"
+import { request as clientRequest } from "../client/core/request"
 import {
   UdmFlowchartsService,
-  UdmHybridConfigsService,
   UdmModelsService,
   UdmService,
 } from "../client/sdk.gen"
@@ -16,10 +17,6 @@ import type {
   UDMFlowChartPublic,
   UDMFlowChartUpdate,
   UDMFlowChartsPublic,
-  UDMHybridConfigCreate,
-  UDMHybridConfigPublic,
-  UDMHybridConfigUpdate,
-  UDMHybridConfigsPublic,
   UDMJobInputDataResponse,
   UDMJobPublic,
   UDMJobsPublic,
@@ -33,6 +30,7 @@ import type {
   UDMProcessDefinition,
   UDMValidationResponse,
 } from "../client/types.gen"
+import type { HybridUDMConfig } from "../types/hybridUdm"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
 
@@ -48,6 +46,33 @@ export interface UDMSeedTemplateSummary {
   components_count?: number
   processes_count?: number
   parameters_count?: number
+}
+
+export interface UDMHybridConfigCreate {
+  name: string
+  description?: string | null
+  hybrid_config: HybridUDMConfig
+}
+
+export interface UDMHybridConfigUpdate {
+  name?: string | null
+  description?: string | null
+  hybrid_config?: HybridUDMConfig | null
+}
+
+export interface UDMHybridConfigPublic {
+  id: string
+  owner_id: string
+  created_at: string
+  updated_at: string
+  name: string
+  description?: string | null
+  hybrid_config: HybridUDMConfig
+}
+
+export interface UDMHybridConfigsPublic {
+  data: UDMHybridConfigPublic[]
+  count: number
 }
 
 class UDMServiceImpl
@@ -378,9 +403,13 @@ class UDMServiceImpl
     limit?: number,
   ): Promise<UDMHybridConfigsPublic> {
     try {
-      return await UdmHybridConfigsService.readUdmHybridConfigs({
-        skip,
-        limit,
+      return await clientRequest(OpenAPI, {
+        method: "GET",
+        url: "/api/v1/udm-hybrid-configs/",
+        query: {
+          skip,
+          limit,
+        },
       })
     } catch (error) {
       throw handleApiError(error, "Failed to fetch UDM hybrid config list")
@@ -389,8 +418,12 @@ class UDMServiceImpl
 
   async getHybridConfig(id: string): Promise<UDMHybridConfigPublic> {
     try {
-      return await UdmHybridConfigsService.readUdmHybridConfig({
-        id,
+      return await clientRequest(OpenAPI, {
+        method: "GET",
+        url: "/api/v1/udm-hybrid-configs/{id}",
+        path: {
+          id,
+        },
       })
     } catch (error) {
       throw handleApiError(error, "Failed to fetch UDM hybrid config detail")
@@ -401,8 +434,11 @@ class UDMServiceImpl
     payload: UDMHybridConfigCreate,
   ): Promise<UDMHybridConfigPublic> {
     try {
-      return await UdmHybridConfigsService.createUdmHybridConfig({
-        requestBody: payload,
+      return await clientRequest(OpenAPI, {
+        method: "POST",
+        url: "/api/v1/udm-hybrid-configs/",
+        body: payload,
+        mediaType: "application/json",
       })
     } catch (error) {
       throw handleApiError(error, "Failed to create UDM hybrid config")
@@ -414,9 +450,14 @@ class UDMServiceImpl
     payload: UDMHybridConfigUpdate,
   ): Promise<UDMHybridConfigPublic> {
     try {
-      return await UdmHybridConfigsService.updateUdmHybridConfig({
-        id,
-        requestBody: payload,
+      return await clientRequest(OpenAPI, {
+        method: "PUT",
+        url: "/api/v1/udm-hybrid-configs/{id}",
+        path: {
+          id,
+        },
+        body: payload,
+        mediaType: "application/json",
       })
     } catch (error) {
       throw handleApiError(error, "Failed to update UDM hybrid config")
@@ -425,8 +466,12 @@ class UDMServiceImpl
 
   async deleteHybridConfig(id: string): Promise<{ message: string }> {
     try {
-      return await UdmHybridConfigsService.deleteUdmHybridConfig({
-        id,
+      return await clientRequest(OpenAPI, {
+        method: "DELETE",
+        url: "/api/v1/udm-hybrid-configs/{id}",
+        path: {
+          id,
+        },
       })
     } catch (error) {
       throw handleApiError(error, "Failed to delete UDM hybrid config")

@@ -358,15 +358,116 @@ UDM_SEED_TEMPLATES: Dict[str, Dict[str, Any]] = {
 }
 
 
-def list_udm_seed_templates() -> List[Dict[str, Any]]:
+TUTORIAL_TEMPLATE_SPECS: List[Dict[str, Any]] = [
+    {
+        "key": "petersen-chapter-1",
+        "base_template_key": "asm1slim",
+        "name": "Petersen Tutorial - Chapter 1",
+        "description": "Chapter 1 tutorial seed for arrow-matrix intuition.",
+        "lesson_key": "chapter-1",
+        "difficulty": "beginner",
+        "template_type": "guide",
+        "estimated_minutes": 15,
+        "prerequisites": [],
+        "step_config": {"defaultStep": 1, "maxStep": 2},
+        "recommended_charts": ["cod", "dissolvedOxygen"],
+    },
+    {
+        "key": "petersen-chapter-2",
+        "base_template_key": "asm1slim",
+        "name": "Petersen Tutorial - Chapter 2",
+        "description": "Chapter 2 tutorial seed for the first full Petersen matrix.",
+        "lesson_key": "chapter-2",
+        "difficulty": "beginner",
+        "template_type": "exercise",
+        "estimated_minutes": 25,
+        "prerequisites": ["chapter-1"],
+        "step_config": {"defaultStep": 1, "maxStep": 5},
+        "recommended_charts": ["cod", "dissolvedOxygen", "ammonia"],
+    },
+    {
+        "key": "petersen-chapter-3",
+        "base_template_key": "asm1slim",
+        "name": "Petersen Tutorial - Chapter 3",
+        "description": "Chapter 3 tutorial seed for COD/N continuity checks.",
+        "lesson_key": "chapter-3",
+        "difficulty": "intermediate",
+        "template_type": "exercise",
+        "estimated_minutes": 30,
+        "prerequisites": ["chapter-2"],
+        "step_config": {"defaultStep": 1, "maxStep": 5},
+        "recommended_charts": ["cod", "ammonia", "nitrate"],
+    },
+    {
+        "key": "petersen-chapter-7",
+        "base_template_key": "asm1",
+        "name": "Petersen Tutorial - Chapter 7",
+        "description": "Chapter 7 tutorial seed for a basic CSTR simulation case.",
+        "lesson_key": "chapter-7",
+        "difficulty": "intermediate",
+        "template_type": "case",
+        "estimated_minutes": 40,
+        "prerequisites": ["chapter-3"],
+        "step_config": {"defaultStep": 1, "maxStep": 5},
+        "recommended_charts": ["S_S", "X_BH", "S_O", "S_NH", "S_NO"],
+    },
+]
+
+
+def _build_tutorial_seed_template(spec: Dict[str, Any]) -> Dict[str, Any]:
+    base_template = copy.deepcopy(UDM_SEED_TEMPLATES[spec["base_template_key"]])
+    base_meta = copy.deepcopy(base_template.get("meta", {}))
+    base_meta["source"] = "seed-template"
+    base_meta["learning"] = {
+        "track": "petersen",
+        "lessonKey": spec["lesson_key"],
+        "chapter": spec["lesson_key"],
+        "chapterTitle": spec["name"],
+        "difficulty": spec["difficulty"],
+        "templateType": spec["template_type"],
+        "estimatedMinutes": spec["estimated_minutes"],
+        "prerequisites": spec["prerequisites"],
+        "stepConfig": spec["step_config"],
+        "recommendedCharts": spec["recommended_charts"],
+        "readonlyMode": False,
+    }
+    tutorial_tags = list(dict.fromkeys([*base_template.get("tags", []), "tutorial", "petersen-tutorial", spec["lesson_key"]]))
+    base_template.update(
+        {
+            "key": spec["key"],
+            "name": spec["name"],
+            "description": spec["description"],
+            "tags": tutorial_tags,
+            "meta": base_meta,
+        }
+    )
+    return base_template
+
+
+for tutorial_spec in TUTORIAL_TEMPLATE_SPECS:
+    UDM_SEED_TEMPLATES[tutorial_spec["key"]] = _build_tutorial_seed_template(
+        tutorial_spec
+    )
+
+
+def list_udm_seed_templates(
+    *,
+    tags: list[str] | None = None,
+    exclude_tags: list[str] | None = None,
+) -> List[Dict[str, Any]]:
     summaries = []
     for key, template in UDM_SEED_TEMPLATES.items():
+        template_tags = template.get("tags", [])
+        if tags and not all(t in template_tags for t in tags):
+            continue
+        if exclude_tags and any(t in template_tags for t in exclude_tags):
+            continue
         summaries.append(
             {
                 "key": key,
                 "name": template.get("name"),
                 "description": template.get("description"),
-                "tags": template.get("tags", []),
+                "tags": template_tags,
                 "components_count": len(template.get("components", [])),
                 "processes_count": len(template.get("processes", [])),
                 "parameters_count": len(template.get("parameters", [])),

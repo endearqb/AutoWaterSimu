@@ -19,8 +19,10 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { FiSearch } from "react-icons/fi"
 
 import TutorialLessonsSection from "@/components/UDM/TutorialLessonsSection"
+import type { TutorialLesson } from "@/data/tutorialLessons"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
+import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
 import { udmService } from "../../services/udmService"
 
 export const Route = createFileRoute("/_layout/udmModels")({
@@ -32,6 +34,9 @@ function UDMModelsPage() {
   const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
+  const attachLessonModel = useTutorialProgressStore(
+    (state) => state.attachLessonModel,
+  )
 
   const [searchInput, setSearchInput] = useState("")
   const [searchText, setSearchText] = useState("")
@@ -72,17 +77,6 @@ function UDMModelsPage() {
   const createFromTemplate = useMutation({
     mutationFn: async (templateKey: string) =>
       udmService.createModelFromTemplate({ template_key: templateKey }),
-    onSuccess: (created) => {
-      showSuccessToast(
-        t("flow.udmModels.toast.createTemplateSuccess", {
-          name: created.name,
-        }),
-      )
-      navigate({
-        to: "/udmModelEditor",
-        search: { modelId: created.id },
-      })
-    },
     onError: (error) => {
       showErrorToast(
         error instanceof Error
@@ -155,6 +149,10 @@ function UDMModelsPage() {
     () => templatesQuery.data || [],
     [templatesQuery.data],
   )
+  const generalTemplates = useMemo(
+    () => templates.filter((tpl) => !(tpl.tags || []).includes("tutorial")),
+    [templates],
+  )
 
   const dateLocale = language === "zh" ? "zh-CN" : "en-US"
 
@@ -165,6 +163,55 @@ function UDMModelsPage() {
     }
   }, [totalCount, models.length, page])
 
+  const openTutorialLesson = async (
+    lesson: TutorialLesson,
+    existingModelId?: string | null,
+  ) => {
+    try {
+      if (existingModelId) {
+        navigate({
+          to: "/udmModelEditor",
+          search: { modelId: existingModelId, lessonKey: lesson.lessonKey },
+        })
+        return
+      }
+
+      const created = await createFromTemplate.mutateAsync(lesson.seedTemplateKey)
+      attachLessonModel(lesson.lessonKey, created.id)
+      showSuccessToast(
+        t("flow.udmModels.toast.createTemplateSuccess", {
+          name: created.name,
+        }),
+      )
+      navigate({
+        to: "/udmModelEditor",
+        search: { modelId: created.id, lessonKey: lesson.lessonKey },
+      })
+    } catch {
+      // The mutation already surfaces a toast.
+    }
+  }
+
+  const openGeneralTemplate = async (templateKey: string) => {
+    try {
+      const created = await createFromTemplate.mutateAsync(templateKey)
+      showSuccessToast(
+        t("flow.udmModels.toast.createTemplateSuccess", {
+          name: created.name,
+        }),
+      )
+      navigate({
+        to: "/udmModelEditor",
+        search: { modelId: created.id },
+      })
+    } catch {
+      // The mutation already surfaces a toast.
+    }
+  }
+
+  const getLessonKeyFromModel = (tags?: string[]) =>
+    (tags || []).find((tag) => /^chapter-\d+$/.test(tag))
+
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
@@ -172,9 +219,7 @@ function UDMModelsPage() {
       </Heading>
 
       <TutorialLessonsSection
-        onNavigateToEditor={(lessonKey) =>
-          navigate({ to: "/udmModelEditor", search: { lessonKey } })
-        }
+        onOpenLesson={openTutorialLesson}
       />
 
       <Flex mt={6} gap={3} wrap="wrap" align="center">
@@ -219,13 +264,13 @@ function UDMModelsPage() {
           <Text color="gray.500">
             {t("flow.udmModels.state.templatesLoading")}
           </Text>
-        ) : templates.length === 0 ? (
+        ) : generalTemplates.length === 0 ? (
           <Text color="gray.500">
             {t("flow.udmModels.state.templatesEmpty")}
           </Text>
         ) : (
           <VStack align="stretch" gap={3}>
-            {templates.map((tpl) => (
+            {generalTemplates.map((tpl) => (
               <Flex
                 key={tpl.key}
                 borderWidth="1px"
@@ -261,7 +306,9 @@ function UDMModelsPage() {
                     createFromTemplate.isPending &&
                     createFromTemplate.variables === tpl.key
                   }
-                  onClick={() => createFromTemplate.mutate(tpl.key)}
+                  onClick={() => {
+                    void openGeneralTemplate(tpl.key)
+                  }}
                 >
                   {t("flow.udmModels.actions.createFromTemplate")}
                 </Button>
@@ -341,7 +388,10 @@ function UDMModelsPage() {
                           onClick={() =>
                             navigate({
                               to: "/udmModelEditor",
-                              search: { modelId: model.id },
+                              search: {
+                                modelId: model.id,
+                                lessonKey: getLessonKeyFromModel(model.tags),
+                              },
                             })
                           }
                         >

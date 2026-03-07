@@ -1038,11 +1038,21 @@ class UDMModelCreateFromTemplate(SQLModel):
     description: Optional[str] = Field(default=None, max_length=2000, description="可选覆盖模型描述")
 
 
+class UDMValidationLocation(SQLModel):
+    """UDM校验定位信息"""
+    section: Optional[str] = Field(default=None, description="问题所属区域")
+    processName: Optional[str] = Field(default=None, description="关联过程名")
+    componentName: Optional[str] = Field(default=None, description="关联组分名")
+    parameterName: Optional[str] = Field(default=None, description="关联参数名")
+    cellKey: Optional[str] = Field(default=None, description="关联单元格标识")
+
+
 class UDMValidationIssue(SQLModel):
     """UDM校验项"""
     code: str = Field(description="错误/警告编码")
     message: str = Field(description="错误/警告消息")
     process: Optional[str] = Field(default=None, description="关联过程")
+    location: Optional[UDMValidationLocation] = Field(default=None, description="问题定位信息")
 
 
 class UDMValidationResponse(SQLModel):

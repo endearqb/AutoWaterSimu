@@ -20,6 +20,7 @@ import {
   useState,
 } from "react"
 
+import type { TutorialRecipe } from "@/data/tutorialLessons"
 import { useI18n } from "@/i18n"
 import {
   type DecoratedExpressionToken,
@@ -57,6 +58,7 @@ interface ExpressionCellEditorDialogProps {
   initialValue: string
   componentNames: string[]
   parameterNames: string[]
+  recipes?: TutorialRecipe[]
   onSave: (nextValue: string) => void
   onClose: () => void
 }
@@ -98,6 +100,7 @@ function ExpressionCellEditorDialog({
   initialValue,
   componentNames,
   parameterNames,
+  recipes,
   onSave,
   onClose,
 }: ExpressionCellEditorDialogProps) {
@@ -355,6 +358,32 @@ function ExpressionCellEditorDialog({
                 flex={{ base: "1 1 auto", lg: "0 0 300px" }}
                 minW={{ base: 0, lg: "300px" }}
               >
+                {recipes && recipes.length > 0 ? (
+                  <Box borderWidth="1px" borderRadius="md" p={3}>
+                    <Heading size="xs" mb={2}>
+                      {t("flow.tutorial.recipeBar.title")}
+                    </Heading>
+                    <VStack align="stretch" gap={2}>
+                      {recipes.map((recipe) => (
+                        <Button
+                          key={recipe.key}
+                          size="xs"
+                          variant="subtle"
+                          justifyContent="space-between"
+                          onClick={() => insertSymbolAtCursor(recipe.template)}
+                        >
+                          <HStack justify="space-between" w="full">
+                            <Text>{t(recipe.labelKey)}</Text>
+                            <Badge colorPalette="blue" variant="subtle">
+                              {recipe.category}
+                            </Badge>
+                          </HStack>
+                        </Button>
+                      ))}
+                    </VStack>
+                  </Box>
+                ) : null}
+
                 <Box borderWidth="1px" borderRadius="md" p={3}>
                   <Heading size="xs" mb={2}>
                     {t("flow.udmEditor.expressionEditor.variables.title")}

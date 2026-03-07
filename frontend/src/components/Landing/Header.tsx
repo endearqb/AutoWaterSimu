@@ -74,7 +74,7 @@ export const Header = () => {
               _hover={{ color: "green.600", transform: "translateY(-1px)" }}
               transition="all 0.2s"
             >
-              <Link to="/ai-deep-research">AI Deep Research</Link>
+              <Link to="/updates">Updates</Link>
             </Text>
             <Text
               asChild
@@ -132,11 +132,8 @@ export const Header = () => {
                     _hover={{ bg: "gray.50", color: "green.600" }}
                     transition="all 0.2s"
                   >
-                    <Link
-                      to="/ai-deep-research"
-                      onClick={() => setIsDrawerOpen(false)}
-                    >
-                      AI Deep Research
+                    <Link to="/updates" onClick={() => setIsDrawerOpen(false)}>
+                      Updates
                     </Link>
                   </Text>
                   <Text

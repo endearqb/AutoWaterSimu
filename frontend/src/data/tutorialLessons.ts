@@ -1,86 +1,350 @@
-/** Petersen-matrix tutorial course metadata (MVP — pure frontend, no backend) */
-
 export type TutorialDifficulty = "beginner" | "intermediate" | "full"
 export type TutorialTemplateType = "exercise" | "answer" | "case" | "guide"
+export type TutorialMode = "guided" | "expert"
+export type TutorialRecipeCategory = "monod" | "stoich" | "switch"
+export type TutorialStep = 1 | 2 | 3 | 4 | 5
+export type TutorialCompletionRule = "validation-pass-last-step"
+
+export interface TutorialStepGuide {
+  titleKey: string
+  bodyKey: string
+  focusAreas: Array<
+    | "components"
+    | "processes"
+    | "stoich"
+    | "rateExpr"
+    | "parameters"
+    | "validation"
+  >
+}
+
+export interface TutorialRecipe {
+  key: string
+  labelKey: string
+  descriptionKey: string
+  category: TutorialRecipeCategory
+  template: string
+}
+
+export interface TutorialProcessTeaching {
+  processName: string
+  titleKey: string
+  storyKey: string
+  mistakes: string[]
+}
 
 export interface TutorialLesson {
-  /** Unique key, used in URL and localStorage */
   lessonKey: string
-  /** Chapter-level label, e.g. "chapter-1" */
-  level: string
+  chapter: string
   difficulty: TutorialDifficulty
   templateType: TutorialTemplateType
-  /** Estimated completion time in minutes */
   estimatedMinutes: number
-  /** Keys of prerequisite lessons (empty = no prereqs) */
   prerequisites: string[]
-  /** Backend seed-template key to load, e.g. "asm1slim" / "asm1" */
   seedTemplateKey: string
-  /** Teaching-mode step config */
   stepConfig: {
-    defaultStep: number
-    maxStep: number
+    defaultStep: TutorialStep
+    maxStep: TutorialStep
   }
-  /** Recommended chart variables for observation */
   recommendedCharts: string[]
-  /** If true, card is shown but disabled ("coming soon") */
+  objectives: string[]
+  stepGuides: Record<TutorialStep, TutorialStepGuide>
+  recipes: TutorialRecipe[]
+  processTeaching: TutorialProcessTeaching[]
+  completionRule: TutorialCompletionRule
   comingSoon?: boolean
 }
+
+export const TUTORIAL_STEP_ORDER: TutorialStep[] = [1, 2, 3, 4, 5]
+
+const chapter2Recipes: TutorialRecipe[] = [
+  {
+    key: "monod-substrate",
+    labelKey: "flow.tutorial.recipes.monodSubstrate.label",
+    descriptionKey: "flow.tutorial.recipes.monodSubstrate.description",
+    category: "monod",
+    template: "S_S/(K_S+S_S)",
+  },
+  {
+    key: "oxygen-switch",
+    labelKey: "flow.tutorial.recipes.oxygenSwitch.label",
+    descriptionKey: "flow.tutorial.recipes.oxygenSwitch.description",
+    category: "switch",
+    template: "S_O/(K_OH+S_O)",
+  },
+  {
+    key: "yield-consumption",
+    labelKey: "flow.tutorial.recipes.yieldConsumption.label",
+    descriptionKey: "flow.tutorial.recipes.yieldConsumption.description",
+    category: "stoich",
+    template: "-1/Y_H",
+  },
+]
+
+const chapter3Recipes: TutorialRecipe[] = [
+  ...chapter2Recipes,
+  {
+    key: "alk-balance",
+    labelKey: "flow.tutorial.recipes.alkBalance.label",
+    descriptionKey: "flow.tutorial.recipes.alkBalance.description",
+    category: "stoich",
+    template: "-1/14",
+  },
+]
 
 export const TUTORIAL_LESSONS: TutorialLesson[] = [
   {
     lessonKey: "chapter-1",
-    level: "chapter-1",
+    chapter: "chapter-1",
     difficulty: "beginner",
     templateType: "guide",
     estimatedMinutes: 15,
     prerequisites: [],
-    seedTemplateKey: "asm1slim",
-    stepConfig: { defaultStep: 1, maxStep: 3 },
-    recommendedCharts: ["S_S", "X_BH"],
+    seedTemplateKey: "petersen-chapter-1",
+    stepConfig: { defaultStep: 1, maxStep: 2 },
+    recommendedCharts: ["cod", "dissolvedOxygen"],
+    objectives: [
+      "flow.tutorial.lessonContent.chapter-1.objectives.0",
+      "flow.tutorial.lessonContent.chapter-1.objectives.1",
+    ],
+    stepGuides: {
+      1: {
+        titleKey: "flow.tutorial.lessonContent.chapter-1.steps.1.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-1.steps.1.body",
+        focusAreas: ["components", "processes"],
+      },
+      2: {
+        titleKey: "flow.tutorial.lessonContent.chapter-1.steps.2.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-1.steps.2.body",
+        focusAreas: ["stoich"],
+      },
+      3: {
+        titleKey: "flow.tutorial.lessonContent.chapter-1.steps.3.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-1.steps.3.body",
+        focusAreas: ["rateExpr"],
+      },
+      4: {
+        titleKey: "flow.tutorial.lessonContent.chapter-1.steps.4.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-1.steps.4.body",
+        focusAreas: ["parameters"],
+      },
+      5: {
+        titleKey: "flow.tutorial.lessonContent.chapter-1.steps.5.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-1.steps.5.body",
+        focusAreas: ["validation"],
+      },
+    },
+    recipes: chapter2Recipes,
+    processTeaching: [
+      {
+        processName: "aerobic_cod_removal",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-1.processes.aerobic_cod_removal.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-1.processes.aerobic_cod_removal.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-1.processes.aerobic_cod_removal.mistakes.0",
+        ],
+      },
+    ],
+    completionRule: "validation-pass-last-step",
   },
   {
     lessonKey: "chapter-2",
-    level: "chapter-2",
+    chapter: "chapter-2",
     difficulty: "beginner",
     templateType: "exercise",
     estimatedMinutes: 25,
     prerequisites: ["chapter-1"],
-    seedTemplateKey: "asm1slim",
+    seedTemplateKey: "petersen-chapter-2",
     stepConfig: { defaultStep: 1, maxStep: 5 },
-    recommendedCharts: ["S_S", "X_BH", "S_O"],
+    recommendedCharts: ["cod", "dissolvedOxygen", "ammonia"],
+    objectives: [
+      "flow.tutorial.lessonContent.chapter-2.objectives.0",
+      "flow.tutorial.lessonContent.chapter-2.objectives.1",
+      "flow.tutorial.lessonContent.chapter-2.objectives.2",
+    ],
+    stepGuides: {
+      1: {
+        titleKey: "flow.tutorial.lessonContent.chapter-2.steps.1.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-2.steps.1.body",
+        focusAreas: ["components", "processes"],
+      },
+      2: {
+        titleKey: "flow.tutorial.lessonContent.chapter-2.steps.2.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-2.steps.2.body",
+        focusAreas: ["stoich"],
+      },
+      3: {
+        titleKey: "flow.tutorial.lessonContent.chapter-2.steps.3.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-2.steps.3.body",
+        focusAreas: ["rateExpr"],
+      },
+      4: {
+        titleKey: "flow.tutorial.lessonContent.chapter-2.steps.4.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-2.steps.4.body",
+        focusAreas: ["parameters"],
+      },
+      5: {
+        titleKey: "flow.tutorial.lessonContent.chapter-2.steps.5.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-2.steps.5.body",
+        focusAreas: ["validation"],
+      },
+    },
+    recipes: chapter2Recipes,
+    processTeaching: [
+      {
+        processName: "aerobic_cod_removal",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-2.processes.aerobic_cod_removal.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-2.processes.aerobic_cod_removal.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-2.processes.aerobic_cod_removal.mistakes.0",
+          "flow.tutorial.lessonContent.chapter-2.processes.aerobic_cod_removal.mistakes.1",
+        ],
+      },
+      {
+        processName: "nitrification",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-2.processes.nitrification.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-2.processes.nitrification.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-2.processes.nitrification.mistakes.0",
+        ],
+      },
+    ],
+    completionRule: "validation-pass-last-step",
   },
   {
     lessonKey: "chapter-3",
-    level: "chapter-3",
+    chapter: "chapter-3",
     difficulty: "intermediate",
     templateType: "exercise",
     estimatedMinutes: 30,
     prerequisites: ["chapter-2"],
-    seedTemplateKey: "asm1slim",
-    stepConfig: { defaultStep: 1, maxStep: 4 },
-    recommendedCharts: ["S_S", "S_NH", "S_NO"],
+    seedTemplateKey: "petersen-chapter-3",
+    stepConfig: { defaultStep: 1, maxStep: 5 },
+    recommendedCharts: ["cod", "ammonia", "nitrate"],
+    objectives: [
+      "flow.tutorial.lessonContent.chapter-3.objectives.0",
+      "flow.tutorial.lessonContent.chapter-3.objectives.1",
+      "flow.tutorial.lessonContent.chapter-3.objectives.2",
+    ],
+    stepGuides: {
+      1: {
+        titleKey: "flow.tutorial.lessonContent.chapter-3.steps.1.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-3.steps.1.body",
+        focusAreas: ["components", "processes"],
+      },
+      2: {
+        titleKey: "flow.tutorial.lessonContent.chapter-3.steps.2.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-3.steps.2.body",
+        focusAreas: ["stoich"],
+      },
+      3: {
+        titleKey: "flow.tutorial.lessonContent.chapter-3.steps.3.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-3.steps.3.body",
+        focusAreas: ["rateExpr"],
+      },
+      4: {
+        titleKey: "flow.tutorial.lessonContent.chapter-3.steps.4.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-3.steps.4.body",
+        focusAreas: ["parameters"],
+      },
+      5: {
+        titleKey: "flow.tutorial.lessonContent.chapter-3.steps.5.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-3.steps.5.body",
+        focusAreas: ["validation"],
+      },
+    },
+    recipes: chapter3Recipes,
+    processTeaching: [
+      {
+        processName: "anoxic_denitrification",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-3.processes.anoxic_denitrification.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-3.processes.anoxic_denitrification.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-3.processes.anoxic_denitrification.mistakes.0",
+        ],
+      },
+      {
+        processName: "nitrification",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-3.processes.nitrification.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-3.processes.nitrification.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-3.processes.nitrification.mistakes.0",
+          "flow.tutorial.lessonContent.chapter-3.processes.nitrification.mistakes.1",
+        ],
+      },
+    ],
+    completionRule: "validation-pass-last-step",
   },
   {
     lessonKey: "chapter-7",
-    level: "chapter-7",
+    chapter: "chapter-7",
     difficulty: "intermediate",
     templateType: "case",
     estimatedMinutes: 40,
     prerequisites: ["chapter-3"],
-    seedTemplateKey: "asm1",
-    stepConfig: { defaultStep: 1, maxStep: 6 },
+    seedTemplateKey: "petersen-chapter-7",
+    stepConfig: { defaultStep: 1, maxStep: 5 },
     recommendedCharts: ["S_S", "X_BH", "S_O", "S_NH", "S_NO"],
+    objectives: [
+      "flow.tutorial.lessonContent.chapter-7.objectives.0",
+      "flow.tutorial.lessonContent.chapter-7.objectives.1",
+    ],
+    stepGuides: {
+      1: {
+        titleKey: "flow.tutorial.lessonContent.chapter-7.steps.1.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-7.steps.1.body",
+        focusAreas: ["components", "processes"],
+      },
+      2: {
+        titleKey: "flow.tutorial.lessonContent.chapter-7.steps.2.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-7.steps.2.body",
+        focusAreas: ["stoich"],
+      },
+      3: {
+        titleKey: "flow.tutorial.lessonContent.chapter-7.steps.3.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-7.steps.3.body",
+        focusAreas: ["rateExpr"],
+      },
+      4: {
+        titleKey: "flow.tutorial.lessonContent.chapter-7.steps.4.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-7.steps.4.body",
+        focusAreas: ["parameters"],
+      },
+      5: {
+        titleKey: "flow.tutorial.lessonContent.chapter-7.steps.5.title",
+        bodyKey: "flow.tutorial.lessonContent.chapter-7.steps.5.body",
+        focusAreas: ["validation"],
+      },
+    },
+    recipes: chapter3Recipes,
+    processTeaching: [],
+    completionRule: "validation-pass-last-step",
     comingSoon: true,
   },
 ]
 
-/** Get a single tutorial lesson by key */
-export function getTutorialLesson(key: string): TutorialLesson | undefined {
-  return TUTORIAL_LESSONS.find((l) => l.lessonKey === key)
+export function getTutorialLesson(
+  key: string | null | undefined,
+): TutorialLesson | undefined {
+  if (!key) return undefined
+  return TUTORIAL_LESSONS.find((lesson) => lesson.lessonKey === key)
 }
 
-/** Return all lessons that are not marked comingSoon */
 export function getAvailableLessons(): TutorialLesson[] {
-  return TUTORIAL_LESSONS.filter((l) => !l.comingSoon)
+  return TUTORIAL_LESSONS.filter((lesson) => !lesson.comingSoon)
+}
+
+export function getEnabledTutorialSteps(
+  lesson: TutorialLesson,
+): TutorialStep[] {
+  return TUTORIAL_STEP_ORDER.filter((step) => step <= lesson.stepConfig.maxStep)
 }

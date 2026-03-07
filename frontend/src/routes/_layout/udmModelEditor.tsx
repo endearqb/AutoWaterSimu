@@ -24,7 +24,7 @@ function UDMModelEditorPage() {
       onModelIdChange={(nextModelId) =>
         navigate({
           to: "/udmModelEditor",
-          search: { modelId: nextModelId },
+          search: { modelId: nextModelId, lessonKey },
           replace: true,
         })
       }

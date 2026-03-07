@@ -1460,6 +1460,36 @@ export type UDMValidationIssue = {
    * 关联过程
    */
   process?: string | null
+  /**
+   * 问题定位信息
+   */
+  location?: UDMValidationLocation | null
+}
+
+/**
+ * UDM校验定位信息
+ */
+export type UDMValidationLocation = {
+  /**
+   * 问题所属区域
+   */
+  section?: string | null
+  /**
+   * 关联过程名
+   */
+  processName?: string | null
+  /**
+   * 关联组分名
+   */
+  componentName?: string | null
+  /**
+   * 关联参数名
+   */
+  parameterName?: string | null
+  /**
+   * 关联单元格标识
+   */
+  cellKey?: string | null
 }
 
 /**
@@ -2349,6 +2379,17 @@ export type UdmHybridConfigsDeleteUdmHybridConfigData = {
 }
 
 export type UdmHybridConfigsDeleteUdmHybridConfigResponse = Message
+
+export type UdmModelsGetUdmTemplatesData = {
+  /**
+   * Comma-separated tags to exclude
+   */
+  excludeTags?: string | null
+  /**
+   * Comma-separated tags to filter by (all must match)
+   */
+  tags?: string | null
+}
 
 export type UdmModelsGetUdmTemplatesResponse = Array<{
   [key: string]: unknown

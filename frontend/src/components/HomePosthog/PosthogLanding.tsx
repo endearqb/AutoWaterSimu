@@ -608,7 +608,7 @@ export function PosthogLanding() {
               fontWeight="semibold"
               textDecoration="underline"
             >
-              <Link to="/ai-deep-research">Watch a demo</Link>
+              <Link to="/openflow">Watch a demo</Link>
             </Text>
             <Text fontSize="sm" color="gray.700">
               or

@@ -21,6 +21,7 @@ from app.models import (
     UDMModelVersion,
     UDMModelVersionPublic,
     UDMValidationIssue,
+    UDMValidationLocation,
     UDMValidationResponse,
 )
 from app.services.udm_expression import validate_udm_definition
@@ -71,6 +72,11 @@ def _validate_definition_payload(
                 code=issue.code,
                 message=issue.message,
                 process=issue.process,
+                location=(
+                    UDMValidationLocation(**issue.location.__dict__)
+                    if issue.location is not None
+                    else None
+                ),
             )
             for issue in result.errors
         ],
@@ -79,6 +85,11 @@ def _validate_definition_payload(
                 code=issue.code,
                 message=issue.message,
                 process=issue.process,
+                location=(
+                    UDMValidationLocation(**issue.location.__dict__)
+                    if issue.location is not None
+                    else None
+                ),
             )
             for issue in result.warnings
         ],
@@ -215,8 +226,13 @@ def _create_model_with_version(
 
 
 @router.get("/templates", response_model=list[dict[str, Any]])
-def get_udm_templates() -> Any:
-    return list_udm_seed_templates()
+def get_udm_templates(
+    tags: str | None = Query(None, description="Comma-separated tags to filter by (all must match)"),
+    exclude_tags: str | None = Query(None, description="Comma-separated tags to exclude"),
+) -> Any:
+    parsed_tags = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
+    parsed_exclude = [t.strip() for t in exclude_tags.split(",") if t.strip()] if exclude_tags else None
+    return list_udm_seed_templates(tags=parsed_tags, exclude_tags=parsed_exclude)
 
 
 @router.post("/validate", response_model=UDMValidationResponse)

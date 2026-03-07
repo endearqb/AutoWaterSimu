@@ -1,17 +1,24 @@
 import { Box, Button, Flex, Heading, Text, VStack } from "@chakra-ui/react"
 import { FiArrowRight } from "react-icons/fi"
 
-import { TUTORIAL_LESSONS, getTutorialLesson } from "@/data/tutorialLessons"
+import {
+  TUTORIAL_LESSONS,
+  type TutorialLesson,
+  getTutorialLesson,
+} from "@/data/tutorialLessons"
 import { useI18n } from "@/i18n"
 import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
 import TutorialLessonCard from "./TutorialLessonCard"
 
 interface TutorialLessonsSectionProps {
-  onNavigateToEditor: (lessonKey: string) => void
+  onOpenLesson: (
+    lesson: TutorialLesson,
+    existingModelId?: string | null,
+  ) => Promise<void> | void
 }
 
 export default function TutorialLessonsSection({
-  onNavigateToEditor,
+  onOpenLesson,
 }: TutorialLessonsSectionProps) {
   const { t } = useI18n()
   const { completedLessons, currentLesson, lessonProgress, startLesson } =
@@ -33,14 +40,28 @@ export default function TutorialLessonsSection({
     return t(`flow.tutorial.chapters.${missing}.title`)
   }
 
-  const handleStart = (lessonKey: string) => {
-    startLesson(lessonKey)
-    onNavigateToEditor(lessonKey)
+  const handleStart = async (lessonKey: string) => {
+    const lesson = getTutorialLesson(lessonKey)
+    if (!lesson) return
+    const progress = lessonProgress[lessonKey]
+    startLesson(lessonKey, {
+      modelId: progress?.modelId,
+      defaultStep: lesson.stepConfig.defaultStep,
+      mode: progress?.mode ?? "guided",
+    })
+    await onOpenLesson(lesson, progress?.modelId)
   }
 
-  const handleContinue = (lessonKey: string) => {
-    startLesson(lessonKey)
-    onNavigateToEditor(lessonKey)
+  const handleContinue = async (lessonKey: string) => {
+    const lesson = getTutorialLesson(lessonKey)
+    if (!lesson) return
+    const progress = lessonProgress[lessonKey]
+    startLesson(lessonKey, {
+      modelId: progress?.modelId,
+      defaultStep: lesson.stepConfig.defaultStep,
+      mode: progress?.mode ?? "guided",
+    })
+    await onOpenLesson(lesson, progress?.modelId)
   }
 
   // "Continue learning" quick-access: show if there's a current in-progress lesson
@@ -63,10 +84,12 @@ export default function TutorialLessonsSection({
           <Button
             colorPalette="blue"
             size="sm"
-            onClick={() => handleContinue(continueLesson.lessonKey)}
+            onClick={() => {
+              void handleContinue(continueLesson.lessonKey)
+            }}
           >
             {t("flow.tutorial.continueLearning")}:{" "}
-            {t(`flow.tutorial.chapters.${continueLesson.level}.title`)}
+            {t(`flow.tutorial.chapters.${continueLesson.chapter}.title`)}
             <FiArrowRight />
           </Button>
         </Flex>
@@ -81,8 +104,12 @@ export default function TutorialLessonsSection({
             isCompleted={completedLessons.includes(lesson.lessonKey)}
             isUnlocked={isUnlocked(lesson.lessonKey)}
             unlockedByName={getPrerequisiteName(lesson.lessonKey)}
-            onStart={() => handleStart(lesson.lessonKey)}
-            onContinue={() => handleContinue(lesson.lessonKey)}
+            onStart={() => {
+              void handleStart(lesson.lessonKey)
+            }}
+            onContinue={() => {
+              void handleContinue(lesson.lessonKey)
+            }}
           />
         ))}
       </VStack>

@@ -1,8 +1,4 @@
-import type {
-  UDMHybridConfigPublic,
-  UDMModelDetailPublic,
-  UDMModelPublic,
-} from "@/client/types.gen"
+import type { UDMModelDetailPublic, UDMModelPublic } from "@/client/types.gen"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
 import {
@@ -24,7 +20,7 @@ import { useEffect, useMemo, useState } from "react"
 import { FiInfo } from "react-icons/fi"
 
 import type { CustomParameter } from "../../config/modelConfigs"
-import { udmService } from "../../services/udmService"
+import { type UDMHybridConfigPublic, udmService } from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import type {
   HybridUDMConfig,

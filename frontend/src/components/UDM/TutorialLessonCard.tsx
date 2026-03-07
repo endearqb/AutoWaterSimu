@@ -5,7 +5,9 @@ import type { TutorialLesson } from "@/data/tutorialLessons"
 import { useI18n } from "@/i18n"
 
 interface LessonProgress {
+  modelId?: string | null
   currentStep: number
+  completedSteps?: number[]
 }
 
 interface TutorialLessonCardProps {
@@ -31,6 +33,10 @@ export default function TutorialLessonCard({
   const isComingSoon = !!lesson.comingSoon
   const isStarted = !!progress
   const disabled = isComingSoon || !isUnlocked
+  const progressLabel =
+    isStarted && progress?.currentStep
+      ? t("flow.tutorial.currentStep", { step: progress.currentStep })
+      : null
 
   return (
     <Flex
@@ -47,7 +53,7 @@ export default function TutorialLessonCard({
       <Box flex="1" minW={0}>
         <Flex align="center" gap={2} wrap="wrap">
           <Badge colorPalette="purple" size="sm">
-            {t(`flow.tutorial.chapters.${lesson.level}.title`)}
+            {t(`flow.tutorial.chapters.${lesson.chapter}.title`)}
           </Badge>
           <Badge
             colorPalette={lesson.difficulty === "beginner" ? "green" : "orange"}
@@ -68,12 +74,17 @@ export default function TutorialLessonCard({
           )}
         </Flex>
         <Text fontSize="sm" color="fg.muted" mt={1}>
-          {t(`flow.tutorial.chapters.${lesson.level}.subtitle`)}
+          {t(`flow.tutorial.chapters.${lesson.chapter}.subtitle`)}
         </Text>
         <HStack mt={1} gap={3}>
           <Text fontSize="xs" color="fg.muted">
             {t("flow.tutorial.minutes", { n: lesson.estimatedMinutes })}
           </Text>
+          {progressLabel ? (
+            <Text fontSize="xs" color="blue.600">
+              {progressLabel}
+            </Text>
+          ) : null}
           {!isUnlocked && unlockedByName && (
             <Text fontSize="xs" color="orange.600">
               {t("flow.tutorial.prerequisite", { name: unlockedByName })}
