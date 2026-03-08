@@ -1,3 +1,16 @@
+# 2026-03-08 PDF Summary TODO
+
+- [x] Gather repo evidence for summary content
+- [x] Generate one-page Chinese PDF in `output/pdf/`
+- [x] Render-check the PDF and confirm single-page layout
+- [x] Record review notes and deliverable path
+
+### Review
+
+- Evidence used: README, README_zh, frontend routes/services/stores, backend app entrypoints, API router, service layer.
+- Output: `output/pdf/app-summary-zh.pdf`
+- Verification: generated PDF successfully, confirmed 1 page with `pypdf`, rendered page 1 to `tmp/pdfs/app-summary-zh-page1.png` and visually checked no overflow.
+
 # Epic 4 Implementation TODO
 
 - [x] Phase 0: 创建 `udmTutorialFlowStore`、`tutorialFlowPresets`、`tutorialInsights` 数据层
@@ -122,8 +135,26 @@
 - 已保存报告：`tasks/Epic_04_一键仿真闭环与教学型结果页_review_report_2026-03-08.md`
 - 主要发现 3 项：
 - `/udm` 路由没有携带 `flowchartId`，刷新后无法回载刚生成的流程图，闭环不可恢复
-- 结果页完成卡片会被 Epic 02 提前写入的 `completedLessons` 吞掉，标准成功路径下通常只会显示“已完成”
-- `simulationRanAt` 在“仅生成流程图”时就被写入，和“真实仿真成功”混用了同一进度字段
+- 结果页完成卡片会被 Epic 02 提前写入的 `completedLessons` 吞掉，标准成功路径下通常只会显示”已完成”
+- `simulationRanAt` 在”仅生成流程图”时就被写入，和”真实仿真成功”混用了同一进度字段
 - 验证结果：
 - `cd frontend; npx tsc --noEmit` 通过
 - `cd frontend; npx vite build` 通过
+
+# Epic 05 Implementation TODO
+
+- [x] Phase 1: 补齐 Chapter 1-3 Flow Presets（tutorialFlowPresets.ts 新增 3 个 preset）
+- [x] Phase 1: 补齐 Chapter 1-3 Insights（tutorialInsights.ts 新增 3 个 insight set，共 8 条 insight）
+- [x] Phase 1: 补齐 i18n 键（zh.ts + en.ts 各新增 8 个 insight 的 title+body 翻译）
+- [x] Phase 2: 模板端到端验证测试（4 个 petersen-chapter 模板 validate_udm_definition → ok=True）
+- [x] Phase 2: 模板连续性回归测试（chapter-3 COD/N，chapter-7 COD/N/ALK 关键过程 pass）
+- [x] Phase 2: ASM1Slim 连续性专项测试（5 个用例覆盖各过程 × 各维度）
+- [x] Phase 3: 3 个数据文件顶部添加文档注释（用途、扩展步骤、关联关系）
+
+## Review
+
+- 前端：`cd frontend; npx tsc -p tsconfig.build.json --noEmit` 通过
+- 前端：`cd frontend; npx vite build` 通过（TutorialResultsPanel code-split 正常）
+- 后端：`cd backend; uv run pytest app/tests/udm_tutorial_validation_test.py app/tests/services/test_petersen_continuity.py -v` — 32 passed
+- 注意：ASM1slim 是简化经验模型，aerobic_cod_removal/denitrification 的 COD 维度设计上不完全守恒；测试已正确反映这一特性
+- chapter-7 (ASM1) 的 heterotrophic/autotrophic growth/decay 在 ALK 和部分 N 维度存在已知不平衡；测试仅断言已知平衡的关键过程

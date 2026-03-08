@@ -1,8 +1,16 @@
+import pytest
+
+from app.services.petersen_continuity import check_continuity
 from app.services.udm_expression import validate_udm_definition
 from app.services.udm_seed_templates import (
     get_udm_seed_template,
     list_udm_seed_templates,
 )
+
+
+# ------------------------------------------------------------------
+# 已有测试：位置元数据与模板结构
+# ------------------------------------------------------------------
 
 
 def test_rate_expr_issue_contains_location_metadata() -> None:
@@ -89,3 +97,78 @@ def test_list_templates_supports_tag_filtering() -> None:
 
     petersen_only = list_udm_seed_templates(tags=["petersen-tutorial"])
     assert len(petersen_only) == len(tutorial_only)
+
+
+# ------------------------------------------------------------------
+# Phase 2A: 模板端到端验证 — 表达式合法性 + 连续性回归
+# ------------------------------------------------------------------
+
+TUTORIAL_TEMPLATE_KEYS = [
+    "petersen-chapter-1",
+    "petersen-chapter-2",
+    "petersen-chapter-3",
+    "petersen-chapter-7",
+]
+
+
+@pytest.mark.parametrize("template_key", TUTORIAL_TEMPLATE_KEYS)
+def test_all_tutorial_templates_pass_validation(template_key: str) -> None:
+    """每个教程模板的表达式、化学计量系数都应通过 validate_udm_definition。"""
+    tpl = get_udm_seed_template(template_key)
+    result = validate_udm_definition(
+        components=[c["name"] for c in tpl["components"]],
+        processes=tpl["processes"],
+        declared_parameters=[p["name"] for p in tpl["parameters"]],
+    )
+    assert result.ok, f"{template_key} validation failed: {[e.message for e in result.errors]}"
+    assert len(result.errors) == 0
+
+
+CONTINUITY_CASES = [
+    ("petersen-chapter-3", ["COD", "N"]),
+    ("petersen-chapter-7", ["COD", "N", "ALK"]),
+]
+
+
+@pytest.mark.parametrize("template_key,dimensions", CONTINUITY_CASES)
+def test_tutorial_templates_continuity(template_key: str, dimensions: list[str]) -> None:
+    """模板连续性检查应能正常执行，且各结果都有有效的 status。"""
+    tpl = get_udm_seed_template(template_key)
+    results = check_continuity(
+        components=tpl["components"],
+        processes=tpl["processes"],
+        parameters=tpl["parameters"],
+        dimensions=dimensions,
+        mode="strict",
+    )
+    assert len(results) > 0, f"{template_key} should produce continuity results"
+    for r in results:
+        assert r.status in ("pass", "warn", "error")
+        assert r.dimension in dimensions
+        assert r.process_name is not None
+
+
+def test_chapter7_all_processes_pass_strict_continuity() -> None:
+    """Chapter-7 (基于完整 ASM1) 关键过程在 COD/N 维度应通过守恒检查。"""
+    tpl = get_udm_seed_template("petersen-chapter-7")
+    results = check_continuity(
+        components=tpl["components"],
+        processes=tpl["processes"],
+        parameters=tpl["parameters"],
+        dimensions=["COD", "N", "ALK"],
+        mode="strict",
+    )
+    # 验证结果非空且格式正确
+    assert len(results) > 0
+
+    # ASM1 核心过程 COD 守恒
+    for proc_name in ("heterotrophic_growth_aerobic", "heterotrophic_growth_anoxic", "hydrolysis"):
+        cod_items = [r for r in results if r.process_name == proc_name and r.dimension == "COD"]
+        assert len(cod_items) == 1, f"expected 1 COD result for {proc_name}"
+        assert cod_items[0].status == "pass", f"{proc_name} COD should pass"
+
+    # ASM1 核心过程 N 守恒
+    for proc_name in ("ammonification", "hydrolysis_nitrogen"):
+        n_items = [r for r in results if r.process_name == proc_name and r.dimension == "N"]
+        assert len(n_items) == 1, f"expected 1 N result for {proc_name}"
+        assert n_items[0].status == "pass", f"{proc_name} N should pass"

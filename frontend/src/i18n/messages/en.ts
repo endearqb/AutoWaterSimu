@@ -1648,6 +1648,44 @@ export const enMessages: I18nMessages = {
         insightsTitle: "Result Interpretation",
       },
       insights: {
+        "chapter-1": {
+          codDecline: {
+            title: "Why does COD decline?",
+            body: "COD (Chemical Oxygen Demand) represents the concentration of biodegradable organic matter. Under aerobic conditions, microorganisms consume COD as a carbon and energy source. You'll see COD drop quickly at first (fastest when organics are abundant), then gradually slow down — this is the classic Monod kinetics behavior.",
+          },
+          doConsumption: {
+            title: "What does DO consumption indicate?",
+            body: "Dissolved oxygen (DO) is essential for aerobic degradation. Microorganisms consume oxygen while oxidizing COD, so the DO decline rate reflects microbial activity intensity. If DO drops to near zero quickly, oxygen consumption exceeds aeration supply — in real operations, this means more aeration is needed.",
+          },
+        },
+        "chapter-2": {
+          yieldEffect: {
+            title: "How does Y_H affect stoichiometric coefficients?",
+            body: "The yield coefficient Y_H represents how much biomass is produced per unit of COD consumed. A higher Y_H means more sludge production and less oxygen consumption per unit COD removed. In the Petersen matrix, many stoichiometric coefficients are functions of Y_H, e.g., oxygen demand is -(1-Y_H)/Y_H. Changing Y_H simultaneously affects the rates of change for multiple components.",
+          },
+          monodSaturation: {
+            title: "Why does degradation slow down?",
+            body: "The Monod equation S/(K_S+S) describes how substrate concentration affects degradation rate. When S >> K_S, the rate approaches its maximum (zero-order); when S << K_S, the rate is proportional to S (first-order). The transition from rapid to gradual COD decline is the shift from zero-order to first-order kinetics.",
+          },
+          nitrificationOnset: {
+            title: "When does nitrification start?",
+            body: "Nitrifying bacteria (autotrophs) convert ammonia to nitrate. Observe the ammonia curve: if ammonia begins declining early in the simulation, nitrification has started. Nitrification rate is controlled by both dissolved oxygen and ammonia concentration — insufficient DO inhibits nitrification.",
+          },
+        },
+        "chapter-3": {
+          aerobicVsAnoxic: {
+            title: "Aerobic vs. anoxic pathways",
+            body: "COD can be degraded via two pathways: aerobic (using O₂ as electron acceptor) and anoxic (using NO₃⁻ as electron acceptor, i.e., denitrification). When DO is low, microorganisms switch to using nitrate — this is the principle of denitrification. This chapter sets low DO and high nitrate to observe this switch.",
+          },
+          nitrogenBalance: {
+            title: "Where does the nitrogen go?",
+            body: "Observe ammonia and nitrate changes: ammonia is converted to nitrate via nitrification (NH₄⁺ → NO₃⁻), and nitrate is converted to nitrogen gas via denitrification (NO₃⁻ → N₂↑). If ammonia decreases but nitrate doesn't increase proportionally, some nitrogen has left the system through denitrification.",
+          },
+          alkalinitySignal: {
+            title: "What does alkalinity change tell us?",
+            body: "Alkalinity is an indicator of nitrification/denitrification balance. Nitrification consumes alkalinity (~7.14 mg CaCO₃ per mg NH₄⁺-N oxidized), while denitrification recovers alkalinity (~3.57 mg CaCO₃ per mg NO₃⁻-N reduced). The net alkalinity change helps assess the relative intensity of nitrification vs. denitrification.",
+          },
+        },
         "chapter-7": {
           ssDeclination: {
             title: "Why does S_S decline over time?",

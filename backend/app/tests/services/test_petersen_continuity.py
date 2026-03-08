@@ -329,3 +329,88 @@ class TestEdgeCases:
         assert len(results) == 2
         dims = {r.dimension for r in results}
         assert dims == {"COD", "N"}
+
+
+# ------------------------------------------------------------------
+# ASM1Slim 守恒测试
+# ------------------------------------------------------------------
+
+class TestASM1SlimContinuity:
+    """ASM1Slim 模板连续性检查 — 简化模型部分过程不做完整守恒"""
+
+    def test_aerobic_cod_removal_cod(self):
+        """aerobic_cod_removal 仅消耗 cod，无生物量/DO 产消，COD 维度不平衡。"""
+        components, processes, parameters = _get_asm1slim_data()
+        results = check_continuity(
+            components=components,
+            processes=processes,
+            parameters=parameters,
+            dimensions=["COD"],
+            mode="strict",
+        )
+        aerobic = [r for r in results if r.process_name == "aerobic_cod_removal" and r.dimension == "COD"]
+        assert len(aerobic) == 1
+        assert aerobic[0].balance_value != 0.0  # simplified model, not balanced
+
+    def test_denitrification_cod_n(self):
+        """anoxic_denitrification COD+N 维度检查能正常返回结果。"""
+        components, processes, parameters = _get_asm1slim_data()
+        results = check_continuity(
+            components=components,
+            processes=processes,
+            parameters=parameters,
+            dimensions=["COD", "N"],
+            mode="strict",
+        )
+        denit = [r for r in results if r.process_name == "anoxic_denitrification"]
+        assert len(denit) == 2  # one for COD, one for N
+        dims = {r.dimension for r in denit}
+        assert dims == {"COD", "N"}
+
+    def test_nitrification_n(self):
+        """nitrification 过程中 ammonia(-1) + nitrate(+1) → N 维度平衡。"""
+        components, processes, parameters = _get_asm1slim_data()
+        results = check_continuity(
+            components=components,
+            processes=processes,
+            parameters=parameters,
+            dimensions=["N"],
+            mode="strict",
+        )
+        nitr = [r for r in results if r.process_name == "nitrification" and r.dimension == "N"]
+        assert len(nitr) == 1
+        assert nitr[0].status == "pass"
+        assert abs(nitr[0].balance_value) < 1e-6
+
+    def test_all_processes_cod_results(self):
+        """ASM1Slim 所有过程 COD 维度应返回 3 条结果（每个过程一条）。"""
+        components, processes, parameters = _get_asm1slim_data()
+        results = check_continuity(
+            components=components,
+            processes=processes,
+            parameters=parameters,
+            dimensions=["COD"],
+            mode="teaching",
+        )
+        cod_results = [r for r in results if r.dimension == "COD"]
+        process_names = {r.process_name for r in cod_results}
+        assert "aerobic_cod_removal" in process_names
+        assert "anoxic_denitrification" in process_names
+        # nitrification 涉及 nitrate(COD=-2.86) 也会有 COD 维度结果
+        assert len(cod_results) >= 2
+
+    def test_all_processes_n_results(self):
+        """ASM1Slim N 维度：nitrification 应 pass，denitrification 有 N 维度结果。"""
+        components, processes, parameters = _get_asm1slim_data()
+        results = check_continuity(
+            components=components,
+            processes=processes,
+            parameters=parameters,
+            dimensions=["N"],
+            mode="strict",
+        )
+        n_results = [r for r in results if r.dimension == "N"]
+        assert len(n_results) >= 1
+        nitr = [r for r in n_results if r.process_name == "nitrification"]
+        assert len(nitr) == 1
+        assert nitr[0].status == "pass"

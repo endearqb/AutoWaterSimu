@@ -1,3 +1,28 @@
+/**
+ * Tutorial Lessons — 教程章节地图（核心配置）
+ *
+ * 定义所有教程章节的元信息：难度、步骤配置、关联模板、推荐图表等。
+ * 前端路由、教程侧边栏、步骤引导面板均从此处读取配置。
+ *
+ * 关键字段说明：
+ *   - lessonKey: 全局唯一标识，同时用于 URL 路由参数
+ *   - seedTemplateKey: 后端 UDM_SEED_TEMPLATES 中的模板 key
+ *   - stepConfig: defaultStep 为初始步骤，maxStep 为最大可达步骤
+ *   - continuityProfiles: 启用的连续性检查维度（COD / N / ALK）
+ *
+ * 新增章节步骤：
+ *   1. 在后端 udm_seed_templates.py 注册新的 seed template
+ *   2. 在此文件新增 TutorialLesson 对象并加入 TUTORIAL_LESSONS 数组
+ *   3. 在 tutorialFlowPresets.ts 添加仿真预设
+ *   4. 在 tutorialInsights.ts 添加教学解释卡
+ *   5. 在 i18n/messages/{zh,en}.ts 补充所有 i18n 键
+ *
+ * 关联文件：
+ *   - tutorialFlowPresets.ts — 仿真预设
+ *   - tutorialInsights.ts — 教学解释卡
+ *   - i18n/messages/{zh,en}.ts — 步骤标题、正文、过程教学文案
+ *   - backend: udm_seed_templates.py — 后端模板定义
+ */
 export type TutorialDifficulty = "beginner" | "intermediate" | "full"
 export type TutorialTemplateType = "exercise" | "answer" | "case" | "guide"
 export type TutorialMode = "guided" | "expert"
