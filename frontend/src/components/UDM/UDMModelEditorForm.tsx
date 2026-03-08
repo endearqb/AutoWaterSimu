@@ -25,6 +25,7 @@ import {
 } from "react"
 
 import type {
+  ContinuityCheckItem as ApiContinuityCheckItem,
   UDMComponentDefinition,
   UDMModelCreate,
   UDMModelDefinitionDraft,
@@ -46,11 +47,14 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
 import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
 import { getDefaultCalculationParams } from "../../config/simulationConfig"
+import { getTutorialFlowPreset } from "../../data/tutorialFlowPresets"
 import { udmService } from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import ExpressionCellEditorDialog from "./ExpressionCellEditorDialog"
 import ArrowMatrixView from "./tutorial/ArrowMatrixView"
-import ContinuityCheckPanel from "./tutorial/ContinuityCheckPanel"
+import ContinuityCheckPanel, {
+  type ContinuityCheckItemData,
+} from "./tutorial/ContinuityCheckPanel"
 import ProcessTeachingPopover from "./tutorial/ProcessTeachingPopover"
 import RecipeBar from "./tutorial/RecipeBar"
 import TutorialGuidePanel from "./tutorial/TutorialGuidePanel"
@@ -117,6 +121,75 @@ const parseNumOrNull = (value: string): number | null => {
   const v = Number.parseFloat(value)
   return Number.isFinite(v) ? v : null
 }
+
+const STOICH_NUMBER_PATTERN = /^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/
+
+const toFiniteNumber = (value: unknown): number => {
+  const parsed =
+    typeof value === "number" ? value : Number.parseFloat(String(value ?? ""))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const extractContinuityProfiles = (learningMeta: unknown): string[] | undefined => {
+  if (!learningMeta || typeof learningMeta !== "object") {
+    return undefined
+  }
+
+  const rawProfiles = (learningMeta as Record<string, unknown>).continuityProfiles
+  if (!Array.isArray(rawProfiles)) {
+    return undefined
+  }
+
+  const profiles = rawProfiles
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  return profiles.length > 0 ? Array.from(new Set(profiles)) : undefined
+}
+
+const normalizeContinuityCheckDetails = (
+  details: unknown,
+): ContinuityCheckItemData["details"] => {
+  if (!details || typeof details !== "object") {
+    return null
+  }
+
+  const rawContributions = (details as Record<string, unknown>).contributions
+  if (!Array.isArray(rawContributions)) {
+    return null
+  }
+
+  const contributions = rawContributions
+    .filter(
+      (item): item is Record<string, unknown> =>
+        !!item && typeof item === "object",
+    )
+    .map((item) => ({
+      component: String(item.component ?? ""),
+      stoich: toFiniteNumber(item.stoich),
+      factor: toFiniteNumber(item.factor),
+      contribution: toFiniteNumber(item.contribution),
+      expr: String(item.expr ?? ""),
+    }))
+
+  return contributions.length > 0 ? { contributions } : null
+}
+
+const normalizeContinuityCheckItem = (
+  item: ApiContinuityCheckItem,
+): ContinuityCheckItemData => ({
+  process_name: item.process_name,
+  dimension: item.dimension,
+  balance_value: item.balance_value,
+  status:
+    item.status === "pass" || item.status === "warn" || item.status === "error"
+      ? item.status
+      : "warn",
+  explanation: item.explanation,
+  suggestion: item.suggestion,
+  details: normalizeContinuityCheckDetails(item.details),
+})
 
 const emptyComponent = (): ComponentRow => ({
   _rowId: crypto.randomUUID() as string,
@@ -447,6 +520,12 @@ export function UDMModelEditorForm({
   const showParameterSection = !isGuidedMode || currentTutorialStep >= 4
   const showValidationSection = !isGuidedMode || currentTutorialStep >= 5
   const showAdvancedFields = !isGuidedMode || currentTutorialStep >= 5
+  const activeContinuityProfiles = useMemo(
+    () =>
+      tutorialLesson?.continuityProfiles ||
+      extractContinuityProfiles(detailQuery.data?.latest_version?.meta?.learning),
+    [detailQuery.data?.latest_version?.meta, tutorialLesson],
+  )
   const showRecipeBar =
     isGuidedMode && currentTutorialStep >= 3 && activeRecipes.length > 0
 
@@ -515,6 +594,12 @@ export function UDMModelEditorForm({
         unknown
       >) || {}),
     }
+    const existingLearningMeta =
+      existingMeta.learning &&
+      typeof existingMeta.learning === "object" &&
+      !Array.isArray(existingMeta.learning)
+        ? (existingMeta.learning as Record<string, unknown>)
+        : {}
     const normalizedComponents = componentRows
       .map((row) => {
         const compName = row.name.trim()
@@ -544,8 +629,10 @@ export function UDMModelEditorForm({
           stoichExpr[compName] = raw || "0"
           const num = Number.parseFloat(raw)
           const isNumeric =
-            raw.length > 0 && /^[-+]?\\d*\\.?\\d+(?:[eE][-+]?\\d+)?$/.test(raw)
-          stoich[compName] = isNumeric && Number.isFinite(num) ? num : 0
+            raw.length > 0 && STOICH_NUMBER_PATTERN.test(raw)
+          if (isNumeric && Number.isFinite(num)) {
+            stoich[compName] = num
+          }
         })
         return {
           name: processName || "unnamed_process",
@@ -573,8 +660,12 @@ export function UDMModelEditorForm({
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
 
+    const continuityProfiles =
+      tutorialLesson?.continuityProfiles ||
+      extractContinuityProfiles(existingLearningMeta)
     const tutorialLearningMeta = tutorialLesson
       ? {
+          ...existingLearningMeta,
           track: "petersen",
           lessonKey: tutorialLesson.lessonKey,
           chapter: tutorialLesson.chapter,
@@ -585,6 +676,9 @@ export function UDMModelEditorForm({
           stepConfig: tutorialLesson.stepConfig,
           recommendedCharts: tutorialLesson.recommendedCharts,
           readonlyMode: false,
+          ...(continuityProfiles
+            ? { continuityProfiles }
+            : {}),
         }
       : null
 
@@ -605,6 +699,17 @@ export function UDMModelEditorForm({
       },
     }
   }
+
+  const continuityChecks = useMemo<ContinuityCheckItemData[]>(() => {
+    const items = (validation?.continuity_checks || []).map(
+      normalizeContinuityCheckItem,
+    )
+    if (!activeContinuityProfiles || activeContinuityProfiles.length === 0) {
+      return items
+    }
+    const dimensionSet = new Set(activeContinuityProfiles)
+    return items.filter((item) => dimensionSet.has(item.dimension))
+  }, [activeContinuityProfiles, validation?.continuity_checks])
 
   const validateParameterRanges = (): string[] => {
     const errors: string[] = []
@@ -789,13 +894,24 @@ export function UDMModelEditorForm({
       parameterValues[paramName] = Number.isFinite(value) ? value : 0
     })
 
-    const buildNodeData = (label: string) => {
+    // Lookup tutorial flow preset for this lesson
+    const preset = getTutorialFlowPreset(tutorialLessonKey)
+
+    const buildNodeData = (label: string, nodeRole?: "input" | "reactor") => {
       const base: Record<string, unknown> = {
         label,
-        volume: "1e-3",
+        volume:
+          nodeRole === "reactor" && preset?.reactorOverrides?.volume
+            ? preset.reactorOverrides.volume
+            : "1e-3",
       }
       customParameters.forEach((p) => {
-        base[p.name] = String(p.defaultValue ?? 0)
+        // For input nodes with tutorial preset, use the preset influent concentrations
+        if (nodeRole === "input" && preset?.inputNodeOverrides?.[p.name] != null) {
+          base[p.name] = String(preset.inputNodeOverrides[p.name])
+        } else {
+          base[p.name] = String(p.defaultValue ?? 0)
+        }
       })
       return base
     }
@@ -811,7 +927,12 @@ export function UDMModelEditorForm({
       ]),
     )
 
-    const calculationParameters = getDefaultCalculationParams("udm")
+    const edgeFlowRate = preset?.edgeFlowRate ?? 1000
+
+    const calculationParameters = {
+      ...getDefaultCalculationParams("udm"),
+      ...(preset?.calculationParameters ?? {}),
+    }
     const modelSnapshot = {
       id: model.id,
       name: model.name,
@@ -829,14 +950,14 @@ export function UDMModelEditorForm({
           id: "udm-input-1",
           type: "input",
           position: { x: 40, y: 220 },
-          data: buildNodeData(t("flow.udmEditor.form.defaults.influentNode")),
+          data: buildNodeData(t("flow.udmEditor.form.defaults.influentNode"), "input"),
         },
         {
           id: "udm-reactor-1",
           type: "udm",
           position: { x: 360, y: 220 },
           data: {
-            ...buildNodeData(t("flow.udmEditor.form.defaults.reactorNode")),
+            ...buildNodeData(t("flow.udmEditor.form.defaults.reactorNode"), "reactor"),
             udmModel: {
               id: model.id,
               name: model.name,
@@ -872,7 +993,7 @@ export function UDMModelEditorForm({
           target: "udm-reactor-1",
           type: "editable",
           data: {
-            flow: 1000,
+            flow: edgeFlowRate,
             ...edgeData,
           },
         },
@@ -882,7 +1003,7 @@ export function UDMModelEditorForm({
           target: "udm-output-1",
           type: "editable",
           data: {
-            flow: 1000,
+            flow: edgeFlowRate,
             ...edgeData,
           },
         },
@@ -1040,6 +1161,32 @@ export function UDMModelEditorForm({
     return enMatch?.[1] || null
   }
 
+  const focusStoichCell = (processIndex: number, componentName: string): boolean => {
+    if (isTutorialModel && !showStoichSection) {
+      handleTutorialStepChange(Math.min(2, maxTutorialStep) as TutorialStep)
+    }
+    const stoichKey = `${processIndex}:${componentName}`
+    const targetCell = stoichInputRefs.current[stoichKey]
+    if (targetCell) {
+      targetCell.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      })
+      targetCell.focus()
+    }
+    openStoichEditor(processIndex, componentName)
+    return true
+  }
+
+  const focusFirstStoichCell = (processIndex: number): boolean => {
+    const fallbackComponent = componentNames[0]
+    if (!fallbackComponent) {
+      return false
+    }
+    return focusStoichCell(processIndex, fallbackComponent)
+  }
+
   const jumpToIssue = (issue: ValidationIssue) => {
     const location = (issue.location || null) as ValidationLocation | null
     const processIndex = resolveProcessIndex(issue)
@@ -1066,44 +1213,25 @@ export function UDMModelEditorForm({
 
     if (processIndex < 0) return
 
-    if (componentName) {
-      if (isTutorialModel && !showStoichSection) {
-        handleTutorialStepChange(Math.min(2, maxTutorialStep) as TutorialStep)
-      }
-      const stoichKey = `${processIndex}:${componentName}`
-      const targetCell = stoichInputRefs.current[stoichKey]
-      if (targetCell) {
-        targetCell.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        })
-        targetCell.focus()
-        openStoichEditor(processIndex, componentName)
+    if (location?.section === "stoich" && !componentName) {
+      if (focusFirstStoichCell(processIndex)) {
         return
       }
     }
 
-    if (
-      !componentName &&
-      issue.code.startsWith("STOICH_") &&
-      componentNames[0]
-    ) {
-      if (isTutorialModel && !showStoichSection) {
-        handleTutorialStepChange(Math.min(2, maxTutorialStep) as TutorialStep)
+    if (componentName) {
+      if (focusStoichCell(processIndex, componentName)) {
+        return
       }
-      const fallbackComponent = componentNames[0]
-      const fallbackCell =
-        stoichInputRefs.current[`${processIndex}:${fallbackComponent}`]
-      if (fallbackCell) {
-        fallbackCell.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        })
-        fallbackCell.focus()
+    }
+
+    if (!componentName && issue.code.startsWith("STOICH_")) {
+      if (focusFirstStoichCell(processIndex)) {
+        return
       }
-      openStoichEditor(processIndex, fallbackComponent)
+    }
+
+    if (location?.section === "stoich") {
       return
     }
 
@@ -1808,7 +1936,7 @@ export function UDMModelEditorForm({
           {showValidationSection && (
             <Box mt={4}>
               <ContinuityCheckPanel
-                continuityChecks={(validation?.continuity_checks as any) ?? []}
+                continuityChecks={continuityChecks}
                 onJumpToProcess={(processName) => {
                   const idx = processRows.findIndex(
                     (r) => r.name.trim() === processName.trim(),

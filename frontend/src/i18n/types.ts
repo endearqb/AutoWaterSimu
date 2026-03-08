@@ -466,6 +466,7 @@ export interface I18nMessages {
       parameters: string
       calculation: string
       simulation: string
+      tutorialGuide: string
     }
     canvas: {
       doubleClickEdit: string

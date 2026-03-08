@@ -489,6 +489,7 @@ export const enMessages: I18nMessages = {
       parameters: "Parameters",
       calculation: "Calculation",
       simulation: "Simulation",
+      tutorialGuide: "Tutorial",
     },
     canvas: {
       doubleClickEdit: "Double click to edit",
@@ -1610,8 +1611,79 @@ export const enMessages: I18nMessages = {
               body: "Use validation to make sure the seed is consistent before the simulation walkthrough lands.",
             },
           },
-          processes: {},
+          processes: {
+            aerobic_growth: {
+              title: "Aerobic Heterotrophic Growth",
+              story:
+                "Heterotrophic bacteria consume soluble substrate (S_S) and dissolved oxygen (S_O) under aerobic conditions, converting substrate into biomass (X_BH). The rate follows dual Monod kinetics.",
+              mistakes: {
+                0: "If S_O is not consumed, the oxygen stoichiometric coefficient may be missing.",
+              },
+            },
+            decay: {
+              title: "Biomass Decay",
+              story:
+                "Under all conditions, biomass undergoes endogenous respiration decay, converting active biomass into inert particulates and slowly degradable substrate.",
+              mistakes: {
+                0: "The decay rate should not depend on substrate concentration — it is a first-order process.",
+              },
+            },
+            nitrification: {
+              title: "Nitrification (Autotrophic Growth)",
+              story:
+                "Autotrophic bacteria oxidize ammonia nitrogen (S_NH) to nitrate (S_NO) under aerobic conditions, consuming significant dissolved oxygen.",
+              mistakes: {
+                0: "Nitrification does not consume organic substrate (S_S). If your rate expression includes S_S, review it.",
+              },
+            },
+          },
         },
+      },
+      results: {
+        panelTitle: "Tutorial Guide",
+        noResultHint: "Run the simulation to see recommended charts and learning insights here.",
+        unknownLesson: "Unknown lesson",
+        recommendedCharts: "Recommended Variables",
+        selectVariableHint: "Click a tag above to select variables to observe",
+        insightsTitle: "Result Interpretation",
+      },
+      insights: {
+        "chapter-7": {
+          ssDeclination: {
+            title: "Why does S_S decline over time?",
+            body: "Soluble substrate S_S is consumed by heterotrophic bacteria (X_BH). Per Monod kinetics, consumption is fastest when S_S is much greater than K_S, and slows as S_S approaches K_S. This is why the S_S curve typically shows a fast-then-slow decline.",
+          },
+          xbhGrowth: {
+            title: "Why does X_BH grow rapidly then plateau?",
+            body: "Heterotrophic growth is limited by S_S concentration. When S_S is abundant initially, X_BH grows quickly; as S_S is depleted, the growth rate drops. When growth and decay rates approach equilibrium, X_BH stabilizes.",
+          },
+          oxygenDemand: {
+            title: "What does S_O change tell us?",
+            body: "Dissolved oxygen consumption reflects the oxygen demand of biological reactions. Both aerobic heterotrophic growth and nitrification consume oxygen. If S_O drops to zero quickly, aeration is insufficient or influent loading is too high.",
+          },
+          nitrification: {
+            title: "Inverse trends of S_NH and S_NO",
+            body: "Nitrification converts ammonia (S_NH) to nitrate (S_NO), so S_NH decreases while S_NO increases. If S_O is insufficient, nitrification is inhibited and S_NH may not be fully converted.",
+          },
+        },
+      },
+      explosionDebug: {
+        alertTitle: "Numerical Anomaly Detected",
+        checklistTitle: "Debug Checklist",
+        items: {
+          checkInitialValues: "Check initial values: Are there denominator terms with concentration = 0? (e.g., K_S=0 causes division by zero)",
+          checkStoichiometry: "Check stoichiometric coefficients: Are signs correct? (consumption is negative, production is positive)",
+          reduceStepSize: "Try reducing step size: increase steps_per_hour (e.g., from 20 to 100)",
+          checkVolume: "Check reactor volume: Is it too small relative to flow? (Small volume causes rapid dilution)",
+          checkRateExpressions: "Verify rate expressions: Are all Monod half-saturation constants K > 0?",
+        },
+      },
+      completion: {
+        congratsTitle: "Chapter Complete!",
+        congratsBody: "You have successfully completed the full loop from matrix definition to simulation.",
+        markComplete: "Mark Complete",
+        nextChapter: "Next Chapter",
+        alreadyCompleted: "This chapter is already completed",
       },
     },
     modelParams: {

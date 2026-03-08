@@ -474,6 +474,7 @@ export const zhMessages: I18nMessages = {
       parameters: "参数设置",
       calculation: "计算参数",
       simulation: "模拟计算",
+      tutorialGuide: "教程引导",
     },
     canvas: {
       doubleClickEdit: "双击编辑文本",
@@ -1559,8 +1560,79 @@ export const zhMessages: I18nMessages = {
               body: "先用校验确保 seed 内容一致，等待后续的仿真讲解开放。",
             },
           },
-          processes: {},
+          processes: {
+            aerobic_growth: {
+              title: "好氧异养生长",
+              story:
+                "异养菌在好氧条件下消耗可溶性基质（S_S）和溶解氧（S_O），将基质转化为生物量（X_BH）。速率遵循双 Monod 动力学。",
+              mistakes: {
+                0: "如果 S_O 没有消耗，说明氧的化学计量系数可能缺失。",
+              },
+            },
+            decay: {
+              title: "生物量衰减",
+              story:
+                "在所有条件下，生物量都会经历内源呼吸衰减，将活性生物量转化为惰性颗粒物和缓慢降解基质。",
+              mistakes: {
+                0: "衰减速率不应依赖基质浓度——它是一阶过程。",
+              },
+            },
+            nitrification: {
+              title: "硝化（自养生长）",
+              story:
+                "自养菌在好氧条件下将氨氮（S_NH）氧化为硝酸盐（S_NO），消耗大量溶解氧。",
+              mistakes: {
+                0: "硝化不消耗有机基质（S_S），如果你的速率表达式中包含 S_S，需要重新检查。",
+              },
+            },
+          },
         },
+      },
+      results: {
+        panelTitle: "教程引导",
+        noResultHint: "运行仿真后，这里将显示推荐曲线和教学解释。",
+        unknownLesson: "未知的课程",
+        recommendedCharts: "推荐观测变量",
+        selectVariableHint: "点击上方标签选择要观测的变量",
+        insightsTitle: "结果解读",
+      },
+      insights: {
+        "chapter-7": {
+          ssDeclination: {
+            title: "S_S 为什么随时间下降？",
+            body: "可溶性基质 S_S 被异养菌（X_BH）消耗。根据 Monod 动力学，当 S_S 远大于 K_S 时消耗速率最快；当 S_S 接近 K_S 时速率减缓。这就是为什么 S_S 曲线通常呈现先快后慢的下降趋势。",
+          },
+          xbhGrowth: {
+            title: "X_BH 为什么先快速增长然后趋稳？",
+            body: "异养菌的增长受到 S_S 浓度的限制。初始阶段 S_S 充足时，X_BH 快速增长；随着 S_S 被耗尽，增长速率下降。当增长速率与衰减速率接近平衡时，X_BH 趋于稳定。",
+          },
+          oxygenDemand: {
+            title: "S_O 的变化告诉我们什么？",
+            body: "溶解氧的消耗反映了生物反应的耗氧需求。好氧异养生长和硝化都消耗氧气。如果 S_O 快速降至零，说明曝气量不足或进水负荷过高。在实际运行中，这意味着需要增加曝气。",
+          },
+          nitrification: {
+            title: "S_NH 和 S_NO 的反向变化",
+            body: "硝化过程将氨氮（S_NH）转化为硝酸盐（S_NO），因此 S_NH 下降的同时 S_NO 上升。如果 S_O 不足，硝化会受到抑制，S_NH 可能无法完全被转化。",
+          },
+        },
+      },
+      explosionDebug: {
+        alertTitle: "检测到数值异常",
+        checklistTitle: "排查清单",
+        items: {
+          checkInitialValues: "检查初值：是否有浓度为 0 的分母项？（如 K_S=0 会导致除零）",
+          checkStoichiometry: "检查化学计量系数：符号是否正确？（消耗为负，生成为正）",
+          reduceStepSize: "尝试减小步长：增加 steps_per_hour（如从 20 增加到 100）",
+          checkVolume: "检查反应器体积：是否相对流量太小？（小体积会导致快速稀释）",
+          checkRateExpressions: "验证速率表达式：所有 Monod 项的半饱和常数 K 是否 > 0？",
+        },
+      },
+      completion: {
+        congratsTitle: "恭喜完成本章！",
+        congratsBody: "你已经成功完成了从矩阵定义到仿真运行的完整闭环。",
+        markComplete: "标记完成",
+        nextChapter: "下一章",
+        alreadyCompleted: "本章已完成",
       },
     },
     modelParams: {

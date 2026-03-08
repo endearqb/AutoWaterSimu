@@ -49,6 +49,9 @@ import {
   isJobSuccessful as materialBalanceIsJobSuccessful,
 } from "../../../stores/materialBalanceStore"
 import { type ModelType, createAnalysisButton } from "../legacy-analysis"
+import { getTutorialFlowPreset } from "../../../data/tutorialFlowPresets"
+import { useUdmTutorialFlowStore } from "../../../stores/udmTutorialFlowStore"
+import { useTutorialProgressStore } from "../../../stores/tutorialProgressStore"
 
 interface SimulationPanelProps {
   store?: () => RFState // 可选的自定义 store
@@ -109,6 +112,19 @@ function SimulationPanel({
 
   const { isJobCompleted, isJobSuccessful, isJobRunning, getJobStatusText } =
     getModelHelpers(modelType)
+
+  // Tutorial preset auto-load
+  const tutorialLessonKey = useUdmTutorialFlowStore(
+    (s) => s.tutorialLessonKey,
+  )
+  useEffect(() => {
+    if (tutorialLessonKey && modelType === "udm") {
+      const preset = getTutorialFlowPreset(tutorialLessonKey)
+      if (preset?.calculationParameters) {
+        updateCalculationParameters(preset.calculationParameters)
+      }
+    }
+  }, [tutorialLessonKey])
 
   // 参数验证状态
   const [validationErrors, setValidationErrors] = useState<string[]>([])
@@ -319,6 +335,13 @@ function SimulationPanel({
       ]
 
       Promise.all(promises).catch(console.error)
+
+      // Record tutorial simulation run
+      if (tutorialLessonKey) {
+        useTutorialProgressStore
+          .getState()
+          .recordSimulationRun(tutorialLessonKey)
+      }
     }
   }, [finalStore.currentJob?.status, currentJobId])
 

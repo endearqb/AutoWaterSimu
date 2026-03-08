@@ -328,9 +328,39 @@ export const TUTORIAL_LESSONS: TutorialLesson[] = [
       },
     },
     recipes: chapter3Recipes,
-    processTeaching: [],
+    processTeaching: [
+      {
+        processName: "aerobic_growth",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-7.processes.aerobic_growth.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-7.processes.aerobic_growth.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-7.processes.aerobic_growth.mistakes.0",
+        ],
+      },
+      {
+        processName: "decay",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-7.processes.decay.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-7.processes.decay.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-7.processes.decay.mistakes.0",
+        ],
+      },
+      {
+        processName: "nitrification",
+        titleKey:
+          "flow.tutorial.lessonContent.chapter-7.processes.nitrification.title",
+        storyKey:
+          "flow.tutorial.lessonContent.chapter-7.processes.nitrification.story",
+        mistakes: [
+          "flow.tutorial.lessonContent.chapter-7.processes.nitrification.mistakes.0",
+        ],
+      },
+    ],
     completionRule: "validation-pass-last-step",
-    comingSoon: true,
     continuityProfiles: ["COD", "N", "ALK"],
   },
 ]

@@ -1,6 +1,7 @@
-﻿import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 import { ReactFlowProvider } from "@xyflow/react"
-import { useEffect, useMemo } from "react"
+import { lazy, useEffect, useMemo } from "react"
+import { z } from "zod"
 import "@xyflow/react/dist/style.css"
 
 import type { NodeTypes } from "@xyflow/react"
@@ -21,12 +22,21 @@ import { useI18n } from "../../i18n"
 import { useThemePaletteStore } from "../../stores/themePaletteStore"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import { useUDMStore } from "../../stores/udmStore"
+import { useUdmTutorialFlowStore } from "../../stores/udmTutorialFlowStore"
+
+const TutorialResultsPanel = lazy(
+  () => import("../../components/UDM/tutorial/TutorialResultsPanel"),
+)
+
+const searchSchema = z.object({
+  lessonKey: z.string().optional().catch(undefined),
+})
 
 export const Route = createFileRoute("/_layout/udm")({
   component: UDMPage,
+  validateSearch: (search) => searchSchema.parse(search),
 })
 
-// 鍒涘缓甯︽湁store鐨勮妭鐐圭被鍨嬪伐鍘傚嚱鏁?
 const createUDMNodeTypes = (store: () => any): NodeTypes => ({
   default: (props: any) => <DefaultNode {...props} store={store} />,
   input: (props: any) => <InputNode {...props} store={store} />,
@@ -36,6 +46,17 @@ const createUDMNodeTypes = (store: () => any): NodeTypes => ({
 
 function UDMPage() {
   const { t, language } = useI18n()
+  const { lessonKey } = Route.useSearch()
+  const setTutorialLessonKey = useUdmTutorialFlowStore(
+    (s) => s.setTutorialLessonKey,
+  )
+
+  // Sync lessonKey from URL into tutorial flow store
+  useEffect(() => {
+    setTutorialLessonKey(lessonKey ?? null)
+    return () => setTutorialLessonKey(null)
+  }, [lessonKey, setTutorialLessonKey])
+
   const udmDefaultNodeDataFactory = useMemo<DefaultNodeDataFactory>(() => {
     return (nodeType: string) => {
       switch (nodeType) {
@@ -44,15 +65,13 @@ function UDMPage() {
         case "output":
           return { label: t("flow.node.output") }
         case "udm":
-          return {
-            label: t("flow.node.udm"),
-            // 鍥哄畾鍙傛暟鐢?store 鑷姩娣诲姞锛屾棤闇€鍦ㄦ澶勫畾涔?
-          }
+          return { label: t("flow.node.udm") }
         default:
           return { label: t("flow.node.default") }
       }
     }
   }, [language])
+
   const udmInspectorConfig = useMemo(
     () => ({
       nodeTabs: [
@@ -78,6 +97,20 @@ function UDMPage() {
             modelType: "udm",
           },
         },
+        ...(lessonKey
+          ? [
+              {
+                key: "tutorial",
+                label: t("flow.tab.tutorialGuide"),
+                component: TutorialResultsPanel,
+                props: {
+                  lessonKey,
+                  store: useUDMFlowStore,
+                  modelStore: useUDMStore,
+                },
+              },
+            ]
+          : []),
       ],
       edgePanel: {
         component: UDMPropertyPanel,
@@ -85,9 +118,9 @@ function UDMPage() {
       },
       defaultTab: "parameters",
     }),
-    [language],
+    [language, lessonKey],
   )
-  // 鉁?浣跨敤 useMemo 纭繚 nodeTypes 寮曠敤绋冲畾
+
   const udmNodeTypes = useMemo(() => createUDMNodeTypes(useUDMFlowStore), [])
   const themeStore = useThemePaletteStore()
   useEffect(() => {
