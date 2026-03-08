@@ -29,8 +29,13 @@ function UDMModelEditorPage() {
         })
       }
       onBack={() => navigate({ to: "/udmModels" })}
-      onGeneratedFlowchart={() =>
-        navigate({ to: "/udm", search: lessonKey ? { lessonKey } : {} })
+      onGeneratedFlowchart={(payload) =>
+        navigate({
+          to: "/udm",
+          search: lessonKey
+            ? { lessonKey, flowchartId: payload.flowchart.id }
+            : { flowchartId: payload.flowchart.id },
+        })
       }
     />
   )

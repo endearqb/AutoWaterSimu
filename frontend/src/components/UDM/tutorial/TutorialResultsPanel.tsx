@@ -1,6 +1,6 @@
 import { Box, Button, HStack, Stack, Text } from "@chakra-ui/react"
 import { useNavigate } from "@tanstack/react-router"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { FiAward, FiBookOpen } from "react-icons/fi"
 
 import type { UDMResultData } from "@/components/Flow/legacy-analysis/udm-analysis"
@@ -47,6 +47,13 @@ export default function TutorialResultsPanel({
 
   const isAlreadyCompleted = completedLessons.includes(lessonKey)
 
+  // Auto-complete lesson when conditions are met for the first time
+  useEffect(() => {
+    if (isComplete && !isAlreadyCompleted) {
+      completeLesson(lessonKey)
+    }
+  }, [isComplete, isAlreadyCompleted, lessonKey, completeLesson])
+
   // Find next lesson suggestion
   const nextLesson = useMemo(() => {
     const currentIdx = TUTORIAL_LESSONS.findIndex(
@@ -87,10 +94,6 @@ export default function TutorialResultsPanel({
   }
 
   // Has results — render full panel
-  const handleComplete = () => {
-    completeLesson(lessonKey)
-  }
-
   const handleNextLesson = () => {
     if (nextLesson) {
       navigate({
@@ -121,8 +124,8 @@ export default function TutorialResultsPanel({
         hasSimulationResult={true}
       />
 
-      {/* Completion card */}
-      {isComplete && !isAlreadyCompleted && (
+      {/* Completion card — shown whenever all conditions are met */}
+      {isComplete && (
         <Box
           p={4}
           borderWidth={1}
@@ -139,45 +142,11 @@ export default function TutorialResultsPanel({
           <Text fontSize="sm" color="green.700" mb={3}>
             {t("flow.tutorial.completion.congratsBody")}
           </Text>
-          <HStack gap={2}>
-            <Button size="sm" colorPalette="green" onClick={handleComplete}>
-              {t("flow.tutorial.completion.markComplete")}
-            </Button>
-            {nextLesson && (
-              <Button
-                size="sm"
-                variant="outline"
-                colorPalette="blue"
-                onClick={handleNextLesson}
-              >
-                {t("flow.tutorial.completion.nextChapter")}
-              </Button>
-            )}
-          </HStack>
-        </Box>
-      )}
-
-      {/* Already completed */}
-      {isAlreadyCompleted && (
-        <Box
-          p={3}
-          borderWidth={1}
-          borderRadius="md"
-          borderColor="green.200"
-          bg="green.50"
-        >
-          <HStack gap={2}>
-            <FiAward color="green" />
-            <Text fontSize="sm" color="green.700">
-              {t("flow.tutorial.completion.alreadyCompleted")}
-            </Text>
-          </HStack>
           {nextLesson && (
             <Button
               size="sm"
               variant="outline"
               colorPalette="blue"
-              mt={2}
               onClick={handleNextLesson}
             >
               {t("flow.tutorial.completion.nextChapter")}

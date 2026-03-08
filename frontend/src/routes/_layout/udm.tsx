@@ -30,6 +30,7 @@ const TutorialResultsPanel = lazy(
 
 const searchSchema = z.object({
   lessonKey: z.string().optional().catch(undefined),
+  flowchartId: z.string().optional().catch(undefined),
 })
 
 export const Route = createFileRoute("/_layout/udm")({
@@ -46,7 +47,7 @@ const createUDMNodeTypes = (store: () => any): NodeTypes => ({
 
 function UDMPage() {
   const { t, language } = useI18n()
-  const { lessonKey } = Route.useSearch()
+  const { lessonKey, flowchartId } = Route.useSearch()
   const setTutorialLessonKey = useUdmTutorialFlowStore(
     (s) => s.setTutorialLessonKey,
   )
@@ -56,6 +57,14 @@ function UDMPage() {
     setTutorialLessonKey(lessonKey ?? null)
     return () => setTutorialLessonKey(null)
   }, [lessonKey, setTutorialLessonKey])
+
+  // Auto-reload flowchart from URL param on refresh
+  useEffect(() => {
+    if (!flowchartId) return
+    const store = useUDMFlowStore.getState()
+    if (store.currentFlowChartId) return
+    store.loadFlowChart(flowchartId)
+  }, [flowchartId])
 
   const udmDefaultNodeDataFactory = useMemo<DefaultNodeDataFactory>(() => {
     return (nodeType: string) => {

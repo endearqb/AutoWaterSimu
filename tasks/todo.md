@@ -108,3 +108,22 @@
 - 验证结果：
 - `cd backend; .venv\Scripts\python -m pytest app/tests/services/test_petersen_continuity.py app/tests/api/routes/test_udm_models_validate.py app/tests/udm_tutorial_validation_test.py` 通过，`23 passed`
 - `cd frontend; npx tsc --noEmit` 通过
+
+### Epic 04 Review TODO
+
+- [x] 初始化 Epic 04 review 计划
+- [x] 阅读 Epic 04 开发计划与 Implementation Complete 文档
+- [x] 核对编辑器生成流程图、/udm 路由、教程结果页与进度 store
+- [x] 运行前端类型检查与生产构建验证
+- [x] 输出并保存 Epic 04 review 报告
+
+### Review
+
+- 已保存报告：`tasks/Epic_04_一键仿真闭环与教学型结果页_review_report_2026-03-08.md`
+- 主要发现 3 项：
+- `/udm` 路由没有携带 `flowchartId`，刷新后无法回载刚生成的流程图，闭环不可恢复
+- 结果页完成卡片会被 Epic 02 提前写入的 `completedLessons` 吞掉，标准成功路径下通常只会显示“已完成”
+- `simulationRanAt` 在“仅生成流程图”时就被写入，和“真实仿真成功”混用了同一进度字段
+- 验证结果：
+- `cd frontend; npx tsc --noEmit` 通过
+- `cd frontend; npx vite build` 通过

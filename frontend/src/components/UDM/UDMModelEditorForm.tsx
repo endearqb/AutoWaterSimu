@@ -331,9 +331,6 @@ export function UDMModelEditorForm({
   const completeLesson = useTutorialProgressStore(
     (state) => state.completeLesson,
   )
-  const recordSimulationRun = useTutorialProgressStore(
-    (state) => state.recordSimulationRun,
-  )
   const isTutorialModel = !!tutorialLesson
   const isGuidedMode = isTutorialModel && tutorialMode === "guided"
   const isReadonlyMode = isGuidedMode && readonlyFromMeta
@@ -1042,9 +1039,6 @@ export function UDMModelEditorForm({
       flowStore.setCurrentFlowChartName(createdFlowchart.name)
 
       showSuccessToast(t("flow.udmEditor.form.toast.generateFlowSuccess"))
-      if (tutorialLesson) {
-        recordSimulationRun(tutorialLesson.lessonKey)
-      }
       onGeneratedFlowchart?.({
         savedModel,
         flowData: flowData as Record<string, unknown>,
