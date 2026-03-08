@@ -51,11 +51,64 @@ def _definition_hash(
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def _to_validation_location(location: Any | None) -> UDMValidationLocation | None:
+    if location is None:
+        return None
+    if isinstance(location, UDMValidationLocation):
+        return location
+    return UDMValidationLocation(**location.__dict__)
+
+
+def _extract_continuity_dimensions(meta: dict[str, Any] | None) -> list[str] | None:
+    if not isinstance(meta, dict):
+        return None
+
+    learning = meta.get("learning")
+    if not isinstance(learning, dict):
+        return None
+
+    raw_dimensions = learning.get("continuityProfiles")
+    if not isinstance(raw_dimensions, list):
+        return None
+
+    dimensions: list[str] = []
+    seen: set[str] = set()
+    for item in raw_dimensions:
+        if not isinstance(item, str):
+            continue
+        dim = item.strip()
+        if not dim or dim in seen:
+            continue
+        seen.add(dim)
+        dimensions.append(dim)
+
+    return dimensions or None
+
+
+def _build_continuity_validation_errors(
+    continuity_checks: list[Any],
+) -> list[UDMValidationIssue]:
+    return [
+        UDMValidationIssue(
+            code="CONTINUITY_IMBALANCE",
+            message=f"{item.dimension} continuity imbalance (Δ={item.balance_value:g})",
+            process=item.process_name,
+            location=UDMValidationLocation(
+                section="stoich",
+                processName=item.process_name,
+            ),
+        )
+        for item in continuity_checks
+        if getattr(item, "status", None) == "error"
+    ]
+
+
 def _validate_definition_payload(
     *,
     components: list[dict[str, Any]],
     parameters: list[dict[str, Any]],
     processes: list[dict[str, Any]],
+    meta: dict[str, Any] | None = None,
     validation_mode: str = "teaching",
 ) -> UDMValidationResponse:
     component_names = [str(item.get("name", "")).strip() for item in components]
@@ -71,37 +124,38 @@ def _validate_definition_payload(
         components=components,
         processes=processes,
         parameters=parameters,
+        dimensions=_extract_continuity_dimensions(meta),
         mode=validation_mode,
     )
 
+    strict_continuity_errors = (
+        _build_continuity_validation_errors(continuity_checks)
+        if validation_mode == "strict"
+        else []
+    )
+    errors = [
+        UDMValidationIssue(
+            code=issue.code,
+            message=issue.message,
+            process=issue.process,
+            location=_to_validation_location(issue.location),
+        )
+        for issue in result.errors
+    ]
+    warnings = [
+        UDMValidationIssue(
+            code=issue.code,
+            message=issue.message,
+            process=issue.process,
+            location=_to_validation_location(issue.location),
+        )
+        for issue in result.warnings
+    ]
+
     return UDMValidationResponse(
-        ok=result.ok,
-        errors=[
-            UDMValidationIssue(
-                code=issue.code,
-                message=issue.message,
-                process=issue.process,
-                location=(
-                    UDMValidationLocation(**issue.location.__dict__)
-                    if issue.location is not None
-                    else None
-                ),
-            )
-            for issue in result.errors
-        ],
-        warnings=[
-            UDMValidationIssue(
-                code=issue.code,
-                message=issue.message,
-                process=issue.process,
-                location=(
-                    UDMValidationLocation(**issue.location.__dict__)
-                    if issue.location is not None
-                    else None
-                ),
-            )
-            for issue in result.warnings
-        ],
+        ok=result.ok and not strict_continuity_errors,
+        errors=[*errors, *strict_continuity_errors],
+        warnings=warnings,
         extracted_parameters=result.extracted_parameters,
         continuity_checks=continuity_checks,
     )
@@ -183,6 +237,7 @@ def _create_model_with_version(
         components=components,
         parameters=parameters,
         processes=processes,
+        meta=meta,
     )
     if not validation.ok:
         raise HTTPException(
@@ -259,6 +314,7 @@ def validate_udm_model_definition(
         components=components,
         parameters=parameters,
         processes=processes,
+        meta=draft.meta,
         validation_mode=validation_mode,
     )
 
@@ -387,6 +443,7 @@ def update_udm_model(
             components=components,
             parameters=parameters,
             processes=processes,
+            meta=meta,
         )
         if not validation.ok:
             raise HTTPException(

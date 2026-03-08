@@ -34,6 +34,33 @@ def _evaluate_stoich_value(
         return None
 
 
+def _resolve_stoich_value(
+    raw_numeric: Any,
+    stoich_expr: str,
+    param_defaults: dict[str, float],
+) -> float | None:
+    """Resolve a stoich coefficient, preferring symbolic expressions when present."""
+    expr_text = str(stoich_expr or "").strip()
+    if expr_text:
+        evaluated = _evaluate_stoich_value(expr_text, param_defaults)
+        if evaluated is None:
+            logger.debug(
+                "Cannot resolve stoich coefficient from expr '%s'; ignoring raw numeric value %r",
+                expr_text,
+                raw_numeric,
+            )
+        return evaluated
+
+    if raw_numeric is None:
+        return None
+
+    try:
+        return float(raw_numeric)
+    except (TypeError, ValueError):
+        logger.debug("Invalid raw stoich value %r, skipping", raw_numeric)
+        return None
+
+
 def check_continuity(
     *,
     components: list[dict[str, Any]],
@@ -110,12 +137,12 @@ def check_continuity(
                     continue
                 has_any_factor = True
 
-                # 优先使用 stoich 数值，回退到 stoich_expr 求值
-                stoich_val = stoich.get(comp_name)
-                expr_str = stoich_expr.get(comp_name, "")
-
-                if stoich_val is None and expr_str:
-                    stoich_val = _evaluate_stoich_value(expr_str, param_defaults)
+                expr_str = str(stoich_expr.get(comp_name, "") or "").strip()
+                stoich_val = _resolve_stoich_value(
+                    stoich.get(comp_name),
+                    expr_str,
+                    param_defaults,
+                )
 
                 if stoich_val is None:
                     continue
@@ -131,6 +158,14 @@ def check_continuity(
                 })
 
             if not has_any_factor:
+                continue
+
+            if not contributions:
+                logger.debug(
+                    "Skipping continuity result for process '%s' dimension '%s' because no contributions were resolved",
+                    proc_name,
+                    dim,
+                )
                 continue
 
             # 构建可读的说明

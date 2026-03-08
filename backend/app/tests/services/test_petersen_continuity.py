@@ -217,6 +217,57 @@ class TestEdgeCases:
         assert len(results) == 1
         assert results[0].status == "pass"
 
+    def test_stoich_expr_overrides_placeholder_zero(self):
+        """前端占位 stoich=0 时，连续性检查仍应优先按表达式求值。"""
+        components = [
+            {"name": "A", "conversion_factors": {"COD": 1.0}},
+            {"name": "B", "conversion_factors": {"COD": 1.0}},
+        ]
+        processes = [
+            {
+                "name": "expr_proc",
+                "stoich": {"A": 0.0, "B": 0.0},
+                "stoich_expr": {"A": "1/Y", "B": "-1/Y"},
+            },
+        ]
+        parameters = [{"name": "Y", "default_value": 0.5}]
+        results = check_continuity(
+            components=components,
+            processes=processes,
+            parameters=parameters,
+            dimensions=["COD"],
+            mode="strict",
+        )
+        assert len(results) == 1
+        assert results[0].status == "pass"
+        contributions = results[0].details["contributions"]
+        assert [item["stoich"] for item in contributions] == [2.0, -2.0]
+
+    def test_stoich_expr_details_use_resolved_value_not_placeholder_zero(self):
+        """details.contributions.stoich 应记录表达式解析后的真实数值。"""
+        components = [
+            {"name": "A", "conversion_factors": {"COD": 1.0}},
+        ]
+        processes = [
+            {
+                "name": "expr_detail_proc",
+                "stoich": {"A": 0.0},
+                "stoich_expr": {"A": "1/Y"},
+            },
+        ]
+        parameters = [{"name": "Y", "default_value": 0.5}]
+        results = check_continuity(
+            components=components,
+            processes=processes,
+            parameters=parameters,
+            dimensions=["COD"],
+            mode="teaching",
+        )
+        assert len(results) == 1
+        assert results[0].details is not None
+        assert results[0].details["contributions"][0]["stoich"] == 2.0
+        assert "1/Y" in results[0].explanation
+
     def test_explanation_contains_components(self):
         """explanation 字段应包含组分名"""
         components = [

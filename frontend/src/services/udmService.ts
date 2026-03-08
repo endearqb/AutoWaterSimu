@@ -521,10 +521,12 @@ class UDMServiceImpl
 
   async validateModelDefinition(
     draft: UDMModelDefinitionDraft,
+    validationMode?: string,
   ): Promise<UDMValidationResponse> {
     try {
       return await UdmModelsService.validateUdmModelDefinition({
         requestBody: draft,
+        validationMode,
       })
     } catch (error) {
       throw handleApiError(error, "Failed to validate UDM model definition")
