@@ -4,6 +4,7 @@ import { Link as RouterLink } from "@tanstack/react-router"
 
 import {
   FiBarChart,
+  FiBookOpen,
   FiBriefcase,
   FiDatabase,
   FiGitBranch,
@@ -51,8 +52,13 @@ const getItems = (
   t: (key: string) => string,
 ) => [
   { icon: FiHome, title: t("nav.home"), path: "/dashboard" },
-  { icon: FiSliders, title: t("nav.hybrid"), path: "/hybrid" },
+  {
+    icon: FiBookOpen,
+    title: t("nav.petersenTutorial"),
+    path: "/petersen-tutorial",
+  },
   { icon: FiDatabase, title: t("nav.udmModels"), path: "/udmModels" },
+  { icon: FiSliders, title: t("nav.hybrid"), path: "/hybrid" },
   {
     icon: FiLayers,
     title: t("nav.flowingFlow"),

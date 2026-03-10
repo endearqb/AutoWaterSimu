@@ -29,6 +29,7 @@ import { Route as LayoutUdmModelEditorImport } from './routes/_layout/udmModelEd
 import { Route as LayoutUdmImport } from './routes/_layout/udm'
 import { Route as LayoutSuperDashboardImport } from './routes/_layout/super-dashboard'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
+import { Route as LayoutPetersenTutorialImport } from './routes/_layout/petersen-tutorial'
 import { Route as LayoutOverviewImport } from './routes/_layout/overview'
 import { Route as LayoutMaterialbalanceImport } from './routes/_layout/materialbalance'
 import { Route as LayoutItemsImport } from './routes/_layout/items'
@@ -128,6 +129,11 @@ const LayoutSuperDashboardRoute = LayoutSuperDashboardImport.update({
 
 const LayoutSettingsRoute = LayoutSettingsImport.update({
   path: '/settings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutPetersenTutorialRoute = LayoutPetersenTutorialImport.update({
+  path: '/petersen-tutorial',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -252,6 +258,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutOverviewImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/petersen-tutorial': {
+      preLoaderRoute: typeof LayoutPetersenTutorialImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/settings': {
       preLoaderRoute: typeof LayoutSettingsImport
       parentRoute: typeof LayoutImport
@@ -305,6 +315,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutItemsRoute,
     LayoutMaterialbalanceRoute,
     LayoutOverviewRoute,
+    LayoutPetersenTutorialRoute,
     LayoutSettingsRoute,
     LayoutSuperDashboardRoute,
     LayoutUdmRoute,

@@ -18,11 +18,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { FiSearch } from "react-icons/fi"
 
-import TutorialLessonsSection from "@/components/UDM/TutorialLessonsSection"
-import type { TutorialLesson } from "@/data/tutorialLessons"
+import type { UDMModelPublic } from "@/client/types.gen"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
-import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
+import {
+  extractLessonKeyFromModelSummary,
+  resolveTutorialModelDisplayName,
+  resolveTutorialTemplateDisplay,
+} from "@/utils/udmTutorialLocalization"
 import { udmService } from "../../services/udmService"
 
 export const Route = createFileRoute("/_layout/udmModels")({
@@ -34,9 +37,6 @@ function UDMModelsPage() {
   const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
-  const attachLessonModel = useTutorialProgressStore(
-    (state) => state.attachLessonModel,
-  )
 
   const [searchInput, setSearchInput] = useState("")
   const [searchText, setSearchText] = useState("")
@@ -91,7 +91,7 @@ function UDMModelsPage() {
     onSuccess: (created) => {
       showSuccessToast(
         t("flow.udmModels.toast.duplicateSuccess", {
-          name: created.name,
+          name: getModelDisplayName(created),
         }),
       )
       queryClient.invalidateQueries({ queryKey: ["udm-models"] })
@@ -163,43 +163,18 @@ function UDMModelsPage() {
     }
   }, [totalCount, models.length, page])
 
-  const openTutorialLesson = async (
-    lesson: TutorialLesson,
-    existingModelId?: string | null,
-  ) => {
-    try {
-      if (existingModelId) {
-        navigate({
-          to: "/udmModelEditor",
-          search: { modelId: existingModelId, lessonKey: lesson.lessonKey },
-        })
-        return
-      }
-
-      const created = await createFromTemplate.mutateAsync(
-        lesson.seedTemplateKey,
-      )
-      attachLessonModel(lesson.lessonKey, created.id)
-      showSuccessToast(
-        t("flow.udmModels.toast.createTemplateSuccess", {
-          name: created.name,
-        }),
-      )
-      navigate({
-        to: "/udmModelEditor",
-        search: { modelId: created.id, lessonKey: lesson.lessonKey },
-      })
-    } catch {
-      // The mutation already surfaces a toast.
-    }
-  }
-
   const openGeneralTemplate = async (templateKey: string) => {
     try {
       const created = await createFromTemplate.mutateAsync(templateKey)
+      const templateDisplay = resolveTutorialTemplateDisplay(
+        t,
+        templateKey,
+        created.name,
+        created.description,
+      )
       showSuccessToast(
         t("flow.udmModels.toast.createTemplateSuccess", {
-          name: created.name,
+          name: templateDisplay.name,
         }),
       )
       navigate({
@@ -214,13 +189,18 @@ function UDMModelsPage() {
   const getLessonKeyFromModel = (tags?: string[]) =>
     (tags || []).find((tag) => /^chapter-\d+$/.test(tag))
 
+  const getModelDisplayName = (model: UDMModelPublic) =>
+    resolveTutorialModelDisplayName(
+      t,
+      extractLessonKeyFromModelSummary(model),
+      model.name,
+    )
+
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
         {t("flow.udmModels.title")}
       </Heading>
-
-      <TutorialLessonsSection onOpenLesson={openTutorialLesson} />
 
       <Flex mt={6} gap={3} wrap="wrap" align="center">
         <Input
@@ -270,50 +250,59 @@ function UDMModelsPage() {
           </Text>
         ) : (
           <VStack align="stretch" gap={3}>
-            {generalTemplates.map((tpl) => (
-              <Flex
-                key={tpl.key}
-                borderWidth="1px"
-                borderRadius="md"
-                p={4}
-                align="center"
-                justify="space-between"
-                gap={4}
-              >
-                <Box>
-                  <Text fontWeight="semibold">{tpl.name}</Text>
-                  <Text fontSize="sm" color="gray.600">
-                    {tpl.description ||
-                      t("flow.udmModels.template.noDescription")}
-                  </Text>
-                  <HStack mt={2} gap={2}>
-                    {(tpl.tags || []).map((tag) => (
-                      <Badge key={`${tpl.key}-${tag}`} colorPalette="blue">
-                        {tag}
-                      </Badge>
-                    ))}
-                    <Text fontSize="xs" color="gray.500">
-                      {t("flow.udmModels.template.stats", {
-                        components: tpl.components_count || 0,
-                        processes: tpl.processes_count || 0,
-                        parameters: tpl.parameters_count || 0,
-                      })}
-                    </Text>
-                  </HStack>
-                </Box>
-                <Button
-                  loading={
-                    createFromTemplate.isPending &&
-                    createFromTemplate.variables === tpl.key
-                  }
-                  onClick={() => {
-                    void openGeneralTemplate(tpl.key)
-                  }}
+            {generalTemplates.map((tpl) => {
+              const templateDisplay = resolveTutorialTemplateDisplay(
+                t,
+                tpl.key,
+                tpl.name,
+                tpl.description,
+              )
+
+              return (
+                <Flex
+                  key={tpl.key}
+                  borderWidth="1px"
+                  borderRadius="md"
+                  p={4}
+                  align="center"
+                  justify="space-between"
+                  gap={4}
                 >
-                  {t("flow.udmModels.actions.createFromTemplate")}
-                </Button>
-              </Flex>
-            ))}
+                  <Box>
+                    <Text fontWeight="semibold">{templateDisplay.name}</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {templateDisplay.description ||
+                        t("flow.udmModels.template.noDescription")}
+                    </Text>
+                    <HStack mt={2} gap={2}>
+                      {(tpl.tags || []).map((tag) => (
+                        <Badge key={`${tpl.key}-${tag}`} colorPalette="blue">
+                          {tag}
+                        </Badge>
+                      ))}
+                      <Text fontSize="xs" color="gray.500">
+                        {t("flow.udmModels.template.stats", {
+                          components: tpl.components_count || 0,
+                          processes: tpl.processes_count || 0,
+                          parameters: tpl.parameters_count || 0,
+                        })}
+                      </Text>
+                    </HStack>
+                  </Box>
+                  <Button
+                    loading={
+                      createFromTemplate.isPending &&
+                      createFromTemplate.variables === tpl.key
+                    }
+                    onClick={() => {
+                      void openGeneralTemplate(tpl.key)
+                    }}
+                  >
+                    {t("flow.udmModels.actions.createFromTemplate")}
+                  </Button>
+                </Flex>
+              )
+            })}
           </VStack>
         )}
       </Box>
@@ -365,9 +354,21 @@ function UDMModelsPage() {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {models.map((model) => (
-                  <Table.Row key={model.id}>
-                    <Table.Cell>{model.name}</Table.Cell>
+                {models.map((model) => {
+                  const displayName = getModelDisplayName(model)
+
+                  return (
+                    <Table.Row key={model.id}>
+                    <Table.Cell>
+                      <VStack align="start" gap={0}>
+                        <Text>{displayName}</Text>
+                        {displayName !== model.name ? (
+                          <Text fontSize="xs" color="fg.muted">
+                            {model.name}
+                          </Text>
+                        ) : null}
+                      </VStack>
+                    </Table.Cell>
                     <Table.Cell>v{model.current_version}</Table.Cell>
                     <Table.Cell>
                       <Badge
@@ -431,15 +432,16 @@ function UDMModelsPage() {
                           colorPalette="red"
                           variant="subtle"
                           onClick={() =>
-                            setModelToDelete({ id: model.id, name: model.name })
+                            setModelToDelete({ id: model.id, name: displayName })
                           }
                         >
                           {t("flow.udmModels.actions.delete")}
                         </Button>
                       </HStack>
                     </Table.Cell>
-                  </Table.Row>
-                ))}
+                    </Table.Row>
+                  )
+                })}
               </Table.Body>
             </Table.Root>
           </>

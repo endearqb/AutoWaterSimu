@@ -1,6 +1,6 @@
 import { Box, HStack, Slider, Text, VStack } from "@chakra-ui/react"
 import type React from "react"
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   CartesianGrid,
   Line,
@@ -62,6 +62,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   modelType = "asm1",
 }) => {
   const { t, language } = useI18n()
+  const chartContainerRef = useRef<HTMLDivElement>(null)
+  const [chartContainerSize, setChartContainerSize] = useState({
+    width: 0,
+    height: 0,
+  })
 
   const plotAreaHeight = useMemo(() => {
     if (typeof yAxisHeight === "number") return yAxisHeight
@@ -302,10 +307,32 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     t,
   ])
 
+  useEffect(() => {
+    const element = chartContainerRef.current
+    if (!element) return
+
+    const syncSize = () => {
+      const { width, height } = element.getBoundingClientRect()
+      setChartContainerSize({
+        width: Math.round(width),
+        height: Math.round(height),
+      })
+    }
+
+    syncSize()
+    const observer = new ResizeObserver(syncSize)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  const canRenderResponsiveChart =
+    chartContainerSize.width > 0 && chartContainerSize.height > 0
+
   if (selectedNodes.length === 0 || selectedVariables.length === 0) {
     return (
       <Box
         w="full"
+        minW={0}
         h={chartAreaHeight}
         border="1px"
         borderColor="gray.200"
@@ -321,11 +348,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   }
 
   return (
-    <VStack w="full" align="start" gap={4}>
+    <VStack w="full" minW={0} align="start" gap={4}>
       {showTimeRangeSlider && (
-        <VStack align="start" gap={2} w="full">
+        <VStack align="start" gap={2} w="full" minW={0}>
           <Text fontWeight="bold">{t("flow.analysis.timeRange")}</Text>
-          <HStack w="full" gap={4}>
+          <HStack w="full" gap={4} minW={0}>
             <Text minW="60px">{t("flow.analysis.timeLabel")}</Text>
             <Slider.Root
               value={safeTimeRange}
@@ -356,13 +383,16 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       )}
 
       <Box
+        ref={chartContainerRef}
         w="full"
+        minW={0}
         h={chartAreaHeight}
+        minH={chartAreaHeight}
         border="1px"
         borderColor="gray.200"
         borderRadius="md"
       >
-        {timeSeriesData.length > 0 ? (
+        {timeSeriesData.length > 0 && canRenderResponsiveChart ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={timeSeriesData} margin={chartMargin}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -436,6 +466,12 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               {chartSeries.lines}
             </LineChart>
           </ResponsiveContainer>
+        ) : timeSeriesData.length > 0 ? (
+          <VStack align="center" justify="center" h="full">
+            <Text color="gray.500" textAlign="center">
+              {t("flow.analysis.emptyData")}
+            </Text>
+          </VStack>
         ) : (
           <VStack align="center" justify="center" h="full">
             <Text color="gray.500" textAlign="center">
@@ -448,6 +484,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       {showParamChangeAnnotations && groupedChangeEvents.length > 0 && (
         <Box
           w="full"
+          minW={0}
           px={2}
           py={1}
           borderWidth="1px"
@@ -475,7 +512,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       )}
 
       {chartSeries.legendItems.length > 0 && (
-        <Box w="full" display="flex" flexWrap="wrap" gap={2}>
+        <Box w="full" minW={0} display="flex" flexWrap="wrap" gap={2}>
           {chartSeries.legendItems.map((item) => (
             <HStack
               key={item.key}

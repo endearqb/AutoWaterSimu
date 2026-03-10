@@ -19,6 +19,7 @@ export interface I18nMessages {
     asm3: string
     hybrid: string
     udmModels: string
+    petersenTutorial: string
     knowledge: string
     superDashboard: string
     items: string

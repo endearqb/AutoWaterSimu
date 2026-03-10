@@ -46,6 +46,13 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
 import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
+import {
+  resolveTutorialComponentDisplay,
+  resolveTutorialModelDescription,
+  resolveTutorialModelDisplayName,
+  resolveTutorialParameterDisplay,
+  resolveTutorialProcessDisplay,
+} from "@/utils/udmTutorialLocalization"
 import { getDefaultCalculationParams } from "../../config/simulationConfig"
 import { getTutorialFlowPreset } from "../../data/tutorialFlowPresets"
 import { udmService } from "../../services/udmService"
@@ -332,6 +339,20 @@ export function UDMModelEditorForm({
     (state) => state.completeLesson,
   )
   const isTutorialModel = !!tutorialLesson
+  const tutorialDisplayName = useMemo(
+    () =>
+      resolveTutorialModelDisplayName(t, tutorialLessonKey, name.trim() || ""),
+    [name, t, tutorialLessonKey],
+  )
+  const tutorialDisplayDescription = useMemo(
+    () =>
+      resolveTutorialModelDescription(
+        t,
+        tutorialLessonKey,
+        description.trim() || "",
+      ),
+    [description, t, tutorialLessonKey],
+  )
   const isGuidedMode = isTutorialModel && tutorialMode === "guided"
   const isReadonlyMode = isGuidedMode && readonlyFromMeta
   const maxTutorialStep = tutorialLesson?.stepConfig.maxStep ?? 5
@@ -510,6 +531,41 @@ export function UDMModelEditorForm({
   const parameterNames = useMemo(
     () => parameterRows.map((row) => row.name.trim()).filter(Boolean),
     [parameterRows],
+  )
+  const componentDisplayMap = useMemo(
+    () =>
+      new Map(
+        componentRows.map((row) => [
+          row._rowId,
+          resolveTutorialComponentDisplay(
+            t,
+            tutorialLessonKey,
+            row.name,
+            row.label,
+          ),
+        ]),
+      ),
+    [componentRows, t, tutorialLessonKey],
+  )
+  const processDisplayMap = useMemo(
+    () =>
+      new Map(
+        processRows.map((row) => [
+          row._rowId,
+          resolveTutorialProcessDisplay(t, tutorialLessonKey, row.name),
+        ]),
+      ),
+    [processRows, t, tutorialLessonKey],
+  )
+  const parameterDisplayMap = useMemo(
+    () =>
+      new Map(
+        parameterRows.map((row) => [
+          row._rowId,
+          resolveTutorialParameterDisplay(t, tutorialLessonKey, row.name),
+        ]),
+      ),
+    [parameterRows, t, tutorialLessonKey],
   )
   const showArrowMatrix = isGuidedMode && currentTutorialStep === 1
   const showStoichSection = !isGuidedMode || currentTutorialStep >= 2
@@ -1435,11 +1491,25 @@ export function UDMModelEditorForm({
               {t("flow.udmEditor.form.sections.basicInfo")}
             </Heading>
             <VStack align="stretch" gap={3}>
+              {isTutorialModel &&
+              tutorialDisplayName &&
+              tutorialDisplayName !== name.trim() ? (
+                <Text fontSize="xs" color="fg.muted">
+                  {tutorialDisplayName}
+                </Text>
+              ) : null}
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t("flow.udmEditor.form.placeholders.modelName")}
               />
+              {isTutorialModel &&
+              tutorialDisplayDescription &&
+              tutorialDisplayDescription !== description.trim() ? (
+                <Text fontSize="xs" color="fg.muted">
+                  {tutorialDisplayDescription}
+                </Text>
+              ) : null}
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -1459,6 +1529,7 @@ export function UDMModelEditorForm({
           {showArrowMatrix ? (
             <Box mt={6}>
               <ArrowMatrixView
+                lessonKey={tutorialLessonKey}
                 componentNames={componentNames}
                 processRows={processRows.map((row) => ({
                   name: row.name,
@@ -1507,32 +1578,50 @@ export function UDMModelEditorForm({
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {componentRows.map((row, index) => (
-                  <Table.Row key={row._rowId}>
-                    <Table.Cell>
-                      <Input
-                        size="sm"
-                        value={row.name}
-                        onChange={(e) =>
-                          setComponentName(index, e.target.value)
-                        }
-                      />
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Input
-                        size="sm"
-                        value={row.label}
-                        onChange={(e) =>
-                          setComponentRows((prev) =>
-                            prev.map((item, idx) =>
-                              idx === index
-                                ? { ...item, label: e.target.value }
-                                : item,
-                            ),
-                          )
-                        }
-                      />
-                    </Table.Cell>
+                {componentRows.map((row, index) => {
+                  const componentDisplay = componentDisplayMap.get(row._rowId)
+                  const componentAlias =
+                    componentDisplay?.label?.trim() || row.label.trim()
+
+                  return (
+                    <Table.Row key={row._rowId}>
+                      <Table.Cell>
+                        <VStack align="stretch" gap={1}>
+                          <Input
+                            size="sm"
+                            value={row.name}
+                            onChange={(e) =>
+                              setComponentName(index, e.target.value)
+                            }
+                          />
+                          {componentAlias && componentAlias !== row.name.trim() ? (
+                            <Text fontSize="xs" color="fg.muted">
+                              {componentAlias}
+                            </Text>
+                          ) : null}
+                          {componentDisplay?.description ? (
+                            <Text fontSize="xs" color="fg.muted">
+                              {componentDisplay.description}
+                            </Text>
+                          ) : null}
+                        </VStack>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          size="sm"
+                          value={row.label}
+                          placeholder={componentDisplay?.label}
+                          onChange={(e) =>
+                            setComponentRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === index
+                                  ? { ...item, label: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </Table.Cell>
                     <Table.Cell>
                       <Input
                         size="sm"
@@ -1599,8 +1688,9 @@ export function UDMModelEditorForm({
                         {t("common.delete")}
                       </Button>
                     </Table.Cell>
-                  </Table.Row>
-                ))}
+                    </Table.Row>
+                  )
+                })}
               </Table.Body>
             </Table.Root>
           </Box>
@@ -1700,7 +1790,20 @@ export function UDMModelEditorForm({
                             key={`stoich-header-${compName}`}
                             minW={STOICH_COL_MIN_W}
                           >
-                            {compName}
+                            <VStack align="start" gap={0}>
+                              <Text fontWeight="medium">
+                                {
+                                  resolveTutorialComponentDisplay(
+                                    t,
+                                    tutorialLessonKey,
+                                    compName,
+                                  ).label
+                                }
+                              </Text>
+                              <Text fontSize="xs" color="fg.muted">
+                                {compName}
+                              </Text>
+                            </VStack>
                           </Table.ColumnHeader>
                         ))
                       : null}
@@ -1715,34 +1818,50 @@ export function UDMModelEditorForm({
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {processRows.map((row, rowIndex) => (
-                    <Table.Row key={row._rowId}>
+                  {processRows.map((row, rowIndex) => {
+                    const processDisplay = processDisplayMap.get(row._rowId)
+                    const processAlias = processDisplay?.label?.trim() || ""
+
+                    return (
+                      <Table.Row key={row._rowId}>
                       <Table.Cell
                         minW={PROCESS_NAME_COL_W}
                         data-sticky="start-first"
                         left="0"
                       >
-                        <HStack>
-                          <Input
-                            size="sm"
-                            value={row.name}
-                            ref={(el) => {
-                              processNameInputRefs.current[rowIndex] = el
-                            }}
-                            onChange={(e) =>
-                              setProcessRows((prev) =>
-                                prev.map((item, idx) =>
-                                  idx === rowIndex
-                                    ? { ...item, name: e.target.value }
-                                    : item,
-                                ),
-                              )
-                            }
-                          />
-                          <ProcessTeachingPopover
-                            teaching={getProcessTeaching(row.name)}
-                          />
-                        </HStack>
+                        <VStack align="stretch" gap={1}>
+                          <HStack>
+                            <Input
+                              size="sm"
+                              value={row.name}
+                              ref={(el) => {
+                                processNameInputRefs.current[rowIndex] = el
+                              }}
+                              onChange={(e) =>
+                                setProcessRows((prev) =>
+                                  prev.map((item, idx) =>
+                                    idx === rowIndex
+                                      ? { ...item, name: e.target.value }
+                                      : item,
+                                  ),
+                                )
+                              }
+                            />
+                            <ProcessTeachingPopover
+                              teaching={getProcessTeaching(row.name)}
+                            />
+                          </HStack>
+                          {processAlias && processAlias !== row.name.trim() ? (
+                            <Text fontSize="xs" color="fg.muted">
+                              {processAlias}
+                            </Text>
+                          ) : null}
+                          {processDisplay?.description ? (
+                            <Text fontSize="xs" color="fg.muted">
+                              {processDisplay.description}
+                            </Text>
+                          ) : null}
+                        </VStack>
                       </Table.Cell>
                       {showRateExprSection ? (
                         <Table.Cell
@@ -1843,8 +1962,9 @@ export function UDMModelEditorForm({
                           {t("common.delete")}
                         </Button>
                       </Table.Cell>
-                    </Table.Row>
-                  ))}
+                      </Table.Row>
+                    )
+                  })}
                 </Table.Body>
               </Table.Root>
             </Table.ScrollArea>
@@ -2001,25 +2121,41 @@ export function UDMModelEditorForm({
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {parameterRows.map((row, rowIndex) => (
-                    <Table.Row key={row._rowId}>
+                  {parameterRows.map((row, rowIndex) => {
+                    const parameterDisplay = parameterDisplayMap.get(row._rowId)
+                    const parameterAlias = parameterDisplay?.label?.trim() || ""
+
+                    return (
+                      <Table.Row key={row._rowId}>
                       <Table.Cell>
-                        <Input
-                          size="sm"
-                          value={row.name}
-                          ref={(el) => {
-                            parameterNameInputRefs.current[rowIndex] = el
-                          }}
-                          onChange={(e) =>
-                            setParameterRows((prev) =>
-                              prev.map((item, idx) =>
-                                idx === rowIndex
-                                  ? { ...item, name: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
+                        <VStack align="stretch" gap={1}>
+                          <Input
+                            size="sm"
+                            value={row.name}
+                            ref={(el) => {
+                              parameterNameInputRefs.current[rowIndex] = el
+                            }}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, name: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                          {parameterAlias && parameterAlias !== row.name.trim() ? (
+                            <Text fontSize="xs" color="fg.muted">
+                              {parameterAlias}
+                            </Text>
+                          ) : null}
+                          {parameterDisplay?.description ? (
+                            <Text fontSize="xs" color="fg.muted">
+                              {parameterDisplay.description}
+                            </Text>
+                          ) : null}
+                        </VStack>
                       </Table.Cell>
                       <Table.Cell>
                         <Input
@@ -2137,8 +2273,9 @@ export function UDMModelEditorForm({
                           {t("common.delete")}
                         </Button>
                       </Table.Cell>
-                    </Table.Row>
-                  ))}
+                      </Table.Row>
+                    )
+                  })}
                 </Table.Body>
               </Table.Root>
             </Box>

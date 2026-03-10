@@ -5,6 +5,10 @@ import TimeSeriesChart from "@/components/Flow/legacy-analysis/TimeSeriesChart"
 import type { UDMResultData } from "@/components/Flow/legacy-analysis/udm-analysis"
 import type { TutorialLesson } from "@/data/tutorialLessons"
 import { useI18n } from "@/i18n"
+import {
+  formatAliasWithCanonical,
+  resolveTutorialVariableLabel,
+} from "@/utils/udmTutorialLocalization"
 
 interface RecommendedChartsPanelProps {
   lesson: TutorialLesson
@@ -55,6 +59,11 @@ export default function RecommendedChartsPanel({
     [],
   )
 
+  const hasChartData =
+    reactorNodeIds.length > 0 &&
+    selectedVars.length > 0 &&
+    (resultData.timestamps?.length ?? 0) > 0
+
   const toggleVariable = (varName: string) => {
     setSelectedVars((prev) =>
       prev.includes(varName)
@@ -66,14 +75,18 @@ export default function RecommendedChartsPanel({
   if (reactorNodeIds.length === 0) return null
 
   return (
-    <Stack gap={3}>
+    <Stack gap={3} minW={0}>
       <Text fontSize="sm" fontWeight="semibold">
         {t("flow.tutorial.results.recommendedCharts")}
       </Text>
-      <HStack flexWrap="wrap" gap={1}>
+      <HStack flexWrap="wrap" gap={1} minW={0}>
         {availableVars.map((v) => {
           const isSelected = selectedVars.includes(v)
           const isRecommended = recommended.includes(v)
+          const displayLabel = formatAliasWithCanonical(
+            resolveTutorialVariableLabel(t, lesson.lessonKey, v),
+            v,
+          )
           return (
             <Tag.Root
               key={v}
@@ -83,13 +96,13 @@ export default function RecommendedChartsPanel({
               cursor="pointer"
               onClick={() => toggleVariable(v)}
             >
-              <Tag.Label>{v}</Tag.Label>
+              <Tag.Label>{displayLabel}</Tag.Label>
             </Tag.Root>
           )
         })}
       </HStack>
-      {selectedVars.length > 0 ? (
-        <Box>
+      {hasChartData ? (
+        <Box w="full" minW={0} minH="250px">
           <TimeSeriesChart
             resultData={resultData}
             selectedNodes={reactorNodeIds}
@@ -103,6 +116,10 @@ export default function RecommendedChartsPanel({
             modelType="udm"
           />
         </Box>
+      ) : selectedVars.length > 0 ? (
+        <Text fontSize="xs" color="gray.500">
+          {t("flow.analysis.emptyRange")}
+        </Text>
       ) : (
         <Text fontSize="xs" color="gray.500">
           {t("flow.tutorial.results.selectVariableHint")}

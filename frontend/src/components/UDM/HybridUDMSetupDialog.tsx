@@ -42,6 +42,13 @@ import {
   toHybridSelectedModel,
   uniqueStrings,
 } from "../../utils/hybridUdm"
+import {
+  extractLessonKeyFromModelDetail,
+  extractLessonKeyFromModelSummary,
+  formatAliasWithCanonical,
+  resolveTutorialModelDisplayName,
+  resolveTutorialVariableLabel,
+} from "../../utils/udmTutorialLocalization"
 import { Checkbox } from "../ui/checkbox"
 import { Tooltip } from "../ui/tooltip"
 
@@ -99,6 +106,26 @@ function HybridUDMSetupDialog({
         .filter((detail): detail is UDMModelDetailPublic => !!detail),
     [selectedModelIds, modelDetails],
   )
+
+  const getSummaryModelDisplayName = (model: UDMModelPublic) =>
+    formatAliasWithCanonical(
+      resolveTutorialModelDisplayName(
+        t,
+        extractLessonKeyFromModelSummary(model),
+        model.name,
+      ),
+      model.name,
+    )
+
+  const getDetailModelDisplayName = (detail: UDMModelDetailPublic) =>
+    formatAliasWithCanonical(
+      resolveTutorialModelDisplayName(
+        t,
+        extractLessonKeyFromModelDetail(detail),
+        detail.name,
+      ),
+      detail.name,
+    )
 
   // F-3.1: Build set of required pair keys based on actual flow edges
   const requiredPairKeys = useMemo(() => {
@@ -463,11 +490,22 @@ function HybridUDMSetupDialog({
     const loadedDetail = modelDetails[modelId]
     if (!loadedDetail) return t("flow.hybridSetup.modelPreview.notLoaded")
 
+    const lessonKey = extractLessonKeyFromModelDetail(loadedDetail)
     const compNames = extractHybridComponentNamesFromDetail(loadedDetail)
     const processCount = extractHybridProcessesFromDetail(loadedDetail).length
 
     const compLine = t("flow.hybridSetup.modelPreview.components", {
-      list: compNames.length > 0 ? compNames.join(", ") : "-",
+      list:
+        compNames.length > 0
+          ? compNames
+              .map((name) =>
+                formatAliasWithCanonical(
+                  resolveTutorialVariableLabel(t, lessonKey, name),
+                  name,
+                ),
+              )
+              .join(", ")
+          : "-",
     })
     const procLine = t("flow.hybridSetup.modelPreview.processes", {
       count: String(processCount),
@@ -619,7 +657,7 @@ function HybridUDMSetupDialog({
                                 >
                                   <HStack gap={2}>
                                     <Text fontSize="sm" fontWeight="medium">
-                                      {model.name}
+                                      {getSummaryModelDisplayName(model)}
                                     </Text>
                                     <Badge variant="subtle">
                                       v
@@ -677,9 +715,9 @@ function HybridUDMSetupDialog({
                             >
                               <HStack justify="space-between" mb={2}>
                                 <Text fontSize="sm" fontWeight="medium">
-                                  {pair.source.name} (v
+                                  {getDetailModelDisplayName(pair.source)} (v
                                   {pair.source.current_version}) {"->"}{" "}
-                                  {pair.target.name} (v
+                                  {getDetailModelDisplayName(pair.target)} (v
                                   {pair.target.current_version})
                                 </Text>
                                 {/* F-3.2: Per-pair progress badge */}
@@ -719,7 +757,18 @@ function HybridUDMSetupDialog({
                                       gap={3}
                                     >
                                       <Box minW="120px">
-                                        <Text fontSize="sm">{targetVar}</Text>
+                                        <Text fontSize="sm">
+                                          {formatAliasWithCanonical(
+                                            resolveTutorialVariableLabel(
+                                              t,
+                                              extractLessonKeyFromModelDetail(
+                                                pair.target,
+                                              ),
+                                              targetVar,
+                                            ),
+                                            targetVar,
+                                          )}
+                                        </Text>
                                       </Box>
                                       {/* U-3.3: Tooltip on localExempt NativeSelect */}
                                       <NativeSelect.Root size="sm" flex="1">
@@ -746,7 +795,16 @@ function HybridUDMSetupDialog({
                                                 key={sourceVar}
                                                 value={sourceVar}
                                               >
-                                                {sourceVar}
+                                                {formatAliasWithCanonical(
+                                                  resolveTutorialVariableLabel(
+                                                    t,
+                                                    extractLessonKeyFromModelDetail(
+                                                      pair.source,
+                                                    ),
+                                                    sourceVar,
+                                                  ),
+                                                  sourceVar,
+                                                )}
                                               </option>
                                             ),
                                           )}

@@ -25,7 +25,7 @@ export default function ProcessTeachingPopover({
           <Text fontSize="sm">{t(teaching.storyKey)}</Text>
           {teaching.mistakes.map((mistakeKey) => (
             <Text key={mistakeKey} fontSize="xs" color="fg.muted">
-              • {t(mistakeKey)}
+              - {t(mistakeKey)}
             </Text>
           ))}
         </VStack>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { ReactFlowProvider } from "@xyflow/react"
-import { lazy, useEffect, useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { z } from "zod"
 import "@xyflow/react/dist/style.css"
 
@@ -14,6 +14,7 @@ import SimulationPanel from "../../components/Flow/inspectorbar/SimulationPanel"
 import UDMCalculationPanel from "../../components/Flow/inspectorbar/UDMCalculationPanel"
 import UDMPropertyPanel from "../../components/Flow/inspectorbar/UDMPropertyPanel"
 import UDMBubbleMenu from "../../components/Flow/menu/UDMBubbleMenu"
+import TutorialResultsPanel from "../../components/UDM/tutorial/TutorialResultsPanel"
 import DefaultNode from "../../components/Flow/nodes/DefaultNode"
 import InputNode from "../../components/Flow/nodes/InputNode"
 import OutputNode from "../../components/Flow/nodes/OutputNode"
@@ -23,10 +24,6 @@ import { useThemePaletteStore } from "../../stores/themePaletteStore"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import { useUDMStore } from "../../stores/udmStore"
 import { useUdmTutorialFlowStore } from "../../stores/udmTutorialFlowStore"
-
-const TutorialResultsPanel = lazy(
-  () => import("../../components/UDM/tutorial/TutorialResultsPanel"),
-)
 
 const searchSchema = z.object({
   lessonKey: z.string().optional().catch(undefined),

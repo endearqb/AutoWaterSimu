@@ -158,3 +158,46 @@
 - 后端：`cd backend; uv run pytest app/tests/udm_tutorial_validation_test.py app/tests/services/test_petersen_continuity.py -v` — 32 passed
 - 注意：ASM1slim 是简化经验模型，aerobic_cod_removal/denitrification 的 COD 维度设计上不完全守恒；测试已正确反映这一特性
 - chapter-7 (ASM1) 的 heterotrophic/autotrophic growth/decay 在 ALK 和部分 N 维度存在已知不平衡；测试仅断言已知平衡的关键过程
+
+# 2026-03-10 Docker Database Setup TODO
+
+- [x] Inspect current Docker and database configuration
+- [x] Update local database config to use `autowatersimu`
+- [x] Start PostgreSQL in Docker Desktop on Windows
+- [x] Verify the `autowatersimu` database exists
+- [x] Record review notes
+
+## Review
+
+- Updated local Docker database name from the previous value to `autowatersimu` in `.env`, `docker-compose.local.yml`, and `backend/scripts/init-db.sql`.
+- Started PostgreSQL with `docker compose -f docker-compose.local.yml up -d postgres`.
+- Verified the container `autowatersimu_postgres_local` is healthy and confirmed the database exists with `psql`.
+
+# 2026-03-10 UDM Tutorial Panel Stability Fix TODO
+
+- [x] Inspect `/_layout/udm` tutorial panel, inspector layout, and chart container implementation
+- [x] Remove lazy tutorial panel loading that can suspend during synchronous input
+- [x] Harden inspector and tutorial chart containers against zero-width layout states
+- [x] Run frontend type check and production build
+- [x] Record review notes
+
+## Review
+
+- Replaced the lazy tutorial results panel import in `/_layout/udm` with a direct import to avoid synchronous-input suspense failures.
+- Added `minW={0}` and stable tab content sizing in the flow inspector so tutorial chart content can shrink safely inside the inspector panel.
+- Added explicit width/height guards around the tutorial chart container and delayed `ResponsiveContainer` rendering until the measured size is positive.
+- Verification: `cd frontend; npx tsc --noEmit` passed, and `cd frontend; npx vite build` passed.
+
+# 2026-03-10 UDM/Hybrid/Tutorial i18n Fix TODO
+
+- [ ] Audit current UDM/Hybrid/tutorial i18n surfaces and preserve unrelated user changes
+- [ ] Add tutorial localization resolver for lesson/model/component/process/parameter display aliases
+- [ ] Patch `en.ts` and `zh.ts` for UDM/Hybrid/tutorial keys and targeted mojibake in affected surfaces
+- [ ] Wire localized aliases into UDM editor tables, arrow matrix, tutorial charts, model library, hybrid setup, and UDM property display
+- [ ] Clean backend tutorial/seed template names and descriptions that leak mojibake or non-localized placeholders
+- [ ] Run frontend type check and targeted backend tutorial/UDM tests
+- [ ] Record review notes
+
+## Review
+
+- Pending.

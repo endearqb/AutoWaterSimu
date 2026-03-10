@@ -7,13 +7,22 @@ import {
   getTutorialInsights,
 } from "@/data/tutorialInsights"
 import { useI18n } from "@/i18n"
+import {
+  formatAliasWithCanonical,
+  resolveTutorialVariableLabel,
+} from "@/utils/udmTutorialLocalization"
+
+interface InsightItemProps {
+  lessonKey: string
+  insight: TutorialInsight
+}
 
 interface ResultInterpretationCardProps {
   lessonKey: string
   hasSimulationResult: boolean
 }
 
-function InsightItem({ insight }: { insight: TutorialInsight }) {
+function InsightItem({ lessonKey, insight }: InsightItemProps) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
 
@@ -46,7 +55,12 @@ function InsightItem({ insight }: { insight: TutorialInsight }) {
                   variant="outline"
                   colorPalette="blue"
                 >
-                  <Tag.Label>{v}</Tag.Label>
+                  <Tag.Label>
+                    {formatAliasWithCanonical(
+                      resolveTutorialVariableLabel(t, lessonKey, v),
+                      v,
+                    )}
+                  </Tag.Label>
                 </Tag.Root>
               ))}
             </HStack>
@@ -86,7 +100,11 @@ export default function ResultInterpretationCard({
       </Text>
       <Stack gap={2}>
         {visibleInsights.map((insight) => (
-          <InsightItem key={insight.id} insight={insight} />
+          <InsightItem
+            key={insight.id}
+            lessonKey={lessonKey}
+            insight={insight}
+          />
         ))}
       </Stack>
     </Stack>

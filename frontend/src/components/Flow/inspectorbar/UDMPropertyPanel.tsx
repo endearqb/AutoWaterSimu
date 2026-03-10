@@ -13,6 +13,12 @@ import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
 import type { HybridUDMSelectedModel } from "../../../types/hybridUdm"
 import type { UDMNodeData } from "../../../types/udmNodeData"
+import {
+  extractLessonKeyFromCarrier,
+  formatAliasWithCanonical,
+  resolveTutorialModelDisplayName,
+  resolveTutorialVariableLabel,
+} from "../../../utils/udmTutorialLocalization"
 import EdgeTimeSegmentEditor from "./EdgeTimeSegmentEditor"
 
 interface UDMPropertyPanelProps {
@@ -174,6 +180,22 @@ const buildNodeModelData = (
   }
 }
 
+const extractLessonKeyFromNodeData = (
+  sourceData: UDMNodeData | undefined,
+): string | undefined => {
+  if (!sourceData) return undefined
+
+  const snapshotMeta =
+    sourceData.udmModelSnapshot &&
+    typeof sourceData.udmModelSnapshot === "object"
+      ? (sourceData.udmModelSnapshot as Record<string, unknown>).meta
+      : undefined
+
+  return extractLessonKeyFromCarrier({
+    meta: snapshotMeta,
+  })
+}
+
 function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
   if (!store) {
     throw new Error("UDMPropertyPanel requires a store prop")
@@ -308,26 +330,58 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     )
   }, [customParameters, selectedNode?.id, selectedNode?.data, nodes, t])
 
+  const activeLessonKey = useMemo(() => {
+    const selectedLessonKey = extractLessonKeyFromNodeData(
+      selectedNode?.data as UDMNodeData | undefined,
+    )
+    if (selectedLessonKey) return selectedLessonKey
+
+    const firstUdmNode = nodes.find((node) => node.type === "udm")
+    return extractLessonKeyFromNodeData(
+      firstUdmNode?.data as UDMNodeData | undefined,
+    )
+  }, [nodes, selectedNode?.data])
+
   const allParameters = useMemo(
     () => [volumeParam, ...udmParameters],
     [udmParameters],
   )
 
-  const getParamLabel = (param: { label: string }) => {
+  const getParamLabel = (param: { name: string; label: string }) => {
     if (param.label.startsWith("flow.")) {
       return t(param.label)
+    }
+    if (activeLessonKey) {
+      return formatAliasWithCanonical(
+        resolveTutorialVariableLabel(
+          t,
+          activeLessonKey,
+          param.name,
+          param.label,
+        ),
+        param.name,
+      )
     }
     return param.label
   }
 
-  const getParamDescription = (param: { description?: string }) => {
+  const getParamDescription = (param: { name: string; description?: string }) => {
     if (!param.description) return ""
     if (param.description.startsWith("flow.")) {
       return t(param.description)
     }
     if (param.description.startsWith("Unit: ")) {
       const unitValue = param.description.slice("Unit: ".length).trim()
-      return t("flow.propertyPanel.unitWithValue", { unit: unitValue })
+      const unitText = t("flow.propertyPanel.unitWithValue", { unit: unitValue })
+      if (!activeLessonKey) return unitText
+      const tutorialLabel = resolveTutorialVariableLabel(
+        t,
+        activeLessonKey,
+        param.name,
+      )
+      return tutorialLabel === param.name
+        ? unitText
+        : `${tutorialLabel} · ${unitText}`
     }
     return param.description
   }
@@ -507,9 +561,20 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
                             model.model_id,
                             model.version,
                           )
+                          const lessonKey = extractLessonKeyFromCarrier({
+                            meta: model.meta,
+                          })
+                          const displayName = formatAliasWithCanonical(
+                            resolveTutorialModelDisplayName(
+                              t,
+                              lessonKey,
+                              model.name || model.model_id,
+                            ),
+                            model.name || model.model_id,
+                          )
                           return (
                             <option key={key} value={key}>
-                              {model.name || model.model_id} (v{model.version})
+                              {displayName} (v{model.version})
                             </option>
                           )
                         })}

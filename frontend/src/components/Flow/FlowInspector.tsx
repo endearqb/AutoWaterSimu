@@ -103,7 +103,7 @@ const FlowInspector = ({ config, store }: FlowInspectorProps) => {
       const defaultTabValue = defaultTab || nodeTabs[0]?.key
 
       return (
-        <Box>
+        <Box minW={0}>
           <Tabs.Root defaultValue={defaultTabValue} variant="enclosed">
             <Tabs.List mb={4}>
               {nodeTabs.map((tab) => (
@@ -116,7 +116,7 @@ const FlowInspector = ({ config, store }: FlowInspectorProps) => {
             {nodeTabs.map((tab) => {
               const Component = tab.component
               return (
-                <Tabs.Content key={tab.key} value={tab.key}>
+                <Tabs.Content key={tab.key} value={tab.key} minW={0}>
                   <Component {...(tab.props || {})} store={flowStore} />
                 </Tabs.Content>
               )

@@ -4,9 +4,9 @@ services:
   # PostgreSQL 数据库服务
   postgres:
     image: postgres:15
-    container_name: dataanalysis_postgres_local
+    container_name: autowatersimu_postgres_local
     environment:
-      POSTGRES_DB: dataanalysis_local
+      POSTGRES_DB: autowatersimu
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: dataanalysis123
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C --auth-host=trust"
@@ -16,10 +16,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
-      - dataanalysis_network
+      - autowatersimu_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dataanalysis_local"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d autowatersimu"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,13 +27,13 @@ services:
   # Redis 缓存服务
   redis:
     image: redis:7-alpine
-    container_name: dataanalysis_redis_local
+    container_name: autowatersimu_redis_local
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - dataanalysis_network
+      - autowatersimu_network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -44,9 +44,9 @@ services:
   # pgAdmin 数据库管理工具
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: dataanalysis_pgadmin_local
+    container_name: autowatersimu_pgadmin_local
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@dataanalysis.local
+      PGADMIN_DEFAULT_EMAIL: admin@autowatersimu.local
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
@@ -54,7 +54,7 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     networks:
-      - dataanalysis_network
+      - autowatersimu_network
     restart: unless-stopped
     depends_on:
       postgres:
@@ -62,13 +62,13 @@ services:
 
 volumes:
   postgres_data:
-    name: dataanalysis_postgres_data
+    name: autowatersimu_postgres_data
   pgadmin_data:
-    name: dataanalysis_pgadmin_data
+    name: autowatersimu_pgadmin_data
   redis_data:
-    name: dataanalysis_redis_data
+    name: autowatersimu_redis_data
 
 networks:
-  dataanalysis_network:
-    name: dataanalysis_network
+  autowatersimu_network:
+    name: autowatersimu_network
     driver: bridge
