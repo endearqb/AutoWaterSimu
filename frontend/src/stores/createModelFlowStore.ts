@@ -1098,13 +1098,14 @@ export function createModelFlowStore<
 
           // 澶勭悊瀵煎叆鐨勮妭鐐规暟鎹紝灏哸sm1slimParameters銆乵odelParameters鎴朼sm1Parameters鍚堝苟鍒癲ata锟?
           const processedNodes = nodes.map((node: any) => {
+            let result: any = node
             if (
               (node.type === "asm1slim" || node.type === "asmslim") &&
               (node.asm1slimParameters || node.modelParameters)
             ) {
               // 灏哸sm1slimParameters鎴杕odelParameters鍚堝苟鍒癲ata涓紙鍏煎鏃ф牸寮忥級
               const parameters = node.asm1slimParameters || node.modelParameters
-              return {
+              result = {
                 ...node,
                 type: "asmslim", // 鍐呴儴缁熶竴浣跨敤asmslim绫诲瀷
                 data: {
@@ -1115,10 +1116,9 @@ export function createModelFlowStore<
                 asm1slimParameters: undefined,
                 modelParameters: undefined,
               }
-            }
-            if (node.type === "asm1" && node.asm1Parameters) {
+            } else if (node.type === "asm1" && node.asm1Parameters) {
               // 灏哸sm1Parameters鍚堝苟鍒癲ata锟?
-              return {
+              result = {
                 ...node,
                 data: {
                   ...node.data,
@@ -1128,7 +1128,18 @@ export function createModelFlowStore<
                 asm1Parameters: undefined,
               }
             }
-            return node
+            // 统一规范化 wrapper style，移除默认黑色1px边框
+            return {
+              ...result,
+              style: {
+                border: 0,
+                padding: 0,
+                background: "transparent",
+                width: "auto",
+                height: "auto",
+                ...result.style,
+              },
+            }
           })
 
           // 澶勭悊瀵煎叆鐨勮竟鏁版嵁锛屼粠data涓彁鍙栬嚜瀹氫箟鍙傛暟鐨刟鍜宐閰嶇疆

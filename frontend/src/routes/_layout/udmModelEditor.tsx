@@ -1,7 +1,8 @@
-﻿import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { z } from "zod"
 
 import UDMModelEditorForm from "../../components/UDM/UDMModelEditorForm"
+import { useI18n } from "@/i18n"
 
 const searchSchema = z.object({
   modelId: z.string().optional().catch(undefined),
@@ -16,11 +17,13 @@ export const Route = createFileRoute("/_layout/udmModelEditor")({
 function UDMModelEditorPage() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { modelId, lessonKey } = Route.useSearch()
+  const { t } = useI18n()
 
   return (
     <UDMModelEditorForm
       modelId={modelId}
       lessonKey={lessonKey}
+      headingText={lessonKey ? t("nav.petersenTutorial") : undefined}
       onModelIdChange={(nextModelId) =>
         navigate({
           to: "/udmModelEditor",

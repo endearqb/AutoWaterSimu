@@ -221,9 +221,10 @@ const FlowCanvas = ({
             display: none !important;
           }
 
-          /* 移除 React Flow 节点的默认选中阴影 */
+          /* 移除 React Flow 节点的默认选中阴影和默认边框 */
           .react-flow {
             --xy-node-boxshadow-selected: none;
+            --xy-node-border: none;
           }
         `}
       </style>

@@ -981,6 +981,7 @@ class UDMComponentDefinition(SQLModel):
         default=None,
         description="守恒维度换算系数，如 {'COD': -1.0, 'N': 0.0, 'ALK': 0.0}",
     )
+    note: Optional[str] = Field(default=None, max_length=500, description="组分备注")
 
 
 class UDMParameterDefinition(SQLModel):

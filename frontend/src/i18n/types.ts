@@ -1080,6 +1080,7 @@ export interface I18nMessages {
         }
         columns: {
           name: string
+          varName: string
           label: string
           unit: string
           defaultValue: string
@@ -1088,10 +1089,12 @@ export interface I18nMessages {
           processName: string
           rateExpr: string
           note: string
+          description: string
           min: string
           max: string
           scale: string
         }
+        varNameTooltip: string
         aria: {
           allowChange: string
         }

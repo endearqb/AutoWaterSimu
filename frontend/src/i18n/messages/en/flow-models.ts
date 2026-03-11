@@ -28,6 +28,7 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
       },
       columns: {
         name: "name",
+        varName: "Var. Name",
         label: "label",
         unit: "unit",
         defaultValue: "default",
@@ -36,10 +37,12 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
         processName: "process name",
         rateExpr: "rateExpr",
         note: "note",
+        description: "Description",
         min: "min",
         max: "max",
         scale: "scale",
       },
+      varNameTooltip: "Variable name must be a valid identifier: start with a letter or underscore, contain only letters, digits, and underscores",
       aria: {
         allowChange: "allow-change-{index}",
       },
