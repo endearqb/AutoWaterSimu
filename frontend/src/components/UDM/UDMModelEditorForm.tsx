@@ -23,6 +23,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { FiInfo } from "react-icons/fi"
 
 import type {
   ContinuityCheckItem as ApiContinuityCheckItem,
@@ -53,6 +54,7 @@ import {
   resolveTutorialParameterDisplay,
   resolveTutorialProcessDisplay,
 } from "@/utils/udmTutorialLocalization"
+import { Tooltip } from "@/components/ui/tooltip"
 import { getDefaultCalculationParams } from "../../config/simulationConfig"
 import { getTutorialFlowPreset } from "../../data/tutorialFlowPresets"
 import { udmService } from "../../services/udmService"
@@ -74,6 +76,7 @@ type ComponentRow = {
   unit: string
   defaultValue: string
   isFixed: boolean
+  note: string
   conversion_factors?: Record<string, number> | null
 }
 
@@ -90,6 +93,7 @@ type ParameterRow = {
 
 type ProcessRow = {
   _rowId: string
+  _canonicalName?: string
   name: string
   rateExpr: string
   note: string
@@ -130,6 +134,8 @@ const parseNumOrNull = (value: string): number | null => {
 }
 
 const STOICH_NUMBER_PATTERN = /^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/
+
+const VALID_IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 
 const toFiniteNumber = (value: unknown): number => {
   const parsed =
@@ -205,6 +211,7 @@ const emptyComponent = (): ComponentRow => ({
   unit: "",
   defaultValue: "0",
   isFixed: false,
+  note: "",
   conversion_factors: null,
 })
 
@@ -241,7 +248,7 @@ const buildFormSignature = (payload: {
   JSON.stringify({
     ...payload,
     componentRows: payload.componentRows.map(({ _rowId, ...rest }) => rest),
-    processRows: payload.processRows.map(({ _rowId, ...rest }) => rest),
+    processRows: payload.processRows.map(({ _rowId, _canonicalName, ...rest }) => rest),
     parameterRows: payload.parameterRows.map(({ _rowId, ...rest }) => rest),
   })
 
@@ -426,18 +433,35 @@ export function UDMModelEditorForm({
     const loadedDescription = detail.description || ""
     const loadedTagsText = (detail.tags || []).join(", ")
 
-    setName(loadedName)
-    setDescription(loadedDescription)
-    setTagsText(loadedTagsText)
-
     const latest = detail.latest_version
-    if (!latest) return
 
-    const metaLearning = (latest.meta?.learning || null) as {
+    const metaLearning = (latest?.meta?.learning || null) as {
       lessonKey?: string
       chapter?: string
       readonlyMode?: boolean
     } | null
+
+    // Determine effective lesson key from prop or meta (for i18n pre-fill)
+    const effectiveLessonKey =
+      _lessonKey ||
+      metaLearning?.lessonKey ||
+      metaLearning?.chapter ||
+      undefined
+
+    // Task 2: pre-fill name/description with localized i18n values in tutorial mode
+    const displayName = effectiveLessonKey
+      ? resolveTutorialModelDisplayName(t, effectiveLessonKey, loadedName)
+      : loadedName
+    const displayDescription = effectiveLessonKey
+      ? resolveTutorialModelDescription(t, effectiveLessonKey, loadedDescription)
+      : loadedDescription
+
+    setName(displayName)
+    setDescription(displayDescription)
+    setTagsText(loadedTagsText)
+
+    if (!latest) return
+
     if (!_lessonKey) {
       setLessonKeyFromMeta(
         metaLearning?.lessonKey || metaLearning?.chapter || undefined,
@@ -458,6 +482,7 @@ export function UDMModelEditorForm({
           unit: String(item?.unit || ""),
           defaultValue: String(item?.default_value ?? "0"),
           isFixed: Boolean(item?.is_fixed ?? false),
+          note: String((item as any)?.note || ""),
           conversion_factors: (item as any)?.conversion_factors ?? null,
         }
       })
@@ -471,20 +496,28 @@ export function UDMModelEditorForm({
     const loadedProcesses: ProcessRow[] = (
       (latest.processes || []) as UDMProcessDefinition[]
     )
-      .map((item) => ({
-        _rowId: crypto.randomUUID() as string,
-        name: String(item?.name || ""),
-        rateExpr: String(item?.rate_expr ?? ""),
-        note: String(item?.note || ""),
-        stoich: Object.fromEntries(
-          Object.entries(
-            (item?.stoich_expr || item?.stoich || {}) as Record<
-              string,
-              unknown
-            >,
-          ).map(([k, v]) => [k, String(v)]),
-        ),
-      }))
+      .map((item) => {
+        const originalName = String(item?.name || "")
+        // Task 5: in tutorial mode, replace process name with localized label
+        const localizedLabel = effectiveLessonKey
+          ? resolveTutorialProcessDisplay(t, effectiveLessonKey, originalName).label
+          : originalName
+        return {
+          _rowId: crypto.randomUUID() as string,
+          name: localizedLabel,
+          _canonicalName: localizedLabel !== originalName ? originalName : undefined,
+          rateExpr: String(item?.rate_expr ?? ""),
+          note: String(item?.note || ""),
+          stoich: Object.fromEntries(
+            Object.entries(
+              (item?.stoich_expr || item?.stoich || {}) as Record<
+                string,
+                unknown
+              >,
+            ).map(([k, v]) => [k, String(v)]),
+          ),
+        }
+      })
       .filter((item: ProcessRow) => item.name || item.rateExpr || item.note)
 
     const nextProcessRows = loadedProcesses.length
@@ -514,8 +547,8 @@ export function UDMModelEditorForm({
     setParameterRows(loadedParameters)
     setBaselineSignature(
       buildFormSignature({
-        name: loadedName,
-        description: loadedDescription,
+        name: displayName,
+        description: displayDescription,
         tagsText: loadedTagsText,
         componentRows: nextComponentRows,
         processRows: nextProcessRows,
@@ -531,6 +564,10 @@ export function UDMModelEditorForm({
   const parameterNames = useMemo(
     () => parameterRows.map((row) => row.name.trim()).filter(Boolean),
     [parameterRows],
+  )
+  const componentByName = useMemo(
+    () => new Map(componentRows.map((row) => [row.name.trim(), row])),
+    [componentRows],
   )
   const componentDisplayMap = useMemo(
     () =>
@@ -663,6 +700,7 @@ export function UDMModelEditorForm({
           unit: row.unit.trim() || null,
           default_value: parseNumOrNull(row.defaultValue) ?? 0,
           is_fixed: row.isFixed,
+          note: row.note.trim() || null,
           ...(row.conversion_factors
             ? { conversion_factors: row.conversion_factors }
             : {}),
@@ -672,7 +710,8 @@ export function UDMModelEditorForm({
 
     const normalizedProcesses = processRows
       .map((row) => {
-        const processName = row.name.trim()
+        // Task 5: save the canonical English name to DB, not the localized display name
+        const processName = (row._canonicalName ?? row.name).trim()
         const rateExpr = row.rateExpr.trim()
         if (!processName && !rateExpr) return null
         const stoichExpr: Record<string, string> = {}
@@ -997,6 +1036,8 @@ export function UDMModelEditorForm({
       meta: latest.meta || {},
     }
 
+    const defaultNodeStyle = { border: 0, padding: 0, background: "transparent", width: "auto", height: "auto" }
+
     return {
       nodes: [
         {
@@ -1004,6 +1045,7 @@ export function UDMModelEditorForm({
           type: "input",
           position: { x: 40, y: 220 },
           data: buildNodeData(t("flow.udmEditor.form.defaults.influentNode"), "input"),
+          style: defaultNodeStyle,
         },
         {
           id: "udm-reactor-1",
@@ -1031,12 +1073,14 @@ export function UDMModelEditorForm({
             udmModelVersion: model.current_version,
             udmModelHash: latest.content_hash,
           },
+          style: defaultNodeStyle,
         },
         {
           id: "udm-output-1",
           type: "output",
           position: { x: 690, y: 220 },
           data: buildNodeData(t("flow.udmEditor.form.defaults.effluentNode")),
+          style: defaultNodeStyle,
         },
       ],
       edges: [
@@ -1531,6 +1575,7 @@ export function UDMModelEditorForm({
               <ArrowMatrixView
                 lessonKey={tutorialLessonKey}
                 componentNames={componentNames}
+                componentInfos={componentByName}
                 processRows={processRows.map((row) => ({
                   name: row.name,
                   stoich: row.stoich,
@@ -1558,7 +1603,12 @@ export function UDMModelEditorForm({
               <Table.Header>
                 <Table.Row>
                   <Table.ColumnHeader>
-                    {t("flow.udmEditor.form.columns.name")}
+                    <HStack gap={1}>
+                      {t("flow.udmEditor.form.columns.varName")}
+                      <Tooltip content={t("flow.udmEditor.form.varNameTooltip")}>
+                        <FiInfo />
+                      </Tooltip>
+                    </HStack>
                   </Table.ColumnHeader>
                   <Table.ColumnHeader>
                     {t("flow.udmEditor.form.columns.label")}
@@ -1573,6 +1623,9 @@ export function UDMModelEditorForm({
                     {t("flow.udmEditor.form.columns.allowChange")}
                   </Table.ColumnHeader>
                   <Table.ColumnHeader>
+                    {t("flow.udmEditor.form.columns.description")}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader>
                     {t("flow.udmEditor.form.columns.actions")}
                   </Table.ColumnHeader>
                 </Table.Row>
@@ -1580,31 +1633,22 @@ export function UDMModelEditorForm({
               <Table.Body>
                 {componentRows.map((row, index) => {
                   const componentDisplay = componentDisplayMap.get(row._rowId)
-                  const componentAlias =
-                    componentDisplay?.label?.trim() || row.label.trim()
 
                   return (
                     <Table.Row key={row._rowId}>
                       <Table.Cell>
-                        <VStack align="stretch" gap={1}>
-                          <Input
-                            size="sm"
-                            value={row.name}
-                            onChange={(e) =>
-                              setComponentName(index, e.target.value)
-                            }
-                          />
-                          {componentAlias && componentAlias !== row.name.trim() ? (
-                            <Text fontSize="xs" color="fg.muted">
-                              {componentAlias}
-                            </Text>
-                          ) : null}
-                          {componentDisplay?.description ? (
-                            <Text fontSize="xs" color="fg.muted">
-                              {componentDisplay.description}
-                            </Text>
-                          ) : null}
-                        </VStack>
+                        <Input
+                          size="sm"
+                          value={row.name}
+                          onChange={(e) =>
+                            setComponentName(index, e.target.value)
+                          }
+                          borderColor={
+                            row.name.trim() && !VALID_IDENTIFIER_PATTERN.test(row.name.trim())
+                              ? "red.500"
+                              : undefined
+                          }
+                        />
                       </Table.Cell>
                       <Table.Cell>
                         <Input
@@ -1676,6 +1720,19 @@ export function UDMModelEditorForm({
                         />
                         <Switch.Control />
                       </Switch.Root>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Input
+                        size="sm"
+                        value={row.note}
+                        onChange={(e) =>
+                          setComponentRows((prev) =>
+                            prev.map((item, idx) =>
+                              idx === index ? { ...item, note: e.target.value } : item
+                            )
+                          )
+                        }
+                      />
                     </Table.Cell>
                     <Table.Cell>
                       <Button
@@ -1785,27 +1842,37 @@ export function UDMModelEditorForm({
                       </Table.ColumnHeader>
                     ) : null}
                     {showStoichSection
-                      ? componentNames.map((compName) => (
-                          <Table.ColumnHeader
-                            key={`stoich-header-${compName}`}
-                            minW={STOICH_COL_MIN_W}
-                          >
+                      ? componentNames.map((compName) => {
+                          const comp = componentByName.get(compName)
+                          const display = resolveTutorialComponentDisplay(
+                            t,
+                            tutorialLessonKey,
+                            compName,
+                            comp?.label,
+                          )
+                          const headerContent = (
                             <VStack align="start" gap={0}>
-                              <Text fontWeight="medium">
-                                {
-                                  resolveTutorialComponentDisplay(
-                                    t,
-                                    tutorialLessonKey,
-                                    compName,
-                                  ).label
-                                }
-                              </Text>
+                              <Text fontWeight="medium">{display.label}</Text>
                               <Text fontSize="xs" color="fg.muted">
                                 {compName}
                               </Text>
                             </VStack>
-                          </Table.ColumnHeader>
-                        ))
+                          )
+                          return (
+                            <Table.ColumnHeader
+                              key={`stoich-header-${compName}`}
+                              minW={STOICH_COL_MIN_W}
+                            >
+                              {comp?.note ? (
+                                <Tooltip content={comp.note}>
+                                  {headerContent}
+                                </Tooltip>
+                              ) : (
+                                headerContent
+                              )}
+                            </Table.ColumnHeader>
+                          )
+                        })
                       : null}
                     {showAdvancedFields ? (
                       <Table.ColumnHeader minW={NOTE_COL_W}>
@@ -1820,8 +1887,6 @@ export function UDMModelEditorForm({
                 <Table.Body>
                   {processRows.map((row, rowIndex) => {
                     const processDisplay = processDisplayMap.get(row._rowId)
-                    const processAlias = processDisplay?.label?.trim() || ""
-
                     return (
                       <Table.Row key={row._rowId}>
                       <Table.Cell
@@ -1848,19 +1913,9 @@ export function UDMModelEditorForm({
                               }
                             />
                             <ProcessTeachingPopover
-                              teaching={getProcessTeaching(row.name)}
+                              teaching={getProcessTeaching(row._canonicalName ?? row.name)}
                             />
                           </HStack>
-                          {processAlias && processAlias !== row.name.trim() ? (
-                            <Text fontSize="xs" color="fg.muted">
-                              {processAlias}
-                            </Text>
-                          ) : null}
-                          {processDisplay?.description ? (
-                            <Text fontSize="xs" color="fg.muted">
-                              {processDisplay.description}
-                            </Text>
-                          ) : null}
                         </VStack>
                       </Table.Cell>
                       {showRateExprSection ? (
@@ -2123,39 +2178,26 @@ export function UDMModelEditorForm({
                 <Table.Body>
                   {parameterRows.map((row, rowIndex) => {
                     const parameterDisplay = parameterDisplayMap.get(row._rowId)
-                    const parameterAlias = parameterDisplay?.label?.trim() || ""
 
                     return (
                       <Table.Row key={row._rowId}>
                       <Table.Cell>
-                        <VStack align="stretch" gap={1}>
-                          <Input
-                            size="sm"
-                            value={row.name}
-                            ref={(el) => {
-                              parameterNameInputRefs.current[rowIndex] = el
-                            }}
-                            onChange={(e) =>
-                              setParameterRows((prev) =>
-                                prev.map((item, idx) =>
-                                  idx === rowIndex
-                                    ? { ...item, name: e.target.value }
-                                    : item,
-                                ),
-                              )
-                            }
-                          />
-                          {parameterAlias && parameterAlias !== row.name.trim() ? (
-                            <Text fontSize="xs" color="fg.muted">
-                              {parameterAlias}
-                            </Text>
-                          ) : null}
-                          {parameterDisplay?.description ? (
-                            <Text fontSize="xs" color="fg.muted">
-                              {parameterDisplay.description}
-                            </Text>
-                          ) : null}
-                        </VStack>
+                        <Input
+                          size="sm"
+                          value={row.name}
+                          ref={(el) => {
+                            parameterNameInputRefs.current[rowIndex] = el
+                          }}
+                          onChange={(e) =>
+                            setParameterRows((prev) =>
+                              prev.map((item, idx) =>
+                                idx === rowIndex
+                                  ? { ...item, name: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
                       </Table.Cell>
                       <Table.Cell>
                         <Input

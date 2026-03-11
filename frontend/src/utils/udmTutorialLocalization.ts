@@ -147,12 +147,6 @@ export const resolveTutorialComponentDisplay = (
   componentName: string,
   fallbackLabel?: string | null,
 ) => {
-  const aliasLabel =
-    translateIfExists(
-      t,
-      resolveAliasKey(lessonKey, "components", componentName, "label") ||
-        "__missing_component_alias__",
-    ) || undefined
   const aliasDescription =
     translateIfExists(
       t,
@@ -161,7 +155,7 @@ export const resolveTutorialComponentDisplay = (
     ) || undefined
 
   return {
-    label: aliasLabel || String(fallbackLabel || "").trim() || componentName,
+    label: String(fallbackLabel || "").trim() || componentName,
     description: aliasDescription,
   }
 }
@@ -195,19 +189,6 @@ export const resolveTutorialProcessDisplay = (
   lessonKey: string | undefined,
   processName: string,
 ) => {
-  const aliasLabel =
-    translateIfExists(
-      t,
-      resolveAliasKey(lessonKey, "processes", processName, "label") ||
-        "__missing_process_alias__",
-    ) ||
-    (lessonKey
-      ? translateIfExists(
-          t,
-          `flow.tutorial.lessonContent.${lessonKey}.processes.${processName}.title`,
-        )
-      : undefined)
-
   const aliasDescription =
     translateIfExists(
       t,
@@ -216,7 +197,7 @@ export const resolveTutorialProcessDisplay = (
     ) || undefined
 
   return {
-    label: aliasLabel || humanizeCanonicalName(processName),
+    label: humanizeCanonicalName(processName),
     description: aliasDescription,
   }
 }

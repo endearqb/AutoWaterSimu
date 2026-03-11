@@ -1,6 +1,7 @@
 import { Badge, Box, Table, Text, VStack } from "@chakra-ui/react"
 
 import { useI18n } from "@/i18n"
+import { Tooltip } from "@/components/ui/tooltip"
 import {
   resolveTutorialProcessDisplay,
   resolveTutorialVariableLabel,
@@ -11,10 +12,16 @@ interface ArrowMatrixRow {
   stoich: Record<string, string>
 }
 
+interface ComponentInfo {
+  label?: string | null
+  note?: string | null
+}
+
 interface ArrowMatrixViewProps {
   lessonKey?: string
   componentNames: string[]
   processRows: ArrowMatrixRow[]
+  componentInfos?: Map<string, ComponentInfo>
 }
 
 const resolveSymbol = (value: string, t: (key: string) => string) => {
@@ -41,6 +48,7 @@ export default function ArrowMatrixView({
   lessonKey,
   componentNames,
   processRows,
+  componentInfos,
 }: ArrowMatrixViewProps) {
   const { t } = useI18n()
 
@@ -64,18 +72,33 @@ export default function ArrowMatrixView({
                 <Table.ColumnHeader>
                   {t("flow.tutorial.matrix.processHeader")}
                 </Table.ColumnHeader>
-                {componentNames.map((componentName) => (
-                  <Table.ColumnHeader key={componentName}>
+                {componentNames.map((componentName) => {
+                  const info = componentInfos?.get(componentName)
+                  const headerContent = (
                     <VStack align="start" gap={0}>
                       <Text fontWeight="medium">
-                        {resolveTutorialVariableLabel(t, lessonKey, componentName)}
+                        {resolveTutorialVariableLabel(
+                          t,
+                          lessonKey,
+                          componentName,
+                          info?.label,
+                        )}
                       </Text>
                       <Text fontSize="xs" color="fg.muted">
                         {componentName}
                       </Text>
                     </VStack>
-                  </Table.ColumnHeader>
-                ))}
+                  )
+                  return (
+                    <Table.ColumnHeader key={componentName}>
+                      {info?.note ? (
+                        <Tooltip content={info.note}>{headerContent}</Tooltip>
+                      ) : (
+                        headerContent
+                      )}
+                    </Table.ColumnHeader>
+                  )
+                })}
               </Table.Row>
             </Table.Header>
             <Table.Body>
