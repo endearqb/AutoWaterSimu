@@ -3,6 +3,7 @@ import { FiCheck } from "react-icons/fi"
 
 import type { TutorialLesson } from "@/data/tutorialLessons"
 import { useI18n } from "@/i18n"
+import { resolveLocalizedText } from "@/data/tutorialContent"
 
 interface LessonProgress {
   modelId?: string | null
@@ -29,7 +30,7 @@ export default function TutorialLessonCard({
   onStart,
   onContinue,
 }: TutorialLessonCardProps) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const isComingSoon = !!lesson.comingSoon
   const isStarted = !!progress
   const disabled = isComingSoon || !isUnlocked
@@ -76,6 +77,16 @@ export default function TutorialLessonCard({
         <Text fontSize="sm" color="fg.muted" mt={1}>
           {t(`flow.tutorial.chapters.${lesson.chapter}.subtitle`)}
         </Text>
+        <Text fontSize="sm" mt={2}>
+          {resolveLocalizedText(language, lesson.summary)}
+        </Text>
+        <Box mt={2}>
+          {lesson.entryHighlights.slice(0, 2).map((item) => (
+            <Text key={item.zh} fontSize="xs" color="fg.muted">
+              • {resolveLocalizedText(language, item)}
+            </Text>
+          ))}
+        </Box>
         <HStack mt={1} gap={3}>
           <Text fontSize="xs" color="fg.muted">
             {t("flow.tutorial.minutes", { n: lesson.estimatedMinutes })}

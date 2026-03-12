@@ -622,6 +622,8 @@ export interface I18nMessages {
       nodeNameHeader: string
       volumeHeader: string
       empty: string
+      fixedBoundaryTag: string
+      udmBoundaryNote: string
     }
     jobStatus: {
       pending: string

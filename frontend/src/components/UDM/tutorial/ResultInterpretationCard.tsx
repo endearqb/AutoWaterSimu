@@ -4,9 +4,11 @@ import { FiChevronDown, FiChevronRight } from "react-icons/fi"
 
 import {
   type TutorialInsight,
+  getTutorialTakeaways,
   getTutorialInsights,
 } from "@/data/tutorialInsights"
 import { useI18n } from "@/i18n"
+import { resolveLocalizedText } from "@/data/tutorialContent"
 import {
   formatAliasWithCanonical,
   resolveTutorialVariableLabel,
@@ -82,8 +84,9 @@ export default function ResultInterpretationCard({
   lessonKey,
   hasSimulationResult,
 }: ResultInterpretationCardProps) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const insights = getTutorialInsights(lessonKey)
+  const takeaways = getTutorialTakeaways(lessonKey)
 
   const visibleInsights = insights.filter(
     (item) =>
@@ -95,6 +98,20 @@ export default function ResultInterpretationCard({
 
   return (
     <Stack gap={2}>
+      {takeaways.length > 0 ? (
+        <Box borderWidth={1} borderRadius="md" p={3}>
+          <Text fontSize="sm" fontWeight="semibold" mb={2}>
+            {language === "zh" ? "结果提示" : "Key Takeaways"}
+          </Text>
+          <Stack gap={1}>
+            {takeaways.map((item) => (
+              <Text key={item.zh} fontSize="sm" color="gray.600">
+                • {resolveLocalizedText(language, item)}
+              </Text>
+            ))}
+          </Stack>
+        </Box>
+      ) : null}
       <Text fontSize="sm" fontWeight="semibold">
         {t("flow.tutorial.results.insightsTitle")}
       </Text>

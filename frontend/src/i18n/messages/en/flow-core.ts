@@ -184,6 +184,9 @@ export const flowCoreMessages: Pick<I18nMessages["flow"], "node" | "tab" | "canv
     nodeNameHeader: "Node name",
     volumeHeader: "Volume",
     empty: "No calculation results",
+    fixedBoundaryTag: "Fixed boundary",
+    udmBoundaryNote:
+      "Input and output nodes show fixed boundary conditions and are not solved dynamically; only reactor nodes evolve during the simulation.",
   },
   analysis: {
     aiReportComingSoon: "Coming soon",

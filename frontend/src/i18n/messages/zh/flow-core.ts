@@ -178,6 +178,9 @@ export const flowCoreMessages: Pick<I18nMessages["flow"], "node" | "tab" | "canv
     nodeNameHeader: "节点名称",
     volumeHeader: "体积",
     empty: "暂无计算结果数据",
+    fixedBoundaryTag: "固定边界",
+    udmBoundaryNote:
+      "进水/出水节点显示的是固定边界条件，不参与动态求解；仿真状态变化只发生在反应器节点。",
   },
   analysis: {
     aiReportComingSoon: "敬请期待",

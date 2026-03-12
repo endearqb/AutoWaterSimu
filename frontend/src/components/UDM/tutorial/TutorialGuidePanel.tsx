@@ -2,6 +2,7 @@ import { Box, Heading, IconButton, List, Text, VStack } from "@chakra-ui/react"
 import { useState } from "react"
 import { FiBookOpen, FiX } from "react-icons/fi"
 
+import { resolveLocalizedText } from "@/data/tutorialContent"
 import type { TutorialLesson, TutorialStep } from "@/data/tutorialLessons"
 import { useI18n } from "@/i18n"
 import ChapterGuideCard from "./ChapterGuideCard"
@@ -16,11 +17,12 @@ function TutorialGuidePanelContent({
   lesson,
   currentStep,
 }: Pick<TutorialGuidePanelProps, "lesson" | "currentStep">) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const stepGuide = lesson.stepGuides[currentStep]
   const watchItems = lesson.processTeaching
     .flatMap((item) => item.mistakes)
     .slice(0, 3)
+  const extendedGuide = stepGuide.extendedGuide ?? []
 
   return (
     <VStack align="stretch" gap={4}>
@@ -50,6 +52,18 @@ function TutorialGuidePanelContent({
           <Text fontSize="sm" color="fg.muted">
             {t(stepGuide.bodyKey)}
           </Text>
+          {extendedGuide.length > 0 ? (
+            <VStack align="stretch" gap={1}>
+              <Text fontSize="xs" fontWeight="medium" color="fg.muted">
+                {language === "zh" ? "执行提示" : "Execution Notes"}
+              </Text>
+              {extendedGuide.map((item) => (
+                <Text key={item.zh} fontSize="xs" color="fg.muted">
+                  • {resolveLocalizedText(language, item)}
+                </Text>
+              ))}
+            </VStack>
+          ) : null}
           <Text fontSize="xs" color="fg.muted">
             {t("flow.tutorial.guide.focusAreas")}:{" "}
             {stepGuide.focusAreas

@@ -176,6 +176,32 @@ export interface FlowChartService<
 
 const getDefaultFlowchartName = () => t("flow.menu.untitledFlowchart")
 
+const normalizeLegacyUdmEdgeHandles = (
+  nodes: Array<Pick<Node, "id" | "type">>,
+  edge: Edge,
+): Edge => {
+  if (edge.sourceHandle && edge.targetHandle) {
+    return edge
+  }
+
+  const nodeTypeById = new Map(nodes.map((node) => [node.id, node.type]))
+  const sourceType = nodeTypeById.get(edge.source)
+  const targetType = nodeTypeById.get(edge.target)
+  const shouldNormalize =
+    (sourceType === "input" && targetType === "udm") ||
+    (sourceType === "udm" && targetType === "output")
+
+  if (!shouldNormalize) {
+    return edge
+  }
+
+  return {
+    ...edge,
+    sourceHandle: edge.sourceHandle ?? "right-source",
+    targetHandle: edge.targetHandle ?? "left-target",
+  }
+}
+
 /**
  * 鍒涘缓妯″瀷娴佺▼鍥維tore鐨勫伐鍘傚嚱锟?
  * @param config 妯″瀷閰嶇疆
@@ -1150,8 +1176,13 @@ export function createModelFlowStore<
           > = {}
 
           importedEdges.forEach((edge: any) => {
+            const normalizedEdge =
+              config.modelName === "udm"
+                ? normalizeLegacyUdmEdgeHandles(processedNodes, edge)
+                : edge
+
             if (!edge.data) {
-              processedEdges.push(edge)
+              processedEdges.push(normalizedEdge)
               return
             }
 
@@ -1181,7 +1212,7 @@ export function createModelFlowStore<
 
             // 娣诲姞澶勭悊鍚庣殑锟?
             processedEdges.push({
-              ...edge,
+              ...normalizedEdge,
               data: newEdgeData,
             })
           })

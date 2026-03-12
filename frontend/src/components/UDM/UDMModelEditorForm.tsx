@@ -53,6 +53,10 @@ import {
   resolveTutorialModelDisplayName,
   resolveTutorialProcessDisplay,
 } from "@/utils/udmTutorialLocalization"
+import {
+  buildBoundUdmNodeData,
+  createBoundUdmModelSourceFromDetail,
+} from "@/utils/udmNodeBinding"
 import { Tooltip } from "@/components/ui/tooltip"
 import { getDefaultCalculationParams } from "../../config/simulationConfig"
 import { getTutorialFlowPreset } from "../../data/tutorialFlowPresets"
@@ -1050,9 +1054,6 @@ export function UDMModelEditorForm({
     }
 
     const components = (latest.components || []) as UDMComponentDefinition[]
-    const parameters = (latest.parameters || []) as UDMParameterDefinition[]
-    const processes = (latest.processes || []) as UDMProcessDefinition[]
-
     const customParameters = components
       .map((item) => {
         const compName = String(item.name || "").trim()
@@ -1073,16 +1074,12 @@ export function UDMModelEditorForm({
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    const parameterValues: Record<string, number> = {}
-    parameters.forEach((param) => {
-      const paramName = String(param.name || "").trim()
-      if (!paramName) return
-      const value = Number.parseFloat(String(param.default_value ?? "0"))
-      parameterValues[paramName] = Number.isFinite(value) ? value : 0
-    })
-
     // Lookup tutorial flow preset for this lesson
     const preset = getTutorialFlowPreset(tutorialLessonKey)
+    const boundModelSource = createBoundUdmModelSourceFromDetail(model)
+    if (!boundModelSource) {
+      throw new Error(t("flow.udmEditor.form.toast.missingVersionForFlow"))
+    }
 
     const buildNodeData = (label: string, nodeRole?: "input" | "reactor") => {
       const base: Record<string, unknown> = {
@@ -1120,16 +1117,6 @@ export function UDMModelEditorForm({
       ...getDefaultCalculationParams("udm"),
       ...(preset?.calculationParameters ?? {}),
     }
-    const modelSnapshot = {
-      id: model.id,
-      name: model.name,
-      version: model.current_version,
-      hash: latest.content_hash,
-      components,
-      parameters,
-      processes,
-      meta: latest.meta || {},
-    }
 
     const defaultNodeStyle = { border: 0, padding: 0, background: "transparent", width: "auto", height: "auto" }
 
@@ -1146,28 +1133,14 @@ export function UDMModelEditorForm({
           id: "udm-reactor-1",
           type: "udm",
           position: { x: 360, y: 220 },
-          data: {
-            ...buildNodeData(t("flow.udmEditor.form.defaults.reactorNode"), "reactor"),
-            udmModel: {
-              id: model.id,
-              name: model.name,
-              version: model.current_version,
-              hash: latest.content_hash,
-              components,
-              parameters,
-              processes,
-              parameterValues,
-            },
-            udmModelSnapshot: modelSnapshot,
-            udmComponents: components,
-            udmComponentNames: customParameters.map((p) => p.name),
-            udmProcesses: processes,
-            udmParameters: parameterValues,
-            udmParameterValues: parameterValues,
-            udmModelId: model.id,
-            udmModelVersion: model.current_version,
-            udmModelHash: latest.content_hash,
-          },
+          data: buildBoundUdmNodeData({
+            label: t("flow.udmEditor.form.defaults.reactorNode"),
+            model: boundModelSource,
+            volume:
+              preset?.reactorOverrides?.volume != null
+                ? String(preset.reactorOverrides.volume)
+                : "1e-3",
+          }),
           style: defaultNodeStyle,
         },
         {
@@ -1183,6 +1156,8 @@ export function UDMModelEditorForm({
           id: "udm-edge-1",
           source: "udm-input-1",
           target: "udm-reactor-1",
+          sourceHandle: "right-source",
+          targetHandle: "left-target",
           type: "editable",
           data: {
             flow: edgeFlowRate,
@@ -1193,6 +1168,8 @@ export function UDMModelEditorForm({
           id: "udm-edge-2",
           source: "udm-reactor-1",
           target: "udm-output-1",
+          sourceHandle: "right-source",
+          targetHandle: "left-target",
           type: "editable",
           data: {
             flow: edgeFlowRate,
@@ -2215,6 +2192,7 @@ export function UDMModelEditorForm({
             <Box mt={4}>
               <ContinuityCheckPanel
                 continuityChecks={continuityChecks}
+                notes={tutorialLesson?.continuityPanelNotes}
                 onJumpToProcess={(processName) => {
                   const idx = processRows.findIndex(
                     (r) =>
