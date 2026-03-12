@@ -80,7 +80,14 @@ const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
 
   const getNodeName = (nodeId: string): string => {
     const node = nodes.find((n) => n.id === nodeId)
-    return (node?.data?.label as string) || nodeId
+    const label = (node?.data?.label as string) || nodeId
+    const isBoundaryNode = node?.type === "input" || node?.type === "output"
+
+    if (resolvedModelType === "udm" && isBoundaryNode) {
+      return `${label} (${t("flow.resultsPanel.fixedBoundaryTag")})`
+    }
+
+    return label
   }
 
   const getUdmComponentNames = (): string[] => {
@@ -173,6 +180,11 @@ const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
         return nodeData && Object.keys(nodeData).length > 0
       })() ? (
         <Box>
+          {resolvedModelType === "udm" ? (
+            <Text fontSize="xs" color="gray.600" mb={3}>
+              {t("flow.resultsPanel.udmBoundaryNote")}
+            </Text>
+          ) : null}
           <Table.Root size="sm" variant="outline">
             <Table.Header>
               <Table.Row>

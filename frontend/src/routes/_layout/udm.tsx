@@ -24,6 +24,11 @@ import { useThemePaletteStore } from "../../stores/themePaletteStore"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import { useUDMStore } from "../../stores/udmStore"
 import { useUdmTutorialFlowStore } from "../../stores/udmTutorialFlowStore"
+import {
+  buildBoundUdmNodeData,
+  type BoundUdmModelSource,
+  extractBoundUdmModelSource,
+} from "../../utils/udmNodeBinding"
 
 const searchSchema = z.object({
   lessonKey: z.string().optional().catch(undefined),
@@ -70,8 +75,29 @@ function UDMPage() {
           return { label: t("flow.node.input") }
         case "output":
           return { label: t("flow.node.output") }
-        case "udm":
-          return { label: t("flow.node.udm") }
+        case "udm": {
+          const label = t("flow.node.udm")
+          const nodes = useUDMFlowStore.getState().nodes
+          const uniqueModelSources = new Map<string, BoundUdmModelSource>()
+
+          nodes.forEach((node) => {
+            if (node.type !== "udm") return
+            const source = extractBoundUdmModelSource(
+              (node.data as Record<string, unknown> | undefined) || undefined,
+            )
+            if (!source) return
+            uniqueModelSources.set(`${source.id}@${source.version}`, source)
+          })
+
+          if (uniqueModelSources.size === 1) {
+            const model = Array.from(uniqueModelSources.values())[0]
+            if (model) {
+              return buildBoundUdmNodeData({ label, model })
+            }
+          }
+
+          return { label }
+        }
         default:
           return { label: t("flow.node.default") }
       }
