@@ -10,6 +10,10 @@ import {
 } from "@chakra-ui/react"
 import { useState } from "react"
 
+import {
+  resolveLocalizedText,
+  type LocalizedText,
+} from "@/data/tutorialContent"
 import { useI18n } from "@/i18n"
 
 export interface ContinuityCheckItemData {
@@ -33,6 +37,7 @@ export interface ContinuityCheckItemData {
 interface ContinuityCheckPanelProps {
   continuityChecks: ContinuityCheckItemData[]
   onJumpToProcess?: (processName: string) => void
+  notes?: LocalizedText[]
 }
 
 const STATUS_PALETTE: Record<string, string> = {
@@ -50,8 +55,9 @@ const STATUS_ICON: Record<string, string> = {
 export default function ContinuityCheckPanel({
   continuityChecks,
   onJumpToProcess,
+  notes = [],
 }: ContinuityCheckPanelProps) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
 
   if (!continuityChecks || continuityChecks.length === 0) {
@@ -78,6 +84,21 @@ export default function ContinuityCheckPanel({
         <Heading size="xs">
           {t("flow.tutorial.continuity.sectionTitle")}
         </Heading>
+
+        {notes.length > 0 ? (
+          <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
+            <VStack align="stretch" gap={1}>
+              <Text fontSize="xs" fontWeight="medium">
+                {language === "zh" ? "阅读提示" : "Reading Notes"}
+              </Text>
+              {notes.map((note) => (
+                <Text key={note.zh} fontSize="xs" color="fg.muted">
+                  • {resolveLocalizedText(language, note)}
+                </Text>
+              ))}
+            </VStack>
+          </Box>
+        ) : null}
 
         {dimensions.map((dim) => {
           const items = continuityChecks.filter((c) => c.dimension === dim)

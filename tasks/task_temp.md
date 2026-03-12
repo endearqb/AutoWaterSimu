@@ -1,10 +1,10 @@
-1.  全面检查 Peterson 教程和 udmModel 页面的 i18n 并修复，例如：
+1.  从 UDM 编辑器生成的 UDM 画布，当前的形式如图，默认会有一个 进水节点，一个带模型名的 UDM反应器节点，一个出水节点，并从节点上部通过edge相连，方向顺序是进水，udm反应器节点，出水节点。
     
+    1.  问题1：edge都从上部相连很不美观，希望改成从进水节点右侧出发，指向udm反应器左侧一条，从udm反应器节点右侧出发，指向出水节点左侧一条edge
+        
+    2.  从节点工具栏拖出新增的udm节点样式与生成udm画布时画布中已有的udm反应器节点样式不同，一个是指定模型为模型名，从节点工具栏中新增的udm节点显示未指定模型，但实际上该节点带模型参数。这里要修改成从UDM编辑器生成UDM画布时，UDM节点统一在模型名位置统一使用当前模型名，而不是显示未指定模型。Peterson教程中的生成画布应该复用udm的画布，而非Hybrid的画布
+        
+    3.  Peterson教程中step2的模型矩阵生成画布运行2h时，初始进水节点的变量值和终点出水节点的变量值会改变，nitrite 会从 0变到 10，模型计算时进水节点和出水节点的变量浓度应该不参与变化，请检查这里是否有bug，这个bug是怎么产生的，是不是因为分时段输入功能的影响
+        
 
-**Components（列）components 翻译成变量可以吗 ，把表头适配 i18n ,**
-
-<table style="min-width: 100px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p><strong>name</strong></p></th><th colspan="1" rowspan="1"><p><strong>label</strong></p></th><th colspan="1" rowspan="1"><p><strong>unit</strong></p></th><th colspan="1" rowspan="1"><p><strong>default</strong></p></th></tr></tbody></table>
-
-<table style="min-width: 50px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p><strong>process name</strong></p></th><th colspan="1" rowspan="1"><p><strong>rateExpr</strong></p></th></tr></tbody></table>
-
-1.  UMD模板库和Peterson矩阵教学进入画布时，需要修复带入的进水节点和出水节点外围有黑色边框，udm节点没有，节点工具栏拖曳到画布增加的节点都没有外围的黑色边框，udm节点的默认尺寸和 其他节点的默认大小不一致
+![](http://asset.localhost/C%3A%5CUsers%5CQian%5CPictures%5Cmdpad-image%5Ctask_temp-img-20260312-212041-aqlcbk.png)

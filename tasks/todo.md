@@ -1,3 +1,27 @@
+# 2026-03-12 UDM Tutorial Canvas Consistency Fix TODO
+
+- [x] Inspect relevant UDM tutorial canvas files and preserve unrelated in-flight changes
+- [x] Add a shared UDM node-binding helper for generated/default bound node data
+- [x] Fix generated UDM default-flow edge handles and normalize legacy imported UDM edges
+- [x] Auto-bind newly dragged UDM nodes when the current UDM canvas has exactly one bound model
+- [x] Clarify UDM results-table boundary semantics for input/output nodes
+- [x] Add backend regression tests proving tutorial default-flow input/output nodes stay fixed
+- [x] Run frontend TypeScript check and targeted backend pytest
+- [x] Record review notes
+
+## Review
+
+- Added `frontend/src/utils/udmNodeBinding.ts` to centralize UDM-bound node construction and bound-model extraction; default generated reactor nodes and toolbar-created UDM nodes now use the same binding payload shape.
+- `UDMModelEditorForm` now persists explicit left/right edge handles in the generated default flowchart, so `Input -> UDM -> Output` renders from right to left handles instead of top handles.
+- `/udm` now auto-binds a newly dragged UDM node only when the current canvas has exactly one unique bound UDM model; empty or multi-model canvases still create an unbound node.
+- `createModelFlowStore.importFlowData()` now backfills missing left/right handles for legacy UDM `input -> udm` and `udm -> output` edges without overwriting already-saved handles.
+- `ResultsPanel` now labels UDM input/output rows as fixed boundaries and adds an explanatory note that only reactor nodes participate in dynamic solving.
+- Added `backend/app/tests/udm_tutorial_default_flow_runtime_test.py` to verify chapter-2 and chapter-7 style default UDM flows keep input/output node series unchanged while the reactor node changes, with `timeSegments=[]` explicitly asserted.
+- Verification:
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd backend; .venv\Scripts\python -m pytest app/tests/udm_tutorial_default_flow_runtime_test.py` passed (`2 passed`).
+  - Manual browser interaction for drag-drop and legacy-flow visual confirmation was not run in this environment.
+
 # 2026-03-08 PDF Summary TODO
 
 - [x] Gather repo evidence for summary content
@@ -218,3 +242,32 @@
 - Tutorial component description cells now distinguish localized prefill from manual edits; saved tutorial notes stay language-aware because existing zh/en alias text is recognized on reload.
 - Arrow matrix process names now render in a single line and stoich directions use direct red/green arrow text instead of textual badges.
 - Verification: `cd frontend; npx tsc --noEmit` passed.
+
+# 2026-03-12 Petersen Tutorial Docs + Page Content TODO
+
+- [x] Inspect current tutorial page/content surfaces and preserve unrelated changes
+- [x] Add tutorial overview/content data structures for homepage and lesson summaries
+- [x] Integrate overview and lesson summary content into `/petersen-tutorial` and lesson cards
+- [x] Extend tutorial guide/results surfaces to consume richer documentation excerpts
+- [x] Write the 3 Petersen tutorial documents under `tasks/`
+- [x] Run frontend TypeScript type check
+- [x] Update review notes with delivered files and verification
+
+## Review
+
+- Added `frontend/src/data/tutorialOverview.ts` and `frontend/src/data/tutorialContent.ts` as the new content-layer source for homepage overview blocks and localized tutorial excerpts.
+- Extended `tutorialLessons.ts` with chapter summaries, entry highlights, step-level extended guide notes, and continuity panel reading notes; extended `tutorialInsights.ts` with lesson takeaways for result interpretation.
+- Integrated the new content into the real tutorial surfaces:
+  - `/petersen-tutorial` now renders a structured overview panel above the lesson cards.
+  - `TutorialLessonCard` now shows per-chapter summary and highlights.
+  - `ChapterGuideCard` and `TutorialGuidePanel` now surface richer lesson/step excerpts.
+  - `ContinuityCheckPanel` now supports tutorial reading notes from the lesson config.
+  - `ResultInterpretationCard` now shows lesson takeaways before the insight cards.
+- Delivered the 3 requested documents:
+  - `tasks/AutoWaterSimu_Petersen_教程说明.md`
+  - `tasks/AutoWaterSimu_Petersen_教程文档.md`
+  - `tasks/AutoWaterSimu_Petersen_教程页面集成执行方案.md`
+- Verification:
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npx vite build` passed.
+  - Manual browser smoke test was not run in this environment.

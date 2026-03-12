@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import TutorialLessonsSection from "@/components/UDM/TutorialLessonsSection"
+import TutorialOverviewPanel from "@/components/UDM/tutorial/TutorialOverviewPanel"
 import type { TutorialLesson } from "@/data/tutorialLessons"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
@@ -74,6 +75,7 @@ function PetersenTutorialPage() {
       <Heading size="lg" pt={12}>
         {t("nav.petersenTutorial")}
       </Heading>
+      <TutorialOverviewPanel />
       <TutorialLessonsSection onOpenLesson={openTutorialLesson} />
     </Container>
   )
