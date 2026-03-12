@@ -2,6 +2,9 @@ import type {
   UDMModelDetailPublic,
   UDMModelPublic,
 } from "@/client/types.gen"
+import { enMessages } from "@/i18n/messages/en"
+import { zhMessages } from "@/i18n/messages/zh"
+import type { I18nMessages, Language } from "@/i18n/types"
 
 type Translator = (key: string, params?: Record<string, string | number>) => string
 
@@ -10,7 +13,37 @@ type TutorialMetaCarrier = {
   tags?: string[] | null
 }
 
+const STATIC_MESSAGES: Record<Language, I18nMessages> = {
+  zh: zhMessages,
+  en: enMessages,
+}
+
 const LESSON_KEY_PATTERN = /^chapter-\d+$/i
+
+const resolveStaticMessage = (language: Language, key: string): string => {
+  const keys = key.split(".")
+  let value: unknown = STATIC_MESSAGES[language]
+
+  for (const segment of keys) {
+    if (value && typeof value === "object" && segment in value) {
+      value = (value as Record<string, unknown>)[segment]
+    } else {
+      return key
+    }
+  }
+
+  return typeof value === "string" ? value : key
+}
+
+const getStaticTranslator = (language: Language): Translator => (key, params) => {
+  const template = resolveStaticMessage(language, key)
+  if (!params) return template
+
+  return template.replace(/\{(\w+)\}/g, (match, paramKey) => {
+    const value = params[paramKey]
+    return value === undefined || value === null ? match : String(value)
+  })
+}
 
 const translateIfExists = (
   t: Translator,
@@ -189,6 +222,13 @@ export const resolveTutorialProcessDisplay = (
   lessonKey: string | undefined,
   processName: string,
 ) => {
+  const aliasLabel =
+    translateIfExists(
+      t,
+      resolveAliasKey(lessonKey, "processes", processName, "label") ||
+        "__missing_process_label__",
+    ) || undefined
+
   const aliasDescription =
     translateIfExists(
       t,
@@ -197,7 +237,7 @@ export const resolveTutorialProcessDisplay = (
     ) || undefined
 
   return {
-    label: humanizeCanonicalName(processName),
+    label: aliasLabel || humanizeCanonicalName(processName),
     description: aliasDescription,
   }
 }
@@ -209,3 +249,26 @@ export const resolveTutorialVariableLabel = (
   fallbackLabel?: string | null,
 ) =>
   resolveTutorialComponentDisplay(t, lessonKey, variableName, fallbackLabel).label
+
+export const matchesTutorialComponentDescription = (
+  note: string | null | undefined,
+  lessonKey: string | undefined,
+  componentName: string,
+  fallbackLabel?: string | null,
+): boolean => {
+  const normalizedNote = String(note || "").trim()
+  if (!normalizedNote || !lessonKey) return false
+
+  const descriptionVariants = (["zh", "en"] as const)
+    .map((language) =>
+      resolveTutorialComponentDisplay(
+        getStaticTranslator(language),
+        lessonKey,
+        componentName,
+        fallbackLabel,
+      ).description?.trim(),
+    )
+    .filter((value): value is string => Boolean(value))
+
+  return new Set(descriptionVariants).has(normalizedNote)
+}

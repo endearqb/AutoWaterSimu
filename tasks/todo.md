@@ -201,3 +201,20 @@
 ## Review
 
 - Pending.
+
+# 2026-03-12 Petersen Tutorial i18n/UI Refinement TODO
+
+- [x] Inspect current UDM tutorial editor WIP and preserve unrelated in-flight changes
+- [x] Add localized/manual source tracking for tutorial process names and component descriptions
+- [x] Keep canonical process names for save/validation/jump logic while rendering localized process labels in the UI
+- [x] Finalize arrow matrix single-line localized process labels with red/green arrow indicators
+- [x] Remove per-row process info icon rendering from the process table
+- [x] Run frontend TypeScript type check
+- [x] Record review notes
+
+## Review
+
+- Tutorial process rows now keep canonical names for save/jump logic while rendering language-aware labels from i18n; user-typed display overrides are kept local to the current session.
+- Tutorial component description cells now distinguish localized prefill from manual edits; saved tutorial notes stay language-aware because existing zh/en alias text is recognized on reload.
+- Arrow matrix process names now render in a single line and stoich directions use direct red/green arrow text instead of textual badges.
+- Verification: `cd frontend; npx tsc --noEmit` passed.

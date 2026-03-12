@@ -1,4 +1,4 @@
-import { Badge, Box, Table, Text, VStack } from "@chakra-ui/react"
+import { Box, Table, Text, VStack } from "@chakra-ui/react"
 
 import { useI18n } from "@/i18n"
 import { Tooltip } from "@/components/ui/tooltip"
@@ -24,23 +24,23 @@ interface ArrowMatrixViewProps {
   componentInfos?: Map<string, ComponentInfo>
 }
 
-const resolveSymbol = (value: string, t: (key: string) => string) => {
+const resolveSymbol = (value: string) => {
   const trimmed = value.trim()
   if (!trimmed || trimmed === "0") {
     return {
-      label: t("flow.tutorial.matrix.noneSymbol"),
-      colorPalette: "gray" as const,
+      label: "—",
+      color: "fg.muted",
     }
   }
   if (trimmed.startsWith("-")) {
     return {
-      label: t("flow.tutorial.matrix.consumeSymbol"),
-      colorPalette: "red" as const,
+      label: "↓",
+      color: "red.500",
     }
   }
   return {
-    label: t("flow.tutorial.matrix.produceSymbol"),
-    colorPalette: "green" as const,
+    label: "↑",
+    color: "green.500",
   }
 }
 
@@ -69,13 +69,13 @@ export default function ArrowMatrixView({
           <Table.Root size="sm">
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>
+                <Table.ColumnHeader textAlign="left">
                   {t("flow.tutorial.matrix.processHeader")}
                 </Table.ColumnHeader>
                 {componentNames.map((componentName) => {
                   const info = componentInfos?.get(componentName)
                   const headerContent = (
-                    <VStack align="start" gap={0}>
+                    <VStack align="center" gap={0}>
                       <Text fontWeight="medium">
                         {resolveTutorialVariableLabel(
                           t,
@@ -90,7 +90,7 @@ export default function ArrowMatrixView({
                     </VStack>
                   )
                   return (
-                    <Table.ColumnHeader key={componentName}>
+                    <Table.ColumnHeader key={componentName} textAlign="center">
                       {info?.note ? (
                         <Tooltip content={info.note}>{headerContent}</Tooltip>
                       ) : (
@@ -104,26 +104,28 @@ export default function ArrowMatrixView({
             <Table.Body>
               {processRows.map((row) => (
                 <Table.Row key={row.name}>
-                  <Table.Cell>
-                    <VStack align="start" gap={0}>
-                      <Text fontWeight="medium">
-                        {resolveTutorialProcessDisplay(t, lessonKey, row.name).label}
-                      </Text>
-                      <Text fontSize="xs" color="fg.muted">
-                        {row.name || "-"}
-                      </Text>
-                    </VStack>
+                  <Table.Cell textAlign="left">
+                    <Text fontWeight="medium">
+                      {resolveTutorialProcessDisplay(t, lessonKey, row.name).label}
+                    </Text>
                   </Table.Cell>
                   {componentNames.map((componentName) => {
                     const symbol = resolveSymbol(
                       row.stoich[componentName] || "0",
-                      t,
                     )
                     return (
-                      <Table.Cell key={`${row.name}-${componentName}`}>
-                        <Badge colorPalette={symbol.colorPalette} variant="subtle">
+                      <Table.Cell
+                        key={`${row.name}-${componentName}`}
+                        textAlign="center"
+                      >
+                        <Text
+                          color={symbol.color}
+                          fontSize="lg"
+                          fontWeight="bold"
+                          textAlign="center"
+                        >
                           {symbol.label}
-                        </Badge>
+                        </Text>
                       </Table.Cell>
                     )
                   })}

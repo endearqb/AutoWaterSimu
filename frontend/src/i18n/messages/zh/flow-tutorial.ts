@@ -378,6 +378,14 @@ export const flowTutorialMessages: Pick<I18nMessages["flow"], "tutorial"> = {
               label: "好氧 COD 去除",
               description: "有机基质在好氧条件下被氧化。",
             },
+            anoxic_denitrification: {
+              label: "缺氧反硝化",
+              description: "在缺氧条件下消耗 COD 并还原硝酸盐。",
+            },
+            nitrification: {
+              label: "硝化",
+              description: "氨氮被氧化为硝酸盐，同时消耗碱度。",
+            },
           },
           parameters: {
             aerobicCODDegradationRate: {

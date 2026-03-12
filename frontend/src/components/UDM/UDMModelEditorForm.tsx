@@ -38,7 +38,6 @@ import type {
 } from "@/client/types.gen"
 import {
   type TutorialMode,
-  type TutorialProcessTeaching,
   type TutorialRecipe,
   type TutorialStep,
   getEnabledTutorialSteps,
@@ -48,10 +47,10 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
 import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
 import {
+  matchesTutorialComponentDescription,
   resolveTutorialComponentDisplay,
   resolveTutorialModelDescription,
   resolveTutorialModelDisplayName,
-  resolveTutorialParameterDisplay,
   resolveTutorialProcessDisplay,
 } from "@/utils/udmTutorialLocalization"
 import { Tooltip } from "@/components/ui/tooltip"
@@ -64,13 +63,13 @@ import ArrowMatrixView from "./tutorial/ArrowMatrixView"
 import ContinuityCheckPanel, {
   type ContinuityCheckItemData,
 } from "./tutorial/ContinuityCheckPanel"
-import ProcessTeachingPopover from "./tutorial/ProcessTeachingPopover"
 import RecipeBar from "./tutorial/RecipeBar"
 import TutorialGuidePanel from "./tutorial/TutorialGuidePanel"
 import TutorialStepper from "./tutorial/TutorialStepper"
 
 type ComponentRow = {
   _rowId: string
+  _noteSource?: "localized" | "manual"
   name: string
   label: string
   unit: string
@@ -94,6 +93,7 @@ type ParameterRow = {
 type ProcessRow = {
   _rowId: string
   _canonicalName?: string
+  _nameSource?: "localized" | "manual"
   name: string
   rateExpr: string
   note: string
@@ -206,6 +206,7 @@ const normalizeContinuityCheckItem = (
 
 const emptyComponent = (): ComponentRow => ({
   _rowId: crypto.randomUUID() as string,
+  _noteSource: "manual",
   name: "",
   label: "",
   unit: "",
@@ -228,6 +229,7 @@ const emptyParameter = (): ParameterRow => ({
 
 const emptyProcess = (): ProcessRow => ({
   _rowId: crypto.randomUUID() as string,
+  _nameSource: "manual",
   name: "",
   rateExpr: "",
   note: "",
@@ -247,10 +249,33 @@ const buildFormSignature = (payload: {
 }) =>
   JSON.stringify({
     ...payload,
-    componentRows: payload.componentRows.map(({ _rowId, ...rest }) => rest),
-    processRows: payload.processRows.map(({ _rowId, _canonicalName, ...rest }) => rest),
+    componentRows: payload.componentRows.map(
+      ({ _rowId, _noteSource, ...rest }) => rest,
+    ),
+    processRows: payload.processRows.map(
+      ({ _rowId, _canonicalName, _nameSource, ...rest }) => rest,
+    ),
     parameterRows: payload.parameterRows.map(({ _rowId, ...rest }) => rest),
   })
+
+const getCanonicalProcessName = (row: Pick<ProcessRow, "name" | "_canonicalName">) =>
+  (row._canonicalName ?? row.name).trim()
+
+const getProcessDisplayValue = (
+  row: ProcessRow,
+  localizedLabel?: string,
+): string =>
+  row._nameSource === "localized" && row._canonicalName
+    ? localizedLabel || row.name
+    : row.name
+
+const getComponentNoteValue = (
+  row: ComponentRow,
+  localizedDescription?: string | null,
+): string =>
+  row._noteSource === "localized"
+    ? String(localizedDescription || row.note || "")
+    : row.note
 
 const INITIAL_FORM_SIGNATURE = buildFormSignature({
   name: "",
@@ -364,16 +389,6 @@ export function UDMModelEditorForm({
   const isReadonlyMode = isGuidedMode && readonlyFromMeta
   const maxTutorialStep = tutorialLesson?.stepConfig.maxStep ?? 5
   const activeRecipes = tutorialLesson?.recipes ?? []
-  const processTeachingMap = useMemo(
-    () =>
-      new Map(
-        (tutorialLesson?.processTeaching || []).map((item) => [
-          item.processName,
-          item,
-        ]),
-      ),
-    [tutorialLesson],
-  )
 
   const processNameInputRefs = useRef<Record<number, HTMLInputElement | null>>(
     {},
@@ -475,14 +490,36 @@ export function UDMModelEditorForm({
       .map((item): ComponentRow | null => {
         const compName = String(item?.name || "").trim()
         if (!compName) return null
+        const fallbackLabel = String(item?.label || compName)
+        const localizedDescription =
+          effectiveLessonKey
+            ? (resolveTutorialComponentDisplay(
+                t,
+                effectiveLessonKey,
+                compName,
+                fallbackLabel,
+              ).description ?? "")
+            : ""
+        const existingNote = String((item as any)?.note || "")
+        const useLocalizedNote =
+          Boolean(localizedDescription) &&
+          (!existingNote.trim() ||
+            matchesTutorialComponentDescription(
+              existingNote,
+              effectiveLessonKey,
+              compName,
+              fallbackLabel,
+            ))
+
         return {
           _rowId: crypto.randomUUID() as string,
+          _noteSource: useLocalizedNote ? "localized" : "manual",
           name: compName,
-          label: String(item?.label || compName),
+          label: fallbackLabel,
           unit: String(item?.unit || ""),
           defaultValue: String(item?.default_value ?? "0"),
           isFixed: Boolean(item?.is_fixed ?? false),
-          note: String((item as any)?.note || ""),
+          note: useLocalizedNote ? localizedDescription : existingNote,
           conversion_factors: (item as any)?.conversion_factors ?? null,
         }
       })
@@ -498,14 +535,18 @@ export function UDMModelEditorForm({
     )
       .map((item) => {
         const originalName = String(item?.name || "")
-        // Task 5: in tutorial mode, replace process name with localized label
         const localizedLabel = effectiveLessonKey
           ? resolveTutorialProcessDisplay(t, effectiveLessonKey, originalName).label
           : originalName
         return {
           _rowId: crypto.randomUUID() as string,
+          _nameSource:
+            effectiveLessonKey && originalName.trim()
+              ? ("localized" as const)
+              : ("manual" as const),
           name: localizedLabel,
-          _canonicalName: localizedLabel !== originalName ? originalName : undefined,
+          _canonicalName:
+            effectiveLessonKey && originalName.trim() ? originalName : undefined,
           rateExpr: String(item?.rate_expr ?? ""),
           note: String(item?.note || ""),
           stoich: Object.fromEntries(
@@ -518,7 +559,7 @@ export function UDMModelEditorForm({
           ),
         }
       })
-      .filter((item: ProcessRow) => item.name || item.rateExpr || item.note)
+      .filter((item) => Boolean(item.name || item.rateExpr || item.note))
 
     const nextProcessRows = loadedProcesses.length
       ? loadedProcesses
@@ -584,26 +625,81 @@ export function UDMModelEditorForm({
       ),
     [componentRows, t, tutorialLessonKey],
   )
+  const componentInfoByName = useMemo(
+    () =>
+      new Map(
+        componentRows.map((row) => {
+          const display = componentDisplayMap.get(row._rowId)
+          return [
+            row.name.trim(),
+            {
+              label: row.label,
+              note: getComponentNoteValue(row, display?.description),
+            },
+          ]
+        }),
+      ),
+    [componentDisplayMap, componentRows],
+  )
   const processDisplayMap = useMemo(
     () =>
       new Map(
         processRows.map((row) => [
           row._rowId,
-          resolveTutorialProcessDisplay(t, tutorialLessonKey, row.name),
+          resolveTutorialProcessDisplay(t, tutorialLessonKey, row._canonicalName ?? row.name),
         ]),
       ),
     [processRows, t, tutorialLessonKey],
   )
-  const parameterDisplayMap = useMemo(
-    () =>
-      new Map(
-        parameterRows.map((row) => [
-          row._rowId,
-          resolveTutorialParameterDisplay(t, tutorialLessonKey, row.name),
-        ]),
-      ),
-    [parameterRows, t, tutorialLessonKey],
-  )
+
+  useEffect(() => {
+    if (!isTutorialModel) return
+
+    setComponentRows((prev) => {
+      let changed = false
+      const next = prev.map((row) => {
+        if (row._noteSource !== "localized") {
+          return row
+        }
+        const nextNote = componentDisplayMap.get(row._rowId)?.description ?? ""
+        if (row.note === nextNote) {
+          return row
+        }
+        changed = true
+        return {
+          ...row,
+          note: nextNote,
+        }
+      })
+      return changed ? next : prev
+    })
+  }, [componentDisplayMap, isTutorialModel])
+
+  useEffect(() => {
+    if (!isTutorialModel) return
+
+    setProcessRows((prev) => {
+      let changed = false
+      const next = prev.map((row) => {
+        if (row._nameSource !== "localized") {
+          return row
+        }
+        const nextName =
+          processDisplayMap.get(row._rowId)?.label ||
+          getCanonicalProcessName(row)
+        if (row.name === nextName) {
+          return row
+        }
+        changed = true
+        return {
+          ...row,
+          name: nextName,
+        }
+      })
+      return changed ? next : prev
+    })
+  }, [isTutorialModel, processDisplayMap])
+
   const showArrowMatrix = isGuidedMode && currentTutorialStep === 1
   const showStoichSection = !isGuidedMode || currentTutorialStep >= 2
   const showRateExprSection = !isGuidedMode || currentTutorialStep >= 3
@@ -633,11 +729,6 @@ export function UDMModelEditorForm({
       setLessonMode(tutorialLesson.lessonKey, mode)
     }
   }
-
-  const getProcessTeaching = (
-    processName: string,
-  ): TutorialProcessTeaching | undefined =>
-    processTeachingMap.get(processName.trim())
 
   const currentSignature = useMemo(
     () =>
@@ -694,13 +785,18 @@ export function UDMModelEditorForm({
       .map((row) => {
         const compName = row.name.trim()
         if (!compName) return null
+        const noteValue =
+          row._noteSource === "localized"
+            ? (componentDisplayMap.get(row._rowId)?.description?.trim() ||
+              row.note.trim())
+            : row.note.trim()
         return {
           name: compName,
           label: row.label.trim() || compName,
           unit: row.unit.trim() || null,
           default_value: parseNumOrNull(row.defaultValue) ?? 0,
           is_fixed: row.isFixed,
-          note: row.note.trim() || null,
+          note: noteValue || null,
           ...(row.conversion_factors
             ? { conversion_factors: row.conversion_factors }
             : {}),
@@ -710,8 +806,7 @@ export function UDMModelEditorForm({
 
     const normalizedProcesses = processRows
       .map((row) => {
-        // Task 5: save the canonical English name to DB, not the localized display name
-        const processName = (row._canonicalName ?? row.name).trim()
+        const processName = getCanonicalProcessName(row)
         const rateExpr = row.rateExpr.trim()
         if (!processName && !rateExpr) return null
         const stoichExpr: Record<string, string> = {}
@@ -1228,7 +1323,9 @@ export function UDMModelEditorForm({
     const processName = issue.location?.processName || issue.process
     if (processName) {
       const byName = processRows.findIndex(
-        (row) => row.name.trim() === processName.trim(),
+        (row) =>
+          getCanonicalProcessName(row) === processName.trim() ||
+          row.name.trim() === processName.trim(),
       )
       if (byName >= 0) return byName
 
@@ -1521,12 +1618,11 @@ export function UDMModelEditorForm({
         direction={{ base: "column", xl: "row" }}
       >
         {isTutorialModel ? (
-          <Box flex={{ base: "1 1 auto", xl: "0 0 280px" }} w="full">
-            <TutorialGuidePanel
-              lesson={tutorialLesson}
-              currentStep={currentTutorialStep}
-            />
-          </Box>
+          <TutorialGuidePanel
+            lesson={tutorialLesson}
+            currentStep={currentTutorialStep}
+            variant="floating"
+          />
         ) : null}
 
         <Box flex="1" minW={0}>
@@ -1575,9 +1671,9 @@ export function UDMModelEditorForm({
               <ArrowMatrixView
                 lessonKey={tutorialLessonKey}
                 componentNames={componentNames}
-                componentInfos={componentByName}
+                componentInfos={componentInfoByName}
                 processRows={processRows.map((row) => ({
-                  name: row.name,
+                  name: getCanonicalProcessName(row),
                   stoich: row.stoich,
                 }))}
               />
@@ -1724,12 +1820,21 @@ export function UDMModelEditorForm({
                     <Table.Cell>
                       <Input
                         size="sm"
-                        value={row.note}
+                        value={getComponentNoteValue(
+                          row,
+                          componentDisplay?.description,
+                        )}
                         onChange={(e) =>
                           setComponentRows((prev) =>
                             prev.map((item, idx) =>
-                              idx === index ? { ...item, note: e.target.value } : item
-                            )
+                              idx === index
+                                ? {
+                                    ...item,
+                                    note: e.target.value,
+                                    _noteSource: "manual",
+                                  }
+                                : item,
+                            ),
                           )
                         }
                       />
@@ -1789,8 +1894,6 @@ export function UDMModelEditorForm({
               </HStack>
             </Flex>
             <Table.ScrollArea
-              borderWidth="1px"
-              rounded="md"
               maxW="100%"
               maxH="520px"
             >
@@ -1850,6 +1953,9 @@ export function UDMModelEditorForm({
                             compName,
                             comp?.label,
                           )
+                          const headerNote = comp
+                            ? getComponentNoteValue(comp, display.description)
+                            : ""
                           const headerContent = (
                             <VStack align="start" gap={0}>
                               <Text fontWeight="medium">{display.label}</Text>
@@ -1863,8 +1969,8 @@ export function UDMModelEditorForm({
                               key={`stoich-header-${compName}`}
                               minW={STOICH_COL_MIN_W}
                             >
-                              {comp?.note ? (
-                                <Tooltip content={comp.note}>
+                              {headerNote ? (
+                                <Tooltip content={headerNote}>
                                   {headerContent}
                                 </Tooltip>
                               ) : (
@@ -1895,27 +2001,30 @@ export function UDMModelEditorForm({
                         left="0"
                       >
                         <VStack align="stretch" gap={1}>
-                          <HStack>
-                            <Input
-                              size="sm"
-                              value={row.name}
-                              ref={(el) => {
-                                processNameInputRefs.current[rowIndex] = el
-                              }}
-                              onChange={(e) =>
-                                setProcessRows((prev) =>
-                                  prev.map((item, idx) =>
-                                    idx === rowIndex
-                                      ? { ...item, name: e.target.value }
-                                      : item,
-                                  ),
-                                )
-                              }
-                            />
-                            <ProcessTeachingPopover
-                              teaching={getProcessTeaching(row._canonicalName ?? row.name)}
-                            />
-                          </HStack>
+                          <Input
+                            size="sm"
+                            value={getProcessDisplayValue(
+                              row,
+                              processDisplay?.label,
+                            )}
+                            readOnly={isReadonlyMode}
+                            ref={(el) => {
+                              processNameInputRefs.current[rowIndex] = el
+                            }}
+                            onChange={(e) =>
+                              setProcessRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? {
+                                        ...item,
+                                        name: e.target.value,
+                                        _nameSource: "manual",
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
                         </VStack>
                       </Table.Cell>
                       {showRateExprSection ? (
@@ -2108,7 +2217,9 @@ export function UDMModelEditorForm({
                 continuityChecks={continuityChecks}
                 onJumpToProcess={(processName) => {
                   const idx = processRows.findIndex(
-                    (r) => r.name.trim() === processName.trim(),
+                    (r) =>
+                      getCanonicalProcessName(r) === processName.trim() ||
+                      r.name.trim() === processName.trim(),
                   )
                   if (idx < 0) return
                   if (isTutorialModel && !showStoichSection) {
@@ -2177,8 +2288,6 @@ export function UDMModelEditorForm({
                 </Table.Header>
                 <Table.Body>
                   {parameterRows.map((row, rowIndex) => {
-                    const parameterDisplay = parameterDisplayMap.get(row._rowId)
-
                     return (
                       <Table.Row key={row._rowId}>
                       <Table.Cell>

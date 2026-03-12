@@ -399,6 +399,16 @@ export const flowTutorialMessages: Pick<I18nMessages["flow"], "tutorial"> = {
               description:
                 "Organic substrate is oxidized under aerobic conditions.",
             },
+            anoxic_denitrification: {
+              label: "Anoxic Denitrification",
+              description:
+                "COD is consumed while nitrate is reduced under anoxic conditions.",
+            },
+            nitrification: {
+              label: "Nitrification",
+              description:
+                "Ammonia is oxidized to nitrate and alkalinity is consumed.",
+            },
           },
           parameters: {
             aerobicCODDegradationRate: {
