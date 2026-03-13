@@ -69,6 +69,7 @@ import ContinuityCheckPanel, {
 } from "./tutorial/ContinuityCheckPanel"
 import RecipeBar from "./tutorial/RecipeBar"
 import TutorialGuidePanel from "./tutorial/TutorialGuidePanel"
+import TutorialParameterReference from "./tutorial/TutorialParameterReference"
 import TutorialStepper from "./tutorial/TutorialStepper"
 
 type ComponentRow = {
@@ -2110,6 +2111,13 @@ export function UDMModelEditorForm({
               </Table.Root>
             </Table.ScrollArea>
           </Box>
+
+          {isTutorialModel && showStoichSection ? (
+            <TutorialParameterReference
+              parameterRows={parameterRows}
+              lessonKey={tutorialLessonKey}
+            />
+          ) : null}
 
           {showRecipeBar ? (
             <Box mt={6}>

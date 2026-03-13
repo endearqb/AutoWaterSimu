@@ -119,7 +119,7 @@ const chapter3Recipes: TutorialRecipe[] = [
     labelKey: "flow.tutorial.recipes.alkBalance.label",
     descriptionKey: "flow.tutorial.recipes.alkBalance.description",
     category: "stoich",
-    template: "-1/14",
+    template: "-50/14",
   },
 ]
 
@@ -150,7 +150,7 @@ export const TUTORIAL_LESSONS: TutorialLesson[] = [
         "Rate expressions, parameters, and validation are mostly previewed here to establish spatial familiarity.",
       ),
     ],
-    stepConfig: { defaultStep: 1, maxStep: 2 },
+    stepConfig: { defaultStep: 1, maxStep: 5 },
     recommendedCharts: ["cod", "dissolvedOxygen"],
     objectives: [
       "flow.tutorial.lessonContent.chapter-1.objectives.0",

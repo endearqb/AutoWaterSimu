@@ -1066,6 +1066,12 @@ export interface I18nMessages {
           components: string
           processes: string
           parameterWizard: string
+          parameterReference: string
+        }
+        paramRef: {
+          name: string
+          description: string
+          defaultValue: string
         }
         placeholders: {
           modelName: string

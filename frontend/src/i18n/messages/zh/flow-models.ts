@@ -12,6 +12,12 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
         components: "变量（列）",
         processes: "过程（行）+ 化学计量系数 + 速率表达式",
         parameterWizard: "参数范围向导",
+        parameterReference: "参数说明",
+      },
+      paramRef: {
+        name: "参数名",
+        description: "说明",
+        defaultValue: "默认值",
       },
       placeholders: {
         modelName: "模型名称",

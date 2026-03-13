@@ -12,6 +12,12 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
         components: "Components (columns)",
         processes: "Processes (rows) + Stoich + rateExpr",
         parameterWizard: "Parameter Range Wizard",
+        parameterReference: "Parameter Reference",
+      },
+      paramRef: {
+        name: "Parameter",
+        description: "Description",
+        defaultValue: "Default",
       },
       placeholders: {
         modelName: "Model name",

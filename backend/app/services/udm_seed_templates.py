@@ -204,12 +204,12 @@ UDM_SEED_TEMPLATES: Dict[str, Dict[str, Any]] = {
                 "stoich_expr": {
                     "cod": "-empiricalCNRatio",
                     "nitrate": "-1",
-                    "totalAlkalinity": "1/14",
+                    "totalAlkalinity": "50/14",
                 },
                 "stoich": {
                     "cod": -5.0,
                     "nitrate": -1.0,
-                    "totalAlkalinity": 0.07142857142857142,
+                    "totalAlkalinity": 3.5714285714285716,
                 },
             },
             {
@@ -218,12 +218,12 @@ UDM_SEED_TEMPLATES: Dict[str, Dict[str, Any]] = {
                 "stoich_expr": {
                     "ammonia": "-1",
                     "nitrate": "1",
-                    "totalAlkalinity": "-1/7",
+                    "totalAlkalinity": "-50/7",
                 },
                 "stoich": {
                     "ammonia": -1.0,
                     "nitrate": 1.0,
-                    "totalAlkalinity": -0.14285714285714285,
+                    "totalAlkalinity": -7.142857142857143,
                 },
             },
         ],
