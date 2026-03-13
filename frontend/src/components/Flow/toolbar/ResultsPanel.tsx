@@ -4,6 +4,10 @@ import { useI18n } from "../../../i18n"
 import type { BaseModelState } from "../../../stores/baseModelStore"
 import useFlowStore from "../../../stores/flowStore"
 import type { RFState } from "../../../stores/flowStore"
+import {
+  buildUdmDisplayMapsFromNodes,
+  resolveUdmDisplayName,
+} from "../../../utils/udmRuntimeDisplay"
 import { Tooltip } from "../../ui/tooltip"
 
 interface ResultsPanelProps {
@@ -54,12 +58,14 @@ const ResultsPanel = ({ store, modelStore, modelType }: ResultsPanelProps) => {
   const modelConfig = resolvedModelType
     ? getModelConfig(resolvedModelType)
     : undefined
+  const udmDisplayMaps = buildUdmDisplayMapsFromNodes(nodes)
 
   const getParameterLabel = (paramName: string): string => {
     if (resolvedModelType === "udm") {
-      return paramName.startsWith("concentration_")
-        ? paramName.replace("concentration_", "")
+      const normalizedName = paramName.startsWith("concentration_")
+        ? paramName
         : paramName
+      return resolveUdmDisplayName(normalizedName, udmDisplayMaps.variableLabels)
     }
 
     const normalizedName = paramName.startsWith("concentration_")

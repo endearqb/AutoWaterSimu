@@ -21,6 +21,7 @@ export const flowCoreMessages: Pick<I18nMessages["flow"], "node" | "tab" | "canv
     calculation: "Calculation",
     simulation: "Simulation",
     tutorialGuide: "Tutorial",
+    tutorialResults: "Tutorial Results",
   },
   canvas: {
     doubleClickEdit: "Double click to edit",

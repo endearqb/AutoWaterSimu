@@ -25,11 +25,13 @@ type AnalyzerModelType = "asm1" | "asm1slim" | "asm3" | "udm"
 interface SpatialProfilePanelProps {
   resultData: ASM1ResultData | UDMResultData
   modelType?: AnalyzerModelType
+  udmVariableLabels?: Map<string, string> | Record<string, string>
 }
 
 const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
   resultData,
   modelType = "asm1",
+  udmVariableLabels,
 }) => {
   const { t, language } = useI18n()
   const yAxisPlotHeight = 450
@@ -57,6 +59,7 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
     if (modelType === "udm") {
       return getUDMAvailableVariables(resultData as UDMResultData, {
         exclude: ["volume"],
+        labels: udmVariableLabels,
       })
     }
 
@@ -289,10 +292,10 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
         <Separator my={4} />
 
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} alignItems="stretch">
-          <VStack align="start" gap={4}>
-            <VStack align="start" gap={2} w="full">
+          <VStack align="start" gap={4} minW={0}>
+            <VStack align="start" gap={2} w="full" minW={0}>
               <Text fontWeight="bold">{t("flow.analysis.timeSelection")}</Text>
-              <HStack w="full" gap={4}>
+              <HStack w="full" gap={4} minW={0}>
                 <Text minW="60px">{t("flow.analysis.timeLabel")}</Text>
                 <Slider.Root
                   value={[safeSelectedTimeIndex]}
@@ -330,17 +333,20 @@ const SpatialProfilePanel: React.FC<SpatialProfilePanelProps> = ({
             />
           </VStack>
 
-          <TimeSeriesChart
-            resultData={resultData}
-            selectedNodes={selectedNodes}
-            selectedVariables={selectedVariables}
-            timeRange={safeTimeSeriesRange}
-            onTimeRangeChange={handleTimeSeriesRangeChange}
-            showSegmentLines={showSegmentLines}
-            showParamChangeAnnotations={showParamChangeAnnotations}
-            yAxisHeight={yAxisPlotHeight}
-            modelType={modelType}
-          />
+          <VStack align="stretch" minW={0}>
+            <TimeSeriesChart
+              resultData={resultData}
+              selectedNodes={selectedNodes}
+              selectedVariables={selectedVariables}
+              timeRange={safeTimeSeriesRange}
+              onTimeRangeChange={handleTimeSeriesRangeChange}
+              showSegmentLines={showSegmentLines}
+              showParamChangeAnnotations={showParamChangeAnnotations}
+              yAxisHeight={yAxisPlotHeight}
+              modelType={modelType}
+              udmVariableLabels={udmVariableLabels}
+            />
+          </VStack>
         </SimpleGrid>
       </Card.Body>
     </Card.Root>

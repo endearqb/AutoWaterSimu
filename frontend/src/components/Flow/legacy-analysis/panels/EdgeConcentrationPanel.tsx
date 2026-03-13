@@ -34,6 +34,7 @@ interface EdgeConcentrationPanelProps {
   edges: Array<{ id: string; source: string; target: string }>
   edgeParameterConfigs: { [key: string]: any }
   modelType?: AnalyzerModelType
+  udmVariableLabels?: Map<string, string> | Record<string, string>
 }
 
 const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
@@ -41,6 +42,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
   edges,
   edgeParameterConfigs,
   modelType = "asm1",
+  udmVariableLabels,
 }) => {
   const { t, language } = useI18n()
   const yAxisPlotHeight = 450
@@ -70,6 +72,7 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
         resultData as UDMResultData,
         {
           exclude: ["volume"],
+          labels: udmVariableLabels,
         },
       )
       return [
@@ -341,10 +344,10 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
         <Separator my={4} />
 
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} alignItems="stretch">
-          <VStack align="start" gap={4}>
-            <VStack align="start" gap={2} w="full">
+          <VStack align="start" gap={4} minW={0}>
+            <VStack align="start" gap={2} w="full" minW={0}>
               <Text fontWeight="bold">{t("flow.analysis.timeSelection")}</Text>
-              <HStack w="full" gap={4}>
+              <HStack w="full" gap={4} minW={0}>
                 <Text minW="60px">{t("flow.analysis.timeLabel")}</Text>
                 <Slider.Root
                   value={[safeSelectedTimeIndex]}
@@ -384,19 +387,22 @@ const EdgeConcentrationPanel: React.FC<EdgeConcentrationPanelProps> = ({
             />
           </VStack>
 
-          <EdgeTimeSeriesChart
-            resultData={resultData}
-            selectedEdges={selectedEdges}
-            selectedVariables={selectedVariables}
-            timeRange={safeEdgeTimeSeriesRange}
-            onTimeRangeChange={handleEdgeTimeSeriesRangeChange}
-            edges={edges}
-            edgeParameterConfigs={edgeParameterConfigs}
-            showSegmentLines={showSegmentLines}
-            showParamChangeAnnotations={showParamChangeAnnotations}
-            yAxisHeight={yAxisPlotHeight}
-            modelType={modelType}
-          />
+          <VStack align="stretch" minW={0}>
+            <EdgeTimeSeriesChart
+              resultData={resultData}
+              selectedEdges={selectedEdges}
+              selectedVariables={selectedVariables}
+              timeRange={safeEdgeTimeSeriesRange}
+              onTimeRangeChange={handleEdgeTimeSeriesRangeChange}
+              edges={edges}
+              edgeParameterConfigs={edgeParameterConfigs}
+              showSegmentLines={showSegmentLines}
+              showParamChangeAnnotations={showParamChangeAnnotations}
+              yAxisHeight={yAxisPlotHeight}
+              modelType={modelType}
+              udmVariableLabels={udmVariableLabels}
+            />
+          </VStack>
         </SimpleGrid>
       </Card.Body>
     </Card.Root>

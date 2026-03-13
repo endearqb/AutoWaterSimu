@@ -21,6 +21,7 @@ export const flowCoreMessages: Pick<I18nMessages["flow"], "node" | "tab" | "canv
     calculation: "计算参数",
     simulation: "模拟计算",
     tutorialGuide: "教程引导",
+    tutorialResults: "教程结果",
   },
   canvas: {
     doubleClickEdit: "双击编辑文本",

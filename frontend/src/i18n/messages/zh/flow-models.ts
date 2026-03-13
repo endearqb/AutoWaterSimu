@@ -49,6 +49,17 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
         scale: "量程",
       },
       varNameTooltip: "变量名须为有效标识符：以字母或下划线开头，仅含字母、数字和下划线",
+      identifierErrors: {
+        componentNameRequired: "变量名不能为空",
+        componentNameInvalid: "{name}: 变量名必须是合法标识符",
+        componentNameDuplicate: "{name}: 变量名重复",
+        componentNameConflict: "{name}: 变量名不能与参数名重复",
+        parameterNameRequired: "参数名不能为空",
+        parameterNameInvalid: "{name}: 参数名必须是合法标识符",
+        parameterNameDuplicate: "{name}: 参数名重复",
+        parameterNameConflictsComponent: "{name}: 参数名不能与变量名重复",
+        parameterReferencedMissing: "{name}: 已在过程表达式中引用，请在参数表中补齐定义",
+      },
       aria: {
         allowChange: "允许变化-{index}",
       },

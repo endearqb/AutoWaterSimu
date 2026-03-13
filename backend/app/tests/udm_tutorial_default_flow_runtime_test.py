@@ -230,7 +230,7 @@ def _count_changed_series(node_data: dict[str, Any], *, tolerance: float = 1e-6)
                 "S_S": 200.0,
                 "S_O": 0.0,
                 "S_NH": 25.0,
-                "S_NO": 0.0,
+                "S_NO": 10.0,
                 "S_ND": 5.0,
                 "X_BH": 0.0,
                 "X_BA": 0.0,

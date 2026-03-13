@@ -96,3 +96,59 @@ def test_validate_teaching_mode_keeps_continuity_as_warning_only(
     assert data["ok"] is True
     assert all(item["code"] != "CONTINUITY_IMBALANCE" for item in data["errors"])
     assert any(item["status"] == "warn" for item in data["continuity_checks"])
+
+
+def test_create_and_read_udm_model_preserves_parameter_label(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    payload = {
+        "name": "UDM Parameter Label Test",
+        "description": "verify parameter labels round-trip through create/read",
+        "tags": ["test"],
+        "components": [
+            {
+                "name": "S_S",
+                "label": "可溶性基质",
+                "default_value": 20.0,
+            }
+        ],
+        "parameters": [
+            {
+                "name": "mu_H",
+                "label": "最大比增长速率",
+                "default_value": 6.0,
+                "min_value": 0.1,
+                "max_value": 20.0,
+                "scale": "lin",
+            }
+        ],
+        "processes": [
+            {
+                "name": "growth",
+                "rate_expr": "mu_H*S_S",
+                "stoich_expr": {"S_S": "-1"},
+            }
+        ],
+        "meta": None,
+    }
+
+    create_response = client.post(
+        f"{settings.API_V1_STR}/udm-models/",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+    assert create_response.status_code == 200
+    created = create_response.json()
+
+    assert created["latest_version"]["parameters"][0]["label"] == "最大比增长速率"
+
+    read_response = client.get(
+        f"{settings.API_V1_STR}/udm-models/{created['id']}",
+        headers=superuser_token_headers,
+    )
+    assert read_response.status_code == 200
+    reread = read_response.json()
+
+    assert reread["latest_version"]["parameters"][0]["name"] == "mu_H"
+    assert reread["latest_version"]["parameters"][0]["label"] == "最大比增长速率"

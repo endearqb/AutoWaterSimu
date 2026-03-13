@@ -46,6 +46,7 @@ interface EdgeTimeSeriesChartProps {
   chartHeight?: string | number
   yAxisHeight?: number
   modelType?: AnalyzerModelType
+  udmVariableLabels?: Map<string, string> | Record<string, string>
 }
 
 type ParameterChangeEvent = {
@@ -73,6 +74,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
   chartHeight = "500px",
   yAxisHeight,
   modelType = "asm1",
+  udmVariableLabels,
 }) => {
   const { t, language } = useI18n()
 
@@ -103,7 +105,9 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
 
   const availableVariables = useMemo(() => {
     if (modelType === "udm") {
-      return getUDMAvailableVariables(resultData as UDMResultData)
+      return getUDMAvailableVariables(resultData as UDMResultData, {
+        labels: udmVariableLabels,
+      })
     }
     if (modelType === "asm1slim") {
       return getSlimAvailableVariables(resultData as ASM1SlimResultData)
@@ -315,10 +319,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
           return translated === variableInfo.label ? variable : translated
         })()
 
-        const label =
-          variableLabel === variable
-            ? `${edgeLabel} - ${variable}`
-            : `${edgeLabel} - ${variableLabel} (${variable})`
+        const label = `${edgeLabel} - ${variableLabel}`
         const color = colors[colorIndex % colors.length]
 
         lines.push(
@@ -364,11 +365,11 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
   }
 
   return (
-    <VStack w="full" align="start" gap={4}>
+    <VStack w="full" minW={0} align="start" gap={4}>
       {showTimeRangeSlider && (
-        <VStack align="start" gap={2} w="full">
+        <VStack align="start" gap={2} w="full" minW={0}>
           <Text fontWeight="bold">{t("flow.analysis.timeRange")}</Text>
-          <HStack w="full" gap={4}>
+          <HStack w="full" gap={4} minW={0}>
             <Text minW="60px">{t("flow.analysis.timeLabel")}</Text>
             <Slider.Root
               value={safeTimeRange}
@@ -398,7 +399,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
         </VStack>
       )}
 
-      <Box w="full" h={chartAreaHeight}>
+      <Box w="full" minW={0} h={chartAreaHeight}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={edgeTimeSeriesData} margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -493,7 +494,7 @@ const EdgeTimeSeriesChart: React.FC<EdgeTimeSeriesChartProps> = ({
         </Box>
       )}
 
-      <Box w="full" display="flex" flexWrap="wrap" gap={2}>
+      <Box w="full" minW={0} display="flex" flexWrap="wrap" gap={2}>
         {chartSeries.legendItems.map((item) => (
           <HStack
             key={item.key}

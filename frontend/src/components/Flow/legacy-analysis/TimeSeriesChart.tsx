@@ -35,6 +35,7 @@ interface TimeSeriesChartProps {
   chartHeight?: string | number
   yAxisHeight?: number
   modelType?: AnalyzerModelType
+  udmVariableLabels?: Map<string, string> | Record<string, string>
 }
 
 type ParameterChangeEvent = {
@@ -60,6 +61,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   chartHeight = "500px",
   yAxisHeight,
   modelType = "asm1",
+  udmVariableLabels,
 }) => {
   const { t, language } = useI18n()
   const chartContainerRef = useRef<HTMLDivElement>(null)
@@ -86,7 +88,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   const availableVariables = useMemo(() => {
     if (modelType === "udm") {
-      return getUDMAvailableVariables(resultData as UDMResultData)
+      return getUDMAvailableVariables(resultData as UDMResultData, {
+        labels: udmVariableLabels,
+      })
     }
     if (modelType === "asm1slim") {
       return getSlimAvailableVariables(resultData as ASM1SlimResultData)
@@ -275,10 +279,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           const translated = t(variableInfo.label)
           return translated === variableInfo.label ? variable : translated
         })()
-        const label =
-          variableLabel === variable
-            ? `${nodeLabel} - ${variable}`
-            : `${nodeLabel} - ${variableLabel} (${variable})`
+        const label = `${nodeLabel} - ${variableLabel}`
         const color = colors[colorIndex % colors.length]
 
         lines.push(

@@ -19,6 +19,7 @@ interface UDMAnalysisButtonProps {
   loading?: boolean
   resultData?: UDMResultData
   edges?: Edge[]
+  nodes?: Array<{ type?: string; data?: Record<string, unknown> }>
   edgeParameterConfigs?: Record<string, Record<string, EdgeParameterConfig>>
 }
 
@@ -28,6 +29,7 @@ const UDMAnalysisButton = ({
   loading = false,
   resultData,
   edges,
+  nodes,
   edgeParameterConfigs,
 }: UDMAnalysisButtonProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -60,6 +62,7 @@ const UDMAnalysisButton = ({
           <UDMAnalyzer
             resultData={resultData}
             edges={edges}
+            nodes={nodes}
             edgeParameterConfigs={edgeParameterConfigs}
           />
         )}

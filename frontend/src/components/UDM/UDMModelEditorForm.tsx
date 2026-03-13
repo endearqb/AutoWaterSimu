@@ -87,6 +87,7 @@ type ComponentRow = {
 type ParameterRow = {
   _rowId: string
   name: string
+  label: string
   unit: string
   defaultValue: string
   minValue: string
@@ -141,6 +142,19 @@ const parseNumOrNull = (value: string): number | null => {
 const STOICH_NUMBER_PATTERN = /^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/
 
 const VALID_IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
+const EXPRESSION_IDENTIFIER_PATTERN = /[A-Za-z_][A-Za-z0-9_]*/g
+const BUILTIN_EXPRESSION_IDENTIFIERS = new Set([
+  "abs",
+  "clip",
+  "e",
+  "exp",
+  "log",
+  "max",
+  "min",
+  "pi",
+  "pow",
+  "sqrt",
+])
 
 const toFiniteNumber = (value: unknown): number => {
   const parsed =
@@ -224,6 +238,7 @@ const emptyComponent = (): ComponentRow => ({
 const emptyParameter = (): ParameterRow => ({
   _rowId: crypto.randomUUID() as string,
   name: "",
+  label: "",
   unit: "",
   defaultValue: "1",
   minValue: "0.1",
@@ -281,6 +296,41 @@ const getComponentNoteValue = (
   row._noteSource === "localized"
     ? String(localizedDescription || row.note || "")
     : row.note
+
+const isBlankComponentRow = (row: ComponentRow) =>
+  !row.name.trim() &&
+  !row.label.trim() &&
+  !row.unit.trim() &&
+  row.defaultValue.trim() === "0" &&
+  !row.isFixed &&
+  !row.note.trim() &&
+  !row.conversion_factors
+
+const isBlankParameterRow = (row: ParameterRow) =>
+  !row.name.trim() &&
+  !row.label.trim() &&
+  !row.unit.trim() &&
+  row.defaultValue.trim() === "1" &&
+  row.minValue.trim() === "0.1" &&
+  row.maxValue.trim() === "10" &&
+  row.scale === "lin" &&
+  !row.note.trim()
+
+const buildIdentifierCountMap = (values: string[]) => {
+  const counts = new Map<string, number>()
+  values
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .forEach((value) => {
+      counts.set(value, (counts.get(value) ?? 0) + 1)
+    })
+  return counts
+}
+
+const extractExpressionIdentifiers = (expression: string) => {
+  const matches = expression.match(EXPRESSION_IDENTIFIER_PATTERN)
+  return matches ? matches : []
+}
 
 const INITIAL_FORM_SIGNATURE = buildFormSignature({
   name: "",
@@ -580,6 +630,7 @@ export function UDMModelEditorForm({
         return {
           _rowId: crypto.randomUUID() as string,
           name: paramName,
+          label: String(item?.label || ""),
           unit: String(item?.unit || ""),
           defaultValue: String(item?.default_value ?? "1"),
           minValue: String(item?.min_value ?? "0.1"),
@@ -611,6 +662,33 @@ export function UDMModelEditorForm({
     () => parameterRows.map((row) => row.name.trim()).filter(Boolean),
     [parameterRows],
   )
+  const componentNameCounts = useMemo(
+    () => buildIdentifierCountMap(componentNames),
+    [componentNames],
+  )
+  const parameterNameCounts = useMemo(
+    () => buildIdentifierCountMap(parameterNames),
+    [parameterNames],
+  )
+  const referencedParameterNames = useMemo(() => {
+    const componentNameSet = new Set(componentNames)
+    const identifiers = new Set<string>()
+    processRows.forEach((row) => {
+      const expressions = [row.rateExpr, ...Object.values(row.stoich)]
+      expressions.forEach((expression) => {
+        extractExpressionIdentifiers(expression).forEach((identifier) => {
+          if (
+            componentNameSet.has(identifier) ||
+            BUILTIN_EXPRESSION_IDENTIFIERS.has(identifier)
+          ) {
+            return
+          }
+          identifiers.add(identifier)
+        })
+      })
+    })
+    return identifiers
+  }, [componentNames, processRows])
   const componentByName = useMemo(
     () => new Map(componentRows.map((row) => [row.name.trim(), row])),
     [componentRows],
@@ -773,6 +851,96 @@ export function UDMModelEditorForm({
     }
   }, [editorTarget, processRows.length, componentNames])
 
+  const getComponentNameIssue = (row: ComponentRow): string | null => {
+    const componentName = row.name.trim()
+    if (!componentName) {
+      return isBlankComponentRow(row)
+        ? null
+        : t("flow.udmEditor.form.identifierErrors.componentNameRequired")
+    }
+    if (!VALID_IDENTIFIER_PATTERN.test(componentName)) {
+      return t("flow.udmEditor.form.identifierErrors.componentNameInvalid", {
+        name: componentName,
+      })
+    }
+    if ((componentNameCounts.get(componentName) ?? 0) > 1) {
+      return t("flow.udmEditor.form.identifierErrors.componentNameDuplicate", {
+        name: componentName,
+      })
+    }
+    if ((parameterNameCounts.get(componentName) ?? 0) > 0) {
+      return t("flow.udmEditor.form.identifierErrors.componentNameConflict", {
+        name: componentName,
+      })
+    }
+    return null
+  }
+
+  const getParameterNameIssue = (row: ParameterRow): string | null => {
+    const parameterName = row.name.trim()
+    if (!parameterName) {
+      return isBlankParameterRow(row)
+        ? null
+        : t("flow.udmEditor.form.identifierErrors.parameterNameRequired")
+    }
+    if (!VALID_IDENTIFIER_PATTERN.test(parameterName)) {
+      return t("flow.udmEditor.form.identifierErrors.parameterNameInvalid", {
+        name: parameterName,
+      })
+    }
+    if ((parameterNameCounts.get(parameterName) ?? 0) > 1) {
+      return t("flow.udmEditor.form.identifierErrors.parameterNameDuplicate", {
+        name: parameterName,
+      })
+    }
+    if ((componentNameCounts.get(parameterName) ?? 0) > 0) {
+      return t(
+        "flow.udmEditor.form.identifierErrors.parameterNameConflictsComponent",
+        {
+          name: parameterName,
+        },
+      )
+    }
+    return null
+  }
+
+  const getMissingReferencedParameterIssue = (): string | null => {
+    if (referencedParameterNames.size === 0) {
+      return null
+    }
+    const definedNames = new Set(parameterNames)
+    const missing = Array.from(referencedParameterNames).find(
+      (name) => !definedNames.has(name),
+    )
+    if (!missing) {
+      return null
+    }
+    return t("flow.udmEditor.form.identifierErrors.parameterReferencedMissing", {
+      name: missing,
+    })
+  }
+
+  const validateIdentifierIssues = (): string[] => {
+    const errors: string[] = []
+    componentRows.forEach((row) => {
+      const issue = getComponentNameIssue(row)
+      if (issue) {
+        errors.push(issue)
+      }
+    })
+    parameterRows.forEach((row) => {
+      const issue = getParameterNameIssue(row)
+      if (issue) {
+        errors.push(issue)
+      }
+    })
+    const missingParameterIssue = getMissingReferencedParameterIssue()
+    if (missingParameterIssue) {
+      errors.push(missingParameterIssue)
+    }
+    return errors
+  }
+
   const buildDraft = (): UDMModelDefinitionDraft => {
     const existingMeta = {
       ...(((detailQuery.data?.latest_version?.meta || {}) as Record<
@@ -842,6 +1010,7 @@ export function UDMModelEditorForm({
         if (!paramName) return null
         return {
           name: paramName,
+          label: row.label.trim() || null,
           unit: row.unit.trim() || null,
           default_value: parseNumOrNull(row.defaultValue),
           min_value: parseNumOrNull(row.minValue),
@@ -997,6 +1166,12 @@ export function UDMModelEditorForm({
   }
 
   const saveModel = async (): Promise<UDMModelDetailPublic | null> => {
+    const identifierIssues = validateIdentifierIssues()
+    if (identifierIssues.length > 0) {
+      showErrorToast(identifierIssues[0])
+      return null
+    }
+
     const rangeErrors = validateParameterRanges()
     if (rangeErrors.length > 0) {
       showErrorToast(rangeErrors[0])
@@ -1091,9 +1266,14 @@ export function UDMModelEditorForm({
             : "1e-3",
       }
       customParameters.forEach((p) => {
-        // For input nodes with tutorial preset, use the preset influent concentrations
-        if (nodeRole === "input" && preset?.inputNodeOverrides?.[p.name] != null) {
-          base[p.name] = String(preset.inputNodeOverrides[p.name])
+        const hasExplicitInputOverride =
+          nodeRole === "input" &&
+          Object.prototype.hasOwnProperty.call(
+            preset?.inputNodeOverrides ?? {},
+            p.name,
+          )
+        if (hasExplicitInputOverride) {
+          base[p.name] = String(preset?.inputNodeOverrides?.[p.name] ?? 0)
         } else {
           base[p.name] = String(p.defaultValue ?? 0)
         }
@@ -1707,6 +1887,7 @@ export function UDMModelEditorForm({
               <Table.Body>
                 {componentRows.map((row, index) => {
                   const componentDisplay = componentDisplayMap.get(row._rowId)
+                  const componentNameIssue = getComponentNameIssue(row)
 
                   return (
                     <Table.Row key={row._rowId}>
@@ -1717,11 +1898,7 @@ export function UDMModelEditorForm({
                           onChange={(e) =>
                             setComponentName(index, e.target.value)
                           }
-                          borderColor={
-                            row.name.trim() && !VALID_IDENTIFIER_PATTERN.test(row.name.trim())
-                              ? "red.500"
-                              : undefined
-                          }
+                          borderColor={componentNameIssue ? "red.500" : undefined}
                         />
                       </Table.Cell>
                       <Table.Cell>
@@ -2247,7 +2424,15 @@ export function UDMModelEditorForm({
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeader>
-                      {t("flow.udmEditor.form.columns.name")}
+                      <HStack gap={1}>
+                        {t("flow.udmEditor.form.columns.name")}
+                        <Tooltip content={t("flow.udmEditor.form.varNameTooltip")}>
+                          <FiInfo />
+                        </Tooltip>
+                      </HStack>
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      {t("flow.udmEditor.form.columns.label")}
                     </Table.ColumnHeader>
                     <Table.ColumnHeader>
                       {t("flow.udmEditor.form.columns.unit")}
@@ -2274,142 +2459,162 @@ export function UDMModelEditorForm({
                 </Table.Header>
                 <Table.Body>
                   {parameterRows.map((row, rowIndex) => {
+                    const parameterNameIssue = getParameterNameIssue(row)
                     return (
                       <Table.Row key={row._rowId}>
-                      <Table.Cell>
-                        <Input
-                          size="sm"
-                          value={row.name}
-                          ref={(el) => {
-                            parameterNameInputRefs.current[rowIndex] = el
-                          }}
-                          onChange={(e) =>
-                            setParameterRows((prev) =>
-                              prev.map((item, idx) =>
-                                idx === rowIndex
-                                  ? { ...item, name: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Input
-                          size="sm"
-                          value={row.unit}
-                          onChange={(e) =>
-                            setParameterRows((prev) =>
-                              prev.map((item, idx) =>
-                                idx === rowIndex
-                                  ? { ...item, unit: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Input
-                          size="sm"
-                          type="number"
-                          value={row.defaultValue}
-                          onChange={(e) =>
-                            setParameterRows((prev) =>
-                              prev.map((item, idx) =>
-                                idx === rowIndex
-                                  ? { ...item, defaultValue: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Input
-                          size="sm"
-                          type="number"
-                          value={row.minValue}
-                          onChange={(e) =>
-                            setParameterRows((prev) =>
-                              prev.map((item, idx) =>
-                                idx === rowIndex
-                                  ? { ...item, minValue: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Input
-                          size="sm"
-                          type="number"
-                          value={row.maxValue}
-                          onChange={(e) =>
-                            setParameterRows((prev) =>
-                              prev.map((item, idx) =>
-                                idx === rowIndex
-                                  ? { ...item, maxValue: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <NativeSelect.Root size="sm">
-                          <NativeSelect.Field
-                            value={row.scale}
+                        <Table.Cell>
+                          <Input
+                            size="sm"
+                            value={row.name}
+                            ref={(el) => {
+                              parameterNameInputRefs.current[rowIndex] = el
+                            }}
+                            borderColor={
+                              parameterNameIssue ? "red.500" : undefined
+                            }
                             onChange={(e) =>
                               setParameterRows((prev) =>
                                 prev.map((item, idx) =>
                                   idx === rowIndex
-                                    ? {
-                                        ...item,
-                                        scale: e.target.value as "lin" | "log",
-                                      }
+                                    ? { ...item, name: e.target.value }
                                     : item,
                                 ),
                               )
                             }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Input
+                            size="sm"
+                            value={row.label}
+                            placeholder={row.name.trim() || undefined}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, label: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Input
+                            size="sm"
+                            value={row.unit}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, unit: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Input
+                            size="sm"
+                            type="number"
+                            value={row.defaultValue}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, defaultValue: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Input
+                            size="sm"
+                            type="number"
+                            value={row.minValue}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, minValue: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Input
+                            size="sm"
+                            type="number"
+                            value={row.maxValue}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, maxValue: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <NativeSelect.Root size="sm">
+                            <NativeSelect.Field
+                              value={row.scale}
+                              onChange={(e) =>
+                                setParameterRows((prev) =>
+                                  prev.map((item, idx) =>
+                                    idx === rowIndex
+                                      ? {
+                                          ...item,
+                                          scale: e.target.value as "lin" | "log",
+                                        }
+                                      : item,
+                                  ),
+                                )
+                              }
+                            >
+                              <option value="lin">lin</option>
+                              <option value="log">log</option>
+                            </NativeSelect.Field>
+                            <NativeSelect.Indicator />
+                          </NativeSelect.Root>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Input
+                            size="sm"
+                            value={row.note}
+                            onChange={(e) =>
+                              setParameterRows((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === rowIndex
+                                    ? { ...item, note: e.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Button
+                            size="xs"
+                            variant="subtle"
+                            colorPalette="red"
+                            onClick={() =>
+                              setParameterRows((prev) =>
+                                prev.filter((_, idx) => idx !== rowIndex),
+                              )
+                            }
+                            disabled={isReadonlyMode}
                           >
-                            <option value="lin">lin</option>
-                            <option value="log">log</option>
-                          </NativeSelect.Field>
-                          <NativeSelect.Indicator />
-                        </NativeSelect.Root>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Input
-                          size="sm"
-                          value={row.note}
-                          onChange={(e) =>
-                            setParameterRows((prev) =>
-                              prev.map((item, idx) =>
-                                idx === rowIndex
-                                  ? { ...item, note: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Button
-                          size="xs"
-                          variant="subtle"
-                          colorPalette="red"
-                          onClick={() =>
-                            setParameterRows((prev) =>
-                              prev.filter((_, idx) => idx !== rowIndex),
-                            )
-                          }
-                          disabled={isReadonlyMode}
-                        >
-                          {t("common.delete")}
-                        </Button>
-                      </Table.Cell>
+                            {t("common.delete")}
+                          </Button>
+                        </Table.Cell>
                       </Table.Row>
                     )
                   })}

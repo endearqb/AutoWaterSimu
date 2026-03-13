@@ -103,7 +103,7 @@ const chapter7Preset: TutorialFlowPreset = {
     S_S: 200,
     S_O: 0,
     S_NH: 25,
-    S_NO: 0,
+    S_NO: 10,
     S_ND: 5,
     X_BH: 0,
     X_BA: 0,

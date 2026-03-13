@@ -38,6 +38,7 @@ export interface UDMEdgeParameterConfig {
 
 interface UDMVariableOptions {
   exclude?: string[]
+  labels?: Map<string, string> | Record<string, string>
 }
 
 export function getUDMAvailableVariables(
@@ -46,6 +47,15 @@ export function getUDMAvailableVariables(
 ): Array<{ name: string; label: string }> {
   const excluded = new Set(options.exclude || [])
   const variables = new Set<string>()
+  const resolveLabel = (name: string) => {
+    if (!options.labels) {
+      return name
+    }
+    if (options.labels instanceof Map) {
+      return options.labels.get(name) || name
+    }
+    return String(options.labels[name] || name)
+  }
 
   Object.values(rd.node_data || {}).forEach((node) => {
     Object.keys(node).forEach((key) => {
@@ -58,7 +68,7 @@ export function getUDMAvailableVariables(
 
   return Array.from(variables).map((name) => ({
     name,
-    label: name,
+    label: resolveLabel(name),
   }))
 }
 

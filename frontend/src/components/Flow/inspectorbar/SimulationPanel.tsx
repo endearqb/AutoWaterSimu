@@ -942,6 +942,7 @@ function SimulationPanel({
                         modelType: (modelType as ModelType) || "other",
                         label: t("flow.simulation.analysisButton"),
                         resultData: finalStore.currentJob.result_data,
+                        nodes: nodes,
                         edges: edges,
                         edgeParameterConfigs: edgeParameterConfigs,
                         disabled: !isCalculationSuccessful,

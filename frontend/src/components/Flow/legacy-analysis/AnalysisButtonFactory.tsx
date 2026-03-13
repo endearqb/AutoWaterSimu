@@ -45,6 +45,8 @@ interface CreateAnalysisButtonProps {
   resultData?: any
   /** 连接线数据 */
   edges?: Edge[]
+  /** 当前流程图节点数据 */
+  nodes?: Array<{ type?: string; data?: Record<string, unknown> }>
   /** 连接线参数配置 */
   edgeParameterConfigs?: Record<string, Record<string, EdgeParameterConfig>>
   /** 自定义分析处理函数（用于非内置模型类型） */
@@ -64,6 +66,7 @@ export const createAnalysisButton = ({
   loading = false,
   resultData,
   edges,
+  nodes,
   edgeParameterConfigs,
   onCustomAnalyze,
 }: CreateAnalysisButtonProps): React.ComponentType => {
@@ -114,6 +117,7 @@ export const createAnalysisButton = ({
           loading={loading}
           resultData={resultData as UDMResultData}
           edges={edges}
+          nodes={nodes}
           edgeParameterConfigs={edgeParameterConfigs}
         />
       )

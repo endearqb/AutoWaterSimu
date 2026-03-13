@@ -43,6 +43,7 @@ interface FlowLayoutProps {
     BubbleMenuProps | BaseBubbleMenuProps
   >
   simulationControlProps?: SimulationControllerProps
+  inspectorBaseWidth?: number
 }
 
 const FlowLayout = ({
@@ -52,6 +53,7 @@ const FlowLayout = ({
   store,
   BubbleMenuComponent,
   simulationControlProps,
+  inspectorBaseWidth = INSPECTOR_PANEL_WIDTH,
 }: FlowLayoutProps) => {
   const { t } = useI18n()
   const themeScopeRef = useRef<HTMLDivElement>(null!)
@@ -146,15 +148,15 @@ const FlowLayout = ({
   const shouldExpandInspector =
     !!selectedEdge && isEdgeTimeSegmentMode && segmentCount >= 2
   const inspectorWidth = useMemo(() => {
-    if (!shouldExpandInspector) return INSPECTOR_PANEL_WIDTH
+    if (!shouldExpandInspector) return inspectorBaseWidth
 
-    const desiredWidth = INSPECTOR_PANEL_WIDTH + (segmentCount - 1) * 280
+    const desiredWidth = inspectorBaseWidth + (segmentCount - 1) * 280
     const viewportWidth =
-      typeof window !== "undefined" ? window.innerWidth : INSPECTOR_PANEL_WIDTH
+      typeof window !== "undefined" ? window.innerWidth : inspectorBaseWidth
     const containerWidth = layoutWidth > 0 ? layoutWidth : viewportWidth
     const maxWidth = Math.floor(containerWidth * 0.8)
-    return Math.max(INSPECTOR_PANEL_WIDTH, Math.min(desiredWidth, maxWidth))
-  }, [layoutWidth, segmentCount, shouldExpandInspector])
+    return Math.max(inspectorBaseWidth, Math.min(desiredWidth, maxWidth))
+  }, [inspectorBaseWidth, layoutWidth, segmentCount, shouldExpandInspector])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isToolbarLocked) return

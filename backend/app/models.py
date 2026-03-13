@@ -987,6 +987,7 @@ class UDMComponentDefinition(SQLModel):
 class UDMParameterDefinition(SQLModel):
     """UDM参数定义"""
     name: str = Field(min_length=1, max_length=120, description="参数唯一标识")
+    label: Optional[str] = Field(default=None, max_length=120, description="参数显示名称")
     unit: Optional[str] = Field(default=None, max_length=60, description="参数单位")
     default_value: Optional[float] = Field(default=None, description="参数默认值")
     min_value: Optional[float] = Field(default=None, description="参数最小值")

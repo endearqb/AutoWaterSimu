@@ -468,6 +468,7 @@ export interface I18nMessages {
       calculation: string
       simulation: string
       tutorialGuide: string
+      tutorialResults: string
     }
     canvas: {
       doubleClickEdit: string
@@ -1103,6 +1104,17 @@ export interface I18nMessages {
           scale: string
         }
         varNameTooltip: string
+        identifierErrors: {
+          componentNameRequired: string
+          componentNameInvalid: string
+          componentNameDuplicate: string
+          componentNameConflict: string
+          parameterNameRequired: string
+          parameterNameInvalid: string
+          parameterNameDuplicate: string
+          parameterNameConflictsComponent: string
+          parameterReferencedMissing: string
+        }
         aria: {
           allowChange: string
         }

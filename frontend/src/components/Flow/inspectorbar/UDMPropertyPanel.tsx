@@ -352,15 +352,7 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
       return t(param.label)
     }
     if (activeLessonKey) {
-      return formatAliasWithCanonical(
-        resolveTutorialVariableLabel(
-          t,
-          activeLessonKey,
-          param.name,
-          param.label,
-        ),
-        param.name,
-      )
+      return resolveTutorialVariableLabel(t, activeLessonKey, param.name, param.label)
     }
     return param.label
   }

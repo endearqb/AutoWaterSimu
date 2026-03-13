@@ -12,6 +12,7 @@ import { useMemo, useState } from "react"
 
 import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
+import { resolveUdmDisplayName } from "../../../utils/udmRuntimeDisplay"
 
 interface UDMCalculationPanelProps {
   store?: () => ModelFlowState<any, any, any>
@@ -71,7 +72,9 @@ const extractParameterDefs = (
 
         return {
           name,
-          label: name,
+          label: resolveUdmDisplayName(name, {
+            [name]: String(raw.label || name).trim() || name,
+          }),
           unit: String(raw.unit || "").trim() || undefined,
           defaultValue,
           min: toNumber(raw.minValue) ?? toNumber(raw.min_value) ?? undefined,
@@ -241,12 +244,18 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
 
           return (
             <Field.Root key={param.name} invalid={!!error}>
-              <HStack align="flex-start" gap={4}>
-                <Field.Label minW="120px" pt={2}>
-                  {param.label}
-                  {param.unit ? ` (${param.unit})` : ""}
-                </Field.Label>
-                <Box flex={1}>
+              <Box borderWidth="1px" borderRadius="md" p={3}>
+                <Stack gap={3}>
+                  <Box>
+                    <Field.Label mb={1}>
+                      {param.label}
+                      {param.unit ? ` (${param.unit})` : ""}
+                    </Field.Label>
+                    <Text fontSize="xs" color="gray.500">
+                      {param.note || param.name}
+                    </Text>
+                  </Box>
+
                   <Slider.Root
                     value={[value]}
                     onValueChange={(details) =>
@@ -256,7 +265,6 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
                     max={bounds.max}
                     step={bounds.step}
                     width="100%"
-                    mb={2}
                   >
                     <HStack justify="space-between" mb={2}>
                       <Text fontSize="sm" color="gray.600">
@@ -274,14 +282,10 @@ function UDMCalculationPanel({ store }: UDMCalculationPanelProps = {}) {
                       <Slider.Thumbs />
                     </Slider.Control>
                   </Slider.Root>
-                  {param.note ? (
-                    <Text fontSize="xs" color="gray.500" mt={1}>
-                      {param.note}
-                    </Text>
-                  ) : null}
+
                   {error ? <Field.ErrorText>{error}</Field.ErrorText> : null}
-                </Box>
-              </HStack>
+                </Stack>
+              </Box>
             </Field.Root>
           )
         })}

@@ -1,8 +1,9 @@
 import { Box, Tabs } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import { useI18n } from "../../../i18n"
+import { buildUdmDisplayMapsFromNodes } from "../../../utils/udmRuntimeDisplay"
 import AIReportPanel from "./panels/AIReportPanel"
 import DataQualityPanel from "./panels/DataQualityPanel"
 import EdgeConcentrationPanel from "./panels/EdgeConcentrationPanel"
@@ -17,16 +18,28 @@ interface EdgeParameterConfig {
 interface UDMAnalyzerProps {
   resultData: UDMResultData
   edges?: Edge[]
+  nodes?: Array<{ type?: string; data?: Record<string, unknown> }>
   edgeParameterConfigs?: Record<string, Record<string, EdgeParameterConfig>>
 }
 
 const UDMAnalyzer = ({
   resultData,
   edges = [],
+  nodes = [],
   edgeParameterConfigs = {},
 }: UDMAnalyzerProps) => {
   const [activeTab, setActiveTab] = useState(0)
   const { t } = useI18n()
+  const udmDisplayMaps = useMemo(
+    () =>
+      buildUdmDisplayMapsFromNodes(
+        nodes.map((node) => ({
+          type: node.type,
+          data: node.data ?? {},
+        })),
+      ),
+    [nodes],
+  )
 
   return (
     <Box w="full" h="full" p={4} overflowY="auto">
@@ -57,7 +70,11 @@ const UDMAnalyzer = ({
         </Tabs.Content>
 
         <Tabs.Content value="tab-1">
-          <SpatialProfilePanel resultData={resultData} modelType="udm" />
+          <SpatialProfilePanel
+            resultData={resultData}
+            modelType="udm"
+            udmVariableLabels={udmDisplayMaps.variableLabels}
+          />
         </Tabs.Content>
 
         <Tabs.Content value="tab-2">
@@ -66,6 +83,7 @@ const UDMAnalyzer = ({
             edges={edges}
             edgeParameterConfigs={edgeParameterConfigs}
             modelType="udm"
+            udmVariableLabels={udmDisplayMaps.variableLabels}
           />
         </Tabs.Content>
 

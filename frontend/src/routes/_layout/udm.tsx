@@ -10,10 +10,12 @@ import type { DefaultNodeDataFactory } from "../../components/Flow/FlowCanvas"
 import FlowInspector from "../../components/Flow/FlowInspector"
 import FlowLayout from "../../components/Flow/FlowLayout"
 import { UDMToolbarWrapper } from "../../components/Flow/ToolbarWrapper"
+import { INSPECTOR_PANEL_WIDTH } from "../../components/Flow/inspectorbar/BaseInspectorContainer"
 import SimulationPanel from "../../components/Flow/inspectorbar/SimulationPanel"
 import UDMCalculationPanel from "../../components/Flow/inspectorbar/UDMCalculationPanel"
 import UDMPropertyPanel from "../../components/Flow/inspectorbar/UDMPropertyPanel"
 import UDMBubbleMenu from "../../components/Flow/menu/UDMBubbleMenu"
+import TutorialGuideTabPanel from "../../components/UDM/tutorial/TutorialGuideTabPanel"
 import TutorialResultsPanel from "../../components/UDM/tutorial/TutorialResultsPanel"
 import DefaultNode from "../../components/Flow/nodes/DefaultNode"
 import InputNode from "../../components/Flow/nodes/InputNode"
@@ -132,8 +134,16 @@ function UDMPage() {
         ...(lessonKey
           ? [
               {
-                key: "tutorial",
+                key: "tutorialGuide",
                 label: t("flow.tab.tutorialGuide"),
+                component: TutorialGuideTabPanel,
+                props: {
+                  lessonKey,
+                },
+              },
+              {
+                key: "tutorialResults",
+                label: t("flow.tab.tutorialResults"),
                 component: TutorialResultsPanel,
                 props: {
                   lessonKey,
@@ -193,6 +203,9 @@ function UDMPage() {
           modelStore: useUDMStore,
           modelType: "udm",
         }}
+        inspectorBaseWidth={
+          lessonKey ? Math.round(INSPECTOR_PANEL_WIDTH * 1.3) : undefined
+        }
       />
     </ReactFlowProvider>
   )

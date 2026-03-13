@@ -1,3 +1,30 @@
+# 2026-03-13 UDM Label / Tutorial Simulation Consistency TODO
+
+- [x] Inspect relevant UDM schema, editor, runtime display, tutorial preset, and analysis panels
+- [x] Add backend `UDMParameterDefinition.label` support and update targeted backend tests
+- [x] Regenerate frontend OpenAPI client for the new parameter label field
+- [x] Extend UDM editor parameter rows with `label` input plus identifier validation/help text for `name`
+- [x] Add a shared UDM runtime label resolver and switch UDM runtime/analysis displays from `name` to `label`
+- [x] Add tutorial guide tab, widen tutorial inspector layout, and refine UDM calculation panel layout
+- [x] Fix tutorial default-flow input concentration precedence and align chapter-7 `S_NO` with the seed template
+- [x] Harden spatial profile / time-series layout so the line chart renders reliably in the inspector
+- [x] Run frontend TypeScript/build checks and targeted backend pytest
+- [x] Record review notes
+
+## Review
+
+- Backend `UDMParameterDefinition` now supports optional `label`, and targeted API/runtime tests were updated to assert label round-trip plus chapter-7 `S_NO=10.0`.
+- Regenerated the frontend OpenAPI client and patched the generated `UDMParameterDefinition` type so the editor/runtime can consume `parameters[].label`.
+- `UDMModelEditorForm` now exposes a parameter `label` column, persists it in the draft payload, highlights invalid identifier inputs, blocks save on duplicate/conflicting component/parameter names, and requires process-referenced parameters to be defined in the parameter table.
+- Added `frontend/src/utils/udmRuntimeDisplay.ts` and threaded its label maps through UDM property/calculation/results/analysis surfaces so display uses `label` first and falls back to canonical `name`.
+- `/udm` tutorial mode now has separate `tutorialGuide` and `tutorialResults` tabs, and `FlowLayout` accepts a route-level base inspector width so tutorial inspectors render about 30% wider while still preserving edge time-segment expansion.
+- Tutorial default-flow generation now only applies explicit input overrides, and `frontend/src/data/tutorialFlowPresets.ts` aligns chapter-7 `S_NO` with the backend seed template at `10`.
+- Spatial/edge analysis panels and charts now add `minW={0}` and safer width plumbing so the line chart can re-measure and render in compressed inspector layouts.
+- Verification:
+- `cd frontend; npx tsc --noEmit` passed.
+- `cd frontend; npx vite build` passed. Build emitted existing chunk-size / dynamic-import warnings only.
+- `cd backend; .venv\Scripts\python -m pytest app/tests/api/routes/udm_models_validate_test.py app/tests/udm_tutorial_default_flow_runtime_test.py` passed (`6 passed`).
+
 # 2026-03-12 UDM Tutorial Canvas Consistency Fix TODO
 
 - [x] Inspect relevant UDM tutorial canvas files and preserve unrelated in-flight changes

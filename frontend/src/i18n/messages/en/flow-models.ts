@@ -49,6 +49,19 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
         scale: "scale",
       },
       varNameTooltip: "Variable name must be a valid identifier: start with a letter or underscore, contain only letters, digits, and underscores",
+      identifierErrors: {
+        componentNameRequired: "Component name is required",
+        componentNameInvalid: "{name}: component name must be a valid identifier",
+        componentNameDuplicate: "{name}: duplicate component name",
+        componentNameConflict: "{name}: component name cannot match a parameter name",
+        parameterNameRequired: "Parameter name is required",
+        parameterNameInvalid: "{name}: parameter name must be a valid identifier",
+        parameterNameDuplicate: "{name}: duplicate parameter name",
+        parameterNameConflictsComponent:
+          "{name}: parameter name cannot match a component name",
+        parameterReferencedMissing:
+          "{name}: referenced in process expressions but missing from the parameter table",
+      },
       aria: {
         allowChange: "allow-change-{index}",
       },
