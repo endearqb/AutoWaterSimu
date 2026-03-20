@@ -1145,6 +1145,46 @@ export interface I18nMessages {
           defaultFlowSuffix: string
         }
       }
+      importExport: {
+        actions: {
+          exportExcel: string
+          importExcel: string
+        }
+        toast: {
+          exportSuccess: string
+          exportFailed: string
+          onlyXlsx: string
+          previewReady: string
+          previewHasErrors: string
+          previewHasWarnings: string
+          importFailed: string
+          importApplied: string
+        }
+        importDialog: {
+          title: string
+          description: string
+          confirm: string
+          addedComponentsTitle: string
+          removedComponentsTitle: string
+          addedParametersTitle: string
+          removedParametersTitle: string
+          addedTitle: string
+          removedTitle: string
+          errorsTitle: string
+          warningsTitle: string
+          confirmationHint: string
+          stats: {
+            addedComponents: string
+            removedComponents: string
+            addedParameters: string
+            removedParameters: string
+            rows: string
+            added: string
+            removed: string
+            issues: string
+          }
+        }
+      }
       validation: {
         sectionTitle: string
         actions: {

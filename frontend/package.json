@@ -58,6 +58,7 @@
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.0",
     "sugar-high": "^0.9.3",
+    "xlsx": "^0.18.5",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

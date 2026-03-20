@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
 import {
+  type ChangeEvent,
   type ClipboardEvent,
   useEffect,
   useMemo,
@@ -46,6 +47,18 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 import { useI18n } from "@/i18n"
 import { useTutorialProgressStore } from "@/stores/tutorialProgressStore"
+import { FileValidationConfig } from "@/utils/fileValidation"
+import type {
+  PetersonMatrixComponentInfo,
+  PetersonMatrixImportPreview,
+  PetersonMatrixParameterInfo,
+  PetersonMatrixRow,
+} from "@/utils/petersonMatrixWorkbook"
+import {
+  buildPetersonMatrixExportFilename,
+  parsePetersonMatrixWorkbook,
+  serializePetersonMatrixWorkbook,
+} from "@/utils/petersonMatrixWorkbook"
 import {
   matchesTutorialComponentDescription,
   resolveTutorialComponentDisplay,
@@ -63,6 +76,7 @@ import { getTutorialFlowPreset } from "../../data/tutorialFlowPresets"
 import { udmService } from "../../services/udmService"
 import { useUDMFlowStore } from "../../stores/udmFlowStore"
 import ExpressionCellEditorDialog from "./ExpressionCellEditorDialog"
+import PetersonMatrixImportDialog from "./PetersonMatrixImportDialog"
 import ArrowMatrixView from "./tutorial/ArrowMatrixView"
 import ContinuityCheckPanel, {
   type ContinuityCheckItemData,
@@ -116,6 +130,16 @@ type ProcessEditorTarget =
       rowIndex: number
       componentName: string
     }
+
+type PetersonImportDialogState = {
+  preview: PetersonMatrixImportPreview
+  addedComponentNames: string[]
+  removedComponentNames: string[]
+  addedParameterNames: string[]
+  removedParameterNames: string[]
+  addedProcessNames: string[]
+  removedProcessNames: string[]
+}
 
 interface UDMModelEditorFormProps {
   modelId?: string
@@ -256,6 +280,98 @@ const emptyProcess = (): ProcessRow => ({
   stoich: {},
 })
 
+const processRowsToPetersonMatrixRows = (
+  rows: ProcessRow[],
+  componentNames: string[],
+): PetersonMatrixRow[] =>
+  rows
+    .map((row) => {
+      const processName = getCanonicalProcessName(row)
+      const rateExpr = row.rateExpr.trim()
+      const note = row.note.trim()
+      if (!processName && !rateExpr && !note) {
+        const hasNonZeroStoich = componentNames.some(
+          (componentName) => (row.stoich[componentName] || "").trim().length > 0,
+        )
+        if (!hasNonZeroStoich) {
+          return null
+        }
+      }
+
+      return {
+        processName,
+        rateExpr,
+        note,
+        stoich: Object.fromEntries(
+          componentNames.map((componentName) => [
+            componentName,
+            row.stoich[componentName]?.trim() || "0",
+          ]),
+        ),
+      }
+    })
+    .filter((item): item is PetersonMatrixRow => !!item)
+
+const petersonMatrixRowsToProcessRows = (
+  rows: PetersonMatrixRow[],
+  componentNames: string[],
+  options?: {
+    tutorialLessonKey?: string
+    t?: (key: string, params?: Record<string, string | number>) => string
+  },
+): ProcessRow[] =>
+  rows.map((row) => ({
+    _rowId: crypto.randomUUID() as string,
+    _canonicalName: options?.tutorialLessonKey ? row.processName : undefined,
+    _nameSource: options?.tutorialLessonKey ? "localized" : "manual",
+    name:
+      options?.tutorialLessonKey && options.t
+        ? resolveTutorialProcessDisplay(
+            options.t,
+            options.tutorialLessonKey,
+            row.processName,
+          ).label
+        : row.processName,
+    rateExpr: row.rateExpr,
+    note: row.note,
+    stoich: Object.fromEntries(
+      componentNames.map((componentName) => [
+        componentName,
+        row.stoich[componentName] || "0",
+      ]),
+    ),
+  }))
+
+const componentInfosToComponentRows = (
+  componentInfos: PetersonMatrixComponentInfo[],
+): ComponentRow[] =>
+  componentInfos.map((item) => ({
+    _rowId: crypto.randomUUID() as string,
+    _noteSource: "manual",
+    name: item.name.trim(),
+    label: item.label?.trim() || item.name.trim(),
+    unit: item.unit?.trim() || "",
+    defaultValue: "0",
+    isFixed: false,
+    note: item.note?.trim() || "",
+    conversion_factors: null,
+  }))
+
+const parameterInfosToParameterRows = (
+  parameterInfos: PetersonMatrixParameterInfo[],
+): ParameterRow[] =>
+  parameterInfos.map((item) => ({
+    _rowId: crypto.randomUUID() as string,
+    name: item.name.trim(),
+    label: item.label.trim(),
+    unit: item.unit.trim(),
+    defaultValue: item.defaultValue.trim() || "1",
+    minValue: item.min.trim() || "0.1",
+    maxValue: item.max.trim() || "10",
+    scale: item.scale === "log" ? "log" : "lin",
+    note: item.note.trim(),
+  }))
+
 type ValidationIssue = NonNullable<UDMValidationResponse["errors"]>[number]
 type ValidationLocation = NonNullable<ValidationIssue["location"]>
 
@@ -360,7 +476,7 @@ export function UDMModelEditorForm({
   containerMaxW = "full",
 }: UDMModelEditorFormProps) {
   const { t } = useI18n()
-  const { showErrorToast, showSuccessToast, showWarningToast } =
+  const { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } =
     useCustomToast()
 
   const resolvedHeadingText =
@@ -396,6 +512,9 @@ export function UDMModelEditorForm({
   const [tutorialMode, setTutorialMode] = useState<TutorialMode>("expert")
   const [currentTutorialStep, setCurrentTutorialStep] =
     useState<TutorialStep>(1)
+  const [isImportingMatrix, setIsImportingMatrix] = useState(false)
+  const [pendingImportDialog, setPendingImportDialog] =
+    useState<PetersonImportDialogState | null>(null)
 
   const tutorialLessonKey = _lessonKey ?? lessonKeyFromMeta
   const tutorialLesson = useMemo(
@@ -453,6 +572,7 @@ export function UDMModelEditorForm({
   const parameterNameInputRefs = useRef<
     Record<number, HTMLInputElement | null>
   >({})
+  const matrixImportInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     setCurrentModelId(modelId)
@@ -661,6 +781,13 @@ export function UDMModelEditorForm({
   const parameterNames = useMemo(
     () => parameterRows.map((row) => row.name.trim()).filter(Boolean),
     [parameterRows],
+  )
+  const currentProcessNames = useMemo(
+    () =>
+      processRows
+        .map((row) => getCanonicalProcessName(row))
+        .filter(Boolean),
+    [processRows],
   )
   const componentNameCounts = useMemo(
     () => buildIdentifierCountMap(componentNames),
@@ -941,7 +1068,17 @@ export function UDMModelEditorForm({
     return errors
   }
 
-  const buildDraft = (): UDMModelDefinitionDraft => {
+  const buildDraft = (overrides?: {
+    componentRows?: ComponentRow[]
+    parameterRows?: ParameterRow[]
+    processRows?: ProcessRow[]
+  }): UDMModelDefinitionDraft => {
+    const componentRowsSource = overrides?.componentRows ?? componentRows
+    const parameterRowsSource = overrides?.parameterRows ?? parameterRows
+    const processRowsSource = overrides?.processRows ?? processRows
+    const componentNamesSource = componentRowsSource
+      .map((row) => row.name.trim())
+      .filter(Boolean)
     const existingMeta = {
       ...(((detailQuery.data?.latest_version?.meta || {}) as Record<
         string,
@@ -954,7 +1091,7 @@ export function UDMModelEditorForm({
       !Array.isArray(existingMeta.learning)
         ? (existingMeta.learning as Record<string, unknown>)
         : {}
-    const normalizedComponents = componentRows
+    const normalizedComponents = componentRowsSource
       .map((row) => {
         const compName = row.name.trim()
         if (!compName) return null
@@ -977,14 +1114,14 @@ export function UDMModelEditorForm({
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    const normalizedProcesses = processRows
+    const normalizedProcesses = processRowsSource
       .map((row) => {
         const processName = getCanonicalProcessName(row)
         const rateExpr = row.rateExpr.trim()
         if (!processName && !rateExpr) return null
         const stoichExpr: Record<string, string> = {}
         const stoich: Record<string, number> = {}
-        componentNames.forEach((compName) => {
+        componentNamesSource.forEach((compName) => {
           const raw = (row.stoich[compName] || "0").trim()
           stoichExpr[compName] = raw || "0"
           const num = Number.parseFloat(raw)
@@ -1004,7 +1141,7 @@ export function UDMModelEditorForm({
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    const normalizedParameters = parameterRows
+    const normalizedParameters = parameterRowsSource
       .map((row) => {
         const paramName = row.name.trim()
         if (!paramName) return null
@@ -1110,9 +1247,29 @@ export function UDMModelEditorForm({
     return errors
   }
 
-  const runValidate = async () => {
+  const validateDraft = async (options?: {
+    showPassedToast?: boolean
+    showIssueToast?: boolean
+    showFailureToast?: boolean
+    componentRowsOverride?: ComponentRow[]
+    parameterRowsOverride?: ParameterRow[]
+    processRowsOverride?: ProcessRow[]
+  }): Promise<UDMValidationResponse | null> => {
+    const {
+      showPassedToast = true,
+      showIssueToast = true,
+      showFailureToast = true,
+      componentRowsOverride,
+      parameterRowsOverride,
+      processRowsOverride,
+    } = options ?? {}
+
     try {
-      const draft = buildDraft()
+      const draft = buildDraft({
+        componentRows: componentRowsOverride,
+        parameterRows: parameterRowsOverride,
+        processRows: processRowsOverride,
+      })
       const result = await udmService.validateModelDefinition(draft)
       setValidation(result)
       if (tutorialLesson) {
@@ -1126,22 +1283,32 @@ export function UDMModelEditorForm({
         }
       }
       if (result.ok) {
-        showSuccessToast(t("flow.udmEditor.validation.toast.validationPassed"))
-      } else {
+        if (showPassedToast) {
+          showSuccessToast(t("flow.udmEditor.validation.toast.validationPassed"))
+        }
+      } else if (showIssueToast) {
         showWarningToast(
           t("flow.udmEditor.validation.toast.validationHasIssues"),
         )
       }
+      return result
     } catch (error) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : t("flow.udmEditor.validation.toast.validationFailed"),
-      )
+      if (showFailureToast) {
+        showErrorToast(
+          error instanceof Error
+            ? error.message
+            : t("flow.udmEditor.validation.toast.validationFailed"),
+        )
+      }
       if (tutorialLesson) {
         markValidationResult(tutorialLesson.lessonKey, false)
       }
+      return null
     }
+  }
+
+  const runValidate = async () => {
+    await validateDraft()
   }
 
   const mergeExtractedParameters = () => {
@@ -1163,6 +1330,202 @@ export function UDMModelEditorForm({
     })
     setParameterRows(Array.from(existing.values()))
     showSuccessToast(t("flow.udmEditor.validation.toast.parametersMerged"))
+  }
+
+  const triggerMatrixImport = () => {
+    matrixImportInputRef.current?.click()
+  }
+
+  const handleExportPetersonMatrix = async () => {
+    try {
+      const exportRows = processRowsToPetersonMatrixRows(processRows, componentNames)
+      const workbookData = serializePetersonMatrixWorkbook({
+        componentNames,
+        componentInfos: componentRows
+          .map((row) => {
+            const componentName = row.name.trim()
+            if (!componentName) {
+              return null
+            }
+            return {
+              name: componentName,
+              label: row.label.trim() || componentName,
+              unit: row.unit.trim(),
+              defaultValue: row.defaultValue.trim() || "0",
+              isFixed: row.isFixed,
+              note: row.note.trim(),
+            }
+          })
+          .filter((item): item is NonNullable<typeof item> => !!item),
+        parameterInfos: parameterRows
+          .map((row) => {
+            const parameterName = row.name.trim()
+            if (!parameterName) {
+              return null
+            }
+            return {
+              name: parameterName,
+              label: row.label.trim(),
+              unit: row.unit.trim(),
+              defaultValue: row.defaultValue.trim() || "1",
+              min: row.minValue.trim() || "0.1",
+              max: row.maxValue.trim() || "10",
+              scale: row.scale,
+              note: row.note.trim(),
+            }
+          })
+          .filter((item): item is NonNullable<typeof item> => !!item),
+        rows: exportRows,
+      })
+      const blob = new Blob([workbookData], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      })
+      const link = document.createElement("a")
+      link.href = URL.createObjectURL(blob)
+      link.download = buildPetersonMatrixExportFilename(
+        name.trim() || t("flow.udmEditor.form.defaults.unnamedModel"),
+      )
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(link.href)
+      showSuccessToast(
+        t("flow.udmEditor.importExport.toast.exportSuccess", {
+          count: exportRows.length,
+        }),
+      )
+    } catch (error) {
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmEditor.importExport.toast.exportFailed"),
+      )
+    }
+  }
+
+  const handleMatrixFileChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) {
+      return
+    }
+
+    const fileValidation = FileValidationConfig.validateFile(file)
+    if (!fileValidation.isValid) {
+      showErrorToast(fileValidation.errors[0])
+      return
+    }
+
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      showErrorToast(t("flow.udmEditor.importExport.toast.onlyXlsx"))
+      return
+    }
+
+    setIsImportingMatrix(true)
+    try {
+      const preview = parsePetersonMatrixWorkbook(await file.arrayBuffer())
+      const importedComponentNames = preview.componentNames
+      const importedProcessNames = preview.rows.map((row) => row.processName)
+      const importedParameterNames = preview.parameterInfos.map(
+        (row) => row.name,
+      )
+      const importedComponentSet = new Set(importedComponentNames)
+      const currentComponentSet = new Set(componentNames)
+      const importedParameterSet = new Set(importedParameterNames)
+      const currentParameterSet = new Set(parameterNames)
+      const addedComponentNames = importedComponentNames.filter(
+        (componentName) => !currentComponentSet.has(componentName),
+      )
+      const removedComponentNames = componentNames.filter(
+        (componentName) => !importedComponentSet.has(componentName),
+      )
+      const addedParameterNames = importedParameterNames.filter(
+        (parameterName) => !currentParameterSet.has(parameterName),
+      )
+      const removedParameterNames = parameterNames.filter(
+        (parameterName) => !importedParameterSet.has(parameterName),
+      )
+      const importedSet = new Set(importedProcessNames)
+      const currentSet = new Set(currentProcessNames)
+      const addedProcessNames = importedProcessNames.filter(
+        (processName) => !currentSet.has(processName),
+      )
+      const removedProcessNames = currentProcessNames.filter(
+        (processName) => !importedSet.has(processName),
+      )
+
+      setPendingImportDialog({
+        preview,
+        addedComponentNames,
+        removedComponentNames,
+        addedParameterNames,
+        removedParameterNames,
+        addedProcessNames,
+        removedProcessNames,
+      })
+
+      if (preview.errors.length > 0) {
+        showErrorToast(
+          t("flow.udmEditor.importExport.toast.previewHasErrors", {
+            count: preview.errors.length,
+          }),
+        )
+      } else if (preview.warnings.length > 0) {
+        showWarningToast(
+          t("flow.udmEditor.importExport.toast.previewHasWarnings", {
+            count: preview.warnings.length,
+          }),
+        )
+      } else {
+        showInfoToast(t("flow.udmEditor.importExport.toast.previewReady"))
+      }
+    } catch (error) {
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : t("flow.udmEditor.importExport.toast.importFailed"),
+      )
+    } finally {
+      setIsImportingMatrix(false)
+    }
+  }
+
+  const applyPendingMatrixImport = async () => {
+    if (!pendingImportDialog || pendingImportDialog.preview.errors.length > 0) {
+      return
+    }
+
+    const nextComponentRows = componentInfosToComponentRows(
+      pendingImportDialog.preview.componentInfos,
+    )
+    const nextParameterRows = parameterInfosToParameterRows(
+      pendingImportDialog.preview.parameterInfos,
+    )
+    const nextProcessRows = petersonMatrixRowsToProcessRows(
+      pendingImportDialog.preview.rows,
+      pendingImportDialog.preview.componentNames,
+      { tutorialLessonKey, t },
+    )
+    setComponentRows(nextComponentRows)
+    setParameterRows(nextParameterRows)
+    setProcessRows(nextProcessRows)
+    const importedCount = pendingImportDialog.preview.rows.length
+    setPendingImportDialog(null)
+    showSuccessToast(
+      t("flow.udmEditor.importExport.toast.importApplied", {
+        count: importedCount,
+      }),
+    )
+    await validateDraft({
+      showPassedToast: false,
+      showIssueToast: true,
+      showFailureToast: true,
+      componentRowsOverride: nextComponentRows,
+      parameterRowsOverride: nextParameterRows,
+      processRowsOverride: nextProcessRows,
+    })
   }
 
   const saveModel = async (): Promise<UDMModelDetailPublic | null> => {
@@ -2018,6 +2381,23 @@ export function UDMModelEditorForm({
                 {t("flow.udmEditor.form.sections.processes")}
               </Heading>
               <HStack>
+                <Button
+                  size="sm"
+                  variant="subtle"
+                  onClick={handleExportPetersonMatrix}
+                  disabled={isReadonlyMode || isImportingMatrix}
+                >
+                  {t("flow.udmEditor.importExport.actions.exportExcel")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="subtle"
+                  onClick={triggerMatrixImport}
+                  disabled={isReadonlyMode || isImportingMatrix}
+                  loading={isImportingMatrix}
+                >
+                  {t("flow.udmEditor.importExport.actions.importExcel")}
+                </Button>
                 {showStoichSection ? (
                   <Button
                     size="sm"
@@ -2048,6 +2428,13 @@ export function UDMModelEditorForm({
                 </Button>
               </HStack>
             </Flex>
+            <Input
+              ref={matrixImportInputRef}
+              display="none"
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={handleMatrixFileChange}
+            />
             <Table.ScrollArea
               maxW="100%"
               maxH="520px"
@@ -2656,6 +3043,20 @@ export function UDMModelEditorForm({
           </Flex>
         </Box>
       </Flex>
+
+      <PetersonMatrixImportDialog
+        isOpen={!!pendingImportDialog}
+        preview={pendingImportDialog?.preview ?? null}
+        addedComponentNames={pendingImportDialog?.addedComponentNames ?? []}
+        removedComponentNames={pendingImportDialog?.removedComponentNames ?? []}
+        addedParameterNames={pendingImportDialog?.addedParameterNames ?? []}
+        removedParameterNames={pendingImportDialog?.removedParameterNames ?? []}
+        addedProcessNames={pendingImportDialog?.addedProcessNames ?? []}
+        removedProcessNames={pendingImportDialog?.removedProcessNames ?? []}
+        onClose={() => setPendingImportDialog(null)}
+        onConfirm={applyPendingMatrixImport}
+        t={t}
+      />
 
       {editorTarget ? (
         <ExpressionCellEditorDialog

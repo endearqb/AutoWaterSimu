@@ -94,6 +94,51 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
         defaultFlowSuffix: "-default-flow",
       },
     },
+    importExport: {
+      actions: {
+        exportExcel: "Export Excel",
+        importExcel: "Import Excel",
+      },
+      toast: {
+        exportSuccess: "Exported Peterson matrix with {count} process rows",
+        exportFailed: "Failed to export Excel workbook",
+        onlyXlsx: "Only .xlsx files are supported for import right now",
+        previewReady: "Excel workbook parsed. Review the import preview.",
+        previewHasErrors:
+          "Import preview found {count} blocking issue(s). Please review them first.",
+        previewHasWarnings:
+          "Import preview found {count} warning(s). Review before importing.",
+        importFailed: "Failed to import Excel workbook",
+        importApplied:
+          "Imported Peterson matrix and updated components, processes, and parameters with {count} process row(s)",
+      },
+      importDialog: {
+        title: "Import Peterson Matrix",
+        description:
+          "Confirming will rebuild the current editor components, processes matrix, and parameter table from Excel.",
+        confirm: "Confirm Import",
+        addedComponentsTitle: "Components to add",
+        removedComponentsTitle: "Components to remove",
+        addedParametersTitle: "Parameters to add",
+        removedParametersTitle: "Parameters to remove",
+        addedTitle: "Processes to add",
+        removedTitle: "Processes to remove",
+        errorsTitle: "Blocking issues",
+        warningsTitle: "Warnings",
+        confirmationHint:
+          "Confirming the import replaces the current components, processes matrix, and parameter table, then runs the existing model validation once.",
+        stats: {
+          addedComponents: "Components +{count}",
+          removedComponents: "Components -{count}",
+          addedParameters: "Parameters +{count}",
+          removedParameters: "Parameters -{count}",
+          rows: "Rows {count}",
+          added: "Added {count}",
+          removed: "Removed {count}",
+          issues: "Issues {count}",
+        },
+      },
+    },
     validation: {
       sectionTitle: "Model Validation & Parameter Extraction",
       actions: {

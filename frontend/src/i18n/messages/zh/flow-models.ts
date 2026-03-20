@@ -90,6 +90,48 @@ export const flowModelsMessages: Pick<I18nMessages["flow"], "udmEditor" | "udmMo
         defaultFlowSuffix: "-默认流程图",
       },
     },
+    importExport: {
+      actions: {
+        exportExcel: "导出 Excel",
+        importExcel: "导入 Excel",
+      },
+      toast: {
+        exportSuccess: "已导出 Peterson 矩阵，共 {count} 条过程",
+        exportFailed: "导出 Excel 失败",
+        onlyXlsx: "当前仅支持导入 .xlsx 文件",
+        previewReady: "Excel 已解析，请确认导入预览",
+        previewHasErrors: "导入预览包含 {count} 个阻断问题，请先检查",
+        previewHasWarnings: "导入预览包含 {count} 个提示，请确认后导入",
+        importFailed: "导入 Excel 失败",
+        importApplied: "已导入 Peterson 矩阵，并同步更新变量、过程与参数，共覆盖 {count} 条过程",
+      },
+      importDialog: {
+        title: "导入 Peterson 矩阵",
+        description:
+          "确认后将以 Excel 为准重建当前编辑器中的变量、过程矩阵与参数表。",
+        confirm: "确认导入",
+        addedComponentsTitle: "将新增的变量",
+        removedComponentsTitle: "将被移除的变量",
+        addedParametersTitle: "将新增的参数",
+        removedParametersTitle: "将被移除的参数",
+        addedTitle: "将新增的过程",
+        removedTitle: "将被移除的过程",
+        errorsTitle: "阻断问题",
+        warningsTitle: "提示信息",
+        confirmationHint:
+          "确认导入后，系统会同时覆盖当前变量、过程矩阵与参数表，并自动运行一次现有模型校验。",
+        stats: {
+          addedComponents: "新增变量 {count}",
+          removedComponents: "移除变量 {count}",
+          addedParameters: "新增参数 {count}",
+          removedParameters: "移除参数 {count}",
+          rows: "导入行数 {count}",
+          added: "新增 {count}",
+          removed: "移除 {count}",
+          issues: "问题 {count}",
+        },
+      },
+    },
     validation: {
       sectionTitle: "模型校验与参数抽取",
       actions: {
