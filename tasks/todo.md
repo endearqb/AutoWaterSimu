@@ -253,6 +253,49 @@
 
 - Pending.
 
+# 2026-03-30 WaterTAP Calculator HTML Preview TODO
+
+- [x] Inspect current frontend static asset structure and confirm preview-page landing path
+- [x] Record the task context in planning/progress files without disturbing unrelated repo work
+- [x] Create a single-file Chinese HTML preview page under `frontend/public/previews/`
+- [x] Implement 5 WaterTAP-inspired quick calculators with standalone JS functions
+- [x] Add common-case and edge-case presets for each calculator
+- [x] Add Chinese docs sections for usage, assumptions, limits, and WaterTAP model mapping
+- [x] Run frontend validation (`npx tsc --noEmit`, `npm run build`) and record results
+- [x] Update review notes and delivery path
+
+## Review
+
+- Delivered preview page: `frontend/public/previews/watertap-calculators-preview.html`
+- Access path after running frontend: `/previews/watertap-calculators-preview.html`
+- Included calculators: RO, NF, Ion Exchange, GAC, UV/AOP
+- Each calculator now includes Chinese inputs/results/intermediates, preset buttons, docs guidance, warnings, and WaterTAP model mapping
+- Verification:
+- `cd frontend; npx tsc --noEmit` passed
+- `cd frontend; npm run build` passed
+- Built output contains `frontend/dist/previews/watertap-calculators-preview.html`
+
+# 2026-03-30 WaterTAP RO/NF Module Report TODO
+
+- [x] Inspect WaterTAP RO/NF official docs and source files
+- [x] Summarize RO module family (`base + 0D + 1D`) in Chinese
+- [x] Summarize NF module family (`0D + DSPM-DE 0D`) in Chinese
+- [x] Write a detailed report covering principles, calculation flow, and algorithm details
+- [x] Save the report under `tasks/`
+
+## Review
+
+- Delivered report: `tasks/WaterTAP_RO_NF_计算模块原理与算法细节报告_2026-03-30.md`
+- Scope:
+- RO shared architecture and 0D/1D relationship
+- NF simplified 0D model
+- NF DSPM-DE mechanistic model
+- Focus:
+- Physical principles
+- Calculation workflow
+- Initialization and solver behavior
+- Algorithm details and frontend suitability boundaries
+
 # 2026-03-12 Petersen Tutorial i18n/UI Refinement TODO
 
 - [x] Inspect current UDM tutorial editor WIP and preserve unrelated in-flight changes

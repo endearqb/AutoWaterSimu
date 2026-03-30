@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WaterTAP 风格计算器中文预览</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f8fb;
+        --panel: #ffffff;
+        --panel-alt: #eef6fb;
+        --ink: #153047;
+        --muted: #58758d;
+        --line: #d4e3ed;
+        --accent: #0f8cb8;
+        --accent-deep: #0b5f8b;
+        --accent-soft: rgba(15, 140, 184, 0.12);
+        --success: #19735c;
+        --warn: #9b6400;
+        --shadow: 0 18px 48px rgba(18, 47, 71, 0.08);
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 140, 184, 0.12), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(63, 154, 117, 0.1), transparent 24%),
+          linear-gradient(180deg, #f7fbfe 0%, var(--bg) 100%);
+      }
+
+      a {
+        color: var(--accent-deep);
+      }
+
+      .page {
+        width: min(1240px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      .hero {
+        background:
+          linear-gradient(135deg, rgba(8, 78, 120, 0.98), rgba(20, 127, 165, 0.94)),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent);
+        border-radius: 28px;
+        color: #f6fbff;
+        padding: 32px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -40px -70px auto;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 62%);
+        pointer-events: none;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        font-size: 13px;
+        letter-spacing: 0.02em;
+      }
+
+      h1 {
+        margin: 14px 0 12px;
+        font-size: clamp(34px, 4.2vw, 52px);
+        line-height: 1.08;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 820px;
+        color: rgba(246, 251, 255, 0.88);
+        line-height: 1.75;
+        font-size: 16px;
+      }
+
+      .hero-grid,
+      .footer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-top: 22px;
+      }
+
+      .hero-stat,
+      .footer-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        padding: 16px;
+        backdrop-filter: blur(10px);
+      }
+
+      .hero-stat strong,
+      .footer-card strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 16px;
+        margin: 34px 0 18px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .calculator-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .card-header {
+        padding: 22px 22px 18px;
+        background:
+          linear-gradient(180deg, rgba(15, 140, 184, 0.12), transparent),
+          linear-gradient(180deg, #ffffff, #fcfeff);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .card-header-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-deep);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .card h3 {
+        margin: 10px 0 8px;
+        font-size: 24px;
+      }
+
+      .card-desc {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+        font-size: 14px;
+      }
+
+      .card-body {
+        padding: 20px 22px 24px;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          transform 0.16s ease,
+          background-color 0.16s ease,
+          color 0.16s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .btn-secondary {
+        background: #e8f4fa;
+        color: var(--accent-deep);
+      }
+
+      .btn-ghost {
+        background: #f6f9fb;
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+
+      .input-grid,
+      .metric-grid,
+      .docs-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .input-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      }
+
+      .docs-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        margin-top: 16px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #fbfdfe;
+        border: 1px solid var(--line);
+      }
+
+      .field label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .field span {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .field input {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid #bfd5e3;
+        padding: 10px 12px;
+        font-size: 15px;
+        color: var(--ink);
+        background: white;
+      }
+
+      .block {
+        margin-top: 18px;
+      }
+
+      .block-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .block-title h4 {
+        margin: 0;
+        font-size: 17px;
+      }
+
+      .block-title small {
+        color: var(--muted);
+      }
+
+      .metric {
+        padding: 14px;
+        border-radius: 16px;
+        background: var(--panel-alt);
+        border: 1px solid #d8e9f3;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .metric-value {
+        font-size: 23px;
+        font-weight: 800;
+        line-height: 1.12;
+      }
+
+      .metric-help {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .summary-box,
+      .warning-box,
+      .docs-card,
+      .mapping-box {
+        border-radius: 16px;
+        padding: 16px;
+        line-height: 1.7;
+      }
+
+      .summary-box {
+        background: #f2faf6;
+        border: 1px solid rgba(25, 115, 92, 0.18);
+        color: var(--success);
+      }
+
+      .warning-box {
+        background: #fff7e8;
+        border: 1px solid rgba(155, 100, 0, 0.18);
+        color: var(--warn);
+      }
+
+      .warning-box strong,
+      .docs-card strong,
+      .mapping-box strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .warning-box ul,
+      .docs-card ul,
+      .mapping-box ul,
+      .footer-card ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+
+      .docs-card {
+        background: #fbfdff;
+        border: 1px solid #ddebf4;
+      }
+
+      .mapping-box {
+        margin-top: 16px;
+        background: linear-gradient(180deg, #f7fbfe, #f1f7fb);
+        border: 1px solid #d7e6ef;
+      }
+
+      .footer-note {
+        margin-top: 28px;
+        padding: 24px;
+        border-radius: 24px;
+        background: linear-gradient(180deg, #0d3f5d, #12597f);
+        color: rgba(246, 251, 255, 0.92);
+        box-shadow: var(--shadow);
+      }
+
+      .footer-note h2 {
+        margin: 0 0 10px;
+      }
+
+      .footer-note p {
+        margin: 0;
+        line-height: 1.75;
+      }
+
+      .mono {
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      @media (max-width: 760px) {
+        .page {
+          width: min(100vw - 20px, 1240px);
+          padding-top: 16px;
+        }
+
+        .hero,
+        .card-header,
+        .card-body,
+        .footer-note {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+
+        .section-head {
+          align-items: start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="hero">
+        <div class="eyebrow">WaterTAP 概念对齐 · 纯前端快算预览</div>
+        <h1>水处理计算器中文预览页</h1>
+        <p>
+          本页用于快速验证 5 个 WaterTAP 风格计算器的内容结构、输入字段、结果表达和文档说明方式。
+          当前版本是工程快算预览，适合方案初筛、教学演示和参数敏感性体验，不用于替代 WaterTAP 正式模型、后端求解器或完整工艺设计。
+        </p>
+        <div class="hero-grid">
+          <div class="hero-stat">
+            <strong>本页验证什么</strong>
+            输入项是否合理、结果是否易懂、中文 docs 是否足够清楚、哪些计算适合继续迁入 React 前端。
+          </div>
+          <div class="hero-stat">
+            <strong>本页不验证什么</strong>
+            不复刻 Pyomo/IDAES 严格求解，不保证与 WaterTAP 数值一一对应，不做 flowsheet 级联优化。
+          </div>
+          <div class="hero-stat">
+            <strong>建议使用方式</strong>
+            先点“常规示例”看默认表现，再点“边界示例”观察风险提示，最后结合卡片内 Docs 判断是否值得前端集成。
+          </div>
+        </div>
+      </section>
+
+      <div class="section-head">
+        <div>
+          <h2>5 个首批 WaterTAP 风格快算器</h2>
+          <p>统一结构：输入参数、计算结果、关键中间量、Docs 使用说明、适用边界与 WaterTAP 对应模型。</p>
+        </div>
+      </div>
+
+      <section class="calculator-grid" id="calculator-grid"></section>
+
+      <section class="footer-note">
+        <h2>进一步使用建议</h2>
+        <div class="footer-grid">
+          <div class="footer-card">
+            <strong>如果预览通过</strong>
+            <ul>
+              <li>把每个公式函数迁移到 TS 纯函数文件。</li>
+              <li>把当前卡片结构迁移到 Chakra 组件。</li>
+              <li>优先挑 1 到 2 个反馈最明确的计算器接入首页。</li>
+            </ul>
+          </div>
+          <div class="footer-card">
+            <strong>如果需要更高保真度</strong>
+            <ul>
+              <li>转向 WaterTAP 的 unit model 或 flowsheet。</li>
+              <li>在后端接入更严格的物性、反应和求解逻辑。</li>
+              <li>将当前页面保留为教学版或预估版入口。</li>
+            </ul>
+          </div>
+          <div class="footer-card">
+            <strong>WaterTAP 参考方向</strong>
+            <ul>
+              <li><a href="https://github.com/watertap-org/watertap/tree/main/watertap/unit_models" target="_blank" rel="noreferrer">Unit Models</a></li>
+              <li><a href="https://github.com/watertap-org/watertap/tree/main/watertap/unit_models/zero_order" target="_blank" rel="noreferrer">Zero-Order Unit Models</a></li>
+              <li><a href="https://github.com/watertap-org/watertap/tree/main/watertap/flowsheets" target="_blank" rel="noreferrer">Flowsheets</a></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+      const safe = (value, floor = 1e-9) => Math.max(Number(value) || 0, floor);
+      const round = (value, digits = 2) => {
+        if (!Number.isFinite(value)) return "—";
+        return value.toLocaleString("zh-CN", {
+          maximumFractionDigits: digits,
+          minimumFractionDigits: digits,
+        });
+      };
+
+      const normalize = (value, fallback, min = -Infinity, max = Infinity) => {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return fallback;
+        return clamp(numeric, min, max);
+      };
+
+      const createMetric = (label, value, unit, help = "") => ({
+        label,
+        value,
+        unit,
+        help,
+      });
+
+      const calculatorConfigs = [
+        {
+          id: "ro",
+          title: "RO 快速估算",
+          tag: "膜法分离",
+          description: "用回收率、盐度和设计通量快速估算反渗透系统的产水量、压力级和比能耗。",
+          inputs: [
+            { key: "feedFlow", label: "进水流量", unit: "m3/h", hint: "建议先填设计平均流量。", min: 1, max: 3000, step: 1, value: 120 },
+            { key: "feedTds", label: "进水 TDS", unit: "mg/L", hint: "适合中高盐度快算。", min: 50, max: 80000, step: 50, value: 18000 },
+            { key: "recovery", label: "回收率", unit: "%", hint: "通常 30% 到 60% 更常见。", min: 5, max: 90, step: 1, value: 45 },
+            { key: "temperature", label: "温度", unit: "°C", hint: "用于修正近似渗透压。", min: 4, max: 45, step: 1, value: 25 },
+            { key: "flux", label: "设计通量", unit: "LMH", hint: "用于估算膜面积。", min: 5, max: 50, step: 0.5, value: 18 },
+            { key: "pumpEff", label: "泵效率", unit: "%", hint: "常用于估算比能耗。", min: 30, max: 95, step: 1, value: 78 },
+          ],
+          presets: {
+            regular: { feedFlow: 120, feedTds: 18000, recovery: 45, temperature: 25, flux: 18, pumpEff: 78 },
+            edge: { feedFlow: 120, feedTds: 42000, recovery: 58, temperature: 33, flux: 24, pumpEff: 62 },
+          },
+          watertap: [
+            "unit_models/reverse_osmosis_0D.py",
+            "flowsheets/seawater_RO_desalination",
+            "flowsheets/RO_with_energy_recovery",
+          ],
+          docs: {
+            scenes: [
+              "快速比较不同回收率和盐度下的压力级、比能耗和膜面积变化趋势。",
+              "在方案筛选阶段判断某组设计参数是否明显偏激进。",
+            ],
+            inputNotes: [
+              "进水 TDS 用来近似渗透压，适合盐分主导、未细分离子组成的场景。",
+              "设计通量用于估算膜面积，不代表膜元件的真实运行剖面。",
+            ],
+            outputNotes: [
+              "比能耗越高，通常意味着压力级更高、泵效率更低或回收率设置更激进。",
+              "浓水 TDS 只做一阶物料衡算近似，适合快算，不适合浓差极化分析。",
+            ],
+            assumptions: [
+              "采用近似渗透压系数和简化泵功关系。",
+              "未显式考虑能量回收装置、压降、污染和温度校正细节。",
+            ],
+            notUse: [
+              "需要精确校核膜段配置、浓差极化、回收装置时。",
+              "需要与 WaterTAP 求解结果逐项比对或用于正式设计文件时。",
+            ],
+          },
+          calculate(values) {
+            const flow = normalize(values.feedFlow, 120, 1, 3000);
+            const tds = normalize(values.feedTds, 18000, 50, 80000);
+            const recoveryPct = normalize(values.recovery, 45, 5, 90);
+            const recovery = recoveryPct / 100;
+            const tempC = normalize(values.temperature, 25, 4, 45);
+            const flux = normalize(values.flux, 18, 5, 50);
+            const pumpEff = normalize(values.pumpEff, 78, 30, 95) / 100;
+
+            const permeateFlow = flow * recovery;
+            const brineFlow = safe(flow - permeateFlow, 0.001);
+            const salinityGL = tds / 1000;
+            const osmoticPressureBar = 0.78 * salinityGL * ((tempC + 273.15) / 298.15);
+            const concentrateTds = tds / safe(1 - recovery, 0.02);
+            const operatingPressureBar = osmoticPressureBar * 1.18 + 4;
+            const sec = (operatingPressureBar * 0.02778 * (flow / safe(permeateFlow))) / safe(pumpEff, 0.35);
+            const membraneArea = (permeateFlow * 1000) / safe(flux, 1);
+
+            const warnings = [];
+            if (recoveryPct > 55) warnings.push("回收率已经偏高，浓水侧风险和结垢压力可能明显上升。");
+            if (tds > 35000) warnings.push("高盐度工况下，近似渗透压对实际离子组成很敏感，建议后续转后端模型校核。");
+            if (pumpEff < 0.7) warnings.push("泵效率偏低会显著放大比能耗，当前结果更像设备筛选预警。");
+
+            return {
+              summary: `在当前设置下，系统预计产水约 ${round(permeateFlow, 1)} m3/h，比能耗约 ${round(sec, 2)} kWh/m3。若你主要在比较压力级和能耗趋势，这个结果已经足够用于前期方案筛选。`,
+              outputs: [
+                createMetric("产水流量", permeateFlow, "m3/h", "进水流量乘回收率。"),
+                createMetric("浓水 TDS", concentrateTds, "mg/L", "基于一阶物料衡算近似。"),
+                createMetric("近似操作压力", operatingPressureBar, "bar", "由近似渗透压叠加设计裕量得到。"),
+                createMetric("比能耗", sec, "kWh/m3", "简化泵功模型下的单位产水能耗。"),
+              ],
+              intermediates: [
+                createMetric("近似渗透压", osmoticPressureBar, "bar", "盐度和温度驱动的近似值。"),
+                createMetric("膜面积估算", membraneArea, "m2", "按设计通量反推。"),
+                createMetric("浓水流量", brineFlow, "m3/h", "用于判断浓缩侧负荷。"),
+              ],
+              warnings,
+            };
+          },
+        },
+        {
+          id: "nf",
+          title: "NF 快速估算",
+          tag: "截留与分配",
+          description: "快速判断纳滤系统的产浓水分配、溶质去除趋势和膜面积需求。",
+          inputs: [
+            { key: "feedFlow", label: "进水流量", unit: "m3/h", hint: "适合做单级纳滤的设计快算。", min: 1, max: 3000, step: 1, value: 80 },
+            { key: "feedConc", label: "目标溶质浓度", unit: "mg/L", hint: "可理解为需要关注的代表性溶质。", min: 10, max: 30000, step: 10, value: 2200 },
+            { key: "recovery", label: "回收率", unit: "%", hint: "用于分配产水和浓水流量。", min: 5, max: 90, step: 1, value: 75 },
+            { key: "rejection", label: "截留率", unit: "%", hint: "对目标溶质的平均截留率。", min: 10, max: 99, step: 1, value: 85 },
+            { key: "flux", label: "设计通量", unit: "LMH", hint: "用于估算所需膜面积。", min: 5, max: 60, step: 0.5, value: 24 },
+          ],
+          presets: {
+            regular: { feedFlow: 80, feedConc: 2200, recovery: 75, rejection: 85, flux: 24 },
+            edge: { feedFlow: 80, feedConc: 12000, recovery: 85, rejection: 65, flux: 32 },
+          },
+          watertap: [
+            "unit_models/nanofiltration_0D.py",
+            "unit_models/nanofiltration_ZO.py",
+            "flowsheets/nf_dspmde",
+          ],
+          docs: {
+            scenes: [
+              "比较不同截留率和回收率设定下的产水质量趋势。",
+              "快速判断膜面积是否会因通量假设过于激进而失真。",
+            ],
+            inputNotes: [
+              "目标溶质浓度可代表硬度、色度前体或某种重点离子，但当前不区分多组分。",
+              "截留率是整体平均值，适合教学和方案比选，不适合精细膜分离校核。",
+            ],
+            outputNotes: [
+              "产水浓度越低，通常代表截留率更高，但浓水侧浓缩会更明显。",
+              "膜面积越大，说明当前通量设定更保守或产水量更大。",
+            ],
+            assumptions: [
+              "使用单溶质平均截留近似和一阶物料衡算。",
+              "不显式考虑膜荷电、跨膜压差和多离子竞争效应。",
+            ],
+            notUse: [
+              "需要评估具体离子选择性、价态影响或 DSPM-DE 细节时。",
+              "需要对浓差极化、压差和元件级配置做严格建模时。",
+            ],
+          },
+          calculate(values) {
+            const flow = normalize(values.feedFlow, 80, 1, 3000);
+            const feedConc = normalize(values.feedConc, 2200, 10, 30000);
+            const recoveryPct = normalize(values.recovery, 75, 5, 90);
+            const rejectionPct = normalize(values.rejection, 85, 10, 99);
+            const flux = normalize(values.flux, 24, 5, 60);
+
+            const recovery = recoveryPct / 100;
+            const rejection = rejectionPct / 100;
+            const permeateFlow = flow * recovery;
+            const concentrateFlow = safe(flow - permeateFlow, 0.001);
+            const permeateConc = feedConc * (1 - rejection);
+            const feedSoluteKgph = (flow * feedConc) / 1000;
+            const permeateSoluteKgph = (permeateFlow * permeateConc) / 1000;
+            const concentrateSoluteKgph = Math.max(feedSoluteKgph - permeateSoluteKgph, 0);
+            const concentrateConc = (concentrateSoluteKgph * 1000) / safe(concentrateFlow, 0.001);
+            const membraneArea = (permeateFlow * 1000) / safe(flux, 1);
+            const removalRate = 100 * (1 - permeateSoluteKgph / safe(feedSoluteKgph, 0.001));
+
+            const warnings = [];
+            if (recoveryPct > 80) warnings.push("高回收率会显著抬升浓水侧浓度，实际设计应进一步评估污染和结垢余量。");
+            if (rejectionPct < 70) warnings.push("截留率偏低时，产水水质改善可能有限，建议回头核查目标溶质和膜型选择。");
+            if (feedConc > 10000) warnings.push("高浓度下多组分效应会更明显，当前单溶质快算只能作为粗筛。");
+
+            return {
+              summary: `在当前参数下，纳滤产水约 ${round(permeateFlow, 1)} m3/h，目标溶质去除率约 ${round(removalRate, 1)}%。如果你在比选水质改善幅度和膜面积需求，这组结果可以作为前期判断依据。`,
+              outputs: [
+                createMetric("产水流量", permeateFlow, "m3/h", "由进水流量和回收率决定。"),
+                createMetric("产水浓度", permeateConc, "mg/L", "按平均截留率估算。"),
+                createMetric("浓水浓度", concentrateConc, "mg/L", "基于溶质物料衡算反推。"),
+                createMetric("膜面积估算", membraneArea, "m2", "按设计通量估算。"),
+              ],
+              intermediates: [
+                createMetric("浓水流量", concentrateFlow, "m3/h", "用于判断浓缩侧负荷。"),
+                createMetric("进水溶质负荷", feedSoluteKgph, "kg/h", "用于对比去除趋势。"),
+                createMetric("去除率", removalRate, "%", "以溶质质量负荷计。"),
+              ],
+              warnings,
+            };
+          },
+        },
+        {
+          id: "ix",
+          title: "离子交换尺寸估算",
+          tag: "树脂床设计",
+          description: "估算树脂床体积、运行周期和再生频率，适合做离子交换系统的前期尺寸快算。",
+          inputs: [
+            { key: "flow", label: "设计流量", unit: "m3/h", hint: "建议填连续运行平均值。", min: 0.5, max: 1000, step: 0.5, value: 35 },
+            { key: "influent", label: "进水浓度", unit: "mg/L", hint: "按目标去除物的等效浓度填写。", min: 1, max: 5000, step: 1, value: 180 },
+            { key: "effluent", label: "目标出水", unit: "mg/L", hint: "应明显小于进水浓度。", min: 0, max: 3000, step: 1, value: 30 },
+            { key: "capacity", label: "树脂工作容量", unit: "g/L", hint: "使用设计可兑现容量，而非理论最大容量。", min: 5, max: 300, step: 1, value: 55 },
+            { key: "ebct", label: "EBCT", unit: "min", hint: "空床接触时间。", min: 1, max: 60, step: 0.5, value: 8 },
+          ],
+          presets: {
+            regular: { flow: 35, influent: 180, effluent: 30, capacity: 55, ebct: 8 },
+            edge: { flow: 35, influent: 300, effluent: 90, capacity: 28, ebct: 4 },
+          },
+          watertap: [
+            "unit_models/ion_exchange_0D.py",
+            "unit_models/zero_order/ion_exchange_zo.py",
+            "flowsheets/ion_exchange",
+          ],
+          docs: {
+            scenes: [
+              "快速估算单床尺寸、运行周期和是否会频繁再生。",
+              "比较不同树脂容量和 EBCT 设定对再生频率的影响。",
+            ],
+            inputNotes: [
+              "树脂工作容量要填可兑现的设计容量，避免把理论最大容量直接带入。",
+              "目标出水越接近进水，说明去除要求较松，运行周期通常会更长。",
+            ],
+            outputNotes: [
+              "运行周期越短，代表单位时间去除负荷越高，系统再生会更频繁。",
+              "床体积负荷越高，说明设计更紧凑，但压降和穿透风险也更值得关注。",
+            ],
+            assumptions: [
+              "假定床层利用度均匀，未显式考虑传质区、串并联床切换和再生停机时间。",
+              "用平均浓度差和工作容量做一阶估算。",
+            ],
+            notUse: [
+              "需要做树脂选择性、再生剂消耗、穿透曲线和多离子竞争时。",
+              "需要给出正式设备尺寸或切换策略时。",
+            ],
+          },
+          calculate(values) {
+            const flow = normalize(values.flow, 35, 0.5, 1000);
+            const influent = normalize(values.influent, 180, 1, 5000);
+            const effluent = normalize(values.effluent, 30, 0, 3000);
+            const capacity = normalize(values.capacity, 55, 5, 300);
+            const ebct = normalize(values.ebct, 8, 1, 60);
+
+            const effectiveDelta = Math.max(influent - effluent, 1);
+            const bedVolume = (flow * ebct) / 60;
+            const totalCapacityKg = (bedVolume * 1000 * capacity) / 1000;
+            const removalLoadKgph = (flow * effectiveDelta) / 1000;
+            const runtimeHours = totalCapacityKg / safe(removalLoadKgph, 0.001);
+            const waterPerCycle = flow * runtimeHours;
+            const regenPerDay = 24 / safe(runtimeHours, 0.1);
+            const bedVolumesPerHour = flow / safe(bedVolume, 0.01);
+
+            const warnings = [];
+            if (effluent >= influent) warnings.push("目标出水不应高于或等于进水浓度，当前结果只保留了最小差值保护。");
+            if (runtimeHours < 8) warnings.push("运行周期偏短，说明树脂床可能需要频繁再生或增加床体积。");
+            if (bedVolumesPerHour > 10) warnings.push("床体积负荷偏高，建议后续再核查压降、利用率和切换策略。");
+
+            return {
+              summary: `当前设定下，单床体积约 ${round(bedVolume, 2)} m3，预计运行周期约 ${round(runtimeHours, 1)} h。若你的目标是判断再生频率是否过高，这个快算已经足够有指导性。`,
+              outputs: [
+                createMetric("床体积", bedVolume, "m3", "由流量和 EBCT 直接估算。"),
+                createMetric("运行周期", runtimeHours, "h", "可支撑的单次运行时长。"),
+                createMetric("再生频率", regenPerDay, "次/天", "用于判断运维压力。"),
+                createMetric("单周期产水量", waterPerCycle, "m3", "一次再生周期可处理的水量。"),
+              ],
+              intermediates: [
+                createMetric("去除负荷", removalLoadKgph, "kg/h", "以平均浓度差估算。"),
+                createMetric("工作容量总量", totalCapacityKg, "kg", "床层可兑现的总去除能力。"),
+                createMetric("床体积负荷", bedVolumesPerHour, "BV/h", "高值意味着设计更紧凑。"),
+              ],
+              warnings,
+            };
+          },
+        },
+        {
+          id: "gac",
+          title: "GAC 接触时间估算",
+          tag: "吸附接触",
+          description: "快速估算 GAC 床层体积、接触时间、床深和参考炭量，适合做吸附系统前期比选。",
+          inputs: [
+            { key: "flow", label: "设计流量", unit: "m3/h", hint: "建议填长期平均处理量。", min: 0.5, max: 2000, step: 0.5, value: 50 },
+            { key: "ebct", label: "EBCT", unit: "min", hint: "吸附系统最常见的快算起点。", min: 1, max: 60, step: 0.5, value: 12 },
+            { key: "porosity", label: "床层空隙率", unit: "-", hint: "通常 0.35 到 0.5 之间。", min: 0.2, max: 0.7, step: 0.01, value: 0.42 },
+            { key: "velocity", label: "空床线速度", unit: "m/h", hint: "用于估算床层截面积和床深。", min: 1, max: 20, step: 0.1, value: 6 },
+          ],
+          presets: {
+            regular: { flow: 50, ebct: 12, porosity: 0.42, velocity: 6 },
+            edge: { flow: 50, ebct: 6, porosity: 0.35, velocity: 10 },
+          },
+          watertap: [
+            "unit_models/gac.py",
+            "unit_models/zero_order/gac_zo.py",
+            "flowsheets/gac",
+          ],
+          docs: {
+            scenes: [
+              "估算不同 EBCT 和线速度设定下的床层体积、床深和炭量趋势。",
+              "在方案比选中快速判断设计是否过于紧凑。",
+            ],
+            inputNotes: [
+              "EBCT 是最直接的尺寸驱动参数，适合先做粗筛。",
+              "空床线速度用于反推床层面积和床深，帮助识别偏薄或偏深的设计。",
+            ],
+            outputNotes: [
+              "床体积越大，通常意味着更保守的接触设计。",
+              "床深偏浅时，虽然设备更紧凑，但吸附利用度和水力分布风险要多关注。",
+            ],
+            assumptions: [
+              "假定床层均匀、炭层密度固定为参考值 480 kg/m3。",
+              "未显式考虑传质区、穿透曲线、反冲洗和吸附等温线。",
+            ],
+            notUse: [
+              "需要预测穿透时间、污染物选择性和换炭周期时。",
+              "需要处理复杂有机物体系或做正式设备设计时。",
+            ],
+          },
+          calculate(values) {
+            const flow = normalize(values.flow, 50, 0.5, 2000);
+            const ebct = normalize(values.ebct, 12, 1, 60);
+            const porosity = normalize(values.porosity, 0.42, 0.2, 0.7);
+            const velocity = normalize(values.velocity, 6, 1, 20);
+
+            const bedVolume = (flow * ebct) / 60;
+            const bedArea = flow / safe(velocity, 0.2);
+            const bedDepth = bedVolume / safe(bedArea, 0.05);
+            const carbonVolume = bedVolume * (1 - porosity);
+            const carbonMass = carbonVolume * 480;
+            const bedVolumesPerHour = flow / safe(bedVolume, 0.01);
+
+            const warnings = [];
+            if (ebct < 8) warnings.push("EBCT 偏低时，当前床层更适合做紧凑预案，不建议直接视为保守设计。");
+            if (bedDepth < 1) warnings.push("床深偏浅，实际设计中要额外关注水力分布和炭层利用率。");
+            if (velocity > 8) warnings.push("空床线速度偏高，后续建议校核压降和反冲洗策略。");
+
+            return {
+              summary: `当前设置对应的 GAC 床体积约 ${round(bedVolume, 2)} m3，参考炭量约 ${round(carbonMass, 0)} kg。这个结果适合用于估算尺寸量级和判断设计是否过于紧凑。`,
+              outputs: [
+                createMetric("床体积", bedVolume, "m3", "由流量与 EBCT 决定。"),
+                createMetric("接触时间", ebct, "min", "当前采用的空床接触时间。"),
+                createMetric("床深估算", bedDepth, "m", "由床层面积反推。"),
+                createMetric("参考炭量", carbonMass, "kg", "按参考堆积密度估算。"),
+              ],
+              intermediates: [
+                createMetric("床层截面积", bedArea, "m2", "由空床线速度反推。"),
+                createMetric("炭层体积", carbonVolume, "m3", "扣除空隙后的炭体积。"),
+                createMetric("处理负荷", bedVolumesPerHour, "BV/h", "用于判断设计紧凑度。"),
+              ],
+              warnings,
+            };
+          },
+        },
+        {
+          id: "uvaop",
+          title: "UV/AOP 投加估算",
+          tag: "高级氧化",
+          description: "用 UV Dose、UVT 和 H2O2 投加量快速估算功率与药耗，适合做 AOP 初步方案筛选。",
+          inputs: [
+            { key: "flow", label: "设计流量", unit: "m3/h", hint: "建议使用设备设计工况。", min: 0.5, max: 2000, step: 0.5, value: 60 },
+            { key: "dose", label: "目标 UV Dose", unit: "mJ/cm2", hint: "用于反映目标灭活或氧化强度。", min: 10, max: 200, step: 1, value: 55 },
+            { key: "uvt", label: "UVT", unit: "%", hint: "透光率越低，通常需要更高功率。", min: 30, max: 99, step: 1, value: 88 },
+            { key: "h2o2", label: "H2O2 投加量", unit: "mg/L", hint: "只做药耗快算，不涉及副产物。", min: 0, max: 100, step: 0.5, value: 8 },
+          ],
+          presets: {
+            regular: { flow: 60, dose: 55, uvt: 88, h2o2: 8 },
+            edge: { flow: 60, dose: 95, uvt: 62, h2o2: 20 },
+          },
+          watertap: [
+            "unit_models/uv_aop.py",
+            "unit_models/zero_order/uv_aop_zo.py",
+            "costing/unit_models/uv_aop.py",
+          ],
+          docs: {
+            scenes: [
+              "快速比较不同 UVT 和 dose 目标下的功率需求变化。",
+              "评估 H2O2 投加量变化对药耗和日消耗量的影响。",
+            ],
+            inputNotes: [
+              "UVT 反映透光性，是影响功率需求的关键输入。",
+              "H2O2 投加量只用于药耗估算，不代表实际氧化链反应效率。",
+            ],
+            outputNotes: [
+              "近似 UV 功率更适合做量级判断，而不是设备选型定案。",
+              "单位水量能耗用于横向比较不同工况，不等于完整电耗模型。",
+            ],
+            assumptions: [
+              "使用经验系数将 dose、流量和 UVT 关联为近似功率。",
+              "未显式考虑灯管老化、水力停留、反应器几何和自由基动力学。",
+            ],
+            notUse: [
+              "需要校核特定污染物去除率、反应动力学或副产物生成时。",
+              "需要做正式 AOP 设计、设备选型或法规申报时。",
+            ],
+          },
+          calculate(values) {
+            const flow = normalize(values.flow, 60, 0.5, 2000);
+            const dose = normalize(values.dose, 55, 10, 200);
+            const uvt = normalize(values.uvt, 88, 30, 99);
+            const h2o2 = normalize(values.h2o2, 8, 0, 100);
+
+            const uvtFactor = clamp(uvt / 100, 0.35, 0.99);
+            const uvPowerKw = (flow * dose) / (85 * uvtFactor);
+            const specificEnergy = uvPowerKw / safe(flow, 0.01);
+            const h2o2UseKgph = (flow * h2o2) / 1000;
+            const h2o2UseKgpd = h2o2UseKgph * 24;
+            const oxidationIndex = dose * (1 + h2o2 / 25);
+
+            const warnings = [];
+            if (uvt < 70) warnings.push("UVT 偏低时，功率需求会快速上升，建议后续转更细的反应器模型校核。");
+            if (dose > 80) warnings.push("目标 dose 较高，这类结果更适合初筛，不建议直接用于设备选型。");
+            if (h2o2 > 15) warnings.push("药剂投加偏高，后续应补充残余、淬灭和副产物相关评估。");
+
+            return {
+              summary: `当前工况下，近似 UV 功率约 ${round(uvPowerKw, 1)} kW，单位水量能耗约 ${round(specificEnergy, 2)} kWh/m3。这个结果适合用来快速比较不同 UVT 和投加量方案的强弱关系。`,
+              outputs: [
+                createMetric("近似 UV 功率", uvPowerKw, "kW", "按流量、dose 和 UVT 经验估算。"),
+                createMetric("单位能耗", specificEnergy, "kWh/m3", "用于横向比较工况。"),
+                createMetric("H2O2 药耗", h2o2UseKgph, "kg/h", "按投加量直接换算。"),
+                createMetric("日耗量", h2o2UseKgpd, "kg/d", "用于粗略估算药剂需求。"),
+              ],
+              intermediates: [
+                createMetric("UVT 修正系数", uvtFactor, "-", "透光性越差，修正系数越低。"),
+                createMetric("氧化强度指数", oxidationIndex, "-", "帮助比较 dose 与投加联合作用。"),
+                createMetric("目标剂量", dose, "mJ/cm2", "当前设定的目标强度。"),
+              ],
+              warnings,
+            };
+          },
+        },
+      ];
+
+      const grid = document.getElementById("calculator-grid");
+
+      function buildCard(config) {
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-header-top">
+              <div class="tag">${config.tag}</div>
+              <div class="tag">工程快算预览</div>
+            </div>
+            <h3>${config.title}</h3>
+            <p class="card-desc">${config.description}</p>
+          </div>
+          <div class="card-body">
+            <div class="button-row">
+              <button class="btn-primary" type="button" data-action="regular">常规示例</button>
+              <button class="btn-secondary" type="button" data-action="edge">边界示例</button>
+              <button class="btn-ghost" type="button" data-action="reset">恢复默认</button>
+            </div>
+
+            <div class="block">
+              <div class="block-title">
+                <h4>输入参数</h4>
+                <small>所有结果会随输入即时更新</small>
+              </div>
+              <div class="input-grid"></div>
+            </div>
+
+            <div class="block">
+              <div class="block-title">
+                <h4>计算结果</h4>
+                <small>适合做方案初筛和教学演示</small>
+              </div>
+              <div class="metric-grid" data-role="outputs"></div>
+            </div>
+
+            <div class="block">
+              <div class="block-title">
+                <h4>关键中间量</h4>
+                <small>帮助理解公式和趋势</small>
+              </div>
+              <div class="metric-grid" data-role="intermediates"></div>
+            </div>
+
+            <div class="block">
+              <div class="block-title">
+                <h4>结果摘要</h4>
+                <small>面向快速阅读</small>
+              </div>
+              <div class="summary-box" data-role="summary"></div>
+            </div>
+
+            <div class="block">
+              <div class="block-title">
+                <h4>适用边界与注意事项</h4>
+                <small>当前版本默认保留风险提示</small>
+              </div>
+              <div class="warning-box" data-role="warnings"></div>
+            </div>
+
+            <div class="block">
+              <div class="block-title">
+                <h4>Docs 使用说明</h4>
+                <small>确认是否适合继续前端集成</small>
+              </div>
+              <div class="docs-grid">
+                <div class="docs-card">
+                  <strong>适用场景</strong>
+                  <ul>${config.docs.scenes.map((item) => `<li>${item}</li>`).join("")}</ul>
+                </div>
+                <div class="docs-card">
+                  <strong>输入说明</strong>
+                  <ul>${config.docs.inputNotes.map((item) => `<li>${item}</li>`).join("")}</ul>
+                </div>
+                <div class="docs-card">
+                  <strong>结果说明</strong>
+                  <ul>${config.docs.outputNotes.map((item) => `<li>${item}</li>`).join("")}</ul>
+                </div>
+                <div class="docs-card">
+                  <strong>公式假设</strong>
+                  <ul>${config.docs.assumptions.map((item) => `<li>${item}</li>`).join("")}</ul>
+                </div>
+                <div class="docs-card">
+                  <strong>何时不要使用</strong>
+                  <ul>${config.docs.notUse.map((item) => `<li>${item}</li>`).join("")}</ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="mapping-box">
+              <strong>WaterTAP 对应模型</strong>
+              <ul>${config.watertap.map((item) => `<li class="mono">${item}</li>`).join("")}</ul>
+            </div>
+          </div>
+        `;
+
+        const inputGrid = card.querySelector(".input-grid");
+        const state = {};
+
+        config.inputs.forEach((input) => {
+          state[input.key] = input.value;
+          const field = document.createElement("div");
+          field.className = "field";
+          field.innerHTML = `
+            <label for="${config.id}-${input.key}">${input.label} <span>(${input.unit})</span></label>
+            <input
+              id="${config.id}-${input.key}"
+              name="${config.id}-${input.key}"
+              type="number"
+              min="${input.min}"
+              max="${input.max}"
+              step="${input.step}"
+              value="${input.value}"
+            />
+            <span>${input.hint}</span>
+          `;
+
+          const inputEl = field.querySelector("input");
+          inputEl.addEventListener("input", () => {
+            state[input.key] = inputEl.value;
+            render();
+          });
+          inputGrid.appendChild(field);
+        });
+
+        function renderMetrics(target, metrics) {
+          target.innerHTML = metrics
+            .map(
+              (metric) => `
+                <div class="metric">
+                  <strong>${metric.label}</strong>
+                  <div class="metric-value">${round(metric.value, 2)} <span style="font-size: 14px; color: var(--muted); font-weight: 600;">${metric.unit}</span></div>
+                  <div class="metric-help">${metric.help}</div>
+                </div>
+              `,
+            )
+            .join("");
+        }
+
+        function applyPreset(preset) {
+          config.inputs.forEach((input) => {
+            const nextValue = preset[input.key];
+            state[input.key] = nextValue;
+            const inputEl = card.querySelector(`#${config.id}-${input.key}`);
+            inputEl.value = nextValue;
+          });
+          render();
+        }
+
+        function render() {
+          const result = config.calculate(state);
+          renderMetrics(card.querySelector('[data-role="outputs"]'), result.outputs);
+          renderMetrics(card.querySelector('[data-role="intermediates"]'), result.intermediates);
+          card.querySelector('[data-role="summary"]').textContent = result.summary;
+
+          const warningBox = card.querySelector('[data-role="warnings"]');
+          const warningItems = result.warnings.length
+            ? result.warnings.map((item) => `<li>${item}</li>`).join("")
+            : "<li>当前输入未触发明显边界警告，但仍应视为工程快算结果。</li>";
+          warningBox.innerHTML = `<strong>当前解释</strong><ul>${warningItems}</ul>`;
+        }
+
+        card.querySelectorAll("[data-action]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const action = button.getAttribute("data-action");
+            if (action === "regular") applyPreset(config.presets.regular);
+            if (action === "edge") applyPreset(config.presets.edge);
+            if (action === "reset") {
+              const defaults = {};
+              config.inputs.forEach((input) => {
+                defaults[input.key] = input.value;
+              });
+              applyPreset(defaults);
+            }
+          });
+        });
+
+        render();
+        return card;
+      }
+
+      calculatorConfigs.forEach((config) => {
+        grid.appendChild(buildCard(config));
+      });
+    </script>
+  </body>
+</html>

@@ -80,3 +80,61 @@
 | 目标是什么？ | 输出 ch06 完成情况的 review 报告 |
 | 我学到了什么？ | 更准确的完成度是 1/5 完成、4/5 部分完成，不是报告里写的 5/5 全完成 |
 | 我做了什么？ | 已完成 review 报告撰写，并准备交付结论 |
+
+---
+
+## 会话日期 (Session): 2026-03-30
+
+### 阶段 1：需求与落点确认
+- **状态:** complete
+- **开始时间:** 2026-03-30 13:30
+- 已采取的操作：
+  - 回顾 `AGENTS.md` 中复杂任务、任务记录和前端验证要求。
+  - 确认本轮用户希望先做 HTML 预览，而不是直接集成 React 首页。
+  - 检查 `frontend/public`，确认适合新增独立静态页。
+  - 回顾 WaterTAP 仓库目录，确认本轮计算器主题与 WaterTAP 的概念映射关系。
+- 创建/修改的文件：
+  - `task_plan.md` (更新)
+  - `findings.md` (更新)
+  - `progress.md` (更新)
+
+### 阶段 2：页面与计算逻辑实现
+- **状态:** complete
+- 已采取的操作：
+  - 确定预览页放在 `frontend/public/previews/watertap-calculators-preview.html`。
+  - 设计 5 个计算器统一结构：输入参数、计算结果、关键中间量、Docs 使用说明、适用边界与注意事项、WaterTAP 对应模型。
+  - 准备以 JS 纯函数方式实现公式逻辑，并为每个计算器加入常规/边界示例按钮。
+  - 实现单文件静态 HTML 页面，包括顶部总说明、5 个计算器卡片区和底部进一步使用建议。
+  - 为 5 个计算器全部完成 JS 纯函数、输入边界保护、结果摘要、风险提示和中文 docs 说明。
+- 创建/修改的文件：
+  - `task_plan.md` (更新)
+  - `findings.md` (更新)
+  - `progress.md` (更新)
+  - `frontend/public/previews/watertap-calculators-preview.html` (创建)
+
+### 阶段 3：验证与记录
+- **状态:** complete
+- 已采取的操作：
+  - 使用 Node 解析 `watertap-calculators-preview.html` 的内联脚本，确认脚本语法有效。
+  - 运行 `cd frontend; npx tsc --noEmit`，通过。
+  - 运行 `cd frontend; npm run build`，通过。
+  - 检查 `frontend/dist/previews/`，确认构建产物已包含 `watertap-calculators-preview.html`。
+  - 记录访问路径、验证结果与本轮工作日志。
+- 创建/修改的文件：
+  - `task_plan.md` (更新)
+  - `findings.md` (更新)
+  - `progress.md` (更新)
+  - `tasks/todo.md` (更新)
+  - `updatenote/2026-03-30.md` (创建)
+
+## 测试结果补充 (2026-03-30)
+| 测试 | 输入 | 预期结果 | 实际结果 | 状态 |
+|------|-------|----------|--------|--------|
+| HTML 内联脚本解析 | `node` 提取并编译 `<script>` 内容 | 语法有效 | `inline-script-ok` | ✓ |
+| Frontend 类型检查 | `cd frontend; npx tsc --noEmit` | 类型通过 | 通过 | ✓ |
+| Frontend 构建 | `cd frontend; npm run build` | 构建通过且复制静态预览页 | 通过，`dist/previews/watertap-calculators-preview.html` 已生成 | ✓ |
+
+## 错误日志补充 (2026-03-30)
+| 时间戳 | 错误 | 尝试次数 | 解决方法 |
+|-----------|-------|---------|------------|
+| 2026-03-30 13:42 | 超长 `apply_patch` 调用失败（Windows 文件名/扩展名过长） | 1 | 改成分段补丁写入 HTML 文件 |

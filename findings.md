@@ -58,3 +58,66 @@
 - `tasks/code_review_optimization_2026-03-03_ch06.md`
 - `tasks/ch06-cross-module-fixes-2026-03-06.md`
 - `git status --short --branch`
+
+---
+
+## 2026-03-30 WaterTAP 计算器预览页
+
+### 当前任务
+- 任务：实现一个独立的静态 HTML 中文预览页，包含 5 个 WaterTAP 风格纯前端快算器，并附带 docs 使用说明。
+- 目标位置：`frontend/public/previews/watertap-calculators-preview.html`
+
+### 已知上下文
+- 当前仓库已有多个 React 计算器组件，但本轮用户明确希望先做 HTML 页面预览，再考虑前端集成。
+- `frontend/public/` 当前只有 `assets/`，适合新增 `previews/` 目录承载独立静态页。
+- 现有首页采用窗口式交互；本轮预览页不需要先接入该结构，只要可直接访问和验证即可。
+
+### 技术决策
+| 决策 | 理由 |
+|----------|-----------|
+| 预览页使用单文件 HTML + 内联 CSS/JS | 打开和迁移成本最低，便于快速验证 |
+| 采用配置驱动渲染 5 个计算器卡片 | 保持结构统一，便于后续迁移到 React 组件 |
+| 每个计算器都提供“常规示例”和“边界示例” | 满足预览阶段验证计划，提升演示效率 |
+| 在卡片内固定保留 `Docs 使用说明` 模块 | 让用户能直接判断输入、结果、假设和限制是否讲清楚 |
+
+### WaterTAP 对齐策略
+- 以 WaterTAP 的单元模型主题做概念映射，而不是求解器数值复刻。
+- 适合纯前端的内容集中在：
+  - RO / NF 的通量、回收率、近似盐分分配、近似能耗
+  - 离子交换与 GAC 的尺寸、接触时间、运行周期类工程快算
+  - UV/AOP 的剂量、功率和药耗级估算
+- 不适合本轮纯前端复刻的内容包括：
+  - ASM/ADM 反应-物性耦合模型
+  - 1D 膜模型、复杂电渗析、分布参数模型
+  - flowsheet 级联求解、优化和 OLI 外部工具
+
+### 已实现结果
+- 已新增独立静态页：`frontend/public/previews/watertap-calculators-preview.html`
+- 页面包含 5 个统一结构的中文计算器卡片：
+  - RO 快速估算
+  - NF 快速估算
+  - 离子交换尺寸估算
+  - GAC 接触时间估算
+  - UV/AOP 投加估算
+- 每个卡片都包含：
+  - 输入参数
+  - 计算结果
+  - 关键中间量
+  - 结果摘要
+  - 适用边界与注意事项
+  - Docs 使用说明
+  - WaterTAP 对应模型
+- 每个计算器都实现了：
+  - `常规示例`
+  - `边界示例`
+  - `恢复默认`
+
+### 验证结果
+- 通过 Node 对 HTML 内联脚本做了解析验证：`inline-script-ok`
+- `cd frontend; npx tsc --noEmit` 通过
+- `cd frontend; npm run build` 通过
+- 构建产物已包含：`frontend/dist/previews/watertap-calculators-preview.html`
+
+### 交付路径
+- 开发环境访问路径：`/previews/watertap-calculators-preview.html`
+- 文件路径：`frontend/public/previews/watertap-calculators-preview.html`
