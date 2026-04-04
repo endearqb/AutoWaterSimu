@@ -1,0 +1,186 @@
+{
+  "canonical_policy": "platform_name",
+  "default_normalization": "normalize_identifier",
+  "aliases": [
+    {
+      "sumo_name": "XPHA,PAO",
+      "canonical_name": "XPHA_PAO",
+      "dimension_tags": ["carbon", "phosphorus"],
+      "hybrid_equivalence_group": "XPHA"
+    },
+    {
+      "sumo_name": "XPHA,GAO",
+      "canonical_name": "XPHA_GAO",
+      "dimension_tags": ["carbon", "phosphorus"],
+      "hybrid_equivalence_group": "XPHA"
+    },
+    {
+      "sumo_name": "XB,e",
+      "canonical_name": "XB_e",
+      "dimension_tags": ["carbon"],
+      "hybrid_equivalence_group": "XB_e"
+    },
+    {
+      "sumo_name": "XE,ana",
+      "canonical_name": "XE_ana",
+      "dimension_tags": ["carbon"],
+      "hybrid_equivalence_group": "XE_ana"
+    },
+    {
+      "sumo_name": "SNO,AOB",
+      "canonical_name": "SNO_AOB",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "SNO"
+    },
+    {
+      "sumo_name": "SNO,OHO",
+      "canonical_name": "SNO_OHO",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "SNO"
+    },
+    {
+      "sumo_name": "SN,B",
+      "canonical_name": "SN_B",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "SN_B"
+    },
+    {
+      "sumo_name": "XN,B",
+      "canonical_name": "XN_B",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "XN_B"
+    },
+    {
+      "sumo_name": "XN,Be",
+      "canonical_name": "XN_Be",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "XN_Be"
+    },
+    {
+      "sumo_name": "XN,U",
+      "canonical_name": "XN_U",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "XN_U"
+    },
+    {
+      "sumo_name": "SP,B",
+      "canonical_name": "SP_B",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "SP_B"
+    },
+    {
+      "sumo_name": "XP,B",
+      "canonical_name": "XP_B",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XP_B"
+    },
+    {
+      "sumo_name": "XP,Be",
+      "canonical_name": "XP_Be",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XP_Be"
+    },
+    {
+      "sumo_name": "XP,U",
+      "canonical_name": "XP_U",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XP_U"
+    },
+    {
+      "sumo_name": "XHFO,H",
+      "canonical_name": "XHFO_H",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHFO"
+    },
+    {
+      "sumo_name": "XHFO,L",
+      "canonical_name": "XHFO_L",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHFO"
+    },
+    {
+      "sumo_name": "XHFO,H,P",
+      "canonical_name": "XHFO_H_P",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHFO_P"
+    },
+    {
+      "sumo_name": "XHFO,L,P",
+      "canonical_name": "XHFO_L_P",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHFO_P"
+    },
+    {
+      "sumo_name": "XHAO,H",
+      "canonical_name": "XHAO_H",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHAO"
+    },
+    {
+      "sumo_name": "XHAO,L",
+      "canonical_name": "XHAO_L",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHAO"
+    },
+    {
+      "sumo_name": "XHAO,H,P",
+      "canonical_name": "XHAO_H_P",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHAO_P"
+    },
+    {
+      "sumo_name": "XHAO,L,P",
+      "canonical_name": "XHAO_L_P",
+      "dimension_tags": ["phosphorus"],
+      "hybrid_equivalence_group": "XHAO_P"
+    },
+    {
+      "sumo_name": "GCO2,atm",
+      "canonical_name": "GCO2_atm",
+      "dimension_tags": ["carbon", "alkalinity"],
+      "hybrid_equivalence_group": "GCO2"
+    },
+    {
+      "sumo_name": "GCH4,atm",
+      "canonical_name": "GCH4_atm",
+      "dimension_tags": ["carbon"],
+      "hybrid_equivalence_group": "GCH4"
+    },
+    {
+      "sumo_name": "GH2,atm",
+      "canonical_name": "GH2_atm",
+      "dimension_tags": ["carbon"],
+      "hybrid_equivalence_group": "GH2"
+    },
+    {
+      "sumo_name": "GO2,atm",
+      "canonical_name": "GO2_atm",
+      "dimension_tags": ["carbon"],
+      "hybrid_equivalence_group": "GO2"
+    },
+    {
+      "sumo_name": "GNH3,atm",
+      "canonical_name": "GNH3_atm",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "GNH3"
+    },
+    {
+      "sumo_name": "GNO,atm",
+      "canonical_name": "GNO_atm",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "GNO"
+    },
+    {
+      "sumo_name": "GN2O,atm",
+      "canonical_name": "GN2O_atm",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "GN2O"
+    },
+    {
+      "sumo_name": "GN2,atm",
+      "canonical_name": "GN2_atm",
+      "dimension_tags": ["nitrogen"],
+      "hybrid_equivalence_group": "GN2"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "name": "default_multi_tag_profile",
+  "description": "Default decomposition slices for SUMO Petersen matrix normalization and platform export.",
+  "slices": [
+    {
+      "name": "heterotroph_carbon_core",
+      "description": "Ordinary heterotrophic carbon conversion processes, excluding PAO/GAO phosphorus removal branches.",
+      "include": {
+        "guild": ["heterotroph"],
+        "element_scope": ["carbon"]
+      },
+      "exclude": {
+        "extension_flags": ["p_removal"]
+      },
+      "component_mode": "active_only"
+    },
+    {
+      "name": "autotroph_nitrogen_core",
+      "description": "Autotrophic nitrogen conversion processes including AOB, NOB and Anammox.",
+      "include": {
+        "guild": ["autotroph", "aob", "nob", "amx"],
+        "element_scope": ["nitrogen"]
+      },
+      "component_mode": "active_only"
+    },
+    {
+      "name": "phosphorus_pao_gao_core",
+      "description": "Phosphorus-oriented PAO/GAO and chemical phosphorus storage or release processes.",
+      "include": {
+        "element_scope": ["phosphorus"]
+      },
+      "component_mode": "active_only"
+    },
+    {
+      "name": "nitrification_two_step",
+      "description": "Two-step nitrification and related AOB/NOB reaction blocks.",
+      "include": {
+        "extension_flags": ["two_step_nitrification"]
+      },
+      "component_mode": "active_only"
+    },
+    {
+      "name": "digestion_two_step",
+      "description": "Digestion-related methylotrophic and gas-forming process blocks.",
+      "include": {
+        "extension_flags": ["two_step_digestion"]
+      },
+      "component_mode": "active_only"
+    },
+    {
+      "name": "nitrogen_four_step_pathway",
+      "description": "Four-step nitrogen transformation pathway covering NO3, NO2, NO and N2O branches.",
+      "include": {
+        "extension_flags": ["four_step_n_conversion"]
+      },
+      "component_mode": "active_only"
+    }
+  ]
+}

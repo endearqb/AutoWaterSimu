@@ -1,0 +1,35 @@
+﻿Symbol,Name,SB,XB,SU,XU,XE,XOHO,XNITO,XAMETO,XHMETO,XALGAE,SNHx,SNOx,SN2,"SN,B","XN,B",SPO4,"XP,B",SO2,SCH4,SH2,XINORG,SALK,XFeOH,XFeP,XAlOH,XAlP,SPFOA,XPFOA,SPFOS,XPFOS,SH,SALPHA,GCH4,GH2,GO2,GN2,"GCH4,atm","GH2,atm","GO2,atm","GN2,atm",Rate,Unit
+r1,"OHO growth on SB, O2","-1/YOHO,SB,ox",,,,,1,,,,,"-iN,BIO",,,,,"-iP,BIO",,"-(1-YOHO,SB,ox)/YOHO,SB,ox",,,,"(-iN,BIO*CHNHx-iP,BIO*CHPO4)",,,,,,,,,,,,,,,,,,,"µOHO,T*MsatSB,KSB*XOHO*MsatSO2,KO2,OHO*MsatSNHx,KNHx,BIO*MsatSPO4,KPO4,BIO*MsatSALK,KALK",g.m-3.d-1
+r2,"OHO growth on SB, NOx","-1/YOHO,SB,anox",,,,,1,,,,,"-iN,BIO","-(1-YOHO,SB,anox)/(EEQN2,NO3*YOHO,SB,anox)","(1-YOHO,SB,anox)/(EEQN2,NO3*YOHO,SB,anox)",,,"-iP,BIO",,,,,,"(-(1-YOHO,SB,anox)/(EEQN2,NO3*YOHO,SB,anox)*CHNO3-iN,BIO*CHNHx-iP,BIO*CHPO4)",,,,,,,,,,,,,,,,,,,"µOHO,T*ηOHO,anox*MsatSB,KSB*XOHO*MsatSNOx,KNOx,OHO*MinhSO2,KO2,OHO*MsatSNHx,KNHx,BIO*MsatSPO4,KPO4,BIO",g.m-3.d-1
+r3,OHO decay,,1-fE,,,fE,-1,,,,,"-fE*(iN,XE-iN,BIO)",,,,"(1-fE)*iN,BIO",,"(1-fE)*iP,BIO",,,,,"-fE*(iN,XE-iN,BIO)*CHNHx",,,,,,,,,,,,,,,,,,,"bOHO,T*XOHO*(MsatSO2,KO2,OHO+ηb,anox*MsatSNOx,KNOx,OHO*MinhSO2,KO2,OHO+ηb,ana*MinhSNOx,KNOx,OHO*MinhSO2,KO2,OHO)",g.m-3.d-1
+r4,NITO growth,,,,,,,1,,,,"-1/YNITO-iN,BIO",1/YNITO,,,,"-iP,BIO",,-(EEQNO3-YNITO)/YNITO,,,,"((-1/YNITO-iN,BIO)*CHNHx+1/YNITO*CHNO3-iP,BIO*CHPO4)",,,,,,,,,,,,,,,,,,,"µNITO,T*MsatSNHx,KNHx,NITO*XNITO*MsatSO2,KO2,NITO*MsatSPO4,KPO4,BIO*MsatSALK,KALK",g.m-3.d-1
+r5,NITO decay,,1-fE,,,fE,,-1,,,,"-fE*(iN,XE-iN,BIO)",,,,"(1-fE)*iN,BIO",,"(1-fE)*iP,BIO",,,,,"-fE*(iN,XE-iN,BIO)*CHNHx",,,,,,,,,,,,,,,,,,,"bNITO,T*XNITO*(MsatSO2,KO2,NITO+ηb,anox*MsatSNOx,KNOx,NITO*MinhSO2,KO2,NITO+ηb,ana*MinhSNOx,KNOx,NITO*MinhSO2,KO2,NITO+mtox,ana)",g.m-3.d-1
+r6,AMETO growth,-1/YAMETO,,,,,,,1,,,"-iN,BIO",,,,,"-iP,BIO",,,(1-YAMETO)/YAMETO,,,"(-iN,BIO*CHNHx-iP,BIO*CHPO4)",,,,,,,,,,,,,,,,,,,"µAMETO,T*MsatSB,KVFA,AMETO*XAMETO*MinhSO2,KiO2,AMETO*MinhSNOx,KNOx,AMETO*MsatSNHx,KNHx,BIO*MsatSPO4,KPO4,BIO*MsatSALK,KALK",g.m-3.d-1
+r7,AMETO decay,,1-fE,,,fE,,,-1,,,"-fE*(iN,XE-iN,BIO)",,,,"(1-fE)*iN,BIO",,"(1-fE)*iP,BIO",,,,,"-fE*(iN,XE-iN,BIO)*CHNHx",,,,,,,,,,,,,,,,,,,"bAMETO,T*XAMETO*(MsatSO2,KiO2,AMETO+ηb,anox*MsatSNOx,KNOx,AMETO*MinhSO2,KiO2,AMETO+ηb,ana*MinhSNOx,KNOx,AMETO*MinhSO2,KiO2,AMETO)",g.m-3.d-1
+r8,HMETO growth,,,,,,,,,1,,"-iN,BIO",,,,,"-iP,BIO",,,(1-YHMETO)/YHMETO,-1/YHMETO,,"(-iN,BIO*CHNHx-iP,BIO*CHPO4)",,,,,,,,,,,,,,,,,,,"µHMETO,T*MsatSH2,KH2,HMETO*XHMETO*MinhSO2,KiO2,HMETO*MinhSNOx,KNOx,HMETO*MsatSNHx,KNHx,BIO*MsatSPO4,KPO4,BIO*MsatSALK,KALK",g.m-3.d-1
+r9,HMETO decay,,1-fE,,,fE,,,,-1,,"-fE*(iN,XE-iN,BIO)",,,,"(1-fE)*iN,BIO",,"(1-fE)*iP,BIO",,,,,"-fE*(iN,XE-iN,BIO)*CHNHx",,,,,,,,,,,,,,,,,,,"bHMETO,T*XHMETO*(MsatSO2,KiO2,HMETO+ηb,anox*MsatSNOx,KNOx,HMETO*MinhSO2,KiO2,HMETO+ηb,ana*MinhSNOx,KNOx,HMETO*MinhSO2,KiO2,HMETO)",g.m-3.d-1
+r10,ALGAE growth on Nitrate,,,,,,,,,,1,,"-iN,ALGAE",,,,"-iP,ALGAE",,"1 + iN,ALGAE*EEQNO3",,,,"(-iN,ALGAE*CHNO3-iP,ALGAE*CHPO4)",,,,,,,,,,,,,,,,,,,"µALGAE,T * XALGAE * MsatSPO4,KPO4,BIO *MsatSALK,KALK * LightSwitch * MsatSNOx,KNOx,ALGAE  * MinhSNHx,KiNHx,ALGAE",g.m-3.d-1
+r11,ALGAE growth on Ammonia,,,,,,,,,,1,"-iN,ALGAE",,,,,"-iP,ALGAE",,1,,,,"(-iN,ALGAE*CHNHx-iP,ALGAE*CHPO4)",,,,,,,,,,,,,,,,,,,"µALGAE,T * XALGAE *MsatSNHx,KNHx,ALGAE * MsatSPO4,KPO4,BIO * MsatSALK,KALK * LightSwitch ",g.m-3.d-1
+r12,ALGAE respiration,,,,,,,,,,-1,"iN,ALGAE",,,,,"iP,ALGAE",,-1,,,,"(iN,ALGAE*CHNHx+iP,ALGAE*CHPO4)",,,,,,,,,,,,,,,,,,,"bALGAE,T * XALGAE * MsatSO2,KO2,ALGAE",g.m-3.d-1
+r13,ALGAE decay,,1-fE,,,fE,,,,,-1,"-fE*(iN,XE-iN,BIO)",,,,"(1-fE)*iN,BIO","iP,ALGAE-iP,BIO","(1-fE)*iP,BIO",,,,,"-fE*(iN,XE-iN,BIO)*CHNHx+(iP,ALGAE-iP,BIO)*CHPO4",,,,,,,,,,,,,,,,,,,"bALGAE,T * XALGAE * MinhSO2,KO2,ALGAE",g.m-3.d-1
+r14,XB hydrolysis,1,-1,,,,,,,,,,,,"XN,B/XB","-XN,B/XB","XP,B/XB","-XP,B/XB",,,,,"XP,B/XB*CHPO4",,,,,,,,,,,,,,,,,,,"qHYD,T*XHET*(LogsatXHET,HYD,lim*MRsatXB,XHET,KHYD+LoginhXHET,HYD,lim*MsatXB,KXB,HYD)*(MsatSO2,KO2,OHO+ηb,anox*MsatSNOx,KNOx,OHO*MinhSO2,KO2,OHO)*MsatSALK,KALK",g.m-3.d-1
+r15,XB anaerobic hydrolysis (fermentation),1-fH2,-1,,,,,,,,,,,,"XN,B/XB","-XN,B/XB","XP,B/XB","-XP,B/XB",,,fH2,,"XP,B/XB*CHPO4",,,,,,,,,,,,,,,,,,,"qHYD,T*XHET*(LogsatXHET,HYD,lim*MRsatXB,XHET,KHYD+LoginhXHET,HYD,lim*MsatXB,KXB,HYD)*ηb,ana*MinhSNOx,KNOx,OHO*MinhSO2,KO2,OHO*MsatSALK,KALK",g.m-3.d-1
+r16,"SN,B ammonification",,,,,,,,,,,1,,,-1,,,,,,,,CHNHx,,,,,,,,,,,,,,,,,,,"qAMMON,T*SN,B*XHET",g.m-3.d-1
+r17,XE conversion,,1,,,-1,,,,,,,,,,"iN,XE",,"iP,BIO",,,,,,,,,,,,,,,,,,,,,,,,"qXE,T*XE",g.m-3.d-1
+r18,XU conversion,,1,,-1,,,,,,,,,,,"iN,XU",,,,,,,,,,,,,,,,,,,,,,,,,,"qXU,T*XU*MsatXU,KXU",g.m-3.d-1
+r19,NOx assimilative reduction,,,,,,-EEQNO3*XOHO/XBIO,-EEQNO3*XNITO/XBIO,-EEQNO3*XAMETO/XBIO,-EEQNO3*XHMETO/XBIO,-EEQNO3*XALGAE/XBIO,"1+(iN,BIO*EEQNO3*(XBIO-XALGAE)+iN,ALGAE*EEQNO3*XALGAE)/XBIO",-1,,,,"(iP,BIO*EEQNO3*(XBIO-XALGAE)+iP,ALGAE*EEQNO3*XALGAE)/XBIO",,,,,,"(1+(iN,BIO*EEQNO3*(XBIO-XALGAE)+iN,ALGAE*EEQNO3*XALGAE)/XBIO)*CHNHx-CHNO3+(iP,BIO*EEQNO3*(XBIO-XALGAE)+iP,ALGAE*EEQNO3*XALGAE)/XBIO*CHPO4",,,,,,,,,,,,,,,,,,,"qASSIM,T*MsatSNOx,KNOx,ASSIM*MinhSNHx,KiNHx,ASSIM*XBIO",g.m-3.d-1
+r20,FeP precipitation,,,,,,,,,,,,,,,,"-fP,Fe",,,,,,"-fP,Fe*CHPO4",-1,1,,,,,,,,,,,,,,,,,"qFeOH,PREC*SPO4*XFeOH",g.m-3.d-1
+r21,FeP redissolution,,,,,,,,,,,,,,,,"fP,Fe",,,,,,"fP,Fe*CHPO4",1,-1,,,,,,,,,,,,,,,,,"qFeOH,DISSOL*XFeP*MsatSALK,KALK",g.m-3.d-1
+r22,AlP precipitation,,,,,,,,,,,,,,,,"-fP,Al",,,,,,"-fP,Al*CHPO4",,,-1,1,,,,,,,,,,,,,,,"qAlOH,PREC*SPO4*XAlOH",g.m-3.d-1
+r23,AlP redissolution,,,,,,,,,,,,,,,,"fP,Al",,,,,,"fP,Al*CHPO4",,,1,-1,,,,,,,,,,,,,,,"qAlOH,DISSOL*XAlP*MsatSALK,KALK",g.m-3.d-1
+r24,PFOA sorption,,,,,,,,,,,,,,,,,,,,,,,,,,,-1,1,,,,,,,,,,,,,"qPFOA,SORP*(SPFOA - (XPFOA/XVSS)*(cg,kg*cmg,g)/KOC,PFOA,EQ)",g.m-3.d-1
+r25,PFOS sorption,,,,,,,,,,,,,,,,,,,,,,,,,,,,,-1,1,,,,,,,,,,,"qPFOS,SORP*(SPFOS - (XPFOS/XVSS)*(cg,kg*cmg,g)/KOC,PFOS,EQ)",g.m-3.d-1
+r26,Elimination of surfactants,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,,,,,,,,,"qALPHA,O2*XVSS*dampALPHA*(SALPHA,sat-SALPHA)",d-1
+r27,Methane gas transfer - bubbles,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,-1,,,,,,,,"kLaGCH4,bub*(SGCH4,bub,sat - SCH4)",g.m-3.d-1
+r28,Hydrogen gas transfer - bubbles,,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,-1,,,,,,,"kLaGH2,bub*(SGH2,bub,sat - SH2)",g.m-3.d-1
+r29,Oxygen gas transfer - bubbles,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,-1,,,,,,"kLaGO2,bub*(SGO2,bub,sat - SO2)",g.m-3.d-1
+r30,Nitrogen gas transfer - bubbles,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,,,,,,,-1,,,,,"kLaGN2,bub*(SGN2,bub,sat - SN2)",g.m-3.d-1
+r31,Methane gas transfer - surface,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,,-Δatm,,,,"kLaGCH4,sur*(SGCH4,sur,sat - SCH4)",g.m-3.d-1
+r32,Hydrogen gas transfer - surface,,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,,-Δatm,,,"kLaGH2,sur*(SGH2,sur,sat - SH2)",g.m-3.d-1
+r33,Oxygen gas transfer - surface,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,,,,,-Δatm,,"kLaGO2,sur*(SGO2,sur,sat - SO2)",g.m-3.d-1
+r34,Nitrogen gas transfer - surface,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,,,,,,,,,,,-Δatm,"kLaGN2,sur*(SGN2,sur,sat - SN2)",g.m-3.d-1

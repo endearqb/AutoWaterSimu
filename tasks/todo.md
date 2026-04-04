@@ -1,3 +1,28 @@
+# 2026-04-03 SUMO Petersen Matrix Pipeline TODO
+
+- [x] Inspect current SUMO matrix conversion assets and preserve existing behavior where practical
+- [x] Add a reusable normalization/tagging/export module for SUMO Petersen matrices
+- [x] Add default component alias registry and decomposition profile configs
+- [x] Upgrade `docs/peterson_matrix/sumo_matrix_to_platform_xlsx.py` to support pipeline export mode
+- [x] Add targeted tests for expression expansion, tagging, slicing, and workbook export
+- [x] Run the new pipeline on `docs/peterson_matrix/sumo4n.xlsx` and validate generated outputs
+- [x] Run targeted verification and record review notes
+
+## Review
+
+- Added `docs/peterson_matrix/sumo_matrix_pipeline.py` as the new reusable core module. It now owns SUMO function expansion, identifier normalization, process catalog building, multi-tag inference, focal-variable extraction, slice matching, workbook export, catalog/manifest emission, and markdown reporting.
+- Added default configs `docs/peterson_matrix/component_alias_registry.json` and `docs/peterson_matrix/decomposition_profile.json`. The alias registry normalizes SUMO comma-style names to platform-safe canonical names, while the profile emits six default slices including heterotroph carbon, autotroph nitrogen, phosphorus, two-step nitrification, two-step digestion, and four-step nitrogen conversion.
+- Replaced `docs/peterson_matrix/sumo_matrix_to_platform_xlsx.py` with a compatibility wrapper that now supports both legacy single-workbook export via `--output` and pipeline mode via `--output-dir`, plus `--emit-catalog`, `--emit-markdown`, `--component-alias-map`, and `--decomposition-profile`.
+- Added `docs/peterson_matrix/tests/test_sumo_matrix_pipeline.py` covering SUMO token expansion, multi-axis tagging, slice matching, and a real-file pipeline integration run against `sumo4n.xlsx`.
+- Verified the real pipeline command:
+  - `python docs\peterson_matrix\sumo_matrix_to_platform_xlsx.py --source docs\peterson_matrix\sumo4n.xlsx --source-sheet Sheet1 --output-dir tmp\sumo_pipeline --emit-catalog --emit-markdown`
+  - `python docs\peterson_matrix\sumo_matrix_to_platform_xlsx.py --source docs\peterson_matrix\sumo4n.xlsx --source-sheet Sheet1 --output tmp\sumo_single.xlsx`
+- Verification:
+  - `python -m compileall docs\peterson_matrix\sumo_matrix_pipeline.py docs\peterson_matrix\sumo_matrix_to_platform_xlsx.py docs\peterson_matrix\tests\test_sumo_matrix_pipeline.py` passed.
+  - `python -m pytest docs\peterson_matrix\tests\test_sumo_matrix_pipeline.py -q` passed (`4 passed`).
+- Residual boundary:
+  - The new pipeline makes `rate_expr` platform-safe and includes rate focal vars in slice columns, but some exported SUMO stoichiometric expressions still reference component state variables such as `XCASTO` or `XPHA_PAO`. Current backend UDM validation flags those as `STOICH_COMPONENT_REF`, so the slice manifest currently serves as a split/export asset for downstream hybrid work rather than a fully UDM-valid end state.
+
 # 2026-03-13 UDM Label / Tutorial Simulation Consistency TODO
 
 - [x] Inspect relevant UDM schema, editor, runtime display, tutorial preset, and analysis panels
