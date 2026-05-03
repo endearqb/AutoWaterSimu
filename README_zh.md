@@ -21,6 +21,10 @@
 **[pipellm.ai](https://pipellm.ai)**  
 感谢提供 API 资源支持。
 
+[![waterdataai.com](docs/waterdataai.png)](https://waterdataai.com)
+
+**[waterdataai.com](https://waterdataai.com)**
+
 ---
 ## 截图与示意图
 

@@ -18,6 +18,10 @@ We sincerely thank the following sponsor for supporting the development and main
 **[pipellm.ai](https://pipellm.ai)**  
 Thank you for providing API resource support.
 
+[![waterdataai.com](docs/waterdataai.png)](https://waterdataai.com)
+
+**[waterdataai.com](https://waterdataai.com)**
+
 ---
 
 ## Screenshots & Diagrams
