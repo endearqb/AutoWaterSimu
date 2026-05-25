@@ -1,0 +1,12 @@
+{
+  "schema_version": "model_run.v1",
+  "model_run_id": "mr_material_balance_minimal",
+  "job_id": "job_material_balance_minimal",
+  "model_key": "material_balance",
+  "model_version": "v1",
+  "parameter_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "input_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "quality_metrics": { "mass_balance_error": 0.0 },
+  "warnings": [],
+  "evidence_refs": []
+}

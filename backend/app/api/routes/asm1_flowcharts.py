@@ -1,6 +1,7 @@
 import uuid
 from typing import Any
 from datetime import datetime
+import logging
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
@@ -16,6 +17,7 @@ from app.models import (
 )
 
 router = APIRouter(prefix="/asm1-flowcharts", tags=["asm1-flowcharts"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/", response_model=ASM1FlowChartsPublic)
@@ -70,11 +72,14 @@ def create_asm1_flowchart(
     """
     Create new ASM1 flowchart.
     """
-    print(f"DEBUG: Received flowchart_in: {flowchart_in}")
-    print(f"DEBUG: flowchart_in.name: {flowchart_in.name}")
-    print(f"DEBUG: flowchart_in.description: {flowchart_in.description}")
-    print(f"DEBUG: flowchart_in.flow_data type: {type(flowchart_in.flow_data)}")
-    print(f"DEBUG: flowchart_in.flow_data: {flowchart_in.flow_data}")
+    logger.debug(
+        "Creating ASM1 flowchart",
+        extra={
+            "flowchart_name": flowchart_in.name,
+            "has_description": bool(flowchart_in.description),
+            "flow_data_type": type(flowchart_in.flow_data).__name__,
+        },
+    )
     
     try:
         flowchart = ASM1FlowChart(
@@ -85,16 +90,20 @@ def create_asm1_flowchart(
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
-        print(f"DEBUG: Created flowchart object: {flowchart}")
         session.add(flowchart)
         session.commit()
         session.refresh(flowchart)
-        print(f"DEBUG: Successfully saved flowchart with id: {flowchart.id}")
+        logger.debug(
+            "Saved ASM1 flowchart",
+            extra={"flowchart_id": str(flowchart.id), "flowchart_name": flowchart.name},
+        )
         return flowchart
-    except Exception as e:
-        print(f"DEBUG: Error creating flowchart: {e}")
-        print(f"DEBUG: Error type: {type(e)}")
-        raise e
+    except Exception:
+        logger.exception(
+            "Failed to create ASM1 flowchart",
+            extra={"flowchart_name": flowchart_in.name},
+        )
+        raise
 
 
 @router.put("/{id}", response_model=ASM1FlowChartPublic)

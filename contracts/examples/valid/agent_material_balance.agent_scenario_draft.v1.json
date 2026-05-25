@@ -1,0 +1,11 @@
+{
+  "schema_version": "agent_scenario_draft.v1",
+  "draft_id": "draft_material_balance_minimal",
+  "created_by": "agent:test",
+  "scenario_summary": "Run the minimal material balance scenario.",
+  "proposed_request": {
+    "schema_version": "simulation_request.v1",
+    "request_id": "sim_req_material_balance_minimal"
+  },
+  "requires_confirmation": true
+}

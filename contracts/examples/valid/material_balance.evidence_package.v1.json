@@ -1,0 +1,14 @@
+{
+  "schema_version": "evidence_package.v1",
+  "evidence_package_id": "evidence_material_balance_minimal",
+  "job_id": "job_material_balance_minimal",
+  "input_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "result_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "process_graph_ref": { "process_graph_id": "pg_material_balance_minimal", "version": 1 },
+  "simulation_input_ref": { "simulation_input_id": "si_material_balance_minimal" },
+  "model_run_refs": ["mr_material_balance_minimal"],
+  "artifact_refs": ["art_time_series_minimal"],
+  "runtime_audit": { "worker_version": "dev" },
+  "warnings": [],
+  "generated_at": "2026-05-25T00:00:00Z"
+}

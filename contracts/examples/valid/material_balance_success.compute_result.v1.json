@@ -1,0 +1,26 @@
+{
+  "schema_version": "compute_result.v1",
+  "job_id": "job_material_balance_minimal",
+  "job_type": "simulation.material_balance.v1",
+  "status": "succeeded",
+  "summary": {
+    "total_steps": 240,
+    "convergence_status": "completed",
+    "final_total_volume": 12.0
+  },
+  "data": {},
+  "quality": {
+    "data_quality": "simulated",
+    "warnings": []
+  },
+  "artifacts": [],
+  "runtime_audit": {
+    "model_runs": [],
+    "timings_ms": { "total": 10 },
+    "fallback_used": false,
+    "fallback_reason": "",
+    "worker_version": "dev",
+    "python_version": "3.10",
+    "package_versions": {}
+  }
+}

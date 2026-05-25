@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "model_run.v1.json",
+  "title": "model_run.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "model_run_id",
+    "job_id",
+    "model_key",
+    "model_version",
+    "parameter_hash",
+    "input_hash",
+    "quality_metrics",
+    "warnings",
+    "evidence_refs"
+  ],
+  "properties": {
+    "schema_version": { "const": "model_run.v1" },
+    "model_run_id": { "type": "string", "minLength": 1 },
+    "job_id": { "type": "string", "minLength": 1 },
+    "model_key": { "type": "string", "minLength": 1 },
+    "model_version": { "type": "string", "minLength": 1 },
+    "parameter_hash": { "type": "string", "pattern": "^sha256:[0-9a-fA-F]{64}$" },
+    "input_hash": { "type": "string", "pattern": "^sha256:[0-9a-fA-F]{64}$" },
+    "quality_metrics": { "type": "object" },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

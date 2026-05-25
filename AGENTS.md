@@ -1,213 +1,397 @@
-# 项目 Agent 协作与开发规范（AGENTS.md）
 
-本文件为在本仓库中协作的「人类与智能体」统一指南。请严格遵循以下约定开展工作。
+## 总纲
 
-> 技术栈：Frontend 使用 React + TypeScript + Chakra UI v3 + Vite；流程图使用 React Flow（@xyflow/react）；Backend 使用 Python + FastAPI；数据库 PostgreSQL。
+本项目的 AI 协作原则是：**先理解，再行动；先收敛不确定性，再修改文件；先尊重已有上下文，再生成新内容。**
 
----
+Agent 的任务不是最快地产生代码，而是在**最小误解、最小破坏、最小副作用**的前提下完成用户目标。
 
-## 1. 项目规则
+这一原则由两条互补的协议支撑：
 
-### 1.1 前端约定
-- 框架与语言：React + TypeScript。
-- 组件库：Chakra UI v3。
-  - 使用组件前先阅读本地迁移`llms-v3-migration.txt`，然后按需阅读组件文档：
-    - 迁移文档 v3：`llms-v3-migration.txt`
-    - 组件：`llms-components.txt`
-    - 图表：`llms-charts.txt`
-    - 样式系统：`llms-styling.txt`
-    - 主题：`llms-theming.txt`
-    - 完整文档：`llms-full.txt`
-  - 若上述文件不存在，请参考官方 Chakra UI v3 文档，并确保 API 用法与 v3 一致。
-- 类型检查：完成前端改动后，务必执行 TypeScript 类型检查（不生成输出）：
-  
-  ```powershell
-  cd frontend; npx tsc --noEmit
-  ```
-- React Flow（流程图）：使用 `@xyflow/react`，固定导入格式：
-  
-  ```ts
-  import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
-  ```
-  - 本地文档目录：`reactflow_docs/`（概念、教程、性能与调试、TypeScript 等）。
-
-### 1.2 终端与命令执行
-- 默认终端：Windows PowerShell。
-- 后端虚拟环境：从后端目录激活虚拟环境的命令为：
-  
-  ```powershell
-  .venv\Scripts\activate
-  ```
-
-- 多条命令请使用分号 `;` 分隔，而不是 `&&`。例如：
-  
-  ```powershell
-  cd backend; .venv\Scripts\activate; uv sync; fastapi run app/main.py
-  ```
-
-### 1.3 后端约定
-- 框架/数据库：FastAPI + PostgreSQL。
-- 数据计算与处理：涉及密集计算、复杂数据处理时，请尽可能多地添加调试信息（建议使用标准 `logging`，避免随意 `print`）。建议模式：
-  
-  ```python
-  import logging
-  logger = logging.getLogger(__name__)
-
-  def compute(payload: dict) -> Result:
-      logger.debug("compute:start", extra={"shape": len(payload)})
-      # 关键步骤加入关键变量与中间统计信息
-      result = heavy_calc(payload)
-      logger.debug("compute:done", extra={"size": result.size})
-      return result
-  ```
-  
-  - 调试完成后，请移除或降级不必要的调试日志，避免污染日志与影响性能。
-  - 如需长期保留的运行信息，使用 `INFO` 级别，保持结构化且简洁。
+- **README First 原则**：保证 Agent 在动手前读取了项目上下文。
+- **本质不确定性最小化协议**：保证 Agent 读完上下文后，真正理解了问题、边界、风险和验收标准。
 
 ---
 
-## 2. 生成前端客户端（OpenAPI Client）
+## 1. README First 原则
 
-前端客户端基于后端 OpenAPI Schema 生成。每次后端接口/Schema 变更后，都需要重新生成前端客户端并提交。
+在执行任何操作前，必须先阅读相关上下文，顺序如下：
 
-### 2.1 自动方式
-1. 激活后端虚拟环境。
-2. 在项目顶级目录运行脚本：
-   
-   ```bash
-   ./scripts/generate-client.sh
-   ```
-   
-   - Windows 下如直接执行失败，请使用手动方式。
-3. 提交更改。
+1. 先阅读本文件 `AGENTS.md`。
+2. 再阅读根目录 `README.md`。
+3. 再阅读目标文件所在路径上的**各级目录 `README.md`**（从上到下）。
+4. 最后阅读目标文件本身及其直接依赖、调用方和相关测试。
 
-### 2.2 手动方式
-1. 启动本地后端（或确保可访问 API）。
-2. 下载 OpenAPI JSON：`http://localhost/api/v1/openapi.json`，保存为 `frontend/openapi.json`。
-3. 生成前端客户端：
-   
-   ```powershell
-   cd frontend; npm run generate-client
-   ```
-4. 提交更改。
+举例：修改 `src/components/Button/Button.tsx`，应依次阅读：
 
-> 注意：每次后端更改（OpenAPI 架构变化）后都需要重复上述步骤更新前端客户端。
+```txt
+AGENTS.md
+README.md
+src/README.md
+src/components/README.md
+src/components/Button/README.md
+```
 
----
+如果某一级目录没有 README，则继续向上读取上级 README，并基于现有文件谨慎推断；不得自行假设该目录约定。如该目录属于关键目录，应先补建 README。
 
-## 3. 日常开发流程（推荐）
+### 优先级规则
 
-- 拉取/更新代码；在独立分支上进行工作。
-- 前端改动：实现功能 → `cd frontend; npx tsc --noEmit` 确认类型通过 → 本地运行预览。
-- 后端改动：激活虚拟环境 → 开发与调试（增加必要的结构化调试信息）→ 完成后移除冗余调试。
-- 如涉及接口变更：更新/生成 OpenAPI 前端客户端，并验证类型与运行。
-- 更新每日工作日志（见下文）。
-- 提交代码并发起合并请求。
+1. 本文件 `AGENTS.md` 中的全局规则优先级最高。
+2. 距离目标文件最近的目录 README 优先于上级 README。
+3. 上级目录 README 提供通用背景。
+4. 当 README 与实际代码冲突时，必须显式指出冲突（见第 9 节），不得静默选择。
+5. 当规则冲突且无法判断时，必须在修改前提出，而非擅自决定。
 
 ---
 
-## 4. 工作流编排
+## 2. 本质不确定性最小化协议
 
-### 4.1. 计划节点默认行为
-- 对于任何非简单任务（3步以上或涉及架构决策），默认进入计划模式
-- 如果出现问题，立即停止并重新规划，不要一头扎进去硬撑
-- 在验证步骤中也使用计划模式，而不仅仅是构建阶段
-- 提前编写详细规格说明，减少歧义
+Agent 在面对任何用户 prompt 时，**不得直接把 prompt 当作完整需求执行**。必须先尽可能降低任务中的本质不确定性，再进行查询、新增、修改或删除。
 
-### 4.2. 子代理策略
-- 大量使用子代理，保持主上下文窗口整洁
-- 将研究、探索和并行分析任务分配给子代理
-- 面对复杂问题，通过子代理投入更多算力
-- 每个子代理专注单一任务，确保执行聚焦
+本协议的目标不是消除所有不确定性，而是通过阅读上下文、识别假设、缩小范围、验证约束和记录决策，尽可能减少因误解需求、误判边界、忽略隐含约定而造成的错误修改。
 
-### 4.3. 自我改进循环
-- 每次被用户纠正后：将经验规律更新到 `tasks/lessons.md`
-- 为自己制定规则，防止重犯同类错误
-- 持续迭代这些经验，直到错误率下降
-- 每次会话开始时回顾与当前项目相关的经验
+> 区分两类困难：偶然不确定性来自“尚未读取上下文”，必须先用工程动作消除；本质不确定性来自“问题本身、用户意图、业务语义、架构权衡、接口契约、验收标准”，必须靠收敛和记录来压缩。
 
-### 4.4. 完成前验证
-- 未经证明可正常运行，绝不将任务标记为完成
-- 必要时对比主版本与修改后的行为差异
-- 问自己："高级工程师会认可这个方案吗？"
-- 运行测试、检查日志、演示正确性
+### 2.1 两类不确定性
 
-### 4.5. 追求优雅（适度平衡）
-- 对于非简单改动：停下来问"有没有更优雅的实现方式？"
-- 如果修复方案感觉像是临时补丁，就说："基于我现在掌握的全部信息，实现一个优雅的解决方案"
-- 对于简单明显的修复，跳过此步骤，不要过度设计
-- 在提交方案前先审视自己的工作
+**偶然不确定性**：因为还没读文件、没搜代码、没看 README、没理解项目结构、没检查测试而产生的不确定性。必须**优先**通过工程动作消除：阅读 `AGENTS.md`、相关 `README.md`、搜索相关代码/类型/测试/配置/文档、检查调用方和依赖方、运行或说明验证命令。
 
-### 4.6. 自主修复 Bug
-- 收到 Bug 报告后：直接修复，无需寻求引导
-- 定位日志、错误信息、失败的测试，然后解决它们
-- 不需要用户切换上下文
-- 无需被告知如何操作，主动去修复失败的 CI 测试
+> Agent 不得把可以通过读取项目上下文解决的问题，转嫁给用户反复确认。
 
-### 4.7. 任务管理
+**本质不确定性**：来自问题本身的不确定性，常见表现包括：用户真正想解决的问题不清楚；prompt 只描述操作没描述目标；需求边界不明；业务规则缺失；多种方案都合理但取舍标准不清；修改可能影响公共 API、数据结构、状态流、权限、性能或安全；README、代码、测试或实际行为之间存在冲突；验收标准不明确。
 
-1. **先写计划**：将计划写入 `tasks/todo.md`，包含可勾选的条目
-2. **确认计划**：开始实施前进行检查确认
-3. **追踪进度**：完成后逐项标记
-4. **说明变更**：每步提供高层级摘要
-5. **记录结果**：在 `tasks/todo.md` 中添加回顾章节
-6. **沉淀经验**：被纠正后更新 `tasks/lessons.md`
+### 2.2 把 Prompt 转换为任务契约
 
+执行前，Agent 必须在内部把用户 prompt 转换为任务契约，至少包括：
 
-### 4.8. 核心原则
+```txt
+1. 用户目标：用户真正想达成什么结果？
+2. 直接交付物：输出文档 / 修改代码 / 创建文件 / 删除文件 / 仅提供建议？
+3. 影响范围：涉及哪些目录、文件、模块、接口、测试或配置？
+4. 非目标：本次不应该做哪些事？
+5. 约束条件：技术栈、架构、风格、性能、安全、兼容性或业务约束？
+6. 验收标准：如何判断本次任务已完成？
+7. 不确定性清单：还有哪些会影响实现选择的不确定点？
+8. 假设清单：无法确认时，准备基于哪些保守假设继续？
+```
 
-- **简洁优先**：每次改动尽可能简单，影响尽量少的代码
-- **杜绝懒惰**：找到根本原因，不打临时补丁，保持高级开发者标准
-- **最小影响**：变更只触及必要之处，避免引入新 Bug
----
+Agent 不需要向用户暴露完整推理过程，但必须在最终回复中明确说明与结果相关的**关键假设、不确定点和验证方式**。
 
-## 5. 目录与关键路径（对齐现有结构）
+### 2.3 不确定性压缩流程
 
-- 前端主要目录：`frontend/`
-  - 源码：`frontend/src`
-  - 生成的 OpenAPI 客户端：`frontend/src/client`
-  - 自定义主题：`frontend/theme.tsx`
-- React Flow 文档：`reactflow_docs/`（本地说明与示例）
-- OpenAPI Schema（运行时）：`http://localhost/api/v1/openapi.json`
+**第一步：先消除偶然不确定性。** 优先检查：`AGENTS.md` → 根 `README.md` → 目标路径上各级 `README.md` → 相关源代码 → 相关测试 → 相关类型定义 → 相关配置 → `.ai/changes/` → `.ai/decisions/`。
 
----
+**第二步：识别本质不确定性。** 逐项判断：目标是否明确？边界是否明确？目录职责是否明确？是否存在多个合理方案？用户是否指定取舍标准？是否影响公共接口 / 数据结构 / 已有测试 / 未来维护？是否需要更新 README 或记录决策？
 
-## 6. 常用命令速查（PowerShell）
+**第三步：压缩不确定性。** 从 README 确认目录职责，从代码确认实际行为，从测试确认预期行为，从类型确认接口契约，从调用方确认影响范围，从 `.ai/changes/` 确认历史修改原因，从 `.ai/decisions/` 确认架构决策。把大问题拆成可验证的小问题，优先选择**最小、保守、可回滚**的方案，避免引入 prompt 中没有要求的功能。
 
-- 前端类型检查：
-  
-  ```powershell
-  cd frontend; npx tsc --noEmit
-  ```
+**第四步：按风险等级处理剩余不确定性。**
 
-- 前端开发启动（若配置存在于 package.json 中）：
-  
-  ```powershell
-  cd frontend; npm install; npm run dev
-  ```
+| 风险等级 | 判断标准 | 处理方式 |
+|---|---|---|
+| 低风险 | 不影响公共接口、核心逻辑、数据结构或用户体验 | 基于明确假设继续，并在记录中说明 |
+| 中风险 | 可能影响局部行为，但范围可控 | 采用最小变更，补充验证，记录假设 |
+| 高风险 | 可能影响公共 API、数据结构、权限、安全、支付、认证、部署或核心业务流程 | 不得静默修改，必须明确指出风险与待确认问题 |
+| 不可逆风险 | 删除核心文件、大规模重构、破坏兼容性、迁移数据、废弃重要接口 | 未获明确确认前不得执行破坏性操作 |
 
-- 激活后端虚拟环境并运行（示例）：
-  
-  ```powershell
-  cd backend; .venv\Scripts\activate; fastapi run app/main.py
-  ```
+### 2.4 提问规则
 
-- 生成前端客户端（手动）：
-  
-  ```powershell
-  Invoke-WebRequest http://localhost/api/v1/openapi.json -OutFile frontend/openapi.json; `
-  cd frontend; npm run generate-client
-  ```
+可以向用户提问，但**不得把提问当作逃避上下文分析的手段**。提问必须满足以下条件之一：无法通过读 README/代码/测试/记录解决；显著影响实现方案；涉及高风险或不可逆操作；关系业务规则、产品取舍或用户偏好；不提问就只能凭空猜测。
+
+提问时：只问阻塞性问题；不要一次抛出大量泛泛问题；每个问题说明它为何影响实现；能给合理默认方案的同时给出默认方案；可安全推进的部分先完成，再标记待确认部分。
+
+### 2.5 假设规则
+
+当必须基于假设继续时：假设必须明确写出；尽量保守；不得扩大用户需求；不得覆盖 README 已有约定；不得违反现有代码模式；不得引入新业务规则；不得用于高风险或不可逆操作。
+
+推荐在回复中使用如下格式：
+
+```md
+## 本次执行假设
+- 假设 1：
+- 假设 2：
+
+## 剩余不确定性
+- 不确定点 1：
+- 不确定点 2：
+
+## 风险控制方式
+- 本次仅做最小变更。
+- 不修改公共接口 / 不删除现有文件 / 不引入新依赖。
+- 已检查相关 README、代码和测试。
+```
+
+### 2.6 实现策略
+
+优先做最小必要变更；优先保持现有架构与命名风格；优先复用现有模块而非新建抽象；优先补充/更新测试；优先保留兼容性；优先局部修改而非大范围重构；优先明确记录假设而非隐式猜测。不得为让实现“看起来合理”而篡改 README；不得把未确认的业务判断写成确定事实；不得添加用户没要求、README 没支持、测试没覆盖的额外功能。
 
 ---
 
-## 7. 代码质量与风格
+## 3. 增删改查规则
 
-- 保持 TypeScript 类型完备，尽量避免 `any`；新增类型定义放在合适的 `types`/`interfaces` 文件。
-- Chakra 组件使用 v3 API；样式尽量使用主题 Token 与系统化写法。
-- 后端调试信息应结构化、可控（使用 `logging`），在确认稳定后删除临时调试语句。
-- 变更涉及 API 时，务必同步更新前端客户端并进行类型与运行验证。
+### 查询前
+
+- 阅读相关 README，确认问题涉及哪些目录、README 中是否已有答案。
+- 检查 README 与实际代码是否一致；如不一致，在回答中指出。
+- 基于 README 与代码事实回答，而非凭记忆。
+
+### 新增前
+
+- 检查当前目录是否适合放置该文件。
+- 检查是否已有类似功能、是否存在统一导出入口。
+- 检查命名、导出、测试、依赖是否符合约定。
+- 判断是否改变公共接口或依赖边界，是否需要更新目录 README 的核心文件表。
+- 禁止：未检查现有结构就新建平行模块；为图方便在错误层级新增文件；新增重复工具函数或组件；引入新依赖却不说明原因和影响。
+
+### 修改前
+
+- 检查当前文件是否是公共入口、是否影响调用方。
+- 检查是否影响类型、测试、配置、构建或部署。
+- 检查是否改变 README 中描述的职责或约定。
+- 对公共 API、共享类型、路由、数据库 schema、配置、权限逻辑、安全逻辑等高影响文件，必须**扩大**影响分析范围，而非只改局部文件。
+
+### 删除前
+
+- 检查文件是否仍被引用、是否被导出入口/测试/配置/文档/构建脚本引用。
+- 检查是否被 README 标记为核心或受保护的文件。
+- 删除后是否需要更新 README、测试或 `.ai/changes/`。
+- 删除应比新增和修改更谨慎。除非用户明确要求，否则不得删除业务代码来“简化结构”。
 
 ---
 
+## 4. 修改完成后的记录规则
 
+每次完成修改后，必须根据实际影响完成四件事：
+
+1. **验证**：运行测试、lint、typecheck，或明确说明未运行的原因。
+2. **更新**：若目录职责、公共接口或长期约定发生变化，更新对应 README。
+3. **记录**：在 `.ai/changes/YYYY-MM-DD.md` 中记录本次变更（格式见下）。
+4. **报告**：向用户输出简洁实施报告（见第 10 节）。
+
+普通修改仅记录到 `.ai/changes/`；只有当修改改变目录职责、架构约定、公共接口、文件组织方式或长期维护规则时，才更新对应目录 README。
+
+`.ai/changes/YYYY-MM-DD.md` 记录模板（文件名精确到天，标题精确到时分；日期已在文件名中，标题只写时间）：
+
+```md
+## HH:MM - <任务标题>
+
+- 用户目标：
+- 涉及目录：
+- 修改内容：
+- 修改原因：
+- 本次已消除的不确定性：
+- 本次采用的关键假设：
+- 剩余不确定性：
+- 影响范围 / 风险控制方式：
+- 验证方式：
+- 是否更新 README：
+- 是否需要新增或更新架构决策（.ai/decisions/）：
+```
+
+如本次任务产生长期架构决策，必须写入 `.ai/decisions/`。
+
+---
+
+## 5. README 更新触发条件
+
+出现以下任一情况，**必须**更新对应目录 README：
+
+1. 新增或删除核心文件。
+2. 改变目录职责。
+3. 改变公共 API、导出方式、数据结构或模块边界。
+4. 引入新的依赖、构建方式、测试方式或运行方式。
+5. 新增、废弃或改变重要工程约定或命名约定。
+6. 修改会影响未来 Agent 或开发者理解该目录。
+7. 发现 README 与代码明显不一致，并已完成修正。
+
+以下情况通常**只需记录到 `.ai/changes/`**，甚至只靠 commit 即可：修复小 bug、调整局部样式、修改文案、不改变外部行为的内部优化、临时日志、无设计变化的测试快照更新。
+
+判断标准：
+
+> 六个月后的 Agent 或新人维护者，是否需要知道这次修改背后的规则、边界或设计原因？需要 → 更新 README 或 `.ai/decisions/`；只是普通实现细节 → 不要污染 README。
+
+---
+
+## 6. 文档分工
+
+| 机制 | 主要用途 |
+|---|---|
+| git diff | 记录具体改了哪些代码 |
+| commit message | 记录一次提交的摘要 |
+| `README.md` | 记录当前稳定的目录上下文与维护契约（长期知识） |
+| `.ai/changes/` | 记录变更的原因、范围、假设、验证与后续注意事项 |
+| `.ai/decisions/` | 记录长期架构决策 |
+| `.ai/plans/`（可选） | 记录单次复杂任务的执行计划 |
+
+README 只记录长期知识（目录职责、模块边界、公共接口、命名与依赖规则、验证方式），不记录流水账、临时调试信息、可从 git diff 看出的细节或未经确认的猜测。
+
+---
+
+## 7. 禁止行为
+
+Agent 不得：
+
+1. 在未阅读相关 README 的情况下直接执行用户 prompt 或修改文件。
+2. 把 prompt 中模糊的描述直接解释成确定需求。
+3. 在存在高风险不确定性时静默修改核心文件。
+4. 用大范围重构掩盖对需求理解不清。
+5. 为完成任务而编造业务规则。
+6. 为减少工作量而忽略调用方、测试或 README。
+7. 把猜测写入 README，伪装成项目事实。
+8. 在没有验证的情况下声称问题已解决。
+9. 删除或覆盖与任务无关的现有文档和代码。
+10. 删除 README 中标记为核心或受保护的文件（除非用户明确要求并完成影响分析）。
+11. 把本质不确定性完全转嫁给用户，而不先做项目上下文分析。
+12. 修改 README 以掩盖错误实现。
+
+---
+
+## 8. 目录 README 模板
+
+新建或补全目录级 README 时，使用以下模板：
+
+```md
+# 目录说明：<目录名>
+
+## 1. 目录职责
+本目录负责：
+-
+本目录不负责：
+-
+
+## 2. 核心文件
+| 文件/子目录 | 作用 |
+|---|---|
+| `xxx` |  |
+
+## 3. 维护约定
+1.
+2.
+
+## 4. 对外接口
+本目录对外暴露：
+-
+修改这些接口时需同步检查调用方和测试。
+
+## 5. 依赖边界
+可以依赖：
+-
+不应该依赖：
+-
+
+## 6. 测试与验证
+修改本目录后建议运行：
+    （根据项目实际情况填写，如 test / lint / typecheck 命令）
+
+## 7. AI 操作提示
+1. 阅读本 README 与上级 README。
+2. 确认修改是否影响目录职责、公共接口或维护约定。
+3. 完成后按 AGENTS.md 决定是否更新 README 或记录到 .ai/changes/。
+```
+
+目录 README 的理想状态是“短而准”，通常控制在 50–150 行内。复杂目录应拆分子目录，而不是把一份 README 写成百科全书。
+
+---
+
+## 9. README 与代码不一致时
+
+如果 README 和实际代码不一致，Agent 必须：
+
+1. 明确指出不一致之处。
+2. 判断是 README 过时，还是代码偏离约定。
+3. 在本次修改中修复代码或更新 README。
+4. 在 `.ai/changes/` 中记录本次修正。
+
+允许 Agent 指出 README 与代码、测试、最佳实践的冲突。把 README 视为**可进化的契约**，而非不可质疑的命令；但在未确认前，不得擅自固化或推翻规则。
+
+---
+
+## 10. 最终输出要求
+
+完成任务后，最终回复必须包含：
+
+1. 本次完成了什么。
+2. 修改了哪些文件。
+3. 基于哪些 README 或项目上下文执行。
+4. 采用了哪些关键假设。
+5. 消除了哪些不确定性、仍存在哪些不确定性。
+6. 如何验证（已运行的命令与结果，或未运行的原因）。
+7. 是否更新了 README、`.ai/changes/` 或 `.ai/decisions/`。
+
+如果没有修改任何文件，也必须说明原因和建议的下一步。
+
+---
+
+## 11. AutoWaterSimu 项目专属规则
+
+本节是 AutoWaterSimu 在 README First 主协议之上的项目级约束。若本节与上文通用流程存在表述差异，以更严格、更具体、更接近当前仓库事实的规则为准。
+
+### 11.1 技术栈与核心目录
+
+- 当前 legacy 前端使用 React + TypeScript + Chakra UI v3 + Vite。
+- 当前流程图使用 React Flow / XYFlow，固定导入格式：
+
+```ts
+import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
+```
+
+- 当前 legacy 后端使用 Python + FastAPI + SQLModel + PostgreSQL。
+- 新 AutoWaterSimu Next 重构采用同仓 monorepo：`contracts/`、`simulation_core/`、`services/simulation-worker/`、`apps/api/`、`apps/desktop/` 与 legacy `frontend/`、`backend/` 并行。
+- `docs/rebuild/AutoWaterSimu_Next_PRD_v1.0.md`、`docs/rebuild/AutoWaterSimu_Next_Technical_Spec_v1.0.md`、`docs/rebuild/AutoWaterSimu_Next_Development_Plan_v1.0.md` 是 Next 重构的当前权威输入。
+
+### 11.2 前端约定
+
+- 使用 Chakra UI v3 前，先阅读本地迁移与组件文档：`llms-v3-migration.txt`、`llms-components.txt`、`llms-charts.txt`、`llms-styling.txt`、`llms-theming.txt`、`llms-full.txt`。若文件不存在，再参考官方 Chakra UI v3 文档。
+- 前端改动完成后必须运行：
+
+```powershell
+cd frontend; npx tsc --noEmit
+```
+
+- 新核心页面逐步走 COSS-compatible UI；legacy Chakra 页面先保留，不在 P0 大规模重写。
+- Go Compute API 生成的 TypeScript client 放在 `frontend/src/client/compute`，不得覆盖 legacy FastAPI client。
+
+### 11.3 后端与计算约定
+
+- 后端虚拟环境从 `backend/` 激活：
+
+```powershell
+.venv\Scripts\activate
+```
+
+- 涉及密集计算、复杂数据处理时使用标准 `logging`，避免随意 `print`，不得输出完整流程图、完整水质 payload、token 或大结果。
+- 长耗时仿真逐步迁移到 worker；legacy FastAPI BackgroundTasks 只作为迁移对照期能力。
+- 结果 summary 入库，大结果进入 artifact；不得把大时间序列完整写入主表 JSON。
+
+### 11.4 OpenAPI Client 规则
+
+每次后端接口或 schema 变更后，必须同步更新前端客户端。
+
+自动方式：
+
+```bash
+./scripts/generate-client.sh
+```
+
+Windows 手动方式：
+
+```powershell
+Invoke-WebRequest http://localhost/api/v1/openapi.json -OutFile frontend/openapi.json; cd frontend; npm run generate-client
+```
+
+### 11.5 PowerShell 与验证命令
+
+- 默认终端是 Windows PowerShell。
+- 多条命令使用分号 `;` 分隔，不使用 `&&`。
+- 常用验证：
+
+```powershell
+cd frontend; npx tsc --noEmit
+cd backend; .venv\Scripts\python -m pytest app/tests/time_segment_validation_test.py app/tests/material_balance_segment_overrides_test.py app/tests/hybrid_udm_validation_test.py app/tests/udm_engine_variable_binding_test.py -q
+```
+
+### 11.6 任务与记录
+
+- 非简单任务先在 `tasks/todo.md` 写计划和复盘。
+- README First 变更记录写入 `.ai/changes/YYYY-MM-DD.md`。
+- 长期架构决策写入 `.ai/decisions/`。
+- 被用户纠正后，将可复用经验沉淀到 `tasks/lessons.md`。

@@ -1,0 +1,32 @@
+{
+  "schema_version": "canvas_graph.v1",
+  "graph_id": "graph_material_balance_minimal",
+  "name": "Material Balance Minimal",
+  "nodes": [
+    {
+      "id": "n_in",
+      "type": "input",
+      "position": { "x": 0, "y": 0 },
+      "data": { "label": "Influent" }
+    },
+    {
+      "id": "n_tank",
+      "type": "tank",
+      "position": { "x": 240, "y": 0 },
+      "data": { "label": "Tank" }
+    },
+    {
+      "id": "n_out",
+      "type": "output",
+      "position": { "x": 480, "y": 0 },
+      "data": { "label": "Effluent" }
+    }
+  ],
+  "edges": [
+    { "id": "e_in_tank", "source": "n_in", "target": "n_tank", "data": { "flow_rate": 100.0 } },
+    { "id": "e_tank_out", "source": "n_tank", "target": "n_out", "data": { "flow_rate": 100.0 } }
+  ],
+  "viewport": { "x": 0, "y": 0, "zoom": 1 },
+  "ui_state": {},
+  "exported_at": "2026-05-25T00:00:00Z"
+}

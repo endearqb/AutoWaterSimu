@@ -1,5 +1,18 @@
 # FastAPI Project - Backend
 
+## README First Context
+
+Before modifying backend code, read root `AGENTS.md`, root `README.md`, this file, and the closest README under the target path if one exists.
+
+Backend is the legacy FastAPI / SQLModel / PostgreSQL application. AutoWaterSimu Next work should preserve backend behavior as a migration baseline while moving long-running simulation execution toward `simulation_core/` and `services/simulation-worker/`.
+
+Key constraints:
+
+- Do not move long-running simulation behavior without baseline tests.
+- Use structured `logging`; avoid `print`, especially for full flowcharts, payloads, tokens, or large results.
+- API/schema changes require frontend OpenAPI client regeneration.
+- Dense compute changes should keep old-vs-new numerical comparison fixtures.
+
 ## Requirements
 
 * [Docker](https://www.docker.com/).
@@ -348,4 +361,3 @@ $ alembic upgrade head
 在继续之前，请确保你在 VS Code 中安装了 [MJML 扩展](https://marketplace.visualstudio.com/items?itemName=attilabuti.vscode-mjml)。
 
 安装 MJML 扩展后，你可以在 `src` 目录中创建新的电子邮件模板。创建新的电子邮件模板并在编辑器中打开 `.mjml` 文件后，使用 `Ctrl+Shift+P` 打开命令面板并搜索 `MJML: Export to HTML`。这将把 `.mjml` 文件转换为 `.html` 文件，现在你可以将其保存在 build 目录中。
-        

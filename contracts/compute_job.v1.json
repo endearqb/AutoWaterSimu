@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "compute_job.v1.json",
+  "title": "compute_job.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "job_id",
+    "job_type",
+    "queue",
+    "request_id",
+    "idempotency_key",
+    "payload",
+    "context",
+    "execution"
+  ],
+  "properties": {
+    "schema_version": { "const": "compute_job.v1" },
+    "job_id": { "type": "string", "minLength": 1 },
+    "job_type": { "type": "string", "enum": ["simulation.material_balance.v1"] },
+    "queue": { "type": "string", "minLength": 1 },
+    "request_id": { "type": "string", "minLength": 1 },
+    "idempotency_key": { "type": "string", "minLength": 1 },
+    "payload": { "type": "object" },
+    "context": {
+      "type": "object",
+      "required": ["source_system", "requested_by", "trace_id"],
+      "properties": {
+        "source_system": { "type": "string", "minLength": 1 },
+        "requested_by": { "type": "string", "minLength": 1 },
+        "trace_id": { "type": "string", "minLength": 1 },
+        "tenant_id": { "type": "string" },
+        "project_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "required": ["time_limit_sec", "priority", "required_capabilities"],
+      "properties": {
+        "time_limit_sec": { "type": "integer", "minimum": 1 },
+        "priority": { "type": "string", "enum": ["low", "normal", "high"] },
+        "required_capabilities": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": true
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

@@ -9,6 +9,33 @@ Built on a full‑stack FastAPI + React architecture, supporting process flow mo
 
 ---
 
+## README First / AI Context Protocol
+
+This repository uses a README First workflow for human and AI collaboration.
+
+Recommended reading order before changing files:
+
+1. `AGENTS.md`
+2. `README_First.md`
+3. This root `README.md`
+4. The nearest `README.md` files from parent directory to target directory
+5. The target files, direct dependencies, callers, and relevant tests
+
+Long-term AI collaboration records live under `.ai/`:
+
+- `.ai/changes/`: why a change was made, what was verified, and what remains uncertain
+- `.ai/decisions/`: durable architecture decisions
+- `.ai/plans/`: optional complex task plans
+- `.ai/reviews/`: optional review records
+
+AutoWaterSimu Next work is developed in this repository as a monorepo-style evolution:
+
+- legacy `frontend/` and `backend/` remain as the baseline
+- new contracts, worker, API, and desktop surfaces are added in parallel
+- migration happens through tested adapters, fixtures, and old-vs-new baselines
+
+---
+
 ## Sponsors
 
 We sincerely thank the following sponsor for supporting the development and maintenance of this project:
@@ -104,6 +131,13 @@ The repository root is the AutoWaterSimu project root. The core structure is:
   - `src/components/Flow/`: flow editor and related UI
   - `src/routes/`: page routes (material balance pages, model config pages, etc.)
 - `docs/`: usage and development documentation
+- `contracts/`: AutoWaterSimu Next JSON Schema contracts and examples
+- `simulation_core/`: pure Python simulation core extraction target
+- `services/simulation-worker/`: Python worker CLI / sidecar target
+- `apps/api/`: Go Compute API target
+- `apps/desktop/`: Tauri/Rust + React Desktop target
+- `.ai/`: README First change, decision, plan, and review records
+- `tasks/`: project task notes, work logs, and implementation plans
 - `scripts/`: helper scripts (build, test, DB initialization, etc.)
 - Others:
   - `docker-compose*.yml`: Docker Compose configs for various dev/deploy setups

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "compute_result.v1.json",
+  "title": "compute_result.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "job_id",
+    "job_type",
+    "status",
+    "summary",
+    "data",
+    "quality",
+    "artifacts",
+    "runtime_audit"
+  ],
+  "properties": {
+    "schema_version": { "const": "compute_result.v1" },
+    "job_id": { "type": "string", "minLength": 1 },
+    "job_type": { "type": "string", "enum": ["simulation.material_balance.v1"] },
+    "status": { "type": "string", "enum": ["succeeded", "failed", "cancelled", "timed_out"] },
+    "summary": { "type": "object" },
+    "data": { "type": "object" },
+    "quality": {
+      "type": "object",
+      "required": ["data_quality", "warnings"],
+      "properties": {
+        "data_quality": { "type": "string", "minLength": 1 },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "artifacts": { "type": "array", "items": { "type": "object" } },
+    "runtime_audit": {
+      "type": "object",
+      "required": ["model_runs", "timings_ms", "fallback_used"],
+      "properties": {
+        "model_runs": { "type": "array", "items": { "type": "object" } },
+        "timings_ms": { "type": "object" },
+        "fallback_used": { "type": "boolean" },
+        "fallback_reason": { "type": "string" },
+        "worker_version": { "type": "string" },
+        "python_version": { "type": "string" },
+        "package_versions": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": "process_graph.v1",
+  "process_graph_id": "pg_unknown_edge_node",
+  "version": 1,
+  "source_canvas_graph_id": "graph_material_balance_minimal",
+  "component_schema": {
+    "component_schema_id": "material_balance_components.v1",
+    "components": ["COD"],
+    "unit": "mg/L"
+  },
+  "nodes": [
+    {
+      "node_id": "n_in",
+      "node_type": "input",
+      "process_unit_type": "influent",
+      "ports": [{ "port_id": "out", "direction": "out" }],
+      "model_binding": {},
+      "unit_metadata": {}
+    },
+    {
+      "node_id": "n_out",
+      "node_type": "output",
+      "process_unit_type": "effluent",
+      "ports": [{ "port_id": "in", "direction": "in" }],
+      "model_binding": {},
+      "unit_metadata": {}
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e_unknown",
+      "source_node_id": "n_missing",
+      "target_node_id": "n_out",
+      "source_port": "out",
+      "target_port": "in",
+      "flow_rate": 100.0,
+      "concentration_transform": {}
+    }
+  ],
+  "validation": {
+    "status": "invalid",
+    "errors": [{ "code": "UNKNOWN_EDGE_NODE", "node_id": "n_missing" }],
+    "warnings": []
+  }
+}

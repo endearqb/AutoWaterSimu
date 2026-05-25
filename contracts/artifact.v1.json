@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "artifact.v1.json",
+  "title": "artifact.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "job_id",
+    "artifact_type",
+    "storage_provider",
+    "object_key",
+    "content_type",
+    "size_bytes",
+    "checksum",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "artifact.v1" },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "job_id": { "type": "string", "minLength": 1 },
+    "artifact_type": { "type": "string", "minLength": 1 },
+    "storage_provider": {
+      "type": "string",
+      "enum": ["local_fs", "local_fs_dev", "s3", "minio"]
+    },
+    "object_key": { "type": "string", "minLength": 1 },
+    "content_type": { "type": "string", "minLength": 1 },
+    "size_bytes": { "type": "integer", "minimum": 0 },
+    "checksum": { "type": "string", "pattern": "^sha256:[0-9a-fA-F]{64}$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

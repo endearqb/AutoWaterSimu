@@ -47,6 +47,9 @@ def create_calculation_job(
 ) -> Any:
     """
     鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
+
+    Legacy baseline: long-running execution still uses FastAPI BackgroundTasks
+    until the compute worker lifecycle replaces this endpoint.
     """
     # Generate unique job ID
     job_id = str(uuid4())
@@ -104,6 +107,9 @@ def create_calculation_job_from_flowchart(
 ) -> Any:
     """
     浠庢祦绋嬪浘鏁版嵁鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
+
+    Legacy baseline: accepts raw flowchart JSON until CanvasGraph ->
+    ProcessGraph -> SimulationInput contracts replace this path.
     """
     try:
         calculation_params = flowchart_data.get("calculationParameters", {})

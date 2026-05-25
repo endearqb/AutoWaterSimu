@@ -366,3 +366,75 @@
   - `cd frontend; npx tsc --noEmit` passed.
   - `cd frontend; npx vite build` passed.
   - Manual browser smoke test was not run in this environment.
+
+# 2026-05-25 AutoWaterSimu Next Governance Docs TODO
+
+- [x] Review the three AutoWaterSimu Next docs and preserve their existing product/architecture intent
+- [x] Add P0/P1/P2 scope control and decision table to the PRD
+- [x] Add implementation-grade governance rules to the Technical Spec
+- [x] Add phase tasks, gates, and acceptance checks to the Development Plan
+- [x] Verify cross-document naming and scope consistency
+- [x] Record review notes
+
+## Review
+
+- Updated the PRD with P0/P1/P2 scope control, reserved contracts, API behavior requirements, Desktop support/sandbox expectations, and release risk controls.
+- Updated the Technical Spec with canonical schema naming, `contract_error.v1`, reserved governance contracts, idempotency/pagination semantics, worker lease rules, artifact lifecycle, numerical reproducibility, security, testing, and release gates.
+- Updated the Development Plan with concrete phase tasks and acceptance checks for governance, support bundles, packaging smoke, client generation, migrations, and legacy adapter work.
+- Verification:
+- `rg` consistency checks found no active `schema_version` examples using kebab-case names.
+- `git diff --check` passed for the touched docs; PowerShell reported only the existing LF/CRLF normalization warning for `tasks/todo.md`.
+
+# 2026-05-25 README First Branch Initialization TODO
+
+- [x] Create branch `codex/autowatersimu-next-rebuild` while preserving current working tree changes
+- [x] Add `README_First.md` from the provided attachment
+- [x] Make attached `AGENTS.md` the main protocol and merge AutoWaterSimu-specific rules
+- [x] Create recommended Next directories with README First context files
+- [x] Add `.ai/changes/` and `.ai/decisions/` records
+- [x] Update root, backend, frontend, docs, rebuild, and tasks README files
+- [x] Run structure and markdown consistency checks
+
+## Review
+
+- Created branch `codex/autowatersimu-next-rebuild`.
+- Added README First protocol files and the new AutoWaterSimu Next monorepo skeleton.
+- Added README files for new and existing key directories so future work can follow AGENTS.md -> root README -> directory README.
+- Recorded this initialization in `.ai/changes/2026-05-25.md` and `.ai/decisions/0001-readme-first-and-next-monorepo.md`.
+- Verification:
+- Structure check and README First keyword search were run.
+- `git diff --check` was run; no whitespace errors were reported beyond the existing LF/CRLF warning for `tasks/todo.md`.
+
+# 2026-05-25 AutoWaterSimu Next Phase 0+1 TODO
+
+- [x] Fix ASM1 and UDM validate response fields
+- [x] Replace ASM1/ASM1Slim/ASM3 flowchart route `print` debugging with structured logging
+- [x] Mark existing long-running calculate endpoints as legacy baseline
+- [x] Add P0 and reserved contract schemas under `contracts/`
+- [x] Add valid / invalid contract examples
+- [x] Add contract schema tests
+- [x] Add backend validate response and no-print regression tests
+- [x] Add backend `jsonschema` dev dependency and update lockfile
+- [x] Run backend route/static tests
+- [x] Run contract tests
+- [x] Run backend core regression tests
+- [x] Run frontend TypeScript check
+- [x] Run `git diff --check`
+- [x] Update `.ai/changes/2026-05-25.md` and record review notes
+
+## Review
+
+- Fixed ASM1 and UDM validate responses to return `estimated_memory_mb` and `estimated_time_seconds`, matching `MaterialBalanceValidationResponse`.
+- Replaced ASM1/ASM1Slim/ASM3 flowchart route `print(...)` debugging with module loggers that do not emit complete `flow_data`.
+- Marked existing material balance, ASM1, and UDM calculate entrypoints as legacy baseline paths while preserving URLs, payloads, and response models.
+- Added versioned JSON Schema contracts, valid examples, invalid fixtures, and schema tests under `contracts/`.
+- Added `jsonschema>=4,<5` as a backend dev dependency and updated `backend/uv.lock`.
+- Verification so far:
+  - `cd backend; .venv\Scripts\python -m pytest app/tests/api/routes/test_asm_udm_validate_response.py app/tests/api/routes/test_flowchart_routes_no_print.py -q` passed (`5 passed`).
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`35 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app/tests/time_segment_validation_test.py app/tests/material_balance_segment_overrides_test.py app/tests/hybrid_udm_validation_test.py app/tests/udm_engine_variable_binding_test.py -q` passed (`17 passed`).
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check` passed; Git reported only LF-to-CRLF normalization warnings for touched text files.
+- Notes:
+  - The route field test avoids database/auth coupling by calling the validate route functions directly with a minimal user object.
+  - Existing Pydantic and FastAPI deprecation/protected namespace warnings remain unchanged and are outside this Phase 0+1 scope.

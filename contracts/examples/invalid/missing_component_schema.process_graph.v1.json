@@ -1,0 +1,9 @@
+{
+  "schema_version": "process_graph.v1",
+  "process_graph_id": "pg_missing_component_schema",
+  "version": 1,
+  "source_canvas_graph_id": "graph_material_balance_minimal",
+  "nodes": [],
+  "edges": [],
+  "validation": { "status": "valid", "errors": [], "warnings": [] }
+}

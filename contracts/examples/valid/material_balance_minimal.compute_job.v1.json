@@ -1,0 +1,26 @@
+{
+  "schema_version": "compute_job.v1",
+  "job_id": "job_material_balance_minimal",
+  "job_type": "simulation.material_balance.v1",
+  "queue": "simulation",
+  "request_id": "req_material_balance_minimal",
+  "idempotency_key": "idem_material_balance_minimal",
+  "payload": {
+    "schema_version": "simulation_input.v1",
+    "simulation_input_id": "si_material_balance_minimal",
+    "process_graph_id": "pg_material_balance_minimal",
+    "process_graph_version": 1,
+    "job_type": "simulation.material_balance.v1"
+  },
+  "context": {
+    "source_system": "autowatersimu",
+    "requested_by": "user:test",
+    "trace_id": "trace_material_balance_minimal"
+  },
+  "execution": {
+    "time_limit_sec": 600,
+    "priority": "normal",
+    "required_capabilities": ["material_balance", "ode"]
+  },
+  "created_at": "2026-05-25T00:00:00Z"
+}

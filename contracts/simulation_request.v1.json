@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "simulation_request.v1.json",
+  "title": "simulation_request.v1",
+  "type": "object",
+  "required": ["schema_version", "request_id", "source_system", "requested_by", "job_type", "input_ref"],
+  "properties": {
+    "schema_version": { "const": "simulation_request.v1" },
+    "request_id": { "type": "string", "minLength": 1 },
+    "source_system": { "type": "string", "minLength": 1 },
+    "requested_by": { "type": "string", "minLength": 1 },
+    "job_type": { "type": "string", "enum": ["simulation.material_balance.v1"] },
+    "input_ref": { "type": "object" },
+    "external_refs": { "type": "object" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

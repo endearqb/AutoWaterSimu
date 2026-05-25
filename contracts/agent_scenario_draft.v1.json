@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent_scenario_draft.v1.json",
+  "title": "agent_scenario_draft.v1",
+  "type": "object",
+  "required": ["schema_version", "draft_id", "created_by", "scenario_summary", "proposed_request"],
+  "properties": {
+    "schema_version": { "const": "agent_scenario_draft.v1" },
+    "draft_id": { "type": "string", "minLength": 1 },
+    "created_by": { "type": "string", "minLength": 1 },
+    "scenario_summary": { "type": "string", "minLength": 1 },
+    "proposed_request": { "type": "object" },
+    "requires_confirmation": { "type": "boolean", "default": true },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

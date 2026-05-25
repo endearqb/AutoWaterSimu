@@ -1,0 +1,69 @@
+{
+  "schema_version": "process_graph.v1",
+  "process_graph_id": "pg_material_balance_minimal",
+  "version": 1,
+  "source_canvas_graph_id": "graph_material_balance_minimal",
+  "component_schema": {
+    "component_schema_id": "material_balance_components.v1",
+    "components": ["COD"],
+    "unit": "mg/L"
+  },
+  "nodes": [
+    {
+      "node_id": "n_in",
+      "node_type": "input",
+      "process_unit_type": "influent",
+      "ports": [{ "port_id": "out", "direction": "out" }],
+      "volume": 1.0,
+      "initial_conditions": { "COD": 10.0 },
+      "model_binding": { "model_key": "material_balance", "model_version": "v1" },
+      "parameter_binding": {},
+      "unit_metadata": { "volume": "m3", "concentration": "mg/L" }
+    },
+    {
+      "node_id": "n_tank",
+      "node_type": "tank",
+      "process_unit_type": "storage",
+      "ports": [{ "port_id": "in", "direction": "in" }, { "port_id": "out", "direction": "out" }],
+      "volume": 10.0,
+      "initial_conditions": { "COD": 0.0 },
+      "model_binding": { "model_key": "material_balance", "model_version": "v1" },
+      "parameter_binding": {},
+      "unit_metadata": { "volume": "m3", "concentration": "mg/L" }
+    },
+    {
+      "node_id": "n_out",
+      "node_type": "output",
+      "process_unit_type": "effluent",
+      "ports": [{ "port_id": "in", "direction": "in" }],
+      "volume": 1.0,
+      "initial_conditions": { "COD": 0.0 },
+      "model_binding": { "model_key": "material_balance", "model_version": "v1" },
+      "parameter_binding": {},
+      "unit_metadata": { "volume": "m3", "concentration": "mg/L" }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e_in_tank",
+      "source_node_id": "n_in",
+      "target_node_id": "n_tank",
+      "source_port": "out",
+      "target_port": "in",
+      "flow_rate": 100.0,
+      "concentration_transform": { "COD": { "a": 1.0, "b": 0.0 } },
+      "time_segment_overrides": []
+    },
+    {
+      "edge_id": "e_tank_out",
+      "source_node_id": "n_tank",
+      "target_node_id": "n_out",
+      "source_port": "out",
+      "target_port": "in",
+      "flow_rate": 100.0,
+      "concentration_transform": { "COD": { "a": 1.0, "b": 0.0 } },
+      "time_segment_overrides": []
+    }
+  ],
+  "validation": { "status": "valid", "errors": [], "warnings": [] }
+}

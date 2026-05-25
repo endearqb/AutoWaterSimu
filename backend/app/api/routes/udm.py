@@ -51,7 +51,10 @@ def create_calculation_job(
     calculation_input: MaterialBalanceInput,
 ) -> Any:
     """
-    创建UDM计算任务
+    创建UDM计算任务。
+
+    Legacy baseline: long-running execution still uses FastAPI BackgroundTasks
+    until the compute worker lifecycle replaces this endpoint.
     """
     # Generate unique job ID
     job_id = str(uuid4())
@@ -103,7 +106,10 @@ def create_calculation_job_from_flowchart(
     flowchart_data: Dict[str, Any],
 ) -> Any:
     """
-    从流程图数据创建UDM计算任务
+    从流程图数据创建UDM计算任务。
+
+    Legacy baseline: accepts raw flowchart JSON until CanvasGraph ->
+    ProcessGraph -> SimulationInput contracts replace this path.
     """
     try:
         calculation_params = flowchart_data.get("calculationParameters", {})
@@ -542,7 +548,11 @@ def validate_calculation_input(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            estimated_calculation_time_seconds=min(30 + total_steps * 0.001, 600)
+            estimated_memory_mb=min(
+                float(input_data.parameters.max_memory_mb),
+                max(64.0, total_steps * max(len(input_data.nodes), 1) * 0.001),
+            ),
+            estimated_time_seconds=min(30 + total_steps * 0.001, 600),
         )
         
     except Exception as e:
@@ -550,7 +560,8 @@ def validate_calculation_input(
             is_valid=False,
             errors=[f"Validation error: {str(e)}"],
             warnings=[],
-            estimated_calculation_time_seconds=0
+            estimated_memory_mb=0.0,
+            estimated_time_seconds=0.0,
         )
 
 

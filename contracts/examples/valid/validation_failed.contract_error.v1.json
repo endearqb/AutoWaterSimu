@@ -1,0 +1,8 @@
+{
+  "schema_version": "contract_error.v1",
+  "error_code": "VALIDATION_FAILED",
+  "message": "Payload failed schema validation",
+  "details": { "field": "component_schema" },
+  "retryable": false,
+  "trace_id": "trace_validation_failed"
+}

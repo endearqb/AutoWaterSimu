@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contract_error.v1.json",
+  "title": "contract_error.v1",
+  "type": "object",
+  "required": ["schema_version", "error_code", "message", "details", "retryable", "trace_id"],
+  "properties": {
+    "schema_version": { "const": "contract_error.v1" },
+    "error_code": {
+      "type": "string",
+      "enum": [
+        "VALIDATION_FAILED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "JOB_NOT_FOUND",
+        "JOB_ALREADY_TERMINAL",
+        "IDEMPOTENCY_CONFLICT",
+        "WORKER_STALE",
+        "WORKER_CAPABILITY_MISMATCH",
+        "ARTIFACT_NOT_FOUND",
+        "TIMEOUT",
+        "INTERNAL_ERROR"
+      ]
+    },
+    "message": { "type": "string", "minLength": 1 },
+    "details": { "type": "object" },
+    "retryable": { "type": "boolean" },
+    "retry_after_ms": { "type": "integer", "minimum": 0 },
+    "trace_id": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

@@ -1,5 +1,18 @@
 # FastAPI Project - Frontend
 
+## README First Context
+
+Before modifying frontend code, read root `AGENTS.md`, root `README.md`, this file, and the closest README under the target path if one exists.
+
+Frontend is the legacy React + TypeScript + Vite + Chakra UI v3 application. AutoWaterSimu Next UI work should keep legacy pages stable while new compute-oriented clients and screens are added in parallel.
+
+Key constraints:
+
+- Keep React Flow / XYFlow imports aligned with project rules.
+- Existing FastAPI generated client remains under `frontend/src/client`.
+- Go Compute API generated client should be isolated under `frontend/src/client/compute`.
+- After frontend changes, run `cd frontend; npx tsc --noEmit`.
+
 The frontend is built with [Vite](https://vitejs.dev/), [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/), [TanStack Query](https://tanstack.com/query), [TanStack Router](https://tanstack.com/router) and [Chakra UI](https://chakra-ui.com/).
 
 ## Frontend development
@@ -312,4 +325,3 @@ docker compose down -v
 要更新测试，请导航到测试目录并根据需要修改现有测试文件或添加新文件。
 
 有关编写和运行 Playwright 测试的更多信息，请参阅官方 [Playwright 文档](https://playwright.dev/docs/intro)。
-        
