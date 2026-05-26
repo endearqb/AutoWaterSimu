@@ -23,16 +23,17 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `README.md` | 本目录上下文契约 |
-| `src-tauri/` | Phase 3A Rust/Tauri scaffold、SQLite migration 草案和 command placeholders |
+| `src-tauri/` | Phase 3B Rust runtime foundation、SQLite store、source-mode worker JSON-RPC、artifact/support bundle smoke |
 
-后续新增 React Desktop shell、真实 worker sidecar spawn、SQLite runtime wiring 和 installer packaging。
+后续新增 React Desktop shell、packaged sidecar、installer packaging 和完整 UI wiring。
 
 ## 3. 维护约定
 
 1. React 不直接启动 worker 或执行 shell。
 2. Rust owns SQLite writes and worker lifecycle。
-3. sidecar 通过 JSON-RPC stdin/stdout 通信。
+3. Phase 3B 使用 source-mode Python worker，通过 JSON-RPC stdin/stdout 通信。
 4. P0 不做 auto update、code signing、Microsoft Store。
+5. 导出路径先限制在 runtime-local sandbox，后续 UI 文件对话框再扩展 allowlist。
 
 ## 4. 对外接口
 
@@ -59,7 +60,7 @@
 cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml
 ```
 
-Phase 3B 之后再补 Tauri dev smoke、SQLite runtime tests、sidecar spawn smoke、NSIS installer smoke。
+Phase 3B 已补 SQLite runtime tests、source-mode worker spawn smoke、support bundle smoke 和 path sandbox tests。Tauri dev smoke、packaged sidecar smoke、NSIS installer smoke 留到后续。
 
 ## 7. AI 操作提示
 

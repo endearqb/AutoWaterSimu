@@ -544,3 +544,67 @@
   - Worker still supports only `simulation.material_balance.v1`; ASM/UDM job handlers remain Phase 5.
   - Desktop real sidecar spawn, packaging, installer, SQLite runtime wiring, and React UI remain Phase 3B+.
   - Web Go Compute API remains outside this round.
+
+# 2026-05-26 AutoWaterSimu Next Phase 3B TODO
+
+- [x] Re-read Desktop and worker README First context before changing runtime files
+- [x] Add Desktop SQLite migration runner and `schema_migrations`
+- [x] Add 0002 migration for `canvas_graphs`, `process_graphs`, `model_runs`, `support_bundles`, `settings`, and `recent_files`
+- [x] Extend `compute_jobs` tracking fields for input/result hash, worker version, error, and stderr tail
+- [x] Replace Phase 3A command stubs with runtime-backed command wrappers
+- [x] Add SQLite store for job create/get/list, events, artifacts, and support bundles
+- [x] Add source-mode Python worker bridge for `--self-check` and JSON-RPC `run_job`
+- [x] Add synchronous `compute_job_run` smoke lifecycle from queued to terminal status
+- [x] Add artifact persistence/export sandbox and support bundle generation
+- [x] Add Rust tests for migrations, store, lifecycle, failure, timeout, sandbox, and support bundle
+- [x] Run Desktop, contract, worker/core, frontend, and whitespace checks
+- [x] Update README First records and review notes
+
+## Review
+
+- Upgraded `apps/desktop/src-tauri` from Phase 3A deterministic stubs to a Phase 3B runtime foundation.
+- Added Rust modules for migrations, SQLite store, source-mode worker process bridge, runtime orchestration, and path sandbox validation.
+- Added 0002 migration and migration runner with `schema_migrations`.
+- `compute_job_create` now validates minimal `compute_job.v1`, writes SQLite rows, computes input hash, and writes `job.created` / `job.queued` events.
+- `compute_job_run` now marks jobs running, invokes the Python worker over JSON-RPC `params.job`, records terminal status, summary, result hash, worker version, stderr tail, and artifact rows.
+- Artifact export is limited to runtime-local `exports/` with relative path validation.
+- Support bundle generation writes redacted JSON with job metadata, events, artifact metadata/checksum, and runtime/migration versions, excluding artifact contents.
+- Verification:
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`9 passed`).
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`44 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests services\simulation-worker\tests -q` passed (`10 passed`, existing warnings only).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services\test_simulation_input_adapter.py app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q` passed (`22 passed`, existing warnings only).
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check` passed with LF/CRLF normalization warnings only.
+- Remaining scope:
+  - React Desktop UI, packaged sidecar/`externalBin`, installer, signing, auto update, long-lived worker, cancel/restart/progress streaming, CSV export, and Web Go API remain outside Phase 3B.
+
+# 2026-05-26 AutoWaterSimu Next Phase 3B Review Fix TODO
+
+- [x] Harden worker spawn/stdout parse/missing result errors so running jobs always reach terminal status
+- [x] Restrict job state transitions to `queued -> running -> succeeded|failed|timed_out`
+- [x] Reject rerunning terminal jobs without appending extra running events
+- [x] Persist timeout as `status=timed_out` and `error_code=TIMEOUT`
+- [x] Return readable duplicate job conflict errors
+- [x] Wrap each migration application in a SQLite transaction
+- [x] Include `support_bundle.created` in support bundle event timeline
+- [x] Add Rust tests for event sequence, rerun rejection, worker spawn failure, timeout code, duplicate conflict, and support bundle timeline
+- [x] Run Desktop Rust tests and full regression matrix
+- [x] Update README First records
+
+## Review
+
+- Patched Phase 3B runtime hardening issues before moving to UI or packaged sidecar work.
+- `compute_job_run` now persists worker spawn/parse/missing-result failures as terminal failed jobs.
+- `mark_running` only transitions queued jobs; terminal jobs cannot be rerun.
+- Timeout jobs now persist `error_code=TIMEOUT`.
+- Duplicate job IDs return a stable conflict message instead of raw SQLite constraint text.
+- Migration application now runs each migration in a transaction.
+- Support bundle export includes its own `support_bundle.created` timeline event.
+- Verification:
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`11 passed`).
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`44 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests services\simulation-worker\tests -q` passed (`10 passed`, existing warnings only).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services\test_simulation_input_adapter.py app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q` passed (`22 passed`, existing warnings only).
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check` passed with LF/CRLF normalization warnings only.
