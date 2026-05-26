@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
+import importlib.metadata
 import json
 import math
 import platform
+import subprocess
 import sys
 import time
+import tempfile
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-WORKER_VERSION = "0.1.0-phase2a"
+WORKER_VERSION = "0.2.0-phase2b"
 SUPPORTED_JOB_TYPE = "simulation.material_balance.v1"
 SUPPORTED_CONTRACT_VERSIONS = [
     "compute_job.v1",
@@ -26,6 +30,14 @@ class WorkerRunError(RuntimeError):
 
 
 def self_check() -> dict[str, Any]:
+    _ensure_repo_import_paths()
+    dependency_imports = {
+        name: _dependency_status(name)
+        for name in ("numpy", "scipy", "torch", "torchdiffeq")
+    }
+    artifact_temp_writable = _artifact_temp_writable()
+    minimal_job_status = _minimal_job_self_check()
+
     return {
         "worker_version": WORKER_VERSION,
         "python_version": platform.python_version(),
@@ -33,16 +45,36 @@ def self_check() -> dict[str, Any]:
         "supported_contract_versions": SUPPORTED_CONTRACT_VERSIONS,
         "supported_job_types": [SUPPORTED_JOB_TYPE],
         "capabilities": ["material_balance", "ode"],
+        "git_sha": _git_sha(),
+        "packaging_mode": _packaging_mode(),
+        "dependency_imports": dependency_imports,
+        "artifact_temp_writable": artifact_temp_writable,
+        "minimal_job_status": minimal_job_status,
     }
 
 
 def run_job_file(job_path: str | Path, artifact_dir: str | Path) -> dict[str, Any]:
+    try:
+        job = _load_json(Path(job_path))
+    except Exception as exc:
+        return _failed_result(
+            job_id="unknown_job",
+            job_type=SUPPORTED_JOB_TYPE,
+            message=_safe_error_message(exc),
+            started_at=time.perf_counter(),
+        )
+    return run_job(job, artifact_dir)
+
+
+def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
     started_at = time.perf_counter()
     job_id = "unknown_job"
     job_type = SUPPORTED_JOB_TYPE
 
     try:
-        job = _load_json(Path(job_path))
+        if not isinstance(job, dict):
+            raise WorkerRunError("compute_job root must be an object")
+
         job_id = _string_value(job.get("job_id")) or job_id
         raw_job_type = _string_value(job.get("job_type")) or job_type
         job_type = raw_job_type if raw_job_type == SUPPORTED_JOB_TYPE else SUPPORTED_JOB_TYPE
@@ -57,15 +89,15 @@ def run_job_file(job_path: str | Path, artifact_dir: str | Path) -> dict[str, An
         _validate_against_schema("simulation_input.v1.json", payload)
 
         _ensure_repo_import_paths()
-        from app.material_balance.core import MaterialBalanceCalculator
-        from app.services.simulation_input_adapter import (
-            SimulationInputAdapterError,
+        from autowatersimu_simulation_core.adapters import (
+            SimulationCoreAdapterError,
             simulation_input_to_material_balance_input,
         )
+        from autowatersimu_simulation_core.material_balance import MaterialBalanceCalculator
 
         try:
             material_balance_input = simulation_input_to_material_balance_input(payload)
-        except SimulationInputAdapterError as exc:
+        except SimulationCoreAdapterError as exc:
             raise WorkerRunError(str(exc)) from exc
 
         result = MaterialBalanceCalculator().calculate(material_balance_input)
@@ -199,7 +231,7 @@ def _validate_against_schema(schema_name: str, payload: dict[str, Any]) -> None:
 
 def _ensure_repo_import_paths() -> None:
     root = _repo_root()
-    for path in (root / "backend", root / "contracts" / "python"):
+    for path in (root / "simulation_core" / "python", root / "contracts" / "python"):
         path_text = str(path)
         if path_text not in sys.path:
             sys.path.insert(0, path_text)
@@ -249,3 +281,69 @@ def _string_value(value: Any) -> str:
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _dependency_status(module_name: str) -> dict[str, Any]:
+    try:
+        module = importlib.import_module(module_name)
+        version = getattr(module, "__version__", None)
+        if version is None:
+            try:
+                version = importlib.metadata.version(module_name)
+            except importlib.metadata.PackageNotFoundError:
+                version = None
+        return {"ok": True, "version": version}
+    except Exception as exc:
+        return {"ok": False, "error": _safe_error_message(exc)}
+
+
+def _artifact_temp_writable() -> dict[str, Any]:
+    try:
+        with tempfile.TemporaryDirectory(prefix="autowatersimu-worker-") as temp_dir:
+            path = Path(temp_dir) / "write-test.json"
+            path.write_text('{"ok":true}', encoding="utf-8")
+            return {"ok": path.read_text(encoding="utf-8") == '{"ok":true}'}
+    except Exception as exc:
+        return {"ok": False, "error": _safe_error_message(exc)}
+
+
+def _minimal_job_self_check() -> dict[str, Any]:
+    try:
+        job = _load_json(
+            _repo_root()
+            / "contracts"
+            / "examples"
+            / "valid"
+            / "material_balance_minimal.compute_job.v1.json"
+        )
+        with tempfile.TemporaryDirectory(prefix="autowatersimu-worker-artifacts-") as temp_dir:
+            result = run_job(job, temp_dir)
+        return {
+            "ok": result.get("status") == "succeeded",
+            "status": result.get("status"),
+            "job_id": result.get("job_id"),
+        }
+    except Exception as exc:
+        return {"ok": False, "error": _safe_error_message(exc)}
+
+
+def _git_sha() -> str:
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=_repo_root(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode == 0:
+            return completed.stdout.strip() or "unknown"
+    except Exception:
+        pass
+    return "unknown"
+
+
+def _packaging_mode() -> str:
+    if getattr(sys, "frozen", False):
+        return "frozen"
+    return "source"

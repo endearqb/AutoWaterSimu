@@ -22,8 +22,10 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `README.md` | 本目录上下文契约 |
+| `python/` | Phase 2B 纯 Python simulation core 包 |
+| `tests/` | core import boundary、adapter 行为和数值 parity 测试 |
 
-后续按模型拆分子包。
+`python/autowatersimu_simulation_core/` 当前只暴露 material balance 最小运行时；ASM/UDM job type 迁移仍在后续 Phase。
 
 ## 3. 维护约定
 
@@ -53,4 +55,4 @@
 
 ## 7. AI 操作提示
 
-抽取时优先保持旧 backend import 兼容，通过 wrapper 渐进迁移。
+抽取时优先保持数值行为与 legacy backend 对齐；新增 worker 代码必须优先依赖本目录，不再依赖 `backend/app`。

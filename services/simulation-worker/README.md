@@ -22,14 +22,14 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `README.md` | 本目录上下文契约 |
-| `simulation_worker/` | Phase 2A Python CLI、job runner、self-check 和 JSON-RPC smoke protocol |
+| `simulation_worker/` | Python CLI、job runner、self-check 和 JSON-RPC protocol |
 | `tests/` | Worker CLI contract tests |
 
-后续添加 packaging、Web worker protocol client、sidecar spawn integration 和 full simulation core wiring。
+Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runtime，不再直接依赖 `backend/app`。后续添加 packaging、Web worker protocol client、sidecar spawn integration。
 
 ## 3. 维护约定
 
-1. stdout 只输出 JSON-RPC frames。
+1. stdout 只输出 JSON result 或 JSON-RPC frames。
 2. stderr 只输出脱敏诊断日志。
 3. worker 不执行未知 `schema_version`。
 4. 大结果写 artifact，并返回 checksum。
@@ -47,6 +47,7 @@
 
 不应该依赖：
 
+- `backend/app`
 - FastAPI route。
 - React store。
 - SQLite 或 PostgreSQL 直接写入。

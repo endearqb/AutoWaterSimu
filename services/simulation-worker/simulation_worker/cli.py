@@ -6,9 +6,9 @@ import sys
 from typing import IO, Any
 
 try:
-    from .runner import run_job_file, self_check
+    from .runner import run_job, run_job_file, self_check
 except ImportError:
-    from runner import run_job_file, self_check  # type: ignore
+    from runner import run_job, run_job_file, self_check  # type: ignore
 
 
 def main(
@@ -79,18 +79,29 @@ def _handle_jsonrpc_request(request: dict[str, Any]) -> dict[str, Any]:
         return {"jsonrpc": "2.0", "id": request_id, "result": self_check()}
 
     if method == "run_job":
-        job_path = params.get("job_path")
         artifact_dir = params.get("artifact_dir", "artifacts")
+        job = params.get("job")
+        if isinstance(job, dict):
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {"compute_result": run_job(job, str(artifact_dir))},
+            }
+
+        job_path = params.get("job_path")
         if not isinstance(job_path, str) or not job_path:
             return {
                 "jsonrpc": "2.0",
                 "id": request_id,
-                "error": {"code": -32602, "message": "params.job_path is required"},
+                "error": {
+                    "code": -32602,
+                    "message": "params.job or params.job_path is required",
+                },
             }
         return {
             "jsonrpc": "2.0",
             "id": request_id,
-            "result": run_job_file(job_path, str(artifact_dir)),
+            "result": {"compute_result": run_job_file(job_path, str(artifact_dir))},
         }
 
     return {

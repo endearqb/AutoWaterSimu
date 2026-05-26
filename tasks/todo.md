@@ -504,3 +504,43 @@
   - Full `simulation_core/` extraction stays in Phase 2B.
   - Desktop real sidecar spawn, SQLite runtime wiring, React UI, installer, signing, and packaging stay in Phase 3B+.
   - Web Go Compute API remains outside this round.
+
+# 2026-05-26 AutoWaterSimu Next Phase 2B TODO
+
+- [x] Checkpoint Phase 1B review fix + Phase 2A + Phase 3A changes before new core extraction
+- [x] Create `simulation_core/python/autowatersimu_simulation_core` package and README context
+- [x] Extract material balance runtime into simulation core without importing `backend/app`
+- [x] Add core-side `simulation_input.v1` adapter with contract-style errors
+- [x] Update worker runner to import only `simulation_core/python` and `contracts/python`
+- [x] Expand worker self-check for scientific imports, git/build metadata, writable artifact temp, and minimal job smoke
+- [x] Align JSON-RPC `run_job` with `params.job` and `result.compute_result`, while preserving `params.job_path`
+- [x] Add core import boundary, worker boundary, adapter, numerical parity, self-check, and JSON-RPC tests
+- [x] Run contract, core, worker, backend regression, desktop Rust, frontend TypeScript, and whitespace checks
+- [x] Update README First records and review notes
+
+## Review
+
+- Checkpointed completed Phase 1B review fix + Phase 2A + Phase 3A work before Phase 2B in commit `eb0f2f1 feat: add contracts worker and desktop scaffold`.
+- Added pure Python core package under `simulation_core/python/autowatersimu_simulation_core`.
+- Extracted material balance runtime files, ASM runtime helpers, UDM ODE/runtime helpers, and UDM expression compilation into core-local modules.
+- Added core runtime Pydantic models that match the fields the calculator actually reads, without importing SQLModel or `backend/app`.
+- Added core-side `simulation_input.v1 -> MaterialBalanceInput` adapter with `SimulationCoreAdapterError` and `contract_error.v1`-style error mapping.
+- Updated worker runner so runtime import paths are only `simulation_core/python` and `contracts/python`; static checks confirm worker/core no longer import `app.*`.
+- Expanded `--self-check` with dependency import checks, git SHA, packaging mode, temp artifact write check, and minimal material balance smoke.
+- Updated JSON-RPC `run_job` to accept `params.job` object and return `result.compute_result`; `params.job_path` remains for local dev/test compatibility.
+- Added `simulation_core/tests` for import boundary, adapter behavior, validation wrapping, and numerical parity against legacy backend baseline.
+- Updated README First context for `simulation_core`, new core package subdirectories, and worker behavior.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`44 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` passed (`4 passed`, existing backend warning only in parity test).
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`6 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services\test_simulation_input_adapter.py app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q` passed (`22 passed`, existing warnings).
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`3 passed`).
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `rg -n "from app\.|import app\." services\simulation-worker\simulation_worker simulation_core\python\autowatersimu_simulation_core` returned no matches.
+  - `git diff --check` passed with LF/CRLF normalization warnings only.
+- Remaining scope:
+  - Legacy backend still owns its existing material balance copy; converting backend to wrap core is a later migration.
+  - Worker still supports only `simulation.material_balance.v1`; ASM/UDM job handlers remain Phase 5.
+  - Desktop real sidecar spawn, packaging, installer, SQLite runtime wiring, and React UI remain Phase 3B+.
+  - Web Go Compute API remains outside this round.

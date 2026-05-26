@@ -9,21 +9,21 @@
 - CLI 参数解析。
 - `--self-check`。
 - `--run-job` material balance 最小执行链路。
-- stdio JSON-RPC smoke protocol。
+- stdio JSON-RPC protocol。
 - time-series artifact 写入。
 
 本目录不负责：
 
 - 打包 sidecar。
 - Web worker claim / heartbeat HTTP protocol。
-- 完整 simulation core 抽离。
+- simulation core 运行时实现。
 
 ## 2. 核心文件
 
 | 文件/子目录 | 作用 |
 |---|---|
 | `cli.py` | CLI 与 JSON-RPC 入口 |
-| `runner.py` | compute job 执行、schema 校验、artifact 输出 |
+| `runner.py` | compute job 执行、schema 校验、core adapter 调用、artifact 输出 |
 | `__main__.py` | `python -m simulation_worker` 入口 |
 
 ## 3. 维护约定
@@ -38,17 +38,31 @@
 
 修改这些接口时需同步检查 worker tests、contracts 和 Desktop Rust sidecar plan。
 
+JSON-RPC `run_job` 目标形态：
+
+```json
+{"jsonrpc":"2.0","id":"rpc_1","method":"run_job","params":{"job":{}}}
+```
+
+响应中返回：
+
+```json
+{"jsonrpc":"2.0","id":"rpc_1","result":{"compute_result":{}}}
+```
+
+`params.job_path` 仅作为本地开发和测试兼容入口保留。
+
 ## 5. 依赖边界
 
 可以依赖：
 
 - `contracts/`
 - `contracts/python`
-- 迁移期 `backend/app/services/simulation_input_adapter.py`
-- 迁移期 `backend/app/material_balance`
+- `simulation_core/python`
 
 不应该依赖：
 
+- `backend/app`
 - FastAPI route。
 - React store。
 - SQLite / PostgreSQL 直接写入。
@@ -65,4 +79,4 @@ backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
 
 1. 先读根 `AGENTS.md`、根 `README.md`、`services/simulation-worker/README.md` 和本 README。
 2. 任何 stdout 改动都要验证 JSON parser 可以直接解析。
-3. Phase 2B 前不要把完整核心搬迁混进本目录。
+3. worker 只编排 job、schema、artifact 和 JSON-RPC，不实现核心算法。
