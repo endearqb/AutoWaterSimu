@@ -23,8 +23,9 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `README.md` | 本目录上下文契约 |
+| `src-tauri/` | Phase 3A Rust/Tauri scaffold、SQLite migration 草案和 command placeholders |
 
-后续新增 `src-tauri/` 和 React app files。
+后续新增 React Desktop shell、真实 worker sidecar spawn、SQLite runtime wiring 和 installer packaging。
 
 ## 3. 维护约定
 
@@ -52,7 +53,13 @@
 
 ## 6. 测试与验证
 
-修改本目录后建议运行 Tauri dev smoke、SQLite migration tests、sidecar spawn smoke、NSIS installer smoke。
+修改本目录后建议运行：
+
+```powershell
+cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml
+```
+
+Phase 3B 之后再补 Tauri dev smoke、SQLite runtime tests、sidecar spawn smoke、NSIS installer smoke。
 
 ## 7. AI 操作提示
 

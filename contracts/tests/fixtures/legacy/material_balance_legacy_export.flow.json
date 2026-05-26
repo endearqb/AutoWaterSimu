@@ -1,0 +1,88 @@
+{
+  "nodes": [
+    {
+      "id": "n_in",
+      "type": "input",
+      "position": { "x": 0, "y": 0 },
+      "data": { "label": "Influent", "COD": "10", "NH3": "2" }
+    },
+    {
+      "id": "n_tank",
+      "type": "tank",
+      "position": { "x": 260, "y": 0 },
+      "data": { "label": "Tank", "volume": "10", "COD": "", "NH3": "" }
+    },
+    {
+      "id": "n_out",
+      "type": "output",
+      "position": { "x": 520, "y": 0 },
+      "data": { "label": "Effluent", "COD": "", "NH3": "" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_in_tank",
+      "source": "n_in",
+      "target": "n_tank",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "data": {
+        "flow": "100",
+        "concentration_transform": {
+          "COD": { "a": "0.9", "b": "1.0" },
+          "NH3": { "a": "0.8", "b": "0.2" }
+        }
+      }
+    },
+    {
+      "id": "e_tank_out",
+      "source": "n_tank",
+      "target": "n_out",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "data": {
+        "flow_rate": "100",
+        "COD_a": "1.0",
+        "COD_b": "0",
+        "NH3_a": "1.1",
+        "NH3_b": ""
+      }
+    }
+  ],
+  "customParameters": [
+    { "name": "COD", "label": "COD" },
+    { "name": "NH3", "label": "NH3" }
+  ],
+  "calculationParameters": {
+    "hours": 4,
+    "steps_per_hour": 60,
+    "solver_method": "scipy_solver",
+    "tolerance": 0.000001
+  },
+  "timeSegments": [
+    {
+      "id": "seg_1",
+      "startHour": 0,
+      "endHour": 2,
+      "edgeOverrides": {
+        "e_in_tank": {
+          "flow": 80,
+          "factors": { "COD": { "a": 0.7, "b": 0.1 } }
+        }
+      }
+    },
+    {
+      "id": "seg_2",
+      "startHour": 2,
+      "endHour": 4,
+      "edgeOverrides": {
+        "e_in_tank": {
+          "flow": 120,
+          "factors": { "NH3": { "a": 0.9, "b": 0 } }
+        }
+      }
+    }
+  ],
+  "exportedAt": "2026-05-26T00:00:00Z",
+  "version": "legacy-flow-export.v1"
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": "canvas_graph.v1",
+  "graph_id": "graph_unknown_edge_node",
+  "name": "Unknown Edge Node",
+  "nodes": [
+    { "id": "n_in", "type": "input", "position": { "x": 0, "y": 0 }, "data": { "COD": 10.0 } },
+    { "id": "n_tank", "type": "tank", "position": { "x": 100, "y": 0 }, "data": { "volume": 10.0, "COD": 0.0 } }
+  ],
+  "edges": [
+    { "id": "e_1", "source": "n_in", "target": "missing_node", "data": { "flow_rate": 100.0 } }
+  ],
+  "exported_at": "2026-05-26T00:00:00Z"
+}

@@ -22,6 +22,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `examples/` | 合同示例，按 valid / invalid 拆分 |
+| `python/` | Python 合同转换 helper，当前支持 material balance 最小链路 |
 | `tests/` | schema 与 fixture 校验测试 |
 | `*.v1.json` | 版本化 JSON Schema 合同 |
 

@@ -10,7 +10,28 @@
     "simulation_input_id": "si_material_balance_minimal",
     "process_graph_id": "pg_material_balance_minimal",
     "process_graph_version": 1,
-    "job_type": "simulation.material_balance.v1"
+    "job_type": "simulation.material_balance.v1",
+    "component_schema": {
+      "component_schema_id": "material_balance_components.v1",
+      "components": ["COD"],
+      "unit": "mg/L"
+    },
+    "nodes": [
+      { "node_id": "n_in", "node_type": "input", "initial_volume": 1.0, "initial_concentrations": { "COD": 10.0 }, "is_inlet": true, "is_outlet": false },
+      { "node_id": "n_tank", "node_type": "tank", "initial_volume": 10.0, "initial_concentrations": { "COD": 0.0 }, "is_inlet": false, "is_outlet": false },
+      { "node_id": "n_out", "node_type": "output", "initial_volume": 1.0, "initial_concentrations": { "COD": 0.0 }, "is_inlet": false, "is_outlet": true }
+    ],
+    "edges": [
+      { "edge_id": "e_in_tank", "source_node_id": "n_in", "target_node_id": "n_tank", "flow_rate": 100.0, "concentration_transform": { "COD": { "a": 1.0, "b": 0.0 } } },
+      { "edge_id": "e_tank_out", "source_node_id": "n_tank", "target_node_id": "n_out", "flow_rate": 100.0, "concentration_transform": { "COD": { "a": 1.0, "b": 0.0 } } }
+    ],
+    "parameters": {
+      "hours": 4.0,
+      "steps_per_hour": 60,
+      "solver_method": "scipy_solver",
+      "tolerance": 0.000001
+    },
+    "runtime_options": {}
   },
   "context": {
     "source_system": "autowatersimu",

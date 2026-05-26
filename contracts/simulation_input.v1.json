@@ -24,6 +24,7 @@
     "component_schema": { "type": "object" },
     "nodes": { "type": "array", "minItems": 2, "items": { "type": "object" } },
     "edges": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+    "time_segments": { "type": "array", "items": { "type": "object" } },
     "parameters": {
       "type": "object",
       "required": ["hours", "steps_per_hour", "solver_method", "tolerance"],

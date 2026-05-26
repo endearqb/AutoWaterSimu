@@ -22,8 +22,10 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `README.md` | 本目录上下文契约 |
+| `simulation_worker/` | Phase 2A Python CLI、job runner、self-check 和 JSON-RPC smoke protocol |
+| `tests/` | Worker CLI contract tests |
 
-后续添加 worker CLI、protocol、packaging 和 tests。
+后续添加 packaging、Web worker protocol client、sidecar spawn integration 和 full simulation core wiring。
 
 ## 3. 维护约定
 
@@ -54,8 +56,9 @@
 修改本目录后建议运行：
 
 ```powershell
-simulation-worker --self-check
-simulation-worker --run-job contracts/examples/valid/material_balance_minimal.compute_job.json
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\material_balance_minimal.compute_job.v1.json --artifact-dir tmp\worker-artifacts
+backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
 ```
 
 ## 7. AI 操作提示

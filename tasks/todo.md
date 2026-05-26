@@ -438,3 +438,69 @@
 - Notes:
   - The route field test avoids database/auth coupling by calling the validate route functions directly with a minimal user object.
   - Existing Pydantic and FastAPI deprecation/protected namespace warnings remain unchanged and are outside this Phase 0+1 scope.
+
+# 2026-05-26 AutoWaterSimu Next Phase 1B TODO
+
+- [x] Add pure Python contract transform package under `contracts/python/`
+- [x] Implement `canvas_graph_to_process_graph`, `validate_process_graph`, `process_graph_to_simulation_input`, and `build_contract_error`
+- [x] Add backend `simulation_input.v1` to `MaterialBalanceInput` adapter
+- [x] Update minimal compute job fixture to embed full `simulation_input.v1`
+- [x] Add transform valid and invalid fixtures/tests
+- [x] Add backend adapter execution baseline tests against `MaterialBalanceCalculator`
+- [x] Add frontend TypeScript transform prototype under `frontend/src/contracts/`
+- [x] Run contract tests
+- [x] Run backend core regression tests
+- [x] Run frontend TypeScript check
+- [x] Run `git diff --check`
+- [x] Update `.ai/changes/2026-05-26.md` and record review notes
+
+## Review
+
+- Added `contracts/python/autowatersimu_contracts` as a pure dict transform package with CanvasGraph, ProcessGraph, SimulationInput, and contract error helpers.
+- Updated the minimal compute job fixture so `payload` embeds a complete `simulation_input.v1` rather than a partial reference-like object.
+- Added transform invalid fixtures for duplicate node IDs, unknown edge nodes, missing reactor volume, and missing component schema.
+- Added `backend/app/services/simulation_input_adapter.py` to adapt `simulation_input.v1` into the existing legacy `MaterialBalanceInput` model.
+- Added backend adapter tests proving component order, default `{a,b}` behavior, missing reactor volume failure, and `MaterialBalanceCalculator` execution parity against a direct baseline.
+- Added `frontend/src/contracts` TypeScript prototype with the same transform concepts, without wiring it into UI or legacy stores.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`42 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app/tests/services/test_simulation_input_adapter.py -q` passed (`3 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app/tests/time_segment_validation_test.py app/tests/material_balance_segment_overrides_test.py app/tests/hybrid_udm_validation_test.py app/tests/udm_engine_variable_binding_test.py -q` passed (`17 passed`).
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check` passed with only LF-to-CRLF normalization warnings.
+- Notes:
+  - Phase 1B still only supports `simulation.material_balance.v1`.
+  - No legacy FastAPI routes, OpenAPI client, worker, Go API, or Tauri files were changed.
+
+# 2026-05-26 AutoWaterSimu Next Phase 1B Review Fix + Phase 2A/3A TODO
+
+- [x] Patch Phase 1B transform review findings for legacy top-level fields, edge transform parity, time segments, and adapter validation wrapping
+- [x] Add contract and adapter regression tests for the review findings
+- [x] Add Phase 2A Python simulation worker CLI with self-check, run-job, artifact output, and stdio JSON-RPC smoke protocol
+- [x] Add worker CLI tests for self-check, success, invalid job, artifact checksum, and stdout JSON parsing
+- [x] Add Phase 3A Desktop scaffold with Rust command placeholders and SQLite migration draft
+- [x] Add Rust tests for migration/schema and command placeholders
+- [x] Run contract, adapter, worker, Rust, backend regression, frontend TypeScript, and whitespace checks
+- [x] Update `.ai/changes/2026-05-26.md`, relevant README files, and review notes
+
+## Review
+
+- Patched contract transforms so Python and TypeScript support real legacy top-level `customParameters`, `calculationParameters`, and `timeSegments`, while still accepting `metadata.component_schema`.
+- Aligned edge transform behavior across Python and TypeScript: nested `data.concentration_transform[component]` is preferred, then `${component}_a/_b` fallback is used.
+- Extended `simulation_input.v1` with optional `time_segments`; transform and backend adapter now preserve segment edge overrides.
+- Wrapped backend adapter Pydantic validation failures as `SimulationInputAdapterError` with contract-style details.
+- Added Phase 2A worker CLI under `services/simulation-worker/simulation_worker` with `--self-check`, `--run-job`, `--artifact-dir`, and `--stdio-jsonrpc`.
+- Worker now validates `compute_job.v1` and embedded `simulation_input.v1`, executes material balance through the migration adapter, writes time-series artifact JSON, and returns `compute_result.v1`.
+- Added Phase 3A desktop Rust scaffold under `apps/desktop/src-tauri` with command placeholders and SQLite migration draft for `projects`, `compute_jobs`, `compute_job_events`, and `artifacts`.
+- Updated README First context for new/changed key directories.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`44 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services\test_simulation_input_adapter.py app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q` passed (`22 passed`, existing warnings only).
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`4 passed`).
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`3 passed`).
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check` passed with LF/CRLF normalization warnings only.
+- Remaining scope:
+  - Full `simulation_core/` extraction stays in Phase 2B.
+  - Desktop real sidecar spawn, SQLite runtime wiring, React UI, installer, signing, and packaging stay in Phase 3B+.
+  - Web Go Compute API remains outside this round.

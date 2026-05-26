@@ -7,19 +7,19 @@
       "id": "n_in",
       "type": "input",
       "position": { "x": 0, "y": 0 },
-      "data": { "label": "Influent" }
+      "data": { "label": "Influent", "COD": 10.0 }
     },
     {
       "id": "n_tank",
       "type": "tank",
       "position": { "x": 240, "y": 0 },
-      "data": { "label": "Tank" }
+      "data": { "label": "Tank", "volume": 10.0, "COD": 0.0 }
     },
     {
       "id": "n_out",
       "type": "output",
       "position": { "x": 480, "y": 0 },
-      "data": { "label": "Effluent" }
+      "data": { "label": "Effluent", "COD": 0.0 }
     }
   ],
   "edges": [
