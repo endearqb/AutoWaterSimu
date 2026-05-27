@@ -1,48 +1,46 @@
 use crate::runtime::DesktopRuntime;
+use serde_json::Value;
 
 pub type CommandResult<T> = Result<T, String>;
 
-pub fn worker_self_check() -> CommandResult<String> {
+#[tauri::command]
+pub fn worker_self_check() -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
-    runtime.worker_self_check().map(|value| value.to_string())
+    runtime.worker_self_check()
 }
 
-pub fn compute_job_create(request_json: &str) -> CommandResult<String> {
+#[tauri::command]
+pub fn compute_job_create(request_json: String) -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
-    runtime
-        .compute_job_create(request_json)
-        .map(|value| value.to_string())
+    runtime.compute_job_create(&request_json)
 }
 
-pub fn compute_job_run(job_id: &str) -> CommandResult<String> {
+#[tauri::command]
+pub fn compute_job_run(job_id: String) -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
-    runtime
-        .compute_job_run(job_id)
-        .map(|value| value.to_string())
+    runtime.compute_job_run(&job_id)
 }
 
-pub fn compute_job_get(job_id: &str) -> CommandResult<String> {
+#[tauri::command]
+pub fn compute_job_get(job_id: String) -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
-    runtime
-        .compute_job_get(job_id)
-        .map(|value| value.to_string())
+    runtime.compute_job_get(&job_id)
 }
 
-pub fn compute_job_list() -> CommandResult<String> {
+#[tauri::command]
+pub fn compute_job_list() -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
-    runtime.compute_job_list().map(|value| value.to_string())
+    runtime.compute_job_list()
 }
 
-pub fn artifact_export(artifact_id: &str, target_dir: &str) -> CommandResult<String> {
+#[tauri::command]
+pub fn artifact_export(artifact_id: String, target_dir: String) -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
-    runtime
-        .artifact_export(artifact_id, target_dir)
-        .map(|value| value.to_string())
+    runtime.artifact_export(&artifact_id, &target_dir)
 }
 
-pub fn support_bundle_create(job_id: &str) -> CommandResult<String> {
+#[tauri::command]
+pub fn support_bundle_create(job_id: String) -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
-    runtime
-        .support_bundle_create(job_id)
-        .map(|value| value.to_string())
+    runtime.support_bundle_create(&job_id)
 }

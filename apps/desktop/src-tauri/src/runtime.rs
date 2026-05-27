@@ -17,6 +17,7 @@ pub struct DesktopRuntime {
     store: DesktopStore,
     worker_timeout: Duration,
     worker_python_path: Option<PathBuf>,
+    worker_cli_path: Option<PathBuf>,
 }
 
 impl DesktopRuntime {
@@ -42,6 +43,7 @@ impl DesktopRuntime {
             store,
             worker_timeout,
             worker_python_path: None,
+            worker_cli_path: None,
         })
     }
 
@@ -53,6 +55,19 @@ impl DesktopRuntime {
     ) -> Result<Self, String> {
         let mut runtime = Self::new_with_timeout(base_dir, repo_root, worker_timeout)?;
         runtime.worker_python_path = Some(worker_python_path);
+        Ok(runtime)
+    }
+
+    pub fn new_with_worker_process(
+        base_dir: PathBuf,
+        repo_root: PathBuf,
+        worker_timeout: Duration,
+        worker_python_path: PathBuf,
+        worker_cli_path: PathBuf,
+    ) -> Result<Self, String> {
+        let mut runtime =
+            Self::new_with_worker_python(base_dir, repo_root, worker_timeout, worker_python_path)?;
+        runtime.worker_cli_path = Some(worker_cli_path);
         Ok(runtime)
     }
 
@@ -274,6 +289,15 @@ impl DesktopRuntime {
     }
 
     fn source_worker(&self) -> SourceWorker {
+        if let (Some(python_path), Some(cli_path)) =
+            (&self.worker_python_path, &self.worker_cli_path)
+        {
+            return SourceWorker::new_with_python_and_cli(
+                self.worker_timeout,
+                python_path.clone(),
+                cli_path.clone(),
+            );
+        }
         if let Some(python_path) = &self.worker_python_path {
             return SourceWorker::new_with_python(
                 &self.repo_root,

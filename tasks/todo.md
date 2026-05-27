@@ -608,3 +608,26 @@
   - `cd backend; .venv\Scripts\python -m pytest app\tests\services\test_simulation_input_adapter.py app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q` passed (`22 passed`, existing warnings only).
   - `cd frontend; npx tsc --noEmit` passed.
   - `git diff --check` passed with LF/CRLF normalization warnings only.
+
+# 2026-05-27 AutoWaterSimu Next Phase 3C TODO
+
+- [x] Re-read Desktop README First context before changing Tauri/frontend files
+- [x] Add independent `apps/desktop` Vite + React + TypeScript app
+- [x] Use port `1420` with `strictPort=true` to avoid legacy frontend port `5173`
+- [x] Add typed Tauri command wrappers and browser-only unavailable fallback
+- [x] Add Desktop workbench for worker self-check, demo job create/run, job list/detail, artifact export, and support bundle
+- [x] Add Tauri v2 Rust dependency, build script, app entrypoint, and command registration
+- [x] Keep capabilities minimal and avoid shell/fs/dialog plugin permissions
+- [x] Add fake worker invalid stdout test for terminal failed persistence
+- [x] Run Desktop frontend, Rust, Tauri build, contract, core/worker, backend, frontend legacy, and whitespace checks
+- [x] Update README First records and review notes
+
+## Review
+
+- Added a standalone Desktop frontend under `apps/desktop` with npm-managed dependencies and Vite dev port `1420`.
+- Wired existing Rust runtime commands into Tauri v2 using `#[tauri::command]` and a single `invoke_handler`.
+- Added a minimal Desktop workbench that runs through the Phase 3B local runtime via Tauri commands.
+- Browser-only Vite usage now shows a Tauri runtime unavailable state instead of attempting local commands.
+- Added a generated local `icon.ico` so Tauri Windows resource generation succeeds.
+- Added invalid stdout coverage for the worker JSON-RPC parse failure path.
+- Verification results are recorded in `.ai/changes/2026-05-27.md`.

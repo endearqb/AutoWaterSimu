@@ -56,6 +56,18 @@ impl SourceWorker {
         }
     }
 
+    pub fn new_with_python_and_cli(
+        timeout: Duration,
+        python_path: PathBuf,
+        cli_path: PathBuf,
+    ) -> Self {
+        Self {
+            python_path,
+            cli_path,
+            timeout,
+        }
+    }
+
     pub fn self_check(&self) -> Result<(Value, String), String> {
         let output = self.run_args(&["--self-check"], None)?;
         if output.timed_out {

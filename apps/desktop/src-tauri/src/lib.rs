@@ -5,6 +5,22 @@ pub mod runtime;
 pub mod store;
 pub mod worker;
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            commands::worker_self_check,
+            commands::compute_job_create,
+            commands::compute_job_run,
+            commands::compute_job_get,
+            commands::compute_job_list,
+            commands::artifact_export,
+            commands::support_bundle_create
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running AutoWaterSimu Desktop");
+}
+
 #[cfg(test)]
 mod tests {
     use rusqlite::Connection;
@@ -222,6 +238,45 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("spawn worker failed"));
+        assert_eq!(
+            event_types(&runtime, "job_material_balance_minimal"),
+            vec!["job.created", "job.queued", "job.running", "job.failed"]
+        );
+    }
+
+    #[test]
+    fn worker_invalid_stdout_records_failed_terminal_status() {
+        let temp = tempfile::tempdir().unwrap();
+        let fake_worker = temp.path().join("fake_worker.py");
+        fs::write(
+            &fake_worker,
+            "import sys\nif '--stdio-jsonrpc' in sys.argv:\n    print('not-json')\nelse:\n    print('{\"status\":\"ok\"}')\n",
+        )
+        .unwrap();
+        let python_path = repo_root()
+            .join("backend")
+            .join(".venv")
+            .join("Scripts")
+            .join("python.exe");
+        let runtime = DesktopRuntime::new_with_worker_process(
+            temp.path().to_path_buf(),
+            repo_root(),
+            Duration::from_secs(3),
+            python_path,
+            fake_worker,
+        )
+        .unwrap();
+        runtime.compute_job_create(&valid_job_json()).unwrap();
+        let result = runtime
+            .compute_job_run("job_material_balance_minimal")
+            .unwrap();
+
+        assert_eq!(result["job"]["status"], "failed");
+        assert_eq!(result["job"]["error_code"], "WORKER_FAILED");
+        assert!(result["job"]["error_message"]
+            .as_str()
+            .unwrap()
+            .contains("worker JSON-RPC stdout is not JSON"));
         assert_eq!(
             event_types(&runtime, "job_material_balance_minimal"),
             vec!["job.created", "job.queued", "job.running", "job.failed"]
