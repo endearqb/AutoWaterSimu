@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Phase 3A desktop scaffold capability placeholder.",
+  "description": "Phase 3C desktop dev MVP capability with no plugin permissions.",
   "windows": ["main"],
   "permissions": []
 }
