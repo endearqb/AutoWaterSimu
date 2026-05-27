@@ -87,6 +87,11 @@ But it would be only to clean them up, leaving them won't really have any effect
 
 ## Generate Client
 
+There are two generated API client families:
+
+- `frontend/src/client`: legacy FastAPI client.
+- `frontend/src/client/compute`: AutoWaterSimu Next Go Compute API client.
+
 ### Automatically
 
 * Activate the backend virtual environment.
@@ -113,6 +118,18 @@ npm run generate-client
 * Commit the changes.
 
 Notice that everytime the backend changes (changing the OpenAPI schema), you should follow these steps again to update the frontend client.
+
+### Compute API Client
+
+The Go Compute API OpenAPI source lives at `../apps/api/openapi/compute.openapi.json`.
+
+Generate only the compute client with:
+
+```bash
+npm run generate-compute-client
+```
+
+This command writes to `frontend/src/client/compute` and must not overwrite the legacy FastAPI client.
 
 ## Using a Remote API
 

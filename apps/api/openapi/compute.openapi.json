@@ -1,0 +1,238 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AutoWaterSimu Compute API",
+    "version": "0.1.0"
+  },
+  "servers": [{ "url": "http://localhost:8088" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "getHealthz",
+        "security": [],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "getReadyz",
+        "security": [],
+        "responses": { "200": { "description": "Ready" } }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "getMetrics",
+        "security": [],
+        "responses": { "200": { "description": "Prometheus metrics" } }
+      }
+    },
+    "/api/v1/compute/jobs": {
+      "post": {
+        "operationId": "createComputeJob",
+        "parameters": [{ "name": "Idempotency-Key", "in": "header", "required": false, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ComputeJob" } } }
+        },
+        "responses": {
+          "202": { "description": "Queued", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "200": { "description": "Duplicate idempotency key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "get": {
+        "operationId": "listComputeJobs",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "job_type", "in": "query", "schema": { "type": "string" } },
+          { "name": "created_after", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "created_before", "in": "query", "schema": { "type": "string", "format": "date-time" } }
+        ],
+        "responses": {
+          "200": { "description": "Jobs", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListJobsResponse" } } } }
+        }
+      }
+    },
+    "/api/v1/compute/jobs/{job_id}": {
+      "get": {
+        "operationId": "getComputeJob",
+        "parameters": [{ "$ref": "#/components/parameters/JobID" }],
+        "responses": {
+          "200": { "description": "Job", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/compute/jobs/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelComputeJob",
+        "parameters": [{ "$ref": "#/components/parameters/JobID" }],
+        "responses": {
+          "200": { "description": "Cancelled", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/compute/jobs/{job_id}/result": {
+      "get": {
+        "operationId": "getComputeJobResult",
+        "parameters": [{ "$ref": "#/components/parameters/JobID" }],
+        "responses": { "200": { "description": "Result", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } } }
+      }
+    },
+    "/api/v1/compute/jobs/{job_id}/events": {
+      "get": {
+        "operationId": "getComputeJobEvents",
+        "parameters": [{ "$ref": "#/components/parameters/JobID" }],
+        "responses": { "200": { "description": "Events", "content": { "application/json": { "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/EventRecord" } } } } } } } }
+      }
+    },
+    "/api/v1/artifacts/{artifact_id}": {
+      "get": {
+        "operationId": "downloadArtifact",
+        "parameters": [{ "name": "artifact_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Artifact bytes", "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } } },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/workers/register": {
+      "post": {
+        "operationId": "registerWorker",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkerRegisterRequest" } } } },
+        "responses": { "200": { "description": "Worker", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkerRecord" } } } } }
+      }
+    },
+    "/api/v1/workers/{worker_id}/claim": {
+      "post": {
+        "operationId": "claimWorkerJob",
+        "parameters": [{ "$ref": "#/components/parameters/WorkerID" }],
+        "responses": { "200": { "description": "Claim", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClaimResponse" } } } } }
+      }
+    },
+    "/api/v1/workers/{worker_id}/heartbeat": {
+      "post": {
+        "operationId": "heartbeatWorker",
+        "parameters": [{ "$ref": "#/components/parameters/WorkerID" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HeartbeatRequest" } } } },
+        "responses": { "200": { "description": "Heartbeat", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HeartbeatResponse" } } } } }
+      }
+    },
+    "/api/v1/workers/{worker_id}/jobs/{job_id}/artifact": {
+      "post": {
+        "operationId": "uploadWorkerArtifact",
+        "parameters": [{ "$ref": "#/components/parameters/WorkerID" }, { "$ref": "#/components/parameters/JobID" }],
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "required": ["metadata", "file"], "properties": { "metadata": { "type": "string" }, "file": { "type": "string", "format": "binary" } } } } } },
+        "responses": { "200": { "description": "Artifact", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArtifactRecord" } } } } }
+      }
+    },
+    "/api/v1/workers/{worker_id}/jobs/{job_id}/succeed": {
+      "post": {
+        "operationId": "succeedWorkerJob",
+        "parameters": [{ "$ref": "#/components/parameters/WorkerID" }, { "$ref": "#/components/parameters/JobID" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+        "responses": { "200": { "description": "Completed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } } }
+      }
+    },
+    "/api/v1/workers/{worker_id}/jobs/{job_id}/fail": {
+      "post": {
+        "operationId": "failWorkerJob",
+        "parameters": [{ "$ref": "#/components/parameters/WorkerID" }, { "$ref": "#/components/parameters/JobID" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+        "responses": { "200": { "description": "Failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer" } },
+    "parameters": {
+      "JobID": { "name": "job_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "WorkerID": { "name": "worker_id", "in": "path", "required": true, "schema": { "type": "string" } }
+    },
+    "responses": {
+      "ContractError": { "description": "Contract error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContractError" } } } }
+    },
+    "schemas": {
+      "ComputeJob": { "type": "object", "additionalProperties": true },
+      "ContractError": {
+        "type": "object",
+        "required": ["schema_version", "error_code", "message", "retryable"],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["contract_error.v1"] },
+          "error_code": { "type": "string" },
+          "message": { "type": "string" },
+          "retryable": { "type": "boolean" },
+          "details": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "JobRecord": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["job_id", "status", "job_type"],
+        "properties": {
+          "job_id": { "type": "string" },
+          "status": { "type": "string" },
+          "job_type": { "type": "string" },
+          "payload_hash": { "type": "string" },
+          "result_hash": { "type": "string" },
+          "attempt": { "type": "integer" },
+          "cancel_requested": { "type": "boolean" }
+        }
+      },
+      "ArtifactRecord": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["artifact_id", "job_id", "object_key", "checksum"],
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "job_id": { "type": "string" },
+          "object_key": { "type": "string" },
+          "checksum": { "type": "string" },
+          "content_type": { "type": "string" }
+        }
+      },
+      "EventRecord": { "type": "object", "additionalProperties": true },
+      "JobSnapshot": {
+        "type": "object",
+        "required": ["job", "artifacts", "event_count"],
+        "properties": {
+          "job": { "$ref": "#/components/schemas/JobRecord" },
+          "artifacts": { "type": "array", "items": { "$ref": "#/components/schemas/ArtifactRecord" } },
+          "event_count": { "type": "integer" }
+        }
+      },
+      "ListJobsResponse": {
+        "type": "object",
+        "required": ["items", "total_estimate"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/JobSnapshot" } },
+          "next_cursor": { "type": "string" },
+          "total_estimate": { "type": "integer" }
+        }
+      },
+      "WorkerRegisterRequest": {
+        "type": "object",
+        "properties": {
+          "worker_id": { "type": "string" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "supported_contract_versions": { "type": "array", "items": { "type": "string" } },
+          "runtime_version": { "type": "string" }
+        }
+      },
+      "WorkerRecord": { "type": "object", "additionalProperties": true },
+      "ClaimResponse": { "type": "object", "additionalProperties": true },
+      "HeartbeatRequest": {
+        "type": "object",
+        "required": ["job_id"],
+        "properties": { "job_id": { "type": "string" } }
+      },
+      "HeartbeatResponse": { "type": "object", "additionalProperties": true }
+    }
+  }
+}

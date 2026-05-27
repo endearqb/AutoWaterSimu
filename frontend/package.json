@@ -9,6 +9,7 @@
     "lint": "biome check --apply-unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
     "preview": "vite preview",
     "generate-client": "openapi-ts",
+    "generate-compute-client": "openapi-ts -f openapi-compute-ts.config.ts",
     "validate-updates": "node scripts/validate-updates-frontmatter.mjs"
   },
   "dependencies": {

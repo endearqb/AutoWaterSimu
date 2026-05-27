@@ -631,3 +631,25 @@
 - Added a generated local `icon.ico` so Tauri Windows resource generation succeeds.
 - Added invalid stdout coverage for the worker JSON-RPC parse failure path.
 - Verification results are recorded in `.ai/changes/2026-05-27.md`.
+
+# 2026-05-28 AutoWaterSimu Next Phase 4A TODO
+
+- [x] Checkpoint Phase 3C Desktop dev MVP and push current branch
+- [x] Initialize Go Compute API module under `apps/api`
+- [x] Add PostgreSQL metadata migration and migration runner
+- [x] Add static bearer token scope auth
+- [x] Add contract validation, canonical payload hash, idempotency duplicate/conflict behavior
+- [x] Add job create/get/list/cancel/result/events API handlers
+- [x] Add worker register/claim/heartbeat/artifact/succeed/fail lifecycle
+- [x] Add local artifact store with checksum verification and server-generated object keys
+- [x] Add timeout sweep function without background daemon
+- [x] Add OpenAPI spec and generated TypeScript client under `frontend/src/client/compute`
+- [x] Add Go lifecycle tests and README First records
+- [x] Run full Phase 4A validation matrix
+
+## Review
+
+- Phase 4A implements the first Web / Platform compute skeleton while preserving legacy FastAPI and Desktop boundaries.
+- PostgreSQL remains the target metadata database; core lifecycle unit tests use an in-memory store so most validation does not require local Postgres.
+- OpenAPI generation is isolated with `frontend/openapi-compute-ts.config.ts` and does not overwrite the legacy generated client.
+- Verification results are recorded in `.ai/changes/2026-05-27.md`.
