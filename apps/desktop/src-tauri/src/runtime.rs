@@ -140,11 +140,13 @@ impl DesktopRuntime {
     pub fn project_export(&self, project_id: &str, target_dir: &str) -> Result<Value, String> {
         let project_id = require_non_empty(project_id, "project_id")?;
         let target_dir = require_non_empty(target_dir, "target_dir")?;
-        let project = self.store.get_project(project_id)?;
+        let snapshot = self.store.project_package_snapshot(project_id)?;
         let payload = json!({
             "schema_version": "desktop_project_export.v1",
             "exported_at": utc_now(),
-            "project": project
+            "project": snapshot["project"],
+            "contents": snapshot["contents"],
+            "content_counts": snapshot["content_counts"]
         });
         let bytes = serde_json::to_vec_pretty(&payload)
             .map_err(|err| format!("serialize project export failed: {err}"))?;
@@ -168,6 +170,7 @@ impl DesktopRuntime {
             "exported_path": target.to_string_lossy(),
             "size_bytes": bytes.len(),
             "checksum": format!("sha256:{}", sha256_hex(&bytes)),
+            "content_counts": snapshot["content_counts"],
             "status": "exported"
         }))
     }
@@ -184,9 +187,31 @@ impl DesktopRuntime {
             .map_err(|err| format!("project export JSON is invalid: {err}"))?;
         validate_project_export(&payload)?;
         let imported = self.store.upsert_project_snapshot(&payload["project"])?;
+        let project_id = imported["project_id"]
+            .as_str()
+            .ok_or_else(|| String::from("imported project_id is missing"))?;
+        let canvas_graphs = payload
+            .pointer("/contents/canvas_graphs")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let imported_canvas_graphs = self
+            .store
+            .import_canvas_graphs_for_project(project_id, &canvas_graphs)?;
+        let content_counts = project_export_content_counts(&payload);
+        let metadata_only_counts = json!({
+            "compute_jobs": project_export_content_array_len(&payload, "compute_jobs"),
+            "artifact_refs": project_export_content_array_len(&payload, "artifact_refs"),
+            "support_bundle_refs": project_export_content_array_len(&payload, "support_bundle_refs")
+        });
         Ok(json!({
             "project": imported,
             "object_key": export_object_key,
+            "content_counts": content_counts,
+            "imported_counts": {
+                "canvas_graphs": imported_canvas_graphs
+            },
+            "metadata_only_counts": metadata_only_counts,
             "imported_at": utc_now(),
             "status": "imported"
         }))
@@ -755,7 +780,47 @@ fn validate_project_export(payload: &Value) -> Result<(), String> {
     require_object_str(project, "name")?;
     require_object_str(project, "created_at")?;
     require_object_str(project, "updated_at")?;
+    if let Some(contents) = payload.get("contents") {
+        if !contents.is_object() {
+            return Err(String::from("project export contents object is required"));
+        }
+        for key in [
+            "compute_jobs",
+            "canvas_graphs",
+            "artifact_refs",
+            "support_bundle_refs",
+        ] {
+            if contents.get(key).is_some_and(|value| !value.is_array()) {
+                return Err(format!("project export contents.{key} must be an array"));
+            }
+        }
+        if contents
+            .get("redaction")
+            .is_some_and(|value| !value.is_object())
+        {
+            return Err(String::from(
+                "project export contents.redaction must be an object",
+            ));
+        }
+    }
     Ok(())
+}
+
+fn project_export_content_counts(payload: &Value) -> Value {
+    json!({
+        "compute_jobs": project_export_content_array_len(payload, "compute_jobs"),
+        "canvas_graphs": project_export_content_array_len(payload, "canvas_graphs"),
+        "artifact_refs": project_export_content_array_len(payload, "artifact_refs"),
+        "support_bundle_refs": project_export_content_array_len(payload, "support_bundle_refs")
+    })
+}
+
+fn project_export_content_array_len(payload: &Value, key: &str) -> usize {
+    payload
+        .pointer(&format!("/contents/{key}"))
+        .and_then(Value::as_array)
+        .map(Vec::len)
+        .unwrap_or(0)
 }
 
 fn verify_backup_files(backup_dir: &Path, manifest: &Value) -> Result<(), String> {

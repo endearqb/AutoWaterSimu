@@ -243,15 +243,64 @@ mod tests {
         let (_temp, runtime) = runtime();
         let project = runtime.project_create("Desktop Smoke Project").unwrap();
         let project_id = project["project_id"].as_str().unwrap();
+        runtime
+            .compute_job_create_for_project(&valid_job_json(), Some(project_id))
+            .unwrap();
+        runtime
+            .compute_job_run("job_material_balance_minimal")
+            .unwrap();
+        runtime
+            .support_bundle_create("job_material_balance_minimal")
+            .unwrap();
+        runtime
+            .canvas_graph_save_for_project(&valid_canvas_graph_json(), Some(project_id))
+            .unwrap();
 
         let exported = runtime.project_export(project_id, "projects").unwrap();
         assert_eq!(exported["status"], "exported");
+        assert_eq!(exported["content_counts"]["compute_jobs"], 1);
+        assert_eq!(exported["content_counts"]["canvas_graphs"], 1);
+        assert_eq!(exported["content_counts"]["artifact_refs"], 1);
+        assert_eq!(exported["content_counts"]["support_bundle_refs"], 1);
         let object_key = exported["object_key"].as_str().unwrap();
         let export_path = runtime.base_dir().join("exports").join(object_key);
         assert!(export_path.is_file());
 
-        let mut payload: Value =
-            serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
+        let text = fs::read_to_string(&export_path).unwrap();
+        assert!(!text.contains("\"timestamps\""));
+        let mut payload: Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(
+            payload["contents"]["compute_jobs"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            payload["contents"]["canvas_graphs"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            payload["contents"]["artifact_refs"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            payload["contents"]["support_bundle_refs"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            payload["contents"]["redaction"]["artifact_contents_included"],
+            false
+        );
         payload["project"]["name"] = json!("Imported Project");
         fs::write(
             &export_path,
@@ -259,9 +308,29 @@ mod tests {
         )
         .unwrap();
 
-        let imported = runtime.project_import(object_key).unwrap();
+        let (_target_temp, target_runtime) = self::runtime();
+        let target_export_path = target_runtime.base_dir().join("exports").join(object_key);
+        fs::create_dir_all(target_export_path.parent().unwrap()).unwrap();
+        fs::copy(&export_path, &target_export_path).unwrap();
+
+        let imported = target_runtime.project_import(object_key).unwrap();
         assert_eq!(imported["status"], "imported");
         assert_eq!(imported["project"]["name"], "Imported Project");
+        assert_eq!(imported["content_counts"]["compute_jobs"], 1);
+        assert_eq!(imported["content_counts"]["canvas_graphs"], 1);
+        assert_eq!(imported["content_counts"]["artifact_refs"], 1);
+        assert_eq!(imported["content_counts"]["support_bundle_refs"], 1);
+        assert_eq!(imported["imported_counts"]["canvas_graphs"], 1);
+        assert_eq!(imported["metadata_only_counts"]["compute_jobs"], 1);
+        assert_eq!(
+            target_runtime
+                .canvas_graph_load("graph_material_balance_minimal")
+                .unwrap()["project_id"],
+            imported["project"]["project_id"]
+        );
+        assert!(target_runtime
+            .compute_job_get("job_material_balance_minimal")
+            .is_err());
         assert!(runtime.project_export(project_id, "../escape").is_err());
         assert!(runtime.project_import("../escape/project.json").is_err());
         assert!(runtime.project_import("C:/escape/project.json").is_err());

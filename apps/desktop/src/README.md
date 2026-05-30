@@ -7,7 +7,7 @@ This directory contains the Phase 3C Desktop React shell.
 It is responsible for:
 
 - Calling Rust Tauri commands through typed wrappers.
-- Showing worker health, local projects, project-associated local compute jobs/canvas graphs, queued-job cancellation, canvas/process graph command smoke, job details, artifact/model_run refs, JSON/CSV export results, backup/restore results, and support bundle results.
+- Showing worker health, local projects, project package import/export counts, project-associated local compute jobs/canvas graphs, queued-job cancellation, canvas/process graph command smoke, job details, artifact/model_run refs, JSON/CSV export results, backup/restore results, and support bundle results.
 - Providing a dev-mode material balance demo flow.
 
 It is not responsible for:
@@ -34,7 +34,7 @@ It is not responsible for:
 3. Keep this app independent from legacy `frontend/`.
 4. Export controls call Rust commands; React must not write local files directly.
 5. Canvas/process graph buttons use Rust command wrappers; React must not persist graph JSON itself.
-6. Project controls call Rust registry/export/import commands only; React must not create local project files or mutate SQLite directly.
+6. Project controls call Rust registry/package export/import commands only; React must not create local project files or mutate SQLite directly.
 7. When a project is selected, demo job creation and CanvasGraph save pass that `project_id` to Rust; Rust remains responsible for validation and persistence.
 
 ## 4. Public Interfaces

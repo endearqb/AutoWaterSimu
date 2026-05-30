@@ -1,3 +1,37 @@
+# 2026-05-31 AutoWaterSimu Next Desktop Project Package Contents TODO
+
+- [x] Re-read Desktop README First context for runtime, store, commands, React wrappers, and existing project export/import scope
+- [x] Confirm current export contains only project metadata and remaining audit calls out richer project package content
+- [x] Add project package snapshot content for project-scoped jobs, CanvasGraphs, artifact refs, and support bundle refs
+- [x] Keep import conservative: restore project metadata and CanvasGraphs, but do not recreate job/artifact/support-bundle rows without file contents
+- [x] Update Desktop UI/types and README First records
+- [x] Run Desktop Rust/React validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Preserve `desktop_project_export.v1` and keep backward compatibility with project-only exports.
+- Add export content under a new `contents` object while keeping artifact/support bundle payloads metadata-only.
+- Reuse existing project_id wiring for jobs and CanvasGraphs; do not introduce external file dialogs in this slice.
+- Import CanvasGraphs only after the project row is upserted, and reject graphs that claim a different project_id.
+
+## Review
+
+- `desktop_project_export.v1` now includes `contents.compute_jobs`, `contents.canvas_graphs`, `contents.artifact_refs`, `contents.support_bundle_refs`, `contents.redaction`, and returned `content_counts`.
+- Project import remains backward compatible with old project-only exports; for rich packages it restores the project row and CanvasGraphs, while job/artifact/support bundle refs remain metadata-only because the package does not carry artifact/support bundle file contents.
+- Desktop UI/types now show package counts for project export/import.
+- Updated Desktop README contracts for the project package metadata-only boundary.
+- Verification:
+  - `cargo fmt --manifest-path apps\desktop\src-tauri\Cargo.toml` passed.
+  - First `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` failed because the updated test shadowed the `runtime()` helper with a local `runtime` binding; fixed by calling `self::runtime()`.
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`21 passed`).
+  - `cd apps\desktop; npm run typecheck` passed.
+  - `cd apps\desktop; npm run build` passed.
+  - Browser preview against `http://127.0.0.1:1420/` confirmed `Desktop Runtime`, `Project Export`, `Project Import`, and `No project export yet.` render in browser-only mode; the first navigation timed out but a retry loaded successfully. The temporary Vite dev server was stopped.
+  - `git diff --check -- apps\desktop tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - External file dialogs, recent-file allowlist, and file-backed job/artifact/support bundle restore remain Desktop follow-up work.
+
 # 2026-05-31 AutoWaterSimu Next Compute Lifecycle Admin UI TODO
 
 - [x] Re-read frontend, routes, services, i18n, Chakra v3, and Compute lifecycle context

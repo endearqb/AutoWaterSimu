@@ -34,6 +34,7 @@ import {
   type ProjectBackupResponse,
   type ProjectExportResponse,
   type ProjectImportResponse,
+  type ProjectPackageContentCounts,
   type ProjectRestoreResponse,
   type SupportBundleResponse,
   type WorkerSelfCheckResponse,
@@ -505,15 +506,11 @@ export function App() {
             <div className="artifact-grid compact">
               <InfoBlock
                 label="Project Export"
-                value={projectExport?.object_key ?? "No project export yet."}
+                value={formatProjectExport(projectExport)}
               />
               <InfoBlock
                 label="Project Import"
-                value={
-                  projectImport
-                    ? `${projectImport.project.name} imported`
-                    : "No project import yet."
-                }
+                value={formatProjectImport(projectImport)}
               />
             </div>
           </section>
@@ -691,6 +688,40 @@ function StatusPill(props: { status: string }) {
       {props.status}
     </span>
   )
+}
+
+function formatProjectExport(result: ProjectExportResponse | null): string {
+  if (!result) {
+    return "No project export yet."
+  }
+  return `${result.object_key} (${formatProjectPackageCounts(
+    result.content_counts,
+  )})`
+}
+
+function formatProjectImport(result: ProjectImportResponse | null): string {
+  if (!result) {
+    return "No project import yet."
+  }
+  return `${result.project.name} imported (${result.imported_counts.canvas_graphs} graphs restored, ${formatProjectPackageCounts(
+    result.metadata_only_counts,
+  )} metadata-only)`
+}
+
+function formatProjectPackageCounts(
+  counts:
+    | ProjectPackageContentCounts
+    | Omit<ProjectPackageContentCounts, "canvas_graphs">,
+): string {
+  const parts = [`${counts.compute_jobs} jobs`]
+  if ("canvas_graphs" in counts) {
+    parts.push(`${counts.canvas_graphs} graphs`)
+  }
+  parts.push(
+    `${counts.artifact_refs} artifacts`,
+    `${counts.support_bundle_refs} support bundles`,
+  )
+  return parts.join(", ")
 }
 
 function InfoBlock(props: { label: string; value: string }) {

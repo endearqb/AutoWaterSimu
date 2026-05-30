@@ -97,6 +97,74 @@ impl DesktopStore {
         })
     }
 
+    pub fn project_package_snapshot(&self, project_id: &str) -> Result<Value, String> {
+        self.with_conn(|conn| {
+            let project = project_snapshot(conn, project_id)?;
+            let compute_jobs = jobs_for_project(conn, project_id)?;
+            let canvas_graphs = canvas_graphs_for_project(conn, project_id)?;
+            let support_bundle_refs = support_bundle_refs_for_project(conn, project_id)?;
+            let artifact_refs: Vec<Value> = compute_jobs
+                .iter()
+                .flat_map(|snapshot| {
+                    snapshot
+                        .get("artifacts")
+                        .and_then(Value::as_array)
+                        .into_iter()
+                        .flatten()
+                        .cloned()
+                })
+                .collect();
+            Ok(json!({
+                "project": project,
+                "contents": {
+                    "compute_jobs": compute_jobs,
+                    "canvas_graphs": canvas_graphs,
+                    "artifact_refs": artifact_refs,
+                    "support_bundle_refs": support_bundle_refs,
+                    "redaction": {
+                        "artifact_contents_included": false,
+                        "support_bundle_contents_included": false,
+                        "job_events_included": false
+                    }
+                },
+                "content_counts": {
+                    "compute_jobs": compute_jobs.len(),
+                    "canvas_graphs": canvas_graphs.len(),
+                    "artifact_refs": artifact_refs.len(),
+                    "support_bundle_refs": support_bundle_refs.len()
+                }
+            }))
+        })
+    }
+
+    pub fn import_canvas_graphs_for_project(
+        &self,
+        project_id: &str,
+        canvas_graphs: &[Value],
+    ) -> Result<usize, String> {
+        let mut imported = 0;
+        for record in canvas_graphs {
+            if let Some(record_project_id) = record.get("project_id").and_then(Value::as_str) {
+                if record_project_id != project_id {
+                    return Err(format!(
+                        "canvas graph project_id does not match imported project: {record_project_id}"
+                    ));
+                }
+            }
+            let graph = record
+                .get("graph")
+                .filter(|value| value.is_object())
+                .ok_or_else(|| {
+                    String::from("canvas graph export record graph object is required")
+                })?;
+            let graph_json = serde_json::to_string(graph)
+                .map_err(|err| format!("serialize canvas graph import failed: {err}"))?;
+            self.save_canvas_graph_for_project(&graph_json, Some(project_id))?;
+            imported += 1;
+        }
+        Ok(imported)
+    }
+
     pub fn create_job(&self, request_json: &str) -> Result<Value, String> {
         self.create_job_for_project(request_json, None)
     }
@@ -650,6 +718,27 @@ fn canvas_graph_snapshot(conn: &Connection, graph_id: &str) -> Result<Value, Str
     .ok_or_else(|| format!("canvas graph not found: {graph_id}"))
 }
 
+fn canvas_graphs_for_project(conn: &Connection, project_id: &str) -> Result<Vec<Value>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id FROM canvas_graphs
+             WHERE project_id = ?1
+             ORDER BY updated_at DESC, id DESC",
+        )
+        .map_err(|err| format!("prepare project canvas graphs query failed: {err}"))?;
+    let ids = stmt
+        .query_map([project_id], |row| row.get::<_, String>(0))
+        .map_err(|err| format!("query project canvas graphs failed: {err}"))?;
+    let mut graphs = Vec::new();
+    for id in ids {
+        graphs.push(canvas_graph_snapshot(
+            conn,
+            &id.map_err(|err| format!("read canvas graph id failed: {err}"))?,
+        )?);
+    }
+    Ok(graphs)
+}
+
 fn job_snapshot(conn: &Connection, job_id: &str) -> Result<Value, String> {
     let mut stmt = conn
         .prepare(
@@ -700,6 +789,27 @@ fn job_snapshot(conn: &Connection, job_id: &str) -> Result<Value, String> {
     }))
 }
 
+fn jobs_for_project(conn: &Connection, project_id: &str) -> Result<Vec<Value>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id FROM compute_jobs
+             WHERE project_id = ?1
+             ORDER BY COALESCE(created_at, '') DESC, id DESC",
+        )
+        .map_err(|err| format!("prepare project jobs query failed: {err}"))?;
+    let ids = stmt
+        .query_map([project_id], |row| row.get::<_, String>(0))
+        .map_err(|err| format!("query project jobs failed: {err}"))?;
+    let mut jobs = Vec::new();
+    for id in ids {
+        jobs.push(job_snapshot(
+            conn,
+            &id.map_err(|err| format!("read job id failed: {err}"))?,
+        )?);
+    }
+    Ok(jobs)
+}
+
 fn artifact_snapshot(conn: &Connection, artifact_id: &str) -> Result<Value, String> {
     conn.query_row(
         "SELECT id, job_id, schema_version, artifact_type, object_key, content_type,
@@ -729,6 +839,31 @@ fn artifacts_for_job(conn: &Connection, job_id: &str) -> Result<Vec<Value>, Stri
         artifacts.push(row.map_err(|err| format!("read artifact row failed: {err}"))?);
     }
     Ok(artifacts)
+}
+
+fn support_bundle_refs_for_project(
+    conn: &Connection,
+    project_id: &str,
+) -> Result<Vec<Value>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT support_bundles.id, support_bundles.job_id, support_bundles.object_key,
+                    support_bundles.size_bytes, support_bundles.checksum,
+                    support_bundles.created_at, support_bundles.metadata_json
+             FROM support_bundles
+             JOIN compute_jobs ON compute_jobs.id = support_bundles.job_id
+             WHERE compute_jobs.project_id = ?1
+             ORDER BY support_bundles.created_at, support_bundles.id",
+        )
+        .map_err(|err| format!("prepare project support bundles query failed: {err}"))?;
+    let rows = stmt
+        .query_map([project_id], support_bundle_ref_row_to_json)
+        .map_err(|err| format!("query project support bundles failed: {err}"))?;
+    let mut bundles = Vec::new();
+    for row in rows {
+        bundles.push(row.map_err(|err| format!("read support bundle row failed: {err}"))?);
+    }
+    Ok(bundles)
 }
 
 fn events_for_job(conn: &Connection, job_id: &str) -> Result<Vec<Value>, String> {
@@ -825,6 +960,22 @@ fn artifact_row_to_json(row: &rusqlite::Row<'_>) -> rusqlite::Result<Value> {
         "size_bytes": row.get::<_, i64>(6)?,
         "checksum": row.get::<_, String>(7)?,
         "created_at": row.get::<_, String>(8)?,
+        "metadata": metadata_json
+            .as_deref()
+            .and_then(|text| serde_json::from_str::<Value>(text).ok())
+            .unwrap_or(Value::Null)
+    }))
+}
+
+fn support_bundle_ref_row_to_json(row: &rusqlite::Row<'_>) -> rusqlite::Result<Value> {
+    let metadata_json: Option<String> = row.get(6)?;
+    Ok(json!({
+        "bundle_id": row.get::<_, String>(0)?,
+        "job_id": row.get::<_, Option<String>>(1)?,
+        "object_key": row.get::<_, String>(2)?,
+        "size_bytes": row.get::<_, i64>(3)?,
+        "checksum": row.get::<_, String>(4)?,
+        "created_at": row.get::<_, String>(5)?,
         "metadata": metadata_json
             .as_deref()
             .and_then(|text| serde_json::from_str::<Value>(text).ok())

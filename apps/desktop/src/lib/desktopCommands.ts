@@ -68,18 +68,31 @@ export type ProjectListResponse = {
   count: number
 }
 
+export type ProjectPackageContentCounts = {
+  compute_jobs: number
+  canvas_graphs: number
+  artifact_refs: number
+  support_bundle_refs: number
+}
+
 export type ProjectExportResponse = {
   project_id: string
   object_key: string
   exported_path: string
   size_bytes: number
   checksum: string
+  content_counts: ProjectPackageContentCounts
   status: string
 }
 
 export type ProjectImportResponse = {
   project: DesktopProject
   object_key: string
+  content_counts: ProjectPackageContentCounts
+  imported_counts: {
+    canvas_graphs: number
+  }
+  metadata_only_counts: Omit<ProjectPackageContentCounts, "canvas_graphs">
   imported_at: string
   status: string
 }
