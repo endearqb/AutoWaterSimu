@@ -1,3 +1,28 @@
+# 2026-05-31 AutoWaterSimu Next tenancy observability runbook TODO
+
+- [x] Re-read operations, Compute API, and Technical Spec context
+- [x] Add Compute API tenancy/observability runbook
+- [x] Link runbook from operations README and Development Plan Phase 6.4
+- [x] Update completion audit and README First records
+- [x] Run docs and targeted Compute API validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Document the current P0 metadata boundary without claiming full tenant isolation.
+- Keep OpenTelemetry as a trigger-based adoption path, not an implemented dependency.
+- Avoid changing Go API behavior in this documentation-only slice.
+
+## Review
+
+- Added `docs/operations/compute_api_tenancy_observability_runbook.md`.
+- Documented `tenant_id` / `project_id` / `created_by` as metadata fields, not P0 security boundaries.
+- Recorded OpenTelemetry triggers for cross-process triage, production SLO attribution, external integration validation, and object-store archive operations.
+- Verification:
+  - `git diff --check -- docs\operations docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `rg -n "OpenTelemetry|tenant_id|project_id|full RBAC|metadata boundary|trace_id" ...` confirmed the runbook and linked docs expose the intended boundary language.
+  - `cd apps\api; go test ./internal/compute -run "TestHTTPAuthScopeAndMetrics|TestStaticTokenRevocation|TestNewSystemEvidenceEndToEnd" -count=1` passed.
+
 # 2026-05-31 AutoWaterSimu Next deliverable docs closeout TODO
 
 - [x] Re-read docs/rebuild and docs/operations README context
