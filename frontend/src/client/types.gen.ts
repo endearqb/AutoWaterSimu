@@ -1060,6 +1060,10 @@ export type UDMComponentDefinition = {
     conversion_factors?: ({
     [key: string]: (number);
 } | null);
+    /**
+     * 组分备注
+     */
+    note?: (string | null);
 };
 
 /**

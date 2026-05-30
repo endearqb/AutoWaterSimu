@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next legacy FastAPI client refresh TODO
+
+- [x] Re-read frontend generated client README context and legacy Phase 0 drift audit
+- [x] Regenerate local `frontend/openapi.json` from current FastAPI app
+- [x] Run `npm run generate-client` for the legacy FastAPI client only
+- [x] Fix README/audit wording for ignored local OpenAPI input versus tracked generated client output
+- [x] Run frontend typecheck and diff checks
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep `frontend/openapi.json` ignored as the local generator input.
+- Commit only generated legacy client output under `frontend/src/client` plus README/audit records.
+- Do not touch `frontend/src/client/compute`.
+
+## Review
+
+- Regenerated legacy client from the current FastAPI OpenAPI document.
+- Corrected `frontend/README.md` and the legacy drift audit to state that `frontend/openapi.json` is ignored local input, while `frontend/src/client` is the tracked output.
+- The tracked generated client now includes `UDMComponentDefinition.note` and current legacy endpoint comments from OpenAPI descriptions.
+- Verification:
+  - OpenAPI compare from `backend/` reported `current_paths=88`, `local_paths=88`, no missing/extra paths, and `matches=True`.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check -- frontend\README.md frontend\src\client docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `git diff --name-only -- frontend\src\client\compute` returned no changes.
+
 # 2026-05-31 AutoWaterSimu Next FastAPI lifespan cleanup TODO
 
 - [x] Re-read backend app lifecycle README/context and current Phase 0 drift audit

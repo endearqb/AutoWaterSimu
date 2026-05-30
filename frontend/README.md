@@ -109,7 +109,8 @@ Use this only if the repository has the root helper script available. The curren
 
 * Start the Docker Compose stack.
 
-* Download the OpenAPI JSON file from `http://localhost/api/v1/openapi.json` and copy it to a new file `openapi.json` at the root of the `frontend` directory.
+* Download the OpenAPI JSON file from `http://localhost/api/v1/openapi.json` and copy it to `openapi.json` at the root of the `frontend` directory.
+  `frontend/openapi.json` is a local generated input ignored by Git; the tracked output is `frontend/src/client`.
 
 * To generate the frontend client, run:
 
@@ -117,7 +118,7 @@ Use this only if the repository has the root helper script available. The curren
 npm run generate-client
 ```
 
-* Commit the changes.
+* Commit the generated client changes under `frontend/src/client`.
 
 Notice that everytime the backend changes (changing the OpenAPI schema), you should follow these steps again to update the frontend client.
 
@@ -293,7 +294,8 @@ npm run dev
 
 * 启动 Docker Compose 栈。
 
-* 从 `http://localhost/api/v1/openapi.json` 下载 OpenAPI JSON 文件，并将其复制为 `frontend` 目录根目录中的新文件 `openapi.json`。
+* 从 `http://localhost/api/v1/openapi.json` 下载 OpenAPI JSON 文件，并将其复制为 `frontend` 目录根目录中的 `openapi.json`。
+  `frontend/openapi.json` 是本地生成输入，已被 Git 忽略；需要提交的是 `frontend/src/client` 下的 generated client 输出。
 
 * 要生成前端客户端，请运行：
 
@@ -301,7 +303,7 @@ npm run dev
 npm run generate-client
 ```
 
-* 提交更改。
+* 提交 `frontend/src/client` 下的 generated client 变更。
 
 请注意，每次后端更改（更改 OpenAPI 架构）时，你都应该再次遵循这些步骤以更新前端客户端。
 

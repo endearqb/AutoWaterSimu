@@ -5,8 +5,8 @@
 This audit records the current legacy baseline drift items that remain after the Phase 0 stabilization work. It covers:
 
 - active `print(...)` usage relevant to legacy runtime behavior;
-- FastAPI OpenAPI schema drift against tracked `frontend/openapi.json`;
-- generated legacy frontend client drift risk.
+- FastAPI OpenAPI schema drift against local generated input `frontend/openapi.json`;
+- generated legacy frontend client drift risk under `frontend/src/client`.
 
 It does not change legacy calculation behavior or replace the legacy FastAPI client.
 
@@ -19,6 +19,7 @@ It does not change legacy calculation behavior or replace the legacy FastAPI cli
 - `frontend/README.md`
 - `frontend/src/README.md`
 - `frontend/src/client/README.md`
+- `frontend/.gitignore`
 - `docs/rebuild/AutoWaterSimu_Next_PRD_v1.0.md`
 - `docs/rebuild/AutoWaterSimu_Next_Technical_Spec_v1.0.md`
 - `docs/rebuild/AutoWaterSimu_Next_Development_Plan_v1.0.md`
@@ -45,28 +46,19 @@ The commented mojibake debug `# print(...)` lines previously found in `backend/a
 
 ## OpenAPI And Client Drift Findings
 
-The current FastAPI OpenAPI document and tracked `frontend/openapi.json` have the same path count and no missing/extra paths:
+`frontend/openapi.json` is ignored by `frontend/.gitignore` and is therefore a local generated input for `npm run generate-client`, not a tracked source artifact.
+
+After regenerating `frontend/openapi.json` from the current FastAPI app and running `npm run generate-client`, the current FastAPI OpenAPI document and local `frontend/openapi.json` match exactly:
 
 ```txt
 current_paths = 88
-tracked_paths = 88
+local_paths = 88
 missing_paths = []
 extra_paths = []
+matches = True
 ```
 
-The remaining semantic JSON differences are non-behavioral metadata/description drift:
-
-| OpenAPI location | Drift |
-|---|---|
-| `/info/title` | Current app title is `AutoWaterSimu`; tracked `frontend/openapi.json` still says `Full Stack FastAPI Project` |
-| `/api/v1/material-balance/calculate` | Current description includes the Phase 0 legacy baseline note; tracked OpenAPI has the old description |
-| `/api/v1/material-balance/calculate-from-flowchart` | Current description includes the raw-flowchart legacy baseline note; tracked OpenAPI has the old description |
-| `/api/v1/asm1/calculate` | Current description includes the Phase 0 legacy baseline note; tracked OpenAPI has the old description |
-| `/api/v1/asm1/calculate-from-flowchart` | Current description includes the raw-flowchart legacy baseline note; tracked OpenAPI has the old description |
-| `/api/v1/udm/calculate` | Current description includes the Phase 0 legacy baseline note; tracked OpenAPI has the old description |
-| `/api/v1/udm/calculate-from-flowchart` | Current description includes the raw-flowchart legacy baseline note; tracked OpenAPI has the old description |
-
-No request/response path or schema shape drift was identified in this comparison. The legacy generated client is therefore not known to be behaviorally stale, but the tracked OpenAPI metadata is not byte-for-byte current.
+The tracked generated legacy client is current with that local OpenAPI input. The refresh added the missing `UDMComponentDefinition.note` field to `frontend/src/client/types.gen.ts` and updated generated SDK comments for the legacy calculation endpoints. No request/response path count drift or missing/extra paths were identified.
 
 Importing `app.models` no longer emits Pydantic protected-namespace warnings for `model_id` / `model_pair_mappings`; the affected legacy models now explicitly allow those field names. Legacy model validators have been migrated to Pydantic v2 `field_validator`, so `app.models` import no longer emits Pydantic v1-style validator warnings.
 
@@ -77,12 +69,12 @@ FastAPI startup/shutdown now uses an application lifespan context manager in `ba
 - `backend/app/tests/api/routes/test_flowchart_routes_no_print.py` guards all route modules against active `print(...)`.
 - `backend/app/tests/api/routes/test_asm_udm_validate_response.py` guards ASM1 and UDM validate response shape against the earlier validation response drift.
 - `backend/app/tests/pydantic_warning_test.py` guards `app.models` import against protected namespace and Pydantic v1 validator warning regressions.
-- `frontend/README.md` documents that legacy backend schema changes require `frontend/openapi.json` export and `npm run generate-client`.
+- `frontend/README.md` documents that legacy backend schema changes require local `frontend/openapi.json` export and `npm run generate-client`; only generated client output under `frontend/src/client` is tracked.
 - Compute API client generation remains isolated under `frontend/src/client/compute` and does not affect the legacy client.
 
 ## Remaining Follow-Up
 
-1. Regenerate legacy `frontend/openapi.json` and legacy client only when a behaviorally relevant FastAPI schema change is made, or when the team wants metadata/docstring drift eliminated from the tracked OpenAPI file.
+1. Regenerate local `frontend/openapi.json` and legacy client whenever a behaviorally relevant FastAPI schema change is made; commit generated client output under `frontend/src/client`.
 2. Remove or convert ad hoc debug scripts with active prints if they become maintained tooling.
 3. Broader legacy mojibake comments/docstrings should be cleaned only with localized tests or when the affected file is already being maintained.
 4. Third-party `python_multipart` import warning remains cleanup debt; treat it separately from legacy application code unless dependency versions or import behavior change.

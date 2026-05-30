@@ -8,7 +8,10 @@ import type { Asm1CreateCalculationJobData, Asm1CreateCalculationJobResponse, As
 export class Asm1Service {
     /**
      * Create Calculation Job
-     * 创建ASM1计算任务
+     * 创建ASM1计算任务。
+     *
+     * Legacy baseline: long-running execution still uses FastAPI BackgroundTasks
+     * until the compute worker lifecycle replaces this endpoint.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns ASM1JobPublic Successful Response
@@ -28,7 +31,10 @@ export class Asm1Service {
     
     /**
      * Create Calculation Job From Flowchart
-     * 从流程图数据创建ASM1计算任务
+     * 从流程图数据创建ASM1计算任务。
+     *
+     * Legacy baseline: accepts raw flowchart JSON until CanvasGraph ->
+     * ProcessGraph -> SimulationInput contracts replace this path.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns ASM1JobPublic Successful Response
@@ -1345,6 +1351,9 @@ export class MaterialBalanceService {
     /**
      * Create Calculation Job
      * 鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
+     *
+     * Legacy baseline: long-running execution still uses FastAPI BackgroundTasks
+     * until the compute worker lifecycle replaces this endpoint.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns MaterialBalanceJobPublic Successful Response
@@ -1365,6 +1374,9 @@ export class MaterialBalanceService {
     /**
      * Create Calculation Job From Flowchart
      * 浠庢祦绋嬪浘鏁版嵁鍒涘缓鐗╂枡骞宠　璁＄畻浠诲姟
+     *
+     * Legacy baseline: accepts raw flowchart JSON until CanvasGraph ->
+     * ProcessGraph -> SimulationInput contracts replace this path.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns MaterialBalanceJobPublic Successful Response
@@ -1700,7 +1712,10 @@ export class StatsService {
 export class UdmService {
     /**
      * Create Calculation Job
-     * 创建UDM计算任务
+     * 创建UDM计算任务。
+     *
+     * Legacy baseline: long-running execution still uses FastAPI BackgroundTasks
+     * until the compute worker lifecycle replaces this endpoint.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns UDMJobPublic Successful Response
@@ -1720,7 +1735,10 @@ export class UdmService {
     
     /**
      * Create Calculation Job From Flowchart
-     * 从流程图数据创建UDM计算任务
+     * 从流程图数据创建UDM计算任务。
+     *
+     * Legacy baseline: accepts raw flowchart JSON until CanvasGraph ->
+     * ProcessGraph -> SimulationInput contracts replace this path.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns UDMJobPublic Successful Response

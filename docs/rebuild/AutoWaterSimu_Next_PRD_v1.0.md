@@ -67,7 +67,7 @@ AutoWaterSimu Next 是面向水处理工艺建模、仿真计算、模型证据�
   - `material_balance_segment_overrides_test.py`
   - `hybrid_udm_validation_test.py`
   - `udm_engine_variable_binding_test.py`
-- Pydantic protected namespace、v1 validator warning 与 FastAPI lifespan deprecation warning 已在 Phase 0 cleanup 中清理；仍存在第三方 `python_multipart` import warning 与 legacy OpenAPI metadata drift，属于后续治理项。
+- Pydantic protected namespace、v1 validator warning、FastAPI lifespan deprecation warning 与 legacy FastAPI generated client drift 已在 Phase 0 cleanup 中清理；仍存在第三方 `python_multipart` import warning，属于后续治理项。
 
 ---
 
