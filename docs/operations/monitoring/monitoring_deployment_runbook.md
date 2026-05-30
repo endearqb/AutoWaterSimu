@@ -9,6 +9,7 @@ Current repository assets:
 - `compute_api_alerts.yml`: Prometheus alert rules for the Compute API `/metrics` surface.
 - `alertmanager_route_example.yml`: Alertmanager routing example with placeholder receivers only.
 - `compute_api_grafana_dashboard.json`: Grafana dashboard JSON that references only metrics currently emitted by the Compute API.
+- `receiver_policy_runbook.md`: policy for replacing placeholder receivers without committing secrets.
 
 Out of scope for this repository:
 
@@ -39,7 +40,7 @@ Do not add deployment rules for new metric names until `apps/api/internal/comput
 promtool check rules docs/operations/monitoring/compute_api_alerts.yml
 ```
 
-4. Merge `alertmanager_route_example.yml` into the environment Alertmanager config and replace `example.invalid` webhook URLs with deployment-managed receiver secrets.
+4. Review `receiver_policy_runbook.md`, then merge `alertmanager_route_example.yml` into the environment Alertmanager config and replace `example.invalid` webhook URLs with deployment-managed receiver secrets.
 5. Validate the Alertmanager config before reload if `amtool` is available:
 
 ```powershell
@@ -68,6 +69,7 @@ For retention and archive-specific triage, use `docs/operations/compute_api_life
 - Prometheus target for `/metrics` is up.
 - Prometheus rule load succeeds with no parse errors.
 - Alertmanager config renders with real environment receivers and no checked-in secrets.
+- Receiver owner mapping is approved outside the repository.
 - Grafana dashboard imports with the expected Prometheus datasource.
 - At least one scrape has data for every required metric listed above.
 - Retention backlog alerts are reviewed against dry-run output before manual deletion or archiving.

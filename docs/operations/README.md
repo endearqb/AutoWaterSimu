@@ -24,7 +24,7 @@
 | `compute_api_token_secret_runbook.md` | Compute API 静态 bearer token、scope、rotation、revocation 与 secret handling 操作手册 |
 | `compute_api_tenancy_observability_runbook.md` | Compute API tenant/project metadata boundary、trace/logging expectations 与 OpenTelemetry adoption trigger |
 | `support_bundle_runbook.md` | Desktop support bundle、project package support files 与 Compute API evidence package 操作边界 |
-| `monitoring/` | Compute API Prometheus alert rules、Alertmanager route 示例、Grafana dashboard 示例与 monitoring deployment runbook |
+| `monitoring/` | Compute API Prometheus alert rules、Alertmanager route 示例、Grafana dashboard 示例、receiver policy 与 monitoring deployment runbook |
 
 ## 3. 维护约定
 

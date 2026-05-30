@@ -470,6 +470,7 @@
 - OpenTelemetry adoption trigger（见 `docs/operations/compute_api_tenancy_observability_runbook.md`）。
 - multi-tenant deployment boundary document（见 `docs/operations/compute_api_tenancy_observability_runbook.md`）。
 - archived artifact count in `/metrics` and monitoring dashboard examples。
+- monitoring receiver/on-call/secret policy（见 `docs/operations/monitoring/receiver_policy_runbook.md`）。
 
 验收:
 

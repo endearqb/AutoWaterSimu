@@ -1,3 +1,28 @@
+# 2026-05-31 AutoWaterSimu Next monitoring receiver policy TODO
+
+- [x] Re-read monitoring README/runbook context
+- [x] Add receiver/on-call/secret policy runbook without real receivers
+- [x] Link policy from monitoring and operations docs
+- [x] Update Development Plan and completion audit
+- [x] Validate docs and secret-safety scan
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep all real receiver URLs, tokens, personal contacts, and private channel names out of the repository.
+- Document deployment-owned severity routing, receiver approval, secret handling, and synthetic test-alert expectations.
+- Keep live monitoring deployment evidence separate because it requires a real environment.
+
+## Review
+
+- Added `docs/operations/monitoring/receiver_policy_runbook.md`.
+- Linked the policy from monitoring README, monitoring deployment runbook, operations README, Development Plan, and completion audit.
+- Remaining live deployment evidence still requires real Prometheus/Alertmanager/Grafana environment proof.
+- Verification:
+  - `git diff --check -- docs\operations docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `backend\.venv\Scripts\python` parsed monitoring YAML/JSON and scanned receiver policy for common real receiver secret markers / URLs.
+  - `rg -n "https?://|Bearer |xoxb-|webhook|token|secret|phone|email|@" ...` found only placeholder/policy language, not real receiver values.
+
 # 2026-05-31 AutoWaterSimu Next archive directory guard TODO
 
 - [x] Re-read Compute API entrypoint, archive wiring, and operations context

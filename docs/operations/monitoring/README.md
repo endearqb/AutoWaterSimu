@@ -25,6 +25,7 @@
 | `alertmanager_route_example.yml` | Alertmanager route/receiver 示例，仅包含占位 webhook |
 | `compute_api_grafana_dashboard.json` | Grafana dashboard provisioning JSON，仅引用当前已暴露 metrics |
 | `monitoring_deployment_runbook.md` | 将 alert/dashboard 示例接入真实监控系统的操作核对手册 |
+| `receiver_policy_runbook.md` | 真实 receiver/on-call/secret 接入策略，不存放真实 URL 或 token |
 
 ## 3. 维护约定
 
@@ -32,6 +33,7 @@
 2. 阈值先保持保守，部署时可按环境覆盖。
 3. 不把 rule、route 或 dashboard 文件存在视为生产监控已部署。
 4. Alertmanager 示例只能使用占位 receiver，不得提交真实 URL 或 secret。
+5. 真实 receiver、on-call owner 和 secret 只在部署环境配置；本目录只能记录策略与验证清单。
 
 ## 4. 对外接口
 
@@ -75,3 +77,4 @@ promtool check rules docs/operations/monitoring/compute_api_alerts.yml
 1. 新增 alert 前先确认 `/metrics` 已实际暴露对应指标。
 2. 不要为未实现组件编写假指标规则。
 3. 不要把示例 receiver 或 dashboard 写成生产部署事实。
+4. 更新 receiver 策略时确认没有真实 webhook、token、个人联系方式或私有频道名。
