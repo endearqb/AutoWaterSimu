@@ -21,6 +21,7 @@ Latest current-turn verification:
 - `cd apps\api; go test ./...`: passed
 - Approved `constraint_draft.v1` confirmation can produce a read-only `constraint_application_plan.v1` through Go API tests; the plan is advisory-only and keeps `would_create_job=false` / `would_modify_target=false`
 - Externally generated `result_explanation.v1` can be submitted, reviewed, read, and published through Go API tests after job-scoped evidence ref checks; publish is audit metadata only
+- `process_graph:<id>` evidence refs resolve to registered `ProcessGraphRecord` only when the completed job payload references that graph
 - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check`: passed
 - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q`: passed, `7 passed`
 - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\material_balance_minimal.compute_job.v1.json --artifact-dir tmp\worker-artifacts`: passed with `status=succeeded`
@@ -52,7 +53,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, model_run records, evidence governance summary | Multi-parameter-set management, benchmark execution/run history, governance UI beyond Compute Jobs read-only panel |
-| Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, service-token scopes/revocation exist | Approval UI integration, process graph evidence dereference, NewSystem service-level E2E |
+| Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, service-token scopes/revocation exist | Approval UI integration and NewSystem service-level E2E |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
 | Release governance | Merge/release gates | Partial | Local verification matrix is stronger and opt-in migration rollback smoke passed | CI gate wiring, installer smoke evidence, packaged sidecar smoke, release checklist execution |
@@ -73,7 +74,6 @@ Latest recorded but not re-run in this verification refresh:
 3. NewSystem/milp integration completion
 
 - Add approval-page UI integration for evidence/risk finding dereference.
-- Add process graph evidence dereference where registered graph refs are available.
 - Add NewSystem/milp service-level E2E covering simulation_input, process_graph, and model_run references.
 
 4. Agent DSL completion

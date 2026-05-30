@@ -1,3 +1,21 @@
+# 2026-05-30 AutoWaterSimu Next ProcessGraph Evidence Ref TODO
+
+- [x] Re-read evidence/risk/NewSystem approval-read context
+- [x] Add job-scoped `process_graph:<id>` evidence ref dereference
+- [x] Cover registered ProcessGraph simulation-check job evidence ref success/missing cases
+- [x] Update API README context
+- [x] Run Go verification and diff validation
+- [x] Commit checkpoint
+
+## Review
+
+- `GET /api/v1/compute/jobs/{job_id}/evidence-ref?ref=process_graph:<id>` now resolves only when the job payload references that process graph and the registered ProcessGraph record exists.
+- The resolver returns the persisted `ProcessGraphRecord`; missing or cross-job refs still return 404.
+- This is read-only approval/evidence plumbing only; it does not mutate process graphs, jobs, evidence packages, or production state.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `git diff --check` passed with LF/CRLF warnings only.
+
 # 2026-05-30 AutoWaterSimu Next Result Explanation Workflow TODO
 
 - [x] Re-read PRD/Spec/Development Plan and existing Agent/result explanation context

@@ -396,6 +396,10 @@ func (svc *Service) ResolveEvidenceReference(ctx context.Context, jobID, evidenc
 				Payload:     payload,
 			}, nil
 		}
+	case "process_graph":
+		if resolution, ok := svc.resolveProcessGraphEvidenceRef(ctx, snapshot.Job.JobID, evidenceRef, refID, snapshot.Job.InputJSON); ok {
+			return resolution, nil
+		}
 	case "evidence_package":
 		evidence, _, err := svc.EvidencePackage(ctx, snapshot.Job.JobID)
 		if err != nil {
@@ -1324,6 +1328,29 @@ func (svc *Service) resolveArtifactEvidenceRef(ctx context.Context, jobID, evide
 		RefID:       artifact.ArtifactID,
 		Resolved:    true,
 		Payload:     artifact,
+	}, true
+}
+
+func (svc *Service) resolveProcessGraphEvidenceRef(ctx context.Context, jobID, evidenceRef, processGraphID string, input json.RawMessage) (EvidenceReferenceResolution, bool) {
+	_, _, processGraphRef, _ := evidenceInputRefs(input)
+	if stringValue(processGraphRef, "process_graph_id") != processGraphID {
+		return EvidenceReferenceResolution{}, false
+	}
+	version := int(numberValue(processGraphRef, "version"))
+	if version <= 0 {
+		version = 1
+	}
+	record, err := svc.store.FindProcessGraph(ctx, processGraphID, version)
+	if err != nil {
+		return EvidenceReferenceResolution{}, false
+	}
+	return EvidenceReferenceResolution{
+		JobID:       jobID,
+		EvidenceRef: evidenceRef,
+		RefType:     "process_graph",
+		RefID:       processGraphID,
+		Resolved:    true,
+		Payload:     record,
 	}, true
 }
 
