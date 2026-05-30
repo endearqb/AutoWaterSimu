@@ -465,7 +465,7 @@
 任务:
 
 - artifact retention policy and admin dry-run-first sweep。
-- job event retention / archive policy, including opt-in `local_fs_archive` for archive candidates。
+- job event retention / archive policy（见 `docs/operations/compute_api_job_event_retention_runbook.md`）, including opt-in `local_fs_archive` for archive candidates。
 - support bundle format。
 - OpenTelemetry adoption trigger（见 `docs/operations/compute_api_tenancy_observability_runbook.md`）。
 - multi-tenant deployment boundary document（见 `docs/operations/compute_api_tenancy_observability_runbook.md`）。

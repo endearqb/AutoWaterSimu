@@ -1,3 +1,28 @@
+# 2026-05-31 AutoWaterSimu Next job event retention policy TODO
+
+- [x] Re-read Compute API lifecycle/store and operations context
+- [x] Add job event retention/archive policy runbook
+- [x] Link runbook from operations README and Development Plan Phase 6.4
+- [x] Update completion audit and README First records
+- [x] Run docs and targeted Compute API event/evidence validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Document current `compute_job_events` behavior as durable audit metadata.
+- Avoid claiming an automated pruning endpoint or worker exists.
+- Make future event pruning dry-run-first and evidence/support-aware.
+
+## Review
+
+- Added `docs/operations/compute_api_job_event_retention_runbook.md`.
+- Recorded current storage boundary, retention principles, future candidate lifecycle, and validation commands.
+- Linked the policy from operations README and the Development Plan lifecycle/operations section.
+- Verification:
+  - `git diff --check -- docs\operations docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `rg -n "job event retention|compute_job_events|dry-run|automated event|evidence package|artifact.archived|artifact.retention_deleted" ...` confirmed the intended policy language is present.
+  - `cd apps\api; go test ./internal/compute -run "TestEvidencePackage|TestArtifactRetention|TestWorkerLifecycle|TestNewSystemEvidenceEndToEnd" -count=1` passed.
+
 # 2026-05-31 AutoWaterSimu Next tenancy observability runbook TODO
 
 - [x] Re-read operations, Compute API, and Technical Spec context
