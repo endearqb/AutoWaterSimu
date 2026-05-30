@@ -92,6 +92,8 @@ After deletion, check `/metrics` again and inspect affected job events for `arti
 
 Retention deletion removes artifact metadata and the local artifact object. The API records an audit event, but it does not restore deleted objects. Recovery requires external backups or object-store versioning outside the current Compute API implementation.
 
+For the current PostgreSQL + local artifact directory deployment shape, use `docs/operations/compute_api_backup_restore_runbook.md` before enabling destructive retention deletion.
+
 ## Scheduler Status
 
 The API process has an optional retention scheduler, disabled by default:

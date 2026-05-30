@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next Compute API Backup Restore Policy TODO
+
+- [x] Re-read docs, operations, Compute API, and migration README context
+- [x] Confirm current runtime facts for PostgreSQL metadata and local artifact storage
+- [x] Add Compute API backup/restore runbook with PowerShell examples
+- [x] Link backup policy from lifecycle runbook and operations README
+- [x] Run docs diff validation and update README First records
+- [x] Commit checkpoint
+
+## Plan
+
+- Document PostgreSQL `pg_dump` / `pg_restore` and artifact directory snapshot as an operator procedure, not as an in-process API feature.
+- Make the destructive restore boundary explicit: stop API and workers, restore metadata and artifact directory as a matched pair, then verify checksums/health.
+- Keep archive backend and object-store versioning as unresolved follow-up; do not claim they exist.
+
+## Review
+
+- Added `docs/operations/compute_api_backup_restore_runbook.md`.
+- The runbook treats PostgreSQL metadata and `COMPUTE_API_ARTIFACT_DIR` as one consistency unit, includes pre-backup, backup, restore, and post-restore verification steps, and warns that restore is destructive.
+- Updated `docs/operations/README.md` and linked the runbook from `compute_api_lifecycle_runbook.md`.
+- Verification:
+  - `git diff --check -- docs tasks .ai\plans .ai\changes` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - No archive backend or object-store versioning is implemented in this slice.
+  - No automated backup scheduler or restore API is added.
+
 # 2026-05-31 AutoWaterSimu Next GitHub Release Artifact Build TODO
 
 - [x] Re-read `.github`, workflow, Desktop packaging, and release gate README context
