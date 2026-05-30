@@ -1,3 +1,23 @@
+# 2026-05-30 AutoWaterSimu Next NewSystem Evidence E2E TODO
+
+- [x] Re-read NewSystem/milp evidence README, contracts, PRD/Spec/Plan context
+- [x] Add service-level E2E for process_graph simulation check and evidence refs
+- [x] Cover simulation_input/process_graph/model_run/evidence_package dereference in one workflow
+- [x] Cover result explanation submission using the resolved refs
+- [x] Run targeted and full Go API verification
+- [x] Run diff validation
+- [x] Commit checkpoint
+
+## Review
+
+- Added `TestNewSystemEvidenceReferenceE2E` to exercise a NewSystem-style `simulation_request.v1` through process graph registration, simulation-check job creation, worker completion, risk finding summary exposure, evidence ref dereference, and result explanation submission.
+- The test covers `simulation_input:<id>`、`process_graph:<id>`、`model_run:<id>` and generated `evidence_package:<id>` refs in one job-scoped workflow.
+- This is regression coverage only; it does not add endpoints, mutate production semantics, or introduce new NewSystem business rules.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run TestNewSystemEvidenceReferenceE2E -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `git diff --check` passed with LF/CRLF warnings only.
+
 # 2026-05-30 AutoWaterSimu Next Web Evidence Ref Lookup TODO
 
 - [x] Re-read Compute Jobs route README/service boundary and existing evidence UI

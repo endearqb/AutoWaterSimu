@@ -23,6 +23,7 @@ Latest current-turn verification:
 - Externally generated `result_explanation.v1` can be submitted, reviewed, read, and published through Go API tests after job-scoped evidence ref checks; publish is audit metadata only
 - `process_graph:<id>` evidence refs resolve to registered `ProcessGraphRecord` only when the completed job payload references that graph
 - Web Compute Jobs detail can resolve job-scoped evidence refs through `computeJobsService.resolveEvidenceReference()` and display the backend resolution payload without composing evidence in the route layer
+- NewSystem-style service-level E2E covers process graph simulation check creation, risk finding summary exposure, `simulation_input` / `process_graph` / `model_run` / `evidence_package` ref dereference, and result explanation submission in one job-scoped workflow
 - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check`: passed
 - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q`: passed, `7 passed`
 - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\material_balance_minimal.compute_job.v1.json --artifact-dir tmp\worker-artifacts`: passed with `status=succeeded`
@@ -54,7 +55,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, model_run records, evidence governance summary | Multi-parameter-set management, benchmark execution/run history, governance UI beyond Compute Jobs read-only panel |
-| Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, service-token scopes/revocation exist | NewSystem service-level E2E covering simulation_input/process_graph/model_run/result explanation refs |
+| Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
 | Release governance | Merge/release gates | Partial | Local verification matrix is stronger and opt-in migration rollback smoke passed | CI gate wiring, installer smoke evidence, packaged sidecar smoke, release checklist execution |
@@ -72,29 +73,25 @@ Latest recorded but not re-run in this verification refresh:
 - Add benchmark run contract and execution history after model catalog persistence is available.
 - Add read-only governance UI separate from Compute Jobs if the route grows too dense.
 
-3. NewSystem/milp integration completion
-
-- Add NewSystem/milp service-level E2E covering simulation_input, process_graph, model_run, and result explanation references.
-
-4. Agent DSL completion
+3. Agent DSL completion
 
 - Keep production-related job creation blocked unless the confirmation and governance gates pass.
 - Keep approved constraint draft application advisory-only unless a separate enforcement contract and approval endpoint are designed.
 - Keep result explanation publish as audit metadata; add internal LLM generation or reviewer assignment only if separately scoped.
 
-5. Desktop completion
+4. Desktop completion
 
 - Implement full project package content, including jobs, graphs, artifacts, and support bundle references.
 - Add file dialog/recent files allowlist.
 - Run packaging/NSIS smoke and document signing as post-P0 unless requirements change.
 
-6. Worker/model migration completion
+5. Worker/model migration completion
 
 - Migrate ASM/UDM long-running workloads to the worker path.
 - Add old-vs-worker numerical baseline matrix.
 - Expand `model_catalog.v1` beyond material_balance only after the corresponding worker path is tested.
 
-7. Lifecycle/operations completion
+6. Lifecycle/operations completion
 
 - Implement retention executor or archive/delete worker with evidence/model_run reference protection.
 - Add operational metrics beyond the current `/metrics` stub.
@@ -110,7 +107,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Add NewSystem service-level E2E covering simulation_input, process_graph, model_run, and result explanation references.
-2. Add benchmark run contract after benchmark case metadata and catalog persistence have stabilized.
-3. Add release checklist automation, packaged sidecar smoke, and installer smoke evidence.
-4. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
+1. Add benchmark run contract after benchmark case metadata and catalog persistence have stabilized.
+2. Add release checklist automation, packaged sidecar smoke, and installer smoke evidence.
+3. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
