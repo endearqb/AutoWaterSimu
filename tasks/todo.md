@@ -1,3 +1,32 @@
+# 2026-05-31 AutoWaterSimu Next release artifact download verification TODO
+
+- [x] Re-read `.github`, `.github/workflows`, `scripts/release`, and completion audit context
+- [x] Add reusable release artifact download verification script
+- [x] Wire workflow upload -> download -> verify -> evidence upload order
+- [x] Update workflow/script README and completion records
+- [x] Validate workflow syntax, script behavior, and release gate dry run
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep artifact download verification inside `scripts/release` so workflow YAML only orchestrates Actions upload/download and script calls.
+- Verify the downloaded unsigned artifact contains packaged sidecar evidence, NSIS installer evidence, a sidecar executable, and a setup executable.
+- Write `tmp/release-evidence/downloaded-release-artifacts.json` so the evidence upload includes the artifact download check.
+- Preserve post-P0 boundaries: no signing, auto-update, GitHub Release publication, signing keys, updater keys, or release tokens.
+
+## Review
+
+- Added `scripts/release/verify-release-artifact-download.ps1`.
+- The verifier checks required build/smoke JSON files, `sidecar_executable` / `installer_path` manifest fields, downloaded sidecar executable, downloaded NSIS setup executable, and writes pass/fail evidence.
+- Reordered `next-release-gates.yml` so manual artifact flow is upload -> download -> verify -> evidence upload.
+- Updated `.github`, workflow, and release script READMEs plus Development Plan and completion audit records.
+- Verification:
+  - `backend\.venv\Scripts\python` + PyYAML parsed `.github/workflows/next-release-gates.yml` and asserted upload/download/verify/evidence step order and artifact names.
+  - Valid and invalid fixture runs of `scripts/release/verify-release-artifact-download.ps1` produced `passed` and `failed` `downloaded-release-artifacts.json` evidence respectively.
+  - `git diff --check -- .github scripts\release docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -EvidenceDir tmp\release-evidence\artifact-download-workflow-gate` passed with evidence status `passed` and `10` steps.
+  - Remaining live evidence still requires a real GitHub `workflow_dispatch build_release_artifacts=true` run.
+
 # 2026-05-31 AutoWaterSimu Next job event retention policy TODO
 
 - [x] Re-read Compute API lifecycle/store and operations context

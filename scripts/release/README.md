@@ -9,6 +9,7 @@
 - merge gate 编排。
 - release gate 编排。
 - 生成本地/CI evidence JSON。
+- 校验 GitHub workflow 下载后的 unsigned Desktop release artifact 内容。
 
 本目录不负责：
 
@@ -22,6 +23,7 @@
 | 文件 | 作用 |
 |---|---|
 | `next-release-gates.ps1` | 编排 Next merge/release gate，并写出 `tmp/release-evidence/next-release-gates.json` |
+| `verify-release-artifact-download.ps1` | 校验下载后的 unsigned Desktop workflow artifact 是否包含 sidecar、installer 和 smoke evidence，并写出 `tmp/release-evidence/downloaded-release-artifacts.json` |
 
 ## 3. 维护约定
 
@@ -32,12 +34,14 @@
 5. Release artifact path 允许包含空格；编排脚本必须在传递子进程参数时保留完整路径。
 6. Worker pytest matrix 与 mock-backed Compute Jobs current-flow / Compute lifecycle Playwright smokes 通过 `-RunWorkerMatrix` / `-RunBrowserSmoke` 显式开启；默认 gate 只跑 worker self-check 与 minimal job。
 7. GitHub `workflow_dispatch` 可以用 `build_release_artifacts=true` 先构建 unsigned sidecar/NSIS installer，再把 manifest 中的 artifact path 传给本脚本；本脚本本身仍只做验证与 evidence 汇总。
-8. Installer signing、auto update 和 GitHub Release publication 不属于本脚本职责；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
-9. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
+8. GitHub workflow artifact 下载校验只确认 artifact 可下载且包含 unsigned sidecar/installer/evidence，不代表签名、发布或自动更新已完成。
+9. Installer signing、auto update 和 GitHub Release publication 不属于本脚本职责；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
+10. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
 
 ## 4. 对外接口
 
 本目录对本地 PowerShell 和 `.github/workflows/next-release-gates.yml` 暴露 release gate 入口。
+`verify-release-artifact-download.ps1` 也作为 workflow 下载 artifact 后的内容校验入口。
 
 ## 5. 依赖边界
 

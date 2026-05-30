@@ -543,6 +543,7 @@ Status note (2026-05-31): checked implementation items are completed and verifie
 - [x] Worker packaging smoke passed.
 - [x] DB migration rollback smoke passed.
 - [x] Schema/codegen gate passed.
+- [x] Workflow artifact download verification scripted.
 - [ ] Web deploy smoke passed.
 - [ ] Legacy FastAPI compute marked read-only.
 - [x] Migration guide published.

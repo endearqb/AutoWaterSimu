@@ -9,7 +9,7 @@
 - GitHub Actions workflows。
 - Dependabot、labeler 等仓库协作配置。
 - AutoWaterSimu Next merge/release gate CI 入口。
-- Manual dispatch 下的 unsigned Desktop release artifact 构建与 workflow artifact 上传编排。
+- Manual dispatch 下的 unsigned Desktop release artifact 构建、workflow artifact 上传与下载校验编排。
 - Manual dispatch 下的 PostgreSQL migration up/down smoke CI 编排。
 
 本目录不负责：
@@ -30,7 +30,7 @@
 1. Workflow 只编排仓库脚本、缓存、并发取消和标准 setup actions；复杂 gate 逻辑应放在 `scripts/` 或对应 app 目录。
 2. Release artifact 路径必须通过 workflow input、build manifest、artifact download 或环境变量传入，不在 workflow 中猜测。
 3. Next release gate dry run 不等于 release 通过；missing artifact 必须在 evidence 中显式呈现。
-4. Workflow artifact 可上传 unsigned release artifacts 和 evidence；不得上传 signing key、证书、更新通道密钥或发布令牌。
+4. Workflow artifact 可上传 unsigned release artifacts 和 evidence，并在 manual release artifact 构建后下载校验 artifact 内容；不得上传 signing key、证书、更新通道密钥或发布令牌。
 5. GitHub Release publication、installer signing 和 auto update 均为 post-P0 policy-driven work；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 6. PostgreSQL migration up/down smoke 必须使用临时测试数据库；不得指向生产或共享环境。
 
@@ -40,7 +40,7 @@ GitHub Actions 对 pull request、push 和 manual dispatch 提供 CI gate。
 
 ## 5. 依赖边界
 
-可以调用仓库脚本、语言 toolchain setup actions 和 upload actions。
+可以调用仓库脚本、语言 toolchain setup actions 和 upload/download artifact actions。
 
 不应该内联长 PowerShell 或 Bash 业务逻辑。
 

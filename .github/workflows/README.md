@@ -19,7 +19,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `next-release-gates.yml` | 运行 AutoWaterSimu Next merge/release gate 脚本；manual dispatch 可构建 unsigned Desktop artifacts 并上传 evidence/artifacts |
+| `next-release-gates.yml` | 运行 AutoWaterSimu Next merge/release gate 脚本；manual dispatch 可构建 unsigned Desktop artifacts，上传/下载校验 artifacts，并上传 evidence |
 | `test-backend.yml` | legacy backend test workflow |
 | `playwright.yml` | legacy frontend E2E workflow |
 | `generate-client.yml` | legacy FastAPI client generation workflow |
@@ -29,7 +29,7 @@
 
 1. Workflow 负责依赖安装、缓存、并发取消和脚本调用；复杂验证逻辑放在仓库脚本中。
 2. Next release mode 需要显式传入 packaged sidecar 和 installer artifact 路径；`workflow_dispatch` 可用 `build_release_artifacts=true` 从 packaging build manifest 自动取得路径。
-3. Workflow artifact 可上传 evidence 和 unsigned Desktop release artifacts，不上传 secrets、signing material、updater keys 或 release tokens。
+3. Workflow artifact 可上传 evidence 和 unsigned Desktop release artifacts，并在 `build_release_artifacts=true` 后下载校验 artifact 内容；不上传 secrets、signing material、updater keys 或 release tokens。
 4. GitHub Release publication、installer signing 和 auto update 均为 post-P0 policy-driven work；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 5. Next gate 的 worker pytest matrix、mock-backed Playwright Compute Jobs/current-flow + Compute lifecycle smokes 和 PostgreSQL migration up/down smoke 通过 `workflow_dispatch` inputs 显式开启，不作为默认 PR gate。
 6. PostgreSQL migration smoke 使用 workflow 临时 `postgres:16-alpine` service database；不得改为生产或共享数据库。
@@ -41,7 +41,7 @@
 
 ## 5. 依赖边界
 
-可以调用 GitHub Actions 官方 setup/upload actions 与仓库脚本。
+可以调用 GitHub Actions 官方 setup/upload/download actions 与仓库脚本。
 
 不应该把业务规则写进 YAML。
 
@@ -54,6 +54,7 @@
 ```
 
 涉及 `build_release_artifacts` 时还需本地确认 `apps/desktop/packaging/build-packaged-sidecar.ps1` 与 `build-nsis-installer.ps1` manifest 字段仍包含 `sidecar_executable` / `installer_path`。
+涉及 workflow artifact 下载校验时还需用 fixture 目录运行 `scripts/release/verify-release-artifact-download.ps1`，确认会写出 `downloaded-release-artifacts.json`。
 涉及 cache/concurrency/input wiring 时还需用 YAML parser 确认 workflow syntax。
 涉及 `run_postgres_migration_smoke` 时还需用 YAML parser 确认 opt-in job 的 PostgreSQL service、database URL 和 `COMPUTE_API_MIGRATION_DOWN_SMOKE=true` wiring。
 
