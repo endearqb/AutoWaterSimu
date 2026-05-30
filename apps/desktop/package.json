@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
+    "release:build:sidecar": "powershell -NoProfile -ExecutionPolicy Bypass -File packaging/build-packaged-sidecar.ps1",
     "release:smoke:sidecar": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-packaged-sidecar.ps1",
     "release:smoke:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-nsis-installer.ps1"
   },

@@ -21,6 +21,8 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `README.md` | Desktop packaging 契约 |
+| `build-packaged-sidecar.ps1` | 在 Windows 上使用 PyInstaller one-folder 构建 packaged worker sidecar，并可直接运行 smoke |
+| `pyinstaller_entrypoint.py` | PyInstaller package-mode entrypoint，避免直接脚本执行破坏相对导入 |
 
 ## 3. 维护约定
 
@@ -54,6 +56,7 @@ Packaging 对 release gate 暴露 artifact 路径：
 ## 6. 测试与验证
 
 ```powershell
+.\apps\desktop\packaging\build-packaged-sidecar.ps1
 .\apps\desktop\scripts\smoke-packaged-sidecar.ps1 -SidecarPath <path-to-simulation-worker-x86_64-pc-windows-msvc.exe>
 .\apps\desktop\scripts\smoke-nsis-installer.ps1 -InstallerPath <path-to-nsis-setup.exe>
 .\scripts\release\next-release-gates.ps1 -Mode release -SidecarPath <path-to-sidecar.exe> -InstallerPath <path-to-installer.exe>

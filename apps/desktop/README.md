@@ -27,12 +27,12 @@
 |---|---|
 | `README.md` | 本目录上下文契约 |
 | `package.json` | 独立 Desktop React/Vite app 脚本与依赖 |
-| `packaging/` | Desktop packaged sidecar / NSIS installer release 契约 |
+| `packaging/` | Desktop packaged sidecar build script and NSIS installer release 契约 |
 | `scripts/` | packaged sidecar and NSIS installer smoke scripts |
 | `src/` | Phase 3C Desktop React dev MVP shell |
 | `src-tauri/` | Rust/Tauri runtime、SQLite store、project registry/project_id wiring、source-mode worker JSON-RPC、canvas/process graph commands、artifact JSON/CSV/model_run/support bundle/backup smoke |
 
-后续仍需实际生成 packaged sidecar、配置 Tauri `externalBin`、产出 NSIS installer 并执行 release smoke；本目录已提供 packaging 契约和 artifact smoke 入口。
+后续仍需配置 Tauri `externalBin`、产出 NSIS installer 并执行 release smoke；本目录已提供 PyInstaller one-folder sidecar build 脚本、packaging 契约和 artifact smoke 入口。
 
 ## 3. 维护约定
 

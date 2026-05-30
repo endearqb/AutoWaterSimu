@@ -42,11 +42,12 @@ Latest current-turn verification:
 - Release gate automation now exists under `scripts/release/next-release-gates.ps1`; merge mode runs source-verifiable schema/worker/Go/codegen/frontend/Desktop checks and release mode requires explicit packaged sidecar and NSIS installer artifact paths
 - Desktop packaged sidecar and NSIS installer smoke scripts now write machine-readable evidence under `tmp/release-evidence/`
 - `scripts/release/next-release-gates.ps1 -Mode release -AllowMissingPackageArtifacts -SkipLong` produces `dry_run_skipped_artifacts`; this validates orchestration only and is not release-pass evidence
+- A real PyInstaller one-folder worker sidecar build path exists at `apps/desktop/packaging/build-packaged-sidecar.ps1`; latest local artifact `tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe` passed packaged sidecar self-check and minimal job smoke with `packaging_mode=frozen`
 
 Latest recorded but not re-run in this verification refresh:
 
 - Browser render smokes against `/compute-jobs` are recorded earlier in `tasks/todo.md` and `.ai/changes/2026-05-30.md`.
-- Real NSIS installer smoke and packaged sidecar smoke have not been run because no release artifacts exist in the repository; allow-missing dry runs must not be treated as release pass evidence.
+- Real NSIS installer smoke has not been run because no installer artifact exists in the repository; allow-missing dry runs must not be treated as release pass evidence.
 
 ## Phase Status
 
@@ -55,14 +56,14 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 0 | Legacy baseline stabilization | Strong partial | Targeted legacy backend tests and frontend type/build pass with existing warnings only | Document exact remaining legacy `print`/schema/client drift issues; keep legacy tests as migration baseline |
 | Phase 1 | Contracts and transform layer | Strong partial | Contract tests pass; P0/P1/P2 schemas and valid/invalid fixtures exist; Python transform tests are included in `contracts\tests` | Keep schema registry current; broaden old-vs-new numerical fixtures beyond material balance |
 | Phase 2 | Simulation core and worker CLI | Strong partial | Worker self-check, worker tests, minimal run-job, simulation core tests, and API-once worker smoke pass | Expand worker support beyond material balance; add long-running worker daemon/heartbeat coverage when that mode exists |
-| Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present | Complete installer/package smoke, external file dialog allowlist, recent files, full project package content |
+| Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present; PyInstaller one-folder packaged worker sidecar build and smoke pass locally | Complete Tauri packaged-worker runtime mode, installer smoke, external file dialog allowlist, recent files, full project package content |
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, benchmark_run history, model_run records, evidence governance summary | Multi-parameter-set management, scheduled benchmark execution, benchmark-backed parameter promotion, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
-| Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist with explicit artifact evidence boundaries | Real packaged sidecar artifact generation, real NSIS installer smoke evidence, and full release checklist execution |
+| Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist; real PyInstaller sidecar artifact smoke passed locally | Tauri `externalBin`/resource wiring, real NSIS installer smoke evidence, and full release checklist execution |
 
 ## Remaining Roadmap
 
@@ -87,7 +88,7 @@ Latest recorded but not re-run in this verification refresh:
 
 - Implement full project package content, including jobs, graphs, artifacts, and support bundle references.
 - Add file dialog/recent files allowlist.
-- Build the real packaged Python worker sidecar, wire Tauri `externalBin`, produce the NSIS installer artifact, and run the existing smoke scripts without allow-missing.
+- Wire the real packaged Python worker sidecar into Desktop runtime/Tauri resources, produce the NSIS installer artifact, and run the existing smoke scripts without allow-missing.
 
 5. Worker/model migration completion
 
@@ -111,6 +112,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Build the real Desktop packaged sidecar artifact, wire Tauri `externalBin`, and produce/run NSIS installer smoke evidence.
+1. Wire Desktop packaged-worker runtime mode and Tauri resource/externalBin handling for the PyInstaller one-folder sidecar, then produce/run NSIS installer smoke evidence.
 2. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
 3. Add scheduled benchmark execution or benchmark-backed parameter promotion only after those governance semantics are separately approved.

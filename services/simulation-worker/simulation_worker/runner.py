@@ -5,6 +5,7 @@ import importlib
 import importlib.metadata
 import json
 import math
+import os
 import platform
 import subprocess
 import sys
@@ -276,6 +277,13 @@ def _ensure_repo_import_paths() -> None:
 
 
 def _repo_root() -> Path:
+    explicit_root = os.environ.get("AUTOWATERSIMU_WORKER_REPO_ROOT")
+    if explicit_root:
+        return Path(explicit_root).resolve()
+    if getattr(sys, "frozen", False):
+        bundle_root = getattr(sys, "_MEIPASS", None)
+        if bundle_root:
+            return Path(bundle_root).resolve()
     return Path(__file__).resolve().parents[3]
 
 

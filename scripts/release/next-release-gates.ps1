@@ -82,8 +82,8 @@ function Invoke-Gate {
     try {
         $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
         $exitCode = $process.ExitCode
-        $stdout = Get-Content -Path $stdoutFile -Raw
-        $stderr = Get-Content -Path $stderrFile -Raw
+        $stdout = [string](Get-Content -Path $stdoutFile -Raw)
+        $stderr = [string](Get-Content -Path $stderrFile -Raw)
         $outputText = (($stdout, $stderr) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join "`n"
     }
     catch {

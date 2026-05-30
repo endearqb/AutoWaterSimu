@@ -40,8 +40,8 @@ function Invoke-CapturedProcess {
         $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
         return [ordered]@{
             exit_code = $process.ExitCode
-            stdout = Get-Content -Path $stdoutFile -Raw
-            stderr = Get-Content -Path $stderrFile -Raw
+            stdout = [string](Get-Content -Path $stdoutFile -Raw)
+            stderr = [string](Get-Content -Path $stderrFile -Raw)
         }
     }
     finally {

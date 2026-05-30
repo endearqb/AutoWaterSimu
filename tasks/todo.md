@@ -1,3 +1,40 @@
+# 2026-05-30 AutoWaterSimu Next Packaged Sidecar Build TODO
+
+- [x] Re-read worker, simulation core, contracts, Desktop packaging, and release gate context
+- [x] Add packaged-mode worker resource root resolution
+- [x] Add PyInstaller package-mode entrypoint
+- [x] Add Desktop packaged sidecar build script
+- [x] Generate a real PyInstaller one-folder sidecar artifact
+- [x] Run packaged sidecar self-check and minimal job smoke
+- [x] Run source worker, release gate, desktop, and diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep this slice scoped to the Python worker packaged sidecar.
+- Do not wire Tauri `externalBin` until the Desktop runtime has an explicit packaged-worker mode.
+- Do not build or claim NSIS installer smoke in this slice.
+
+## Review
+
+- `services/simulation-worker/simulation_worker/runner.py` now resolves bundled `contracts/` from PyInstaller `sys._MEIPASS` when frozen, while preserving `AUTOWATERSIMU_WORKER_REPO_ROOT` and source-mode repo root behavior.
+- Added `apps/desktop/packaging/build-packaged-sidecar.ps1`, which uses `uv run --project backend --with pyinstaller pyinstaller` to create a PyInstaller one-folder sidecar and rename the executable to `simulation-worker-x86_64-pc-windows-msvc.exe`.
+- Added `apps/desktop/packaging/pyinstaller_entrypoint.py` so PyInstaller imports `simulation_worker.cli` as a package instead of executing `cli.py` as a parentless script.
+- Updated sidecar smoke script to accept the worker CLI's self-check payload shape and to write compact string evidence for stdout/stderr.
+- Verification so far:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File apps\desktop\packaging\build-packaged-sidecar.ps1` passed.
+  - Generated artifact: `tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe`.
+  - Packaged smoke evidence: `tmp\desktop-packaging\sidecar-20260531010636\packaged-sidecar-smoke.json`, status passed.
+  - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check` passed in source mode.
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`7 passed`).
+  - `cd apps\desktop; npm run build` passed.
+  - `scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -EvidenceDir tmp\release-evidence\merge` passed.
+  - `scripts\release\next-release-gates.ps1 -Mode release -SidecarPath tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe -AllowMissingPackageArtifacts -SkipLong -EvidenceDir tmp\release-evidence\release` passed as `dry_run_skipped_artifacts`: sidecar passed, installer skipped.
+  - PowerShell parser check for `apps\desktop\packaging\build-packaged-sidecar.ps1` passed.
+  - `git diff --check` passed with LF-to-CRLF warnings only.
+- Remaining scope:
+  - Tauri `externalBin` wiring, explicit Rust packaged-worker mode, NSIS artifact generation, installer smoke, and signing remain follow-up work.
+
 # 2026-05-30 AutoWaterSimu Next Release Gate Automation TODO
 
 - [x] Re-read release, Desktop, worker, GitHub Actions, and README First context

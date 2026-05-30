@@ -33,8 +33,8 @@ function Invoke-CapturedProcess {
         $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
         return [ordered]@{
             exit_code = $process.ExitCode
-            stdout = Get-Content -Path $stdoutFile -Raw
-            stderr = Get-Content -Path $stderrFile -Raw
+            stdout = [string](Get-Content -Path $stdoutFile -Raw)
+            stderr = [string](Get-Content -Path $stderrFile -Raw)
         }
     }
     finally {
@@ -112,8 +112,15 @@ try {
 catch {
     Write-EvidenceAndExit -Status "failed" -Reason "Sidecar self-check stdout is not JSON." -Steps $steps -ExitCode 1
 }
-if ($selfCheckJson.status -ne "ok") {
-    Write-EvidenceAndExit -Status "failed" -Reason "Sidecar self-check did not return status=ok." -Steps $steps -ExitCode 1
+$selfCheckProperties = @($selfCheckJson.PSObject.Properties.Name)
+if (($selfCheckProperties -contains "status") -and $selfCheckJson.status -ne "ok") {
+    Write-EvidenceAndExit -Status "failed" -Reason "Sidecar self-check returned a non-ok status." -Steps $steps -ExitCode 1
+}
+if (-not ($selfCheckProperties -contains "worker_version")) {
+    Write-EvidenceAndExit -Status "failed" -Reason "Sidecar self-check did not return worker_version." -Steps $steps -ExitCode 1
+}
+if (($selfCheckProperties -contains "minimal_job_status") -and $selfCheckJson.minimal_job_status.ok -ne $true) {
+    Write-EvidenceAndExit -Status "failed" -Reason "Sidecar self-check minimal job did not pass." -Steps $steps -ExitCode 1
 }
 
 $runJob = Invoke-CapturedProcess -Executable $script:ResolvedSidecarPath -Arguments @("--run-job", $fixture, "--artifact-dir", $script:ResolvedArtifactDir)
