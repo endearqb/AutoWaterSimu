@@ -253,6 +253,18 @@ type ModelCatalogRecord struct {
 	CreatedAt     time.Time       `json:"created_at"`
 }
 
+type ModelCatalogSnapshotFilter struct {
+	CatalogID string
+	Limit     int
+	Cursor    string
+}
+
+type ListModelCatalogSnapshotsResponse struct {
+	Items         []ModelCatalogRecord `json:"items"`
+	NextCursor    string               `json:"next_cursor,omitempty"`
+	TotalEstimate int                  `json:"total_estimate"`
+}
+
 type ModelCatalogResponse struct {
 	SchemaVersion string              `json:"schema_version"`
 	GeneratedAt   string              `json:"generated_at"`

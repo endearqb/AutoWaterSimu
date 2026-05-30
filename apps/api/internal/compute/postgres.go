@@ -648,6 +648,44 @@ func (store *PostgresStore) LatestModelCatalog(ctx context.Context, catalogID st
 	return record, err
 }
 
+func (store *PostgresStore) ListModelCatalogSnapshots(ctx context.Context, filter ModelCatalogSnapshotFilter) ([]ModelCatalogRecord, string, int, error) {
+	catalogID := defaultString(filter.CatalogID, "default")
+	limit := normalizeListLimit(filter.Limit)
+	offset := decodeCursor(filter.Cursor)
+	var total int
+	if err := store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM model_catalogs WHERE catalog_id=$1", catalogID).Scan(&total); err != nil {
+		return nil, "", 0, err
+	}
+	rows, err := store.pool.Query(
+		ctx,
+		modelCatalogSelectSQL()+" WHERE catalog_id=$1 ORDER BY created_at DESC, snapshot_id DESC LIMIT $2 OFFSET $3",
+		catalogID,
+		limit+1,
+		offset,
+	)
+	if err != nil {
+		return nil, "", 0, err
+	}
+	defer rows.Close()
+	var records []ModelCatalogRecord
+	for rows.Next() {
+		record, err := scanModelCatalog(rows)
+		if err != nil {
+			return nil, "", 0, err
+		}
+		records = append(records, *record)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, "", 0, err
+	}
+	next := ""
+	if len(records) > limit {
+		records = records[:limit]
+		next = encodeCursor(offset + limit)
+	}
+	return records, next, total, nil
+}
+
 func (store *PostgresStore) UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord) (bool, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {

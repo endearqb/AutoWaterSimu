@@ -34,6 +34,7 @@ type Store interface {
 	ListBenchmarkRuns(ctx context.Context, filter BenchmarkRunFilter) ([]BenchmarkRunRecord, string, int, error)
 	UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error)
 	LatestModelCatalog(ctx context.Context, catalogID string) (*ModelCatalogRecord, error)
+	ListModelCatalogSnapshots(ctx context.Context, filter ModelCatalogSnapshotFilter) ([]ModelCatalogRecord, string, int, error)
 	UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord) (bool, error)
 	FindProcessGraph(ctx context.Context, processGraphID string, version int) (*ProcessGraphRecord, error)
 	UpsertSimulationInput(ctx context.Context, record SimulationInputRecord) (bool, error)
@@ -574,6 +575,37 @@ func (store *MemoryStore) LatestModelCatalog(_ context.Context, catalogID string
 	return &record, nil
 }
 
+func (store *MemoryStore) ListModelCatalogSnapshots(_ context.Context, filter ModelCatalogSnapshotFilter) ([]ModelCatalogRecord, string, int, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	catalogID := defaultString(filter.CatalogID, "default")
+	snapshots := append([]ModelCatalogRecord(nil), store.modelCatalogs[catalogID]...)
+	records := make([]ModelCatalogRecord, 0, len(snapshots))
+	for _, snapshot := range snapshots {
+		records = append(records, cloneModelCatalogRecord(snapshot))
+	}
+	sort.Slice(records, func(i, j int) bool {
+		if records[i].CreatedAt.Equal(records[j].CreatedAt) {
+			return records[i].PayloadHash > records[j].PayloadHash
+		}
+		return records[i].CreatedAt.After(records[j].CreatedAt)
+	})
+	total := len(records)
+	offset := decodeCursor(filter.Cursor)
+	if offset > len(records) {
+		offset = len(records)
+	}
+	limit := normalizeListLimit(filter.Limit)
+	end := offset + limit
+	next := ""
+	if end < len(records) {
+		next = encodeCursor(end)
+	} else {
+		end = len(records)
+	}
+	return records[offset:end], next, total, nil
+}
+
 func (store *MemoryStore) UpsertProcessGraph(_ context.Context, record ProcessGraphRecord) (bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
@@ -932,6 +964,16 @@ func decodeCursor(cursor string) int {
 		return 0
 	}
 	return value["offset"]
+}
+
+func normalizeListLimit(limit int) int {
+	if limit <= 0 {
+		return 50
+	}
+	if limit > 200 {
+		return 200
+	}
+	return limit
 }
 
 func jobMatchesWorker(job JobRecord, worker WorkerRecord) bool {

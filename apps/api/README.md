@@ -9,7 +9,7 @@
 - compute job lifecycle。
 - worker register / claim / heartbeat / succeed / fail。
 - artifact metadata, including retention policy fields。
-- model catalog snapshot registration/read query, default parameter set status transition, and model run persistence/list/search/read query。
+- model catalog snapshot registration/read/list query, default parameter set status transition, and model run persistence/list/search/read query。
 - benchmark case metadata for model governance smoke。
 - benchmark run execution history metadata。
 - process graph registry and ProcessGraph-to-SimulationInput resolution for simulation checks。

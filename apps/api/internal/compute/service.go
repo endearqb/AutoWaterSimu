@@ -687,6 +687,19 @@ func (svc *Service) ModelCatalogModel(ctx context.Context, modelKey string) (Mod
 	return ModelCatalogModel{}, NotFound("MODEL_NOT_FOUND", "model not found")
 }
 
+func (svc *Service) ListModelCatalogSnapshots(ctx context.Context, filter ModelCatalogSnapshotFilter) (ListModelCatalogSnapshotsResponse, error) {
+	filter.CatalogID = defaultString(filter.CatalogID, "default")
+	records, next, total, err := svc.store.ListModelCatalogSnapshots(ctx, filter)
+	if err != nil {
+		return ListModelCatalogSnapshotsResponse{}, err
+	}
+	return ListModelCatalogSnapshotsResponse{
+		Items:         records,
+		NextCursor:    next,
+		TotalEstimate: total,
+	}, nil
+}
+
 func (svc *Service) UpdateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
 	modelKey = required(modelKey, "model_key")
 	modelVersion = required(modelVersion, "model_version")

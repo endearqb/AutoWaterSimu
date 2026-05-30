@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1266,6 +1267,37 @@ func TestModelCatalogEndpoint(t *testing.T) {
 	if !transition.CreatedSnapshot || transition.FromStatus != "approved" || transition.ToStatus != "retired" ||
 		transition.Catalog.Models[0].Versions[0].DefaultParameterSet.Status != "retired" {
 		t.Fatalf("unexpected parameter set transition response: %#v", transition)
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/snapshots?limit=1", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("model catalog snapshot list failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var snapshotList ListModelCatalogSnapshotsResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &snapshotList); err != nil {
+		t.Fatal(err)
+	}
+	if snapshotList.TotalEstimate != 2 || len(snapshotList.Items) != 1 || snapshotList.NextCursor == "" {
+		t.Fatalf("expected first page of two catalog snapshots, got %#v", snapshotList)
+	}
+	if snapshotList.Items[0].PayloadHash != transition.CatalogPayloadHash {
+		t.Fatalf("newest snapshot should be the transition snapshot, got %#v", snapshotList.Items[0])
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/snapshots?cursor="+url.QueryEscape(snapshotList.NextCursor), nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("model catalog snapshot second page failed: %d %s", rec.Code, rec.Body.String())
+	}
+	snapshotList = ListModelCatalogSnapshotsResponse{}
+	if err := json.Unmarshal(rec.Body.Bytes(), &snapshotList); err != nil {
+		t.Fatal(err)
+	}
+	if snapshotList.TotalEstimate != 2 || len(snapshotList.Items) != 1 || snapshotList.NextCursor != "" {
+		t.Fatalf("expected second page of catalog snapshots, got %#v", snapshotList)
 	}
 
 	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/status", strings.NewReader(`{"from_status":"retired","to_status":"approved"}`))

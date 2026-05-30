@@ -392,6 +392,7 @@
 - model versions。
 - parameter templates。
 - parameter sets。
+- persisted model catalog snapshot history listing。
 - benchmark cases。
 - model run records。
 - production allowed status:

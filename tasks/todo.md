@@ -1,3 +1,34 @@
+# 2026-05-31 AutoWaterSimu Next model catalog snapshot listing TODO
+
+- [x] Re-read Compute API model governance, OpenAPI, generated client, and frontend service context
+- [x] Add persisted model catalog snapshot listing in memory/PostgreSQL stores
+- [x] Add HTTP endpoint, OpenAPI source, generated Compute client, and frontend service wrapper
+- [x] Add snapshot pagination coverage to model catalog endpoint test
+- [x] Update README/context records
+- [x] Run Go/OpenAPI/client/typecheck validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep `GET /api/v1/model-catalog` unchanged: latest persisted `default` catalog or built-in fallback.
+- Add `GET /api/v1/model-catalog/snapshots` as a read-only persisted-history list; do not include built-in fallback as a stored snapshot.
+- Reuse existing cursor/limit style and `job:read` scope.
+- Do not add multi-parameter-set management, scheduled benchmarks, or governance approval enforcement in this slice.
+
+## Review
+
+- Added `GET /api/v1/model-catalog/snapshots` as a read-only persisted snapshot history endpoint using `job:read`.
+- Added memory/PostgreSQL store pagination, service and HTTP wiring, OpenAPI source, generated Compute client output, and `computeJobsService` wrapper.
+- Kept `GET /api/v1/model-catalog` semantics unchanged: latest persisted `default` catalog or built-in fallback; fallback is not reported as persisted history.
+- Remaining governance work still includes multi-parameter-set lifecycle design, benchmark-backed promotion, scheduled benchmark execution, and UI/approval workflow.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run TestModelCatalogEndpoint -count=1` passed after resetting the pagination response struct before the second JSON unmarshal.
+  - `cd apps\api; go test ./internal/compute -count=1` passed.
+  - `cd frontend; npm run generate-compute-client` passed and regenerated only `frontend/src/client/compute/sdk.gen.ts` and `frontend/src/client/compute/types.gen.ts`.
+  - OpenAPI assertion confirmed `/api/v1/model-catalog/snapshots` path, `listModelCatalogSnapshots` operation, and `ListModelCatalogSnapshotsResponse` schema.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check -- apps\api frontend docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+
 # 2026-05-31 AutoWaterSimu Next monitoring receiver policy TODO
 
 - [x] Re-read monitoring README/runbook context

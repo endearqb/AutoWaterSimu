@@ -17,6 +17,7 @@ import type {
   JobSnapshot,
   ListBenchmarkRunsResponse,
   ListJobsResponse,
+  ListModelCatalogSnapshotsResponse,
   ListModelRunsResponse,
   ModelCatalog,
   ModelCatalogRecord,
@@ -63,6 +64,12 @@ export interface ListBenchmarkRunsParams {
   limit?: number
   modelKey: string
   modelVersion: string
+}
+
+export interface ListModelCatalogSnapshotsParams {
+  catalogId?: string
+  cursor?: string
+  limit?: number
 }
 
 export interface BuildFlowComputeJobResult {
@@ -360,6 +367,16 @@ export const computeJobsService = {
 
   listModelCatalog(): Promise<ModelCatalog> {
     return DefaultService.listModelCatalog()
+  },
+
+  listModelCatalogSnapshots(
+    params: ListModelCatalogSnapshotsParams = {},
+  ): Promise<ListModelCatalogSnapshotsResponse> {
+    return DefaultService.listModelCatalogSnapshots({
+      catalogId: params.catalogId || undefined,
+      cursor: params.cursor,
+      limit: params.limit ?? 20,
+    })
   },
 
   registerModelCatalog(catalog: ModelCatalog): Promise<ModelCatalogRecord> {

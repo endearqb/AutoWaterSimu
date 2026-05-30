@@ -240,6 +240,12 @@ export type ListJobsResponse = {
     total_estimate: number;
 };
 
+export type ListModelCatalogSnapshotsResponse = {
+    items: Array<ModelCatalogRecord>;
+    next_cursor?: string;
+    total_estimate: number;
+};
+
 export type ListModelRunsResponse = {
     items: Array<ModelRun>;
     next_cursor?: string;
@@ -714,6 +720,14 @@ export type RegisterModelCatalogData = {
 };
 
 export type RegisterModelCatalogResponse = (ModelCatalogRecord);
+
+export type ListModelCatalogSnapshotsData = {
+    catalogId?: string;
+    cursor?: string;
+    limit?: number;
+};
+
+export type ListModelCatalogSnapshotsResponse2 = (ListModelCatalogSnapshotsResponse);
 
 export type GetModelCatalogModelData = {
     modelKey: string;

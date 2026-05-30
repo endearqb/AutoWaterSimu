@@ -370,6 +370,21 @@
         }
       }
     },
+    "/api/v1/model-catalog/snapshots": {
+      "get": {
+        "operationId": "listModelCatalogSnapshots",
+        "parameters": [
+          { "name": "catalog_id", "in": "query", "schema": { "type": "string", "default": "default" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "minimum": 1, "maximum": 200 } },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Persisted model catalog snapshots", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListModelCatalogSnapshotsResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/model-catalog/{model_key}": {
       "get": {
         "operationId": "getModelCatalogModel",
@@ -837,6 +852,15 @@
           "project_id": { "type": "string" },
           "metadata": { "type": "object", "additionalProperties": true },
           "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ListModelCatalogSnapshotsResponse": {
+        "type": "object",
+        "required": ["items", "total_estimate"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ModelCatalogRecord" } },
+          "next_cursor": { "type": "string" },
+          "total_estimate": { "type": "integer" }
         }
       },
       "ModelCatalogModel": {

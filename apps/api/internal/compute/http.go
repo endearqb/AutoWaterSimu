@@ -646,6 +646,24 @@ func (server *Server) modelCatalog(w http.ResponseWriter, r *http.Request) {
 func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) {
 	rest := strings.TrimPrefix(r.URL.Path, "/api/v1/model-catalog/")
 	parts := strings.Split(strings.Trim(rest, "/"), "/")
+	if len(parts) == 1 && parts[0] == "snapshots" && r.Method == http.MethodGet {
+		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		filter, err := modelCatalogSnapshotFilter(r)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		response, err := server.service.ListModelCatalogSnapshots(r.Context(), filter)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, response)
+		return
+	}
 	if len(parts) == 1 && r.Method == http.MethodGet {
 		if _, err := server.auth.Principal(r, "job:read"); err != nil {
 			WriteError(w, err)
@@ -966,6 +984,23 @@ func benchmarkRunListFilter(r *http.Request, modelKey, modelVersion string) (Ben
 		ModelKey:        modelKey,
 		ModelVersion:    modelVersion,
 		BenchmarkCaseID: query.Get("benchmark_case_id"),
+	}, nil
+}
+
+func modelCatalogSnapshotFilter(r *http.Request) (ModelCatalogSnapshotFilter, error) {
+	query := r.URL.Query()
+	limit := 50
+	if raw := query.Get("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil {
+			return ModelCatalogSnapshotFilter{}, ValidationError("limit must be an integer")
+		}
+		limit = parsed
+	}
+	return ModelCatalogSnapshotFilter{
+		CatalogID: query.Get("catalog_id"),
+		Limit:     limit,
+		Cursor:    query.Get("cursor"),
 	}, nil
 }
 
