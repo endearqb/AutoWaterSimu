@@ -1,0 +1,20 @@
+{
+  "schema_version": "result_explanation.v1",
+  "explanation_id": "explanation_material_balance_minimal",
+  "job_id": "job_material_balance_minimal",
+  "created_by": "agent:test",
+  "summary": "The material balance smoke run completed and produced auditable evidence references.",
+  "evidence_refs": [
+    "evidence_package:evidence_job_material_balance_minimal",
+    "model_run:mr_material_balance_minimal"
+  ],
+  "statements": [
+    {
+      "statement": "The run completed without model warnings in the recorded model run.",
+      "evidence_refs": ["model_run:mr_material_balance_minimal"],
+      "severity": "info",
+      "metric": "warning_count",
+      "value": 0
+    }
+  ]
+}

@@ -222,10 +222,11 @@ func (store *PostgresStore) InsertArtifact(ctx context.Context, artifact Artifac
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO artifacts (
 		id, job_id, schema_version, artifact_type, storage_provider, object_key,
-		content_type, size_bytes, checksum, metadata_json, created_at
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+		content_type, size_bytes, checksum, retention_policy, retain_until, metadata_json, created_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
 		artifact.ArtifactID, artifact.JobID, artifact.SchemaVersion, artifact.ArtifactType, artifact.StorageProvider,
-		artifact.ObjectKey, artifact.ContentType, artifact.SizeBytes, artifact.Checksum, artifact.Metadata, artifact.CreatedAt)
+		artifact.ObjectKey, artifact.ContentType, artifact.SizeBytes, artifact.Checksum, artifact.RetentionPolicy, artifact.RetainUntil,
+		artifact.Metadata, artifact.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -234,6 +235,285 @@ func (store *PostgresStore) InsertArtifact(ctx context.Context, artifact Artifac
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+func (store *PostgresStore) InsertModelRuns(ctx context.Context, jobID string, modelRuns []json.RawMessage, now time.Time) error {
+	if len(modelRuns) == 0 {
+		return nil
+	}
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	for _, modelRun := range modelRuns {
+		modelRunID, modelRunJobID, modelKey, modelVersion, parameterSetID, err := modelRunFieldsFromRaw(modelRun)
+		if err != nil {
+			return ValidationError("model_run JSON is invalid")
+		}
+		if modelRunID == "" {
+			return ValidationError("model_run_id is required")
+		}
+		if modelRunJobID != "" && modelRunJobID != jobID {
+			return ValidationError("model_run job_id does not match completed job")
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO model_runs (
+			id, job_id, model_key, model_version, parameter_set_id, runtime_audit, created_at
+		) VALUES ($1,$2,$3,$4,$5,$6,$7)
+		ON CONFLICT (id) DO UPDATE SET
+			job_id=EXCLUDED.job_id,
+			model_key=EXCLUDED.model_key,
+			model_version=EXCLUDED.model_version,
+			parameter_set_id=EXCLUDED.parameter_set_id,
+			runtime_audit=EXCLUDED.runtime_audit`,
+			modelRunID, jobID, nullString(modelKey), nullString(modelVersion), nullString(parameterSetID), modelRun, now)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func (store *PostgresStore) FindModelRun(ctx context.Context, modelRunID string) (json.RawMessage, error) {
+	var modelRun json.RawMessage
+	err := store.pool.QueryRow(ctx, "SELECT runtime_audit FROM model_runs WHERE id=$1", modelRunID).Scan(&modelRun)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, NotFound(CodeModelRunNotFound, "model run not found")
+	}
+	return modelRun, err
+}
+
+func (store *PostgresStore) ListModelRuns(ctx context.Context, filter ModelRunFilter) ([]json.RawMessage, string, int, error) {
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 200 {
+		limit = 200
+	}
+	offset := decodeCursor(filter.Cursor)
+	where, args := modelRunListWhere(filter)
+	countSQL := "SELECT COUNT(*) FROM model_runs" + where
+	var total int
+	if err := store.pool.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, "", 0, err
+	}
+	args = append(args, limit+1, offset)
+	rows, err := store.pool.Query(ctx, "SELECT runtime_audit FROM model_runs"+where+" ORDER BY created_at DESC, id DESC LIMIT $"+fmt.Sprint(len(args)-1)+" OFFSET $"+fmt.Sprint(len(args)), args...)
+	if err != nil {
+		return nil, "", 0, err
+	}
+	defer rows.Close()
+	var modelRuns []json.RawMessage
+	for rows.Next() {
+		var modelRun json.RawMessage
+		if err := rows.Scan(&modelRun); err != nil {
+			return nil, "", 0, err
+		}
+		modelRuns = append(modelRuns, modelRun)
+	}
+	next := ""
+	if len(modelRuns) > limit {
+		modelRuns = modelRuns[:limit]
+		next = encodeCursor(offset + limit)
+	}
+	return modelRuns, next, total, rows.Err()
+}
+
+func (store *PostgresStore) ModelRuns(ctx context.Context, jobID string) ([]json.RawMessage, error) {
+	rows, err := store.pool.Query(ctx, "SELECT runtime_audit FROM model_runs WHERE job_id=$1 ORDER BY created_at, id", jobID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var modelRuns []json.RawMessage
+	for rows.Next() {
+		var modelRun json.RawMessage
+		if err := rows.Scan(&modelRun); err != nil {
+			return nil, err
+		}
+		modelRuns = append(modelRuns, modelRun)
+	}
+	return modelRuns, rows.Err()
+}
+
+func (store *PostgresStore) UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error) {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return ModelCatalogRecord{}, false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	existing, err := scanModelCatalog(tx.QueryRow(ctx, modelCatalogSelectSQL()+" WHERE catalog_id=$1 AND payload_hash=$2 FOR UPDATE", record.CatalogID, record.PayloadHash))
+	if err == nil {
+		if err := tx.Commit(ctx); err != nil {
+			return ModelCatalogRecord{}, false, err
+		}
+		return *existing, false, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return ModelCatalogRecord{}, false, err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO model_catalogs (
+		catalog_id, schema_version, generated_at, payload_hash, payload_json,
+		source_system, requested_by, tenant_id, project_id, metadata_json, created_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+		record.CatalogID, record.SchemaVersion, record.GeneratedAt, record.PayloadHash,
+		record.Payload, record.SourceSystem, record.RequestedBy, nullString(record.TenantID),
+		nullString(record.ProjectID), record.Metadata, record.CreatedAt)
+	if err != nil {
+		return ModelCatalogRecord{}, false, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return ModelCatalogRecord{}, false, err
+	}
+	return record, true, nil
+}
+
+func (store *PostgresStore) LatestModelCatalog(ctx context.Context, catalogID string) (*ModelCatalogRecord, error) {
+	row := store.pool.QueryRow(ctx, modelCatalogSelectSQL()+" WHERE catalog_id=$1 ORDER BY created_at DESC, snapshot_id DESC LIMIT 1", catalogID)
+	record, err := scanModelCatalog(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, NotFound(CodeModelCatalogNotFound, "model catalog not found")
+	}
+	return record, err
+}
+
+func (store *PostgresStore) UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord) (bool, error) {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var existingHash string
+	err = tx.QueryRow(ctx, "SELECT payload_hash FROM process_graphs WHERE id=$1 AND version=$2 FOR UPDATE", record.ProcessGraphID, record.Version).Scan(&existingHash)
+	if err == nil {
+		if existingHash != record.PayloadHash {
+			return false, Conflict(CodeIdempotencyConflict, "process_graph_id/version was reused with a different payload")
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO process_graphs (
+		id, schema_version, version, source_canvas_graph_id, payload_hash, payload_json,
+		source_system, requested_by, tenant_id, project_id, metadata_json, created_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+		record.ProcessGraphID, record.SchemaVersion, record.Version, record.SourceCanvasGraphID,
+		record.PayloadHash, record.Payload, record.SourceSystem, record.RequestedBy,
+		nullString(record.TenantID), nullString(record.ProjectID), record.Metadata, record.CreatedAt)
+	if err != nil {
+		return false, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (store *PostgresStore) FindProcessGraph(ctx context.Context, processGraphID string, version int) (*ProcessGraphRecord, error) {
+	row := store.pool.QueryRow(ctx, processGraphSelectSQL()+" WHERE id=$1 AND version=$2", processGraphID, version)
+	record, err := scanProcessGraph(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, NotFound(CodeProcessGraphNotFound, "process graph not found")
+	}
+	return record, err
+}
+
+func (store *PostgresStore) UpsertSimulationInput(ctx context.Context, record SimulationInputRecord) (bool, error) {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var existingHash string
+	err = tx.QueryRow(ctx, "SELECT payload_hash FROM simulation_inputs WHERE id=$1 FOR UPDATE", record.SimulationInputID).Scan(&existingHash)
+	if err == nil {
+		if existingHash != record.PayloadHash {
+			return false, Conflict(CodeIdempotencyConflict, "simulation_input_id was reused with a different payload")
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO simulation_inputs (
+		id, schema_version, job_type, process_graph_id, process_graph_version,
+		payload_hash, payload_json, source_system, requested_by, tenant_id, project_id,
+		metadata_json, created_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+		record.SimulationInputID, record.SchemaVersion, record.JobType, record.ProcessGraphID, record.ProcessGraphVersion,
+		record.PayloadHash, record.Payload, record.SourceSystem, record.RequestedBy, nullString(record.TenantID), nullString(record.ProjectID),
+		record.Metadata, record.CreatedAt)
+	if err != nil {
+		return false, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (store *PostgresStore) FindSimulationInput(ctx context.Context, simulationInputID string) (*SimulationInputRecord, error) {
+	row := store.pool.QueryRow(ctx, simulationInputSelectSQL()+" WHERE id=$1", simulationInputID)
+	record, err := scanSimulationInput(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, NotFound(CodeSimulationInputNotFound, "simulation input not found")
+	}
+	return record, err
+}
+
+func (store *PostgresStore) UpsertDraftConfirmation(ctx context.Context, record DraftConfirmationRecord) (bool, error) {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var existingHash string
+	err = tx.QueryRow(ctx, "SELECT payload_hash FROM draft_confirmations WHERE id=$1 FOR UPDATE", record.ConfirmationID).Scan(&existingHash)
+	if err == nil {
+		if existingHash != record.PayloadHash {
+			return false, Conflict(CodeIdempotencyConflict, "confirmation_id was reused with a different payload")
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO draft_confirmations (
+		id, schema_version, draft_schema_version, draft_id, decision, decision_reason,
+		confirmed_by, confirmed_at, payload_hash, payload_json, source_system, requested_by,
+		tenant_id, project_id, metadata_json, created_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+		record.ConfirmationID, record.SchemaVersion, record.DraftSchemaVersion, record.DraftID,
+		record.Decision, nullString(record.DecisionReason), record.ConfirmedBy, record.ConfirmedAt,
+		record.PayloadHash, record.Payload, record.SourceSystem, record.RequestedBy,
+		nullString(record.TenantID), nullString(record.ProjectID), record.Metadata, record.CreatedAt)
+	if err != nil {
+		return false, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (store *PostgresStore) FindDraftConfirmation(ctx context.Context, confirmationID string) (*DraftConfirmationRecord, error) {
+	row := store.pool.QueryRow(ctx, draftConfirmationSelectSQL()+" WHERE id=$1", confirmationID)
+	record, err := scanDraftConfirmation(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, NotFound(CodeDraftConfirmationNotFound, "draft confirmation not found")
+	}
+	return record, err
 }
 
 func (store *PostgresStore) UpsertWorker(ctx context.Context, worker WorkerRecord) error {
@@ -251,30 +531,57 @@ func (store *PostgresStore) UpsertWorker(ctx context.Context, worker WorkerRecor
 	return err
 }
 
-func (store *PostgresStore) ClaimNext(ctx context.Context, workerID string, leaseExpiresAt time.Time) (*JobRecord, error) {
+func (store *PostgresStore) FindWorkerByID(ctx context.Context, workerID string) (*WorkerRecord, error) {
+	row := store.pool.QueryRow(ctx, `SELECT worker_id, capabilities, supported_contract_versions, COALESCE(runtime_version,''), COALESCE(current_job_id,''), heartbeat_at, registered_at FROM workers WHERE worker_id=$1`, workerID)
+	worker, err := scanWorker(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ValidationError("worker is not registered")
+	}
+	return worker, err
+}
+
+func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	var jobID string
-	if err := tx.QueryRow(ctx, "SELECT id FROM compute_jobs WHERE status='queued' AND cancel_requested=false ORDER BY created_at, id LIMIT 1 FOR UPDATE SKIP LOCKED").Scan(&jobID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
+	rows, err := tx.Query(ctx, jobSelectSQL()+" WHERE status='queued' AND cancel_requested=false ORDER BY created_at, id FOR UPDATE SKIP LOCKED")
+	if err != nil {
 		return nil, err
+	}
+	var selected *JobRecord
+	for rows.Next() {
+		job, err := scanJob(rows)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+		if jobMatchesWorker(*job, worker) {
+			selected = job
+			break
+		}
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, err
+	}
+	rows.Close()
+	if selected == nil {
+		_ = tx.Commit(ctx)
+		return nil, nil
 	}
 	now := time.Now().UTC()
-	if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET status='running', worker_id=$2, attempt=attempt+1, claimed_at=$3, started_at=$3, lease_expires_at=$4 WHERE id=$1", jobID, workerID, now, leaseExpiresAt); err != nil {
+	if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET status='running', worker_id=$2, attempt=attempt+1, claimed_at=$3, started_at=$3, lease_expires_at=$4 WHERE id=$1", selected.JobID, worker.WorkerID, now, leaseExpiresAt); err != nil {
 		return nil, err
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.running',$2,$3)", jobID, mustJSON(map[string]any{"worker_id": workerID}), now); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.running',$2,$3)", selected.JobID, mustJSON(map[string]any{"worker_id": worker.WorkerID}), now); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
-	return store.FindJobByID(ctx, jobID)
+	return store.FindJobByID(ctx, selected.JobID)
 }
 
 func (store *PostgresStore) Heartbeat(ctx context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*JobRecord, error) {
@@ -385,11 +692,134 @@ func scanJob(row rowScanner) (*JobRecord, error) {
 
 func scanArtifact(row rowScanner) (*ArtifactRecord, error) {
 	var artifact ArtifactRecord
-	err := row.Scan(&artifact.ArtifactID, &artifact.JobID, &artifact.SchemaVersion, &artifact.ArtifactType, &artifact.StorageProvider, &artifact.ObjectKey, &artifact.ContentType, &artifact.SizeBytes, &artifact.Checksum, &artifact.Metadata, &artifact.CreatedAt)
+	err := row.Scan(
+		&artifact.ArtifactID,
+		&artifact.JobID,
+		&artifact.SchemaVersion,
+		&artifact.ArtifactType,
+		&artifact.StorageProvider,
+		&artifact.ObjectKey,
+		&artifact.ContentType,
+		&artifact.SizeBytes,
+		&artifact.Checksum,
+		&artifact.RetentionPolicy,
+		&artifact.RetainUntil,
+		&artifact.Metadata,
+		&artifact.CreatedAt,
+	)
 	if err != nil {
 		return nil, err
 	}
 	return &artifact, nil
+}
+
+func scanWorker(row rowScanner) (*WorkerRecord, error) {
+	var worker WorkerRecord
+	err := row.Scan(
+		&worker.WorkerID,
+		&worker.Capabilities,
+		&worker.SupportedContractVersions,
+		&worker.RuntimeVersion,
+		&worker.CurrentJobID,
+		&worker.HeartbeatAt,
+		&worker.RegisteredAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &worker, nil
+}
+
+func scanModelCatalog(row rowScanner) (*ModelCatalogRecord, error) {
+	var record ModelCatalogRecord
+	err := row.Scan(
+		&record.CatalogID,
+		&record.SchemaVersion,
+		&record.GeneratedAt,
+		&record.PayloadHash,
+		&record.Payload,
+		&record.SourceSystem,
+		&record.RequestedBy,
+		&record.TenantID,
+		&record.ProjectID,
+		&record.Metadata,
+		&record.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &record, nil
+}
+
+func scanProcessGraph(row rowScanner) (*ProcessGraphRecord, error) {
+	var record ProcessGraphRecord
+	err := row.Scan(
+		&record.ProcessGraphID,
+		&record.SchemaVersion,
+		&record.Version,
+		&record.SourceCanvasGraphID,
+		&record.PayloadHash,
+		&record.Payload,
+		&record.SourceSystem,
+		&record.RequestedBy,
+		&record.TenantID,
+		&record.ProjectID,
+		&record.Metadata,
+		&record.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &record, nil
+}
+
+func scanSimulationInput(row rowScanner) (*SimulationInputRecord, error) {
+	var record SimulationInputRecord
+	err := row.Scan(
+		&record.SimulationInputID,
+		&record.SchemaVersion,
+		&record.JobType,
+		&record.ProcessGraphID,
+		&record.ProcessGraphVersion,
+		&record.PayloadHash,
+		&record.Payload,
+		&record.SourceSystem,
+		&record.RequestedBy,
+		&record.TenantID,
+		&record.ProjectID,
+		&record.Metadata,
+		&record.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &record, nil
+}
+
+func scanDraftConfirmation(row rowScanner) (*DraftConfirmationRecord, error) {
+	var record DraftConfirmationRecord
+	err := row.Scan(
+		&record.ConfirmationID,
+		&record.SchemaVersion,
+		&record.DraftSchemaVersion,
+		&record.DraftID,
+		&record.Decision,
+		&record.DecisionReason,
+		&record.ConfirmedBy,
+		&record.ConfirmedAt,
+		&record.PayloadHash,
+		&record.Payload,
+		&record.SourceSystem,
+		&record.RequestedBy,
+		&record.TenantID,
+		&record.ProjectID,
+		&record.Metadata,
+		&record.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &record, nil
 }
 
 func scanArtifacts(rows pgx.Rows) ([]ArtifactRecord, error) {
@@ -414,7 +844,33 @@ func jobSelectSQL() string {
 
 func artifactSelectSQL() string {
 	return `SELECT id, job_id, schema_version, artifact_type, storage_provider, object_key, content_type,
-		size_bytes, checksum, COALESCE(metadata_json,'null'::jsonb), created_at FROM artifacts`
+		size_bytes, checksum, COALESCE(retention_policy,'retain_forever'), retain_until,
+		COALESCE(metadata_json,'null'::jsonb), created_at FROM artifacts`
+}
+
+func modelCatalogSelectSQL() string {
+	return `SELECT catalog_id, schema_version, generated_at, payload_hash, payload_json,
+		source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''),
+		COALESCE(metadata_json,'null'::jsonb), created_at FROM model_catalogs`
+}
+
+func processGraphSelectSQL() string {
+	return `SELECT id, schema_version, version, source_canvas_graph_id, payload_hash, payload_json,
+		source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''),
+		COALESCE(metadata_json,'null'::jsonb), created_at FROM process_graphs`
+}
+
+func simulationInputSelectSQL() string {
+	return `SELECT id, schema_version, job_type, process_graph_id, process_graph_version,
+		payload_hash, payload_json, source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''),
+		COALESCE(metadata_json,'null'::jsonb), created_at FROM simulation_inputs`
+}
+
+func draftConfirmationSelectSQL() string {
+	return `SELECT id, schema_version, draft_schema_version, draft_id, decision,
+		COALESCE(decision_reason,''), confirmed_by, confirmed_at, payload_hash, payload_json,
+		source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''),
+		COALESCE(metadata_json,'null'::jsonb), created_at FROM draft_confirmations`
 }
 
 func listWhere(filter ListFilter) (string, []any) {
@@ -435,6 +891,28 @@ func listWhere(filter ListFilter) (string, []any) {
 	}
 	if filter.CreatedBefore != nil {
 		add("created_at<$%d", *filter.CreatedBefore)
+	}
+	if len(clauses) == 0 {
+		return "", args
+	}
+	return " WHERE " + strings.Join(clauses, " AND "), args
+}
+
+func modelRunListWhere(filter ModelRunFilter) (string, []any) {
+	var clauses []string
+	var args []any
+	add := func(sql string, value any) {
+		args = append(args, value)
+		clauses = append(clauses, fmt.Sprintf(sql, len(args)))
+	}
+	if filter.JobID != "" {
+		add("job_id=$%d", filter.JobID)
+	}
+	if filter.ModelKey != "" {
+		add("model_key=$%d", filter.ModelKey)
+	}
+	if filter.ModelVersion != "" {
+		add("model_version=$%d", filter.ModelVersion)
 	}
 	if len(clauses) == 0 {
 		return "", args

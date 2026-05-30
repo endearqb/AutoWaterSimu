@@ -9,6 +9,21 @@
   "model_run_refs": ["mr_material_balance_minimal"],
   "artifact_refs": ["art_time_series_minimal"],
   "runtime_audit": { "worker_version": "dev" },
+  "governance": {
+    "production_allowed": true,
+    "model_version_refs": [
+      {
+        "model_run_id": "mr_material_balance_minimal",
+        "model_key": "material_balance",
+        "model_version": "material_balance.v1",
+        "parameter_set_id": "ps_material_balance_default_v1",
+        "parameter_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "model_status": "active",
+        "parameter_set_status": "approved",
+        "production_allowed": true
+      }
+    ]
+  },
   "warnings": [],
   "generated_at": "2026-05-25T00:00:00Z"
 }

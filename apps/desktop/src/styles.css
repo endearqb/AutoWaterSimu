@@ -170,6 +170,13 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.project-id {
+  color: #617080;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
 .job-row[data-selected="true"] {
   border-color: #2f6f64;
   background: #eaf6f3;
@@ -252,9 +259,13 @@ button:disabled {
 
 .artifact-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   margin-top: 14px;
+}
+
+.artifact-grid.compact {
+  grid-template-columns: 1fr;
 }
 
 .info-block {

@@ -1,0 +1,26 @@
+{
+  "schema_version": "compute_result.v1",
+  "job_id": "job_material_balance_invalid_risk",
+  "job_type": "simulation.material_balance.v1",
+  "status": "succeeded",
+  "summary": {},
+  "data": {},
+  "quality": {
+    "data_quality": "simulated",
+    "warnings": []
+  },
+  "artifacts": [],
+  "risk_findings": [
+    {
+      "severity": "high",
+      "title": "Missing risk code",
+      "description": "This finding is invalid because risk_code is required.",
+      "evidence_refs": ["model_run:mr_material_balance_minimal"]
+    }
+  ],
+  "runtime_audit": {
+    "model_runs": [],
+    "timings_ms": {},
+    "fallback_used": false
+  }
+}

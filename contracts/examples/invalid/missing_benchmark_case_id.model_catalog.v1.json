@@ -1,0 +1,29 @@
+{
+  "schema_version": "model_catalog.v1",
+  "generated_at": "2026-05-30T00:00:00Z",
+  "models": [
+    {
+      "model_key": "material_balance",
+      "display_name": "Material Balance",
+      "supported_job_types": ["simulation.material_balance.v1"],
+      "versions": [
+        {
+          "model_version": "material_balance.v1",
+          "status": "active",
+          "runtime": "simulation-worker",
+          "parameter_templates": [],
+          "benchmark_cases": [
+            {
+              "display_name": "Missing benchmark case id",
+              "job_type": "simulation.material_balance.v1",
+              "input_ref": {},
+              "expected_metrics": {},
+              "tolerance": {},
+              "status": "validated"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

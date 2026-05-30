@@ -1,0 +1,10 @@
+{
+  "schema_version": "constraint_draft.v1",
+  "constraint_id": "constraint_missing_constraints",
+  "created_by": "agent:test",
+  "scope": "simulation_request",
+  "target_ref": {
+    "request_id": "sim_req_material_balance_minimal"
+  },
+  "requires_confirmation": true
+}

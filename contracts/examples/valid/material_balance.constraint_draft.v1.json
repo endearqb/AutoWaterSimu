@@ -1,0 +1,21 @@
+{
+  "schema_version": "constraint_draft.v1",
+  "constraint_id": "constraint_material_balance_cod_limit",
+  "created_by": "agent:test",
+  "scope": "simulation_request",
+  "target_ref": {
+    "request_id": "sim_req_material_balance_minimal"
+  },
+  "constraints": [
+    {
+      "constraint_key": "max_effluent_cod",
+      "description": "Effluent COD should stay below the configured limit.",
+      "metric": "effluent_cod",
+      "operator": "<=",
+      "value": 30,
+      "unit": "mg/L",
+      "severity": "warning"
+    }
+  ],
+  "requires_confirmation": true
+}

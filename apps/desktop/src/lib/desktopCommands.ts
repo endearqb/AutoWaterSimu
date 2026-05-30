@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core"
 
 export type DesktopJob = {
   job_id: string
+  project_id?: string | null
   status: string
   job_type: string
   input_hash?: string | null
@@ -29,15 +30,81 @@ export type DesktopArtifact = {
   metadata?: unknown
 }
 
+export type DesktopModelRun = {
+  schema_version: "model_run.v1"
+  model_run_id: string
+  job_id: string
+  model_key: string
+  model_version: string
+  parameter_hash: string
+  input_hash: string
+  quality_metrics: Record<string, unknown>
+  warnings: string[]
+  evidence_refs: string[]
+  metadata?: Record<string, unknown>
+}
+
 export type JobSnapshot = {
   job: DesktopJob
   artifacts: DesktopArtifact[]
+  model_runs: DesktopModelRun[]
   event_count: number
 }
 
 export type JobListResponse = {
   jobs: JobSnapshot[]
   count: number
+}
+
+export type DesktopProject = {
+  project_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+export type ProjectListResponse = {
+  projects: DesktopProject[]
+  count: number
+}
+
+export type ProjectExportResponse = {
+  project_id: string
+  object_key: string
+  exported_path: string
+  size_bytes: number
+  checksum: string
+  status: string
+}
+
+export type ProjectImportResponse = {
+  project: DesktopProject
+  object_key: string
+  imported_at: string
+  status: string
+}
+
+export type CanvasGraphRecord = {
+  graph_id: string
+  project_id?: string | null
+  schema_version: "canvas_graph.v1"
+  graph: unknown
+  created_at: string
+  updated_at: string
+}
+
+export type ProcessGraphValidationError = {
+  code: string
+  path: string
+  message: string
+}
+
+export type ProcessGraphValidationResponse = {
+  schema_version: "process_graph_validation.v1"
+  process_graph_id?: string | null
+  status: "valid" | "invalid"
+  errors: ProcessGraphValidationError[]
+  warnings: string[]
 }
 
 export type WorkerSelfCheckResponse = {
@@ -53,6 +120,11 @@ export type ArtifactExportResponse = {
   status: string
 }
 
+export type ArtifactCsvExportResponse = ArtifactExportResponse & {
+  format: "csv"
+  row_count: number
+}
+
 export type SupportBundleResponse = {
   bundle_id: string
   job_id: string
@@ -60,6 +132,24 @@ export type SupportBundleResponse = {
   size_bytes: number
   checksum: string
   created_at: string
+}
+
+export type ProjectBackupResponse = {
+  backup_id: string
+  object_key: string
+  backup_path: string
+  size_bytes: number
+  file_count: number
+  checksum: string
+  created_at: string
+  status: string
+}
+
+export type ProjectRestoreResponse = {
+  backup_id: string
+  object_key: string
+  restored_at: string
+  status: string
 }
 
 export function isTauriRuntime(): boolean {
@@ -83,8 +173,36 @@ export function workerSelfCheck(): Promise<WorkerSelfCheckResponse> {
   return callDesktop("worker_self_check")
 }
 
-export function createComputeJob(requestJson: string): Promise<JobSnapshot> {
-  return callDesktop("compute_job_create", { requestJson })
+export function createProject(name: string): Promise<DesktopProject> {
+  return callDesktop("project_create", { name })
+}
+
+export function getProject(projectId: string): Promise<DesktopProject> {
+  return callDesktop("project_get", { projectId })
+}
+
+export function listProjects(): Promise<ProjectListResponse> {
+  return callDesktop("project_list")
+}
+
+export function exportProject(
+  projectId: string,
+  targetDir: string,
+): Promise<ProjectExportResponse> {
+  return callDesktop("project_export", { projectId, targetDir })
+}
+
+export function importProject(
+  exportObjectKey: string,
+): Promise<ProjectImportResponse> {
+  return callDesktop("project_import", { exportObjectKey })
+}
+
+export function createComputeJob(
+  requestJson: string,
+  projectId?: string,
+): Promise<JobSnapshot> {
+  return callDesktop("compute_job_create", { projectId, requestJson })
 }
 
 export function runComputeJob(jobId: string): Promise<JobSnapshot> {
@@ -95,8 +213,29 @@ export function getComputeJob(jobId: string): Promise<JobSnapshot> {
   return callDesktop("compute_job_get", { jobId })
 }
 
+export function cancelComputeJob(jobId: string): Promise<JobSnapshot> {
+  return callDesktop("compute_job_cancel", { jobId })
+}
+
 export function listComputeJobs(): Promise<JobListResponse> {
   return callDesktop("compute_job_list")
+}
+
+export function saveCanvasGraph(
+  graphJson: string,
+  projectId?: string,
+): Promise<CanvasGraphRecord> {
+  return callDesktop("canvas_graph_save", { graphJson, projectId })
+}
+
+export function loadCanvasGraph(graphId: string): Promise<CanvasGraphRecord> {
+  return callDesktop("canvas_graph_load", { graphId })
+}
+
+export function validateProcessGraph(
+  graphJson: string,
+): Promise<ProcessGraphValidationResponse> {
+  return callDesktop("process_graph_validate", { graphJson })
 }
 
 export function exportArtifact(
@@ -104,6 +243,23 @@ export function exportArtifact(
   targetDir: string,
 ): Promise<ArtifactExportResponse> {
   return callDesktop("artifact_export", { artifactId, targetDir })
+}
+
+export function exportArtifactCsv(
+  artifactId: string,
+  targetDir: string,
+): Promise<ArtifactCsvExportResponse> {
+  return callDesktop("artifact_export_csv", { artifactId, targetDir })
+}
+
+export function createProjectBackup(): Promise<ProjectBackupResponse> {
+  return callDesktop("project_backup")
+}
+
+export function restoreProjectBackup(
+  backupObjectKey: string,
+): Promise<ProjectRestoreResponse> {
+  return callDesktop("project_restore", { backupObjectKey })
 }
 
 export function createSupportBundle(

@@ -17,14 +17,16 @@ Agent 的任务不是最快地产生代码，而是在**最小误解、最小破
 在执行任何操作前，必须先阅读相关上下文，顺序如下：
 
 1. 先阅读本文件 `AGENTS.md`。
-2. 再阅读根目录 `README.md`。
-3. 再阅读目标文件所在路径上的**各级目录 `README.md`**（从上到下）。
-4. 最后阅读目标文件本身及其直接依赖、调用方和相关测试。
+2. 再阅读根目录 `README_First.md`（理解 README First 协作原则与文档分工）。
+3. 再阅读根目录 `README.md`（理解项目地图、技术栈和顶层目录职责）。
+4. 再阅读目标文件所在路径上的**各级目录 `README.md`**（从上到下）。
+5. 最后阅读目标文件本身及其直接依赖、调用方和相关测试。
 
 举例：修改 `src/components/Button/Button.tsx`，应依次阅读：
 
 ```txt
 AGENTS.md
+README_First.md
 README.md
 src/README.md
 src/components/README.md
@@ -33,13 +35,22 @@ src/components/Button/README.md
 
 如果某一级目录没有 README，则继续向上读取上级 README，并基于现有文件谨慎推断；不得自行假设该目录约定。如该目录属于关键目录，应先补建 README。
 
+如果用户没有指定明确目标文件或目录，必须先完成目标定位：
+
+1. 从 prompt 中提取业务域、功能名、错误信息、命令、路由、接口、页面或文件名线索。
+2. 先查 `README_First.md`、根 README、`tasks/todo.md`、`.ai/changes/` 和 `.ai/decisions/`，确认该任务是否已有背景或历史约束。
+3. 使用 `rg` / `rg --files` 搜索相关实现、测试、类型、配置和目录 README；排除 `node_modules/`、`.venv/`、`dist/`、`build/`、`.pytest_cache/`、`tmp/` 等依赖、构建产物和缓存目录。
+4. 定位到最小合理影响范围后，再按上面的 README 顺序读取目标路径上下文。
+5. 若目标仍无法定位，且继续会导致凭空猜测，再向用户提出阻塞性问题。
+
 ### 优先级规则
 
 1. 本文件 `AGENTS.md` 中的全局规则优先级最高。
-2. 距离目标文件最近的目录 README 优先于上级 README。
-3. 上级目录 README 提供通用背景。
-4. 当 README 与实际代码冲突时，必须显式指出冲突（见第 9 节），不得静默选择。
-5. 当规则冲突且无法判断时，必须在修改前提出，而非擅自决定。
+2. `README_First.md` 是原则说明，不覆盖 `AGENTS.md` 的可执行规则。
+3. 距离目标文件最近的目录 README 优先于上级 README。
+4. 上级目录 README 提供通用背景。
+5. 当 README 与实际代码冲突时，必须显式指出冲突（见第 9 节），不得静默选择。
+6. 当规则冲突且无法判断时，必须在修改前提出，而非擅自决定。
 
 ---
 
@@ -78,7 +89,7 @@ Agent 不需要向用户暴露完整推理过程，但必须在最终回复中�
 
 ### 2.3 不确定性压缩流程
 
-**第一步：先消除偶然不确定性。** 优先检查：`AGENTS.md` → 根 `README.md` → 目标路径上各级 `README.md` → 相关源代码 → 相关测试 → 相关类型定义 → 相关配置 → `.ai/changes/` → `.ai/decisions/`。
+**第一步：先消除偶然不确定性。** 优先检查：`AGENTS.md` → `README_First.md` → 根 `README.md` → 目标路径上各级 `README.md` → 相关源代码 → 相关测试 → 相关类型定义 → 相关配置 → `.ai/changes/` → `.ai/decisions/`。
 
 **第二步：识别本质不确定性。** 逐项判断：目标是否明确？边界是否明确？目录职责是否明确？是否存在多个合理方案？用户是否指定取舍标准？是否影响公共接口 / 数据结构 / 已有测试 / 未来维护？是否需要更新 README 或记录决策？
 
@@ -366,7 +377,7 @@ cd frontend; npx tsc --noEmit
 
 每次后端接口或 schema 变更后，必须同步更新前端客户端。
 
-自动方式：
+自动方式（仅当仓库存在对应脚本时使用；当前工作区未跟踪根目录 `scripts/generate-client.sh`）：
 
 ```bash
 ./scripts/generate-client.sh

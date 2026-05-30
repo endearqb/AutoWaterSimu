@@ -6,8 +6,10 @@ import sys
 from typing import IO, Any
 
 try:
+    from .api_client import DEFAULT_API_BASE_URL, DEFAULT_API_TOKEN, run_api_once
     from .runner import run_job, run_job_file, self_check
 except ImportError:
+    from api_client import DEFAULT_API_BASE_URL, DEFAULT_API_TOKEN, run_api_once  # type: ignore
     from runner import run_job, run_job_file, self_check  # type: ignore
 
 
@@ -23,6 +25,10 @@ def main(
     parser.add_argument("--run-job")
     parser.add_argument("--artifact-dir", default="artifacts")
     parser.add_argument("--stdio-jsonrpc", action="store_true")
+    parser.add_argument("--run-api-once", action="store_true")
+    parser.add_argument("--api-base-url", default=DEFAULT_API_BASE_URL)
+    parser.add_argument("--api-token", default=DEFAULT_API_TOKEN)
+    parser.add_argument("--worker-id")
     args = parser.parse_args(argv)
 
     stdin = stdin or sys.stdin
@@ -35,6 +41,22 @@ def main(
 
     if args.stdio_jsonrpc:
         return _run_stdio_jsonrpc(stdin=stdin, stdout=stdout, stderr=stderr)
+
+    if args.run_api_once:
+        try:
+            result = run_api_once(
+                base_url=args.api_base_url,
+                token=args.api_token,
+                worker_id=args.worker_id,
+                artifact_dir=args.artifact_dir,
+            )
+            _write_json(stdout, result)
+            return 0
+        except Exception as exc:
+            message = _safe_error_message(exc)
+            _write_json(stdout, {"status": "failed", "error_message": message})
+            print(f"simulation-worker api client failed: {message}", file=stderr)
+            return 1
 
     if args.run_job:
         result = run_job_file(args.run_job, args.artifact_dir)

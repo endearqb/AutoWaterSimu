@@ -10,11 +10,23 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             commands::worker_self_check,
+            commands::project_create,
+            commands::project_export,
+            commands::project_get,
+            commands::project_import,
+            commands::project_list,
             commands::compute_job_create,
             commands::compute_job_run,
             commands::compute_job_get,
+            commands::compute_job_cancel,
             commands::compute_job_list,
+            commands::canvas_graph_save,
+            commands::canvas_graph_load,
+            commands::process_graph_validate,
             commands::artifact_export,
+            commands::artifact_export_csv,
+            commands::project_backup,
+            commands::project_restore,
             commands::support_bundle_create
         ])
         .run(tauri::generate_context!())
@@ -44,6 +56,28 @@ mod tests {
                 .join("material_balance_minimal.compute_job.v1.json"),
         )
         .expect("valid compute job fixture should exist")
+    }
+
+    fn valid_canvas_graph_json() -> String {
+        fs::read_to_string(
+            repo_root()
+                .join("contracts")
+                .join("examples")
+                .join("valid")
+                .join("material_balance_3_node.canvas_graph.v1.json"),
+        )
+        .expect("valid canvas graph fixture should exist")
+    }
+
+    fn valid_process_graph_json() -> String {
+        fs::read_to_string(
+            repo_root()
+                .join("contracts")
+                .join("examples")
+                .join("valid")
+                .join("material_balance_3_node.process_graph.v1.json"),
+        )
+        .expect("valid process graph fixture should exist")
     }
 
     fn runtime() -> (TempDir, DesktopRuntime) {
@@ -137,6 +171,128 @@ mod tests {
     }
 
     #[test]
+    fn project_registry_create_get_and_list() {
+        let (_temp, runtime) = runtime();
+        let project = runtime.project_create("Desktop Smoke Project").unwrap();
+        let project_id = project["project_id"].as_str().unwrap();
+        assert!(project_id.starts_with("project_"));
+        assert_eq!(project["name"], "Desktop Smoke Project");
+
+        let fetched = runtime.project_get(project_id).unwrap();
+        assert_eq!(fetched["project_id"], project_id);
+
+        let listed = runtime.project_list().unwrap();
+        assert_eq!(listed["count"], 1);
+        assert_eq!(listed["projects"][0]["project_id"], project_id);
+        assert!(runtime.project_create(" ").is_err());
+        assert!(runtime.project_get("missing_project").is_err());
+    }
+
+    #[test]
+    fn jobs_and_canvas_graphs_can_attach_to_project() {
+        let (_temp, runtime) = runtime();
+        let project = runtime.project_create("Desktop Smoke Project").unwrap();
+        let project_id = project["project_id"].as_str().unwrap();
+
+        let created = runtime
+            .compute_job_create_for_project(&valid_job_json(), Some(project_id))
+            .unwrap();
+        assert_eq!(created["job"]["project_id"], project_id);
+        assert!(runtime
+            .compute_job_create_for_project(&valid_job_json(), Some("missing_project"))
+            .unwrap_err()
+            .contains("project not found"));
+
+        let saved = runtime
+            .canvas_graph_save_for_project(&valid_canvas_graph_json(), Some(project_id))
+            .unwrap();
+        assert_eq!(saved["project_id"], project_id);
+        assert!(runtime
+            .canvas_graph_save_for_project(&valid_canvas_graph_json(), Some("missing_project"))
+            .unwrap_err()
+            .contains("project not found"));
+    }
+
+    #[test]
+    fn project_export_import_is_limited_to_runtime_sandbox() {
+        let (_temp, runtime) = runtime();
+        let project = runtime.project_create("Desktop Smoke Project").unwrap();
+        let project_id = project["project_id"].as_str().unwrap();
+
+        let exported = runtime.project_export(project_id, "projects").unwrap();
+        assert_eq!(exported["status"], "exported");
+        let object_key = exported["object_key"].as_str().unwrap();
+        let export_path = runtime.base_dir().join("exports").join(object_key);
+        assert!(export_path.is_file());
+
+        let mut payload: Value =
+            serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
+        payload["project"]["name"] = json!("Imported Project");
+        fs::write(
+            &export_path,
+            serde_json::to_string_pretty(&payload).unwrap(),
+        )
+        .unwrap();
+
+        let imported = runtime.project_import(object_key).unwrap();
+        assert_eq!(imported["status"], "imported");
+        assert_eq!(imported["project"]["name"], "Imported Project");
+        assert!(runtime.project_export(project_id, "../escape").is_err());
+        assert!(runtime.project_import("../escape/project.json").is_err());
+        assert!(runtime.project_import("C:/escape/project.json").is_err());
+    }
+
+    #[test]
+    fn canvas_graph_save_load_round_trip_validates_edges() {
+        let (_temp, runtime) = runtime();
+        let saved = runtime
+            .canvas_graph_save(&valid_canvas_graph_json())
+            .unwrap();
+        assert_eq!(saved["graph_id"], "graph_material_balance_minimal");
+        assert_eq!(saved["schema_version"], "canvas_graph.v1");
+        assert_eq!(saved["graph"]["nodes"].as_array().unwrap().len(), 3);
+
+        let loaded = runtime
+            .canvas_graph_load("graph_material_balance_minimal")
+            .unwrap();
+        assert_eq!(
+            loaded["graph"]["graph_id"],
+            "graph_material_balance_minimal"
+        );
+        assert!(loaded["updated_at"].as_str().unwrap().len() >= 20);
+
+        let mut invalid: Value = serde_json::from_str(&valid_canvas_graph_json()).unwrap();
+        invalid["edges"][0]["target"] = json!("missing_node");
+        let error = runtime.canvas_graph_save(&invalid.to_string()).unwrap_err();
+        assert!(error.contains("references unknown node"));
+    }
+
+    #[test]
+    fn process_graph_validate_reports_validity_and_edge_errors() {
+        let (_temp, runtime) = runtime();
+        let valid = runtime
+            .process_graph_validate(&valid_process_graph_json())
+            .unwrap();
+        assert_eq!(valid["status"], "valid");
+        assert_eq!(valid["process_graph_id"], "pg_material_balance_minimal");
+        assert!(valid["errors"].as_array().unwrap().is_empty());
+
+        let mut invalid: Value = serde_json::from_str(&valid_process_graph_json()).unwrap();
+        invalid["edges"][0]["target_node_id"] = json!("missing_node");
+        let result = runtime
+            .process_graph_validate(&invalid.to_string())
+            .unwrap();
+        assert_eq!(result["status"], "invalid");
+        assert!(result["errors"].as_array().unwrap().iter().any(|error| {
+            error["code"] == "EDGE_TARGET_UNKNOWN" && error["path"] == "$.edges[0].target_node_id"
+        }));
+
+        let malformed = runtime.process_graph_validate("{").unwrap();
+        assert_eq!(malformed["status"], "invalid");
+        assert_eq!(malformed["errors"][0]["code"], "GRAPH_JSON_INVALID");
+    }
+
+    #[test]
     fn worker_self_check_smoke_returns_json() {
         let (_temp, runtime) = runtime();
         let result = runtime.worker_self_check().unwrap();
@@ -158,6 +314,17 @@ mod tests {
             .unwrap()
             .starts_with("sha256:"));
         assert_eq!(result["artifacts"].as_array().unwrap().len(), 1);
+        assert_eq!(result["model_runs"].as_array().unwrap().len(), 1);
+        assert_eq!(result["model_runs"][0]["schema_version"], "model_run.v1");
+        assert_eq!(
+            result["model_runs"][0]["job_id"],
+            "job_material_balance_minimal"
+        );
+        assert_eq!(result["model_runs"][0]["model_key"], "material_balance");
+        assert_eq!(
+            result["model_runs"][0]["evidence_refs"][0],
+            result["artifacts"][0]["artifact_id"]
+        );
         let object_key = result["artifacts"][0]["object_key"].as_str().unwrap();
         assert!(runtime
             .base_dir()
@@ -198,6 +365,30 @@ mod tests {
                 .unwrap()["job"]["status"],
             "succeeded"
         );
+    }
+
+    #[test]
+    fn queued_job_can_be_cancelled() {
+        let (_temp, runtime) = runtime();
+        runtime.compute_job_create(&valid_job_json()).unwrap();
+        let cancelled = runtime
+            .compute_job_cancel("job_material_balance_minimal")
+            .unwrap();
+
+        assert_eq!(cancelled["job"]["status"], "cancelled");
+        assert_eq!(cancelled["job"]["cancel_requested"], true);
+        assert_eq!(
+            event_types(&runtime, "job_material_balance_minimal"),
+            vec!["job.created", "job.queued", "job.cancelled"]
+        );
+        let error = runtime
+            .compute_job_run("job_material_balance_minimal")
+            .unwrap_err();
+        assert!(error.contains("job cannot be run from status: cancelled"));
+        assert!(runtime
+            .compute_job_cancel("job_material_balance_minimal")
+            .unwrap_err()
+            .contains("job cannot be cancelled from status: cancelled"));
     }
 
     #[test]
@@ -326,6 +517,39 @@ mod tests {
     }
 
     #[test]
+    fn artifact_export_csv_flattens_time_series() {
+        let (_temp, runtime) = runtime();
+        runtime.compute_job_create(&valid_job_json()).unwrap();
+        let result = runtime
+            .compute_job_run("job_material_balance_minimal")
+            .unwrap();
+        let artifact_id = result["artifacts"][0]["artifact_id"].as_str().unwrap();
+
+        let exported = runtime
+            .artifact_export_csv(artifact_id, "manual/job-1")
+            .unwrap();
+        assert_eq!(exported["status"], "exported");
+        assert_eq!(exported["format"], "csv");
+        assert!(exported["exported_path"]
+            .as_str()
+            .unwrap()
+            .ends_with(".csv"));
+        let csv = fs::read_to_string(exported["exported_path"].as_str().unwrap()).unwrap();
+        let header = csv.lines().next().unwrap();
+        assert!(header.starts_with("time,"));
+        assert!(header.contains("node.n_in.COD"));
+        assert!(header.contains("node.n_tank.volume"));
+        assert!(header.contains("edge.e_in_tank.flow_rate"));
+        assert_eq!(
+            csv.lines().count(),
+            exported["row_count"].as_u64().unwrap() as usize + 1
+        );
+        assert!(runtime
+            .artifact_export_csv(artifact_id, "../escape")
+            .is_err());
+    }
+
+    #[test]
     fn path_sandbox_rejects_unsafe_paths() {
         assert!(safe_relative_path("exports/job").is_ok());
         assert!(safe_relative_path("../job").is_err());
@@ -352,11 +576,46 @@ mod tests {
         let payload: Value = serde_json::from_str(&text).unwrap();
         assert_eq!(payload["redaction"]["artifact_contents_included"], false);
         assert!(payload["artifacts"].is_array());
+        assert_eq!(payload["model_runs"].as_array().unwrap().len(), 1);
         assert!(payload["events"]
             .as_array()
             .unwrap()
             .iter()
             .any(|event| event["event_type"] == "support_bundle.created"));
         assert!(!text.contains("\"timestamps\""));
+    }
+
+    #[test]
+    fn project_backup_restore_round_trip_restores_sqlite_and_artifacts() {
+        let (_temp, runtime) = runtime();
+        runtime.compute_job_create(&valid_job_json()).unwrap();
+        let result = runtime
+            .compute_job_run("job_material_balance_minimal")
+            .unwrap();
+        let object_key = result["artifacts"][0]["object_key"].as_str().unwrap();
+        let artifact_path = runtime.base_dir().join("artifacts").join(object_key);
+
+        let backup = runtime.project_backup().unwrap();
+        assert_eq!(backup["status"], "created");
+        let backup_object_key = backup["object_key"].as_str().unwrap();
+        assert!(runtime
+            .base_dir()
+            .join("backups")
+            .join(backup_object_key)
+            .is_file());
+
+        let mut second_job: Value = serde_json::from_str(&valid_job_json()).unwrap();
+        second_job["job_id"] = json!("job_after_backup");
+        runtime.compute_job_create(&second_job.to_string()).unwrap();
+        fs::remove_file(&artifact_path).unwrap();
+        assert_eq!(runtime.compute_job_list().unwrap()["count"], 2);
+        assert!(!artifact_path.is_file());
+
+        let restored = runtime.project_restore(backup_object_key).unwrap();
+        assert_eq!(restored["status"], "restored");
+        assert_eq!(runtime.compute_job_list().unwrap()["count"], 1);
+        assert!(artifact_path.is_file());
+        assert!(runtime.project_restore("../escape/manifest.json").is_err());
+        assert!(runtime.project_restore("C:/escape/manifest.json").is_err());
     }
 }

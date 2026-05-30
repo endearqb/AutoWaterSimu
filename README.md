@@ -12,6 +12,7 @@ Built on a full‑stack FastAPI + React architecture, supporting process flow mo
 ## README First / AI Context Protocol
 
 This repository uses a README First workflow for human and AI collaboration.
+`AGENTS.md` is the executable rulebook; `README_First.md` explains the principles and document roles behind those rules.
 
 Recommended reading order before changing files:
 
@@ -138,7 +139,7 @@ The repository root is the AutoWaterSimu project root. The core structure is:
 - `apps/desktop/`: Tauri/Rust + React Desktop target
 - `.ai/`: README First change, decision, plan, and review records
 - `tasks/`: project task notes, work logs, and implementation plans
-- `scripts/`: helper scripts (build, test, DB initialization, etc.)
+- `backend/scripts/`: backend helper scripts (test, lint, format, DB initialization, prestart, etc.)
 - Others:
   - `docker-compose*.yml`: Docker Compose configs for various dev/deploy setups
   - `deployment.md`: deployment guide

@@ -1,0 +1,52 @@
+# 目录说明：frontend/tests
+
+## 1. 目录职责
+
+本目录保存 frontend Playwright end-to-end tests。
+
+本目录负责：
+
+- 登录、注册、重置密码、用户设置等浏览器级测试。
+- Petersen workbook 相关前端测试。
+- Playwright test utilities。
+
+本目录不负责：
+
+- backend pytest。
+- Go API tests。
+- Unit tests for generated client。
+
+## 2. 核心文件
+
+| 文件/子目录 | 作用 |
+|---|---|
+| `*.spec.ts` | Playwright browser tests |
+| `auth.setup.ts` | auth setup |
+| `utils/` | Playwright helper functions |
+| `peterson-matrix-workbook.test.ts` | workbook helper test |
+
+## 3. 维护约定
+
+1. E2E tests 通常需要 backend stack；不要默认假设本地服务已启动。
+2. 测试数据和随机 user helper 应复用 `utils/`。
+3. UI selector 变更需同步 tests。
+
+## 4. 对外接口
+
+本目录对 Playwright runner 暴露 test suite。
+
+## 5. 依赖边界
+
+可以依赖 Playwright and frontend test helpers。
+
+不应该依赖 backend private implementation details beyond public API behavior。
+
+## 6. 测试与验证
+
+```powershell
+cd frontend; npx playwright test
+```
+
+## 7. AI 操作提示
+
+如果未运行 Playwright，最终报告说明原因；不要声称浏览器流程已验证。

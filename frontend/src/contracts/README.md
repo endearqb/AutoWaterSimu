@@ -2,17 +2,17 @@
 
 ## 1. 目录职责
 
-本目录负责前端侧 AutoWaterSimu Next 合同转换 prototype。
+本目录负责前端侧 AutoWaterSimu Next 合同转换。
 
 本目录负责：
 
 - TypeScript 版 CanvasGraph、ProcessGraph、SimulationInput 最小转换。
 - 与 Python `contracts/python` 的转换语义对齐。
-- 未来 UI 接入前的类型与行为基线。
+- Compute Jobs UI 中 current-flow submission 的 opt-in 转换路径。
 
 本目录不负责：
 
-- legacy flow store 改造。
+- legacy flow store 状态管理。
 - React UI 组件。
 - OpenAPI generated client。
 
@@ -25,13 +25,13 @@
 
 ## 3. 维护约定
 
-1. 现阶段不直接接入 UI 或替换 `exportFlowData()`。
+1. 本目录只提供 opt-in 转换，不替换 legacy `/calculate` 主路径。
 2. Python/TypeScript 对组件顺序、edge `{a,b}`、time segments 的处理必须一致。
 3. Go Compute API client 后续应放在 `frontend/src/client/compute`，不要混入本目录。
 
 ## 4. 对外接口
 
-本目录对未来新核心页面暴露 TypeScript transform prototype。
+本目录对 Compute Jobs UI 和未来新核心页面暴露 TypeScript transform helpers。
 
 修改这些接口时需同步检查 `contracts/python`、contract fixtures 和 `npx tsc --noEmit`。
 

@@ -1,0 +1,27 @@
+{
+  "schema_version": "evidence_package.v1",
+  "evidence_package_id": "evidence_missing_model_status",
+  "job_id": "job_material_balance_minimal",
+  "input_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "result_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "process_graph_ref": {},
+  "simulation_input_ref": {},
+  "model_run_refs": ["mr_material_balance_minimal"],
+  "artifact_refs": [],
+  "runtime_audit": {},
+  "governance": {
+    "production_allowed": false,
+    "model_version_refs": [
+      {
+        "model_run_id": "mr_material_balance_minimal",
+        "model_key": "material_balance",
+        "model_version": "material_balance.v1",
+        "parameter_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "parameter_set_status": "approved",
+        "production_allowed": true
+      }
+    ]
+  },
+  "warnings": [],
+  "generated_at": "2026-05-25T00:00:00Z"
+}

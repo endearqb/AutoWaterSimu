@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "constraint_draft.v1.json",
+  "title": "constraint_draft.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "constraint_id",
+    "created_by",
+    "scope",
+    "target_ref",
+    "constraints",
+    "requires_confirmation"
+  ],
+  "properties": {
+    "schema_version": { "const": "constraint_draft.v1" },
+    "constraint_id": { "type": "string", "minLength": 1 },
+    "created_by": { "type": "string", "minLength": 1 },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "simulation_request",
+        "process_graph",
+        "simulation_input",
+        "model_run",
+        "evidence_review"
+      ]
+    },
+    "target_ref": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": ["string", "number", "integer", "boolean", "null"]
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/constraint" }
+    },
+    "requires_confirmation": { "type": "boolean", "default": true },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "constraint": {
+      "type": "object",
+      "required": [
+        "constraint_key",
+        "description",
+        "metric",
+        "operator",
+        "value",
+        "severity"
+      ],
+      "properties": {
+        "constraint_key": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "metric": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "operator": {
+          "type": "string",
+          "enum": ["<", "<=", ">", ">=", "==", "!=", "between", "in"]
+        },
+        "value": {},
+        "unit": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "error"]
+        },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -14,6 +14,18 @@
     "warnings": []
   },
   "artifacts": [],
+  "risk_findings": [
+    {
+      "risk_code": "material_balance_smoke_ok",
+      "severity": "info",
+      "title": "Material balance smoke run completed",
+      "description": "The minimal material balance smoke run completed without warnings.",
+      "evidence_refs": ["model_run:mr_material_balance_minimal"],
+      "related_metrics": {
+        "warning_count": 0
+      }
+    }
+  ],
   "runtime_audit": {
     "model_runs": [],
     "timings_ms": { "total": 10 },

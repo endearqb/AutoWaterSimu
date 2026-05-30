@@ -29,6 +29,11 @@
     "size_bytes": { "type": "integer", "minimum": 0 },
     "checksum": { "type": "string", "pattern": "^sha256:[0-9a-fA-F]{64}$" },
     "created_at": { "type": "string", "format": "date-time" },
+    "retention_policy": {
+      "type": "string",
+      "enum": ["retain_forever", "ttl", "archive_candidate"]
+    },
+    "retain_until": { "type": "string", "format": "date-time" },
     "metadata": { "type": "object" }
   },
   "additionalProperties": false

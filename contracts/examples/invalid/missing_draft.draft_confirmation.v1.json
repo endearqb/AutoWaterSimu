@@ -1,0 +1,10 @@
+{
+  "schema_version": "draft_confirmation.v1",
+  "confirmation_id": "confirm_missing_draft",
+  "draft_schema_version": "agent_scenario_draft.v1",
+  "draft_id": "draft_material_balance_minimal",
+  "decision": "approved",
+  "confirmed_by": "user:test",
+  "confirmed_at": "2026-05-30T00:00:00Z",
+  "requires_confirmation_acknowledged": true
+}

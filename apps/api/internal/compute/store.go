@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -19,8 +20,21 @@ type Store interface {
 	Artifacts(ctx context.Context, jobID string) ([]ArtifactRecord, error)
 	FindArtifact(ctx context.Context, artifactID string) (*ArtifactRecord, error)
 	InsertArtifact(ctx context.Context, artifact ArtifactRecord, event EventRecord) error
+	InsertModelRuns(ctx context.Context, jobID string, modelRuns []json.RawMessage, now time.Time) error
+	FindModelRun(ctx context.Context, modelRunID string) (json.RawMessage, error)
+	ListModelRuns(ctx context.Context, filter ModelRunFilter) ([]json.RawMessage, string, int, error)
+	ModelRuns(ctx context.Context, jobID string) ([]json.RawMessage, error)
+	UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error)
+	LatestModelCatalog(ctx context.Context, catalogID string) (*ModelCatalogRecord, error)
+	UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord) (bool, error)
+	FindProcessGraph(ctx context.Context, processGraphID string, version int) (*ProcessGraphRecord, error)
+	UpsertSimulationInput(ctx context.Context, record SimulationInputRecord) (bool, error)
+	FindSimulationInput(ctx context.Context, simulationInputID string) (*SimulationInputRecord, error)
+	UpsertDraftConfirmation(ctx context.Context, record DraftConfirmationRecord) (bool, error)
+	FindDraftConfirmation(ctx context.Context, confirmationID string) (*DraftConfirmationRecord, error)
 	UpsertWorker(ctx context.Context, worker WorkerRecord) error
-	ClaimNext(ctx context.Context, workerID string, leaseExpiresAt time.Time) (*JobRecord, error)
+	FindWorkerByID(ctx context.Context, workerID string) (*WorkerRecord, error)
+	ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error)
 	Heartbeat(ctx context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*JobRecord, error)
 	CancelJob(ctx context.Context, jobID string, now time.Time) (*JobRecord, error)
 	CompleteJob(ctx context.Context, jobID, workerID string, attempt int, status string, summary json.RawMessage, resultHash, errorCode, errorMessage string, now time.Time) (*JobRecord, error)
@@ -36,21 +50,39 @@ type ListFilter struct {
 	CreatedBefore *time.Time
 }
 
+type ModelRunFilter struct {
+	Limit        int
+	Cursor       string
+	JobID        string
+	ModelKey     string
+	ModelVersion string
+}
+
 type MemoryStore struct {
-	mu        sync.Mutex
-	jobs      map[string]JobRecord
-	events    map[string][]EventRecord
-	artifacts map[string]ArtifactRecord
-	workers   map[string]WorkerRecord
-	nextEvent int64
+	mu            sync.Mutex
+	jobs          map[string]JobRecord
+	events        map[string][]EventRecord
+	artifacts     map[string]ArtifactRecord
+	modelRuns     map[string]json.RawMessage
+	modelCatalogs map[string][]ModelCatalogRecord
+	processGraphs map[string]ProcessGraphRecord
+	inputs        map[string]SimulationInputRecord
+	confirmations map[string]DraftConfirmationRecord
+	workers       map[string]WorkerRecord
+	nextEvent     int64
 }
 
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		jobs:      map[string]JobRecord{},
-		events:    map[string][]EventRecord{},
-		artifacts: map[string]ArtifactRecord{},
-		workers:   map[string]WorkerRecord{},
+		jobs:          map[string]JobRecord{},
+		events:        map[string][]EventRecord{},
+		artifacts:     map[string]ArtifactRecord{},
+		modelRuns:     map[string]json.RawMessage{},
+		modelCatalogs: map[string][]ModelCatalogRecord{},
+		processGraphs: map[string]ProcessGraphRecord{},
+		inputs:        map[string]SimulationInputRecord{},
+		confirmations: map[string]DraftConfirmationRecord{},
+		workers:       map[string]WorkerRecord{},
 	}
 }
 
@@ -197,6 +229,218 @@ func (store *MemoryStore) InsertArtifact(_ context.Context, artifact ArtifactRec
 	return nil
 }
 
+func (store *MemoryStore) InsertModelRuns(_ context.Context, jobID string, modelRuns []json.RawMessage, _ time.Time) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	if _, ok := store.jobs[jobID]; !ok {
+		return NotFound(CodeJobNotFound, "job not found")
+	}
+	for _, modelRun := range modelRuns {
+		modelRunID := modelRunIDFromRaw(modelRun)
+		if modelRunID == "" {
+			return ValidationError("model_run_id is required")
+		}
+		store.modelRuns[modelRunID] = append(json.RawMessage(nil), modelRun...)
+	}
+	return nil
+}
+
+func (store *MemoryStore) FindModelRun(_ context.Context, modelRunID string) (json.RawMessage, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	modelRun, ok := store.modelRuns[modelRunID]
+	if !ok {
+		return nil, NotFound(CodeModelRunNotFound, "model run not found")
+	}
+	return append(json.RawMessage(nil), modelRun...), nil
+}
+
+func (store *MemoryStore) ListModelRuns(_ context.Context, filter ModelRunFilter) ([]json.RawMessage, string, int, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	var modelRuns []json.RawMessage
+	for _, modelRun := range store.modelRuns {
+		modelRunID, jobID, modelKey, modelVersion, _, err := modelRunFieldsFromRaw(modelRun)
+		if err != nil || modelRunID == "" {
+			continue
+		}
+		if filter.JobID != "" && jobID != filter.JobID {
+			continue
+		}
+		if filter.ModelKey != "" && modelKey != filter.ModelKey {
+			continue
+		}
+		if filter.ModelVersion != "" && modelVersion != filter.ModelVersion {
+			continue
+		}
+		modelRuns = append(modelRuns, append(json.RawMessage(nil), modelRun...))
+	}
+	sort.Slice(modelRuns, func(i, j int) bool {
+		leftID := modelRunIDFromRaw(modelRuns[i])
+		rightID := modelRunIDFromRaw(modelRuns[j])
+		return leftID > rightID
+	})
+	total := len(modelRuns)
+	offset := decodeCursor(filter.Cursor)
+	if offset > len(modelRuns) {
+		offset = len(modelRuns)
+	}
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 200 {
+		limit = 200
+	}
+	end := offset + limit
+	next := ""
+	if end < len(modelRuns) {
+		next = encodeCursor(end)
+	} else {
+		end = len(modelRuns)
+	}
+	return modelRuns[offset:end], next, total, nil
+}
+
+func (store *MemoryStore) ModelRuns(_ context.Context, jobID string) ([]json.RawMessage, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	if _, ok := store.jobs[jobID]; !ok {
+		return nil, NotFound(CodeJobNotFound, "job not found")
+	}
+	var modelRuns []json.RawMessage
+	for _, modelRun := range store.modelRuns {
+		_, modelRunJobID, _, _, _, err := modelRunFieldsFromRaw(modelRun)
+		if err == nil && modelRunJobID == jobID {
+			modelRuns = append(modelRuns, append(json.RawMessage(nil), modelRun...))
+		}
+	}
+	sort.Slice(modelRuns, func(i, j int) bool {
+		return modelRunIDFromRaw(modelRuns[i]) < modelRunIDFromRaw(modelRuns[j])
+	})
+	return modelRuns, nil
+}
+
+func (store *MemoryStore) UpsertModelCatalog(_ context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	snapshots := store.modelCatalogs[record.CatalogID]
+	for _, existing := range snapshots {
+		if existing.PayloadHash == record.PayloadHash {
+			return cloneModelCatalogRecord(existing), false, nil
+		}
+	}
+	record = cloneModelCatalogRecord(record)
+	store.modelCatalogs[record.CatalogID] = append(snapshots, record)
+	return cloneModelCatalogRecord(record), true, nil
+}
+
+func (store *MemoryStore) LatestModelCatalog(_ context.Context, catalogID string) (*ModelCatalogRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	snapshots := store.modelCatalogs[catalogID]
+	if len(snapshots) == 0 {
+		return nil, NotFound(CodeModelCatalogNotFound, "model catalog not found")
+	}
+	record := cloneModelCatalogRecord(snapshots[len(snapshots)-1])
+	return &record, nil
+}
+
+func (store *MemoryStore) UpsertProcessGraph(_ context.Context, record ProcessGraphRecord) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	key := processGraphStoreKey(record.ProcessGraphID, record.Version)
+	existing, ok := store.processGraphs[key]
+	if ok {
+		if existing.PayloadHash != record.PayloadHash {
+			return false, Conflict(CodeIdempotencyConflict, "process_graph_id/version was reused with a different payload")
+		}
+		return false, nil
+	}
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	store.processGraphs[key] = record
+	return true, nil
+}
+
+func cloneModelCatalogRecord(record ModelCatalogRecord) ModelCatalogRecord {
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	return record
+}
+
+func (store *MemoryStore) FindProcessGraph(_ context.Context, processGraphID string, version int) (*ProcessGraphRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	record, ok := store.processGraphs[processGraphStoreKey(processGraphID, version)]
+	if !ok {
+		return nil, NotFound(CodeProcessGraphNotFound, "process graph not found")
+	}
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	return &record, nil
+}
+
+func (store *MemoryStore) UpsertSimulationInput(_ context.Context, record SimulationInputRecord) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	existing, ok := store.inputs[record.SimulationInputID]
+	if ok {
+		if existing.PayloadHash != record.PayloadHash {
+			return false, Conflict(CodeIdempotencyConflict, "simulation_input_id was reused with a different payload")
+		}
+		return false, nil
+	}
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	store.inputs[record.SimulationInputID] = record
+	return true, nil
+}
+
+func processGraphStoreKey(processGraphID string, version int) string {
+	return strings.TrimSpace(processGraphID) + ":" + fmt.Sprint(version)
+}
+
+func (store *MemoryStore) FindSimulationInput(_ context.Context, simulationInputID string) (*SimulationInputRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	record, ok := store.inputs[simulationInputID]
+	if !ok {
+		return nil, NotFound(CodeSimulationInputNotFound, "simulation input not found")
+	}
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	return &record, nil
+}
+
+func (store *MemoryStore) UpsertDraftConfirmation(_ context.Context, record DraftConfirmationRecord) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	existing, ok := store.confirmations[record.ConfirmationID]
+	if ok {
+		if existing.PayloadHash != record.PayloadHash {
+			return false, Conflict(CodeIdempotencyConflict, "confirmation_id was reused with a different payload")
+		}
+		return false, nil
+	}
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	store.confirmations[record.ConfirmationID] = record
+	return true, nil
+}
+
+func (store *MemoryStore) FindDraftConfirmation(_ context.Context, confirmationID string) (*DraftConfirmationRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	record, ok := store.confirmations[confirmationID]
+	if !ok {
+		return nil, NotFound(CodeDraftConfirmationNotFound, "draft confirmation not found")
+	}
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	return &record, nil
+}
+
 func (store *MemoryStore) UpsertWorker(_ context.Context, worker WorkerRecord) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
@@ -204,12 +448,25 @@ func (store *MemoryStore) UpsertWorker(_ context.Context, worker WorkerRecord) e
 	return nil
 }
 
-func (store *MemoryStore) ClaimNext(_ context.Context, workerID string, leaseExpiresAt time.Time) (*JobRecord, error) {
+func (store *MemoryStore) FindWorkerByID(_ context.Context, workerID string) (*WorkerRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	worker, ok := store.workers[workerID]
+	if !ok {
+		return nil, ValidationError("worker is not registered")
+	}
+	return &worker, nil
+}
+
+func (store *MemoryStore) ClaimNext(_ context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var selected *JobRecord
 	for _, job := range store.jobs {
 		if job.Status != StatusQueued || job.CancelRequested {
+			continue
+		}
+		if !jobMatchesWorker(job, worker) {
 			continue
 		}
 		if selected == nil || job.CreatedAt.Before(selected.CreatedAt) || (job.CreatedAt.Equal(selected.CreatedAt) && job.JobID < selected.JobID) {
@@ -222,13 +479,13 @@ func (store *MemoryStore) ClaimNext(_ context.Context, workerID string, leaseExp
 	}
 	now := time.Now().UTC()
 	selected.Status = StatusRunning
-	selected.WorkerID = workerID
+	selected.WorkerID = worker.WorkerID
 	selected.Attempt++
 	selected.ClaimedAt = &now
 	selected.StartedAt = &now
 	selected.LeaseExpiresAt = &leaseExpiresAt
 	store.jobs[selected.JobID] = *selected
-	store.appendEventLocked(EventRecord{JobID: selected.JobID, EventType: "job.running", EventJSON: mustJSON(map[string]any{"worker_id": workerID, "attempt": selected.Attempt}), CreatedAt: now})
+	store.appendEventLocked(EventRecord{JobID: selected.JobID, EventType: "job.running", EventJSON: mustJSON(map[string]any{"worker_id": worker.WorkerID, "attempt": selected.Attempt}), CreatedAt: now})
 	return selected, nil
 }
 
@@ -349,4 +606,92 @@ func decodeCursor(cursor string) int {
 		return 0
 	}
 	return value["offset"]
+}
+
+func jobMatchesWorker(job JobRecord, worker WorkerRecord) bool {
+	capabilities := stringSetFromJSON(worker.Capabilities)
+	for _, capability := range jobRequiredCapabilities(job) {
+		if !capabilities[capability] {
+			return false
+		}
+	}
+	versions := stringSetFromJSON(worker.SupportedContractVersions)
+	for _, version := range jobContractVersions(job) {
+		if !versions[version] {
+			return false
+		}
+	}
+	return true
+}
+
+func jobRequiredCapabilities(job JobRecord) []string {
+	var raw map[string]any
+	if err := json.Unmarshal(job.InputJSON, &raw); err != nil {
+		return nil
+	}
+	execution, ok := raw["execution"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	return stringsFromAny(execution["required_capabilities"])
+}
+
+func jobContractVersions(job JobRecord) []string {
+	versions := []string{job.SchemaVersion}
+	var raw map[string]any
+	if err := json.Unmarshal(job.InputJSON, &raw); err != nil {
+		return versions
+	}
+	if payload, ok := raw["payload"].(map[string]any); ok {
+		if schemaVersion, ok := payload["schema_version"].(string); ok && strings.TrimSpace(schemaVersion) != "" {
+			versions = append(versions, strings.TrimSpace(schemaVersion))
+		}
+	}
+	return versions
+}
+
+func stringSetFromJSON(raw json.RawMessage) map[string]bool {
+	values := map[string]bool{}
+	var items []string
+	if err := json.Unmarshal(raw, &items); err == nil {
+		for _, item := range items {
+			if text := strings.TrimSpace(item); text != "" {
+				values[text] = true
+			}
+		}
+	}
+	return values
+}
+
+func stringsFromAny(value any) []string {
+	items, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+	var result []string
+	for _, item := range items {
+		if text, ok := item.(string); ok && strings.TrimSpace(text) != "" {
+			result = append(result, strings.TrimSpace(text))
+		}
+	}
+	return result
+}
+
+func modelRunIDFromRaw(raw json.RawMessage) string {
+	modelRunID, _, _, _, _, _ := modelRunFieldsFromRaw(raw)
+	return modelRunID
+}
+
+func modelRunFieldsFromRaw(raw json.RawMessage) (modelRunID, jobID, modelKey, modelVersion, parameterSetID string, err error) {
+	var value map[string]any
+	if err = json.Unmarshal(raw, &value); err != nil {
+		return "", "", "", "", "", err
+	}
+	metadata, _ := value["metadata"].(map[string]any)
+	return stringValue(value, "model_run_id"),
+		stringValue(value, "job_id"),
+		stringValue(value, "model_key"),
+		stringValue(value, "model_version"),
+		stringValue(metadata, "parameter_set_id"),
+		nil
 }

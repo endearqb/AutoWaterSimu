@@ -58,6 +58,79 @@
         }
       }
     },
+    "/api/v1/simulation-checks": {
+      "post": {
+        "operationId": "createSimulationCheck",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulationRequest" } } }
+        },
+        "responses": {
+          "202": { "description": "Queued simulation check job", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "200": { "description": "Duplicate simulation request idempotency key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/process-graphs": {
+      "post": {
+        "operationId": "registerProcessGraph",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProcessGraph" } } }
+        },
+        "responses": {
+          "201": { "description": "Registered process graph", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProcessGraphRecord" } } } },
+          "200": { "description": "Duplicate process graph with matching payload", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProcessGraphRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/process-graphs/{process_graph_id}": {
+      "get": {
+        "operationId": "getProcessGraph",
+        "parameters": [
+          { "$ref": "#/components/parameters/ProcessGraphID" },
+          { "name": "version", "in": "query", "required": false, "schema": { "type": "integer", "default": 1, "minimum": 1 } }
+        ],
+        "responses": {
+          "200": { "description": "Process graph record", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProcessGraphRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/simulation-inputs": {
+      "post": {
+        "operationId": "registerSimulationInput",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulationInput" } } }
+        },
+        "responses": {
+          "201": { "description": "Registered simulation input", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulationInputRecord" } } } },
+          "200": { "description": "Duplicate simulation input with matching payload", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulationInputRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/simulation-inputs/{simulation_input_id}": {
+      "get": {
+        "operationId": "getSimulationInput",
+        "parameters": [{ "$ref": "#/components/parameters/SimulationInputID" }],
+        "responses": {
+          "200": { "description": "Simulation input record", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulationInputRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/compute/jobs/{job_id}": {
       "get": {
         "operationId": "getComputeJob",
@@ -92,12 +165,135 @@
         "responses": { "200": { "description": "Events", "content": { "application/json": { "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/EventRecord" } } } } } } } }
       }
     },
+    "/api/v1/compute/jobs/{job_id}/evidence": {
+      "get": {
+        "operationId": "getComputeJobEvidence",
+        "parameters": [{ "$ref": "#/components/parameters/JobID" }],
+        "responses": {
+          "200": {
+            "description": "Evidence package",
+            "headers": { "X-Evidence-Checksum": { "schema": { "type": "string" } } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EvidencePackage" } } }
+          },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/artifacts/{artifact_id}": {
       "get": {
         "operationId": "downloadArtifact",
         "parameters": [{ "name": "artifact_id", "in": "path", "required": true, "schema": { "type": "string" } }],
         "responses": {
           "200": { "description": "Artifact bytes", "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } } },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/contracts/validate": {
+      "post": {
+        "operationId": "validateContract",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Validation result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContractValidationResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/contracts/confirm-draft": {
+      "post": {
+        "operationId": "confirmDraft",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Draft confirmation validation and persisted audit record", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContractValidationResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/contracts/confirmations/{confirmation_id}": {
+      "get": {
+        "operationId": "getDraftConfirmation",
+        "parameters": [{ "$ref": "#/components/parameters/ConfirmationID" }],
+        "responses": {
+          "200": { "description": "Draft confirmation audit record", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DraftConfirmationRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/contracts/confirmations/{confirmation_id}/promote-simulation-check": {
+      "post": {
+        "operationId": "promoteDraftConfirmationToSimulationCheck",
+        "parameters": [{ "$ref": "#/components/parameters/ConfirmationID" }],
+        "responses": {
+          "202": { "description": "Queued promoted simulation check job", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "200": { "description": "Duplicate promoted simulation check idempotency key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/model-catalog": {
+      "get": {
+        "operationId": "listModelCatalog",
+        "responses": {
+          "200": { "description": "Model catalog", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelCatalog" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "post": {
+        "operationId": "registerModelCatalog",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelCatalog" } } } },
+        "responses": {
+          "201": { "description": "Registered model catalog snapshot", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelCatalogRecord" } } } },
+          "200": { "description": "Duplicate model catalog snapshot", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelCatalogRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/model-catalog/{model_key}": {
+      "get": {
+        "operationId": "getModelCatalogModel",
+        "parameters": [{ "$ref": "#/components/parameters/ModelKey" }],
+        "responses": {
+          "200": { "description": "Model catalog entry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelCatalogModel" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/model-runs": {
+      "get": {
+        "operationId": "listModelRuns",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "job_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "model_key", "in": "query", "schema": { "type": "string" } },
+          { "name": "model_version", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Model runs", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListModelRunsResponse" } } } }
+        }
+      }
+    },
+    "/api/v1/model-runs/{model_run_id}": {
+      "get": {
+        "operationId": "getModelRun",
+        "parameters": [{ "$ref": "#/components/parameters/ModelRunID" }],
+        "responses": {
+          "200": { "description": "Model run", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelRun" } } } },
           "404": { "$ref": "#/components/responses/ContractError" }
         }
       }
@@ -153,6 +349,11 @@
     "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer" } },
     "parameters": {
       "JobID": { "name": "job_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ModelKey": { "name": "model_key", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ModelRunID": { "name": "model_run_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ProcessGraphID": { "name": "process_graph_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "SimulationInputID": { "name": "simulation_input_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ConfirmationID": { "name": "confirmation_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "WorkerID": { "name": "worker_id", "in": "path", "required": true, "schema": { "type": "string" } }
     },
     "responses": {
@@ -160,6 +361,70 @@
     },
     "schemas": {
       "ComputeJob": { "type": "object", "additionalProperties": true },
+      "SimulationInput": { "type": "object", "additionalProperties": true },
+      "SimulationRequest": {
+        "type": "object",
+        "required": ["schema_version", "request_id", "source_system", "requested_by", "job_type", "input_ref"],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["simulation_request.v1"] },
+          "request_id": { "type": "string" },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "job_type": { "type": "string", "enum": ["simulation.material_balance.v1"] },
+          "input_ref": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "process_graph_id": { "type": "string" },
+              "process_graph_version": { "type": "integer" },
+              "simulation_input_id": { "type": "string" },
+              "model_run_id": { "type": "string" },
+              "simulation_input": { "type": "object", "additionalProperties": true }
+            }
+          },
+          "external_refs": { "type": "object", "additionalProperties": true },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      },
+      "ProcessGraph": { "type": "object", "additionalProperties": true },
+      "ProcessGraphRecord": {
+        "type": "object",
+        "required": ["process_graph_id", "schema_version", "version", "source_canvas_graph_id", "payload_hash", "payload", "source_system", "requested_by", "created_at"],
+        "properties": {
+          "process_graph_id": { "type": "string" },
+          "schema_version": { "type": "string", "enum": ["process_graph.v1"] },
+          "version": { "type": "integer" },
+          "source_canvas_graph_id": { "type": "string" },
+          "payload_hash": { "type": "string" },
+          "payload": { "$ref": "#/components/schemas/ProcessGraph" },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SimulationInputRecord": {
+        "type": "object",
+        "required": ["simulation_input_id", "schema_version", "job_type", "process_graph_id", "process_graph_version", "payload_hash", "payload", "source_system", "requested_by", "created_at"],
+        "properties": {
+          "simulation_input_id": { "type": "string" },
+          "schema_version": { "type": "string", "enum": ["simulation_input.v1"] },
+          "job_type": { "type": "string" },
+          "process_graph_id": { "type": "string" },
+          "process_graph_version": { "type": "integer" },
+          "payload_hash": { "type": "string" },
+          "payload": { "$ref": "#/components/schemas/SimulationInput" },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
       "ContractError": {
         "type": "object",
         "required": ["schema_version", "error_code", "message", "retryable"],
@@ -169,6 +434,62 @@
           "message": { "type": "string" },
           "retryable": { "type": "boolean" },
           "details": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ContractValidationIssue": {
+        "type": "object",
+        "required": ["path", "message"],
+        "properties": {
+          "path": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      },
+      "ContractValidationResponse": {
+        "type": "object",
+        "required": ["schema_version", "valid", "errors", "warnings"],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["contract_validation.v1"] },
+          "document_schema_version": { "type": "string" },
+          "contract_schema": { "type": "string" },
+          "valid": { "type": "boolean" },
+          "errors": { "type": "array", "items": { "$ref": "#/components/schemas/ContractValidationIssue" } },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "confirmation_record": { "$ref": "#/components/schemas/DraftConfirmationRecord" }
+        }
+      },
+      "DraftConfirmationRecord": {
+        "type": "object",
+        "required": [
+          "confirmation_id",
+          "schema_version",
+          "draft_schema_version",
+          "draft_id",
+          "decision",
+          "confirmed_by",
+          "confirmed_at",
+          "payload_hash",
+          "payload",
+          "source_system",
+          "requested_by",
+          "created_at"
+        ],
+        "properties": {
+          "confirmation_id": { "type": "string" },
+          "schema_version": { "type": "string", "enum": ["draft_confirmation.v1"] },
+          "draft_schema_version": { "type": "string" },
+          "draft_id": { "type": "string" },
+          "decision": { "type": "string", "enum": ["approved", "rejected", "changes_requested"] },
+          "decision_reason": { "type": "string" },
+          "confirmed_by": { "type": "string" },
+          "confirmed_at": { "type": "string", "format": "date-time" },
+          "payload_hash": { "type": "string" },
+          "payload": { "type": "object", "additionalProperties": true },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" }
         }
       },
       "JobRecord": {
@@ -194,10 +515,110 @@
           "job_id": { "type": "string" },
           "object_key": { "type": "string" },
           "checksum": { "type": "string" },
+          "retention_policy": { "type": "string", "enum": ["retain_forever", "ttl", "archive_candidate"] },
+          "retain_until": { "type": "string", "format": "date-time" },
           "content_type": { "type": "string" }
         }
       },
       "EventRecord": { "type": "object", "additionalProperties": true },
+      "ModelCatalog": {
+        "type": "object",
+        "required": ["schema_version", "generated_at", "models"],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["model_catalog.v1"] },
+          "generated_at": { "type": "string", "format": "date-time" },
+          "models": { "type": "array", "items": { "$ref": "#/components/schemas/ModelCatalogModel" } },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ModelCatalogRecord": {
+        "type": "object",
+        "required": ["catalog_id", "schema_version", "generated_at", "payload_hash", "payload", "source_system", "requested_by", "created_at"],
+        "properties": {
+          "catalog_id": { "type": "string" },
+          "schema_version": { "type": "string", "enum": ["model_catalog.v1"] },
+          "generated_at": { "type": "string", "format": "date-time" },
+          "payload_hash": { "type": "string" },
+          "payload": { "$ref": "#/components/schemas/ModelCatalog" },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ModelCatalogModel": {
+        "type": "object",
+        "required": ["model_key", "display_name", "supported_job_types", "versions"],
+        "properties": {
+          "model_key": { "type": "string" },
+          "display_name": { "type": "string" },
+          "description": { "type": "string" },
+          "supported_job_types": { "type": "array", "items": { "type": "string" } },
+          "versions": { "type": "array", "items": { "$ref": "#/components/schemas/ModelCatalogVersion" } },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ModelCatalogVersion": {
+        "type": "object",
+        "required": ["model_version", "status", "runtime", "parameter_templates", "benchmark_cases"],
+        "properties": {
+          "model_version": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "deprecated", "archived"] },
+          "runtime": { "type": "string" },
+          "released_at": { "type": "string", "format": "date-time" },
+          "parameter_templates": { "type": "array", "items": { "$ref": "#/components/schemas/ModelParameterTemplate" } },
+          "benchmark_cases": { "type": "array", "items": { "$ref": "#/components/schemas/ModelBenchmarkCase" } },
+          "default_parameter_set": { "$ref": "#/components/schemas/ModelParameterSet" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ModelBenchmarkCase": {
+        "type": "object",
+        "required": ["benchmark_case_id", "display_name", "job_type", "input_ref", "expected_metrics", "tolerance", "status"],
+        "properties": {
+          "benchmark_case_id": { "type": "string" },
+          "display_name": { "type": "string" },
+          "description": { "type": "string" },
+          "job_type": { "type": "string" },
+          "input_ref": { "type": "object", "additionalProperties": true },
+          "expected_metrics": { "type": "object", "additionalProperties": true },
+          "tolerance": { "type": "object", "additionalProperties": true },
+          "status": { "type": "string", "enum": ["draft", "validated", "retired"] },
+          "source": { "type": "string" },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ModelParameterTemplate": {
+        "type": "object",
+        "required": ["parameter_key", "display_name", "value_type", "required"],
+        "properties": {
+          "parameter_key": { "type": "string" },
+          "display_name": { "type": "string" },
+          "unit": { "type": "string" },
+          "value_type": { "type": "string", "enum": ["number", "integer", "string", "boolean", "object", "array"] },
+          "required": { "type": "boolean" },
+          "default_value": {},
+          "min_value": { "type": "number" },
+          "max_value": { "type": "number" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ModelParameterSet": {
+        "type": "object",
+        "required": ["parameter_set_id", "status", "parameter_hash"],
+        "properties": {
+          "parameter_set_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["draft", "candidate", "validated", "approved", "retired"] },
+          "parameter_hash": { "type": "string" },
+          "parameters": { "type": "object", "additionalProperties": true },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ModelRun": { "type": "object", "additionalProperties": true },
+      "EvidencePackage": { "type": "object", "additionalProperties": true },
       "JobSnapshot": {
         "type": "object",
         "required": ["job", "artifacts", "event_count"],
@@ -212,6 +633,15 @@
         "required": ["items", "total_estimate"],
         "properties": {
           "items": { "type": "array", "items": { "$ref": "#/components/schemas/JobSnapshot" } },
+          "next_cursor": { "type": "string" },
+          "total_estimate": { "type": "integer" }
+        }
+      },
+      "ListModelRunsResponse": {
+        "type": "object",
+        "required": ["items", "total_estimate"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ModelRun" } },
           "next_cursor": { "type": "string" },
           "total_estimate": { "type": "integer" }
         }

@@ -1,0 +1,13 @@
+{
+  "schema_version": "artifact.v1",
+  "artifact_id": "art_invalid_retention",
+  "job_id": "job_material_balance_minimal",
+  "artifact_type": "time_series_json",
+  "storage_provider": "local_fs",
+  "object_key": "jobs/job_material_balance_minimal/time_series.json",
+  "content_type": "application/json",
+  "size_bytes": 128,
+  "checksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "created_at": "2026-05-25T00:00:00Z",
+  "retention_policy": "delete_now"
+}

@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, DownloadArtifactData, DownloadArtifactResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -16,7 +16,7 @@ export class DefaultService {
             url: '/healthz'
         });
     }
-    
+
     /**
      * @returns unknown Ready
      * @throws ApiError
@@ -27,7 +27,7 @@ export class DefaultService {
             url: '/readyz'
         });
     }
-    
+
     /**
      * @returns unknown Prometheus metrics
      * @throws ApiError
@@ -38,7 +38,7 @@ export class DefaultService {
             url: '/metrics'
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.requestBody
@@ -62,7 +62,7 @@ export class DefaultService {
             }
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.limit
@@ -88,7 +88,114 @@ export class DefaultService {
             }
         });
     }
-    
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns JobSnapshot Duplicate simulation request idempotency key
+     * @returns JobSnapshot Queued simulation check job
+     * @throws ApiError
+     */
+    public static createSimulationCheck(data: CreateSimulationCheckData): CancelablePromise<CreateSimulationCheckResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/simulation-checks',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ProcessGraphRecord Duplicate process graph with matching payload
+     * @returns ProcessGraphRecord Registered process graph
+     * @throws ApiError
+     */
+    public static registerProcessGraph(data: RegisterProcessGraphData): CancelablePromise<RegisterProcessGraphResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/process-graphs',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.processGraphId
+     * @param data.version
+     * @returns ProcessGraphRecord Process graph record
+     * @throws ApiError
+     */
+    public static getProcessGraph(data: GetProcessGraphData): CancelablePromise<GetProcessGraphResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/process-graphs/{process_graph_id}',
+            path: {
+                process_graph_id: data.processGraphId
+            },
+            query: {
+                version: data.version
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns SimulationInputRecord Duplicate simulation input with matching payload
+     * @returns SimulationInputRecord Registered simulation input
+     * @throws ApiError
+     */
+    public static registerSimulationInput(data: RegisterSimulationInputData): CancelablePromise<RegisterSimulationInputResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/simulation-inputs',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.simulationInputId
+     * @returns SimulationInputRecord Simulation input record
+     * @throws ApiError
+     */
+    public static getSimulationInput(data: GetSimulationInputData): CancelablePromise<GetSimulationInputResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/simulation-inputs/{simulation_input_id}',
+            path: {
+                simulation_input_id: data.simulationInputId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
     /**
      * @param data The data for the request.
      * @param data.jobId
@@ -107,7 +214,7 @@ export class DefaultService {
             }
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.jobId
@@ -126,7 +233,7 @@ export class DefaultService {
             }
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.jobId
@@ -142,7 +249,7 @@ export class DefaultService {
             }
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.jobId
@@ -158,7 +265,27 @@ export class DefaultService {
             }
         });
     }
-    
+
+    /**
+     * @param data The data for the request.
+     * @param data.jobId
+     * @returns EvidencePackage Evidence package
+     * @throws ApiError
+     */
+    public static getComputeJobEvidence(data: GetComputeJobEvidenceData): CancelablePromise<GetComputeJobEvidenceResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/compute/jobs/{job_id}/evidence',
+            path: {
+                job_id: data.jobId
+            },
+            errors: {
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
     /**
      * @param data The data for the request.
      * @param data.artifactId
@@ -177,7 +304,185 @@ export class DefaultService {
             }
         });
     }
-    
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ContractValidationResponse Validation result
+     * @throws ApiError
+     */
+    public static validateContract(data: ValidateContractData): CancelablePromise<ValidateContractResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/contracts/validate',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ContractValidationResponse Draft confirmation validation and persisted audit record
+     * @throws ApiError
+     */
+    public static confirmDraft(data: ConfirmDraftData): CancelablePromise<ConfirmDraftResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/contracts/confirm-draft',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.confirmationId
+     * @returns DraftConfirmationRecord Draft confirmation audit record
+     * @throws ApiError
+     */
+    public static getDraftConfirmation(data: GetDraftConfirmationData): CancelablePromise<GetDraftConfirmationResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/contracts/confirmations/{confirmation_id}',
+            path: {
+                confirmation_id: data.confirmationId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.confirmationId
+     * @returns JobSnapshot Duplicate promoted simulation check idempotency key
+     * @returns JobSnapshot Queued promoted simulation check job
+     * @throws ApiError
+     */
+    public static promoteDraftConfirmationToSimulationCheck(data: PromoteDraftConfirmationToSimulationCheckData): CancelablePromise<PromoteDraftConfirmationToSimulationCheckResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/contracts/confirmations/{confirmation_id}/promote-simulation-check',
+            path: {
+                confirmation_id: data.confirmationId
+            },
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @returns ModelCatalog Model catalog
+     * @throws ApiError
+     */
+    public static listModelCatalog(): CancelablePromise<ListModelCatalogResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/model-catalog',
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ModelCatalogRecord Duplicate model catalog snapshot
+     * @returns ModelCatalogRecord Registered model catalog snapshot
+     * @throws ApiError
+     */
+    public static registerModelCatalog(data: RegisterModelCatalogData): CancelablePromise<RegisterModelCatalogResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/model-catalog',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelKey
+     * @returns ModelCatalogModel Model catalog entry
+     * @throws ApiError
+     */
+    public static getModelCatalogModel(data: GetModelCatalogModelData): CancelablePromise<GetModelCatalogModelResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/model-catalog/{model_key}',
+            path: {
+                model_key: data.modelKey
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.limit
+     * @param data.cursor
+     * @param data.jobId
+     * @param data.modelKey
+     * @param data.modelVersion
+     * @returns ListModelRunsResponse Model runs
+     * @throws ApiError
+     */
+    public static listModelRuns(data: ListModelRunsData = {}): CancelablePromise<ListModelRunsResponse2> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/model-runs',
+            query: {
+                limit: data.limit,
+                cursor: data.cursor,
+                job_id: data.jobId,
+                model_key: data.modelKey,
+                model_version: data.modelVersion
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelRunId
+     * @returns ModelRun Model run
+     * @throws ApiError
+     */
+    public static getModelRun(data: GetModelRunData): CancelablePromise<GetModelRunResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/model-runs/{model_run_id}',
+            path: {
+                model_run_id: data.modelRunId
+            },
+            errors: {
+                404: 'Contract error'
+            }
+        });
+    }
+
     /**
      * @param data The data for the request.
      * @param data.requestBody
@@ -192,7 +497,7 @@ export class DefaultService {
             mediaType: 'application/json'
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.workerId
@@ -208,7 +513,7 @@ export class DefaultService {
             }
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.workerId
@@ -227,7 +532,7 @@ export class DefaultService {
             mediaType: 'application/json'
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.workerId
@@ -248,7 +553,7 @@ export class DefaultService {
             mediaType: 'multipart/form-data'
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.workerId
@@ -269,7 +574,7 @@ export class DefaultService {
             mediaType: 'application/json'
         });
     }
-    
+
     /**
      * @param data The data for the request.
      * @param data.workerId
@@ -290,5 +595,5 @@ export class DefaultService {
             mediaType: 'application/json'
         });
     }
-    
+
 }

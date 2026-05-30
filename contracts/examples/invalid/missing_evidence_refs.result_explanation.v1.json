@@ -1,0 +1,12 @@
+{
+  "schema_version": "result_explanation.v1",
+  "explanation_id": "explanation_missing_evidence_refs",
+  "job_id": "job_material_balance_minimal",
+  "created_by": "agent:test",
+  "summary": "This explanation has no evidence refs.",
+  "statements": [
+    {
+      "statement": "This statement also lacks required evidence refs."
+    }
+  ]
+}

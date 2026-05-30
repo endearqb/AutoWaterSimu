@@ -1,0 +1,11 @@
+{
+  "schema_version": "model_catalog.v1",
+  "generated_at": "2026-05-30T00:00:00Z",
+  "models": [
+    {
+      "display_name": "Material Balance",
+      "supported_job_types": ["simulation.material_balance.v1"],
+      "versions": []
+    }
+  ]
+}

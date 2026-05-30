@@ -104,7 +104,7 @@
   - `src/components/Flow/`：流程图编辑器与相关 UI
   - `src/routes/`：页面路由（含物料平衡页面、模型配置页面等）
 - `docs/`：项目使用与开发文档
-- `scripts/`：辅助脚本（构建、测试、数据库初始化等）
+- `backend/scripts/`：后端辅助脚本（测试、lint、format、数据库初始化、prestart 等）
 - 其他：
   - `docker-compose*.yml`：各种部署/开发用 Docker Compose 配置
   - `deployment.md`：部署说明

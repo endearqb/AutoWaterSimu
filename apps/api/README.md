@@ -8,8 +8,18 @@
 
 - compute job lifecycle。
 - worker register / claim / heartbeat / succeed / fail。
-- artifact metadata。
-- model run and evidence query。
+- artifact metadata, including retention policy fields。
+- model catalog snapshot registration/read query and model run persistence/list/search/read query。
+- benchmark case metadata for model governance smoke。
+- process graph registry and ProcessGraph-to-SimulationInput resolution for simulation checks。
+- simulation input registry for reference-based simulation checks。
+- evidence package export。
+- simulation check job creation from `simulation_request.v1`。
+- risk findings in result summary for NewSystem/milp read integration。
+- evidence governance summary for model/parameter production-readiness review。
+- contract / Agent draft / constraint draft / draft confirmation / result explanation validation for existing schema files。
+- persistent draft confirmation audit records, while still preventing confirm-draft from creating jobs or production actions。
+- explicit approved Agent draft promotion to simulation-check jobs when the embedded proposed request is already schema-valid。
 - OpenAPI for platform and generated client。
 
 本目录不负责：
@@ -36,8 +46,20 @@ Phase 4A 使用单个 `internal/compute` package 收敛 skeleton，后续领域�
 2. list API 必须支持稳定 cursor pagination。
 3. create job 必须支持 idempotency。
 4. OpenAPI client 生成到 `frontend/src/client/compute`。
-5. P0 auth 使用静态 Bearer token + scope，不实现完整 RBAC。
+5. P0 auth 使用静态 Bearer token + scope，并支持配置级 `revoked` token 拒绝；不实现完整 RBAC 或动态 token 管理 API。
 6. Go API 不执行 Python 科学计算，只编排 worker lifecycle。
+7. `COMPUTE_API_DATABASE_URL` 未配置时，`cmd/compute-api` 只为本地开发使用非持久 in-memory metadata store；正式 Web/Platform 路径必须配置 PostgreSQL。
+8. HTTP routes 允许本地开发 loopback 来源（`localhost`、`127.0.0.1`、`::1`）跨端口 CORS/OPTIONS，用于 Vite Web UI smoke；非本地来源不应被放行；浏览器客户端需要读取 artifact/evidence 校验时只暴露 `X-Artifact-Checksum` 和 `X-Evidence-Checksum`。
+9. `compute_result.runtime_audit.model_runs` 中的 `model_run.v1` 会持久化到 metadata store，并通过只读 model run endpoint 按 id 或 `job_id` / `model_key` / `model_version` 查询。
+10. Evidence package P0 export 基于 job metadata、events、artifact refs 和 model_run refs 生成 `evidence_package.v1`，不内联大 artifact 内容。
+11. `POST /api/v1/contracts/validate` 只校验已有 `contracts/` schema（当前包括 `simulation_request.v1`、`agent_scenario_draft.v1`、`constraint_draft.v1`、`draft_confirmation.v1`、`result_explanation.v1`、`model_catalog.v1` 等）；未知 future schema 必须返回 invalid，不得伪造支持。`POST /api/v1/contracts/confirm-draft` 会校验确认记录和嵌入草案，并持久化确认审计记录；它仍不创建 job、不执行审批或生产动作。`GET /api/v1/contracts/confirmations/{confirmation_id}` 用于只读审计查询。`POST /api/v1/contracts/confirmations/{confirmation_id}/promote-simulation-check` 只对 approved `agent_scenario_draft.v1` 生效，且只在嵌入 `proposed_request` 本身是完整 `simulation_request.v1` 时创建 simulation check job。
+12. `POST /api/v1/model-catalog` 可登记 schema-valid `model_catalog.v1` 快照，使用 `catalog_id`（默认 `default`）+ payload hash 幂等；`GET /api/v1/model-catalog` / `GET /api/v1/model-catalog/{model_key}` 优先读取最新持久化 `default` catalog，未登记时回退到 built-in material_balance P0 catalog。参数集状态迁移、benchmark run history 和生产审批 enforcement 仍是 Phase 6 后续。
+13. Artifact retention P0 仅记录 `retention_policy` 和可选 `retain_until`；当前不自动删除 artifact，也不绕过 evidence/model_run 引用检查。
+14. `compute_result.v1.risk_findings` 如由 worker 返回，会同步进入 stored result summary，便于 `GET /api/v1/compute/jobs/{job_id}/result` 和 NewSystem/milp 只读集成查看；当前不做风险审批或生产发布动作。
+15. Evidence package 会基于最新持久化 model catalog（无持久化时回退 built-in catalog）和 persisted model runs 生成 `governance.production_allowed` 与 model version refs；该判断只用于 evidence/read 集成，不阻止 job 创建，也不执行生产审批。
+16. `POST /api/v1/process-graphs` 可登记 schema-valid `process_graph.v1`，并按 `(process_graph_id, version)` + payload hash 做幂等；`GET /api/v1/process-graphs/{process_graph_id}?version=1` 返回登记记录和原始 payload。省略 `version` 时默认读取 version 1。
+17. `POST /api/v1/simulation-inputs` 可登记 schema-valid `simulation_input.v1`，并按 `simulation_input_id` + payload hash 做幂等；`GET /api/v1/simulation-inputs/{simulation_input_id}` 返回登记记录和原始 payload。
+18. `POST /api/v1/simulation-checks` 将 `simulation_request.v1` 转换为 `compute_job.v1` 并入队；当前支持 `input_ref.simulation_input` 内嵌 payload、先登记后通过 `input_ref.simulation_input_id` 引用，先登记 `process_graph.v1` 后通过 `input_ref.process_graph_id` / `process_graph_version` 解析为 `simulation_input.v1`，以及通过已持久化 `input_ref.model_run_id` 找回源 job 的原始 `simulation_input.v1` payload 进行保守 replay。
 
 ## 4. 对外接口
 
@@ -68,7 +90,7 @@ cd frontend; npm run generate-compute-client
 cd frontend; npx tsc --noEmit
 ```
 
-PostgreSQL integration tests 仅在 `COMPUTE_API_DATABASE_URL` 存在时运行；未配置时会 skip。
+PostgreSQL integration tests 仅在 `COMPUTE_API_DATABASE_URL` 存在时运行；未配置时会 skip。Down migration rollback smoke 会删除 metadata tables，必须额外设置 `COMPUTE_API_MIGRATION_DOWN_SMOKE=true`，且只允许指向临时测试数据库。
 
 ## 7. AI 操作提示
 

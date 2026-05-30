@@ -24,6 +24,27 @@ func testService(t *testing.T) *Service {
 	return NewService(NewMemoryStore(), artifactStore, nil)
 }
 
+func testValidatedService(t *testing.T) *Service {
+	t.Helper()
+	artifactStore, err := NewLocalArtifactStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	validator, err := NewContractValidator(repoRootForTest(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return NewService(NewMemoryStore(), artifactStore, validator)
+}
+
+func compatibleWorkerRegistration(workerID string) map[string]any {
+	return map[string]any{
+		"worker_id":                   workerID,
+		"capabilities":                []any{"material_balance", "ode"},
+		"supported_contract_versions": []any{"compute_job.v1", "simulation_input.v1"},
+	}
+}
+
 func fixtureJobBytes(t *testing.T) []byte {
 	t.Helper()
 	path := filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_minimal.compute_job.v1.json")
@@ -93,6 +114,9 @@ func TestCreateJobIdempotencyDuplicateAndConflict(t *testing.T) {
 	if status != http.StatusAccepted || created.Job.Status != StatusQueued {
 		t.Fatalf("unexpected create result: %d %#v", status, created.Job)
 	}
+	if created.Artifacts == nil {
+		t.Fatalf("empty artifact list must be encoded as an array, not null")
+	}
 
 	duplicate := decodeMap(t, fixtureJobBytes(t))
 	duplicate["job_id"] = "job_duplicate_request"
@@ -119,7 +143,7 @@ func TestWorkerLifecycleArtifactSucceedAndDownload(t *testing.T) {
 	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
 		t.Fatal(err)
 	}
-	worker, err := svc.RegisterWorker(ctx, map[string]any{"worker_id": "worker_1", "capabilities": []any{"material_balance"}, "supported_contract_versions": []any{"compute_job.v1"}})
+	worker, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_1"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,6 +174,8 @@ func TestWorkerLifecycleArtifactSucceedAndDownload(t *testing.T) {
 		"size_bytes":       len(artifactBytes),
 		"checksum":         "sha256:" + SHA256Hex(artifactBytes),
 		"created_at":       time.Now().UTC().Format(time.RFC3339),
+		"retention_policy": "ttl",
+		"retain_until":     "2026-06-01T00:00:00Z",
 	}
 	tempFile, err := os.CreateTemp(t.TempDir(), "artifact-*.json")
 	if err != nil {
@@ -168,6 +194,9 @@ func TestWorkerLifecycleArtifactSucceedAndDownload(t *testing.T) {
 	_ = tempFile.Close()
 	if record.ObjectKey != "jobs/job_material_balance_minimal/art_time_series.json" {
 		t.Fatalf("server must generate object_key, got %s", record.ObjectKey)
+	}
+	if record.RetentionPolicy != "ttl" || record.RetainUntil == nil {
+		t.Fatalf("expected artifact retention metadata, got %#v", record)
 	}
 	result := map[string]any{
 		"schema_version": "compute_result.v1",
@@ -196,13 +225,66 @@ func TestWorkerLifecycleArtifactSucceedAndDownload(t *testing.T) {
 	}
 }
 
+func TestWorkerClaimSkipsCapabilityMismatch(t *testing.T) {
+	svc := testService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	worker, err := svc.RegisterWorker(ctx, map[string]any{
+		"worker_id":                   "worker_weak",
+		"capabilities":                []any{"material_balance"},
+		"supported_contract_versions": []any{"compute_job.v1", "simulation_input.v1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim, err := svc.Claim(ctx, worker.WorkerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if claim["job"] != nil {
+		t.Fatalf("capability-mismatched worker should not claim job: %#v", claim)
+	}
+	job, err := svc.GetJob(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Job.Status != StatusQueued {
+		t.Fatalf("incompatible claim should leave job queued, got %s", job.Job.Status)
+	}
+}
+
+func TestWorkerClaimSkipsContractVersionMismatch(t *testing.T) {
+	svc := testService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	worker, err := svc.RegisterWorker(ctx, map[string]any{
+		"worker_id":                   "worker_old",
+		"capabilities":                []any{"material_balance", "ode"},
+		"supported_contract_versions": []any{"compute_job.v1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim, err := svc.Claim(ctx, worker.WorkerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if claim["job"] != nil {
+		t.Fatalf("contract-version-mismatched worker should not claim job: %#v", claim)
+	}
+}
+
 func TestCancelRejectsLateResult(t *testing.T) {
 	svc := testService(t)
 	ctx := context.Background()
 	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := svc.RegisterWorker(ctx, map[string]any{"worker_id": "worker_1"}); err != nil {
+	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_1")); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.Claim(ctx, "worker_1"); err != nil {
@@ -224,13 +306,189 @@ func TestCancelRejectsLateResult(t *testing.T) {
 	}
 }
 
+func TestValidatedWorkerFailPersistsTerminalResult(t *testing.T) {
+	svc := testValidatedService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_1")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Claim(ctx, "worker_1"); err != nil {
+		t.Fatal(err)
+	}
+	failed, err := svc.Fail(ctx, "worker_1", "job_material_balance_minimal", 1, "WORKER_FAILED", "solver failed")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failed.Job.Status != StatusFailed || failed.Job.ErrorCode != "WORKER_FAILED" || failed.Job.ErrorMessage != "solver failed" {
+		t.Fatalf("expected persisted worker failure, got %#v", failed.Job)
+	}
+}
+
+func TestValidatedCompletePersistsModelRun(t *testing.T) {
+	svc := testValidatedService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_1")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Claim(ctx, "worker_1"); err != nil {
+		t.Fatal(err)
+	}
+	defaultParameterHash := builtInModelCatalog("2026-05-30T00:00:00Z").Models[0].Versions[0].DefaultParameterSet.ParameterHash
+	modelRun := map[string]any{
+		"schema_version":  "model_run.v1",
+		"model_run_id":    "mr_material_balance_test",
+		"job_id":          "job_material_balance_minimal",
+		"model_key":       "material_balance",
+		"model_version":   "material_balance.v1",
+		"parameter_hash":  defaultParameterHash,
+		"input_hash":      "sha256:" + strings.Repeat("b", 64),
+		"quality_metrics": map[string]any{"convergence_status": "converged"},
+		"warnings":        []any{},
+		"evidence_refs":   []any{},
+	}
+	result := map[string]any{
+		"schema_version": "compute_result.v1",
+		"job_id":         "job_material_balance_minimal",
+		"job_type":       "simulation.material_balance.v1",
+		"status":         StatusSucceeded,
+		"summary":        map[string]any{"converged": true},
+		"data":           map[string]any{},
+		"quality":        map[string]any{"data_quality": "ok", "warnings": []any{}},
+		"artifacts":      []any{},
+		"risk_findings": []any{
+			map[string]any{
+				"risk_code":     "material_balance_smoke_ok",
+				"severity":      "info",
+				"title":         "Material balance smoke run completed",
+				"description":   "The minimal material balance smoke run completed without warnings.",
+				"evidence_refs": []any{"model_run:mr_material_balance_test"},
+			},
+		},
+		"runtime_audit": map[string]any{"model_runs": []any{modelRun}, "timings_ms": map[string]any{}, "fallback_used": false},
+	}
+	completed, err := svc.Complete(ctx, "worker_1", "job_material_balance_minimal", 1, result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if completed.Job.Status != StatusSucceeded {
+		t.Fatalf("expected succeeded job, got %s", completed.Job.Status)
+	}
+	stored, err := svc.GetModelRun(ctx, "mr_material_balance_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(stored, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded["model_run_id"] != "mr_material_balance_test" || decoded["model_key"] != "material_balance" {
+		t.Fatalf("unexpected persisted model run: %#v", decoded)
+	}
+	listed, err := svc.ListModelRuns(ctx, ModelRunFilter{ModelKey: "material_balance", ModelVersion: "material_balance.v1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if listed.TotalEstimate != 1 || len(listed.Items) != 1 {
+		t.Fatalf("expected one listed model run, got %#v", listed)
+	}
+	filtered, err := svc.ListModelRuns(ctx, ModelRunFilter{ModelKey: "asm1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filtered.TotalEstimate != 0 || len(filtered.Items) != 0 {
+		t.Fatalf("unexpected model run filter result: %#v", filtered)
+	}
+	resultView, err := svc.Result(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	modelRuns, ok := resultView["model_runs"].([]any)
+	if !ok || len(modelRuns) != 1 {
+		t.Fatalf("expected result view to include model_runs, got %#v", resultView["model_runs"])
+	}
+	summaryView, ok := resultView["summary"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected result summary object, got %#v", resultView["summary"])
+	}
+	riskFindings, ok := summaryView["risk_findings"].([]any)
+	if !ok || len(riskFindings) != 1 {
+		t.Fatalf("expected result summary to include risk_findings, got %#v", summaryView["risk_findings"])
+	}
+	evidence, checksum, err := svc.EvidencePackage(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if evidence["schema_version"] != "evidence_package.v1" || evidence["job_id"] != "job_material_balance_minimal" {
+		t.Fatalf("unexpected evidence package: %#v", evidence)
+	}
+	if checksum == "" || !strings.HasPrefix(checksum, "sha256:") {
+		t.Fatalf("expected evidence checksum, got %q", checksum)
+	}
+	refs, ok := evidence["model_run_refs"].([]any)
+	if !ok || len(refs) != 1 || refs[0] != "mr_material_balance_test" {
+		t.Fatalf("unexpected model_run_refs: %#v", evidence["model_run_refs"])
+	}
+	governance, ok := evidence["governance"].(map[string]any)
+	if !ok || governance["production_allowed"] != true {
+		t.Fatalf("expected production-allowed governance summary, got %#v", evidence["governance"])
+	}
+	versionRefs, ok := governance["model_version_refs"].([]any)
+	if !ok || len(versionRefs) != 1 {
+		t.Fatalf("expected one governance model version ref, got %#v", governance["model_version_refs"])
+	}
+
+	auth, _ := NewAuthenticator("")
+	server := NewServer(svc, auth, nil).Routes()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/model-runs/mr_material_balance_test", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("model run endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-runs?model_key=material_balance&model_version=material_balance.v1", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("model run list endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var listedResponse map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &listedResponse); err != nil {
+		t.Fatal(err)
+	}
+	if int(listedResponse["total_estimate"].(float64)) != 1 {
+		t.Fatalf("unexpected model run list response: %#v", listedResponse)
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_material_balance_minimal/evidence", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || rec.Header().Get("X-Evidence-Checksum") == "" {
+		t.Fatalf("evidence endpoint failed: %d checksum=%q body=%s", rec.Code, rec.Header().Get("X-Evidence-Checksum"), rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_material_balance_minimal/evidence", nil)
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not read evidence, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestTimeoutSweepAndPagination(t *testing.T) {
 	svc := testService(t)
 	ctx := context.Background()
 	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := svc.RegisterWorker(ctx, map[string]any{"worker_id": "worker_1"}); err != nil {
+	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_1")); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.Claim(ctx, "worker_1"); err != nil {
@@ -250,6 +508,9 @@ func TestTimeoutSweepAndPagination(t *testing.T) {
 	}
 	if listed.TotalEstimate != 1 || len(listed.Items) != 1 {
 		t.Fatalf("unexpected list response: %#v", listed)
+	}
+	if listed.Items[0].Artifacts == nil {
+		t.Fatalf("listed jobs should expose an empty artifact array")
 	}
 }
 
@@ -277,13 +538,681 @@ func TestHTTPAuthScopeAndMetrics(t *testing.T) {
 	}
 }
 
+func TestStaticTokenRevocation(t *testing.T) {
+	auth, err := NewAuthenticator(`{"tokens":[
+		{"name":"active","token":"active-token","scopes":["job:create"]},
+		{"name":"old","token":"old-token","scopes":["job:create"],"revoked":true}
+	]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/compute/jobs", nil)
+	req.Header.Set("Authorization", "Bearer active-token")
+	if principal, err := auth.Principal(req, "job:create"); err != nil || principal.Name != "active" {
+		t.Fatalf("active token should authenticate, principal=%#v err=%v", principal, err)
+	}
+	req.Header.Set("Authorization", "Bearer old-token")
+	if _, err := auth.Principal(req, "job:create"); ToAppError(err).Status != http.StatusUnauthorized {
+		t.Fatalf("revoked token should be rejected as unauthorized, got %#v", err)
+	}
+	if _, err := NewAuthenticator(`{"tokens":[
+		{"name":"one","token":"same-token","scopes":["job:create"]},
+		{"name":"two","token":"same-token","scopes":["job:read"]}
+	]}`); err == nil {
+		t.Fatalf("duplicate token values should be rejected")
+	}
+}
+
+func TestModelCatalogEndpoint(t *testing.T) {
+	svc := testValidatedService(t)
+	auth, err := NewAuthenticator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+
+	catalog, err := svc.ModelCatalog(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if catalog.SchemaVersion != "model_catalog.v1" || len(catalog.Models) != 1 {
+		t.Fatalf("unexpected model catalog: %#v", catalog)
+	}
+	if catalog.Models[0].ModelKey != "material_balance" {
+		t.Fatalf("expected material_balance catalog entry, got %#v", catalog.Models[0])
+	}
+	if catalog.Models[0].Versions[0].DefaultParameterSet == nil ||
+		catalog.Models[0].Versions[0].DefaultParameterSet.Status != "approved" {
+		t.Fatalf("expected approved default parameter set: %#v", catalog.Models[0].Versions[0])
+	}
+	if len(catalog.Models[0].Versions[0].BenchmarkCases) != 1 ||
+		catalog.Models[0].Versions[0].BenchmarkCases[0].Status != "validated" {
+		t.Fatalf("expected validated benchmark case: %#v", catalog.Models[0].Versions[0].BenchmarkCases)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("model catalog endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var response ModelCatalogResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.SchemaVersion != "model_catalog.v1" || len(response.Models) != 1 {
+		t.Fatalf("unexpected model catalog response: %#v", response)
+	}
+
+	catalogBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.model_catalog.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog", bytes.NewReader(catalogBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("model catalog registration failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var record ModelCatalogRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &record); err != nil {
+		t.Fatal(err)
+	}
+	if record.CatalogID != "default" || record.SchemaVersion != "model_catalog.v1" || record.PayloadHash == "" {
+		t.Fatalf("unexpected model catalog record: %#v", record)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog", bytes.NewReader(catalogBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("duplicate model catalog registration should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("persisted model catalog endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.GeneratedAt != "2026-05-30T00:00:00Z" ||
+		response.Models[0].Versions[0].DefaultParameterSet == nil ||
+		response.Models[0].Versions[0].DefaultParameterSet.ParameterHash != "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" {
+		t.Fatalf("expected persisted model catalog response, got %#v", response)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("model catalog by key failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var model ModelCatalogModel
+	if err := json.Unmarshal(rec.Body.Bytes(), &model); err != nil {
+		t.Fatal(err)
+	}
+	if model.ModelKey != "material_balance" {
+		t.Fatalf("unexpected model response: %#v", model)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/asm1", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("missing model should return 404, got %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog", nil)
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not read model catalog, got %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog", bytes.NewReader(catalogBytes))
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not write model catalog, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestContractValidationEndpoint(t *testing.T) {
+	svc := testValidatedService(t)
+	auth, err := NewAuthenticator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+	validBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.simulation_request.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/contracts/validate", bytes.NewReader(validBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("validation endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var validResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &validResponse); err != nil {
+		t.Fatal(err)
+	}
+	if !validResponse.Valid || validResponse.ContractSchema != "simulation_request.v1.json" || len(validResponse.Errors) != 0 {
+		t.Fatalf("unexpected valid contract response: %#v", validResponse)
+	}
+
+	constraintBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.constraint_draft.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/validate", bytes.NewReader(constraintBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("constraint draft validation endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var constraintResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &constraintResponse); err != nil {
+		t.Fatal(err)
+	}
+	if !constraintResponse.Valid || constraintResponse.ContractSchema != "constraint_draft.v1.json" || len(constraintResponse.Errors) != 0 {
+		t.Fatalf("unexpected constraint draft validation response: %#v", constraintResponse)
+	}
+
+	explanationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.result_explanation.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/validate", bytes.NewReader(explanationBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("result explanation validation endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var explanationResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &explanationResponse); err != nil {
+		t.Fatal(err)
+	}
+	if !explanationResponse.Valid || explanationResponse.ContractSchema != "result_explanation.v1.json" || len(explanationResponse.Errors) != 0 {
+		t.Fatalf("unexpected result explanation validation response: %#v", explanationResponse)
+	}
+
+	confirmationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.draft_confirmation.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirm-draft", bytes.NewReader(confirmationBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("draft confirmation endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var confirmationResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &confirmationResponse); err != nil {
+		t.Fatal(err)
+	}
+	if !confirmationResponse.Valid || confirmationResponse.ContractSchema != "draft_confirmation.v1.json" || len(confirmationResponse.Errors) != 0 || len(confirmationResponse.Warnings) == 0 {
+		t.Fatalf("unexpected draft confirmation response: %#v", confirmationResponse)
+	}
+	if confirmationResponse.ConfirmationRecord == nil ||
+		confirmationResponse.ConfirmationRecord.ConfirmationID != "confirm_draft_material_balance_minimal" ||
+		confirmationResponse.ConfirmationRecord.PayloadHash == "" {
+		t.Fatalf("draft confirmation should persist an audit record: %#v", confirmationResponse.ConfirmationRecord)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/contracts/confirmations/confirm_draft_material_balance_minimal", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("draft confirmation read endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var storedConfirmation DraftConfirmationRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &storedConfirmation); err != nil {
+		t.Fatal(err)
+	}
+	if storedConfirmation.ConfirmationID != "confirm_draft_material_balance_minimal" ||
+		storedConfirmation.DraftID != "draft_material_balance_minimal" ||
+		storedConfirmation.PayloadHash != confirmationResponse.ConfirmationRecord.PayloadHash {
+		t.Fatalf("unexpected stored draft confirmation: %#v", storedConfirmation)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirm-draft", bytes.NewReader(confirmationBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("duplicate draft confirmation should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+	var duplicateConfirmation ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &duplicateConfirmation); err != nil {
+		t.Fatal(err)
+	}
+	if !duplicateConfirmation.Valid || duplicateConfirmation.ConfirmationRecord == nil ||
+		duplicateConfirmation.ConfirmationRecord.PayloadHash != confirmationResponse.ConfirmationRecord.PayloadHash {
+		t.Fatalf("unexpected duplicate draft confirmation response: %#v", duplicateConfirmation)
+	}
+
+	promotableConfirmationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_promotable.draft_confirmation.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirm-draft", bytes.NewReader(promotableConfirmationBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("promotable draft confirmation endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirmations/confirm_promote_material_balance_minimal/promote-simulation-check", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("promote confirmed draft failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var promoted JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &promoted); err != nil {
+		t.Fatal(err)
+	}
+	if promoted.Job.JobID != "job_simcheck_sim_req_promoted_material_balance_minimal" ||
+		promoted.Job.RequestID != "sim_req_promoted_material_balance_minimal" ||
+		promoted.Job.Status != StatusQueued {
+		t.Fatalf("unexpected promoted job: %#v", promoted.Job)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirmations/confirm_promote_material_balance_minimal/promote-simulation-check", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("duplicate promotion should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	mismatchedConfirmation := strings.Replace(string(confirmationBytes), `"draft_schema_version": "agent_scenario_draft.v1"`, `"draft_schema_version": "constraint_draft.v1"`, 1)
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirm-draft", strings.NewReader(mismatchedConfirmation))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("mismatched confirmation should return validation response, got %d %s", rec.Code, rec.Body.String())
+	}
+	var mismatchResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &mismatchResponse); err != nil {
+		t.Fatal(err)
+	}
+	if mismatchResponse.Valid || len(mismatchResponse.Errors) == 0 {
+		t.Fatalf("mismatched draft confirmation should be invalid: %#v", mismatchResponse)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/validate", strings.NewReader(`{"schema_version":"simulation_request.v1","request_id":""}`))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("invalid contract should return validation response, got %d %s", rec.Code, rec.Body.String())
+	}
+	var invalidResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &invalidResponse); err != nil {
+		t.Fatal(err)
+	}
+	if invalidResponse.Valid || invalidResponse.ContractSchema != "simulation_request.v1.json" || len(invalidResponse.Errors) == 0 {
+		t.Fatalf("unexpected invalid contract response: %#v", invalidResponse)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/validate", strings.NewReader(`{"schema_version":"future_draft.v1"}`))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("unknown contract should return validation response, got %d %s", rec.Code, rec.Body.String())
+	}
+	var unknownResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &unknownResponse); err != nil {
+		t.Fatal(err)
+	}
+	if unknownResponse.Valid || len(unknownResponse.Errors) == 0 {
+		t.Fatalf("unsupported schema should be invalid: %#v", unknownResponse)
+	}
+
+	modelCatalogBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.model_catalog.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/validate", bytes.NewReader(modelCatalogBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("model catalog validation endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var catalogResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &catalogResponse); err != nil {
+		t.Fatal(err)
+	}
+	if !catalogResponse.Valid || catalogResponse.ContractSchema != "model_catalog.v1.json" {
+		t.Fatalf("unexpected model catalog validation response: %#v", catalogResponse)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/validate", bytes.NewReader(validBytes))
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not validate contracts, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
+	svc := testValidatedService(t)
+	auth, err := NewAuthenticator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+	validBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "milp_material_balance.simulation_request.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(validBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("simulation check create failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var created JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.Job.JobID != "job_simcheck_sim_req_milp_material_balance_minimal" ||
+		created.Job.RequestID != "sim_req_milp_material_balance_minimal" ||
+		created.Job.SourceSystem != "milp" ||
+		created.Job.ProjectID != "project_demo" ||
+		created.Job.Status != StatusQueued {
+		t.Fatalf("unexpected simulation check job: %#v", created.Job)
+	}
+	var jobPayload map[string]any
+	if err := json.Unmarshal(created.Job.InputJSON, &jobPayload); err != nil {
+		t.Fatal(err)
+	}
+	if asRecord := mapValue(jobPayload, "payload"); stringValue(asRecord, "schema_version") != "simulation_input.v1" {
+		t.Fatalf("simulation check job should embed simulation_input payload, got %#v", jobPayload["payload"])
+	}
+	contextValue := mapValue(jobPayload, "context")
+	externalRefs := mapValue(contextValue, "external_refs")
+	if stringValue(externalRefs, "plan_id") != "plan_milp_minimal" {
+		t.Fatalf("expected plan id in job context external_refs, got %#v", externalRefs)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(validBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("duplicate simulation check should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+	var duplicate JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &duplicate); err != nil {
+		t.Fatal(err)
+	}
+	if duplicate.Job.JobID != created.Job.JobID {
+		t.Fatalf("duplicate simulation check returned a different job: %#v", duplicate.Job)
+	}
+
+	referenceOnlyBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.simulation_request.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(referenceOnlyBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "simulation input not found") {
+		t.Fatalf("unregistered reference-only simulation check should be rejected, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	processGraphRequestBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_process_graph.simulation_request.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(processGraphRequestBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "process graph not found") {
+		t.Fatalf("unregistered process_graph simulation check should be rejected, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	processGraphBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_3_node.process_graph.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/process-graphs", bytes.NewReader(processGraphBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("process graph register failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var processGraphRecord ProcessGraphRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &processGraphRecord); err != nil {
+		t.Fatal(err)
+	}
+	if processGraphRecord.ProcessGraphID != "pg_material_balance_minimal" ||
+		processGraphRecord.Version != 1 ||
+		processGraphRecord.PayloadHash == "" ||
+		processGraphRecord.RequestedBy != "dev-public" {
+		t.Fatalf("unexpected process graph record: %#v", processGraphRecord)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/process-graphs", bytes.NewReader(processGraphBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("duplicate process graph register should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/process-graphs/pg_material_balance_minimal?version=1", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("process graph get failed: %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(processGraphRequestBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("registered process_graph simulation check should create a job, got %d %s", rec.Code, rec.Body.String())
+	}
+	var processGraphJob JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &processGraphJob); err != nil {
+		t.Fatal(err)
+	}
+	if processGraphJob.Job.JobID != "job_simcheck_sim_req_process_graph_material_balance_minimal" ||
+		processGraphJob.Job.RequestID != "sim_req_process_graph_material_balance_minimal" {
+		t.Fatalf("unexpected process graph simulation check job: %#v", processGraphJob.Job)
+	}
+	var processGraphPayload map[string]any
+	if err := json.Unmarshal(processGraphJob.Job.InputJSON, &processGraphPayload); err != nil {
+		t.Fatal(err)
+	}
+	generatedPayload := mapValue(processGraphPayload, "payload")
+	if stringValue(generatedPayload, "simulation_input_id") != "si_pg_material_balance_minimal" ||
+		stringValue(generatedPayload, "process_graph_id") != "pg_material_balance_minimal" {
+		t.Fatalf("process graph simulation check should generate simulation_input payload, got %#v", processGraphPayload["payload"])
+	}
+
+	modelRunRequestBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_model_run.simulation_request.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(modelRunRequestBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "model run not found") {
+		t.Fatalf("unregistered model_run simulation check should be rejected, got %d %s", rec.Code, rec.Body.String())
+	}
+	replayModelRun := map[string]any{
+		"schema_version":  "model_run.v1",
+		"model_run_id":    "mr_replay_source_material_balance",
+		"job_id":          created.Job.JobID,
+		"model_key":       "material_balance",
+		"model_version":   "material_balance.v1",
+		"parameter_hash":  "sha256:" + strings.Repeat("a", 64),
+		"input_hash":      "sha256:" + strings.Repeat("b", 64),
+		"quality_metrics": map[string]any{"convergence_status": "completed"},
+		"warnings":        []any{},
+		"evidence_refs":   []any{"job:" + created.Job.JobID},
+	}
+	if err := svc.store.InsertModelRuns(context.Background(), created.Job.JobID, []json.RawMessage{mustJSON(replayModelRun)}, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(modelRunRequestBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("registered model_run simulation check should create a job, got %d %s", rec.Code, rec.Body.String())
+	}
+	var modelRunReplayJob JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &modelRunReplayJob); err != nil {
+		t.Fatal(err)
+	}
+	if modelRunReplayJob.Job.JobID != "job_simcheck_sim_req_model_run_material_balance_minimal" ||
+		modelRunReplayJob.Job.RequestID != "sim_req_model_run_material_balance_minimal" {
+		t.Fatalf("unexpected model_run replay simulation check job: %#v", modelRunReplayJob.Job)
+	}
+	var modelRunReplayPayload map[string]any
+	if err := json.Unmarshal(modelRunReplayJob.Job.InputJSON, &modelRunReplayPayload); err != nil {
+		t.Fatal(err)
+	}
+	if payload := mapValue(modelRunReplayPayload, "payload"); stringValue(payload, "simulation_input_id") != "si_milp_material_balance_minimal" {
+		t.Fatalf("model_run replay should reuse source job simulation_input payload, got %#v", modelRunReplayPayload["payload"])
+	}
+
+	inputBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_minimal.simulation_input.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-inputs", bytes.NewReader(inputBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("simulation input register failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var inputRecord SimulationInputRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &inputRecord); err != nil {
+		t.Fatal(err)
+	}
+	if inputRecord.SimulationInputID != "si_material_balance_minimal" ||
+		inputRecord.PayloadHash == "" ||
+		inputRecord.SourceSystem != "compute-api" ||
+		inputRecord.RequestedBy != "dev-public" {
+		t.Fatalf("unexpected simulation input record: %#v", inputRecord)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-inputs", bytes.NewReader(inputBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("duplicate simulation input register should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/simulation-inputs/si_material_balance_minimal", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("simulation input get failed: %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(referenceOnlyBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("registered reference-only simulation check should create a job, got %d %s", rec.Code, rec.Body.String())
+	}
+	var referenceJob JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &referenceJob); err != nil {
+		t.Fatal(err)
+	}
+	if referenceJob.Job.JobID != "job_simcheck_sim_req_material_balance_minimal" ||
+		referenceJob.Job.RequestID != "sim_req_material_balance_minimal" {
+		t.Fatalf("unexpected reference simulation check job: %#v", referenceJob.Job)
+	}
+	var referencePayload map[string]any
+	if err := json.Unmarshal(referenceJob.Job.InputJSON, &referencePayload); err != nil {
+		t.Fatal(err)
+	}
+	if payload := mapValue(referencePayload, "payload"); stringValue(payload, "simulation_input_id") != "si_material_balance_minimal" {
+		t.Fatalf("reference simulation check should use registered payload, got %#v", referencePayload["payload"])
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(validBytes))
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not create simulation checks, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestHTTPLocalCORSPreflight(t *testing.T) {
+	svc := testService(t)
+	auth, err := NewAuthenticator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/compute/jobs", nil)
+	req.Header.Set("Origin", "http://127.0.0.1:5173")
+	req.Header.Set("Access-Control-Request-Headers", "Authorization, Content-Type, Idempotency-Key")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected local CORS preflight to pass, got %d %s", rec.Code, rec.Body.String())
+	}
+	if rec.Header().Get("Access-Control-Allow-Origin") != "http://127.0.0.1:5173" {
+		t.Fatalf("unexpected allow origin: %q", rec.Header().Get("Access-Control-Allow-Origin"))
+	}
+	if !strings.Contains(rec.Header().Get("Access-Control-Allow-Methods"), http.MethodPost) {
+		t.Fatalf("expected POST in allowed methods, got %q", rec.Header().Get("Access-Control-Allow-Methods"))
+	}
+	if !strings.Contains(rec.Header().Get("Access-Control-Allow-Headers"), "Idempotency-Key") {
+		t.Fatalf("expected Idempotency-Key in allowed headers, got %q", rec.Header().Get("Access-Control-Allow-Headers"))
+	}
+	if !strings.Contains(rec.Header().Get("Access-Control-Expose-Headers"), "X-Evidence-Checksum") {
+		t.Fatalf("expected evidence checksum to be exposed, got %q", rec.Header().Get("Access-Control-Expose-Headers"))
+	}
+}
+
 func TestHTTPArtifactUploadMultipart(t *testing.T) {
 	svc := testService(t)
 	ctx := context.Background()
 	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := svc.RegisterWorker(ctx, map[string]any{"worker_id": "worker_1"}); err != nil {
+	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_1")); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.Claim(ctx, "worker_1"); err != nil {

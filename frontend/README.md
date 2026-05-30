@@ -94,6 +94,8 @@ There are two generated API client families:
 
 ### Automatically
 
+Use this only if the repository has the root helper script available. The current tracked workspace does not include `scripts/generate-client.sh`, so the manual command below is the reliable local path.
+
 * Activate the backend virtual environment.
 * From the top level project directory, run the script:
 
@@ -130,6 +132,11 @@ npm run generate-compute-client
 ```
 
 This command writes to `frontend/src/client/compute` and must not overwrite the legacy FastAPI client.
+
+The web app configures this client separately from the legacy FastAPI client:
+
+- `VITE_COMPUTE_API_URL` overrides the Compute API base URL. If unset, it defaults to `http://localhost:8088`.
+- `VITE_COMPUTE_API_TOKEN` or `localStorage.compute_access_token` supplies the public Compute API bearer token. If unset, local development uses the Go API default `dev-public-token`.
 
 ## Using a Remote API
 
@@ -264,7 +271,14 @@ npm run dev
 
 ## 生成客户端
 
+有两组生成客户端：
+
+- `frontend/src/client`：legacy FastAPI client。
+- `frontend/src/client/compute`：AutoWaterSimu Next Go Compute API client。
+
 ### 自动方式
+
+仅当仓库存在根目录 helper script 时使用。当前已跟踪的工作区不包含 `scripts/generate-client.sh`，因此下面的手动命令是更可靠的本地方式。
 
 * 激活后端虚拟环境。
 * 从顶级项目目录运行脚本：
@@ -290,6 +304,23 @@ npm run generate-client
 * 提交更改。
 
 请注意，每次后端更改（更改 OpenAPI 架构）时，你都应该再次遵循这些步骤以更新前端客户端。
+
+### Compute API Client
+
+Go Compute API 的 OpenAPI 源文件位于 `../apps/api/openapi/compute.openapi.json`。
+
+只生成 Compute client：
+
+```bash
+npm run generate-compute-client
+```
+
+该命令写入 `frontend/src/client/compute`，不得覆盖 legacy FastAPI client。
+
+Web app 会单独配置 Compute client：
+
+- `VITE_COMPUTE_API_URL` 覆盖 Compute API base URL；未设置时默认 `http://localhost:8088`。
+- `VITE_COMPUTE_API_TOKEN` 或 `localStorage.compute_access_token` 提供 public Compute API bearer token；未设置时本地开发使用 Go API 默认的 `dev-public-token`。
 
 ## 使用远程 API
 

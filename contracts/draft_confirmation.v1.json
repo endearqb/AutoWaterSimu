@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "draft_confirmation.v1.json",
+  "title": "draft_confirmation.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "confirmation_id",
+    "draft_schema_version",
+    "draft_id",
+    "decision",
+    "confirmed_by",
+    "confirmed_at",
+    "requires_confirmation_acknowledged",
+    "draft"
+  ],
+  "properties": {
+    "schema_version": { "const": "draft_confirmation.v1" },
+    "confirmation_id": { "type": "string", "minLength": 1 },
+    "draft_schema_version": {
+      "type": "string",
+      "enum": ["agent_scenario_draft.v1", "constraint_draft.v1"]
+    },
+    "draft_id": { "type": "string", "minLength": 1 },
+    "decision": {
+      "type": "string",
+      "enum": ["approved", "rejected", "changes_requested"]
+    },
+    "decision_reason": { "type": "string" },
+    "confirmed_by": { "type": "string", "minLength": 1 },
+    "confirmed_at": { "type": "string", "format": "date-time" },
+    "requires_confirmation_acknowledged": { "const": true },
+    "draft": { "type": "object" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

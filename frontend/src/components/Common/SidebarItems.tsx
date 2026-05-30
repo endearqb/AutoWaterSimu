@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Link as RouterLink } from "@tanstack/react-router"
 
 import {
+  FiActivity,
   FiBarChart,
   FiBookOpen,
   FiBriefcase,
@@ -52,6 +53,7 @@ const getItems = (
   t: (key: string) => string,
 ) => [
   { icon: FiHome, title: t("nav.home"), path: "/dashboard" },
+  { icon: FiActivity, title: t("nav.computeJobs"), path: "/compute-jobs" },
   {
     icon: FiBookOpen,
     title: t("nav.petersenTutorial"),

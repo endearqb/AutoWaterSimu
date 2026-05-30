@@ -7,16 +7,23 @@ import (
 )
 
 const (
-	CodeValidationFailed    = "VALIDATION_FAILED"
-	CodeIdempotencyConflict = "IDEMPOTENCY_CONFLICT"
-	CodeUnauthorized        = "UNAUTHORIZED"
-	CodeForbidden           = "FORBIDDEN"
-	CodeJobNotFound         = "JOB_NOT_FOUND"
-	CodeArtifactNotFound    = "ARTIFACT_NOT_FOUND"
-	CodeJobAlreadyTerminal  = "JOB_ALREADY_TERMINAL"
-	CodeWorkerStale         = "WORKER_STALE"
-	CodeTimeout             = "TIMEOUT"
-	CodeInternal            = "INTERNAL_ERROR"
+	CodeValidationFailed             = "VALIDATION_FAILED"
+	CodeIdempotencyConflict          = "IDEMPOTENCY_CONFLICT"
+	CodeUnauthorized                 = "UNAUTHORIZED"
+	CodeForbidden                    = "FORBIDDEN"
+	CodeJobNotFound                  = "JOB_NOT_FOUND"
+	CodeArtifactNotFound             = "ARTIFACT_NOT_FOUND"
+	CodeModelRunNotFound             = "MODEL_RUN_NOT_FOUND"
+	CodeModelCatalogNotFound         = "MODEL_CATALOG_NOT_FOUND"
+	CodeProcessGraphNotFound         = "PROCESS_GRAPH_NOT_FOUND"
+	CodeSimulationInputNotFound      = "SIMULATION_INPUT_NOT_FOUND"
+	CodeDraftConfirmationNotFound    = "DRAFT_CONFIRMATION_NOT_FOUND"
+	CodeDraftConfirmationNotApproved = "DRAFT_CONFIRMATION_NOT_APPROVED"
+	CodeEvidenceUnavailable          = "EVIDENCE_UNAVAILABLE"
+	CodeJobAlreadyTerminal           = "JOB_ALREADY_TERMINAL"
+	CodeWorkerStale                  = "WORKER_STALE"
+	CodeTimeout                      = "TIMEOUT"
+	CodeInternal                     = "INTERNAL_ERROR"
 )
 
 type AppError struct {

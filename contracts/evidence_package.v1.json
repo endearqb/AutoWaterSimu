@@ -28,9 +28,48 @@
     "model_run_refs": { "type": "array", "items": { "type": "string" } },
     "artifact_refs": { "type": "array", "items": { "type": "string" } },
     "runtime_audit": { "type": "object" },
+    "governance": { "$ref": "#/$defs/governance" },
     "warnings": { "type": "array", "items": { "type": "string" } },
     "generated_at": { "type": "string", "format": "date-time" },
     "metadata": { "type": "object" }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "governance": {
+      "type": "object",
+      "required": ["production_allowed", "model_version_refs"],
+      "properties": {
+        "production_allowed": { "type": "boolean" },
+        "model_version_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/model_version_ref" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "model_version_ref": {
+      "type": "object",
+      "required": [
+        "model_run_id",
+        "model_key",
+        "model_version",
+        "parameter_hash",
+        "model_status",
+        "parameter_set_status",
+        "production_allowed"
+      ],
+      "properties": {
+        "model_run_id": { "type": "string", "minLength": 1 },
+        "model_key": { "type": "string", "minLength": 1 },
+        "model_version": { "type": "string", "minLength": 1 },
+        "parameter_set_id": { "type": "string" },
+        "parameter_hash": { "type": "string", "pattern": "^sha256:[0-9a-fA-F]{64}$" },
+        "model_status": { "type": "string", "minLength": 1 },
+        "parameter_set_status": { "type": "string", "minLength": 1 },
+        "production_allowed": { "type": "boolean" },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
 }

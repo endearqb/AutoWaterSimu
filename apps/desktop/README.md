@@ -8,9 +8,11 @@
 
 - Tauri v2 / Rust local orchestration。
 - React Desktop shell。
-- SQLite local job store。
+- local project registry, export/import smoke, and selected-project wiring for jobs/canvas graphs。
+- SQLite local job store and queued-job cancellation。
 - Python worker sidecar management。
-- local artifact and support bundle。
+- local artifact JSON/CSV export、model run audit、support bundle and runtime backup/restore smoke。
+- local CanvasGraph save/load and ProcessGraph validation smoke。
 
 本目录不负责：
 
@@ -25,7 +27,7 @@
 | `README.md` | 本目录上下文契约 |
 | `package.json` | 独立 Desktop React/Vite app 脚本与依赖 |
 | `src/` | Phase 3C Desktop React dev MVP shell |
-| `src-tauri/` | Rust/Tauri runtime、SQLite store、source-mode worker JSON-RPC、artifact/support bundle smoke |
+| `src-tauri/` | Rust/Tauri runtime、SQLite store、project registry/project_id wiring、source-mode worker JSON-RPC、canvas/process graph commands、artifact JSON/CSV/model_run/support bundle/backup smoke |
 
 后续新增 packaged sidecar、installer packaging 和完整 project/graph UI wiring。
 
@@ -37,6 +39,10 @@
 4. P0 不做 auto update、code signing、Microsoft Store。
 5. 导出路径先限制在 runtime-local sandbox，后续 UI 文件对话框再扩展 allowlist。
 6. Desktop Vite dev server 使用 `127.0.0.1:1420`，避免和 legacy `frontend` 的 `5173` 冲突。
+7. Backup/restore P0 先限制在 runtime-local `backups/` sandbox，恢复前必须校验 manifest checksum。
+8. CanvasGraph save/load 先使用 SQLite `canvas_graphs` 表；ProcessGraph command 先做只读结构 validation，不隐式创建 compute job。
+9. Project registry smoke 只写 SQLite `projects` 表并提供 create/list/get；project export/import 目前只读写 runtime-local `exports/` sandbox，完整外部 file dialog 与 recent file allowlist 仍待后续。
+10. 创建 compute job 或保存 CanvasGraph 时，React 可传入当前选中 `project_id`；Rust 必须验证项目存在后再写入 `compute_jobs.project_id` 或 `canvas_graphs.project_id`。
 
 ## 4. 对外接口
 

@@ -31,6 +31,10 @@
       "additionalProperties": true
     },
     "artifacts": { "type": "array", "items": { "type": "object" } },
+    "risk_findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/risk_finding" }
+    },
     "runtime_audit": {
       "type": "object",
       "required": ["model_runs", "timings_ms", "fallback_used"],
@@ -47,5 +51,35 @@
     },
     "metadata": { "type": "object" }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "risk_finding": {
+      "type": "object",
+      "required": [
+        "risk_code",
+        "severity",
+        "title",
+        "description",
+        "evidence_refs"
+      ],
+      "properties": {
+        "risk_code": { "type": "string", "minLength": 1 },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "low", "medium", "high", "critical"]
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "related_metrics": { "type": "object" },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
 }

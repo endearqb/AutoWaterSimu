@@ -1,0 +1,71 @@
+{
+  "schema_version": "model_catalog.v1",
+  "generated_at": "2026-05-30T00:00:00Z",
+  "models": [
+    {
+      "model_key": "material_balance",
+      "display_name": "Material Balance",
+      "description": "Deterministic material-balance model for P0/P1 smoke jobs.",
+      "supported_job_types": ["simulation.material_balance.v1"],
+      "versions": [
+        {
+          "model_version": "material_balance.v1",
+          "status": "active",
+          "runtime": "simulation-worker",
+          "released_at": "2026-05-25T00:00:00Z",
+          "parameter_templates": [
+            {
+              "parameter_key": "hours",
+              "display_name": "Simulation horizon",
+              "unit": "h",
+              "value_type": "number",
+              "required": true,
+              "default_value": 4,
+              "min_value": 0
+            },
+            {
+              "parameter_key": "steps_per_hour",
+              "display_name": "Steps per hour",
+              "value_type": "integer",
+              "required": true,
+              "default_value": 60,
+              "min_value": 1
+            }
+          ],
+          "benchmark_cases": [
+            {
+              "benchmark_case_id": "bc_material_balance_minimal_v1",
+              "display_name": "Material balance minimal smoke",
+              "description": "Minimal three-node material-balance case used as a reproducible P0 benchmark.",
+              "job_type": "simulation.material_balance.v1",
+              "input_ref": {
+                "simulation_input_id": "si_material_balance_minimal",
+                "fixture": "contracts/examples/valid/material_balance_minimal.simulation_input.v1.json"
+              },
+              "expected_metrics": {
+                "convergence_status": "completed",
+                "warning_count": 0
+              },
+              "tolerance": {
+                "relative": 0.000001,
+                "absolute": 0.000001
+              },
+              "status": "validated",
+              "source": "built_in_smoke",
+              "evidence_refs": ["model_run:mr_material_balance_minimal"]
+            }
+          ],
+          "default_parameter_set": {
+            "parameter_set_id": "ps_material_balance_default_v1",
+            "status": "approved",
+            "parameter_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "parameters": {
+              "hours": 4,
+              "steps_per_hour": 60
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

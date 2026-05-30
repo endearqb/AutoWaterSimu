@@ -27,6 +27,7 @@ export const commonMessages: Pick<
   },
   nav: {
     home: "Home",
+    computeJobs: "Compute Jobs",
     flowingFlow: "FlowingFlow",
     materialBalance: "Material Balance",
     asm1slim: "ASM1 Slim",

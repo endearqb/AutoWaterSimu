@@ -8,9 +8,11 @@
 
 - Rust command runtime wrapper。
 - Tauri command registration 与 app entrypoint。
-- SQLite migration runner 与本地 job store。
+- SQLite migration runner 与本地 project/job/artifact/model_run store。
+- Project-aware job and canvas graph persistence。
 - source-mode Python worker JSON-RPC smoke。
-- artifact export sandbox 与 support bundle smoke。
+- CanvasGraph save/load and ProcessGraph validation command surface。
+- artifact JSON/CSV export sandbox、model_run audit、support bundle 与 backup/restore smoke。
 - Tauri v2 config。
 - Phase 3C 编译与单测基线。
 
@@ -30,10 +32,10 @@
 | `src/lib.rs` | Tauri command registration and tests |
 | `src/commands.rs` | Tauri command wrapper |
 | `src/migrations.rs` | SQLite migrations 与 migration runner |
-| `src/store.rs` | SQLite job/event/artifact/support bundle store |
-| `src/runtime.rs` | Desktop runtime orchestration |
-| `src/worker.rs` | source-mode Python worker process bridge |
+| `src/store.rs` | SQLite project/job/event/artifact/model_run/support bundle/canvas graph store |
+| `src/runtime.rs` | Desktop runtime orchestration, including artifact JSON/CSV export and backup/restore |
 | `src/path_sandbox.rs` | local export path validation |
+| `src/worker.rs` | source-mode Python worker process bridge |
 | `icons/icon.ico` | Windows resource icon for Tauri build |
 | `tauri.conf.json` | Tauri v2 config |
 | `capabilities/default.json` | Tauri capability file |
@@ -44,8 +46,15 @@
 2. Rust owns SQLite writes and worker lifecycle。
 3. React 不直接执行 shell 或写 SQLite。
 4. Phase 3C worker 是 source-mode dev sidecar；packaged `externalBin` 留到后续。
-5. Job 状态机只允许 `queued -> running -> succeeded|failed|timed_out`；terminal job 不允许重复运行。
+5. Job 状态机只允许 `queued -> running -> succeeded|failed|cancelled|timed_out`；terminal job 不允许重复运行。
 6. Tauri commands must be registered in one `invoke_handler` call。
+7. 成功 compute result 中的 `runtime_audit.model_runs` 需要持久化到 SQLite，并随 job snapshot/support bundle 返回。
+8. CSV export 仅从受支持的 material balance time-series artifact 派生，仍必须写入 runtime-local export sandbox。
+9. Source-mode worker 当前只支持取消 queued job；running job 不伪装为可中断。
+10. Backup/restore P0 使用 runtime-local `backups/`；restore 必须先校验 manifest 中的 SQLite/artifact checksums。
+11. CanvasGraph persistence validates graph IDs and edge/node references before SQLite upsert; ProcessGraph validation returns structured errors without mutating job state。
+12. Project registry commands use the local `projects` table; project export/import is limited to runtime-local `exports/` files and does not imply external project-file dialogs yet。
+13. `compute_job_create` and `canvas_graph_save` may receive an optional `project_id`; runtime/store must reject unknown project ids instead of silently writing dangling references。
 
 ## 4. 对外接口
 

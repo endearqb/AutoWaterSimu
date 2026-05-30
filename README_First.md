@@ -2,7 +2,7 @@
 
 **面向所有 AI Agent 的项目上下文协作原则**
 
-本文件解释本项目为何采用 README First，以及它如何与 `AGENTS.md` 协同。`README First.md` 回答“为什么”，`AGENTS.md` 规定“怎么做”——任何 Agent 执行任务前应先读 `AGENTS.md` 中的可执行规则。
+本文件解释本项目为何采用 README First，以及它如何与 `AGENTS.md` 协同。`README_First.md` 回答“为什么”，`AGENTS.md` 规定“怎么做”——任何 Agent 执行任务前应先读 `AGENTS.md` 中的可执行规则。
 
 ---
 
@@ -37,7 +37,7 @@ README First 把这些问题转化为工程制度：让每次工作都沿稳定�
 ```txt
 project/
 ├── AGENTS.md                 # AI 全局行为规则（Agent 每次执行前必读）
-├── README First.md           # 本文件：协作原则说明
+├── README_First.md           # 本文件：协作原则说明
 ├── README.md                 # 项目总览与入口
 ├── .ai/
 │   ├── changes/              # AI 变更记录
@@ -55,6 +55,7 @@ project/
 各层职责：
 
 - **`AGENTS.md`**：行为协议层。规定读取顺序、不确定性压缩、增删改查检查项、记录规则、禁止行为、验收标准。
+- **`README_First.md`**：原则说明层。解释 README First 的目的、文档分工、落地方式和好 README 的标准；不覆盖 `AGENTS.md` 的可执行规则。
 - **根 `README.md`**：项目地图层。项目是什么、技术栈、安装/启动/测试/构建、顶层目录职责、应从哪里读起。
 - **目录级 `README.md`**：局部上下文契约层。每个关键目录的职责、核心文件、维护约定、依赖边界、验证方式。
 - **`.ai/changes/`**：修改记录层。补足 git diff 不表达的内容——为什么改、如何验证、对未来维护的影响。
@@ -95,7 +96,7 @@ diff 只说明“改了什么”，不稳定说明“为什么”。因此每次
 ```txt
 1. 识别任务类型，把 prompt 转换为任务契约
 2. 定位影响范围
-3. 阅读 AGENTS.md → 根 README.md → 目标路径上各级目录 README.md
+3. 阅读 AGENTS.md → README_First.md → 根 README.md → 目标路径上各级目录 README.md
 4. 先消除偶然不确定性，再压缩本质不确定性（按风险等级处理）
 5. 检查 README 与实际代码是否一致
 6. 执行查询、新增、修改或删除（最小、保守、可回滚）
@@ -104,6 +105,8 @@ diff 只说明“改了什么”，不稳定说明“为什么”。因此每次
 9. 在 .ai/changes/ 中记录本次变更
 10. 输出最终实施报告（含关键假设、剩余不确定性、验证结果）
 ```
+
+当用户没有给出明确目标文件或目录时，不应跳过 README First。Agent 应先用 prompt 线索定位最小影响范围：从根 README、`tasks/todo.md`、`.ai/changes/`、`.ai/decisions/` 和目录 README 查历史背景，再用代码搜索确认实现、调用方和测试。只有定位失败且继续会变成凭空猜测时，才向用户提出阻塞性问题。
 
 ---
 

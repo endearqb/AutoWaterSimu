@@ -10,12 +10,13 @@
 - `--self-check`。
 - `--run-job` material balance 最小执行链路。
 - stdio JSON-RPC protocol。
+- `--run-api-once` one-shot Go Compute API worker bridge。
 - time-series artifact 写入。
 
 本目录不负责：
 
 - 打包 sidecar。
-- Web worker claim / heartbeat HTTP protocol。
+- 长驻 Web worker 调度、复杂 heartbeat 和生产部署编排。
 - simulation core 运行时实现。
 
 ## 2. 核心文件
@@ -23,6 +24,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `cli.py` | CLI 与 JSON-RPC 入口 |
+| `api_client.py` | one-shot Go Compute API register/claim/run/upload/succeed/fail client |
 | `runner.py` | compute job 执行、schema 校验、core adapter 调用、artifact 输出 |
 | `__main__.py` | `python -m simulation_worker` 入口 |
 
@@ -31,6 +33,8 @@
 1. stdout 只能输出 JSON result 或 JSON-RPC frame。
 2. stderr 只能输出脱敏诊断，不输出 traceback、token 或完整大 payload。
 3. 大时间序列必须写 artifact，summary inline 返回。
+4. `api_client.py` 只通过 Go Compute API HTTP contract 交互，不直接写 metadata store。
+5. 成功运行需输出 `model_run.v1` 到 `compute_result.runtime_audit.model_runs`，并用 artifact id 填写 `evidence_refs`。
 
 ## 4. 对外接口
 
@@ -51,6 +55,14 @@ JSON-RPC `run_job` 目标形态：
 ```
 
 `params.job_path` 仅作为本地开发和测试兼容入口保留。
+
+HTTP worker bridge 目标形态：
+
+```powershell
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-once --api-base-url http://localhost:8088 --api-token dev-worker-token --artifact-dir tmp\worker-api-artifacts
+```
+
+该模式执行一次 register -> claim -> run -> artifact upload -> succeed/fail 后退出，用于本地 smoke 和 CI，不替代后续长驻 worker 调度。
 
 ## 5. 依赖边界
 

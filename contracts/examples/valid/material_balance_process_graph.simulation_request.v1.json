@@ -1,0 +1,20 @@
+{
+  "schema_version": "simulation_request.v1",
+  "request_id": "sim_req_process_graph_material_balance_minimal",
+  "source_system": "canvas",
+  "requested_by": "planner@example.com",
+  "job_type": "simulation.material_balance.v1",
+  "input_ref": {
+    "process_graph_id": "pg_material_balance_minimal",
+    "process_graph_version": 1
+  },
+  "external_refs": {
+    "site_id": "site_demo",
+    "scenario_id": "scenario_material_balance_minimal"
+  },
+  "metadata": {
+    "trace_id": "trace_sim_req_process_graph_material_balance_minimal",
+    "tenant_id": "tenant_demo",
+    "project_id": "project_demo"
+  }
+}

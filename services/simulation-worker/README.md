@@ -9,6 +9,7 @@
 - `simulation-worker --self-check`。
 - `simulation-worker --run-job <path>`。
 - `simulation-worker --stdio-jsonrpc`。
+- `simulation-worker --run-api-once` 本地/CI worker HTTP smoke。
 - Desktop sidecar 和 Web worker 的共享执行逻辑。
 
 本目录不负责：
@@ -25,7 +26,7 @@
 | `simulation_worker/` | Python CLI、job runner、self-check 和 JSON-RPC protocol |
 | `tests/` | Worker CLI contract tests |
 
-Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runtime，不再直接依赖 `backend/app`。后续添加 packaging、Web worker protocol client、sidecar spawn integration。
+Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runtime，不再直接依赖 `backend/app`。`--run-api-once` 是 Phase 4/5 的本地/CI HTTP worker bridge，用于 register -> claim -> run -> upload artifact -> succeed/fail 的单次闭环；长驻 worker 调度、复杂 heartbeat 和生产部署仍是后续工作。
 
 ## 3. 维护约定
 
@@ -33,6 +34,8 @@ Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runt
 2. stderr 只输出脱敏诊断日志。
 3. worker 不执行未知 `schema_version`。
 4. 大结果写 artifact，并返回 checksum。
+5. HTTP worker bridge 只能通过 Go Compute API HTTP contract 交互，不直接写 PostgreSQL、SQLite 或 legacy backend。
+6. 成功运行应在 `compute_result.runtime_audit.model_runs` 写入 `model_run.v1`，并引用已生成/上传 artifact。
 
 ## 4. 对外接口
 
@@ -59,6 +62,7 @@ Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runt
 ```powershell
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\material_balance_minimal.compute_job.v1.json --artifact-dir tmp\worker-artifacts
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-once --api-base-url http://localhost:8088 --api-token dev-worker-token --artifact-dir tmp\worker-api-artifacts
 backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
 ```
 

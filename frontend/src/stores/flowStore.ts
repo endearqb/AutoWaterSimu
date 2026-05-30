@@ -643,13 +643,40 @@ const useFlowStore = create<RFState>((set, get) => ({
       }
     })
 
+    const exportedAt = new Date().toISOString()
+    const graphId =
+      state.currentFlowChartId ||
+      `flow_${exportedAt.replace(/[^0-9]/g, "").slice(0, 14)}`
+    const flowName = state.currentFlowChartName || getDefaultFlowchartName()
+    const components = state.customParameters
+      .map((param) => param.name)
+      .filter(Boolean)
+    const componentSchema = {
+      components: components.length > 0 ? components : ["COD"],
+      unit: "mg/L",
+    }
+
     return {
+      schema_version: "canvas_graph.v1",
+      graph_id: graphId,
+      name: flowName,
       nodes: state.nodes,
       edges: processedEdges,
       customParameters: state.customParameters,
+      component_schema: componentSchema,
       calculationParameters: state.calculationParameters,
-      exportedAt: new Date().toISOString(),
-      version: "1.0",
+      timeSegments: state.timeSegments,
+      exportedAt,
+      exported_at: exportedAt,
+      version: "1.1",
+      metadata: {
+        component_schema: componentSchema,
+        customParameters: state.customParameters,
+        calculationParameters: state.calculationParameters,
+        timeSegments: state.timeSegments,
+        source_format: "legacy_flow_export",
+        version: "1.1",
+      },
     }
   },
 

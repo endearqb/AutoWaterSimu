@@ -3,11 +3,44 @@ package compute
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
+
+var contractSchemaFiles = []string{
+	"compute_job.v1.json",
+	"compute_result.v1.json",
+	"artifact.v1.json",
+	"model_run.v1.json",
+	"model_catalog.v1.json",
+	"evidence_package.v1.json",
+	"simulation_request.v1.json",
+	"agent_scenario_draft.v1.json",
+	"constraint_draft.v1.json",
+	"draft_confirmation.v1.json",
+	"result_explanation.v1.json",
+	"process_graph.v1.json",
+	"simulation_input.v1.json",
+	"contract_error.v1.json",
+}
+
+var contractSchemaByVersion = map[string]string{
+	"compute_job.v1":          "compute_job.v1.json",
+	"compute_result.v1":       "compute_result.v1.json",
+	"artifact.v1":             "artifact.v1.json",
+	"model_run.v1":            "model_run.v1.json",
+	"model_catalog.v1":        "model_catalog.v1.json",
+	"evidence_package.v1":     "evidence_package.v1.json",
+	"simulation_request.v1":   "simulation_request.v1.json",
+	"agent_scenario_draft.v1": "agent_scenario_draft.v1.json",
+	"constraint_draft.v1":     "constraint_draft.v1.json",
+	"draft_confirmation.v1":   "draft_confirmation.v1.json",
+	"result_explanation.v1":   "result_explanation.v1.json",
+	"process_graph.v1":        "process_graph.v1.json",
+	"simulation_input.v1":     "simulation_input.v1.json",
+	"contract_error.v1":       "contract_error.v1.json",
+}
 
 type ContractValidator struct {
 	schemas map[string]*jsonschema.Schema
@@ -16,21 +49,10 @@ type ContractValidator struct {
 func NewContractValidator(repoRoot string) (*ContractValidator, error) {
 	contractsDir := filepath.Join(repoRoot, "contracts")
 	compiler := jsonschema.NewCompiler()
-	for _, name := range []string{"compute_job.v1.json", "compute_result.v1.json", "artifact.v1.json", "contract_error.v1.json"} {
-		path := filepath.Join(contractsDir, name)
-		file, err := os.Open(path)
-		if err != nil {
-			return nil, fmt.Errorf("open contract schema %s failed: %w", name, err)
-		}
-		if err := compiler.AddResource(name, file); err != nil {
-			_ = file.Close()
-			return nil, fmt.Errorf("add contract schema %s failed: %w", name, err)
-		}
-		_ = file.Close()
-	}
+	compiler.DefaultDraft(jsonschema.Draft2020)
 	schemas := map[string]*jsonschema.Schema{}
-	for _, name := range []string{"compute_job.v1.json", "compute_result.v1.json", "artifact.v1.json", "contract_error.v1.json"} {
-		schema, err := compiler.Compile(name)
+	for _, name := range contractSchemaFiles {
+		schema, err := compiler.Compile(fileURL(filepath.Join(contractsDir, name)))
 		if err != nil {
 			return nil, fmt.Errorf("compile contract schema %s failed: %w", name, err)
 		}
@@ -50,6 +72,11 @@ func (validator *ContractValidator) Validate(schemaName string, value any) error
 	return nil
 }
 
+func ContractSchemaName(schemaVersion string) (string, bool) {
+	schemaName, ok := contractSchemaByVersion[schemaVersion]
+	return schemaName, ok
+}
+
 func DecodeComputeJob(bytes []byte, validator *ContractValidator) (ComputeJob, error) {
 	var raw map[string]any
 	if err := json.Unmarshal(bytes, &raw); err != nil {
@@ -66,6 +93,14 @@ func DecodeComputeJob(bytes []byte, validator *ContractValidator) (ComputeJob, e
 	}
 	job.Raw = raw
 	return job, nil
+}
+
+func fileURL(path string) string {
+	slashPath := filepath.ToSlash(path)
+	if len(slashPath) >= 2 && slashPath[1] == ':' {
+		return "file:///" + slashPath
+	}
+	return "file://" + slashPath
 }
 
 func DecodeArtifactMetadata(text string, validator *ContractValidator) (map[string]any, error) {

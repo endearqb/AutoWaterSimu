@@ -5,9 +5,13 @@ export type ArtifactRecord = {
     job_id: string;
     object_key: string;
     checksum: string;
+    retention_policy?: 'retain_forever' | 'ttl' | 'archive_candidate';
+    retain_until?: string;
     content_type?: string;
     [key: string]: unknown | string;
 };
+
+export type retention_policy = 'retain_forever' | 'ttl' | 'archive_candidate';
 
 export type ClaimResponse = {
     [key: string]: unknown;
@@ -29,7 +33,55 @@ export type ContractError = {
 
 export type schema_version = 'contract_error.v1';
 
+export type ContractValidationIssue = {
+    path: string;
+    message: string;
+};
+
+export type ContractValidationResponse = {
+    schema_version: 'contract_validation.v1';
+    document_schema_version?: string;
+    contract_schema?: string;
+    valid: boolean;
+    errors: Array<ContractValidationIssue>;
+    warnings: Array<(string)>;
+    confirmation_record?: DraftConfirmationRecord;
+};
+
+export type schema_version2 = 'contract_validation.v1';
+
+export type DraftConfirmationRecord = {
+    confirmation_id: string;
+    schema_version: 'draft_confirmation.v1';
+    draft_schema_version: string;
+    draft_id: string;
+    decision: 'approved' | 'rejected' | 'changes_requested';
+    decision_reason?: string;
+    confirmed_by: string;
+    confirmed_at: string;
+    payload_hash: string;
+    payload: {
+        [key: string]: unknown;
+    };
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    created_at: string;
+};
+
+export type schema_version3 = 'draft_confirmation.v1';
+
+export type decision = 'approved' | 'rejected' | 'changes_requested';
+
 export type EventRecord = {
+    [key: string]: unknown;
+};
+
+export type EvidencePackage = {
     [key: string]: unknown;
 };
 
@@ -64,9 +116,212 @@ export type ListJobsResponse = {
     total_estimate: number;
 };
 
+export type ListModelRunsResponse = {
+    items: Array<ModelRun>;
+    next_cursor?: string;
+    total_estimate: number;
+};
+
+export type ModelBenchmarkCase = {
+    benchmark_case_id: string;
+    display_name: string;
+    description?: string;
+    job_type: string;
+    input_ref: {
+        [key: string]: unknown;
+    };
+    expected_metrics: {
+        [key: string]: unknown;
+    };
+    tolerance: {
+        [key: string]: unknown;
+    };
+    status: 'draft' | 'validated' | 'retired';
+    source?: string;
+    evidence_refs?: Array<(string)>;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type status = 'draft' | 'validated' | 'retired';
+
+export type ModelCatalog = {
+    schema_version: 'model_catalog.v1';
+    generated_at: string;
+    models: Array<ModelCatalogModel>;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type schema_version4 = 'model_catalog.v1';
+
+export type ModelCatalogModel = {
+    model_key: string;
+    display_name: string;
+    description?: string;
+    supported_job_types: Array<(string)>;
+    versions: Array<ModelCatalogVersion>;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type ModelCatalogRecord = {
+    catalog_id: string;
+    schema_version: 'model_catalog.v1';
+    generated_at: string;
+    payload_hash: string;
+    payload: ModelCatalog;
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    created_at: string;
+};
+
+export type ModelCatalogVersion = {
+    model_version: string;
+    status: 'active' | 'deprecated' | 'archived';
+    runtime: string;
+    released_at?: string;
+    parameter_templates: Array<ModelParameterTemplate>;
+    benchmark_cases: Array<ModelBenchmarkCase>;
+    default_parameter_set?: ModelParameterSet;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type status2 = 'active' | 'deprecated' | 'archived';
+
+export type ModelParameterSet = {
+    parameter_set_id: string;
+    status: 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
+    parameter_hash: string;
+    parameters?: {
+        [key: string]: unknown;
+    };
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type status3 = 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
+
+export type ModelParameterTemplate = {
+    parameter_key: string;
+    display_name: string;
+    unit?: string;
+    value_type: 'number' | 'integer' | 'string' | 'boolean' | 'object' | 'array';
+    required: boolean;
+    default_value?: unknown;
+    min_value?: number;
+    max_value?: number;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type value_type = 'number' | 'integer' | 'string' | 'boolean' | 'object' | 'array';
+
+export type ModelRun = {
+    [key: string]: unknown;
+};
+
+export type ParameterConfirmationID = string;
+
 export type ParameterJobID = string;
 
+export type ParameterModelKey = string;
+
+export type ParameterModelRunID = string;
+
+export type ParameterProcessGraphID = string;
+
+export type ParameterSimulationInputID = string;
+
 export type ParameterWorkerID = string;
+
+export type ProcessGraph = {
+    [key: string]: unknown;
+};
+
+export type ProcessGraphRecord = {
+    process_graph_id: string;
+    schema_version: 'process_graph.v1';
+    version: number;
+    source_canvas_graph_id: string;
+    payload_hash: string;
+    payload: ProcessGraph;
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    created_at: string;
+};
+
+export type schema_version5 = 'process_graph.v1';
+
+export type SimulationInput = {
+    [key: string]: unknown;
+};
+
+export type SimulationInputRecord = {
+    simulation_input_id: string;
+    schema_version: 'simulation_input.v1';
+    job_type: string;
+    process_graph_id: string;
+    process_graph_version: number;
+    payload_hash: string;
+    payload: SimulationInput;
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    created_at: string;
+};
+
+export type schema_version6 = 'simulation_input.v1';
+
+export type SimulationRequest = {
+    schema_version: 'simulation_request.v1';
+    request_id: string;
+    source_system: string;
+    requested_by: string;
+    job_type: 'simulation.material_balance.v1';
+    input_ref: {
+        process_graph_id?: string;
+        process_graph_version?: number;
+        simulation_input_id?: string;
+        model_run_id?: string;
+        simulation_input?: {
+            [key: string]: unknown;
+        };
+        [key: string]: unknown | string | number;
+    };
+    external_refs?: {
+        [key: string]: unknown;
+    };
+    metadata?: {
+        [key: string]: unknown;
+    };
+    [key: string]: unknown | string;
+};
+
+export type schema_version7 = 'simulation_request.v1';
+
+export type job_type = 'simulation.material_balance.v1';
 
 export type WorkerRecord = {
     [key: string]: unknown;
@@ -103,6 +358,37 @@ export type ListComputeJobsData = {
 
 export type ListComputeJobsResponse = (ListJobsResponse);
 
+export type CreateSimulationCheckData = {
+    requestBody: SimulationRequest;
+};
+
+export type CreateSimulationCheckResponse = (JobSnapshot);
+
+export type RegisterProcessGraphData = {
+    requestBody: ProcessGraph;
+};
+
+export type RegisterProcessGraphResponse = (ProcessGraphRecord);
+
+export type GetProcessGraphData = {
+    processGraphId: string;
+    version?: number;
+};
+
+export type GetProcessGraphResponse = (ProcessGraphRecord);
+
+export type RegisterSimulationInputData = {
+    requestBody: SimulationInput;
+};
+
+export type RegisterSimulationInputResponse = (SimulationInputRecord);
+
+export type GetSimulationInputData = {
+    simulationInputId: string;
+};
+
+export type GetSimulationInputResponse = (SimulationInputRecord);
+
 export type GetComputeJobData = {
     jobId: string;
 };
@@ -131,11 +417,75 @@ export type GetComputeJobEventsResponse = ({
     items?: Array<EventRecord>;
 });
 
+export type GetComputeJobEvidenceData = {
+    jobId: string;
+};
+
+export type GetComputeJobEvidenceResponse = (EvidencePackage);
+
 export type DownloadArtifactData = {
     artifactId: string;
 };
 
 export type DownloadArtifactResponse = ((Blob | File));
+
+export type ValidateContractData = {
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
+
+export type ValidateContractResponse = (ContractValidationResponse);
+
+export type ConfirmDraftData = {
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
+
+export type ConfirmDraftResponse = (ContractValidationResponse);
+
+export type GetDraftConfirmationData = {
+    confirmationId: string;
+};
+
+export type GetDraftConfirmationResponse = (DraftConfirmationRecord);
+
+export type PromoteDraftConfirmationToSimulationCheckData = {
+    confirmationId: string;
+};
+
+export type PromoteDraftConfirmationToSimulationCheckResponse = (JobSnapshot);
+
+export type ListModelCatalogResponse = (ModelCatalog);
+
+export type RegisterModelCatalogData = {
+    requestBody: ModelCatalog;
+};
+
+export type RegisterModelCatalogResponse = (ModelCatalogRecord);
+
+export type GetModelCatalogModelData = {
+    modelKey: string;
+};
+
+export type GetModelCatalogModelResponse = (ModelCatalogModel);
+
+export type ListModelRunsData = {
+    cursor?: string;
+    jobId?: string;
+    limit?: number;
+    modelKey?: string;
+    modelVersion?: string;
+};
+
+export type ListModelRunsResponse2 = (ListModelRunsResponse);
+
+export type GetModelRunData = {
+    modelRunId: string;
+};
+
+export type GetModelRunResponse = (ModelRun);
 
 export type RegisterWorkerData = {
     requestBody: WorkerRegisterRequest;

@@ -1,0 +1,91 @@
+# 目录说明：apps/api/internal/compute
+
+## 1. 目录职责
+
+本目录实现 Go Compute API Phase 4A compute lifecycle。
+
+本目录负责：
+
+- Job create/get/list/cancel/result/events。
+- Worker register/claim/heartbeat/artifact/succeed/fail。
+- Model catalog snapshot registration/read endpoints。
+- Model benchmark case metadata for governance smoke。
+- Model run persistence plus read/list lookup。
+- Process graph registry and ProcessGraph-to-SimulationInput resolution for simulation checks。
+- Simulation input registry used by reference-based simulation checks。
+- Evidence package export from completed job metadata。
+- Simulation check creation from `simulation_request.v1` into queued `compute_job.v1`。
+- Artifact retention metadata recording。
+- Risk findings copied into stored result summary for read-only integrations。
+- Evidence governance summary generated from model runs and the latest persisted model catalog, with built-in fallback。
+- Contract validation for existing Agent / simulation / constraint draft / draft confirmation / result explanation schema files。
+- Draft confirmation audit record persistence and readback。
+- Explicit approved Agent draft promotion to simulation-check jobs when the embedded proposed request is schema-valid。
+- Static bearer token scope auth with config-level revocation。
+- Contract validation、canonical payload hash、idempotency/conflict。
+- Metadata store abstraction and PostgreSQL implementation。
+
+本目录不负责：
+
+- Python simulation execution。
+- Desktop local runtime。
+- Frontend UI。
+
+## 2. 核心文件
+
+| 文件 | 作用 |
+|---|---|
+| `http.go` | HTTP handlers and routing |
+| `service.go` | lifecycle orchestration |
+| `store.go`、`postgres.go` | store interface and PostgreSQL implementation, including model catalog / process graph / simulation input / draft confirmation metadata persistence |
+| `types.go` | internal DTO/domain types |
+| `auth.go` | static bearer token scopes |
+| `contracts.go`、`errors.go`、`hash.go`、`artifacts.go` | contract/error/hash/artifact helpers |
+| `*_test.go` | lifecycle and store tests |
+
+## 3. 维护约定
+
+1. Create job idempotency and payload conflict behavior must stay deterministic.
+2. List APIs use stable cursor pagination.
+3. Worker state transitions must be validated server-side.
+4. Error responses should map to `contract_error.v1`-style structures where applicable.
+5. Local development CORS is intentionally limited to loopback browser origins for Web UI smoke tests; checksum visibility is limited to exposed `X-Artifact-Checksum` / `X-Evidence-Checksum` headers; do not broaden origins or exposed headers without an explicit deployment/auth review.
+6. Successful compute results may include `runtime_audit.model_runs`; persist schema-valid `model_run.v1` records without storing large artifact contents in metadata tables, and keep list filters limited to indexed governance fields such as `job_id`、`model_key` and `model_version`.
+7. Evidence package export must reference artifacts/model runs by id and include a checksum header that browser clients can read through the local CORS expose list; do not inline artifact bytes.
+8. Contract validation endpoints use existing `job:create` scope; `/contracts/validate` validates only schema files compiled by `ContractValidator`, while `/contracts/confirm-draft` additionally validates the embedded draft, persists a draft confirmation audit record, and returns a warning that no compute job was created. `/contracts/confirmations/{confirmation_id}/promote-simulation-check` is the only promotion path: it requires an approved `agent_scenario_draft.v1` confirmation and a schema-valid embedded `simulation_request.v1`. Unknown future contracts must remain invalid until the schema exists.
+9. Static token rotation is represented by overlapping token config and setting old token records to `revoked=true`; revoked tokens must fail authentication even if their scopes match.
+10. Model catalog GET endpoints use `job:read`; `POST /api/v1/model-catalog` uses `model:write` to register schema-valid `model_catalog.v1` snapshots. Reads prefer the latest persisted `default` catalog and fall back to the built-in material-balance catalog when no snapshot exists. This is still not a parameter-set lifecycle or benchmark-run service.
+11. Artifact upload defaults `retention_policy` to `retain_forever`; when workers provide `ttl` / `archive_candidate` and optional `retain_until`, the API records those fields but does not delete or archive files automatically.
+12. When a valid `compute_result.v1` includes top-level `risk_findings`, copy those findings into the stored summary so result read APIs expose them without storing the full result payload in metadata tables.
+13. Evidence governance uses the latest persisted model catalog, with built-in fallback, to mark model version and parameter set status; `production_allowed=true` currently requires an active model version and matching approved default parameter set.
+14. Process graph registration stores only schema-valid `process_graph.v1` payload metadata and hash in the metadata DB. The API currently resolves `simulation_request.v1.input_ref.process_graph_id` by loading a registered process graph and generating a `simulation_input.v1` payload for material-balance jobs; it does not execute simulation directly.
+15. Simulation check creation is a thin adapter from external `simulation_request.v1` to internal `compute_job.v1`; it validates embedded `input_ref.simulation_input`, resolves a previously registered `input_ref.simulation_input_id`, resolves a registered `input_ref.process_graph_id`, or replays a persisted `input_ref.model_run_id` by reusing the source job's original `simulation_input.v1` payload before queueing.
+16. Simulation input registration stores only `simulation_input.v1` payload metadata and hash in the metadata DB; it must not store simulation results, time-series artifacts, or approval state.
+
+## 4. 对外接口
+
+本目录通过 `cmd/compute-api` 暴露 HTTP API，OpenAPI source 位于 `apps/api/openapi`。
+
+## 5. 依赖边界
+
+可以依赖 Go standard library、PostgreSQL driver and contract JSON validation helpers。
+
+不应该依赖 backend FastAPI app or Desktop Tauri runtime。
+
+## 6. 测试与验证
+
+```powershell
+cd apps\api; go test ./...
+```
+
+PostgreSQL migration rollback smoke 会删除 metadata tables，必须在临时数据库上显式设置：
+
+```powershell
+$env:COMPUTE_API_DATABASE_URL="postgres://..."
+$env:COMPUTE_API_MIGRATION_DOWN_SMOKE="true"
+cd apps\api; go test ./internal/compute -run 'TestPostgresMigrations(Up|Down)Smoke' -count=1
+```
+
+## 7. AI 操作提示
+
+API 行为变化需同步 `apps/api/openapi/compute.openapi.json`、generated compute client and `.ai/changes`。

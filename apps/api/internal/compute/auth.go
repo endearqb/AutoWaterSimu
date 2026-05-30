@@ -14,7 +14,7 @@ func NewAuthenticator(tokensJSON string) (*Authenticator, error) {
 	var config TokenConfig
 	if strings.TrimSpace(tokensJSON) == "" {
 		config = TokenConfig{Tokens: []TokenRecord{
-			{Name: "dev-public", Token: "dev-public-token", Scopes: []string{"job:create", "job:read", "artifact:read"}},
+			{Name: "dev-public", Token: "dev-public-token", Scopes: []string{"job:create", "job:read", "artifact:read", "evidence:read", "model:write"}},
 			{Name: "dev-worker", Token: "dev-worker-token", Scopes: []string{"worker:register", "worker:claim", "worker:heartbeat", "job:write", "artifact:write"}},
 		}}
 	} else if err := json.Unmarshal([]byte(tokensJSON), &config); err != nil {
@@ -25,11 +25,14 @@ func NewAuthenticator(tokensJSON string) (*Authenticator, error) {
 		if token.Token == "" || token.Name == "" {
 			return nil, ValidationError("token name and token value are required")
 		}
+		if _, exists := auth.tokens[token.Token]; exists {
+			return nil, ValidationError("duplicate token value is not allowed")
+		}
 		scopes := map[string]bool{}
 		for _, scope := range token.Scopes {
 			scopes[scope] = true
 		}
-		auth.tokens[token.Token] = Principal{Name: token.Name, Scopes: scopes}
+		auth.tokens[token.Token] = Principal{Name: token.Name, Scopes: scopes, Revoked: token.Revoked}
 	}
 	return auth, nil
 }
@@ -44,6 +47,9 @@ func (auth *Authenticator) Principal(r *http.Request, requiredScope string) (*Pr
 	principal, ok := auth.tokens[token]
 	if !ok {
 		return nil, NewAppError(http.StatusUnauthorized, CodeUnauthorized, "invalid bearer token", false, nil)
+	}
+	if principal.Revoked {
+		return nil, NewAppError(http.StatusUnauthorized, CodeUnauthorized, "revoked bearer token", false, nil)
 	}
 	if requiredScope != "" && !principal.Scopes[requiredScope] {
 		return nil, NewAppError(http.StatusForbidden, CodeForbidden, "missing required scope", false, map[string]any{"scope": requiredScope})

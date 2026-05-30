@@ -101,11 +101,18 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
             raise WorkerRunError(str(exc)) from exc
 
         result = MaterialBalanceCalculator().calculate(material_balance_input)
+        summary = _json_safe(result.summary)
         artifact = _write_time_series_artifact(
             result=result,
             job_id=job_id,
             job_type=job_type,
             artifact_dir=Path(artifact_dir),
+        )
+        model_run = _model_run_record(
+            job_id=job_id,
+            payload=payload,
+            summary=summary,
+            artifact=artifact,
         )
 
         return {
@@ -113,12 +120,12 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
             "job_id": job_id,
             "job_type": job_type,
             "status": "succeeded",
-            "summary": _json_safe(result.summary),
+            "summary": summary,
             "data": {},
             "quality": {"data_quality": "simulated", "warnings": []},
             "artifacts": [artifact],
             "runtime_audit": {
-                "model_runs": [],
+                "model_runs": [model_run],
                 "timings_ms": {"total": int((time.perf_counter() - started_at) * 1000)},
                 "fallback_used": False,
                 "fallback_reason": "",
@@ -180,6 +187,37 @@ def _write_time_series_artifact(
         "metadata": {
             "description": "Material balance time-series artifact",
             "worker_version": WORKER_VERSION,
+        },
+    }
+
+
+def _model_run_record(
+    *,
+    job_id: str,
+    payload: dict[str, Any],
+    summary: Any,
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    summary_record = summary if isinstance(summary, dict) else {}
+    return {
+        "schema_version": "model_run.v1",
+        "model_run_id": f"mr_{_safe_path_part(job_id)}_material_balance",
+        "job_id": job_id,
+        "model_key": "material_balance",
+        "model_version": "material_balance.v1",
+        "parameter_hash": _sha256_json(payload.get("parameters", {})),
+        "input_hash": _sha256_json(payload),
+        "quality_metrics": {
+            "convergence_status": summary_record.get("convergence_status"),
+            "final_mass_balance_error": summary_record.get("final_mass_balance_error"),
+            "total_steps": summary_record.get("total_steps"),
+        },
+        "warnings": [],
+        "evidence_refs": [str(artifact.get("artifact_id") or "")],
+        "metadata": {
+            "worker_version": WORKER_VERSION,
+            "component_schema_id": _component_schema_id(payload),
+            "solver_method": summary_record.get("solver_method"),
         },
     }
 
@@ -265,6 +303,23 @@ def _json_safe(value: Any) -> Any:
     if hasattr(value, "model_dump"):
         return _json_safe(value.model_dump())
     return value
+
+
+def _sha256_json(value: Any) -> str:
+    payload = json.dumps(
+        _json_safe(value),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def _component_schema_id(payload: dict[str, Any]) -> str:
+    component_schema = payload.get("component_schema")
+    if isinstance(component_schema, dict):
+        return _string_value(component_schema.get("component_schema_id"))
+    return ""
 
 
 def _safe_error_message(exc: Exception) -> str:

@@ -32,14 +32,11 @@ func run() error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	store, err := compute.OpenPostgresStore(ctx, config.DatabaseURL)
+	store, closeStore, err := openStore(ctx, config, filepath.Join(repoRoot, "apps", "api", "migrations"))
 	if err != nil {
 		return err
 	}
-	defer store.Close()
-	if err := store.ApplyMigrations(ctx, filepath.Join(repoRoot, "apps", "api", "migrations")); err != nil {
-		return err
-	}
+	defer closeStore()
 	artifactStore, err := compute.NewLocalArtifactStore(config.ArtifactDir)
 	if err != nil {
 		return err
@@ -56,6 +53,22 @@ func run() error {
 	server := compute.NewServer(service, auth, slog.Default())
 	slog.Info("starting compute api", "port", config.Port)
 	return http.ListenAndServe(":"+config.Port, server.Routes())
+}
+
+func openStore(ctx context.Context, config compute.Config, migrationsDir string) (compute.Store, func(), error) {
+	if config.DatabaseURL == "" {
+		slog.Warn("COMPUTE_API_DATABASE_URL not set; using in-memory compute metadata store")
+		return compute.NewMemoryStore(), func() {}, nil
+	}
+	store, err := compute.OpenPostgresStore(ctx, config.DatabaseURL)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := store.ApplyMigrations(ctx, migrationsDir); err != nil {
+		store.Close()
+		return nil, nil, err
+	}
+	return store, store.Close, nil
 }
 
 func getenv(key, fallback string) string {

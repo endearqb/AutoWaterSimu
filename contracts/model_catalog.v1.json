@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "model_catalog.v1.json",
+  "title": "model_catalog.v1",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "models"],
+  "properties": {
+    "schema_version": { "const": "model_catalog.v1" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "models": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/model" }
+    },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "model": {
+      "type": "object",
+      "required": ["model_key", "display_name", "supported_job_types", "versions"],
+      "properties": {
+        "model_key": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "supported_job_types": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "versions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/model_version" },
+          "minItems": 1
+        },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "model_version": {
+      "type": "object",
+      "required": ["model_version", "status", "runtime", "parameter_templates", "benchmark_cases"],
+      "properties": {
+        "model_version": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["active", "deprecated", "archived"]
+        },
+        "runtime": { "type": "string", "minLength": 1 },
+        "released_at": { "type": "string", "format": "date-time" },
+        "parameter_templates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/parameter_template" }
+        },
+        "benchmark_cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/benchmark_case" }
+        },
+        "default_parameter_set": { "$ref": "#/$defs/parameter_set" },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "parameter_template": {
+      "type": "object",
+      "required": ["parameter_key", "display_name", "value_type", "required"],
+      "properties": {
+        "parameter_key": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 },
+        "unit": { "type": "string" },
+        "value_type": {
+          "type": "string",
+          "enum": ["number", "integer", "string", "boolean", "object", "array"]
+        },
+        "required": { "type": "boolean" },
+        "default_value": {},
+        "min_value": { "type": "number" },
+        "max_value": { "type": "number" },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "parameter_set": {
+      "type": "object",
+      "required": ["parameter_set_id", "status", "parameter_hash"],
+      "properties": {
+        "parameter_set_id": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "candidate", "validated", "approved", "retired"]
+        },
+        "parameter_hash": { "type": "string", "pattern": "^sha256:[0-9a-fA-F]{64}$" },
+        "parameters": { "type": "object" },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "benchmark_case": {
+      "type": "object",
+      "required": ["benchmark_case_id", "display_name", "job_type", "input_ref", "expected_metrics", "tolerance", "status"],
+      "properties": {
+        "benchmark_case_id": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "job_type": { "type": "string", "minLength": 1 },
+        "input_ref": { "type": "object" },
+        "expected_metrics": { "type": "object" },
+        "tolerance": { "type": "object" },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "validated", "retired"]
+        },
+        "source": { "type": "string" },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

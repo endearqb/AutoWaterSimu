@@ -1,0 +1,59 @@
+{
+  "schema_version": "draft_confirmation.v1",
+  "confirmation_id": "confirm_promote_material_balance_minimal",
+  "draft_schema_version": "agent_scenario_draft.v1",
+  "draft_id": "draft_promote_material_balance_minimal",
+  "decision": "approved",
+  "confirmed_by": "user:test",
+  "confirmed_at": "2026-05-30T00:00:00Z",
+  "requires_confirmation_acknowledged": true,
+  "draft": {
+    "schema_version": "agent_scenario_draft.v1",
+    "draft_id": "draft_promote_material_balance_minimal",
+    "created_by": "agent:test",
+    "scenario_summary": "Promote a confirmed minimal material balance scenario.",
+    "proposed_request": {
+      "schema_version": "simulation_request.v1",
+      "request_id": "sim_req_promoted_material_balance_minimal",
+      "source_system": "agent",
+      "requested_by": "agent:test",
+      "job_type": "simulation.material_balance.v1",
+      "input_ref": {
+        "simulation_input": {
+          "schema_version": "simulation_input.v1",
+          "simulation_input_id": "si_promoted_material_balance_minimal",
+          "process_graph_id": "pg_promoted_material_balance_minimal",
+          "process_graph_version": 1,
+          "job_type": "simulation.material_balance.v1",
+          "component_schema": {
+            "component_schema_id": "material_balance_components.v1",
+            "components": ["COD"],
+            "unit": "mg/L"
+          },
+          "nodes": [
+            { "node_id": "n_in", "node_type": "input", "initial_volume": 1.0, "initial_concentrations": { "COD": 10.0 }, "is_inlet": true, "is_outlet": false },
+            { "node_id": "n_tank", "node_type": "tank", "initial_volume": 10.0, "initial_concentrations": { "COD": 0.0 }, "is_inlet": false, "is_outlet": false },
+            { "node_id": "n_out", "node_type": "output", "initial_volume": 1.0, "initial_concentrations": { "COD": 0.0 }, "is_inlet": false, "is_outlet": true }
+          ],
+          "edges": [
+            { "edge_id": "e_in_tank", "source_node_id": "n_in", "target_node_id": "n_tank", "flow_rate": 100.0, "concentration_transform": { "COD": { "a": 1.0, "b": 0.0 } } },
+            { "edge_id": "e_tank_out", "source_node_id": "n_tank", "target_node_id": "n_out", "flow_rate": 100.0, "concentration_transform": { "COD": { "a": 1.0, "b": 0.0 } } }
+          ],
+          "parameters": {
+            "hours": 4.0,
+            "steps_per_hour": 60,
+            "solver_method": "scipy_solver",
+            "tolerance": 0.000001
+          },
+          "runtime_options": {}
+        }
+      },
+      "metadata": {
+        "trace_id": "trace_promoted_material_balance_minimal",
+        "tenant_id": "tenant_demo",
+        "project_id": "project_demo"
+      }
+    },
+    "requires_confirmation": true
+  }
+}

@@ -12,6 +12,7 @@ export interface I18nMessages {
   }
   nav: {
     home: string
+    computeJobs: string
     flowingFlow: string
     materialBalance: string
     asm1slim: string

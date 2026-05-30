@@ -1,0 +1,21 @@
+{
+  "schema_version": "draft_confirmation.v1",
+  "confirmation_id": "confirm_draft_material_balance_minimal",
+  "draft_schema_version": "agent_scenario_draft.v1",
+  "draft_id": "draft_material_balance_minimal",
+  "decision": "approved",
+  "confirmed_by": "user:test",
+  "confirmed_at": "2026-05-30T00:00:00Z",
+  "requires_confirmation_acknowledged": true,
+  "draft": {
+    "schema_version": "agent_scenario_draft.v1",
+    "draft_id": "draft_material_balance_minimal",
+    "created_by": "agent:test",
+    "scenario_summary": "Run the minimal material balance scenario.",
+    "proposed_request": {
+      "schema_version": "simulation_request.v1",
+      "request_id": "sim_req_material_balance_minimal"
+    },
+    "requires_confirmation": true
+  }
+}
