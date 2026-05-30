@@ -1,3 +1,23 @@
+# 2026-05-30 AutoWaterSimu Next Web Evidence Ref Lookup TODO
+
+- [x] Re-read Compute Jobs route README/service boundary and existing evidence UI
+- [x] Add job-scoped evidence ref lookup control to Compute Jobs detail
+- [x] Keep dereference inside `computeJobsService.resolveEvidenceReference()`
+- [x] Update route README context
+- [x] Run frontend build and diff validation
+- [x] Commit checkpoint
+
+## Review
+
+- Compute Jobs detail now has a read-only `Evidence ref lookup` panel for refs such as `model_run:<id>`、`artifact:<id>`、`job:<id>`、`simulation_input:<id>`、`process_graph:<id>` and `evidence_package:<id>`.
+- The route calls the generated-backed service wrapper only; it does not compose evidence payloads or cross-job references in frontend code.
+- Lookup state is reset when the selected job changes, and results are displayed only when the response belongs to the selected job.
+- Verification so far:
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npm run build` passed with existing Vite warnings only.
+  - `cd frontend; npx biome check src\routes\_layout\compute-jobs.tsx` passed.
+  - `git diff --check` passed with LF/CRLF warnings only.
+
 # 2026-05-30 AutoWaterSimu Next ProcessGraph Evidence Ref TODO
 
 - [x] Re-read evidence/risk/NewSystem approval-read context

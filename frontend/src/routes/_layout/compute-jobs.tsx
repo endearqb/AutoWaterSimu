@@ -30,6 +30,7 @@ import type {
   ArtifactRecord,
   ContractValidationResponse,
   EventRecord,
+  EvidenceReferenceResolution,
   JobSnapshot,
   ModelCatalog,
   ModelRun,
@@ -703,22 +704,32 @@ function JobDetail({
   snapshot,
   result,
   evidenceDownload,
+  evidenceRef,
+  evidenceResolution,
   onCancel,
   cancelPending,
   onDownload,
   downloading,
   onDownloadEvidence,
+  onEvidenceRefChange,
+  onResolveEvidenceRef,
   evidenceDownloading,
+  evidenceResolving,
 }: {
   snapshot: JobSnapshot | undefined
   result: unknown
   evidenceDownload: EvidenceDownloadResult | null
+  evidenceRef: string
+  evidenceResolution: EvidenceReferenceResolution | null
   onCancel: () => void
   cancelPending: boolean
   onDownload: (artifact: ArtifactRecord) => void
   downloading: boolean
   onDownloadEvidence: () => void
+  onEvidenceRefChange: (value: string) => void
+  onResolveEvidenceRef: () => void
   evidenceDownloading: boolean
+  evidenceResolving: boolean
 }) {
   if (!snapshot) {
     return (
@@ -737,6 +748,11 @@ function JobDetail({
     : []
   const errorText =
     [job.error_code, job.error_message].filter(Boolean).join(": ") || undefined
+  const resolveRefOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && evidenceRef.trim()) {
+      onResolveEvidenceRef()
+    }
+  }
 
   return (
     <Stack gap={4}>
@@ -804,6 +820,63 @@ function JobDetail({
           Result summary
         </Heading>
         <JsonBlock value={resultSummary} />
+      </Box>
+
+      <Box borderWidth="1px" borderRadius="md" p={4}>
+        <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
+          <Heading size="sm">Evidence ref lookup</Heading>
+          {evidenceResolution && (
+            <Badge colorPalette={evidenceResolution.resolved ? "green" : "red"}>
+              {evidenceResolution.ref_type || "ref"}
+            </Badge>
+          )}
+        </Flex>
+        <HStack gap={2} align="stretch">
+          <Input
+            size="sm"
+            value={evidenceRef}
+            onChange={(event) => onEvidenceRefChange(event.target.value)}
+            onKeyDown={resolveRefOnEnter}
+            placeholder="model_run:..."
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={
+              evidenceResolving || !evidenceRef.trim() || !job.result_hash
+            }
+            onClick={onResolveEvidenceRef}
+          >
+            <FiSearch />
+            Resolve
+          </Button>
+        </HStack>
+        {evidenceResolution && (
+          <Box mt={3}>
+            <Grid
+              templateColumns={{
+                base: "1fr",
+                md: "repeat(3, minmax(0, 1fr))",
+              }}
+              gap={3}
+              mb={3}
+            >
+              <Field
+                label="Reference"
+                value={evidenceResolution.evidence_ref}
+              />
+              <Field label="Reference ID" value={evidenceResolution.ref_id} />
+              <Field
+                label="Resolved"
+                value={evidenceResolution.resolved ? "yes" : "no"}
+              />
+            </Grid>
+            <JsonBlock
+              value={evidenceResolution.payload ?? evidenceResolution}
+              minH="120px"
+            />
+          </Box>
+        )}
       </Box>
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
@@ -903,6 +976,9 @@ function ComputeJobs() {
   >([])
   const [evidenceDownload, setEvidenceDownload] =
     useState<EvidenceDownloadResult | null>(null)
+  const [evidenceRefText, setEvidenceRefText] = useState("")
+  const [evidenceResolution, setEvidenceResolution] =
+    useState<EvidenceReferenceResolution | null>(null)
   const [modelRunFilters, setModelRunFilters] =
     useState<ModelRunSearchForm>(emptyModelRunFilters)
   const [appliedModelRunFilters, setAppliedModelRunFilters] =
@@ -918,6 +994,12 @@ function ComputeJobs() {
     (state) => state.currentFlowChartName,
   )
   const currentFlowNodeCount = useFlowStore((state) => state.nodes.length)
+
+  const selectJob = (jobId: string) => {
+    setSelectedJobId(jobId)
+    setEvidenceRefText("")
+    setEvidenceResolution(null)
+  }
 
   const healthQuery = useQuery({
     queryKey: ["compute-api-health"],
@@ -982,7 +1064,7 @@ function ComputeJobs() {
     mutationFn: computeJobsService.createDemoJob,
     onMutate: () => setTransformIssues([]),
     onSuccess: (snapshot) => {
-      setSelectedJobId(snapshot.job.job_id)
+      selectJob(snapshot.job.job_id)
       queryClient.invalidateQueries({ queryKey: ["compute-jobs"] })
     },
   })
@@ -1000,7 +1082,7 @@ function ComputeJobs() {
       }
     },
     onSuccess: (snapshot) => {
-      setSelectedJobId(snapshot.job.job_id)
+      selectJob(snapshot.job.job_id)
       queryClient.invalidateQueries({ queryKey: ["compute-jobs"] })
     },
   })
@@ -1008,7 +1090,7 @@ function ComputeJobs() {
   const cancelMutation = useMutation({
     mutationFn: (jobId: string) => computeJobsService.cancelJob(jobId),
     onSuccess: (snapshot) => {
-      setSelectedJobId(snapshot.job.job_id)
+      selectJob(snapshot.job.job_id)
       queryClient.invalidateQueries({ queryKey: ["compute-jobs"] })
       queryClient.invalidateQueries({
         queryKey: ["compute-job", snapshot.job.job_id],
@@ -1026,6 +1108,18 @@ function ComputeJobs() {
       computeJobsService.downloadEvidencePackage(jobId),
     onMutate: () => setEvidenceDownload(null),
     onSuccess: (download) => setEvidenceDownload(download),
+  })
+
+  const resolveEvidenceMutation = useMutation({
+    mutationFn: ({
+      evidenceRef,
+      jobId,
+    }: {
+      evidenceRef: string
+      jobId: string
+    }) => computeJobsService.resolveEvidenceReference(jobId, evidenceRef),
+    onMutate: () => setEvidenceResolution(null),
+    onSuccess: (resolution) => setEvidenceResolution(resolution),
   })
 
   const contractValidationMutation = useMutation({
@@ -1052,6 +1146,8 @@ function ComputeJobs() {
       : "ready"
   const selectedEvidenceDownload =
     evidenceDownload?.jobId === selectedJobId ? evidenceDownload : null
+  const selectedEvidenceResolution =
+    evidenceResolution?.job_id === selectedJobId ? evidenceResolution : null
 
   return (
     <Container maxW="full" py={8}>
@@ -1131,6 +1227,7 @@ function ComputeJobs() {
           cancelMutation.isError ||
           downloadMutation.isError ||
           downloadEvidenceMutation.isError ||
+          resolveEvidenceMutation.isError ||
           contractValidationMutation.isError ||
           draftConfirmationMutation.isError) && (
           <Box borderWidth="1px" borderRadius="md" p={4} color="red.fg">
@@ -1144,6 +1241,7 @@ function ComputeJobs() {
                   cancelMutation.error ||
                   downloadMutation.error ||
                   downloadEvidenceMutation.error ||
+                  resolveEvidenceMutation.error ||
                   contractValidationMutation.error ||
                   draftConfirmationMutation.error,
               )}
@@ -1180,7 +1278,7 @@ function ComputeJobs() {
             <JobsTable
               jobs={jobs}
               selectedJobId={selectedJobId}
-              onSelect={setSelectedJobId}
+              onSelect={selectJob}
             />
           </Box>
 
@@ -1189,6 +1287,8 @@ function ComputeJobs() {
               snapshot={selectedSnapshot}
               result={resultQuery.data}
               evidenceDownload={selectedEvidenceDownload}
+              evidenceRef={evidenceRefText}
+              evidenceResolution={selectedEvidenceResolution}
               onCancel={() => {
                 if (selectedJobId) {
                   cancelMutation.mutate(selectedJobId)
@@ -1202,7 +1302,17 @@ function ComputeJobs() {
                   downloadEvidenceMutation.mutate(selectedJobId)
                 }
               }}
+              onEvidenceRefChange={setEvidenceRefText}
+              onResolveEvidenceRef={() => {
+                if (selectedJobId && evidenceRefText.trim()) {
+                  resolveEvidenceMutation.mutate({
+                    evidenceRef: evidenceRefText.trim(),
+                    jobId: selectedJobId,
+                  })
+                }
+              }}
               evidenceDownloading={downloadEvidenceMutation.isPending}
+              evidenceResolving={resolveEvidenceMutation.isPending}
             />
             <EventsPanel events={eventsQuery.data?.items ?? []} />
           </Stack>
