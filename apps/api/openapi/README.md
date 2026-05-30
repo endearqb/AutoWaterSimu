@@ -7,7 +7,7 @@
 本目录负责：
 
 - `compute.openapi.json` 作为 compute client generation source。
-- 描述 Web/Platform compute API 的 request/response/error surface，包括 job、model catalog snapshot registry、default parameter set status transition、process graph registry、simulation input registry、simulation check、artifact retention metadata、model catalog/benchmark cases、model_run、evidence package and evidence reference dereference、contract validation、draft confirmation audit、constraint application plan、result explanation workflow and explicit promotion endpoints。
+- 描述 Web/Platform compute API 的 request/response/error surface，包括 job、model catalog snapshot registry、default parameter set status transition、benchmark run history、process graph registry、simulation input registry、simulation check、artifact retention metadata、model catalog/benchmark cases、model_run、evidence package and evidence reference dereference、contract validation、draft confirmation audit、constraint application plan、result explanation workflow and explicit promotion endpoints。
 
 本目录不负责：
 

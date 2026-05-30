@@ -13,6 +13,60 @@ export type ArtifactRecord = {
 
 export type retention_policy = 'retain_forever' | 'ttl' | 'archive_candidate';
 
+export type BenchmarkRun = {
+    schema_version: 'benchmark_run.v1';
+    benchmark_run_id: string;
+    model_key: string;
+    model_version: string;
+    benchmark_case_id: string;
+    parameter_set_id: string;
+    model_run_id: string;
+    job_id: string;
+    status: 'passed' | 'failed' | 'error';
+    metrics: {
+        [key: string]: unknown;
+    };
+    tolerance: {
+        [key: string]: unknown;
+    };
+    evidence_refs: Array<(string)>;
+    warnings?: Array<(string)>;
+    executed_at: string;
+    executed_by?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type schema_version = 'benchmark_run.v1';
+
+export type status = 'passed' | 'failed' | 'error';
+
+export type BenchmarkRunRecord = {
+    benchmark_run_id: string;
+    schema_version: 'benchmark_run.v1';
+    model_key: string;
+    model_version: string;
+    benchmark_case_id: string;
+    parameter_set_id: string;
+    model_run_id: string;
+    job_id: string;
+    status: 'passed' | 'failed' | 'error';
+    payload_hash: string;
+    payload: {
+        [key: string]: unknown;
+    };
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    executed_at: string;
+    created_at: string;
+};
+
 export type ClaimResponse = {
     [key: string]: unknown;
 };
@@ -40,7 +94,7 @@ export type ConstraintApplicationPlan = {
     warnings: Array<(string)>;
 };
 
-export type schema_version = 'constraint_application_plan.v1';
+export type schema_version2 = 'constraint_application_plan.v1';
 
 export type application_mode = 'advisory_only';
 
@@ -54,7 +108,7 @@ export type ContractError = {
     };
 };
 
-export type schema_version2 = 'contract_error.v1';
+export type schema_version3 = 'contract_error.v1';
 
 export type ContractValidationIssue = {
     path: string;
@@ -71,7 +125,7 @@ export type ContractValidationResponse = {
     confirmation_record?: DraftConfirmationRecord;
 };
 
-export type schema_version3 = 'contract_validation.v1';
+export type schema_version4 = 'contract_validation.v1';
 
 export type DraftConfirmationRecord = {
     confirmation_id: string;
@@ -96,7 +150,7 @@ export type DraftConfirmationRecord = {
     created_at: string;
 };
 
-export type schema_version4 = 'draft_confirmation.v1';
+export type schema_version5 = 'draft_confirmation.v1';
 
 export type decision = 'approved' | 'rejected' | 'changes_requested';
 
@@ -142,6 +196,12 @@ export type JobSnapshot = {
     event_count: number;
 };
 
+export type ListBenchmarkRunsResponse = {
+    items: Array<BenchmarkRunRecord>;
+    next_cursor?: string;
+    total_estimate: number;
+};
+
 export type ListJobsResponse = {
     items: Array<JobSnapshot>;
     next_cursor?: string;
@@ -176,7 +236,7 @@ export type ModelBenchmarkCase = {
     };
 };
 
-export type status = 'draft' | 'validated' | 'retired';
+export type status2 = 'draft' | 'validated' | 'retired';
 
 export type ModelCatalog = {
     schema_version: 'model_catalog.v1';
@@ -187,7 +247,7 @@ export type ModelCatalog = {
     };
 };
 
-export type schema_version5 = 'model_catalog.v1';
+export type schema_version6 = 'model_catalog.v1';
 
 export type ModelCatalogModel = {
     model_key: string;
@@ -229,7 +289,7 @@ export type ModelCatalogVersion = {
     };
 };
 
-export type status2 = 'active' | 'deprecated' | 'archived';
+export type status3 = 'active' | 'deprecated' | 'archived';
 
 export type ModelParameterSet = {
     parameter_set_id: string;
@@ -243,7 +303,7 @@ export type ModelParameterSet = {
     };
 };
 
-export type status3 = 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
+export type status4 = 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
 
 export type ModelParameterSetTransitionResponse = {
     model_key: string;
@@ -275,6 +335,8 @@ export type value_type = 'number' | 'integer' | 'string' | 'boolean' | 'object' 
 export type ModelRun = {
     [key: string]: unknown;
 };
+
+export type ParameterBenchmarkRunID = string;
 
 export type ParameterConfirmationID = string;
 
@@ -329,7 +391,7 @@ export type ProcessGraphRecord = {
     created_at: string;
 };
 
-export type schema_version6 = 'process_graph.v1';
+export type schema_version7 = 'process_graph.v1';
 
 export type ResultExplanationRecord = {
     schema_version: 'result_explanation_record.v1';
@@ -361,11 +423,11 @@ export type ResultExplanationRecord = {
     updated_at: string;
 };
 
-export type schema_version7 = 'result_explanation_record.v1';
+export type schema_version8 = 'result_explanation_record.v1';
 
 export type explanation_schema_version = 'result_explanation.v1';
 
-export type status4 = 'submitted' | 'approved' | 'rejected' | 'published';
+export type status5 = 'submitted' | 'approved' | 'rejected' | 'published';
 
 export type review_decision = 'approved' | 'rejected';
 
@@ -398,7 +460,7 @@ export type SimulationInputRecord = {
     created_at: string;
 };
 
-export type schema_version8 = 'simulation_input.v1';
+export type schema_version9 = 'simulation_input.v1';
 
 export type SimulationRequest = {
     schema_version: 'simulation_request.v1';
@@ -425,7 +487,7 @@ export type SimulationRequest = {
     [key: string]: unknown | string;
 };
 
-export type schema_version9 = 'simulation_request.v1';
+export type schema_version10 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1';
 
@@ -628,6 +690,30 @@ export type UpdateDefaultParameterSetStatusData = {
 };
 
 export type UpdateDefaultParameterSetStatusResponse = (ModelParameterSetTransitionResponse);
+
+export type ListBenchmarkRunsData = {
+    benchmarkCaseId?: string;
+    cursor?: string;
+    limit?: number;
+    modelKey: string;
+    modelVersion: string;
+};
+
+export type ListBenchmarkRunsResponse2 = (ListBenchmarkRunsResponse);
+
+export type RecordBenchmarkRunData = {
+    modelKey: string;
+    modelVersion: string;
+    requestBody: BenchmarkRun;
+};
+
+export type RecordBenchmarkRunResponse = (BenchmarkRunRecord);
+
+export type GetBenchmarkRunData = {
+    benchmarkRunId: string;
+};
+
+export type GetBenchmarkRunResponse = (BenchmarkRunRecord);
 
 export type ListModelRunsData = {
     cursor?: string;

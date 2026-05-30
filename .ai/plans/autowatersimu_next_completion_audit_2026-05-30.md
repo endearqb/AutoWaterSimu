@@ -17,8 +17,9 @@ This is not a completion claim. The goal remains active until every requirement 
 
 Latest current-turn verification:
 
-- `backend\.venv\Scripts\python -m pytest contracts\tests -q`: passed, `69 passed`
+- `backend\.venv\Scripts\python -m pytest contracts\tests -q`: passed, `73 passed`
 - `cd apps\api; go test ./...`: passed
+- `benchmark_run.v1` contract, PostgreSQL history table, record/list/get API, generated client, and frontend service wrappers exist; recording benchmark runs validates catalog benchmark case status, default parameter set hash, matching model_run, and job-scoped evidence refs
 - Approved `constraint_draft.v1` confirmation can produce a read-only `constraint_application_plan.v1` through Go API tests; the plan is advisory-only and keeps `would_create_job=false` / `would_modify_target=false`
 - Externally generated `result_explanation.v1` can be submitted, reviewed, read, and published through Go API tests after job-scoped evidence ref checks; publish is audit metadata only
 - `process_graph:<id>` evidence refs resolve to registered `ProcessGraphRecord` only when the completed job payload references that graph
@@ -54,7 +55,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present | Complete installer/package smoke, external file dialog allowlist, recent files, full project package content |
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
-| Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, model_run records, evidence governance summary | Multi-parameter-set management, benchmark execution/run history, governance UI beyond Compute Jobs read-only panel |
+| Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, benchmark_run history, model_run records, evidence governance summary | Multi-parameter-set management, scheduled benchmark execution, benchmark-backed parameter promotion, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
@@ -70,7 +71,7 @@ Latest recorded but not re-run in this verification refresh:
 2. Model governance completion
 
 - Broaden parameter set lifecycle beyond the current default-parameter-set status transition only after multi-parameter-set semantics are defined.
-- Add benchmark run contract and execution history after model catalog persistence is available.
+- Add scheduled benchmark execution and benchmark-backed parameter promotion only after benchmark history semantics are reviewed.
 - Add read-only governance UI separate from Compute Jobs if the route grows too dense.
 
 3. Agent DSL completion
@@ -107,6 +108,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Add benchmark run contract after benchmark case metadata and catalog persistence have stabilized.
-2. Add release checklist automation, packaged sidecar smoke, and installer smoke evidence.
-3. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
+1. Add release checklist automation, packaged sidecar smoke, and installer smoke evidence.
+2. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
+3. Add scheduled benchmark execution or benchmark-backed parameter promotion only after those governance semantics are separately approved.

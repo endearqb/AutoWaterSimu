@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "benchmark_run.v1.json",
+  "title": "benchmark_run.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "benchmark_run_id",
+    "model_key",
+    "model_version",
+    "benchmark_case_id",
+    "parameter_set_id",
+    "model_run_id",
+    "job_id",
+    "status",
+    "metrics",
+    "tolerance",
+    "evidence_refs",
+    "executed_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "benchmark_run.v1" },
+    "benchmark_run_id": { "type": "string", "minLength": 1 },
+    "model_key": { "type": "string", "minLength": 1 },
+    "model_version": { "type": "string", "minLength": 1 },
+    "benchmark_case_id": { "type": "string", "minLength": 1 },
+    "parameter_set_id": { "type": "string", "minLength": 1 },
+    "model_run_id": { "type": "string", "minLength": 1 },
+    "job_id": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["passed", "failed", "error"] },
+    "metrics": { "type": "object" },
+    "tolerance": { "type": "object" },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "executed_at": { "type": "string", "format": "date-time" },
+    "executed_by": { "type": "string" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

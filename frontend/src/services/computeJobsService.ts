@@ -1,7 +1,10 @@
 import { OpenAPI as ComputeOpenAPI, DefaultService } from "@/client/compute"
 import type {
   ArtifactRecord,
+  BenchmarkRun,
+  BenchmarkRunRecord,
   ComputeJob,
+  ProcessGraphRecord as ComputeProcessGraphRecord,
   ConstraintApplicationPlan,
   ContractValidationResponse,
   DraftConfirmationRecord,
@@ -10,13 +13,13 @@ import type {
   GetComputeJobEventsResponse,
   GetComputeJobResultResponse,
   JobSnapshot,
+  ListBenchmarkRunsResponse,
   ListJobsResponse,
   ListModelRunsResponse,
   ModelCatalog,
   ModelCatalogRecord,
   ModelParameterSetTransitionResponse,
   ParameterSetStatusUpdateRequest,
-  ProcessGraphRecord as ComputeProcessGraphRecord,
   ResultExplanationRecord,
   ResultExplanationReviewRequest,
 } from "@/client/compute"
@@ -50,6 +53,14 @@ export interface ListModelRunsParams {
   limit?: number
   modelKey?: string
   modelVersion?: string
+}
+
+export interface ListBenchmarkRunsParams {
+  benchmarkCaseId?: string
+  cursor?: string
+  limit?: number
+  modelKey: string
+  modelVersion: string
 }
 
 export interface BuildFlowComputeJobResult {
@@ -357,6 +368,34 @@ export const computeJobsService = {
       modelVersion,
       requestBody: request,
     })
+  },
+
+  listBenchmarkRuns(
+    params: ListBenchmarkRunsParams,
+  ): Promise<ListBenchmarkRunsResponse> {
+    return DefaultService.listBenchmarkRuns({
+      benchmarkCaseId: params.benchmarkCaseId || undefined,
+      cursor: params.cursor,
+      limit: params.limit ?? 20,
+      modelKey: params.modelKey,
+      modelVersion: params.modelVersion,
+    })
+  },
+
+  recordBenchmarkRun(
+    modelKey: string,
+    modelVersion: string,
+    benchmarkRun: BenchmarkRun,
+  ): Promise<BenchmarkRunRecord> {
+    return DefaultService.recordBenchmarkRun({
+      modelKey,
+      modelVersion,
+      requestBody: benchmarkRun,
+    })
+  },
+
+  getBenchmarkRun(benchmarkRunId: string): Promise<BenchmarkRunRecord> {
+    return DefaultService.getBenchmarkRun({ benchmarkRunId })
   },
 
   validateContractDocument(

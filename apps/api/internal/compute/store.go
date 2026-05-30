@@ -24,6 +24,9 @@ type Store interface {
 	FindModelRun(ctx context.Context, modelRunID string) (json.RawMessage, error)
 	ListModelRuns(ctx context.Context, filter ModelRunFilter) ([]json.RawMessage, string, int, error)
 	ModelRuns(ctx context.Context, jobID string) ([]json.RawMessage, error)
+	UpsertBenchmarkRun(ctx context.Context, record BenchmarkRunRecord) (BenchmarkRunRecord, bool, error)
+	FindBenchmarkRun(ctx context.Context, benchmarkRunID string) (*BenchmarkRunRecord, error)
+	ListBenchmarkRuns(ctx context.Context, filter BenchmarkRunFilter) ([]BenchmarkRunRecord, string, int, error)
 	UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error)
 	LatestModelCatalog(ctx context.Context, catalogID string) (*ModelCatalogRecord, error)
 	UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord) (bool, error)
@@ -68,6 +71,7 @@ type MemoryStore struct {
 	events        map[string][]EventRecord
 	artifacts     map[string]ArtifactRecord
 	modelRuns     map[string]json.RawMessage
+	benchmarkRuns map[string]BenchmarkRunRecord
 	modelCatalogs map[string][]ModelCatalogRecord
 	processGraphs map[string]ProcessGraphRecord
 	inputs        map[string]SimulationInputRecord
@@ -83,6 +87,7 @@ func NewMemoryStore() *MemoryStore {
 		events:        map[string][]EventRecord{},
 		artifacts:     map[string]ArtifactRecord{},
 		modelRuns:     map[string]json.RawMessage{},
+		benchmarkRuns: map[string]BenchmarkRunRecord{},
 		modelCatalogs: map[string][]ModelCatalogRecord{},
 		processGraphs: map[string]ProcessGraphRecord{},
 		inputs:        map[string]SimulationInputRecord{},
@@ -325,6 +330,81 @@ func (store *MemoryStore) ModelRuns(_ context.Context, jobID string) ([]json.Raw
 		return modelRunIDFromRaw(modelRuns[i]) < modelRunIDFromRaw(modelRuns[j])
 	})
 	return modelRuns, nil
+}
+
+func (store *MemoryStore) UpsertBenchmarkRun(_ context.Context, record BenchmarkRunRecord) (BenchmarkRunRecord, bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	existing, ok := store.benchmarkRuns[record.BenchmarkRunID]
+	if ok {
+		if existing.PayloadHash != record.PayloadHash {
+			return BenchmarkRunRecord{}, false, Conflict(CodeIdempotencyConflict, "benchmark_run_id was reused with a different payload")
+		}
+		return cloneBenchmarkRunRecord(existing), false, nil
+	}
+	store.benchmarkRuns[record.BenchmarkRunID] = cloneBenchmarkRunRecord(record)
+	return cloneBenchmarkRunRecord(record), true, nil
+}
+
+func (store *MemoryStore) FindBenchmarkRun(_ context.Context, benchmarkRunID string) (*BenchmarkRunRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	record, ok := store.benchmarkRuns[benchmarkRunID]
+	if !ok {
+		return nil, NotFound(CodeBenchmarkRunNotFound, "benchmark run not found")
+	}
+	record = cloneBenchmarkRunRecord(record)
+	return &record, nil
+}
+
+func (store *MemoryStore) ListBenchmarkRuns(_ context.Context, filter BenchmarkRunFilter) ([]BenchmarkRunRecord, string, int, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	var records []BenchmarkRunRecord
+	for _, record := range store.benchmarkRuns {
+		if filter.ModelKey != "" && record.ModelKey != filter.ModelKey {
+			continue
+		}
+		if filter.ModelVersion != "" && record.ModelVersion != filter.ModelVersion {
+			continue
+		}
+		if filter.BenchmarkCaseID != "" && record.BenchmarkCaseID != filter.BenchmarkCaseID {
+			continue
+		}
+		records = append(records, cloneBenchmarkRunRecord(record))
+	}
+	sort.Slice(records, func(i, j int) bool {
+		if records[i].ExecutedAt.Equal(records[j].ExecutedAt) {
+			return records[i].BenchmarkRunID > records[j].BenchmarkRunID
+		}
+		return records[i].ExecutedAt.After(records[j].ExecutedAt)
+	})
+	total := len(records)
+	offset := decodeCursor(filter.Cursor)
+	if offset > len(records) {
+		offset = len(records)
+	}
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 200 {
+		limit = 200
+	}
+	end := offset + limit
+	next := ""
+	if end < len(records) {
+		next = encodeCursor(end)
+	} else {
+		end = len(records)
+	}
+	return records[offset:end], next, total, nil
+}
+
+func cloneBenchmarkRunRecord(record BenchmarkRunRecord) BenchmarkRunRecord {
+	record.Payload = append(json.RawMessage(nil), record.Payload...)
+	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
+	return record
 }
 
 func (store *MemoryStore) UpsertModelCatalog(_ context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error) {

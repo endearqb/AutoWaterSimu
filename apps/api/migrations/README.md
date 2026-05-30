@@ -28,6 +28,7 @@
 | `0005_process_graphs.*.sql` | registered `process_graph.v1` payload metadata for ProcessGraph-based simulation checks |
 | `0006_model_catalogs.*.sql` | persisted `model_catalog.v1` snapshot metadata for model governance reads |
 | `0007_result_explanations.*.sql` | persisted `result_explanation.v1` review/publish audit records |
+| `0008_benchmark_runs.*.sql` | persisted `benchmark_run.v1` execution history for model governance reads |
 
 ## 3. 维护约定
 
@@ -38,6 +39,7 @@
 5. Model catalog, process graph and simulation input registries store validated payload metadata for governance or job creation references; do not store result artifacts or time-series outputs in these tables.
 6. Draft confirmation records are audit metadata only; they must not create jobs, approvals, or production actions by themselves.
 7. Result explanation records are audit metadata only; publish status must not be treated as production approval or control publication.
+8. Benchmark run records are execution history only; they must not automatically change parameter set lifecycle state or production approval.
 
 ## 4. 对外接口
 

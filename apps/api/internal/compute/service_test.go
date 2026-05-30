@@ -496,6 +496,70 @@ func TestValidatedCompletePersistsModelRun(t *testing.T) {
 		t.Fatalf("evidence package ref endpoint failed: %d %s", rec.Code, rec.Body.String())
 	}
 
+	benchmarkRunBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.benchmark_run.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	benchmarkRun := decodeMap(t, benchmarkRunBytes)
+	benchmarkRun["benchmark_run_id"] = "br_material_balance_test"
+	benchmarkRun["model_run_id"] = "mr_material_balance_test"
+	benchmarkRun["job_id"] = "job_material_balance_minimal"
+	benchmarkRun["evidence_refs"] = []any{
+		"model_run:mr_material_balance_test",
+		"evidence_package:evidence_job_material_balance_minimal",
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/benchmark-runs", bytes.NewReader(encodeMap(t, benchmarkRun)))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("benchmark run record failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var benchmarkRecord BenchmarkRunRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &benchmarkRecord); err != nil {
+		t.Fatal(err)
+	}
+	if benchmarkRecord.BenchmarkRunID != "br_material_balance_test" ||
+		benchmarkRecord.Status != "passed" ||
+		benchmarkRecord.PayloadHash == "" {
+		t.Fatalf("unexpected benchmark run record: %#v", benchmarkRecord)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/benchmark-runs", bytes.NewReader(encodeMap(t, benchmarkRun)))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("duplicate benchmark run should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/benchmark-runs?benchmark_case_id=bc_material_balance_minimal_v1", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("benchmark run list failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var benchmarkList ListBenchmarkRunsResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &benchmarkList); err != nil {
+		t.Fatal(err)
+	}
+	if benchmarkList.TotalEstimate != 1 || len(benchmarkList.Items) != 1 {
+		t.Fatalf("unexpected benchmark run list: %#v", benchmarkList)
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/benchmark-runs/br_material_balance_test", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("benchmark run get failed: %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/benchmark-runs", bytes.NewReader(encodeMap(t, benchmarkRun)))
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not record benchmark runs, got %d %s", rec.Code, rec.Body.String())
+	}
+
 	explanationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.result_explanation.v1.json"))
 	if err != nil {
 		t.Fatal(err)

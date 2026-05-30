@@ -385,6 +385,49 @@
         }
       }
     },
+    "/api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-runs": {
+      "get": {
+        "operationId": "listBenchmarkRuns",
+        "parameters": [
+          { "$ref": "#/components/parameters/ModelKey" },
+          { "$ref": "#/components/parameters/ModelVersionPath" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "benchmark_case_id", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Benchmark run history", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListBenchmarkRunsResponse" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "post": {
+        "operationId": "recordBenchmarkRun",
+        "parameters": [
+          { "$ref": "#/components/parameters/ModelKey" },
+          { "$ref": "#/components/parameters/ModelVersionPath" }
+        ],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BenchmarkRun" } } } },
+        "responses": {
+          "201": { "description": "Recorded benchmark run", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BenchmarkRunRecord" } } } },
+          "200": { "description": "Duplicate benchmark run with matching payload", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BenchmarkRunRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/benchmark-runs/{benchmark_run_id}": {
+      "get": {
+        "operationId": "getBenchmarkRun",
+        "parameters": [{ "$ref": "#/components/parameters/BenchmarkRunID" }],
+        "responses": {
+          "200": { "description": "Benchmark run record", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BenchmarkRunRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/model-runs": {
       "get": {
         "operationId": "listModelRuns",
@@ -464,6 +507,7 @@
       "ModelKey": { "name": "model_key", "in": "path", "required": true, "schema": { "type": "string" } },
       "ModelVersionPath": { "name": "model_version", "in": "path", "required": true, "schema": { "type": "string" } },
       "ModelRunID": { "name": "model_run_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "BenchmarkRunID": { "name": "benchmark_run_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "ProcessGraphID": { "name": "process_graph_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "SimulationInputID": { "name": "simulation_input_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "ConfirmationID": { "name": "confirmation_id", "in": "path", "required": true, "schema": { "type": "string" } },
@@ -837,6 +881,61 @@
           "catalog_payload_hash": { "type": "string" },
           "created_snapshot": { "type": "boolean" },
           "catalog": { "$ref": "#/components/schemas/ModelCatalog" }
+        }
+      },
+      "BenchmarkRun": {
+        "type": "object",
+        "required": ["schema_version", "benchmark_run_id", "model_key", "model_version", "benchmark_case_id", "parameter_set_id", "model_run_id", "job_id", "status", "metrics", "tolerance", "evidence_refs", "executed_at"],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["benchmark_run.v1"] },
+          "benchmark_run_id": { "type": "string" },
+          "model_key": { "type": "string" },
+          "model_version": { "type": "string" },
+          "benchmark_case_id": { "type": "string" },
+          "parameter_set_id": { "type": "string" },
+          "model_run_id": { "type": "string" },
+          "job_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["passed", "failed", "error"] },
+          "metrics": { "type": "object", "additionalProperties": true },
+          "tolerance": { "type": "object", "additionalProperties": true },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "executed_at": { "type": "string", "format": "date-time" },
+          "executed_by": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "BenchmarkRunRecord": {
+        "type": "object",
+        "required": ["benchmark_run_id", "schema_version", "model_key", "model_version", "benchmark_case_id", "parameter_set_id", "model_run_id", "job_id", "status", "payload_hash", "payload", "source_system", "requested_by", "executed_at", "created_at"],
+        "properties": {
+          "benchmark_run_id": { "type": "string" },
+          "schema_version": { "type": "string", "enum": ["benchmark_run.v1"] },
+          "model_key": { "type": "string" },
+          "model_version": { "type": "string" },
+          "benchmark_case_id": { "type": "string" },
+          "parameter_set_id": { "type": "string" },
+          "model_run_id": { "type": "string" },
+          "job_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["passed", "failed", "error"] },
+          "payload_hash": { "type": "string" },
+          "payload": { "type": "object", "additionalProperties": true },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "executed_at": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ListBenchmarkRunsResponse": {
+        "type": "object",
+        "required": ["items", "total_estimate"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/BenchmarkRunRecord" } },
+          "next_cursor": { "type": "string" },
+          "total_estimate": { "type": "integer" }
         }
       },
       "ModelRun": { "type": "object", "additionalProperties": true },

@@ -1,0 +1,26 @@
+{
+  "schema_version": "benchmark_run.v1",
+  "benchmark_run_id": "br_material_balance_minimal_v1",
+  "model_key": "material_balance",
+  "model_version": "material_balance.v1",
+  "benchmark_case_id": "bc_material_balance_minimal_v1",
+  "parameter_set_id": "ps_material_balance_default_v1",
+  "model_run_id": "mr_material_balance_minimal",
+  "job_id": "job_material_balance_minimal",
+  "status": "passed",
+  "metrics": {
+    "convergence_status": "completed",
+    "warning_count": 0
+  },
+  "tolerance": {
+    "relative": 0.000001,
+    "absolute": 0.000001
+  },
+  "evidence_refs": [
+    "model_run:mr_material_balance_minimal",
+    "evidence_package:evidence_job_material_balance_minimal"
+  ],
+  "warnings": [],
+  "executed_at": "2026-05-30T00:00:00Z",
+  "executed_by": "benchmark:test"
+}

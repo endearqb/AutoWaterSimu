@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -608,6 +608,83 @@ export class DefaultService {
                 403: 'Contract error',
                 404: 'Contract error',
                 409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelKey
+     * @param data.modelVersion
+     * @param data.limit
+     * @param data.cursor
+     * @param data.benchmarkCaseId
+     * @returns ListBenchmarkRunsResponse Benchmark run history
+     * @throws ApiError
+     */
+    public static listBenchmarkRuns(data: ListBenchmarkRunsData): CancelablePromise<ListBenchmarkRunsResponse2> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-runs',
+            path: {
+                model_key: data.modelKey,
+                model_version: data.modelVersion
+            },
+            query: {
+                limit: data.limit,
+                cursor: data.cursor,
+                benchmark_case_id: data.benchmarkCaseId
+            },
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelKey
+     * @param data.modelVersion
+     * @param data.requestBody
+     * @returns BenchmarkRunRecord Duplicate benchmark run with matching payload
+     * @returns BenchmarkRunRecord Recorded benchmark run
+     * @throws ApiError
+     */
+    public static recordBenchmarkRun(data: RecordBenchmarkRunData): CancelablePromise<RecordBenchmarkRunResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-runs',
+            path: {
+                model_key: data.modelKey,
+                model_version: data.modelVersion
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.benchmarkRunId
+     * @returns BenchmarkRunRecord Benchmark run record
+     * @throws ApiError
+     */
+    public static getBenchmarkRun(data: GetBenchmarkRunData): CancelablePromise<GetBenchmarkRunResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/benchmark-runs/{benchmark_run_id}',
+            path: {
+                benchmark_run_id: data.benchmarkRunId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
             }
         });
     }

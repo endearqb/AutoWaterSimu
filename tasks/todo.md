@@ -1,3 +1,29 @@
+# 2026-05-30 AutoWaterSimu Next Benchmark Run History TODO
+
+- [x] Re-read model governance README, PRD/Spec/Plan, catalog and model_run implementation
+- [x] Add `benchmark_run.v1` schema and valid/invalid fixtures
+- [x] Add benchmark run PostgreSQL migration, store/service/API, and OpenAPI surface
+- [x] Regenerate Compute API frontend client and add service wrapper methods
+- [x] Update README/ADR/planning records
+- [x] Run Go, contract, frontend, migration, and diff validation
+- [x] Commit checkpoint
+
+## Review
+
+- Added `benchmark_run.v1` as an audit contract for completed benchmark executions tied to a catalog benchmark case, default parameter set, model_run, job, metrics, tolerance, and evidence refs.
+- Added persistent benchmark run history with record/list/get API endpoints under model governance; recording validates benchmark case status, model_run model/version/parameter hash, and job-scoped evidence refs.
+- Added migration `0008_benchmark_runs.*.sql`, OpenAPI updates, generated compute client updates, and `computeJobsService` wrappers.
+- Added ADR `.ai/decisions/0007-benchmark-run-history-scope.md` to preserve the no-side-effect boundary: records do not execute benchmarks, change parameter set status, or approve production.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`73 passed`).
+  - `cd frontend; npm run generate-compute-client` completed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npx biome check src\services\computeJobsService.ts` passed.
+  - `cd frontend; npm run build` passed with existing Vite warnings only.
+  - Temporary Docker PostgreSQL migration up/down smoke passed through `0008`.
+  - `git diff --check` passed with LF/CRLF warnings only after stripping generated SDK trailing whitespace.
+
 # 2026-05-30 AutoWaterSimu Next NewSystem Evidence E2E TODO
 
 - [x] Re-read NewSystem/milp evidence README, contracts, PRD/Spec/Plan context

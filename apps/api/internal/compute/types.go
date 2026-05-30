@@ -266,6 +266,41 @@ type ModelBenchmarkCase struct {
 	Metadata        map[string]any `json:"metadata,omitempty"`
 }
 
+type BenchmarkRunRecord struct {
+	BenchmarkRunID  string          `json:"benchmark_run_id"`
+	SchemaVersion   string          `json:"schema_version"`
+	ModelKey        string          `json:"model_key"`
+	ModelVersion    string          `json:"model_version"`
+	BenchmarkCaseID string          `json:"benchmark_case_id"`
+	ParameterSetID  string          `json:"parameter_set_id"`
+	ModelRunID      string          `json:"model_run_id"`
+	JobID           string          `json:"job_id"`
+	Status          string          `json:"status"`
+	PayloadHash     string          `json:"payload_hash"`
+	Payload         json.RawMessage `json:"payload"`
+	SourceSystem    string          `json:"source_system"`
+	RequestedBy     string          `json:"requested_by"`
+	TenantID        string          `json:"tenant_id,omitempty"`
+	ProjectID       string          `json:"project_id,omitempty"`
+	Metadata        json.RawMessage `json:"metadata,omitempty"`
+	ExecutedAt      time.Time       `json:"executed_at"`
+	CreatedAt       time.Time       `json:"created_at"`
+}
+
+type BenchmarkRunFilter struct {
+	Limit           int
+	Cursor          string
+	ModelKey        string
+	ModelVersion    string
+	BenchmarkCaseID string
+}
+
+type ListBenchmarkRunsResponse struct {
+	Items         []BenchmarkRunRecord `json:"items"`
+	NextCursor    string               `json:"next_cursor,omitempty"`
+	TotalEstimate int                  `json:"total_estimate"`
+}
+
 type ContractValidationIssue struct {
 	Path    string `json:"path"`
 	Message string `json:"message"`
