@@ -1,3 +1,28 @@
+# 2026-05-30 AutoWaterSimu Next Current Flow Playwright Smoke TODO
+
+- [x] Re-read frontend route/service/store/contracts and Playwright test context
+- [x] Add mock-backed Compute Jobs current-flow submission smoke
+- [x] Validate exported job metadata, simulation input nodes/edges/time segments, and UI job visibility
+- [x] Run frontend typecheck and focused Playwright test
+- [x] Update README First records and completion audit
+
+## Plan
+
+- Keep this slice test-only; do not change production Compute Jobs UI or current material-balance submit semantics.
+- Seed the Zustand flow store through Vite module import, then submit the existing `Current flow` action.
+- Mock legacy auth and Compute API endpoints so the smoke is deterministic and independent from live backend/Go API services.
+
+## Review
+
+- Added `frontend/tests/compute-jobs-current-flow.spec.ts`.
+- The smoke injects a three-node current flow with COD edge transforms and one time segment, clicks `Current flow`, and verifies the submitted `compute_job.v1` keeps `metadata.source=legacy_flow_export`, `process_graph_id=pg_graph_current_flow_smoke`, three simulation nodes, two edges, and one time segment.
+- The mocked Compute API returns queued job detail/result/events so the test also verifies the submitted job appears in the Compute Jobs table and process graph evidence is visible in the UI.
+- Verification:
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps` passed (`1 passed`).
+- Remaining scope:
+  - Full Playwright suite still depends on existing auth setup/backend environment; production CI placement for heavier worker baseline matrix remains a separate decision.
+
 # 2026-05-30 AutoWaterSimu Next Artifact Retention Sweep TODO
 
 - [x] Re-read Go API, internal compute, migration, artifact, evidence, and model_run context

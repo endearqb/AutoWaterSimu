@@ -52,6 +52,7 @@ Latest current-turn verification:
 - `cd apps\desktop; npm run typecheck`: passed
 - `cd apps\desktop; npm run build`: passed
 - `cd frontend; npx tsc --noEmit`: passed
+- `cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps`: passed, `1 passed`
 - `cd frontend; npm run build`: passed with existing Vite warnings about `gray-matter` eval, toaster chunking, and bundle size
 - Release gate automation now exists under `scripts/release/next-release-gates.ps1`; merge mode runs source-verifiable schema/worker/Go/codegen/frontend/Desktop checks and release mode requires explicit packaged sidecar and NSIS installer artifact paths
 - Desktop packaged sidecar and NSIS installer smoke scripts now write machine-readable evidence under `tmp/release-evidence/`
@@ -63,7 +64,7 @@ Latest current-turn verification:
 
 Latest recorded but not re-run in this verification refresh:
 
-- Browser render smokes against `/compute-jobs` are recorded earlier in `tasks/todo.md` and `.ai/changes/2026-05-30.md`.
+- Browser render smokes against `/compute-jobs` are recorded earlier in `tasks/todo.md` and `.ai/changes/2026-05-30.md`; the focused mock-backed current-flow Playwright smoke is now current-turn evidence.
 - Signing, auto-update, artifact publishing, and GitHub Windows runner release-build timing are not yet verified.
 
 ## Phase Status
@@ -75,7 +76,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 2 | Simulation core and worker CLI | Strong partial | Worker self-check, worker tests, minimal run-job, ASM1Slim model-bound run-job, independent `simulation.asm1slim.v1` / `simulation.asm1.v1` / `simulation.asm3.v1` / `simulation.udm.v1` run-job, simulation core tests, and API-once worker smoke pass | Add long-running worker daemon/heartbeat coverage when that mode exists |
 | Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present; PyInstaller one-folder packaged worker sidecar build, explicit Desktop runtime smoke, Tauri resource-bundled NSIS installer build, and installer smoke pass locally | External file dialog allowlist, recent files, full project package content, signing/auto-update decisions |
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
-| Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, ProcessGraph-to-SimulationInput API resolution, ASM1Slim model-bound parity, independent `simulation.asm1slim.v1` / `simulation.asm1.v1` / `simulation.asm3.v1` / `simulation.udm.v1` worker/core/backend parity, and old-vs-backend worker matrix for ASM/UDM/Hybrid/Petersen paths exist | Playwright flow smoke beyond current minimal path; decide whether the full worker matrix belongs in every CI/release gate run given runtime cost |
+| Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, mock-backed Playwright current-flow submit smoke, ProcessGraph registry, ProcessGraph-to-SimulationInput API resolution, ASM1Slim model-bound parity, independent `simulation.asm1slim.v1` / `simulation.asm1.v1` / `simulation.asm3.v1` / `simulation.udm.v1` worker/core/backend parity, and old-vs-backend worker matrix for ASM/UDM/Hybrid/Petersen paths exist | Decide whether the full worker matrix belongs in every CI/release gate run given runtime cost; keep adding real API/browser E2E as deployment wiring stabilizes |
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, benchmark_run history, model_run records, evidence governance summary | Multi-parameter-set management, scheduled benchmark execution, benchmark-backed parameter promotion, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
@@ -130,6 +131,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Add Playwright ProcessGraph/current-flow smoke beyond the current minimal browser evidence, and decide CI placement for the heavier worker baseline matrix.
+1. Decide CI/release placement for the heavier worker baseline matrix and focused Playwright smoke.
 2. Add admin/scheduler surface, metrics, and operational runbooks for artifact/model-run lifecycle management.
 3. Harden release artifact publishing, signing, and auto-update after certificate/update policy is defined.

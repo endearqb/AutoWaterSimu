@@ -24,12 +24,14 @@
 | `auth.setup.ts` | auth setup |
 | `utils/` | Playwright helper functions |
 | `peterson-matrix-workbook.test.ts` | workbook helper test |
+| `compute-jobs-current-flow.spec.ts` | Mock-backed Compute Jobs current-flow submission smoke |
 
 ## 3. 维护约定
 
 1. E2E tests 通常需要 backend stack；不要默认假设本地服务已启动。
 2. 测试数据和随机 user helper 应复用 `utils/`。
 3. UI selector 变更需同步 tests。
+4. Mock-backed Compute Jobs smokes may override `storageState` and use `--no-deps` for local focused runs when they do not require `auth.setup.ts` or a live backend.
 
 ## 4. 对外接口
 
@@ -45,6 +47,7 @@
 
 ```powershell
 cd frontend; npx playwright test
+cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps
 ```
 
 ## 7. AI 操作提示
