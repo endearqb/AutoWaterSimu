@@ -9,6 +9,7 @@
 - Reading runtime configuration.
 - Creating compute service dependencies.
 - Starting HTTP server.
+- Wiring optional artifact retention scheduler configuration.
 
 本目录不负责：
 
@@ -28,6 +29,7 @@
 2. Business behavior changes belong in `internal/compute`.
 3. Config changes must be documented and tested where practical。
 4. Missing `COMPUTE_API_DATABASE_URL` intentionally starts a non-persistent memory store for local Web UI smoke tests only; PostgreSQL remains required for durable platform runs。
+5. Artifact retention scheduler is disabled unless `COMPUTE_API_RETENTION_SWEEP_INTERVAL` is set; `COMPUTE_API_RETENTION_SWEEP_DRY_RUN` defaults to `true` and must be explicitly set to `false` to delete.
 
 ## 4. 对外接口
 

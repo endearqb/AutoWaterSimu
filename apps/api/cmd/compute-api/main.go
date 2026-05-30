@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"autowatersimu/apps/api/internal/compute"
@@ -24,11 +25,14 @@ func run() error {
 		return err
 	}
 	config := compute.Config{
-		DatabaseURL: os.Getenv("COMPUTE_API_DATABASE_URL"),
-		ArtifactDir: getenv("COMPUTE_API_ARTIFACT_DIR", filepath.Join(repoRoot, "tmp", "compute-api-artifacts")),
-		TokensJSON:  os.Getenv("COMPUTE_API_TOKENS_JSON"),
-		Port:        getenv("COMPUTE_API_PORT", "8088"),
-		RepoRoot:    repoRoot,
+		DatabaseURL:            os.Getenv("COMPUTE_API_DATABASE_URL"),
+		ArtifactDir:            getenv("COMPUTE_API_ARTIFACT_DIR", filepath.Join(repoRoot, "tmp", "compute-api-artifacts")),
+		TokensJSON:             os.Getenv("COMPUTE_API_TOKENS_JSON"),
+		Port:                   getenv("COMPUTE_API_PORT", "8088"),
+		RepoRoot:               repoRoot,
+		RetentionSweepInterval: durationEnv("COMPUTE_API_RETENTION_SWEEP_INTERVAL", 0),
+		RetentionSweepDryRun:   boolEnv("COMPUTE_API_RETENTION_SWEEP_DRY_RUN", true),
+		RetentionSweepLimit:    intEnv("COMPUTE_API_RETENTION_SWEEP_LIMIT", 100),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -50,6 +54,28 @@ func run() error {
 		return err
 	}
 	service := compute.NewService(store, artifactStore, validator)
+	schedulerCtx, stopScheduler := context.WithCancel(context.Background())
+	defer stopScheduler()
+	if config.RetentionSweepInterval > 0 {
+		slog.Info(
+			"starting artifact retention scheduler",
+			"interval", config.RetentionSweepInterval.String(),
+			"dry_run", config.RetentionSweepDryRun,
+			"limit", config.RetentionSweepLimit,
+		)
+		if err := compute.StartArtifactRetentionScheduler(
+			schedulerCtx,
+			service,
+			compute.ArtifactRetentionSchedulerOptions{
+				Interval: config.RetentionSweepInterval,
+				DryRun:   config.RetentionSweepDryRun,
+				Limit:    config.RetentionSweepLimit,
+			},
+			slog.Default(),
+		); err != nil {
+			return err
+		}
+	}
 	server := compute.NewServer(service, auth, slog.Default())
 	slog.Info("starting compute api", "port", config.Port)
 	return http.ListenAndServe(":"+config.Port, server.Routes())
@@ -76,6 +102,45 @@ func getenv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func durationEnv(key string, fallback time.Duration) time.Duration {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	duration, err := time.ParseDuration(value)
+	if err != nil {
+		slog.Warn("invalid duration env; using fallback", "key", key, "value", value, "fallback", fallback.String())
+		return fallback
+	}
+	return duration
+}
+
+func boolEnv(key string, fallback bool) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		slog.Warn("invalid bool env; using fallback", "key", key, "value", value, "fallback", fallback)
+		return fallback
+	}
+	return parsed
+}
+
+func intEnv(key string, fallback int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < 0 {
+		slog.Warn("invalid int env; using fallback", "key", key, "value", value, "fallback", fallback)
+		return fallback
+	}
+	return parsed
 }
 
 func findRepoRoot() (string, error) {

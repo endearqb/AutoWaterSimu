@@ -23,7 +23,7 @@
 ## 3. 维护约定
 
 1. Runbook 必须基于当前代码事实和已验证命令。
-2. 尚未实现的 scheduler、archive backend、UI 或 alerting 只能写为待实施项。
+2. 尚未实现的 archive backend、UI 或 alerting 只能写为待实施项；scheduler 已实现但默认关闭。
 3. 涉及 destructive 操作时必须先写 dry-run 和回滚限制。
 
 ## 4. 对外接口

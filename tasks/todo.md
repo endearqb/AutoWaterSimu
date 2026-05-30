@@ -1,3 +1,28 @@
+# 2026-05-30 AutoWaterSimu Next Retention Scheduler TODO
+
+- [x] Re-read compute-api command, internal compute lifecycle, and operations runbook context
+- [x] Add disabled-by-default artifact retention scheduler helper
+- [x] Wire explicit env configuration in `cmd/compute-api`
+- [x] Keep scheduler dry-run by default
+- [x] Add regression proving enabled scheduler deletes expired unreferenced TTL artifacts
+- [x] Run Go validation and update README First records
+
+## Plan
+
+- Enable scheduler only when `COMPUTE_API_RETENTION_SWEEP_INTERVAL` is set.
+- Default `COMPUTE_API_RETENTION_SWEEP_DRY_RUN=true`.
+- Reuse `SweepArtifactRetention` so model_run reference protection and archive-candidate skip behavior stay identical to the manual admin endpoint.
+
+## Review
+
+- Added `StartArtifactRetentionScheduler`.
+- `cmd/compute-api` now reads `COMPUTE_API_RETENTION_SWEEP_INTERVAL`, `COMPUTE_API_RETENTION_SWEEP_DRY_RUN`, and `COMPUTE_API_RETENTION_SWEEP_LIMIT`.
+- The scheduler logs report counts and performs no work unless explicitly enabled.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+- Remaining scope:
+  - Archive backend, alert manager/dashboard wiring, and backup/restore policy remain follow-up work before enabling scheduled deletion in production.
+
 # 2026-05-30 AutoWaterSimu Next Artifact Retention UI TODO
 
 - [x] Re-read Compute Jobs route, services, generated client, and routes README context

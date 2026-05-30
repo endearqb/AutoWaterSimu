@@ -9,7 +9,7 @@ This runbook covers current AutoWaterSimu Next Compute API operations for:
 - token scope requirements for lifecycle actions;
 - incident triage around job backlog, worker availability, and retention backlog.
 
-It does not describe a built-in scheduler, archive backend, lifecycle UI, or production alert manager. Those components are not implemented yet.
+It does not describe an archive backend, lifecycle UI, or production alert manager. Those components are not implemented yet.
 
 ## Required Context
 
@@ -92,12 +92,22 @@ Retention deletion removes artifact metadata and the local artifact object. The 
 
 ## Scheduler Status
 
-There is no built-in retention scheduler in the API process. Until a scheduler is implemented and reviewed, use an external controlled job that:
+The API process has an optional retention scheduler, disabled by default:
+
+| Environment variable | Default | Meaning |
+|---|---|---|
+| `COMPUTE_API_RETENTION_SWEEP_INTERVAL` | unset | Enables the scheduler when set to a Go duration such as `1h` |
+| `COMPUTE_API_RETENTION_SWEEP_DRY_RUN` | `true` | Keeps scheduled sweeps as dry-run unless explicitly set to `false` |
+| `COMPUTE_API_RETENTION_SWEEP_LIMIT` | `100` | Candidate limit per sweep |
+
+Recommended rollout:
 
 1. Calls dry-run.
 2. Stores the report.
 3. Requires operator or policy approval.
 4. Calls `dry_run=false` only for approved windows.
+
+Do not enable scheduled deletion until artifact backup/restore expectations and alerting are reviewed for the deployment.
 
 ## Triage Checklist
 

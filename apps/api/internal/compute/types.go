@@ -19,11 +19,14 @@ const (
 )
 
 type Config struct {
-	DatabaseURL string
-	ArtifactDir string
-	TokensJSON  string
-	Port        string
-	RepoRoot    string
+	DatabaseURL            string
+	ArtifactDir            string
+	TokensJSON             string
+	Port                   string
+	RepoRoot               string
+	RetentionSweepInterval time.Duration
+	RetentionSweepDryRun   bool
+	RetentionSweepLimit    int
 }
 
 type ComputeJob struct {
@@ -108,6 +111,12 @@ type ArtifactRetentionSweepOptions struct {
 	DryRun bool
 	Limit  int
 	Now    time.Time
+}
+
+type ArtifactRetentionSchedulerOptions struct {
+	Interval time.Duration
+	DryRun   bool
+	Limit    int
 }
 
 type ArtifactRetentionSweepRequest struct {
