@@ -246,14 +246,17 @@ impl DesktopRuntime {
 
     fn project_export_payload(&self, project_id: &str) -> Result<(Value, Value), String> {
         let snapshot = self.store.project_package_snapshot(project_id)?;
-        let payload = json!({
+        let mut payload = json!({
             "schema_version": "desktop_project_export.v1",
             "exported_at": utc_now(),
             "project": snapshot["project"],
             "contents": snapshot["contents"],
             "content_counts": snapshot["content_counts"]
         });
-        Ok((payload, snapshot["content_counts"].clone()))
+        self.include_project_package_files(&mut payload)?;
+        let content_counts = project_export_content_counts(&payload);
+        payload["content_counts"] = content_counts.clone();
+        Ok((payload, content_counts))
     }
 
     fn import_project_export_payload(&self, payload: &Value) -> Result<Value, String> {
@@ -269,22 +272,220 @@ impl DesktopRuntime {
         let imported_canvas_graphs = self
             .store
             .import_canvas_graphs_for_project(project_id, &canvas_graphs)?;
+        let restored_artifact_ids = self.restore_project_package_files(
+            payload,
+            "artifact_files",
+            "artifacts",
+            "artifact_id",
+        )?;
+        let restored_support_bundle_ids = self.restore_project_package_files(
+            payload,
+            "support_bundle_files",
+            "support_bundles",
+            "bundle_id",
+        )?;
+        let compute_jobs = payload
+            .pointer("/contents/compute_jobs")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let support_bundle_refs = payload
+            .pointer("/contents/support_bundle_refs")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let imported_records = self.store.import_project_package_records(
+            project_id,
+            &compute_jobs,
+            &support_bundle_refs,
+            &restored_artifact_ids,
+            &restored_support_bundle_ids,
+        )?;
         let content_counts = project_export_content_counts(&payload);
         let metadata_only_counts = json!({
-            "compute_jobs": project_export_content_array_len(&payload, "compute_jobs"),
-            "artifact_refs": project_export_content_array_len(&payload, "artifact_refs"),
-            "support_bundle_refs": project_export_content_array_len(&payload, "support_bundle_refs")
+            "compute_jobs": imported_records["metadata_only"]["compute_jobs"],
+            "artifact_refs": imported_records["metadata_only"]["artifact_refs"],
+            "support_bundle_refs": imported_records["metadata_only"]["support_bundle_refs"]
         });
         Ok(json!({
             "project": imported,
             "content_counts": content_counts,
             "imported_counts": {
-                "canvas_graphs": imported_canvas_graphs
+                "canvas_graphs": imported_canvas_graphs,
+                "compute_jobs": imported_records["compute_jobs"],
+                "artifacts": imported_records["artifacts"],
+                "model_runs": imported_records["model_runs"],
+                "job_events": imported_records["job_events"],
+                "support_bundles": imported_records["support_bundles"],
+                "artifact_files": restored_artifact_ids.len(),
+                "support_bundle_files": restored_support_bundle_ids.len()
             },
             "metadata_only_counts": metadata_only_counts,
             "imported_at": utc_now(),
             "status": "imported"
         }))
+    }
+
+    fn include_project_package_files(&self, payload: &mut Value) -> Result<(), String> {
+        let artifact_refs = payload
+            .pointer("/contents/artifact_refs")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let support_bundle_refs = payload
+            .pointer("/contents/support_bundle_refs")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let artifact_files =
+            self.project_package_file_records("artifacts", &artifact_refs, "artifact_id")?;
+        let support_bundle_files = self.project_package_file_records(
+            "support_bundles",
+            &support_bundle_refs,
+            "bundle_id",
+        )?;
+        let contents = payload
+            .get_mut("contents")
+            .and_then(Value::as_object_mut)
+            .ok_or_else(|| String::from("project export contents object is required"))?;
+        contents.insert("artifact_files".to_string(), json!(artifact_files));
+        contents.insert(
+            "support_bundle_files".to_string(),
+            json!(support_bundle_files),
+        );
+        if let Some(redaction) = contents.get_mut("redaction").and_then(Value::as_object_mut) {
+            redaction.insert("artifact_contents_included".to_string(), json!(true));
+            redaction.insert("support_bundle_contents_included".to_string(), json!(true));
+            redaction.insert("job_events_included".to_string(), json!(true));
+        }
+        Ok(())
+    }
+
+    fn project_package_file_records(
+        &self,
+        dir_name: &str,
+        refs: &[Value],
+        id_key: &str,
+    ) -> Result<Vec<Value>, String> {
+        let mut files = Vec::new();
+        for record in refs {
+            let item_id = require_object_str(record, id_key)?;
+            let object_key = require_object_str(record, "object_key")?;
+            let checksum = require_object_str(record, "checksum")?;
+            let expected_size = record
+                .get("size_bytes")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| format!("{id_key} {item_id} size_bytes is required"))?;
+            let bytes = self.read_runtime_file_with_checksum(dir_name, object_key, checksum)?;
+            if bytes.len() as u64 != expected_size {
+                return Err(format!(
+                    "{dir_name} file size mismatch for {object_key}: expected {expected_size}, got {}",
+                    bytes.len()
+                ));
+            }
+            let mut file_record = json!({
+                "object_key": object_key,
+                "size_bytes": bytes.len(),
+                "checksum": checksum,
+                "content_encoding": "hex",
+                "content_hex": bytes_to_hex(&bytes)
+            });
+            file_record[id_key] = json!(item_id);
+            files.push(file_record);
+        }
+        Ok(files)
+    }
+
+    fn read_runtime_file_with_checksum(
+        &self,
+        dir_name: &str,
+        object_key: &str,
+        expected_checksum: &str,
+    ) -> Result<Vec<u8>, String> {
+        let path = self
+            .base_dir
+            .join(dir_name)
+            .join(path_sandbox::safe_relative_path(object_key)?);
+        let bytes = fs::read(&path).map_err(|err| {
+            format!("read {dir_name} project package file failed for {object_key}: {err}")
+        })?;
+        let actual_checksum = format!("sha256:{}", sha256_hex(&bytes));
+        if actual_checksum != expected_checksum {
+            return Err(format!(
+                "{dir_name} checksum mismatch for {object_key}: expected {expected_checksum}, got {actual_checksum}"
+            ));
+        }
+        Ok(bytes)
+    }
+
+    fn restore_project_package_files(
+        &self,
+        payload: &Value,
+        contents_key: &str,
+        dir_name: &str,
+        id_key: &str,
+    ) -> Result<BTreeSet<String>, String> {
+        let mut restored_ids = BTreeSet::new();
+        for record in payload
+            .pointer(&format!("/contents/{contents_key}"))
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            let item_id = require_object_str(record, id_key)?.to_string();
+            let object_key = require_object_str(record, "object_key")?;
+            let expected_checksum = require_object_str(record, "checksum")?;
+            let bytes = decode_project_package_file(record)?;
+            let actual_checksum = format!("sha256:{}", sha256_hex(&bytes));
+            if actual_checksum != expected_checksum {
+                return Err(format!(
+                    "project package {contents_key} checksum mismatch for {object_key}"
+                ));
+            }
+            let expected_size = record
+                .get("size_bytes")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| format!("project package {contents_key} size_bytes is required"))?;
+            if bytes.len() as u64 != expected_size {
+                return Err(format!(
+                    "project package {contents_key} size mismatch for {object_key}"
+                ));
+            }
+            self.write_runtime_file_if_matching(dir_name, object_key, expected_checksum, &bytes)?;
+            restored_ids.insert(item_id);
+        }
+        Ok(restored_ids)
+    }
+
+    fn write_runtime_file_if_matching(
+        &self,
+        dir_name: &str,
+        object_key: &str,
+        expected_checksum: &str,
+        bytes: &[u8],
+    ) -> Result<(), String> {
+        let target = self
+            .base_dir
+            .join(dir_name)
+            .join(path_sandbox::safe_relative_path(object_key)?);
+        if target.exists() {
+            let existing =
+                fs::read(&target).map_err(|err| format!("read existing file failed: {err}"))?;
+            let existing_checksum = format!("sha256:{}", sha256_hex(&existing));
+            if existing_checksum != expected_checksum {
+                return Err(format!(
+                    "{dir_name} file already exists with a different checksum: {object_key}"
+                ));
+            }
+            return Ok(());
+        }
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|err| format!("create project package file parent failed: {err}"))?;
+        }
+        fs::write(&target, bytes)
+            .map_err(|err| format!("write project package file failed: {err}"))?;
+        Ok(())
     }
 
     pub fn compute_job_create(&self, request_json: &str) -> Result<Value, String> {
@@ -714,6 +915,34 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
     digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
+fn bytes_to_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn decode_project_package_file(record: &Value) -> Result<Vec<u8>, String> {
+    if record.get("content_encoding").and_then(Value::as_str) != Some("hex") {
+        return Err(String::from(
+            "project package file content_encoding must be hex",
+        ));
+    }
+    let hex = require_object_str(record, "content_hex")?;
+    hex_to_bytes(hex)
+}
+
+fn hex_to_bytes(hex: &str) -> Result<Vec<u8>, String> {
+    let hex = hex.trim();
+    if hex.len() % 2 != 0 {
+        return Err(String::from("hex content length must be even"));
+    }
+    let mut bytes = Vec::with_capacity(hex.len() / 2);
+    for index in (0..hex.len()).step_by(2) {
+        let value = u8::from_str_radix(&hex[index..index + 2], 16)
+            .map_err(|err| format!("project package hex content is invalid: {err}"))?;
+        bytes.push(value);
+    }
+    Ok(bytes)
+}
+
 pub fn repo_root() -> PathBuf {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     manifest
@@ -858,7 +1087,9 @@ fn validate_project_export(payload: &Value) -> Result<(), String> {
             "compute_jobs",
             "canvas_graphs",
             "artifact_refs",
+            "artifact_files",
             "support_bundle_refs",
+            "support_bundle_files",
         ] {
             if contents.get(key).is_some_and(|value| !value.is_array()) {
                 return Err(format!("project export contents.{key} must be an array"));
@@ -879,9 +1110,12 @@ fn validate_project_export(payload: &Value) -> Result<(), String> {
 fn project_export_content_counts(payload: &Value) -> Value {
     json!({
         "compute_jobs": project_export_content_array_len(payload, "compute_jobs"),
+        "job_events": project_export_job_event_count(payload),
         "canvas_graphs": project_export_content_array_len(payload, "canvas_graphs"),
         "artifact_refs": project_export_content_array_len(payload, "artifact_refs"),
-        "support_bundle_refs": project_export_content_array_len(payload, "support_bundle_refs")
+        "artifact_files": project_export_content_array_len(payload, "artifact_files"),
+        "support_bundle_refs": project_export_content_array_len(payload, "support_bundle_refs"),
+        "support_bundle_files": project_export_content_array_len(payload, "support_bundle_files")
     })
 }
 
@@ -891,6 +1125,17 @@ fn project_export_content_array_len(payload: &Value, key: &str) -> usize {
         .and_then(Value::as_array)
         .map(Vec::len)
         .unwrap_or(0)
+}
+
+fn project_export_job_event_count(payload: &Value) -> usize {
+    payload
+        .pointer("/contents/compute_jobs")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|job| job.get("events").and_then(Value::as_array))
+        .map(Vec::len)
+        .sum()
 }
 
 fn external_project_package_source(file_path: &str) -> Result<PathBuf, String> {

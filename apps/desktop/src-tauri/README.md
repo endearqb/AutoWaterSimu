@@ -8,7 +8,7 @@
 
 - Rust command runtime wrapper。
 - Tauri command registration 与 app entrypoint。
-- SQLite migration runner 与本地 project/job/artifact/model_run store。
+- SQLite migration runner 与本地 project/job/artifact/model_run/support bundle store。
 - Tauri dialog plugin registration for project package open/save。
 - Project-aware job and canvas graph persistence。
 - source-mode Python worker JSON-RPC smoke。
@@ -35,8 +35,8 @@
 | `src/lib.rs` | Tauri command registration and tests |
 | `src/commands.rs` | Tauri command wrapper |
 | `src/migrations.rs` | SQLite migrations 与 migration runner |
-| `src/store.rs` | SQLite project/job/event/artifact/model_run/support bundle/canvas graph/recent files store |
-| `src/runtime.rs` | Desktop runtime orchestration, including project package export/import, artifact JSON/CSV export and backup/restore |
+| `src/store.rs` | SQLite project/job/event/artifact/model_run/support bundle/canvas graph/recent files store and file-backed project package record import/export |
+| `src/runtime.rs` | Desktop runtime orchestration, including checksum-verified project package file export/import, artifact JSON/CSV export and backup/restore |
 | `src/path_sandbox.rs` | local export path validation |
 | `src/worker.rs` | source-mode Python worker process bridge |
 | `icons/icon.ico` | Windows resource icon for Tauri build |
@@ -57,7 +57,7 @@
 9. Source-mode worker 当前只支持取消 queued job；running job 不伪装为可中断。
 10. Backup/restore P0 使用 runtime-local `backups/`；restore 必须先校验 manifest 中的 SQLite/artifact checksums。
 11. CanvasGraph persistence validates graph IDs and edge/node references before SQLite upsert; ProcessGraph validation returns structured errors without mutating job state。
-12. Project registry commands use the local `projects` table; project package import/export may use runtime-local `exports/` or user-selected external `.autowatersimu-project.json` files. External paths must be absolute, suffix-validated in Rust, and recorded in `recent_files` only after successful import/export。
+12. Project registry commands use the local `projects` table; project package import/export may use runtime-local `exports/` or user-selected external `.autowatersimu-project.json` files. External paths must be absolute, suffix-validated in Rust, and recorded in `recent_files` only after successful import/export. File-backed package import must checksum-verify artifact/support bundle file contents before restoring DB rows; older metadata-only packages remain compatible but do not create dangling artifact/support bundle records。
 13. `compute_job_create` and `canvas_graph_save` may receive an optional `project_id`; runtime/store must reject unknown project ids instead of silently writing dangling references。
 14. Packaged sidecar 和 NSIS installer release smoke 由 Desktop scripts 执行；Rust packaged mode 只能通过显式 exe path 或 Tauri resource 中存在的 packaged exe 选择，不应在 development 中静默替换 source-mode。
 15. PyInstaller one-folder sidecar 不应只通过 `externalBin` 复制单个 exe；必须保持 exe 与 `_internal` 目录相邻。

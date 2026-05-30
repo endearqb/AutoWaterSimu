@@ -272,7 +272,6 @@ mod tests {
         assert!(export_path.is_file());
 
         let text = fs::read_to_string(&export_path).unwrap();
-        assert!(!text.contains("\"timestamps\""));
         let mut payload: Value = serde_json::from_str(&text).unwrap();
         assert_eq!(
             payload["contents"]["compute_jobs"]
@@ -296,6 +295,20 @@ mod tests {
             1
         );
         assert_eq!(
+            payload["contents"]["artifact_files"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert!(
+            payload["contents"]["artifact_files"][0]["content_hex"]
+                .as_str()
+                .unwrap()
+                .len()
+                > 100
+        );
+        assert_eq!(
             payload["contents"]["support_bundle_refs"]
                 .as_array()
                 .unwrap()
@@ -303,8 +316,23 @@ mod tests {
             1
         );
         assert_eq!(
+            payload["contents"]["support_bundle_files"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
             payload["contents"]["redaction"]["artifact_contents_included"],
-            false
+            true
+        );
+        assert_eq!(
+            payload["contents"]["redaction"]["support_bundle_contents_included"],
+            true
+        );
+        assert_eq!(
+            payload["contents"]["redaction"]["job_events_included"],
+            true
         );
         payload["project"]["name"] = json!("Imported Project");
         fs::write(
@@ -324,18 +352,47 @@ mod tests {
         assert_eq!(imported["content_counts"]["compute_jobs"], 1);
         assert_eq!(imported["content_counts"]["canvas_graphs"], 1);
         assert_eq!(imported["content_counts"]["artifact_refs"], 1);
+        assert_eq!(imported["content_counts"]["artifact_files"], 1);
         assert_eq!(imported["content_counts"]["support_bundle_refs"], 1);
+        assert_eq!(imported["content_counts"]["support_bundle_files"], 1);
         assert_eq!(imported["imported_counts"]["canvas_graphs"], 1);
-        assert_eq!(imported["metadata_only_counts"]["compute_jobs"], 1);
+        assert_eq!(imported["imported_counts"]["compute_jobs"], 1);
+        assert_eq!(imported["imported_counts"]["artifacts"], 1);
+        assert_eq!(imported["imported_counts"]["model_runs"], 1);
+        assert!(imported["imported_counts"]["job_events"].as_u64().unwrap() >= 5);
+        assert_eq!(imported["imported_counts"]["support_bundles"], 1);
+        assert_eq!(imported["metadata_only_counts"]["compute_jobs"], 0);
+        assert_eq!(imported["metadata_only_counts"]["artifact_refs"], 0);
+        assert_eq!(imported["metadata_only_counts"]["support_bundle_refs"], 0);
         assert_eq!(
             target_runtime
                 .canvas_graph_load("graph_material_balance_minimal")
                 .unwrap()["project_id"],
             imported["project"]["project_id"]
         );
-        assert!(target_runtime
+        let imported_job = target_runtime
             .compute_job_get("job_material_balance_minimal")
-            .is_err());
+            .unwrap();
+        assert_eq!(imported_job["job"]["status"], "succeeded");
+        assert_eq!(imported_job["artifacts"].as_array().unwrap().len(), 1);
+        assert_eq!(imported_job["model_runs"].as_array().unwrap().len(), 1);
+        let artifact_object_key = imported_job["artifacts"][0]["object_key"].as_str().unwrap();
+        let restored_artifact_path = target_runtime
+            .base_dir()
+            .join("artifacts")
+            .join(artifact_object_key);
+        assert!(restored_artifact_path.is_file());
+        assert!(fs::read_to_string(restored_artifact_path)
+            .unwrap()
+            .contains("\"timestamps\""));
+        let support_object_key = payload["contents"]["support_bundle_refs"][0]["object_key"]
+            .as_str()
+            .unwrap();
+        assert!(target_runtime
+            .base_dir()
+            .join("support_bundles")
+            .join(support_object_key)
+            .is_file());
         assert!(runtime.project_export(project_id, "../escape").is_err());
         assert!(runtime.project_import("../escape/project.json").is_err());
         assert!(runtime.project_import("C:/escape/project.json").is_err());

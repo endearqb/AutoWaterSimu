@@ -82,9 +82,12 @@ export type RecentFileListResponse = {
 
 export type ProjectPackageContentCounts = {
   compute_jobs: number
+  job_events?: number
   canvas_graphs: number
   artifact_refs: number
+  artifact_files?: number
   support_bundle_refs: number
+  support_bundle_files?: number
 }
 
 export type ProjectExportResponse = {
@@ -107,6 +110,13 @@ export type ProjectImportResponse = {
   content_counts: ProjectPackageContentCounts
   imported_counts: {
     canvas_graphs: number
+    compute_jobs?: number
+    artifacts?: number
+    model_runs?: number
+    job_events?: number
+    support_bundles?: number
+    artifact_files?: number
+    support_bundle_files?: number
   }
   metadata_only_counts: Omit<ProjectPackageContentCounts, "canvas_graphs">
   recent_file?: DesktopRecentFile

@@ -1,3 +1,37 @@
+# 2026-05-31 AutoWaterSimu Next Desktop file-backed project restore TODO
+
+- [x] Re-read Desktop runtime/store/tests and project package README context
+- [x] Confirm current project import restores only project metadata and CanvasGraphs
+- [x] Include job input/events plus artifact/support bundle file contents in project packages
+- [x] Restore file-backed jobs/artifacts/model runs/support bundles only after checksum verification
+- [x] Update Desktop UI/types and README First records
+- [x] Run Desktop Rust/React validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Preserve `desktop_project_export.v1` compatibility with old project-only and metadata-only packages.
+- Export current P0 artifact/support bundle files as hex-encoded package records with checksums, avoiding new dependencies.
+- Restore DB records only when the referenced files are present and checksum-verified; otherwise keep older package records metadata-only.
+- Reject path traversal through existing `safe_relative_path` before reading or writing package file contents.
+
+## Review
+
+- Project packages now include job `input`, job `events`, and hex-encoded `artifact_files` / `support_bundle_files` with checksum and size metadata.
+- Import writes package files only after checksum/size verification; if an existing file has a different checksum, import rejects instead of overwriting it.
+- Import restores compute jobs, artifacts, model runs, job events, and support bundle rows only when the package carries verified file records; older metadata-only packages remain importable without creating dangling rows.
+- Desktop UI/types now expose restored counts plus file counts.
+- Verification:
+  - `cargo fmt --manifest-path apps\desktop\src-tauri\Cargo.toml` passed.
+  - First Rust test run failed because the test still expected artifact JSON text to appear directly in the package; package files are hex-encoded, so the test was updated to verify package file records and restored artifact file content.
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`22 passed`).
+  - `cd apps\desktop; npm run typecheck` passed.
+  - `cd apps\desktop; npm run build` passed.
+  - Browser preview against `http://127.0.0.1:1420/` confirmed `Desktop Runtime`, `Project Export`, `Project Import`, `No project export yet.`, `No project import yet.`, `No recent project files yet.`, and browser-only runtime notice render; the first navigation timed out but the page loaded and a follow-up snapshot passed, then the temporary Vite dev server was stopped.
+  - `git diff --check -- apps\desktop tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Directory/zip package format, compression, persisted ProcessGraph restore, and package migration policy remain future design work.
+
 # 2026-05-31 AutoWaterSimu Next Desktop release policy boundary TODO
 
 - [x] Re-read Desktop packaging, GitHub workflow, release script, and rebuild plan context

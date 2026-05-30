@@ -12,7 +12,7 @@
 - Source-mode Python worker JSON-RPC bridge。
 - Packaged worker exe launch mode selected by explicit env/constructor path。
 - Tauri resource discovery for packaged worker exe in release builds。
-- Runtime orchestration、runtime-local and external project package export/import、canvas/process graph commands、path sandbox、artifact JSON/CSV export、support bundle and backup/restore logic。
+- Runtime orchestration、runtime-local and external file-backed project package export/import、canvas/process graph commands、path sandbox、artifact JSON/CSV export、support bundle and backup/restore logic。
 
 本目录不负责：
 
@@ -26,9 +26,9 @@
 |---|---|
 | `main.rs`、`lib.rs` | Tauri entrypoint and invoke handler registration |
 | `commands.rs` | command wrappers exposed to React |
-| `runtime.rs` | project registry/package export/import, recent file recording, project-aware compute job runtime orchestration, process graph validation, artifact export and backup/restore |
+| `runtime.rs` | project registry/package export/import, package file checksum verification, recent file recording, project-aware compute job runtime orchestration, process graph validation, artifact export and backup/restore |
 | `worker.rs` | Python worker process bridge |
-| `store.rs` | SQLite project-aware canvas graph/job/event/artifact/model_run/support bundle/recent files store and project package snapshots |
+| `store.rs` | SQLite project-aware canvas graph/job/event/artifact/model_run/support bundle/recent files store and file-backed project package snapshots/import |
 | `migrations.rs` | SQLite migration runner |
 | `path_sandbox.rs` | artifact export path constraints |
 
@@ -44,7 +44,7 @@
 8. Backup restore may replace SQLite/artifact/support bundle files only after manifest checksum verification.
 9. CanvasGraph save/load owns only persisted canvas JSON; ProcessGraph validation is read-only and must not enqueue jobs.
 10. Project create/list/get owns local project metadata. Project package export can target runtime-local `exports/` or a user-selected external `.autowatersimu-project.json` path. External paths must be absolute and suffix-validated in Rust before read/write; successful external import/export records `recent_files.file_type = project_package`, and `project_import_recent` may only reuse those recorded project package paths.
-11. Project package contents include project-scoped job snapshots, CanvasGraphs, artifact refs and support bundle refs without artifact/support bundle file contents. Import may restore project metadata and CanvasGraphs; job/artifact/support bundle refs remain metadata-only.
+11. Project package contents include project-scoped job snapshots, job events, CanvasGraphs, artifact refs/files and support bundle refs/files. Import restores jobs/artifacts/model runs/support bundles only after referenced files are present and checksum-verified; older metadata-only packages remain importable without creating dangling file-backed rows.
 12. `project_id` attachment for jobs and CanvasGraphs is optional, but when present it must reference an existing project row.
 13. Packaged worker mode is explicit: tests use `AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE`, runtime uses `AUTOWATERSIMU_DESKTOP_WORKER_EXE`, release startup may set that env var from Tauri resource discovery, and default development behavior remains source-mode worker.
 14. Release resource discovery expects `simulation-worker/simulation-worker-x86_64-pc-windows-msvc.exe` under Tauri resources so the PyInstaller exe remains adjacent to its `_internal` directory.

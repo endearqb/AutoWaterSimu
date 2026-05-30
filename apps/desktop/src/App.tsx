@@ -795,9 +795,14 @@ function formatProjectImport(result: ProjectImportResponse | null): string {
   if (!result) {
     return "No project import yet."
   }
-  return `${result.project.name} imported (${result.imported_counts.canvas_graphs} graphs restored, ${formatProjectPackageCounts(
-    result.metadata_only_counts,
-  )} metadata-only)`
+  const restored = [
+    `${result.imported_counts.canvas_graphs} graphs`,
+    `${result.imported_counts.compute_jobs ?? 0} jobs`,
+    `${result.imported_counts.artifacts ?? 0} artifacts`,
+    `${result.imported_counts.support_bundles ?? 0} support bundles`,
+  ].join(", ")
+  const metadataOnly = formatProjectPackageCounts(result.metadata_only_counts)
+  return `${result.project.name} imported (${restored} restored, ${metadataOnly} metadata-only)`
 }
 
 function formatRecentProjectFile(files: DesktopRecentFile[]): string {
@@ -821,6 +826,15 @@ function formatProjectPackageCounts(
     `${counts.artifact_refs} artifacts`,
     `${counts.support_bundle_refs} support bundles`,
   )
+  if ((counts.artifact_files ?? 0) > 0) {
+    parts.push(`${counts.artifact_files} artifact files`)
+  }
+  if ((counts.support_bundle_files ?? 0) > 0) {
+    parts.push(`${counts.support_bundle_files} support files`)
+  }
+  if ((counts.job_events ?? 0) > 0) {
+    parts.push(`${counts.job_events} events`)
+  }
   return parts.join(", ")
 }
 

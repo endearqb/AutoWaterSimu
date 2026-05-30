@@ -146,7 +146,7 @@ impl DesktopStore {
     pub fn project_package_snapshot(&self, project_id: &str) -> Result<Value, String> {
         self.with_conn(|conn| {
             let project = project_snapshot(conn, project_id)?;
-            let compute_jobs = jobs_for_project(conn, project_id)?;
+            let compute_jobs = export_jobs_for_project(conn, project_id)?;
             let canvas_graphs = canvas_graphs_for_project(conn, project_id)?;
             let support_bundle_refs = support_bundle_refs_for_project(conn, project_id)?;
             let artifact_refs: Vec<Value> = compute_jobs
@@ -160,6 +160,11 @@ impl DesktopStore {
                         .cloned()
                 })
                 .collect();
+            let job_events = compute_jobs
+                .iter()
+                .filter_map(|snapshot| snapshot.get("events").and_then(Value::as_array))
+                .map(Vec::len)
+                .sum::<usize>();
             Ok(json!({
                 "project": project,
                 "contents": {
@@ -170,11 +175,12 @@ impl DesktopStore {
                     "redaction": {
                         "artifact_contents_included": false,
                         "support_bundle_contents_included": false,
-                        "job_events_included": false
+                        "job_events_included": true
                     }
                 },
                 "content_counts": {
                     "compute_jobs": compute_jobs.len(),
+                    "job_events": job_events,
                     "canvas_graphs": canvas_graphs.len(),
                     "artifact_refs": artifact_refs.len(),
                     "support_bundle_refs": support_bundle_refs.len()
@@ -209,6 +215,134 @@ impl DesktopStore {
             imported += 1;
         }
         Ok(imported)
+    }
+
+    pub fn import_project_package_records(
+        &self,
+        project_id: &str,
+        compute_jobs: &[Value],
+        support_bundle_refs: &[Value],
+        restored_artifact_ids: &BTreeSet<String>,
+        restored_support_bundle_ids: &BTreeSet<String>,
+    ) -> Result<Value, String> {
+        self.with_conn(|conn| {
+            conn.execute_batch("BEGIN IMMEDIATE TRANSACTION;")
+                .map_err(|err| format!("begin project package import failed: {err}"))?;
+            let import_result = (|| {
+                let mut imported_jobs = BTreeSet::new();
+                let mut imported_job_count = 0usize;
+                let mut imported_artifact_count = 0usize;
+                let mut imported_model_run_count = 0usize;
+                let mut imported_event_count = 0usize;
+                let mut metadata_only_jobs = 0usize;
+                let mut metadata_only_artifacts = 0usize;
+
+                for record in compute_jobs {
+                    let Some(input) = record.get("input").filter(|value| value.is_object()) else {
+                        metadata_only_jobs += 1;
+                        metadata_only_artifacts += record
+                            .get("artifacts")
+                            .and_then(Value::as_array)
+                            .map(Vec::len)
+                            .unwrap_or(0);
+                        continue;
+                    };
+                    let artifacts = record
+                        .get("artifacts")
+                        .and_then(Value::as_array)
+                        .cloned()
+                        .unwrap_or_default();
+                    let missing_artifact = artifacts.iter().any(|artifact| {
+                        match artifact.get("artifact_id").and_then(Value::as_str) {
+                            Some(artifact_id) => !restored_artifact_ids.contains(artifact_id),
+                            None => true,
+                        }
+                    });
+                    if missing_artifact {
+                        metadata_only_jobs += 1;
+                        metadata_only_artifacts += artifacts.len();
+                        continue;
+                    }
+
+                    import_compute_job_record(conn, project_id, record, input)?;
+                    let job_id = required_str(record.get("job").unwrap_or(record), "job_id")?;
+                    imported_jobs.insert(job_id.to_string());
+                    imported_job_count += 1;
+
+                    conn.execute("DELETE FROM artifacts WHERE job_id = ?1", [job_id])
+                        .map_err(|err| format!("delete existing artifacts failed: {err}"))?;
+                    for artifact in &artifacts {
+                        import_artifact_record(conn, job_id, artifact)?;
+                        imported_artifact_count += 1;
+                    }
+
+                    conn.execute("DELETE FROM model_runs WHERE job_id = ?1", [job_id])
+                        .map_err(|err| format!("delete existing model runs failed: {err}"))?;
+                    for model_run in record
+                        .get("model_runs")
+                        .and_then(Value::as_array)
+                        .into_iter()
+                        .flatten()
+                    {
+                        import_model_run_record(conn, job_id, model_run)?;
+                        imported_model_run_count += 1;
+                    }
+
+                    conn.execute("DELETE FROM compute_job_events WHERE job_id = ?1", [job_id])
+                        .map_err(|err| format!("delete existing job events failed: {err}"))?;
+                    for event in record
+                        .get("events")
+                        .and_then(Value::as_array)
+                        .into_iter()
+                        .flatten()
+                    {
+                        import_event_record(conn, job_id, event)?;
+                        imported_event_count += 1;
+                    }
+                }
+
+                let mut imported_support_bundle_count = 0usize;
+                let mut metadata_only_support_bundle_count = 0usize;
+                for bundle in support_bundle_refs {
+                    let bundle_id = required_str(bundle, "bundle_id")?;
+                    let job_id = bundle.get("job_id").and_then(Value::as_str);
+                    let job_is_imported = job_id
+                        .map(|value| imported_jobs.contains(value))
+                        .unwrap_or(false);
+                    if !restored_support_bundle_ids.contains(bundle_id) || !job_is_imported {
+                        metadata_only_support_bundle_count += 1;
+                        continue;
+                    }
+                    import_support_bundle_record(conn, bundle)?;
+                    imported_support_bundle_count += 1;
+                }
+
+                Ok::<Value, String>(json!({
+                    "compute_jobs": imported_job_count,
+                    "artifacts": imported_artifact_count,
+                    "model_runs": imported_model_run_count,
+                    "job_events": imported_event_count,
+                    "support_bundles": imported_support_bundle_count,
+                    "metadata_only": {
+                        "compute_jobs": metadata_only_jobs,
+                        "artifact_refs": metadata_only_artifacts,
+                        "support_bundle_refs": metadata_only_support_bundle_count
+                    }
+                }))
+            })();
+
+            match import_result {
+                Ok(value) => {
+                    conn.execute_batch("COMMIT;")
+                        .map_err(|err| format!("commit project package import failed: {err}"))?;
+                    Ok(value)
+                }
+                Err(err) => {
+                    let _ = conn.execute_batch("ROLLBACK;");
+                    Err(err)
+                }
+            }
+        })
     }
 
     pub fn create_job(&self, request_json: &str) -> Result<Value, String> {
@@ -854,25 +988,272 @@ fn job_snapshot(conn: &Connection, job_id: &str) -> Result<Value, String> {
     }))
 }
 
-fn jobs_for_project(conn: &Connection, project_id: &str) -> Result<Vec<Value>, String> {
+fn export_jobs_for_project(conn: &Connection, project_id: &str) -> Result<Vec<Value>, String> {
     let mut stmt = conn
         .prepare(
             "SELECT id FROM compute_jobs
              WHERE project_id = ?1
              ORDER BY COALESCE(created_at, '') DESC, id DESC",
         )
-        .map_err(|err| format!("prepare project jobs query failed: {err}"))?;
+        .map_err(|err| format!("prepare project export jobs query failed: {err}"))?;
     let ids = stmt
         .query_map([project_id], |row| row.get::<_, String>(0))
-        .map_err(|err| format!("query project jobs failed: {err}"))?;
+        .map_err(|err| format!("query project export jobs failed: {err}"))?;
     let mut jobs = Vec::new();
     for id in ids {
-        jobs.push(job_snapshot(
+        jobs.push(export_job_snapshot(
             conn,
-            &id.map_err(|err| format!("read job id failed: {err}"))?,
+            &id.map_err(|err| format!("read export job id failed: {err}"))?,
         )?);
     }
     Ok(jobs)
+}
+
+fn export_job_snapshot(conn: &Connection, job_id: &str) -> Result<Value, String> {
+    let mut snapshot = job_snapshot(conn, job_id)?;
+    let input_json: String = conn
+        .query_row(
+            "SELECT input_json FROM compute_jobs WHERE id = ?1",
+            [job_id],
+            |row| row.get(0),
+        )
+        .map_err(|err| format!("read project package job input failed: {err}"))?;
+    snapshot["input"] = serde_json::from_str::<Value>(&input_json)
+        .map_err(|err| format!("stored job input JSON is invalid: {err}"))?;
+    snapshot["events"] = json!(events_for_job(conn, job_id)?);
+    Ok(snapshot)
+}
+
+fn import_compute_job_record(
+    conn: &Connection,
+    project_id: &str,
+    record: &Value,
+    input: &Value,
+) -> Result<(), String> {
+    let job = record
+        .get("job")
+        .filter(|value| value.is_object())
+        .ok_or_else(|| String::from("project package compute job.job object is required"))?;
+    if let Some(record_project_id) = job.get("project_id").and_then(Value::as_str) {
+        if record_project_id != project_id {
+            return Err(format!(
+                "compute job project_id does not match imported project: {record_project_id}"
+            ));
+        }
+    }
+    validate_compute_job(input)?;
+    let job_id = required_str(job, "job_id")?;
+    if input.get("job_id").and_then(Value::as_str) != Some(job_id) {
+        return Err(String::from(
+            "compute job input job_id does not match snapshot",
+        ));
+    }
+    let input_json =
+        serde_json::to_string(input).map_err(|err| format!("serialize job input failed: {err}"))?;
+    let summary_json = if job.get("summary").is_some_and(|value| !value.is_null()) {
+        Some(
+            serde_json::to_string(&job["summary"])
+                .map_err(|err| format!("serialize job summary failed: {err}"))?,
+        )
+    } else {
+        None
+    };
+    let status = required_str(job, "status")?;
+    if !matches!(
+        status,
+        "queued" | "running" | "succeeded" | "failed" | "cancelled" | "timed_out"
+    ) {
+        return Err(format!(
+            "unsupported compute job status in project package: {status}"
+        ));
+    }
+    let cancel_requested = if job
+        .get("cancel_requested")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+    {
+        1
+    } else {
+        0
+    };
+    let input_hash = job
+        .get("input_hash")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| sha256_hex(input_json.as_bytes()));
+
+    conn.execute(
+        "INSERT INTO compute_jobs (
+            id, project_id, schema_version, job_type, status, cancel_requested,
+            input_json, summary_json, created_at, queued_at, started_at, finished_at,
+            input_hash, result_hash, worker_version, error_code, error_message, stderr_tail
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
+        ON CONFLICT(id) DO UPDATE SET
+            project_id = excluded.project_id,
+            schema_version = excluded.schema_version,
+            job_type = excluded.job_type,
+            status = excluded.status,
+            cancel_requested = excluded.cancel_requested,
+            input_json = excluded.input_json,
+            summary_json = excluded.summary_json,
+            created_at = excluded.created_at,
+            queued_at = excluded.queued_at,
+            started_at = excluded.started_at,
+            finished_at = excluded.finished_at,
+            input_hash = excluded.input_hash,
+            result_hash = excluded.result_hash,
+            worker_version = excluded.worker_version,
+            error_code = excluded.error_code,
+            error_message = excluded.error_message,
+            stderr_tail = excluded.stderr_tail",
+        params![
+            job_id,
+            project_id,
+            required_str(job, "schema_version")?,
+            required_str(job, "job_type")?,
+            status,
+            cancel_requested,
+            input_json,
+            summary_json,
+            required_str(job, "created_at")?,
+            job.get("queued_at").and_then(Value::as_str),
+            job.get("started_at").and_then(Value::as_str),
+            job.get("finished_at").and_then(Value::as_str),
+            input_hash,
+            job.get("result_hash").and_then(Value::as_str),
+            job.get("worker_version").and_then(Value::as_str),
+            job.get("error_code").and_then(Value::as_str),
+            job.get("error_message").and_then(Value::as_str),
+            job.get("stderr_tail").and_then(Value::as_str)
+        ],
+    )
+    .map_err(|err| format!("import compute job failed: {err}"))?;
+    Ok(())
+}
+
+fn import_artifact_record(conn: &Connection, job_id: &str, artifact: &Value) -> Result<(), String> {
+    if artifact.get("job_id").and_then(Value::as_str) != Some(job_id) {
+        return Err(String::from("artifact job_id does not match imported job"));
+    }
+    let metadata_json = serde_json::to_string(artifact.get("metadata").unwrap_or(&Value::Null))
+        .map_err(|err| format!("serialize artifact metadata failed: {err}"))?;
+    conn.execute(
+        "INSERT INTO artifacts (
+            id, job_id, schema_version, artifact_type, object_key, content_type,
+            size_bytes, checksum, created_at, metadata_json
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+        ON CONFLICT(id) DO UPDATE SET
+            job_id = excluded.job_id,
+            schema_version = excluded.schema_version,
+            artifact_type = excluded.artifact_type,
+            object_key = excluded.object_key,
+            content_type = excluded.content_type,
+            size_bytes = excluded.size_bytes,
+            checksum = excluded.checksum,
+            created_at = excluded.created_at,
+            metadata_json = excluded.metadata_json",
+        params![
+            required_str(artifact, "artifact_id")?,
+            job_id,
+            required_str(artifact, "schema_version")?,
+            required_str(artifact, "artifact_type")?,
+            required_str(artifact, "object_key")?,
+            required_str(artifact, "content_type")?,
+            artifact
+                .get("size_bytes")
+                .and_then(Value::as_i64)
+                .ok_or_else(|| String::from("artifact.size_bytes is required"))?,
+            required_str(artifact, "checksum")?,
+            required_str(artifact, "created_at")?,
+            metadata_json
+        ],
+    )
+    .map_err(|err| format!("import artifact failed: {err}"))?;
+    Ok(())
+}
+
+fn import_model_run_record(
+    conn: &Connection,
+    job_id: &str,
+    model_run: &Value,
+) -> Result<(), String> {
+    validate_model_run(job_id, model_run)?;
+    let run_json = serde_json::to_string(model_run)
+        .map_err(|err| format!("serialize model run failed: {err}"))?;
+    conn.execute(
+        "INSERT INTO model_runs (
+            id, job_id, model_key, model_version, parameter_set_id, run_json, created_at
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+        ON CONFLICT(id) DO UPDATE SET
+            job_id = excluded.job_id,
+            model_key = excluded.model_key,
+            model_version = excluded.model_version,
+            parameter_set_id = excluded.parameter_set_id,
+            run_json = excluded.run_json,
+            created_at = excluded.created_at",
+        params![
+            required_str(model_run, "model_run_id")?,
+            job_id,
+            required_str(model_run, "model_key")?,
+            required_str(model_run, "model_version")?,
+            model_run
+                .pointer("/metadata/parameter_set_id")
+                .and_then(Value::as_str),
+            run_json,
+            utc_now()
+        ],
+    )
+    .map_err(|err| format!("import model run failed: {err}"))?;
+    Ok(())
+}
+
+fn import_event_record(conn: &Connection, job_id: &str, event: &Value) -> Result<(), String> {
+    let event_json = serde_json::to_string(event.get("event").unwrap_or(&Value::Null))
+        .map_err(|err| format!("serialize job event failed: {err}"))?;
+    conn.execute(
+        "INSERT OR REPLACE INTO compute_job_events (id, job_id, event_type, event_json, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            required_str(event, "id")?,
+            job_id,
+            required_str(event, "event_type")?,
+            event_json,
+            required_str(event, "created_at")?
+        ],
+    )
+    .map_err(|err| format!("import job event failed: {err}"))?;
+    Ok(())
+}
+
+fn import_support_bundle_record(conn: &Connection, bundle: &Value) -> Result<(), String> {
+    let metadata_json = serde_json::to_string(bundle.get("metadata").unwrap_or(&Value::Null))
+        .map_err(|err| format!("serialize support bundle metadata failed: {err}"))?;
+    conn.execute(
+        "INSERT INTO support_bundles (
+            id, job_id, object_key, size_bytes, checksum, created_at, metadata_json
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+        ON CONFLICT(id) DO UPDATE SET
+            job_id = excluded.job_id,
+            object_key = excluded.object_key,
+            size_bytes = excluded.size_bytes,
+            checksum = excluded.checksum,
+            created_at = excluded.created_at,
+            metadata_json = excluded.metadata_json",
+        params![
+            required_str(bundle, "bundle_id")?,
+            bundle.get("job_id").and_then(Value::as_str),
+            required_str(bundle, "object_key")?,
+            bundle
+                .get("size_bytes")
+                .and_then(Value::as_i64)
+                .ok_or_else(|| String::from("support bundle size_bytes is required"))?,
+            required_str(bundle, "checksum")?,
+            required_str(bundle, "created_at")?,
+            metadata_json
+        ],
+    )
+    .map_err(|err| format!("import support bundle failed: {err}"))?;
+    Ok(())
 }
 
 fn artifact_snapshot(conn: &Connection, artifact_id: &str) -> Result<Value, String> {
