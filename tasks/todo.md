@@ -1,3 +1,34 @@
+# 2026-05-31 AutoWaterSimu Next legacy Phase 0 drift audit TODO
+
+- [x] Re-read legacy backend/frontend README First context and Phase 0 audit gap
+- [x] Identify remaining active `print` calls and route guard coverage
+- [x] Compare current FastAPI OpenAPI with tracked `frontend/openapi.json`
+- [x] Document exact remaining legacy print/schema/client drift issues
+- [x] Broaden route no-print regression guard
+- [x] Update completion audit and README First records
+- [x] Run targeted backend validation and diff checks
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep this as a documentation/baseline slice; do not refactor legacy calculation behavior.
+- Treat route/runtime `print` separately from ad hoc debug scripts and tests.
+- Treat legacy OpenAPI drift by semantic category: path/schema contract drift versus non-behavioral title/description drift.
+
+## Review
+
+- Added `docs/rebuild/AutoWaterSimu_Next_Legacy_Phase0_Drift_Audit_2026-05-31.md`.
+- Documented that route modules have no active `print(...)`, while remaining active prints are ad hoc/debug/test-only.
+- Documented that current FastAPI OpenAPI and tracked `frontend/openapi.json` both have 88 paths with no missing/extra paths; remaining drift is title and legacy endpoint descriptions only.
+- Broadened `test_flowchart_routes_no_print.py` to scan all `backend/app/api/routes/*.py` and read with `utf-8-sig` because `material_balance.py` currently has a UTF-8 BOM.
+- Verification:
+  - First targeted pytest run failed on `material_balance.py` BOM during AST parse; the test now reads `utf-8-sig`.
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\api\routes\test_flowchart_routes_no_print.py app\tests\api\routes\test_asm_udm_validate_response.py -q` passed (`21 passed`, existing warnings).
+  - FastAPI OpenAPI compare confirmed `current_paths=88`, `tracked_paths=88`, `missing_paths=[]`, `extra_paths=[]`, and `matches=False` due to metadata/description drift.
+  - `git diff --check -- backend\app\tests docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Legacy OpenAPI/client metadata refresh, debug/test print cleanup, UTF-8 BOM removal, mojibake comment cleanup, and Pydantic protected namespace cleanup remain separate legacy maintenance work.
+
 # 2026-05-31 AutoWaterSimu Next artifact archive backend TODO
 
 - [x] Re-read archive ADR, Compute API retention implementation, migrations, OpenAPI, and operations context
