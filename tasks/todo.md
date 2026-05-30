@@ -1,3 +1,38 @@
+# 2026-05-31 AutoWaterSimu Next Desktop File Dialog Recent Files TODO
+
+- [x] Re-read Desktop README First context and Tauri dialog/recent_files requirements
+- [x] Confirm Tauri v2 dialog plugin current package/crate version and permission model from official docs
+- [x] Add minimal dialog dependency/capability and React file picker helpers
+- [x] Add Rust external project package export/import commands with path validation and recent_files tracking
+- [x] Expose recent files in Desktop wrappers/UI
+- [x] Add Rust regression coverage and update README First records
+- [x] Run Desktop Rust/React/browser validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Use `@tauri-apps/plugin-dialog` / `tauri-plugin-dialog` only for open/save dialogs; React may choose paths but Rust remains the only writer/reader of project package files.
+- Keep accepted external project package paths strict: absolute paths ending with `.autowatersimu-project.json`.
+- Record successful external project package import/export in SQLite `recent_files` as `project_package`.
+- Do not add broad filesystem plugin permissions or arbitrary React filesystem access.
+
+## Review
+
+- Added `@tauri-apps/plugin-dialog` and `tauri-plugin-dialog` v2.7.1 with only `dialog:allow-open` / `dialog:allow-save` capability permissions.
+- Added `project_export_file`, `project_import_file`, and `recent_file_list` commands. Rust validates absolute `.autowatersimu-project.json` paths, performs all file IO, and records successful external project package paths in SQLite `recent_files` as `project_package`.
+- Added `projectDialogs.ts` open/save helpers plus Desktop controls for `Export Project File`, `Import Project File`, `Import Recent Project`, and `Recent Project File`.
+- Added Rust regression coverage for external project package export/import, recent file tracking, suffix validation, and relative path rejection.
+- Verification:
+  - `cargo fmt --manifest-path apps\desktop\src-tauri\Cargo.toml` passed.
+  - First Rust test run failed because Windows canonical paths added a `\\?\` display prefix to recent file records; runtime now uses canonicalization for validation only and preserves the user-selected absolute path for records/UI.
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`22 passed`).
+  - `cd apps\desktop; npm run typecheck` passed.
+  - `cd apps\desktop; npm run build` passed.
+  - `cd apps\desktop; npm run tauri -- build` passed and produced `apps\desktop\src-tauri\target\release\autowatersimu-desktop.exe`.
+  - Browser preview against `http://127.0.0.1:1420/` confirmed `Export Project File`, `Import Project File`, `Import Recent Project`, `Recent Project File`, and `No recent project files yet.` render in browser-only mode; temporary Vite dev server was stopped.
+- Remaining scope:
+  - File-backed restore of job/artifact/support bundle contents remains out of scope until project packages carry and verify those files.
+
 # 2026-05-31 AutoWaterSimu Next Desktop Project Package Contents TODO
 
 - [x] Re-read Desktop README First context for runtime, store, commands, React wrappers, and existing project export/import scope

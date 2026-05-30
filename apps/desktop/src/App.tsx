@@ -13,13 +13,17 @@ import {
   exportArtifact,
   exportArtifactCsv,
   exportProject,
+  exportProjectFile,
   getComputeJob,
   getProject,
   importProject,
+  importProjectFile,
+  importRecentProject,
   isTauriRuntime,
   loadCanvasGraph,
   listComputeJobs,
   listProjects,
+  listRecentFiles,
   restoreProjectBackup,
   runComputeJob,
   saveCanvasGraph,
@@ -29,6 +33,7 @@ import {
   type ArtifactExportResponse,
   type CanvasGraphRecord,
   type DesktopProject,
+  type DesktopRecentFile,
   type JobSnapshot,
   type ProcessGraphValidationResponse,
   type ProjectBackupResponse,
@@ -39,6 +44,10 @@ import {
   type SupportBundleResponse,
   type WorkerSelfCheckResponse,
 } from "./lib/desktopCommands"
+import {
+  chooseProjectExportPath,
+  chooseProjectImportPath,
+} from "./lib/projectDialogs"
 
 type ActionState = "idle" | "running"
 
@@ -55,6 +64,7 @@ export function App() {
   const [selectedJobId, setSelectedJobId] = useState<string>(DEMO_JOB_ID)
   const [selectedJob, setSelectedJob] = useState<JobSnapshot | null>(null)
   const [projects, setProjects] = useState<DesktopProject[]>([])
+  const [recentFiles, setRecentFiles] = useState<DesktopRecentFile[]>([])
   const [selectedProject, setSelectedProject] = useState<DesktopProject | null>(
     null,
   )
@@ -117,6 +127,14 @@ export function App() {
     })
   }, [runtimeAvailable])
 
+  const refreshRecentFiles = useCallback(async () => {
+    if (!runtimeAvailable) {
+      return
+    }
+    const response = await listRecentFiles()
+    setRecentFiles(response.recent_files)
+  }, [runtimeAvailable])
+
   useEffect(() => {
     void refreshJobs().catch((error: unknown) => {
       setMessage(errorToMessage(error))
@@ -128,6 +146,12 @@ export function App() {
       setMessage(errorToMessage(error))
     })
   }, [refreshProjects])
+
+  useEffect(() => {
+    void refreshRecentFiles().catch((error: unknown) => {
+      setMessage(errorToMessage(error))
+    })
+  }, [refreshRecentFiles])
 
   async function runAction(
     label: string,
@@ -182,15 +206,60 @@ export function App() {
     })
   }
 
+  async function handleExportProjectFile() {
+    if (!selectedProject?.project_id) {
+      return
+    }
+    const filePath = await chooseProjectExportPath(selectedProject.project_id)
+    if (!filePath) {
+      return
+    }
+    await runAction("Export project file", async () => {
+      const result = await exportProjectFile(selectedProject.project_id, filePath)
+      setProjectExport(result)
+      setProjectImport(null)
+      await refreshRecentFiles()
+    })
+  }
+
   async function handleImportProject() {
-    if (!projectExport?.object_key) {
+    const objectKey = projectExport?.object_key
+    if (!objectKey) {
       return
     }
     await runAction("Import project", async () => {
-      const result = await importProject(projectExport.object_key)
+      const result = await importProject(objectKey)
       setProjectImport(result)
       setSelectedProject(result.project)
       await refreshProjects()
+    })
+  }
+
+  async function handleImportProjectFile() {
+    const filePath = await chooseProjectImportPath()
+    if (!filePath) {
+      return
+    }
+    await runAction("Import project file", async () => {
+      const result = await importProjectFile(filePath)
+      setProjectImport(result)
+      setSelectedProject(result.project)
+      await refreshProjects()
+      await refreshRecentFiles()
+    })
+  }
+
+  async function handleImportRecentProject() {
+    const recentFileId = recentFiles[0]?.recent_file_id
+    if (!recentFileId) {
+      return
+    }
+    await runAction("Import recent project file", async () => {
+      const result = await importRecentProject(recentFileId)
+      setProjectImport(result)
+      setSelectedProject(result.project)
+      await refreshProjects()
+      await refreshRecentFiles()
     })
   }
 
@@ -381,10 +450,28 @@ export function App() {
             Export Project
           </button>
           <button
-            disabled={!runtimeAvailable || busy || !projectExport}
+            disabled={!runtimeAvailable || busy || !selectedProject}
+            onClick={handleExportProjectFile}
+          >
+            Export Project File
+          </button>
+          <button
+            disabled={!runtimeAvailable || busy || !projectExport?.object_key}
             onClick={handleImportProject}
           >
             Import Project
+          </button>
+          <button
+            disabled={!runtimeAvailable || busy}
+            onClick={handleImportProjectFile}
+          >
+            Import Project File
+          </button>
+          <button
+            disabled={!runtimeAvailable || busy || recentFiles.length === 0}
+            onClick={handleImportRecentProject}
+          >
+            Import Recent Project
           </button>
           <button
             disabled={!runtimeAvailable || busy}
@@ -511,6 +598,10 @@ export function App() {
               <InfoBlock
                 label="Project Import"
                 value={formatProjectImport(projectImport)}
+              />
+              <InfoBlock
+                label="Recent Project File"
+                value={formatRecentProjectFile(recentFiles)}
               />
             </div>
           </section>
@@ -694,7 +785,8 @@ function formatProjectExport(result: ProjectExportResponse | null): string {
   if (!result) {
     return "No project export yet."
   }
-  return `${result.object_key} (${formatProjectPackageCounts(
+  const location = result.object_key ?? result.exported_path
+  return `${location} (${formatProjectPackageCounts(
     result.content_counts,
   )})`
 }
@@ -706,6 +798,14 @@ function formatProjectImport(result: ProjectImportResponse | null): string {
   return `${result.project.name} imported (${result.imported_counts.canvas_graphs} graphs restored, ${formatProjectPackageCounts(
     result.metadata_only_counts,
   )} metadata-only)`
+}
+
+function formatRecentProjectFile(files: DesktopRecentFile[]): string {
+  const recent = files[0]
+  if (!recent) {
+    return "No recent project files yet."
+  }
+  return `${recent.file_path} (${recent.last_opened_at})`
 }
 
 function formatProjectPackageCounts(

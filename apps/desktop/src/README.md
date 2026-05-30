@@ -7,7 +7,7 @@ This directory contains the Phase 3C Desktop React shell.
 It is responsible for:
 
 - Calling Rust Tauri commands through typed wrappers.
-- Showing worker health, local projects, project package import/export counts, project-associated local compute jobs/canvas graphs, queued-job cancellation, canvas/process graph command smoke, job details, artifact/model_run refs, JSON/CSV export results, backup/restore results, and support bundle results.
+- Showing worker health, local projects, project package import/export counts, recent project files, project-associated local compute jobs/canvas graphs, queued-job cancellation, canvas/process graph command smoke, job details, artifact/model_run refs, JSON/CSV export results, backup/restore results, and support bundle results.
 - Providing a dev-mode material balance demo flow.
 
 It is not responsible for:
@@ -24,17 +24,18 @@ It is not responsible for:
 | `App.tsx` | Desktop MVP workbench |
 | `styles.css` | Local COSS-compatible visual styling |
 | `lib/desktopCommands.ts` | Tauri command wrapper |
+| `lib/projectDialogs.ts` | Tauri dialog open/save helpers for project package files |
 | `fixtures/materialBalanceMinimalJob.ts` | Embedded demo compute job |
 | `fixtures/materialBalanceGraphFixtures.ts` | Embedded canvas/process graph command smoke fixtures |
 
 ## 3. Maintenance Rules
 
-1. All side effects must go through Rust commands.
+1. File reads/writes and SQLite changes must go through Rust commands; React may only use Tauri dialog helpers to select project package paths.
 2. Browser-only Vite preview must stay read-only when Tauri APIs are unavailable.
 3. Keep this app independent from legacy `frontend/`.
 4. Export controls call Rust commands; React must not write local files directly.
 5. Canvas/process graph buttons use Rust command wrappers; React must not persist graph JSON itself.
-6. Project controls call Rust registry/package export/import commands only; React must not create local project files or mutate SQLite directly.
+6. Project controls call Rust registry/package export/import commands only after dialog path selection; React must not create local project files or mutate SQLite directly.
 7. When a project is selected, demo job creation and CanvasGraph save pass that `project_id` to Rust; Rust remains responsible for validation and persistence.
 
 ## 4. Public Interfaces

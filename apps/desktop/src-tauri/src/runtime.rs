@@ -14,6 +14,7 @@ use crate::worker::SourceWorker;
 pub const DESKTOP_WORKER_EXE_ENV: &str = "AUTOWATERSIMU_DESKTOP_WORKER_EXE";
 pub const PACKAGED_WORKER_RESOURCE_RELATIVE_PATH: &str =
     "simulation-worker/simulation-worker-x86_64-pc-windows-msvc.exe";
+const PROJECT_PACKAGE_FILE_SUFFIX: &str = ".autowatersimu-project.json";
 
 #[derive(Clone, Debug)]
 pub struct DesktopRuntime {
@@ -137,17 +138,14 @@ impl DesktopRuntime {
         self.store.list_projects()
     }
 
+    pub fn recent_file_list(&self) -> Result<Value, String> {
+        self.store.list_recent_files()
+    }
+
     pub fn project_export(&self, project_id: &str, target_dir: &str) -> Result<Value, String> {
         let project_id = require_non_empty(project_id, "project_id")?;
         let target_dir = require_non_empty(target_dir, "target_dir")?;
-        let snapshot = self.store.project_package_snapshot(project_id)?;
-        let payload = json!({
-            "schema_version": "desktop_project_export.v1",
-            "exported_at": utc_now(),
-            "project": snapshot["project"],
-            "contents": snapshot["contents"],
-            "content_counts": snapshot["content_counts"]
-        });
+        let (payload, content_counts) = self.project_export_payload(project_id)?;
         let bytes = serde_json::to_vec_pretty(&payload)
             .map_err(|err| format!("serialize project export failed: {err}"))?;
         let target_dir_path = path_sandbox::join_under(&self.base_dir.join("exports"), target_dir)?;
@@ -170,7 +168,30 @@ impl DesktopRuntime {
             "exported_path": target.to_string_lossy(),
             "size_bytes": bytes.len(),
             "checksum": format!("sha256:{}", sha256_hex(&bytes)),
-            "content_counts": snapshot["content_counts"],
+            "content_counts": content_counts,
+            "target_kind": "sandbox",
+            "status": "exported"
+        }))
+    }
+
+    pub fn project_export_file(&self, project_id: &str, file_path: &str) -> Result<Value, String> {
+        let project_id = require_non_empty(project_id, "project_id")?;
+        let target = external_project_package_target(file_path)?;
+        let (payload, content_counts) = self.project_export_payload(project_id)?;
+        let bytes = serde_json::to_vec_pretty(&payload)
+            .map_err(|err| format!("serialize project export failed: {err}"))?;
+        fs::write(&target, &bytes)
+            .map_err(|err| format!("write external project export failed: {err}"))?;
+        let recent_file = self.store.record_recent_file(&target, "project_package")?;
+        Ok(json!({
+            "project_id": project_id,
+            "object_key": Value::Null,
+            "exported_path": target.to_string_lossy(),
+            "size_bytes": bytes.len(),
+            "checksum": format!("sha256:{}", sha256_hex(&bytes)),
+            "content_counts": content_counts,
+            "recent_file": recent_file,
+            "target_kind": "external_file",
             "status": "exported"
         }))
     }
@@ -186,6 +207,56 @@ impl DesktopRuntime {
         let payload: Value = serde_json::from_str(&text)
             .map_err(|err| format!("project export JSON is invalid: {err}"))?;
         validate_project_export(&payload)?;
+        let mut result = self.import_project_export_payload(&payload)?;
+        result["object_key"] = json!(export_object_key);
+        result["source_kind"] = json!("sandbox");
+        Ok(result)
+    }
+
+    pub fn project_import_file(&self, file_path: &str) -> Result<Value, String> {
+        let path = external_project_package_source(file_path)?;
+        let text = fs::read_to_string(&path)
+            .map_err(|err| format!("read external project export failed: {err}"))?;
+        let payload: Value = serde_json::from_str(&text)
+            .map_err(|err| format!("project export JSON is invalid: {err}"))?;
+        validate_project_export(&payload)?;
+        let mut result = self.import_project_export_payload(&payload)?;
+        let recent_file = self.store.record_recent_file(&path, "project_package")?;
+        result["object_key"] = Value::Null;
+        result["source_path"] = json!(path.to_string_lossy());
+        result["source_kind"] = json!("external_file");
+        result["recent_file"] = recent_file;
+        Ok(result)
+    }
+
+    pub fn project_import_recent(&self, recent_file_id: &str) -> Result<Value, String> {
+        let recent_file_id = require_non_empty(recent_file_id, "recent_file_id")?;
+        let recent_file = self.store.get_recent_file(recent_file_id)?;
+        if recent_file.get("file_type").and_then(Value::as_str) != Some("project_package") {
+            return Err(String::from("recent file is not a project package"));
+        }
+        let file_path = recent_file
+            .get("file_path")
+            .and_then(Value::as_str)
+            .ok_or_else(|| String::from("recent file path is missing"))?;
+        let mut result = self.project_import_file(file_path)?;
+        result["recent_file_id"] = json!(recent_file_id);
+        Ok(result)
+    }
+
+    fn project_export_payload(&self, project_id: &str) -> Result<(Value, Value), String> {
+        let snapshot = self.store.project_package_snapshot(project_id)?;
+        let payload = json!({
+            "schema_version": "desktop_project_export.v1",
+            "exported_at": utc_now(),
+            "project": snapshot["project"],
+            "contents": snapshot["contents"],
+            "content_counts": snapshot["content_counts"]
+        });
+        Ok((payload, snapshot["content_counts"].clone()))
+    }
+
+    fn import_project_export_payload(&self, payload: &Value) -> Result<Value, String> {
         let imported = self.store.upsert_project_snapshot(&payload["project"])?;
         let project_id = imported["project_id"]
             .as_str()
@@ -206,7 +277,6 @@ impl DesktopRuntime {
         });
         Ok(json!({
             "project": imported,
-            "object_key": export_object_key,
             "content_counts": content_counts,
             "imported_counts": {
                 "canvas_graphs": imported_canvas_graphs
@@ -821,6 +891,56 @@ fn project_export_content_array_len(payload: &Value, key: &str) -> usize {
         .and_then(Value::as_array)
         .map(Vec::len)
         .unwrap_or(0)
+}
+
+fn external_project_package_source(file_path: &str) -> Result<PathBuf, String> {
+    let path = external_project_package_path(file_path)?;
+    let canonical_path = fs::canonicalize(&path)
+        .map_err(|err| format!("canonicalize project package path failed: {err}"))?;
+    if !canonical_path.is_file() {
+        return Err(format!(
+            "project package file not found: {}",
+            path.display()
+        ));
+    }
+    Ok(path)
+}
+
+fn external_project_package_target(file_path: &str) -> Result<PathBuf, String> {
+    let path = external_project_package_path(file_path)?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| String::from("project package file_path has no parent directory"))?;
+    let canonical_parent = fs::canonicalize(parent)
+        .map_err(|err| format!("canonicalize project package parent failed: {err}"))?;
+    if !canonical_parent.is_dir() {
+        return Err(format!(
+            "project package parent is not a directory: {}",
+            canonical_parent.display()
+        ));
+    }
+    Ok(path)
+}
+
+fn external_project_package_path(file_path: &str) -> Result<PathBuf, String> {
+    let file_path = require_non_empty(file_path, "file_path")?;
+    let path = PathBuf::from(file_path);
+    if !path.is_absolute() {
+        return Err(String::from("project package file_path must be absolute"));
+    }
+    let file_name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| String::from("project package file_path has no filename"))?;
+    if !file_name
+        .to_ascii_lowercase()
+        .ends_with(PROJECT_PACKAGE_FILE_SUFFIX)
+    {
+        return Err(format!(
+            "project package file must end with {PROJECT_PACKAGE_FILE_SUFFIX}"
+        ));
+    }
+    Ok(path)
 }
 
 fn verify_backup_files(backup_dir: &Path, manifest: &Value) -> Result<(), String> {

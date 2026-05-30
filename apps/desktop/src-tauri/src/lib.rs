@@ -11,6 +11,7 @@ use tauri::{path::BaseDirectory, Manager};
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             configure_packaged_worker_env_from_resources(app);
             Ok(())
@@ -19,9 +20,13 @@ pub fn run() {
             commands::worker_self_check,
             commands::project_create,
             commands::project_export,
+            commands::project_export_file,
             commands::project_get,
             commands::project_import,
+            commands::project_import_file,
+            commands::project_import_recent,
             commands::project_list,
+            commands::recent_file_list,
             commands::compute_job_create,
             commands::compute_job_run,
             commands::compute_job_get,
@@ -334,6 +339,69 @@ mod tests {
         assert!(runtime.project_export(project_id, "../escape").is_err());
         assert!(runtime.project_import("../escape/project.json").is_err());
         assert!(runtime.project_import("C:/escape/project.json").is_err());
+    }
+
+    #[test]
+    fn external_project_package_files_record_recent_files_and_validate_paths() {
+        let (_temp, runtime) = runtime();
+        let project = runtime.project_create("Desktop Smoke Project").unwrap();
+        let project_id = project["project_id"].as_str().unwrap();
+        let external_dir = tempfile::tempdir().unwrap();
+        let project_file = external_dir
+            .path()
+            .join("site-a.autowatersimu-project.json");
+        let project_file_path = project_file.to_string_lossy().to_string();
+
+        let exported = runtime
+            .project_export_file(project_id, &project_file_path)
+            .unwrap();
+        assert_eq!(exported["status"], "exported");
+        assert_eq!(exported["target_kind"], "external_file");
+        assert_eq!(exported["object_key"], Value::Null);
+        assert!(project_file.is_file());
+
+        let imported = runtime.project_import_file(&project_file_path).unwrap();
+        assert_eq!(imported["status"], "imported");
+        assert_eq!(imported["source_kind"], "external_file");
+        assert_eq!(imported["object_key"], Value::Null);
+
+        let recent_files = runtime.recent_file_list().unwrap();
+        assert_eq!(recent_files["count"], 1);
+        assert_eq!(
+            recent_files["recent_files"][0]["file_type"],
+            "project_package"
+        );
+        assert_eq!(
+            recent_files["recent_files"][0]["file_path"]
+                .as_str()
+                .unwrap(),
+            project_file.to_string_lossy().as_ref()
+        );
+        let recent_file_id = recent_files["recent_files"][0]["recent_file_id"]
+            .as_str()
+            .unwrap();
+        let recent_imported = runtime.project_import_recent(recent_file_id).unwrap();
+        assert_eq!(recent_imported["status"], "imported");
+        assert_eq!(recent_imported["recent_file_id"], recent_file_id);
+        assert!(runtime
+            .project_import_recent("missing_recent_file")
+            .unwrap_err()
+            .contains("recent file not found"));
+
+        let wrong_suffix = external_dir.path().join("site-a.json");
+        let wrong_suffix_path = wrong_suffix.to_string_lossy().to_string();
+        assert!(runtime
+            .project_export_file(project_id, &wrong_suffix_path)
+            .unwrap_err()
+            .contains(".autowatersimu-project.json"));
+        assert!(runtime
+            .project_import_file(&wrong_suffix_path)
+            .unwrap_err()
+            .contains(".autowatersimu-project.json"));
+        assert!(runtime
+            .project_export_file(project_id, "relative.autowatersimu-project.json")
+            .unwrap_err()
+            .contains("must be absolute"));
     }
 
     #[test]

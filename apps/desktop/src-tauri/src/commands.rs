@@ -28,15 +28,39 @@ pub fn project_list() -> CommandResult<Value> {
 }
 
 #[tauri::command]
+pub fn recent_file_list() -> CommandResult<Value> {
+    let runtime = DesktopRuntime::default_runtime()?;
+    runtime.recent_file_list()
+}
+
+#[tauri::command]
 pub fn project_export(project_id: String, target_dir: String) -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
     runtime.project_export(&project_id, &target_dir)
 }
 
 #[tauri::command]
+pub fn project_export_file(project_id: String, file_path: String) -> CommandResult<Value> {
+    let runtime = DesktopRuntime::default_runtime()?;
+    runtime.project_export_file(&project_id, &file_path)
+}
+
+#[tauri::command]
 pub fn project_import(export_object_key: String) -> CommandResult<Value> {
     let runtime = DesktopRuntime::default_runtime()?;
     runtime.project_import(&export_object_key)
+}
+
+#[tauri::command]
+pub fn project_import_file(file_path: String) -> CommandResult<Value> {
+    let runtime = DesktopRuntime::default_runtime()?;
+    runtime.project_import_file(&file_path)
+}
+
+#[tauri::command]
+pub fn project_import_recent(recent_file_id: String) -> CommandResult<Value> {
+    let runtime = DesktopRuntime::default_runtime()?;
+    runtime.project_import_recent(&recent_file_id)
 }
 
 #[tauri::command]

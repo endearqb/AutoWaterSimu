@@ -8,6 +8,7 @@
 
 - Typed Tauri command wrappers。
 - Browser-only fallback behavior for dev preview。
+- Tauri dialog helpers for project package open/save path selection。
 - Project registry/package export/import wrappers。
 - CanvasGraph save/load and ProcessGraph validation wrappers。
 
@@ -22,6 +23,7 @@
 | 文件 | 作用 |
 |---|---|
 | `desktopCommands.ts` | Tauri `invoke` wrapper and browser fallback |
+| `projectDialogs.ts` | `@tauri-apps/plugin-dialog` open/save helpers for `.autowatersimu-project.json` files |
 
 ## 3. 维护约定
 
@@ -33,8 +35,9 @@
 6. Job lifecycle wrappers mirror Rust's conservative source-mode semantics; only queued jobs can be cancelled.
 7. Backup/restore wrappers pass Rust-owned object keys only; React must not assemble filesystem paths.
 8. Graph wrappers pass JSON strings to Rust and display returned records/errors; React must not write SQLite or local graph files.
-9. Project wrappers mirror Rust `project_create` / `project_get` / `project_list` / `project_export` / `project_import`; import/export object keys remain Rust-owned and sandbox-relative, and package count types must match Rust response JSON.
+9. Project wrappers mirror Rust `project_create` / `project_get` / `project_list` / `project_export` / `project_import` / external project package / recent project import commands; import/export object keys remain Rust-owned and sandbox-relative when using sandbox mode, and package count types must match Rust response JSON.
 10. `createComputeJob()` and `saveCanvasGraph()` accept optional `projectId`; wrappers only forward it and do not validate project existence in React.
+11. Dialog helpers may return user-selected absolute paths, but Rust commands must still validate suffix and perform all file reads/writes.
 
 ## 4. 对外接口
 
@@ -43,6 +46,7 @@
 ## 5. 依赖边界
 
 可以依赖 `@tauri-apps/api`。
+可以依赖 `@tauri-apps/plugin-dialog` for path selection only。
 
 不应该依赖 backend client、Chakra UI or Node runtime。
 

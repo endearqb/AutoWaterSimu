@@ -97,6 +97,52 @@ impl DesktopStore {
         })
     }
 
+    pub fn record_recent_file(&self, file_path: &Path, file_type: &str) -> Result<Value, String> {
+        validate_recent_file_type(file_type)?;
+        let file_path = file_path.to_string_lossy().to_string();
+        let id = format!(
+            "recent_{}",
+            sha256_hex(format!("{file_type}\n{file_path}").as_bytes())
+        );
+        let now = utc_now();
+        self.with_conn(|conn| {
+            conn.execute(
+                "INSERT INTO recent_files (id, file_path, file_type, last_opened_at)
+                 VALUES (?1, ?2, ?3, ?4)
+                 ON CONFLICT(id) DO UPDATE SET
+                    file_path = excluded.file_path,
+                    file_type = excluded.file_type,
+                    last_opened_at = excluded.last_opened_at",
+                params![id, file_path, file_type, now],
+            )
+            .map_err(|err| format!("record recent file failed: {err}"))?;
+            recent_file_snapshot(conn, &id)
+        })
+    }
+
+    pub fn list_recent_files(&self) -> Result<Value, String> {
+        self.with_conn(|conn| {
+            let mut stmt = conn
+                .prepare("SELECT id FROM recent_files ORDER BY last_opened_at DESC, id DESC")
+                .map_err(|err| format!("prepare recent files query failed: {err}"))?;
+            let ids = stmt
+                .query_map([], |row| row.get::<_, String>(0))
+                .map_err(|err| format!("query recent files failed: {err}"))?;
+            let mut files = Vec::new();
+            for id in ids {
+                files.push(recent_file_snapshot(
+                    conn,
+                    &id.map_err(|err| format!("read recent file id failed: {err}"))?,
+                )?);
+            }
+            Ok(json!({"recent_files": files, "count": files.len()}))
+        })
+    }
+
+    pub fn get_recent_file(&self, recent_file_id: &str) -> Result<Value, String> {
+        self.with_conn(|conn| recent_file_snapshot(conn, recent_file_id))
+    }
+
     pub fn project_package_snapshot(&self, project_id: &str) -> Result<Value, String> {
         self.with_conn(|conn| {
             let project = project_snapshot(conn, project_id)?;
@@ -718,6 +764,25 @@ fn canvas_graph_snapshot(conn: &Connection, graph_id: &str) -> Result<Value, Str
     .ok_or_else(|| format!("canvas graph not found: {graph_id}"))
 }
 
+fn recent_file_snapshot(conn: &Connection, recent_file_id: &str) -> Result<Value, String> {
+    conn.query_row(
+        "SELECT id, file_path, file_type, last_opened_at
+         FROM recent_files WHERE id = ?1",
+        [recent_file_id],
+        |row| {
+            Ok(json!({
+                "recent_file_id": row.get::<_, String>(0)?,
+                "file_path": row.get::<_, String>(1)?,
+                "file_type": row.get::<_, String>(2)?,
+                "last_opened_at": row.get::<_, String>(3)?,
+            }))
+        },
+    )
+    .optional()
+    .map_err(|err| format!("read recent file failed: {err}"))?
+    .ok_or_else(|| format!("recent file not found: {recent_file_id}"))
+}
+
 fn canvas_graphs_for_project(conn: &Connection, project_id: &str) -> Result<Vec<Value>, String> {
     let mut stmt = conn
         .prepare(
@@ -981,6 +1046,13 @@ fn support_bundle_ref_row_to_json(row: &rusqlite::Row<'_>) -> rusqlite::Result<V
             .and_then(|text| serde_json::from_str::<Value>(text).ok())
             .unwrap_or(Value::Null)
     }))
+}
+
+fn validate_recent_file_type(file_type: &str) -> Result<(), String> {
+    if file_type == "project_package" {
+        return Ok(());
+    }
+    Err(format!("unsupported recent file type: {file_type}"))
 }
 
 fn required_str<'a>(value: &'a Value, key: &str) -> Result<&'a str, String> {

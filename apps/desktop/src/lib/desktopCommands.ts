@@ -68,6 +68,18 @@ export type ProjectListResponse = {
   count: number
 }
 
+export type DesktopRecentFile = {
+  recent_file_id: string
+  file_path: string
+  file_type: "project_package"
+  last_opened_at: string
+}
+
+export type RecentFileListResponse = {
+  recent_files: DesktopRecentFile[]
+  count: number
+}
+
 export type ProjectPackageContentCounts = {
   compute_jobs: number
   canvas_graphs: number
@@ -77,22 +89,27 @@ export type ProjectPackageContentCounts = {
 
 export type ProjectExportResponse = {
   project_id: string
-  object_key: string
+  object_key?: string | null
   exported_path: string
   size_bytes: number
   checksum: string
   content_counts: ProjectPackageContentCounts
+  recent_file?: DesktopRecentFile
+  target_kind?: "sandbox" | "external_file"
   status: string
 }
 
 export type ProjectImportResponse = {
   project: DesktopProject
-  object_key: string
+  object_key?: string | null
+  source_path?: string | null
+  source_kind?: "sandbox" | "external_file"
   content_counts: ProjectPackageContentCounts
   imported_counts: {
     canvas_graphs: number
   }
   metadata_only_counts: Omit<ProjectPackageContentCounts, "canvas_graphs">
+  recent_file?: DesktopRecentFile
   imported_at: string
   status: string
 }
@@ -198,6 +215,10 @@ export function listProjects(): Promise<ProjectListResponse> {
   return callDesktop("project_list")
 }
 
+export function listRecentFiles(): Promise<RecentFileListResponse> {
+  return callDesktop("recent_file_list")
+}
+
 export function exportProject(
   projectId: string,
   targetDir: string,
@@ -205,10 +226,29 @@ export function exportProject(
   return callDesktop("project_export", { projectId, targetDir })
 }
 
+export function exportProjectFile(
+  projectId: string,
+  filePath: string,
+): Promise<ProjectExportResponse> {
+  return callDesktop("project_export_file", { projectId, filePath })
+}
+
 export function importProject(
   exportObjectKey: string,
 ): Promise<ProjectImportResponse> {
   return callDesktop("project_import", { exportObjectKey })
+}
+
+export function importProjectFile(
+  filePath: string,
+): Promise<ProjectImportResponse> {
+  return callDesktop("project_import_file", { filePath })
+}
+
+export function importRecentProject(
+  recentFileId: string,
+): Promise<ProjectImportResponse> {
+  return callDesktop("project_import_recent", { recentFileId })
 }
 
 export function createComputeJob(
