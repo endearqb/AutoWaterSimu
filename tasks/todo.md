@@ -1,3 +1,34 @@
+# 2026-05-31 AutoWaterSimu Next GitHub Release Artifact Build TODO
+
+- [x] Re-read `.github`, workflow, Desktop packaging, and release gate README context
+- [x] Inspect packaging scripts and confirm manifest output fields
+- [x] Add explicit `workflow_dispatch` release artifact build switch
+- [x] Pass built sidecar/installer manifest paths into release gate
+- [x] Upload unsigned Desktop artifacts as GitHub workflow artifacts
+- [x] Run workflow syntax/diff validation and update README First records
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep PR/merge gate behavior unchanged.
+- Make release artifact build opt-in through `build_release_artifacts=true`.
+- Read `sidecar_executable` and `installer_path` from packaging manifests instead of guessing generated paths.
+- Upload only unsigned sidecar/installer artifacts and evidence; do not add signing, auto-update, or GitHub Release publication in this slice.
+
+## Review
+
+- `.github/workflows/next-release-gates.yml` now exposes `build_release_artifacts`.
+- When enabled through `workflow_dispatch`, the workflow builds the packaged sidecar, builds the NSIS installer, reads `sidecar_executable` / `installer_path` from packaging manifests, passes those paths into `next-release-gates.ps1`, and uploads unsigned Desktop artifacts plus build/smoke evidence.
+- Default pull request and merge gate behavior remains unchanged.
+- Verification:
+  - `backend\.venv\Scripts\python` parsed `.github/workflows/next-release-gates.yml` with PyYAML successfully.
+  - `.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -EvidenceDir tmp\release-evidence\workflow-artifact-build-gate` passed with `10` passed steps.
+  - `git diff --check -- .github apps\desktop\packaging scripts\release tasks .ai\plans .ai\changes` passed with LF/CRLF warnings only.
+  - `actionlint` was not installed locally.
+- Remaining scope:
+  - A real GitHub `workflow_dispatch` run with `build_release_artifacts=true` is still needed to verify Windows runner timing and uploaded artifact retention/download behavior.
+  - Signing, auto-update, and GitHub Release publication remain policy-dependent follow-up work.
+
 # 2026-05-31 AutoWaterSimu Next Compute API Alert Rules TODO
 
 - [x] Re-read operations README/runbook and current Compute API metrics contract

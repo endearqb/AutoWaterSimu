@@ -68,11 +68,12 @@ Latest current-turn verification:
 - Tauri release overlay and NSIS installer build path exist; latest local installer artifact `apps\desktop\src-tauri\target\release\bundle\nsis\AutoWaterSimu Next Desktop_0.1.0_x64-setup.exe` passed silent install, installed sidecar existence, installed sidecar smoke, and silent uninstall
 - Release gate release mode passed with the real sidecar path and real installer path, `allow_missing_package_artifacts=false`, and evidence status `passed`
 - Opt-in heavy merge gate passed with `-RunWorkerMatrix -RunBrowserSmoke -SkipLong`, recording `run_worker_matrix=true`, `run_browser_smoke=true`, `skip_long=true`, and 12 passed steps in `tmp/release-evidence/current-flow-worker-gate/next-release-gates.json`
+- GitHub `workflow_dispatch` now has an explicit `build_release_artifacts=true` path that builds the packaged sidecar and NSIS installer on a Windows runner, reads artifact paths from packaging manifests, passes those paths into the release gate, and uploads unsigned Desktop artifacts as workflow artifacts
 
 Latest recorded but not re-run in this verification refresh:
 
 - Browser render smokes against `/compute-jobs` are recorded earlier in `tasks/todo.md` and `.ai/changes/2026-05-30.md`; the focused mock-backed current-flow Playwright smoke is now current-turn evidence.
-- Signing, auto-update, artifact publishing, and GitHub Windows runner release-build timing are not yet verified.
+- Signing, auto-update, GitHub Release publication, and live GitHub Windows runner release-build timing are not yet verified.
 
 ## Phase Status
 
@@ -88,7 +89,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
 | Phase 6.4 | Lifecycle and operations | Strong partial | Artifact retention metadata, admin-scoped manual retention sweep API with safe dry-run default, disabled-by-default scheduler, guarded Compute Jobs retention UI, store-backed `/metrics` gauges, operations runbook, Prometheus alert rule examples, internal service-level retention sweep with model_run reference protection, generated client wrapper, and static token revoke exist | Archive backend, Alertmanager/dashboard deployment, backup/restore policy, and dedicated lifecycle admin UI |
-| Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist; worker matrix and current-flow browser smoke have explicit opt-in switches; real PyInstaller sidecar artifact, NSIS installer artifact, installed-sidecar smoke, and release gate pass evidence exist locally | CI artifact build/publish, signing, auto-update, and release runner cache/timing hardening |
+| Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist; worker matrix and current-flow browser smoke have explicit opt-in switches; real PyInstaller sidecar artifact, NSIS installer artifact, installed-sidecar smoke, and release gate pass evidence exist locally; manual workflow_dispatch can now build and upload unsigned Desktop workflow artifacts | Live runner timing/download verification, signing, auto-update, GitHub Release publication, and release runner cache/timing hardening |
 
 ## Remaining Roadmap
 
@@ -113,7 +114,7 @@ Latest recorded but not re-run in this verification refresh:
 
 - Implement full project package content, including jobs, graphs, artifacts, and support bundle references.
 - Add file dialog/recent files allowlist.
-- Harden release artifact publishing, signing, and auto-update only after certificate/update policy is defined.
+- Harden GitHub Release publication, signing, and auto-update only after certificate/update policy is defined.
 
 5. Worker/model migration completion
 
@@ -139,5 +140,5 @@ Latest recorded but not re-run in this verification refresh:
 ## Next Best Implementation Candidates
 
 1. Add archive backend decision, Alertmanager/dashboard deployment wiring, backup/restore policy, and a dedicated lifecycle admin UI for artifact/model-run lifecycle management.
-2. Harden release artifact publishing, signing, and auto-update after certificate/update policy is defined.
+2. Harden live release artifact download verification, GitHub Release publication, signing, and auto-update after certificate/update policy is defined.
 3. Add real deployed Go API/browser E2E once deployment wiring and secrets policy are available.

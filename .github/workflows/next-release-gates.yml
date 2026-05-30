@@ -33,6 +33,10 @@ on:
         description: "Allow release dry run to skip missing sidecar/installer artifacts"
         required: false
         default: "false"
+      build_release_artifacts:
+        description: "Build unsigned sidecar/NSIS artifacts on the runner before the gate"
+        required: false
+        default: "false"
       run_worker_matrix:
         description: "Run the heavier simulation-worker pytest matrix"
         required: false
@@ -91,6 +95,39 @@ jobs:
         run: npx playwright install chromium
         working-directory: frontend
 
+      - name: Build packaged sidecar
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_release_artifacts == 'true' }}
+        id: build_sidecar
+        shell: powershell
+        run: |
+          $outputDir = "tmp\desktop-packaging\github-sidecar"
+          .\apps\desktop\packaging\build-packaged-sidecar.ps1 -OutputDir $outputDir
+          $manifestPath = Join-Path $outputDir "packaged-sidecar-build.json"
+          $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json
+          if ([string]::IsNullOrWhiteSpace($manifest.sidecar_executable) -or -not (Test-Path -LiteralPath $manifest.sidecar_executable -PathType Leaf)) {
+            throw "Packaged sidecar manifest did not point to an executable artifact."
+          }
+          "sidecar_path=$($manifest.sidecar_executable)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "sidecar_dist_dir=$($manifest.dist_dir)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Build NSIS installer
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_release_artifacts == 'true' }}
+        id: build_installer
+        shell: powershell
+        run: |
+          $sidecarPath = "${{ steps.build_sidecar.outputs.sidecar_path }}"
+          if ([string]::IsNullOrWhiteSpace($sidecarPath)) {
+            throw "Packaged sidecar output path was not available for installer build."
+          }
+          $evidenceDir = "tmp\desktop-packaging\github-nsis"
+          .\apps\desktop\packaging\build-nsis-installer.ps1 -SidecarPath $sidecarPath -EvidenceDir $evidenceDir
+          $manifestPath = Join-Path $evidenceDir "nsis-installer-build.json"
+          $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json
+          if ([string]::IsNullOrWhiteSpace($manifest.installer_path) -or -not (Test-Path -LiteralPath $manifest.installer_path -PathType Leaf)) {
+            throw "NSIS installer manifest did not point to an installer artifact."
+          }
+          "installer_path=$($manifest.installer_path)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
       - name: Run Next gates
         shell: powershell
         run: |
@@ -99,11 +136,21 @@ jobs:
             $mode = "merge"
           }
           $args = @("-Mode", $mode)
-          if ("${{ github.event.inputs.sidecar_path }}" -ne "") {
-            $args += @("-SidecarPath", "${{ github.event.inputs.sidecar_path }}")
+          $sidecarPath = "${{ github.event.inputs.sidecar_path }}"
+          $builtSidecarPath = "${{ steps.build_sidecar.outputs.sidecar_path }}"
+          if ([string]::IsNullOrWhiteSpace($sidecarPath) -and -not [string]::IsNullOrWhiteSpace($builtSidecarPath)) {
+            $sidecarPath = $builtSidecarPath
           }
-          if ("${{ github.event.inputs.installer_path }}" -ne "") {
-            $args += @("-InstallerPath", "${{ github.event.inputs.installer_path }}")
+          if (-not [string]::IsNullOrWhiteSpace($sidecarPath)) {
+            $args += @("-SidecarPath", $sidecarPath)
+          }
+          $installerPath = "${{ github.event.inputs.installer_path }}"
+          $builtInstallerPath = "${{ steps.build_installer.outputs.installer_path }}"
+          if ([string]::IsNullOrWhiteSpace($installerPath) -and -not [string]::IsNullOrWhiteSpace($builtInstallerPath)) {
+            $installerPath = $builtInstallerPath
+          }
+          if (-not [string]::IsNullOrWhiteSpace($installerPath)) {
+            $args += @("-InstallerPath", $installerPath)
           }
           if ("${{ github.event.inputs.allow_missing_package_artifacts }}" -eq "true") {
             $args += "-AllowMissingPackageArtifacts"
@@ -123,3 +170,18 @@ jobs:
           name: next-release-gate-evidence
           path: tmp/release-evidence
           include-hidden-files: true
+
+      - name: Upload unsigned release artifacts
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && github.event.inputs.build_release_artifacts == 'true' && steps.build_installer.outputs.installer_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-desktop-unsigned-release-artifacts
+          path: |
+            tmp/desktop-packaging/github-sidecar/dist/simulation-worker
+            tmp/desktop-packaging/github-sidecar/packaged-sidecar-build.json
+            tmp/desktop-packaging/github-sidecar/packaged-sidecar-smoke.json
+            tmp/desktop-packaging/github-nsis/nsis-installer-build.json
+            tmp/desktop-packaging/github-nsis/nsis-installer-smoke.json
+            tmp/desktop-packaging/github-nsis/installed-sidecar-smoke.json
+            apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error

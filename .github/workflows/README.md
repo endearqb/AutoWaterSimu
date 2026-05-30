@@ -19,7 +19,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `next-release-gates.yml` | 运行 AutoWaterSimu Next merge/release gate 脚本并上传 evidence |
+| `next-release-gates.yml` | 运行 AutoWaterSimu Next merge/release gate 脚本；manual dispatch 可构建 unsigned Desktop artifacts 并上传 evidence/artifacts |
 | `test-backend.yml` | legacy backend test workflow |
 | `playwright.yml` | legacy frontend E2E workflow |
 | `generate-client.yml` | legacy FastAPI client generation workflow |
@@ -28,8 +28,8 @@
 ## 3. 维护约定
 
 1. Workflow 负责依赖安装、缓存和脚本调用；复杂验证逻辑放在仓库脚本中。
-2. Next release mode 需要显式传入 packaged sidecar 和 installer artifact 路径。
-3. Workflow artifact 只上传 evidence，不上传 secrets 或 signing material。
+2. Next release mode 需要显式传入 packaged sidecar 和 installer artifact 路径；`workflow_dispatch` 可用 `build_release_artifacts=true` 从 packaging build manifest 自动取得路径。
+3. Workflow artifact 可上传 evidence 和 unsigned Desktop release artifacts，不上传 secrets 或 signing material。
 4. Next gate 的 worker pytest matrix 和 mock-backed Playwright current-flow smoke 通过 `workflow_dispatch` inputs 显式开启，不作为默认 PR gate。
 
 ## 4. 对外接口
@@ -49,6 +49,8 @@
 ```powershell
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
 ```
+
+涉及 `build_release_artifacts` 时还需本地确认 `apps/desktop/packaging/build-packaged-sidecar.ps1` 与 `build-nsis-installer.ps1` manifest 字段仍包含 `sidecar_executable` / `installer_path`。
 
 ## 7. AI 操作提示
 

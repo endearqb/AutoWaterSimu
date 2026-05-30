@@ -9,6 +9,7 @@
 - GitHub Actions workflows。
 - Dependabot、labeler 等仓库协作配置。
 - AutoWaterSimu Next merge/release gate CI 入口。
+- Manual dispatch 下的 unsigned Desktop release artifact 构建与 workflow artifact 上传编排。
 
 本目录不负责：
 
@@ -26,8 +27,9 @@
 ## 3. 维护约定
 
 1. Workflow 只编排仓库脚本和标准 setup actions；复杂 gate 逻辑应放在 `scripts/` 或对应 app 目录。
-2. Release artifact 路径必须通过 workflow input、artifact download 或环境变量传入，不在 workflow 中猜测。
+2. Release artifact 路径必须通过 workflow input、build manifest、artifact download 或环境变量传入，不在 workflow 中猜测。
 3. Next release gate dry run 不等于 release 通过；missing artifact 必须在 evidence 中显式呈现。
+4. Workflow artifact 可上传 unsigned release artifacts 和 evidence；不得上传 signing key、证书或更新通道密钥。
 
 ## 4. 对外接口
 

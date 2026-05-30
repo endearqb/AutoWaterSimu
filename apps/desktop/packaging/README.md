@@ -34,6 +34,7 @@
 4. P0 明确不包含 code signing、auto update、Microsoft Store 分发。
 5. release evidence 写入 `tmp/release-evidence/`，不得提交安装包、sidecar 二进制或 evidence 产物。
 6. 当前 PyInstaller 输出为 one-folder sidecar；Tauri release 打包使用 `bundle.resources` 暂存整个目录，而不是只用 `externalBin` 复制单个 exe。
+7. GitHub `workflow_dispatch` 可调用本目录脚本在 runner 上构建 unsigned artifacts，并通过 workflow artifact 上传；本目录仍不存放 signing material 或发布密钥。
 
 ## 4. 对外接口
 

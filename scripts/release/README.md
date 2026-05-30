@@ -15,6 +15,7 @@
 - 构建 Python worker packaged sidecar。
 - 构建或签名 Windows installer。
 - 替代各子目录自己的测试命令。
+- 直接构建或上传 GitHub workflow artifacts；CI 如需 artifact build，应先调用 Desktop packaging 脚本再把 manifest 路径传入本脚本。
 
 ## 2. 核心文件
 
@@ -30,6 +31,7 @@
 4. 脚本只记录 evidence，不把 release 成功写成源码事实。
 5. Release artifact path 允许包含空格；编排脚本必须在传递子进程参数时保留完整路径。
 6. Worker pytest matrix 与 Compute Jobs current-flow Playwright smoke 通过 `-RunWorkerMatrix` / `-RunBrowserSmoke` 显式开启；默认 gate 只跑 worker self-check 与 minimal job。
+7. GitHub `workflow_dispatch` 可以用 `build_release_artifacts=true` 先构建 unsigned sidecar/NSIS installer，再把 manifest 中的 artifact path 传给本脚本；本脚本本身仍只做验证与 evidence 汇总。
 
 ## 4. 对外接口
 
