@@ -13,6 +13,35 @@ export type ArtifactRecord = {
 
 export type retention_policy = 'retain_forever' | 'ttl' | 'archive_candidate';
 
+export type ArtifactRetentionAction = {
+    artifact_id: string;
+    job_id: string;
+    retention_policy: 'retain_forever' | 'ttl' | 'archive_candidate';
+    retain_until?: string;
+    action: 'would_delete' | 'deleted' | 'skipped';
+    reason?: string;
+    blocking_refs?: Array<(string)>;
+};
+
+export type action = 'would_delete' | 'deleted' | 'skipped';
+
+export type ArtifactRetentionSweepReport = {
+    schema_version: 'artifact_retention_sweep.v1';
+    dry_run: boolean;
+    checked: number;
+    deleted: number;
+    skipped: number;
+    items: Array<ArtifactRetentionAction>;
+    generated_at: string;
+};
+
+export type schema_version = 'artifact_retention_sweep.v1';
+
+export type ArtifactRetentionSweepRequest = {
+    dry_run?: boolean;
+    limit?: number;
+};
+
 export type BenchmarkRun = {
     schema_version: 'benchmark_run.v1';
     benchmark_run_id: string;
@@ -38,7 +67,7 @@ export type BenchmarkRun = {
     };
 };
 
-export type schema_version = 'benchmark_run.v1';
+export type schema_version2 = 'benchmark_run.v1';
 
 export type status = 'passed' | 'failed' | 'error';
 
@@ -94,7 +123,7 @@ export type ConstraintApplicationPlan = {
     warnings: Array<(string)>;
 };
 
-export type schema_version2 = 'constraint_application_plan.v1';
+export type schema_version3 = 'constraint_application_plan.v1';
 
 export type application_mode = 'advisory_only';
 
@@ -108,7 +137,7 @@ export type ContractError = {
     };
 };
 
-export type schema_version3 = 'contract_error.v1';
+export type schema_version4 = 'contract_error.v1';
 
 export type ContractValidationIssue = {
     path: string;
@@ -125,7 +154,7 @@ export type ContractValidationResponse = {
     confirmation_record?: DraftConfirmationRecord;
 };
 
-export type schema_version4 = 'contract_validation.v1';
+export type schema_version5 = 'contract_validation.v1';
 
 export type DraftConfirmationRecord = {
     confirmation_id: string;
@@ -150,7 +179,7 @@ export type DraftConfirmationRecord = {
     created_at: string;
 };
 
-export type schema_version5 = 'draft_confirmation.v1';
+export type schema_version6 = 'draft_confirmation.v1';
 
 export type decision = 'approved' | 'rejected' | 'changes_requested';
 
@@ -247,7 +276,7 @@ export type ModelCatalog = {
     };
 };
 
-export type schema_version6 = 'model_catalog.v1';
+export type schema_version7 = 'model_catalog.v1';
 
 export type ModelCatalogModel = {
     model_key: string;
@@ -391,7 +420,7 @@ export type ProcessGraphRecord = {
     created_at: string;
 };
 
-export type schema_version7 = 'process_graph.v1';
+export type schema_version8 = 'process_graph.v1';
 
 export type ResultExplanationRecord = {
     schema_version: 'result_explanation_record.v1';
@@ -423,7 +452,7 @@ export type ResultExplanationRecord = {
     updated_at: string;
 };
 
-export type schema_version8 = 'result_explanation_record.v1';
+export type schema_version9 = 'result_explanation_record.v1';
 
 export type explanation_schema_version = 'result_explanation.v1';
 
@@ -460,7 +489,7 @@ export type SimulationInputRecord = {
     created_at: string;
 };
 
-export type schema_version9 = 'simulation_input.v1';
+export type schema_version10 = 'simulation_input.v1';
 
 export type SimulationRequest = {
     schema_version: 'simulation_request.v1';
@@ -487,7 +516,7 @@ export type SimulationRequest = {
     [key: string]: unknown | string;
 };
 
-export type schema_version10 = 'simulation_request.v1';
+export type schema_version11 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1';
 
@@ -634,6 +663,12 @@ export type DownloadArtifactData = {
 };
 
 export type DownloadArtifactResponse = ((Blob | File));
+
+export type SweepArtifactRetentionData = {
+    requestBody?: ArtifactRetentionSweepRequest;
+};
+
+export type SweepArtifactRetentionResponse = (ArtifactRetentionSweepReport);
 
 export type ValidateContractData = {
     requestBody: {

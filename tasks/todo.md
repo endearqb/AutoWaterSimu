@@ -1,3 +1,34 @@
+# 2026-05-30 AutoWaterSimu Next Admin Artifact Retention Sweep TODO
+
+- [x] Re-read Go API, internal compute, OpenAPI, generated client, frontend service, and retention context
+- [x] Add admin-scoped HTTP endpoint for manual artifact retention sweep
+- [x] Keep dry-run as the safe default and require explicit `dry_run=false` for deletion
+- [x] Add HTTP scope/default-dry-run/deletion regression coverage
+- [x] Update OpenAPI, generated Compute client, and frontend service wrapper
+- [x] Run Go, frontend, and diff validation
+- [x] Update README First records and completion audit
+
+## Plan
+
+- Add `POST /api/v1/admin/artifacts/retention-sweep`.
+- Require a new `artifact:admin` scope rather than reusing worker `artifact:write`.
+- Accept an optional body with `dry_run` and `limit`; empty body means `dry_run=true`.
+- Do not add scheduler, archive backend, metrics, or UI in this slice.
+
+## Review
+
+- Added `ArtifactRetentionSweepRequest` and a new admin route.
+- The route calls the existing service-level sweep and returns `artifact_retention_sweep.v1`; it refuses non-admin tokens and defaults to `would_delete` dry-run behavior.
+- OpenAPI and generated Compute TypeScript client now expose `sweepArtifactRetention`; `computeJobsService` wraps it with a dry-run default.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run TestHTTPArtifactRetentionSweepRequiresAdminScope -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `cd frontend; npm run generate-compute-client` completed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check` passed after generated SDK whitespace normalization.
+- Remaining scope:
+  - Retention scheduling, archive storage, retention metrics/SLOs, runbooks, and UI are still follow-up lifecycle/operations work.
+
 # 2026-05-30 AutoWaterSimu Next Opt-in Heavy Release Gates TODO
 
 - [x] Re-read release script, workflow, and README First automation context

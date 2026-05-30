@@ -271,6 +271,20 @@
         }
       }
     },
+    "/api/v1/admin/artifacts/retention-sweep": {
+      "post": {
+        "operationId": "sweepArtifactRetention",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArtifactRetentionSweepRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Artifact retention sweep report", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArtifactRetentionSweepReport" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/contracts/validate": {
       "post": {
         "operationId": "validateContract",
@@ -759,6 +773,39 @@
           "retention_policy": { "type": "string", "enum": ["retain_forever", "ttl", "archive_candidate"] },
           "retain_until": { "type": "string", "format": "date-time" },
           "content_type": { "type": "string" }
+        }
+      },
+      "ArtifactRetentionSweepRequest": {
+        "type": "object",
+        "properties": {
+          "dry_run": { "type": "boolean", "default": true },
+          "limit": { "type": "integer", "minimum": 0, "maximum": 1000 }
+        }
+      },
+      "ArtifactRetentionSweepReport": {
+        "type": "object",
+        "required": ["schema_version", "dry_run", "checked", "deleted", "skipped", "items", "generated_at"],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["artifact_retention_sweep.v1"] },
+          "dry_run": { "type": "boolean" },
+          "checked": { "type": "integer" },
+          "deleted": { "type": "integer" },
+          "skipped": { "type": "integer" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ArtifactRetentionAction" } },
+          "generated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ArtifactRetentionAction": {
+        "type": "object",
+        "required": ["artifact_id", "job_id", "retention_policy", "action"],
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "job_id": { "type": "string" },
+          "retention_policy": { "type": "string", "enum": ["retain_forever", "ttl", "archive_candidate"] },
+          "retain_until": { "type": "string", "format": "date-time" },
+          "action": { "type": "string", "enum": ["would_delete", "deleted", "skipped"] },
+          "reason": { "type": "string" },
+          "blocking_refs": { "type": "array", "items": { "type": "string" } }
         }
       },
       "EventRecord": { "type": "object", "additionalProperties": true },

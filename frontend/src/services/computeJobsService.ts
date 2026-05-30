@@ -1,6 +1,8 @@
 import { OpenAPI as ComputeOpenAPI, DefaultService } from "@/client/compute"
 import type {
   ArtifactRecord,
+  ArtifactRetentionSweepReport,
+  ArtifactRetentionSweepRequest,
   BenchmarkRun,
   BenchmarkRunRecord,
   ComputeJob,
@@ -356,6 +358,12 @@ export const computeJobsService = {
 
   registerModelCatalog(catalog: ModelCatalog): Promise<ModelCatalogRecord> {
     return DefaultService.registerModelCatalog({ requestBody: catalog })
+  },
+
+  sweepArtifactRetention(
+    request: ArtifactRetentionSweepRequest = { dry_run: true },
+  ): Promise<ArtifactRetentionSweepReport> {
+    return DefaultService.sweepArtifactRetention({ requestBody: request })
   },
 
   updateDefaultParameterSetStatus(

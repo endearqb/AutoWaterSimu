@@ -110,6 +110,11 @@ type ArtifactRetentionSweepOptions struct {
 	Now    time.Time
 }
 
+type ArtifactRetentionSweepRequest struct {
+	DryRun *bool `json:"dry_run,omitempty"`
+	Limit  int   `json:"limit,omitempty"`
+}
+
 type ArtifactRetentionSweepReport struct {
 	SchemaVersion string                    `json:"schema_version"`
 	DryRun        bool                      `json:"dry_run"`

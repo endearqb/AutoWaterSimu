@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -423,6 +423,25 @@ export class DefaultService {
             },
             errors: {
                 404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ArtifactRetentionSweepReport Artifact retention sweep report
+     * @throws ApiError
+     */
+    public static sweepArtifactRetention(data: SweepArtifactRetentionData = {}): CancelablePromise<SweepArtifactRetentionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/admin/artifacts/retention-sweep',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error'
             }
         });
     }
