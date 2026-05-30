@@ -870,6 +870,64 @@ func TestContractValidationEndpoint(t *testing.T) {
 		t.Fatalf("unexpected duplicate draft confirmation response: %#v", duplicateConfirmation)
 	}
 
+	constraintConfirmationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_constraint.draft_confirmation.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirm-draft", bytes.NewReader(constraintConfirmationBytes))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("constraint draft confirmation endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var constraintConfirmationResponse ContractValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &constraintConfirmationResponse); err != nil {
+		t.Fatal(err)
+	}
+	if !constraintConfirmationResponse.Valid || constraintConfirmationResponse.ContractSchema != "draft_confirmation.v1.json" ||
+		constraintConfirmationResponse.ConfirmationRecord == nil ||
+		constraintConfirmationResponse.ConfirmationRecord.DraftSchemaVersion != "constraint_draft.v1" {
+		t.Fatalf("unexpected constraint confirmation response: %#v", constraintConfirmationResponse)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/contracts/confirmations/confirm_constraint_material_balance_cod_limit/constraint-application-plan", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("constraint application plan endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var constraintPlan ConstraintApplicationPlan
+	if err := json.Unmarshal(rec.Body.Bytes(), &constraintPlan); err != nil {
+		t.Fatal(err)
+	}
+	if constraintPlan.SchemaVersion != "constraint_application_plan.v1" ||
+		constraintPlan.ConstraintID != "constraint_material_balance_cod_limit" ||
+		constraintPlan.ApplicationMode != "advisory_only" ||
+		constraintPlan.WouldCreateJob ||
+		constraintPlan.WouldModifyTarget ||
+		!constraintPlan.ProductionApprovalRequired ||
+		len(constraintPlan.Constraints) != 1 {
+		t.Fatalf("unexpected constraint application plan: %#v", constraintPlan)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/contracts/confirmations/confirm_draft_material_balance_minimal/constraint-application-plan", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("agent draft confirmation should not produce a constraint plan, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/contracts/confirmations/confirm_constraint_material_balance_cod_limit/constraint-application-plan", nil)
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not read constraint application plan, got %d %s", rec.Code, rec.Body.String())
+	}
+
 	promotableConfirmationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_promotable.draft_confirmation.v1.json"))
 	if err != nil {
 		t.Fatal(err)

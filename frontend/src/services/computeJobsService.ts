@@ -2,6 +2,7 @@ import { OpenAPI as ComputeOpenAPI, DefaultService } from "@/client/compute"
 import type {
   ArtifactRecord,
   ComputeJob,
+  ConstraintApplicationPlan,
   ContractValidationResponse,
   DraftConfirmationRecord,
   EvidencePackage,
@@ -336,6 +337,12 @@ export const computeJobsService = {
     confirmationId: string,
   ): Promise<DraftConfirmationRecord> {
     return DefaultService.getDraftConfirmation({ confirmationId })
+  },
+
+  getConstraintApplicationPlan(
+    confirmationId: string,
+  ): Promise<ConstraintApplicationPlan> {
+    return DefaultService.getConstraintApplicationPlan({ confirmationId })
   },
 
   promoteDraftConfirmationToSimulationCheck(

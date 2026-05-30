@@ -427,6 +427,19 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 		WriteJSON(w, status, snapshot)
 		return
 	}
+	if len(parts) == 2 && parts[1] == "constraint-application-plan" && r.Method == http.MethodGet {
+		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		plan, err := server.service.ConstraintApplicationPlan(r.Context(), confirmationID)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, plan)
+		return
+	}
 	w.WriteHeader(http.StatusNotFound)
 }
 

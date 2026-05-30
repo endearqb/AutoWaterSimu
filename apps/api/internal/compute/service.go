@@ -934,6 +934,57 @@ func (svc *Service) GetDraftConfirmation(ctx context.Context, confirmationID str
 	return *record, nil
 }
 
+func (svc *Service) ConstraintApplicationPlan(ctx context.Context, confirmationID string) (ConstraintApplicationPlan, error) {
+	record, err := svc.store.FindDraftConfirmation(ctx, required(confirmationID, "confirmation_id"))
+	if err != nil {
+		return ConstraintApplicationPlan{}, err
+	}
+	if record.Decision != "approved" {
+		return ConstraintApplicationPlan{}, Conflict(CodeDraftConfirmationNotApproved, "draft confirmation is not approved")
+	}
+	if record.DraftSchemaVersion != "constraint_draft.v1" {
+		return ConstraintApplicationPlan{}, ValidationError("only constraint_draft.v1 can produce a constraint application plan")
+	}
+	var confirmation map[string]any
+	if err := json.Unmarshal(record.Payload, &confirmation); err != nil {
+		return ConstraintApplicationPlan{}, NewAppError(500, CodeInternal, "stored draft confirmation JSON is invalid", true, nil)
+	}
+	draft := mapValue(confirmation, "draft")
+	if draft == nil {
+		return ConstraintApplicationPlan{}, ValidationError("draft confirmation draft is required")
+	}
+	if svc.validator != nil {
+		if err := svc.validator.Validate("constraint_draft.v1.json", draft); err != nil {
+			return ConstraintApplicationPlan{}, err
+		}
+	}
+	targetRef := mapValue(draft, "target_ref")
+	if targetRef == nil {
+		return ConstraintApplicationPlan{}, ValidationError("constraint_draft.target_ref is required")
+	}
+	constraints, ok := draft["constraints"].([]any)
+	if !ok {
+		return ConstraintApplicationPlan{}, ValidationError("constraint_draft.constraints is required")
+	}
+	return ConstraintApplicationPlan{
+		SchemaVersion:              "constraint_application_plan.v1",
+		ConfirmationID:             record.ConfirmationID,
+		DraftID:                    record.DraftID,
+		ConstraintID:               stringValue(draft, "constraint_id"),
+		Scope:                      stringValue(draft, "scope"),
+		TargetRef:                  targetRef,
+		Constraints:                constraints,
+		ApplicationMode:            "advisory_only",
+		WouldCreateJob:             false,
+		WouldModifyTarget:          false,
+		ProductionApprovalRequired: true,
+		Warnings: []string{
+			"constraint application plan is advisory only; no compute job was created",
+			"production approval is owned by the consuming approval system",
+		},
+	}, nil
+}
+
 func (svc *Service) PromoteDraftConfirmationToSimulationCheck(ctx context.Context, confirmationID string) (JobSnapshot, int, error) {
 	record, err := svc.store.FindDraftConfirmation(ctx, required(confirmationID, "confirmation_id"))
 	if err != nil {

@@ -17,8 +17,9 @@ This is not a completion claim. The goal remains active until every requirement 
 
 Latest current-turn verification:
 
-- `backend\.venv\Scripts\python -m pytest contracts\tests -q`: passed, `68 passed`
+- `backend\.venv\Scripts\python -m pytest contracts\tests -q`: passed, `69 passed`
 - `cd apps\api; go test ./...`: passed
+- Approved `constraint_draft.v1` confirmation can produce a read-only `constraint_application_plan.v1` through Go API tests; the plan is advisory-only and keeps `would_create_job=false` / `would_modify_target=false`
 - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check`: passed
 - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q`: passed, `7 passed`
 - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\material_balance_minimal.compute_job.v1.json --artifact-dir tmp\worker-artifacts`: passed with `status=succeeded`
@@ -51,7 +52,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, model_run records, evidence governance summary | Multi-parameter-set management, benchmark execution/run history, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, service-token scopes/revocation exist | Approval UI integration, process graph evidence dereference, NewSystem service-level E2E |
-| Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, explicit approved Agent draft promotion, and Web validation panel exist | Constraint draft application semantics, Agent explanation generation/review/publish workflow |
+| Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, explicit approved Agent draft promotion, and Web validation panel exist | Agent explanation generation/review/publish workflow; any future constraint enforcement still needs a separate contract/endpoint |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
 | Release governance | Merge/release gates | Partial | Local verification matrix is stronger and opt-in migration rollback smoke passed | CI gate wiring, installer smoke evidence, packaged sidecar smoke, release checklist execution |
 
@@ -77,7 +78,7 @@ Latest recorded but not re-run in this verification refresh:
 4. Agent DSL completion
 
 - Keep production-related job creation blocked unless the confirmation and governance gates pass.
-- Define constraint draft application semantics before any constraint draft promotion or enforcement.
+- Keep approved constraint draft application advisory-only unless a separate enforcement contract and approval endpoint are designed.
 - Add Agent explanation generation/review/publish workflow only after evidence dereference is available.
 
 5. Desktop completion
@@ -108,7 +109,7 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Define constraint draft application semantics and production approval policy.
+1. Add Agent explanation generation/review/publish workflow.
 2. Add approval-page UI integration for evidence/risk finding dereference.
 3. Add benchmark run contract after benchmark case metadata and catalog persistence have stabilized.
 4. Add NewSystem service-level E2E covering simulation_input, process_graph, and model_run references.

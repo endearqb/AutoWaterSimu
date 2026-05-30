@@ -1,3 +1,25 @@
+# 2026-05-30 AutoWaterSimu Next Constraint Application Plan TODO
+
+- [x] Re-read README First context for contracts, Go Compute API, OpenAPI, and frontend service wrappers
+- [x] Define safe constraint draft application policy and record ADR
+- [x] Add approved constraint confirmation fixture and read-only application plan endpoint
+- [x] Update OpenAPI, generated compute client, frontend service wrapper, and README contracts
+- [x] Run Go, contract, frontend type/build, and diff validation
+- [x] Record review notes and create a checkpoint commit
+
+## Review
+
+- Added ADR `.ai/decisions/0005-constraint-draft-application-policy.md`, fixing constraint draft application as advisory-only metadata.
+- `GET /api/v1/contracts/confirmations/{confirmation_id}/constraint-application-plan` now requires `job:read`, only accepts approved `constraint_draft.v1` confirmations, and returns `would_create_job=false` / `would_modify_target=false`.
+- Added a valid constraint draft confirmation fixture and Go regression coverage for success, wrong draft type, and worker-token rejection.
+- Updated OpenAPI, regenerated `frontend/src/client/compute`, and added `computeJobsService.getConstraintApplicationPlan()`.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`69 passed`).
+  - `cd frontend; npm run generate-compute-client` completed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npm run build` passed with existing Vite warnings only.
+
 # 2026-04-03 SUMO Petersen Matrix Pipeline TODO
 
 - [x] Inspect current SUMO matrix conversion assets and preserve existing behavior where practical

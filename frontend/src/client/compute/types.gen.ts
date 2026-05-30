@@ -21,6 +21,29 @@ export type ComputeJob = {
     [key: string]: unknown;
 };
 
+export type ConstraintApplicationPlan = {
+    schema_version: 'constraint_application_plan.v1';
+    confirmation_id: string;
+    draft_id: string;
+    constraint_id: string;
+    scope: string;
+    target_ref: {
+        [key: string]: unknown;
+    };
+    constraints: Array<{
+        [key: string]: unknown;
+    }>;
+    application_mode: 'advisory_only';
+    would_create_job: boolean;
+    would_modify_target: boolean;
+    production_approval_required: boolean;
+    warnings: Array<(string)>;
+};
+
+export type schema_version = 'constraint_application_plan.v1';
+
+export type application_mode = 'advisory_only';
+
 export type ContractError = {
     schema_version: 'contract_error.v1';
     error_code: string;
@@ -31,7 +54,7 @@ export type ContractError = {
     };
 };
 
-export type schema_version = 'contract_error.v1';
+export type schema_version2 = 'contract_error.v1';
 
 export type ContractValidationIssue = {
     path: string;
@@ -48,7 +71,7 @@ export type ContractValidationResponse = {
     confirmation_record?: DraftConfirmationRecord;
 };
 
-export type schema_version2 = 'contract_validation.v1';
+export type schema_version3 = 'contract_validation.v1';
 
 export type DraftConfirmationRecord = {
     confirmation_id: string;
@@ -73,7 +96,7 @@ export type DraftConfirmationRecord = {
     created_at: string;
 };
 
-export type schema_version3 = 'draft_confirmation.v1';
+export type schema_version4 = 'draft_confirmation.v1';
 
 export type decision = 'approved' | 'rejected' | 'changes_requested';
 
@@ -164,7 +187,7 @@ export type ModelCatalog = {
     };
 };
 
-export type schema_version4 = 'model_catalog.v1';
+export type schema_version5 = 'model_catalog.v1';
 
 export type ModelCatalogModel = {
     model_key: string;
@@ -304,7 +327,7 @@ export type ProcessGraphRecord = {
     created_at: string;
 };
 
-export type schema_version5 = 'process_graph.v1';
+export type schema_version6 = 'process_graph.v1';
 
 export type SimulationInput = {
     [key: string]: unknown;
@@ -328,7 +351,7 @@ export type SimulationInputRecord = {
     created_at: string;
 };
 
-export type schema_version6 = 'simulation_input.v1';
+export type schema_version7 = 'simulation_input.v1';
 
 export type SimulationRequest = {
     schema_version: 'simulation_request.v1';
@@ -355,7 +378,7 @@ export type SimulationRequest = {
     [key: string]: unknown | string;
 };
 
-export type schema_version7 = 'simulation_request.v1';
+export type schema_version8 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1';
 
@@ -493,6 +516,12 @@ export type GetDraftConfirmationData = {
 };
 
 export type GetDraftConfirmationResponse = (DraftConfirmationRecord);
+
+export type GetConstraintApplicationPlanData = {
+    confirmationId: string;
+};
+
+export type GetConstraintApplicationPlanResponse = (ConstraintApplicationPlan);
 
 export type PromoteDraftConfirmationToSimulationCheckData = {
     confirmationId: string;

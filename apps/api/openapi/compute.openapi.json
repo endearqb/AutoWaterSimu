@@ -244,6 +244,19 @@
         }
       }
     },
+    "/api/v1/contracts/confirmations/{confirmation_id}/constraint-application-plan": {
+      "get": {
+        "operationId": "getConstraintApplicationPlan",
+        "parameters": [{ "$ref": "#/components/parameters/ConfirmationID" }],
+        "responses": {
+          "200": { "description": "Read-only constraint application plan", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ConstraintApplicationPlan" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/contracts/confirmations/{confirmation_id}/promote-simulation-check": {
       "post": {
         "operationId": "promoteDraftConfirmationToSimulationCheck",
@@ -524,6 +537,37 @@
           "project_id": { "type": "string" },
           "metadata": { "type": "object", "additionalProperties": true },
           "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ConstraintApplicationPlan": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "confirmation_id",
+          "draft_id",
+          "constraint_id",
+          "scope",
+          "target_ref",
+          "constraints",
+          "application_mode",
+          "would_create_job",
+          "would_modify_target",
+          "production_approval_required",
+          "warnings"
+        ],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["constraint_application_plan.v1"] },
+          "confirmation_id": { "type": "string" },
+          "draft_id": { "type": "string" },
+          "constraint_id": { "type": "string" },
+          "scope": { "type": "string" },
+          "target_ref": { "type": "object", "additionalProperties": true },
+          "constraints": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "application_mode": { "type": "string", "enum": ["advisory_only"] },
+          "would_create_job": { "type": "boolean" },
+          "would_modify_target": { "type": "boolean" },
+          "production_approval_required": { "type": "boolean" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
         }
       },
       "JobRecord": {
