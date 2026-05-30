@@ -20,6 +20,8 @@
 | `asm1_independent.simulation_input.v1.json` | `simulation.asm1.v1` core/backend adapter fixture |
 | `asm3_independent.compute_job.v1.json` | `simulation.asm3.v1` worker fixture |
 | `asm3_independent.simulation_input.v1.json` | `simulation.asm3.v1` core/backend adapter fixture |
+| `udm_independent.compute_job.v1.json` | `simulation.udm.v1` worker fixture |
+| `udm_independent.simulation_input.v1.json` | `simulation.udm.v1` core/backend adapter fixture |
 
 ## 3. 维护约定
 

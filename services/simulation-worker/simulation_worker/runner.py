@@ -21,12 +21,14 @@ MATERIAL_BALANCE_JOB_TYPE = "simulation.material_balance.v1"
 ASM1SLIM_JOB_TYPE = "simulation.asm1slim.v1"
 ASM1_JOB_TYPE = "simulation.asm1.v1"
 ASM3_JOB_TYPE = "simulation.asm3.v1"
-SUPPORTED_JOB_TYPES = [MATERIAL_BALANCE_JOB_TYPE, ASM1SLIM_JOB_TYPE, ASM1_JOB_TYPE, ASM3_JOB_TYPE]
+UDM_JOB_TYPE = "simulation.udm.v1"
+SUPPORTED_JOB_TYPES = [MATERIAL_BALANCE_JOB_TYPE, ASM1SLIM_JOB_TYPE, ASM1_JOB_TYPE, ASM3_JOB_TYPE, UDM_JOB_TYPE]
 JOB_TYPE_MODEL_FAMILY = {
     MATERIAL_BALANCE_JOB_TYPE: "material_balance",
     ASM1SLIM_JOB_TYPE: "asm1slim",
     ASM1_JOB_TYPE: "asm1",
     ASM3_JOB_TYPE: "asm3",
+    UDM_JOB_TYPE: "udm",
 }
 SUPPORTED_CONTRACT_VERSIONS = [
     "compute_job.v1",
@@ -35,6 +37,19 @@ SUPPORTED_CONTRACT_VERSIONS = [
     "artifact.v1",
 ]
 SUPPORTED_CAPABILITIES = ["material_balance", "asm1slim", "asm1", "asm3", "udm", "ode"]
+MODEL_PARAMETER_FIELD_PAIRS = [
+    ("asm1slim_parameters", "asm1slimParameters"),
+    ("asm1_parameters", "asm1Parameters"),
+    ("asm3_parameters", "asm3Parameters"),
+    ("udm_model_id", "udmModelId"),
+    ("udm_model_version", "udmModelVersion"),
+    ("udm_model_hash", "udmModelHash"),
+    ("udm_component_names", "udmComponentNames"),
+    ("udm_processes", "udmProcesses"),
+    ("udm_parameter_values", "udmParameterValues"),
+    ("udm_model_snapshot", "udmModelSnapshot"),
+    ("udm_variable_bindings", "udmVariableBindings"),
+]
 
 
 class WorkerRunError(RuntimeError):
@@ -218,7 +233,7 @@ def _model_run_record(
         "job_id": job_id,
         "model_key": model_family,
         "model_version": f"{model_family}.v1",
-        "parameter_hash": _sha256_json(payload.get("parameters", {})),
+        "parameter_hash": _sha256_json(_model_parameter_payload(payload)),
         "input_hash": _sha256_json(payload),
         "quality_metrics": {
             "convergence_status": summary_record.get("convergence_status"),
@@ -340,6 +355,48 @@ def _component_schema_id(payload: dict[str, Any]) -> str:
     if isinstance(component_schema, dict):
         return _string_value(component_schema.get("component_schema_id"))
     return ""
+
+
+def _field_value(payload: dict[str, Any], snake_key: str, camel_key: str) -> Any:
+    if snake_key in payload:
+        return payload.get(snake_key)
+    if camel_key in payload:
+        return payload.get(camel_key)
+    return None
+
+
+def _model_parameter_payload(payload: dict[str, Any]) -> Any:
+    parameters = payload.get("parameters", {})
+    nodes = payload.get("nodes")
+    if not isinstance(nodes, list):
+        return parameters
+
+    model_nodes: list[dict[str, Any]] = []
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        model_fields: dict[str, Any] = {}
+        for snake_key, camel_key in MODEL_PARAMETER_FIELD_PAIRS:
+            value = _field_value(node, snake_key, camel_key)
+            if value is not None:
+                model_fields[snake_key] = value
+        if not model_fields:
+            continue
+        model_nodes.append(
+            {
+                "node_id": _string_value(node.get("node_id") or node.get("id")),
+                "node_type": _string_value(node.get("node_type") or node.get("type")),
+                "model_fields": model_fields,
+            }
+        )
+
+    if not model_nodes:
+        return parameters
+    return {
+        "parameters": parameters,
+        "runtime_options": payload.get("runtime_options", {}),
+        "model_nodes": model_nodes,
+    }
 
 
 def _model_family(payload: dict[str, Any]) -> str:

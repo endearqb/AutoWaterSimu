@@ -37,6 +37,13 @@ ASM3_INDEPENDENT_JOB = (
     / "valid"
     / "asm3_independent.compute_job.v1.json"
 )
+UDM_INDEPENDENT_JOB = (
+    REPO_ROOT
+    / "contracts"
+    / "examples"
+    / "valid"
+    / "udm_independent.compute_job.v1.json"
+)
 
 
 def _run_worker(args: list[str], *, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -54,6 +61,16 @@ def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _sha256_json(value: Any) -> str:
+    payload = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
+
+
 def _validate(schema_name: str, payload: dict[str, Any]) -> None:
     Draft202012Validator(_load_json(REPO_ROOT / "contracts" / schema_name)).validate(payload)
 
@@ -69,6 +86,7 @@ def test_worker_self_check_outputs_json() -> None:
     assert "simulation.asm1slim.v1" in payload["supported_job_types"]
     assert "simulation.asm1.v1" in payload["supported_job_types"]
     assert "simulation.asm3.v1" in payload["supported_job_types"]
+    assert "simulation.udm.v1" in payload["supported_job_types"]
     assert "asm1slim" in payload["capabilities"]
     assert payload["git_sha"]
     assert payload["packaging_mode"] in {"source", "frozen"}
@@ -105,6 +123,7 @@ def test_worker_run_job_writes_artifact_with_checksum(tmp_path: Path) -> None:
     _validate("model_run.v1.json", model_run)
     assert model_run["job_id"] == result["job_id"]
     assert model_run["model_key"] == "material_balance"
+    assert model_run["parameter_hash"] == _sha256_json(_load_json(VALID_JOB)["payload"]["parameters"])
     assert model_run["evidence_refs"] == [artifact["artifact_id"]]
 
     time_series = json.loads(artifact_bytes.decode("utf-8"))
@@ -220,6 +239,55 @@ def test_worker_run_independent_asm3_job_type(tmp_path: Path) -> None:
     assert model_run["model_run_id"] == "mr_job_asm3_independent_asm3"
     assert model_run["model_key"] == "asm3"
     assert model_run["model_version"] == "asm3.v1"
+
+
+def test_worker_run_independent_udm_job_type(tmp_path: Path) -> None:
+    completed = _run_worker([
+        "--run-job",
+        str(UDM_INDEPENDENT_JOB),
+        "--artifact-dir",
+        str(tmp_path),
+    ])
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    _validate("compute_result.v1.json", result)
+    assert result["status"] == "succeeded"
+    assert result["job_type"] == "simulation.udm.v1"
+
+    artifact = result["artifacts"][0]
+    artifact_path = tmp_path / Path(artifact["object_key"])
+    time_series = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert time_series["job_type"] == "simulation.udm.v1"
+    assert time_series["node_data"]["n_reactor"]["A"]
+
+    model_run = result["runtime_audit"]["model_runs"][0]
+    _validate("model_run.v1.json", model_run)
+    assert model_run["model_run_id"] == "mr_job_udm_independent_udm"
+    assert model_run["model_key"] == "udm"
+    assert model_run["model_version"] == "udm.v1"
+    expected_payload = _load_json(UDM_INDEPENDENT_JOB)["payload"]
+    expected_model_parameter_payload = {
+        "parameters": expected_payload["parameters"],
+        "runtime_options": expected_payload["runtime_options"],
+        "model_nodes": [
+            {
+                "node_id": "n_reactor",
+                "node_type": "udm",
+                "model_fields": {
+                    "udm_model_id": "udm_ab_decay",
+                    "udm_model_version": 1,
+                    "udm_model_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "udm_component_names": ["S", "P"],
+                    "udm_processes": expected_payload["nodes"][1]["udm_processes"],
+                    "udm_parameter_values": {"k_decay": 0.05},
+                    "udm_model_snapshot": expected_payload["nodes"][1]["udm_model_snapshot"],
+                    "udm_variable_bindings": expected_payload["nodes"][1]["udm_variable_bindings"],
+                },
+            }
+        ],
+    }
+    assert model_run["parameter_hash"] == _sha256_json(expected_model_parameter_payload)
 
 
 def test_worker_invalid_job_returns_failed_result_without_traceback(tmp_path: Path) -> None:

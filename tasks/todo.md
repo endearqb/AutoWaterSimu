@@ -1,3 +1,37 @@
+# 2026-05-30 AutoWaterSimu Next UDM Independent Worker Job Type TODO
+
+- [x] Re-read UDM runtime, contracts, worker, simulation core, backend adapter, and tests context
+- [x] Add `simulation.udm.v1` to executable compute/simulation/result contracts
+- [x] Add independent UDM fixture with model snapshot, process definitions, parameter values, and variable bindings
+- [x] Add core/backend parity and worker model_run coverage
+- [x] Keep Go SimulationRequest, Desktop creation, and frontend submission out of this slice
+- [x] Run contract, core, worker, backend adapter, direct worker, and diff validation
+- [x] Record findings and commit checkpoint
+
+## Plan
+
+- Introduce `simulation.udm.v1` after ASM1Slim, ASM1, and ASM3 independent job types are already proven.
+- Use a single UDM reactor fixture with local variables bound to canonical component names to cover `udm_model_snapshot`, `udm_processes`, `udm_parameter_values`, and `udm_variable_bindings`.
+- Do not implement Hybrid multi-UDM model mapping or Petersen tutorial worker baselines in this slice.
+- Keep API/UI submission surfaces unchanged until independent model job routing is explicitly designed.
+
+## Review
+
+- `compute_job.v1`, `simulation_input.v1`, and `compute_result.v1` now allow `simulation.udm.v1` in addition to material balance and ASM job types.
+- Added independent UDM compute/simulation fixtures with a single reactor, local-to-canonical variable bindings, UDM process definitions, parameter values, and model snapshot.
+- Core and legacy backend adapters accept `simulation.udm.v1` while still converting through the existing MaterialBalanceInput runtime model.
+- Worker self-check now lists `simulation.udm.v1`; `run_job` preserves that job type in result/artifact payloads and emits `model_run.model_key=udm`.
+- Worker `model_run.parameter_hash` now keeps pure material balance hashing unchanged but includes node model fields for ASM/UDM model job types, including UDM snapshot and variable bindings.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`83 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` passed (`10 passed`, existing warnings only).
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`12 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services -q` passed (`26 passed`, existing warnings only).
+  - Direct worker run for `udm_independent.compute_job.v1.json` passed with `job_type=simulation.udm.v1`, `status=succeeded`, `model_key=udm`, and `total_steps=11`.
+- Remaining scope:
+  - `simulation_request.v1`, Go API promotion, Desktop job creation, and Web submit UI still accept only the material-balance submission path.
+  - UDM Hybrid multi-model mapping, Petersen tutorial worker baselines, and the full old-vs-worker numerical baseline matrix remain follow-up work.
+
 # 2026-05-30 AutoWaterSimu Next ASM3 Independent Worker Job Type TODO
 
 - [x] Re-read ASM3 runtime, contracts, worker, simulation core, backend adapter, and tasks context

@@ -8,7 +8,7 @@
 
 - CLI 参数解析。
 - `--self-check`。
-- `--run-job` material balance、ASM1Slim model-bound fixture、`simulation.asm1slim.v1`、`simulation.asm1.v1` 和 `simulation.asm3.v1` 独立 job type 执行链路。
+- `--run-job` material balance、ASM1Slim model-bound fixture、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 和 `simulation.udm.v1` 独立 job type 执行链路。
 - stdio JSON-RPC protocol。
 - `--run-api-once` one-shot Go Compute API worker bridge。
 - time-series artifact 写入。
@@ -37,6 +37,7 @@
 4. `api_client.py` 只通过 Go Compute API HTTP contract 交互，不直接写 metadata store。
 5. 成功运行需输出 `model_run.v1` 到 `compute_result.runtime_audit.model_runs`，并用 artifact id 填写 `evidence_refs`。
 6. `model_run.model_key` 对独立模型 job type 优先来自 `payload.job_type`；对 `simulation.material_balance.v1` 包装下的模型节点，优先来自 `payload.runtime_options.model_family`，再其次来自 ASM/UDM 节点类型；默认回落到 `material_balance`。
+7. `model_run.parameter_hash` 对纯 material balance 保持求解参数 hash；对 ASM/UDM model job type 必须纳入节点模型参数、UDM snapshot 和 variable bindings，避免不同模型输入共享同一个 hash。
 
 ## 4. 对外接口
 
@@ -91,6 +92,7 @@ backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm1slim_independent.compute_job.v1.json --artifact-dir tmp\worker-asm1slim-independent-artifacts
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm1_independent.compute_job.v1.json --artifact-dir tmp\worker-asm1-artifacts
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm3_independent.compute_job.v1.json --artifact-dir tmp\worker-asm3-artifacts
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\udm_independent.compute_job.v1.json --artifact-dir tmp\worker-udm-artifacts
 ```
 
 ## 7. AI 操作提示

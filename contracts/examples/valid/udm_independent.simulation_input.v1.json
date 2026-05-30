@@ -1,0 +1,147 @@
+{
+  "schema_version": "simulation_input.v1",
+  "simulation_input_id": "si_udm_independent",
+  "process_graph_id": "pg_udm_independent",
+  "process_graph_version": 1,
+  "job_type": "simulation.udm.v1",
+  "component_schema": {
+    "component_schema_id": "udm_ab_components.v1",
+    "components": ["A", "B"],
+    "unit": "mg/L"
+  },
+  "nodes": [
+    {
+      "node_id": "n_in",
+      "node_type": "input",
+      "initial_volume": 1.0,
+      "initial_concentrations": {
+        "A": 10.0,
+        "B": 0.0
+      },
+      "is_inlet": true,
+      "is_outlet": false
+    },
+    {
+      "node_id": "n_reactor",
+      "node_type": "udm",
+      "initial_volume": 10.0,
+      "initial_concentrations": {
+        "A": 8.0,
+        "B": 1.0
+      },
+      "udm_model_id": "udm_ab_decay",
+      "udm_model_version": 1,
+      "udm_model_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "udm_component_names": ["S", "P"],
+      "udm_processes": [
+        {
+          "name": "convert_s_to_p",
+          "rate_expr": "k_decay * S",
+          "stoich": {
+            "S": -1.0,
+            "P": 1.0
+          }
+        }
+      ],
+      "udm_parameter_values": {
+        "k_decay": 0.05
+      },
+      "udm_variable_bindings": [
+        {
+          "local_var": "S",
+          "canonical_var": "A"
+        },
+        {
+          "local_var": "P",
+          "canonical_var": "B"
+        }
+      ],
+      "udm_model_snapshot": {
+        "id": "udm_ab_decay",
+        "name": "UDM A to B conversion",
+        "version": 1,
+        "hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "components": [
+          {
+            "name": "S",
+            "label": "Substrate",
+            "unit": "mg/L",
+            "default_value": 8.0,
+            "is_fixed": false
+          },
+          {
+            "name": "P",
+            "label": "Product",
+            "unit": "mg/L",
+            "default_value": 1.0,
+            "is_fixed": false
+          }
+        ],
+        "parameters": [
+          {
+            "name": "k_decay",
+            "label": "Decay coefficient",
+            "default_value": 0.05
+          }
+        ],
+        "processes": [
+          {
+            "name": "convert_s_to_p",
+            "rate_expr": "k_decay * S",
+            "stoich": {
+              "S": -1.0,
+              "P": 1.0
+            }
+          }
+        ],
+        "meta": {
+          "source": "contract_fixture"
+        }
+      },
+      "is_inlet": false,
+      "is_outlet": false
+    },
+    {
+      "node_id": "n_out",
+      "node_type": "output",
+      "initial_volume": 1.0,
+      "initial_concentrations": {
+        "A": 0.0,
+        "B": 0.0
+      },
+      "is_inlet": false,
+      "is_outlet": true
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e_in_reactor",
+      "source_node_id": "n_in",
+      "target_node_id": "n_reactor",
+      "flow_rate": 10.0,
+      "concentration_transform": {
+        "A": { "a": 1.0, "b": 0.0 },
+        "B": { "a": 1.0, "b": 0.0 }
+      }
+    },
+    {
+      "edge_id": "e_reactor_out",
+      "source_node_id": "n_reactor",
+      "target_node_id": "n_out",
+      "flow_rate": 10.0,
+      "concentration_transform": {
+        "A": { "a": 1.0, "b": 0.0 },
+        "B": { "a": 1.0, "b": 0.0 }
+      }
+    }
+  ],
+  "parameters": {
+    "hours": 0.5,
+    "steps_per_hour": 20,
+    "solver_method": "scipy_solver",
+    "tolerance": 0.000001
+  },
+  "runtime_options": {
+    "model_family": "udm"
+  }
+}
