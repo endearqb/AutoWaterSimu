@@ -1,3 +1,27 @@
+# 2026-05-30 AutoWaterSimu Next Lifecycle Operations Runbook TODO
+
+- [x] Re-read docs README and current Compute API lifecycle/metrics context
+- [x] Add `docs/operations/README.md`
+- [x] Add Compute API lifecycle runbook for health, metrics, admin retention sweep, scope boundaries, and triage
+- [x] Keep scheduler/archive/UI documented as not implemented
+- [x] Run docs diff validation and update README First records
+
+## Plan
+
+- Document only current code facts: metrics gauges, `artifact:admin` retention endpoint, dry-run default, and recovery limits.
+- Use PowerShell examples.
+- Avoid claiming built-in scheduler, archive backend, alert manager, or UI.
+
+## Review
+
+- Added `docs/operations/compute_api_lifecycle_runbook.md`.
+- Added operations directory README and registered it in `docs/README.md`.
+- The runbook covers health/readiness, metrics, manual dry-run and deletion sweep, recovery limits, scheduler status, and triage checklist.
+- Verification:
+  - `git diff --check -- docs` passed.
+- Remaining scope:
+  - Built-in scheduler, archive backend, alert manager integration, dashboards, and lifecycle UI remain follow-up implementation work.
+
 # 2026-05-30 AutoWaterSimu Next Compute API Metrics Hardening TODO
 
 - [x] Re-read Go API/internal compute metrics and lifecycle context
