@@ -1,3 +1,31 @@
+# 2026-05-31 AutoWaterSimu Next monitoring deployment examples TODO
+
+- [x] Re-read monitoring and operations README context
+- [x] Add Alertmanager routing example without production receivers or secrets
+- [x] Add Grafana dashboard JSON using only current Compute API metrics
+- [x] Add monitoring deployment runbook and validation checklist
+- [x] Update operations README, completion audit, and README First records
+- [x] Validate YAML/JSON parsing and diff checks
+- [x] Commit checkpoint
+
+## Plan
+
+- Treat this as deployment-ready examples and a runbook, not live production monitoring.
+- Only reference metrics currently rendered by `apps/api/internal/compute/http.go`.
+- Use placeholder receiver URLs and keep real notification channels out of the repository.
+
+## Review
+
+- Added `docs/operations/monitoring/alertmanager_route_example.yml` with service/severity routes and placeholder receivers.
+- Added `docs/operations/monitoring/compute_api_grafana_dashboard.json` with panels for API up, workers, job status, artifact count, and retention candidates.
+- Added `docs/operations/monitoring/monitoring_deployment_runbook.md` covering Prometheus scrape/rule load, Alertmanager receiver replacement, Grafana import, and retention alert triage.
+- Updated monitoring/operations README files and the completion audit to separate reusable examples from live deployment.
+- Verification:
+  - YAML/JSON parse validation passed for alert rules, Alertmanager example, and Grafana dashboard.
+  - `git diff --check -- docs\operations tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Production monitoring deployment, real receiver/on-call policy, and live dashboard verification remain deployment-owned work.
+
 # 2026-05-31 AutoWaterSimu Next legacy Phase 0 drift audit TODO
 
 - [x] Re-read legacy backend/frontend README First context and Phase 0 audit gap
