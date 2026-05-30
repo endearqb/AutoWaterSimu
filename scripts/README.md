@@ -24,7 +24,7 @@
 1. 根脚本只能编排跨目录验证，不内联业务逻辑。
 2. 脚本应输出机器可读 evidence 到 `tmp/`，不要把临时 evidence 提交进仓库。
 3. 涉及单个应用的 smoke 细节优先放回对应应用目录。
-4. codegen gate 可做机械生成和尾随空格归一化，但不得手写修改 generated client。
+4. codegen gate 可做机械生成、尾随空格和末尾换行归一化，但不得手写修改 generated client。
 
 ## 4. 对外接口
 

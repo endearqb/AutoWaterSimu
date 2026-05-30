@@ -33,6 +33,7 @@
 6. Worker pytest matrix 与 Compute Jobs current-flow Playwright smoke 通过 `-RunWorkerMatrix` / `-RunBrowserSmoke` 显式开启；默认 gate 只跑 worker self-check 与 minimal job。
 7. GitHub `workflow_dispatch` 可以用 `build_release_artifacts=true` 先构建 unsigned sidecar/NSIS installer，再把 manifest 中的 artifact path 传给本脚本；本脚本本身仍只做验证与 evidence 汇总。
 8. Installer signing、auto update 和 GitHub Release publication 不属于本脚本职责；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
+9. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
 
 ## 4. 对外接口
 
@@ -60,6 +61,13 @@ Focused heavier gates are opt-in so default merge/release checks stay predictabl
 
 ```powershell
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -RunWorkerMatrix -RunBrowserSmoke
+```
+
+PostgreSQL migration rollback smoke is destructive to the target metadata schema and must only use a temporary database:
+
+```powershell
+$env:COMPUTE_API_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:5432/autowatersimu_compute_ci?sslmode=disable"
+.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -RunPostgresMigrationSmoke
 ```
 
 完整 release gate 需要 Windows packaged sidecar 和 NSIS installer artifact：

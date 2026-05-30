@@ -27,6 +27,7 @@
 1. `npm run generate-client` 只更新 legacy FastAPI client。
 2. `npm run generate-compute-client` 只更新 `compute/`。
 3. 不要手改 generated files；更新 OpenAPI source 后重新生成。
+4. Release gate 可对 `compute/` generated files 做机械尾随空格和末尾换行归一化；不得借此改写 generated client 逻辑。
 
 ## 4. 对外接口
 

@@ -119,19 +119,27 @@ function Normalize-ComputeClientWhitespace {
     $exitCode = 0
     $outputText = ""
     try {
-        $sdkPath = Join-Path $Root "frontend\src\client\compute\sdk.gen.ts"
+        $clientDir = Join-Path $Root "frontend\src\client\compute"
         $encoding = [System.Text.UTF8Encoding]::new($false)
-        $text = [System.IO.File]::ReadAllText($sdkPath)
-        $normalized = [System.Text.RegularExpressions.Regex]::Replace($text, "[ `t]+(?=`r?`n)", "")
-        if (-not $normalized.EndsWith("`n")) {
-            $lineEnding = if ($text.Contains("`r`n")) { "`r`n" } else { "`n" }
-            $normalized = $normalized + $lineEnding
+        $changedPaths = [System.Collections.Generic.List[string]]::new()
+        $files = Get-ChildItem -LiteralPath $clientDir -Recurse -Filter "*.ts" -File
+        foreach ($file in $files) {
+            $text = [System.IO.File]::ReadAllText($file.FullName)
+            $normalized = [System.Text.RegularExpressions.Regex]::Replace($text, '[ \t]+(?=\r?\n)', "")
+            if (-not $normalized.EndsWith("`n")) {
+                $lineEnding = if ($text.Contains("`r`n")) { "`r`n" } else { "`n" }
+                $normalized = $normalized + $lineEnding
+            }
+            if ($normalized -ne $text) {
+                [System.IO.File]::WriteAllText($file.FullName, $normalized, $encoding)
+                $relativePath = $file.FullName.Substring($Root.Length + 1).Replace("\", "/")
+                $changedPaths.Add($relativePath) | Out-Null
+            }
         }
-        if ($normalized -ne $text) {
-            [System.IO.File]::WriteAllText($sdkPath, $normalized, $encoding)
-            $outputText = "Trimmed trailing whitespace in frontend/src/client/compute/sdk.gen.ts"
+        if ($changedPaths.Count -gt 0) {
+            $outputText = "Normalized generated compute client whitespace in $($changedPaths.Count) file(s): " + ($changedPaths -join ", ")
         } else {
-            $outputText = "No generated SDK trailing whitespace found"
+            $outputText = "No generated compute client whitespace changes found"
         }
     }
     catch {

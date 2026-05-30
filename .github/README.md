@@ -10,6 +10,7 @@
 - Dependabot、labeler 等仓库协作配置。
 - AutoWaterSimu Next merge/release gate CI 入口。
 - Manual dispatch 下的 unsigned Desktop release artifact 构建与 workflow artifact 上传编排。
+- Manual dispatch 下的 PostgreSQL migration up/down smoke CI 编排。
 
 本目录不负责：
 
@@ -31,6 +32,7 @@
 3. Next release gate dry run 不等于 release 通过；missing artifact 必须在 evidence 中显式呈现。
 4. Workflow artifact 可上传 unsigned release artifacts 和 evidence；不得上传 signing key、证书、更新通道密钥或发布令牌。
 5. GitHub Release publication、installer signing 和 auto update 均为 post-P0 policy-driven work；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
+6. PostgreSQL migration up/down smoke 必须使用临时测试数据库；不得指向生产或共享环境。
 
 ## 4. 对外接口
 

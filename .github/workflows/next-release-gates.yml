@@ -49,12 +49,51 @@ on:
         description: "Run the mock-backed Compute Jobs current-flow Playwright smoke"
         required: false
         default: "false"
+      run_postgres_migration_smoke:
+        description: "Run PostgreSQL migration up/down smoke with a temporary service database"
+        required: false
+        default: "false"
       skip_long:
         description: "Skip long build steps in manual gate runs"
         required: false
         default: "false"
 
 jobs:
+  postgres-migration-smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_postgres_migration_smoke == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: autowatersimu
+          POSTGRES_PASSWORD: autowatersimu
+          POSTGRES_DB: autowatersimu_compute_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U autowatersimu -d autowatersimu_compute_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Run PostgreSQL migration up/down smoke
+        run: go test ./internal/compute -run 'TestPostgresMigrations(Up|Down)Smoke' -count=1
+        working-directory: apps/api
+        env:
+          COMPUTE_API_DATABASE_URL: postgres://autowatersimu:autowatersimu@localhost:5432/autowatersimu_compute_ci?sslmode=disable
+          COMPUTE_API_MIGRATION_DOWN_SMOKE: "true"
+
   next-gates:
     runs-on: windows-latest
     timeout-minutes: 90

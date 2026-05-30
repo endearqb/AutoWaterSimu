@@ -31,8 +31,9 @@
 2. Next release mode 需要显式传入 packaged sidecar 和 installer artifact 路径；`workflow_dispatch` 可用 `build_release_artifacts=true` 从 packaging build manifest 自动取得路径。
 3. Workflow artifact 可上传 evidence 和 unsigned Desktop release artifacts，不上传 secrets、signing material、updater keys 或 release tokens。
 4. GitHub Release publication、installer signing 和 auto update 均为 post-P0 policy-driven work；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
-5. Next gate 的 worker pytest matrix 和 mock-backed Playwright current-flow smoke 通过 `workflow_dispatch` inputs 显式开启，不作为默认 PR gate。
-6. Manual dispatch 可显式设置 `skip_long=true` 做较快验证；默认 PR gate 不传 `-SkipLong`。
+5. Next gate 的 worker pytest matrix、mock-backed Playwright current-flow smoke 和 PostgreSQL migration up/down smoke 通过 `workflow_dispatch` inputs 显式开启，不作为默认 PR gate。
+6. PostgreSQL migration smoke 使用 workflow 临时 `postgres:16-alpine` service database；不得改为生产或共享数据库。
+7. Manual dispatch 可显式设置 `skip_long=true` 做较快验证；默认 PR gate 不传 `-SkipLong`。
 
 ## 4. 对外接口
 
@@ -54,6 +55,7 @@
 
 涉及 `build_release_artifacts` 时还需本地确认 `apps/desktop/packaging/build-packaged-sidecar.ps1` 与 `build-nsis-installer.ps1` manifest 字段仍包含 `sidecar_executable` / `installer_path`。
 涉及 cache/concurrency/input wiring 时还需用 YAML parser 确认 workflow syntax。
+涉及 `run_postgres_migration_smoke` 时还需用 YAML parser 确认 opt-in job 的 PostgreSQL service、database URL 和 `COMPUTE_API_MIGRATION_DOWN_SMOKE=true` wiring。
 
 ## 7. AI 操作提示
 

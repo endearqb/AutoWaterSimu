@@ -1,3 +1,32 @@
+# 2026-05-31 AutoWaterSimu Next CI PostgreSQL migration smoke TODO
+
+- [x] Re-read GitHub workflow and release script README context
+- [x] Confirm migration up/down smoke already exists behind temporary database guards
+- [x] Add manual opt-in GitHub Actions job with a temporary PostgreSQL service database
+- [x] Update workflow/release README, completion audit, and README First records
+- [x] Validate workflow wiring and local release gate dry run
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep PostgreSQL migration rollback smoke opt-in because down migrations drop metadata tables.
+- Use a dedicated `ubuntu-latest` job with `postgres:16-alpine` service instead of mixing a service database into the Windows Desktop gate.
+- Do not point CI at any external shared or production database.
+
+## Review
+
+- Added `run_postgres_migration_smoke` manual dispatch input to `.github/workflows/next-release-gates.yml`.
+- Added an opt-in `postgres-migration-smoke` job that runs `go test ./internal/compute -run 'TestPostgresMigrations(Up|Down)Smoke' -count=1` against a temporary `postgres:16-alpine` service with `COMPUTE_API_MIGRATION_DOWN_SMOKE=true`.
+- Expanded release gate Compute client whitespace normalization from `sdk.gen.ts` to all generated `frontend/src/client/compute/**/*.ts` files after local validation exposed `types.gen.ts` missing-final-newline drift.
+- Committed the resulting generated Compute client final-newline normalization for seven `core/` / `index.ts` files so the release gate diff check has a stable baseline.
+- Updated GitHub/workflow/release README files and the completion audit to record the CI entry.
+- Verification:
+  - YAML parser assertions passed for the new input, service image, migration test command, and down-smoke env wiring.
+  - First local release gate dry run failed at `compute client diff gate` because codegen removed the final newline in `types.gen.ts`; the follow-up run exposed older no-final-newline drift in seven generated `core/` / `index.ts` files, now normalized as mechanical generated output.
+  - `git diff --check -- .github scripts frontend\src\client tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - The new GitHub job still needs a real `workflow_dispatch` run to produce live runner evidence.
+
 # 2026-05-31 AutoWaterSimu Next monitoring deployment examples TODO
 
 - [x] Re-read monitoring and operations README context
