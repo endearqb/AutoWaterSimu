@@ -17,7 +17,13 @@ from pathlib import Path
 from typing import Any
 
 WORKER_VERSION = "0.2.0-phase2b"
-SUPPORTED_JOB_TYPE = "simulation.material_balance.v1"
+MATERIAL_BALANCE_JOB_TYPE = "simulation.material_balance.v1"
+ASM1SLIM_JOB_TYPE = "simulation.asm1slim.v1"
+SUPPORTED_JOB_TYPES = [MATERIAL_BALANCE_JOB_TYPE, ASM1SLIM_JOB_TYPE]
+JOB_TYPE_MODEL_FAMILY = {
+    MATERIAL_BALANCE_JOB_TYPE: "material_balance",
+    ASM1SLIM_JOB_TYPE: "asm1slim",
+}
 SUPPORTED_CONTRACT_VERSIONS = [
     "compute_job.v1",
     "simulation_input.v1",
@@ -45,7 +51,7 @@ def self_check() -> dict[str, Any]:
         "python_version": platform.python_version(),
         "platform": platform.platform(),
         "supported_contract_versions": SUPPORTED_CONTRACT_VERSIONS,
-        "supported_job_types": [SUPPORTED_JOB_TYPE],
+        "supported_job_types": SUPPORTED_JOB_TYPES,
         "capabilities": SUPPORTED_CAPABILITIES,
         "git_sha": _git_sha(),
         "packaging_mode": _packaging_mode(),
@@ -61,7 +67,7 @@ def run_job_file(job_path: str | Path, artifact_dir: str | Path) -> dict[str, An
     except Exception as exc:
         return _failed_result(
             job_id="unknown_job",
-            job_type=SUPPORTED_JOB_TYPE,
+            job_type=MATERIAL_BALANCE_JOB_TYPE,
             message=_safe_error_message(exc),
             started_at=time.perf_counter(),
         )
@@ -71,7 +77,7 @@ def run_job_file(job_path: str | Path, artifact_dir: str | Path) -> dict[str, An
 def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
     started_at = time.perf_counter()
     job_id = "unknown_job"
-    job_type = SUPPORTED_JOB_TYPE
+    job_type = MATERIAL_BALANCE_JOB_TYPE
 
     try:
         if not isinstance(job, dict):
@@ -79,10 +85,10 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
 
         job_id = _string_value(job.get("job_id")) or job_id
         raw_job_type = _string_value(job.get("job_type")) or job_type
-        job_type = raw_job_type if raw_job_type == SUPPORTED_JOB_TYPE else SUPPORTED_JOB_TYPE
+        job_type = raw_job_type if raw_job_type in SUPPORTED_JOB_TYPES else MATERIAL_BALANCE_JOB_TYPE
 
         _validate_against_schema("compute_job.v1.json", job)
-        if raw_job_type != SUPPORTED_JOB_TYPE:
+        if raw_job_type not in SUPPORTED_JOB_TYPES:
             raise WorkerRunError(f"unsupported job_type: {raw_job_type}")
 
         payload = job.get("payload")
@@ -235,7 +241,7 @@ def _failed_result(
     return {
         "schema_version": "compute_result.v1",
         "job_id": job_id or "unknown_job",
-        "job_type": job_type if job_type == SUPPORTED_JOB_TYPE else SUPPORTED_JOB_TYPE,
+        "job_type": job_type if job_type in SUPPORTED_JOB_TYPES else MATERIAL_BALANCE_JOB_TYPE,
         "status": "failed",
         "summary": {"error_message": message},
         "data": {},
@@ -333,6 +339,9 @@ def _component_schema_id(payload: dict[str, Any]) -> str:
 
 
 def _model_family(payload: dict[str, Any]) -> str:
+    job_type = _string_value(payload.get("job_type"))
+    if job_type and job_type != MATERIAL_BALANCE_JOB_TYPE and job_type in JOB_TYPE_MODEL_FAMILY:
+        return JOB_TYPE_MODEL_FAMILY[job_type]
     runtime_options = payload.get("runtime_options")
     if isinstance(runtime_options, dict):
         value = _string_value(runtime_options.get("model_family"))
@@ -345,6 +354,8 @@ def _model_family(payload: dict[str, Any]) -> str:
                 node_type = _string_value(node.get("node_type"))
                 if node_type in {"asm1slim", "asm1", "asm3", "udm"}:
                     return node_type
+    if job_type in JOB_TYPE_MODEL_FAMILY:
+        return JOB_TYPE_MODEL_FAMILY[job_type]
     return "material_balance"
 
 

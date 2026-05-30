@@ -6,7 +6,7 @@
 
 本目录负责：
 
-- `simulation_input.v1 -> MaterialBalanceInput`。
+- `simulation_input.v1 -> MaterialBalanceInput`，当前支持 `simulation.material_balance.v1` 与 `simulation.asm1slim.v1`。
 - core adapter validation error 归一化。
 - 保持组件顺序、默认值和 time segments 语义。
 - 保留 ASM1Slim / ASM1 / ASM3 / UDM 节点 runtime binding 字段，供 material balance runtime 的模型分支使用。

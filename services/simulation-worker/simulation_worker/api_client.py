@@ -10,15 +10,15 @@ from urllib import error, parse, request
 
 try:
     from .runner import (
+        SUPPORTED_CAPABILITIES,
         SUPPORTED_CONTRACT_VERSIONS,
-        SUPPORTED_JOB_TYPE,
         WORKER_VERSION,
         run_job,
     )
 except ImportError:
     from runner import (  # type: ignore
+        SUPPORTED_CAPABILITIES,
         SUPPORTED_CONTRACT_VERSIONS,
-        SUPPORTED_JOB_TYPE,
         WORKER_VERSION,
         run_job,
     )
@@ -126,7 +126,7 @@ def run_api_once(
 
     registration = {
         "worker_id": worker_id,
-        "capabilities": ["material_balance", "ode"],
+        "capabilities": SUPPORTED_CAPABILITIES,
         "supported_contract_versions": SUPPORTED_CONTRACT_VERSIONS,
         "runtime_version": WORKER_VERSION,
     }

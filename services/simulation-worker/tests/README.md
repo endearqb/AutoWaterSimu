@@ -7,7 +7,7 @@
 本目录负责：
 
 - Worker CLI self-check 测试。
-- `--run-job` 合同 fixture 执行、artifact checksum 和 model_run 审计测试。
+- `--run-job` 合同 fixture 执行、artifact checksum、独立 `simulation.asm1slim.v1` job type 和 model_run 审计测试。
 - stdio JSON-RPC 与 one-shot Go Compute API bridge 回归测试。
 
 本目录不负责：

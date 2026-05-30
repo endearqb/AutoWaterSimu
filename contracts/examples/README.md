@@ -10,6 +10,7 @@
 - invalid examples。
 - 最小 material balance fixture。
 - ASM1Slim model-bound material balance fixture，用于 ASM/UDM 迁移前的 worker/core 对齐。
+- ASM1Slim independent job type fixture，用于首个独立 ASM worker job type 对齐。
 
 本目录不负责运行真实仿真。
 
@@ -25,7 +26,7 @@
 1. 示例必须尽量小，便于人工 review。
 2. invalid 示例必须能说明失败原因。
 3. 示例字段不要超前于 schema。
-4. 在独立 ASM/UDM job type 迁移前，ASM1Slim/ASM/UDM 示例应继续使用当前 schema 允许的 `simulation.material_balance.v1` job type，并通过节点模型绑定字段表达模型差异。
+4. `simulation.asm1slim.v1` 是当前唯一已放入 compute/simulation/result 合同的独立 ASM job type；ASM1、ASM3、UDM 仍需先补 schema、fixture 和 worker parity 后再加入。
 
 ## 4. 对外接口
 

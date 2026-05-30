@@ -20,7 +20,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
-| `simulation_input_adapter.py` | `simulation_input.v1` 到 legacy `MaterialBalanceInput` 的迁移期 adapter |
+| `simulation_input_adapter.py` | `simulation_input.v1` 到 legacy `MaterialBalanceInput` 的迁移期 adapter，支持 `simulation.material_balance.v1` 与 `simulation.asm1slim.v1` |
 | `time_segment_validation.py` | legacy flowchart time segment normalize / validate / convert helpers |
 | `data_conversion_service.py` | legacy flowchart 到后端计算输入的转换服务 |
 
@@ -29,7 +29,7 @@
 1. 服务层可以依赖 `app.models`，但不应直接依赖 HTTP 请求对象。
 2. 密集计算或大 payload 处理不得用 `print` 输出完整数据。
 3. Next adapter 失败应返回可映射为 `contract_error.v1` 的结构化错误。
-4. `simulation_input_adapter.py` 与 `simulation_core/python/.../adapters/material_balance.py` 的字段保留语义必须保持一致，尤其是 ASM/UDM 可选字段。
+4. `simulation_input_adapter.py` 与 `simulation_core/python/.../adapters/material_balance.py` 的字段保留和 job type 语义必须保持一致，尤其是 ASM/UDM 可选字段。
 
 ## 4. 对外接口
 

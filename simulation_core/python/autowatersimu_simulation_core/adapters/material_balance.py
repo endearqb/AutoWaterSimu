@@ -13,6 +13,8 @@ from autowatersimu_simulation_core.material_balance.models import (
     TimeSegment,
 )
 
+SUPPORTED_JOB_TYPES = {"simulation.material_balance.v1", "simulation.asm1slim.v1"}
+
 
 def simulation_input_to_material_balance_input(
     simulation_input: dict[str, Any],
@@ -22,13 +24,13 @@ def simulation_input_to_material_balance_input(
             "simulation_input schema_version must be simulation_input.v1",
             [_detail("$.schema_version", "schema_version must be simulation_input.v1", None)],
         )
-    if simulation_input.get("job_type") != "simulation.material_balance.v1":
+    if simulation_input.get("job_type") not in SUPPORTED_JOB_TYPES:
         raise SimulationCoreAdapterError(
             "unsupported simulation input job_type",
             [
                 _detail(
                     "$.job_type",
-                    "only simulation.material_balance.v1 is supported",
+                    "supported job_type values are simulation.material_balance.v1 and simulation.asm1slim.v1",
                     simulation_input.get("job_type"),
                 )
             ],

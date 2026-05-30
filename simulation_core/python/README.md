@@ -8,6 +8,7 @@
 
 - `autowatersimu_simulation_core` import 根。
 - 无 HTTP、DB、用户或 worker token 的 material balance 运行时，以及该运行时内的 ASM/UDM 节点模型绑定数据。
+- `simulation.asm1slim.v1` 到现有 ASM1Slim 节点模型分支的纯 Python adapter 支持。
 - 供 Python worker、未来 backend wrapper 和数值测试复用的计算 API。
 
 本目录不负责：

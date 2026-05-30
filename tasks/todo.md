@@ -1,3 +1,36 @@
+# 2026-05-30 AutoWaterSimu Next ASM1Slim Independent Worker Job Type TODO
+
+- [x] Re-read contracts, worker, simulation core, backend adapter, and Phase 5 migration context
+- [x] Add `simulation.asm1slim.v1` to executable compute/simulation/result contracts
+- [x] Add independent ASM1Slim fixtures and adapter/worker tests
+- [x] Keep Go SimulationRequest, Desktop creation, and frontend submission out of this slice
+- [x] Run contract, core, worker, backend adapter, and diff validation
+- [x] Record findings and commit checkpoint
+
+## Plan
+
+- Introduce only the first independent ASM job type, `simulation.asm1slim.v1`.
+- Continue routing execution through the existing material balance runtime because ASM1Slim is already represented as a node model branch there.
+- Do not claim ASM1, ASM3, or UDM independent job types until each has fixtures and old-vs-worker parity.
+- Do not change `simulation_request.v1`, Go API promotion, Desktop job creation, or Web submit UI in this slice.
+
+## Review
+
+- `compute_job.v1`, `simulation_input.v1`, and `compute_result.v1` now allow `simulation.asm1slim.v1` in addition to `simulation.material_balance.v1`.
+- Added independent ASM1Slim compute/simulation fixtures while keeping the previous ASM1Slim model-bound material-balance fixtures.
+- Core and legacy backend adapters accept `simulation.asm1slim.v1` and still convert to the existing MaterialBalanceInput runtime model.
+- Worker self-check now lists both supported job types; `run_job` executes `simulation.asm1slim.v1`, preserves that job type in result/artifact payloads, and emits `model_run.model_key=asm1slim`.
+- `--run-api-once` registration now reports the shared worker capability list instead of the old hardcoded material-balance-only list.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`77 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` passed (`7 passed`, existing warnings only).
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`9 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services -q` passed (`26 passed`, existing warnings only).
+  - Direct worker runs passed for both `asm1slim_minimal.compute_job.v1.json` and `asm1slim_independent.compute_job.v1.json`.
+- Remaining scope:
+  - `simulation_request.v1`, Go API promotion, Desktop job creation, and Web submit UI still accept only the material-balance submission path.
+  - Independent ASM1, ASM3, and UDM job types remain follow-up work and need their own fixtures/parity evidence.
+
 # 2026-05-30 AutoWaterSimu Next ASM/UDM Runtime Binding Adapter TODO
 
 - [x] Re-read PRD/Spec/Development Plan, simulation core, worker, and legacy adapter context

@@ -17,7 +17,10 @@
   "properties": {
     "schema_version": { "const": "compute_result.v1" },
     "job_id": { "type": "string", "minLength": 1 },
-    "job_type": { "type": "string", "enum": ["simulation.material_balance.v1"] },
+    "job_type": {
+      "type": "string",
+      "enum": ["simulation.material_balance.v1", "simulation.asm1slim.v1"]
+    },
     "status": { "type": "string", "enum": ["succeeded", "failed", "cancelled", "timed_out"] },
     "summary": { "type": "object" },
     "data": { "type": "object" },
