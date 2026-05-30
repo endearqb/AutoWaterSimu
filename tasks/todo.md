@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next Artifact Archive Backend Decision TODO
+
+- [x] Re-read `.ai/decisions`, Compute API retention, operations, and migration context
+- [x] Add ADR for archive backend boundary and current non-implementation status
+- [x] Update Compute API/operations documentation to point at the decision
+- [x] Update completion audit and README First records
+- [x] Run docs diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep current runtime behavior unchanged: `archive_candidate` remains skipped by retention sweep.
+- Record the future archive backend requirements before changing metadata or deletion behavior.
+- Require archive copy verification and auditable metadata before any archived artifact can be deleted from hot storage.
+
+## Review
+
+- Added `.ai/decisions/0010-artifact-archive-backend-boundary.md`.
+- The ADR keeps current runtime behavior unchanged: retention sweep continues to skip `archive_candidate` with `archive_executor_not_configured`.
+- Future archive implementation must copy, verify checksum, and durably record archive metadata before deleting hot-storage artifacts.
+- Updated Compute API README, internal compute README, and lifecycle runbook to point at the ADR.
+- Verification:
+  - `git diff --check -- .ai\decisions apps\api\README.md apps\api\internal\compute\README.md docs\operations tasks .ai\plans .ai\changes` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - No archive store, metadata migration, OpenAPI field, or scheduler behavior change is implemented in this slice.
+
 # 2026-05-31 AutoWaterSimu Next Compute API Backup Restore Policy TODO
 
 - [x] Re-read docs, operations, Compute API, and migration README context

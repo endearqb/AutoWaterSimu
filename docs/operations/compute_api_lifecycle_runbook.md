@@ -71,7 +71,7 @@ Review the returned `artifact_retention_sweep.v1` report:
 
 - `would_delete` means an expired unreferenced `ttl` artifact would be deleted in an actual sweep.
 - `skipped` with `referenced_by_model_run` means model-run evidence still references the artifact.
-- `skipped` with `archive_executor_not_configured` means an `archive_candidate` artifact cannot be processed until archive storage is designed.
+- `skipped` with `archive_executor_not_configured` means an `archive_candidate` artifact cannot be processed until archive storage is implemented under `.ai/decisions/0010-artifact-archive-backend-boundary.md`.
 
 Run deletion only after dry-run review:
 
