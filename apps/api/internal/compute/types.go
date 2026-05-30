@@ -104,6 +104,32 @@ type ArtifactRecord struct {
 	CreatedAt       time.Time       `json:"created_at"`
 }
 
+type ArtifactRetentionSweepOptions struct {
+	DryRun bool
+	Limit  int
+	Now    time.Time
+}
+
+type ArtifactRetentionSweepReport struct {
+	SchemaVersion string                    `json:"schema_version"`
+	DryRun        bool                      `json:"dry_run"`
+	Checked       int                       `json:"checked"`
+	Deleted       int                       `json:"deleted"`
+	Skipped       int                       `json:"skipped"`
+	Items         []ArtifactRetentionAction `json:"items"`
+	GeneratedAt   time.Time                 `json:"generated_at"`
+}
+
+type ArtifactRetentionAction struct {
+	ArtifactID      string     `json:"artifact_id"`
+	JobID           string     `json:"job_id"`
+	RetentionPolicy string     `json:"retention_policy"`
+	RetainUntil     *time.Time `json:"retain_until,omitempty"`
+	Action          string     `json:"action"`
+	Reason          string     `json:"reason,omitempty"`
+	BlockingRefs    []string   `json:"blocking_refs,omitempty"`
+}
+
 type WorkerRecord struct {
 	WorkerID                  string          `json:"worker_id"`
 	Capabilities              json.RawMessage `json:"capabilities"`

@@ -10,6 +10,7 @@ import (
 type ArtifactStore interface {
 	Write(ctx context.Context, objectKey string, bytes []byte) error
 	Read(ctx context.Context, objectKey string) ([]byte, error)
+	Delete(ctx context.Context, objectKey string) error
 }
 
 type LocalArtifactStore struct {
@@ -47,6 +48,17 @@ func (store *LocalArtifactStore) Read(_ context.Context, objectKey string) ([]by
 		return nil, NotFound(CodeArtifactNotFound, "artifact file not found")
 	}
 	return bytes, err
+}
+
+func (store *LocalArtifactStore) Delete(_ context.Context, objectKey string) error {
+	path, err := store.safePath(objectKey)
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
 
 func (store *LocalArtifactStore) safePath(objectKey string) (string, error) {

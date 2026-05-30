@@ -19,6 +19,7 @@ Latest current-turn verification:
 
 - `backend\.venv\Scripts\python -m pytest contracts\tests -q`: passed, `83 passed`
 - `cd apps\api; go test ./...`: passed
+- Go API service-level artifact retention sweep now deletes expired unreferenced `ttl` artifacts, protects artifacts referenced by persisted `model_run.v1.evidence_refs`, and records an audit event; no public admin API/scheduler/archive backend is exposed yet
 - `benchmark_run.v1` contract, PostgreSQL history table, record/list/get API, generated client, and frontend service wrappers exist; recording benchmark runs validates catalog benchmark case status, default parameter set hash, matching model_run, and job-scoped evidence refs
 - Approved `constraint_draft.v1` confirmation can produce a read-only `constraint_application_plan.v1` through Go API tests; the plan is advisory-only and keeps `would_create_job=false` / `would_modify_target=false`
 - Externally generated `result_explanation.v1` can be submitted, reviewed, read, and published through Go API tests after job-scoped evidence ref checks; publish is audit metadata only
@@ -78,7 +79,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, benchmark_run history, model_run records, evidence governance summary | Multi-parameter-set management, scheduled benchmark execution, benchmark-backed parameter promotion, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
-| Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
+| Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata, internal service-level retention sweep with model_run reference protection, and static token revoke exist | Public admin API/scheduler, archive backend, metrics/SLO hardening, operation runbooks, and lifecycle UI |
 | Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist; real PyInstaller sidecar artifact, NSIS installer artifact, installed-sidecar smoke, and release gate pass evidence exist locally | CI artifact build/publish, signing, auto-update, and release runner cache/timing hardening |
 
 ## Remaining Roadmap
@@ -115,7 +116,7 @@ Latest recorded but not re-run in this verification refresh:
 
 6. Lifecycle/operations completion
 
-- Implement retention executor or archive/delete worker with evidence/model_run reference protection.
+- Add public lifecycle operation surface only after admin/auth policy is defined; current internal retention sweep already protects model_run evidence refs and deletes only expired unreferenced `ttl` artifacts.
 - Add operational metrics beyond the current `/metrics` stub.
 - Document production token/secret handling and rotation process.
 
@@ -130,5 +131,5 @@ Latest recorded but not re-run in this verification refresh:
 ## Next Best Implementation Candidates
 
 1. Add Playwright ProcessGraph/current-flow smoke beyond the current minimal browser evidence, and decide CI placement for the heavier worker baseline matrix.
-2. Add lifecycle retention/archive executor and operational runbooks for artifacts/model runs.
+2. Add admin/scheduler surface, metrics, and operational runbooks for artifact/model-run lifecycle management.
 3. Harden release artifact publishing, signing, and auto-update after certificate/update policy is defined.

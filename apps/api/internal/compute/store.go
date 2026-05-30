@@ -20,6 +20,9 @@ type Store interface {
 	Artifacts(ctx context.Context, jobID string) ([]ArtifactRecord, error)
 	FindArtifact(ctx context.Context, artifactID string) (*ArtifactRecord, error)
 	InsertArtifact(ctx context.Context, artifact ArtifactRecord, event EventRecord) error
+	ListArtifactRetentionCandidates(ctx context.Context, now time.Time, limit int) ([]ArtifactRecord, error)
+	ArtifactReferences(ctx context.Context, artifactID string) ([]string, error)
+	DeleteArtifact(ctx context.Context, artifactID string, event EventRecord) error
 	InsertModelRuns(ctx context.Context, jobID string, modelRuns []json.RawMessage, now time.Time) error
 	FindModelRun(ctx context.Context, modelRunID string) (json.RawMessage, error)
 	ListModelRuns(ctx context.Context, filter ModelRunFilter) ([]json.RawMessage, string, int, error)
@@ -237,6 +240,72 @@ func (store *MemoryStore) InsertArtifact(_ context.Context, artifact ArtifactRec
 	}
 	store.artifacts[artifact.ArtifactID] = artifact
 	store.appendEventLocked(event)
+	return nil
+}
+
+func (store *MemoryStore) ListArtifactRetentionCandidates(_ context.Context, now time.Time, limit int) ([]ArtifactRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	var artifacts []ArtifactRecord
+	for _, artifact := range store.artifacts {
+		if !artifactRetentionPolicyEligible(artifact.RetentionPolicy) {
+			continue
+		}
+		if artifact.RetainUntil == nil || artifact.RetainUntil.After(now) {
+			continue
+		}
+		artifacts = append(artifacts, artifact)
+	}
+	sort.Slice(artifacts, func(i, j int) bool {
+		left := artifacts[i]
+		right := artifacts[j]
+		if left.RetainUntil != nil && right.RetainUntil != nil && !left.RetainUntil.Equal(*right.RetainUntil) {
+			return left.RetainUntil.Before(*right.RetainUntil)
+		}
+		if !left.CreatedAt.Equal(right.CreatedAt) {
+			return left.CreatedAt.Before(right.CreatedAt)
+		}
+		return left.ArtifactID < right.ArtifactID
+	})
+	limit = normalizeRetentionLimit(limit)
+	if len(artifacts) > limit {
+		artifacts = artifacts[:limit]
+	}
+	return append([]ArtifactRecord(nil), artifacts...), nil
+}
+
+func (store *MemoryStore) ArtifactReferences(_ context.Context, artifactID string) ([]string, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	var refs []string
+	for _, modelRun := range store.modelRuns {
+		modelRunID := modelRunIDFromRaw(modelRun)
+		if modelRunID == "" {
+			continue
+		}
+		for _, evidenceRef := range modelRunEvidenceRefsFromRaw(modelRun) {
+			if evidenceRef == artifactID || evidenceRef == "artifact:"+artifactID {
+				refs = append(refs, "model_run:"+modelRunID)
+				break
+			}
+		}
+	}
+	sort.Strings(refs)
+	return refs, nil
+}
+
+func (store *MemoryStore) DeleteArtifact(_ context.Context, artifactID string, event EventRecord) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	artifact, ok := store.artifacts[artifactID]
+	if !ok {
+		return NotFound(CodeArtifactNotFound, "artifact not found")
+	}
+	delete(store.artifacts, artifactID)
+	if _, ok := store.jobs[artifact.JobID]; ok {
+		event.JobID = artifact.JobID
+		store.appendEventLocked(event)
+	}
 	return nil
 }
 
@@ -878,4 +947,31 @@ func modelRunFieldsFromRaw(raw json.RawMessage) (modelRunID, jobID, modelKey, mo
 		stringValue(value, "model_version"),
 		stringValue(metadata, "parameter_set_id"),
 		nil
+}
+
+func modelRunEvidenceRefsFromRaw(raw json.RawMessage) []string {
+	var value map[string]any
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return nil
+	}
+	return stringsFromAny(value["evidence_refs"])
+}
+
+func artifactRetentionPolicyEligible(policy string) bool {
+	switch strings.TrimSpace(policy) {
+	case "ttl", "archive_candidate":
+		return true
+	default:
+		return false
+	}
+}
+
+func normalizeRetentionLimit(limit int) int {
+	if limit <= 0 {
+		return 100
+	}
+	if limit > 1000 {
+		return 1000
+	}
+	return limit
 }

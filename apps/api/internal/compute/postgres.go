@@ -237,6 +237,72 @@ func (store *PostgresStore) InsertArtifact(ctx context.Context, artifact Artifac
 	return tx.Commit(ctx)
 }
 
+func (store *PostgresStore) ListArtifactRetentionCandidates(ctx context.Context, now time.Time, limit int) ([]ArtifactRecord, error) {
+	rows, err := store.pool.Query(
+		ctx,
+		artifactSelectSQL()+` WHERE retention_policy IN ('ttl','archive_candidate')
+			AND retain_until IS NOT NULL
+			AND retain_until <= $1
+			ORDER BY retain_until, created_at, id
+			LIMIT $2`,
+		now,
+		normalizeRetentionLimit(limit),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanArtifacts(rows)
+}
+
+func (store *PostgresStore) ArtifactReferences(ctx context.Context, artifactID string) ([]string, error) {
+	rows, err := store.pool.Query(
+		ctx,
+		`SELECT id FROM model_runs
+			WHERE (runtime_audit->'evidence_refs' ? $1)
+				OR (runtime_audit->'evidence_refs' ? $2)
+			ORDER BY id`,
+		artifactID,
+		"artifact:"+artifactID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var refs []string
+	for rows.Next() {
+		var modelRunID string
+		if err := rows.Scan(&modelRunID); err != nil {
+			return nil, err
+		}
+		refs = append(refs, "model_run:"+modelRunID)
+	}
+	return refs, rows.Err()
+}
+
+func (store *PostgresStore) DeleteArtifact(ctx context.Context, artifactID string, event EventRecord) error {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var jobID string
+	if err := tx.QueryRow(ctx, "SELECT job_id FROM artifacts WHERE id=$1 FOR UPDATE", artifactID).Scan(&jobID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return NotFound(CodeArtifactNotFound, "artifact not found")
+		}
+		return err
+	}
+	if _, err := tx.Exec(ctx, "DELETE FROM artifacts WHERE id=$1", artifactID); err != nil {
+		return err
+	}
+	event.JobID = jobID
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", event.JobID, event.EventType, event.EventJSON, event.CreatedAt); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
 func (store *PostgresStore) InsertModelRuns(ctx context.Context, jobID string, modelRuns []json.RawMessage, now time.Time) error {
 	if len(modelRuns) == 0 {
 		return nil

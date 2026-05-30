@@ -1243,6 +1243,84 @@ func (svc *Service) DownloadArtifact(ctx context.Context, artifactID string) (Ar
 	return *artifact, bytes, nil
 }
 
+func (svc *Service) SweepArtifactRetention(ctx context.Context, options ArtifactRetentionSweepOptions) (ArtifactRetentionSweepReport, error) {
+	now := options.Now
+	if now.IsZero() {
+		now = svc.now()
+	}
+	limit := normalizeRetentionLimit(options.Limit)
+	candidates, err := svc.store.ListArtifactRetentionCandidates(ctx, now, limit)
+	if err != nil {
+		return ArtifactRetentionSweepReport{}, err
+	}
+	report := ArtifactRetentionSweepReport{
+		SchemaVersion: "artifact_retention_sweep.v1",
+		DryRun:        options.DryRun,
+		Checked:       len(candidates),
+		Items:         make([]ArtifactRetentionAction, 0, len(candidates)),
+		GeneratedAt:   now,
+	}
+	for _, artifact := range candidates {
+		action := ArtifactRetentionAction{
+			ArtifactID:      artifact.ArtifactID,
+			JobID:           artifact.JobID,
+			RetentionPolicy: artifact.RetentionPolicy,
+			RetainUntil:     artifact.RetainUntil,
+		}
+		blockingRefs, err := svc.store.ArtifactReferences(ctx, artifact.ArtifactID)
+		if err != nil {
+			return ArtifactRetentionSweepReport{}, err
+		}
+		if len(blockingRefs) > 0 {
+			action.Action = "skipped"
+			action.Reason = "referenced_by_model_run"
+			action.BlockingRefs = blockingRefs
+			report.Skipped++
+			report.Items = append(report.Items, action)
+			continue
+		}
+		if artifact.RetentionPolicy == "archive_candidate" {
+			action.Action = "skipped"
+			action.Reason = "archive_executor_not_configured"
+			report.Skipped++
+			report.Items = append(report.Items, action)
+			continue
+		}
+		if artifact.RetentionPolicy != "ttl" {
+			action.Action = "skipped"
+			action.Reason = "unsupported_retention_policy"
+			report.Skipped++
+			report.Items = append(report.Items, action)
+			continue
+		}
+		if options.DryRun {
+			action.Action = "would_delete"
+			report.Items = append(report.Items, action)
+			continue
+		}
+		if err := svc.artifacts.Delete(ctx, artifact.ObjectKey); err != nil {
+			return ArtifactRetentionSweepReport{}, err
+		}
+		event := EventRecord{
+			JobID:     artifact.JobID,
+			EventType: "artifact.retention_deleted",
+			EventJSON: mustJSON(map[string]any{
+				"artifact_id":      artifact.ArtifactID,
+				"retention_policy": artifact.RetentionPolicy,
+				"retain_until":     artifact.RetainUntil,
+			}),
+			CreatedAt: now,
+		}
+		if err := svc.store.DeleteArtifact(ctx, artifact.ArtifactID, event); err != nil {
+			return ArtifactRetentionSweepReport{}, err
+		}
+		action.Action = "deleted"
+		report.Deleted++
+		report.Items = append(report.Items, action)
+	}
+	return report, nil
+}
+
 func (svc *Service) snapshot(ctx context.Context, jobID string) (JobSnapshot, error) {
 	job, err := svc.store.FindJobByID(ctx, jobID)
 	if err != nil {

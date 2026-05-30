@@ -1,3 +1,30 @@
+# 2026-05-30 AutoWaterSimu Next Artifact Retention Sweep TODO
+
+- [x] Re-read Go API, internal compute, migration, artifact, evidence, and model_run context
+- [x] Add service-level retention sweep options/report types
+- [x] Add store queries for expired artifact candidates, model_run evidence references, and artifact metadata deletion
+- [x] Add local artifact object delete support
+- [x] Protect model_run-referenced artifacts and delete only expired unreferenced TTL artifacts
+- [x] Add focused Go service regression test
+- [x] Update README First records and completion audit
+
+## Plan
+
+- Keep this slice internal to Go API service code; do not add public admin HTTP routes or OpenAPI surface yet.
+- Treat `retain_forever` as never eligible, `ttl` as deletable only after `retain_until`, and `archive_candidate` as skipped until archive storage is designed.
+- Before deleting, scan persisted `model_run.v1.evidence_refs` for both raw artifact ids and `artifact:<id>` refs.
+
+## Review
+
+- Added `SweepArtifactRetention` with dry-run support, bounded candidate limits, per-artifact action reporting, and audit event creation for actual deletion.
+- Added `ArtifactStore.Delete` for local artifact files; missing files are treated idempotently so stale metadata can still be removed.
+- Added memory/PostgreSQL store methods for expired retention candidates, model_run evidence reference lookup, and artifact metadata deletion.
+- Added a Go service test proving dry-run safety, model_run reference protection, expired unreferenced TTL deletion, download behavior, and audit event recording.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+- Remaining scope:
+  - No public admin API, scheduler/daemon, archive backend, metrics, or UI exists yet.
+
 # 2026-05-30 AutoWaterSimu Next Worker Numerical Baseline Matrix TODO
 
 - [x] Re-read worker, contracts examples, backend legacy baseline, simulation core, and task audit context
