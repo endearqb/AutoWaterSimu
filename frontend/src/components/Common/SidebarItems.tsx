@@ -14,6 +14,7 @@ import {
   FiHome,
   FiLayers,
   FiSliders,
+  FiShield,
   FiUsers,
 } from "react-icons/fi"
 import type { IconType } from "react-icons/lib"
@@ -54,6 +55,11 @@ const getItems = (
 ) => [
   { icon: FiHome, title: t("nav.home"), path: "/dashboard" },
   { icon: FiActivity, title: t("nav.computeJobs"), path: "/compute-jobs" },
+  {
+    icon: FiShield,
+    title: t("nav.computeLifecycle"),
+    path: "/compute-lifecycle",
+  },
   {
     icon: FiBookOpen,
     title: t("nav.petersenTutorial"),

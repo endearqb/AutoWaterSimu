@@ -24,7 +24,7 @@
 | `asm1Service.ts`、`asm1slimService.ts`、`asm3Service.ts` | ASM service wrappers |
 | `udmService.ts` | UDM service wrapper |
 | `websocketService.ts` | WebSocket helper |
-| `computeJobsService.ts` | Go Compute API jobs/health/artifact/evidence/model_catalog/model_run/benchmark_run/process_graph/contract validation/admin retention service wrapper and current-flow contract bridge |
+| `computeJobsService.ts` | Go Compute API jobs/health/metrics/artifact/evidence/model_catalog/model_run/benchmark_run/process_graph/contract validation/admin retention service wrapper and current-flow contract bridge |
 
 ## 3. 维护约定
 

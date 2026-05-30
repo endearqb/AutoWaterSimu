@@ -274,6 +274,12 @@ export const computeJobsService = {
     ]).then(([health, ready]) => ({ health, ready }))
   },
 
+  getMetrics(): Promise<string> {
+    return DefaultService.getMetrics().then((metrics) =>
+      typeof metrics === "string" ? metrics : String(metrics ?? ""),
+    )
+  },
+
   listJobs(params: ListComputeJobsParams = {}): Promise<ListJobsResponse> {
     return DefaultService.listComputeJobs({
       cursor: params.cursor,

@@ -1,3 +1,37 @@
+# 2026-05-31 AutoWaterSimu Next Compute Lifecycle Admin UI TODO
+
+- [x] Re-read frontend, routes, services, i18n, Chakra v3, and Compute lifecycle context
+- [x] Add dedicated `/compute-lifecycle` route
+- [x] Surface Compute API health/metrics and retention summary
+- [x] Reuse admin retention sweep with dry-run-before-delete guard
+- [x] Add sidebar/i18n route entry and regenerate route tree
+- [x] Add mock-backed Playwright lifecycle smoke
+- [x] Run frontend validation and update README First records
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep backend API unchanged and reuse `computeJobsService`.
+- Parse current Prometheus text metrics in the route for display only.
+- Keep deletion disabled until the latest dry-run report contains `would_delete`.
+- Display `archive_executor_not_configured` as a blocker instead of treating archive candidates as deletable.
+
+## Review
+
+- Added `frontend/src/routes/_layout/compute-lifecycle.tsx`.
+- Added `computeJobsService.getMetrics()`.
+- Added the sidebar entry, English/Chinese nav labels, and generated `routeTree.gen.ts` update.
+- Added `frontend/tests/compute-lifecycle.spec.ts`.
+- Verification:
+  - `cd frontend; npx vite build` passed and regenerated route tree, with existing Vite warnings about `gray-matter` eval, toaster chunking, and bundle size.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - First Playwright run used a Windows backslash path and found no tests.
+  - Second Playwright run with the default HTML reporter left a report server open after a strict locator failure; stale Playwright node/Chrome processes were stopped, the test locators were tightened, and rerun with `--reporter=line`.
+  - `cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line` passed (`1 passed`).
+  - `git diff --check -- frontend tasks .ai\plans .ai\changes` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - This is a focused lifecycle admin page, not full Alertmanager/dashboard deployment or archive backend implementation.
+
 # 2026-05-31 AutoWaterSimu Next Artifact Archive Backend Decision TODO
 
 - [x] Re-read `.ai/decisions`, Compute API retention, operations, and migration context
