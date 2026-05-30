@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next browser gate expansion TODO
+
+- [x] Re-read frontend/tests and release gate README context
+- [x] Add Compute lifecycle Playwright smoke to the opt-in browser release gate
+- [x] Update workflow/release/frontend test README records
+- [x] Validate focused Playwright smokes and release gate wiring
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep browser smoke opt-in through `-RunBrowserSmoke` / `workflow_dispatch.run_browser_smoke=true`.
+- Reuse the existing mock-backed Compute Jobs current-flow and Compute lifecycle specs.
+- Do not add live backend or deployed Go API dependencies to this browser gate slice.
+
+## Review
+
+- `scripts/release/next-release-gates.ps1` now runs both `compute-jobs-current-flow.spec.ts` and `compute-lifecycle.spec.ts` when `-RunBrowserSmoke` is set.
+- Workflow and README text now describe browser smokes as covering Compute Jobs/current-flow and Compute lifecycle.
+- `frontend/tests/README.md` now lists the lifecycle smoke and focused validation command.
+- Verification:
+  - `cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line` passed.
+  - `.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -RunBrowserSmoke -EvidenceDir tmp\release-evidence\browser-gate-expanded` passed.
+  - `git diff --check -- .github scripts frontend\tests tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Live deployed API/browser E2E remains blocked on deployment wiring and deployed token/secret policy.
+
 # 2026-05-31 AutoWaterSimu Next CI PostgreSQL migration smoke TODO
 
 - [x] Re-read GitHub workflow and release script README context

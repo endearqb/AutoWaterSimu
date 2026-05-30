@@ -30,7 +30,7 @@
 3. 使用 `-AllowMissingPackageArtifacts` 时，总 evidence status 必须是 `dry_run_skipped_artifacts`，不能被解释为 release 通过。
 4. 脚本只记录 evidence，不把 release 成功写成源码事实。
 5. Release artifact path 允许包含空格；编排脚本必须在传递子进程参数时保留完整路径。
-6. Worker pytest matrix 与 Compute Jobs current-flow Playwright smoke 通过 `-RunWorkerMatrix` / `-RunBrowserSmoke` 显式开启；默认 gate 只跑 worker self-check 与 minimal job。
+6. Worker pytest matrix 与 mock-backed Compute Jobs current-flow / Compute lifecycle Playwright smokes 通过 `-RunWorkerMatrix` / `-RunBrowserSmoke` 显式开启；默认 gate 只跑 worker self-check 与 minimal job。
 7. GitHub `workflow_dispatch` 可以用 `build_release_artifacts=true` 先构建 unsigned sidecar/NSIS installer，再把 manifest 中的 artifact path 传给本脚本；本脚本本身仍只做验证与 evidence 汇总。
 8. Installer signing、auto update 和 GitHub Release publication 不属于本脚本职责；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 9. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。

@@ -46,7 +46,7 @@ on:
         required: false
         default: "false"
       run_browser_smoke:
-        description: "Run the mock-backed Compute Jobs current-flow Playwright smoke"
+        description: "Run mock-backed Compute Jobs and lifecycle Playwright smokes"
         required: false
         default: "false"
       run_postgres_migration_smoke:

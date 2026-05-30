@@ -180,6 +180,7 @@ Invoke-Gate -Name "compute client diff gate" -WorkingDirectory $Root -Executable
 Invoke-Gate -Name "frontend typecheck" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @("tsc", "--noEmit")
 if ($RunBrowserSmoke) {
     Invoke-Gate -Name "frontend current-flow playwright smoke" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @("playwright", "test", "tests/compute-jobs-current-flow.spec.ts", "--project=chromium", "--no-deps")
+    Invoke-Gate -Name "frontend compute lifecycle playwright smoke" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @("playwright", "test", "tests/compute-lifecycle.spec.ts", "--project=chromium", "--no-deps", "--reporter=line")
 }
 Invoke-Gate -Name "desktop typecheck" -WorkingDirectory (Join-Path $Root "apps\desktop") -Executable $npm -Arguments @("run", "typecheck")
 Invoke-Gate -Name "desktop rust tests" -WorkingDirectory $Root -Executable "cargo" -Arguments @("test", "--manifest-path", "apps\desktop\src-tauri\Cargo.toml")
