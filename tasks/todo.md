@@ -1,3 +1,27 @@
+# 2026-05-31 AutoWaterSimu Next archive directory guard TODO
+
+- [x] Re-read Compute API entrypoint, archive wiring, and operations context
+- [x] Add non-overlap validation for hot artifact and local archive directories
+- [x] Add command entrypoint tests
+- [x] Update command README and lifecycle runbook
+- [x] Run focused command tests and diff check
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep archive safety in the command wiring layer because this only validates environment paths before creating stores.
+- Reject `COMPUTE_API_ARCHIVE_DIR` when it is the same as, contains, or is contained by `COMPUTE_API_ARTIFACT_DIR`.
+- Do not change retention sweep, archive copy, checksum verification, archive metadata, or download fallback behavior.
+
+## Review
+
+- Added `openArchiveStore` wiring and non-overlap validation in `apps/api/cmd/compute-api/main.go`.
+- Added tests for same directory, archive-inside-hot, hot-inside-archive, and valid sibling archive directory.
+- Updated command README and lifecycle runbook to state `COMPUTE_API_ARCHIVE_DIR` must be separate and non-overlapping.
+- Verification:
+  - `cd apps\api; go test ./cmd/compute-api -run "TestOpenArchiveStore|TestOpenStoreUsesMemoryStoreWhenDatabaseURLMissing" -count=1` passed.
+  - `git diff --check -- apps\api docs\operations tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+
 # 2026-05-31 AutoWaterSimu Next archive metrics TODO
 
 - [x] Re-read Compute API, internal compute, and monitoring README context

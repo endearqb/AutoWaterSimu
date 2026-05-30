@@ -108,7 +108,7 @@ The API process has an optional retention scheduler, disabled by default:
 | `COMPUTE_API_RETENTION_SWEEP_INTERVAL` | unset | Enables the scheduler when set to a Go duration such as `1h` |
 | `COMPUTE_API_RETENTION_SWEEP_DRY_RUN` | `true` | Keeps scheduled sweeps as dry-run unless explicitly set to `false` |
 | `COMPUTE_API_RETENTION_SWEEP_LIMIT` | `100` | Candidate limit per sweep |
-| `COMPUTE_API_ARCHIVE_DIR` | unset | Enables `local_fs_archive` handling for expired unreferenced `archive_candidate` artifacts |
+| `COMPUTE_API_ARCHIVE_DIR` | unset | Enables `local_fs_archive` handling for expired unreferenced `archive_candidate` artifacts; must not equal, contain, or be contained by `COMPUTE_API_ARTIFACT_DIR` |
 
 Recommended rollout:
 

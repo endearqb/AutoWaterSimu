@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"autowatersimu/apps/api/internal/compute"
@@ -47,11 +49,11 @@ func run() error {
 		return err
 	}
 	var archiveStore compute.ArtifactStore
-	if config.ArchiveDir != "" {
-		archiveStore, err = compute.NewLocalArtifactStore(config.ArchiveDir)
-		if err != nil {
-			return err
-		}
+	archiveStore, err = openArchiveStore(config)
+	if err != nil {
+		return err
+	}
+	if archiveStore != nil {
 		slog.Info("artifact archive backend enabled", "provider", "local_fs_archive")
 	}
 	validator, err := compute.NewContractValidator(config.RepoRoot)
@@ -104,6 +106,56 @@ func openStore(ctx context.Context, config compute.Config, migrationsDir string)
 		return nil, nil, err
 	}
 	return store, store.Close, nil
+}
+
+func openArchiveStore(config compute.Config) (compute.ArtifactStore, error) {
+	if strings.TrimSpace(config.ArchiveDir) == "" {
+		return nil, nil
+	}
+	overlap, err := localArchiveDirsOverlap(config.ArtifactDir, config.ArchiveDir)
+	if err != nil {
+		return nil, err
+	}
+	if overlap {
+		return nil, fmt.Errorf("COMPUTE_API_ARCHIVE_DIR must not be the same as or nested with COMPUTE_API_ARTIFACT_DIR")
+	}
+	return compute.NewLocalArtifactStore(config.ArchiveDir)
+}
+
+func localArchiveDirsOverlap(artifactDir, archiveDir string) (bool, error) {
+	artifactAbs, err := filepath.Abs(artifactDir)
+	if err != nil {
+		return false, err
+	}
+	archiveAbs, err := filepath.Abs(archiveDir)
+	if err != nil {
+		return false, err
+	}
+	artifactAbs = filepath.Clean(artifactAbs)
+	archiveAbs = filepath.Clean(archiveAbs)
+	if artifactAbs == archiveAbs {
+		return true, nil
+	}
+	archiveInArtifact, err := pathIsWithin(archiveAbs, artifactAbs)
+	if err != nil {
+		return false, err
+	}
+	artifactInArchive, err := pathIsWithin(artifactAbs, archiveAbs)
+	if err != nil {
+		return false, err
+	}
+	return archiveInArtifact || artifactInArchive, nil
+}
+
+func pathIsWithin(path, parent string) (bool, error) {
+	rel, err := filepath.Rel(parent, path)
+	if err != nil {
+		return false, err
+	}
+	if rel == "." {
+		return true, nil
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel), nil
 }
 
 func getenv(key, fallback string) string {
