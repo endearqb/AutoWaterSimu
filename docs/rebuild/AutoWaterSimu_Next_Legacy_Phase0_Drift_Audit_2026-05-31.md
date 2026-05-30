@@ -68,7 +68,9 @@ The remaining semantic JSON differences are non-behavioral metadata/description 
 
 No request/response path or schema shape drift was identified in this comparison. The legacy generated client is therefore not known to be behaviorally stale, but the tracked OpenAPI metadata is not byte-for-byte current.
 
-Importing `app.models` no longer emits Pydantic protected-namespace warnings for `model_id` / `model_pair_mappings`; the affected legacy models now explicitly allow those field names. Legacy model validators have been migrated to Pydantic v2 `field_validator`, so `app.models` import no longer emits Pydantic v1-style validator warnings. FastAPI lifespan deprecation warnings remain separate cleanup debt.
+Importing `app.models` no longer emits Pydantic protected-namespace warnings for `model_id` / `model_pair_mappings`; the affected legacy models now explicitly allow those field names. Legacy model validators have been migrated to Pydantic v2 `field_validator`, so `app.models` import no longer emits Pydantic v1-style validator warnings.
+
+FastAPI startup/shutdown now uses an application lifespan context manager in `backend/app/main.py`, so importing `app.main` no longer emits deprecated `@app.on_event` warnings. The remaining warning observed in targeted backend tests is the third-party `python_multipart` import deprecation from Starlette form parsing.
 
 ## Current Guardrails
 
@@ -83,4 +85,4 @@ Importing `app.models` no longer emits Pydantic protected-namespace warnings for
 1. Regenerate legacy `frontend/openapi.json` and legacy client only when a behaviorally relevant FastAPI schema change is made, or when the team wants metadata/docstring drift eliminated from the tracked OpenAPI file.
 2. Remove or convert ad hoc debug scripts with active prints if they become maintained tooling.
 3. Broader legacy mojibake comments/docstrings should be cleaned only with localized tests or when the affected file is already being maintained.
-4. FastAPI lifespan deprecation warnings remain cleanup debt.
+4. Third-party `python_multipart` import warning remains cleanup debt; treat it separately from legacy application code unless dependency versions or import behavior change.

@@ -1,3 +1,28 @@
+# 2026-05-31 AutoWaterSimu Next FastAPI lifespan cleanup TODO
+
+- [x] Re-read backend app lifecycle README/context and current Phase 0 drift audit
+- [x] Replace deprecated FastAPI `on_event` startup/shutdown hooks with a lifespan context manager
+- [x] Verify import warning capture, targeted backend tests, and OpenAPI path drift
+- [x] Update PRD status, legacy drift audit, completion audit, and README First records
+- [x] Commit checkpoint
+
+## Plan
+
+- Preserve the existing SimpleWebSocket background task startup/shutdown behavior.
+- Do not change routes, response models, OpenAPI-visible schemas, or generated legacy client files.
+- Keep `python_multipart` third-party import warning and legacy OpenAPI metadata refresh as separate follow-up items.
+
+## Review
+
+- `backend/app/main.py` now wires `simple_websocket_manager.start_background_tasks()` / `stop_background_tasks()` through FastAPI `lifespan` instead of deprecated `@app.on_event` hooks.
+- Verification:
+  - Warning capture around `import app.main` reported `lifespan_warnings=0`.
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\pydantic_warning_test.py app\tests\api\routes\test_asm_udm_validate_response.py app\tests\api\routes\test_flowchart_routes_no_print.py app\tests\services -q` passed (`48 passed`, remaining warning is `python_multipart` import deprecation).
+  - OpenAPI compare from `backend/` still showed 88 current/tracked paths with no missing/extra paths and metadata/description-only drift.
+  - `git diff --check -- backend\app\main.py docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Legacy OpenAPI metadata refresh, third-party `python_multipart` warning, debug/test-only print noise, and broader mojibake readability cleanup remain separate work.
+
 # 2026-05-31 AutoWaterSimu Next Pydantic validator migration TODO
 
 - [x] Re-read backend model/test context and validator usage

@@ -3,6 +3,8 @@ try:
 except ImportError:
     sentry_sdk = None
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
@@ -26,10 +28,23 @@ if sentry_sdk and settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
 # 初始化日志配置
 setup_logging()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage legacy application startup/shutdown hooks."""
+
+    await simple_websocket_manager.start_background_tasks()
+    try:
+        yield
+    finally:
+        await simple_websocket_manager.stop_background_tasks()
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
+    lifespan=lifespan,
 )
 
 # Set all CORS enabled origins
@@ -46,17 +61,3 @@ if settings.all_cors_origins:
 setup_exception_handlers(app)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """应用启动事件"""
-    # 启动简化的WebSocket后台任务
-    await simple_websocket_manager.start_background_tasks()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """应用关闭事件"""
-    # 停止简化的WebSocket后台任务
-    await simple_websocket_manager.stop_background_tasks()
