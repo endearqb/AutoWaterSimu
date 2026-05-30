@@ -29,6 +29,7 @@
 3. 使用 `-AllowMissingPackageArtifacts` 时，总 evidence status 必须是 `dry_run_skipped_artifacts`，不能被解释为 release 通过。
 4. 脚本只记录 evidence，不把 release 成功写成源码事实。
 5. Release artifact path 允许包含空格；编排脚本必须在传递子进程参数时保留完整路径。
+6. Worker pytest matrix 与 Compute Jobs current-flow Playwright smoke 通过 `-RunWorkerMatrix` / `-RunBrowserSmoke` 显式开启；默认 gate 只跑 worker self-check 与 minimal job。
 
 ## 4. 对外接口
 
@@ -50,6 +51,12 @@
 
 ```powershell
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
+```
+
+Focused heavier gates are opt-in so default merge/release checks stay predictable:
+
+```powershell
+.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -RunWorkerMatrix -RunBrowserSmoke
 ```
 
 完整 release gate 需要 Windows packaged sidecar 和 NSIS installer artifact：

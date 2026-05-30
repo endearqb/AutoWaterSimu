@@ -7,6 +7,8 @@ param(
     [string]$InstallerPath = "",
     [switch]$AllowMissingPackageArtifacts,
     [switch]$RunPostgresMigrationSmoke,
+    [switch]$RunWorkerMatrix,
+    [switch]$RunBrowserSmoke,
     [switch]$SkipLong
 )
 
@@ -160,11 +162,17 @@ $npx = Resolve-NativeCommand -Name "npx"
 Invoke-Gate -Name "contracts schema tests" -WorkingDirectory $Root -Executable $python -Arguments @("-m", "pytest", "contracts\tests", "-q")
 Invoke-Gate -Name "worker self-check" -WorkingDirectory $Root -Executable $python -Arguments @("services\simulation-worker\simulation_worker\cli.py", "--self-check")
 Invoke-Gate -Name "worker minimal job" -WorkingDirectory $Root -Executable $python -Arguments @("services\simulation-worker\simulation_worker\cli.py", "--run-job", "contracts\examples\valid\material_balance_minimal.compute_job.v1.json", "--artifact-dir", "tmp\release-evidence\worker-artifacts")
+if ($RunWorkerMatrix) {
+    Invoke-Gate -Name "worker pytest matrix" -WorkingDirectory $Root -Executable $python -Arguments @("-m", "pytest", "services\simulation-worker\tests", "-q")
+}
 Invoke-Gate -Name "go compute api tests" -WorkingDirectory (Join-Path $Root "apps\api") -Executable "go" -Arguments @("test", "./...")
 Invoke-Gate -Name "compute client generation" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npm -Arguments @("run", "generate-compute-client")
 Normalize-ComputeClientWhitespace -Root $Root
 Invoke-Gate -Name "compute client diff gate" -WorkingDirectory $Root -Executable "git" -Arguments @("diff", "--exit-code", "--", "apps/api/openapi/compute.openapi.json", "frontend/src/client/compute")
 Invoke-Gate -Name "frontend typecheck" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @("tsc", "--noEmit")
+if ($RunBrowserSmoke) {
+    Invoke-Gate -Name "frontend current-flow playwright smoke" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @("playwright", "test", "tests/compute-jobs-current-flow.spec.ts", "--project=chromium", "--no-deps")
+}
 Invoke-Gate -Name "desktop typecheck" -WorkingDirectory (Join-Path $Root "apps\desktop") -Executable $npm -Arguments @("run", "typecheck")
 Invoke-Gate -Name "desktop rust tests" -WorkingDirectory $Root -Executable "cargo" -Arguments @("test", "--manifest-path", "apps\desktop\src-tauri\Cargo.toml")
 
@@ -219,6 +227,9 @@ $report = [ordered]@{
     repo_root = $Root
     status = if ($script:Failed) { "failed" } elseif ($script:DryRunSkippedArtifacts) { "dry_run_skipped_artifacts" } else { "passed" }
     allow_missing_package_artifacts = [bool]$AllowMissingPackageArtifacts
+    skip_long = [bool]$SkipLong
+    run_worker_matrix = [bool]$RunWorkerMatrix
+    run_browser_smoke = [bool]$RunBrowserSmoke
     steps = $script:Steps
 }
 

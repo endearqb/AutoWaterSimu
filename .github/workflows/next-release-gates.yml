@@ -33,6 +33,14 @@ on:
         description: "Allow release dry run to skip missing sidecar/installer artifacts"
         required: false
         default: "false"
+      run_worker_matrix:
+        description: "Run the heavier simulation-worker pytest matrix"
+        required: false
+        default: "false"
+      run_browser_smoke:
+        description: "Run the mock-backed Compute Jobs current-flow Playwright smoke"
+        required: false
+        default: "false"
 
 jobs:
   next-gates:
@@ -78,6 +86,11 @@ jobs:
         run: npm ci
         working-directory: apps/desktop
 
+      - name: Install Playwright Chromium
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_browser_smoke == 'true' }}
+        run: npx playwright install chromium
+        working-directory: frontend
+
       - name: Run Next gates
         shell: powershell
         run: |
@@ -94,6 +107,12 @@ jobs:
           }
           if ("${{ github.event.inputs.allow_missing_package_artifacts }}" -eq "true") {
             $args += "-AllowMissingPackageArtifacts"
+          }
+          if ("${{ github.event.inputs.run_worker_matrix }}" -eq "true") {
+            $args += "-RunWorkerMatrix"
+          }
+          if ("${{ github.event.inputs.run_browser_smoke }}" -eq "true") {
+            $args += "-RunBrowserSmoke"
           }
           .\scripts\release\next-release-gates.ps1 @args
 

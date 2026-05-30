@@ -30,6 +30,7 @@
 1. Workflow 负责依赖安装、缓存和脚本调用；复杂验证逻辑放在仓库脚本中。
 2. Next release mode 需要显式传入 packaged sidecar 和 installer artifact 路径。
 3. Workflow artifact 只上传 evidence，不上传 secrets 或 signing material。
+4. Next gate 的 worker pytest matrix 和 mock-backed Playwright current-flow smoke 通过 `workflow_dispatch` inputs 显式开启，不作为默认 PR gate。
 
 ## 4. 对外接口
 

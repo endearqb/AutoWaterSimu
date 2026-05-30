@@ -1,3 +1,31 @@
+# 2026-05-30 AutoWaterSimu Next Opt-in Heavy Release Gates TODO
+
+- [x] Re-read release script, workflow, and README First automation context
+- [x] Add explicit `-RunWorkerMatrix` and `-RunBrowserSmoke` release gate switches
+- [x] Add matching `workflow_dispatch` inputs and browser install step for manual smoke runs
+- [x] Keep default PR/merge gate behavior unchanged
+- [x] Run opt-in merge gate with worker matrix and current-flow browser smoke
+- [x] Update README First records and completion audit
+
+## Plan
+
+- Treat worker pytest matrix and current-flow Playwright smoke as opt-in heavy/focused gates.
+- Keep default PR gates predictable: worker self-check and minimal job stay default, full worker pytest matrix and Playwright smoke require explicit switches.
+- Record selected switches in evidence JSON so dry-run/pass claims are auditable.
+
+## Review
+
+- `scripts/release/next-release-gates.ps1` now supports `-RunWorkerMatrix` and `-RunBrowserSmoke`.
+- Evidence JSON now records `skip_long`, `run_worker_matrix`, and `run_browser_smoke`.
+- `.github/workflows/next-release-gates.yml` exposes matching manual inputs; when browser smoke is requested, the workflow installs Playwright Chromium before invoking the script.
+- Updated release/workflow README files to document default vs opt-in placement.
+- Verification:
+  - PowerShell parser check for `scripts/release/next-release-gates.ps1` passed.
+  - `.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -RunWorkerMatrix -RunBrowserSmoke -EvidenceDir tmp\release-evidence\current-flow-worker-gate` passed with 12 passed steps.
+  - `git diff --check` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Default PR gate still does not install browser dependencies or run the heavy worker matrix; moving either to default CI remains a future runtime/cost policy decision.
+
 # 2026-05-30 AutoWaterSimu Next Current Flow Playwright Smoke TODO
 
 - [x] Re-read frontend route/service/store/contracts and Playwright test context
