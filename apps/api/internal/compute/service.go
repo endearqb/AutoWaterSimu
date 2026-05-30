@@ -345,6 +345,61 @@ func (svc *Service) EvidencePackage(ctx context.Context, jobID string) (map[stri
 	return evidence, checksum, nil
 }
 
+func (svc *Service) ResolveEvidenceReference(ctx context.Context, jobID, evidenceRef string) (EvidenceReferenceResolution, error) {
+	snapshot, err := svc.snapshot(ctx, required(jobID, "job_id"))
+	if err != nil {
+		return EvidenceReferenceResolution{}, err
+	}
+	if strings.TrimSpace(snapshot.Job.ResultHash) == "" {
+		return EvidenceReferenceResolution{}, Conflict(CodeEvidenceUnavailable, "job result is not available")
+	}
+	refType, refID := parseEvidenceRef(required(evidenceRef, "ref"))
+	if refType == "" {
+		if resolution, ok := svc.resolveModelRunEvidenceRef(ctx, snapshot.Job.JobID, evidenceRef, refID); ok {
+			return resolution, nil
+		}
+		if resolution, ok := svc.resolveArtifactEvidenceRef(ctx, snapshot.Job.JobID, evidenceRef, refID); ok {
+			return resolution, nil
+		}
+		return EvidenceReferenceResolution{}, NotFound(CodeEvidenceRefNotFound, "evidence reference not found")
+	}
+	switch refType {
+	case "model_run":
+		resolution, ok := svc.resolveModelRunEvidenceRef(ctx, snapshot.Job.JobID, evidenceRef, refID)
+		if ok {
+			return resolution, nil
+		}
+	case "artifact":
+		resolution, ok := svc.resolveArtifactEvidenceRef(ctx, snapshot.Job.JobID, evidenceRef, refID)
+		if ok {
+			return resolution, nil
+		}
+	case "job":
+		if refID == snapshot.Job.JobID {
+			return EvidenceReferenceResolution{
+				JobID:       snapshot.Job.JobID,
+				EvidenceRef: evidenceRef,
+				RefType:     refType,
+				RefID:       refID,
+				Resolved:    true,
+				Payload:     snapshot.Job,
+			}, nil
+		}
+	case "simulation_input":
+		if payload := simulationInputPayloadForEvidence(snapshot.Job.InputJSON, refID); payload != nil {
+			return EvidenceReferenceResolution{
+				JobID:       snapshot.Job.JobID,
+				EvidenceRef: evidenceRef,
+				RefType:     refType,
+				RefID:       refID,
+				Resolved:    true,
+				Payload:     payload,
+			}, nil
+		}
+	}
+	return EvidenceReferenceResolution{}, NotFound(CodeEvidenceRefNotFound, "evidence reference not found")
+}
+
 func (svc *Service) CancelJob(ctx context.Context, jobID string) (JobSnapshot, error) {
 	job, err := svc.store.CancelJob(ctx, required(jobID, "job_id"), svc.now())
 	if err != nil {
@@ -1022,6 +1077,64 @@ func evidenceInputRefs(input json.RawMessage) (map[string]any, string, map[strin
 	inputRef["job_id"] = stringValue(job, "job_id")
 	inputRef["payload_schema_version"] = stringValue(payload, "schema_version")
 	return inputRef, inputHash, processGraphRef, simulationInputRef
+}
+
+func parseEvidenceRef(evidenceRef string) (string, string) {
+	evidenceRef = strings.TrimSpace(evidenceRef)
+	refType, refID, ok := strings.Cut(evidenceRef, ":")
+	if !ok {
+		return "", evidenceRef
+	}
+	return strings.TrimSpace(refType), strings.TrimSpace(refID)
+}
+
+func (svc *Service) resolveModelRunEvidenceRef(ctx context.Context, jobID, evidenceRef, modelRunID string) (EvidenceReferenceResolution, bool) {
+	raw, err := svc.store.FindModelRun(ctx, modelRunID)
+	if err != nil {
+		return EvidenceReferenceResolution{}, false
+	}
+	modelRunID, modelRunJobID, _, _, _, err := modelRunFieldsFromRaw(raw)
+	if err != nil || modelRunJobID != jobID {
+		return EvidenceReferenceResolution{}, false
+	}
+	return EvidenceReferenceResolution{
+		JobID:       jobID,
+		EvidenceRef: evidenceRef,
+		RefType:     "model_run",
+		RefID:       modelRunID,
+		Resolved:    true,
+		Payload:     rawOrNull(raw),
+	}, true
+}
+
+func (svc *Service) resolveArtifactEvidenceRef(ctx context.Context, jobID, evidenceRef, artifactID string) (EvidenceReferenceResolution, bool) {
+	artifact, err := svc.store.FindArtifact(ctx, artifactID)
+	if err != nil || artifact.JobID != jobID {
+		return EvidenceReferenceResolution{}, false
+	}
+	return EvidenceReferenceResolution{
+		JobID:       jobID,
+		EvidenceRef: evidenceRef,
+		RefType:     "artifact",
+		RefID:       artifact.ArtifactID,
+		Resolved:    true,
+		Payload:     artifact,
+	}, true
+}
+
+func simulationInputPayloadForEvidence(input json.RawMessage, simulationInputID string) map[string]any {
+	var job map[string]any
+	if err := json.Unmarshal(input, &job); err != nil {
+		return nil
+	}
+	payload := mapValue(job, "payload")
+	if payload == nil || stringValue(payload, "schema_version") != "simulation_input.v1" {
+		return nil
+	}
+	if stringValue(payload, "simulation_input_id") != simulationInputID {
+		return nil
+	}
+	return payload
 }
 
 func evidenceTimeline(events []EventRecord) []map[string]any {

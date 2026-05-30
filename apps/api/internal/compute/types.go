@@ -132,6 +132,15 @@ type ListModelRunsResponse struct {
 	TotalEstimate int    `json:"total_estimate"`
 }
 
+type EvidenceReferenceResolution struct {
+	JobID       string `json:"job_id"`
+	EvidenceRef string `json:"evidence_ref"`
+	RefType     string `json:"ref_type"`
+	RefID       string `json:"ref_id"`
+	Resolved    bool   `json:"resolved"`
+	Payload     any    `json:"payload,omitempty"`
+}
+
 type ProcessGraphRecord struct {
 	ProcessGraphID      string          `json:"process_graph_id"`
 	SchemaVersion       string          `json:"schema_version"`

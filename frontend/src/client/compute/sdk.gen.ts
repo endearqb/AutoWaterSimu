@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -281,6 +281,31 @@ export class DefaultService {
             },
             errors: {
                 403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.jobId
+     * @param data.ref
+     * @returns EvidenceReferenceResolution Resolved evidence reference
+     * @throws ApiError
+     */
+    public static resolveEvidenceReference(data: ResolveEvidenceReferenceData): CancelablePromise<ResolveEvidenceReferenceResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/compute/jobs/{job_id}/evidence-ref',
+            path: {
+                job_id: data.jobId
+            },
+            query: {
+                ref: data.ref
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error',
                 409: 'Contract error'
             }
         });

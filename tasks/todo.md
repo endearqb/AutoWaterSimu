@@ -1980,3 +1980,38 @@
 - `git diff --check` passed with LF/CRLF warnings only.
 - Remaining scope:
 - Multi-parameter-set lifecycle, benchmark-backed approval, benchmark run history, standalone governance UI, production approval policy, and evidence/risk dereference remain follow-up work.
+
+# 2026-05-30 AutoWaterSimu Next Evidence Ref Dereference TODO
+
+- [x] Re-read README First context for contracts, Go API evidence/result code, OpenAPI, and frontend service wrapper
+- [x] Define minimal job-scoped evidence ref dereference boundary
+- [x] Add evidence-ref read endpoint for supported ref types
+- [x] Update OpenAPI, generated compute client, frontend service wrapper, and README boundaries
+- [x] Run Go, contract, frontend type/build, and diff-check validation
+
+## Plan
+
+- Add a job-scoped read endpoint under `GET /api/v1/compute/jobs/{job_id}/evidence-ref?ref=...`.
+- Require `evidence:read`.
+- Resolve only supported refs that belong to the requested job.
+- Start with `model_run:<id>`, `artifact:<id>`, `job:<id>`, and embedded `simulation_input:<id>`.
+- Do not dereference across unrelated jobs, inline artifact bytes, or implement approval actions.
+
+## Review
+
+- Added `EvidenceReferenceResolution` and `ResolveEvidenceReference`.
+- `model_run:<id>` checks the persisted model run's `job_id`.
+- `artifact:<id>` checks the artifact's `job_id` and returns metadata only.
+- `job:<id>` returns the job metadata only when it matches the route job id.
+- `simulation_input:<id>` resolves the embedded `simulation_input.v1` payload from the job input when it matches the ref.
+- Added HTTP and Go regression coverage for `model_run` evidence ref success, not found, and worker-token denial.
+- OpenAPI and isolated Compute TypeScript client expose `resolveEvidenceReference`; `computeJobsService` has a matching wrapper.
+- Verification:
+- `cd apps\api; go test ./...` passed.
+- `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`68 passed`).
+- `cd frontend; npm run generate-compute-client` completed.
+- `cd frontend; npx tsc --noEmit` passed.
+- `cd frontend; npm run build` passed with existing Vite warnings.
+- `git diff --check` passed with LF/CRLF warnings only.
+- Remaining scope:
+- UI integration for approval pages, richer evidence ref grammar, process graph registry dereference, full result explanation review/publish, and NewSystem service-level E2E remain follow-up work.

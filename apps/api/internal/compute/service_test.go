@@ -473,12 +473,41 @@ func TestValidatedCompletePersistsModelRun(t *testing.T) {
 	if rec.Code != http.StatusOK || rec.Header().Get("X-Evidence-Checksum") == "" {
 		t.Fatalf("evidence endpoint failed: %d checksum=%q body=%s", rec.Code, rec.Header().Get("X-Evidence-Checksum"), rec.Body.String())
 	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_material_balance_minimal/evidence-ref?ref=model_run:mr_material_balance_test", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("evidence ref endpoint failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var resolution EvidenceReferenceResolution
+	if err := json.Unmarshal(rec.Body.Bytes(), &resolution); err != nil {
+		t.Fatal(err)
+	}
+	payload, ok := resolution.Payload.(map[string]any)
+	if !ok || resolution.RefType != "model_run" || payload["model_run_id"] != "mr_material_balance_test" {
+		t.Fatalf("unexpected evidence ref resolution: %#v", resolution)
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_material_balance_minimal/evidence-ref?ref=model_run:missing", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("missing evidence ref should return 404, got %d %s", rec.Code, rec.Body.String())
+	}
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_material_balance_minimal/evidence", nil)
 	req.Header.Set("Authorization", "Bearer dev-worker-token")
 	rec = httptest.NewRecorder()
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("worker token should not read evidence, got %d %s", rec.Code, rec.Body.String())
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_material_balance_minimal/evidence-ref?ref=model_run:mr_material_balance_test", nil)
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not dereference evidence, got %d %s", rec.Code, rec.Body.String())
 	}
 }
 

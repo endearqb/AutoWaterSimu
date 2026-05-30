@@ -180,6 +180,21 @@
         }
       }
     },
+    "/api/v1/compute/jobs/{job_id}/evidence-ref": {
+      "get": {
+        "operationId": "resolveEvidenceReference",
+        "parameters": [
+          { "$ref": "#/components/parameters/JobID" },
+          { "name": "ref", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Resolved evidence reference", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EvidenceReferenceResolution" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/artifacts/{artifact_id}": {
       "get": {
         "operationId": "downloadArtifact",
@@ -662,6 +677,18 @@
         }
       },
       "ModelRun": { "type": "object", "additionalProperties": true },
+      "EvidenceReferenceResolution": {
+        "type": "object",
+        "required": ["job_id", "evidence_ref", "ref_type", "ref_id", "resolved"],
+        "properties": {
+          "job_id": { "type": "string" },
+          "evidence_ref": { "type": "string" },
+          "ref_type": { "type": "string" },
+          "ref_id": { "type": "string" },
+          "resolved": { "type": "boolean" },
+          "payload": {}
+        }
+      },
       "EvidencePackage": { "type": "object", "additionalProperties": true },
       "JobSnapshot": {
         "type": "object",

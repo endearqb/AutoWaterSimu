@@ -5,6 +5,7 @@ import type {
   ContractValidationResponse,
   DraftConfirmationRecord,
   EvidencePackage,
+  EvidenceReferenceResolution,
   GetComputeJobEventsResponse,
   GetComputeJobResultResponse,
   JobSnapshot,
@@ -275,6 +276,16 @@ export const computeJobsService = {
 
   getJobEvents(jobId: string): Promise<GetComputeJobEventsResponse> {
     return DefaultService.getComputeJobEvents({ jobId })
+  },
+
+  resolveEvidenceReference(
+    jobId: string,
+    evidenceRef: string,
+  ): Promise<EvidenceReferenceResolution> {
+    return DefaultService.resolveEvidenceReference({
+      jobId,
+      ref: evidenceRef,
+    })
   },
 
   listModelRuns(

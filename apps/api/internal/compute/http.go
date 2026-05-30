@@ -312,6 +312,17 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("X-Evidence-Checksum", checksum)
 		WriteJSON(w, http.StatusOK, evidence)
+	case "evidence-ref":
+		if _, err := server.auth.Principal(r, "evidence:read"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		resolution, err := server.service.ResolveEvidenceReference(r.Context(), jobID, r.URL.Query().Get("ref"))
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, resolution)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}

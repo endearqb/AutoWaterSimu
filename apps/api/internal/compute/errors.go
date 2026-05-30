@@ -22,6 +22,7 @@ const (
 	CodeDraftConfirmationNotFound    = "DRAFT_CONFIRMATION_NOT_FOUND"
 	CodeDraftConfirmationNotApproved = "DRAFT_CONFIRMATION_NOT_APPROVED"
 	CodeEvidenceUnavailable          = "EVIDENCE_UNAVAILABLE"
+	CodeEvidenceRefNotFound          = "EVIDENCE_REF_NOT_FOUND"
 	CodeJobAlreadyTerminal           = "JOB_ALREADY_TERMINAL"
 	CodeWorkerStale                  = "WORKER_STALE"
 	CodeTimeout                      = "TIMEOUT"

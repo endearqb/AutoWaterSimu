@@ -46,7 +46,7 @@
 7. `constraint_draft.v1` 只表达 Agent/外部系统提出的约束草案；必须经 API 校验和用户确认后，才能参与 simulation request 或生产相关决策。
 8. `draft_confirmation.v1` 只表达用户对草案的 approve/reject/changes_requested 决策；Go API 可持久化确认记录用于审计。确认记录本身不得在 `confirm-draft` 阶段创建 job；只有显式 promotion endpoint 可把 approved `agent_scenario_draft.v1` 中完整且 schema-valid 的 `proposed_request` 转为 simulation check job。
 9. `result_explanation.v1` 只表达 Agent/外部系统对结果的结构化解释，且 top-level 与 statement 都必须引用 `evidence_refs`；本合同不生成解释、不执行审批。
-10. `compute_result.v1.risk_findings` 是面向 NewSystem/milp 审批集成的结构化风险结论；每条 finding 必须带 `evidence_refs`，API 可把它同步到 result summary 便于只读查询。
+10. `compute_result.v1.risk_findings` 是面向 NewSystem/milp 审批集成的结构化风险结论；每条 finding 必须带 `evidence_refs`，API 可把它同步到 result summary 便于只读查询，并可在 job 边界内解析支持的证据引用。
 11. `evidence_package.v1.governance` 汇总 model version、parameter set status 与 `production_allowed`；该字段只供审批/审计读取，不代表 AutoWaterSimu 发布生产指令。
 12. `simulation_request.v1.input_ref` 可表达 `process_graph_id`、`simulation_input_id`、`model_run_id` 或内嵌 `simulation_input`；Go Compute API 当前可把内嵌 `simulation_input.v1`、已登记的 `simulation_input_id`、已登记的 `process_graph_id` / `process_graph_version`，或可回溯到源 job 的已持久化 `model_run_id` 转为可执行 material-balance job。
 

@@ -85,6 +85,15 @@ export type EvidencePackage = {
     [key: string]: unknown;
 };
 
+export type EvidenceReferenceResolution = {
+    job_id: string;
+    evidence_ref: string;
+    ref_type: string;
+    ref_id: string;
+    resolved: boolean;
+    payload?: unknown;
+};
+
 export type HeartbeatRequest = {
     job_id: string;
 };
@@ -449,6 +458,13 @@ export type GetComputeJobEvidenceData = {
 };
 
 export type GetComputeJobEvidenceResponse = (EvidencePackage);
+
+export type ResolveEvidenceReferenceData = {
+    jobId: string;
+    ref: string;
+};
+
+export type ResolveEvidenceReferenceResponse = (EvidenceReferenceResolution);
 
 export type DownloadArtifactData = {
     artifactId: string;
