@@ -30,7 +30,7 @@ Runtime route modules under `backend/app/api/routes/` currently contain no activ
 
 The no-print regression guard now scans every Python route module under `backend/app/api/routes/*.py`, not only the ASM flowchart route subset.
 
-`backend/app/api/routes/material_balance.py` currently carries a UTF-8 BOM; the AST guard reads route files with `utf-8-sig` so this encoding artifact does not hide real route `print(...)` calls.
+`backend/app/api/routes/material_balance.py` no longer carries the UTF-8 BOM that was present during the first audit pass. The AST guard still reads route files with `utf-8-sig` so future encoding drift does not hide real route `print(...)` calls.
 
 Active `print(...)` calls remain in ad hoc/debug/test-only files:
 
@@ -41,7 +41,7 @@ Active `print(...)` calls remain in ad hoc/debug/test-only files:
 | `backend/app/material_balance/test_module.py` | Standalone manual module exercise with verbose output | Keep out of runtime paths; migrate useful checks into pytest before relying on CI |
 | `backend/app/tests/test_flowchart_conversion.py` | Pytest file with debug prints in one exploratory test path | Low-risk test noise; clean when touching this test |
 
-Commented mojibake `# print(...)` lines remain in `backend/app/services/data_conversion_service.py`. They are not active runtime calls, but they are readability debt.
+The commented mojibake debug `# print(...)` lines previously found in `backend/app/services/data_conversion_service.py` have been removed. Broader mojibake comments/docstrings in legacy code remain separate readability debt.
 
 ## OpenAPI And Client Drift Findings
 
@@ -81,6 +81,5 @@ Importing the FastAPI app to build OpenAPI emits existing Pydantic protected-nam
 
 1. Regenerate legacy `frontend/openapi.json` and legacy client only when a behaviorally relevant FastAPI schema change is made, or when the team wants metadata/docstring drift eliminated from the tracked OpenAPI file.
 2. Remove or convert ad hoc debug scripts with active prints if they become maintained tooling.
-3. Remove the UTF-8 BOM from `backend/app/api/routes/material_balance.py` only in a dedicated legacy cleanup, because this audit intentionally avoids runtime file churn.
-4. Clean commented mojibake debug lines from `data_conversion_service.py` when that file is next touched for behavior.
-5. Address Pydantic protected namespace warnings only as a separate legacy model cleanup, because changing model config can affect generated schema and should be tested with client regeneration.
+3. Address Pydantic protected namespace warnings only as a separate legacy model cleanup, because changing model config can affect generated schema and should be tested with client regeneration.
+4. Broader legacy mojibake comments/docstrings should be cleaned only with localized tests or when the affected file is already being maintained.

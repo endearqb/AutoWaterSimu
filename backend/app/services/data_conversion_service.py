@@ -52,8 +52,6 @@ class DataConversionService:
             ValueError: 褰撴暟鎹牸寮忎笉姝ｇ‘鎴栫己灏戝繀瑕佷俊鎭椂
         """
         try:
-            # print("\n=== 鏁版嵁杞崲鏈嶅姟寮€濮嬪鐞?===")
-            
             # 鎻愬彇鏁版嵁
             nodes_data = flowchart_data.get('nodes', [])
             edges_data = flowchart_data.get('edges', [])
@@ -69,8 +67,6 @@ class DataConversionService:
             )
             selected_model_snapshots = self._build_hybrid_snapshot_index(runtime_info)
             
-            # print(f"鎻愬彇鍒扮殑鏁版嵁: 鑺傜偣{len(nodes_data)}涓? 杈箋len(edges_data)}鏉? 鑷畾涔夊弬鏁皗len(custom_parameters)}涓?)
-            
             if not nodes_data:
                 raise ValueError("No nodes found in flowchart data")
             
@@ -78,11 +74,7 @@ class DataConversionService:
             param_map = {param['name']: i for i, param in enumerate(custom_parameters)}
             num_components = len(custom_parameters) if custom_parameters else 1
             
-            # print(f"鍙傛暟鏄犲皠: {param_map}")
-            # print(f"缁勫垎鏁伴噺: {num_components}")
-            
             # 杞崲鑺傜偣鏁版嵁
-            # print("\n=== 寮€濮嬭浆鎹㈣妭鐐规暟鎹?===")
             nodes = self._convert_nodes(
                 nodes_data,
                 param_map,
@@ -93,10 +85,7 @@ class DataConversionService:
                 else None,
                 selected_model_snapshots=selected_model_snapshots,
             )
-            # print(f"鎴愬姛杞崲{len(nodes)}涓妭鐐?)
-            
             # 杞崲杈规暟鎹?
-            # print("\n=== 寮€濮嬭浆鎹㈣竟鏁版嵁 ===")
             edges = self._convert_edges(
                 edges_data, param_map, num_components, custom_parameters
             )
@@ -108,27 +97,11 @@ class DataConversionService:
             converted_time_segments = convert_time_segments_to_input(
                 normalized_time_segments
             )
-            # print(f"鎴愬姛杞崲{len(edges)}鏉¤竟")
-            
             # 鍒涘缓璁＄畻鍙傛暟 - 浼樺厛浣跨敤flowchart涓殑calculationParameters
             calc_params = flowchart_data.get('calculationParameters', {})
             if calculation_params:
                 calc_params.update(calculation_params)
             parameters = self._create_calculation_parameters(calc_params)
-            # print(f"璁＄畻鍙傛暟: {parameters}")
-            
-            # print("\n=== 鍒涘缓MaterialBalanceInput瀵硅薄 ===")
-            
-            # 鎵撳嵃璇︾粏鐨勮緭鍏ユ暟鎹敤浜庤皟璇?
-            # print(f"鑺傜偣鏁版嵁璇︽儏:")
-            # for i, node in enumerate(nodes):
-                # print(f"  鑺傜偣{i+1}: id={node.node_id}, type={node.node_type}, is_inlet={node.is_inlet}, is_outlet={node.is_outlet}")
-                # print(f"    volume={node.initial_volume}, concentrations={node.initial_concentrations}")
-            
-            # print(f"杈规暟鎹鎯?")
-            # for i, edge in enumerate(edges):
-                # print(f"  杈箋i+1}: id={edge.edge_id}, source={edge.source_node_id}, target={edge.target_node_id}")
-                # print(f"    flow_rate={edge.flow_rate}, factor_a={edge.concentration_factor_a}, factor_b={edge.concentration_factor_b}")
             
             result = MaterialBalanceInput(
                 nodes=nodes,
@@ -143,26 +116,10 @@ class DataConversionService:
             
             # 淇濆瓨鍘熷flowchart鏁版嵁浠ヤ究鍦ㄧ粨鏋滆浆鎹㈡椂浣跨敤
             result.original_flowchart_data = flowchart_data
-            # print("MaterialBalanceInput瀵硅薄鍒涘缓鎴愬姛")
             
             return result
             
         except Exception as e:
-            # print(f"\n=== 鏁版嵁杞崲澶辫触 ===")
-            # print(f"閿欒绫诲瀷: {type(e).__name__}")
-            # print(f"閿欒淇℃伅: {str(e)}")
-            # import traceback
-            # # print(f"閿欒鍫嗘爤: {traceback.format_exc()}")
-            
-            # # 濡傛灉鏄疨ydantic楠岃瘉閿欒锛屾墦鍗拌缁嗕俊鎭?
-            # if hasattr(e, 'errors'):
-            #     # print(f"Pydantic楠岃瘉閿欒璇︽儏:")
-            #     for error in e.errors():
-                    # print(f"  - 瀛楁: {error.get('loc', 'unknown')}")
-                    # print(f"    閿欒绫诲瀷: {error.get('type', 'unknown')}")
-                    # print(f"    閿欒淇℃伅: {error.get('msg', 'unknown')}")
-                    # print(f"    杈撳叆鍊? {error.get('input', 'unknown')}")
-            
             raise ValueError(f"Failed to convert flowchart data: {str(e)}")
 
     def _resolve_custom_parameters(
@@ -427,7 +384,6 @@ class DataConversionService:
                         except (ValueError, TypeError):
                             asm1slim_parameters.append(0.0)
                     
-                    # print(f"鑺傜偣 {node_id} ASM1 Slim鍙傛暟: {asm1slim_parameters}")
             # 澶勭悊ASM1鍙傛暟锛堜粎瀵筧sm1绫诲瀷鑺傜偣锛?
             asm1_parameters = None
             if node_type == 'asm1':
@@ -465,7 +421,6 @@ class DataConversionService:
                             asm1_parameters.append(asm1_param_float)
                         except (ValueError, TypeError):
                             asm1_parameters.append(0.0)
-                    # print(f"鑺傜偣 {node_id} ASM1鍙傛暟: {asm1_parameters}")
             
             # 澶勭悊ASM3鍙傛暟锛堜粎瀵筧sm3绫诲瀷鑺傜偣锛?
             asm3_parameters = None
@@ -491,7 +446,6 @@ class DataConversionService:
                             asm3_parameters.append(asm3_param_float)
                         except (ValueError, TypeError):
                             asm3_parameters.append(0.0)
-                    # print(f"鑺傜偣 {node_id} ASM3鍙傛暟: {asm3_parameters}")
             
             # 婢跺嫮鎮奤DM閸欏倹鏆熼敍鍫滅矌鐎电dm缁鐎烽懞鍌滃仯閿?
             udm_model_id = None
@@ -976,8 +930,6 @@ class DataConversionService:
         
         # Get original parameter names from flowchart data
         original_param_names = self._get_original_parameter_names(input_data)
-        # print(f"[DEBUG] 鑾峰彇鍒扮殑鍘熷鍙傛暟鍚嶇О: {original_param_names}")
-        
         # Process node data with original parameter names
         node_data_dict = {}
         for node_id, data in node_data.items():
@@ -985,7 +937,6 @@ class DataConversionService:
             for param_name, values in data.items():
                 # Convert generic parameter names to original names
                 original_param_name = self._convert_to_original_param_name(param_name, original_param_names)
-                # print(f"[DEBUG] 鍙傛暟鍚嶇О杞崲: {param_name} -> {original_param_name}")
                 
                 if hasattr(values, 'tolist'):
                     node_data_dict[node_id][original_param_name] = values.tolist()

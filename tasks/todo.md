@@ -1,3 +1,31 @@
+# 2026-05-31 AutoWaterSimu Next legacy cleanup TODO
+
+- [x] Re-read legacy route/service README context and Phase 0 drift audit
+- [x] Remove UTF-8 BOM from `backend/app/api/routes/material_balance.py`
+- [x] Remove commented mojibake debug `print` remnants from `backend/app/services/data_conversion_service.py`
+- [x] Update legacy drift audit, completion audit, and README First records
+- [x] Run targeted route/service validation and diff checks
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep this cleanup behavior-neutral.
+- Do not change Pydantic model config in this slice because that can affect OpenAPI schema output.
+- Leave ad hoc debug/test active prints alone unless those scripts become maintained tooling.
+
+## Review
+
+- Removed the UTF-8 BOM from `backend/app/api/routes/material_balance.py`.
+- Removed commented mojibake debug `print` lines and their dead commented exception-debug block from `backend/app/services/data_conversion_service.py`.
+- Updated the Phase 0 drift audit to mark those two items closed while keeping Pydantic protected namespace warnings as separate cleanup debt.
+- Verification:
+  - BOM check confirmed `material_balance.py` no longer starts with `EF BB BF`.
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\api\routes\test_flowchart_routes_no_print.py app\tests\api\routes\test_asm_udm_validate_response.py app\tests\services -q` passed.
+  - OpenAPI compare first failed from the repository root because backend settings did not load required `.env` values; rerunning from `backend/` showed 88 current/tracked paths with no missing/extra paths and metadata/description-only drift.
+  - `git diff --check -- backend\app\api\routes\material_balance.py backend\app\services\data_conversion_service.py docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Pydantic protected namespace warning cleanup and ad hoc debug/test print cleanup remain separate legacy maintenance work.
+
 # 2026-05-31 AutoWaterSimu Next browser gate expansion TODO
 
 - [x] Re-read frontend/tests and release gate README context
@@ -103,14 +131,14 @@
 - Added `docs/rebuild/AutoWaterSimu_Next_Legacy_Phase0_Drift_Audit_2026-05-31.md`.
 - Documented that route modules have no active `print(...)`, while remaining active prints are ad hoc/debug/test-only.
 - Documented that current FastAPI OpenAPI and tracked `frontend/openapi.json` both have 88 paths with no missing/extra paths; remaining drift is title and legacy endpoint descriptions only.
-- Broadened `test_flowchart_routes_no_print.py` to scan all `backend/app/api/routes/*.py` and read with `utf-8-sig` because `material_balance.py` currently has a UTF-8 BOM.
+- Broadened `test_flowchart_routes_no_print.py` to scan all `backend/app/api/routes/*.py` and read with `utf-8-sig`; the later legacy cleanup removed the `material_balance.py` BOM.
 - Verification:
   - First targeted pytest run failed on `material_balance.py` BOM during AST parse; the test now reads `utf-8-sig`.
   - `cd backend; .venv\Scripts\python -m pytest app\tests\api\routes\test_flowchart_routes_no_print.py app\tests\api\routes\test_asm_udm_validate_response.py -q` passed (`21 passed`, existing warnings).
   - FastAPI OpenAPI compare confirmed `current_paths=88`, `tracked_paths=88`, `missing_paths=[]`, `extra_paths=[]`, and `matches=False` due to metadata/description drift.
   - `git diff --check -- backend\app\tests docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
 - Remaining scope:
-  - Legacy OpenAPI/client metadata refresh, debug/test print cleanup, UTF-8 BOM removal, mojibake comment cleanup, and Pydantic protected namespace cleanup remain separate legacy maintenance work.
+  - Legacy OpenAPI/client metadata refresh, debug/test print cleanup, broader mojibake cleanup, and Pydantic protected namespace cleanup remain separate legacy maintenance work.
 
 # 2026-05-31 AutoWaterSimu Next artifact archive backend TODO
 
