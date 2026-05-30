@@ -1,3 +1,33 @@
+# 2026-05-30 AutoWaterSimu Next Desktop Packaged Worker Runtime TODO
+
+- [x] Re-read Desktop, src-tauri, worker, packaging, release gate, and README First context
+- [x] Add explicit Desktop runtime launch mode for a packaged worker executable
+- [x] Add optional packaged-worker smoke test that uses the generated PyInstaller sidecar
+- [x] Update Desktop runtime README context
+- [x] Run packaged-worker, Desktop, release gate, and diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep this slice scoped to Desktop Rust/runtime invocation of an already-built worker executable.
+- Preserve source-mode worker execution as the default for development and tests.
+- Do not enable Tauri `externalBin`, resource bundling, installer generation, signing, or auto-update in this slice.
+
+## Review
+
+- `DesktopRuntime` can now be constructed with an explicit packaged worker executable path, and `default_runtime()` honors `AUTOWATERSIMU_DESKTOP_WORKER_EXE` when set.
+- `SourceWorker` now models source and packaged launch modes separately, while keeping source mode as the default `python cli.py` execution path.
+- Added an optional Rust smoke test controlled by `AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE`; with the generated PyInstaller one-folder sidecar it verifies `worker_self_check()` and `packaging_mode=frozen`.
+- Updated Desktop README context to document the env vars, validation command, and remaining Tauri/installer work.
+- Verification:
+  - `cargo fmt --manifest-path apps\desktop\src-tauri\Cargo.toml` passed.
+  - `$env:AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE=(Resolve-Path 'tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe').Path; cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml packaged_worker_exe_smoke_when_env_is_available -- --nocapture; Remove-Item Env:\AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE` passed.
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`21 passed`).
+  - `cd apps\desktop; npm run build` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\next-release-gates.ps1 -Mode release -SidecarPath tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe -AllowMissingPackageArtifacts -SkipLong -EvidenceDir tmp\release-evidence\runtime-release` passed as `dry_run_skipped_artifacts`: sidecar passed, installer skipped.
+- Remaining scope:
+  - Tauri `externalBin`/resource wiring, NSIS artifact generation, installer smoke without allow-missing, signing, and auto-update remain follow-up work.
+
 # 2026-05-30 AutoWaterSimu Next Packaged Sidecar Build TODO
 
 - [x] Re-read worker, simulation core, contracts, Desktop packaging, and release gate context

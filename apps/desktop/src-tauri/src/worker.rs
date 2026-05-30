@@ -15,9 +15,19 @@ pub struct WorkerOutput {
 
 #[derive(Clone, Debug)]
 pub struct SourceWorker {
-    python_path: PathBuf,
-    cli_path: PathBuf,
+    launch: WorkerLaunch,
     timeout: Duration,
+}
+
+#[derive(Clone, Debug)]
+enum WorkerLaunch {
+    Source {
+        python_path: PathBuf,
+        cli_path: PathBuf,
+    },
+    Packaged {
+        exe_path: PathBuf,
+    },
 }
 
 impl SourceWorker {
@@ -37,8 +47,10 @@ impl SourceWorker {
             .join("simulation_worker")
             .join("cli.py");
         Self {
-            python_path,
-            cli_path,
+            launch: WorkerLaunch::Source {
+                python_path,
+                cli_path,
+            },
             timeout,
         }
     }
@@ -50,8 +62,10 @@ impl SourceWorker {
             .join("simulation_worker")
             .join("cli.py");
         Self {
-            python_path,
-            cli_path,
+            launch: WorkerLaunch::Source {
+                python_path,
+                cli_path,
+            },
             timeout,
         }
     }
@@ -62,8 +76,17 @@ impl SourceWorker {
         cli_path: PathBuf,
     ) -> Self {
         Self {
-            python_path,
-            cli_path,
+            launch: WorkerLaunch::Source {
+                python_path,
+                cli_path,
+            },
+            timeout,
+        }
+    }
+
+    pub fn new_packaged(timeout: Duration, exe_path: PathBuf) -> Self {
+        Self {
+            launch: WorkerLaunch::Packaged { exe_path },
             timeout,
         }
     }
@@ -134,8 +157,18 @@ impl SourceWorker {
     }
 
     fn run_args(&self, args: &[&str], stdin_bytes: Option<&[u8]>) -> Result<WorkerOutput, String> {
-        let mut child = Command::new(&self.python_path)
-            .arg(&self.cli_path)
+        let mut command = match &self.launch {
+            WorkerLaunch::Source {
+                python_path,
+                cli_path,
+            } => {
+                let mut command = Command::new(python_path);
+                command.arg(cli_path);
+                command
+            }
+            WorkerLaunch::Packaged { exe_path } => Command::new(exe_path),
+        };
+        let mut child = command
             .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

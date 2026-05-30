@@ -9,6 +9,7 @@
 - Tauri command registration and wrappers。
 - SQLite migrations/store for projects, jobs, artifacts, model runs, support bundles and canvas graphs。
 - Source-mode Python worker JSON-RPC bridge。
+- Packaged worker exe launch mode selected by explicit env/constructor path。
 - Runtime orchestration、canvas/process graph commands、path sandbox、artifact JSON/CSV export、support bundle and backup/restore logic。
 
 本目录不负责：
@@ -42,7 +43,7 @@
 9. CanvasGraph save/load owns only persisted canvas JSON; ProcessGraph validation is read-only and must not enqueue jobs.
 10. Project create/list/get owns local project metadata; project export/import stays inside runtime-local `exports/` until external file dialogs and recent-file allowlists are designed.
 11. `project_id` attachment for jobs and CanvasGraphs is optional, but when present it must reference an existing project row.
-12. Packaged sidecar support should be added as an explicit runtime mode with tests; do not silently replace the current source-mode worker path.
+12. Packaged worker mode is explicit: tests use `AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE`, runtime uses `AUTOWATERSIMU_DESKTOP_WORKER_EXE`, and default behavior remains source-mode worker.
 
 ## 4. 对外接口
 
@@ -58,6 +59,13 @@
 
 ```powershell
 cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml
+```
+
+Optional packaged worker smoke:
+
+```powershell
+$env:AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE="<path-to-sidecar.exe>"
+cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml packaged_worker_exe_smoke_when_env_is_available -- --nocapture
 ```
 
 ## 7. AI 操作提示

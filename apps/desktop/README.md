@@ -10,7 +10,7 @@
 - React Desktop shell。
 - local project registry, export/import smoke, and selected-project wiring for jobs/canvas graphs。
 - SQLite local job store and queued-job cancellation。
-- Python worker sidecar management。
+- Python worker sidecar management, including explicit packaged-worker exe mode。
 - local artifact JSON/CSV export、model run audit、support bundle and runtime backup/restore smoke。
 - local CanvasGraph save/load and ProcessGraph validation smoke。
 - Desktop packaging contract and release smoke scripts。
@@ -32,7 +32,7 @@
 | `src/` | Phase 3C Desktop React dev MVP shell |
 | `src-tauri/` | Rust/Tauri runtime、SQLite store、project registry/project_id wiring、source-mode worker JSON-RPC、canvas/process graph commands、artifact JSON/CSV/model_run/support bundle/backup smoke |
 
-后续仍需配置 Tauri `externalBin`、产出 NSIS installer 并执行 release smoke；本目录已提供 PyInstaller one-folder sidecar build 脚本、packaging 契约和 artifact smoke 入口。
+后续仍需配置 Tauri `externalBin`/resource bundling、产出 NSIS installer 并执行 installer smoke；本目录已提供 PyInstaller one-folder sidecar build 脚本、explicit packaged-worker runtime mode、packaging 契约和 artifact smoke 入口。
 
 ## 3. 维护约定
 
@@ -47,6 +47,7 @@
 9. Project registry smoke 只写 SQLite `projects` 表并提供 create/list/get；project export/import 目前只读写 runtime-local `exports/` sandbox，完整外部 file dialog 与 recent file allowlist 仍待后续。
 10. 创建 compute job 或保存 CanvasGraph 时，React 可传入当前选中 `project_id`；Rust 必须验证项目存在后再写入 `compute_jobs.project_id` 或 `canvas_graphs.project_id`。
 11. Packaged sidecar / installer smoke 必须通过显式 artifact 路径运行；缺少 artifact 不能声明 release 通过。
+12. Desktop runtime 默认使用 source-mode Python worker；`AUTOWATERSIMU_DESKTOP_WORKER_EXE` 只在显式设置时启用 packaged worker exe。
 
 ## 4. 对外接口
 

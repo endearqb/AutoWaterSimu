@@ -11,6 +11,7 @@
 - SQLite migration runner 与本地 project/job/artifact/model_run store。
 - Project-aware job and canvas graph persistence。
 - source-mode Python worker JSON-RPC smoke。
+- explicit packaged worker exe mode for local/release smoke。
 - CanvasGraph save/load and ProcessGraph validation command surface。
 - artifact JSON/CSV export sandbox、model_run audit、support bundle 与 backup/restore smoke。
 - Tauri v2 config。
@@ -45,7 +46,7 @@
 1. Command body 必须经由 Rust runtime，不让 React 直接启动 worker。
 2. Rust owns SQLite writes and worker lifecycle。
 3. React 不直接执行 shell 或写 SQLite。
-4. Phase 3C worker 是 source-mode dev sidecar；packaged `externalBin` 配置和真实二进制构建仍留到后续，artifact smoke 由 `apps/desktop/scripts/` 提供。
+4. Phase 3C 默认 worker 是 source-mode dev sidecar；设置 `AUTOWATERSIMU_DESKTOP_WORKER_EXE` 后 Desktop runtime 可显式改用 packaged worker exe。Tauri `externalBin` / resource bundling 和 installer 仍留到后续。
 5. Job 状态机只允许 `queued -> running -> succeeded|failed|cancelled|timed_out`；terminal job 不允许重复运行。
 6. Tauri commands must be registered in one `invoke_handler` call。
 7. 成功 compute result 中的 `runtime_audit.model_runs` 需要持久化到 SQLite，并随 job snapshot/support bundle 返回。
@@ -55,7 +56,7 @@
 11. CanvasGraph persistence validates graph IDs and edge/node references before SQLite upsert; ProcessGraph validation returns structured errors without mutating job state。
 12. Project registry commands use the local `projects` table; project export/import is limited to runtime-local `exports/` files and does not imply external project-file dialogs yet。
 13. `compute_job_create` and `canvas_graph_save` may receive an optional `project_id`; runtime/store must reject unknown project ids instead of silently writing dangling references。
-14. Packaged sidecar 和 NSIS installer release smoke 由 Desktop scripts 执行；`src-tauri` 不应在未接入真实 artifact 前伪造 packaged mode。
+14. Packaged sidecar 和 NSIS installer release smoke 由 Desktop scripts 执行；Rust packaged mode 只能通过显式 exe path 选择，不应静默替换 source-mode。
 
 ## 4. 对外接口
 
@@ -90,6 +91,13 @@ Release artifact smoke 入口：
 ```powershell
 .\apps\desktop\scripts\smoke-packaged-sidecar.ps1 -SidecarPath <path-to-sidecar.exe>
 .\apps\desktop\scripts\smoke-nsis-installer.ps1 -InstallerPath <path-to-installer.exe>
+```
+
+真实 packaged worker runtime smoke：
+
+```powershell
+$env:AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE="<path-to-sidecar.exe>"
+cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml packaged_worker_exe_smoke_when_env_is_available -- --nocapture
 ```
 
 ## 7. AI 操作提示

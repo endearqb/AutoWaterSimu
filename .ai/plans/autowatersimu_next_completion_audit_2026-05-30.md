@@ -34,7 +34,7 @@ Latest current-turn verification:
 - Temporary Go Compute API confirmation smoke on port `8119`: `POST /api/v1/contracts/confirm-draft` persisted and `GET /api/v1/contracts/confirmations/{confirmation_id}` read back the confirmation record
 - `backend\.venv\Scripts\python -m pytest simulation_core\tests -q`: passed, `4 passed`
 - `cd backend; .venv\Scripts\python -m pytest app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q`: passed, `17 passed`, existing warnings only
-- `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml`: passed, `20 passed`
+- `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml`: passed, `21 passed`
 - `cd apps\desktop; npm run typecheck`: passed
 - `cd apps\desktop; npm run build`: passed
 - `cd frontend; npx tsc --noEmit`: passed
@@ -43,6 +43,8 @@ Latest current-turn verification:
 - Desktop packaged sidecar and NSIS installer smoke scripts now write machine-readable evidence under `tmp/release-evidence/`
 - `scripts/release/next-release-gates.ps1 -Mode release -AllowMissingPackageArtifacts -SkipLong` produces `dry_run_skipped_artifacts`; this validates orchestration only and is not release-pass evidence
 - A real PyInstaller one-folder worker sidecar build path exists at `apps/desktop/packaging/build-packaged-sidecar.ps1`; latest local artifact `tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe` passed packaged sidecar self-check and minimal job smoke with `packaging_mode=frozen`
+- Desktop runtime can now invoke that packaged worker executable explicitly through `AUTOWATERSIMU_DESKTOP_WORKER_EXE` or `DesktopRuntime::new_with_packaged_worker(...)`; the optional Rust packaged-worker smoke passed against the generated sidecar
+- Release gate release mode passed with the real sidecar path and `-AllowMissingPackageArtifacts`, producing `dry_run_skipped_artifacts` because NSIS installer artifact smoke is still skipped
 
 Latest recorded but not re-run in this verification refresh:
 
@@ -56,7 +58,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 0 | Legacy baseline stabilization | Strong partial | Targeted legacy backend tests and frontend type/build pass with existing warnings only | Document exact remaining legacy `print`/schema/client drift issues; keep legacy tests as migration baseline |
 | Phase 1 | Contracts and transform layer | Strong partial | Contract tests pass; P0/P1/P2 schemas and valid/invalid fixtures exist; Python transform tests are included in `contracts\tests` | Keep schema registry current; broaden old-vs-new numerical fixtures beyond material balance |
 | Phase 2 | Simulation core and worker CLI | Strong partial | Worker self-check, worker tests, minimal run-job, simulation core tests, and API-once worker smoke pass | Expand worker support beyond material balance; add long-running worker daemon/heartbeat coverage when that mode exists |
-| Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present; PyInstaller one-folder packaged worker sidecar build and smoke pass locally | Complete Tauri packaged-worker runtime mode, installer smoke, external file dialog allowlist, recent files, full project package content |
+| Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present; PyInstaller one-folder packaged worker sidecar build and explicit Desktop runtime smoke pass locally | Complete Tauri resource/externalBin wiring, installer smoke, external file dialog allowlist, recent files, full project package content |
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, benchmark_run history, model_run records, evidence governance summary | Multi-parameter-set management, scheduled benchmark execution, benchmark-backed parameter promotion, governance UI beyond Compute Jobs read-only panel |
@@ -88,7 +90,7 @@ Latest recorded but not re-run in this verification refresh:
 
 - Implement full project package content, including jobs, graphs, artifacts, and support bundle references.
 - Add file dialog/recent files allowlist.
-- Wire the real packaged Python worker sidecar into Desktop runtime/Tauri resources, produce the NSIS installer artifact, and run the existing smoke scripts without allow-missing.
+- Wire the real packaged Python worker sidecar into Tauri resources/externalBin, produce the NSIS installer artifact, and run the existing smoke scripts without allow-missing.
 
 5. Worker/model migration completion
 
@@ -112,6 +114,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Wire Desktop packaged-worker runtime mode and Tauri resource/externalBin handling for the PyInstaller one-folder sidecar, then produce/run NSIS installer smoke evidence.
+1. Wire Tauri resource/externalBin handling for the PyInstaller one-folder sidecar, then produce/run NSIS installer smoke evidence.
 2. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
 3. Add scheduled benchmark execution or benchmark-backed parameter promotion only after those governance semantics are separately approved.

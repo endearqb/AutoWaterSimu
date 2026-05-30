@@ -37,8 +37,8 @@ pub fn run() {
 mod tests {
     use rusqlite::Connection;
     use serde_json::{json, Value};
-    use std::fs;
     use std::time::Duration;
+    use std::{env, fs};
     use tempfile::TempDir;
 
     use super::migrations::{
@@ -297,6 +297,26 @@ mod tests {
         let (_temp, runtime) = runtime();
         let result = runtime.worker_self_check().unwrap();
         assert_eq!(result["status"], "ok");
+        assert_eq!(result["self_check"]["minimal_job_status"]["ok"], true);
+    }
+
+    #[test]
+    fn packaged_worker_exe_smoke_when_env_is_available() {
+        let worker_exe = match env::var("AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE") {
+            Ok(value) if !value.trim().is_empty() => value,
+            _ => return,
+        };
+        let temp = tempfile::tempdir().unwrap();
+        let runtime = DesktopRuntime::new_with_packaged_worker(
+            temp.path().to_path_buf(),
+            repo_root(),
+            Duration::from_secs(120),
+            worker_exe.into(),
+        )
+        .unwrap();
+        let result = runtime.worker_self_check().unwrap();
+        assert_eq!(result["status"], "ok");
+        assert_eq!(result["self_check"]["packaging_mode"], "frozen");
         assert_eq!(result["self_check"]["minimal_job_status"]["ok"], true);
     }
 

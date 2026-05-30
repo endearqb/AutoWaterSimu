@@ -19,6 +19,7 @@ pub struct DesktopRuntime {
     worker_timeout: Duration,
     worker_python_path: Option<PathBuf>,
     worker_cli_path: Option<PathBuf>,
+    worker_exe_path: Option<PathBuf>,
 }
 
 impl DesktopRuntime {
@@ -47,6 +48,7 @@ impl DesktopRuntime {
             worker_timeout,
             worker_python_path: None,
             worker_cli_path: None,
+            worker_exe_path: None,
         })
     }
 
@@ -74,12 +76,30 @@ impl DesktopRuntime {
         Ok(runtime)
     }
 
+    pub fn new_with_packaged_worker(
+        base_dir: PathBuf,
+        repo_root: PathBuf,
+        worker_timeout: Duration,
+        worker_exe_path: PathBuf,
+    ) -> Result<Self, String> {
+        let mut runtime = Self::new_with_timeout(base_dir, repo_root, worker_timeout)?;
+        runtime.worker_exe_path = Some(worker_exe_path);
+        Ok(runtime)
+    }
+
     pub fn default_runtime() -> Result<Self, String> {
         let repo_root = repo_root();
         let base_dir = std::env::var("AUTOWATERSIMU_DESKTOP_RUNTIME_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| repo_root.join("tmp").join("desktop-runtime"));
-        Self::new(base_dir, repo_root)
+        let mut runtime = Self::new(base_dir, repo_root)?;
+        if let Ok(worker_exe_path) = std::env::var("AUTOWATERSIMU_DESKTOP_WORKER_EXE") {
+            let worker_exe_path = worker_exe_path.trim();
+            if !worker_exe_path.is_empty() {
+                runtime.worker_exe_path = Some(PathBuf::from(worker_exe_path));
+            }
+        }
+        Ok(runtime)
     }
 
     pub fn base_dir(&self) -> &Path {
@@ -563,6 +583,9 @@ impl DesktopRuntime {
     }
 
     fn source_worker(&self) -> SourceWorker {
+        if let Some(exe_path) = &self.worker_exe_path {
+            return SourceWorker::new_packaged(self.worker_timeout, exe_path.clone());
+        }
         if let (Some(python_path), Some(cli_path)) =
             (&self.worker_python_path, &self.worker_cli_path)
         {
