@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next Compute API Alert Rules TODO
+
+- [x] Re-read operations README/runbook and current Compute API metrics contract
+- [x] Add Prometheus alert rules for Compute API lifecycle metrics
+- [x] Document monitoring directory scope and deployment boundary
+- [x] Link alert rules from the lifecycle runbook
+- [x] Validate docs diff and YAML structure
+
+## Plan
+
+- Store alert rules under `docs/operations/monitoring/` because there is no existing deployment monitoring directory.
+- Reference only metrics currently emitted by `/metrics`.
+- Do not claim Alertmanager or Prometheus deployment is complete.
+
+## Review
+
+- Added `docs/operations/monitoring/compute_api_alerts.yml`.
+- Rules cover API down, queued jobs without workers, failed/timed-out jobs, and persistent artifact retention backlog.
+- Added `docs/operations/monitoring/README.md` and linked the rules from the lifecycle runbook.
+- Verification:
+  - `git diff --check -- docs\operations` passed with LF/CRLF warnings only.
+  - `promtool` was not installed locally.
+  - `backend\.venv\Scripts\python` + PyYAML parsed the alert file and asserted group/rule/alert/expr structure.
+- Remaining scope:
+  - Actual Prometheus/Alertmanager deployment, notification routing, dashboard provisioning, and environment-specific thresholds remain follow-up operations work.
+
 # 2026-05-30 AutoWaterSimu Next Retention Scheduler TODO
 
 - [x] Re-read compute-api command, internal compute lifecycle, and operations runbook context

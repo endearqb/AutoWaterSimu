@@ -50,6 +50,8 @@ Initial alert candidates:
 - Failed/timed-out jobs increase above the deployment's accepted failure budget.
 - Retention candidates keep increasing across multiple operator review windows.
 
+Prometheus alert rule examples are in `docs/operations/monitoring/compute_api_alerts.yml`.
+
 ## Manual Retention Sweep
 
 Always start with dry-run. Empty request body is also dry-run, but an explicit body is preferred for audit clarity:

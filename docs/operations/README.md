@@ -19,11 +19,12 @@
 | 文件 | 作用 |
 |---|---|
 | `compute_api_lifecycle_runbook.md` | Compute API lifecycle、metrics 和 artifact retention 手动操作手册 |
+| `monitoring/` | Compute API Prometheus alert rules |
 
 ## 3. 维护约定
 
 1. Runbook 必须基于当前代码事实和已验证命令。
-2. 尚未实现的 archive backend、UI 或 alerting 只能写为待实施项；scheduler 已实现但默认关闭。
+2. 尚未实现的 archive backend、UI 或告警部署只能写为待实施项；scheduler 已实现但默认关闭，alert rules 仅表示可执行规则文件。
 3. 涉及 destructive 操作时必须先写 dry-run 和回滚限制。
 
 ## 4. 对外接口

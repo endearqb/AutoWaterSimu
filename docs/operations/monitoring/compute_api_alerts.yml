@@ -1,0 +1,42 @@
+groups:
+  - name: autowatersimu-compute-api
+    rules:
+      - alert: AutoWaterSimuComputeAPIDown
+        expr: autowatersimu_compute_api_up != 1
+        for: 2m
+        labels:
+          severity: critical
+          service: autowatersimu-compute-api
+        annotations:
+          summary: "Compute API metrics endpoint is not reporting up"
+          description: "The Compute API /metrics endpoint is missing or reports autowatersimu_compute_api_up != 1 for more than 2 minutes."
+
+      - alert: AutoWaterSimuComputeQueuedWithoutWorkers
+        expr: sum(autowatersimu_compute_jobs_total{status="queued"}) > 0 and autowatersimu_compute_workers_registered_total == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: autowatersimu-compute-api
+        annotations:
+          summary: "Compute jobs are queued but no workers are registered"
+          description: "At least one compute job is queued while the registered worker count is zero for more than 5 minutes."
+
+      - alert: AutoWaterSimuComputeFailedOrTimedOutJobsPresent
+        expr: sum(autowatersimu_compute_jobs_total{status=~"failed|timed_out"}) > 0
+        for: 15m
+        labels:
+          severity: warning
+          service: autowatersimu-compute-api
+        annotations:
+          summary: "Compute jobs have failed or timed out"
+          description: "One or more failed/timed_out compute jobs have been present for more than 15 minutes. Inspect job events and worker logs."
+
+      - alert: AutoWaterSimuComputeArtifactRetentionBacklog
+        expr: autowatersimu_compute_artifact_retention_candidates_total > 0
+        for: 24h
+        labels:
+          severity: warning
+          service: autowatersimu-compute-api
+        annotations:
+          summary: "Artifact retention backlog is not clearing"
+          description: "Retention candidates have remained above zero for 24 hours. Run an artifact retention dry-run and review skip reasons before enabling deletion."
