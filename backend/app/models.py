@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 from enum import Enum
 
-from pydantic import EmailStr, Field as PydanticField, validator
+from pydantic import ConfigDict, EmailStr, Field as PydanticField, validator
 from sqlmodel import Field, Relationship, SQLModel, Column, JSON
 
 
@@ -239,6 +239,8 @@ class HybridUDMModelPairMapping(SQLModel):
 class HybridUDMSelectedModel(SQLModel):
     """Hybrid UDM 已选择模型快照。"""
 
+    model_config = ConfigDict(protected_namespaces=())
+
     model_id: str = Field(description="模型ID")
     version: int = Field(description="模型版本")
     name: Optional[str] = Field(default=None, description="模型名称")
@@ -251,6 +253,8 @@ class HybridUDMSelectedModel(SQLModel):
 
 class HybridUDMConfig(SQLModel):
     """Hybrid UDM 配置。"""
+
+    model_config = ConfigDict(protected_namespaces=())
 
     mode: str = Field(default="udm_only", description="Hybrid 模式，当前仅支持 udm_only")
     selected_models: List[HybridUDMSelectedModel] = Field(
@@ -1100,6 +1104,9 @@ class UDMModel(SQLModel, table=True):
 
 class UDMModelVersion(SQLModel, table=True):
     """UDM模型版本表（可复现快照）"""
+
+    model_config = ConfigDict(protected_namespaces=())
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     model_id: uuid.UUID = Field(
         foreign_key="udmmodel.id", nullable=False, ondelete="CASCADE"
@@ -1140,6 +1147,9 @@ class UDMModelsPublic(SQLModel):
 
 class UDMModelVersionPublic(SQLModel):
     """UDM模型版本公开信息"""
+
+    model_config = ConfigDict(protected_namespaces=())
+
     id: uuid.UUID
     model_id: uuid.UUID
     version: int

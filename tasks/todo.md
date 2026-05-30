@@ -1,3 +1,31 @@
+# 2026-05-31 AutoWaterSimu Next Pydantic protected namespace cleanup TODO
+
+- [x] Re-read backend app/models/test README context and legacy drift audit
+- [x] Add explicit Pydantic config to legacy models with `model_` field names
+- [x] Add regression guard for protected namespace warnings
+- [x] Validate targeted backend tests and OpenAPI path drift
+- [x] Update PRD status, legacy drift audit, completion audit, and README First records
+- [x] Commit checkpoint
+
+## Plan
+
+- Preserve public field names and database columns.
+- Use `ConfigDict(protected_namespaces=())` only on affected models.
+- Verify OpenAPI path count and missing/extra paths remain unchanged before deciding whether legacy client regeneration is needed.
+
+## Review
+
+- Added `ConfigDict(protected_namespaces=())` to `HybridUDMSelectedModel`, `HybridUDMConfig`, `UDMModelVersion`, and `UDMModelVersionPublic`.
+- Added `backend/app/tests/pydantic_warning_test.py` to guard `app.models` import against protected namespace warning regressions.
+- Updated PRD current-state notes and the legacy drift audit to mark protected namespace warnings closed.
+- Verification:
+  - Warnings capture around `import app.models` reported `protected_namespace_warnings=0`.
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\pydantic_warning_test.py app\tests\api\routes\test_asm_udm_validate_response.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py app\tests\services -q` passed (`36 passed`, existing validator/lifespan warnings remain).
+  - OpenAPI compare from `backend/` still showed 88 current/tracked paths with no missing/extra paths and metadata/description-only drift.
+  - `git diff --check -- backend\app\models.py backend\app\tests docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Pydantic v1-style validator migration, FastAPI lifespan cleanup, and legacy OpenAPI metadata refresh remain separate work.
+
 # 2026-05-31 AutoWaterSimu Next legacy cleanup TODO
 
 - [x] Re-read legacy route/service README context and Phase 0 drift audit
@@ -24,7 +52,7 @@
   - OpenAPI compare first failed from the repository root because backend settings did not load required `.env` values; rerunning from `backend/` showed 88 current/tracked paths with no missing/extra paths and metadata/description-only drift.
   - `git diff --check -- backend\app\api\routes\material_balance.py backend\app\services\data_conversion_service.py docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
 - Remaining scope:
-  - Pydantic protected namespace warning cleanup and ad hoc debug/test print cleanup remain separate legacy maintenance work.
+  - Pydantic v1-style validator cleanup, FastAPI lifespan cleanup, and ad hoc debug/test print cleanup remain separate legacy maintenance work.
 
 # 2026-05-31 AutoWaterSimu Next browser gate expansion TODO
 
@@ -1614,7 +1642,7 @@
   - `git diff --check` passed; Git reported only LF-to-CRLF normalization warnings for touched text files.
 - Notes:
   - The route field test avoids database/auth coupling by calling the validate route functions directly with a minimal user object.
-  - Existing Pydantic and FastAPI deprecation/protected namespace warnings remain unchanged and are outside this Phase 0+1 scope.
+  - At that time, Pydantic/FastAPI deprecation and protected namespace warnings were outside Phase 0+1 scope; protected namespace warnings were later cleaned in the 2026-05-31 cleanup entry above.
 
 # 2026-05-26 AutoWaterSimu Next Phase 1B TODO
 
