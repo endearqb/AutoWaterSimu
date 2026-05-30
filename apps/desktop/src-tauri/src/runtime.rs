@@ -11,6 +11,10 @@ use crate::path_sandbox;
 use crate::store::DesktopStore;
 use crate::worker::SourceWorker;
 
+pub const DESKTOP_WORKER_EXE_ENV: &str = "AUTOWATERSIMU_DESKTOP_WORKER_EXE";
+pub const PACKAGED_WORKER_RESOURCE_RELATIVE_PATH: &str =
+    "simulation-worker/simulation-worker-x86_64-pc-windows-msvc.exe";
+
 #[derive(Clone, Debug)]
 pub struct DesktopRuntime {
     base_dir: PathBuf,
@@ -93,7 +97,7 @@ impl DesktopRuntime {
             .map(PathBuf::from)
             .unwrap_or_else(|_| repo_root.join("tmp").join("desktop-runtime"));
         let mut runtime = Self::new(base_dir, repo_root)?;
-        if let Ok(worker_exe_path) = std::env::var("AUTOWATERSIMU_DESKTOP_WORKER_EXE") {
+        if let Ok(worker_exe_path) = std::env::var(DESKTOP_WORKER_EXE_ENV) {
             let worker_exe_path = worker_exe_path.trim();
             if !worker_exe_path.is_empty() {
                 runtime.worker_exe_path = Some(PathBuf::from(worker_exe_path));

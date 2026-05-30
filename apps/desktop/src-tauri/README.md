@@ -12,6 +12,7 @@
 - Project-aware job and canvas graph persistence。
 - source-mode Python worker JSON-RPC smoke。
 - explicit packaged worker exe mode for local/release smoke。
+- release-only Tauri config for resource-bundled PyInstaller one-folder sidecar。
 - CanvasGraph save/load and ProcessGraph validation command surface。
 - artifact JSON/CSV export sandbox、model_run audit、support bundle 与 backup/restore smoke。
 - Tauri v2 config。
@@ -39,6 +40,7 @@
 | `src/worker.rs` | source-mode Python worker process bridge |
 | `icons/icon.ico` | Windows resource icon for Tauri build |
 | `tauri.conf.json` | Tauri v2 config |
+| `tauri.release.conf.json` | Release overlay config that enables NSIS bundling and stages the packaged worker as a resource |
 | `capabilities/default.json` | Tauri capability file |
 
 ## 3. 维护约定
@@ -46,7 +48,7 @@
 1. Command body 必须经由 Rust runtime，不让 React 直接启动 worker。
 2. Rust owns SQLite writes and worker lifecycle。
 3. React 不直接执行 shell 或写 SQLite。
-4. Phase 3C 默认 worker 是 source-mode dev sidecar；设置 `AUTOWATERSIMU_DESKTOP_WORKER_EXE` 后 Desktop runtime 可显式改用 packaged worker exe。Tauri `externalBin` / resource bundling 和 installer 仍留到后续。
+4. Phase 3C 默认 worker 是 source-mode dev sidecar；设置 `AUTOWATERSIMU_DESKTOP_WORKER_EXE` 后 Desktop runtime 可显式改用 packaged worker exe。Release build 通过 `tauri.release.conf.json` 把 PyInstaller one-folder sidecar 作为 Tauri resource 打入 NSIS installer。
 5. Job 状态机只允许 `queued -> running -> succeeded|failed|cancelled|timed_out`；terminal job 不允许重复运行。
 6. Tauri commands must be registered in one `invoke_handler` call。
 7. 成功 compute result 中的 `runtime_audit.model_runs` 需要持久化到 SQLite，并随 job snapshot/support bundle 返回。
@@ -56,7 +58,8 @@
 11. CanvasGraph persistence validates graph IDs and edge/node references before SQLite upsert; ProcessGraph validation returns structured errors without mutating job state。
 12. Project registry commands use the local `projects` table; project export/import is limited to runtime-local `exports/` files and does not imply external project-file dialogs yet。
 13. `compute_job_create` and `canvas_graph_save` may receive an optional `project_id`; runtime/store must reject unknown project ids instead of silently writing dangling references。
-14. Packaged sidecar 和 NSIS installer release smoke 由 Desktop scripts 执行；Rust packaged mode 只能通过显式 exe path 选择，不应静默替换 source-mode。
+14. Packaged sidecar 和 NSIS installer release smoke 由 Desktop scripts 执行；Rust packaged mode 只能通过显式 exe path 或 Tauri resource 中存在的 packaged exe 选择，不应在 development 中静默替换 source-mode。
+15. PyInstaller one-folder sidecar 不应只通过 `externalBin` 复制单个 exe；必须保持 exe 与 `_internal` 目录相邻。
 
 ## 4. 对外接口
 
@@ -84,6 +87,13 @@
 ```powershell
 cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml
 cd apps\desktop; npm run tauri -- build
+```
+
+Release NSIS build with a generated sidecar:
+
+```powershell
+cd apps\desktop
+npm run release:build:installer -- -SidecarPath <path-to-sidecar.exe>
 ```
 
 Release artifact smoke 入口：

@@ -13,7 +13,7 @@
 - Python worker sidecar management, including explicit packaged-worker exe mode。
 - local artifact JSON/CSV export、model run audit、support bundle and runtime backup/restore smoke。
 - local CanvasGraph save/load and ProcessGraph validation smoke。
-- Desktop packaging contract and release smoke scripts。
+- Desktop packaging contract, NSIS installer build entrypoint, and release smoke scripts。
 
 本目录不负责：
 
@@ -27,12 +27,12 @@
 |---|---|
 | `README.md` | 本目录上下文契约 |
 | `package.json` | 独立 Desktop React/Vite app 脚本与依赖 |
-| `packaging/` | Desktop packaged sidecar build script and NSIS installer release 契约 |
+| `packaging/` | Desktop packaged sidecar build script、NSIS installer build script and release 契约 |
 | `scripts/` | packaged sidecar and NSIS installer smoke scripts |
 | `src/` | Phase 3C Desktop React dev MVP shell |
 | `src-tauri/` | Rust/Tauri runtime、SQLite store、project registry/project_id wiring、source-mode worker JSON-RPC、canvas/process graph commands、artifact JSON/CSV/model_run/support bundle/backup smoke |
 
-后续仍需配置 Tauri `externalBin`/resource bundling、产出 NSIS installer 并执行 installer smoke；本目录已提供 PyInstaller one-folder sidecar build 脚本、explicit packaged-worker runtime mode、packaging 契约和 artifact smoke 入口。
+本目录已提供 PyInstaller one-folder sidecar build、explicit packaged-worker runtime mode、Tauri resource-bundled NSIS installer build、packaging 契约和 artifact smoke 入口。后续仍需评估是否切换到单文件 sidecar + `externalBin`、以及 signing/auto-update。
 
 ## 3. 维护约定
 
@@ -48,6 +48,7 @@
 10. 创建 compute job 或保存 CanvasGraph 时，React 可传入当前选中 `project_id`；Rust 必须验证项目存在后再写入 `compute_jobs.project_id` 或 `canvas_graphs.project_id`。
 11. Packaged sidecar / installer smoke 必须通过显式 artifact 路径运行；缺少 artifact 不能声明 release 通过。
 12. Desktop runtime 默认使用 source-mode Python worker；`AUTOWATERSIMU_DESKTOP_WORKER_EXE` 只在显式设置时启用 packaged worker exe。
+13. PyInstaller one-folder sidecar 打入 installer 时使用 Tauri `bundle.resources` 保持 exe 与 `_internal` 目录相邻；不要只复制单个 exe。
 
 ## 4. 对外接口
 
@@ -74,9 +75,10 @@
 cd apps\desktop; npm run typecheck
 cd apps\desktop; npm run build
 cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml
+npm run release:build:installer -- -SidecarPath <path-to-sidecar.exe>
 ```
 
-Phase 3C 已补 Desktop React build、Tauri release build smoke、SQLite runtime tests、source-mode worker spawn smoke、support bundle smoke 和 path sandbox tests。Packaged sidecar smoke、NSIS installer smoke 脚本已存在，但完整 release 通过仍需要实际 artifact。
+Phase 3C 已补 Desktop React build、Tauri release build smoke、SQLite runtime tests、source-mode worker spawn smoke、support bundle smoke 和 path sandbox tests。Packaged sidecar smoke、NSIS installer smoke 脚本已存在，完整 release 通过需要真实 sidecar 和 installer artifact。
 
 ## 7. AI 操作提示
 

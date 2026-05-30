@@ -67,6 +67,14 @@ function New-Step {
     }
 }
 
+function ConvertTo-ProcessArgument {
+    param([string]$Argument)
+    if ($Argument -match '[\s"]') {
+        return '"' + ($Argument -replace '"', '\"') + '"'
+    }
+    return $Argument
+}
+
 function Invoke-Gate {
     param(
         [string]$Name,
@@ -80,7 +88,8 @@ function Invoke-Gate {
     $stdoutFile = New-TemporaryFile
     $stderrFile = New-TemporaryFile
     try {
-        $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+        $argumentList = ($Arguments | ForEach-Object { ConvertTo-ProcessArgument -Argument $_ }) -join " "
+        $process = Start-Process -FilePath $Executable -ArgumentList $argumentList -WorkingDirectory $WorkingDirectory -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
         $exitCode = $process.ExitCode
         $stdout = [string](Get-Content -Path $stdoutFile -Raw)
         $stderr = [string](Get-Content -Path $stderrFile -Raw)

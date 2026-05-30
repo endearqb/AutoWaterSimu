@@ -44,12 +44,13 @@ Latest current-turn verification:
 - `scripts/release/next-release-gates.ps1 -Mode release -AllowMissingPackageArtifacts -SkipLong` produces `dry_run_skipped_artifacts`; this validates orchestration only and is not release-pass evidence
 - A real PyInstaller one-folder worker sidecar build path exists at `apps/desktop/packaging/build-packaged-sidecar.ps1`; latest local artifact `tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe` passed packaged sidecar self-check and minimal job smoke with `packaging_mode=frozen`
 - Desktop runtime can now invoke that packaged worker executable explicitly through `AUTOWATERSIMU_DESKTOP_WORKER_EXE` or `DesktopRuntime::new_with_packaged_worker(...)`; the optional Rust packaged-worker smoke passed against the generated sidecar
-- Release gate release mode passed with the real sidecar path and `-AllowMissingPackageArtifacts`, producing `dry_run_skipped_artifacts` because NSIS installer artifact smoke is still skipped
+- Tauri release overlay and NSIS installer build path exist; latest local installer artifact `apps\desktop\src-tauri\target\release\bundle\nsis\AutoWaterSimu Next Desktop_0.1.0_x64-setup.exe` passed silent install, installed sidecar existence, installed sidecar smoke, and silent uninstall
+- Release gate release mode passed with the real sidecar path and real installer path, `allow_missing_package_artifacts=false`, and evidence status `passed`
 
 Latest recorded but not re-run in this verification refresh:
 
 - Browser render smokes against `/compute-jobs` are recorded earlier in `tasks/todo.md` and `.ai/changes/2026-05-30.md`.
-- Real NSIS installer smoke has not been run because no installer artifact exists in the repository; allow-missing dry runs must not be treated as release pass evidence.
+- Signing, auto-update, artifact publishing, and GitHub Windows runner release-build timing are not yet verified.
 
 ## Phase Status
 
@@ -58,14 +59,14 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 0 | Legacy baseline stabilization | Strong partial | Targeted legacy backend tests and frontend type/build pass with existing warnings only | Document exact remaining legacy `print`/schema/client drift issues; keep legacy tests as migration baseline |
 | Phase 1 | Contracts and transform layer | Strong partial | Contract tests pass; P0/P1/P2 schemas and valid/invalid fixtures exist; Python transform tests are included in `contracts\tests` | Keep schema registry current; broaden old-vs-new numerical fixtures beyond material balance |
 | Phase 2 | Simulation core and worker CLI | Strong partial | Worker self-check, worker tests, minimal run-job, simulation core tests, and API-once worker smoke pass | Expand worker support beyond material balance; add long-running worker daemon/heartbeat coverage when that mode exists |
-| Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present; PyInstaller one-folder packaged worker sidecar build and explicit Desktop runtime smoke pass locally | Complete Tauri resource/externalBin wiring, installer smoke, external file dialog allowlist, recent files, full project package content |
+| Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present; PyInstaller one-folder packaged worker sidecar build, explicit Desktop runtime smoke, Tauri resource-bundled NSIS installer build, and installer smoke pass locally | External file dialog allowlist, recent files, full project package content, signing/auto-update decisions |
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, benchmark_run history, model_run records, evidence governance summary | Multi-parameter-set management, scheduled benchmark execution, benchmark-backed parameter promotion, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
-| Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist; real PyInstaller sidecar artifact smoke passed locally | Tauri `externalBin`/resource wiring, real NSIS installer smoke evidence, and full release checklist execution |
+| Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist; real PyInstaller sidecar artifact, NSIS installer artifact, installed-sidecar smoke, and release gate pass evidence exist locally | CI artifact build/publish, signing, auto-update, and release runner cache/timing hardening |
 
 ## Remaining Roadmap
 
@@ -90,7 +91,7 @@ Latest recorded but not re-run in this verification refresh:
 
 - Implement full project package content, including jobs, graphs, artifacts, and support bundle references.
 - Add file dialog/recent files allowlist.
-- Wire the real packaged Python worker sidecar into Tauri resources/externalBin, produce the NSIS installer artifact, and run the existing smoke scripts without allow-missing.
+- Harden release artifact publishing, signing, and auto-update only after certificate/update policy is defined.
 
 5. Worker/model migration completion
 
@@ -114,6 +115,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Wire Tauri resource/externalBin handling for the PyInstaller one-folder sidecar, then produce/run NSIS installer smoke evidence.
-2. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
-3. Add scheduled benchmark execution or benchmark-backed parameter promotion only after those governance semantics are separately approved.
+1. Migrate ASM/UDM workloads into the worker path with old-vs-worker numerical baseline fixtures.
+2. Add lifecycle retention/archive executor and operational runbooks for artifacts/model runs.
+3. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.

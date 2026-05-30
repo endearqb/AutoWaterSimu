@@ -5,9 +5,16 @@ pub mod runtime;
 pub mod store;
 pub mod worker;
 
+use crate::runtime::{DESKTOP_WORKER_EXE_ENV, PACKAGED_WORKER_RESOURCE_RELATIVE_PATH};
+use tauri::{path::BaseDirectory, Manager};
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            configure_packaged_worker_env_from_resources(app);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::worker_self_check,
             commands::project_create,
@@ -31,6 +38,24 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running AutoWaterSimu Desktop");
+}
+
+fn configure_packaged_worker_env_from_resources<R: tauri::Runtime>(app: &tauri::App<R>) {
+    if std::env::var(DESKTOP_WORKER_EXE_ENV)
+        .map(|value| !value.trim().is_empty())
+        .unwrap_or(false)
+    {
+        return;
+    }
+
+    if let Ok(worker_exe) = app.path().resolve(
+        PACKAGED_WORKER_RESOURCE_RELATIVE_PATH,
+        BaseDirectory::Resource,
+    ) {
+        if worker_exe.is_file() {
+            std::env::set_var(DESKTOP_WORKER_EXE_ENV, worker_exe);
+        }
+    }
 }
 
 #[cfg(test)]

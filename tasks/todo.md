@@ -1,3 +1,39 @@
+# 2026-05-30 AutoWaterSimu Next Desktop NSIS Installer Runtime TODO
+
+- [x] Re-read README First, Desktop, src-tauri, packaging, scripts, release gate, and Tauri schema context
+- [x] Choose Tauri resource bundling for the PyInstaller one-folder sidecar
+- [x] Add release overlay config and NSIS installer build script
+- [x] Auto-discover packaged worker exe from Tauri resources at app startup
+- [x] Strengthen installer smoke to verify installed packaged sidecar and run sidecar smoke
+- [x] Run installer build, installed-sidecar smoke, release gate, and diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Preserve source-mode Desktop worker as the default development path.
+- Use `bundle.resources` instead of `externalBin` for the current PyInstaller one-folder sidecar so `_internal` stays adjacent to the exe.
+- Keep signing, auto-update, Microsoft Store distribution, and one-file sidecar decisions out of this slice.
+
+## Review
+
+- Added `apps/desktop/src-tauri/tauri.release.conf.json`, which enables NSIS bundling and maps staged `target/release-sidecar/simulation-worker` into installer resources as `simulation-worker`.
+- Added `apps/desktop/packaging/build-nsis-installer.ps1`, which stages the generated sidecar directory, runs `npm run tauri -- build --bundles nsis --config src-tauri/tauri.release.conf.json --ci --no-sign`, writes build evidence, and runs installer smoke by default.
+- Desktop startup now discovers `simulation-worker/simulation-worker-x86_64-pc-windows-msvc.exe` from Tauri resources and sets `AUTOWATERSIMU_DESKTOP_WORKER_EXE` only when the packaged resource exists and the env var was not already set.
+- `smoke-nsis-installer.ps1` now verifies the installed Desktop exe, installed packaged sidecar exe, installed sidecar self-check/minimal job, and best-effort silent uninstall.
+- `scripts/release/next-release-gates.ps1` now quotes subprocess arguments so installer paths with spaces are passed intact.
+- Added ADR `.ai/decisions/0009-desktop-onedir-sidecar-resource-bundling.md`.
+- Verification:
+  - `cargo fmt --manifest-path apps\desktop\src-tauri\Cargo.toml` passed.
+  - PowerShell parser checks passed for `build-nsis-installer.ps1`, `smoke-nsis-installer.ps1`, and `next-release-gates.ps1`.
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed (`21 passed`).
+  - `cd apps\desktop; npm run build` passed.
+  - Packaged-worker Rust smoke with `AUTOWATERSIMU_TEST_PACKAGED_WORKER_EXE` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File apps\desktop\packaging\build-nsis-installer.ps1 -SidecarPath tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe -EvidenceDir tmp\desktop-packaging\nsis-runtime` passed and produced `apps\desktop\src-tauri\target\release\bundle\nsis\AutoWaterSimu Next Desktop_0.1.0_x64-setup.exe`.
+  - `tmp\desktop-packaging\nsis-runtime\nsis-installer-smoke.json` status is `passed`; installed packaged sidecar smoke also passed with `packaging_mode=frozen`.
+  - `scripts\release\next-release-gates.ps1 -Mode release -SidecarPath tmp\desktop-packaging\sidecar-20260531010636\dist\simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe -InstallerPath "apps\desktop\src-tauri\target\release\bundle\nsis\AutoWaterSimu Next Desktop_0.1.0_x64-setup.exe" -SkipLong -EvidenceDir tmp\release-evidence\installer-release` passed with status `passed` and `allow_missing_package_artifacts=false`.
+- Remaining scope:
+  - Signing, auto-update, one-file sidecar vs onedir tradeoff, and wider Windows runner/release artifact publishing remain follow-up work.
+
 # 2026-05-30 AutoWaterSimu Next Desktop Packaged Worker Runtime TODO
 
 - [x] Re-read Desktop, src-tauri, worker, packaging, release gate, and README First context

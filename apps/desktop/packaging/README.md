@@ -7,6 +7,7 @@
 本目录负责：
 
 - Windows packaged sidecar artifact 命名约定。
+- Tauri release resource staging and NSIS installer build entrypoint。
 - NSIS installer smoke 验收入口。
 - P0 release evidence 要求。
 
@@ -22,15 +23,17 @@
 |---|---|
 | `README.md` | Desktop packaging 契约 |
 | `build-packaged-sidecar.ps1` | 在 Windows 上使用 PyInstaller one-folder 构建 packaged worker sidecar，并可直接运行 smoke |
+| `build-nsis-installer.ps1` | 将 PyInstaller one-folder sidecar 暂存到 Tauri release resources，构建 NSIS installer，并可直接运行 installer smoke |
 | `pyinstaller_entrypoint.py` | PyInstaller package-mode entrypoint，避免直接脚本执行破坏相对导入 |
 
 ## 3. 维护约定
 
-1. P0 Desktop packaged sidecar 目标文件名为 `simulation-worker-x86_64-pc-windows-msvc.exe`，用于匹配 Tauri v2 `externalBin` target triple 查找规则。
+1. P0 Desktop packaged sidecar 目标文件名为 `simulation-worker-x86_64-pc-windows-msvc.exe`；该命名保留 Tauri v2 `externalBin` target triple 兼容性，但当前 one-folder release path 使用 resources 保持依赖目录相邻。
 2. Packaged sidecar 必须通过 `apps/desktop/scripts/smoke-packaged-sidecar.ps1`，覆盖 `--self-check` 和 minimal material balance job。
 3. NSIS installer 必须通过 `apps/desktop/scripts/smoke-nsis-installer.ps1`，覆盖 silent install、installed executable presence 和 best-effort silent uninstall。
 4. P0 明确不包含 code signing、auto update、Microsoft Store 分发。
 5. release evidence 写入 `tmp/release-evidence/`，不得提交安装包、sidecar 二进制或 evidence 产物。
+6. 当前 PyInstaller 输出为 one-folder sidecar；Tauri release 打包使用 `bundle.resources` 暂存整个目录，而不是只用 `externalBin` 复制单个 exe。
 
 ## 4. 对外接口
 
@@ -57,6 +60,7 @@ Packaging 对 release gate 暴露 artifact 路径：
 
 ```powershell
 .\apps\desktop\packaging\build-packaged-sidecar.ps1
+.\apps\desktop\packaging\build-nsis-installer.ps1 -SidecarPath <path-to-simulation-worker-x86_64-pc-windows-msvc.exe>
 .\apps\desktop\scripts\smoke-packaged-sidecar.ps1 -SidecarPath <path-to-simulation-worker-x86_64-pc-windows-msvc.exe>
 .\apps\desktop\scripts\smoke-nsis-installer.ps1 -InstallerPath <path-to-nsis-setup.exe>
 .\scripts\release\next-release-gates.ps1 -Mode release -SidecarPath <path-to-sidecar.exe> -InstallerPath <path-to-installer.exe>

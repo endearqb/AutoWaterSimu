@@ -28,6 +28,7 @@
 2. `Mode=release` 必须显式验证 packaged sidecar 和 NSIS installer artifact；没有 artifact 时应失败，除非调用方显式传入 `-AllowMissingPackageArtifacts`。
 3. 使用 `-AllowMissingPackageArtifacts` 时，总 evidence status 必须是 `dry_run_skipped_artifacts`，不能被解释为 release 通过。
 4. 脚本只记录 evidence，不把 release 成功写成源码事实。
+5. Release artifact path 允许包含空格；编排脚本必须在传递子进程参数时保留完整路径。
 
 ## 4. 对外接口
 

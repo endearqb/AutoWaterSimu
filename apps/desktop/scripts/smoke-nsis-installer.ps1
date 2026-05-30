@@ -4,6 +4,7 @@ param(
     [string]$InstallDir = "",
     [string]$EvidencePath = "",
     [string]$ExpectedExeName = "AutoWaterSimu Next Desktop.exe",
+    [string]$ExpectedSidecarRelativePath = "simulation-worker\simulation-worker-x86_64-pc-windows-msvc.exe",
     [switch]$AllowMissing
 )
 
@@ -30,6 +31,14 @@ function Resolve-PathFromRoot {
         return $PathValue
     }
     return (Join-Path $Root $PathValue)
+}
+
+function Resolve-NativeCommand {
+    param([string]$Name)
+    if ((Test-IsWindows) -and ($Name -in @("powershell"))) {
+        return "$Name.exe"
+    }
+    return $Name
 }
 
 function Invoke-CapturedProcess {
@@ -132,6 +141,29 @@ $steps += [ordered]@{
     exit_code = 0
     stdout_excerpt = $expectedExe
     stderr_excerpt = ""
+}
+
+$expectedSidecar = Join-Path $script:ResolvedInstallDir $ExpectedSidecarRelativePath
+if (-not (Test-Path -LiteralPath $expectedSidecar -PathType Leaf)) {
+    Write-EvidenceAndExit -Status "failed" -Reason "NSIS install completed but packaged sidecar was not found." -Steps $steps -ExitCode 1
+}
+$steps += [ordered]@{
+    name = "installed packaged sidecar exists"
+    exit_code = 0
+    stdout_excerpt = $expectedSidecar
+    stderr_excerpt = ""
+}
+
+$sidecarSmokeEvidence = Join-Path (Split-Path -Parent $script:ResolvedEvidencePath) "installed-sidecar-smoke.json"
+& (Resolve-NativeCommand -Name "powershell") -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Root "apps\desktop\scripts\smoke-packaged-sidecar.ps1") -RepoRoot $Root -SidecarPath $expectedSidecar -EvidencePath $sidecarSmokeEvidence
+$steps += [ordered]@{
+    name = "installed packaged sidecar smoke"
+    exit_code = $LASTEXITCODE
+    stdout_excerpt = $sidecarSmokeEvidence
+    stderr_excerpt = ""
+}
+if ($LASTEXITCODE -ne 0) {
+    Write-EvidenceAndExit -Status "failed" -Reason "Installed packaged sidecar smoke failed." -Steps $steps -ExitCode 1
 }
 
 $uninstaller = Join-Path $script:ResolvedInstallDir "uninstall.exe"
