@@ -28,7 +28,7 @@
 - Admin-scoped artifact retention sweep HTTP endpoint with safe dry-run default。
 - Disabled-by-default artifact retention scheduler helper。
 - Opt-in local filesystem archive backend metadata and download fallback。
-- Prometheus metrics snapshot rendering from the metadata store。
+- Prometheus metrics snapshot rendering from the metadata store, including archived artifact metadata count。
 - Static bearer token scope auth with config-level revocation。
 - Contract validation、canonical payload hash、idempotency/conflict。
 - Metadata store abstraction and PostgreSQL implementation。
@@ -71,7 +71,7 @@
 16. Simulation check creation is a thin adapter from external `simulation_request.v1` to internal `compute_job.v1`; it validates embedded `input_ref.simulation_input`, resolves a previously registered `input_ref.simulation_input_id`, resolves a registered `input_ref.process_graph_id`, or replays a persisted `input_ref.model_run_id` by reusing the source job's original `simulation_input.v1` payload before queueing.
 17. Simulation input registration stores only `simulation_input.v1` payload metadata and hash in the metadata DB; it must not store simulation results, time-series artifacts, or approval state.
 18. Result explanation workflow stores externally generated `result_explanation.v1` payloads only after schema validation and job-scoped evidence ref resolution. Review/publish changes audit status only; it must not generate explanation text, execute Agent code, mark production approval complete, or mutate jobs/results.
-19. `/metrics` renders a read-only snapshot from the metadata store: API up, jobs by status, registered workers, artifact metadata count, and retention candidates. Metrics rendering must not trigger retention sweep, timeout sweep, or any lifecycle mutation.
+19. `/metrics` renders a read-only snapshot from the metadata store: API up, jobs by status, registered workers, artifact metadata count, archived artifact metadata count, and retention candidates. Metrics rendering must not trigger retention sweep, timeout sweep, or any lifecycle mutation.
 
 ## 4. 对外接口
 

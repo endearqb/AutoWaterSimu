@@ -167,6 +167,7 @@ type MetricsSnapshot struct {
 	JobsByStatus        map[string]int `json:"jobs_by_status"`
 	WorkersRegistered   int            `json:"workers_registered"`
 	ArtifactsTotal      int            `json:"artifacts_total"`
+	ArtifactArchives    int            `json:"artifact_archives"`
 	RetentionCandidates int            `json:"retention_candidates"`
 }
 

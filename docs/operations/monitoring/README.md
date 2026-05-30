@@ -46,7 +46,7 @@
 
 不应该依赖：
 
-- 尚未暴露的 archive-specific 指标。
+- 尚未暴露的 archive provider latency/error 等细分指标。
 - 私有 dashboard 或外部告警平台。
 - 生产 receiver secret。
 

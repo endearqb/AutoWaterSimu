@@ -27,7 +27,7 @@
 - admin-scoped artifact retention sweep API for manual dry-run/delete operations。
 - optional disabled-by-default artifact retention scheduler。
 - opt-in local filesystem archive backend for expired unreferenced `archive_candidate` artifacts。
-- Prometheus metrics for API up, job status counts, registered workers, artifact metadata count, and retention candidate count。
+- Prometheus metrics for API up, job status counts, registered workers, artifact metadata count, archived artifact metadata count, and retention candidate count。
 - OpenAPI for platform and generated client。
 
 本目录不负责：
@@ -70,7 +70,7 @@ Phase 4A 使用单个 `internal/compute` package 收敛 skeleton，后续领域�
 18. `POST /api/v1/simulation-inputs` 可登记 schema-valid `simulation_input.v1`，并按 `simulation_input_id` + payload hash 做幂等；`GET /api/v1/simulation-inputs/{simulation_input_id}` 返回登记记录和原始 payload。
 19. `POST /api/v1/simulation-checks` 将 `simulation_request.v1` 转换为 `compute_job.v1` 并入队；当前支持 `input_ref.simulation_input` 内嵌 payload、先登记后通过 `input_ref.simulation_input_id` 引用，先登记 `process_graph.v1` 后通过 `input_ref.process_graph_id` / `process_graph_version` 解析为 `simulation_input.v1`，以及通过已持久化 `input_ref.model_run_id` 找回源 job 的原始 `simulation_input.v1` payload 进行保守 replay。
 20. `POST /api/v1/compute/jobs/{job_id}/result-explanations` 接收外部 Agent 生成的 `result_explanation.v1`，要求 job 已有结果、payload `job_id` 与路径一致、所有 `evidence_refs` 可在该 job 边界内解析；`review` 只允许 `approved` / `rejected`，`publish` 只允许发布已 approved 的 explanation。该流程不生成解释内容、不执行生产审批、不发布生产指令。
-21. `/metrics` 为公开 Prometheus text endpoint，暴露 API up、job status、registered worker、artifact metadata 和 retention candidate gauges；不得在 metrics handler 中执行 lifecycle mutation。
+21. `/metrics` 为公开 Prometheus text endpoint，暴露 API up、job status、registered worker、artifact metadata、archived artifact metadata 和 retention candidate gauges；不得在 metrics handler 中执行 lifecycle mutation。
 
 ## 4. 对外接口
 

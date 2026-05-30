@@ -1,3 +1,34 @@
+# 2026-05-31 AutoWaterSimu Next archive metrics TODO
+
+- [x] Re-read Compute API, internal compute, and monitoring README context
+- [x] Add archived artifact count to Compute API metrics snapshot
+- [x] Render `autowatersimu_compute_artifact_archives_total`
+- [x] Add service/HTTP test coverage
+- [x] Update monitoring docs/dashboard and completion records
+- [x] Run focused Go and monitoring validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep metrics read-only and store-backed; do not trigger retention/archive mutation from `/metrics`.
+- Count only archive records with `status=archived`.
+- Update monitoring examples to consume the new metric without inventing provider-specific latency/error metrics.
+- Leave production object-store archive backend and live monitoring receiver deployment as separate external/deployment work.
+
+## Review
+
+- Added `ArtifactArchives` to the Compute API metrics snapshot.
+- Memory and PostgreSQL stores count `status=archived` archive metadata records.
+- `/metrics` now renders `autowatersimu_compute_artifact_archives_total`.
+- Focused service/HTTP tests cover the archived artifact count after archive sweep and the public metric text.
+- Updated Compute API README files plus lifecycle/monitoring runbooks and Grafana dashboard example.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "TestArtifactRetentionSweepArchivesCandidateWithConfiguredBackend|TestHTTPAuthScopeAndMetrics" -count=1` passed.
+  - `cd apps\api; go test ./internal/compute -count=1` passed.
+  - `backend\.venv\Scripts\python` parsed monitoring YAML/JSON and asserted the Grafana dashboard references `autowatersimu_compute_artifact_archives_total`.
+  - `git diff --check -- apps\api docs\operations docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - PostgreSQL live query execution remains covered only when `COMPUTE_API_DATABASE_URL` points at a test database; it was not run in this slice.
+
 # 2026-05-31 AutoWaterSimu Next release artifact download verification TODO
 
 - [x] Re-read `.github`, `.github/workflows`, `scripts/release`, and completion audit context

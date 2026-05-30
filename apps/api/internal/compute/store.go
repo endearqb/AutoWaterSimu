@@ -354,6 +354,12 @@ func (store *MemoryStore) Metrics(_ context.Context, now time.Time) (MetricsSnap
 		jobsByStatus[job.Status]++
 	}
 	retentionCandidates := 0
+	artifactArchives := 0
+	for _, archive := range store.archives {
+		if archive.Status == "archived" {
+			artifactArchives++
+		}
+	}
 	for _, artifact := range store.artifacts {
 		if artifactRetentionPolicyEligible(artifact.RetentionPolicy) &&
 			artifact.RetainUntil != nil &&
@@ -371,6 +377,7 @@ func (store *MemoryStore) Metrics(_ context.Context, now time.Time) (MetricsSnap
 		JobsByStatus:        jobsByStatus,
 		WorkersRegistered:   len(store.workers),
 		ArtifactsTotal:      len(store.artifacts),
+		ArtifactArchives:    artifactArchives,
 		RetentionCandidates: retentionCandidates,
 	}, nil
 }

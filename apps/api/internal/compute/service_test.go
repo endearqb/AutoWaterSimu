@@ -475,6 +475,13 @@ func TestArtifactRetentionSweepArchivesCandidateWithConfiguredBackend(t *testing
 	if string(downloaded) != string(artifactBytes) {
 		t.Fatalf("downloaded archive artifact mismatch")
 	}
+	metrics, err := svc.Metrics(ctx)
+	if err != nil {
+		t.Fatalf("archive metrics failed: %v", err)
+	}
+	if metrics.ArtifactArchives != 1 || metrics.RetentionCandidates != 0 {
+		t.Fatalf("archive metrics should count archived artifacts and clear candidates, got %#v", metrics)
+	}
 	second, err := svc.SweepArtifactRetention(ctx, ArtifactRetentionSweepOptions{Now: now})
 	if err != nil {
 		t.Fatal(err)
@@ -1120,6 +1127,9 @@ func TestHTTPAuthScopeAndMetrics(t *testing.T) {
 	}
 	if !strings.Contains(metrics, "autowatersimu_compute_workers_registered_total 1") {
 		t.Fatalf("metrics should expose registered worker count, got %s", metrics)
+	}
+	if !strings.Contains(metrics, "autowatersimu_compute_artifact_archives_total 0") {
+		t.Fatalf("metrics should expose archived artifact count, got %s", metrics)
 	}
 
 	rec = httptest.NewRecorder()

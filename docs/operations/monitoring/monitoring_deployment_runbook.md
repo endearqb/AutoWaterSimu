@@ -24,6 +24,7 @@ The dashboard and alert rules use these current metrics:
 - `autowatersimu_compute_jobs_total{status="..."}`
 - `autowatersimu_compute_workers_registered_total`
 - `autowatersimu_compute_artifacts_total`
+- `autowatersimu_compute_artifact_archives_total`
 - `autowatersimu_compute_artifact_retention_candidates_total`
 
 Do not add deployment rules for new metric names until `apps/api/internal/compute` exposes them.
@@ -46,7 +47,7 @@ amtool check-config <path-to-rendered-alertmanager.yml>
 ```
 
 6. Import or provision `compute_api_grafana_dashboard.json` with a Prometheus datasource.
-7. Verify the dashboard shows `Compute API up = Up`, worker count, job status counts, artifact records, and retention candidates.
+7. Verify the dashboard shows `Compute API up = Up`, worker count, job status counts, artifact records, archived artifact records, and retention candidates.
 8. Trigger a non-destructive artifact retention dry-run before any `dry_run=false` sweep:
 
 ```powershell

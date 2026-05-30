@@ -352,6 +352,11 @@
           "expr": "autowatersimu_compute_artifacts_total",
           "legendFormat": "artifact records",
           "refId": "B"
+        },
+        {
+          "expr": "autowatersimu_compute_artifact_archives_total",
+          "legendFormat": "archived artifacts",
+          "refId": "C"
         }
       ],
       "title": "Artifacts and retention",

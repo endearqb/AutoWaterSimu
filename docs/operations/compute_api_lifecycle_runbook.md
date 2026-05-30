@@ -43,6 +43,7 @@ Current gauges:
 | `autowatersimu_compute_jobs_total{status="..."}` | Jobs grouped by lifecycle status |
 | `autowatersimu_compute_workers_registered_total` | Registered worker metadata records |
 | `autowatersimu_compute_artifacts_total` | Stored artifact metadata records |
+| `autowatersimu_compute_artifact_archives_total` | Archived artifact metadata records |
 | `autowatersimu_compute_artifact_retention_candidates_total` | Artifacts eligible for retention processing at scrape time |
 
 Initial alert candidates:
@@ -90,7 +91,7 @@ Invoke-RestMethod `
   -Body $body
 ```
 
-After deletion, check `/metrics` again and inspect affected job events for `artifact.retention_deleted`.
+After deletion or archive processing, check `/metrics` again and inspect affected job events for `artifact.retention_deleted` or `artifact.archived`.
 
 ## Recovery Limits
 

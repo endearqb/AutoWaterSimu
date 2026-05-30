@@ -398,11 +398,14 @@ func (store *PostgresStore) Metrics(ctx context.Context, now time.Time) (Metrics
 	if err := rows.Err(); err != nil {
 		return MetricsSnapshot{}, err
 	}
-	var workers, artifacts, retentionCandidates int64
+	var workers, artifacts, artifactArchives, retentionCandidates int64
 	if err := store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM workers").Scan(&workers); err != nil {
 		return MetricsSnapshot{}, err
 	}
 	if err := store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM artifacts").Scan(&artifacts); err != nil {
+		return MetricsSnapshot{}, err
+	}
+	if err := store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM artifact_archives WHERE status = 'archived'").Scan(&artifactArchives); err != nil {
 		return MetricsSnapshot{}, err
 	}
 	if err := store.pool.QueryRow(
@@ -421,6 +424,7 @@ func (store *PostgresStore) Metrics(ctx context.Context, now time.Time) (Metrics
 	}
 	snapshot.WorkersRegistered = int(workers)
 	snapshot.ArtifactsTotal = int(artifacts)
+	snapshot.ArtifactArchives = int(artifactArchives)
 	snapshot.RetentionCandidates = int(retentionCandidates)
 	return snapshot, nil
 }
