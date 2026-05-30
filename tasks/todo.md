@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next Compute API token secret runbook TODO
+
+- [x] Re-read Compute API auth, operations README, lifecycle runbook, and completion audit context
+- [x] Document static bearer token scope boundaries and production secret handling
+- [x] Document overlap rotation, revocation, validation, and incident response steps
+- [x] Update operations README, lifecycle runbook, completion audit, and README First records
+- [x] Run focused validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Add an operations runbook for `COMPUTE_API_TOKENS_JSON` without adding real secrets or new runtime behavior.
+- Keep the P0 boundary explicit: static bearer tokens with scopes and config-level `revoked:true`, no full RBAC or dynamic token management API.
+- Link the runbook from lifecycle/operations docs so artifact retention admin steps point to rotation and incident response guidance.
+
+## Review
+
+- Added `docs/operations/compute_api_token_secret_runbook.md`.
+- Documented dev-token non-production boundary, production secret storage expectations, scope separation, overlap rotation, config-level revocation, validation commands, and incident response.
+- Updated operations README, lifecycle runbook, completion audit, and README First records.
+- Verification:
+  - `git diff --check -- docs\operations tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `cd apps\api; go test ./internal/compute -run "TestHTTPAuthScopeAndMetrics|TestStaticTokenRevocation|TestHTTPArtifactRetentionSweepRequiresAdminScope" -count=1` passed.
+- Remaining scope:
+  - Deployment-specific secret manager wiring, token approval ownership, restart windows, and live deployed API validation remain external deployment decisions.
+
 # 2026-05-31 AutoWaterSimu Next release runner timing TODO
 
 - [x] Re-read `.github/workflows`, release script, and completion audit context

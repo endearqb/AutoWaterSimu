@@ -16,6 +16,7 @@ It does not describe an archive backend, lifecycle UI, or production alert manag
 - Durable platform runs should set `COMPUTE_API_DATABASE_URL`.
 - Admin retention calls require a bearer token with `artifact:admin`.
 - Worker artifact upload uses `artifact:write`; do not reuse worker tokens for retention deletion.
+- Token storage, rotation, and emergency revocation procedures are documented in `docs/operations/compute_api_token_secret_runbook.md`.
 - The retention sweep deletes only expired, unreferenced `ttl` artifacts. It skips `retain_forever`, skips `archive_candidate`, and protects artifacts referenced by persisted `model_run.v1.evidence_refs`.
 
 ## Health And Metrics
@@ -121,3 +122,4 @@ Do not enable scheduled deletion until artifact backup/restore expectations and 
 4. For retention backlog, run a dry-run sweep and inspect skip reasons.
 5. For evidence concerns, resolve refs through job-scoped evidence endpoints before deleting artifacts.
 6. If token scope errors appear, verify `COMPUTE_API_TOKENS_JSON` grants the narrow required scope rather than broad worker or public UI scopes.
+7. If a bearer token is suspected to be exposed, follow `compute_api_token_secret_runbook.md` before running any destructive retention operation.
