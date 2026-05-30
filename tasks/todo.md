@@ -1,3 +1,32 @@
+# 2026-05-31 AutoWaterSimu Next Pydantic validator migration TODO
+
+- [x] Re-read backend model/test context and validator usage
+- [x] Migrate legacy `@validator` methods in `backend/app/models.py` to Pydantic v2 `@field_validator`
+- [x] Extend warning regression test to cover v1 validator warnings
+- [x] Run targeted model/adapter/service tests and OpenAPI path compare
+- [x] Update PRD status, legacy drift audit, completion audit, and README First records
+- [x] Commit checkpoint
+
+## Plan
+
+- Preserve the existing validation rules and error messages.
+- Use `ValidationInfo.data` where validators need previously parsed fields.
+- Do not migrate FastAPI lifespan hooks in this slice.
+
+## Review
+
+- Replaced all remaining legacy `@validator` usages in `backend/app/models.py` with `@field_validator`.
+- Kept `TimeSegment.end_hour` and `MaterialBalanceInput.edges` cross-field checks by reading `ValidationInfo.data`.
+- Extended `backend/app/tests/pydantic_warning_test.py` to fail on either protected namespace or Pydantic v1 validator warnings from `app.models` import.
+- Updated PRD current-state notes and the legacy drift audit to mark v1 validator warnings closed.
+- Verification:
+  - Warnings capture around `import app.models` reported `v1_validator_warnings=0` and `protected_namespace_warnings=0`.
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\pydantic_warning_test.py app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py app\tests\api\routes\test_asm_udm_validate_response.py app\tests\services -q` passed (`46 passed`, remaining warnings are FastAPI lifespan/python_multipart).
+  - OpenAPI compare from `backend/` still showed 88 current/tracked paths with no missing/extra paths and metadata/description-only drift.
+  - `git diff --check -- backend\app\models.py backend\app\tests docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - FastAPI lifespan deprecation cleanup and legacy OpenAPI metadata refresh remain separate work.
+
 # 2026-05-31 AutoWaterSimu Next Pydantic protected namespace cleanup TODO
 
 - [x] Re-read backend app/models/test README context and legacy drift audit
@@ -24,7 +53,7 @@
   - OpenAPI compare from `backend/` still showed 88 current/tracked paths with no missing/extra paths and metadata/description-only drift.
   - `git diff --check -- backend\app\models.py backend\app\tests docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
 - Remaining scope:
-  - Pydantic v1-style validator migration, FastAPI lifespan cleanup, and legacy OpenAPI metadata refresh remain separate work.
+  - FastAPI lifespan cleanup and legacy OpenAPI metadata refresh remain separate work.
 
 # 2026-05-31 AutoWaterSimu Next legacy cleanup TODO
 
@@ -52,7 +81,7 @@
   - OpenAPI compare first failed from the repository root because backend settings did not load required `.env` values; rerunning from `backend/` showed 88 current/tracked paths with no missing/extra paths and metadata/description-only drift.
   - `git diff --check -- backend\app\api\routes\material_balance.py backend\app\services\data_conversion_service.py docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
 - Remaining scope:
-  - Pydantic v1-style validator cleanup, FastAPI lifespan cleanup, and ad hoc debug/test print cleanup remain separate legacy maintenance work.
+  - FastAPI lifespan cleanup and ad hoc debug/test print cleanup remain separate legacy maintenance work.
 
 # 2026-05-31 AutoWaterSimu Next browser gate expansion TODO
 
@@ -1642,7 +1671,7 @@
   - `git diff --check` passed; Git reported only LF-to-CRLF normalization warnings for touched text files.
 - Notes:
   - The route field test avoids database/auth coupling by calling the validate route functions directly with a minimal user object.
-  - At that time, Pydantic/FastAPI deprecation and protected namespace warnings were outside Phase 0+1 scope; protected namespace warnings were later cleaned in the 2026-05-31 cleanup entry above.
+  - At that time, Pydantic/FastAPI deprecation and protected namespace warnings were outside Phase 0+1 scope; protected namespace and v1 validator warnings were later cleaned in the 2026-05-31 cleanup entries above.
 
 # 2026-05-26 AutoWaterSimu Next Phase 1B TODO
 

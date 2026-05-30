@@ -68,13 +68,13 @@ The remaining semantic JSON differences are non-behavioral metadata/description 
 
 No request/response path or schema shape drift was identified in this comparison. The legacy generated client is therefore not known to be behaviorally stale, but the tracked OpenAPI metadata is not byte-for-byte current.
 
-Importing `app.models` no longer emits Pydantic protected-namespace warnings for `model_id` / `model_pair_mappings`; the affected legacy models now explicitly allow those field names. Pydantic v1-style validator and FastAPI lifespan deprecation warnings remain separate cleanup debt.
+Importing `app.models` no longer emits Pydantic protected-namespace warnings for `model_id` / `model_pair_mappings`; the affected legacy models now explicitly allow those field names. Legacy model validators have been migrated to Pydantic v2 `field_validator`, so `app.models` import no longer emits Pydantic v1-style validator warnings. FastAPI lifespan deprecation warnings remain separate cleanup debt.
 
 ## Current Guardrails
 
 - `backend/app/tests/api/routes/test_flowchart_routes_no_print.py` guards all route modules against active `print(...)`.
 - `backend/app/tests/api/routes/test_asm_udm_validate_response.py` guards ASM1 and UDM validate response shape against the earlier validation response drift.
-- `backend/app/tests/pydantic_warning_test.py` guards `app.models` import against protected namespace warning regressions.
+- `backend/app/tests/pydantic_warning_test.py` guards `app.models` import against protected namespace and Pydantic v1 validator warning regressions.
 - `frontend/README.md` documents that legacy backend schema changes require `frontend/openapi.json` export and `npm run generate-client`.
 - Compute API client generation remains isolated under `frontend/src/client/compute` and does not affect the legacy client.
 
@@ -83,4 +83,4 @@ Importing `app.models` no longer emits Pydantic protected-namespace warnings for
 1. Regenerate legacy `frontend/openapi.json` and legacy client only when a behaviorally relevant FastAPI schema change is made, or when the team wants metadata/docstring drift eliminated from the tracked OpenAPI file.
 2. Remove or convert ad hoc debug scripts with active prints if they become maintained tooling.
 3. Broader legacy mojibake comments/docstrings should be cleaned only with localized tests or when the affected file is already being maintained.
-4. Pydantic v1-style validators and FastAPI lifespan deprecation warnings remain cleanup debt.
+4. FastAPI lifespan deprecation warnings remain cleanup debt.

@@ -2,15 +2,20 @@ import subprocess
 import sys
 
 
-def test_models_import_without_protected_namespace_warnings() -> None:
+def test_models_import_without_pydantic_namespace_or_validator_warnings() -> None:
     script = """
 import warnings
 with warnings.catch_warnings(record=True) as caught:
     warnings.simplefilter("always")
     import app.models  # noqa: F401
-protected = [item for item in caught if "protected namespace" in str(item.message)]
-if protected:
-    for item in protected:
+unexpected = [
+    item
+    for item in caught
+    if "protected namespace" in str(item.message)
+    or "Pydantic V1 style" in str(item.message)
+]
+if unexpected:
+    for item in unexpected:
         print(item.message)
     raise SystemExit(1)
 """

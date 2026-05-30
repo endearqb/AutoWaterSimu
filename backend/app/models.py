@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 from enum import Enum
 
-from pydantic import ConfigDict, EmailStr, Field as PydanticField, validator
+from pydantic import ConfigDict, EmailStr, Field as PydanticField, ValidationInfo, field_validator
 from sqlmodel import Field, Relationship, SQLModel, Column, JSON
 
 
@@ -290,14 +290,14 @@ class NodeData(SQLModel):
         description="UDM局部变量到全局规范变量的绑定关系 [{local_var, canonical_var}]",
     )
     
-    @validator('initial_concentrations')
+    @field_validator('initial_concentrations')
     def validate_concentrations(cls, v):
         if not all(c >= 0 for c in v):
             raise ValueError("Concentrations must be non-negative")
         return v
     
-    @validator('asm1slim_parameters')
-    def validate_asm1slim_parameters(cls, v, values):
+    @field_validator('asm1slim_parameters')
+    def validate_asm1slim_parameters(cls, v):
         if v is not None:
             if len(v) != 7:
                 raise ValueError("ASM1 Slim parameters must contain exactly 7 values: [dSNOmax, dSNHmax, CNRatio, K_S, K_NO, n_g, K_NH]")
@@ -305,8 +305,8 @@ class NodeData(SQLModel):
                 raise ValueError("ASM1 Slim parameters must be non-negative")
         return v
     
-    @validator('asm1_parameters')
-    def validate_asm1_parameters(cls, v, values):
+    @field_validator('asm1_parameters')
+    def validate_asm1_parameters(cls, v):
         if v is not None:
             if len(v) != 19:
                 raise ValueError("ASM1 parameters must contain exactly 19 values: [u_H, K_S, K_OH, K_NO, n_g, b_H, u_A, K_NH, K_OA, b_A, Y_H, Y_A, i_XB, i_XP, f_P, n_h, K_a, K_h, K_x]")
@@ -314,8 +314,8 @@ class NodeData(SQLModel):
                 raise ValueError("ASM1 parameters must be non-negative")
         return v
     
-    @validator('asm3_parameters')
-    def validate_asm3_parameters(cls, v, values):
+    @field_validator('asm3_parameters')
+    def validate_asm3_parameters(cls, v):
         if v is not None:
             if len(v) != 37:
                 raise ValueError("ASM3 parameters must contain exactly 37 values: [k_H, K_X, k_STO, ny_NOX, K_O2, K_NOX, K_S, K_STO, mu_H, K_NH4, K_ALK, b_HO2, b_HNOX, b_STOO2, b_STONOX, mu_A, K_ANH4, K_AO2, K_AALK, b_AO2, b_ANOX, f_SI, Y_STOO2, Y_STONOX, Y_HO2, Y_HNOX, Y_A, f_XI, i_NSI, i_NSS, i_NXI, i_NXS, i_NBM, i_SSXI, i_SSXS, i_SSBM, i_SSSTO]")
@@ -323,7 +323,7 @@ class NodeData(SQLModel):
                 raise ValueError("ASM3 parameters must be non-negative")
         return v
 
-    @validator('udm_component_names')
+    @field_validator('udm_component_names')
     def validate_udm_component_names(cls, v):
         if v is None:
             return v
@@ -370,9 +370,9 @@ class TimeSegment(SQLModel):
         default_factory=dict, description="时段内边覆盖配置（键为边ID）"
     )
 
-    @validator("end_hour")
-    def validate_end_after_start(cls, v, values):
-        start_hour = values.get("start_hour")
+    @field_validator("end_hour")
+    def validate_end_after_start(cls, v, info: ValidationInfo):
+        start_hour = info.data.get("start_hour")
         if start_hour is not None and v <= start_hour:
             raise ValueError("end_hour must be greater than start_hour")
         return v
@@ -403,7 +403,7 @@ class MaterialBalanceInput(SQLModel):
     )
     original_flowchart_data: Optional[Dict[str, Any]] = Field(default=None, description="原始流程图数据，用于保留原始参数名称")
     
-    @validator('nodes')
+    @field_validator('nodes')
     def validate_nodes(cls, v):
         if len(v) < 2:
             raise ValueError("At least 2 nodes are required")
@@ -419,12 +419,12 @@ class MaterialBalanceInput(SQLModel):
         
         return v
     
-    @validator('edges')
-    def validate_edges(cls, v, values):
-        if 'nodes' not in values:
+    @field_validator('edges')
+    def validate_edges(cls, v, info: ValidationInfo):
+        if 'nodes' not in info.data:
             return v
         
-        nodes = values['nodes']
+        nodes = info.data['nodes']
         node_ids = {node.node_id for node in nodes}
         
         # Check edge references
