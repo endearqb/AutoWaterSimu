@@ -33,14 +33,14 @@
 | `src/` | Phase 3C Desktop React dev MVP shell |
 | `src-tauri/` | Rust/Tauri runtime、SQLite store、project registry/project package/recent files/project_id wiring、source-mode worker JSON-RPC、canvas/process graph commands、artifact JSON/CSV/model_run/support bundle/backup smoke |
 
-本目录已提供 PyInstaller one-folder sidecar build、explicit packaged-worker runtime mode、Tauri resource-bundled NSIS installer build、packaging 契约和 artifact smoke 入口。后续仍需评估是否切换到单文件 sidecar + `externalBin`、以及 signing/auto-update。
+本目录已提供 PyInstaller one-folder sidecar build、explicit packaged-worker runtime mode、Tauri resource-bundled NSIS installer build、packaging 契约和 artifact smoke 入口。后续仍需评估是否切换到单文件 sidecar + `externalBin`；signing/auto-update/GitHub Release publication 按 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md` 作为 post-P0 policy-driven work。
 
 ## 3. 维护约定
 
 1. React 不直接启动 worker 或执行 shell。
 2. Rust owns SQLite writes and worker lifecycle。
 3. Phase 3C 使用 source-mode Python worker，通过 JSON-RPC stdin/stdout 通信。
-4. P0 不做 auto update、code signing、Microsoft Store。
+4. P0 不做 auto update、code signing、Microsoft Store 或自动 GitHub Release publication；当前 P0 release artifact 是 unsigned sidecar/NSIS installer 加 smoke evidence。
 5. Project package external open/save uses Tauri dialog; Rust still validates absolute `.autowatersimu-project.json` paths and records successful paths in SQLite `recent_files` as `project_package`。
 6. Desktop Vite dev server 使用 `127.0.0.1:1420`，避免和 legacy `frontend` 的 `5173` 冲突。
 7. Backup/restore P0 先限制在 runtime-local `backups/` sandbox，恢复前必须校验 manifest checksum。

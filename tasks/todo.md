@@ -1,3 +1,32 @@
+# 2026-05-31 AutoWaterSimu Next Desktop release policy boundary TODO
+
+- [x] Re-read Desktop packaging, GitHub workflow, release script, and rebuild plan context
+- [x] Confirm PRD/Spec/Development Plan already mark signing/auto-update/Store as post-P0
+- [x] Add ADR for unsigned P0 artifacts and post-P0 signing/auto-update/GitHub Release publication boundary
+- [x] Update Desktop, packaging, GitHub workflow, release script, and Development Plan records
+- [x] Update completion audit and README First records
+- [x] Run docs diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Treat unsigned sidecar/NSIS installer artifacts plus smoke evidence as the current P0 release artifact boundary.
+- Do not add signing, updater, Store/MSI, GitHub Release publication, or secret handling without a separate policy decision.
+- Keep `workflow_dispatch build_release_artifacts=true` as workflow artifact upload, not automatic release publication.
+
+## Review
+
+- Added `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`.
+- The ADR treats unsigned sidecar/NSIS installer artifacts plus smoke evidence as the current P0 release boundary.
+- GitHub workflow artifact upload remains manual and unsigned; signing, auto update, Store/MSI, and GitHub Release publication require separate policy/secrets/update-channel decisions before implementation.
+- Updated Desktop, packaging, src-tauri, GitHub, workflow, release, Development Plan, completion audit, and README First records.
+- Verification:
+  - `git diff --check -- .ai\decisions apps\desktop .github scripts\release docs\rebuild tasks .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `rg -n "schema_version|P0|P1|P2" docs\rebuild --glob "AutoWaterSimu_Next_*.md"` completed and confirmed the updated checklist remains aligned with PRD/Spec P0 non-goals.
+- Remaining scope:
+  - Live GitHub Windows runner release-build timing/download verification and release runner cache/timing hardening remain follow-up work.
+  - Future signing, auto update, Store/MSI, and GitHub Release publication remain policy-driven post-P0 work.
+
 # 2026-05-31 AutoWaterSimu Next Desktop File Dialog Recent Files TODO
 
 - [x] Re-read Desktop README First context and Tauri dialog/recent_files requirements

@@ -545,4 +545,4 @@
 - [ ] Legacy FastAPI compute marked read-only.
 - [ ] Migration guide published.
 - [ ] Evidence export documented.
-- [ ] Installer signing and auto update explicitly marked post-P0.
+- [x] Installer signing and auto update explicitly marked post-P0.
