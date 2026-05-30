@@ -296,6 +296,37 @@ type ConstraintApplicationPlan struct {
 	Warnings                   []string       `json:"warnings"`
 }
 
+type ResultExplanationRecord struct {
+	SchemaVersion            string          `json:"schema_version"`
+	ExplanationID            string          `json:"explanation_id"`
+	ExplanationSchemaVersion string          `json:"explanation_schema_version"`
+	JobID                    string          `json:"job_id"`
+	Status                   string          `json:"status"`
+	CreatedBy                string          `json:"created_by"`
+	PayloadHash              string          `json:"payload_hash"`
+	Payload                  json.RawMessage `json:"payload"`
+	ResolvedEvidenceRefs     []string        `json:"resolved_evidence_refs"`
+	SourceSystem             string          `json:"source_system"`
+	RequestedBy              string          `json:"requested_by"`
+	TenantID                 string          `json:"tenant_id,omitempty"`
+	ProjectID                string          `json:"project_id,omitempty"`
+	Metadata                 json.RawMessage `json:"metadata,omitempty"`
+	SubmittedAt              time.Time       `json:"submitted_at"`
+	ReviewedBy               string          `json:"reviewed_by,omitempty"`
+	ReviewedAt               *time.Time      `json:"reviewed_at,omitempty"`
+	ReviewDecision           string          `json:"review_decision,omitempty"`
+	ReviewReason             string          `json:"review_reason,omitempty"`
+	PublishedBy              string          `json:"published_by,omitempty"`
+	PublishedAt              *time.Time      `json:"published_at,omitempty"`
+	CreatedAt                time.Time       `json:"created_at"`
+	UpdatedAt                time.Time       `json:"updated_at"`
+}
+
+type ResultExplanationReviewRequest struct {
+	Decision string `json:"decision"`
+	Reason   string `json:"reason,omitempty"`
+}
+
 type DraftConfirmationRecord struct {
 	ConfirmationID     string          `json:"confirmation_id"`
 	SchemaVersion      string          `json:"schema_version"`

@@ -195,6 +195,72 @@
         }
       }
     },
+    "/api/v1/compute/jobs/{job_id}/result-explanations": {
+      "post": {
+        "operationId": "submitResultExplanation",
+        "parameters": [{ "$ref": "#/components/parameters/JobID" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "201": { "description": "Submitted result explanation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultExplanationRecord" } } } },
+          "200": { "description": "Duplicate result explanation with matching payload", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultExplanationRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/compute/jobs/{job_id}/result-explanations/{explanation_id}": {
+      "get": {
+        "operationId": "getResultExplanation",
+        "parameters": [
+          { "$ref": "#/components/parameters/JobID" },
+          { "$ref": "#/components/parameters/ExplanationID" }
+        ],
+        "responses": {
+          "200": { "description": "Result explanation record", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultExplanationRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/compute/jobs/{job_id}/result-explanations/{explanation_id}/review": {
+      "post": {
+        "operationId": "reviewResultExplanation",
+        "parameters": [
+          { "$ref": "#/components/parameters/JobID" },
+          { "$ref": "#/components/parameters/ExplanationID" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultExplanationReviewRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Reviewed result explanation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultExplanationRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/compute/jobs/{job_id}/result-explanations/{explanation_id}/publish": {
+      "post": {
+        "operationId": "publishResultExplanation",
+        "parameters": [
+          { "$ref": "#/components/parameters/JobID" },
+          { "$ref": "#/components/parameters/ExplanationID" }
+        ],
+        "responses": {
+          "200": { "description": "Published result explanation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultExplanationRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/artifacts/{artifact_id}": {
       "get": {
         "operationId": "downloadArtifact",
@@ -401,6 +467,7 @@
       "ProcessGraphID": { "name": "process_graph_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "SimulationInputID": { "name": "simulation_input_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "ConfirmationID": { "name": "confirmation_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ExplanationID": { "name": "explanation_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "WorkerID": { "name": "worker_id", "in": "path", "required": true, "schema": { "type": "string" } }
     },
     "responses": {
@@ -568,6 +635,58 @@
           "would_modify_target": { "type": "boolean" },
           "production_approval_required": { "type": "boolean" },
           "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ResultExplanationRecord": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "explanation_id",
+          "explanation_schema_version",
+          "job_id",
+          "status",
+          "created_by",
+          "payload_hash",
+          "payload",
+          "resolved_evidence_refs",
+          "source_system",
+          "requested_by",
+          "submitted_at",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "schema_version": { "type": "string", "enum": ["result_explanation_record.v1"] },
+          "explanation_id": { "type": "string" },
+          "explanation_schema_version": { "type": "string", "enum": ["result_explanation.v1"] },
+          "job_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["submitted", "approved", "rejected", "published"] },
+          "created_by": { "type": "string" },
+          "payload_hash": { "type": "string" },
+          "payload": { "type": "object", "additionalProperties": true },
+          "resolved_evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "submitted_at": { "type": "string", "format": "date-time" },
+          "reviewed_by": { "type": "string" },
+          "reviewed_at": { "type": "string", "format": "date-time" },
+          "review_decision": { "type": "string", "enum": ["approved", "rejected"] },
+          "review_reason": { "type": "string" },
+          "published_by": { "type": "string" },
+          "published_at": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ResultExplanationReviewRequest": {
+        "type": "object",
+        "required": ["decision"],
+        "properties": {
+          "decision": { "type": "string", "enum": ["approved", "rejected"] },
+          "reason": { "type": "string" }
         }
       },
       "JobRecord": {

@@ -266,6 +266,67 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 		WriteJSON(w, http.StatusOK, snapshot)
 		return
 	}
+	if len(parts) == 2 && parts[1] == "result-explanations" && r.Method == http.MethodPost {
+		principal, err := server.auth.Principal(r, "explanation:write")
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		bytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			WriteError(w, ValidationError("read request body failed"))
+			return
+		}
+		record, status, err := server.service.SubmitResultExplanation(r.Context(), jobID, bytes, "compute-api", principal.Name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, status, record)
+		return
+	}
+	if len(parts) == 3 && parts[1] == "result-explanations" && r.Method == http.MethodGet {
+		record, err := server.service.GetResultExplanation(r.Context(), jobID, parts[2])
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, record)
+		return
+	}
+	if len(parts) == 4 && parts[1] == "result-explanations" && parts[3] == "review" && r.Method == http.MethodPost {
+		principal, err := server.auth.Principal(r, "explanation:write")
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		var request ResultExplanationReviewRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			WriteError(w, ValidationError("result explanation review JSON is invalid"))
+			return
+		}
+		record, err := server.service.ReviewResultExplanation(r.Context(), jobID, parts[2], request, principal.Name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, record)
+		return
+	}
+	if len(parts) == 4 && parts[1] == "result-explanations" && parts[3] == "publish" && r.Method == http.MethodPost {
+		principal, err := server.auth.Principal(r, "explanation:write")
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		record, err := server.service.PublishResultExplanation(r.Context(), jobID, parts[2], principal.Name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, record)
+		return
+	}
 	if len(parts) != 2 {
 		w.WriteHeader(http.StatusNotFound)
 		return

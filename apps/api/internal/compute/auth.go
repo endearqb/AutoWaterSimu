@@ -14,7 +14,7 @@ func NewAuthenticator(tokensJSON string) (*Authenticator, error) {
 	var config TokenConfig
 	if strings.TrimSpace(tokensJSON) == "" {
 		config = TokenConfig{Tokens: []TokenRecord{
-			{Name: "dev-public", Token: "dev-public-token", Scopes: []string{"job:create", "job:read", "artifact:read", "evidence:read", "model:write"}},
+			{Name: "dev-public", Token: "dev-public-token", Scopes: []string{"job:create", "job:read", "artifact:read", "evidence:read", "model:write", "explanation:write"}},
 			{Name: "dev-worker", Token: "dev-worker-token", Scopes: []string{"worker:register", "worker:claim", "worker:heartbeat", "job:write", "artifact:write"}},
 		}}
 	} else if err := json.Unmarshal([]byte(tokensJSON), &config); err != nil {

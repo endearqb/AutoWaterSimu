@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -302,6 +302,103 @@ export class DefaultService {
             },
             query: {
                 ref: data.ref
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.jobId
+     * @param data.requestBody
+     * @returns ResultExplanationRecord Duplicate result explanation with matching payload
+     * @returns ResultExplanationRecord Submitted result explanation
+     * @throws ApiError
+     */
+    public static submitResultExplanation(data: SubmitResultExplanationData): CancelablePromise<SubmitResultExplanationResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/compute/jobs/{job_id}/result-explanations',
+            path: {
+                job_id: data.jobId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.jobId
+     * @param data.explanationId
+     * @returns ResultExplanationRecord Result explanation record
+     * @throws ApiError
+     */
+    public static getResultExplanation(data: GetResultExplanationData): CancelablePromise<GetResultExplanationResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/compute/jobs/{job_id}/result-explanations/{explanation_id}',
+            path: {
+                job_id: data.jobId,
+                explanation_id: data.explanationId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.jobId
+     * @param data.explanationId
+     * @param data.requestBody
+     * @returns ResultExplanationRecord Reviewed result explanation
+     * @throws ApiError
+     */
+    public static reviewResultExplanation(data: ReviewResultExplanationData): CancelablePromise<ReviewResultExplanationResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/compute/jobs/{job_id}/result-explanations/{explanation_id}/review',
+            path: {
+                job_id: data.jobId,
+                explanation_id: data.explanationId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.jobId
+     * @param data.explanationId
+     * @returns ResultExplanationRecord Published result explanation
+     * @throws ApiError
+     */
+    public static publishResultExplanation(data: PublishResultExplanationData): CancelablePromise<PublishResultExplanationResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/compute/jobs/{job_id}/result-explanations/{explanation_id}/publish',
+            path: {
+                job_id: data.jobId,
+                explanation_id: data.explanationId
             },
             errors: {
                 403: 'Contract error',

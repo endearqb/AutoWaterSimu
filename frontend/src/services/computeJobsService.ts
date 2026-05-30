@@ -17,6 +17,8 @@ import type {
   ModelParameterSetTransitionResponse,
   ParameterSetStatusUpdateRequest,
   ProcessGraphRecord as ComputeProcessGraphRecord,
+  ResultExplanationRecord,
+  ResultExplanationReviewRequest,
 } from "@/client/compute"
 import type { ApiRequestOptions } from "@/client/compute/core/ApiRequestOptions"
 import {
@@ -287,6 +289,42 @@ export const computeJobsService = {
       jobId,
       ref: evidenceRef,
     })
+  },
+
+  submitResultExplanation(
+    jobId: string,
+    document: Record<string, unknown>,
+  ): Promise<ResultExplanationRecord> {
+    return DefaultService.submitResultExplanation({
+      jobId,
+      requestBody: document,
+    })
+  },
+
+  getResultExplanation(
+    jobId: string,
+    explanationId: string,
+  ): Promise<ResultExplanationRecord> {
+    return DefaultService.getResultExplanation({ explanationId, jobId })
+  },
+
+  reviewResultExplanation(
+    jobId: string,
+    explanationId: string,
+    request: ResultExplanationReviewRequest,
+  ): Promise<ResultExplanationRecord> {
+    return DefaultService.reviewResultExplanation({
+      explanationId,
+      jobId,
+      requestBody: request,
+    })
+  },
+
+  publishResultExplanation(
+    jobId: string,
+    explanationId: string,
+  ): Promise<ResultExplanationRecord> {
+    return DefaultService.publishResultExplanation({ explanationId, jobId })
   },
 
   listModelRuns(

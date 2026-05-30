@@ -8,7 +8,7 @@
 
 - Versioned SQL up/down migrations for compute metadata。
 - Job、worker、artifact、event、model run 等平台 metadata 表结构。
-- Model catalog、process graph、simulation input、draft confirmation 等合同 payload metadata 表结构。
+- Model catalog、process graph、simulation input、draft confirmation、result explanation 等合同 payload metadata 表结构。
 
 本目录不负责：
 
@@ -27,6 +27,7 @@
 | `0004_draft_confirmations.*.sql` | persisted `draft_confirmation.v1` audit records for Agent/user confirmation gates |
 | `0005_process_graphs.*.sql` | registered `process_graph.v1` payload metadata for ProcessGraph-based simulation checks |
 | `0006_model_catalogs.*.sql` | persisted `model_catalog.v1` snapshot metadata for model governance reads |
+| `0007_result_explanations.*.sql` | persisted `result_explanation.v1` review/publish audit records |
 
 ## 3. 维护约定
 
@@ -36,6 +37,7 @@
 4. Retention columns are metadata only; deletion/archive workers require a separate reviewed lifecycle implementation.
 5. Model catalog, process graph and simulation input registries store validated payload metadata for governance or job creation references; do not store result artifacts or time-series outputs in these tables.
 6. Draft confirmation records are audit metadata only; they must not create jobs, approvals, or production actions by themselves.
+7. Result explanation records are audit metadata only; publish status must not be treated as production approval or control publication.
 
 ## 4. 对外接口
 

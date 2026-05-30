@@ -1,3 +1,29 @@
+# 2026-05-30 AutoWaterSimu Next Result Explanation Workflow TODO
+
+- [x] Re-read PRD/Spec/Development Plan and existing Agent/result explanation context
+- [x] Define minimal no-LLM result explanation workflow boundary
+- [x] Add persisted submit/review/publish API and PostgreSQL migration
+- [x] Add job-scoped evidence ref resolution for generated evidence package refs
+- [x] Update OpenAPI, generated compute client, frontend service wrapper, README, and ADR records
+- [x] Run final frontend build, migration smoke, and diff validation
+- [x] Commit checkpoint
+
+## Review
+
+- Added ADR `.ai/decisions/0006-result-explanation-workflow-scope.md`, fixing result explanations as externally generated, evidence-backed audit metadata.
+- Added `result_explanations` metadata table migration and Go store/service/http support for submit, review, read, and publish.
+- Submit validates `result_explanation.v1`, requires the target job to have a result, enforces path `job_id`, and checks all top-level/statement `evidence_refs` resolve inside the same job.
+- `publish` requires prior `approved` review; neither review nor publish generates explanation text, executes Agent code, or marks production approval complete.
+- Updated OpenAPI and regenerated `frontend/src/client/compute`; `computeJobsService` now exposes submit/get/review/publish wrappers.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`69 passed`).
+  - `cd frontend; npm run generate-compute-client` completed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npm run build` passed with existing Vite warnings only.
+  - Temporary Docker PostgreSQL migration smoke passed for `0001`-`0007` up/down with `COMPUTE_API_MIGRATION_DOWN_SMOKE=true`.
+  - `git diff --check` passed with LF/CRLF warnings only.
+
 # 2026-05-30 AutoWaterSimu Next Constraint Application Plan TODO
 
 - [x] Re-read README First context for contracts, Go Compute API, OpenAPI, and frontend service wrappers

@@ -278,6 +278,8 @@ export type ModelRun = {
 
 export type ParameterConfirmationID = string;
 
+export type ParameterExplanationID = string;
+
 export type ParameterJobID = string;
 
 export type ParameterModelKey = string;
@@ -329,6 +331,51 @@ export type ProcessGraphRecord = {
 
 export type schema_version6 = 'process_graph.v1';
 
+export type ResultExplanationRecord = {
+    schema_version: 'result_explanation_record.v1';
+    explanation_id: string;
+    explanation_schema_version: 'result_explanation.v1';
+    job_id: string;
+    status: 'submitted' | 'approved' | 'rejected' | 'published';
+    created_by: string;
+    payload_hash: string;
+    payload: {
+        [key: string]: unknown;
+    };
+    resolved_evidence_refs: Array<(string)>;
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    submitted_at: string;
+    reviewed_by?: string;
+    reviewed_at?: string;
+    review_decision?: 'approved' | 'rejected';
+    review_reason?: string;
+    published_by?: string;
+    published_at?: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type schema_version7 = 'result_explanation_record.v1';
+
+export type explanation_schema_version = 'result_explanation.v1';
+
+export type status4 = 'submitted' | 'approved' | 'rejected' | 'published';
+
+export type review_decision = 'approved' | 'rejected';
+
+export type ResultExplanationReviewRequest = {
+    decision: 'approved' | 'rejected';
+    reason?: string;
+};
+
+export type decision2 = 'approved' | 'rejected';
+
 export type SimulationInput = {
     [key: string]: unknown;
 };
@@ -351,7 +398,7 @@ export type SimulationInputRecord = {
     created_at: string;
 };
 
-export type schema_version7 = 'simulation_input.v1';
+export type schema_version8 = 'simulation_input.v1';
 
 export type SimulationRequest = {
     schema_version: 'simulation_request.v1';
@@ -378,7 +425,7 @@ export type SimulationRequest = {
     [key: string]: unknown | string;
 };
 
-export type schema_version8 = 'simulation_request.v1';
+export type schema_version9 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1';
 
@@ -488,6 +535,37 @@ export type ResolveEvidenceReferenceData = {
 };
 
 export type ResolveEvidenceReferenceResponse = (EvidenceReferenceResolution);
+
+export type SubmitResultExplanationData = {
+    jobId: string;
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
+
+export type SubmitResultExplanationResponse = (ResultExplanationRecord);
+
+export type GetResultExplanationData = {
+    explanationId: string;
+    jobId: string;
+};
+
+export type GetResultExplanationResponse = (ResultExplanationRecord);
+
+export type ReviewResultExplanationData = {
+    explanationId: string;
+    jobId: string;
+    requestBody: ResultExplanationReviewRequest;
+};
+
+export type ReviewResultExplanationResponse = (ResultExplanationRecord);
+
+export type PublishResultExplanationData = {
+    explanationId: string;
+    jobId: string;
+};
+
+export type PublishResultExplanationResponse = (ResultExplanationRecord);
 
 export type DownloadArtifactData = {
     artifactId: string;
