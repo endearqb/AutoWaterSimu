@@ -213,6 +213,17 @@ export type ModelParameterSet = {
 
 export type status3 = 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
 
+export type ModelParameterSetTransitionResponse = {
+    model_key: string;
+    model_version: string;
+    parameter_set_id: string;
+    from_status: string;
+    to_status: string;
+    catalog_payload_hash: string;
+    created_snapshot: boolean;
+    catalog: ModelCatalog;
+};
+
 export type ModelParameterTemplate = {
     parameter_key: string;
     display_name: string;
@@ -241,7 +252,23 @@ export type ParameterModelKey = string;
 
 export type ParameterModelRunID = string;
 
+export type ParameterModelVersionPath = string;
+
 export type ParameterProcessGraphID = string;
+
+export type ParameterSetStatusUpdateRequest = {
+    parameter_set_id?: string;
+    from_status?: 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
+    to_status: 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
+    reason?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type from_status = 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
+
+export type to_status = 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
 
 export type ParameterSimulationInputID = string;
 
@@ -470,6 +497,14 @@ export type GetModelCatalogModelData = {
 };
 
 export type GetModelCatalogModelResponse = (ModelCatalogModel);
+
+export type UpdateDefaultParameterSetStatusData = {
+    modelKey: string;
+    modelVersion: string;
+    requestBody: ParameterSetStatusUpdateRequest;
+};
+
+export type UpdateDefaultParameterSetStatusResponse = (ModelParameterSetTransitionResponse);
 
 export type ListModelRunsData = {
     cursor?: string;

@@ -15,6 +15,8 @@ const (
 	CodeArtifactNotFound             = "ARTIFACT_NOT_FOUND"
 	CodeModelRunNotFound             = "MODEL_RUN_NOT_FOUND"
 	CodeModelCatalogNotFound         = "MODEL_CATALOG_NOT_FOUND"
+	CodeParameterSetNotFound         = "PARAMETER_SET_NOT_FOUND"
+	CodeParameterSetTransitionFailed = "PARAMETER_SET_TRANSITION_FAILED"
 	CodeProcessGraphNotFound         = "PROCESS_GRAPH_NOT_FOUND"
 	CodeSimulationInputNotFound      = "SIMULATION_INPUT_NOT_FOUND"
 	CodeDraftConfirmationNotFound    = "DRAFT_CONFIRMATION_NOT_FOUND"

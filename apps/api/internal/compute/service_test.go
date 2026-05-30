@@ -648,6 +648,39 @@ func TestModelCatalogEndpoint(t *testing.T) {
 		t.Fatalf("expected persisted model catalog response, got %#v", response)
 	}
 
+	transitionBody := `{"parameter_set_id":"ps_material_balance_default_v1","from_status":"approved","to_status":"retired","reason":"regression test"}`
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/status", strings.NewReader(transitionBody))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("parameter set status transition failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var transition ModelParameterSetTransitionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &transition); err != nil {
+		t.Fatal(err)
+	}
+	if !transition.CreatedSnapshot || transition.FromStatus != "approved" || transition.ToStatus != "retired" ||
+		transition.Catalog.Models[0].Versions[0].DefaultParameterSet.Status != "retired" {
+		t.Fatalf("unexpected parameter set transition response: %#v", transition)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/status", strings.NewReader(`{"from_status":"retired","to_status":"approved"}`))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("invalid parameter set transition should conflict, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/status", strings.NewReader(`{"to_status":"retired"}`))
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not update parameter set status, got %d %s", rec.Code, rec.Body.String())
+	}
+
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance", nil)
 	req.Header.Set("Authorization", "Bearer dev-public-token")
 	rec = httptest.NewRecorder()

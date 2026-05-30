@@ -12,6 +12,8 @@ import type {
   ListModelRunsResponse,
   ModelCatalog,
   ModelCatalogRecord,
+  ModelParameterSetTransitionResponse,
+  ParameterSetStatusUpdateRequest,
   ProcessGraphRecord as ComputeProcessGraphRecord,
 } from "@/client/compute"
 import type { ApiRequestOptions } from "@/client/compute/core/ApiRequestOptions"
@@ -293,6 +295,18 @@ export const computeJobsService = {
 
   registerModelCatalog(catalog: ModelCatalog): Promise<ModelCatalogRecord> {
     return DefaultService.registerModelCatalog({ requestBody: catalog })
+  },
+
+  updateDefaultParameterSetStatus(
+    modelKey: string,
+    modelVersion: string,
+    request: ParameterSetStatusUpdateRequest,
+  ): Promise<ModelParameterSetTransitionResponse> {
+    return DefaultService.updateDefaultParameterSetStatus({
+      modelKey,
+      modelVersion,
+      requestBody: request,
+    })
   },
 
   validateContractDocument(

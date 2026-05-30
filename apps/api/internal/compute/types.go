@@ -224,6 +224,25 @@ type ModelParameterSet struct {
 	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
+type ParameterSetStatusUpdateRequest struct {
+	ParameterSetID string         `json:"parameter_set_id,omitempty"`
+	FromStatus     string         `json:"from_status,omitempty"`
+	ToStatus       string         `json:"to_status"`
+	Reason         string         `json:"reason,omitempty"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
+}
+
+type ModelParameterSetTransitionResponse struct {
+	ModelKey           string               `json:"model_key"`
+	ModelVersion       string               `json:"model_version"`
+	ParameterSetID     string               `json:"parameter_set_id"`
+	FromStatus         string               `json:"from_status"`
+	ToStatus           string               `json:"to_status"`
+	CatalogPayloadHash string               `json:"catalog_payload_hash"`
+	CreatedSnapshot    bool                 `json:"created_snapshot"`
+	Catalog            ModelCatalogResponse `json:"catalog"`
+}
+
 type ModelBenchmarkCase struct {
 	BenchmarkCaseID string         `json:"benchmark_case_id"`
 	DisplayName     string         `json:"display_name"`

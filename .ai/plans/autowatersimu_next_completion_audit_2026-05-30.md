@@ -49,7 +49,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 3 | Desktop MVP | Strong partial | Desktop Rust tests, Desktop typecheck, and Desktop build pass; project registry/export/import/project_id/support bundle commands are present | Complete installer/package smoke, external file dialog allowlist, recent files, full project package content |
 | Phase 4 | Web Compute API P0A/P0B | Strong partial | Go API tests pass; API/worker smoke passes; PostgreSQL migration up/down smoke passes; generated client and Web build pass | Production deployment auth/secrets review; broader browser coverage; CI gate wiring |
 | Phase 5 | ProcessGraph integration and model migration | Strong partial | Contract transforms, current-flow job submission, ProcessGraph registry, and ProcessGraph-to-SimulationInput API resolution exist for material balance | ASM/UDM worker migration, old-vs-worker numerical baseline matrix, Playwright flow smoke beyond current minimal path |
-| Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default approved parameter set, benchmark case metadata, model_run records, evidence governance summary | Parameter set lifecycle transitions, benchmark execution/run history, governance UI beyond Compute Jobs read-only panel |
+| Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, model_run records, evidence governance summary | Multi-parameter-set management, benchmark execution/run history, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, model_run replay, evidence refs, risk findings, evidence governance, service-token scopes/revocation exist | Evidence dereference UI/API, approval integration, NewSystem service-level E2E |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, explicit approved Agent draft promotion, and Web validation panel exist | Constraint draft application semantics, Agent explanation generation/review/publish workflow |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
@@ -64,7 +64,7 @@ Latest recorded but not re-run in this verification refresh:
 
 2. Model governance completion
 
-- Add parameter set lifecycle endpoints on top of the persisted catalog snapshot boundary.
+- Broaden parameter set lifecycle beyond the current default-parameter-set status transition only after multi-parameter-set semantics are defined.
 - Add benchmark run contract and execution history after model catalog persistence is available.
 - Add read-only governance UI separate from Compute Jobs if the route grows too dense.
 
@@ -107,8 +107,8 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Define parameter set lifecycle transition semantics and add endpoints on top of persisted catalog snapshots.
-2. Add evidence/risk finding dereference API or UI for approval pages.
-3. Define constraint draft application semantics and production approval policy.
-4. Add benchmark run contract after benchmark case metadata and catalog persistence have stabilized.
+1. Add evidence/risk finding dereference API or UI for approval pages.
+2. Define constraint draft application semantics and production approval policy.
+3. Add benchmark run contract after benchmark case metadata and catalog persistence have stabilized.
+4. Add read-only governance UI or catalog snapshot history if Compute Jobs grows too dense.
 5. Add release checklist automation, packaged sidecar smoke, and installer smoke evidence.

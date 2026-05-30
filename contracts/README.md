@@ -41,7 +41,7 @@
 2. P0 合同使用 snake_case，例如 `compute_job.v1`。
 3. 合同变更必须同步更新示例、测试和生成类型。
 4. 不把 UI-only 字段放入 worker 可执行合同。
-5. `model_catalog.v1` 只定义跨边界 catalog/版本/参数模板/默认参数集/benchmark case 形状；Go Compute API 可持久化 schema-valid catalog snapshots 用于治理读取，但完整参数集审批流或状态机仍应由 API/数据库实现补充。
+5. `model_catalog.v1` 只定义跨边界 catalog/版本/参数模板/默认参数集/benchmark case 形状；Go Compute API 可持久化 schema-valid catalog snapshots 用于治理读取，并可对现有 default parameter set 做最小状态迁移；完整多参数集审批流或 benchmark-backed 状态机仍应由 API/数据库实现补充。
 6. `artifact.v1.retention_policy` / `retain_until` 只是生命周期 metadata；实际删除、归档或引用计数必须由 API/存储层另行实现并验证。
 7. `constraint_draft.v1` 只表达 Agent/外部系统提出的约束草案；必须经 API 校验和用户确认后，才能参与 simulation request 或生产相关决策。
 8. `draft_confirmation.v1` 只表达用户对草案的 approve/reject/changes_requested 决策；Go API 可持久化确认记录用于审计。确认记录本身不得在 `confirm-draft` 阶段创建 job；只有显式 promotion endpoint 可把 approved `agent_scenario_draft.v1` 中完整且 schema-valid 的 `proposed_request` 转为 simulation check job。

@@ -32,7 +32,7 @@
 2. 服务层可做 compatibility mapping，但不要伪造未确认业务规则。
 3. 错误处理应保留后端结构化错误信息，便于 UI 定位。
 4. Evidence package 下载优先沿用 generated Compute API 配置；当前用 service-local `fetch` 读取 `X-Evidence-Checksum` 响应头并下载后端返回 JSON，不要从前端伪造 evidence 内容。
-5. Model catalog and model run queries use generated Compute API endpoints; catalog snapshot registration must pass a schema-valid `model_catalog.v1` document to the backend and must not implement parameter-set approval transitions in the service layer. Route 层只展示 catalog/version/default parameter set/benchmark case metadata 或传递 `job_id` / `model_key` / `model_version` 等只读过滤条件。
+5. Model catalog and model run queries use generated Compute API endpoints; catalog snapshot registration must pass a schema-valid `model_catalog.v1` document to the backend, and default parameter set status updates must call the generated backend lifecycle endpoint instead of mutating catalog objects locally. Route 层只展示 catalog/version/default parameter set/benchmark case metadata 或传递 `job_id` / `model_key` / `model_version` 等只读过滤条件。
 6. Contract validation wrappers 只调用 `POST /api/v1/contracts/validate`、`POST /api/v1/contracts/confirm-draft`、只读 confirmation record 查询，或显式 `promote-simulation-check` endpoint；不得在服务层自行把 valid Agent / simulation / constraint draft / draft confirmation / result explanation 自动转换为 compute job、审批或解释发布动作。
 
 ## 4. 对外接口

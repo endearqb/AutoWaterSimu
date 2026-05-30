@@ -1946,3 +1946,37 @@
 - `git diff --check` passed with LF/CRLF warnings only.
 - Remaining scope:
 - Parameter set lifecycle endpoints, benchmark run contract/history, standalone governance UI, production approval policy, evidence/risk dereference UI/API, and ASM/UDM catalog expansion remain follow-up work.
+
+# 2026-05-30 AutoWaterSimu Next Parameter Set Lifecycle TODO
+
+- [x] Re-read README First context, persistent catalog ADR, completion audit, Go API, OpenAPI, and frontend service wrappers
+- [x] Record minimal parameter set lifecycle semantics as an ADR
+- [x] Add default parameter set status transition endpoint
+- [x] Generate a new validated catalog snapshot after successful transitions
+- [x] Update OpenAPI, generated compute client, frontend service wrapper, and README boundaries
+- [x] Run Go, contract, frontend type/build, and diff-check validation
+
+## Plan
+
+- Scope lifecycle mutation to `default_parameter_set.status` only.
+- Allow forward transitions `draft -> candidate -> validated -> approved`.
+- Allow `retired` from any non-retired status.
+- Reject backward transitions, transitions out of `retired`, optional `from_status` mismatch, and missing model/version/parameter set.
+- Do not create production approvals, benchmark runs, or multi-parameter-set management in this step.
+
+## Review
+
+- Added ADR `0004-parameter-set-lifecycle-minimal-scope.md`.
+- Added `POST /api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/status`.
+- The endpoint uses `model:write`, validates `to_status` / optional `from_status`, checks the allowed state machine, updates the latest catalog's existing default parameter set, and stores a new catalog snapshot.
+- Repeated requests for the already-current status return a no-op response without creating a new snapshot.
+- OpenAPI and isolated Compute TypeScript client expose `ParameterSetStatusUpdateRequest` and `ModelParameterSetTransitionResponse`; `computeJobsService` has a matching wrapper.
+- Verification:
+- `cd apps\api; go test ./...` passed.
+- `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`68 passed`).
+- `cd frontend; npm run generate-compute-client` completed.
+- `cd frontend; npx tsc --noEmit` passed.
+- `cd frontend; npm run build` passed with existing Vite warnings.
+- `git diff --check` passed with LF/CRLF warnings only.
+- Remaining scope:
+- Multi-parameter-set lifecycle, benchmark-backed approval, benchmark run history, standalone governance UI, production approval policy, and evidence/risk dereference remain follow-up work.

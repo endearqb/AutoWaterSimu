@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, DownloadArtifactData, DownloadArtifactResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -436,6 +436,34 @@ export class DefaultService {
             errors: {
                 403: 'Contract error',
                 404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelKey
+     * @param data.modelVersion
+     * @param data.requestBody
+     * @returns ModelParameterSetTransitionResponse No-op or duplicate parameter set status transition
+     * @returns ModelParameterSetTransitionResponse Created a new catalog snapshot with the parameter set status transition
+     * @throws ApiError
+     */
+    public static updateDefaultParameterSetStatus(data: UpdateDefaultParameterSetStatusData): CancelablePromise<UpdateDefaultParameterSetStatusResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/status',
+            path: {
+                model_key: data.modelKey,
+                model_version: data.modelVersion
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
             }
         });
     }

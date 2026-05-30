@@ -273,6 +273,24 @@
         }
       }
     },
+    "/api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/status": {
+      "post": {
+        "operationId": "updateDefaultParameterSetStatus",
+        "parameters": [
+          { "$ref": "#/components/parameters/ModelKey" },
+          { "$ref": "#/components/parameters/ModelVersionPath" }
+        ],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ParameterSetStatusUpdateRequest" } } } },
+        "responses": {
+          "201": { "description": "Created a new catalog snapshot with the parameter set status transition", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelParameterSetTransitionResponse" } } } },
+          "200": { "description": "No-op or duplicate parameter set status transition", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelParameterSetTransitionResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/model-runs": {
       "get": {
         "operationId": "listModelRuns",
@@ -350,6 +368,7 @@
     "parameters": {
       "JobID": { "name": "job_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "ModelKey": { "name": "model_key", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ModelVersionPath": { "name": "model_version", "in": "path", "required": true, "schema": { "type": "string" } },
       "ModelRunID": { "name": "model_run_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "ProcessGraphID": { "name": "process_graph_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "SimulationInputID": { "name": "simulation_input_id", "in": "path", "required": true, "schema": { "type": "string" } },
@@ -615,6 +634,31 @@
           "parameter_hash": { "type": "string" },
           "parameters": { "type": "object", "additionalProperties": true },
           "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ParameterSetStatusUpdateRequest": {
+        "type": "object",
+        "required": ["to_status"],
+        "properties": {
+          "parameter_set_id": { "type": "string" },
+          "from_status": { "type": "string", "enum": ["draft", "candidate", "validated", "approved", "retired"] },
+          "to_status": { "type": "string", "enum": ["draft", "candidate", "validated", "approved", "retired"] },
+          "reason": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ModelParameterSetTransitionResponse": {
+        "type": "object",
+        "required": ["model_key", "model_version", "parameter_set_id", "from_status", "to_status", "catalog_payload_hash", "created_snapshot", "catalog"],
+        "properties": {
+          "model_key": { "type": "string" },
+          "model_version": { "type": "string" },
+          "parameter_set_id": { "type": "string" },
+          "from_status": { "type": "string" },
+          "to_status": { "type": "string" },
+          "catalog_payload_hash": { "type": "string" },
+          "created_snapshot": { "type": "boolean" },
+          "catalog": { "$ref": "#/components/schemas/ModelCatalog" }
         }
       },
       "ModelRun": { "type": "object", "additionalProperties": true },

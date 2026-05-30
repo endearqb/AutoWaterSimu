@@ -455,21 +455,41 @@ func (server *Server) modelCatalog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
-		WriteError(w, err)
+	rest := strings.TrimPrefix(r.URL.Path, "/api/v1/model-catalog/")
+	parts := strings.Split(strings.Trim(rest, "/"), "/")
+	if len(parts) == 1 && r.Method == http.MethodGet {
+		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		model, err := server.service.ModelCatalogModel(r.Context(), parts[0])
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, model)
 		return
 	}
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if len(parts) == 5 && parts[1] == "versions" && parts[3] == "default-parameter-set" && parts[4] == "status" && r.Method == http.MethodPost {
+		principal, err := server.auth.Principal(r, "model:write")
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		var request ParameterSetStatusUpdateRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			WriteError(w, ValidationError("parameter set status update JSON is invalid"))
+			return
+		}
+		response, status, err := server.service.UpdateDefaultParameterSetStatus(r.Context(), parts[0], parts[2], request, "compute-api", principal.Name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, status, response)
 		return
 	}
-	modelKey := strings.TrimPrefix(r.URL.Path, "/api/v1/model-catalog/")
-	model, err := server.service.ModelCatalogModel(r.Context(), modelKey)
-	if err != nil {
-		WriteError(w, err)
-		return
-	}
-	WriteJSON(w, http.StatusOK, model)
+	w.WriteHeader(http.StatusNotFound)
 }
 
 func (server *Server) modelRuns(w http.ResponseWriter, r *http.Request) {

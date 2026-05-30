@@ -8,7 +8,7 @@
 
 - Job create/get/list/cancel/result/events。
 - Worker register/claim/heartbeat/artifact/succeed/fail。
-- Model catalog snapshot registration/read endpoints。
+- Model catalog snapshot registration/read endpoints and default parameter set status transitions。
 - Model benchmark case metadata for governance smoke。
 - Model run persistence plus read/list lookup。
 - Process graph registry and ProcessGraph-to-SimulationInput resolution for simulation checks。
@@ -54,7 +54,7 @@
 7. Evidence package export must reference artifacts/model runs by id and include a checksum header that browser clients can read through the local CORS expose list; do not inline artifact bytes.
 8. Contract validation endpoints use existing `job:create` scope; `/contracts/validate` validates only schema files compiled by `ContractValidator`, while `/contracts/confirm-draft` additionally validates the embedded draft, persists a draft confirmation audit record, and returns a warning that no compute job was created. `/contracts/confirmations/{confirmation_id}/promote-simulation-check` is the only promotion path: it requires an approved `agent_scenario_draft.v1` confirmation and a schema-valid embedded `simulation_request.v1`. Unknown future contracts must remain invalid until the schema exists.
 9. Static token rotation is represented by overlapping token config and setting old token records to `revoked=true`; revoked tokens must fail authentication even if their scopes match.
-10. Model catalog GET endpoints use `job:read`; `POST /api/v1/model-catalog` uses `model:write` to register schema-valid `model_catalog.v1` snapshots. Reads prefer the latest persisted `default` catalog and fall back to the built-in material-balance catalog when no snapshot exists. This is still not a parameter-set lifecycle or benchmark-run service.
+10. Model catalog GET endpoints use `job:read`; `POST /api/v1/model-catalog` uses `model:write` to register schema-valid `model_catalog.v1` snapshots. Reads prefer the latest persisted `default` catalog and fall back to the built-in material-balance catalog when no snapshot exists. `POST /api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/status` is the only P0 mutable lifecycle endpoint: it updates the existing default parameter set status through allowed forward transitions or retirement and stores a new catalog snapshot. This is still not a multi-parameter-set management or benchmark-run service.
 11. Artifact upload defaults `retention_policy` to `retain_forever`; when workers provide `ttl` / `archive_candidate` and optional `retain_until`, the API records those fields but does not delete or archive files automatically.
 12. When a valid `compute_result.v1` includes top-level `risk_findings`, copy those findings into the stored summary so result read APIs expose them without storing the full result payload in metadata tables.
 13. Evidence governance uses the latest persisted model catalog, with built-in fallback, to mark model version and parameter set status; `production_allowed=true` currently requires an active model version and matching approved default parameter set.

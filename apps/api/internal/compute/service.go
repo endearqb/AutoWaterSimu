@@ -607,6 +607,103 @@ func (svc *Service) ModelCatalogModel(ctx context.Context, modelKey string) (Mod
 	return ModelCatalogModel{}, NotFound("MODEL_NOT_FOUND", "model not found")
 }
 
+func (svc *Service) UpdateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
+	modelKey = required(modelKey, "model_key")
+	modelVersion = required(modelVersion, "model_version")
+	toStatus := strings.TrimSpace(request.ToStatus)
+	if !validParameterSetStatus(toStatus) {
+		return ModelParameterSetTransitionResponse{}, 0, ValidationError("to_status must be one of draft, candidate, validated, approved, retired")
+	}
+	if request.FromStatus != "" && !validParameterSetStatus(request.FromStatus) {
+		return ModelParameterSetTransitionResponse{}, 0, ValidationError("from_status must be one of draft, candidate, validated, approved, retired")
+	}
+	catalog, err := svc.ModelCatalog(ctx)
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	modelIndex, versionIndex := findModelVersionIndex(catalog, modelKey, modelVersion)
+	if modelIndex < 0 || versionIndex < 0 {
+		return ModelParameterSetTransitionResponse{}, 0, NotFound("MODEL_NOT_FOUND", "model version not found")
+	}
+	parameterSet := catalog.Models[modelIndex].Versions[versionIndex].DefaultParameterSet
+	if parameterSet == nil {
+		return ModelParameterSetTransitionResponse{}, 0, NotFound(CodeParameterSetNotFound, "default parameter set not found")
+	}
+	if request.ParameterSetID != "" && strings.TrimSpace(request.ParameterSetID) != parameterSet.ParameterSetID {
+		return ModelParameterSetTransitionResponse{}, 0, NotFound(CodeParameterSetNotFound, "parameter set not found")
+	}
+	fromStatus := strings.TrimSpace(parameterSet.Status)
+	if request.FromStatus != "" && strings.TrimSpace(request.FromStatus) != fromStatus {
+		return ModelParameterSetTransitionResponse{}, 0, Conflict(CodeParameterSetTransitionFailed, "parameter set current status does not match from_status")
+	}
+	if fromStatus == toStatus {
+		hash, err := ResultHash(catalog)
+		if err != nil {
+			return ModelParameterSetTransitionResponse{}, 0, err
+		}
+		return ModelParameterSetTransitionResponse{
+			ModelKey:           modelKey,
+			ModelVersion:       modelVersion,
+			ParameterSetID:     parameterSet.ParameterSetID,
+			FromStatus:         fromStatus,
+			ToStatus:           toStatus,
+			CatalogPayloadHash: hash,
+			CreatedSnapshot:    false,
+			Catalog:            catalog,
+		}, http.StatusOK, nil
+	}
+	if !allowedParameterSetTransition(fromStatus, toStatus) {
+		return ModelParameterSetTransitionResponse{}, 0, Conflict(CodeParameterSetTransitionFailed, "parameter set status transition is not allowed")
+	}
+	parameterSet.Status = toStatus
+	parameterSet.Metadata = copyStringAnyMap(parameterSet.Metadata)
+	parameterSet.Metadata["last_status_transition"] = map[string]any{
+		"from_status": fromStatus,
+		"to_status":   toStatus,
+		"reason":      strings.TrimSpace(request.Reason),
+		"metadata":    request.Metadata,
+		"changed_by":  defaultString(defaultRequestedBy, "compute-api"),
+		"changed_at":  svc.now().Format(time.RFC3339Nano),
+	}
+	catalog.Models[modelIndex].Versions[versionIndex].DefaultParameterSet = parameterSet
+	catalog.GeneratedAt = svc.now().Format(time.RFC3339Nano)
+	catalog.Metadata = copyStringAnyMap(catalog.Metadata)
+	catalog.Metadata["last_parameter_set_transition"] = map[string]any{
+		"model_key":        modelKey,
+		"model_version":    modelVersion,
+		"parameter_set_id": parameterSet.ParameterSetID,
+		"from_status":      fromStatus,
+		"to_status":        toStatus,
+		"reason":           strings.TrimSpace(request.Reason),
+		"metadata":         request.Metadata,
+		"changed_by":       defaultString(defaultRequestedBy, "compute-api"),
+		"changed_at":       svc.now().Format(time.RFC3339Nano),
+	}
+	record, err := svc.modelCatalogRecord(modelCatalogResponseToMap(catalog), defaultSourceSystem, defaultRequestedBy)
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	stored, created, err := svc.store.UpsertModelCatalog(ctx, record)
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	status := http.StatusCreated
+	if !created {
+		status = http.StatusOK
+	}
+	response := ModelParameterSetTransitionResponse{
+		ModelKey:           modelKey,
+		ModelVersion:       modelVersion,
+		ParameterSetID:     parameterSet.ParameterSetID,
+		FromStatus:         fromStatus,
+		ToStatus:           toStatus,
+		CatalogPayloadHash: stored.PayloadHash,
+		CreatedSnapshot:    created,
+		Catalog:            catalog,
+	}
+	return response, status, nil
+}
+
 func (svc *Service) validateModelCatalog(catalog ModelCatalogResponse) error {
 	if svc.validator == nil {
 		return nil
@@ -1011,6 +1108,63 @@ func modelGovernance(catalog ModelCatalogResponse, modelKey, modelVersion, param
 		}
 	}
 	return "unknown", "", "unknown", false
+}
+
+func findModelVersionIndex(catalog ModelCatalogResponse, modelKey, modelVersion string) (int, int) {
+	for modelIndex, model := range catalog.Models {
+		if model.ModelKey != modelKey {
+			continue
+		}
+		for versionIndex, version := range model.Versions {
+			if version.ModelVersion == modelVersion {
+				return modelIndex, versionIndex
+			}
+		}
+		return modelIndex, -1
+	}
+	return -1, -1
+}
+
+func validParameterSetStatus(status string) bool {
+	switch status {
+	case "draft", "candidate", "validated", "approved", "retired":
+		return true
+	default:
+		return false
+	}
+}
+
+func allowedParameterSetTransition(fromStatus, toStatus string) bool {
+	if fromStatus == "retired" {
+		return false
+	}
+	if toStatus == "retired" {
+		return true
+	}
+	order := map[string]int{
+		"draft":     0,
+		"candidate": 1,
+		"validated": 2,
+		"approved":  3,
+	}
+	from, fromOK := order[fromStatus]
+	to, toOK := order[toStatus]
+	return fromOK && toOK && to == from+1
+}
+
+func copyStringAnyMap(value map[string]any) map[string]any {
+	copy := map[string]any{}
+	for key, raw := range value {
+		copy[key] = raw
+	}
+	return copy
+}
+
+func modelCatalogResponseToMap(catalog ModelCatalogResponse) map[string]any {
+	var value map[string]any
+	bytes, _ := json.Marshal(catalog)
+	_ = json.Unmarshal(bytes, &value)
+	return value
 }
 
 func artifactRetention(metadata map[string]any) (string, *time.Time, error) {
