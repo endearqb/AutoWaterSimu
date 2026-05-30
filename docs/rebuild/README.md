@@ -25,6 +25,8 @@
 | `AutoWaterSimu_Next_Technical_Spec_v1.0.md` | 技术接口、状态机、存储和治理规格 |
 | `AutoWaterSimu_Next_Development_Plan_v1.0.md` | 分阶段开发计划和验收 |
 | `AutoWaterSimu_Next_Legacy_Phase0_Drift_Audit_2026-05-31.md` | Phase 0 legacy print/schema/client drift 精确审计 |
+| `AutoWaterSimu_Next_COSS_Source_Manifest_2026-05-31.md` | COSS-compatible UI source copy/license manifest |
+| `AutoWaterSimu_Next_Legacy_Migration_Guide_2026-05-31.md` | legacy FastAPI/React baseline 到 Next worker/API/Desktop 的迁移指南 |
 | `AutoWaterSimu_Final_State_Driven_Plan_v1.2.md` | 原始终态架构输入 |
 | `windows app.md` | Windows Desktop 路线输入 |
 

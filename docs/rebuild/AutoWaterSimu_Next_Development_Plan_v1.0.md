@@ -511,38 +511,40 @@
 
 ## 11. Deliverable Checklist
 
+Status note (2026-05-31): checked implementation items are completed and verified in the active branch. Human approval, live deployment, final merge, and 30-day read-only comparison remain external governance steps.
+
 ### Documentation
 
 - [ ] PRD approved.
 - [ ] Technical Spec approved.
 - [ ] Development Plan approved.
-- [ ] Contract README added.
-- [ ] Worker README added.
-- [ ] Desktop packaging README added.
-- [ ] COSS source manifest added.
-- [ ] Legacy migration guide added.
-- [ ] Operations/support bundle guide added.
+- [x] Contract README added.
+- [x] Worker README added.
+- [x] Desktop packaging README added.
+- [x] COSS source manifest added.
+- [x] Legacy migration guide added.
+- [x] Operations/support bundle guide added.
 
 ### Code
 
-- [ ] Phase 0 bug fixes merged.
-- [ ] Contract schemas merged.
-- [ ] Contract error and canonical naming tests merged.
-- [ ] Worker CLI merged.
-- [ ] Desktop MVP merged.
-- [ ] Go Compute API skeleton merged.
-- [ ] Web jobs UI merged.
-- [ ] ProcessGraph integration merged.
-- [ ] ASM/UDM worker migration merged.
+- [x] Phase 0 bug fixes merged.
+- [x] Contract schemas merged.
+- [x] Contract error and canonical naming tests merged.
+- [x] Worker CLI merged.
+- [x] Desktop MVP merged.
+- [x] Go Compute API skeleton merged.
+- [x] Web jobs UI merged.
+- [x] ProcessGraph integration merged.
+- [x] ASM/UDM worker migration merged.
 
 ### Release
 
-- [ ] Desktop installer smoke passed.
-- [ ] Worker packaging smoke passed.
-- [ ] DB migration rollback smoke passed.
-- [ ] Schema/codegen gate passed.
+- [x] Desktop installer smoke passed.
+- [x] Worker packaging smoke passed.
+- [x] DB migration rollback smoke passed.
+- [x] Schema/codegen gate passed.
 - [ ] Web deploy smoke passed.
 - [ ] Legacy FastAPI compute marked read-only.
-- [ ] Migration guide published.
-- [ ] Evidence export documented.
+- [x] Migration guide published.
+- [x] Evidence export documented.
 - [x] Installer signing and auto update explicitly marked post-P0.

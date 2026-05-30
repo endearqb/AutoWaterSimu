@@ -1,3 +1,31 @@
+# 2026-05-31 AutoWaterSimu Next deliverable docs closeout TODO
+
+- [x] Re-read docs/rebuild and docs/operations README context
+- [x] Add COSS source manifest for current local-owned COSS-compatible UI status
+- [x] Add legacy migration guide with read-only exit criteria and client regeneration rules
+- [x] Add support bundle runbook for Desktop bundles, backup relation, and Compute evidence package boundary
+- [x] Update rebuild/operations README and Development Plan checklist
+- [x] Run document checks and targeted support bundle tests
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep human approval and live deployment smoke unchecked because they require external governance/environment evidence.
+- Do not claim legacy FastAPI compute is read-only; document the exit criteria instead.
+- Treat current COSS-compatible UI as local-owned unless an upstream COSS source copy is explicitly recorded.
+
+## Review
+
+- Added `docs/rebuild/AutoWaterSimu_Next_COSS_Source_Manifest_2026-05-31.md`.
+- Added `docs/rebuild/AutoWaterSimu_Next_Legacy_Migration_Guide_2026-05-31.md`.
+- Added `docs/operations/support_bundle_runbook.md`.
+- Updated Development Plan checklist to distinguish active-branch implementation evidence from external approval/deployment/read-only comparison gates.
+- Verification:
+  - `git diff --check -- docs\rebuild docs\operations tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `rg -n "schema_version|P0|P1|P2" docs\rebuild --glob "AutoWaterSimu_Next_*.md"` completed and confirmed the new docs participate in the rebuild doc scan.
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml support_bundle` passed (`1 passed`).
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml project_package` passed (`1 passed`).
+
 # 2026-05-31 AutoWaterSimu Next legacy FastAPI client refresh TODO
 
 - [x] Re-read frontend generated client README context and legacy Phase 0 drift audit

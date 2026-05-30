@@ -84,6 +84,7 @@ Latest current-turn verification:
 - Legacy model validators in `backend/app/models.py` now use Pydantic v2 `field_validator`; `app.models` import is guarded against protected namespace and v1 validator warning regressions
 - Legacy FastAPI startup/shutdown hooks now use the application lifespan context manager; `app.main` import no longer emits `@app.on_event` deprecation warnings
 - Legacy FastAPI generated client has been refreshed from the current local `frontend/openapi.json` input; the tracked client now includes `UDMComponentDefinition.note` and current legacy calculation endpoint comments
+- Development Plan deliverable docs now include a COSS source manifest, legacy migration guide, and support bundle runbook; checklist items requiring human approval, live deployment, or 30-day read-only evidence remain open
 
 Latest recorded but not re-run in this verification refresh:
 
