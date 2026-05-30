@@ -16,6 +16,7 @@ SUPPORTED_JOB_TYPES = {
     "simulation.material_balance.v1",
     "simulation.asm1slim.v1",
     "simulation.asm1.v1",
+    "simulation.asm3.v1",
 }
 
 
@@ -51,7 +52,7 @@ def simulation_input_to_material_balance_input(
             [
                 _detail(
                     "$.job_type",
-                    "supported job_type values are simulation.material_balance.v1, simulation.asm1slim.v1, and simulation.asm1.v1",
+                    "supported job_type values are simulation.material_balance.v1, simulation.asm1slim.v1, simulation.asm1.v1, and simulation.asm3.v1",
                     simulation_input.get("job_type"),
                 )
             ],

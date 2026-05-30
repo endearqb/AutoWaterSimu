@@ -22,7 +22,7 @@
     "process_graph_version": { "type": "integer", "minimum": 1 },
     "job_type": {
       "type": "string",
-      "enum": ["simulation.material_balance.v1", "simulation.asm1slim.v1", "simulation.asm1.v1"]
+      "enum": ["simulation.material_balance.v1", "simulation.asm1slim.v1", "simulation.asm1.v1", "simulation.asm3.v1"]
     },
     "component_schema": { "type": "object" },
     "nodes": { "type": "array", "minItems": 2, "items": { "type": "object" } },

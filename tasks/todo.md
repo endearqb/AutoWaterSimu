@@ -1,3 +1,36 @@
+# 2026-05-30 AutoWaterSimu Next ASM3 Independent Worker Job Type TODO
+
+- [x] Re-read ASM3 runtime, contracts, worker, simulation core, backend adapter, and tasks context
+- [x] Add `simulation.asm3.v1` to executable compute/simulation/result contracts
+- [x] Add independent ASM3 fixtures and adapter/worker tests
+- [x] Keep Go SimulationRequest, Desktop creation, and frontend submission out of this slice
+- [x] Run contract, core, worker, backend adapter, direct worker, and diff validation
+- [x] Record findings and commit checkpoint
+
+## Plan
+
+- Introduce `simulation.asm3.v1` after the completed ASM1Slim and ASM1 independent job type pattern.
+- Use the existing ASM3 node model branch in the material balance runtime, with 13 state variables and 37 parameters from the runtime model validators and ASM3 reaction implementation.
+- Keep API/UI submission surfaces unchanged until independent model job routing is explicitly designed.
+- Do not claim UDM independent job type in this slice; UDM needs model snapshot and variable binding semantics beyond a simple ASM parameter vector.
+
+## Review
+
+- `compute_job.v1`, `simulation_input.v1`, and `compute_result.v1` now allow `simulation.asm3.v1` in addition to material balance, ASM1Slim, and ASM1 job types.
+- Added independent ASM3 compute/simulation fixtures with 13 ASM3 state variables and 37 ASM3 runtime parameters.
+- Core and legacy backend adapters accept `simulation.asm3.v1` while still converting through the existing MaterialBalanceInput runtime model.
+- Worker self-check now lists `simulation.asm3.v1`; `run_job` preserves that job type in result/artifact payloads and emits `model_run.model_key=asm3`.
+- Updated `tasks/README.md` after finding it conflicted with the existing newest-first `tasks/todo.md` convention.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`81 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` passed (`9 passed`, existing warnings only).
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`11 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services -q` passed (`26 passed`, existing warnings only).
+  - Direct worker run for `asm3_independent.compute_job.v1.json` passed with `job_type=simulation.asm3.v1`, `status=succeeded`, `model_key=asm3`, and `total_steps=11`.
+- Remaining scope:
+  - `simulation_request.v1`, Go API promotion, Desktop job creation, and Web submit UI still accept only the material-balance submission path.
+  - Independent UDM job type remains follow-up work and needs model snapshot / binding fixtures plus parity evidence.
+
 # 2026-05-30 AutoWaterSimu Next ASM1 Independent Worker Job Type TODO
 
 - [x] Re-read ASM1 runtime, contracts, worker, simulation core, and backend adapter context

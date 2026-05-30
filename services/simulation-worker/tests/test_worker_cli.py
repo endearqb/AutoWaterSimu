@@ -30,6 +30,13 @@ ASM1_INDEPENDENT_JOB = (
     / "valid"
     / "asm1_independent.compute_job.v1.json"
 )
+ASM3_INDEPENDENT_JOB = (
+    REPO_ROOT
+    / "contracts"
+    / "examples"
+    / "valid"
+    / "asm3_independent.compute_job.v1.json"
+)
 
 
 def _run_worker(args: list[str], *, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -61,6 +68,7 @@ def test_worker_self_check_outputs_json() -> None:
     assert "simulation.material_balance.v1" in payload["supported_job_types"]
     assert "simulation.asm1slim.v1" in payload["supported_job_types"]
     assert "simulation.asm1.v1" in payload["supported_job_types"]
+    assert "simulation.asm3.v1" in payload["supported_job_types"]
     assert "asm1slim" in payload["capabilities"]
     assert payload["git_sha"]
     assert payload["packaging_mode"] in {"source", "frozen"}
@@ -185,6 +193,33 @@ def test_worker_run_independent_asm1_job_type(tmp_path: Path) -> None:
     assert model_run["model_run_id"] == "mr_job_asm1_independent_asm1"
     assert model_run["model_key"] == "asm1"
     assert model_run["model_version"] == "asm1.v1"
+
+
+def test_worker_run_independent_asm3_job_type(tmp_path: Path) -> None:
+    completed = _run_worker([
+        "--run-job",
+        str(ASM3_INDEPENDENT_JOB),
+        "--artifact-dir",
+        str(tmp_path),
+    ])
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    _validate("compute_result.v1.json", result)
+    assert result["status"] == "succeeded"
+    assert result["job_type"] == "simulation.asm3.v1"
+
+    artifact = result["artifacts"][0]
+    artifact_path = tmp_path / Path(artifact["object_key"])
+    time_series = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert time_series["job_type"] == "simulation.asm3.v1"
+    assert time_series["node_data"]["n_reactor"]["S_S"]
+
+    model_run = result["runtime_audit"]["model_runs"][0]
+    _validate("model_run.v1.json", model_run)
+    assert model_run["model_run_id"] == "mr_job_asm3_independent_asm3"
+    assert model_run["model_key"] == "asm3"
+    assert model_run["model_version"] == "asm3.v1"
 
 
 def test_worker_invalid_job_returns_failed_result_without_traceback(tmp_path: Path) -> None:

@@ -1,0 +1,153 @@
+{
+  "schema_version": "compute_job.v1",
+  "job_id": "job_asm3_independent",
+  "job_type": "simulation.asm3.v1",
+  "queue": "simulation",
+  "request_id": "req_asm3_independent",
+  "idempotency_key": "idem_asm3_independent",
+  "payload": {
+    "schema_version": "simulation_input.v1",
+    "simulation_input_id": "si_asm3_independent",
+    "process_graph_id": "pg_asm3_independent",
+    "process_graph_version": 1,
+    "job_type": "simulation.asm3.v1",
+    "component_schema": {
+      "component_schema_id": "asm3_components.v1",
+      "components": ["X_H", "X_A", "X_S", "X_I", "X_ND", "X_STO", "S_O", "S_S", "S_NO", "S_NH", "S_ND", "S_ALK", "S_I"],
+      "unit": "mg/L"
+    },
+    "nodes": [
+      {
+        "node_id": "n_in",
+        "node_type": "input",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "X_H": 20.0,
+          "X_A": 2.0,
+          "X_S": 15.0,
+          "X_I": 10.0,
+          "X_ND": 1.0,
+          "X_STO": 2.0,
+          "S_O": 2.0,
+          "S_S": 20.0,
+          "S_NO": 5.0,
+          "S_NH": 20.0,
+          "S_ND": 1.0,
+          "S_ALK": 7.0,
+          "S_I": 30.0
+        },
+        "is_inlet": true,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_reactor",
+        "node_type": "asm3",
+        "initial_volume": 10.0,
+        "initial_concentrations": {
+          "X_H": 30.0,
+          "X_A": 5.0,
+          "X_S": 25.0,
+          "X_I": 25.0,
+          "X_ND": 1.0,
+          "X_STO": 5.0,
+          "S_O": 2.0,
+          "S_S": 20.0,
+          "S_NO": 5.0,
+          "S_NH": 20.0,
+          "S_ND": 1.0,
+          "S_ALK": 7.0,
+          "S_I": 30.0
+        },
+        "asm3_parameters": [3.0, 0.1, 5.0, 0.8, 0.2, 0.5, 2.0, 1.0, 2.0, 0.05, 0.1, 0.2, 0.1, 0.2, 0.1, 1.0, 1.0, 0.4, 0.5, 0.05, 0.05, 0.0, 0.85, 0.8, 0.63, 0.54, 0.24, 0.1, 0.01, 0.03, 0.02, 0.04, 0.07, 0.75, 0.75, 0.9, 0.85],
+        "is_inlet": false,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_out",
+        "node_type": "output",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "X_H": 0.0,
+          "X_A": 0.0,
+          "X_S": 0.0,
+          "X_I": 0.0,
+          "X_ND": 0.0,
+          "X_STO": 0.0,
+          "S_O": 0.0,
+          "S_S": 0.0,
+          "S_NO": 0.0,
+          "S_NH": 0.0,
+          "S_ND": 0.0,
+          "S_ALK": 0.0,
+          "S_I": 0.0
+        },
+        "is_inlet": false,
+        "is_outlet": true
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "e_in_reactor",
+        "source_node_id": "n_in",
+        "target_node_id": "n_reactor",
+        "flow_rate": 10.0,
+        "concentration_transform": {
+          "X_H": { "a": 1.0, "b": 0.0 },
+          "X_A": { "a": 1.0, "b": 0.0 },
+          "X_S": { "a": 1.0, "b": 0.0 },
+          "X_I": { "a": 1.0, "b": 0.0 },
+          "X_ND": { "a": 1.0, "b": 0.0 },
+          "X_STO": { "a": 1.0, "b": 0.0 },
+          "S_O": { "a": 1.0, "b": 0.0 },
+          "S_S": { "a": 1.0, "b": 0.0 },
+          "S_NO": { "a": 1.0, "b": 0.0 },
+          "S_NH": { "a": 1.0, "b": 0.0 },
+          "S_ND": { "a": 1.0, "b": 0.0 },
+          "S_ALK": { "a": 1.0, "b": 0.0 },
+          "S_I": { "a": 1.0, "b": 0.0 }
+        }
+      },
+      {
+        "edge_id": "e_reactor_out",
+        "source_node_id": "n_reactor",
+        "target_node_id": "n_out",
+        "flow_rate": 10.0,
+        "concentration_transform": {
+          "X_H": { "a": 1.0, "b": 0.0 },
+          "X_A": { "a": 1.0, "b": 0.0 },
+          "X_S": { "a": 1.0, "b": 0.0 },
+          "X_I": { "a": 1.0, "b": 0.0 },
+          "X_ND": { "a": 1.0, "b": 0.0 },
+          "X_STO": { "a": 1.0, "b": 0.0 },
+          "S_O": { "a": 1.0, "b": 0.0 },
+          "S_S": { "a": 1.0, "b": 0.0 },
+          "S_NO": { "a": 1.0, "b": 0.0 },
+          "S_NH": { "a": 1.0, "b": 0.0 },
+          "S_ND": { "a": 1.0, "b": 0.0 },
+          "S_ALK": { "a": 1.0, "b": 0.0 },
+          "S_I": { "a": 1.0, "b": 0.0 }
+        }
+      }
+    ],
+    "parameters": {
+      "hours": 0.5,
+      "steps_per_hour": 20,
+      "solver_method": "scipy_solver",
+      "tolerance": 0.000001
+    },
+    "runtime_options": {
+      "model_family": "asm3"
+    }
+  },
+  "context": {
+    "source_system": "autowatersimu",
+    "requested_by": "user:test",
+    "trace_id": "trace_asm3_independent"
+  },
+  "execution": {
+    "time_limit_sec": 600,
+    "priority": "normal",
+    "required_capabilities": ["asm3", "ode"]
+  },
+  "created_at": "2026-05-30T00:00:00Z"
+}

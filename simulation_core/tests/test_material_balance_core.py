@@ -41,6 +41,13 @@ ASM1_INDEPENDENT_SIMULATION_INPUT = (
     / "valid"
     / "asm1_independent.simulation_input.v1.json"
 )
+ASM3_INDEPENDENT_SIMULATION_INPUT = (
+    REPO_ROOT
+    / "contracts"
+    / "examples"
+    / "valid"
+    / "asm3_independent.simulation_input.v1.json"
+)
 
 sys.path.insert(0, str(SIMULATION_CORE_PYTHON))
 sys.path.insert(0, str(BACKEND_PATH))
@@ -239,6 +246,29 @@ def test_core_calculator_matches_backend_for_independent_asm1_job_type() -> None
     assert core_input.nodes[1].node_type == "asm1"
     assert core_input.nodes[1].asm1_parameters is not None
     assert len(core_input.nodes[1].asm1_parameters) == 19
+    assert core_result.summary["total_steps"] == backend_result.summary["total_steps"]
+    assert _final_component_value(core_result, "n_reactor", "S_S", 1) == pytest.approx(
+        _final_component_value(backend_result, "n_reactor", "S_S", 1),
+        rel=1e-6,
+        abs=1e-9,
+    )
+
+
+def test_core_calculator_matches_backend_for_independent_asm3_job_type() -> None:
+    simulation_input = _load_json(ASM3_INDEPENDENT_SIMULATION_INPUT)
+
+    core_input = simulation_input_to_material_balance_input(simulation_input)
+    backend_input = backend_simulation_input_to_material_balance_input(simulation_input)
+
+    core_result = MaterialBalanceCalculator().calculate(core_input)
+    backend_result = BackendMaterialBalanceCalculator().calculate(backend_input)
+
+    assert simulation_input["job_type"] == "simulation.asm3.v1"
+    assert core_result.status == "success"
+    assert backend_result.status == "success"
+    assert core_input.nodes[1].node_type == "asm3"
+    assert core_input.nodes[1].asm3_parameters is not None
+    assert len(core_input.nodes[1].asm3_parameters) == 37
     assert core_result.summary["total_steps"] == backend_result.summary["total_steps"]
     assert _final_component_value(core_result, "n_reactor", "S_S", 1) == pytest.approx(
         _final_component_value(backend_result, "n_reactor", "S_S", 1),

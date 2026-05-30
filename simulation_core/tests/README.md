@@ -8,7 +8,7 @@
 
 - core import boundary 测试。
 - core adapter 行为测试。
-- 与 legacy backend 的 material balance、ASM1Slim model-bound、`simulation.asm1slim.v1` 和 `simulation.asm1.v1` 数值 parity 测试。
+- 与 legacy backend 的 material balance、ASM1Slim model-bound、`simulation.asm1slim.v1`、`simulation.asm1.v1` 和 `simulation.asm3.v1` 数值 parity 测试。
 
 本目录不负责：
 
@@ -27,7 +27,7 @@
 1. import boundary 测试不得把 `backend/` 加入 subprocess `PYTHONPATH`。
 2. parity 测试可以导入 backend baseline，但必须和 boundary 测试分开。
 3. tolerance 默认使用 `rtol=1e-6`、`atol=1e-9`。
-4. ASM/UDM 迁移期测试应先覆盖 runtime binding 字段保留和 legacy backend parity，再新增独立 job type 测试；当前 `simulation.asm1slim.v1` 与 `simulation.asm1.v1` 已有独立 job type parity。
+4. ASM/UDM 迁移期测试应先覆盖 runtime binding 字段保留和 legacy backend parity，再新增独立 job type 测试；当前 `simulation.asm1slim.v1`、`simulation.asm1.v1` 与 `simulation.asm3.v1` 已有独立 job type parity。
 
 ## 4. 对外接口
 

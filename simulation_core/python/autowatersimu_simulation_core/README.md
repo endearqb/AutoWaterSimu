@@ -7,7 +7,7 @@
 本目录负责：
 
 - material balance runtime 的公开 import surface。
-- `simulation_input.v1` 到 core runtime model 的 adapter，包括 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1` 和 ASM/UDM 节点 runtime binding 字段。
+- `simulation_input.v1` 到 core runtime model 的 adapter，包括 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 和 ASM/UDM 节点 runtime binding 字段。
 - core-side validation error 到 `contract_error.v1` 风格的映射。
 
 本目录不负责：

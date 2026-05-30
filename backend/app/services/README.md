@@ -20,7 +20,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
-| `simulation_input_adapter.py` | `simulation_input.v1` 到 legacy `MaterialBalanceInput` 的迁移期 adapter，支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1` 与 `simulation.asm1.v1` |
+| `simulation_input_adapter.py` | `simulation_input.v1` 到 legacy `MaterialBalanceInput` 的迁移期 adapter，支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1` 与 `simulation.asm3.v1` |
 | `time_segment_validation.py` | legacy flowchart time segment normalize / validate / convert helpers |
 | `data_conversion_service.py` | legacy flowchart 到后端计算输入的转换服务 |
 
