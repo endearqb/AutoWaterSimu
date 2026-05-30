@@ -16,7 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
-import { FiRefreshCw, FiSearch, FiTrash2 } from "react-icons/fi"
+import { FiArchive, FiRefreshCw, FiSearch } from "react-icons/fi"
 
 import type {
   ArtifactRetentionAction,
@@ -167,6 +167,10 @@ function actionPalette(action: ArtifactRetentionAction["action"]) {
       return "red"
     case "would_delete":
       return "orange"
+    case "archived":
+      return "green"
+    case "would_archive":
+      return "blue"
     default:
       return "gray"
   }
@@ -194,6 +198,7 @@ function RetentionReportTable({
             <Table.ColumnHeader>Job</Table.ColumnHeader>
             <Table.ColumnHeader>Policy</Table.ColumnHeader>
             <Table.ColumnHeader>Action</Table.ColumnHeader>
+            <Table.ColumnHeader>Archive</Table.ColumnHeader>
             <Table.ColumnHeader>Reason</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
@@ -211,6 +216,9 @@ function RetentionReportTable({
                 <Badge colorPalette={actionPalette(item.action)}>
                   {item.action}
                 </Badge>
+              </Table.Cell>
+              <Table.Cell maxW="220px" truncate>
+                {item.archive_object_key ?? item.archive_provider ?? "N/A"}
               </Table.Cell>
               <Table.Cell maxW="260px" truncate>
                 {item.reason ?? "N/A"}
@@ -249,10 +257,15 @@ function ComputeLifecycle() {
   const wouldDelete = reportItems.filter(
     (item) => item.action === "would_delete",
   ).length
+  const wouldArchive = reportItems.filter(
+    (item) => item.action === "would_archive",
+  ).length
   const archiveBlocked = reportItems.filter(
     (item) => item.reason === "archive_executor_not_configured",
   ).length
-  const deleteEnabled = Boolean(retentionReport?.dry_run && wouldDelete > 0)
+  const retentionEnabled = Boolean(
+    retentionReport?.dry_run && wouldDelete + wouldArchive > 0,
+  )
 
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ["compute-lifecycle"] })
@@ -379,11 +392,11 @@ function ComputeLifecycle() {
                 size="sm"
                 colorPalette="red"
                 variant="outline"
-                disabled={pending || !deleteEnabled}
+                disabled={pending || !retentionEnabled}
                 onClick={() => deleteMutation.mutate()}
               >
-                <FiTrash2 />
-                Delete eligible TTL
+                <FiArchive />
+                Apply retention
               </Button>
             </HStack>
           </Flex>
@@ -391,15 +404,18 @@ function ComputeLifecycle() {
           <Grid
             templateColumns={{
               base: "repeat(2, minmax(0, 1fr))",
-              md: "repeat(6, minmax(0, 1fr))",
+              md: "repeat(4, minmax(0, 1fr))",
+              xl: "repeat(7, minmax(0, 1fr))",
             }}
             gap={3}
             my={4}
           >
             <MetricTile label="Checked" value={retentionReport?.checked} />
             <MetricTile label="Deleted" value={retentionReport?.deleted} />
+            <MetricTile label="Archived" value={retentionReport?.archived} />
             <MetricTile label="Skipped" value={retentionReport?.skipped} />
             <MetricTile label="Would delete" value={wouldDelete} />
+            <MetricTile label="Would archive" value={wouldArchive} />
             <MetricTile label="Archive blockers" value={archiveBlocked} />
             <MetricTile
               label="Generated"

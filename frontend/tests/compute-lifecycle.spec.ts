@@ -91,6 +91,7 @@ test("shows lifecycle metrics and runs guarded retention sweep", async ({
       await route.fulfill(
         json({
           schema_version: "artifact_retention_sweep.v1",
+          archived: 0,
           checked: 2,
           deleted: dryRun ? 0 : 1,
           dry_run: dryRun,
@@ -133,7 +134,7 @@ test("shows lifecycle metrics and runs guarded retention sweep", async ({
   ).toBeVisible()
 
   const deleteButton = page.getByRole("button", {
-    name: /Delete eligible TTL/i,
+    name: /Apply retention/i,
   })
   await expect(deleteButton).toBeDisabled()
 

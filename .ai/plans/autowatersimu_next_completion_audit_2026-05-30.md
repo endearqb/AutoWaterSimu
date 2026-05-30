@@ -19,7 +19,7 @@ Latest current-turn verification:
 
 - `backend\.venv\Scripts\python -m pytest contracts\tests -q`: passed, `83 passed`
 - `cd apps\api; go test ./...`: passed
-- Go API service-level artifact retention sweep now deletes expired unreferenced `ttl` artifacts, protects artifacts referenced by persisted `model_run.v1.evidence_refs`, and records an audit event; a manual admin endpoint exists, while scheduler/archive backend are not exposed yet
+- Go API service-level artifact retention sweep now deletes expired unreferenced `ttl` artifacts, protects artifacts referenced by persisted `model_run.v1.evidence_refs`, and records an audit event; a manual admin endpoint exists and the optional scheduler reuses the same path
 - Go API now exposes `POST /api/v1/admin/artifacts/retention-sweep` behind `artifact:admin`, with safe `dry_run=true` default and explicit `dry_run=false` deletion path wired through OpenAPI and generated Compute TypeScript client
 - `/metrics` now reports store-backed API up, job status, registered worker, artifact metadata, and retention candidate gauges without mutating lifecycle state
 - `docs/operations/compute_api_lifecycle_runbook.md` documents current health/metrics checks, manual admin retention sweep, scope boundaries, recovery limits, scheduler status, and triage checklist
@@ -29,7 +29,7 @@ Latest current-turn verification:
 - `docs/operations/monitoring/compute_api_alerts.yml` now provides Prometheus alert rules for API down, queued jobs without workers, failed/timed-out jobs, and persistent retention backlog
 - `docs/operations/compute_api_backup_restore_runbook.md` now documents the PostgreSQL metadata plus local artifact directory backup/restore boundary required before destructive retention deletion
 - `docs/operations/compute_api_token_secret_runbook.md` now documents static bearer token scope boundaries, deployment secret handling, overlap rotation, config-level revocation, validation commands, and incident response without introducing dynamic RBAC
-- `.ai/decisions/0010-artifact-archive-backend-boundary.md` records that `archive_candidate` remains skipped until a future archive backend can copy, verify, and durably record archive metadata before hot-storage deletion
+- `.ai/decisions/0010-artifact-archive-backend-boundary.md` records the archive backend safety model; `COMPUTE_API_ARCHIVE_DIR` now enables a first `local_fs_archive` backend that copy/checksum-verifies archive candidates, records durable archive metadata and `artifact.archived`, removes the hot object, and keeps normal artifact download working through archive fallback
 - `benchmark_run.v1` contract, PostgreSQL history table, record/list/get API, generated client, and frontend service wrappers exist; recording benchmark runs validates catalog benchmark case status, default parameter set hash, matching model_run, and job-scoped evidence refs
 - Approved `constraint_draft.v1` confirmation can produce a read-only `constraint_application_plan.v1` through Go API tests; the plan is advisory-only and keeps `would_create_job=false` / `would_modify_target=false`
 - Externally generated `result_explanation.v1` can be submitted, reviewed, read, and published through Go API tests after job-scoped evidence ref checks; publish is audit metadata only
@@ -75,6 +75,7 @@ Latest current-turn verification:
 - GitHub `workflow_dispatch` now has an explicit `build_release_artifacts=true` path that builds the packaged sidecar and NSIS installer on a Windows runner, reads artifact paths from packaging manifests, passes those paths into the release gate, and uploads unsigned Desktop artifacts as workflow artifacts
 - Desktop project package export/import now includes job input snapshots, job events, artifact/support bundle file contents encoded in the package with checksum verification, and import restores project metadata, CanvasGraphs, compute jobs, artifacts, model runs, job events, support bundles, and files when the package carries verified file records
 - Next release workflow now cancels superseded runs per ref, uses npm/Go/Rust cache configuration, and exposes manual `skip_long=true` while leaving default PR gate behavior unchanged
+- OpenAPI and generated Compute TypeScript client now expose retention `archived` count plus `would_archive` / `archived` actions; Compute Jobs and Compute lifecycle UI enable retention apply only after dry-run reports `would_delete` or `would_archive`
 
 Latest recorded but not re-run in this verification refresh:
 
@@ -94,7 +95,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 6.1 | Model governance | Strong partial | Persistent model catalog snapshots with built-in fallback, default parameter set status transition, benchmark case metadata, benchmark_run history, model_run records, evidence governance summary | Multi-parameter-set management, scheduled benchmark execution, benchmark-backed parameter promotion, governance UI beyond Compute Jobs read-only panel |
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
-| Phase 6.4 | Lifecycle and operations | Strong partial | Artifact retention metadata, admin-scoped manual retention sweep API with safe dry-run default, disabled-by-default scheduler, guarded Compute Jobs retention UI, dedicated Compute lifecycle admin page, store-backed `/metrics` gauges, operations runbook, backup/restore runbook, Prometheus alert rule examples, archive backend boundary ADR, internal service-level retention sweep with model_run reference protection, generated client wrapper, and static token revoke exist | Archive backend implementation and Alertmanager/dashboard deployment |
+| Phase 6.4 | Lifecycle and operations | Strong partial | Artifact retention metadata, admin-scoped manual retention sweep API with safe dry-run default, disabled-by-default scheduler, guarded Compute Jobs retention UI, dedicated Compute lifecycle admin page, store-backed `/metrics` gauges, operations runbook, backup/restore/token runbooks, Prometheus alert rule examples, archive backend boundary ADR, opt-in `local_fs_archive` backend with durable metadata/download fallback, internal service-level retention sweep with model_run reference protection, generated client wrapper, and static token revoke exist | Production object-store archive backend and Alertmanager/dashboard deployment |
 | Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist; worker matrix and current-flow browser smoke have explicit opt-in switches; real PyInstaller sidecar artifact, NSIS installer artifact, installed-sidecar smoke, and release gate pass evidence exist locally; manual workflow_dispatch can now build and upload unsigned Desktop workflow artifacts; workflow concurrency/cache/manual `skip_long` controls exist; signing/auto-update/GitHub Release publication are explicitly post-P0 policy-driven work in ADR 0011 | Live runner timing/download verification |
 
 ## Remaining Roadmap
@@ -130,7 +131,7 @@ Latest recorded but not re-run in this verification refresh:
 
 6. Lifecycle/operations completion
 
-- Keep lifecycle operation surface conservative: current admin-scoped manual retention sweep defaults to dry-run and protects model_run evidence refs before deleting only expired unreferenced `ttl` artifacts.
+- Keep lifecycle operation surface conservative: current admin-scoped manual retention sweep defaults to dry-run, protects model_run evidence refs, deletes only expired unreferenced `ttl` artifacts, and archives `archive_candidate` artifacts only when `COMPUTE_API_ARCHIVE_DIR` is configured.
 - Extend operational metrics into executable alert rules and scheduler/archive metrics after those lifecycle components exist.
 - Keep production token/secret handling aligned with the static bearer token runbook until a separate dynamic auth design exists.
 
@@ -144,6 +145,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Add archive backend implementation and Alertmanager/dashboard deployment wiring for artifact/model-run lifecycle management.
+1. Add production object-store archive backend and Alertmanager/dashboard deployment wiring for artifact/model-run lifecycle management.
 2. Harden live release artifact download verification; add GitHub Release publication, signing, and auto-update only after policy/secrets/update-channel decisions are defined.
 3. Add real deployed Go API/browser E2E once deployment wiring and deployment-specific secret-manager policy are available.

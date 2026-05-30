@@ -243,6 +243,10 @@ func (store *PostgresStore) ListArtifactRetentionCandidates(ctx context.Context,
 		artifactSelectSQL()+` WHERE retention_policy IN ('ttl','archive_candidate')
 			AND retain_until IS NOT NULL
 			AND retain_until <= $1
+			AND NOT EXISTS (
+				SELECT 1 FROM artifact_archives aa
+				WHERE aa.artifact_id = artifacts.id AND aa.status = 'archived'
+			)
 			ORDER BY retain_until, created_at, id
 			LIMIT $2`,
 		now,
@@ -303,6 +307,76 @@ func (store *PostgresStore) DeleteArtifact(ctx context.Context, artifactID strin
 	return tx.Commit(ctx)
 }
 
+func (store *PostgresStore) UpsertArtifactArchive(ctx context.Context, archive ArtifactArchiveRecord, event EventRecord) error {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var jobID string
+	if err := tx.QueryRow(ctx, "SELECT job_id FROM artifacts WHERE id=$1 FOR UPDATE", archive.ArtifactID).Scan(&jobID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return NotFound(CodeArtifactNotFound, "artifact not found")
+		}
+		return err
+	}
+	archive.JobID = jobID
+	_, err = tx.Exec(ctx, `INSERT INTO artifact_archives (
+		artifact_id, job_id, original_storage_provider, original_object_key,
+		archive_provider, archive_object_key, checksum, size_bytes, status, metadata_json, archived_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+	ON CONFLICT (artifact_id) DO UPDATE SET
+		job_id=EXCLUDED.job_id,
+		original_storage_provider=EXCLUDED.original_storage_provider,
+		original_object_key=EXCLUDED.original_object_key,
+		archive_provider=EXCLUDED.archive_provider,
+		archive_object_key=EXCLUDED.archive_object_key,
+		checksum=EXCLUDED.checksum,
+		size_bytes=EXCLUDED.size_bytes,
+		status=EXCLUDED.status,
+		metadata_json=EXCLUDED.metadata_json,
+		archived_at=EXCLUDED.archived_at`,
+		archive.ArtifactID, archive.JobID, archive.OriginalStorageProvider, archive.OriginalObjectKey,
+		archive.ArchiveProvider, archive.ArchiveObjectKey, archive.Checksum, archive.SizeBytes,
+		archive.Status, archive.Metadata, archive.ArchivedAt,
+	)
+	if err != nil {
+		return err
+	}
+	event.JobID = jobID
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", event.JobID, event.EventType, event.EventJSON, event.CreatedAt); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func (store *PostgresStore) FindArtifactArchive(ctx context.Context, artifactID string) (*ArtifactArchiveRecord, error) {
+	row := store.pool.QueryRow(ctx, `SELECT artifact_id, job_id, original_storage_provider, original_object_key,
+		archive_provider, archive_object_key, checksum, size_bytes, status,
+		COALESCE(metadata_json,'null'::jsonb), archived_at
+		FROM artifact_archives WHERE artifact_id=$1`, artifactID)
+	var archive ArtifactArchiveRecord
+	if err := row.Scan(
+		&archive.ArtifactID,
+		&archive.JobID,
+		&archive.OriginalStorageProvider,
+		&archive.OriginalObjectKey,
+		&archive.ArchiveProvider,
+		&archive.ArchiveObjectKey,
+		&archive.Checksum,
+		&archive.SizeBytes,
+		&archive.Status,
+		&archive.Metadata,
+		&archive.ArchivedAt,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, NotFound(CodeArtifactNotFound, "artifact archive not found")
+		}
+		return nil, err
+	}
+	return &archive, nil
+}
+
 func (store *PostgresStore) Metrics(ctx context.Context, now time.Time) (MetricsSnapshot, error) {
 	snapshot := MetricsSnapshot{
 		GeneratedAt:  now,
@@ -336,7 +410,11 @@ func (store *PostgresStore) Metrics(ctx context.Context, now time.Time) (Metrics
 		`SELECT COUNT(*) FROM artifacts
 			WHERE retention_policy IN ('ttl','archive_candidate')
 				AND retain_until IS NOT NULL
-				AND retain_until <= $1`,
+				AND retain_until <= $1
+				AND NOT EXISTS (
+					SELECT 1 FROM artifact_archives aa
+					WHERE aa.artifact_id = artifacts.id AND aa.status = 'archived'
+				)`,
 		now,
 	).Scan(&retentionCandidates); err != nil {
 		return MetricsSnapshot{}, err

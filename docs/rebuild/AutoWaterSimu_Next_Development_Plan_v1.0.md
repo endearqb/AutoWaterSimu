@@ -464,8 +464,8 @@
 
 任务:
 
-- artifact retention policy。
-- job event retention / archive policy。
+- artifact retention policy and admin dry-run-first sweep。
+- job event retention / archive policy, including opt-in `local_fs_archive` for archive candidates。
 - support bundle format。
 - OpenTelemetry adoption trigger。
 - multi-tenant deployment boundary document。

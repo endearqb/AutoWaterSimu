@@ -5,11 +5,11 @@
 This runbook covers current AutoWaterSimu Next Compute API operations for:
 
 - health and metrics checks;
-- manual artifact retention sweep;
+- manual artifact retention sweep and opt-in local filesystem archive handling;
 - token scope requirements for lifecycle actions;
 - incident triage around job backlog, worker availability, and retention backlog.
 
-It does not describe an archive backend, lifecycle UI, or production alert manager. Those components are not implemented yet.
+It does not describe a production object-store archive backend, lifecycle UI, or production alert manager. Local filesystem archive handling exists only when `COMPUTE_API_ARCHIVE_DIR` is explicitly configured.
 
 ## Required Context
 
@@ -17,7 +17,8 @@ It does not describe an archive backend, lifecycle UI, or production alert manag
 - Admin retention calls require a bearer token with `artifact:admin`.
 - Worker artifact upload uses `artifact:write`; do not reuse worker tokens for retention deletion.
 - Token storage, rotation, and emergency revocation procedures are documented in `docs/operations/compute_api_token_secret_runbook.md`.
-- The retention sweep deletes only expired, unreferenced `ttl` artifacts. It skips `retain_forever`, skips `archive_candidate`, and protects artifacts referenced by persisted `model_run.v1.evidence_refs`.
+- The retention sweep deletes only expired, unreferenced `ttl` artifacts. It protects artifacts referenced by persisted `model_run.v1.evidence_refs`.
+- Expired, unreferenced `archive_candidate` artifacts are skipped with `archive_executor_not_configured` unless `COMPUTE_API_ARCHIVE_DIR` enables `local_fs_archive`.
 
 ## Health And Metrics
 
@@ -72,7 +73,9 @@ Review the returned `artifact_retention_sweep.v1` report:
 
 - `would_delete` means an expired unreferenced `ttl` artifact would be deleted in an actual sweep.
 - `skipped` with `referenced_by_model_run` means model-run evidence still references the artifact.
-- `skipped` with `archive_executor_not_configured` means an `archive_candidate` artifact cannot be processed until archive storage is implemented under `.ai/decisions/0010-artifact-archive-backend-boundary.md`.
+- `would_archive` means an expired unreferenced `archive_candidate` artifact would be copied to the configured archive store and removed from hot storage in an actual sweep.
+- `archived` means the archive copy was checksum-verified, archive metadata and `artifact.archived` event were written, and the hot object was removed; normal artifact download should still work through archive fallback.
+- `skipped` with `archive_executor_not_configured` means `COMPUTE_API_ARCHIVE_DIR` is not configured, so the `archive_candidate` artifact cannot be processed.
 
 Run deletion only after dry-run review:
 
@@ -104,6 +107,7 @@ The API process has an optional retention scheduler, disabled by default:
 | `COMPUTE_API_RETENTION_SWEEP_INTERVAL` | unset | Enables the scheduler when set to a Go duration such as `1h` |
 | `COMPUTE_API_RETENTION_SWEEP_DRY_RUN` | `true` | Keeps scheduled sweeps as dry-run unless explicitly set to `false` |
 | `COMPUTE_API_RETENTION_SWEEP_LIMIT` | `100` | Candidate limit per sweep |
+| `COMPUTE_API_ARCHIVE_DIR` | unset | Enables `local_fs_archive` handling for expired unreferenced `archive_candidate` artifacts |
 
 Recommended rollout:
 
@@ -112,14 +116,14 @@ Recommended rollout:
 3. Requires operator or policy approval.
 4. Calls `dry_run=false` only for approved windows.
 
-Do not enable scheduled deletion until artifact backup/restore expectations and alerting are reviewed for the deployment.
+Do not enable scheduled deletion or archive processing until artifact backup/restore expectations and alerting are reviewed for the deployment.
 
 ## Triage Checklist
 
 1. Confirm `healthz`, `readyz`, and `/metrics` respond.
 2. Check job status metrics for queued/running/failed/timed-out changes.
 3. Check registered worker count.
-4. For retention backlog, run a dry-run sweep and inspect skip reasons.
+4. For retention backlog, run a dry-run sweep and inspect skip reasons, `would_delete`, and `would_archive`.
 5. For evidence concerns, resolve refs through job-scoped evidence endpoints before deleting artifacts.
 6. If token scope errors appear, verify `COMPUTE_API_TOKENS_JSON` grants the narrow required scope rather than broad worker or public UI scopes.
 7. If a bearer token is suspected to be exposed, follow `compute_api_token_secret_runbook.md` before running any destructive retention operation.

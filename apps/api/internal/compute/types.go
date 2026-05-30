@@ -21,6 +21,7 @@ const (
 type Config struct {
 	DatabaseURL            string
 	ArtifactDir            string
+	ArchiveDir             string
 	TokensJSON             string
 	Port                   string
 	RepoRoot               string
@@ -107,6 +108,20 @@ type ArtifactRecord struct {
 	CreatedAt       time.Time       `json:"created_at"`
 }
 
+type ArtifactArchiveRecord struct {
+	ArtifactID              string          `json:"artifact_id"`
+	JobID                   string          `json:"job_id"`
+	OriginalStorageProvider string          `json:"original_storage_provider"`
+	OriginalObjectKey       string          `json:"original_object_key"`
+	ArchiveProvider         string          `json:"archive_provider"`
+	ArchiveObjectKey        string          `json:"archive_object_key"`
+	Checksum                string          `json:"checksum"`
+	SizeBytes               int64           `json:"size_bytes"`
+	Status                  string          `json:"status"`
+	Metadata                json.RawMessage `json:"metadata,omitempty"`
+	ArchivedAt              time.Time       `json:"archived_at"`
+}
+
 type ArtifactRetentionSweepOptions struct {
 	DryRun bool
 	Limit  int
@@ -129,19 +144,22 @@ type ArtifactRetentionSweepReport struct {
 	DryRun        bool                      `json:"dry_run"`
 	Checked       int                       `json:"checked"`
 	Deleted       int                       `json:"deleted"`
+	Archived      int                       `json:"archived"`
 	Skipped       int                       `json:"skipped"`
 	Items         []ArtifactRetentionAction `json:"items"`
 	GeneratedAt   time.Time                 `json:"generated_at"`
 }
 
 type ArtifactRetentionAction struct {
-	ArtifactID      string     `json:"artifact_id"`
-	JobID           string     `json:"job_id"`
-	RetentionPolicy string     `json:"retention_policy"`
-	RetainUntil     *time.Time `json:"retain_until,omitempty"`
-	Action          string     `json:"action"`
-	Reason          string     `json:"reason,omitempty"`
-	BlockingRefs    []string   `json:"blocking_refs,omitempty"`
+	ArtifactID       string     `json:"artifact_id"`
+	JobID            string     `json:"job_id"`
+	RetentionPolicy  string     `json:"retention_policy"`
+	RetainUntil      *time.Time `json:"retain_until,omitempty"`
+	Action           string     `json:"action"`
+	Reason           string     `json:"reason,omitempty"`
+	BlockingRefs     []string   `json:"blocking_refs,omitempty"`
+	ArchiveProvider  string     `json:"archive_provider,omitempty"`
+	ArchiveObjectKey string     `json:"archive_object_key,omitempty"`
 }
 
 type MetricsSnapshot struct {

@@ -38,7 +38,7 @@
 
 不应该依赖：
 
-- 未实现的 archive backend 指标。
+- 尚未暴露的 archive-specific 指标。
 - 私有 dashboard 或外部告警平台。
 
 ## 6. 测试与验证

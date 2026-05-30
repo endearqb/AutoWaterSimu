@@ -27,6 +27,7 @@ func run() error {
 	config := compute.Config{
 		DatabaseURL:            os.Getenv("COMPUTE_API_DATABASE_URL"),
 		ArtifactDir:            getenv("COMPUTE_API_ARTIFACT_DIR", filepath.Join(repoRoot, "tmp", "compute-api-artifacts")),
+		ArchiveDir:             os.Getenv("COMPUTE_API_ARCHIVE_DIR"),
 		TokensJSON:             os.Getenv("COMPUTE_API_TOKENS_JSON"),
 		Port:                   getenv("COMPUTE_API_PORT", "8088"),
 		RepoRoot:               repoRoot,
@@ -45,6 +46,14 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	var archiveStore compute.ArtifactStore
+	if config.ArchiveDir != "" {
+		archiveStore, err = compute.NewLocalArtifactStore(config.ArchiveDir)
+		if err != nil {
+			return err
+		}
+		slog.Info("artifact archive backend enabled", "provider", "local_fs_archive")
+	}
 	validator, err := compute.NewContractValidator(config.RepoRoot)
 	if err != nil {
 		return err
@@ -53,7 +62,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	service := compute.NewService(store, artifactStore, validator)
+	service := compute.NewServiceWithArchive(store, artifactStore, archiveStore, validator)
 	schedulerCtx, stopScheduler := context.WithCancel(context.Background())
 	defer stopScheduler()
 	if config.RetentionSweepInterval > 0 {

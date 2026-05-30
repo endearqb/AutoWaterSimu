@@ -1,3 +1,38 @@
+# 2026-05-31 AutoWaterSimu Next artifact archive backend TODO
+
+- [x] Re-read archive ADR, Compute API retention implementation, migrations, OpenAPI, and operations context
+- [x] Add durable artifact archive metadata for PostgreSQL and memory store
+- [x] Add opt-in local filesystem archive store wiring through `COMPUTE_API_ARCHIVE_DIR`
+- [x] Archive expired unreferenced `archive_candidate` artifacts with copy/checksum verification before hot deletion
+- [x] Keep normal artifact download working from archive storage after hot file deletion
+- [x] Update OpenAPI, generated compute client, README/runbook/audit records
+- [x] Run focused Go/frontend validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep the existing behavior unchanged when no archive store is configured: `archive_candidate` remains skipped with `archive_executor_not_configured`.
+- When `COMPUTE_API_ARCHIVE_DIR` is configured, copy archive candidates into a separate local artifact store, verify checksum, persist archive metadata plus `artifact.archived` event, then remove the hot object file while retaining artifact metadata.
+- Exclude already archived artifacts from retention candidates and let normal download fall back to archive storage if the hot object is gone.
+- Treat this as the first local backend only; external object storage, restore UI, and production storage policy remain future deployment work.
+
+## Review
+
+- Added `artifact_archives` migration and store methods for durable archive metadata.
+- Added `COMPUTE_API_ARCHIVE_DIR` wiring; archive handling remains disabled when the variable is unset.
+- Retention sweep now reports `would_archive` in dry-run and `archived` after copy/checksum/metadata/event/hot-delete for eligible unreferenced archive candidates.
+- Normal artifact download falls back to archive storage when hot storage no longer has the object.
+- Updated OpenAPI/generated Compute types and Compute Jobs / Compute lifecycle UI to show archive counts/actions and enable apply only after dry-run.
+- Updated ADR 0010, Compute API README files, operations runbooks, rebuild docs, audit, and change records.
+- Verification:
+  - `gofmt -w ...; cd apps\api; go test ./...` passed.
+  - `cd frontend; npm run generate-compute-client` passed; generated trailing whitespace was stripped without reformatting the whole client.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line` passed (`1 passed`).
+  - `git diff --check -- apps\api frontend docs\operations docs\rebuild .ai\decisions tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Production object-store archive backend, archive-specific metrics/dashboard, deployed archive restore/read smoke, and storage policy remain future deployment work.
+
 # 2026-05-31 AutoWaterSimu Next Compute API token secret runbook TODO
 
 - [x] Re-read Compute API auth, operations README, lifecycle runbook, and completion audit context

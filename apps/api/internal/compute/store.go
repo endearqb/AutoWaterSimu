@@ -23,6 +23,8 @@ type Store interface {
 	ListArtifactRetentionCandidates(ctx context.Context, now time.Time, limit int) ([]ArtifactRecord, error)
 	ArtifactReferences(ctx context.Context, artifactID string) ([]string, error)
 	DeleteArtifact(ctx context.Context, artifactID string, event EventRecord) error
+	UpsertArtifactArchive(ctx context.Context, archive ArtifactArchiveRecord, event EventRecord) error
+	FindArtifactArchive(ctx context.Context, artifactID string) (*ArtifactArchiveRecord, error)
 	InsertModelRuns(ctx context.Context, jobID string, modelRuns []json.RawMessage, now time.Time) error
 	FindModelRun(ctx context.Context, modelRunID string) (json.RawMessage, error)
 	ListModelRuns(ctx context.Context, filter ModelRunFilter) ([]json.RawMessage, string, int, error)
@@ -74,6 +76,7 @@ type MemoryStore struct {
 	jobs          map[string]JobRecord
 	events        map[string][]EventRecord
 	artifacts     map[string]ArtifactRecord
+	archives      map[string]ArtifactArchiveRecord
 	modelRuns     map[string]json.RawMessage
 	benchmarkRuns map[string]BenchmarkRunRecord
 	modelCatalogs map[string][]ModelCatalogRecord
@@ -90,6 +93,7 @@ func NewMemoryStore() *MemoryStore {
 		jobs:          map[string]JobRecord{},
 		events:        map[string][]EventRecord{},
 		artifacts:     map[string]ArtifactRecord{},
+		archives:      map[string]ArtifactArchiveRecord{},
 		modelRuns:     map[string]json.RawMessage{},
 		benchmarkRuns: map[string]BenchmarkRunRecord{},
 		modelCatalogs: map[string][]ModelCatalogRecord{},
@@ -252,6 +256,11 @@ func (store *MemoryStore) ListArtifactRetentionCandidates(_ context.Context, now
 		if !artifactRetentionPolicyEligible(artifact.RetentionPolicy) {
 			continue
 		}
+		if artifact.RetentionPolicy == "archive_candidate" {
+			if archive, ok := store.archives[artifact.ArtifactID]; ok && archive.Status == "archived" {
+				continue
+			}
+		}
 		if artifact.RetainUntil == nil || artifact.RetainUntil.After(now) {
 			continue
 		}
@@ -303,11 +312,38 @@ func (store *MemoryStore) DeleteArtifact(_ context.Context, artifactID string, e
 		return NotFound(CodeArtifactNotFound, "artifact not found")
 	}
 	delete(store.artifacts, artifactID)
+	delete(store.archives, artifactID)
 	if _, ok := store.jobs[artifact.JobID]; ok {
 		event.JobID = artifact.JobID
 		store.appendEventLocked(event)
 	}
 	return nil
+}
+
+func (store *MemoryStore) UpsertArtifactArchive(_ context.Context, archive ArtifactArchiveRecord, event EventRecord) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	artifact, ok := store.artifacts[archive.ArtifactID]
+	if !ok {
+		return NotFound(CodeArtifactNotFound, "artifact not found")
+	}
+	archive.JobID = artifact.JobID
+	store.archives[archive.ArtifactID] = archive
+	if _, ok := store.jobs[artifact.JobID]; ok {
+		event.JobID = artifact.JobID
+		store.appendEventLocked(event)
+	}
+	return nil
+}
+
+func (store *MemoryStore) FindArtifactArchive(_ context.Context, artifactID string) (*ArtifactArchiveRecord, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	archive, ok := store.archives[artifactID]
+	if !ok {
+		return nil, NotFound(CodeArtifactNotFound, "artifact archive not found")
+	}
+	return &archive, nil
 }
 
 func (store *MemoryStore) Metrics(_ context.Context, now time.Time) (MetricsSnapshot, error) {
@@ -322,6 +358,11 @@ func (store *MemoryStore) Metrics(_ context.Context, now time.Time) (MetricsSnap
 		if artifactRetentionPolicyEligible(artifact.RetentionPolicy) &&
 			artifact.RetainUntil != nil &&
 			!artifact.RetainUntil.After(now) {
+			if artifact.RetentionPolicy == "archive_candidate" {
+				if archive, ok := store.archives[artifact.ArtifactID]; ok && archive.Status == "archived" {
+					continue
+				}
+			}
 			retentionCandidates++
 		}
 	}

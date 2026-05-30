@@ -17,12 +17,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { type KeyboardEvent, useMemo, useState } from "react"
 import {
+  FiArchive,
   FiDownload,
   FiPlus,
   FiRefreshCw,
   FiSearch,
   FiSend,
-  FiTrash2,
   FiXCircle,
 } from "react-icons/fi"
 
@@ -484,7 +484,11 @@ function ArtifactRetentionPanel({
 }) {
   const wouldDelete =
     report?.items.filter((item) => item.action === "would_delete").length ?? 0
-  const deleteEnabled = Boolean(report?.dry_run && wouldDelete > 0)
+  const wouldArchive =
+    report?.items.filter((item) => item.action === "would_archive").length ?? 0
+  const retentionEnabled = Boolean(
+    report?.dry_run && wouldDelete + wouldArchive > 0,
+  )
 
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
@@ -504,11 +508,11 @@ function ArtifactRetentionPanel({
             size="sm"
             colorPalette="red"
             variant="outline"
-            disabled={deletePending || !deleteEnabled}
+            disabled={deletePending || !retentionEnabled}
             onClick={onDelete}
           >
-            <FiTrash2 />
-            Delete eligible TTL
+            <FiArchive />
+            Apply retention
           </Button>
         </HStack>
       </Flex>
@@ -516,15 +520,17 @@ function ArtifactRetentionPanel({
       <Grid
         templateColumns={{
           base: "repeat(2, minmax(0, 1fr))",
-          md: "repeat(5, minmax(0, 1fr))",
+          md: "repeat(7, minmax(0, 1fr))",
         }}
         gap={3}
         mb={3}
       >
         <Field label="Checked" value={report?.checked} />
         <Field label="Deleted" value={report?.deleted} />
+        <Field label="Archived" value={report?.archived} />
         <Field label="Skipped" value={report?.skipped} />
         <Field label="Would delete" value={wouldDelete} />
+        <Field label="Would archive" value={wouldArchive} />
         <Field label="Generated" value={formatDateTime(report?.generated_at)} />
       </Grid>
 

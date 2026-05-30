@@ -26,7 +26,7 @@
 ## 3. 维护约定
 
 1. Runbook 必须基于当前代码事实和已验证命令。
-2. 尚未实现的 archive backend、UI 或告警部署只能写为待实施项；scheduler 已实现但默认关闭，alert rules 仅表示可执行规则文件。
+2. 尚未实现的生产对象存储 archive backend、UI 或告警部署只能写为待实施项；scheduler 和 `local_fs_archive` 已实现但默认关闭，alert rules 仅表示可执行规则文件。
 3. 涉及 destructive 操作时必须先写 dry-run 和回滚限制。
 4. Compute API retention deletion 前必须明确 PostgreSQL metadata 与 artifact object files 的一致性备份/恢复边界。
 5. Token/secret runbook 只能使用占位符，不得记录真实 bearer token、签名 key、数据库密码或更新通道密钥。

@@ -784,12 +784,13 @@
       },
       "ArtifactRetentionSweepReport": {
         "type": "object",
-        "required": ["schema_version", "dry_run", "checked", "deleted", "skipped", "items", "generated_at"],
+        "required": ["schema_version", "dry_run", "checked", "deleted", "archived", "skipped", "items", "generated_at"],
         "properties": {
           "schema_version": { "type": "string", "enum": ["artifact_retention_sweep.v1"] },
           "dry_run": { "type": "boolean" },
           "checked": { "type": "integer" },
           "deleted": { "type": "integer" },
+          "archived": { "type": "integer" },
           "skipped": { "type": "integer" },
           "items": { "type": "array", "items": { "$ref": "#/components/schemas/ArtifactRetentionAction" } },
           "generated_at": { "type": "string", "format": "date-time" }
@@ -803,9 +804,11 @@
           "job_id": { "type": "string" },
           "retention_policy": { "type": "string", "enum": ["retain_forever", "ttl", "archive_candidate"] },
           "retain_until": { "type": "string", "format": "date-time" },
-          "action": { "type": "string", "enum": ["would_delete", "deleted", "skipped"] },
+          "action": { "type": "string", "enum": ["would_delete", "deleted", "would_archive", "archived", "skipped"] },
           "reason": { "type": "string" },
-          "blocking_refs": { "type": "array", "items": { "type": "string" } }
+          "blocking_refs": { "type": "array", "items": { "type": "string" } },
+          "archive_provider": { "type": "string" },
+          "archive_object_key": { "type": "string" }
         }
       },
       "EventRecord": { "type": "object", "additionalProperties": true },

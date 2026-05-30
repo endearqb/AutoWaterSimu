@@ -25,6 +25,19 @@ func testService(t *testing.T) *Service {
 	return NewService(NewMemoryStore(), artifactStore, nil)
 }
 
+func testServiceWithArchive(t *testing.T) *Service {
+	t.Helper()
+	artifactStore, err := NewLocalArtifactStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	archiveStore, err := NewLocalArtifactStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return NewServiceWithArchive(NewMemoryStore(), artifactStore, archiveStore, nil)
+}
+
 func testValidatedService(t *testing.T) *Service {
 	t.Helper()
 	artifactStore, err := NewLocalArtifactStore(t.TempDir())
@@ -76,6 +89,11 @@ func encodeMap(t *testing.T, value map[string]any) []byte {
 
 func uploadTestArtifact(t *testing.T, svc *Service, ctx context.Context, workerID, jobID, artifactID string, artifactBytes []byte, retainUntil string) ArtifactRecord {
 	t.Helper()
+	return uploadTestArtifactWithRetention(t, svc, ctx, workerID, jobID, artifactID, artifactBytes, "ttl", retainUntil)
+}
+
+func uploadTestArtifactWithRetention(t *testing.T, svc *Service, ctx context.Context, workerID, jobID, artifactID string, artifactBytes []byte, retentionPolicy, retainUntil string) ArtifactRecord {
+	t.Helper()
 	artifact := map[string]any{
 		"schema_version":   "artifact.v1",
 		"artifact_id":      artifactID,
@@ -87,7 +105,7 @@ func uploadTestArtifact(t *testing.T, svc *Service, ctx context.Context, workerI
 		"size_bytes":       len(artifactBytes),
 		"checksum":         "sha256:" + SHA256Hex(artifactBytes),
 		"created_at":       time.Now().UTC().Format(time.RFC3339),
-		"retention_policy": "ttl",
+		"retention_policy": retentionPolicy,
 		"retain_until":     retainUntil,
 	}
 	tempFile, err := os.CreateTemp(t.TempDir(), "artifact-*.json")
@@ -353,6 +371,130 @@ func TestArtifactRetentionSweepDeletesOnlyUnreferencedExpiredTTL(t *testing.T) {
 	}
 	if !foundRetentionEvent {
 		t.Fatalf("retention deletion should write an audit event")
+	}
+}
+
+func TestArtifactRetentionSweepSkipsArchiveCandidateWithoutBackend(t *testing.T) {
+	svc := testService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	worker, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_archive_skip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Claim(ctx, worker.WorkerID); err != nil {
+		t.Fatal(err)
+	}
+	candidate := uploadTestArtifactWithRetention(
+		t,
+		svc,
+		ctx,
+		worker.WorkerID,
+		"job_material_balance_minimal",
+		"art_archive_skip",
+		[]byte(`{"archive":false}`),
+		"archive_candidate",
+		"2026-06-01T00:00:00Z",
+	)
+
+	report, err := svc.SweepArtifactRetention(ctx, ArtifactRetentionSweepOptions{
+		DryRun: true,
+		Now:    time.Date(2026, 6, 2, 0, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Checked != 1 || report.Skipped != 1 || report.Items[0].Action != "skipped" || report.Items[0].Reason != "archive_executor_not_configured" {
+		t.Fatalf("archive candidate should be blocked when archive backend is not configured: %#v", report)
+	}
+	if _, _, err := svc.DownloadArtifact(ctx, candidate.ArtifactID); err != nil {
+		t.Fatalf("skipped archive candidate should remain hot-downloadable: %v", err)
+	}
+}
+
+func TestArtifactRetentionSweepArchivesCandidateWithConfiguredBackend(t *testing.T) {
+	svc := testServiceWithArchive(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	worker, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_archive"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Claim(ctx, worker.WorkerID); err != nil {
+		t.Fatal(err)
+	}
+	retainUntil := "2026-06-01T00:00:00Z"
+	artifactBytes := []byte(`{"archive":true}`)
+	candidate := uploadTestArtifactWithRetention(t, svc, ctx, worker.WorkerID, "job_material_balance_minimal", "art_archive_candidate", artifactBytes, "archive_candidate", retainUntil)
+	result := map[string]any{
+		"schema_version": "compute_result.v1",
+		"job_id":         "job_material_balance_minimal",
+		"job_type":       "simulation.material_balance.v1",
+		"status":         StatusSucceeded,
+		"summary":        map[string]any{"converged": true},
+		"data":           map[string]any{},
+		"quality":        map[string]any{"data_quality": "ok", "warnings": []any{}},
+		"artifacts":      []any{candidate},
+		"runtime_audit":  map[string]any{"model_runs": []any{}, "timings_ms": map[string]any{}, "fallback_used": false},
+	}
+	if _, err := svc.Complete(ctx, worker.WorkerID, "job_material_balance_minimal", 1, result); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Date(2026, 6, 2, 0, 0, 0, 0, time.UTC)
+	dryRun, err := svc.SweepArtifactRetention(ctx, ArtifactRetentionSweepOptions{DryRun: true, Now: now})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dryRun.Checked != 1 || dryRun.Archived != 0 || dryRun.Skipped != 0 || dryRun.Items[0].Action != "would_archive" {
+		t.Fatalf("unexpected archive dry-run report: %#v", dryRun)
+	}
+
+	report, err := svc.SweepArtifactRetention(ctx, ArtifactRetentionSweepOptions{Now: now})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Checked != 1 || report.Archived != 1 || report.Deleted != 0 || report.Skipped != 0 {
+		t.Fatalf("unexpected archive report: %#v", report)
+	}
+	action := report.Items[0]
+	if action.Action != "archived" || action.ArchiveProvider != "local_fs_archive" || action.ArchiveObjectKey == "" {
+		t.Fatalf("archive action should include archive metadata, got %#v", action)
+	}
+	if _, err := svc.artifacts.Read(ctx, candidate.ObjectKey); err == nil || ToAppError(err).ErrorCode != CodeArtifactNotFound {
+		t.Fatalf("hot artifact should be removed after archive metadata is recorded, got %#v", err)
+	}
+	_, downloaded, err := svc.DownloadArtifact(ctx, candidate.ArtifactID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(downloaded) != string(artifactBytes) {
+		t.Fatalf("downloaded archive artifact mismatch")
+	}
+	second, err := svc.SweepArtifactRetention(ctx, ArtifactRetentionSweepOptions{Now: now})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.Checked != 0 {
+		t.Fatalf("archived artifact should no longer be a retention candidate: %#v", second)
+	}
+	events, err := svc.store.Events(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundArchiveEvent := false
+	for _, event := range events {
+		if event.EventType == "artifact.archived" {
+			foundArchiveEvent = true
+			break
+		}
+	}
+	if !foundArchiveEvent {
+		t.Fatalf("archive should write an audit event")
 	}
 }
 

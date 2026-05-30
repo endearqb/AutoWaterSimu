@@ -18,18 +18,21 @@ export type ArtifactRetentionAction = {
     job_id: string;
     retention_policy: 'retain_forever' | 'ttl' | 'archive_candidate';
     retain_until?: string;
-    action: 'would_delete' | 'deleted' | 'skipped';
+    action: 'would_delete' | 'deleted' | 'would_archive' | 'archived' | 'skipped';
     reason?: string;
     blocking_refs?: Array<(string)>;
+    archive_provider?: string;
+    archive_object_key?: string;
 };
 
-export type action = 'would_delete' | 'deleted' | 'skipped';
+export type action = 'would_delete' | 'deleted' | 'would_archive' | 'archived' | 'skipped';
 
 export type ArtifactRetentionSweepReport = {
     schema_version: 'artifact_retention_sweep.v1';
     dry_run: boolean;
     checked: number;
     deleted: number;
+    archived: number;
     skipped: number;
     items: Array<ArtifactRetentionAction>;
     generated_at: string;
