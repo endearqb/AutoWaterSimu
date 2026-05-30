@@ -39,7 +39,7 @@ Packaged sidecar build/smoke 由 `apps/desktop/packaging/build-packaged-sidecar.
 4. 大结果写 artifact，并返回 checksum。
 5. HTTP worker bridge 只能通过 Go Compute API HTTP contract 交互，不直接写 PostgreSQL、SQLite 或 legacy backend。
 6. 成功运行应在 `compute_result.runtime_audit.model_runs` 写入 `model_run.v1`，并引用已生成/上传 artifact。
-7. `simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 是当前独立 model job type；UDM 现阶段只声明单 reactor snapshot / binding fixture，Hybrid 多模型映射和 Petersen 教程 worker baseline 仍需单独覆盖。
+7. `simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 是当前独立 model job type；静态合同 fixture 覆盖单 reactor UDM，worker tests 另以生成式用例覆盖 UDM Hybrid 多模型映射和 Petersen 教程 baseline。
 8. `model_run.parameter_hash` 对纯 material balance 继续哈希 `payload.parameters`；对 ASM/UDM model job type 必须同时纳入节点模型参数、UDM snapshot 和 variable bindings。
 
 ## 4. 对外接口

@@ -8,6 +8,7 @@
 
 - Worker CLI self-check 测试。
 - `--run-job` 合同 fixture 执行、artifact checksum、独立 `simulation.asm1slim.v1` / `simulation.asm1.v1` / `simulation.asm3.v1` / `simulation.udm.v1` job type、model_run 审计和模型参数 hash 测试。
+- worker artifact 与 legacy backend 的 old-vs-worker 数值基线矩阵，包括 material balance、ASM1Slim/ASM1/ASM3、单 reactor UDM、UDM Hybrid 多模型映射和 Petersen 教程默认流程。
 - stdio JSON-RPC 与 one-shot Go Compute API bridge 回归测试。
 
 本目录不负责：
@@ -40,10 +41,10 @@
 - `services/simulation-worker/simulation_worker`
 - `contracts/`
 - `simulation_core/python`
+- `backend/app` 仅限 old-vs-worker 数值基线测试，worker runtime 代码不得依赖 legacy backend
 
 不应该依赖：
 
-- `backend/app`
 - Desktop Tauri runtime。
 - React frontend。
 

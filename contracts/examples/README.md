@@ -29,7 +29,7 @@
 1. 示例必须尽量小，便于人工 review。
 2. invalid 示例必须能说明失败原因。
 3. 示例字段不要超前于 schema。
-4. `simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 是当前已放入 compute/simulation/result 合同的独立 model job type；UDM 目前只覆盖单 reactor snapshot / binding fixture，Hybrid 多模型映射和 Petersen 教程 worker baseline 仍需单独补齐。
+4. `simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 是当前已放入 compute/simulation/result 合同的独立 model job type；本目录的 UDM 静态示例只覆盖单 reactor snapshot / binding fixture，UDM Hybrid 多模型映射和 Petersen 教程 worker baseline 由 `services/simulation-worker/tests` 生成式 old-vs-worker 基线覆盖。
 
 ## 4. 对外接口
 

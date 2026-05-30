@@ -1,3 +1,30 @@
+# 2026-05-30 AutoWaterSimu Next Worker Numerical Baseline Matrix TODO
+
+- [x] Re-read worker, contracts examples, backend legacy baseline, simulation core, and task audit context
+- [x] Add old-vs-worker fixture matrix for material balance, ASM1Slim, ASM1, ASM3, and single-reactor UDM jobs
+- [x] Add generated UDM Hybrid multi-model worker baseline
+- [x] Add generated Petersen tutorial worker baselines
+- [x] Keep worker runtime code unchanged and preserve the no-backend-import implementation boundary
+- [x] Run worker test suite and update README First records
+
+## Plan
+
+- Treat existing `compute_job.v1` fixtures as the static matrix for material balance and independent model job types.
+- Use test-generated simulation inputs for UDM Hybrid and Petersen tutorial flows to avoid bloating `contracts/examples/` with large tutorial fixtures.
+- Compare worker-produced artifact final series and timestamps against legacy `MaterialBalanceCalculator` output through the backend `simulation_input.v1` adapter.
+
+## Review
+
+- `services/simulation-worker/tests/test_worker_cli.py` now includes an old-vs-backend numerical baseline matrix.
+- Static fixture coverage includes `material_balance_minimal`, `asm1slim_minimal`, `asm1slim_independent`, `asm1_independent`, `asm3_independent`, and `udm_independent`.
+- Generated baseline coverage includes a two-model UDM Hybrid flow with explicit local-to-canonical variable bindings.
+- Generated Petersen tutorial coverage includes `petersen-chapter-2` and `petersen-chapter-7` default UDM flows, matching the legacy backend tutorial runtime baseline shape.
+- Worker runtime code still does not import `backend/app`; the legacy backend dependency is test-only for baseline comparison.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`21 passed`, existing warnings only).
+- Remaining scope:
+  - This closes current local old-vs-worker baseline evidence for worker/core/backend parity; production CI runtime cost and release-gate placement remain separate decisions.
+
 # 2026-05-30 AutoWaterSimu Next UDM Independent Worker Job Type TODO
 
 - [x] Re-read UDM runtime, contracts, worker, simulation core, backend adapter, and tests context
