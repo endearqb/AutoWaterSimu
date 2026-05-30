@@ -42,6 +42,7 @@ type Store interface {
 	FindResultExplanation(ctx context.Context, jobID, explanationID string) (*ResultExplanationRecord, error)
 	UpdateResultExplanationReview(ctx context.Context, jobID, explanationID, reviewedBy, decision, reason string, metadata json.RawMessage, now time.Time) (*ResultExplanationRecord, error)
 	PublishResultExplanation(ctx context.Context, jobID, explanationID, publishedBy string, now time.Time) (*ResultExplanationRecord, error)
+	Metrics(ctx context.Context, now time.Time) (MetricsSnapshot, error)
 	UpsertWorker(ctx context.Context, worker WorkerRecord) error
 	FindWorkerByID(ctx context.Context, workerID string) (*WorkerRecord, error)
 	ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error)
@@ -307,6 +308,30 @@ func (store *MemoryStore) DeleteArtifact(_ context.Context, artifactID string, e
 		store.appendEventLocked(event)
 	}
 	return nil
+}
+
+func (store *MemoryStore) Metrics(_ context.Context, now time.Time) (MetricsSnapshot, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	jobsByStatus := map[string]int{}
+	for _, job := range store.jobs {
+		jobsByStatus[job.Status]++
+	}
+	retentionCandidates := 0
+	for _, artifact := range store.artifacts {
+		if artifactRetentionPolicyEligible(artifact.RetentionPolicy) &&
+			artifact.RetainUntil != nil &&
+			!artifact.RetainUntil.After(now) {
+			retentionCandidates++
+		}
+	}
+	return MetricsSnapshot{
+		GeneratedAt:         now,
+		JobsByStatus:        jobsByStatus,
+		WorkersRegistered:   len(store.workers),
+		ArtifactsTotal:      len(store.artifacts),
+		RetentionCandidates: retentionCandidates,
+	}, nil
 }
 
 func (store *MemoryStore) InsertModelRuns(_ context.Context, jobID string, modelRuns []json.RawMessage, _ time.Time) error {

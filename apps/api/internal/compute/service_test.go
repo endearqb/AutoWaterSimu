@@ -907,6 +907,13 @@ func TestTimeoutSweepAndPagination(t *testing.T) {
 
 func TestHTTPAuthScopeAndMetrics(t *testing.T) {
 	svc := testService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_metrics")); err != nil {
+		t.Fatal(err)
+	}
 	auth, err := NewAuthenticator("")
 	if err != nil {
 		t.Fatal(err)
@@ -916,8 +923,15 @@ func TestHTTPAuthScopeAndMetrics(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	server.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "autowatersimu_compute_api_up") {
-		t.Fatalf("metrics should be public")
+	metrics := rec.Body.String()
+	if rec.Code != http.StatusOK || !strings.Contains(metrics, "autowatersimu_compute_api_up") {
+		t.Fatalf("metrics should be public, got %d %s", rec.Code, metrics)
+	}
+	if !strings.Contains(metrics, `autowatersimu_compute_jobs_total{status="queued"} 1`) {
+		t.Fatalf("metrics should expose job status counts, got %s", metrics)
+	}
+	if !strings.Contains(metrics, "autowatersimu_compute_workers_registered_total 1") {
+		t.Fatalf("metrics should expose registered worker count, got %s", metrics)
 	}
 
 	rec = httptest.NewRecorder()

@@ -1321,6 +1321,10 @@ func (svc *Service) SweepArtifactRetention(ctx context.Context, options Artifact
 	return report, nil
 }
 
+func (svc *Service) Metrics(ctx context.Context) (MetricsSnapshot, error) {
+	return svc.store.Metrics(ctx, svc.now())
+}
+
 func (svc *Service) snapshot(ctx context.Context, jobID string) (JobSnapshot, error) {
 	job, err := svc.store.FindJobByID(ctx, jobID)
 	if err != nil {

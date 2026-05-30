@@ -1,3 +1,28 @@
+# 2026-05-30 AutoWaterSimu Next Compute API Metrics Hardening TODO
+
+- [x] Re-read Go API/internal compute metrics and lifecycle context
+- [x] Add store-backed metrics snapshot for memory and PostgreSQL stores
+- [x] Render Prometheus gauges for API up, jobs by status, workers, artifacts, and retention candidates
+- [x] Keep `/metrics` public and read-only
+- [x] Add HTTP metrics regression coverage
+- [x] Run Go validation and update README First records
+
+## Plan
+
+- Do not introduce Prometheus dependencies; keep text rendering in the existing HTTP package.
+- Count metadata records only, not large artifact bytes or time-series payloads.
+- Do not run timeout sweep, retention sweep, or any other mutation from metrics collection.
+
+## Review
+
+- Added `MetricsSnapshot` and `Store.Metrics`.
+- Memory and PostgreSQL stores now report job status counts, registered workers, artifact metadata total, and retention candidates.
+- `/metrics` now renders Prometheus text for those gauges while retaining `autowatersimu_compute_api_up`.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+- Remaining scope:
+  - SLO thresholds, alerting rules, scheduler metrics, archive metrics, and production dashboards/runbooks still need follow-up operations work.
+
 # 2026-05-30 AutoWaterSimu Next Admin Artifact Retention Sweep TODO
 
 - [x] Re-read Go API, internal compute, OpenAPI, generated client, frontend service, and retention context

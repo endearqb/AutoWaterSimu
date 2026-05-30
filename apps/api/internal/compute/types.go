@@ -135,6 +135,14 @@ type ArtifactRetentionAction struct {
 	BlockingRefs    []string   `json:"blocking_refs,omitempty"`
 }
 
+type MetricsSnapshot struct {
+	GeneratedAt         time.Time      `json:"generated_at"`
+	JobsByStatus        map[string]int `json:"jobs_by_status"`
+	WorkersRegistered   int            `json:"workers_registered"`
+	ArtifactsTotal      int            `json:"artifacts_total"`
+	RetentionCandidates int            `json:"retention_candidates"`
+}
+
 type WorkerRecord struct {
 	WorkerID                  string          `json:"worker_id"`
 	Capabilities              json.RawMessage `json:"capabilities"`
