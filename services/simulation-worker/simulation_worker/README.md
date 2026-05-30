@@ -8,7 +8,7 @@
 
 - CLI 参数解析。
 - `--self-check`。
-- `--run-job` material balance 最小执行链路。
+- `--run-job` material balance 最小执行链路和 ASM1Slim model-bound fixture 执行链路。
 - stdio JSON-RPC protocol。
 - `--run-api-once` one-shot Go Compute API worker bridge。
 - time-series artifact 写入。
@@ -36,6 +36,7 @@
 3. 大时间序列必须写 artifact，summary inline 返回。
 4. `api_client.py` 只通过 Go Compute API HTTP contract 交互，不直接写 metadata store。
 5. 成功运行需输出 `model_run.v1` 到 `compute_result.runtime_audit.model_runs`，并用 artifact id 填写 `evidence_refs`。
+6. `model_run.model_key` 优先来自 `payload.runtime_options.model_family`，其次来自 ASM/UDM 节点类型；默认回落到 `material_balance`。
 
 ## 4. 对外接口
 
@@ -86,6 +87,7 @@ backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py
 
 ```powershell
 backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm1slim_minimal.compute_job.v1.json --artifact-dir tmp\worker-asm1slim-artifacts
 ```
 
 ## 7. AI 操作提示

@@ -1,0 +1,59 @@
+# 目录说明：services/simulation-worker/tests
+
+## 1. 目录职责
+
+本目录负责 Python simulation worker 的 pytest 覆盖。
+
+本目录负责：
+
+- Worker CLI self-check 测试。
+- `--run-job` 合同 fixture 执行、artifact checksum 和 model_run 审计测试。
+- stdio JSON-RPC 与 one-shot Go Compute API bridge 回归测试。
+
+本目录不负责：
+
+- simulation core 数值实现测试。
+- Desktop Rust worker process manager 测试。
+- Go Compute API store / HTTP handler 测试。
+
+## 2. 核心文件
+
+| 文件 | 作用 |
+|---|---|
+| `test_worker_cli.py` | worker CLI、JSON-RPC、HTTP bridge、artifact 和 model_run 回归 |
+
+## 3. 维护约定
+
+1. stdout 断言必须保持 JSON 可解析。
+2. 新增 worker fixture 时同步检查 `contracts/examples/valid/` 与 schema tests。
+3. 新增模型能力时先验证 self-check capabilities，再验证 `model_run.v1`。
+4. 当前根 `.gitignore` 会忽略未跟踪的 `test_*.py`，新增本目录测试文件时需确认文件已被 Git 跟踪。
+
+## 4. 对外接口
+
+本目录不暴露运行时接口，只暴露 pytest 测试。
+
+## 5. 依赖边界
+
+可以依赖：
+
+- `services/simulation-worker/simulation_worker`
+- `contracts/`
+- `simulation_core/python`
+
+不应该依赖：
+
+- `backend/app`
+- Desktop Tauri runtime。
+- React frontend。
+
+## 6. 测试与验证
+
+```powershell
+backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
+```
+
+## 7. AI 操作提示
+
+1. 先读根 `AGENTS.md`、根 `README.md`、`services/simulation-worker/README.md` 和本 README。
+2. 修改 worker stdout/stderr 或 artifact shape 后必须运行本目录测试。

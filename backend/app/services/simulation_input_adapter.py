@@ -105,6 +105,44 @@ def _adapt_node(node: dict[str, Any], components: list[str], index: int) -> Node
             _number(initial_concentrations.get(component), default=0.0, path=f"$.nodes[{index}].initial_concentrations.{component}")
             for component in components
         ],
+        asm1slim_parameters=_optional_number_list(
+            _field_value(node, "asm1slim_parameters", "asm1slimParameters"),
+            path=f"$.nodes[{index}].asm1slim_parameters",
+        ),
+        asm1_parameters=_optional_number_list(
+            _field_value(node, "asm1_parameters", "asm1Parameters"),
+            path=f"$.nodes[{index}].asm1_parameters",
+        ),
+        asm3_parameters=_optional_number_list(
+            _field_value(node, "asm3_parameters", "asm3Parameters"),
+            path=f"$.nodes[{index}].asm3_parameters",
+        ),
+        udm_model_id=_optional_string(_field_value(node, "udm_model_id", "udmModelId")),
+        udm_model_version=_optional_int(
+            _field_value(node, "udm_model_version", "udmModelVersion"),
+            path=f"$.nodes[{index}].udm_model_version",
+        ),
+        udm_model_hash=_optional_string(_field_value(node, "udm_model_hash", "udmModelHash")),
+        udm_component_names=_optional_string_list(
+            _field_value(node, "udm_component_names", "udmComponentNames"),
+            path=f"$.nodes[{index}].udm_component_names",
+        ),
+        udm_processes=_optional_dict_list(
+            _field_value(node, "udm_processes", "udmProcesses"),
+            path=f"$.nodes[{index}].udm_processes",
+        ),
+        udm_parameter_values=_optional_number_dict(
+            _field_value(node, "udm_parameter_values", "udmParameterValues"),
+            path=f"$.nodes[{index}].udm_parameter_values",
+        ),
+        udm_model_snapshot=_optional_dict(
+            _field_value(node, "udm_model_snapshot", "udmModelSnapshot"),
+            path=f"$.nodes[{index}].udm_model_snapshot",
+        ),
+        udm_variable_bindings=_optional_dict_list(
+            _field_value(node, "udm_variable_bindings", "udmVariableBindings"),
+            path=f"$.nodes[{index}].udm_variable_bindings",
+        ),
     )
 
 
@@ -168,6 +206,86 @@ def _number(value: Any, *, path: str, default: float | None = None) -> float:
         ) from exc
 
 
+def _optional_int(value: Any, *, path: str) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise SimulationInputAdapterError(
+            "integer conversion failed",
+            [_detail(path, "value must be an integer", None)],
+        ) from exc
+
+
+def _optional_string(value: Any) -> str | None:
+    text = _string_value(value)
+    return text or None
+
+
+def _optional_string_list(value: Any, *, path: str) -> list[str] | None:
+    if value in (None, ""):
+        return None
+    if not isinstance(value, list):
+        raise SimulationInputAdapterError(
+            "string list conversion failed",
+            [_detail(path, "value must be an array", None)],
+        )
+    return [_string_value(item) for item in value]
+
+
+def _optional_number_list(value: Any, *, path: str) -> list[float] | None:
+    if value in (None, ""):
+        return None
+    if not isinstance(value, list):
+        raise SimulationInputAdapterError(
+            "numeric list conversion failed",
+            [_detail(path, "value must be an array", None)],
+        )
+    return [_number(item, path=f"{path}[{index}]") for index, item in enumerate(value)]
+
+
+def _optional_number_dict(value: Any, *, path: str) -> dict[str, float] | None:
+    if value in (None, ""):
+        return None
+    if not isinstance(value, dict):
+        raise SimulationInputAdapterError(
+            "numeric mapping conversion failed",
+            [_detail(path, "value must be an object", None)],
+        )
+    return {_string_value(key): _number(item, path=f"{path}.{key}") for key, item in value.items()}
+
+
+def _optional_dict(value: Any, *, path: str) -> dict[str, Any] | None:
+    if value in (None, ""):
+        return None
+    if not isinstance(value, dict):
+        raise SimulationInputAdapterError(
+            "object conversion failed",
+            [_detail(path, "value must be an object", None)],
+        )
+    return value
+
+
+def _optional_dict_list(value: Any, *, path: str) -> list[dict[str, Any]] | None:
+    if value in (None, ""):
+        return None
+    if not isinstance(value, list):
+        raise SimulationInputAdapterError(
+            "object list conversion failed",
+            [_detail(path, "value must be an array", None)],
+        )
+    items: list[dict[str, Any]] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise SimulationInputAdapterError(
+                "object list conversion failed",
+                [_detail(f"{path}[{index}]", "item must be an object", None)],
+            )
+        items.append(item)
+    return items
+
+
 def _string_value(value: Any) -> str:
     return str(value).strip() if value is not None else ""
 
@@ -178,6 +296,12 @@ def _as_dict(value: Any) -> dict[str, Any]:
 
 def _as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def _field_value(node: dict[str, Any], snake_case: str, camel_case: str) -> Any:
+    if snake_case in node:
+        return node.get(snake_case)
+    return node.get(camel_case)
 
 
 def _detail(path: str, reason: str, source_id: Any) -> dict[str, Any]:

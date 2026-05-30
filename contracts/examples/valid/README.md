@@ -6,7 +6,14 @@
 
 ## 2. 核心文件
 
-后续添加 `*.json` 示例文件。
+本目录包含多类 valid contract fixture。当前计算链路重点 fixture：
+
+| 文件 | 作用 |
+|---|---|
+| `material_balance_minimal.compute_job.v1.json` | material balance worker 最小 job fixture |
+| `material_balance_minimal.simulation_input.v1.json` | material balance core/backend adapter 最小 input fixture |
+| `asm1slim_minimal.compute_job.v1.json` | ASM1Slim model-bound material balance worker fixture |
+| `asm1slim_minimal.simulation_input.v1.json` | ASM1Slim model-bound core/backend adapter fixture |
 
 ## 3. 维护约定
 

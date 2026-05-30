@@ -9,6 +9,7 @@
 - `simulation_input.v1 -> MaterialBalanceInput`。
 - core adapter validation error 归一化。
 - 保持组件顺序、默认值和 time segments 语义。
+- 保留 ASM1Slim / ASM1 / ASM3 / UDM 节点 runtime binding 字段，供 material balance runtime 的模型分支使用。
 
 本目录不负责：
 
@@ -28,6 +29,8 @@
 1. 组件顺序以 `component_schema.components` 为唯一来源。
 2. 空字符串、`null`、缺失浓度按 legacy 行为转 `0.0`。
 3. input/output 缺失 volume 默认 `1.0`；普通 reactor 缺失 volume 返回 validation error。
+4. 可选模型字段必须区分“字段缺失”和“显式空数组/空对象”，不得用 truthy fallback 丢弃输入。
+5. 本 adapter 与 `backend/app/services/simulation_input_adapter.py` 的字段保留语义必须保持一致。
 
 ## 4. 对外接口
 

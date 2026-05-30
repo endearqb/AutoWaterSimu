@@ -1,3 +1,34 @@
+# 2026-05-30 AutoWaterSimu Next ASM/UDM Runtime Binding Adapter TODO
+
+- [x] Re-read PRD/Spec/Development Plan, simulation core, worker, and legacy adapter context
+- [x] Preserve ASM/UDM node runtime binding fields through `simulation_input.v1` adapters
+- [x] Add ASM1Slim contract fixture and core/worker parity coverage
+- [x] Run contract, core, worker, and legacy backend validation
+- [x] Record findings and commit checkpoint
+
+## Plan
+
+- Keep `job_type` as `simulation.material_balance.v1` in this slice because contracts currently allow only that job type.
+- Treat ASM/UDM node execution as model-bound nodes inside the existing material-balance simulation input.
+- Do not invent separate `simulation.asm*.v1` or `simulation.udm.v1` job types until schema semantics and API routing are explicitly designed.
+
+## Review
+
+- Core and legacy backend `simulation_input.v1` adapters now preserve ASM1Slim / ASM1 / ASM3 / UDM node runtime binding fields while keeping the current `simulation.material_balance.v1` job contract.
+- Optional model binding fields now distinguish missing fields from explicit empty arrays/objects, so invalid empty parameter arrays are not silently dropped.
+- Added ASM1Slim minimal `simulation_input.v1` and `compute_job.v1` fixtures under `contracts/examples/valid/`.
+- Worker self-check now advertises model capabilities while supported job type remains `simulation.material_balance.v1`; ASM1Slim runs are audited with `model_key=asm1slim`.
+- Added/updated core and worker tests for ASM1Slim fixture execution, backend parity, artifact output, and `model_run.v1` binding.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`75 passed`).
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`8 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` passed (`6 passed`, existing warnings only).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services -q` passed (`26 passed`, existing warnings only).
+  - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check` passed and reported `asm1slim`, `asm1`, `asm3`, `udm`, and `ode` capabilities.
+- Remaining scope:
+  - Independent `simulation.asm1.v1`, `simulation.asm1slim.v1`, `simulation.asm3.v1`, and `simulation.udm.v1` job type contracts/handlers remain Phase 5 follow-up work.
+  - Full old-vs-worker numerical baseline matrix for ASM1, ASM3, UDM, and Petersen tutorial flows remains follow-up work.
+
 # 2026-05-30 AutoWaterSimu Next Desktop NSIS Installer Runtime TODO
 
 - [x] Re-read README First, Desktop, src-tauri, packaging, scripts, release gate, and Tauri schema context

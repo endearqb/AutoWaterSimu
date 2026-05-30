@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,13 @@ VALID_SIMULATION_INPUT = (
     / "examples"
     / "valid"
     / "material_balance_minimal.simulation_input.v1.json"
+)
+ASM1SLIM_SIMULATION_INPUT = (
+    REPO_ROOT
+    / "contracts"
+    / "examples"
+    / "valid"
+    / "asm1slim_minimal.simulation_input.v1.json"
 )
 
 sys.path.insert(0, str(SIMULATION_CORE_PYTHON))
@@ -114,6 +122,34 @@ def test_core_adapter_wraps_invalid_parameters_as_contract_style_error() -> None
     assert exc_info.value.to_contract_error()["error_code"] == "VALIDATION_FAILED"
 
 
+def test_core_adapter_preserves_model_runtime_bindings() -> None:
+    simulation_input = deepcopy(_minimal_simulation_input())
+    reactor = simulation_input["nodes"][1]
+    reactor["node_type"] = "asm1slim"
+    reactor["asm1slim_parameters"] = [0.12, 0.08, 2.5, 10.0, 0.5, 0.8, 0.4]
+    reactor["udm_model_id"] = "udm_model_a"
+    reactor["udm_model_version"] = "2"
+    reactor["udm_model_hash"] = "sha256:" + ("a" * 64)
+    reactor["udm_component_names"] = ["A", "B"]
+    reactor["udm_processes"] = [{"id": "p1", "rate_expr": "k * A", "stoich": {"A": -1}}]
+    reactor["udm_parameter_values"] = {"k": "0.1"}
+    reactor["udm_model_snapshot"] = {"id": "udm_model_a", "version": 2}
+    reactor["udm_variable_bindings"] = [{"local_var": "A_local", "canonical_var": "A"}]
+
+    adapted = simulation_input_to_material_balance_input(simulation_input)
+    adapted_node = adapted.nodes[1]
+
+    assert adapted_node.asm1slim_parameters == [0.12, 0.08, 2.5, 10.0, 0.5, 0.8, 0.4]
+    assert adapted_node.udm_model_id == "udm_model_a"
+    assert adapted_node.udm_model_version == 2
+    assert adapted_node.udm_model_hash == "sha256:" + ("a" * 64)
+    assert adapted_node.udm_component_names == ["A", "B"]
+    assert adapted_node.udm_processes == [{"id": "p1", "rate_expr": "k * A", "stoich": {"A": -1}}]
+    assert adapted_node.udm_parameter_values == {"k": 0.1}
+    assert adapted_node.udm_model_snapshot == {"id": "udm_model_a", "version": 2}
+    assert adapted_node.udm_variable_bindings == [{"local_var": "A_local", "canonical_var": "A"}]
+
+
 def test_core_calculator_matches_backend_baseline() -> None:
     simulation_input = _minimal_simulation_input()
 
@@ -127,6 +163,27 @@ def test_core_calculator_matches_backend_baseline() -> None:
     assert core_result.summary["total_steps"] == backend_result.summary["total_steps"]
     assert _final_component_value(core_result, "n_tank", "COD", 0) == pytest.approx(
         _final_component_value(backend_result, "n_tank", "COD", 0),
+        rel=1e-6,
+        abs=1e-9,
+    )
+
+
+def test_core_calculator_matches_backend_for_asm1slim_runtime_binding() -> None:
+    simulation_input = _load_json(ASM1SLIM_SIMULATION_INPUT)
+
+    core_input = simulation_input_to_material_balance_input(simulation_input)
+    backend_input = backend_simulation_input_to_material_balance_input(simulation_input)
+
+    core_result = MaterialBalanceCalculator().calculate(core_input)
+    backend_result = BackendMaterialBalanceCalculator().calculate(backend_input)
+
+    assert core_result.status == "success"
+    assert backend_result.status == "success"
+    assert core_input.nodes[1].node_type == "asm1slim"
+    assert core_input.nodes[1].asm1slim_parameters == [0.12, 0.08, 2.5, 10.0, 0.5, 0.8, 0.4]
+    assert core_result.summary["total_steps"] == backend_result.summary["total_steps"]
+    assert _final_component_value(core_result, "n_reactor", "S_S", 1) == pytest.approx(
+        _final_component_value(backend_result, "n_reactor", "S_S", 1),
         rel=1e-6,
         abs=1e-9,
     )

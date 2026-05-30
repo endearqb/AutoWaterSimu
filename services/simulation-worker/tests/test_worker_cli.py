@@ -1,0 +1,291 @@
+from __future__ import annotations
+
+import hashlib
+import http.server
+import json
+import subprocess
+import sys
+import threading
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlparse
+
+from jsonschema import Draft202012Validator
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CLI_PATH = REPO_ROOT / "services" / "simulation-worker" / "simulation_worker" / "cli.py"
+VALID_JOB = REPO_ROOT / "contracts" / "examples" / "valid" / "material_balance_minimal.compute_job.v1.json"
+ASM1SLIM_JOB = REPO_ROOT / "contracts" / "examples" / "valid" / "asm1slim_minimal.compute_job.v1.json"
+
+
+def _run_worker(args: list[str], *, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(CLI_PATH), *args],
+        cwd=REPO_ROOT,
+        input=input_text,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _validate(schema_name: str, payload: dict[str, Any]) -> None:
+    Draft202012Validator(_load_json(REPO_ROOT / "contracts" / schema_name)).validate(payload)
+
+
+def test_worker_self_check_outputs_json() -> None:
+    completed = _run_worker(["--self-check"])
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    assert payload["worker_version"]
+    assert "compute_job.v1" in payload["supported_contract_versions"]
+    assert "simulation.material_balance.v1" in payload["supported_job_types"]
+    assert "asm1slim" in payload["capabilities"]
+    assert payload["git_sha"]
+    assert payload["packaging_mode"] in {"source", "frozen"}
+    assert payload["dependency_imports"]["numpy"]["ok"] is True
+    assert payload["dependency_imports"]["scipy"]["ok"] is True
+    assert payload["dependency_imports"]["torch"]["ok"] is True
+    assert payload["dependency_imports"]["torchdiffeq"]["ok"] is True
+    assert payload["artifact_temp_writable"]["ok"] is True
+    assert payload["minimal_job_status"]["ok"] is True
+
+
+def test_worker_run_job_writes_artifact_with_checksum(tmp_path: Path) -> None:
+    completed = _run_worker([
+        "--run-job",
+        str(VALID_JOB),
+        "--artifact-dir",
+        str(tmp_path),
+    ])
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    _validate("compute_result.v1.json", result)
+    assert result["status"] == "succeeded"
+    assert result["summary"]["total_steps"] >= 240
+    assert result["summary"]["total_time"] == 4.0
+
+    artifact = result["artifacts"][0]
+    _validate("artifact.v1.json", artifact)
+    artifact_path = tmp_path / Path(artifact["object_key"])
+    artifact_bytes = artifact_path.read_bytes()
+    assert artifact["checksum"] == f"sha256:{hashlib.sha256(artifact_bytes).hexdigest()}"
+
+    model_run = result["runtime_audit"]["model_runs"][0]
+    _validate("model_run.v1.json", model_run)
+    assert model_run["job_id"] == result["job_id"]
+    assert model_run["model_key"] == "material_balance"
+    assert model_run["evidence_refs"] == [artifact["artifact_id"]]
+
+    time_series = json.loads(artifact_bytes.decode("utf-8"))
+    assert time_series["schema_version"] == "material_balance_time_series_artifact.v1"
+    assert time_series["node_data"]
+    assert time_series["edge_data"]
+
+
+def test_worker_run_asm1slim_job_preserves_model_run_binding(tmp_path: Path) -> None:
+    completed = _run_worker([
+        "--run-job",
+        str(ASM1SLIM_JOB),
+        "--artifact-dir",
+        str(tmp_path),
+    ])
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    _validate("compute_result.v1.json", result)
+    assert result["status"] == "succeeded"
+    assert result["job_id"] == "job_asm1slim_minimal"
+    assert result["summary"]["total_time"] == 1.0
+
+    artifact = result["artifacts"][0]
+    artifact_path = tmp_path / Path(artifact["object_key"])
+    time_series = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert time_series["node_data"]["n_reactor"]["S_S"]
+
+    model_run = result["runtime_audit"]["model_runs"][0]
+    _validate("model_run.v1.json", model_run)
+    assert model_run["model_key"] == "asm1slim"
+    assert model_run["model_version"] == "asm1slim.v1"
+    assert model_run["metadata"]["component_schema_id"] == "asm1slim_components.v1"
+    assert model_run["evidence_refs"] == [artifact["artifact_id"]]
+
+
+def test_worker_invalid_job_returns_failed_result_without_traceback(tmp_path: Path) -> None:
+    invalid_job = _load_json(VALID_JOB)
+    invalid_job["payload"]["parameters"]["tolerance"] = 0.1
+    invalid_path = tmp_path / "invalid.compute_job.v1.json"
+    invalid_path.write_text(json.dumps(invalid_job), encoding="utf-8")
+
+    completed = _run_worker([
+        "--run-job",
+        str(invalid_path),
+        "--artifact-dir",
+        str(tmp_path / "artifacts"),
+    ])
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    _validate("compute_result.v1.json", result)
+    assert result["status"] == "failed"
+    assert "validation failed" in result["summary"]["error_message"]
+    assert "Traceback" not in completed.stderr
+
+
+def test_worker_stdio_jsonrpc_self_check() -> None:
+    request = {"jsonrpc": "2.0", "id": 1, "method": "self_check"}
+    completed = _run_worker(["--stdio-jsonrpc"], input_text=json.dumps(request) + "\n")
+
+    assert completed.returncode == 0
+    response = json.loads(completed.stdout)
+    assert response["jsonrpc"] == "2.0"
+    assert response["id"] == 1
+    assert "worker_version" in response["result"]
+
+
+def test_worker_stdio_jsonrpc_run_job_accepts_job_object(tmp_path: Path) -> None:
+    request = {
+        "jsonrpc": "2.0",
+        "id": "rpc_1",
+        "method": "run_job",
+        "params": {
+            "job": _load_json(VALID_JOB),
+            "artifact_dir": str(tmp_path),
+        },
+    }
+    completed = _run_worker(["--stdio-jsonrpc"], input_text=json.dumps(request) + "\n")
+
+    assert completed.returncode == 0
+    response = json.loads(completed.stdout)
+    assert response["jsonrpc"] == "2.0"
+    assert response["id"] == "rpc_1"
+    result = response["result"]["compute_result"]
+    _validate("compute_result.v1.json", result)
+    assert result["status"] == "succeeded"
+
+
+def test_worker_run_api_once_claims_runs_uploads_and_succeeds(tmp_path: Path) -> None:
+    records: list[dict[str, Any]] = []
+    completion_payload: dict[str, Any] = {}
+    job = _load_json(VALID_JOB)
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            content_length = int(self.headers.get("Content-Length", "0"))
+            body = self.rfile.read(content_length)
+            path = urlparse(self.path).path
+            records.append(
+                {
+                    "path": path,
+                    "authorization": self.headers.get("Authorization"),
+                    "content_type": self.headers.get("Content-Type"),
+                    "body": body,
+                }
+            )
+
+            if self.headers.get("Authorization") != "Bearer worker-token":
+                self.send_error(401)
+                return
+
+            if path == "/api/v1/workers/worker_test/register":
+                self._write_json({"worker_id": "worker_test"})
+                return
+            if path == "/api/v1/workers/register":
+                self._write_json({"worker_id": "worker_test"})
+                return
+            if path == "/api/v1/workers/worker_test/claim":
+                self._write_json({"job": job, "attempt": 1})
+                return
+            if path == "/api/v1/workers/worker_test/jobs/job_material_balance_minimal/artifact":
+                assert b'name="metadata"' in body
+                assert b'name="file"' in body
+                self._write_json(
+                    {
+                        "schema_version": "artifact.v1",
+                        "artifact_id": "art_server_time_series",
+                        "job_id": "job_material_balance_minimal",
+                        "artifact_type": "material_balance.time_series",
+                        "storage_provider": "local_fs",
+                        "object_key": "jobs/job_material_balance_minimal/art_server_time_series.json",
+                        "content_type": "application/json",
+                        "size_bytes": 2,
+                        "checksum": "sha256:" + ("0" * 64),
+                        "created_at": "2026-05-30T00:00:00Z",
+                    }
+                )
+                return
+            if path == "/api/v1/workers/worker_test/jobs/job_material_balance_minimal/succeed":
+                completion_payload.update(json.loads(body.decode("utf-8")))
+                self._write_json(
+                    {
+                        "job": {"job_id": "job_material_balance_minimal", "status": "succeeded"},
+                        "artifacts": [],
+                        "event_count": 5,
+                    }
+                )
+                return
+            self.send_error(404)
+
+        def log_message(self, format: str, *args: Any) -> None:
+            return
+
+        def _write_json(self, payload: dict[str, Any]) -> None:
+            data = json.dumps(payload).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        completed = _run_worker(
+            [
+                "--run-api-once",
+                "--api-base-url",
+                f"http://127.0.0.1:{server.server_port}",
+                "--api-token",
+                "worker-token",
+                "--worker-id",
+                "worker_test",
+                "--artifact-dir",
+                str(tmp_path),
+            ]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "succeeded"
+    assert payload["job_id"] == "job_material_balance_minimal"
+    assert payload["compute_result"]["artifacts"][0]["artifact_id"] == "art_server_time_series"
+    model_run = completion_payload["compute_result"]["runtime_audit"]["model_runs"][0]
+    _validate("model_run.v1.json", model_run)
+    assert model_run["evidence_refs"] == ["art_server_time_series"]
+    assert completion_payload["attempt"] == 1
+    assert completion_payload["compute_result"]["status"] == "succeeded"
+    assert [record["path"] for record in records] == [
+        "/api/v1/workers/register",
+        "/api/v1/workers/worker_test/claim",
+        "/api/v1/workers/worker_test/jobs/job_material_balance_minimal/artifact",
+        "/api/v1/workers/worker_test/jobs/job_material_balance_minimal/succeed",
+    ]
+
+
+def test_worker_code_does_not_import_legacy_backend_app() -> None:
+    worker_dir = REPO_ROOT / "services" / "simulation-worker" / "simulation_worker"
+    for path in worker_dir.glob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "from app." not in source
+        assert "import app." not in source

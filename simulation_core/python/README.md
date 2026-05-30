@@ -7,7 +7,7 @@
 本目录负责：
 
 - `autowatersimu_simulation_core` import 根。
-- 无 HTTP、DB、用户或 worker token 的 material balance 运行时。
+- 无 HTTP、DB、用户或 worker token 的 material balance 运行时，以及该运行时内的 ASM/UDM 节点模型绑定数据。
 - 供 Python worker、未来 backend wrapper 和数值测试复用的计算 API。
 
 本目录不负责：
@@ -25,7 +25,7 @@
 ## 3. 维护约定
 
 1. 不导入 `backend/app`、FastAPI、SQLModel、数据库会话或用户上下文。
-2. 新模型运行时先在本包建立纯 Python adapter，再由 worker 调用。
+2. 新模型运行时先在本包建立纯 Python adapter，再由 worker 调用；迁移期 ASM/UDM 节点绑定字段必须和 backend adapter 保持一致。
 3. 数值行为变更必须补 parity 测试或说明 tolerance。
 
 ## 4. 对外接口

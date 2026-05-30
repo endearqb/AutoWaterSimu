@@ -1,0 +1,113 @@
+{
+  "schema_version": "compute_job.v1",
+  "job_id": "job_asm1slim_minimal",
+  "job_type": "simulation.material_balance.v1",
+  "queue": "simulation",
+  "request_id": "req_asm1slim_minimal",
+  "idempotency_key": "idem_asm1slim_minimal",
+  "payload": {
+    "schema_version": "simulation_input.v1",
+    "simulation_input_id": "si_asm1slim_minimal",
+    "process_graph_id": "pg_asm1slim_minimal",
+    "process_graph_version": 1,
+    "job_type": "simulation.material_balance.v1",
+    "component_schema": {
+      "component_schema_id": "asm1slim_components.v1",
+      "components": ["S_O", "S_S", "S_NO", "S_NH", "S_ALK"],
+      "unit": "mg/L"
+    },
+    "nodes": [
+      {
+        "node_id": "n_in",
+        "node_type": "input",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "S_O": 1.0,
+          "S_S": 20.0,
+          "S_NO": 2.0,
+          "S_NH": 4.0,
+          "S_ALK": 5.0
+        },
+        "is_inlet": true,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_reactor",
+        "node_type": "asm1slim",
+        "initial_volume": 10.0,
+        "initial_concentrations": {
+          "S_O": 0.2,
+          "S_S": 8.0,
+          "S_NO": 1.5,
+          "S_NH": 3.0,
+          "S_ALK": 5.0
+        },
+        "asm1slim_parameters": [0.12, 0.08, 2.5, 10.0, 0.5, 0.8, 0.4],
+        "is_inlet": false,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_out",
+        "node_type": "output",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "S_O": 0.0,
+          "S_S": 0.0,
+          "S_NO": 0.0,
+          "S_NH": 0.0,
+          "S_ALK": 0.0
+        },
+        "is_inlet": false,
+        "is_outlet": true
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "e_in_reactor",
+        "source_node_id": "n_in",
+        "target_node_id": "n_reactor",
+        "flow_rate": 10.0,
+        "concentration_transform": {
+          "S_O": { "a": 1.0, "b": 0.0 },
+          "S_S": { "a": 1.0, "b": 0.0 },
+          "S_NO": { "a": 1.0, "b": 0.0 },
+          "S_NH": { "a": 1.0, "b": 0.0 },
+          "S_ALK": { "a": 1.0, "b": 0.0 }
+        }
+      },
+      {
+        "edge_id": "e_reactor_out",
+        "source_node_id": "n_reactor",
+        "target_node_id": "n_out",
+        "flow_rate": 10.0,
+        "concentration_transform": {
+          "S_O": { "a": 1.0, "b": 0.0 },
+          "S_S": { "a": 1.0, "b": 0.0 },
+          "S_NO": { "a": 1.0, "b": 0.0 },
+          "S_NH": { "a": 1.0, "b": 0.0 },
+          "S_ALK": { "a": 1.0, "b": 0.0 }
+        }
+      }
+    ],
+    "parameters": {
+      "hours": 1.0,
+      "steps_per_hour": 20,
+      "solver_method": "scipy_solver",
+      "tolerance": 0.000001
+    },
+    "runtime_options": {
+      "model_family": "asm1slim"
+    }
+  },
+  "context": {
+    "source_system": "autowatersimu",
+    "requested_by": "user:test",
+    "trace_id": "trace_asm1slim_minimal"
+  },
+  "execution": {
+    "time_limit_sec": 600,
+    "priority": "normal",
+    "required_capabilities": ["material_balance", "ode", "asm1slim"]
+  },
+  "created_at": "2026-05-30T00:00:00Z"
+}

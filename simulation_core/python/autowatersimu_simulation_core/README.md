@@ -7,7 +7,7 @@
 本目录负责：
 
 - material balance runtime 的公开 import surface。
-- `simulation_input.v1` 到 core runtime model 的 adapter。
+- `simulation_input.v1` 到 core runtime model 的 adapter，包括 ASM1Slim / ASM1 / ASM3 / UDM 节点 runtime binding 字段。
 - core-side validation error 到 `contract_error.v1` 风格的映射。
 
 本目录不负责：
@@ -30,6 +30,7 @@
 1. 公开 import surface 变更时同步更新 worker README 和测试。
 2. adapter 必须返回 core 包内的模型，不能返回 backend SQLModel。
 3. 与 legacy backend 的数值差异必须通过测试显式说明。
+4. 新增或改名模型绑定字段时，同步检查 core adapter、backend adapter、worker fixture 和 parity 测试。
 
 ## 4. 对外接口
 

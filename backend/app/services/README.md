@@ -8,7 +8,7 @@
 
 - API route 之外的业务服务。
 - legacy flowchart 数据转换。
-- AutoWaterSimu Next 合同到 legacy 计算模型的 adapter。
+- AutoWaterSimu Next 合同到 legacy 计算模型的 adapter，包括迁移期 ASM/UDM runtime binding 字段保留。
 
 本目录不负责：
 
@@ -29,6 +29,7 @@
 1. 服务层可以依赖 `app.models`，但不应直接依赖 HTTP 请求对象。
 2. 密集计算或大 payload 处理不得用 `print` 输出完整数据。
 3. Next adapter 失败应返回可映射为 `contract_error.v1` 的结构化错误。
+4. `simulation_input_adapter.py` 与 `simulation_core/python/.../adapters/material_balance.py` 的字段保留语义必须保持一致，尤其是 ASM/UDM 可选字段。
 
 ## 4. 对外接口
 

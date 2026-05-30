@@ -24,6 +24,7 @@ SUPPORTED_CONTRACT_VERSIONS = [
     "compute_result.v1",
     "artifact.v1",
 ]
+SUPPORTED_CAPABILITIES = ["material_balance", "asm1slim", "asm1", "asm3", "udm", "ode"]
 
 
 class WorkerRunError(RuntimeError):
@@ -45,7 +46,7 @@ def self_check() -> dict[str, Any]:
         "platform": platform.platform(),
         "supported_contract_versions": SUPPORTED_CONTRACT_VERSIONS,
         "supported_job_types": [SUPPORTED_JOB_TYPE],
-        "capabilities": ["material_balance", "ode"],
+        "capabilities": SUPPORTED_CAPABILITIES,
         "git_sha": _git_sha(),
         "packaging_mode": _packaging_mode(),
         "dependency_imports": dependency_imports,
@@ -200,12 +201,13 @@ def _model_run_record(
     artifact: dict[str, Any],
 ) -> dict[str, Any]:
     summary_record = summary if isinstance(summary, dict) else {}
+    model_family = _model_family(payload)
     return {
         "schema_version": "model_run.v1",
-        "model_run_id": f"mr_{_safe_path_part(job_id)}_material_balance",
+        "model_run_id": f"mr_{_safe_path_part(job_id)}_{_safe_path_part(model_family)}",
         "job_id": job_id,
-        "model_key": "material_balance",
-        "model_version": "material_balance.v1",
+        "model_key": model_family,
+        "model_version": f"{model_family}.v1",
         "parameter_hash": _sha256_json(payload.get("parameters", {})),
         "input_hash": _sha256_json(payload),
         "quality_metrics": {
@@ -328,6 +330,22 @@ def _component_schema_id(payload: dict[str, Any]) -> str:
     if isinstance(component_schema, dict):
         return _string_value(component_schema.get("component_schema_id"))
     return ""
+
+
+def _model_family(payload: dict[str, Any]) -> str:
+    runtime_options = payload.get("runtime_options")
+    if isinstance(runtime_options, dict):
+        value = _string_value(runtime_options.get("model_family"))
+        if value:
+            return value
+    nodes = payload.get("nodes")
+    if isinstance(nodes, list):
+        for node in nodes:
+            if isinstance(node, dict):
+                node_type = _string_value(node.get("node_type"))
+                if node_type in {"asm1slim", "asm1", "asm3", "udm"}:
+                    return node_type
+    return "material_balance"
 
 
 def _safe_error_message(exc: Exception) -> str:
