@@ -26,7 +26,7 @@
 
 ## 3. 维护约定
 
-1. Workflow 只编排仓库脚本和标准 setup actions；复杂 gate 逻辑应放在 `scripts/` 或对应 app 目录。
+1. Workflow 只编排仓库脚本、缓存、并发取消和标准 setup actions；复杂 gate 逻辑应放在 `scripts/` 或对应 app 目录。
 2. Release artifact 路径必须通过 workflow input、build manifest、artifact download 或环境变量传入，不在 workflow 中猜测。
 3. Next release gate dry run 不等于 release 通过；missing artifact 必须在 evidence 中显式呈现。
 4. Workflow artifact 可上传 unsigned release artifacts 和 evidence；不得上传 signing key、证书、更新通道密钥或发布令牌。

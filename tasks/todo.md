@@ -1,3 +1,32 @@
+# 2026-05-31 AutoWaterSimu Next release runner timing TODO
+
+- [x] Re-read `.github/workflows`, release script, and completion audit context
+- [x] Add workflow cache/concurrency/timing controls without changing default PR gate behavior
+- [x] Update workflow README and audit records
+- [x] Validate workflow syntax and release gate script
+- [x] Commit checkpoint
+
+## Plan
+
+- Add GitHub Actions concurrency so superseded PR runs do not consume runner time.
+- Use setup-node npm cache for both frontend and Desktop lockfiles, and make setup-go cache path explicit.
+- Add Rust target cache for Desktop Tauri tests/builds.
+- Expose manual `skip_long` dispatch input while keeping default full gate behavior unchanged.
+
+## Review
+
+- Added workflow concurrency cancellation scoped to workflow/ref.
+- Added npm cache for `frontend/package-lock.json` and `apps/desktop/package-lock.json`.
+- Made Go cache dependency path explicit with `apps/api/go.sum`.
+- Added Rust build output cache for `apps/desktop/src-tauri`.
+- Added manual `skip_long` dispatch input and passed it to `next-release-gates.ps1`; default PR behavior remains unchanged.
+- Verification:
+  - `backend\.venv\Scripts\python` + PyYAML parsed `.github/workflows/next-release-gates.yml` and asserted concurrency/cache steps.
+  - `git diff --check -- .github tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - `.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong -EvidenceDir tmp\release-evidence\workflow-timing-gate` passed with evidence status `passed` and `10` steps.
+- Remaining scope:
+  - Live GitHub Windows runner timing, artifact upload/download retention, and cache hit behavior still require an actual `workflow_dispatch` run.
+
 # 2026-05-31 AutoWaterSimu Next Desktop file-backed project restore TODO
 
 - [x] Re-read Desktop runtime/store/tests and project package README context

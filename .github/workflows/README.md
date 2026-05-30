@@ -27,11 +27,12 @@
 
 ## 3. 维护约定
 
-1. Workflow 负责依赖安装、缓存和脚本调用；复杂验证逻辑放在仓库脚本中。
+1. Workflow 负责依赖安装、缓存、并发取消和脚本调用；复杂验证逻辑放在仓库脚本中。
 2. Next release mode 需要显式传入 packaged sidecar 和 installer artifact 路径；`workflow_dispatch` 可用 `build_release_artifacts=true` 从 packaging build manifest 自动取得路径。
 3. Workflow artifact 可上传 evidence 和 unsigned Desktop release artifacts，不上传 secrets、signing material、updater keys 或 release tokens。
 4. GitHub Release publication、installer signing 和 auto update 均为 post-P0 policy-driven work；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 5. Next gate 的 worker pytest matrix 和 mock-backed Playwright current-flow smoke 通过 `workflow_dispatch` inputs 显式开启，不作为默认 PR gate。
+6. Manual dispatch 可显式设置 `skip_long=true` 做较快验证；默认 PR gate 不传 `-SkipLong`。
 
 ## 4. 对外接口
 
@@ -52,6 +53,7 @@
 ```
 
 涉及 `build_release_artifacts` 时还需本地确认 `apps/desktop/packaging/build-packaged-sidecar.ps1` 与 `build-nsis-installer.ps1` manifest 字段仍包含 `sidecar_executable` / `installer_path`。
+涉及 cache/concurrency/input wiring 时还需用 YAML parser 确认 workflow syntax。
 
 ## 7. AI 操作提示
 
