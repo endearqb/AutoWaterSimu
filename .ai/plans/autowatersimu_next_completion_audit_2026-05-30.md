@@ -39,11 +39,14 @@ Latest current-turn verification:
 - `cd apps\desktop; npm run build`: passed
 - `cd frontend; npx tsc --noEmit`: passed
 - `cd frontend; npm run build`: passed with existing Vite warnings about `gray-matter` eval, toaster chunking, and bundle size
+- Release gate automation now exists under `scripts/release/next-release-gates.ps1`; merge mode runs source-verifiable schema/worker/Go/codegen/frontend/Desktop checks and release mode requires explicit packaged sidecar and NSIS installer artifact paths
+- Desktop packaged sidecar and NSIS installer smoke scripts now write machine-readable evidence under `tmp/release-evidence/`
+- `scripts/release/next-release-gates.ps1 -Mode release -AllowMissingPackageArtifacts -SkipLong` produces `dry_run_skipped_artifacts`; this validates orchestration only and is not release-pass evidence
 
 Latest recorded but not re-run in this verification refresh:
 
 - Browser render smokes against `/compute-jobs` are recorded earlier in `tasks/todo.md` and `.ai/changes/2026-05-30.md`.
-- NSIS installer smoke, packaged sidecar smoke, and full CI/release gate execution have not been run.
+- Real NSIS installer smoke and packaged sidecar smoke have not been run because no release artifacts exist in the repository; allow-missing dry runs must not be treated as release pass evidence.
 
 ## Phase Status
 
@@ -59,7 +62,7 @@ Latest recorded but not re-run in this verification refresh:
 | Phase 6.2 | NewSystem / milp integration | Strong partial | `simulation_request.v1`, simulation check API, simulation input registry, ProcessGraph registry/lookup, process graph evidence dereference, model_run replay, evidence refs, risk findings, evidence governance, evidence ref dereference API, Web evidence ref lookup UI, NewSystem service-level E2E, service-token scopes/revocation exist | External NewSystem/milp acceptance smoke and production approval policy remain out of scope until an integration target is available |
 | Phase 6.3 | Agent DSL | Strong partial | Agent draft, constraint draft, result explanation, draft confirmation, validation endpoint, persisted confirm-draft audit record, readback endpoint, advisory constraint application plan endpoint, result explanation submit/review/publish workflow, explicit approved Agent draft promotion, and Web validation panel exist | Internal LLM generation, reviewer assignment UI, and any future constraint enforcement still need separate contracts/endpoints |
 | Phase 6.4 | Lifecycle and operations | Partial | Artifact retention metadata and migration exist; static token revoke exists | Actual retention/delete/archive workers, admin UI, metrics/SLO hardening, operation runbooks |
-| Release governance | Merge/release gates | Partial | Local verification matrix is stronger and opt-in migration rollback smoke passed | CI gate wiring, installer smoke evidence, packaged sidecar smoke, release checklist execution |
+| Release governance | Merge/release gates | Strong partial | Local verification matrix is stronger; opt-in migration rollback smoke passed; release gate scripts and GitHub Actions entry exist with explicit artifact evidence boundaries | Real packaged sidecar artifact generation, real NSIS installer smoke evidence, and full release checklist execution |
 
 ## Remaining Roadmap
 
@@ -84,7 +87,7 @@ Latest recorded but not re-run in this verification refresh:
 
 - Implement full project package content, including jobs, graphs, artifacts, and support bundle references.
 - Add file dialog/recent files allowlist.
-- Run packaging/NSIS smoke and document signing as post-P0 unless requirements change.
+- Build the real packaged Python worker sidecar, wire Tauri `externalBin`, produce the NSIS installer artifact, and run the existing smoke scripts without allow-missing.
 
 5. Worker/model migration completion
 
@@ -108,6 +111,6 @@ Latest recorded but not re-run in this verification refresh:
 
 ## Next Best Implementation Candidates
 
-1. Add release checklist automation, packaged sidecar smoke, and installer smoke evidence.
+1. Build the real Desktop packaged sidecar artifact, wire Tauri `externalBin`, and produce/run NSIS installer smoke evidence.
 2. Add internal Agent explanation generation only after an LLM provider and review assignment policy are specified.
 3. Add scheduled benchmark execution or benchmark-backed parameter promotion only after those governance semantics are separately approved.

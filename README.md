@@ -137,7 +137,9 @@ The repository root is the AutoWaterSimu project root. The core structure is:
 - `services/simulation-worker/`: Python worker CLI / sidecar target
 - `apps/api/`: Go Compute API target
 - `apps/desktop/`: Tauri/Rust + React Desktop target
+- `scripts/`: repository-level automation such as AutoWaterSimu Next release gates
 - `.ai/`: README First change, decision, plan, and review records
+- `.github/`: GitHub Actions and repository automation
 - `tasks/`: project task notes, work logs, and implementation plans
 - `backend/scripts/`: backend helper scripts (test, lint, format, DB initialization, prestart, etc.)
 - Others:

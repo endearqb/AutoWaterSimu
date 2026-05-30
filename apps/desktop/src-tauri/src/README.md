@@ -14,7 +14,7 @@
 本目录不负责：
 
 - React Desktop UI。
-- Packaged sidecar distribution。
+- Packaged sidecar distribution and installer packaging。
 - Go Compute API server。
 
 ## 2. 核心文件
@@ -42,6 +42,7 @@
 9. CanvasGraph save/load owns only persisted canvas JSON; ProcessGraph validation is read-only and must not enqueue jobs.
 10. Project create/list/get owns local project metadata; project export/import stays inside runtime-local `exports/` until external file dialogs and recent-file allowlists are designed.
 11. `project_id` attachment for jobs and CanvasGraphs is optional, but when present it must reference an existing project row.
+12. Packaged sidecar support should be added as an explicit runtime mode with tests; do not silently replace the current source-mode worker path.
 
 ## 4. 对外接口
 

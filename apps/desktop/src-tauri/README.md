@@ -45,7 +45,7 @@
 1. Command body 必须经由 Rust runtime，不让 React 直接启动 worker。
 2. Rust owns SQLite writes and worker lifecycle。
 3. React 不直接执行 shell 或写 SQLite。
-4. Phase 3C worker 是 source-mode dev sidecar；packaged `externalBin` 留到后续。
+4. Phase 3C worker 是 source-mode dev sidecar；packaged `externalBin` 配置和真实二进制构建仍留到后续，artifact smoke 由 `apps/desktop/scripts/` 提供。
 5. Job 状态机只允许 `queued -> running -> succeeded|failed|cancelled|timed_out`；terminal job 不允许重复运行。
 6. Tauri commands must be registered in one `invoke_handler` call。
 7. 成功 compute result 中的 `runtime_audit.model_runs` 需要持久化到 SQLite，并随 job snapshot/support bundle 返回。
@@ -55,6 +55,7 @@
 11. CanvasGraph persistence validates graph IDs and edge/node references before SQLite upsert; ProcessGraph validation returns structured errors without mutating job state。
 12. Project registry commands use the local `projects` table; project export/import is limited to runtime-local `exports/` files and does not imply external project-file dialogs yet。
 13. `compute_job_create` and `canvas_graph_save` may receive an optional `project_id`; runtime/store must reject unknown project ids instead of silently writing dangling references。
+14. Packaged sidecar 和 NSIS installer release smoke 由 Desktop scripts 执行；`src-tauri` 不应在未接入真实 artifact 前伪造 packaged mode。
 
 ## 4. 对外接口
 
@@ -84,8 +85,15 @@ cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml
 cd apps\desktop; npm run tauri -- build
 ```
 
+Release artifact smoke 入口：
+
+```powershell
+.\apps\desktop\scripts\smoke-packaged-sidecar.ps1 -SidecarPath <path-to-sidecar.exe>
+.\apps\desktop\scripts\smoke-nsis-installer.ps1 -InstallerPath <path-to-installer.exe>
+```
+
 ## 7. AI 操作提示
 
 1. 先读根 `AGENTS.md`、根 `README.md`、`apps/desktop/README.md` 和本 README。
-2. 不要在 3B runtime foundation 阶段引入 installer、auto update 或 signing。
+2. 不要在未准备真实 packaged artifact 时引入 installer、auto update 或 signing。
 3. sidecar spawn 变更需要同步验证 stdout JSON-RPC、stderr tail 和本地路径 sandbox。

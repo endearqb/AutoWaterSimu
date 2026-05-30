@@ -1,3 +1,37 @@
+# 2026-05-30 AutoWaterSimu Next Release Gate Automation TODO
+
+- [x] Re-read release, Desktop, worker, GitHub Actions, and README First context
+- [x] Add Desktop packaging contract for packaged sidecar and NSIS installer smoke
+- [x] Add packaged sidecar and NSIS installer smoke scripts with machine-readable evidence
+- [x] Add repository-level Next merge/release gate orchestration
+- [x] Add GitHub Actions workflow entry for Next gates
+- [x] Run script, frontend, desktop, and diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep merge gates limited to source-verifiable checks.
+- Keep release gates explicit: sidecar/installer artifact paths are required unless a caller knowingly asks for allow-missing dry run.
+- Do not enable Tauri `externalBin`, installer bundling, signing, or auto-update without real packaged artifacts.
+
+## Review
+
+- Added repository-level release automation in `scripts/release/next-release-gates.ps1`.
+- Added Desktop artifact smoke scripts:
+  - `apps/desktop/scripts/smoke-packaged-sidecar.ps1`
+  - `apps/desktop/scripts/smoke-nsis-installer.ps1`
+- Added Desktop packaging contract docs under `apps/desktop/packaging/README.md`.
+- Added `.github/workflows/next-release-gates.yml` for pull request merge gates and manual release/dry-run gates.
+- Added ADR `.ai/decisions/0008-release-gate-artifact-boundary.md`.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File apps\desktop\scripts\smoke-packaged-sidecar.ps1 -AllowMissing` passed and wrote skipped evidence.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File apps\desktop\scripts\smoke-nsis-installer.ps1 -AllowMissing` passed and wrote skipped evidence.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\next-release-gates.ps1 -Mode merge -SkipLong` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\next-release-gates.ps1 -Mode release -AllowMissingPackageArtifacts -SkipLong` passed as `dry_run_skipped_artifacts`, not as release pass evidence.
+  - `cd apps\desktop; npm run build` passed.
+- Remaining scope:
+  - Build the real packaged sidecar, wire Tauri `externalBin`, produce NSIS installer artifact, and run release mode without `-AllowMissingPackageArtifacts`.
+
 # 2026-05-30 AutoWaterSimu Next Benchmark Run History TODO
 
 - [x] Re-read model governance README, PRD/Spec/Plan, catalog and model_run implementation

@@ -13,6 +13,7 @@
 - Python worker sidecar management。
 - local artifact JSON/CSV export、model run audit、support bundle and runtime backup/restore smoke。
 - local CanvasGraph save/load and ProcessGraph validation smoke。
+- Desktop packaging contract and release smoke scripts。
 
 本目录不负责：
 
@@ -26,10 +27,12 @@
 |---|---|
 | `README.md` | 本目录上下文契约 |
 | `package.json` | 独立 Desktop React/Vite app 脚本与依赖 |
+| `packaging/` | Desktop packaged sidecar / NSIS installer release 契约 |
+| `scripts/` | packaged sidecar and NSIS installer smoke scripts |
 | `src/` | Phase 3C Desktop React dev MVP shell |
 | `src-tauri/` | Rust/Tauri runtime、SQLite store、project registry/project_id wiring、source-mode worker JSON-RPC、canvas/process graph commands、artifact JSON/CSV/model_run/support bundle/backup smoke |
 
-后续新增 packaged sidecar、installer packaging 和完整 project/graph UI wiring。
+后续仍需实际生成 packaged sidecar、配置 Tauri `externalBin`、产出 NSIS installer 并执行 release smoke；本目录已提供 packaging 契约和 artifact smoke 入口。
 
 ## 3. 维护约定
 
@@ -43,6 +46,7 @@
 8. CanvasGraph save/load 先使用 SQLite `canvas_graphs` 表；ProcessGraph command 先做只读结构 validation，不隐式创建 compute job。
 9. Project registry smoke 只写 SQLite `projects` 表并提供 create/list/get；project export/import 目前只读写 runtime-local `exports/` sandbox，完整外部 file dialog 与 recent file allowlist 仍待后续。
 10. 创建 compute job 或保存 CanvasGraph 时，React 可传入当前选中 `project_id`；Rust 必须验证项目存在后再写入 `compute_jobs.project_id` 或 `canvas_graphs.project_id`。
+11. Packaged sidecar / installer smoke 必须通过显式 artifact 路径运行；缺少 artifact 不能声明 release 通过。
 
 ## 4. 对外接口
 
@@ -71,7 +75,7 @@ cd apps\desktop; npm run build
 cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml
 ```
 
-Phase 3C 已补 Desktop React build、Tauri release build smoke、SQLite runtime tests、source-mode worker spawn smoke、support bundle smoke 和 path sandbox tests。Packaged sidecar smoke、NSIS installer smoke 留到后续。
+Phase 3C 已补 Desktop React build、Tauri release build smoke、SQLite runtime tests、source-mode worker spawn smoke、support bundle smoke 和 path sandbox tests。Packaged sidecar smoke、NSIS installer smoke 脚本已存在，但完整 release 通过仍需要实际 artifact。
 
 ## 7. AI 操作提示
 

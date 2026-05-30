@@ -1,0 +1,106 @@
+name: AutoWaterSimu Next Gates
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - ".github/workflows/next-release-gates.yml"
+      - "scripts/release/**"
+      - "contracts/**"
+      - "simulation_core/**"
+      - "services/simulation-worker/**"
+      - "apps/api/**"
+      - "apps/desktop/**"
+      - "frontend/src/client/compute/**"
+      - "frontend/src/services/computeJobsService.ts"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Gate mode: merge or release"
+        required: true
+        default: "merge"
+      sidecar_path:
+        description: "Path to packaged simulation-worker sidecar on the runner"
+        required: false
+        default: ""
+      installer_path:
+        description: "Path to NSIS installer on the runner"
+        required: false
+        default: ""
+      allow_missing_package_artifacts:
+        description: "Allow release dry run to skip missing sidecar/installer artifacts"
+        required: false
+        default: "false"
+
+jobs:
+  next-gates:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+          enable-cache: true
+
+      - name: Install backend Python dependencies
+        run: uv sync
+        working-directory: backend
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Desktop dependencies
+        run: npm ci
+        working-directory: apps/desktop
+
+      - name: Run Next gates
+        shell: powershell
+        run: |
+          $mode = "${{ github.event.inputs.mode }}"
+          if ([string]::IsNullOrWhiteSpace($mode)) {
+            $mode = "merge"
+          }
+          $args = @("-Mode", $mode)
+          if ("${{ github.event.inputs.sidecar_path }}" -ne "") {
+            $args += @("-SidecarPath", "${{ github.event.inputs.sidecar_path }}")
+          }
+          if ("${{ github.event.inputs.installer_path }}" -ne "") {
+            $args += @("-InstallerPath", "${{ github.event.inputs.installer_path }}")
+          }
+          if ("${{ github.event.inputs.allow_missing_package_artifacts }}" -eq "true") {
+            $args += "-AllowMissingPackageArtifacts"
+          }
+          .\scripts\release\next-release-gates.ps1 @args
+
+      - name: Upload release gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-release-gate-evidence
+          path: tmp/release-evidence
+          include-hidden-files: true

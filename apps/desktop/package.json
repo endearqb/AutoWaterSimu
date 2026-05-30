@@ -8,7 +8,9 @@
     "build": "tsc -p tsconfig.json && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev"
+    "tauri:dev": "tauri dev",
+    "release:smoke:sidecar": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-packaged-sidecar.ps1",
+    "release:smoke:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-nsis-installer.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",

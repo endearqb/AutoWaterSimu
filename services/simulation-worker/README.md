@@ -16,6 +16,7 @@
 
 - Go API job persistence。
 - Tauri Rust process manager。
+- Desktop packaging smoke and installer smoke。
 - React UI。
 
 ## 2. 核心文件
@@ -27,6 +28,8 @@
 | `tests/` | Worker CLI contract tests |
 
 Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runtime，不再直接依赖 `backend/app`。`--run-api-once` 是 Phase 4/5 的本地/CI HTTP worker bridge，用于 register -> claim -> run -> upload artifact -> succeed/fail 的单次闭环；长驻 worker 调度、复杂 heartbeat 和生产部署仍是后续工作。
+
+Packaged sidecar smoke 由 `apps/desktop/scripts/smoke-packaged-sidecar.ps1` 负责；本目录只定义 worker CLI 行为和测试。
 
 ## 3. 维护约定
 
