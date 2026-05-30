@@ -1,3 +1,29 @@
+# 2026-05-30 AutoWaterSimu Next Artifact Retention UI TODO
+
+- [x] Re-read Compute Jobs route, services, generated client, and routes README context
+- [x] Add artifact retention dry-run/delete panel to Compute Jobs page
+- [x] Disable delete until a dry-run report has `would_delete` items
+- [x] Surface backend errors through existing Compute Jobs error panel
+- [x] Run frontend typecheck and current-flow Playwright smoke
+- [x] Update README First records and completion audit
+
+## Plan
+
+- Reuse `computeJobsService.sweepArtifactRetention`.
+- Keep deletion backend-protected by `artifact:admin`; the UI only adds a guarded entry point.
+- Do not add scheduler, archive controls, or a separate admin route in this slice.
+
+## Review
+
+- Added an Artifact retention panel to `/compute-jobs`.
+- Dry run calls `dry_run=true`; delete calls `dry_run=false` and is disabled until a dry-run report indicates eligible TTL artifacts.
+- The panel shows checked/deleted/skipped/would-delete counts and the backend report JSON.
+- Verification:
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps` passed (`1 passed`).
+- Remaining scope:
+  - Scheduler, archive backend, alert/dashboard wiring, and a dedicated lifecycle admin page remain follow-up work.
+
 # 2026-05-30 AutoWaterSimu Next Lifecycle Operations Runbook TODO
 
 - [x] Re-read docs README and current Compute API lifecycle/metrics context

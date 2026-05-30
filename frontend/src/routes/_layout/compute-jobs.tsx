@@ -22,12 +22,14 @@ import {
   FiRefreshCw,
   FiSearch,
   FiSend,
+  FiTrash2,
   FiXCircle,
 } from "react-icons/fi"
 
 import { OpenAPI as ComputeOpenAPI } from "@/client/compute"
 import type {
   ArtifactRecord,
+  ArtifactRetentionSweepReport,
   ContractValidationResponse,
   EventRecord,
   EvidenceReferenceResolution,
@@ -463,6 +465,70 @@ function ModelCatalogPanel({
           </Table.Root>
         </Box>
       )}
+    </Box>
+  )
+}
+
+function ArtifactRetentionPanel({
+  deletePending,
+  dryRunPending,
+  onDelete,
+  onDryRun,
+  report,
+}: {
+  deletePending: boolean
+  dryRunPending: boolean
+  onDelete: () => void
+  onDryRun: () => void
+  report: ArtifactRetentionSweepReport | null
+}) {
+  const wouldDelete =
+    report?.items.filter((item) => item.action === "would_delete").length ?? 0
+  const deleteEnabled = Boolean(report?.dry_run && wouldDelete > 0)
+
+  return (
+    <Box borderWidth="1px" borderRadius="md" p={4}>
+      <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
+        <Heading size="md">Artifact retention</Heading>
+        <HStack wrap="wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={dryRunPending}
+            onClick={onDryRun}
+          >
+            <FiSearch />
+            Dry run
+          </Button>
+          <Button
+            size="sm"
+            colorPalette="red"
+            variant="outline"
+            disabled={deletePending || !deleteEnabled}
+            onClick={onDelete}
+          >
+            <FiTrash2 />
+            Delete eligible TTL
+          </Button>
+        </HStack>
+      </Flex>
+
+      <Grid
+        templateColumns={{
+          base: "repeat(2, minmax(0, 1fr))",
+          md: "repeat(5, minmax(0, 1fr))",
+        }}
+        gap={3}
+        mb={3}
+      >
+        <Field label="Checked" value={report?.checked} />
+        <Field label="Deleted" value={report?.deleted} />
+        <Field label="Skipped" value={report?.skipped} />
+        <Field label="Would delete" value={wouldDelete} />
+        <Field label="Generated" value={formatDateTime(report?.generated_at)} />
+      </Grid>
+
+      <JsonBlock value={report ?? { status: "not_run" }} minH="120px" />
     </Box>
   )
 }
@@ -988,6 +1054,8 @@ function ComputeJobs() {
   )
   const [contractValidationResult, setContractValidationResult] =
     useState<ContractValidationResponse | null>(null)
+  const [retentionSweepReport, setRetentionSweepReport] =
+    useState<ArtifactRetentionSweepReport | null>(null)
   const queryClient = useQueryClient()
   const exportCurrentFlowData = useFlowStore((state) => state.exportFlowData)
   const currentFlowChartName = useFlowStore(
@@ -1138,6 +1206,21 @@ function ComputeJobs() {
     onSuccess: (result) => setContractValidationResult(result),
   })
 
+  const retentionDryRunMutation = useMutation({
+    mutationFn: () =>
+      computeJobsService.sweepArtifactRetention({ dry_run: true, limit: 100 }),
+    onSuccess: (report) => setRetentionSweepReport(report),
+  })
+
+  const retentionDeleteMutation = useMutation({
+    mutationFn: () =>
+      computeJobsService.sweepArtifactRetention({ dry_run: false, limit: 100 }),
+    onSuccess: (report) => {
+      setRetentionSweepReport(report)
+      queryClient.invalidateQueries({ queryKey: ["compute-jobs"] })
+    },
+  })
+
   const selectedSnapshot = detailQuery.data ?? selectedFromList
   const healthStatus = healthQuery.isError
     ? "offline"
@@ -1229,7 +1312,9 @@ function ComputeJobs() {
           downloadEvidenceMutation.isError ||
           resolveEvidenceMutation.isError ||
           contractValidationMutation.isError ||
-          draftConfirmationMutation.isError) && (
+          draftConfirmationMutation.isError ||
+          retentionDryRunMutation.isError ||
+          retentionDeleteMutation.isError) && (
           <Box borderWidth="1px" borderRadius="md" p={4} color="red.fg">
             <Text fontSize="sm">
               {formatError(
@@ -1243,7 +1328,9 @@ function ComputeJobs() {
                   downloadEvidenceMutation.error ||
                   resolveEvidenceMutation.error ||
                   contractValidationMutation.error ||
-                  draftConfirmationMutation.error,
+                  draftConfirmationMutation.error ||
+                  retentionDryRunMutation.error ||
+                  retentionDeleteMutation.error,
               )}
             </Text>
             {transformIssues.length > 0 && (
@@ -1321,6 +1408,14 @@ function ComputeJobs() {
         <ModelCatalogPanel
           catalog={modelCatalogQuery.data}
           isFetching={modelCatalogQuery.isFetching}
+        />
+
+        <ArtifactRetentionPanel
+          deletePending={retentionDeleteMutation.isPending}
+          dryRunPending={retentionDryRunMutation.isPending}
+          onDelete={() => retentionDeleteMutation.mutate()}
+          onDryRun={() => retentionDryRunMutation.mutate()}
+          report={retentionSweepReport}
         />
 
         <ContractValidationPanel

@@ -34,6 +34,7 @@
 4. Evidence/artifact 下载与 evidence ref lookup 只调用 service helper，不在 route 内组装后端 payload；route 只展示 service 返回的下载文件名、evidence checksum 和后端解析结果。
 5. Model catalog/model run UI 只做只读展示、筛选和查询，可展示 benchmark case 数量；不得在 route 层引入 parameter set 状态机、benchmark run 编排或治理审批规则。
 6. Contract validation UI 只显示后端校验结果和已持久化的 draft confirmation audit record；`Confirm draft` 仍不得自动创建 job、执行审批或发布生产动作。
+7. Compute Jobs 中的 artifact retention 操作必须依赖后端 `artifact:admin` scope；UI 删除入口需先有 dry-run report 才能启用。
 
 ## 4. 对外接口
 
