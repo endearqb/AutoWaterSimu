@@ -25,14 +25,14 @@
 | `python/` | Phase 2B 纯 Python simulation core 包 |
 | `tests/` | core import boundary、adapter 行为和数值 parity 测试 |
 
-`python/autowatersimu_simulation_core/` 当前暴露 material balance 运行时，并在该运行时内保留 ASM1Slim / ASM1 / ASM3 / UDM 节点 runtime binding 字段；`simulation.asm1slim.v1` 已作为首个独立 ASM job type 复用该运行时，ASM1/ASM3/UDM 独立 job type 迁移仍在后续 Phase。
+`python/autowatersimu_simulation_core/` 当前暴露 material balance 运行时，并在该运行时内保留 ASM1Slim / ASM1 / ASM3 / UDM 节点 runtime binding 字段；`simulation.asm1slim.v1` 与 `simulation.asm1.v1` 已作为独立 ASM job type 复用该运行时，ASM3/UDM 独立 job type 迁移仍在后续 Phase。
 
 ## 3. 维护约定
 
 1. 核心计算不得导入 FastAPI、SQLModel、Tauri 或 Go API 相关代码。
 2. 所有输入必须来自合同化 payload 或显式适配层。
 3. 数值变更必须有 baseline fixture 和 tolerance 说明。
-4. ASM/UDM 节点字段在迁移期先作为 material balance runtime 的模型绑定字段传递；新增独立 job type 前必须先更新 contracts、worker 和旧后端对照测试。当前仅 `simulation.asm1slim.v1` 已完成该最小闭环。
+4. ASM/UDM 节点字段在迁移期先作为 material balance runtime 的模型绑定字段传递；新增独立 job type 前必须先更新 contracts、worker 和旧后端对照测试。当前 `simulation.asm1slim.v1` 与 `simulation.asm1.v1` 已完成该最小闭环。
 
 ## 4. 对外接口
 

@@ -1,3 +1,35 @@
+# 2026-05-30 AutoWaterSimu Next ASM1 Independent Worker Job Type TODO
+
+- [x] Re-read ASM1 runtime, contracts, worker, simulation core, and backend adapter context
+- [x] Add `simulation.asm1.v1` to executable compute/simulation/result contracts
+- [x] Add independent ASM1 fixtures and adapter/worker tests
+- [x] Keep Go SimulationRequest, Desktop creation, and frontend submission out of this slice
+- [x] Run contract, core, worker, backend adapter, and direct worker validation
+- [x] Record findings and commit checkpoint
+
+## Plan
+
+- Introduce `simulation.asm1.v1` only after the completed ASM1Slim pattern.
+- Use the existing ASM1 node model branch in the material balance runtime, with 11 state variables and 19 parameters from the runtime model validators.
+- Do not claim ASM3 or UDM independent job types in this slice.
+- Keep API/UI submission surfaces unchanged until independent model job routing is explicitly designed.
+
+## Review
+
+- `compute_job.v1`, `simulation_input.v1`, and `compute_result.v1` now allow `simulation.asm1.v1` in addition to `simulation.material_balance.v1` and `simulation.asm1slim.v1`.
+- Added independent ASM1 compute/simulation fixtures with 11 ASM1 state variables and 19 ASM1 runtime parameters.
+- Core and legacy backend adapters accept `simulation.asm1.v1` while still converting through the existing MaterialBalanceInput runtime model.
+- Worker self-check now lists `simulation.asm1.v1`; `run_job` preserves that job type in result/artifact payloads and emits `model_run.model_key=asm1`.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed (`79 passed`).
+  - `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` passed (`8 passed`, existing warnings only).
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed (`10 passed`).
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\services -q` passed (`26 passed`, existing warnings only).
+  - Direct worker run for `asm1_independent.compute_job.v1.json` passed with `job_type=simulation.asm1.v1`, `status=succeeded`, and `model_key=asm1`.
+- Remaining scope:
+  - `simulation_request.v1`, Go API promotion, Desktop job creation, and Web submit UI still accept only the material-balance submission path.
+  - Independent ASM3 and UDM job types remain follow-up work and need their own fixtures/parity evidence.
+
 # 2026-05-30 AutoWaterSimu Next ASM1Slim Independent Worker Job Type TODO
 
 - [x] Re-read contracts, worker, simulation core, backend adapter, and Phase 5 migration context

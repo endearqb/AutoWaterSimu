@@ -1,0 +1,143 @@
+{
+  "schema_version": "compute_job.v1",
+  "job_id": "job_asm1_independent",
+  "job_type": "simulation.asm1.v1",
+  "queue": "simulation",
+  "request_id": "req_asm1_independent",
+  "idempotency_key": "idem_asm1_independent",
+  "payload": {
+    "schema_version": "simulation_input.v1",
+    "simulation_input_id": "si_asm1_independent",
+    "process_graph_id": "pg_asm1_independent",
+    "process_graph_version": 1,
+    "job_type": "simulation.asm1.v1",
+    "component_schema": {
+      "component_schema_id": "asm1_components.v1",
+      "components": ["X_BH", "X_BA", "X_S", "X_i", "X_ND", "S_O", "S_S", "S_NO", "S_NH", "S_ND", "S_ALK"],
+      "unit": "mg/L"
+    },
+    "nodes": [
+      {
+        "node_id": "n_in",
+        "node_type": "input",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "X_BH": 15.0,
+          "X_BA": 2.0,
+          "X_S": 20.0,
+          "X_i": 5.0,
+          "X_ND": 1.0,
+          "S_O": 1.0,
+          "S_S": 25.0,
+          "S_NO": 2.0,
+          "S_NH": 4.0,
+          "S_ND": 1.0,
+          "S_ALK": 5.0
+        },
+        "is_inlet": true,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_reactor",
+        "node_type": "asm1",
+        "initial_volume": 10.0,
+        "initial_concentrations": {
+          "X_BH": 30.0,
+          "X_BA": 5.0,
+          "X_S": 12.0,
+          "X_i": 4.0,
+          "X_ND": 1.2,
+          "S_O": 0.5,
+          "S_S": 10.0,
+          "S_NO": 1.5,
+          "S_NH": 3.0,
+          "S_ND": 0.8,
+          "S_ALK": 5.0
+        },
+        "asm1_parameters": [6.0, 20.0, 0.2, 0.5, 0.8, 0.62, 0.8, 1.0, 0.4, 0.1, 0.67, 0.24, 0.08, 0.06, 0.08, 0.4, 0.08, 3.0, 0.03],
+        "is_inlet": false,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_out",
+        "node_type": "output",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "X_BH": 0.0,
+          "X_BA": 0.0,
+          "X_S": 0.0,
+          "X_i": 0.0,
+          "X_ND": 0.0,
+          "S_O": 0.0,
+          "S_S": 0.0,
+          "S_NO": 0.0,
+          "S_NH": 0.0,
+          "S_ND": 0.0,
+          "S_ALK": 0.0
+        },
+        "is_inlet": false,
+        "is_outlet": true
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "e_in_reactor",
+        "source_node_id": "n_in",
+        "target_node_id": "n_reactor",
+        "flow_rate": 10.0,
+        "concentration_transform": {
+          "X_BH": { "a": 1.0, "b": 0.0 },
+          "X_BA": { "a": 1.0, "b": 0.0 },
+          "X_S": { "a": 1.0, "b": 0.0 },
+          "X_i": { "a": 1.0, "b": 0.0 },
+          "X_ND": { "a": 1.0, "b": 0.0 },
+          "S_O": { "a": 1.0, "b": 0.0 },
+          "S_S": { "a": 1.0, "b": 0.0 },
+          "S_NO": { "a": 1.0, "b": 0.0 },
+          "S_NH": { "a": 1.0, "b": 0.0 },
+          "S_ND": { "a": 1.0, "b": 0.0 },
+          "S_ALK": { "a": 1.0, "b": 0.0 }
+        }
+      },
+      {
+        "edge_id": "e_reactor_out",
+        "source_node_id": "n_reactor",
+        "target_node_id": "n_out",
+        "flow_rate": 10.0,
+        "concentration_transform": {
+          "X_BH": { "a": 1.0, "b": 0.0 },
+          "X_BA": { "a": 1.0, "b": 0.0 },
+          "X_S": { "a": 1.0, "b": 0.0 },
+          "X_i": { "a": 1.0, "b": 0.0 },
+          "X_ND": { "a": 1.0, "b": 0.0 },
+          "S_O": { "a": 1.0, "b": 0.0 },
+          "S_S": { "a": 1.0, "b": 0.0 },
+          "S_NO": { "a": 1.0, "b": 0.0 },
+          "S_NH": { "a": 1.0, "b": 0.0 },
+          "S_ND": { "a": 1.0, "b": 0.0 },
+          "S_ALK": { "a": 1.0, "b": 0.0 }
+        }
+      }
+    ],
+    "parameters": {
+      "hours": 0.5,
+      "steps_per_hour": 20,
+      "solver_method": "scipy_solver",
+      "tolerance": 0.000001
+    },
+    "runtime_options": {
+      "model_family": "asm1"
+    }
+  },
+  "context": {
+    "source_system": "autowatersimu",
+    "requested_by": "user:test",
+    "trace_id": "trace_asm1_independent"
+  },
+  "execution": {
+    "time_limit_sec": 600,
+    "priority": "normal",
+    "required_capabilities": ["asm1", "ode"]
+  },
+  "created_at": "2026-05-30T00:00:00Z"
+}

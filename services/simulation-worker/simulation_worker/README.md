@@ -8,7 +8,7 @@
 
 - CLI 参数解析。
 - `--self-check`。
-- `--run-job` material balance、ASM1Slim model-bound fixture 和 `simulation.asm1slim.v1` 独立 job type 执行链路。
+- `--run-job` material balance、ASM1Slim model-bound fixture、`simulation.asm1slim.v1` 和 `simulation.asm1.v1` 独立 job type 执行链路。
 - stdio JSON-RPC protocol。
 - `--run-api-once` one-shot Go Compute API worker bridge。
 - time-series artifact 写入。
@@ -89,6 +89,7 @@ backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py
 backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm1slim_minimal.compute_job.v1.json --artifact-dir tmp\worker-asm1slim-artifacts
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm1slim_independent.compute_job.v1.json --artifact-dir tmp\worker-asm1slim-independent-artifacts
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm1_independent.compute_job.v1.json --artifact-dir tmp\worker-asm1-artifacts
 ```
 
 ## 7. AI 操作提示

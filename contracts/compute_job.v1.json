@@ -19,7 +19,7 @@
     "job_id": { "type": "string", "minLength": 1 },
     "job_type": {
       "type": "string",
-      "enum": ["simulation.material_balance.v1", "simulation.asm1slim.v1"]
+      "enum": ["simulation.material_balance.v1", "simulation.asm1slim.v1", "simulation.asm1.v1"]
     },
     "queue": { "type": "string", "minLength": 1 },
     "request_id": { "type": "string", "minLength": 1 },

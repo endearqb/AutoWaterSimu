@@ -16,6 +16,8 @@
 | `asm1slim_minimal.simulation_input.v1.json` | ASM1Slim model-bound core/backend adapter fixture |
 | `asm1slim_independent.compute_job.v1.json` | `simulation.asm1slim.v1` worker fixture |
 | `asm1slim_independent.simulation_input.v1.json` | `simulation.asm1slim.v1` core/backend adapter fixture |
+| `asm1_independent.compute_job.v1.json` | `simulation.asm1.v1` worker fixture |
+| `asm1_independent.simulation_input.v1.json` | `simulation.asm1.v1` core/backend adapter fixture |
 
 ## 3. 维护约定
 

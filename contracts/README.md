@@ -51,7 +51,7 @@
 11. `compute_result.v1.risk_findings` 是面向 NewSystem/milp 审批集成的结构化风险结论；每条 finding 必须带 `evidence_refs`，API 可把它同步到 result summary 便于只读查询，并可在 job 边界内解析支持的证据引用。
 12. `evidence_package.v1.governance` 汇总 model version、parameter set status 与 `production_allowed`；该字段只供审批/审计读取，不代表 AutoWaterSimu 发布生产指令。
 13. `simulation_request.v1.input_ref` 可表达 `process_graph_id`、`simulation_input_id`、`model_run_id` 或内嵌 `simulation_input`；Go Compute API 当前可把内嵌 `simulation_input.v1`、已登记的 `simulation_input_id`、已登记的 `process_graph_id` / `process_graph_version`，或可回溯到源 job 的已持久化 `model_run_id` 转为可执行 material-balance job。
-14. `compute_job.v1`、`simulation_input.v1`、`compute_result.v1` 当前支持 `simulation.material_balance.v1` 与首个独立 ASM job type `simulation.asm1slim.v1`；`simulation_request.v1` 与 Go API promotion 仍先保留 material balance 边界，避免在未完成 API 路由设计前扩大提交入口。
+14. `compute_job.v1`、`simulation_input.v1`、`compute_result.v1` 当前支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1` 与 `simulation.asm1.v1`；`simulation_request.v1` 与 Go API promotion 仍先保留 material balance 边界，避免在未完成 API 路由设计前扩大提交入口。
 
 ## 4. 对外接口
 
