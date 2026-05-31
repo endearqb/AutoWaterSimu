@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	domainartifacts "autowatersimu/apps/api/internal/domain/artifacts"
 	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
@@ -317,10 +318,10 @@ func (store *MemoryStore) ListArtifactRetentionCandidates(_ context.Context, now
 	defer store.mu.Unlock()
 	var artifacts []ArtifactRecord
 	for _, artifact := range store.artifacts {
-		if !artifactRetentionPolicyEligible(artifact.RetentionPolicy) {
+		if !domainartifacts.IsRetentionCandidate(artifact.RetentionPolicy) {
 			continue
 		}
-		if artifact.RetentionPolicy == "archive_candidate" {
+		if artifact.RetentionPolicy == domainartifacts.PolicyArchiveCandidate {
 			if archive, ok := store.archives[artifact.ArtifactID]; ok && archive.Status == "archived" {
 				continue
 			}
@@ -425,10 +426,10 @@ func (store *MemoryStore) Metrics(_ context.Context, now time.Time) (MetricsSnap
 		}
 	}
 	for _, artifact := range store.artifacts {
-		if artifactRetentionPolicyEligible(artifact.RetentionPolicy) &&
+		if domainartifacts.IsRetentionCandidate(artifact.RetentionPolicy) &&
 			artifact.RetainUntil != nil &&
 			!artifact.RetainUntil.After(now) {
-			if artifact.RetentionPolicy == "archive_candidate" {
+			if artifact.RetentionPolicy == domainartifacts.PolicyArchiveCandidate {
 				if archive, ok := store.archives[artifact.ArtifactID]; ok && archive.Status == "archived" {
 					continue
 				}
@@ -1074,15 +1075,6 @@ func stringsFromAny(value any) []string {
 		}
 	}
 	return result
-}
-
-func artifactRetentionPolicyEligible(policy string) bool {
-	switch strings.TrimSpace(policy) {
-	case "ttl", "archive_candidate":
-		return true
-	default:
-		return false
-	}
 }
 
 func normalizeRetentionLimit(limit int) int {

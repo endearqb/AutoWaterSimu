@@ -1,3 +1,38 @@
+# 2026-06-01 AutoWaterSimu Next artifacts domain retention policy split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and artifact retention call sites
+- [x] Confirm next low-risk gap: artifact retention policy parsing/candidate checks still live in compute helpers
+- [x] Add `apps/api/internal/domain/artifacts` with retention policy helpers and direct tests
+- [x] Route artifact upload and MemoryStore retention/metrics candidate checks through domain artifacts helpers
+- [x] Update audit/docs/checklists/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Move only stable retention policy constants, `retention_policy` / `retain_until` parsing, and candidate policy checks.
+- Keep artifact object storage, archive execution, audit envelopes, metadata store interfaces, PostgreSQL implementation, HTTP routes, OpenAPI, contracts, migrations, and generated clients unchanged.
+- Treat this as initial artifacts domain movement, not the full artifact lifecycle package split.
+
+## Review
+
+- Added `apps/api/internal/domain/artifacts` with `PolicyRetainForever`, `PolicyTTL`, `PolicyArchiveCandidate`, `RetentionFromMetadata`, and `IsRetentionCandidate`.
+- Added direct artifacts domain tests for default retention, TTL `retain_until` parsing, invalid policy/time rejection, and candidate policy checks.
+- Routed artifact upload metadata parsing and MemoryStore retention/metrics candidate checks through `domain/artifacts`.
+- Removed compute-local artifact retention parsing and candidate helper functions.
+- Updated API/internal/domain/compute/scripts READMEs, `docs/architecture/compute-api.md`, current-state, Certainty/Elegance checklist, boundary audit expected package dirs/notes, and change records.
+- Kept artifact object storage, archive execution, selected mutation audit envelopes, store interfaces, PostgreSQL implementation, HTTP routes, OpenAPI, contracts, migrations, and generated clients unchanged.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/artifacts ./internal/compute -run "Test(ArtifactRetention|HTTPArtifactRetention|IsRetention|Retention|UploadArtifactPersistsRetention)" -count=1` passed.
+  - `cd apps\api; go test ./internal/domain/artifacts ./internal/domain/models ./internal/domain/jobs ./internal/domain/workers ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 10.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full artifact lifecycle package movement is not complete; object storage, archive execution, metadata persistence, audit envelopes, HTTP mapping, and PostgreSQL implementation remain in compute compatibility wiring.
+  - Full jobs lifecycle, full models governance, evidence, simulation, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models domain model-run parsing split TODO
 
 - [x] Re-read current worktree, domain README, jobs domain README, and compute model_run raw parsing call sites

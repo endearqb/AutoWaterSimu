@@ -405,24 +405,6 @@ func modelCatalogResponseToMap(catalog ModelCatalogResponse) map[string]any {
 	return value
 }
 
-func artifactRetention(metadata map[string]any) (string, *time.Time, error) {
-	retentionPolicy := defaultString(stringValue(metadata, "retention_policy"), "retain_forever")
-	switch retentionPolicy {
-	case "retain_forever", "ttl", "archive_candidate":
-	default:
-		return "", nil, ValidationError("retention_policy is invalid")
-	}
-	rawRetainUntil := stringValue(metadata, "retain_until")
-	if rawRetainUntil == "" {
-		return retentionPolicy, nil, nil
-	}
-	retainUntil, err := time.Parse(time.RFC3339Nano, rawRetainUntil)
-	if err != nil {
-		return "", nil, ValidationError("retain_until must be RFC3339")
-	}
-	return retentionPolicy, &retainUntil, nil
-}
-
 func simulationCheckExecution(jobType string) map[string]any {
 	requiredCapabilities := []any{}
 	switch jobType {

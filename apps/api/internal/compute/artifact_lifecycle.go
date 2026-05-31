@@ -5,6 +5,8 @@ import (
 	"io"
 	"mime/multipart"
 	"time"
+
+	domainartifacts "autowatersimu/apps/api/internal/domain/artifacts"
 )
 
 type ArtifactLifecycleService struct {
@@ -67,9 +69,9 @@ func (svc *ArtifactLifecycleService) UploadArtifact(ctx context.Context, workerI
 	if expected := stringValue(metadata, "checksum"); expected != checksum {
 		return ArtifactRecord{}, ValidationError("artifact checksum mismatch")
 	}
-	retentionPolicy, retainUntil, err := artifactRetention(metadata)
+	retention, err := domainartifacts.RetentionFromMetadata(metadata)
 	if err != nil {
-		return ArtifactRecord{}, err
+		return ArtifactRecord{}, ValidationError(err.Error())
 	}
 	objectKey := "jobs/" + jobID + "/" + artifactID + ".json"
 	if err := svc.artifacts.Write(ctx, objectKey, bytes); err != nil {
@@ -86,8 +88,8 @@ func (svc *ArtifactLifecycleService) UploadArtifact(ctx context.Context, workerI
 		ContentType:     defaultString(stringValue(metadata, "content_type"), "application/json"),
 		SizeBytes:       int64(len(bytes)),
 		Checksum:        checksum,
-		RetentionPolicy: retentionPolicy,
-		RetainUntil:     retainUntil,
+		RetentionPolicy: retention.Policy,
+		RetainUntil:     retention.RetainUntil,
 		Metadata:        mustJSON(metadata["metadata"]),
 		CreatedAt:       now,
 	}
@@ -175,7 +177,7 @@ func (svc *ArtifactLifecycleService) SweepArtifactRetention(ctx context.Context,
 			report.Items = append(report.Items, action)
 			continue
 		}
-		if artifact.RetentionPolicy == "archive_candidate" {
+		if artifact.RetentionPolicy == domainartifacts.PolicyArchiveCandidate {
 			if svc.archiveArtifacts == nil {
 				action.Action = "skipped"
 				action.Reason = "archive_executor_not_configured"
@@ -199,7 +201,7 @@ func (svc *ArtifactLifecycleService) SweepArtifactRetention(ctx context.Context,
 			report.Items = append(report.Items, action)
 			continue
 		}
-		if artifact.RetentionPolicy != "ttl" {
+		if artifact.RetentionPolicy != domainartifacts.PolicyTTL {
 			action.Action = "skipped"
 			action.Reason = "unsupported_retention_policy"
 			report.Skipped++
