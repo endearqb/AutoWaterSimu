@@ -1,0 +1,38 @@
+name: AutoWaterSimu Next Security Smoke
+
+concurrency:
+  group: next-security-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+'on':
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  security-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Run security smoke evidence
+        shell: powershell
+        run: .\scripts\ci\security-smoke.ps1
+
+      - name: Upload security smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-security-smoke-evidence
+          path: tmp/ci-evidence
+          include-hidden-files: true

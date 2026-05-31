@@ -47,7 +47,7 @@
 
 本目录对 `Justfile` 和 `.github/workflows/next-integration-smoke.yml` 暴露 `integration-smoke` opt-in 入口；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
-本目录对 `Justfile` 暴露 `check-security` opt-in 入口；当前 security smoke 覆盖 token config / scope denial / revocation / artifact admin scope，并覆盖 job create 与 artifact retention selected mutation audit envelope；仍不覆盖完整 RBAC、tenant/project/site data scope 或 all-mutation audit。
+本目录对 `Justfile` 和 `.github/workflows/next-security-smoke.yml` 暴露 `check-security` opt-in 入口；当前 security smoke 覆盖 token config / scope denial / revocation / artifact admin scope，并覆盖 job create 与 artifact retention selected mutation audit envelope；仍不覆盖完整 RBAC、tenant/project/site data scope 或 all-mutation audit。
 
 本目录对 `Justfile` 和 `.github/workflows/next-browser-smoke.yml` 暴露 `browser-smoke` opt-in 入口；当前 browser smoke 使用 Playwright request mocking 验证 Web 编排，不覆盖真实 Postgres/MinIO/worker backend 或 live authenticated legacy session。
 

@@ -480,10 +480,10 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [ ] `integration`
 - [x] `browser`（mock-backed opt-in；live backend/authenticated browser evidence 尚未完成）
 - [ ] `release-evidence`
-- [ ] `nightly`
+- [x] `nightly`（scheduled/manual orchestrator 已接入 pr-fast、integration、browser、security、Desktop package smoke；真实 hosted nightly green 尚未完成）
 - [x] Postgres + MinIO + Worker integration smoke
 - [x] Release artifact download verification（fixture-backed verifier smoke 已落地并接入 `next-release-gates.yml`；真实 hosted unsigned artifact round trip 尚未完成）
-- [ ] Security scope/audit scenario（token guard / scope denial / revocation / selected mutation audit smoke 已落地；data scope 与 all-mutation audit 尚未完成）
+- [ ] Security scope/audit scenario（token guard / scope denial / revocation / selected mutation audit smoke 与 hosted/manual workflow 已落地；data scope 与 all-mutation audit 尚未完成）
 - [x] Desktop package export/import smoke（local opt-in；packaged worker / NSIS installer / hosted evidence 尚未完成）
 - [ ] 8 golden scenarios
 

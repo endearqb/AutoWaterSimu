@@ -30,6 +30,7 @@ on:
       - "Justfile"
       - "docker-compose.dev.yml"
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   pr-fast:

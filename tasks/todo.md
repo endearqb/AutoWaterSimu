@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next nightly evidence workflow TODO
+
+- [x] Re-read README First, root README, docs/rebuild, docs/architecture, `.github`, workflow, scripts/ci, tasks, and latest change records
+- [x] Confirm checklist gaps: `nightly` is absent, security smoke has no hosted workflow, and existing integration/browser/desktop workflows already expose `workflow_call`
+- [x] Add `workflow_call` support to `next-pr-fast.yml`
+- [x] Add a reusable/manual `next-security-smoke.yml`
+- [x] Add scheduled/manual `next-nightly.yml` to orchestrate pr-fast, integration, browser, security, and Desktop package smoke evidence
+- [x] Update workflow/docs/current-state/Certainty-Elegance records without claiming hosted green runs
+- [x] Run YAML parser checks, local smoke checks, PR fast, and diff-check validation
+
+## Plan
+
+- Treat nightly as a scheduled evidence orchestrator, not a replacement for release-evidence.
+- Reuse existing workflow lanes instead of duplicating integration/browser/desktop smoke logic in one large YAML file.
+- Keep all hosted green-run claims explicit: workflow presence and local parser validation do not prove a completed GitHub Actions run.
+- Leave real release-evidence with unsigned artifact build/download as a separate manual workflow path.
+
+## Review
+
+- Added `workflow_call` to `.github/workflows/next-pr-fast.yml` so the fast lane can be reused by orchestrator workflows.
+- Added `.github/workflows/next-security-smoke.yml` with manual/reusable triggers, Go setup, `scripts/ci/security-smoke.ps1`, and evidence upload.
+- Added `.github/workflows/next-nightly.yml` with a daily UTC schedule and manual trigger. It calls pr-fast, integration, browser, security, and Desktop package reusable workflows, then writes `tmp/ci-evidence/nightly-summary.json`.
+- Updated `.github` README, workflow README, scripts/ci README, architecture current-state, and the Certainty/Elegance checklist. `nightly` is now marked as a scheduled/manual orchestrator, with hosted green run still pending.
+- Verification:
+  - Python/PyYAML parser check passed for `next-pr-fast.yml`, `next-security-smoke.yml`, and `next-nightly.yml`; required triggers, reusable workflow references, summary needs, and artifact upload steps were found.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1` passed; evidence status `passed`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1` passed; evidence status `passed`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+- Remaining scope:
+  - No hosted nightly GitHub Actions run was triggered from this local session.
+  - Nightly does not replace manual release-evidence artifact build/download verification.
+  - Integration/browser/Desktop hosted green runs are still evidence only after GitHub Actions executes them.
+
 # 2026-06-01 AutoWaterSimu Next release artifact download smoke TODO
 
 - [x] Re-read README First, root README, scripts, release, GitHub workflow, architecture, and Certainty/Elegance context
