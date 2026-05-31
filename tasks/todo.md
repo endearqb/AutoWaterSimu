@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next production readiness UI TODO
+
+- [x] Re-read README First, frontend route/test/service README, Compute Jobs route, current-flow Playwright smoke, and service wrapper context
+- [x] Add production readiness read query to Compute Jobs detail
+- [x] Display readiness status, external approval requirement, auto-publish boundary, blockers/warnings, risk severity counts, and policy checks
+- [x] Extend mock-backed Compute Jobs current-flow smoke for production readiness endpoint and visible readiness status
+- [x] Run frontend typecheck and focused Playwright validation
+- [x] Update README/context records
+- [x] Commit checkpoint
+
+## Plan
+
+- Reuse `computeJobsService.getProductionReadiness()` in the existing Compute Jobs detail page.
+- Keep route logic display-only: no local production approval, no local evidence synthesis, no publish mutation.
+- Extend the existing mock-backed current-flow smoke instead of adding a detached test route.
+
+## Review
+
+- Added a `Production readiness` detail panel to `/compute-jobs`.
+- The panel renders backend readiness status, approval/publish flags, evidence package id, blocking reasons, warnings, risk severity counts, and readiness checks.
+- `frontend/tests/compute-jobs-current-flow.spec.ts` now mocks `/production-readiness` and asserts `ready_for_external_approval` is visible after current-flow submission.
+- Verification:
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps --reporter=line` passed, `1 passed`.
+  - In-app Browser opened `http://localhost:5173/compute-jobs`; without a live legacy auth backend/session it displayed the login screen, so the authenticated readiness panel was verified by the mock-backed Playwright smoke.
+
 # 2026-05-31 AutoWaterSimu Next production readiness TODO
 
 - [x] Re-read README First, PRD/Spec/Development Plan, completion audit, contracts, Compute API, OpenAPI, and frontend service context

@@ -36,6 +36,7 @@ import type {
   JobSnapshot,
   ModelCatalog,
   ModelRun,
+  ProductionReadinessReport,
 } from "@/client/compute"
 import { ContractTransformError } from "@/contracts"
 import {
@@ -102,6 +103,30 @@ const statusPalette = (status: string) => {
     case "cancel_requested":
     case "cancelled":
       return "yellow"
+    default:
+      return "gray"
+  }
+}
+
+const readinessPalette = (status: string) => {
+  switch (status) {
+    case "ready_for_external_approval":
+      return "green"
+    case "blocked":
+      return "red"
+    default:
+      return "gray"
+  }
+}
+
+const checkPalette = (status: string) => {
+  switch (status) {
+    case "passed":
+      return "green"
+    case "warning":
+      return "yellow"
+    case "failed":
+      return "red"
     default:
       return "gray"
   }
@@ -775,6 +800,8 @@ function JobsTable({
 function JobDetail({
   snapshot,
   result,
+  productionReadiness,
+  productionReadinessLoading,
   evidenceDownload,
   evidenceRef,
   evidenceResolution,
@@ -790,6 +817,8 @@ function JobDetail({
 }: {
   snapshot: JobSnapshot | undefined
   result: unknown
+  productionReadiness: ProductionReadinessReport | undefined
+  productionReadinessLoading: boolean
   evidenceDownload: EvidenceDownloadResult | null
   evidenceRef: string
   evidenceResolution: EvidenceReferenceResolution | null
@@ -892,6 +921,124 @@ function JobDetail({
           Result summary
         </Heading>
         <JsonBlock value={resultSummary} />
+      </Box>
+
+      <Box borderWidth="1px" borderRadius="md" p={4}>
+        <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
+          <Heading size="sm">Production readiness</Heading>
+          <Badge
+            colorPalette={readinessPalette(
+              productionReadiness?.readiness_status ?? "",
+            )}
+          >
+            {productionReadinessLoading
+              ? "Loading"
+              : productionReadiness?.readiness_status ?? "N/A"}
+          </Badge>
+        </Flex>
+
+        <Grid
+          templateColumns={{
+            base: "1fr",
+            md: "repeat(2, minmax(0, 1fr))",
+          }}
+          gap={3}
+          mb={3}
+        >
+          <Field
+            label="Production ready"
+            value={
+              productionReadiness
+                ? productionReadiness.production_ready
+                  ? "yes"
+                  : "no"
+                : undefined
+            }
+          />
+          <Field
+            label="External approval"
+            value={
+              productionReadiness
+                ? productionReadiness.external_approval_required
+                  ? "required"
+                  : "not required"
+                : undefined
+            }
+          />
+          <Field
+            label="Auto publish"
+            value={
+              productionReadiness
+                ? productionReadiness.auto_publish_allowed
+                  ? "allowed"
+                  : "blocked"
+                : undefined
+            }
+          />
+          <Field
+            label="Evidence package"
+            value={productionReadiness?.evidence_package_id}
+          />
+          <Field
+            label="Blocking reasons"
+            value={productionReadiness?.blocking_reasons.join(", ")}
+          />
+          <Field
+            label="Warnings"
+            value={productionReadiness?.warnings.join(", ")}
+          />
+        </Grid>
+
+        {productionReadiness ? (
+          <Stack gap={3}>
+            <Grid
+              templateColumns={{
+                base: "repeat(2, minmax(0, 1fr))",
+                md: "repeat(6, minmax(0, 1fr))",
+              }}
+              gap={3}
+            >
+              <Field
+                label="Risk total"
+                value={productionReadiness.risk_findings_summary.total}
+              />
+              {Object.entries(
+                productionReadiness.risk_findings_summary.by_severity,
+              ).map(([severity, count]) => (
+                <Field key={severity} label={severity} value={count} />
+              ))}
+            </Grid>
+
+            <Table.Root size="sm">
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader>Check</Table.ColumnHeader>
+                  <Table.ColumnHeader>Status</Table.ColumnHeader>
+                  <Table.ColumnHeader>Message</Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {productionReadiness.checks.map((check) => (
+                  <Table.Row key={check.check_id}>
+                    <Table.Cell maxW="220px" truncate>
+                      {check.check_id}
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Badge colorPalette={checkPalette(check.status)}>
+                        {check.status}
+                      </Badge>
+                    </Table.Cell>
+                    <Table.Cell>{check.message}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </Stack>
+        ) : (
+          <Text color="fg.muted" fontSize="sm">
+            {job.result_hash ? "Loading readiness report." : "N/A"}
+          </Text>
+        )}
       </Box>
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
@@ -1228,6 +1375,13 @@ function ComputeJobs() {
   })
 
   const selectedSnapshot = detailQuery.data ?? selectedFromList
+  const productionReadinessQuery = useQuery({
+    queryKey: ["compute-job-production-readiness", selectedJobId],
+    queryFn: () =>
+      computeJobsService.getProductionReadiness(selectedJobId as string),
+    enabled: Boolean(selectedJobId && selectedSnapshot?.job.result_hash),
+    retry: false,
+  })
   const healthStatus = healthQuery.isError
     ? "offline"
     : healthQuery.isLoading
@@ -1316,6 +1470,7 @@ function ComputeJobs() {
           cancelMutation.isError ||
           downloadMutation.isError ||
           downloadEvidenceMutation.isError ||
+          productionReadinessQuery.isError ||
           resolveEvidenceMutation.isError ||
           contractValidationMutation.isError ||
           draftConfirmationMutation.isError ||
@@ -1332,6 +1487,7 @@ function ComputeJobs() {
                   cancelMutation.error ||
                   downloadMutation.error ||
                   downloadEvidenceMutation.error ||
+                  productionReadinessQuery.error ||
                   resolveEvidenceMutation.error ||
                   contractValidationMutation.error ||
                   draftConfirmationMutation.error ||
@@ -1379,6 +1535,8 @@ function ComputeJobs() {
             <JobDetail
               snapshot={selectedSnapshot}
               result={resultQuery.data}
+              productionReadiness={productionReadinessQuery.data}
+              productionReadinessLoading={productionReadinessQuery.isFetching}
               evidenceDownload={selectedEvidenceDownload}
               evidenceRef={evidenceRefText}
               evidenceResolution={selectedEvidenceResolution}

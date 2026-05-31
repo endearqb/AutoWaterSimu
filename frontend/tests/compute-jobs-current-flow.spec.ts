@@ -175,6 +175,56 @@ test("submits current flow graph as a compute job", async ({ page }) => {
       return
     }
 
+    const readinessMatch = path.match(
+      /^\/api\/v1\/compute\/jobs\/([^/]+)\/production-readiness$/,
+    )
+    if (method === "GET" && readinessMatch) {
+      await route.fulfill(
+        json({
+          auto_publish_allowed: false,
+          blocking_reasons: [],
+          checks: [
+            {
+              check_id: "job_succeeded",
+              evidence_refs: [`job:${readinessMatch[1]}`],
+              message: "Job completed successfully.",
+              status: "passed",
+            },
+            {
+              check_id: "governance_production_allowed",
+              evidence_refs: [
+                `evidence_package:evidence_${readinessMatch[1]}`,
+              ],
+              message:
+                "Evidence governance allows this model/parameter evidence for production review.",
+              status: "passed",
+            },
+          ],
+          evidence_package_id: `evidence_${readinessMatch[1]}`,
+          external_approval_required: true,
+          generated_at: now,
+          job_id: readinessMatch[1],
+          policy_version: "production_readiness_policy.v1",
+          production_ready: true,
+          readiness_status: "ready_for_external_approval",
+          risk_findings_summary: {
+            blocking: [],
+            by_severity: {
+              critical: 0,
+              high: 0,
+              info: 1,
+              low: 0,
+              medium: 0,
+            },
+            total: 1,
+          },
+          schema_version: "production_readiness.v1",
+          warnings: [],
+        }),
+      )
+      return
+    }
+
     const eventsMatch = path.match(
       /^\/api\/v1\/compute\/jobs\/([^/]+)\/events$/,
     )
@@ -381,5 +431,7 @@ test("submits current flow graph as a compute job", async ({ page }) => {
     }),
   ).toBeVisible()
   await expect(page.getByText("pg_graph_current_flow_smoke")).toBeVisible()
+  await expect(page.getByText("Production readiness")).toBeVisible()
+  await expect(page.getByText("ready_for_external_approval")).toBeVisible()
   expect(unexpectedComputeRequests).toEqual([])
 })
