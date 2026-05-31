@@ -1,0 +1,16 @@
+{
+  "schema_version": "simulation_request.v1",
+  "request_id": "sim_req_udm_independent",
+  "source_system": "autowatersimu",
+  "requested_by": "user:test",
+  "job_type": "simulation.udm.v1",
+  "input_ref": {
+    "simulation_input_id": "si_udm_independent"
+  },
+  "external_refs": {
+    "scenario_id": "scenario_udm_independent"
+  },
+  "metadata": {
+    "trace_id": "trace_sim_req_udm_independent"
+  }
+}

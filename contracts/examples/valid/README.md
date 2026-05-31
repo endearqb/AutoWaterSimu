@@ -16,12 +16,16 @@
 | `asm1slim_minimal.simulation_input.v1.json` | ASM1Slim model-bound core/backend adapter fixture |
 | `asm1slim_independent.compute_job.v1.json` | `simulation.asm1slim.v1` worker fixture |
 | `asm1slim_independent.simulation_input.v1.json` | `simulation.asm1slim.v1` core/backend adapter fixture |
+| `asm1slim_independent.simulation_request.v1.json` | `simulation.asm1slim.v1` reference-only simulation check request fixture |
 | `asm1_independent.compute_job.v1.json` | `simulation.asm1.v1` worker fixture |
 | `asm1_independent.simulation_input.v1.json` | `simulation.asm1.v1` core/backend adapter fixture |
+| `asm1_independent.simulation_request.v1.json` | `simulation.asm1.v1` reference-only simulation check request fixture |
 | `asm3_independent.compute_job.v1.json` | `simulation.asm3.v1` worker fixture |
 | `asm3_independent.simulation_input.v1.json` | `simulation.asm3.v1` core/backend adapter fixture |
+| `asm3_independent.simulation_request.v1.json` | `simulation.asm3.v1` reference-only simulation check request fixture |
 | `udm_independent.compute_job.v1.json` | `simulation.udm.v1` worker fixture |
 | `udm_independent.simulation_input.v1.json` | `simulation.udm.v1` core/backend adapter fixture |
+| `udm_independent.simulation_request.v1.json` | `simulation.udm.v1` reference-only simulation check request fixture |
 
 ## 3. 维护约定
 

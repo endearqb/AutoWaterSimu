@@ -1685,6 +1685,25 @@ func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
 		t.Fatal(err)
 	}
 	server := NewServer(svc, auth, nil).Routes()
+	assertRequiredCapabilities := func(jobPayload map[string]any, expected []string) {
+		t.Helper()
+		execution := mapValue(jobPayload, "execution")
+		if execution == nil {
+			t.Fatalf("expected job execution payload, got %#v", jobPayload)
+		}
+		capabilities, ok := execution["required_capabilities"].([]any)
+		if !ok {
+			t.Fatalf("expected required_capabilities array, got %#v", execution["required_capabilities"])
+		}
+		if len(capabilities) != len(expected) {
+			t.Fatalf("unexpected required_capabilities length: got %#v want %#v", capabilities, expected)
+		}
+		for index, capability := range expected {
+			if capabilities[index] != capability {
+				t.Fatalf("unexpected required_capabilities: got %#v want %#v", capabilities, expected)
+			}
+		}
+	}
 	validBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "milp_material_balance.simulation_request.v1.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -1720,6 +1739,7 @@ func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
 	if stringValue(externalRefs, "plan_id") != "plan_milp_minimal" {
 		t.Fatalf("expected plan id in job context external_refs, got %#v", externalRefs)
 	}
+	assertRequiredCapabilities(jobPayload, []string{"material_balance", "ode"})
 
 	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(validBytes))
 	req.Header.Set("Authorization", "Bearer dev-public-token")
@@ -1818,6 +1838,16 @@ func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
 	if stringValue(generatedPayload, "simulation_input_id") != "si_pg_material_balance_minimal" ||
 		stringValue(generatedPayload, "process_graph_id") != "pg_material_balance_minimal" {
 		t.Fatalf("process graph simulation check should generate simulation_input payload, got %#v", processGraphPayload["payload"])
+	}
+	asmProcessGraphRequest := decodeMap(t, processGraphRequestBytes)
+	asmProcessGraphRequest["request_id"] = "sim_req_process_graph_asm1_unsupported"
+	asmProcessGraphRequest["job_type"] = "simulation.asm1.v1"
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(encodeMap(t, asmProcessGraphRequest)))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "process_graph lookup only supports simulation.material_balance.v1") {
+		t.Fatalf("ASM/UDM process_graph simulation check should stay unsupported, got %d %s", rec.Code, rec.Body.String())
 	}
 
 	modelRunRequestBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_model_run.simulation_request.v1.json"))
@@ -1925,6 +1955,104 @@ func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
 	}
 	if payload := mapValue(referencePayload, "payload"); stringValue(payload, "simulation_input_id") != "si_material_balance_minimal" {
 		t.Fatalf("reference simulation check should use registered payload, got %#v", referencePayload["payload"])
+	}
+	assertRequiredCapabilities(referencePayload, []string{"material_balance", "ode"})
+
+	for _, tc := range []struct {
+		name           string
+		inputFixture   string
+		requestFixture string
+		jobID          string
+		requestID      string
+		inputID        string
+		jobType        string
+		capabilities   []string
+	}{
+		{
+			name:           "asm1slim",
+			inputFixture:   "asm1slim_independent.simulation_input.v1.json",
+			requestFixture: "asm1slim_independent.simulation_request.v1.json",
+			jobID:          "job_simcheck_sim_req_asm1slim_independent",
+			requestID:      "sim_req_asm1slim_independent",
+			inputID:        "si_asm1slim_independent",
+			jobType:        "simulation.asm1slim.v1",
+			capabilities:   []string{"asm1slim", "ode"},
+		},
+		{
+			name:           "asm1",
+			inputFixture:   "asm1_independent.simulation_input.v1.json",
+			requestFixture: "asm1_independent.simulation_request.v1.json",
+			jobID:          "job_simcheck_sim_req_asm1_independent",
+			requestID:      "sim_req_asm1_independent",
+			inputID:        "si_asm1_independent",
+			jobType:        "simulation.asm1.v1",
+			capabilities:   []string{"asm1", "ode"},
+		},
+		{
+			name:           "asm3",
+			inputFixture:   "asm3_independent.simulation_input.v1.json",
+			requestFixture: "asm3_independent.simulation_request.v1.json",
+			jobID:          "job_simcheck_sim_req_asm3_independent",
+			requestID:      "sim_req_asm3_independent",
+			inputID:        "si_asm3_independent",
+			jobType:        "simulation.asm3.v1",
+			capabilities:   []string{"asm3", "ode"},
+		},
+		{
+			name:           "udm",
+			inputFixture:   "udm_independent.simulation_input.v1.json",
+			requestFixture: "udm_independent.simulation_request.v1.json",
+			jobID:          "job_simcheck_sim_req_udm_independent",
+			requestID:      "sim_req_udm_independent",
+			inputID:        "si_udm_independent",
+			jobType:        "simulation.udm.v1",
+			capabilities:   []string{"udm", "ode"},
+		},
+	} {
+		t.Run("reference-only "+tc.name, func(t *testing.T) {
+			caseInputBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", tc.inputFixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/simulation-inputs", bytes.NewReader(caseInputBytes))
+			req.Header.Set("Authorization", "Bearer dev-public-token")
+			rec := httptest.NewRecorder()
+			server.ServeHTTP(rec, req)
+			if rec.Code != http.StatusCreated {
+				t.Fatalf("simulation input register failed: %d %s", rec.Code, rec.Body.String())
+			}
+
+			requestBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", tc.requestFixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(requestBytes))
+			req.Header.Set("Authorization", "Bearer dev-public-token")
+			rec = httptest.NewRecorder()
+			server.ServeHTTP(rec, req)
+			if rec.Code != http.StatusAccepted {
+				t.Fatalf("registered %s simulation check should create a job, got %d %s", tc.name, rec.Code, rec.Body.String())
+			}
+			var modelJob JobSnapshot
+			if err := json.Unmarshal(rec.Body.Bytes(), &modelJob); err != nil {
+				t.Fatal(err)
+			}
+			if modelJob.Job.JobID != tc.jobID ||
+				modelJob.Job.RequestID != tc.requestID ||
+				modelJob.Job.JobType != tc.jobType {
+				t.Fatalf("unexpected %s simulation check job: %#v", tc.name, modelJob.Job)
+			}
+			var modelPayload map[string]any
+			if err := json.Unmarshal(modelJob.Job.InputJSON, &modelPayload); err != nil {
+				t.Fatal(err)
+			}
+			payload := mapValue(modelPayload, "payload")
+			if stringValue(payload, "simulation_input_id") != tc.inputID ||
+				stringValue(payload, "job_type") != tc.jobType {
+				t.Fatalf("%s simulation check should use registered payload, got %#v", tc.name, modelPayload["payload"])
+			}
+			assertRequiredCapabilities(modelPayload, tc.capabilities)
+		})
 	}
 
 	req = httptest.NewRequest(http.MethodPost, "/api/v1/simulation-checks", bytes.NewReader(validBytes))

@@ -505,7 +505,7 @@ export type SimulationRequest = {
     request_id: string;
     source_system: string;
     requested_by: string;
-    job_type: 'simulation.material_balance.v1';
+    job_type: 'simulation.material_balance.v1' | 'simulation.asm1slim.v1' | 'simulation.asm1.v1' | 'simulation.asm3.v1' | 'simulation.udm.v1';
     input_ref: {
         process_graph_id?: string;
         process_graph_version?: number;
@@ -527,7 +527,7 @@ export type SimulationRequest = {
 
 export type schema_version11 = 'simulation_request.v1';
 
-export type job_type = 'simulation.material_balance.v1';
+export type job_type = 'simulation.material_balance.v1' | 'simulation.asm1slim.v1' | 'simulation.asm1.v1' | 'simulation.asm3.v1' | 'simulation.udm.v1';
 
 export type WorkerRecord = {
     [key: string]: unknown;

@@ -1,0 +1,16 @@
+{
+  "schema_version": "simulation_request.v1",
+  "request_id": "sim_req_asm1_independent",
+  "source_system": "autowatersimu",
+  "requested_by": "user:test",
+  "job_type": "simulation.asm1.v1",
+  "input_ref": {
+    "simulation_input_id": "si_asm1_independent"
+  },
+  "external_refs": {
+    "scenario_id": "scenario_asm1_independent"
+  },
+  "metadata": {
+    "trace_id": "trace_sim_req_asm1_independent"
+  }
+}

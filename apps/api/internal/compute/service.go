@@ -1846,9 +1846,18 @@ func artifactRetention(metadata map[string]any) (string, *time.Time, error) {
 }
 
 func simulationCheckExecution(jobType string) map[string]any {
-	requiredCapabilities := []any{"material_balance", "ode"}
-	if jobType != "simulation.material_balance.v1" {
-		requiredCapabilities = []any{}
+	requiredCapabilities := []any{}
+	switch jobType {
+	case "simulation.material_balance.v1":
+		requiredCapabilities = []any{"material_balance", "ode"}
+	case "simulation.asm1slim.v1":
+		requiredCapabilities = []any{"asm1slim", "ode"}
+	case "simulation.asm1.v1":
+		requiredCapabilities = []any{"asm1", "ode"}
+	case "simulation.asm3.v1":
+		requiredCapabilities = []any{"asm3", "ode"}
+	case "simulation.udm.v1":
+		requiredCapabilities = []any{"udm", "ode"}
 	}
 	return map[string]any{
 		"time_limit_sec":        600,

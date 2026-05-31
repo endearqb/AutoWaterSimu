@@ -9,7 +9,16 @@
     "request_id": { "type": "string", "minLength": 1 },
     "source_system": { "type": "string", "minLength": 1 },
     "requested_by": { "type": "string", "minLength": 1 },
-    "job_type": { "type": "string", "enum": ["simulation.material_balance.v1"] },
+    "job_type": {
+      "type": "string",
+      "enum": [
+        "simulation.material_balance.v1",
+        "simulation.asm1slim.v1",
+        "simulation.asm1.v1",
+        "simulation.asm3.v1",
+        "simulation.udm.v1"
+      ]
+    },
     "input_ref": {
       "type": "object",
       "minProperties": 1,

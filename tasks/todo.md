@@ -1,3 +1,35 @@
+# 2026-05-31 AutoWaterSimu Next Simulation Request ASM/UDM Entry TODO
+
+- [x] Re-read README First, contracts, Go API, OpenAPI, and generated client context
+- [x] Expand `simulation_request.v1` job types for tested independent ASM/UDM inputs
+- [x] Add valid reference-only simulation request fixtures
+- [x] Update Go simulation-check capability routing and endpoint coverage
+- [x] Sync OpenAPI and generated Compute client
+- [x] Update README/context records
+- [x] Run contract, Go API, frontend type, and diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Allow `simulation_request.v1` to accept `simulation.asm1slim.v1`, `simulation.asm1.v1`, `simulation.asm3.v1`, and `simulation.udm.v1` in addition to `simulation.material_balance.v1`.
+- Cover only embedded or registered `simulation_input.v1` and model-run replay paths for ASM/UDM, because those job types already have contract, worker, and built-in catalog evidence.
+- Keep `input_ref.process_graph_id` conversion material-balance-only until ProcessGraph-to-ASM/UDM transform semantics are explicitly designed.
+- Preserve worker execution outside the Go API; Go API only queues derived `compute_job.v1` with the right required capabilities.
+
+## Review
+
+- `simulation_request.v1` now accepts material_balance plus independent ASM1Slim/ASM1/ASM3/UDM job types.
+- Added reference-only simulation request fixtures for the four independent ASM/UDM job types.
+- Go simulation-check creation now maps those job types to model-specific worker capabilities while keeping `process_graph_id` conversion material-balance-only.
+- OpenAPI and generated Compute TypeScript client now expose the expanded `SimulationRequest.job_type` union.
+- Updated contracts/API README context, Development Plan checklist, and completion audit.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed, `87 passed`.
+  - `cd apps\api; go test ./internal/compute -run TestSimulationCheckEndpointCreatesComputeJob -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - OpenAPI/schema enum assertion passed and `git diff --check -- contracts apps\api frontend\src\client\compute docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with only LF/CRLF warnings.
+
 # 2026-05-31 AutoWaterSimu Next Built-in Model Catalog Coverage TODO
 
 - [x] Re-read Compute API model catalog, contracts, worker fixture, and worker README context

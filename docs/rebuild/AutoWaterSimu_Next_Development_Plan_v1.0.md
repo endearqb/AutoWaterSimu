@@ -370,6 +370,7 @@
 - 对比旧 FastAPI 与 worker 结果。
 - 加 model run records。
 - UDM model snapshot 进入 SimulationInput。
+- 将已具备 worker/core 证据的独立 ASM/UDM job type 暴露到 `simulation_request.v1` 和 Go `simulation-check` 的内嵌 / 已登记 `simulation_input.v1` / model-run replay 路径；`process_graph` 自动转换继续只覆盖 material balance。
 
 验收:
 
@@ -541,6 +542,7 @@ Status note (2026-05-31): checked implementation items are completed and verifie
 - [x] Web jobs UI merged.
 - [x] ProcessGraph integration merged.
 - [x] ASM/UDM worker migration merged.
+- [x] ASM/UDM simulation request entry merged.
 
 ### Release
 
