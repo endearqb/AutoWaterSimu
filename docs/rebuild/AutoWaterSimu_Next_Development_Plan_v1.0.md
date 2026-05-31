@@ -397,7 +397,8 @@
 - parameter templates。
 - parameter sets。
 - persisted model catalog snapshot history listing。
-- read-only Web model governance page for current catalog and persisted snapshot history。
+- read-only default parameter set promotion plan backed by latest benchmark_run/model_run evidence。
+- read-only Web model governance page for current catalog, promotion readiness, and persisted snapshot history。
 - benchmark cases。
 - model run records。
 - production allowed status:
@@ -419,6 +420,7 @@
   - validated。
   - approved。
   - retired。
+- `validated` default parameter set can be checked against benchmark evidence before manual promotion to `approved`。
 - evidence package 可导出并校验 checksum。
 
 ### 8.2 NewSystem / milp

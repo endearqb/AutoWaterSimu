@@ -514,6 +514,9 @@ func (store *MemoryStore) ListBenchmarkRuns(_ context.Context, filter BenchmarkR
 		if filter.BenchmarkCaseID != "" && record.BenchmarkCaseID != filter.BenchmarkCaseID {
 			continue
 		}
+		if filter.ParameterSetID != "" && record.ParameterSetID != filter.ParameterSetID {
+			continue
+		}
 		records = append(records, cloneBenchmarkRunRecord(record))
 	}
 	sort.Slice(records, func(i, j int) bool {

@@ -88,6 +88,15 @@ func encodeMap(t *testing.T, value map[string]any) []byte {
 	return bytes
 }
 
+func containsString(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
+}
+
 func uploadTestArtifact(t *testing.T, svc *Service, ctx context.Context, workerID, jobID, artifactID string, artifactBytes []byte, retainUntil string) ArtifactRecord {
 	t.Helper()
 	return uploadTestArtifactWithRetention(t, svc, ctx, workerID, jobID, artifactID, artifactBytes, "ttl", retainUntil)
@@ -1386,6 +1395,128 @@ func TestModelCatalogEndpoint(t *testing.T) {
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("worker token should not write model catalog, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDefaultParameterSetPromotionPlanEndpoint(t *testing.T) {
+	svc := testValidatedService(t)
+	auth, err := NewAuthenticator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+	catalogBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.model_catalog.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	catalog := decodeMap(t, catalogBytes)
+	models := catalog["models"].([]any)
+	version := models[0].(map[string]any)["versions"].([]any)[0].(map[string]any)
+	parameterSet := version["default_parameter_set"].(map[string]any)
+	parameterSet["status"] = "validated"
+	parameterHash := parameterSet["parameter_hash"].(string)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog", bytes.NewReader(encodeMap(t, catalog)))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("model catalog registration failed: %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/promotion-plan", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("promotion plan before benchmark failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var plan ModelParameterSetPromotionPlan
+	if err := json.Unmarshal(rec.Body.Bytes(), &plan); err != nil {
+		t.Fatal(err)
+	}
+	if plan.CanPromoteToApproved || plan.CurrentStatus != "validated" || plan.BenchmarkCasesChecked != 1 ||
+		!containsString(plan.BlockingReasons, "benchmark_run_missing_for_parameter_set") {
+		t.Fatalf("expected missing benchmark blocker, got %#v", plan)
+	}
+
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_promotion")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Claim(ctx, "worker_promotion"); err != nil {
+		t.Fatal(err)
+	}
+	modelRun := map[string]any{
+		"schema_version":  "model_run.v1",
+		"model_run_id":    "mr_material_balance_promotion",
+		"job_id":          "job_material_balance_minimal",
+		"model_key":       "material_balance",
+		"model_version":   "material_balance.v1",
+		"parameter_hash":  parameterHash,
+		"input_hash":      "sha256:" + strings.Repeat("c", 64),
+		"quality_metrics": map[string]any{"convergence_status": "converged"},
+		"warnings":        []any{},
+		"evidence_refs":   []any{},
+	}
+	result := map[string]any{
+		"schema_version": "compute_result.v1",
+		"job_id":         "job_material_balance_minimal",
+		"job_type":       "simulation.material_balance.v1",
+		"status":         StatusSucceeded,
+		"summary":        map[string]any{"converged": true},
+		"data":           map[string]any{},
+		"quality":        map[string]any{"data_quality": "ok", "warnings": []any{}},
+		"artifacts":      []any{},
+		"runtime_audit":  map[string]any{"model_runs": []any{modelRun}, "timings_ms": map[string]any{}, "fallback_used": false},
+	}
+	if _, err := svc.Complete(ctx, "worker_promotion", "job_material_balance_minimal", 1, result); err != nil {
+		t.Fatal(err)
+	}
+
+	benchmarkRunBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.benchmark_run.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	benchmarkRun := decodeMap(t, benchmarkRunBytes)
+	benchmarkRun["benchmark_run_id"] = "br_material_balance_promotion"
+	benchmarkRun["model_run_id"] = "mr_material_balance_promotion"
+	benchmarkRun["job_id"] = "job_material_balance_minimal"
+	benchmarkRun["evidence_refs"] = []any{"model_run:mr_material_balance_promotion"}
+	benchmarkRun["executed_at"] = "2026-05-31T00:00:00Z"
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/benchmark-runs", bytes.NewReader(encodeMap(t, benchmarkRun)))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("benchmark run record failed: %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/promotion-plan", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("promotion plan after benchmark failed: %d %s", rec.Code, rec.Body.String())
+	}
+	plan = ModelParameterSetPromotionPlan{}
+	if err := json.Unmarshal(rec.Body.Bytes(), &plan); err != nil {
+		t.Fatal(err)
+	}
+	if !plan.CanPromoteToApproved || plan.WouldModifyCatalog || plan.BenchmarkCasesPassed != 1 ||
+		len(plan.BlockingReasons) != 0 || len(plan.CaseResults) != 1 || !plan.CaseResults[0].Ready {
+		t.Fatalf("expected promotable advisory plan without mutation, got %#v", plan)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/promotion-plan", nil)
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not read promotion plan, got %d %s", rec.Code, rec.Body.String())
 	}
 }
 

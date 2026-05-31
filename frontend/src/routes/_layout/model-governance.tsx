@@ -16,7 +16,11 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 import { FiChevronRight, FiRefreshCw } from "react-icons/fi"
 
-import type { ModelCatalog, ModelCatalogRecord } from "@/client/compute"
+import type {
+  ModelCatalog,
+  ModelCatalogRecord,
+  ModelParameterSetPromotionPlan,
+} from "@/client/compute"
 import { computeJobsService } from "@/services/computeJobsService"
 
 export const Route = createFileRoute("/_layout/model-governance")({
@@ -98,6 +102,44 @@ function metricSummary(catalog: ModelCatalog | undefined) {
   }
 }
 
+const versionKey = (modelKey: string, modelVersion: string) =>
+  `${modelKey}:${modelVersion}`
+
+function promotionStatusPalette(
+  plan: ModelParameterSetPromotionPlan | undefined,
+) {
+  if (!plan) {
+    return "gray"
+  }
+  if (plan.can_promote_to_approved || plan.current_status === "approved") {
+    return "green"
+  }
+  if (plan.benchmark_cases_passed > 0) {
+    return "orange"
+  }
+  return "red"
+}
+
+function promotionStatusLabel(
+  plan: ModelParameterSetPromotionPlan | undefined,
+  hasDefaultSet: boolean,
+  isFetching: boolean,
+) {
+  if (!hasDefaultSet) {
+    return "N/A"
+  }
+  if (!plan) {
+    return isFetching ? "Loading" : "N/A"
+  }
+  if (plan.can_promote_to_approved) {
+    return "Ready"
+  }
+  if (plan.current_status === "approved") {
+    return "Approved"
+  }
+  return `${plan.benchmark_cases_passed}/${plan.benchmark_cases_checked}`
+}
+
 function MetricTile({
   label,
   value,
@@ -120,9 +162,13 @@ function MetricTile({
 function CatalogVersionTable({
   catalog,
   isFetching,
+  promotionPlans,
+  promotionPlansFetching,
 }: {
   catalog: ModelCatalog | undefined
   isFetching: boolean
+  promotionPlans: Record<string, ModelParameterSetPromotionPlan>
+  promotionPlansFetching: boolean
 }) {
   const rows =
     catalog?.models.flatMap((model) =>
@@ -134,6 +180,7 @@ function CatalogVersionTable({
         parameterSet:
           version.default_parameter_set?.parameter_set_id ?? "N/A",
         parameterStatus: version.default_parameter_set?.status ?? "N/A",
+        promotionPlan: promotionPlans[versionKey(model.model_key, version.model_version)],
         status: version.status,
         templateCount: version.parameter_templates.length,
         version: version.model_version,
@@ -164,6 +211,7 @@ function CatalogVersionTable({
                 <Table.ColumnHeader>Default set</Table.ColumnHeader>
                 <Table.ColumnHeader>Set status</Table.ColumnHeader>
                 <Table.ColumnHeader>Benchmarks</Table.ColumnHeader>
+                <Table.ColumnHeader>Promotion</Table.ColumnHeader>
                 <Table.ColumnHeader>Parameter hash</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
@@ -196,6 +244,22 @@ function CatalogVersionTable({
                     </Badge>
                   </Table.Cell>
                   <Table.Cell>{row.benchmarkCount}</Table.Cell>
+                  <Table.Cell>
+                    <Badge
+                      colorPalette={promotionStatusPalette(row.promotionPlan)}
+                    >
+                      {promotionStatusLabel(
+                        row.promotionPlan,
+                        row.parameterSet !== "N/A",
+                        promotionPlansFetching,
+                      )}
+                    </Badge>
+                    {row.promotionPlan?.blocking_reasons[0] ? (
+                      <Text fontSize="xs" color="fg.muted" truncate>
+                        {row.promotionPlan.blocking_reasons[0]}
+                      </Text>
+                    ) : null}
+                  </Table.Cell>
                   <Table.Cell maxW="280px" truncate>
                     {row.parameterHash}
                   </Table.Cell>
@@ -321,12 +385,52 @@ function ModelGovernance() {
     queryKey: ["model-governance", "snapshots", cursor],
   })
 
+  const promotionTargets = useMemo(
+    () =>
+      catalogQuery.data?.models.flatMap((model) =>
+        model.versions
+          .filter((version) => version.default_parameter_set)
+          .map((version) => ({
+            modelKey: model.model_key,
+            modelVersion: version.model_version,
+          })),
+      ) ?? [],
+    [catalogQuery.data],
+  )
+  const promotionPlansQuery = useQuery({
+    enabled: promotionTargets.length > 0,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        promotionTargets.map(async (target) => {
+          const plan =
+            await computeJobsService.getDefaultParameterSetPromotionPlan(
+              target.modelKey,
+              target.modelVersion,
+            )
+          return [versionKey(target.modelKey, target.modelVersion), plan] as const
+        }),
+      )
+      return Object.fromEntries(entries)
+    },
+    queryKey: [
+      "model-governance",
+      "promotion-plans",
+      promotionTargets
+        .map((target) => versionKey(target.modelKey, target.modelVersion))
+        .join("|"),
+    ],
+  })
+
   const catalogSummary = useMemo(
     () => metricSummary(catalogQuery.data),
     [catalogQuery.data],
   )
+  const promotionPlans = promotionPlansQuery.data ?? {}
+  const promotableSets = Object.values(promotionPlans).filter(
+    (plan) => plan.can_promote_to_approved,
+  ).length
   const snapshotItems = snapshotQuery.data?.items ?? []
-  const error = catalogQuery.error || snapshotQuery.error
+  const error = catalogQuery.error || snapshotQuery.error || promotionPlansQuery.error
 
   return (
     <Container maxW="7xl" py={8}>
@@ -362,7 +466,8 @@ function ModelGovernance() {
         <Grid
           templateColumns={{
             base: "repeat(2, minmax(0, 1fr))",
-            md: "repeat(6, minmax(0, 1fr))",
+            md: "repeat(4, minmax(0, 1fr))",
+            xl: "repeat(7, minmax(0, 1fr))",
           }}
           gap={3}
         >
@@ -381,11 +486,14 @@ function ModelGovernance() {
             label="Persisted snapshots"
             value={snapshotQuery.data?.total_estimate}
           />
+          <MetricTile label="Promotable sets" value={promotableSets} />
         </Grid>
 
         <CatalogVersionTable
           catalog={catalogQuery.data}
           isFetching={catalogQuery.isFetching}
+          promotionPlans={promotionPlans}
+          promotionPlansFetching={promotionPlansQuery.isFetching}
         />
 
         <Box borderWidth="1px" borderRadius="md" p={4}>

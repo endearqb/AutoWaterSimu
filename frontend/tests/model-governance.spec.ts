@@ -34,7 +34,7 @@ const catalog = {
           default_parameter_set: {
             parameter_hash: "sha256:approved-parameters",
             parameter_set_id: "default",
-            status: "approved",
+            status: "validated",
           },
           model_version: "material_balance.v1",
           parameter_templates: [
@@ -140,6 +140,47 @@ test("shows read-only model catalog and persisted snapshot history", async ({
       return
     }
 
+    if (
+      method === "GET" &&
+      path ===
+        "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/promotion-plan"
+    ) {
+      await route.fulfill(
+        json({
+          benchmark_cases_checked: 1,
+          benchmark_cases_passed: 1,
+          blocking_reasons: [],
+          can_promote_to_approved: true,
+          case_results: [
+            {
+              benchmark_case_id: "minimal_case",
+              blocking_reasons: [],
+              case_status: "validated",
+              evidence_ref_count: 1,
+              executed_at: "2026-05-31T00:00:00.000Z",
+              job_id: "job_material_balance_minimal",
+              latest_benchmark_run_id: "br_material_balance_minimal",
+              latest_benchmark_run_status: "passed",
+              model_run_id: "mr_material_balance_minimal",
+              parameter_hash: "sha256:approved-parameters",
+              parameter_hash_matches: true,
+              ready: true,
+            },
+          ],
+          current_status: "validated",
+          model_key: "material_balance",
+          model_version: "material_balance.v1",
+          parameter_hash: "sha256:approved-parameters",
+          parameter_set_id: "default",
+          production_approval_required: true,
+          schema_version: "parameter_set_promotion_plan.v1",
+          target_status: "approved",
+          would_modify_catalog: false,
+        }),
+      )
+      return
+    }
+
     unexpectedComputeRequests.push(`${method} ${path}`)
     await route.fulfill(json({ message: "unexpected mock request" }, 404))
   })
@@ -156,12 +197,15 @@ test("shows read-only model catalog and persisted snapshot history", async ({
   await expect(
     page.getByRole("cell", { name: "sha256:approved-parameters" }).first(),
   ).toBeVisible()
+  await expect(page.getByText("Ready")).toBeVisible()
   await expect(
     page.getByRole("heading", { name: "Catalog snapshots" }),
   ).toBeVisible()
 
   await page.getByRole("button", { name: /Next page/i }).click()
   await expect(page.getByText("sha256:previous-parameters")).toBeVisible()
-  await expect(page.getByText("validated")).toBeVisible()
+  await expect(
+    page.getByRole("row", { name: /sha256:previous-parameters/ }).getByText("validated"),
+  ).toBeVisible()
   expect(unexpectedComputeRequests).toEqual([])
 })

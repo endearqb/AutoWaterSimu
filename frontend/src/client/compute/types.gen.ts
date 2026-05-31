@@ -45,6 +45,21 @@ export type ArtifactRetentionSweepRequest = {
     limit?: number;
 };
 
+export type BenchmarkCasePromotionResult = {
+    benchmark_case_id: string;
+    case_status: string;
+    latest_benchmark_run_id?: string;
+    latest_benchmark_run_status?: string;
+    model_run_id?: string;
+    job_id?: string;
+    executed_at?: string;
+    parameter_hash?: string;
+    parameter_hash_matches: boolean;
+    evidence_ref_count: number;
+    ready: boolean;
+    blocking_reasons: Array<(string)>;
+};
+
 export type BenchmarkRun = {
     schema_version: 'benchmark_run.v1';
     benchmark_run_id: string;
@@ -343,6 +358,25 @@ export type ModelParameterSet = {
 
 export type status4 = 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
 
+export type ModelParameterSetPromotionPlan = {
+    schema_version: 'parameter_set_promotion_plan.v1';
+    model_key: string;
+    model_version: string;
+    parameter_set_id: string;
+    parameter_hash: string;
+    current_status: string;
+    target_status: string;
+    can_promote_to_approved: boolean;
+    would_modify_catalog: boolean;
+    production_approval_required: boolean;
+    benchmark_cases_checked: number;
+    benchmark_cases_passed: number;
+    blocking_reasons: Array<(string)>;
+    case_results: Array<BenchmarkCasePromotionResult>;
+};
+
+export type schema_version8 = 'parameter_set_promotion_plan.v1';
+
 export type ModelParameterSetTransitionResponse = {
     model_key: string;
     model_version: string;
@@ -429,7 +463,7 @@ export type ProcessGraphRecord = {
     created_at: string;
 };
 
-export type schema_version8 = 'process_graph.v1';
+export type schema_version9 = 'process_graph.v1';
 
 export type ResultExplanationRecord = {
     schema_version: 'result_explanation_record.v1';
@@ -461,7 +495,7 @@ export type ResultExplanationRecord = {
     updated_at: string;
 };
 
-export type schema_version9 = 'result_explanation_record.v1';
+export type schema_version10 = 'result_explanation_record.v1';
 
 export type explanation_schema_version = 'result_explanation.v1';
 
@@ -498,7 +532,7 @@ export type SimulationInputRecord = {
     created_at: string;
 };
 
-export type schema_version10 = 'simulation_input.v1';
+export type schema_version11 = 'simulation_input.v1';
 
 export type SimulationRequest = {
     schema_version: 'simulation_request.v1';
@@ -525,7 +559,7 @@ export type SimulationRequest = {
     [key: string]: unknown | string;
 };
 
-export type schema_version11 = 'simulation_request.v1';
+export type schema_version12 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1' | 'simulation.asm1slim.v1' | 'simulation.asm1.v1' | 'simulation.asm3.v1' | 'simulation.udm.v1';
 
@@ -743,12 +777,20 @@ export type UpdateDefaultParameterSetStatusData = {
 
 export type UpdateDefaultParameterSetStatusResponse = (ModelParameterSetTransitionResponse);
 
+export type GetDefaultParameterSetPromotionPlanData = {
+    modelKey: string;
+    modelVersion: string;
+};
+
+export type GetDefaultParameterSetPromotionPlanResponse = (ModelParameterSetPromotionPlan);
+
 export type ListBenchmarkRunsData = {
     benchmarkCaseId?: string;
     cursor?: string;
     limit?: number;
     modelKey: string;
     modelVersion: string;
+    parameterSetId?: string;
 };
 
 export type ListBenchmarkRunsResponse2 = (ListBenchmarkRunsResponse);

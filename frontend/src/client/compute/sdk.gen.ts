@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, GetDefaultParameterSetPromotionPlanData, GetDefaultParameterSetPromotionPlanResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -659,9 +659,32 @@ export class DefaultService {
      * @param data The data for the request.
      * @param data.modelKey
      * @param data.modelVersion
+     * @returns ModelParameterSetPromotionPlan Read-only default parameter set promotion plan
+     * @throws ApiError
+     */
+    public static getDefaultParameterSetPromotionPlan(data: GetDefaultParameterSetPromotionPlanData): CancelablePromise<GetDefaultParameterSetPromotionPlanResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/promotion-plan',
+            path: {
+                model_key: data.modelKey,
+                model_version: data.modelVersion
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelKey
+     * @param data.modelVersion
      * @param data.limit
      * @param data.cursor
      * @param data.benchmarkCaseId
+     * @param data.parameterSetId
      * @returns ListBenchmarkRunsResponse Benchmark run history
      * @throws ApiError
      */
@@ -676,7 +699,8 @@ export class DefaultService {
             query: {
                 limit: data.limit,
                 cursor: data.cursor,
-                benchmark_case_id: data.benchmarkCaseId
+                benchmark_case_id: data.benchmarkCaseId,
+                parameter_set_id: data.parameterSetId
             },
             errors: {
                 403: 'Contract error'

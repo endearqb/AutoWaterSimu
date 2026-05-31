@@ -331,6 +331,38 @@ type ModelParameterSetTransitionResponse struct {
 	Catalog            ModelCatalogResponse `json:"catalog"`
 }
 
+type ModelParameterSetPromotionPlan struct {
+	SchemaVersion              string                         `json:"schema_version"`
+	ModelKey                   string                         `json:"model_key"`
+	ModelVersion               string                         `json:"model_version"`
+	ParameterSetID             string                         `json:"parameter_set_id"`
+	ParameterHash              string                         `json:"parameter_hash"`
+	CurrentStatus              string                         `json:"current_status"`
+	TargetStatus               string                         `json:"target_status"`
+	CanPromoteToApproved       bool                           `json:"can_promote_to_approved"`
+	WouldModifyCatalog         bool                           `json:"would_modify_catalog"`
+	ProductionApprovalRequired bool                           `json:"production_approval_required"`
+	BenchmarkCasesChecked      int                            `json:"benchmark_cases_checked"`
+	BenchmarkCasesPassed       int                            `json:"benchmark_cases_passed"`
+	BlockingReasons            []string                       `json:"blocking_reasons"`
+	CaseResults                []BenchmarkCasePromotionResult `json:"case_results"`
+}
+
+type BenchmarkCasePromotionResult struct {
+	BenchmarkCaseID          string   `json:"benchmark_case_id"`
+	CaseStatus               string   `json:"case_status"`
+	LatestBenchmarkRunID     string   `json:"latest_benchmark_run_id,omitempty"`
+	LatestBenchmarkRunStatus string   `json:"latest_benchmark_run_status,omitempty"`
+	ModelRunID               string   `json:"model_run_id,omitempty"`
+	JobID                    string   `json:"job_id,omitempty"`
+	ExecutedAt               string   `json:"executed_at,omitempty"`
+	ParameterHash            string   `json:"parameter_hash,omitempty"`
+	ParameterHashMatches     bool     `json:"parameter_hash_matches"`
+	EvidenceRefCount         int      `json:"evidence_ref_count"`
+	Ready                    bool     `json:"ready"`
+	BlockingReasons          []string `json:"blocking_reasons"`
+}
+
 type ModelBenchmarkCase struct {
 	BenchmarkCaseID string         `json:"benchmark_case_id"`
 	DisplayName     string         `json:"display_name"`
@@ -372,6 +404,7 @@ type BenchmarkRunFilter struct {
 	ModelKey        string
 	ModelVersion    string
 	BenchmarkCaseID string
+	ParameterSetID  string
 }
 
 type ListBenchmarkRunsResponse struct {

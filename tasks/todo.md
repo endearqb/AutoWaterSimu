@@ -1,3 +1,30 @@
+# 2026-05-31 AutoWaterSimu Next parameter promotion plan TODO
+
+- [x] Re-read README First, contracts, Compute API, OpenAPI, frontend service, route, and model governance audit context
+- [x] Add read-only default parameter set promotion plan endpoint
+- [x] Check promotion readiness against latest benchmark_run and model_run evidence
+- [x] Sync OpenAPI and generated Compute client
+- [x] Surface promotion readiness on the read-only model governance page
+- [x] Update README/context records
+- [x] Run focused Go, frontend type, Playwright, and diff validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Add `GET /api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/promotion-plan` behind `job:read`.
+- Keep the endpoint advisory-only: no benchmark execution, no catalog mutation, no production approval completion.
+- Require a `validated` current default parameter set, active model version, at least one validated benchmark case, and a latest passed benchmark run per case whose model_run parameter hash matches the current default parameter set.
+- Reuse existing benchmark_run/model_run records; do not introduce multi-parameter-set storage or a new approval workflow in this slice.
+
+## Review
+
+- Added `parameter_set_promotion_plan.v1` response DTO in the Go API and OpenAPI surface.
+- Added optional `parameter_set_id` benchmark run list filtering used by the promotion plan.
+- Added focused Go endpoint coverage for missing benchmark blockers, benchmark-backed readiness, advisory no-mutation semantics, and worker-token denial.
+- Generated the Compute TypeScript client and added a `computeJobsService.getDefaultParameterSetPromotionPlan()` wrapper.
+- Updated `/model-governance` to show read-only promotion readiness for catalog versions with a default parameter set.
+- Remaining governance work: multi-parameter-set management, scheduled benchmark execution, explicit approval workflow semantics, and automated benchmark execution remain separate Phase 6 work.
+
 # 2026-05-31 AutoWaterSimu Next Worker API Loop TODO
 
 - [x] Re-read README First, worker, worker tests, Go API heartbeat, and active audit context

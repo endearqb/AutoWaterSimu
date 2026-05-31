@@ -1451,6 +1451,9 @@ func benchmarkRunListWhere(filter BenchmarkRunFilter) (string, []any) {
 	if filter.BenchmarkCaseID != "" {
 		add("benchmark_case_id=$%d", filter.BenchmarkCaseID)
 	}
+	if filter.ParameterSetID != "" {
+		add("parameter_set_id=$%d", filter.ParameterSetID)
+	}
 	if len(clauses) == 0 {
 		return "", args
 	}

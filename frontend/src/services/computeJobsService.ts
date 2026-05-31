@@ -21,6 +21,7 @@ import type {
   ListModelRunsResponse,
   ModelCatalog,
   ModelCatalogRecord,
+  ModelParameterSetPromotionPlan,
   ModelParameterSetTransitionResponse,
   ParameterSetStatusUpdateRequest,
   ResultExplanationRecord,
@@ -64,6 +65,7 @@ export interface ListBenchmarkRunsParams {
   limit?: number
   modelKey: string
   modelVersion: string
+  parameterSetId?: string
 }
 
 export interface ListModelCatalogSnapshotsParams {
@@ -401,6 +403,16 @@ export const computeJobsService = {
     })
   },
 
+  getDefaultParameterSetPromotionPlan(
+    modelKey: string,
+    modelVersion: string,
+  ): Promise<ModelParameterSetPromotionPlan> {
+    return DefaultService.getDefaultParameterSetPromotionPlan({
+      modelKey,
+      modelVersion,
+    })
+  },
+
   listBenchmarkRuns(
     params: ListBenchmarkRunsParams,
   ): Promise<ListBenchmarkRunsResponse> {
@@ -410,6 +422,7 @@ export const computeJobsService = {
       limit: params.limit ?? 20,
       modelKey: params.modelKey,
       modelVersion: params.modelVersion,
+      parameterSetId: params.parameterSetId || undefined,
     })
   },
 

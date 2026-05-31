@@ -797,6 +797,139 @@ func (svc *Service) UpdateDefaultParameterSetStatus(ctx context.Context, modelKe
 	return response, status, nil
 }
 
+func (svc *Service) DefaultParameterSetPromotionPlan(ctx context.Context, modelKey, modelVersion string) (ModelParameterSetPromotionPlan, error) {
+	modelKey = required(modelKey, "model_key")
+	modelVersion = required(modelVersion, "model_version")
+	catalog, err := svc.ModelCatalog(ctx)
+	if err != nil {
+		return ModelParameterSetPromotionPlan{}, err
+	}
+	modelIndex, versionIndex := findModelVersionIndex(catalog, modelKey, modelVersion)
+	if modelIndex < 0 || versionIndex < 0 {
+		return ModelParameterSetPromotionPlan{}, NotFound("MODEL_NOT_FOUND", "model version not found")
+	}
+	version := catalog.Models[modelIndex].Versions[versionIndex]
+	parameterSet := version.DefaultParameterSet
+	if parameterSet == nil {
+		return ModelParameterSetPromotionPlan{}, NotFound(CodeParameterSetNotFound, "default parameter set not found")
+	}
+	plan := ModelParameterSetPromotionPlan{
+		SchemaVersion:              "parameter_set_promotion_plan.v1",
+		ModelKey:                   modelKey,
+		ModelVersion:               modelVersion,
+		ParameterSetID:             parameterSet.ParameterSetID,
+		ParameterHash:              parameterSet.ParameterHash,
+		CurrentStatus:              parameterSet.Status,
+		TargetStatus:               "approved",
+		WouldModifyCatalog:         false,
+		ProductionApprovalRequired: true,
+		BlockingReasons:            []string{},
+		CaseResults:                []BenchmarkCasePromotionResult{},
+	}
+	if version.Status != "active" {
+		plan.BlockingReasons = append(plan.BlockingReasons, "model_version_not_active")
+	}
+	switch parameterSet.Status {
+	case "validated":
+	case "approved":
+		plan.BlockingReasons = append(plan.BlockingReasons, "parameter_set_already_approved")
+	default:
+		plan.BlockingReasons = append(plan.BlockingReasons, "parameter_set_status_must_be_validated")
+	}
+
+	validatedCases := make([]ModelBenchmarkCase, 0, len(version.BenchmarkCases))
+	for _, benchmarkCase := range version.BenchmarkCases {
+		if benchmarkCase.Status == "validated" {
+			validatedCases = append(validatedCases, benchmarkCase)
+		}
+	}
+	if len(validatedCases) == 0 {
+		plan.BlockingReasons = append(plan.BlockingReasons, "no_validated_benchmark_cases")
+	}
+	plan.BenchmarkCasesChecked = len(validatedCases)
+	for _, benchmarkCase := range validatedCases {
+		result, err := svc.benchmarkCasePromotionResult(ctx, benchmarkCase, modelKey, modelVersion, *parameterSet)
+		if err != nil {
+			return ModelParameterSetPromotionPlan{}, err
+		}
+		if result.Ready {
+			plan.BenchmarkCasesPassed++
+		}
+		plan.CaseResults = append(plan.CaseResults, result)
+		plan.BlockingReasons = append(plan.BlockingReasons, result.BlockingReasons...)
+	}
+	plan.BlockingReasons = uniqueStrings(plan.BlockingReasons)
+	plan.CanPromoteToApproved = parameterSet.Status == "validated" &&
+		version.Status == "active" &&
+		plan.BenchmarkCasesChecked > 0 &&
+		plan.BenchmarkCasesPassed == plan.BenchmarkCasesChecked &&
+		len(plan.BlockingReasons) == 0
+	return plan, nil
+}
+
+func (svc *Service) benchmarkCasePromotionResult(ctx context.Context, benchmarkCase ModelBenchmarkCase, modelKey, modelVersion string, parameterSet ModelParameterSet) (BenchmarkCasePromotionResult, error) {
+	result := BenchmarkCasePromotionResult{
+		BenchmarkCaseID:      benchmarkCase.BenchmarkCaseID,
+		CaseStatus:           benchmarkCase.Status,
+		BlockingReasons:      []string{},
+		ParameterHashMatches: false,
+		Ready:                false,
+	}
+	records, _, _, err := svc.store.ListBenchmarkRuns(ctx, BenchmarkRunFilter{
+		Limit:           1,
+		ModelKey:        modelKey,
+		ModelVersion:    modelVersion,
+		BenchmarkCaseID: benchmarkCase.BenchmarkCaseID,
+		ParameterSetID:  parameterSet.ParameterSetID,
+	})
+	if err != nil {
+		return BenchmarkCasePromotionResult{}, err
+	}
+	if len(records) == 0 {
+		result.BlockingReasons = append(result.BlockingReasons, "benchmark_run_missing_for_parameter_set")
+		return result, nil
+	}
+	record := records[0]
+	result.LatestBenchmarkRunID = record.BenchmarkRunID
+	result.LatestBenchmarkRunStatus = record.Status
+	result.ModelRunID = record.ModelRunID
+	result.JobID = record.JobID
+	result.ExecutedAt = record.ExecutedAt.Format(time.RFC3339Nano)
+	if record.Status != "passed" {
+		result.BlockingReasons = append(result.BlockingReasons, "latest_benchmark_run_not_passed")
+	}
+	var benchmarkPayload map[string]any
+	if err := json.Unmarshal(record.Payload, &benchmarkPayload); err == nil {
+		result.EvidenceRefCount = len(stringsFromAny(benchmarkPayload["evidence_refs"]))
+	}
+	modelRun, err := svc.store.FindModelRun(ctx, record.ModelRunID)
+	if err != nil {
+		if appErr := ToAppError(err); appErr.ErrorCode == CodeModelRunNotFound {
+			result.BlockingReasons = append(result.BlockingReasons, "model_run_not_found")
+			return result, nil
+		}
+		return BenchmarkCasePromotionResult{}, err
+	}
+	var modelRunPayload map[string]any
+	if err := json.Unmarshal(modelRun, &modelRunPayload); err != nil {
+		result.BlockingReasons = append(result.BlockingReasons, "model_run_payload_invalid")
+		return result, nil
+	}
+	if stringValue(modelRunPayload, "job_id") != record.JobID ||
+		stringValue(modelRunPayload, "model_key") != modelKey ||
+		stringValue(modelRunPayload, "model_version") != modelVersion {
+		result.BlockingReasons = append(result.BlockingReasons, "model_run_identity_mismatch")
+	}
+	result.ParameterHash = stringValue(modelRunPayload, "parameter_hash")
+	result.ParameterHashMatches = result.ParameterHash == parameterSet.ParameterHash
+	if !result.ParameterHashMatches {
+		result.BlockingReasons = append(result.BlockingReasons, "model_run_parameter_hash_mismatch")
+	}
+	result.BlockingReasons = uniqueStrings(result.BlockingReasons)
+	result.Ready = record.Status == "passed" && result.ParameterHashMatches && len(result.BlockingReasons) == 0
+	return result, nil
+}
+
 func (svc *Service) RegisterBenchmarkRun(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (BenchmarkRunRecord, int, error) {
 	var document map[string]any
 	if err := json.Unmarshal(bytes, &document); err != nil {
@@ -2619,4 +2752,19 @@ func defaultString(value, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func uniqueStrings(values []string) []string {
+	seen := map[string]bool{}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" || seen[value] {
+			continue
+		}
+		seen[value] = true
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	return result
 }

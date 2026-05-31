@@ -696,6 +696,19 @@ func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) 
 		WriteJSON(w, status, response)
 		return
 	}
+	if len(parts) == 5 && parts[1] == "versions" && parts[3] == "default-parameter-set" && parts[4] == "promotion-plan" && r.Method == http.MethodGet {
+		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		response, err := server.service.DefaultParameterSetPromotionPlan(r.Context(), parts[0], parts[2])
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, response)
+		return
+	}
 	if len(parts) == 4 && parts[1] == "versions" && parts[3] == "benchmark-runs" {
 		switch r.Method {
 		case http.MethodGet:
@@ -984,6 +997,7 @@ func benchmarkRunListFilter(r *http.Request, modelKey, modelVersion string) (Ben
 		ModelKey:        modelKey,
 		ModelVersion:    modelVersion,
 		BenchmarkCaseID: query.Get("benchmark_case_id"),
+		ParameterSetID:  query.Get("parameter_set_id"),
 	}, nil
 }
 
