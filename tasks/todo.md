@@ -1,3 +1,36 @@
+# 2026-05-31 AutoWaterSimu Next benchmark case schedule-run TODO
+
+- [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API, OpenAPI, and frontend service context
+- [x] Add model catalog benchmark case schedule-run endpoint
+- [x] Keep schedule-run as compute job queueing only, without benchmark_run recording or catalog mutation
+- [x] Sync OpenAPI and generated Compute client
+- [x] Add frontend service wrapper
+- [x] Update README/context records
+- [x] Run Go/OpenAPI/frontend validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Add `POST /api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-cases/{benchmark_case_id}/schedule-run` behind `job:create`.
+- Resolve the catalog benchmark case input through the existing simulation input lookup path and queue a standard `compute_job.v1` for the case job type.
+- Require an active model version, validated benchmark case, and non-retired current default parameter set.
+- Preserve separation of concerns: the endpoint does not execute Python, does not auto-record `benchmark_run.v1`, does not mutate model catalog snapshots, and does not approve or promote parameter sets.
+
+## Review
+
+- Added `POST /api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-cases/{benchmark_case_id}/schedule-run` behind `job:create`.
+- The endpoint resolves an existing benchmark case input through the simulation input registry and queues a standard `compute_job.v1` with model/catalog/parameter metadata and worker capabilities.
+- It requires active model version, validated benchmark case, and current default parameter set that is not `retired`; ASM/UDM built-ins without default parameter sets remain unschedulable in this path.
+- It does not execute Python, auto-record `benchmark_run.v1`, mutate catalog snapshots, or approve/promote parameter sets.
+- OpenAPI, generated Compute client, and `computeJobsService.scheduleBenchmarkCaseRun()` now expose the API.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run TestBenchmarkCaseScheduleRunEndpoint -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `cd frontend; npm run generate-compute-client` passed.
+  - OpenAPI/generated client assertion passed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check -- apps\api frontend\src\client\compute frontend\src\services docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+
 # 2026-05-31 AutoWaterSimu Next parameter promotion plan TODO
 
 - [x] Re-read README First, contracts, Compute API, OpenAPI, frontend service, route, and model governance audit context

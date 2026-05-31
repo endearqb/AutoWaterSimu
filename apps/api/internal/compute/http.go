@@ -709,6 +709,25 @@ func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) 
 		WriteJSON(w, http.StatusOK, response)
 		return
 	}
+	if len(parts) == 6 && parts[1] == "versions" && parts[3] == "benchmark-cases" && parts[5] == "schedule-run" && r.Method == http.MethodPost {
+		principal, err := server.auth.Principal(r, "job:create")
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		request, err := readBenchmarkCaseRunRequest(r)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		response, status, err := server.service.ScheduleBenchmarkCaseRun(r.Context(), parts[0], parts[2], parts[4], request, "compute-api", principal.Name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, status, response)
+		return
+	}
 	if len(parts) == 4 && parts[1] == "versions" && parts[3] == "benchmark-runs" {
 		switch r.Method {
 		case http.MethodGet:
@@ -999,6 +1018,21 @@ func benchmarkRunListFilter(r *http.Request, modelKey, modelVersion string) (Ben
 		BenchmarkCaseID: query.Get("benchmark_case_id"),
 		ParameterSetID:  query.Get("parameter_set_id"),
 	}, nil
+}
+
+func readBenchmarkCaseRunRequest(r *http.Request) (BenchmarkCaseRunRequest, error) {
+	var request BenchmarkCaseRunRequest
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return request, ValidationError("read request body failed")
+	}
+	if strings.TrimSpace(string(body)) == "" {
+		return request, nil
+	}
+	if err := json.Unmarshal(body, &request); err != nil {
+		return request, ValidationError("benchmark case run request JSON is invalid")
+	}
+	return request, nil
 }
 
 func modelCatalogSnapshotFilter(r *http.Request) (ModelCatalogSnapshotFilter, error) {

@@ -428,6 +428,25 @@
         }
       }
     },
+    "/api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-cases/{benchmark_case_id}/schedule-run": {
+      "post": {
+        "operationId": "scheduleBenchmarkCaseRun",
+        "parameters": [
+          { "$ref": "#/components/parameters/ModelKey" },
+          { "$ref": "#/components/parameters/ModelVersionPath" },
+          { "$ref": "#/components/parameters/BenchmarkCaseID" }
+        ],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BenchmarkCaseRunRequest" } } } },
+        "responses": {
+          "202": { "description": "Queued benchmark case compute job", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "200": { "description": "Duplicate benchmark case run idempotency key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-runs": {
       "get": {
         "operationId": "listBenchmarkRuns",
@@ -552,6 +571,7 @@
       "ModelVersionPath": { "name": "model_version", "in": "path", "required": true, "schema": { "type": "string" } },
       "ModelRunID": { "name": "model_run_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "BenchmarkRunID": { "name": "benchmark_run_id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "BenchmarkCaseID": { "name": "benchmark_case_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "ProcessGraphID": { "name": "process_graph_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "SimulationInputID": { "name": "simulation_input_id", "in": "path", "required": true, "schema": { "type": "string" } },
       "ConfirmationID": { "name": "confirmation_id", "in": "path", "required": true, "schema": { "type": "string" } },
@@ -979,6 +999,18 @@
           "catalog_payload_hash": { "type": "string" },
           "created_snapshot": { "type": "boolean" },
           "catalog": { "$ref": "#/components/schemas/ModelCatalog" }
+        }
+      },
+      "BenchmarkCaseRunRequest": {
+        "type": "object",
+        "properties": {
+          "request_id": { "type": "string" },
+          "job_id": { "type": "string" },
+          "idempotency_key": { "type": "string" },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "trace_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
         }
       },
       "ModelParameterSetPromotionPlan": {

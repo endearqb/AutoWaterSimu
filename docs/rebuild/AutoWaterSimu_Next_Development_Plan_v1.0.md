@@ -400,6 +400,7 @@
 - read-only default parameter set promotion plan backed by latest benchmark_run/model_run evidence。
 - read-only Web model governance page for current catalog, promotion readiness, and persisted snapshot history。
 - benchmark cases。
+- manual benchmark case schedule-run API that queues `compute_job.v1` without recording benchmark history or mutating parameter status。
 - model run records。
 - production allowed status:
   - only `approved` parameter sets can be used for production/evidence scenarios。

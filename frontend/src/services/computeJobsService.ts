@@ -3,6 +3,7 @@ import type {
   ArtifactRecord,
   ArtifactRetentionSweepReport,
   ArtifactRetentionSweepRequest,
+  BenchmarkCaseRunRequest,
   BenchmarkRun,
   BenchmarkRunRecord,
   ComputeJob,
@@ -423,6 +424,20 @@ export const computeJobsService = {
       modelKey: params.modelKey,
       modelVersion: params.modelVersion,
       parameterSetId: params.parameterSetId || undefined,
+    })
+  },
+
+  scheduleBenchmarkCaseRun(
+    modelKey: string,
+    modelVersion: string,
+    benchmarkCaseId: string,
+    request: BenchmarkCaseRunRequest = {},
+  ): Promise<JobSnapshot> {
+    return DefaultService.scheduleBenchmarkCaseRun({
+      benchmarkCaseId,
+      modelKey,
+      modelVersion,
+      requestBody: request,
     })
   },
 

@@ -331,6 +331,16 @@ type ModelParameterSetTransitionResponse struct {
 	Catalog            ModelCatalogResponse `json:"catalog"`
 }
 
+type BenchmarkCaseRunRequest struct {
+	RequestID      string         `json:"request_id,omitempty"`
+	JobID          string         `json:"job_id,omitempty"`
+	IdempotencyKey string         `json:"idempotency_key,omitempty"`
+	SourceSystem   string         `json:"source_system,omitempty"`
+	RequestedBy    string         `json:"requested_by,omitempty"`
+	TraceID        string         `json:"trace_id,omitempty"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
+}
+
 type ModelParameterSetPromotionPlan struct {
 	SchemaVersion              string                         `json:"schema_version"`
 	ModelKey                   string                         `json:"model_key"`

@@ -60,6 +60,18 @@ export type BenchmarkCasePromotionResult = {
     blocking_reasons: Array<(string)>;
 };
 
+export type BenchmarkCaseRunRequest = {
+    request_id?: string;
+    job_id?: string;
+    idempotency_key?: string;
+    source_system?: string;
+    requested_by?: string;
+    trace_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
 export type BenchmarkRun = {
     schema_version: 'benchmark_run.v1';
     benchmark_run_id: string;
@@ -407,6 +419,8 @@ export type value_type = 'number' | 'integer' | 'string' | 'boolean' | 'object' 
 export type ModelRun = {
     [key: string]: unknown;
 };
+
+export type ParameterBenchmarkCaseID = string;
 
 export type ParameterBenchmarkRunID = string;
 
@@ -783,6 +797,15 @@ export type GetDefaultParameterSetPromotionPlanData = {
 };
 
 export type GetDefaultParameterSetPromotionPlanResponse = (ModelParameterSetPromotionPlan);
+
+export type ScheduleBenchmarkCaseRunData = {
+    benchmarkCaseId: string;
+    modelKey: string;
+    modelVersion: string;
+    requestBody?: BenchmarkCaseRunRequest;
+};
+
+export type ScheduleBenchmarkCaseRunResponse = (JobSnapshot);
 
 export type ListBenchmarkRunsData = {
     benchmarkCaseId?: string;
