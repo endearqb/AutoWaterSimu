@@ -1401,6 +1401,12 @@ func listWhere(filter ListFilter) (string, []any) {
 	if filter.JobType != "" {
 		add("job_type=$%d", filter.JobType)
 	}
+	if filter.TenantID != "" {
+		add("tenant_id=$%d", filter.TenantID)
+	}
+	if filter.ProjectID != "" {
+		add("project_id=$%d", filter.ProjectID)
+	}
 	if filter.CreatedAfter != nil {
 		add("created_at>$%d", *filter.CreatedAfter)
 	}

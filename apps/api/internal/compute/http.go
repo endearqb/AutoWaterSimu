@@ -1,6 +1,7 @@
 package compute
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -166,7 +167,8 @@ func (server *Server) jobs(w http.ResponseWriter, r *http.Request) {
 		}
 		WriteJSON(w, status, snapshot)
 	case http.MethodGet:
-		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+		principal, err := server.auth.Principal(r, "job:read")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -175,6 +177,7 @@ func (server *Server) jobs(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, err)
 			return
 		}
+		filter = filterForPrincipalDataScope(filter, *principal)
 		response, err := server.service.ListJobs(r.Context(), filter)
 		if err != nil {
 			WriteError(w, err)
@@ -305,7 +308,8 @@ func (server *Server) simulationChecks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
+	principal, err := server.auth.Principal(r, "job:read")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -322,7 +326,15 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, err)
 			return
 		}
+		if err := authorizeJobDataScope(*principal, snapshot.Job); err != nil {
+			WriteError(w, err)
+			return
+		}
 		WriteJSON(w, http.StatusOK, snapshot)
+		return
+	}
+	if err := server.authorizeJobRouteDataScope(r.Context(), *principal, jobID); err != nil {
+		WriteError(w, err)
 		return
 	}
 	if len(parts) == 2 && parts[1] == "result-explanations" && r.Method == http.MethodPost {
@@ -460,7 +472,8 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) artifactByID(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "artifact:read"); err != nil {
+	principal, err := server.auth.Principal(r, "artifact:read")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -469,6 +482,15 @@ func (server *Server) artifactByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	artifactID := strings.TrimPrefix(r.URL.Path, "/api/v1/artifacts/")
+	metadata, err := server.service.ArtifactMetadata(r.Context(), artifactID)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if err := server.authorizeJobRouteDataScope(r.Context(), *principal, metadata.JobID); err != nil {
+		WriteError(w, err)
+		return
+	}
 	artifact, bytes, err := server.service.DownloadArtifact(r.Context(), artifactID)
 	if err != nil {
 		WriteError(w, err)
@@ -477,6 +499,14 @@ func (server *Server) artifactByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", artifact.ContentType)
 	w.Header().Set("X-Artifact-Checksum", artifact.Checksum)
 	_, _ = w.Write(bytes)
+}
+
+func (server *Server) authorizeJobRouteDataScope(ctx context.Context, principal Principal, jobID string) error {
+	snapshot, err := server.service.GetJob(ctx, jobID)
+	if err != nil {
+		return err
+	}
+	return authorizeJobDataScope(principal, snapshot.Job)
 }
 
 func (server *Server) artifactRetentionSweep(w http.ResponseWriter, r *http.Request) {

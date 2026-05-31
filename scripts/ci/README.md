@@ -29,7 +29,7 @@
 |---|---|
 | `pr-fast.ps1` | 运行 Next PR fast checks（含 README path、ontology registry、contracts drift、Go/frontend/desktop checks）并写出 `tmp/ci-evidence/pr-fast.json` |
 | `integration-smoke.ps1` | 启动隔离 Compose API 栈，运行本地 Python worker API once，验证 job/result/model_run/artifact/evidence/retention dry-run/metrics，并写出 `tmp/ci-evidence/integration-smoke.json` |
-| `security-smoke.ps1` | 聚合 production token guard、static token revocation、scope denial、artifact admin scope 和 selected mutation audit envelope 的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
+| `security-smoke.ps1` | 聚合 production token guard、static token revocation、scope denial、artifact admin scope、tenant/project read-scope 和 selected mutation audit envelope 的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
 
@@ -47,7 +47,7 @@
 
 本目录对 `Justfile` 和 `.github/workflows/next-integration-smoke.yml` 暴露 `integration-smoke` opt-in 入口；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
-本目录对 `Justfile` 和 `.github/workflows/next-security-smoke.yml` 暴露 `check-security` opt-in 入口；当前 security smoke 覆盖 token config / scope denial / revocation / artifact admin scope，并覆盖 job create 与 artifact retention selected mutation audit envelope；仍不覆盖完整 RBAC、tenant/project/site data scope 或 all-mutation audit。
+本目录对 `Justfile` 和 `.github/workflows/next-security-smoke.yml` 暴露 `check-security` opt-in 入口；当前 security smoke 覆盖 token config / scope denial / revocation / artifact admin scope、job list/get 与 artifact download 的 tenant/project read-scope，并覆盖 job create 与 artifact retention selected mutation audit envelope；仍不覆盖完整 RBAC、site scope、全对象 tenant/project/site data scope 或 all-mutation audit。
 
 本目录对 `Justfile` 和 `.github/workflows/next-browser-smoke.yml` 暴露 `browser-smoke` opt-in 入口；当前 browser smoke 使用 Playwright request mocking 验证 Web 编排，不覆盖真实 Postgres/MinIO/worker backend 或 live authenticated legacy session。
 

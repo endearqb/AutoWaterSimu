@@ -32,7 +32,14 @@ func NewAuthenticator(tokensJSON string) (*Authenticator, error) {
 		for _, scope := range token.Scopes {
 			scopes[scope] = true
 		}
-		auth.tokens[token.Token] = Principal{Name: token.Name, Scopes: scopes, Revoked: token.Revoked}
+		auth.tokens[token.Token] = Principal{
+			Name:      strings.TrimSpace(token.Name),
+			Scopes:    scopes,
+			Revoked:   token.Revoked,
+			TenantID:  strings.TrimSpace(token.TenantID),
+			ProjectID: strings.TrimSpace(token.ProjectID),
+			SiteID:    strings.TrimSpace(token.SiteID),
+		}
 	}
 	return auth, nil
 }
@@ -55,4 +62,32 @@ func (auth *Authenticator) Principal(r *http.Request, requiredScope string) (*Pr
 		return nil, NewAppError(http.StatusForbidden, CodeForbidden, "missing required scope", false, map[string]any{"scope": requiredScope})
 	}
 	return &principal, nil
+}
+
+func filterForPrincipalDataScope(filter ListFilter, principal Principal) ListFilter {
+	filter.TenantID = strings.TrimSpace(principal.TenantID)
+	filter.ProjectID = strings.TrimSpace(principal.ProjectID)
+	return filter
+}
+
+func authorizeJobDataScope(principal Principal, job JobRecord) error {
+	tenantID := strings.TrimSpace(principal.TenantID)
+	projectID := strings.TrimSpace(principal.ProjectID)
+	if tenantID == "" && projectID == "" {
+		return nil
+	}
+	details := map[string]any{}
+	if tenantID != "" {
+		details["tenant_id"] = tenantID
+		if strings.TrimSpace(job.TenantID) != tenantID {
+			return NewAppError(http.StatusForbidden, CodeForbidden, "job is outside token tenant scope", false, details)
+		}
+	}
+	if projectID != "" {
+		details["project_id"] = projectID
+		if strings.TrimSpace(job.ProjectID) != projectID {
+			return NewAppError(http.StatusForbidden, CodeForbidden, "job is outside token project scope", false, details)
+		}
+	}
+	return nil
 }

@@ -1,3 +1,37 @@
+# 2026-06-01 AutoWaterSimu Next tenant/project read-scope TODO
+
+- [x] Re-read README First, root README, docs/rebuild, docs/architecture, apps/api, internal compute, scripts/ci, tasks, and latest security context
+- [x] Confirm current security gap: selected mutation audit is partial, and tenant/project/site data scope is still not enforced on HTTP reads
+- [x] Add optional tenant/project fields to static token principals
+- [x] Enforce tenant/project scope on job list/get and artifact download HTTP reads
+- [x] Add focused Go coverage and extend security smoke coverage summary
+- [x] Update API/security docs, Certainty/Elegance plan, current-state summary, task review, and README First records
+- [x] Run focused Go tests, security smoke, Go API tests, PR fast, and diff-check validation
+
+## Plan
+
+- Keep the first data-scope slice on read paths only: job list/get and artifact download.
+- Treat an empty token tenant/project scope as global access for existing dev/admin tokens.
+- Deny scoped tokens when either the job tenant or project does not match.
+- Do not claim site scope, model catalog scope, benchmark scope, all object scope, or full RBAC/ABAC completion.
+
+## Review
+
+- Added optional `tenant_id`, `project_id`, and forward-compatible `site_id` fields to static token records and principals.
+- Constrained HTTP job list/get and artifact download reads by token tenant/project scope. Empty token scope remains global for existing dev/admin tokens.
+- Added memory/Postgres list filtering for tenant/project scope and route-level authorization against job metadata for single-job and artifact reads.
+- Added focused Go coverage for scoped job list/get and artifact download denial/allowance, then extended `scripts/ci/security-smoke.ps1` to include those checks.
+- Updated API/compute docs, scripts/ci README, architecture current-state, Certainty/Elegance plan, README First change log, and this task review.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(HTTPJobReadTenantProjectScope|HTTPArtifactDownloadTenantProjectScope)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed.
+  - `git diff --check -- apps\api scripts docs tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Site scope is accepted in token config for forward compatibility but not enforced yet.
+  - Full object-level data scope, all-mutation audit, OIDC/JWKS, service-token secret management, and ontology-backed runtime policy enforcement remain future work.
+
 # 2026-06-01 AutoWaterSimu Next nightly evidence workflow TODO
 
 - [x] Re-read README First, root README, docs/rebuild, docs/architecture, `.github`, workflow, scripts/ci, tasks, and latest change records

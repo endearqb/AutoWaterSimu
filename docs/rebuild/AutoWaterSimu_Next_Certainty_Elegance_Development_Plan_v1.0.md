@@ -277,7 +277,7 @@ trace_id
 approval_ref
 ```
 
-当前已落地 selected mutation audit event envelope：`job.created` / `job.queued` 以及 artifact retention delete/archive events 会在 `compute_job_events.event_json.audit` 中记录 `who/when/where/target_object/action/before/after/reason/trace_id/approval_ref`。HTTP job create、simulation-check、draft promotion、benchmark schedule 和 retention sweep 可把静态 token principal 与 route 写入 audit context；scheduler/service path 回退为 system/service context。完整 all-mutation audit、OIDC/RBAC、tenant/project/site data scope 和 ontology-backed policy enforcement 仍需后续实现。
+当前已落地 selected mutation audit event envelope：`job.created` / `job.queued` 以及 artifact retention delete/archive events 会在 `compute_job_events.event_json.audit` 中记录 `who/when/where/target_object/action/before/after/reason/trace_id/approval_ref`。HTTP job create、simulation-check、draft promotion、benchmark schedule 和 retention sweep 可把静态 token principal 与 route 写入 audit context；scheduler/service path 回退为 system/service context。静态 token config 也可携带 `tenant_id` / `project_id`，并已对 job list/get 与 artifact download 的 HTTP read path 做 tenant/project 跨 scope 拒绝。完整 all-mutation audit、OIDC/RBAC、site scope、全对象 tenant/project/site data scope 和 ontology-backed policy enforcement 仍需后续实现。
 
 #### Water Ontology 首批对象
 
@@ -421,7 +421,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 7. Go API domain package 拆分。
 8. Frontend feature service/API wrapper 分层。
 9. Postgres + MinIO + Worker integration smoke（初始本地 API + worker smoke 已落地，manual/reusable hosted workflow 已定义，后续补 hosted green run 与 frontend/browser reads）。
-10. Production dev token 禁用（`cmd/compute-api` 启动 guard 已落地，`scripts/ci/security-smoke.ps1` 已覆盖 token guard / scope denial / revocation / selected mutation audit；后续继续做 issuer/JWKS/service-token secret、data scope、all-mutation audit）。
+10. Production dev token 禁用（`cmd/compute-api` 启动 guard 已落地，`scripts/ci/security-smoke.ps1` 已覆盖 token guard / scope denial / revocation / selected mutation audit / job-artifact tenant/project read-scope；后续继续做 issuer/JWKS/service-token secret、site scope、全对象 data scope、all-mutation audit）。
 11. Release evidence lane。
 12. Water Ontology 首批对象（首版 registry/check 已落地；后续接 runtime policy enforcement）。
 13. Desktop package/support bundle schema。
@@ -483,7 +483,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] `nightly`（scheduled/manual orchestrator 已接入 pr-fast、integration、browser、security、Desktop package smoke；真实 hosted nightly green 尚未完成）
 - [x] Postgres + MinIO + Worker integration smoke
 - [x] Release artifact download verification（fixture-backed verifier smoke 已落地并接入 `next-release-gates.yml`；真实 hosted unsigned artifact round trip 尚未完成）
-- [ ] Security scope/audit scenario（token guard / scope denial / revocation / selected mutation audit smoke 与 hosted/manual workflow 已落地；data scope 与 all-mutation audit 尚未完成）
+- [ ] Security scope/audit scenario（token guard / scope denial / revocation / selected mutation audit smoke / job-artifact tenant/project read-scope 与 hosted/manual workflow 已落地；site scope、全对象 data scope 与 all-mutation audit 尚未完成）
 - [x] Desktop package export/import smoke（local opt-in；packaged worker / NSIS installer / hosted evidence 尚未完成）
 - [ ] 8 golden scenarios
 
@@ -521,7 +521,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 1. 在 clean HEAD 上运行 `just pr-fast` 或 `scripts\ci\pr-fast.ps1`，保留 `tmp/ci-evidence/pr-fast.json`。
 2. 触发或接入 `.github/workflows/next-integration-smoke.yml` 的真实 GitHub Actions run，并把 hosted green run 作为 integration evidence 记录。
 3. 在 integration smoke 之上补 frontend/browser reads job/result/evidence 的验证。
-4. 继续 production security：补 issuer/JWKS 或 service-token secret manager、data scope、all-mutation audit，并把 security smoke 扩展到这些场景。
+4. 继续 production security：补 issuer/JWKS 或 service-token secret manager、site scope、全对象 data scope、all-mutation audit，并把 security smoke 扩展到这些场景。
 5. 基于已完成的 artifact lifecycle（含 upload/listing）、simulation input/process graph、draft workflow、result explanation、model governance、worker lifecycle、evidence governance、job lifecycle 与 metrics 构造函数收窄，准备下一步 Go API package movement、handler/package surface reduction 和后续公共构造签名收窄。
 
 这些步骤风险仍低于直接拆分 Go API 巨型 package，且能继续提高后续结构性重构的确定性。

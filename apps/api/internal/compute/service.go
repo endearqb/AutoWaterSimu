@@ -302,6 +302,10 @@ func (svc *Service) PromoteDraftConfirmationToSimulationCheck(ctx context.Contex
 	return svc.draftWorkflows.PromoteDraftConfirmationToSimulationCheck(ctx, confirmationID)
 }
 
+func (svc *Service) ArtifactMetadata(ctx context.Context, artifactID string) (ArtifactRecord, error) {
+	return svc.artifactLifecycle.ArtifactMetadata(ctx, artifactID)
+}
+
 func (svc *Service) DownloadArtifact(ctx context.Context, artifactID string) (ArtifactRecord, []byte, error) {
 	return svc.artifactLifecycle.DownloadArtifact(ctx, artifactID)
 }

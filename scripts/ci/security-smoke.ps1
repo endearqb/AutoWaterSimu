@@ -115,7 +115,7 @@ $statusBefore = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
 
 $apiDir = Join-Path $Root "apps\api"
 Invoke-Step -Name "production auth config guard" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./cmd/compute-api", "-run", "TestValidateProductionAuthConfig", "-count=1")
-Invoke-Step -Name "auth scope revocation admin and audit checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(HTTPAuthScopeAndMetrics|StaticTokenRevocation|HTTPArtifactRetentionSweepRequiresAdminScope|HTTPMutationAuditEventEnvelopeForJobCreate)", "-count=1")
+Invoke-Step -Name "auth scope revocation admin audit and data-scope checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(HTTPAuthScopeAndMetrics|StaticTokenRevocation|HTTPArtifactRetentionSweepRequiresAdminScope|HTTPMutationAuditEventEnvelopeForJobCreate|HTTPJobReadTenantProjectScope|HTTPArtifactDownloadTenantProjectScope)", "-count=1")
 Invoke-Step -Name "governance route scope denial checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(ModelCatalogEndpoint|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint|ContractValidationEndpoint|SimulationCheckEndpointCreatesComputeJob|NewSystemEvidenceReferenceE2E)", "-count=1")
 
 $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
@@ -132,7 +132,7 @@ $report = [ordered]@{
         scope_denial = "covered_by_internal_compute_http_tests"
         artifact_admin_scope = "covered_by_artifact_retention_http_test"
         mutation_audit_events = "covered_for_job_create_and_artifact_retention_events"
-        tenant_project_site_data_scope = "not_covered"
+        tenant_project_site_data_scope = "tenant_project_read_scope_covered_for_job_list_get_and_artifact_download; site_scope_not_covered"
     }
     is_dirty_before = -not [string]::IsNullOrWhiteSpace($statusBefore)
     is_dirty_after = -not [string]::IsNullOrWhiteSpace($statusAfter)

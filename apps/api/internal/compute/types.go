@@ -551,14 +551,20 @@ type TokenConfig struct {
 }
 
 type TokenRecord struct {
-	Name    string   `json:"name"`
-	Token   string   `json:"token"`
-	Scopes  []string `json:"scopes"`
-	Revoked bool     `json:"revoked,omitempty"`
+	Name      string   `json:"name"`
+	Token     string   `json:"token"`
+	Scopes    []string `json:"scopes"`
+	Revoked   bool     `json:"revoked,omitempty"`
+	TenantID  string   `json:"tenant_id,omitempty"`
+	ProjectID string   `json:"project_id,omitempty"`
+	SiteID    string   `json:"site_id,omitempty"`
 }
 
 type Principal struct {
-	Name    string
-	Scopes  map[string]bool
-	Revoked bool
+	Name      string
+	Scopes    map[string]bool
+	Revoked   bool
+	TenantID  string
+	ProjectID string
+	SiteID    string
 }
