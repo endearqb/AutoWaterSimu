@@ -6,7 +6,7 @@ This runbook covers the current durable Compute API deployment shape:
 
 - PostgreSQL metadata configured through `COMPUTE_API_DATABASE_URL`;
 - local artifact object files configured through `COMPUTE_API_ARTIFACT_DIR`;
-- optional local archive object files configured through `COMPUTE_API_ARCHIVE_DIR`;
+- optional local archive object files configured through `COMPUTE_API_ARCHIVE_DIR`, or S3-compatible archive objects configured through the `COMPUTE_API_ARCHIVE_S3_*` env vars;
 - no built-in point-in-time recovery.
 
 Use this runbook before enabling destructive artifact retention deletion or before a risky migration. It does not replace managed PostgreSQL backups, object-store versioning, or deployment-specific disaster recovery.
@@ -19,7 +19,8 @@ Back up these as one consistency unit:
 |---|---|---|
 | Metadata database | `COMPUTE_API_DATABASE_URL` | Includes jobs, workers, artifact metadata, events, model runs, registries, confirmations, explanations, and benchmark runs |
 | Artifact object files | `COMPUTE_API_ARTIFACT_DIR` | Contains large result payloads referenced by artifact metadata |
-| Archive object files | `COMPUTE_API_ARCHIVE_DIR` when set | Contains archived copies for `archive_candidate` artifacts after hot object deletion |
+| Local archive object files | `COMPUTE_API_ARCHIVE_DIR` when set | Contains archived copies for `archive_candidate` artifacts after hot object deletion |
+| S3-compatible archive objects | `COMPUTE_API_ARCHIVE_S3_ENDPOINT` / bucket / prefix when set | Contains archived copies for `archive_candidate` artifacts after hot object deletion; use provider-native versioning/export procedures |
 | Deployment config inventory | operator-maintained | Record non-secret values such as API version, migration version, artifact dir path, and retention scheduler settings |
 
 Do not put bearer tokens, signing keys, database passwords, or update-channel keys in the backup manifest.
@@ -78,7 +79,7 @@ if ($LASTEXITCODE -ge 8) {
 }
 ```
 
-Copy archive object files when archive handling is enabled:
+Copy local archive object files when `local_fs_archive` handling is enabled:
 
 ```powershell
 if (-not [string]::IsNullOrWhiteSpace($archiveDir)) {
@@ -89,6 +90,8 @@ if (-not [string]::IsNullOrWhiteSpace($archiveDir)) {
   }
 }
 ```
+
+If `s3_archive` is enabled, record the non-secret endpoint/bucket/prefix in the manifest and export archive objects through the storage provider's approved backup or versioning procedure. Do not write access keys or secret keys to the manifest.
 
 Write a minimal manifest with hashes for the metadata dump and top-level inventory:
 
@@ -105,6 +108,9 @@ $manifest = [ordered]@{
   metadata_dump_sha256 = (Get-FileHash $metadataDump -Algorithm SHA256).Hash.ToLowerInvariant()
   artifact_backup_dir = "artifacts"
   archive_backup_dir = $archiveBackupName
+  s3_archive_endpoint_recorded = [bool](-not [string]::IsNullOrWhiteSpace($env:COMPUTE_API_ARCHIVE_S3_ENDPOINT))
+  s3_archive_bucket = $env:COMPUTE_API_ARCHIVE_S3_BUCKET
+  s3_archive_prefix = $env:COMPUTE_API_ARCHIVE_S3_PREFIX
   compute_api_database_url_recorded = [bool](-not [string]::IsNullOrWhiteSpace($env:COMPUTE_API_DATABASE_URL))
   retention_sweep_interval = $env:COMPUTE_API_RETENTION_SWEEP_INTERVAL
   retention_sweep_dry_run = $env:COMPUTE_API_RETENTION_SWEEP_DRY_RUN
@@ -122,7 +128,7 @@ Restore is destructive. Do not restore over a live writer.
 2. Stop all workers.
 3. Confirm the target database is the intended restore target.
 4. Confirm the artifact directory path is the intended restore target.
-5. Confirm the archive directory path is the intended restore target when archive handling is enabled.
+5. Confirm the archive directory path is the intended restore target when local archive handling is enabled, or confirm the S3-compatible bucket/prefix and provider restore point when `s3_archive` is enabled.
 6. Verify the backup manifest and metadata dump hash before changing the target.
 
 ```powershell
@@ -164,7 +170,7 @@ if ($LASTEXITCODE -ge 8) {
 
 Keep the renamed previous artifact directory until the restore is verified.
 
-Restore the archive directory when the manifest contains an archive backup:
+Restore the local archive directory when the manifest contains a local archive backup:
 
 ```powershell
 if ($manifest.archive_backup_dir) {
@@ -185,6 +191,8 @@ if ($manifest.archive_backup_dir) {
 ```
 
 Keep the renamed previous archive directory until archived artifact downloads are verified.
+
+For `s3_archive`, restore archive objects through the provider's native restore/export process before starting the Compute API. The metadata table stores the archive provider and object key, so restored objects must be available at the same bucket/prefix/object keys recorded in PostgreSQL.
 
 ## Post-Restore Verification
 
@@ -210,5 +218,6 @@ Invoke-RestMethod http://localhost:8088/readyz
 
 - The current Compute API does not provide point-in-time recovery.
 - Retention deletion is not reversible unless the metadata dump and artifact files are restored as a matching pair.
-- If artifact files are moved to object storage later, use provider-native versioning/retention in addition to this metadata procedure.
-- `local_fs_archive` protects archive candidates only when `COMPUTE_API_ARCHIVE_DIR` is configured and backed up alongside metadata and hot artifacts; external object-store archive policy remains deployment-specific.
+- If hot artifact files are moved to object storage later, use provider-native versioning/retention in addition to this metadata procedure.
+- `local_fs_archive` protects archive candidates only when `COMPUTE_API_ARCHIVE_DIR` is configured and backed up alongside metadata and hot artifacts.
+- `s3_archive` protects archive candidates only when the S3-compatible endpoint/bucket/access env vars are configured and provider-native backup/versioning is enabled for the recorded bucket/prefix.

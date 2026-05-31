@@ -10,7 +10,7 @@
 - Creating compute service dependencies.
 - Starting HTTP server.
 - Wiring optional artifact retention scheduler configuration.
-- Wiring optional local filesystem artifact archive store configuration.
+- Wiring optional local filesystem or S3-compatible artifact archive store configuration.
 
 本目录不负责：
 
@@ -31,7 +31,18 @@
 3. Config changes must be documented and tested where practical。
 4. Missing `COMPUTE_API_DATABASE_URL` intentionally starts a non-persistent memory store for local Web UI smoke tests only; PostgreSQL remains required for durable platform runs。
 5. Artifact retention scheduler is disabled unless `COMPUTE_API_RETENTION_SWEEP_INTERVAL` is set; `COMPUTE_API_RETENTION_SWEEP_DRY_RUN` defaults to `true` and must be explicitly set to `false` to delete.
-6. Artifact archive handling is disabled unless `COMPUTE_API_ARCHIVE_DIR` is set; when enabled, this command wires a separate non-overlapping `local_fs_archive` store and business behavior remains in `internal/compute`. `COMPUTE_API_ARCHIVE_DIR` must not equal, contain, or be contained by `COMPUTE_API_ARTIFACT_DIR`.
+6. Artifact archive handling is disabled unless one archive backend is explicitly configured. `COMPUTE_API_ARCHIVE_DIR` enables a separate non-overlapping `local_fs_archive` store; `COMPUTE_API_ARCHIVE_S3_ENDPOINT` plus S3 bucket/access key env vars enables path-style `s3_archive`. Set only one backend. Business behavior remains in `internal/compute`.
+
+S3-compatible archive env vars:
+
+| Variable | Required | Meaning |
+|---|---|---|
+| `COMPUTE_API_ARCHIVE_S3_ENDPOINT` | yes | HTTP(S) endpoint for path-style S3-compatible archive storage |
+| `COMPUTE_API_ARCHIVE_S3_BUCKET` | yes | Archive bucket name |
+| `COMPUTE_API_ARCHIVE_S3_REGION` | no | SigV4 region, default `us-east-1` |
+| `COMPUTE_API_ARCHIVE_S3_ACCESS_KEY_ID` | yes | Archive access key id |
+| `COMPUTE_API_ARCHIVE_S3_SECRET_ACCESS_KEY` | yes | Archive secret access key |
+| `COMPUTE_API_ARCHIVE_S3_PREFIX` | no | Optional object key prefix, for example `compute-api/prod` |
 
 ## 4. 对外接口
 

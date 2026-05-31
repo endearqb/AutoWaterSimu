@@ -1638,6 +1638,14 @@ func (svc *Service) archiveArtifact(ctx context.Context, artifact ArtifactRecord
 		return ArtifactArchiveRecord{}, NewAppError(500, CodeInternal, "artifact checksum verification failed", true, nil)
 	}
 	archiveObjectKey := artifact.ObjectKey
+	archiveProvider := "artifact_archive"
+	if archiveStore, ok := svc.archiveArtifacts.(ArtifactArchiveStore); ok {
+		archiveProvider = archiveStore.ArchiveProvider()
+		archiveObjectKey, err = archiveStore.ArchiveObjectKey(artifact.ObjectKey)
+		if err != nil {
+			return ArtifactArchiveRecord{}, err
+		}
+	}
 	if err := svc.archiveArtifacts.Write(ctx, archiveObjectKey, bytes); err != nil {
 		return ArtifactArchiveRecord{}, err
 	}
@@ -1653,7 +1661,7 @@ func (svc *Service) archiveArtifact(ctx context.Context, artifact ArtifactRecord
 		JobID:                   artifact.JobID,
 		OriginalStorageProvider: artifact.StorageProvider,
 		OriginalObjectKey:       artifact.ObjectKey,
-		ArchiveProvider:         "local_fs_archive",
+		ArchiveProvider:         archiveProvider,
 		ArchiveObjectKey:        archiveObjectKey,
 		Checksum:                artifact.Checksum,
 		SizeBytes:               int64(len(archivedBytes)),

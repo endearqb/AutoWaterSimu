@@ -721,7 +721,7 @@ P0 lifecycle:
 - artifact 默认保留，删除前必须确认没有 evidence package 或 model run 引用。
 - Desktop project export 必须包含 project metadata、canvas graphs、process graphs、compute jobs、events、artifact metadata 和选中的 artifact files。
 - Desktop backup/restore 必须校验 SQLite migration version、artifact checksum 和 contract versions。
-- Web object storage lifecycle 第一阶段记录 `retention_policy` 和 `retain_until` 字段；当前实现已增加 `artifact:admin` 手动 dry-run-first sweep，默认不删除，显式 `dry_run=false` 时只删除过期且未被 model_run evidence refs 引用的 `ttl` artifact。`COMPUTE_API_ARCHIVE_DIR` 配置后可对过期未引用 `archive_candidate` 执行 `local_fs_archive` copy/checksum/metadata/event/hot-delete 流程，未配置时继续跳过。
+- Web object storage lifecycle 第一阶段记录 `retention_policy` 和 `retain_until` 字段；当前实现已增加 `artifact:admin` 手动 dry-run-first sweep，默认不删除，显式 `dry_run=false` 时只删除过期且未被 model_run evidence refs 引用的 `ttl` artifact。`COMPUTE_API_ARCHIVE_DIR` 配置后可对过期未引用 `archive_candidate` 执行 `local_fs_archive` copy/checksum/metadata/event/hot-delete 流程；`COMPUTE_API_ARCHIVE_S3_ENDPOINT` 与 bucket/access key env vars 配置后可执行 path-style S3-compatible `s3_archive` copy/checksum/metadata/event/hot-delete 流程；未配置 archive backend 时继续跳过。
 
 P1/P2 lifecycle:
 

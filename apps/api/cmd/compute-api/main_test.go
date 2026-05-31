@@ -58,3 +58,36 @@ func TestOpenArchiveStoreAllowsSeparateArtifactDirs(t *testing.T) {
 		t.Fatalf("expected archive store")
 	}
 }
+
+func TestOpenArchiveStoreAllowsS3ArchiveBackend(t *testing.T) {
+	store, err := openArchiveStore(compute.Config{
+		ArtifactDir:          t.TempDir(),
+		ArchiveS3Endpoint:    "https://archive.example.test",
+		ArchiveS3Bucket:      "autowatersimu-archive",
+		ArchiveS3Region:      "us-east-1",
+		ArchiveS3AccessKeyID: "test-access",
+		ArchiveS3SecretKey:   "test-secret",
+		ArchiveS3Prefix:      "compute-api",
+	})
+	if err != nil {
+		t.Fatalf("expected s3 archive store to be accepted: %v", err)
+	}
+	archiveStore, ok := store.(compute.ArtifactArchiveStore)
+	if !ok || archiveStore.ArchiveProvider() != "s3_archive" {
+		t.Fatalf("expected s3 archive provider, got %T", store)
+	}
+}
+
+func TestOpenArchiveStoreRejectsAmbiguousArchiveBackends(t *testing.T) {
+	_, err := openArchiveStore(compute.Config{
+		ArtifactDir:          filepath.Join(t.TempDir(), "artifacts"),
+		ArchiveDir:           filepath.Join(t.TempDir(), "archives"),
+		ArchiveS3Endpoint:    "https://archive.example.test",
+		ArchiveS3Bucket:      "autowatersimu-archive",
+		ArchiveS3AccessKeyID: "test-access",
+		ArchiveS3SecretKey:   "test-secret",
+	})
+	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_ARCHIVE_DIR") {
+		t.Fatalf("expected ambiguous archive backend error, got %v", err)
+	}
+}

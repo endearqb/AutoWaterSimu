@@ -8,12 +8,14 @@ Accepted.
 
 Compute API artifact retention now stores `retention_policy` and `retain_until`, supports manual/admin retention sweep, exposes retention metrics, and can run an opt-in scheduler. Expired unreferenced `ttl` artifacts can be deleted after model-run evidence reference checks.
 
-The `artifact.v1` contract also allows `archive_candidate`. The initial service skipped those artifacts with `archive_executor_not_configured`; the current local implementation only processes them when a separate archive store is explicitly configured through `COMPUTE_API_ARCHIVE_DIR`.
+The `artifact.v1` contract also allows `archive_candidate`. The initial service skipped those artifacts with `archive_executor_not_configured`; the first local implementation processed them only when a separate archive store was explicitly configured through `COMPUTE_API_ARCHIVE_DIR`. The current implementation also supports a path-style S3-compatible archive backend when `COMPUTE_API_ARCHIVE_S3_ENDPOINT` plus bucket/access key env vars are configured.
 
 ## Decision
 
 - Keep runtime behavior unchanged when no archive backend is configured: `archive_candidate` artifacts remain retention candidates but are skipped by sweep/delete operations with `archive_executor_not_configured`.
 - The first implemented backend is `local_fs_archive`, enabled only when `COMPUTE_API_ARCHIVE_DIR` is set.
+- The first object-store backend is path-style `s3_archive`, enabled only when `COMPUTE_API_ARCHIVE_S3_ENDPOINT`, `COMPUTE_API_ARCHIVE_S3_BUCKET`, `COMPUTE_API_ARCHIVE_S3_ACCESS_KEY_ID`, and `COMPUTE_API_ARCHIVE_S3_SECRET_ACCESS_KEY` are set. It uses SigV4 request signing and an optional `COMPUTE_API_ARCHIVE_S3_PREFIX`.
+- Operators must configure exactly one archive backend. `COMPUTE_API_ARCHIVE_DIR` and S3 archive env vars are mutually exclusive.
 - Any archive backend must be append-first and verify-before-delete:
   - copy artifact bytes to an archive storage provider;
   - verify the archived copy checksum against the original artifact checksum;
@@ -26,7 +28,7 @@ The `artifact.v1` contract also allows `archive_candidate`. The initial service 
 
 ## Consequences
 
-- Retention backlog metrics include unarchived eligible `archive_candidate` artifacts until `local_fs_archive` or a future archive backend processes them.
+- Retention backlog metrics include unarchived eligible `archive_candidate` artifacts until `local_fs_archive`, `s3_archive`, or a future archive backend processes them.
 - Operators must treat `archive_executor_not_configured` as a real blocker, not a warning that can be ignored before deletion.
 - Future object-store implementations can proceed without redefining the deletion safety model: archive copy verification and durable metadata come before hot-storage deletion.
 

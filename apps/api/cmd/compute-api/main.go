@@ -30,6 +30,12 @@ func run() error {
 		DatabaseURL:            os.Getenv("COMPUTE_API_DATABASE_URL"),
 		ArtifactDir:            getenv("COMPUTE_API_ARTIFACT_DIR", filepath.Join(repoRoot, "tmp", "compute-api-artifacts")),
 		ArchiveDir:             os.Getenv("COMPUTE_API_ARCHIVE_DIR"),
+		ArchiveS3Endpoint:      os.Getenv("COMPUTE_API_ARCHIVE_S3_ENDPOINT"),
+		ArchiveS3Bucket:        os.Getenv("COMPUTE_API_ARCHIVE_S3_BUCKET"),
+		ArchiveS3Region:        os.Getenv("COMPUTE_API_ARCHIVE_S3_REGION"),
+		ArchiveS3AccessKeyID:   os.Getenv("COMPUTE_API_ARCHIVE_S3_ACCESS_KEY_ID"),
+		ArchiveS3SecretKey:     os.Getenv("COMPUTE_API_ARCHIVE_S3_SECRET_ACCESS_KEY"),
+		ArchiveS3Prefix:        os.Getenv("COMPUTE_API_ARCHIVE_S3_PREFIX"),
 		TokensJSON:             os.Getenv("COMPUTE_API_TOKENS_JSON"),
 		Port:                   getenv("COMPUTE_API_PORT", "8088"),
 		RepoRoot:               repoRoot,
@@ -54,7 +60,11 @@ func run() error {
 		return err
 	}
 	if archiveStore != nil {
-		slog.Info("artifact archive backend enabled", "provider", "local_fs_archive")
+		provider := "artifact_archive"
+		if archiveProvider, ok := archiveStore.(compute.ArtifactArchiveStore); ok {
+			provider = archiveProvider.ArchiveProvider()
+		}
+		slog.Info("artifact archive backend enabled", "provider", provider)
 	}
 	validator, err := compute.NewContractValidator(config.RepoRoot)
 	if err != nil {
@@ -109,6 +119,19 @@ func openStore(ctx context.Context, config compute.Config, migrationsDir string)
 }
 
 func openArchiveStore(config compute.Config) (compute.ArtifactStore, error) {
+	if s3ArchiveConfigured(config) {
+		if strings.TrimSpace(config.ArchiveDir) != "" {
+			return nil, fmt.Errorf("set either COMPUTE_API_ARCHIVE_DIR or COMPUTE_API_ARCHIVE_S3_ENDPOINT, not both")
+		}
+		return compute.NewS3ArtifactStore(compute.S3ArtifactStoreOptions{
+			Endpoint:        config.ArchiveS3Endpoint,
+			Bucket:          config.ArchiveS3Bucket,
+			Region:          config.ArchiveS3Region,
+			AccessKeyID:     config.ArchiveS3AccessKeyID,
+			SecretAccessKey: config.ArchiveS3SecretKey,
+			Prefix:          config.ArchiveS3Prefix,
+		})
+	}
 	if strings.TrimSpace(config.ArchiveDir) == "" {
 		return nil, nil
 	}
@@ -120,6 +143,15 @@ func openArchiveStore(config compute.Config) (compute.ArtifactStore, error) {
 		return nil, fmt.Errorf("COMPUTE_API_ARCHIVE_DIR must not be the same as or nested with COMPUTE_API_ARTIFACT_DIR")
 	}
 	return compute.NewLocalArtifactStore(config.ArchiveDir)
+}
+
+func s3ArchiveConfigured(config compute.Config) bool {
+	return strings.TrimSpace(config.ArchiveS3Endpoint) != "" ||
+		strings.TrimSpace(config.ArchiveS3Bucket) != "" ||
+		strings.TrimSpace(config.ArchiveS3Region) != "" ||
+		strings.TrimSpace(config.ArchiveS3AccessKeyID) != "" ||
+		config.ArchiveS3SecretKey != "" ||
+		strings.TrimSpace(config.ArchiveS3Prefix) != ""
 }
 
 func localArchiveDirsOverlap(artifactDir, archiveDir string) (bool, error) {

@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next S3 archive backend TODO
+
+- [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API, command entrypoint, artifact retention, and operations context
+- [x] Add path-style S3-compatible archive store for `archive_candidate` artifacts
+- [x] Keep archive copy/checksum/metadata/event/download fallback safety boundary
+- [x] Wire explicit env config and ambiguous backend rejection in `cmd/compute-api`
+- [x] Add focused Go coverage for S3 store signing/path behavior and archive config wiring
+- [x] Update README/runbook/ADR/audit records
+- [x] Run focused and full Go validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Add an `ArtifactArchiveStore` metadata interface so archive providers can record provider name and archive object key without hardcoding `local_fs_archive`.
+- Implement a path-style S3-compatible archive store using SigV4 signing, required endpoint/bucket/access key env vars, default region `us-east-1`, and optional object key prefix.
+- Keep `COMPUTE_API_ARCHIVE_DIR` behavior unchanged and make local archive and S3 archive mutually exclusive.
+- Do not change OpenAPI or retention report shape; existing `archive_provider` / `archive_object_key` fields already cover the new backend.
+
+## Review
+
+- Added `S3ArtifactStore` with PUT/GET/DELETE, SigV4 request signing, object key/prefix validation, provider metadata, and focused httptest coverage.
+- `archiveArtifact` now records provider/object key through `ArtifactArchiveStore`, so S3 archives store `s3_archive` and prefixed archive object keys while local archives keep `local_fs_archive`.
+- `cmd/compute-api` now accepts `COMPUTE_API_ARCHIVE_S3_*` env vars and rejects ambiguous local+S3 archive configuration.
+- Updated API/internal/cmd README, operations runbooks, archive ADR, Development Plan, completion audit, and `.ai/changes`.
+- Remaining operations work: live monitoring deployment evidence and deployment-specific object-store backup/versioning proof are still external/deployment tasks.
+
 # 2026-05-31 AutoWaterSimu Next benchmark-backed parameter promotion TODO
 
 - [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API, OpenAPI, and frontend service context
