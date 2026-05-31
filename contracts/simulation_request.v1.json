@@ -48,7 +48,8 @@
         "idempotency_key": { "type": "string", "minLength": 1 },
         "trace_id": { "type": "string", "minLength": 1 },
         "tenant_id": { "type": "string" },
-        "project_id": { "type": "string" }
+        "project_id": { "type": "string" },
+        "site_id": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": true
     }

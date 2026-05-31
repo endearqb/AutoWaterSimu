@@ -105,7 +105,7 @@ func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context,
 		"requested_by":  requestedBy,
 		"trace_id":      traceID,
 	}
-	for _, key := range []string{"tenant_id", "project_id"} {
+	for _, key := range []string{"tenant_id", "project_id", "site_id"} {
 		if value := stringValue(request.Metadata, key); value != "" {
 			jobContext[key] = value
 		}

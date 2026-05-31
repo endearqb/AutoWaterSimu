@@ -1,6 +1,6 @@
 {
   "schema_version": "contracts_codegen_manifest.v1",
-  "updated_on": "2026-05-31",
+  "updated_on": "2026-06-01",
   "description": "Current codegen and validation strategy for AutoWaterSimu Next contracts.",
   "source_of_truth": "contracts/registry.json",
   "covered_schema_versions": [

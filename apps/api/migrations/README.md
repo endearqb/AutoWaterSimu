@@ -30,6 +30,7 @@
 | `0007_result_explanations.*.sql` | persisted `result_explanation.v1` review/publish audit records |
 | `0008_benchmark_runs.*.sql` | persisted `benchmark_run.v1` execution history for model governance reads |
 | `0009_artifact_archives.*.sql` | durable archive metadata for opt-in `local_fs_archive` retention handling |
+| `0010_job_site_scope.*.sql` | optional `compute_jobs.site_id` metadata and scope query index |
 
 ## 3. 维护约定
 

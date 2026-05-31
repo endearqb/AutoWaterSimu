@@ -242,6 +242,9 @@ export type JobRecord = {
     job_id: string;
     status: string;
     job_type: string;
+    tenant_id?: string;
+    project_id?: string;
+    site_id?: string;
     payload_hash?: string;
     result_hash?: string;
     attempt?: number;

@@ -1,3 +1,41 @@
+# 2026-06-01 AutoWaterSimu Next site read-scope TODO
+
+- [x] Re-read README First, root README, docs/rebuild, docs/architecture, contracts, apps/api, migrations, internal compute, scripts, tasks, and latest security context
+- [x] Confirm next gap: tenant/project read scope is landed, but site scope is still only accepted on token config and not enforced
+- [x] Add optional `site_id` to `compute_job.v1` context and API job metadata persistence
+- [x] Carry `site_id` from simulation request metadata or external refs into generated compute jobs
+- [x] Enforce tenant/project/site scope on job list/get and artifact download HTTP reads
+- [x] Add focused Go, contract, OpenAPI/client drift, security smoke, and dependency validation
+- [x] Update API/security docs, Certainty/Elegance plan, current-state summary, task review, and README First records
+
+## Plan
+
+- Treat `site_id` as an optional additive v1 contract field, not a new required field.
+- Keep enforcement limited to the same read paths already covered by tenant/project: job list/get and artifact download.
+- Keep empty token tenant/project/site scope as global access for existing dev/admin tokens.
+- Do not claim all-object scope, mutation authorization, OIDC/JWKS, or full RBAC/ABAC completion.
+
+## Review
+
+- Added optional `site_id` to `compute_job.v1.context` and `simulation_request.v1.metadata`, plus a site-scoped valid compute job fixture registered in `contracts/registry.json`.
+- Added `0010_job_site_scope` up/down migrations for `compute_jobs.site_id` and a tenant/project/site query index.
+- Go API now persists `JobRecord.SiteID`, carries `site_id` from simulation request metadata or `external_refs.site_id`, includes it in evidence/readiness metadata, and applies token tenant/project/site scope to job list/get and artifact download.
+- Generated Compute TS client `JobRecord` now exposes `tenant_id`, `project_id`, and `site_id`.
+- Extended security smoke to cover tenant/project/site read-scope denial/allowance on job reads and artifact download.
+- Updated contracts/API/compute/migrations/scripts READMEs, architecture current-state, Certainty/Elegance plan, and README First change log.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(HTTPJobReadTenantProjectSiteScope|HTTPArtifactDownloadTenantProjectSiteScope|NewSystemEvidenceReferenceE2E|SimulationCheckEndpointCreatesComputeJob|BenchmarkCaseScheduleRunEndpoint)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1` passed.
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1` passed after commit; registry/schema tests, Compute TS client generation, and OpenAPI/client drift gate passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed.
+  - `git diff --check -- contracts apps\api frontend\src\client\compute scripts docs tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - `site_id` is still job metadata for read-scope, not a complete Site/WaterStation domain model.
+  - Full object-level authorization, mutation data-scope enforcement, OIDC/JWKS, service-token secret management, ontology-backed runtime policy enforcement, and all-mutation audit remain future work.
+
 # 2026-06-01 AutoWaterSimu Next tenant/project read-scope TODO
 
 - [x] Re-read README First, root README, docs/rebuild, docs/architecture, apps/api, internal compute, scripts/ci, tasks, and latest security context

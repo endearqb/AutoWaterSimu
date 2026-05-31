@@ -109,9 +109,13 @@ func (svc *Service) CreateSimulationCheck(ctx context.Context, bytes []byte) (Jo
 		"requested_by":  requestedBy,
 		"trace_id":      traceID,
 	}
-	for _, key := range []string{"tenant_id", "project_id"} {
+	for _, key := range []string{"tenant_id", "project_id", "site_id"} {
 		if value := stringValue(metadata, key); value != "" {
 			jobContext[key] = value
+		} else if key == "site_id" {
+			if value := stringValue(externalRefs, key); value != "" {
+				jobContext[key] = value
+			}
 		}
 	}
 	if externalRefs != nil {

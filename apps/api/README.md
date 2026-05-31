@@ -30,7 +30,7 @@
 - opt-in local filesystem or S3-compatible archive backend for expired unreferenced `archive_candidate` artifacts。
 - Prometheus metrics for API up, job status counts, registered workers, artifact metadata count, archived artifact metadata count, and retention candidate count。
 - selected mutation audit event envelopes for job create/queue and artifact retention delete/archive events。
-- token-scoped tenant/project read filtering for job list/get and artifact download。
+- token-scoped tenant/project/site read filtering for job list/get and artifact download。
 - OpenAPI for platform and generated client。
 
 本目录不负责：
@@ -57,7 +57,7 @@ Phase 4A 仍使用单个 `internal/compute` package 收敛 skeleton，后续领�
 2. list API 必须支持稳定 cursor pagination。
 3. create job 必须支持 idempotency。
 4. OpenAPI client 生成到 `frontend/src/client/compute`。
-5. P0 auth 使用静态 Bearer token + scope，并支持配置级 `revoked` token 拒绝；token config 可选 `tenant_id` / `project_id`，用于 job list/get 和 artifact download 的 HTTP read-scope 过滤；空 tenant/project 表示全局读。当前不实现完整 RBAC 或动态 token 管理 API。`cmd/compute-api` 在 `APP_ENV=production` 或 `ENVIRONMENT=production` 时必须拒绝空 `COMPUTE_API_TOKENS_JSON` 和默认 dev token（`dev-public-token`、`dev-worker-token`、`dev-admin-token`）。Result explanation review/publish 使用 `explanation:write`，避免复用 job 创建权限表达解释发布。当前仅 job create/queue 与 artifact retention delete/archive events 写入 selected mutation audit envelope；完整 all-mutation audit、OIDC/RBAC、site scope 和全对象 tenant/project/site data scope 仍是后续安全工作。
+5. P0 auth 使用静态 Bearer token + scope，并支持配置级 `revoked` token 拒绝；token config 可选 `tenant_id` / `project_id` / `site_id`，用于 job list/get 和 artifact download 的 HTTP read-scope 过滤；空 tenant/project/site 表示全局读。当前不实现完整 RBAC 或动态 token 管理 API。`cmd/compute-api` 在 `APP_ENV=production` 或 `ENVIRONMENT=production` 时必须拒绝空 `COMPUTE_API_TOKENS_JSON` 和默认 dev token（`dev-public-token`、`dev-worker-token`、`dev-admin-token`）。Result explanation review/publish 使用 `explanation:write`，避免复用 job 创建权限表达解释发布。当前仅 job create/queue 与 artifact retention delete/archive events 写入 selected mutation audit envelope；完整 all-mutation audit、OIDC/RBAC 和全对象 tenant/project/site data scope 仍是后续安全工作。
 6. Go API 不执行 Python 科学计算，只编排 worker lifecycle。
 7. `COMPUTE_API_DATABASE_URL` 未配置时，`cmd/compute-api` 只为本地开发使用非持久 in-memory metadata store；正式 Web/Platform 路径必须配置 PostgreSQL。
 8. HTTP routes 允许本地开发 loopback 来源（`localhost`、`127.0.0.1`、`::1`）跨端口 CORS/OPTIONS，用于 Vite Web UI smoke；非本地来源不应被放行；浏览器客户端需要读取 artifact/evidence 校验时只暴露 `X-Artifact-Checksum` 和 `X-Evidence-Checksum`。

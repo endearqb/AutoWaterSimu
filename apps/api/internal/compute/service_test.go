@@ -70,7 +70,7 @@ func fixtureJobBytes(t *testing.T) []byte {
 	return bytes
 }
 
-func scopedFixtureJobBytes(t *testing.T, jobID, tenantID, projectID string) []byte {
+func scopedFixtureJobBytes(t *testing.T, jobID, tenantID, projectID, siteID string) []byte {
 	t.Helper()
 	job := decodeMap(t, fixtureJobBytes(t))
 	job["job_id"] = jobID
@@ -80,6 +80,7 @@ func scopedFixtureJobBytes(t *testing.T, jobID, tenantID, projectID string) []by
 	contextMap["trace_id"] = "trace_" + jobID
 	contextMap["tenant_id"] = tenantID
 	contextMap["project_id"] = projectID
+	contextMap["site_id"] = siteID
 	payload := job["payload"].(map[string]any)
 	payload["simulation_input_id"] = "si_" + jobID
 	payload["process_graph_id"] = "pg_" + jobID
@@ -1421,17 +1422,20 @@ func TestHTTPMutationAuditEventEnvelopeForJobCreate(t *testing.T) {
 	}
 }
 
-func TestHTTPJobReadTenantProjectScope(t *testing.T) {
+func TestHTTPJobReadTenantProjectSiteScope(t *testing.T) {
 	svc := testService(t)
 	ctx := context.Background()
-	if _, _, err := svc.CreateJob(ctx, scopedFixtureJobBytes(t, "job_scope_alpha", "tenant_a", "project_a"), ""); err != nil {
+	if _, _, err := svc.CreateJob(ctx, scopedFixtureJobBytes(t, "job_scope_alpha", "tenant_a", "project_a", "site_a"), ""); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := svc.CreateJob(ctx, scopedFixtureJobBytes(t, "job_scope_beta", "tenant_b", "project_b"), ""); err != nil {
+	if _, _, err := svc.CreateJob(ctx, scopedFixtureJobBytes(t, "job_scope_beta", "tenant_b", "project_b", "site_b"), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := svc.CreateJob(ctx, scopedFixtureJobBytes(t, "job_scope_gamma", "tenant_a", "project_a", "site_b"), ""); err != nil {
 		t.Fatal(err)
 	}
 	auth, err := NewAuthenticator(`{"tokens":[
-		{"name":"tenant-a-reader","token":"tenant-a-token","scopes":["job:read"],"tenant_id":"tenant_a","project_id":"project_a"},
+		{"name":"tenant-a-reader","token":"tenant-a-token","scopes":["job:read"],"tenant_id":"tenant_a","project_id":"project_a","site_id":"site_a"},
 		{"name":"global-reader","token":"global-token","scopes":["job:read"]}
 	]}`)
 	if err != nil {
@@ -1451,7 +1455,7 @@ func TestHTTPJobReadTenantProjectScope(t *testing.T) {
 		t.Fatal(err)
 	}
 	if list.TotalEstimate != 1 || len(list.Items) != 1 || list.Items[0].Job.JobID != "job_scope_alpha" {
-		t.Fatalf("tenant scoped list should include only matching job, got %#v", list)
+		t.Fatalf("tenant/project/site scoped list should include only matching job, got %#v", list)
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_scope_alpha", nil)
@@ -1467,7 +1471,15 @@ func TestHTTPJobReadTenantProjectScope(t *testing.T) {
 	rec = httptest.NewRecorder()
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
-		t.Fatalf("cross-scope job get should be denied, got %d %s", rec.Code, rec.Body.String())
+		t.Fatalf("cross-tenant job get should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_scope_gamma", nil)
+	req.Header.Set("Authorization", "Bearer tenant-a-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("cross-site job get should be denied, got %d %s", rec.Code, rec.Body.String())
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs", nil)
@@ -1480,15 +1492,15 @@ func TestHTTPJobReadTenantProjectScope(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
 		t.Fatal(err)
 	}
-	if list.TotalEstimate != 2 {
-		t.Fatalf("global token should see both jobs, got %#v", list)
+	if list.TotalEstimate != 3 {
+		t.Fatalf("global token should see all jobs, got %#v", list)
 	}
 }
 
-func TestHTTPArtifactDownloadTenantProjectScope(t *testing.T) {
+func TestHTTPArtifactDownloadTenantProjectSiteScope(t *testing.T) {
 	svc := testService(t)
 	ctx := context.Background()
-	if _, _, err := svc.CreateJob(ctx, scopedFixtureJobBytes(t, "job_artifact_scope_beta", "tenant_b", "project_b"), ""); err != nil {
+	if _, _, err := svc.CreateJob(ctx, scopedFixtureJobBytes(t, "job_artifact_scope_beta", "tenant_b", "project_b", "site_b"), ""); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_artifact_scope")); err != nil {
@@ -1500,8 +1512,8 @@ func TestHTTPArtifactDownloadTenantProjectScope(t *testing.T) {
 	artifactBytes := []byte(`{"scope":"tenant_b"}`)
 	artifact := uploadTestArtifact(t, svc, ctx, "worker_artifact_scope", "job_artifact_scope_beta", "art_scope_beta", artifactBytes, "")
 	auth, err := NewAuthenticator(`{"tokens":[
-		{"name":"tenant-a-artifact-reader","token":"tenant-a-artifact-token","scopes":["artifact:read"],"tenant_id":"tenant_a","project_id":"project_a"},
-		{"name":"tenant-b-artifact-reader","token":"tenant-b-artifact-token","scopes":["artifact:read"],"tenant_id":"tenant_b","project_id":"project_b"}
+		{"name":"tenant-b-wrong-site-artifact-reader","token":"wrong-site-artifact-token","scopes":["artifact:read"],"tenant_id":"tenant_b","project_id":"project_b","site_id":"site_a"},
+		{"name":"tenant-b-artifact-reader","token":"tenant-b-artifact-token","scopes":["artifact:read"],"tenant_id":"tenant_b","project_id":"project_b","site_id":"site_b"}
 	]}`)
 	if err != nil {
 		t.Fatal(err)
@@ -1509,11 +1521,11 @@ func TestHTTPArtifactDownloadTenantProjectScope(t *testing.T) {
 	server := NewServer(svc, auth, nil).Routes()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/artifacts/"+artifact.ArtifactID, nil)
-	req.Header.Set("Authorization", "Bearer tenant-a-artifact-token")
+	req.Header.Set("Authorization", "Bearer wrong-site-artifact-token")
 	rec := httptest.NewRecorder()
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
-		t.Fatalf("cross-scope artifact download should be denied, got %d %s", rec.Code, rec.Body.String())
+		t.Fatalf("cross-site artifact download should be denied, got %d %s", rec.Code, rec.Body.String())
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/artifacts/"+artifact.ArtifactID, nil)
@@ -2780,7 +2792,7 @@ func TestNewSystemEvidenceReferenceE2E(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &created); err != nil {
 		t.Fatal(err)
 	}
-	if created.Job.SourceSystem != "NewSystem" || created.Job.ProjectID != "project_demo" {
+	if created.Job.SourceSystem != "NewSystem" || created.Job.ProjectID != "project_demo" || created.Job.SiteID != "site_demo" {
 		t.Fatalf("unexpected NewSystem simulation check job metadata: %#v", created.Job)
 	}
 

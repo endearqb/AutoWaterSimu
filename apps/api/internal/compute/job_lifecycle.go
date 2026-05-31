@@ -69,6 +69,7 @@ func (svc *JobLifecycleService) CreateJob(ctx context.Context, bytes []byte, hea
 		TraceID:        job.Context.TraceID,
 		TenantID:       job.Context.TenantID,
 		ProjectID:      job.Context.ProjectID,
+		SiteID:         job.Context.SiteID,
 		CreatedBy:      job.Context.RequestedBy,
 		PayloadHash:    payloadHash,
 		InputJSON:      append([]byte(nil), bytes...),

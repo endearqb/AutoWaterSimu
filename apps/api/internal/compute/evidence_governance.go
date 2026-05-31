@@ -128,6 +128,7 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 			"trace_id":      snapshot.Job.TraceID,
 			"tenant_id":     snapshot.Job.TenantID,
 			"project_id":    snapshot.Job.ProjectID,
+			"site_id":       snapshot.Job.SiteID,
 		},
 	}
 	if svc.validator != nil {
@@ -256,6 +257,7 @@ func (svc *EvidenceGovernanceService) ProductionReadiness(ctx context.Context, j
 			"trace_id":      snapshot.Job.TraceID,
 			"tenant_id":     snapshot.Job.TenantID,
 			"project_id":    snapshot.Job.ProjectID,
+			"site_id":       snapshot.Job.SiteID,
 		},
 	}
 	if svc.validator != nil {

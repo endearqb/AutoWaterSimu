@@ -58,6 +58,7 @@ type JobContext struct {
 	TraceID      string `json:"trace_id"`
 	TenantID     string `json:"tenant_id,omitempty"`
 	ProjectID    string `json:"project_id,omitempty"`
+	SiteID       string `json:"site_id,omitempty"`
 }
 
 type JobRecord struct {
@@ -73,6 +74,7 @@ type JobRecord struct {
 	TraceID         string          `json:"trace_id"`
 	TenantID        string          `json:"tenant_id,omitempty"`
 	ProjectID       string          `json:"project_id,omitempty"`
+	SiteID          string          `json:"site_id,omitempty"`
 	CreatedBy       string          `json:"created_by,omitempty"`
 	PayloadHash     string          `json:"payload_hash"`
 	InputJSON       json.RawMessage `json:"input_json,omitempty"`

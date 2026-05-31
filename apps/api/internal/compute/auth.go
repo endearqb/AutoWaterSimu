@@ -67,13 +67,15 @@ func (auth *Authenticator) Principal(r *http.Request, requiredScope string) (*Pr
 func filterForPrincipalDataScope(filter ListFilter, principal Principal) ListFilter {
 	filter.TenantID = strings.TrimSpace(principal.TenantID)
 	filter.ProjectID = strings.TrimSpace(principal.ProjectID)
+	filter.SiteID = strings.TrimSpace(principal.SiteID)
 	return filter
 }
 
 func authorizeJobDataScope(principal Principal, job JobRecord) error {
 	tenantID := strings.TrimSpace(principal.TenantID)
 	projectID := strings.TrimSpace(principal.ProjectID)
-	if tenantID == "" && projectID == "" {
+	siteID := strings.TrimSpace(principal.SiteID)
+	if tenantID == "" && projectID == "" && siteID == "" {
 		return nil
 	}
 	details := map[string]any{}
@@ -87,6 +89,12 @@ func authorizeJobDataScope(principal Principal, job JobRecord) error {
 		details["project_id"] = projectID
 		if strings.TrimSpace(job.ProjectID) != projectID {
 			return NewAppError(http.StatusForbidden, CodeForbidden, "job is outside token project scope", false, details)
+		}
+	}
+	if siteID != "" {
+		details["site_id"] = siteID
+		if strings.TrimSpace(job.SiteID) != siteID {
+			return NewAppError(http.StatusForbidden, CodeForbidden, "job is outside token site scope", false, details)
 		}
 	}
 	return nil

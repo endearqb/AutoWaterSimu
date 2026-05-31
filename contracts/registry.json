@@ -1,6 +1,6 @@
 {
   "schema_version": "contracts_registry.v1",
-  "updated_on": "2026-05-31",
+  "updated_on": "2026-06-01",
   "description": "Registry for AutoWaterSimu Next JSON Schema contracts, examples, consumers, and compatibility policy.",
   "current_drift_gates": [
     "backend/.venv/Scripts/python -m pytest contracts/tests -q",
@@ -91,6 +91,7 @@
         "examples/valid/asm1slim_minimal.compute_job.v1.json",
         "examples/valid/asm3_independent.compute_job.v1.json",
         "examples/valid/material_balance_minimal.compute_job.v1.json",
+        "examples/valid/material_balance_site_scoped.compute_job.v1.json",
         "examples/valid/udm_independent.compute_job.v1.json"
       ],
       "invalid_examples": [],

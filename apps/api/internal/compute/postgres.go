@@ -116,11 +116,11 @@ func (store *PostgresStore) InsertJob(ctx context.Context, job JobRecord, events
 	defer func() { _ = tx.Rollback(ctx) }()
 	_, err = tx.Exec(ctx, `INSERT INTO compute_jobs (
 		id, schema_version, job_type, queue, status, request_id, idempotency_key,
-		source_system, requested_by, trace_id, tenant_id, project_id, created_by,
+		source_system, requested_by, trace_id, tenant_id, project_id, site_id, created_by,
 		payload_hash, input_json, attempt, cancel_requested, created_at, queued_at
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
 		job.JobID, job.SchemaVersion, job.JobType, job.Queue, job.Status, job.RequestID, job.IdempotencyKey,
-		job.SourceSystem, job.RequestedBy, job.TraceID, nullString(job.TenantID), nullString(job.ProjectID), nullString(job.CreatedBy),
+		job.SourceSystem, job.RequestedBy, job.TraceID, nullString(job.TenantID), nullString(job.ProjectID), nullString(job.SiteID), nullString(job.CreatedBy),
 		job.PayloadHash, job.InputJSON, job.Attempt, job.CancelRequested, job.CreatedAt, job.QueuedAt)
 	if err != nil {
 		return err
@@ -1118,7 +1118,7 @@ func scanJob(row rowScanner) (*JobRecord, error) {
 	err := row.Scan(
 		&job.JobID, &job.SchemaVersion, &job.JobType, &job.Queue, &job.Status, &job.RequestID,
 		&job.IdempotencyKey, &job.SourceSystem, &job.RequestedBy, &job.TraceID, &job.TenantID,
-		&job.ProjectID, &job.CreatedBy, &job.PayloadHash, &job.InputJSON, &job.Summary, &job.ResultHash,
+		&job.ProjectID, &job.SiteID, &job.CreatedBy, &job.PayloadHash, &job.InputJSON, &job.Summary, &job.ResultHash,
 		&job.WorkerID, &job.Attempt, &job.CancelRequested, &job.ClaimedAt, &job.LeaseExpiresAt,
 		&job.CreatedAt, &job.QueuedAt, &job.StartedAt, &job.FinishedAt, &job.ErrorCode, &job.ErrorMessage,
 	)
@@ -1335,7 +1335,7 @@ func scanArtifacts(rows pgx.Rows) ([]ArtifactRecord, error) {
 
 func jobSelectSQL() string {
 	return `SELECT id, schema_version, job_type, queue, status, request_id, idempotency_key,
-		source_system, requested_by, trace_id, COALESCE(tenant_id,''), COALESCE(project_id,''), COALESCE(created_by,''),
+		source_system, requested_by, trace_id, COALESCE(tenant_id,''), COALESCE(project_id,''), COALESCE(site_id,''), COALESCE(created_by,''),
 		payload_hash, input_json, COALESCE(summary_json,'null'::jsonb), COALESCE(result_hash,''), COALESCE(worker_id,''),
 		attempt, cancel_requested, claimed_at, lease_expires_at, created_at, queued_at, started_at, finished_at,
 		COALESCE(error_code,''), COALESCE(error_message,'') FROM compute_jobs`
@@ -1406,6 +1406,9 @@ func listWhere(filter ListFilter) (string, []any) {
 	}
 	if filter.ProjectID != "" {
 		add("project_id=$%d", filter.ProjectID)
+	}
+	if filter.SiteID != "" {
+		add("site_id=$%d", filter.SiteID)
 	}
 	if filter.CreatedAfter != nil {
 		add("created_at>$%d", *filter.CreatedAfter)

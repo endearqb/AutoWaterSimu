@@ -110,6 +110,7 @@ type ListFilter struct {
 	JobType       string
 	TenantID      string
 	ProjectID     string
+	SiteID        string
 	CreatedAfter  *time.Time
 	CreatedBefore *time.Time
 }
@@ -206,6 +207,9 @@ func (store *MemoryStore) ListJobs(_ context.Context, filter ListFilter) ([]JobR
 			continue
 		}
 		if filter.ProjectID != "" && job.ProjectID != filter.ProjectID {
+			continue
+		}
+		if filter.SiteID != "" && job.SiteID != filter.SiteID {
 			continue
 		}
 		if filter.CreatedAfter != nil && !job.CreatedAt.After(*filter.CreatedAfter) {
