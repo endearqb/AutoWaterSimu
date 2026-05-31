@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 )
 
 type Service struct {
@@ -16,7 +18,7 @@ type Service struct {
 	archiveArtifacts   ArtifactStore
 	artifactLifecycle  *ArtifactLifecycleService
 	jobLifecycle       *JobLifecycleService
-	workerLifecycle    *WorkerLifecycleService
+	workerLifecycle    *domainworkers.WorkerLifecycleService
 	simulationInputs   *SimulationInputService
 	draftWorkflows     *DraftWorkflowService
 	resultExplanations *ResultExplanationService
@@ -43,7 +45,7 @@ func NewServiceWithArchive(store Store, artifacts ArtifactStore, archiveArtifact
 	svc.jobLifecycle = NewJobLifecycleService(store, store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, jobID string) ([]ArtifactRecord, error) {
 		return svc.artifactLifecycle.ListJobArtifacts(ctx, jobID)
 	})
-	svc.workerLifecycle = NewWorkerLifecycleService(store, func() time.Time { return svc.now() })
+	svc.workerLifecycle = domainworkers.NewWorkerLifecycleService(workerStoreAdapter{store: store}, func() time.Time { return svc.now() }, DefaultLeaseSeconds*time.Second)
 	svc.simulationInputs = NewSimulationInputService(store, store, store, validator, func() time.Time { return svc.now() })
 	svc.draftWorkflows = NewDraftWorkflowService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, bytes []byte) (JobSnapshot, int, error) {
 		return svc.CreateSimulationCheck(ctx, bytes)

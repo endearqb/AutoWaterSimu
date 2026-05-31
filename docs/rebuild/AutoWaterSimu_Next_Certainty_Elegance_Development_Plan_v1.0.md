@@ -121,6 +121,7 @@ git diff --check -- docs Justfile .env.example docker-compose.dev.yml
 platform/auth
 platform/httpx
 platform/config
+platform/contracts
 platform/metrics
 jobs
 workers
@@ -503,8 +504,11 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Static bearer auth package split (`apps/api/internal/platform/auth`)
 - [x] First platform HTTP helper package split (`apps/api/internal/platform/httpx`)
 - [x] Runtime config package split (`apps/api/internal/platform/config`)
+- [x] Contract schema validator package split (`apps/api/internal/platform/contracts`)
 - [x] Metrics snapshot / Prometheus renderer package split (`apps/api/internal/platform/metrics`)
 - [x] Platform package reverse-dependency guard in `check-deps`
+- [x] First worker domain package split (`apps/api/internal/domain/workers`)
+- [x] Domain package reverse-dependency guard in `check-deps`
 - [ ] Go API domain package split
 
 ---
@@ -527,6 +531,6 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 2. 触发或接入 `.github/workflows/next-integration-smoke.yml` 的真实 GitHub Actions run，并把 hosted green run 作为 integration evidence 记录。
 3. 在 integration smoke 之上补 frontend/browser reads job/result/evidence 的验证。
 4. 继续 production security：补 issuer/JWKS 或 service-token secret manager、全对象 data scope、all-mutation audit，并把 security smoke 扩展到这些场景。
-5. 基于已完成的 artifact lifecycle（含 upload/listing）、simulation input/process graph、draft workflow、result explanation、model governance、worker lifecycle、evidence governance、job lifecycle、metrics 构造函数收窄、constructor boundary audit、`platform/auth`、`platform/config`、`platform/httpx` 与 `platform/metrics` package movement，继续推进 Go domain package movement、handler/package surface reduction 和后续公共 `Service` 构造签名收窄。
+5. 基于已完成的 artifact lifecycle（含 upload/listing）、simulation input/process graph、draft workflow、result explanation、model governance、worker lifecycle、evidence governance、job lifecycle、metrics 构造函数收窄、constructor boundary audit、`platform/auth`、`platform/config`、`platform/contracts`、`platform/httpx`、`platform/metrics` package movement，以及首个 `domain/workers` package movement，继续推进 jobs/artifacts/models/evidence/simulation 等 Go domain package movement、handler/package surface reduction 和后续公共 `Service` 构造签名收窄。
 
 这些步骤风险仍低于直接拆分 Go API 巨型 package，且能继续提高后续结构性重构的确定性。

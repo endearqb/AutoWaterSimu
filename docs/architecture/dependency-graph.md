@@ -36,6 +36,7 @@ Current rules:
 | `contracts/` must not depend on runtime modules such as `apps/api`, `apps/desktop`, `frontend/src`, `backend/app`, or `services/simulation-worker` | Contracts are the shared source of wire shape, not a runtime consumer |
 | `apps/api/` must not import legacy `backend/app` | Go Compute API must stay independently deployable |
 | `apps/api/internal/platform` must not import `apps/api/internal/compute` | Platform auth/config/http/metrics helpers must stay below compute domain packages and avoid reverse domain dependencies |
+| `apps/api/internal/domain` must not import `apps/api/internal/compute` | Domain packages such as workers must stay independent from the compute compatibility wiring package |
 | `apps/desktop/` must not import legacy `frontend/src` | Desktop runtime and UI are owned separately from legacy Web |
 | `frontend/src/routes` and `frontend/src/components` must not import `frontend/src/client/compute` directly | Generated Compute client belongs behind service wrappers |
 | `backend/app` must not depend on Next runtime modules | Legacy backend remains a migration baseline |

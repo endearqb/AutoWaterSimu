@@ -4,7 +4,9 @@ import (
 	"errors"
 	"net/http"
 
+	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 	platformauth "autowatersimu/apps/api/internal/platform/auth"
+	platformcontracts "autowatersimu/apps/api/internal/platform/contracts"
 	"autowatersimu/apps/api/internal/platform/httpx"
 )
 
@@ -81,6 +83,14 @@ func ToAppError(err error) *AppError {
 	var authErr *platformauth.Error
 	if errors.As(err, &authErr) {
 		return NewAppError(authErr.Status, authErr.Code, authErr.Message, authErr.Retryable, authErr.Details)
+	}
+	var contractErr *platformcontracts.Error
+	if errors.As(err, &contractErr) {
+		return NewAppError(contractErr.Status, contractErr.Code, contractErr.Message, contractErr.Retryable, contractErr.Details)
+	}
+	var workerErr *domainworkers.Error
+	if errors.As(err, &workerErr) {
+		return NewAppError(workerErr.Status, workerErr.Code, workerErr.Message, workerErr.Retryable, workerErr.Details)
 	}
 	return NewAppError(http.StatusInternalServerError, CodeInternal, err.Error(), true, nil)
 }

@@ -2,7 +2,7 @@
 
 > Snapshot date: 2026-06-01.
 
-This document records the current Go Compute API boundary after the first Store/interface split, the current service-constructor narrowing slices, and the first platform helper package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
+This document records the current Go Compute API boundary after the first Store/interface split, the current service-constructor narrowing slices, the first platform helper package movement, and the first workers domain package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/domain/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
@@ -12,7 +12,7 @@ The script writes evidence to `tmp/architecture-evidence/compute-api-boundary.js
 
 ## Current Shape
 
-The Compute API domain is still mostly a single modular-monolith package under `apps/api/internal/compute`. The first non-domain platform packages now live under `apps/api/internal/platform`.
+The Compute API domain is still mostly wired through the modular-monolith compatibility package under `apps/api/internal/compute`. The first true domain package now lives under `apps/api/internal/domain/workers`, and the first non-domain platform packages, including contract schema validation, live under `apps/api/internal/platform`.
 
 The aggregate `Store` is expressed as embedded domain metadata interfaces. Job create/list/read/events, cancel, complete/fail, and timeout logic now lives behind `JobLifecycleService`; artifact upload / listing / metadata lookup / download / retention / archive logic now lives behind `ArtifactLifecycleService`; worker register / claim / heartbeat now lives behind `WorkerLifecycleService`; simulation input registration, process graph registration, and `simulation_request.input_ref` resolution now live behind `SimulationInputService`; draft confirmation / promotion workflows now live behind `DraftWorkflowService`; result explanation submit/review/publish now lives behind `ResultExplanationService`; model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing now live behind `ModelGovernanceService`; result read, evidence package export, production readiness, and evidence-ref resolution now live behind `EvidenceGovernanceService`; metrics snapshot reads now live behind `MetricsService`. Internal domain service constructors now expose 1-3 store-like parameters and the audit fails if they accept the aggregate `Store`.
 
@@ -20,25 +20,29 @@ The wider `Service` still owns package-level construction and compatibility dele
 
 ## Package Boundary
 
-`apps/api/internal/platform/auth` owns static bearer token config parsing, principal parsing, scope/revocation checks, and platform auth errors. Compute maps those errors back to `contract_error.v1` responses. `apps/api/internal/platform/config` owns the command/runtime `Config` shape used by `cmd/compute-api` for environment-derived wiring. `apps/api/internal/platform/httpx` owns platform HTTP helpers that do not hold compute domain state:
+`apps/api/internal/platform/auth` owns static bearer token config parsing, principal parsing, scope/revocation checks, and platform auth errors. Compute maps those errors back to `contract_error.v1` responses. `apps/api/internal/platform/config` owns the command/runtime `Config` shape used by `cmd/compute-api` for environment-derived wiring. `apps/api/internal/platform/contracts` owns JSON Schema loading, schema_version-to-file mapping, and reusable schema validation; compute keeps DTO decoding and response mapping around it. `apps/api/internal/platform/httpx` owns platform HTTP helpers that do not hold compute domain state:
 
 - JSON response writing
 - loopback-only local browser CORS
 
 `apps/api/internal/platform/metrics` owns the metrics snapshot shape and Prometheus exposition text rendering. Compute still owns metadata-store count collection through `MetricsService`.
 
-`apps/api/internal/compute` may call this helper package, but `platform/httpx` must not import compute domain types. The boundary audit records internal Go package dirs and currently expects:
+`apps/api/internal/domain/workers` owns worker register / claim / heartbeat request normalization and response assembly behind a minimal worker store interface. `apps/api/internal/compute` adapts the existing `WorkerStore` and job state projection into that package so HTTP routes and storage behavior stay unchanged.
+
+`apps/api/internal/compute` may call these domain/platform packages, but `internal/domain/*` and `internal/platform/*` must not import compute compatibility types. The boundary audit records internal Go package dirs and currently expects:
 
 | Package Dir | Role |
 |---|---|
 | `compute` | Current compute domain package and compatibility wiring |
+| `domain/workers` | Worker register / claim / heartbeat domain package |
 | `platform/auth` | Static bearer token authentication and platform auth errors |
 | `platform/config` | Runtime configuration shape for command/deployment wiring |
+| `platform/contracts` | Contract schema loading, schema_version mapping, and JSON Schema validation |
 | `platform/httpx` | Platform HTTP helper package |
 | `platform/metrics` | Metrics snapshot shape and Prometheus renderer |
 
-This is the first package movement step. It intentionally starts with low-coupling platform auth, config, HTTP, and metrics helpers before moving domain packages such as jobs, artifacts, models, evidence, simulation, agent, and workers.
-`scripts/check-deps.ps1` enforces the reverse-dependency rule so `apps/api/internal/platform` cannot import `apps/api/internal/compute`.
+This is the first domain package movement step, following the low-coupling platform auth, config, contracts, HTTP, and metrics helper movement. Remaining domain packages include jobs, artifacts, models, evidence, simulation, and agent.
+`scripts/check-deps.ps1` enforces reverse-dependency rules so `apps/api/internal/platform` and `apps/api/internal/domain` cannot import `apps/api/internal/compute`.
 
 Selected files from the latest audit:
 
@@ -52,7 +56,7 @@ Selected files from the latest audit:
 | `draft_workflows.go` | 254 | draft confirmation validation, advisory constraint plans, and explicit simulation-check promotion |
 | `artifact_lifecycle.go` | 367 | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow |
 | `result_explanations.go` | 175 | result explanation submit/review/publish and job-scoped evidence ref validation |
-| `worker_lifecycle.go` | 84 | worker register, claim, and heartbeat flow |
+| `worker_lifecycle.go` | 50 | adapter from compute worker/job records to the workers domain package |
 | `metrics.go` | 25 | read-only metrics snapshot service |
 | `contract_validation.go` | 45 | reusable contract validation response helper |
 | `postgres.go` | 1477 | PostgreSQL store implementation and migrations smoke helpers |
@@ -161,12 +165,12 @@ The public `Service.SubmitResultExplanation`, `Service.GetResultExplanation`, `S
 
 The public `Service.RegisterModelCatalog`, `Service.ModelCatalog`, `Service.ModelCatalogModel`, `Service.ListModelCatalogSnapshots`, `Service.UpdateDefaultParameterSetStatus`, `Service.DefaultParameterSetPromotionPlan`, `Service.PromoteDefaultParameterSetToApproved`, `Service.ScheduleBenchmarkCaseRun`, `Service.RegisterBenchmarkRun`, `Service.GetBenchmarkRun`, `Service.ListBenchmarkRuns`, `Service.GetModelRun`, and `Service.ListModelRuns` methods remain stable and delegate to this narrower service. Benchmark case scheduling still resolves simulation inputs through `SimulationInputService`, job creation through the existing compute-job path, and benchmark run evidence refs through the existing job-scoped evidence boundary.
 
-`WorkerLifecycleService` is the sixth narrowed slice. Its constructor depends on:
+`WorkerLifecycleService` is the sixth narrowed slice and the first moved domain package under `apps/api/internal/domain/workers`. Its constructor depends on:
 
-- `WorkerStore`
+- a minimal workers `WorkerStore` implemented by `compute.workerStoreAdapter`
 - a clock
 
-The public `Service.RegisterWorker`, `Service.Claim`, and `Service.Heartbeat` methods remain stable and delegate to this narrower service. Artifact upload, job completion, and job failure remain outside this worker boundary because they depend on current job/artifact lifecycle rules.
+The public `Service.RegisterWorker`, `Service.Claim`, and `Service.Heartbeat` methods remain stable and delegate to this domain service. Artifact upload, job completion, and job failure remain outside this worker boundary because they depend on current job/artifact lifecycle rules.
 
 `EvidenceGovernanceService` is the seventh narrowed slice. Its constructor depends on:
 
@@ -209,7 +213,7 @@ Recommended order for narrowing service boundaries and later file/package moveme
 7. `jobs`
 8. `metrics`
 
-This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `MetricsService`. Artifact upload/listing has also joined the artifact boundary. Internal domain service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. The first platform package movement is underway through `platform/auth`, `platform/config`, `platform/httpx`, and `platform/metrics`; remaining near-term work is domain package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
+This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `domain/workers.WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `MetricsService`. Artifact upload/listing has also joined the artifact boundary. Internal domain service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. The first platform package movement is underway through `platform/auth`, `platform/config`, `platform/contracts`, `platform/httpx`, and `platform/metrics`; the first true domain package movement is underway through `domain/workers`. Remaining near-term work is additional domain package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
 
 ## Split Rules
 
@@ -224,7 +228,7 @@ Future service-boundary and package splitting should follow these rules:
 ## Current Non-Goals
 
 - `NewService` / `NewServiceWithArchive` still accept the aggregate `Store` for backward-compatible construction; narrowed internal services receive domain interfaces but are still wired from the aggregate in this package.
-- This split has only moved platform auth, config, HTTP, and metrics helpers into new Go packages; it has not moved compute domain files into domain packages yet.
+- This split has moved platform auth, config, contract validation, HTTP, and metrics helpers into platform packages and worker register/claim/heartbeat into the first domain package. Most compute domain files have not moved into domain packages yet.
 - This split does not change endpoint behavior, OpenAPI, auth scopes, contracts, database schema, or PostgreSQL migrations.
 
 ## Verification

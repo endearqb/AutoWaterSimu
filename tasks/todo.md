@@ -1,3 +1,74 @@
+# 2026-06-01 AutoWaterSimu Next platform contracts package split TODO
+
+- [x] Re-read README First context, current worktree, Certainty/Elegance plan, Compute API architecture, contract validator code, and platform package context
+- [x] Confirm next gap: contract schema validator still lived in compute while future domain packages need validation without importing compute
+- [x] Move schema file registry, schema_version mapping, JSON Schema compiler, and validation errors into `internal/platform/contracts`
+- [x] Keep compute-specific JSON payload-to-DTO decoding in `internal/compute`
+- [x] Map platform contracts validation errors through compute `ToAppError`
+- [x] Add direct platform contracts tests for schema mapping, unknown schemas, and a minimal valid `contract_error.v1`
+- [x] Extend package boundary audit/docs/checklists to include `platform/contracts`
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Move only domain-free schema validation mechanics into `platform/contracts`.
+- Keep `DecodeComputeJob` and `DecodeArtifactMetadata` in compute because they return compute DTOs and compute-specific shape errors.
+- Preserve existing HTTP routes, OpenAPI, JSON Schemas, migrations, generated clients, and response mapping.
+- Let `check-deps` continue enforcing that platform packages do not import compute.
+
+## Review
+
+- Added `apps/api/internal/platform/contracts` with `Validator`, schema file registry, `SchemaName`, platform validation error, and direct tests.
+- Updated compute `contracts.go` to expose compatibility aliases for the platform validator while keeping DTO decode helpers in compute.
+- Updated compute `ToAppError` to map `platform/contracts.Error` back to existing `contract_error.v1` response behavior.
+- Extended `scripts/audit-compute-api-boundary.ps1` and architecture docs/checklists to include `platform/contracts`.
+- Verification:
+  - `cd apps\api; go test ./internal/platform/contracts ./internal/domain/workers ./internal/compute` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; package dirs are `compute`, `domain/workers`, `platform/auth`, `platform/config`, `platform/contracts`, `platform/httpx`, and `platform/metrics`, with 0 constructor violations.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Contract schemas and generated clients were intentionally unchanged.
+  - jobs/artifacts/models/evidence/simulation/agent domain packages have not moved yet.
+
+# 2026-06-01 AutoWaterSimu Next workers domain package split TODO
+
+- [x] Re-read README First context, current worktree, Certainty/Elegance plan, Compute API architecture, worker lifecycle code, store interfaces, and tests
+- [x] Confirm next gap: platform helpers moved, but no true Go domain package movement has landed yet
+- [x] Move worker register / claim / heartbeat domain behavior into `internal/domain/workers`
+- [x] Keep compute package as compatibility wiring through a worker store/job state adapter
+- [x] Add direct workers domain tests and dependency guard for domain-to-compute reverse imports
+- [x] Update boundary audit/docs/checklists to include `domain/workers`
+- [x] Run focused workers/compute tests, full Go, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Start true domain package movement with `workers` because register/claim/heartbeat has a narrow service boundary and does not own artifact upload or job completion.
+- Keep HTTP routes, auth scopes, OpenAPI, contracts, migrations, generated clients, and storage behavior unchanged.
+- Define a minimal workers `Store` using worker records plus job state projections, then adapt existing compute `WorkerStore` / `JobRecord` into that interface.
+- Add `check-deps` coverage so `apps/api/internal/domain` cannot import the compute compatibility package.
+
+## Review
+
+- Added `apps/api/internal/domain` and `apps/api/internal/domain/workers` README context.
+- Added `apps/api/internal/domain/workers` with `Record`, minimal `WorkerStore`, `WorkerLifecycleService`, projected claim/heartbeat job structs, and domain validation errors.
+- Added direct workers domain tests for registration normalization, no-job claim, job claim response, heartbeat response, and missing worker id validation.
+- Replaced compute worker lifecycle implementation with `workerStoreAdapter`, preserving existing `Service.RegisterWorker`, `Service.Claim`, and `Service.Heartbeat` behavior.
+- Mapped workers domain errors back through compute `ToAppError`, preserving `contract_error.v1` response behavior.
+- Extended `scripts/check-deps.ps1` and `scripts/audit-compute-api-boundary.ps1` to guard/record `internal/domain/workers`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/workers ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; package dirs are `compute`, `domain/workers`, `platform/auth`, `platform/config`, `platform/httpx`, and `platform/metrics`, with 0 constructor violations.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - jobs/artifacts/models/evidence/simulation/agent domain packages have not moved yet.
+  - Public `NewService` / `NewServiceWithArchive`, HTTP handler surface, `store.go`, and `postgres.go` remain compatibility and large-file split targets.
+
 # 2026-06-01 AutoWaterSimu Next platform metrics package split TODO
 
 - [x] Re-read README First context, current worktree, compute metrics service/store/HTTP rendering code, and platform package context

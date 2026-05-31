@@ -42,8 +42,10 @@ function Get-MissingExpectedGoPackageDirs {
     param([string[]]$PackageDirs)
     $expected = @(
         "compute",
+        "domain/workers",
         "platform/auth",
         "platform/config",
+        "platform/contracts",
         "platform/httpx",
         "platform/metrics"
     )
@@ -376,6 +378,7 @@ New-Item -ItemType Directory -Force -Path $EvidenceDir | Out-Null
 
 $computeDir = Join-Path $root "apps\api\internal\compute"
 $internalDir = Join-Path $root "apps\api\internal"
+$domainDir = Join-Path $internalDir "domain"
 $storePath = Join-Path $computeDir "store.go"
 $postgresPath = Join-Path $computeDir "postgres.go"
 $servicePath = Join-Path $computeDir "service.go"
@@ -391,6 +394,15 @@ $serviceLayerFiles = @(
         -not $_.Name.EndsWith("_test.go") -and $_.Name -notin @("store.go", "postgres.go")
     }
 )
+$domainLayerFiles = @()
+if (Test-Path -LiteralPath $domainDir) {
+    $domainLayerFiles = @(
+        Get-ChildItem -LiteralPath $domainDir -Recurse -File -Filter "*.go" | Where-Object {
+            -not $_.Name.EndsWith("_test.go")
+        } | Sort-Object FullName
+    )
+}
+$serviceAuditFiles = @($serviceLayerFiles + $domainLayerFiles)
 $fileStats = @(
     $goFiles | ForEach-Object {
         [ordered]@{
@@ -407,10 +419,10 @@ $storeInterfaceSummary = @(Get-StoreInterfaceSummary -StorePath $storePath)
 $missingExpectedStoreEmbeds = @(Get-MissingExpectedStoreEmbeds -EmbeddedInterfaces $storeEmbeddedInterfaces)
 $memoryMethods = Get-ImplementedMethods -Path $storePath -ReceiverType "MemoryStore"
 $postgresMethods = Get-ImplementedMethods -Path $postgresPath -ReceiverType "PostgresStore"
-$serviceStoreCalls = Get-ServiceStoreCalls -ServicePaths @($serviceLayerFiles | ForEach-Object { $_.FullName }) -StoreMethods $storeMethods
+$serviceStoreCalls = Get-ServiceStoreCalls -ServicePaths @($serviceAuditFiles | ForEach-Object { $_.FullName }) -StoreMethods $storeMethods
 $serviceCalls = $serviceStoreCalls["calls"]
 $serviceCallSources = $serviceStoreCalls["sources"]
-$serviceConstructorBoundaries = @(Get-ServiceConstructorBoundaries -ServicePaths @($serviceLayerFiles | ForEach-Object { $_.FullName }))
+$serviceConstructorBoundaries = @(Get-ServiceConstructorBoundaries -ServicePaths @($serviceAuditFiles | ForEach-Object { $_.FullName }))
 $serviceConstructorViolations = @(
     $serviceConstructorBoundaries | Where-Object {
         $_["accepts_aggregate_store"] -or $_["exceeds_internal_store_parameter_limit"]
@@ -462,7 +474,7 @@ $report = [ordered]@{
         embedded_interfaces = $storeEmbeddedInterfaces
         missing_expected_embedded_interfaces = $missingExpectedStoreEmbeds
         interface_summary = $storeInterfaceSummary
-        service_layer_files_scanned = @($serviceLayerFiles | ForEach-Object { $_.Name })
+        service_layer_files_scanned = @($serviceAuditFiles | ForEach-Object { $_.Name })
         domain_summaries = $domainSummaries
         missing_memory_store_methods = $missingMemory
         missing_postgres_store_methods = $missingPostgres
@@ -494,7 +506,7 @@ $report = [ordered]@{
         "This is a read-only architecture audit; it verifies that the aggregate Store embeds the expected domain interfaces.",
         "Public Service constructors can still accept the aggregate Store while narrowed internal services receive domain-specific interfaces.",
         "Internal domain service constructors must not accept aggregate Store and should expose at most 3 store-like constructor parameters.",
-        "The first Go package movement guardrail expects apps/api/internal/platform/httpx to hold platform HTTP helpers outside the compute domain package.",
+        "The package movement guardrail expects platform helpers under apps/api/internal/platform, including contracts validation, and the first worker domain package under apps/api/internal/domain/workers.",
         "Large file thresholds are advisory: non-test files >800 lines and test files >1500 lines."
     )
 }

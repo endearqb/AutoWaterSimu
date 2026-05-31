@@ -6,7 +6,7 @@
 
 本目录负责：
 
-- auth、HTTP helper、配置、日志、metrics 等不持有 compute domain 状态的横切能力。
+- auth、HTTP helper、配置、合同 schema validation、日志、metrics 等不持有 compute domain 状态的横切能力。
 - 为 `apps/api/internal/compute` 后续领域拆包提供低耦合基础。
 
 本目录不负责：
@@ -21,6 +21,7 @@
 |---|---|
 | `auth/` | static bearer token config, principal parsing, and platform auth errors |
 | `config/` | command/runtime configuration shape |
+| `contracts/` | contract schema loading, schema_version mapping, and JSON Schema validation |
 | `httpx/` | JSON response and local CORS HTTP helper |
 | `metrics/` | metrics snapshot shape and Prometheus text renderer |
 
@@ -39,6 +40,7 @@
 可以依赖：
 
 - Go standard library。
+- `github.com/santhosh-tekuri/jsonschema/v6`，仅限 `contracts/` schema validation helper。
 
 不应该依赖：
 

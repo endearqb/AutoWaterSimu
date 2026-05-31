@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 	platformmetrics "autowatersimu/apps/api/internal/platform/metrics"
 )
 
@@ -156,15 +157,7 @@ type ArtifactRetentionAction struct {
 
 type MetricsSnapshot = platformmetrics.Snapshot
 
-type WorkerRecord struct {
-	WorkerID                  string          `json:"worker_id"`
-	Capabilities              json.RawMessage `json:"capabilities"`
-	SupportedContractVersions json.RawMessage `json:"supported_contract_versions"`
-	RuntimeVersion            string          `json:"runtime_version,omitempty"`
-	CurrentJobID              string          `json:"current_job_id,omitempty"`
-	HeartbeatAt               *time.Time      `json:"heartbeat_at,omitempty"`
-	RegisteredAt              time.Time       `json:"registered_at"`
-}
+type WorkerRecord = domainworkers.Record
 
 type JobSnapshot struct {
 	Job        JobRecord        `json:"job"`
