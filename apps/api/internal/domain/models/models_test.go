@@ -127,6 +127,83 @@ func TestCanTransitionParameterSetStatus(t *testing.T) {
 	}
 }
 
+func TestEvaluateParameterSetPromotionGateReady(t *testing.T) {
+	gate := EvaluateParameterSetPromotionGate(ParameterSetPromotionGateInput{
+		ModelVersionStatus:    ModelVersionStatusActive,
+		ParameterSetStatus:    ParameterSetStatusValidated,
+		BenchmarkCasesChecked: 2,
+		BenchmarkCasesPassed:  2,
+	})
+	if !gate.CanPromoteToApproved {
+		t.Fatalf("expected promotion to be allowed: %#v", gate)
+	}
+	if len(gate.BlockingReasons) != 0 {
+		t.Fatalf("expected no blocking reasons, got %#v", gate.BlockingReasons)
+	}
+}
+
+func TestEvaluateParameterSetPromotionGateBlocksVersionStatusParameterStatusAndCases(t *testing.T) {
+	gate := EvaluateParameterSetPromotionGate(ParameterSetPromotionGateInput{
+		ModelVersionStatus:    "deprecated",
+		ParameterSetStatus:    ParameterSetStatusApproved,
+		BenchmarkCasesChecked: 0,
+		BenchmarkCasesPassed:  0,
+		BlockingReasons: []string{
+			" latest_benchmark_run_not_passed ",
+			PromotionBlockModelVersionNotActive,
+			"",
+		},
+	})
+	want := []string{
+		"latest_benchmark_run_not_passed",
+		PromotionBlockModelVersionNotActive,
+		PromotionBlockNoValidatedBenchmarkCases,
+		PromotionBlockParameterSetAlreadyApproved,
+	}
+	if gate.CanPromoteToApproved {
+		t.Fatalf("expected promotion to be blocked")
+	}
+	if !reflect.DeepEqual(gate.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", gate.BlockingReasons, want)
+	}
+}
+
+func TestEvaluateParameterSetPromotionGateRequiresValidatedParameterSet(t *testing.T) {
+	gate := EvaluateParameterSetPromotionGate(ParameterSetPromotionGateInput{
+		ModelVersionStatus:    ModelVersionStatusActive,
+		ParameterSetStatus:    ParameterSetStatusDraft,
+		BenchmarkCasesChecked: 1,
+		BenchmarkCasesPassed:  1,
+	})
+	want := []string{PromotionBlockParameterSetStatusMustBeValidated}
+	if gate.CanPromoteToApproved {
+		t.Fatalf("expected promotion to be blocked")
+	}
+	if !reflect.DeepEqual(gate.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", gate.BlockingReasons, want)
+	}
+}
+
+func TestEvaluateParameterSetPromotionGatePreservesCaseBlockingReasons(t *testing.T) {
+	gate := EvaluateParameterSetPromotionGate(ParameterSetPromotionGateInput{
+		ModelVersionStatus:    ModelVersionStatusActive,
+		ParameterSetStatus:    ParameterSetStatusValidated,
+		BenchmarkCasesChecked: 2,
+		BenchmarkCasesPassed:  1,
+		BlockingReasons: []string{
+			"latest_benchmark_run_not_passed",
+			" latest_benchmark_run_not_passed ",
+		},
+	})
+	want := []string{"latest_benchmark_run_not_passed"}
+	if gate.CanPromoteToApproved {
+		t.Fatalf("expected promotion to be blocked")
+	}
+	if !reflect.DeepEqual(gate.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", gate.BlockingReasons, want)
+	}
+}
+
 func TestInvalidRawReturnsEmptyValues(t *testing.T) {
 	raw := json.RawMessage(`{`)
 	if id := RunIDFromRaw(raw); id != "" {

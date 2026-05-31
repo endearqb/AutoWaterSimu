@@ -2,7 +2,14 @@ package models
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
+)
+
+const (
+	ModelVersionStatusActive     = "active"
+	BenchmarkCaseStatusValidated = "validated"
+	BenchmarkRunStatusPassed     = "passed"
 )
 
 const (
@@ -12,6 +19,26 @@ const (
 	ParameterSetStatusApproved  = "approved"
 	ParameterSetStatusRetired   = "retired"
 )
+
+const (
+	PromotionBlockModelVersionNotActive             = "model_version_not_active"
+	PromotionBlockNoValidatedBenchmarkCases         = "no_validated_benchmark_cases"
+	PromotionBlockParameterSetAlreadyApproved       = "parameter_set_already_approved"
+	PromotionBlockParameterSetStatusMustBeValidated = "parameter_set_status_must_be_validated"
+)
+
+type ParameterSetPromotionGateInput struct {
+	ModelVersionStatus    string
+	ParameterSetStatus    string
+	BenchmarkCasesChecked int
+	BenchmarkCasesPassed  int
+	BlockingReasons       []string
+}
+
+type ParameterSetPromotionGate struct {
+	BlockingReasons      []string
+	CanPromoteToApproved bool
+}
 
 func RunIDFromRaw(raw json.RawMessage) string {
 	identity, err := RunIdentityFromRaw(raw)
@@ -109,6 +136,33 @@ func CanTransitionParameterSetStatus(fromStatus, toStatus string) bool {
 	return fromOK && toOK && to == from+1
 }
 
+func EvaluateParameterSetPromotionGate(input ParameterSetPromotionGateInput) ParameterSetPromotionGate {
+	blockingReasons := make([]string, 0, len(input.BlockingReasons)+3)
+	if input.ModelVersionStatus != ModelVersionStatusActive {
+		blockingReasons = append(blockingReasons, PromotionBlockModelVersionNotActive)
+	}
+	switch input.ParameterSetStatus {
+	case ParameterSetStatusValidated:
+	case ParameterSetStatusApproved:
+		blockingReasons = append(blockingReasons, PromotionBlockParameterSetAlreadyApproved)
+	default:
+		blockingReasons = append(blockingReasons, PromotionBlockParameterSetStatusMustBeValidated)
+	}
+	if input.BenchmarkCasesChecked == 0 {
+		blockingReasons = append(blockingReasons, PromotionBlockNoValidatedBenchmarkCases)
+	}
+	blockingReasons = append(blockingReasons, input.BlockingReasons...)
+	blockingReasons = uniqueStrings(blockingReasons)
+	return ParameterSetPromotionGate{
+		BlockingReasons: blockingReasons,
+		CanPromoteToApproved: input.ParameterSetStatus == ParameterSetStatusValidated &&
+			input.ModelVersionStatus == ModelVersionStatusActive &&
+			input.BenchmarkCasesChecked > 0 &&
+			input.BenchmarkCasesPassed == input.BenchmarkCasesChecked &&
+			len(blockingReasons) == 0,
+	}
+}
+
 func stringValue(value map[string]any, key string) string {
 	if value == nil {
 		return ""
@@ -130,5 +184,20 @@ func stringsFromAny(value any) []string {
 			result = append(result, strings.TrimSpace(text))
 		}
 	}
+	return result
+}
+
+func uniqueStrings(values []string) []string {
+	seen := map[string]bool{}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" || seen[value] {
+			continue
+		}
+		seen[value] = true
+		result = append(result, value)
+	}
+	sort.Strings(result)
 	return result
 }

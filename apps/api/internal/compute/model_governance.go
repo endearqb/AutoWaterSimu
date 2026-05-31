@@ -60,21 +60,21 @@ func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context,
 		return JobSnapshot{}, 0, NotFound("MODEL_NOT_FOUND", "model version not found")
 	}
 	version := catalog.Models[modelIndex].Versions[versionIndex]
-	if version.Status != "active" {
+	if version.Status != domainmodels.ModelVersionStatusActive {
 		return JobSnapshot{}, 0, Conflict(CodeParameterSetTransitionFailed, "benchmark case run requires an active model version")
 	}
 	benchmarkCase, ok := findBenchmarkCase(version, benchmarkCaseID)
 	if !ok {
 		return JobSnapshot{}, 0, NotFound("BENCHMARK_CASE_NOT_FOUND", "benchmark case not found")
 	}
-	if benchmarkCase.Status != "validated" {
+	if benchmarkCase.Status != domainmodels.BenchmarkCaseStatusValidated {
 		return JobSnapshot{}, 0, Conflict("BENCHMARK_CASE_NOT_VALIDATED", "benchmark case must be validated before scheduling runs")
 	}
 	parameterSet := version.DefaultParameterSet
 	if parameterSet == nil {
 		return JobSnapshot{}, 0, NotFound(CodeParameterSetNotFound, "default parameter set not found")
 	}
-	if parameterSet.Status == "retired" {
+	if parameterSet.Status == domainmodels.ParameterSetStatusRetired {
 		return JobSnapshot{}, 0, Conflict(CodeParameterSetTransitionFailed, "retired parameter sets cannot be benchmarked")
 	}
 	execution := domainsimulation.ExecutionProfile(benchmarkCase.JobType)
@@ -330,31 +330,18 @@ func (svc *ModelGovernanceService) DefaultParameterSetPromotionPlan(ctx context.
 		ParameterSetID:             parameterSet.ParameterSetID,
 		ParameterHash:              parameterSet.ParameterHash,
 		CurrentStatus:              parameterSet.Status,
-		TargetStatus:               "approved",
+		TargetStatus:               domainmodels.ParameterSetStatusApproved,
 		WouldModifyCatalog:         false,
 		ProductionApprovalRequired: true,
 		BlockingReasons:            []string{},
 		CaseResults:                []BenchmarkCasePromotionResult{},
 	}
-	if version.Status != "active" {
-		plan.BlockingReasons = append(plan.BlockingReasons, "model_version_not_active")
-	}
-	switch parameterSet.Status {
-	case "validated":
-	case "approved":
-		plan.BlockingReasons = append(plan.BlockingReasons, "parameter_set_already_approved")
-	default:
-		plan.BlockingReasons = append(plan.BlockingReasons, "parameter_set_status_must_be_validated")
-	}
 
 	validatedCases := make([]ModelBenchmarkCase, 0, len(version.BenchmarkCases))
 	for _, benchmarkCase := range version.BenchmarkCases {
-		if benchmarkCase.Status == "validated" {
+		if benchmarkCase.Status == domainmodels.BenchmarkCaseStatusValidated {
 			validatedCases = append(validatedCases, benchmarkCase)
 		}
-	}
-	if len(validatedCases) == 0 {
-		plan.BlockingReasons = append(plan.BlockingReasons, "no_validated_benchmark_cases")
 	}
 	plan.BenchmarkCasesChecked = len(validatedCases)
 	for _, benchmarkCase := range validatedCases {
@@ -368,12 +355,15 @@ func (svc *ModelGovernanceService) DefaultParameterSetPromotionPlan(ctx context.
 		plan.CaseResults = append(plan.CaseResults, result)
 		plan.BlockingReasons = append(plan.BlockingReasons, result.BlockingReasons...)
 	}
-	plan.BlockingReasons = uniqueStrings(plan.BlockingReasons)
-	plan.CanPromoteToApproved = parameterSet.Status == "validated" &&
-		version.Status == "active" &&
-		plan.BenchmarkCasesChecked > 0 &&
-		plan.BenchmarkCasesPassed == plan.BenchmarkCasesChecked &&
-		len(plan.BlockingReasons) == 0
+	gate := domainmodels.EvaluateParameterSetPromotionGate(domainmodels.ParameterSetPromotionGateInput{
+		ModelVersionStatus:    version.Status,
+		ParameterSetStatus:    parameterSet.Status,
+		BenchmarkCasesChecked: plan.BenchmarkCasesChecked,
+		BenchmarkCasesPassed:  plan.BenchmarkCasesPassed,
+		BlockingReasons:       plan.BlockingReasons,
+	})
+	plan.BlockingReasons = gate.BlockingReasons
+	plan.CanPromoteToApproved = gate.CanPromoteToApproved
 	return plan, nil
 }
 
@@ -407,7 +397,7 @@ func (svc *ModelGovernanceService) PromoteDefaultParameterSetToApproved(ctx cont
 	return svc.UpdateDefaultParameterSetStatus(ctx, modelKey, modelVersion, ParameterSetStatusUpdateRequest{
 		ParameterSetID: plan.ParameterSetID,
 		FromStatus:     plan.CurrentStatus,
-		ToStatus:       "approved",
+		ToStatus:       domainmodels.ParameterSetStatusApproved,
 		Reason:         defaultString(request.Reason, "benchmark-backed promotion"),
 		Metadata:       metadata,
 	}, defaultSourceSystem, defaultRequestedBy)
@@ -492,7 +482,7 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 	result.ModelRunID = record.ModelRunID
 	result.JobID = record.JobID
 	result.ExecutedAt = record.ExecutedAt.Format(time.RFC3339Nano)
-	if record.Status != "passed" {
+	if record.Status != domainmodels.BenchmarkRunStatusPassed {
 		result.BlockingReasons = append(result.BlockingReasons, "latest_benchmark_run_not_passed")
 	}
 	result.EvidenceRefCount = len(domainmodels.BenchmarkRunEvidenceRefsFromRaw(record.Payload))
@@ -520,7 +510,7 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 		result.BlockingReasons = append(result.BlockingReasons, "model_run_parameter_hash_mismatch")
 	}
 	result.BlockingReasons = uniqueStrings(result.BlockingReasons)
-	result.Ready = record.Status == "passed" && result.ParameterHashMatches && len(result.BlockingReasons) == 0
+	result.Ready = record.Status == domainmodels.BenchmarkRunStatusPassed && result.ParameterHashMatches && len(result.BlockingReasons) == 0
 	return result, nil
 }
 
@@ -550,7 +540,7 @@ func (svc *ModelGovernanceService) benchmarkRunRecord(ctx context.Context, docum
 	if !ok {
 		return BenchmarkRunRecord{}, NotFound("BENCHMARK_CASE_NOT_FOUND", "benchmark case not found")
 	}
-	if benchmarkCase.Status != "validated" {
+	if benchmarkCase.Status != domainmodels.BenchmarkCaseStatusValidated {
 		return BenchmarkRunRecord{}, Conflict("BENCHMARK_CASE_NOT_VALIDATED", "benchmark case must be validated before recording runs")
 	}
 	if version.DefaultParameterSet == nil || version.DefaultParameterSet.ParameterSetID != parameterSetID {

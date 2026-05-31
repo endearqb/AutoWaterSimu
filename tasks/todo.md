@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next models promotion gate split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and promotion planning call sites
+- [x] Confirm next aligned gap: default parameter set promotion gate reasons and final approval predicate still lived in compute workflow code
+- [x] Add promotion status/blocking constants and `EvaluateParameterSetPromotionGate` to `apps/api/internal/domain/models` with direct tests
+- [x] Route `ModelGovernanceService.DefaultParameterSetPromotionPlan` through the domain models gate while preserving benchmark query orchestration and HTTP behavior
+- [x] Update README/architecture/checklists/audit note
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure default parameter set promotion gate: model version active check, parameter set status check, no-validated-case blocking, blocking-reason normalization, and final `CanPromoteToApproved` predicate.
+- Keep catalog persistence, benchmark run query orchestration, case-result assembly, evidence reference resolution, promotion mutation, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as a small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added model governance status constants, promotion blocking reason constants, `ParameterSetPromotionGateInput`, `ParameterSetPromotionGate`, and `EvaluateParameterSetPromotionGate` to `apps/api/internal/domain/models`.
+- Added direct models domain tests for ready promotion, model-version/parameter-status/no-case blocking, non-validated parameter sets, duplicate/trimmed blocking reasons, and case-level blocking reasons.
+- Updated `ModelGovernanceService.DefaultParameterSetPromotionPlan` to assemble benchmark case results as before, then delegate final blocking-reason normalization and approval readiness to the domain models helper.
+- Replaced remaining local string literals for active model versions, validated benchmark cases, passed benchmark runs, approved/retired parameter set statuses in model governance with domain model constants where touched.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(ParameterSetPromotionGate|DefaultParameterSetPromotionPlan|Promotion|BenchmarkRun|ModelCatalog)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshot mutation, benchmark run persistence workflow, benchmark query orchestration, promotion workflow orchestration, HTTP mapping, and DTOs remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full evidence governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models benchmark parsing split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model governance call sites
