@@ -16,15 +16,20 @@ type SimulationInputService struct {
 	now           func() time.Time
 }
 
-func NewSimulationInputService(inputs SimulationInputStore, processGraphs ProcessGraphStore, modelRuns ModelRunStore, jobs JobStore, validator *ContractValidator, now func() time.Time) *SimulationInputService {
+type ModelRunReplayStore interface {
+	ModelRunStore
+	JobStore
+}
+
+func NewSimulationInputService(inputs SimulationInputStore, processGraphs ProcessGraphStore, replay ModelRunReplayStore, validator *ContractValidator, now func() time.Time) *SimulationInputService {
 	if now == nil {
 		now = func() time.Time { return time.Now().UTC() }
 	}
 	return &SimulationInputService{
 		inputs:        inputs,
 		processGraphs: processGraphs,
-		modelRuns:     modelRuns,
-		jobs:          jobs,
+		modelRuns:     replay,
+		jobs:          replay,
 		validator:     validator,
 		now:           now,
 	}

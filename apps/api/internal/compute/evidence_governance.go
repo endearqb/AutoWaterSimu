@@ -18,10 +18,14 @@ type EvidenceGovernanceService struct {
 	artifactMetadata func(context.Context, string) (ArtifactRecord, error)
 }
 
+type EvidenceGovernanceStores interface {
+	JobStore
+	ModelRunStore
+	ProcessGraphStore
+}
+
 func NewEvidenceGovernanceService(
-	jobs JobStore,
-	modelRuns ModelRunStore,
-	processGraphs ProcessGraphStore,
+	stores EvidenceGovernanceStores,
 	validator *ContractValidator,
 	now func() time.Time,
 	modelCatalog func(context.Context) (ModelCatalogResponse, error),
@@ -32,9 +36,9 @@ func NewEvidenceGovernanceService(
 		now = func() time.Time { return time.Now().UTC() }
 	}
 	return &EvidenceGovernanceService{
-		jobs:             jobs,
-		modelRuns:        modelRuns,
-		processGraphs:    processGraphs,
+		jobs:             stores,
+		modelRuns:        stores,
+		processGraphs:    stores,
 		validator:        validator,
 		now:              now,
 		modelCatalog:     modelCatalog,

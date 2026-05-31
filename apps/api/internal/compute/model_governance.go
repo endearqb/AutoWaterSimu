@@ -22,14 +22,20 @@ type ModelGovernanceService struct {
 	resolveEvidenceReference EvidenceReferenceResolver
 }
 
-func NewModelGovernanceService(catalogs ModelCatalogStore, benchmarkRuns BenchmarkRunStore, modelRuns ModelRunStore, validator *ContractValidator, now func() time.Time, resolveSimulationInput SimulationInputResolver, createJob ComputeJobCreator, resolveEvidenceReference EvidenceReferenceResolver) *ModelGovernanceService {
+type ModelGovernanceStores interface {
+	ModelCatalogStore
+	BenchmarkRunStore
+	ModelRunStore
+}
+
+func NewModelGovernanceService(stores ModelGovernanceStores, validator *ContractValidator, now func() time.Time, resolveSimulationInput SimulationInputResolver, createJob ComputeJobCreator, resolveEvidenceReference EvidenceReferenceResolver) *ModelGovernanceService {
 	if now == nil {
 		now = func() time.Time { return time.Now().UTC() }
 	}
 	return &ModelGovernanceService{
-		catalogs:                 catalogs,
-		benchmarkRuns:            benchmarkRuns,
-		modelRuns:                modelRuns,
+		catalogs:                 stores,
+		benchmarkRuns:            stores,
+		modelRuns:                stores,
 		validator:                validator,
 		now:                      now,
 		resolveSimulationInput:   resolveSimulationInput,

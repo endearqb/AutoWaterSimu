@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next service constructor boundary TODO
+
+- [x] Re-read README First, root README, docs/rebuild, docs/architecture, apps/api, internal compute, scripts, tasks, and current Go API structure context
+- [x] Confirm next gap: internal domain services are behaviorally narrowed, but several constructors still expose multiple repository parameters and the boundary audit does not guard constructor regressions
+- [x] Group internal domain service constructor repository dependencies into explicit narrow bundles without changing HTTP/API behavior
+- [x] Extend `scripts/audit-compute-api-boundary.ps1` to record/fail constructor boundary regressions
+- [x] Update API/architecture/current-state/Certainty-Elegance docs, task review, and README First records
+- [x] Run focused audit, Go API tests, PR fast, and diff-check validation
+
+## Plan
+
+- Keep public `NewService` / `NewServiceWithArchive` compatible with the aggregate `Store` while `internal/compute` remains one package.
+- Narrow internal service constructors by passing named domain repository bundles or callback bundles, then keep service fields typed to the smallest interfaces actually used by methods.
+- Treat object artifact stores separately from metadata repositories so archive/hot storage stays explicit.
+- Add an audit rule that fails if internal domain service constructors accept aggregate `Store` or exceed three store-like constructor parameters.
+- Do not move Go packages, modify endpoint behavior, change contracts/OpenAPI, or add migrations in this slice.
+
+## Review
+
+- Added explicit constructor dependency bundles: `ArtifactLifecycleStores` / `ArtifactObjectStores`, `ModelRunReplayStore`, `ModelGovernanceStores`, and `EvidenceGovernanceStores`.
+- Updated `service.go` wiring so internal domain service constructors now expose 1-3 store-like parameters and no internal domain constructor accepts aggregate `Store` directly.
+- Extended `scripts/audit-compute-api-boundary.ps1` to emit `service_constructor_boundaries`, audit 10 service constructors, and fail on aggregate `Store` leakage or more than 3 store-like constructor parameters for internal services.
+- Updated API/compute README context, scripts README, `docs/architecture/compute-api.md`, current-state, Certainty/Elegance checklist, and README First change log.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; 41 Store methods, 12 embedded interfaces, 12 domain groups, 10 service constructors audited.
+  - `cd apps\api; go test ./internal/compute -run "Test(NewSystemEvidenceReferenceE2E|SimulationCheckEndpointCreatesComputeJob|BenchmarkCaseScheduleRunEndpoint|HTTPArtifactDownloadTenantProjectSiteScope)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api scripts docs tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Public `NewService` / `NewServiceWithArchive` still accept aggregate `Store` while package-level compatibility wiring remains in `internal/compute`.
+  - Go API domain package split, handler/package surface reduction, and large-file split remain future work.
+
 # 2026-06-01 AutoWaterSimu Next site read-scope TODO
 
 - [x] Re-read README First, root README, docs/rebuild, docs/architecture, contracts, apps/api, migrations, internal compute, scripts, tasks, and latest security context

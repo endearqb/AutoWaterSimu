@@ -39,26 +39,26 @@ func NewServiceWithArchive(store Store, artifacts ArtifactStore, archiveArtifact
 		validator:        validator,
 		now:              func() time.Time { return time.Now().UTC() },
 	}
-	svc.artifactLifecycle = NewArtifactLifecycleService(store, store, store, artifacts, archiveArtifacts, validator, func() time.Time { return svc.now() })
+	svc.artifactLifecycle = NewArtifactLifecycleService(store, ArtifactObjectStores{Hot: artifacts, Archive: archiveArtifacts}, validator, func() time.Time { return svc.now() })
 	svc.jobLifecycle = NewJobLifecycleService(store, store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, jobID string) ([]ArtifactRecord, error) {
 		return svc.artifactLifecycle.ListJobArtifacts(ctx, jobID)
 	})
 	svc.workerLifecycle = NewWorkerLifecycleService(store, func() time.Time { return svc.now() })
-	svc.simulationInputs = NewSimulationInputService(store, store, store, store, validator, func() time.Time { return svc.now() })
+	svc.simulationInputs = NewSimulationInputService(store, store, store, validator, func() time.Time { return svc.now() })
 	svc.draftWorkflows = NewDraftWorkflowService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, bytes []byte) (JobSnapshot, int, error) {
 		return svc.CreateSimulationCheck(ctx, bytes)
 	})
 	svc.resultExplanations = NewResultExplanationService(store, store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, jobID, evidenceRef string) (EvidenceReferenceResolution, error) {
 		return svc.ResolveEvidenceReference(ctx, jobID, evidenceRef)
 	})
-	svc.modelGovernance = NewModelGovernanceService(store, store, store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, inputRef map[string]any, sourceSystem, requestedBy, jobType string) (map[string]any, error) {
+	svc.modelGovernance = NewModelGovernanceService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, inputRef map[string]any, sourceSystem, requestedBy, jobType string) (map[string]any, error) {
 		return svc.simulationInputs.ResolveSimulationInput(ctx, inputRef, sourceSystem, requestedBy, jobType)
 	}, func(ctx context.Context, bytes []byte, idempotencyKey string) (JobSnapshot, int, error) {
 		return svc.CreateJob(ctx, bytes, idempotencyKey)
 	}, func(ctx context.Context, jobID, evidenceRef string) (EvidenceReferenceResolution, error) {
 		return svc.ResolveEvidenceReference(ctx, jobID, evidenceRef)
 	})
-	svc.evidenceGovernance = NewEvidenceGovernanceService(store, store, store, validator, func() time.Time { return svc.now() }, func(ctx context.Context) (ModelCatalogResponse, error) {
+	svc.evidenceGovernance = NewEvidenceGovernanceService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context) (ModelCatalogResponse, error) {
 		return svc.modelGovernance.ModelCatalog(ctx)
 	}, func(ctx context.Context, jobID string) ([]ArtifactRecord, error) {
 		return svc.artifactLifecycle.ListJobArtifacts(ctx, jobID)

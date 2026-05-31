@@ -1,6 +1,6 @@
 # AutoWaterSimu Next Compute API Architecture
 
-> Snapshot date: 2026-05-31.
+> Snapshot date: 2026-06-01.
 
 This document records the current Go Compute API boundary after the first Store/interface split and the current service-constructor narrowing slices. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, and the read-only audit script:
 
@@ -14,7 +14,7 @@ The script writes evidence to `tmp/architecture-evidence/compute-api-boundary.js
 
 The Compute API is still a single modular-monolith package under `apps/api/internal/compute`.
 
-The aggregate `Store` is expressed as embedded domain metadata interfaces. Job create/list/read/events, cancel, complete/fail, and timeout logic now lives behind `JobLifecycleService`; artifact upload / listing / metadata lookup / download / retention / archive logic now lives behind `ArtifactLifecycleService`; worker register / claim / heartbeat now lives behind `WorkerLifecycleService`; simulation input registration, process graph registration, and `simulation_request.input_ref` resolution now live behind `SimulationInputService`; draft confirmation / promotion workflows now live behind `DraftWorkflowService`; result explanation submit/review/publish now lives behind `ResultExplanationService`; model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing now live behind `ModelGovernanceService`; result read, evidence package export, production readiness, and evidence-ref resolution now live behind `EvidenceGovernanceService`; metrics snapshot reads now live behind `MetricsService`.
+The aggregate `Store` is expressed as embedded domain metadata interfaces. Job create/list/read/events, cancel, complete/fail, and timeout logic now lives behind `JobLifecycleService`; artifact upload / listing / metadata lookup / download / retention / archive logic now lives behind `ArtifactLifecycleService`; worker register / claim / heartbeat now lives behind `WorkerLifecycleService`; simulation input registration, process graph registration, and `simulation_request.input_ref` resolution now live behind `SimulationInputService`; draft confirmation / promotion workflows now live behind `DraftWorkflowService`; result explanation submit/review/publish now lives behind `ResultExplanationService`; model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing now live behind `ModelGovernanceService`; result read, evidence package export, production readiness, and evidence-ref resolution now live behind `EvidenceGovernanceService`; metrics snapshot reads now live behind `MetricsService`. Internal domain service constructors now expose 1-3 store-like parameters and the audit fails if they accept the aggregate `Store`.
 
 The wider `Service` still owns package-level construction and compatibility delegates, so this is not yet a full service-boundary or package split.
 
@@ -22,21 +22,21 @@ Selected files from the latest audit:
 
 | File | Lines | Note |
 |---|---:|---|
-| `service.go` | 922 | orchestration and compatibility delegates |
-| `model_governance.go` | 660 | model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing |
-| `evidence_governance.go` | 639 | result read, evidence package export, production readiness, and evidence-ref resolution |
-| `job_lifecycle.go` | 252 | job create/list/read/events, cancel, complete/fail, timeout sweep, and model-run persistence |
-| `simulation_inputs.go` | 320 | simulation input registry, process graph registry, and input-ref resolution |
+| `service.go` | 930 | orchestration and compatibility delegates |
+| `model_governance.go` | 666 | model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing |
+| `evidence_governance.go` | 645 | result read, evidence package export, production readiness, and evidence-ref resolution |
+| `job_lifecycle.go` | 269 | job create/list/read/events, cancel, complete/fail, timeout sweep, and model-run persistence |
+| `simulation_inputs.go` | 325 | simulation input registry, process graph registry, and input-ref resolution |
 | `draft_workflows.go` | 254 | draft confirmation validation, advisory constraint plans, and explicit simulation-check promotion |
-| `artifact_lifecycle.go` | 288 | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow |
+| `artifact_lifecycle.go` | 367 | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow |
 | `result_explanations.go` | 175 | result explanation submit/review/publish and job-scoped evidence ref validation |
 | `worker_lifecycle.go` | 84 | worker register, claim, and heartbeat flow |
 | `metrics.go` | 25 | read-only metrics snapshot service |
 | `contract_validation.go` | 45 | reusable contract validation response helper |
-| `postgres.go` | 1468 | PostgreSQL store implementation and migrations smoke helpers |
-| `http.go` | 1132 | route handlers and HTTP mapping |
-| `store.go` | 1154 | aggregate Store, domain metadata interfaces, and MemoryStore implementation |
-| `service_test.go` | 2874 | broad lifecycle and governance tests |
+| `postgres.go` | 1477 | PostgreSQL store implementation and migrations smoke helpers |
+| `http.go` | 1166 | route handlers and HTTP mapping |
+| `store.go` | 1166 | aggregate Store, domain metadata interfaces, and MemoryStore implementation |
+| `service_test.go` | 3134 | broad lifecycle and governance tests |
 
 These numbers are audit signals, not hard failure thresholds.
 
@@ -65,15 +65,35 @@ The audit groups the resolved methods into these domains. `Service Calls` counts
 
 Both `MemoryStore` and `PostgresStore` currently implement all audited Store methods.
 
+## Constructor Boundary
+
+The audit records internal domain service constructor store-like parameters and enforces two guardrails:
+
+- internal domain service constructors must not accept aggregate `Store`
+- internal domain service constructors must expose at most 3 store-like constructor parameters
+
+Current constructor counts:
+
+| Constructor | Store-like Params | Notes |
+|---|---:|---|
+| `NewArtifactLifecycleService` | 2 | `ArtifactLifecycleStores` plus hot/archive object stores |
+| `NewSimulationInputService` | 3 | simulation input, process graph, and model-run replay store roles |
+| `NewDraftWorkflowService` | 1 | draft confirmation store |
+| `NewResultExplanationService` | 2 | result explanation and job store roles |
+| `NewModelGovernanceService` | 1 | `ModelGovernanceStores` |
+| `NewWorkerLifecycleService` | 1 | worker store |
+| `NewEvidenceGovernanceService` | 1 | `EvidenceGovernanceStores` |
+| `NewJobLifecycleService` | 2 | job and model-run stores |
+| `NewMetricsService` | 1 | metrics store |
+
+`NewService` and `NewServiceWithArchive` remain package-level compatibility wiring while `internal/compute` is still one package.
+
 ## Service Boundary Progress
 
 `ArtifactLifecycleService` is the first narrowed service-boundary slice and now covers the remaining artifact upload/listing paths. Its constructor depends on:
 
-- `JobStore`
-- `ArtifactMetadataStore`
-- `ArchiveMetadataStore`
-- hot artifact object storage
-- optional archive object storage
+- `ArtifactLifecycleStores` (`JobStore`, `ArtifactMetadataStore`, `ArchiveMetadataStore`)
+- `ArtifactObjectStores` (hot artifact object storage and optional archive object storage)
 - `ContractValidator`
 - a clock
 
@@ -83,8 +103,7 @@ The public `Service.UploadArtifact`, `Service.DownloadArtifact`, and `Service.Sw
 
 - `SimulationInputStore`
 - `ProcessGraphStore`
-- `ModelRunStore`
-- `JobStore`
+- `ModelRunReplayStore` (`ModelRunStore` + `JobStore`)
 - `ContractValidator`
 - a clock
 
@@ -111,9 +130,7 @@ The public `Service.SubmitResultExplanation`, `Service.GetResultExplanation`, `S
 
 `ModelGovernanceService` is the fifth narrowed slice. Its constructor depends on:
 
-- `ModelCatalogStore`
-- `BenchmarkRunStore`
-- `ModelRunStore`
+- `ModelGovernanceStores` (`ModelCatalogStore`, `BenchmarkRunStore`, `ModelRunStore`)
 - `ContractValidator`
 - a clock
 - a simulation input resolver callback
@@ -131,9 +148,7 @@ The public `Service.RegisterWorker`, `Service.Claim`, and `Service.Heartbeat` me
 
 `EvidenceGovernanceService` is the seventh narrowed slice. Its constructor depends on:
 
-- `JobStore`
-- `ModelRunStore`
-- `ProcessGraphStore`
+- `EvidenceGovernanceStores` (`JobStore`, `ModelRunStore`, `ProcessGraphStore`)
 - `ContractValidator`
 - a clock
 - a model catalog resolver callback
@@ -172,7 +187,7 @@ Recommended order for narrowing service boundaries and later file/package moveme
 7. `jobs`
 8. `metrics`
 
-This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `MetricsService`. Artifact upload/listing has also joined the artifact boundary. Remaining near-term work is Go package movement, handler/package surface reduction, and eventually public constructor signature narrowing.
+This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `MetricsService`. Artifact upload/listing has also joined the artifact boundary. Internal domain service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. Remaining near-term work is Go package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
 
 ## Split Rules
 

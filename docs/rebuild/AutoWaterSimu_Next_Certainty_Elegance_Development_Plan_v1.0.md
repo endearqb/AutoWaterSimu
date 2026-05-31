@@ -499,7 +499,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Evidence governance service constructor narrowed
 - [x] Job lifecycle service constructor narrowed
 - [x] Metrics service constructor narrowed
-- [ ] Service constructors narrowed to 1-3 necessary store interfaces
+- [x] Service constructors narrowed to 1-3 necessary store interfaces
 - [ ] Go API domain package split
 
 ---
@@ -522,6 +522,6 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 2. 触发或接入 `.github/workflows/next-integration-smoke.yml` 的真实 GitHub Actions run，并把 hosted green run 作为 integration evidence 记录。
 3. 在 integration smoke 之上补 frontend/browser reads job/result/evidence 的验证。
 4. 继续 production security：补 issuer/JWKS 或 service-token secret manager、全对象 data scope、all-mutation audit，并把 security smoke 扩展到这些场景。
-5. 基于已完成的 artifact lifecycle（含 upload/listing）、simulation input/process graph、draft workflow、result explanation、model governance、worker lifecycle、evidence governance、job lifecycle 与 metrics 构造函数收窄，准备下一步 Go API package movement、handler/package surface reduction 和后续公共构造签名收窄。
+5. 基于已完成的 artifact lifecycle（含 upload/listing）、simulation input/process graph、draft workflow、result explanation、model governance、worker lifecycle、evidence governance、job lifecycle、metrics 构造函数收窄与 constructor boundary audit，准备下一步 Go API package movement、handler/package surface reduction 和后续公共 `Service` 构造签名收窄。
 
 这些步骤风险仍低于直接拆分 Go API 巨型 package，且能继续提高后续结构性重构的确定性。

@@ -208,6 +208,98 @@ function Get-ServiceStoreCalls {
     }
 }
 
+function Split-TopLevelParameters {
+    param([string]$ParameterText)
+    $items = [System.Collections.Generic.List[string]]::new()
+    $current = [System.Text.StringBuilder]::new()
+    $depth = 0
+    foreach ($ch in $ParameterText.ToCharArray()) {
+        if ($ch -eq "," -and $depth -eq 0) {
+            $value = $current.ToString().Trim()
+            if (-not [string]::IsNullOrWhiteSpace($value)) {
+                $items.Add($value) | Out-Null
+            }
+            $current.Clear() | Out-Null
+            continue
+        }
+        if ($ch -in @("(", "[", "{")) {
+            $depth += 1
+        } elseif ($ch -in @(")", "]", "}")) {
+            if ($depth -gt 0) {
+                $depth -= 1
+            }
+        }
+        $current.Append($ch) | Out-Null
+    }
+    $last = $current.ToString().Trim()
+    if (-not [string]::IsNullOrWhiteSpace($last)) {
+        $items.Add($last) | Out-Null
+    }
+    return @($items)
+}
+
+function Get-ConstructorParamType {
+    param([string]$Parameter)
+    $trimmed = ($Parameter -replace '\s+', ' ').Trim()
+    if ([string]::IsNullOrWhiteSpace($trimmed)) {
+        return ""
+    }
+    if ($trimmed -match '^[A-Za-z_][A-Za-z0-9_]*\s+(.+)$') {
+        return $Matches[1].Trim()
+    }
+    return $trimmed
+}
+
+function Test-StoreLikeParamType {
+    param([string]$TypeName)
+    $normalized = $TypeName.Trim()
+    return $normalized -match '^(\*|\[\])?[A-Za-z][A-Za-z0-9_]*(Store|Stores)$'
+}
+
+function Get-ServiceConstructorBoundaries {
+    param([string[]]$ServicePaths)
+    $constructors = [System.Collections.Generic.List[object]]::new()
+    foreach ($path in $ServicePaths) {
+        $text = Get-Content -LiteralPath $path -Raw
+        $fileName = Split-Path -Leaf $path
+        foreach ($match in [regex]::Matches($text, 'func\s+(New[A-Za-z0-9_]*Service)\s*\((.*?)\)\s*\*?[A-Za-z][A-Za-z0-9_]*', [System.Text.RegularExpressions.RegexOptions]::Singleline)) {
+            $name = $match.Groups[1].Value
+            $params = @(Split-TopLevelParameters -ParameterText $match.Groups[2].Value)
+            $storeParams = [System.Collections.Generic.List[object]]::new()
+            $aggregateStoreParams = [System.Collections.Generic.List[object]]::new()
+            foreach ($param in $params) {
+                $typeName = Get-ConstructorParamType -Parameter $param
+                if ([string]::IsNullOrWhiteSpace($typeName)) {
+                    continue
+                }
+                if (-not (Test-StoreLikeParamType -TypeName $typeName)) {
+                    continue
+                }
+                $storeParam = [ordered]@{
+                    parameter = $param
+                    type = $typeName
+                }
+                $storeParams.Add($storeParam) | Out-Null
+                if ($typeName -eq "Store") {
+                    $aggregateStoreParams.Add($storeParam) | Out-Null
+                }
+            }
+            $isPublicCompatibilityConstructor = $name -eq "NewService"
+            $constructors.Add([ordered]@{
+                name = $name
+                file = $fileName
+                is_public_compatibility_constructor = $isPublicCompatibilityConstructor
+                store_like_parameter_count = $storeParams.Count
+                store_like_parameters = @($storeParams)
+                aggregate_store_parameters = @($aggregateStoreParams)
+                exceeds_internal_store_parameter_limit = (-not $isPublicCompatibilityConstructor -and $storeParams.Count -gt 3)
+                accepts_aggregate_store = (-not $isPublicCompatibilityConstructor -and $aggregateStoreParams.Count -gt 0)
+            }) | Out-Null
+        }
+    }
+    return @($constructors)
+}
+
 function ConvertTo-Domain {
     param([string]$Method)
     switch -Regex ($Method) {
@@ -286,6 +378,12 @@ $postgresMethods = Get-ImplementedMethods -Path $postgresPath -ReceiverType "Pos
 $serviceStoreCalls = Get-ServiceStoreCalls -ServicePaths @($serviceLayerFiles | ForEach-Object { $_.FullName }) -StoreMethods $storeMethods
 $serviceCalls = $serviceStoreCalls["calls"]
 $serviceCallSources = $serviceStoreCalls["sources"]
+$serviceConstructorBoundaries = @(Get-ServiceConstructorBoundaries -ServicePaths @($serviceLayerFiles | ForEach-Object { $_.FullName }))
+$serviceConstructorViolations = @(
+    $serviceConstructorBoundaries | Where-Object {
+        $_["accepts_aggregate_store"] -or $_["exceeds_internal_store_parameter_limit"]
+    }
+)
 
 $domains = @{}
 foreach ($method in $storeMethods) {
@@ -336,6 +434,11 @@ $report = [ordered]@{
         missing_postgres_store_methods = $missingPostgres
         unclassified_methods = $unclassified
     }
+    service_constructor_boundaries = [ordered]@{
+        max_internal_store_like_parameters = 3
+        constructors = $serviceConstructorBoundaries
+        violations = $serviceConstructorViolations
+    }
     file_stats = $fileStats
     large_files = $largeFiles
     recommended_split_order = @(
@@ -351,6 +454,7 @@ $report = [ordered]@{
     notes = @(
         "This is a read-only architecture audit; it verifies that the aggregate Store embeds the expected domain interfaces.",
         "Public Service constructors can still accept the aggregate Store while narrowed internal services receive domain-specific interfaces.",
+        "Internal domain service constructors must not accept aggregate Store and should expose at most 3 store-like constructor parameters.",
         "Large file thresholds are advisory: non-test files >800 lines and test files >1500 lines."
     )
 }
@@ -362,7 +466,8 @@ Write-Host "Compute API boundary audit: $evidencePath"
 Write-Host "Store interface methods: $($storeMethods.Count)"
 Write-Host "Store embedded interfaces: $($storeEmbeddedInterfaces.Count)"
 Write-Host "Domain groups: $($domainSummaries.Count)"
-if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassified.Count -gt 0 -or $missingExpectedStoreEmbeds.Count -gt 0) {
+Write-Host "Service constructors audited: $($serviceConstructorBoundaries.Count)"
+if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassified.Count -gt 0 -or $missingExpectedStoreEmbeds.Count -gt 0 -or $serviceConstructorViolations.Count -gt 0) {
     if ($missingMemory.Count -gt 0) {
         Write-Host "Missing MemoryStore methods: $($missingMemory -join ', ')"
     }
@@ -374,6 +479,10 @@ if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassifie
     }
     if ($missingExpectedStoreEmbeds.Count -gt 0) {
         Write-Host "Missing expected Store embedded interfaces: $($missingExpectedStoreEmbeds -join ', ')"
+    }
+    if ($serviceConstructorViolations.Count -gt 0) {
+        $violationNames = @($serviceConstructorViolations | ForEach-Object { $_["name"] })
+        Write-Host "Service constructor boundary violations: $($violationNames -join ', ')"
     }
     exit 1
 }
