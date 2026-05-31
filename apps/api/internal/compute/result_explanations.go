@@ -1,10 +1,10 @@
 package compute
 
 import (
+	domainevidence "autowatersimu/apps/api/internal/domain/evidence"
 	"context"
 	"encoding/json"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 )
@@ -139,37 +139,14 @@ func (svc *ResultExplanationService) resultExplanationRecord(document map[string
 }
 
 func (svc *ResultExplanationService) resolveResultExplanationRefs(ctx context.Context, jobID string, document map[string]any) ([]string, error) {
-	seen := map[string]bool{}
-	add := func(ref string) {
-		ref = strings.TrimSpace(ref)
-		if ref != "" {
-			seen[ref] = true
-		}
-	}
-	for _, ref := range stringsFromAny(document["evidence_refs"]) {
-		add(ref)
-	}
-	if statements, ok := document["statements"].([]any); ok {
-		for _, raw := range statements {
-			statement, ok := raw.(map[string]any)
-			if !ok {
-				continue
-			}
-			for _, ref := range stringsFromAny(statement["evidence_refs"]) {
-				add(ref)
-			}
-		}
-	}
-	refs := make([]string, 0, len(seen))
-	for ref := range seen {
+	refs := domainevidence.ResultExplanationEvidenceRefs(document)
+	for _, ref := range refs {
 		if svc.resolveEvidenceReference == nil {
 			return nil, NewAppError(500, CodeInternal, "evidence reference resolver is not configured", true, nil)
 		}
 		if _, err := svc.resolveEvidenceReference(ctx, jobID, ref); err != nil {
 			return nil, ValidationError("result_explanation evidence_ref is not resolvable within job: " + ref)
 		}
-		refs = append(refs, ref)
 	}
-	sort.Strings(refs)
 	return refs, nil
 }

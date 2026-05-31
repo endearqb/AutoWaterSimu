@@ -10,6 +10,7 @@
 - 解析 job-scoped evidence ref 语法。
 - 从 job input 中定位内嵌 `simulation_input.v1` payload。
 - 从 result summary 中提取 `risk_findings`、risk evidence refs 和 production-readiness risk summary。
+- 从 `result_explanation.v1` 中提取顶层和 statement-level evidence refs。
 - 评估 production-readiness 的稳定策略：job succeeded、evidence package available、governance production_allowed 和 risk severity checks。
 
 本目录不负责：
@@ -29,7 +30,7 @@
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 JSON 解析、引用语法、risk summary 和 production-readiness policy 规则；store-backed evidence governance workflow 暂留 compute compatibility package。
+2. 只放稳定 JSON 解析、引用语法、result explanation evidence ref 提取、risk summary 和 production-readiness policy 规则；store-backed evidence governance workflow 暂留 compute compatibility package。
 3. 新增 evidence ref 类型或 risk severity 规则时需同步检查 evidence package、production-readiness、result explanation、model governance 和相关 contracts fixtures。
 
 ## 4. 对外接口
@@ -41,6 +42,7 @@
 - `SimulationInputPayload`
 - `RiskFindingsFromSummary`
 - `RiskFindingEvidenceRefs`
+- `ResultExplanationEvidenceRefs`
 - `SummarizeRiskFindings`
 - `EvaluateProductionReadiness`
 

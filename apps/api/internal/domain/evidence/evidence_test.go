@@ -107,6 +107,29 @@ func TestRiskFindingsAndSummary(t *testing.T) {
 	}
 }
 
+func TestResultExplanationEvidenceRefs(t *testing.T) {
+	document := map[string]any{
+		"evidence_refs": []any{
+			" evidence_package:evidence_job_1 ",
+			"model_run:m1",
+			42,
+			"",
+		},
+		"statements": []any{
+			map[string]any{
+				"evidence_refs": []any{"artifact:a1", "model_run:m1"},
+			},
+			map[string]any{
+				"evidence_refs": "artifact:not_an_array",
+			},
+			42,
+		},
+	}
+	if got, want := ResultExplanationEvidenceRefs(document), []string{"artifact:a1", "evidence_package:evidence_job_1", "model_run:m1"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("result explanation evidence refs mismatch: got %#v want %#v", got, want)
+	}
+}
+
 func TestEvaluateProductionReadinessReady(t *testing.T) {
 	evaluation := EvaluateProductionReadiness(ReadinessInput{
 		JobID:                       "job_1",

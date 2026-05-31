@@ -1,3 +1,35 @@
+# 2026-06-01 AutoWaterSimu Next evidence result explanation refs split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/evidence/compute READMEs, and result explanation call sites
+- [x] Confirm next aligned gap: result explanation evidence ref extraction still lived in compute workflow code
+- [x] Add `ResultExplanationEvidenceRefs` to `apps/api/internal/domain/evidence` with direct tests
+- [x] Route `ResultExplanationService` evidence-ref validation through the domain helper while preserving job-scoped resolver behavior
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only stable top-level and statement-level `result_explanation.v1.evidence_refs` extraction and deduplication.
+- Keep schema validation, job/result availability checks, job-scoped evidence resolution, persistence, review/publish workflow, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as another small `domain/evidence` package movement step, not the full result explanation or evidence governance package split.
+
+## Review
+
+- Added `ResultExplanationEvidenceRefs` to `apps/api/internal/domain/evidence` to collect top-level and statement-level `result_explanation.v1.evidence_refs` with trimming, deduplication, and stable sorting.
+- Updated `ResultExplanationService` to call the domain helper before invoking the existing job-scoped evidence resolver callback.
+- Kept schema validation, job result availability checks, persistence, review/publish, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Updated API/domain/evidence/compute READMEs, architecture/current-state, Certainty/Elegance checklist, audit note, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/evidence ./internal/compute -run "Test(ResultExplanationEvidenceRefs|ResultExplanation|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full evidence governance and result explanation domain package movement are not complete; resolver orchestration, store-backed workflow, persistence, DTO mapping, and HTTP mapping remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full model governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next evidence domain readiness policy split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/evidence/compute READMEs, and production-readiness call sites

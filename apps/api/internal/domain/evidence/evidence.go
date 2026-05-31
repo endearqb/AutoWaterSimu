@@ -131,6 +131,21 @@ func RiskFindingEvidenceRefs(raw json.RawMessage) []string {
 	return uniqueStrings(refs)
 }
 
+func ResultExplanationEvidenceRefs(document map[string]any) []string {
+	refs := []string{}
+	refs = append(refs, stringsFromAny(document["evidence_refs"])...)
+	if statements, ok := document["statements"].([]any); ok {
+		for _, rawStatement := range statements {
+			statement, ok := rawStatement.(map[string]any)
+			if !ok {
+				continue
+			}
+			refs = append(refs, stringsFromAny(statement["evidence_refs"])...)
+		}
+	}
+	return uniqueStrings(refs)
+}
+
 func SummarizeRiskFindings(findings []map[string]any) RiskSummary {
 	bySeverity := map[string]int{
 		"info":     0,

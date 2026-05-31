@@ -8,7 +8,7 @@
 
 - jobs、workers、artifacts、models、evidence、simulation、agent 等业务领域边界。
 - 已稳定的 artifact retention policy 解析和候选判断规则。
-- 已稳定的 evidence input/ref/risk parsing 与 production-readiness policy 规则。
+- 已稳定的 evidence input/ref/risk parsing、result explanation evidence ref 提取与 production-readiness policy 规则。
 - 已稳定的 compute job status 与 worker claim matching 不变量。
 - 已稳定的 `model_run.v1` 字段、evidence refs 和 warnings 解析规则。
 - 已稳定的 simulation job type execution profile / required capability 映射规则，以及 material-balance ProcessGraph-to-SimulationInput projection 规则。
@@ -26,7 +26,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `artifacts/` | artifact retention policy parsing and candidate helpers |
-| `evidence/` | evidence input/ref/risk parsing and readiness policy helpers |
+| `evidence/` | evidence input/ref/risk parsing, result explanation ref extraction, and readiness policy helpers |
 | `jobs/` | compute job status constants, worker claim matching, and invariant helpers |
 | `models/` | model_run raw JSON field/ref/warning helpers |
 | `simulation/` | simulation job type execution profile, required capability, and material-balance process graph projection helpers |
