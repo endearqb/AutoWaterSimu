@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next evidence domain readiness policy split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/evidence/compute READMEs, and production-readiness call sites
+- [x] Confirm next aligned gap: production-readiness policy evaluation still lives in compute evidence governance helper
+- [x] Add readiness evaluator to `apps/api/internal/domain/evidence` with direct tests
+- [x] Route `EvidenceGovernanceService.ProductionReadiness` through the domain evaluator while preserving response DTO shape
+- [x] Update audit/docs/checklists/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, diff-check validation
+
+## Plan
+
+- Move only stable production-readiness policy evaluation: job succeeded, evidence package available, governance `production_allowed`, high/critical risk blocking, and medium risk warning.
+- Keep evidence package generation, store-backed model catalog/artifact/model-run/process-graph callbacks, schema validation, `ProductionReadinessReport` DTO mapping, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as a second `domain/evidence` package movement step, not the full evidence governance package split.
+
+## Review
+
+- Added `ReadinessInput`, `ReadinessEvaluation`, `ReadinessCheck`, and `EvaluateProductionReadiness` to `apps/api/internal/domain/evidence`.
+- Added direct tests for ready, blocked, and medium-risk warning-only readiness evaluations.
+- Updated `EvidenceGovernanceService.ProductionReadiness` to delegate policy evaluation to `domain/evidence` and map checks/risk summary back to the existing compute DTOs.
+- Removed compute-local readiness policy branching from `evidence_governance.go`; evidence package generation, store-backed callbacks, schema validation, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries stayed unchanged.
+- Updated API/internal/domain/evidence/compute READMEs, `docs/architecture/compute-api.md`, current-state, Certainty/Elegance checklist, audit note, and change records.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/evidence ./internal/compute -run "Test(EvaluateProductionReadiness|ProductionReadiness|EvidencePackage|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full evidence governance package movement is not complete; evidence package response assembly, production-readiness DTO assembly, store-backed artifact/model-run/process-graph callbacks, model catalog resolver, and HTTP mapping remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full model governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next evidence domain parsing split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and evidence governance call sites

@@ -164,99 +164,28 @@ func (svc *EvidenceGovernanceService) ProductionReadiness(ctx context.Context, j
 	}
 	evidencePackageID := stringValue(evidence, "evidence_package_id")
 	evidenceRef := "evidence_package:" + evidencePackageID
-	checks := []ProductionReadinessCheck{}
-	blockingReasons := []string{}
-	warnings := []string{}
-
-	if snapshot.Job.Status == StatusSucceeded {
-		checks = append(checks, productionReadinessCheck(
-			"job_succeeded",
-			"passed",
-			"Job completed successfully.",
-			"job:"+snapshot.Job.JobID,
-		))
-	} else {
-		checks = append(checks, productionReadinessCheck(
-			"job_succeeded",
-			"failed",
-			"Job is not in succeeded status.",
-			"job:"+snapshot.Job.JobID,
-		))
-		blockingReasons = append(blockingReasons, "job_not_succeeded")
-	}
-
-	checks = append(checks, productionReadinessCheck(
-		"evidence_package_available",
-		"passed",
-		"Evidence package is available for external review.",
-		evidenceRef,
-	))
-
 	governance := mapValue(evidence, "governance")
-	if governance != nil && boolValue(governance, "production_allowed") {
-		checks = append(checks, productionReadinessCheck(
-			"governance_production_allowed",
-			"passed",
-			"Evidence governance allows this model/parameter evidence for production review.",
-			evidenceRef,
-		))
-	} else {
-		checks = append(checks, productionReadinessCheck(
-			"governance_production_allowed",
-			"failed",
-			"Evidence governance does not allow this model/parameter evidence for production review.",
-			evidenceRef,
-		))
-		blockingReasons = append(blockingReasons, "governance_not_production_allowed")
-	}
-
-	riskSummary := productionReadinessRiskSummary(domainevidence.RiskFindingsFromSummary(snapshot.Job.Summary))
-	riskEvidenceRefs := domainevidence.RiskFindingEvidenceRefs(snapshot.Job.Summary)
-	if len(riskSummary.Blocking) > 0 {
-		checks = append(checks, ProductionReadinessCheck{
-			CheckID:      "risk_findings_no_high_or_critical",
-			Status:       "failed",
-			Message:      "High or critical risk findings must be resolved before external approval review.",
-			EvidenceRefs: riskEvidenceRefs,
-		})
-		blockingReasons = append(blockingReasons, "risk_findings_blocking_severity")
-	} else if riskSummary.BySeverity["medium"] > 0 {
-		checks = append(checks, ProductionReadinessCheck{
-			CheckID:      "risk_findings_no_high_or_critical",
-			Status:       "warning",
-			Message:      "Medium risk findings require external reviewer attention.",
-			EvidenceRefs: riskEvidenceRefs,
-		})
-		warnings = append(warnings, "medium_risk_findings_present")
-	} else {
-		checks = append(checks, ProductionReadinessCheck{
-			CheckID:      "risk_findings_no_high_or_critical",
-			Status:       "passed",
-			Message:      "No high or critical risk findings were reported.",
-			EvidenceRefs: riskEvidenceRefs,
-		})
-	}
-
-	blockingReasons = uniqueStrings(blockingReasons)
-	warnings = uniqueStrings(warnings)
-	productionReady := len(blockingReasons) == 0
-	readinessStatus := "blocked"
-	if productionReady {
-		readinessStatus = "ready_for_external_approval"
-	}
+	evaluation := domainevidence.EvaluateProductionReadiness(domainevidence.ReadinessInput{
+		JobID:                       snapshot.Job.JobID,
+		JobSucceeded:                snapshot.Job.Status == StatusSucceeded,
+		EvidenceRef:                 evidenceRef,
+		GovernanceProductionAllowed: governance != nil && boolValue(governance, "production_allowed"),
+		RiskFindings:                domainevidence.RiskFindingsFromSummary(snapshot.Job.Summary),
+		RiskEvidenceRefs:            domainevidence.RiskFindingEvidenceRefs(snapshot.Job.Summary),
+	})
 	report := ProductionReadinessReport{
 		SchemaVersion:            "production_readiness.v1",
 		JobID:                    snapshot.Job.JobID,
 		EvidencePackageID:        evidencePackageID,
 		PolicyVersion:            "production_readiness_policy.v1",
-		ReadinessStatus:          readinessStatus,
-		ProductionReady:          productionReady,
+		ReadinessStatus:          evaluation.ReadinessStatus,
+		ProductionReady:          evaluation.ProductionReady,
 		ExternalApprovalRequired: true,
 		AutoPublishAllowed:       false,
-		BlockingReasons:          blockingReasons,
-		Warnings:                 warnings,
-		Checks:                   checks,
-		RiskFindingsSummary:      riskSummary,
+		BlockingReasons:          evaluation.BlockingReasons,
+		Warnings:                 evaluation.Warnings,
+		Checks:                   productionReadinessChecks(evaluation.Checks),
+		RiskFindingsSummary:      productionReadinessRiskSummary(evaluation.RiskSummary),
 		GeneratedAt:              svc.now().Format(time.RFC3339Nano),
 		Metadata: map[string]any{
 			"source_system": snapshot.Job.SourceSystem,
@@ -485,15 +414,6 @@ func evidenceTimeline(events []EventRecord) []map[string]any {
 	return timeline
 }
 
-func productionReadinessCheck(checkID, status, message string, evidenceRefs ...string) ProductionReadinessCheck {
-	return ProductionReadinessCheck{
-		CheckID:      checkID,
-		Status:       status,
-		Message:      message,
-		EvidenceRefs: uniqueStrings(evidenceRefs),
-	}
-}
-
 func productionReadinessReportMap(report ProductionReadinessReport) (map[string]any, error) {
 	bytes, err := json.Marshal(report)
 	if err != nil {
@@ -506,8 +426,20 @@ func productionReadinessReportMap(report ProductionReadinessReport) (map[string]
 	return payload, nil
 }
 
-func productionReadinessRiskSummary(findings []map[string]any) ProductionReadinessRiskSummary {
-	summary := domainevidence.SummarizeRiskFindings(findings)
+func productionReadinessChecks(checks []domainevidence.ReadinessCheck) []ProductionReadinessCheck {
+	result := make([]ProductionReadinessCheck, 0, len(checks))
+	for _, check := range checks {
+		result = append(result, ProductionReadinessCheck{
+			CheckID:      check.CheckID,
+			Status:       check.Status,
+			Message:      check.Message,
+			EvidenceRefs: check.EvidenceRefs,
+		})
+	}
+	return result
+}
+
+func productionReadinessRiskSummary(summary domainevidence.RiskSummary) ProductionReadinessRiskSummary {
 	return ProductionReadinessRiskSummary{
 		Total:      summary.Total,
 		BySeverity: summary.BySeverity,

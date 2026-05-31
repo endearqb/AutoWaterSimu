@@ -107,6 +107,85 @@ func TestRiskFindingsAndSummary(t *testing.T) {
 	}
 }
 
+func TestEvaluateProductionReadinessReady(t *testing.T) {
+	evaluation := EvaluateProductionReadiness(ReadinessInput{
+		JobID:                       "job_1",
+		JobSucceeded:                true,
+		EvidenceRef:                 "evidence_package:evidence_job_1",
+		GovernanceProductionAllowed: true,
+		RiskFindings:                nil,
+	})
+	if !evaluation.ProductionReady || evaluation.ReadinessStatus != "ready_for_external_approval" {
+		t.Fatalf("expected ready evaluation, got %#v", evaluation)
+	}
+	if len(evaluation.BlockingReasons) != 0 || len(evaluation.Warnings) != 0 {
+		t.Fatalf("expected no blocking reasons or warnings, got %#v", evaluation)
+	}
+	if got, want := readinessStatuses(evaluation.Checks), []string{"job_succeeded:passed", "evidence_package_available:passed", "governance_production_allowed:passed", "risk_findings_no_high_or_critical:passed"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("checks mismatch: got %#v want %#v", got, want)
+	}
+}
+
+func TestEvaluateProductionReadinessBlocksFailures(t *testing.T) {
+	evaluation := EvaluateProductionReadiness(ReadinessInput{
+		JobID:                       "job_1",
+		JobSucceeded:                false,
+		EvidenceRef:                 "evidence_package:evidence_job_1",
+		GovernanceProductionAllowed: false,
+		RiskFindings: []map[string]any{
+			{"risk_code": "critical_1", "severity": "critical"},
+			{"risk_code": "high_1", "severity": "high"},
+		},
+		RiskEvidenceRefs: []string{"model_run:m1", "artifact:a1"},
+	})
+	if evaluation.ProductionReady || evaluation.ReadinessStatus != "blocked" {
+		t.Fatalf("expected blocked evaluation, got %#v", evaluation)
+	}
+	if got, want := evaluation.BlockingReasons, []string{"governance_not_production_allowed", "job_not_succeeded", "risk_findings_blocking_severity"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", got, want)
+	}
+	if got, want := evaluation.RiskSummary.Blocking, []string{"critical_1", "high_1"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("risk blocking mismatch: got %#v want %#v", got, want)
+	}
+	last := evaluation.Checks[len(evaluation.Checks)-1]
+	if last.CheckID != "risk_findings_no_high_or_critical" || last.Status != "failed" {
+		t.Fatalf("expected failed risk check, got %#v", last)
+	}
+	if got, want := last.EvidenceRefs, []string{"artifact:a1", "model_run:m1"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("risk evidence refs mismatch: got %#v want %#v", got, want)
+	}
+}
+
+func TestEvaluateProductionReadinessMediumRiskWarns(t *testing.T) {
+	evaluation := EvaluateProductionReadiness(ReadinessInput{
+		JobID:                       "job_1",
+		JobSucceeded:                true,
+		EvidenceRef:                 "evidence_package:evidence_job_1",
+		GovernanceProductionAllowed: true,
+		RiskFindings: []map[string]any{
+			{"risk_code": "medium_1", "severity": "medium"},
+		},
+	})
+	if !evaluation.ProductionReady || evaluation.ReadinessStatus != "ready_for_external_approval" {
+		t.Fatalf("expected warning-only ready evaluation, got %#v", evaluation)
+	}
+	if got, want := evaluation.Warnings, []string{"medium_risk_findings_present"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("warnings mismatch: got %#v want %#v", got, want)
+	}
+	last := evaluation.Checks[len(evaluation.Checks)-1]
+	if last.CheckID != "risk_findings_no_high_or_critical" || last.Status != "warning" {
+		t.Fatalf("expected warning risk check, got %#v", last)
+	}
+}
+
+func readinessStatuses(checks []ReadinessCheck) []string {
+	result := make([]string, 0, len(checks))
+	for _, check := range checks {
+		result = append(result, check.CheckID+":"+check.Status)
+	}
+	return result
+}
+
 func expectedSHA256Hex(bytes []byte) string {
 	sum := sha256.Sum256(bytes)
 	return hex.EncodeToString(sum[:])

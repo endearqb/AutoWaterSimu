@@ -21,6 +21,31 @@ type RiskSummary struct {
 	Blocking   []string
 }
 
+type ReadinessInput struct {
+	JobID                       string
+	JobSucceeded                bool
+	EvidenceRef                 string
+	GovernanceProductionAllowed bool
+	RiskFindings                []map[string]any
+	RiskEvidenceRefs            []string
+}
+
+type ReadinessEvaluation struct {
+	ReadinessStatus string
+	ProductionReady bool
+	BlockingReasons []string
+	Warnings        []string
+	Checks          []ReadinessCheck
+	RiskSummary     RiskSummary
+}
+
+type ReadinessCheck struct {
+	CheckID      string
+	Status       string
+	Message      string
+	EvidenceRefs []string
+}
+
 func InputRefs(input json.RawMessage) InputReferenceSummary {
 	summary := InputReferenceSummary{
 		InputRef:           map[string]any{},
@@ -131,6 +156,104 @@ func SummarizeRiskFindings(findings []map[string]any) RiskSummary {
 		Total:      len(findings),
 		BySeverity: bySeverity,
 		Blocking:   uniqueStrings(blocking),
+	}
+}
+
+func EvaluateProductionReadiness(input ReadinessInput) ReadinessEvaluation {
+	checks := []ReadinessCheck{}
+	blockingReasons := []string{}
+	warnings := []string{}
+
+	if input.JobSucceeded {
+		checks = append(checks, readinessCheck(
+			"job_succeeded",
+			"passed",
+			"Job completed successfully.",
+			"job:"+input.JobID,
+		))
+	} else {
+		checks = append(checks, readinessCheck(
+			"job_succeeded",
+			"failed",
+			"Job is not in succeeded status.",
+			"job:"+input.JobID,
+		))
+		blockingReasons = append(blockingReasons, "job_not_succeeded")
+	}
+
+	checks = append(checks, readinessCheck(
+		"evidence_package_available",
+		"passed",
+		"Evidence package is available for external review.",
+		input.EvidenceRef,
+	))
+
+	if input.GovernanceProductionAllowed {
+		checks = append(checks, readinessCheck(
+			"governance_production_allowed",
+			"passed",
+			"Evidence governance allows this model/parameter evidence for production review.",
+			input.EvidenceRef,
+		))
+	} else {
+		checks = append(checks, readinessCheck(
+			"governance_production_allowed",
+			"failed",
+			"Evidence governance does not allow this model/parameter evidence for production review.",
+			input.EvidenceRef,
+		))
+		blockingReasons = append(blockingReasons, "governance_not_production_allowed")
+	}
+
+	riskSummary := SummarizeRiskFindings(input.RiskFindings)
+	if len(riskSummary.Blocking) > 0 {
+		checks = append(checks, ReadinessCheck{
+			CheckID:      "risk_findings_no_high_or_critical",
+			Status:       "failed",
+			Message:      "High or critical risk findings must be resolved before external approval review.",
+			EvidenceRefs: uniqueStrings(input.RiskEvidenceRefs),
+		})
+		blockingReasons = append(blockingReasons, "risk_findings_blocking_severity")
+	} else if riskSummary.BySeverity["medium"] > 0 {
+		checks = append(checks, ReadinessCheck{
+			CheckID:      "risk_findings_no_high_or_critical",
+			Status:       "warning",
+			Message:      "Medium risk findings require external reviewer attention.",
+			EvidenceRefs: uniqueStrings(input.RiskEvidenceRefs),
+		})
+		warnings = append(warnings, "medium_risk_findings_present")
+	} else {
+		checks = append(checks, ReadinessCheck{
+			CheckID:      "risk_findings_no_high_or_critical",
+			Status:       "passed",
+			Message:      "No high or critical risk findings were reported.",
+			EvidenceRefs: uniqueStrings(input.RiskEvidenceRefs),
+		})
+	}
+
+	blockingReasons = uniqueStrings(blockingReasons)
+	warnings = uniqueStrings(warnings)
+	productionReady := len(blockingReasons) == 0
+	readinessStatus := "blocked"
+	if productionReady {
+		readinessStatus = "ready_for_external_approval"
+	}
+	return ReadinessEvaluation{
+		ReadinessStatus: readinessStatus,
+		ProductionReady: productionReady,
+		BlockingReasons: blockingReasons,
+		Warnings:        warnings,
+		Checks:          checks,
+		RiskSummary:     riskSummary,
+	}
+}
+
+func readinessCheck(checkID, status, message string, evidenceRefs ...string) ReadinessCheck {
+	return ReadinessCheck{
+		CheckID:      checkID,
+		Status:       status,
+		Message:      message,
+		EvidenceRefs: uniqueStrings(evidenceRefs),
 	}
 }
 
