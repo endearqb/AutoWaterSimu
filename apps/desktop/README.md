@@ -45,7 +45,7 @@
 6. Desktop Vite dev server 使用 `127.0.0.1:1420`，避免和 legacy `frontend` 的 `5173` 冲突。
 7. Backup/restore P0 先限制在 runtime-local `backups/` sandbox，恢复前必须校验 manifest checksum。
 8. CanvasGraph save/load 先使用 SQLite `canvas_graphs` 表；ProcessGraph command 先做只读结构 validation，不隐式创建 compute job。
-9. Project export writes `desktop_project_export.v1` either inside runtime-local `exports/` or to a user-selected external project package file, with project metadata, project-scoped job snapshots, job events, CanvasGraphs, artifact refs/files and support bundle refs/files. Import restores project metadata, CanvasGraphs, and checksum-verified file-backed jobs/artifacts/model runs/support bundles; older metadata-only packages remain importable but keep missing job/artifact/support bundle rows metadata-only.
+9. Project export writes the contract-backed `desktop_project_package.v1` either inside runtime-local `exports/` or to a user-selected external project package file, with project metadata, project-scoped job snapshots, job events, CanvasGraphs, artifact refs/files and support bundle refs/files. Import restores project metadata, CanvasGraphs, and checksum-verified file-backed jobs/artifacts/model runs/support bundles; legacy `desktop_project_export.v1` and older metadata-only packages remain importable but keep missing job/artifact/support bundle rows metadata-only.
 10. 创建 compute job 或保存 CanvasGraph 时，React 可传入当前选中 `project_id`；Rust 必须验证项目存在后再写入 `compute_jobs.project_id` 或 `canvas_graphs.project_id`。
 11. Packaged sidecar / installer smoke 必须通过显式 artifact 路径运行；缺少 artifact 不能声明 release 通过。
 12. Desktop runtime 默认使用 source-mode Python worker；`AUTOWATERSIMU_DESKTOP_WORKER_EXE` 只在显式设置时启用 packaged worker exe。

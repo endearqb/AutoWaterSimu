@@ -14,6 +14,7 @@
 - ASM1 independent job type fixture，用于 ASM1 worker/core/backend parity。
 - ASM3 independent job type fixture，用于 ASM3 worker/core/backend parity。
 - UDM independent job type fixture，用于单 UDM model snapshot / binding worker/core/backend parity。
+- Desktop project package/support bundle fixtures，用于 Desktop 离线项目包与诊断包合同对齐。
 
 本目录不负责运行真实仿真。
 

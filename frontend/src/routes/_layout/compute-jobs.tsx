@@ -26,7 +26,7 @@ import {
   FiXCircle,
 } from "react-icons/fi"
 
-import { OpenAPI as ComputeOpenAPI } from "@/client/compute"
+import { ContractTransformError } from "@/contracts"
 import type {
   ArtifactRecord,
   ArtifactRetentionSweepReport,
@@ -37,8 +37,7 @@ import type {
   ModelCatalog,
   ModelRun,
   ProductionReadinessReport,
-} from "@/client/compute"
-import { ContractTransformError } from "@/contracts"
+} from "@/services/computeJobsService"
 import {
   type EvidenceDownloadResult,
   computeJobsService,
@@ -933,7 +932,7 @@ function JobDetail({
           >
             {productionReadinessLoading
               ? "Loading"
-              : productionReadiness?.readiness_status ?? "N/A"}
+              : (productionReadiness?.readiness_status ?? "N/A")}
           </Badge>
         </Flex>
 
@@ -1440,7 +1439,10 @@ function ComputeJobs() {
         <Box borderWidth="1px" borderRadius="md" p={4}>
           <Flex justify="space-between" align="center" gap={4} wrap="wrap">
             <HStack gap={3} wrap="wrap">
-              <Field label="Compute API" value={ComputeOpenAPI.BASE} />
+              <Field
+                label="Compute API"
+                value={computeJobsService.getBaseUrl()}
+              />
               <Field label="Health" value={healthStatus} />
               <Field
                 label="Ready"

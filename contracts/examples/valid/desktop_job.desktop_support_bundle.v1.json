@@ -1,0 +1,77 @@
+{
+  "schema_version": "desktop_support_bundle.v1",
+  "bundle_id": "support_job_desktop_smoke",
+  "job": {
+    "job_id": "job_desktop_smoke",
+    "project_id": "project_desktop_smoke",
+    "schema_version": "compute_job.v1",
+    "job_type": "simulation.material_balance.v1",
+    "status": "succeeded",
+    "cancel_requested": false,
+    "result_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "summary": {
+      "status": "ok"
+    },
+    "created_at": "2026-05-31T12:01:00Z",
+    "finished_at": "2026-05-31T12:01:10Z"
+  },
+  "events": [
+    {
+      "id": "event_job_created",
+      "event_type": "job.created",
+      "event": {
+        "status": "queued"
+      },
+      "created_at": "2026-05-31T12:01:00Z"
+    },
+    {
+      "id": "event_support_created",
+      "event_type": "support_bundle.created",
+      "event": {
+        "bundle_id": "support_job_desktop_smoke",
+        "object_key": "support_job_desktop_smoke.json"
+      },
+      "created_at": "2026-05-31T12:01:11Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact_desktop_smoke",
+      "job_id": "job_desktop_smoke",
+      "schema_version": "artifact.v1",
+      "artifact_type": "time_series",
+      "object_key": "job_desktop_smoke/time_series.json",
+      "content_type": "application/json",
+      "size_bytes": 2,
+      "checksum": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "created_at": "2026-05-31T12:01:10Z",
+      "metadata": {
+        "format": "json"
+      }
+    }
+  ],
+  "model_runs": [
+    {
+      "schema_version": "model_run.v1",
+      "model_run_id": "model_run_desktop_smoke",
+      "job_id": "job_desktop_smoke",
+      "model_key": "material_balance",
+      "model_version": "p0",
+      "parameter_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "input_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "quality_metrics": {
+        "mass_balance_error": 0
+      },
+      "warnings": [],
+      "evidence_refs": ["artifact:artifact_desktop_smoke"]
+    }
+  ],
+  "versions": {
+    "desktop_runtime": "0.1.0",
+    "migration_version": "0001_initial"
+  },
+  "redaction": {
+    "artifact_contents_included": false,
+    "stderr_tail_only": true
+  }
+}

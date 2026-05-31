@@ -1,0 +1,22 @@
+{
+  "schema_version": "desktop_support_bundle.v1",
+  "bundle_id": "support_job_desktop_smoke",
+  "job": {
+    "job_id": "job_desktop_smoke",
+    "schema_version": "compute_job.v1",
+    "job_type": "simulation.material_balance.v1",
+    "status": "succeeded",
+    "created_at": "2026-05-31T12:01:00Z"
+  },
+  "events": [],
+  "artifacts": [],
+  "model_runs": [],
+  "versions": {
+    "desktop_runtime": "0.1.0",
+    "migration_version": "0001_initial"
+  },
+  "redaction": {
+    "artifact_contents_included": true,
+    "stderr_tail_only": true
+  }
+}

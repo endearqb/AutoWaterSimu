@@ -1,0 +1,47 @@
+name: AutoWaterSimu Next Browser Smoke
+
+concurrency:
+  group: next-browser-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+'on':
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Chromium browser
+        run: npx playwright install chromium
+        working-directory: frontend
+
+      - name: Run browser smoke evidence
+        shell: powershell
+        run: .\scripts\ci\browser-smoke.ps1
+
+      - name: Upload browser smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-browser-smoke-evidence
+          path: tmp/ci-evidence
+          include-hidden-files: true

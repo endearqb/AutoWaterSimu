@@ -1,0 +1,352 @@
+{
+  "schema_version": "contracts_registry.v1",
+  "updated_on": "2026-05-31",
+  "description": "Registry for AutoWaterSimu Next JSON Schema contracts, examples, consumers, and compatibility policy.",
+  "current_drift_gates": [
+    "backend/.venv/Scripts/python -m pytest contracts/tests -q",
+    "frontend npm run generate-compute-client",
+    "git diff --exit-code -- apps/api/openapi/compute.openapi.json frontend/src/client/compute"
+  ],
+  "breaking_change_policies": {
+    "p0_additive_only_v1": "Within a v1 schema, consumers may rely on existing required fields, enum values, and semantics. Removing fields, adding required fields, narrowing enums, changing schema_version, or changing persisted/ref semantics requires a new schema version and coordinated Go API, Python worker, frontend generated client, Desktop, OpenAPI, examples, tests, README, and registry updates. Optional additive fields are allowed only when existing consumers can ignore them safely and examples/tests are updated."
+  },
+  "contracts": [
+    {
+      "schema_version": "agent_scenario_draft.v1",
+      "schema_file": "agent_scenario_draft.v1.json",
+      "consumers": [
+        "Go Compute API contract confirmation and promotion endpoints",
+        "frontend Compute Jobs contract validation panel",
+        "Agent or external draft producers"
+      ],
+      "valid_examples": [
+        "examples/valid/agent_material_balance.agent_scenario_draft.v1.json"
+      ],
+      "invalid_examples": [],
+      "compatibility_notes": "Drafts are advisory until explicitly confirmed and promoted; consumers must not treat a draft as an executable job.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "artifact.v1",
+      "schema_file": "artifact.v1.json",
+      "consumers": [
+        "Go Compute API artifact lifecycle",
+        "Python simulation worker result metadata",
+        "frontend Compute Jobs and lifecycle views",
+        "Desktop project package references"
+      ],
+      "valid_examples": [
+        "examples/valid/time_series.artifact.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/invalid_retention_policy.artifact.v1.json"
+      ],
+      "compatibility_notes": "Retention metadata is descriptive until the API storage layer proves deletion or archive safety; artifact bytes are not embedded in this contract.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "benchmark_run.v1",
+      "schema_file": "benchmark_run.v1.json",
+      "consumers": [
+        "Go Compute API model governance history",
+        "model catalog promotion plan",
+        "frontend model governance service"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.benchmark_run.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_benchmark_run_id.benchmark_run.v1.json"
+      ],
+      "compatibility_notes": "Benchmark runs are audit history for completed model runs; they do not execute benchmarks or promote parameters by themselves.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "canvas_graph.v1",
+      "schema_file": "canvas_graph.v1.json",
+      "consumers": [
+        "Desktop project export and import",
+        "ProcessGraph conversion tests",
+        "future frontend graph handoff"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance_3_node.canvas_graph.v1.json"
+      ],
+      "invalid_examples": [],
+      "compatibility_notes": "CanvasGraph is a UI graph exchange shape; runtime simulation semantics must be resolved through ProcessGraph or SimulationInput contracts.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "compute_job.v1",
+      "schema_file": "compute_job.v1.json",
+      "consumers": [
+        "Go Compute API job lifecycle",
+        "Python simulation worker API loop",
+        "Desktop sidecar job execution",
+        "frontend Compute Jobs view"
+      ],
+      "valid_examples": [
+        "examples/valid/asm1_independent.compute_job.v1.json",
+        "examples/valid/asm1slim_independent.compute_job.v1.json",
+        "examples/valid/asm1slim_minimal.compute_job.v1.json",
+        "examples/valid/asm3_independent.compute_job.v1.json",
+        "examples/valid/material_balance_minimal.compute_job.v1.json",
+        "examples/valid/udm_independent.compute_job.v1.json"
+      ],
+      "invalid_examples": [],
+      "compatibility_notes": "Job type values are executable routing keys; adding or changing one requires worker, API, OpenAPI, frontend client, and fixture alignment.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "compute_result.v1",
+      "schema_file": "compute_result.v1.json",
+      "consumers": [
+        "Python simulation worker completion payloads",
+        "Go Compute API result persistence",
+        "evidence package and production readiness reports",
+        "frontend result detail views"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance_success.compute_result.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_risk_code.compute_result.v1.json"
+      ],
+      "compatibility_notes": "Risk findings and evidence refs are used by external approval flows; consumers must preserve them even when they do not render them.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "constraint_draft.v1",
+      "schema_file": "constraint_draft.v1.json",
+      "consumers": [
+        "Go Compute API constraint application plan",
+        "frontend contract validation panel",
+        "Agent or external constraint producers"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.constraint_draft.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_constraints.constraint_draft.v1.json"
+      ],
+      "compatibility_notes": "Constraint drafts remain advisory; applying them to target objects requires explicit API validation and confirmation.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "contract_error.v1",
+      "schema_file": "contract_error.v1.json",
+      "consumers": [
+        "Go Compute API validation errors",
+        "frontend contract validation UI",
+        "Agent and external integration clients"
+      ],
+      "valid_examples": [
+        "examples/valid/validation_failed.contract_error.v1.json"
+      ],
+      "invalid_examples": [],
+      "compatibility_notes": "Error code shape is part of client control flow; additions should be additive and documented.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "draft_confirmation.v1",
+      "schema_file": "draft_confirmation.v1.json",
+      "consumers": [
+        "Go Compute API confirmation audit store",
+        "simulation-check promotion endpoint",
+        "frontend contract confirmation panel"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.draft_confirmation.v1.json",
+        "examples/valid/material_balance_constraint.draft_confirmation.v1.json",
+        "examples/valid/material_balance_promotable.draft_confirmation.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_draft.draft_confirmation.v1.json"
+      ],
+      "compatibility_notes": "Confirmation is an audit gate; only separate explicit promotion endpoints may create jobs from approved drafts.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "desktop_project_package.v1",
+      "schema_file": "desktop_project_package.v1.json",
+      "consumers": [
+        "Desktop project export/import runtime",
+        "Desktop clean-runtime package restore smoke",
+        "future Rust package DTO generation"
+      ],
+      "valid_examples": [
+        "examples/valid/desktop_smoke.desktop_project_package.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_project.desktop_project_package.v1.json"
+      ],
+      "compatibility_notes": "This is the new long-term Desktop project package schema. The Desktop runtime may still import legacy desktop_project_export.v1 files for backward compatibility, but new exports should use desktop_project_package.v1.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "desktop_support_bundle.v1",
+      "schema_file": "desktop_support_bundle.v1.json",
+      "consumers": [
+        "Desktop support bundle runtime",
+        "Desktop project package support bundle refs/files",
+        "support diagnostics runbook"
+      ],
+      "valid_examples": [
+        "examples/valid/desktop_job.desktop_support_bundle.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/artifact_contents_included.desktop_support_bundle.v1.json"
+      ],
+      "compatibility_notes": "Support bundles carry job diagnostics, event history, artifact metadata, and model_run refs; artifact file contents remain excluded and must not be inferred from this bundle.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "evidence_package.v1",
+      "schema_file": "evidence_package.v1.json",
+      "consumers": [
+        "Go Compute API evidence export",
+        "production readiness report",
+        "frontend Compute Jobs detail",
+        "external approval reviewers"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.evidence_package.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_model_status.evidence_package.v1.json"
+      ],
+      "compatibility_notes": "Evidence packages summarize audit facts and governance state; production publication remains outside this contract.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "model_catalog.v1",
+      "schema_file": "model_catalog.v1.json",
+      "consumers": [
+        "Go Compute API model catalog and governance endpoints",
+        "benchmark case scheduling",
+        "frontend model governance view"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.model_catalog.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_benchmark_case_id.model_catalog.v1.json",
+        "examples/invalid/missing_model_key.model_catalog.v1.json"
+      ],
+      "compatibility_notes": "The catalog defines wire shape for model versions, parameter templates, default parameter sets, and benchmark cases; multi-parameter-set workflows remain API/database responsibilities.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "model_run.v1",
+      "schema_file": "model_run.v1.json",
+      "consumers": [
+        "Go Compute API model run persistence",
+        "simulation request replay",
+        "evidence reference dereference",
+        "frontend result views"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.model_run.v1.json"
+      ],
+      "invalid_examples": [],
+      "compatibility_notes": "ModelRun references can drive replay only when the source job and payload are still available and schema-valid.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "process_graph.v1",
+      "schema_file": "process_graph.v1.json",
+      "consumers": [
+        "Go Compute API process graph registry",
+        "simulation request ProcessGraph reference resolution",
+        "Desktop and future frontend graph exchange"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance_3_node.process_graph.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_component_schema.process_graph.v1.json",
+        "examples/invalid/unknown_edge_node.process_graph.v1.json"
+      ],
+      "compatibility_notes": "ProcessGraph-to-SimulationInput conversion currently covers material balance; ASM/UDM conversion semantics require separate design.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "production_readiness.v1",
+      "schema_file": "production_readiness.v1.json",
+      "consumers": [
+        "Go Compute API production readiness endpoint",
+        "frontend Compute Jobs detail",
+        "external approval systems"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.production_readiness.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/auto_publish_allowed.production_readiness.v1.json"
+      ],
+      "compatibility_notes": "Readiness is a policy report for external review; external_approval_required remains true and auto_publish_allowed remains false in P0.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "result_explanation.v1",
+      "schema_file": "result_explanation.v1.json",
+      "consumers": [
+        "Go Compute API explanation review workflow",
+        "frontend explanation review surfaces",
+        "Agent explanation producers"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance.result_explanation.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_evidence_refs.result_explanation.v1.json"
+      ],
+      "compatibility_notes": "Every explanation and statement must remain evidence-backed; publishing an explanation is audit metadata, not production approval.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "simulation_input.v1",
+      "schema_file": "simulation_input.v1.json",
+      "consumers": [
+        "Python simulation worker",
+        "Go Compute API simulation input registry",
+        "legacy backend adapters",
+        "Desktop sidecar execution"
+      ],
+      "valid_examples": [
+        "examples/valid/asm1_independent.simulation_input.v1.json",
+        "examples/valid/asm1slim_independent.simulation_input.v1.json",
+        "examples/valid/asm1slim_minimal.simulation_input.v1.json",
+        "examples/valid/asm3_independent.simulation_input.v1.json",
+        "examples/valid/material_balance_minimal.simulation_input.v1.json",
+        "examples/valid/udm_independent.simulation_input.v1.json"
+      ],
+      "invalid_examples": [],
+      "compatibility_notes": "SimulationInput is worker-executable input; job type additions require parity fixtures and worker/core/backend coverage.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "simulation_request.v1",
+      "schema_file": "simulation_request.v1.json",
+      "consumers": [
+        "Go Compute API simulation-check endpoint",
+        "NewSystem or milp external request clients",
+        "Agent draft promotion",
+        "frontend generated Compute client"
+      ],
+      "valid_examples": [
+        "examples/valid/asm1_independent.simulation_request.v1.json",
+        "examples/valid/asm1slim_independent.simulation_request.v1.json",
+        "examples/valid/asm3_independent.simulation_request.v1.json",
+        "examples/valid/material_balance.simulation_request.v1.json",
+        "examples/valid/material_balance_model_run.simulation_request.v1.json",
+        "examples/valid/material_balance_process_graph.simulation_request.v1.json",
+        "examples/valid/milp_material_balance.simulation_request.v1.json",
+        "examples/valid/udm_independent.simulation_request.v1.json"
+      ],
+      "invalid_examples": [],
+      "compatibility_notes": "Request input_ref variants are resolved conservatively by the API; unsupported refs must fail rather than infer missing inputs.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    }
+  ]
+}

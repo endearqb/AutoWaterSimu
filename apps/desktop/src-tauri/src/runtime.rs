@@ -15,6 +15,8 @@ pub const DESKTOP_WORKER_EXE_ENV: &str = "AUTOWATERSIMU_DESKTOP_WORKER_EXE";
 pub const PACKAGED_WORKER_RESOURCE_RELATIVE_PATH: &str =
     "simulation-worker/simulation-worker-x86_64-pc-windows-msvc.exe";
 const PROJECT_PACKAGE_FILE_SUFFIX: &str = ".autowatersimu-project.json";
+const DESKTOP_PROJECT_PACKAGE_SCHEMA_VERSION: &str = "desktop_project_package.v1";
+const LEGACY_DESKTOP_PROJECT_EXPORT_SCHEMA_VERSION: &str = "desktop_project_export.v1";
 
 #[derive(Clone, Debug)]
 pub struct DesktopRuntime {
@@ -247,7 +249,7 @@ impl DesktopRuntime {
     fn project_export_payload(&self, project_id: &str) -> Result<(Value, Value), String> {
         let snapshot = self.store.project_package_snapshot(project_id)?;
         let mut payload = json!({
-            "schema_version": "desktop_project_export.v1",
+            "schema_version": DESKTOP_PROJECT_PACKAGE_SCHEMA_VERSION,
             "exported_at": utc_now(),
             "project": snapshot["project"],
             "contents": snapshot["contents"],
@@ -1065,9 +1067,12 @@ fn validate_backup_manifest(manifest: &Value) -> Result<(), String> {
 }
 
 fn validate_project_export(payload: &Value) -> Result<(), String> {
-    if payload.get("schema_version").and_then(Value::as_str) != Some("desktop_project_export.v1") {
+    if !matches!(
+        payload.get("schema_version").and_then(Value::as_str),
+        Some(DESKTOP_PROJECT_PACKAGE_SCHEMA_VERSION) | Some(LEGACY_DESKTOP_PROJECT_EXPORT_SCHEMA_VERSION)
+    ) {
         return Err(String::from(
-            "project export schema_version must be desktop_project_export.v1",
+            "project export schema_version must be desktop_project_package.v1 or legacy desktop_project_export.v1",
         ));
     }
     require_object_str(payload, "exported_at")?;

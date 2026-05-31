@@ -20,6 +20,8 @@
 - compute result risk findings wire shape。
 - evidence governance summary wire shape。
 - read-only production readiness policy report wire shape。
+- Desktop project package wire shape。
+- Desktop support bundle diagnostics wire shape。
 - Web、Desktop、Worker、Agent 集成方共享的 wire shape。
 
 本目录不负责：
@@ -32,8 +34,10 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
+| `codegen/` | 合同 codegen/validation 策略 manifest，不存放生成产物 |
 | `examples/` | 合同示例，按 valid / invalid 拆分 |
 | `python/` | Python 合同转换 helper，当前支持 material balance 最小链路 |
+| `registry.json` | schema、consumer、valid/invalid examples、兼容说明和 breaking-change policy 注册表 |
 | `tests/` | schema 与 fixture 校验测试 |
 | `*.v1.json` | 版本化 JSON Schema 合同 |
 
@@ -43,17 +47,21 @@
 2. P0 合同使用 snake_case，例如 `compute_job.v1`。
 3. 合同变更必须同步更新示例、测试和生成类型。
 4. 不把 UI-only 字段放入 worker 可执行合同。
-5. `model_catalog.v1` 只定义跨边界 catalog/版本/参数模板/默认参数集/benchmark case 形状；Go Compute API 可持久化 schema-valid catalog snapshots 用于治理读取，并可对现有 default parameter set 做最小状态迁移、只读 promotion plan，或在 promotion plan 已通过时执行 evidence-backed `approved` 晋升；完整多参数集审批流或自动 benchmark-backed 状态机仍应由 API/数据库实现补充。
-6. `benchmark_run.v1` 记录某个已完成 `model_run.v1` 对 catalog 中 benchmark case 的执行结果、指标、容差和 evidence refs；它是审计历史，不自动执行 benchmark、不推进参数集状态、不代表生产审批。
-7. `artifact.v1.retention_policy` / `retain_until` 只是生命周期 metadata；实际删除、归档或引用计数必须由 API/存储层另行实现并验证。
-8. `constraint_draft.v1` 只表达 Agent/外部系统提出的约束草案；必须经 API 校验和用户确认后，才能参与 simulation request 或生产相关决策。Go API 对 approved constraint confirmation 只能生成只读 application plan，不能直接修改目标对象或发布生产动作。
-9. `draft_confirmation.v1` 只表达用户对草案的 approve/reject/changes_requested 决策；Go API 可持久化确认记录用于审计。确认记录本身不得在 `confirm-draft` 阶段创建 job；只有显式 promotion endpoint 可把 approved `agent_scenario_draft.v1` 中完整且 schema-valid 的 `proposed_request` 转为 simulation check job。Approved `constraint_draft.v1` confirmation 只能通过显式只读 endpoint 生成 advisory plan。
-10. `result_explanation.v1` 只表达 Agent/外部系统对结果的结构化解释，且 top-level 与 statement 都必须引用 `evidence_refs`；本合同不生成解释。Go API 可持久化 evidence-backed explanation review/publish 状态，但发布解释仍只是审计 metadata，不代表生产审批完成。
-11. `compute_result.v1.risk_findings` 是面向 NewSystem/milp 审批集成的结构化风险结论；每条 finding 必须带 `evidence_refs`，API 可把它同步到 result summary 便于只读查询，并可在 job 边界内解析支持的证据引用。
-12. `evidence_package.v1.governance` 汇总 model version、parameter set status 与 `production_allowed`；该字段只供审批/审计读取，不代表 AutoWaterSimu 发布生产指令。
-13. `production_readiness.v1` 汇总 job 成功、evidence package、governance.production_allowed 与 risk_findings 阻断状态，只表达“可提交外部审批”的只读政策判断；`external_approval_required=true` 且 `auto_publish_allowed=false` 是合同约束。
-14. `simulation_request.v1.input_ref` 可表达 `process_graph_id`、`simulation_input_id`、`model_run_id` 或内嵌 `simulation_input`；Go Compute API 当前可把内嵌 `simulation_input.v1`、已登记的 `simulation_input_id`，或可回溯到源 job 的已持久化 `model_run_id` 转为对应 job type 的 `compute_job.v1`。`process_graph_id` / `process_graph_version` 自动转换当前只支持 material-balance job，ASM/UDM ProcessGraph-to-SimulationInput 语义需要单独设计。
-15. `compute_job.v1`、`simulation_input.v1`、`compute_result.v1` 和 `simulation_request.v1` 当前支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；新增 job type 进入 `simulation_request.v1` 时必须同步 Go API、OpenAPI 和 generated compute client。
+5. 每个 `*.v1.json` schema 必须登记在 `registry.json`，并列出 consumers、valid examples、invalid examples、compatibility notes 和 breaking-change policy。
+6. `codegen/manifest.json` 必须覆盖 `registry.json` 中的所有 schema，并说明 TypeScript/OpenAPI/Go/Python/Rust 当前生成或不生成的策略。
+7. `model_catalog.v1` 只定义跨边界 catalog/版本/参数模板/默认参数集/benchmark case 形状；Go Compute API 可持久化 schema-valid catalog snapshots 用于治理读取，并可对现有 default parameter set 做最小状态迁移、只读 promotion plan，或在 promotion plan 已通过时执行 evidence-backed `approved` 晋升；完整多参数集审批流或自动 benchmark-backed 状态机仍应由 API/数据库实现补充。
+8. `benchmark_run.v1` 记录某个已完成 `model_run.v1` 对 catalog 中 benchmark case 的执行结果、指标、容差和 evidence refs；它是审计历史，不自动执行 benchmark、不推进参数集状态、不代表生产审批。
+9. `artifact.v1.retention_policy` / `retain_until` 只是生命周期 metadata；实际删除、归档或引用计数必须由 API/存储层另行实现并验证。
+10. `constraint_draft.v1` 只表达 Agent/外部系统提出的约束草案；必须经 API 校验和用户确认后，才能参与 simulation request 或生产相关决策。Go API 对 approved constraint confirmation 只能生成只读 application plan，不能直接修改目标对象或发布生产动作。
+11. `draft_confirmation.v1` 只表达用户对草案的 approve/reject/changes_requested 决策；Go API 可持久化确认记录用于审计。确认记录本身不得在 `confirm-draft` 阶段创建 job；只有显式 promotion endpoint 可把 approved `agent_scenario_draft.v1` 中完整且 schema-valid 的 `proposed_request` 转为 simulation check job。Approved `constraint_draft.v1` confirmation 只能通过显式只读 endpoint 生成 advisory plan。
+12. `result_explanation.v1` 只表达 Agent/外部系统对结果的结构化解释，且 top-level 与 statement 都必须引用 `evidence_refs`；本合同不生成解释。Go API 可持久化 evidence-backed explanation review/publish 状态，但发布解释仍只是审计 metadata，不代表生产审批完成。
+13. `compute_result.v1.risk_findings` 是面向 NewSystem/milp 审批集成的结构化风险结论；每条 finding 必须带 `evidence_refs`，API 可把它同步到 result summary 便于只读查询，并可在 job 边界内解析支持的证据引用。
+14. `evidence_package.v1.governance` 汇总 model version、parameter set status 与 `production_allowed`；该字段只供审批/审计读取，不代表 AutoWaterSimu 发布生产指令。
+15. `production_readiness.v1` 汇总 job 成功、evidence package、governance.production_allowed 与 risk_findings 阻断状态，只表达“可提交外部审批”的只读政策判断；`external_approval_required=true` 且 `auto_publish_allowed=false` 是合同约束。
+16. `simulation_request.v1.input_ref` 可表达 `process_graph_id`、`simulation_input_id`、`model_run_id` 或内嵌 `simulation_input`；Go Compute API 当前可把内嵌 `simulation_input.v1`、已登记的 `simulation_input_id`，或可回溯到源 job 的已持久化 `model_run_id` 转为对应 job type 的 `compute_job.v1`。`process_graph_id` / `process_graph_version` 自动转换当前只支持 material-balance job，ASM/UDM ProcessGraph-to-SimulationInput 语义需要单独设计。
+17. `compute_job.v1`、`simulation_input.v1`、`compute_result.v1` 和 `simulation_request.v1` 当前支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；新增 job type 进入 `simulation_request.v1` 时必须同步 Go API、OpenAPI 和 generated compute client。
+18. `desktop_project_package.v1` 是 Desktop 新导出的长期项目包合同，覆盖 project metadata、job snapshots、CanvasGraphs、artifact/support bundle refs 和 checksum-verified hex file records；Desktop 可继续导入 legacy `desktop_project_export.v1` 文件作为兼容路径，但新导出应使用 `desktop_project_package.v1`。
+19. `desktop_support_bundle.v1` 是 Desktop 诊断包合同，只包含 job/event/artifact metadata/model_run refs 和版本信息；`redaction.artifact_contents_included=false` 是合同约束，artifact 文件内容应通过 project package 的 checksum file records 或 runtime artifacts 恢复。
 
 ## 4. 对外接口
 
@@ -78,6 +86,7 @@
 
 ```powershell
 rg -n "schema_version" contracts
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1
 backend\.venv\Scripts\python -m pytest contracts\tests -q
 ```
 

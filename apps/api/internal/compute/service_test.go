@@ -117,6 +117,25 @@ func containsString(values []string, expected string) bool {
 	return false
 }
 
+func eventPayloadMap(t *testing.T, event EventRecord) map[string]any {
+	t.Helper()
+	var payload map[string]any
+	if err := json.Unmarshal(event.EventJSON, &payload); err != nil {
+		t.Fatal(err)
+	}
+	return payload
+}
+
+func eventAuditMap(t *testing.T, event EventRecord) map[string]any {
+	t.Helper()
+	payload := eventPayloadMap(t, event)
+	audit, ok := payload["audit"].(map[string]any)
+	if !ok {
+		t.Fatalf("event %s should include audit envelope, got %#v", event.EventType, payload)
+	}
+	return audit
+}
+
 func uploadTestArtifact(t *testing.T, svc *Service, ctx context.Context, workerID, jobID, artifactID string, artifactBytes []byte, retainUntil string) ArtifactRecord {
 	t.Helper()
 	return uploadTestArtifactWithRetention(t, svc, ctx, workerID, jobID, artifactID, artifactBytes, "ttl", retainUntil)
@@ -526,6 +545,23 @@ func TestArtifactRetentionSweepArchivesCandidateWithConfiguredBackend(t *testing
 	foundArchiveEvent := false
 	for _, event := range events {
 		if event.EventType == "artifact.archived" {
+			audit := eventAuditMap(t, event)
+			if audit["who"] != "system" ||
+				audit["where"] != "service:artifact_retention_sweep" ||
+				audit["target_object"] != "Artifact" ||
+				audit["target_id"] != candidate.ArtifactID ||
+				audit["action"] != "artifact.archive" ||
+				audit["trace_id"] != "trace_material_balance_minimal" {
+				t.Fatalf("unexpected archive audit envelope: %#v", audit)
+			}
+			before, ok := audit["before"].(map[string]any)
+			if !ok || before["artifact_id"] != candidate.ArtifactID || before["retention_policy"] != "archive_candidate" {
+				t.Fatalf("archive audit should include artifact before state, got %#v", audit["before"])
+			}
+			after, ok := audit["after"].(map[string]any)
+			if !ok || after["artifact_id"] != candidate.ArtifactID || after["status"] != "archived" {
+				t.Fatalf("archive audit should include archive after state, got %#v", audit["after"])
+			}
 			foundArchiveEvent = true
 			break
 		}
@@ -609,6 +645,37 @@ func TestHTTPArtifactRetentionSweepRequiresAdminScope(t *testing.T) {
 	}
 	if _, _, err := svc.DownloadArtifact(ctx, expired.ArtifactID); ToAppError(err).Status != http.StatusNotFound {
 		t.Fatalf("deleted artifact should no longer resolve, got %#v", err)
+	}
+	events, err := svc.Events(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundAudit := false
+	for _, event := range events {
+		if event.EventType != "artifact.retention_deleted" {
+			continue
+		}
+		audit := eventAuditMap(t, event)
+		if audit["who"] != "admin" ||
+			audit["where"] != "POST /api/v1/admin/artifacts/retention-sweep" ||
+			audit["target_object"] != "Artifact" ||
+			audit["target_id"] != expired.ArtifactID ||
+			audit["action"] != "artifact.retention_delete" ||
+			audit["trace_id"] != "trace_material_balance_minimal" {
+			t.Fatalf("unexpected retention audit envelope: %#v", audit)
+		}
+		before, ok := audit["before"].(map[string]any)
+		if !ok || before["artifact_id"] != expired.ArtifactID || before["retention_policy"] != "ttl" {
+			t.Fatalf("retention audit should include artifact before state, got %#v", audit["before"])
+		}
+		after, ok := audit["after"].(map[string]any)
+		if !ok || after["deleted"] != true {
+			t.Fatalf("retention audit should include delete after state, got %#v", audit["after"])
+		}
+		foundAudit = true
+	}
+	if !foundAudit {
+		t.Fatalf("retention deletion should write an audit envelope")
 	}
 }
 
@@ -1274,6 +1341,67 @@ func TestHTTPAuthScopeAndMetrics(t *testing.T) {
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("expected scope denial, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestHTTPMutationAuditEventEnvelopeForJobCreate(t *testing.T) {
+	svc := testService(t)
+	auth, err := NewAuthenticator(`{"tokens":[
+		{"name":"audit-user","token":"audit-token","scopes":["job:create","job:read"]}
+	]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/compute/jobs", bytes.NewReader(fixtureJobBytes(t)))
+	req.Header.Set("Authorization", "Bearer audit-token")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("job create failed: %d %s", rec.Code, rec.Body.String())
+	}
+
+	events, err := svc.Events(context.Background(), "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	assertAudit := func(event EventRecord, action, status string) {
+		t.Helper()
+		payload := eventPayloadMap(t, event)
+		if payload["status"] != status {
+			t.Fatalf("%s event should keep status payload, got %#v", event.EventType, payload)
+		}
+		audit := eventAuditMap(t, event)
+		if audit["who"] != "audit-user" ||
+			audit["where"] != "POST /api/v1/compute/jobs" ||
+			audit["target_object"] != "ComputeJob" ||
+			audit["target_id"] != "job_material_balance_minimal" ||
+			audit["action"] != action ||
+			audit["trace_id"] != "trace_material_balance_minimal" {
+			t.Fatalf("unexpected audit envelope for %s: %#v", event.EventType, audit)
+		}
+		if audit["when"] == "" {
+			t.Fatalf("audit envelope should include when: %#v", audit)
+		}
+		after, ok := audit["after"].(map[string]any)
+		if !ok || after["status"] != status {
+			t.Fatalf("audit envelope should include after status %s, got %#v", status, audit["after"])
+		}
+	}
+	for _, event := range events {
+		switch event.EventType {
+		case "job.created":
+			assertAudit(event, "job.create", StatusCreated)
+			seen[event.EventType] = true
+		case "job.queued":
+			assertAudit(event, "job.queue", StatusQueued)
+			seen[event.EventType] = true
+		}
+	}
+	if !seen["job.created"] || !seen["job.queued"] {
+		t.Fatalf("expected job create and queue audit events, got %#v", events)
 	}
 }
 

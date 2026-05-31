@@ -25,6 +25,7 @@
 | `utils/` | Playwright helper functions |
 | `peterson-matrix-workbook.test.ts` | workbook helper test |
 | `compute-jobs-current-flow.spec.ts` | Mock-backed Compute Jobs current-flow submission and production readiness smoke |
+| `contract-validation.spec.ts` | Mock-backed Compute Jobs contract validation panel smoke |
 | `model-governance.spec.ts` | Mock-backed Model governance catalog snapshot history smoke |
 | `compute-lifecycle.spec.ts` | Mock-backed Compute lifecycle metrics and retention sweep smoke |
 
@@ -50,8 +51,10 @@
 ```powershell
 cd frontend; npx playwright test
 cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps
+cd frontend; npx playwright test tests/contract-validation.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/model-governance.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\browser-smoke.ps1
 ```
 
 ## 7. AI 操作提示

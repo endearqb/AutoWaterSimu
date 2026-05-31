@@ -21,6 +21,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `rebuild/` | AutoWaterSimu Next 重构文档 |
+| `architecture/` | AutoWaterSimu Next 模块图、依赖边界、本地开发入口和 current-state 摘要 |
 | `operations/` | AutoWaterSimu Next 运维运行手册与 SLO/告警草案 |
 | `tutorial/` | 教程文档 |
 | `UDM/` | UDM 相关文档 |

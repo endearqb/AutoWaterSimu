@@ -1,0 +1,145 @@
+{
+  "schema_version": "ontology_actions_registry.v1",
+  "actions": [
+    {
+      "key": "view",
+      "description": "Read metadata, status, and safe summaries for an ontology object.",
+      "target_objects": ["WaterStation", "ProcessGraph", "ProcessUnit", "EquipmentAsset", "MonitoringPoint", "WaterQualitySample", "ChemicalMaterial", "InventoryBalance", "WorkOrder", "MaintenanceEvent", "BenchmarkCase", "ModelVersion", "ParameterSet", "ComputeJob", "ModelRun", "EvidencePackage", "RiskFinding", "AgentDraft"],
+      "requires_role": ["viewer", "operator", "engineer", "model_owner", "evidence_reviewer", "admin"],
+      "requires_reason": false,
+      "creates_evidence": ["access_log"],
+      "approval_required": false,
+      "rollback": "No rollback; read-only action."
+    },
+    {
+      "key": "update_metadata",
+      "description": "Update non-computational metadata such as name, description, tag, status note, or owner.",
+      "target_objects": ["WaterStation", "ProcessGraph", "ProcessUnit", "EquipmentAsset", "MonitoringPoint", "ChemicalMaterial", "BenchmarkCase", "ModelVersion"],
+      "requires_role": ["operator", "engineer", "model_owner", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["audit_event"],
+      "approval_required": false,
+      "rollback": "Reapply the prior metadata snapshot from the audit event."
+    },
+    {
+      "key": "register_process_graph",
+      "description": "Register a validated process graph version for later simulation input generation.",
+      "target_objects": ["ProcessGraph"],
+      "requires_role": ["engineer", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["process_graph", "audit_event"],
+      "approval_required": false,
+      "rollback": "Register a superseding version; do not mutate historical graph evidence."
+    },
+    {
+      "key": "register_sample",
+      "description": "Attach a water quality sample to a monitoring point.",
+      "target_objects": ["MonitoringPoint", "WaterQualitySample"],
+      "requires_role": ["operator", "engineer", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["quality_sample", "audit_event"],
+      "approval_required": false,
+      "rollback": "Mark the sample superseded or invalid; preserve the original observation record."
+    },
+    {
+      "key": "register_inventory_balance",
+      "description": "Record a material inventory balance entry.",
+      "target_objects": ["ChemicalMaterial", "InventoryBalance"],
+      "requires_role": ["operator", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["inventory_balance", "audit_event"],
+      "approval_required": false,
+      "rollback": "Post a compensating balance adjustment with an audit reason."
+    },
+    {
+      "key": "create_work_order",
+      "description": "Create an operational or maintenance work order for an equipment asset.",
+      "target_objects": ["EquipmentAsset", "WorkOrder"],
+      "requires_role": ["operator", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["work_order", "audit_event"],
+      "approval_required": false,
+      "rollback": "Cancel the work order with a reason; do not delete its audit trail."
+    },
+    {
+      "key": "close_work_order",
+      "description": "Close a work order after validation or maintenance completion.",
+      "target_objects": ["WorkOrder"],
+      "requires_role": ["operator", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["work_order", "maintenance_event", "audit_event"],
+      "approval_required": false,
+      "rollback": "Reopen the work order with a new audit event if allowed by operating policy."
+    },
+    {
+      "key": "record_maintenance_event",
+      "description": "Record completed maintenance, corrective action, or inspection evidence.",
+      "target_objects": ["MaintenanceEvent", "WorkOrder"],
+      "requires_role": ["operator", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["maintenance_event", "audit_event"],
+      "approval_required": false,
+      "rollback": "Append a correction event rather than mutating the original event."
+    },
+    {
+      "key": "queue_compute_job",
+      "description": "Queue a compute job from a process graph, benchmark case, agent draft, or approved request.",
+      "target_objects": ["ProcessGraph", "BenchmarkCase", "ComputeJob", "AgentDraft"],
+      "requires_role": ["engineer", "model_owner", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["compute_job", "simulation_input", "audit_event"],
+      "approval_required": false,
+      "rollback": "Cancel a queued job before worker claim; completed results stay immutable evidence."
+    },
+    {
+      "key": "register_model_version",
+      "description": "Register or update a governed model version entry.",
+      "target_objects": ["ModelVersion"],
+      "requires_role": ["model_owner", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["model_catalog", "audit_event"],
+      "approval_required": false,
+      "rollback": "Register a superseding catalog snapshot."
+    },
+    {
+      "key": "promote_parameter_set",
+      "description": "Advance a parameter set lifecycle after required validation or benchmark evidence is available.",
+      "target_objects": ["ParameterSet"],
+      "requires_role": ["model_owner", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["benchmark_run", "model_run", "audit_event"],
+      "approval_required": true,
+      "rollback": "Retire the parameter set or promote a superseding candidate; do not erase historical promotion evidence."
+    },
+    {
+      "key": "publish_evidence_package",
+      "description": "Publish an evidence package for external review or production-readiness handoff.",
+      "target_objects": ["ModelRun", "EvidencePackage"],
+      "requires_role": ["evidence_reviewer", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["evidence_package", "production_readiness", "audit_event"],
+      "approval_required": true,
+      "rollback": "Publish a superseding evidence package with an explicit correction reason."
+    },
+    {
+      "key": "acknowledge_risk_finding",
+      "description": "Acknowledge a risk finding without deleting the underlying blocker or warning evidence.",
+      "target_objects": ["RiskFinding"],
+      "requires_role": ["evidence_reviewer", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["risk_finding", "audit_event"],
+      "approval_required": false,
+      "rollback": "Reopen or supersede the risk finding with a follow-up audit event."
+    },
+    {
+      "key": "approve_agent_draft",
+      "description": "Approve a confirmed agent draft before promotion to a process graph or compute request.",
+      "target_objects": ["AgentDraft", "ProcessGraph"],
+      "requires_role": ["engineer", "admin"],
+      "requires_reason": true,
+      "creates_evidence": ["draft_confirmation", "audit_event"],
+      "approval_required": true,
+      "rollback": "Reject a later draft version or create a superseding confirmation; do not mutate the original confirmation."
+    }
+  ]
+}

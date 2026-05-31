@@ -149,7 +149,8 @@ func allowLocalOrigin(w http.ResponseWriter, origin string) bool {
 func (server *Server) jobs(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		if _, err := server.auth.Principal(r, "job:create"); err != nil {
+		principal, err := server.auth.Principal(r, "job:create")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -158,7 +159,7 @@ func (server *Server) jobs(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, ValidationError("read request body failed"))
 			return
 		}
-		snapshot, status, err := server.service.CreateJob(r.Context(), bytes, r.Header.Get("Idempotency-Key"))
+		snapshot, status, err := server.service.CreateJob(withAuditPrincipal(r.Context(), *principal, r), bytes, r.Header.Get("Idempotency-Key"))
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -281,7 +282,8 @@ func (server *Server) processGraphByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) simulationChecks(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:create"); err != nil {
+	principal, err := server.auth.Principal(r, "job:create")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -294,7 +296,7 @@ func (server *Server) simulationChecks(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, ValidationError("read request body failed"))
 		return
 	}
-	snapshot, status, err := server.service.CreateSimulationCheck(r.Context(), bytes)
+	snapshot, status, err := server.service.CreateSimulationCheck(withAuditPrincipal(r.Context(), *principal, r), bytes)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -478,7 +480,8 @@ func (server *Server) artifactByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) artifactRetentionSweep(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "artifact:admin"); err != nil {
+	principal, err := server.auth.Principal(r, "artifact:admin")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -495,7 +498,7 @@ func (server *Server) artifactRetentionSweep(w http.ResponseWriter, r *http.Requ
 	if request.DryRun != nil {
 		dryRun = *request.DryRun
 	}
-	report, err := server.service.SweepArtifactRetention(r.Context(), ArtifactRetentionSweepOptions{
+	report, err := server.service.SweepArtifactRetention(withAuditPrincipal(r.Context(), *principal, r), ArtifactRetentionSweepOptions{
 		DryRun: dryRun,
 		Limit:  request.Limit,
 	})
@@ -591,11 +594,12 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if len(parts) == 2 && parts[1] == "promote-simulation-check" && r.Method == http.MethodPost {
-		if _, err := server.auth.Principal(r, "job:create"); err != nil {
+		principal, err := server.auth.Principal(r, "job:create")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
-		snapshot, status, err := server.service.PromoteDraftConfirmationToSimulationCheck(r.Context(), confirmationID)
+		snapshot, status, err := server.service.PromoteDraftConfirmationToSimulationCheck(withAuditPrincipal(r.Context(), *principal, r), confirmationID)
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -750,7 +754,7 @@ func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) 
 			WriteError(w, err)
 			return
 		}
-		response, status, err := server.service.ScheduleBenchmarkCaseRun(r.Context(), parts[0], parts[2], parts[4], request, "compute-api", principal.Name)
+		response, status, err := server.service.ScheduleBenchmarkCaseRun(withAuditPrincipal(r.Context(), *principal, r), parts[0], parts[2], parts[4], request, "compute-api", principal.Name)
 		if err != nil {
 			WriteError(w, err)
 			return

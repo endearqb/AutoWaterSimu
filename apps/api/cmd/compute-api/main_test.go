@@ -21,6 +21,48 @@ func TestOpenStoreUsesMemoryStoreWhenDatabaseURLMissing(t *testing.T) {
 	}
 }
 
+func TestValidateProductionAuthConfigAllowsNonProductionDefaults(t *testing.T) {
+	if err := validateProductionAuthConfig(compute.Config{Environment: "local"}); err != nil {
+		t.Fatalf("non-production defaults should be accepted: %v", err)
+	}
+}
+
+func TestValidateProductionAuthConfigRejectsEmptyTokens(t *testing.T) {
+	err := validateProductionAuthConfig(compute.Config{Environment: "production"})
+	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_TOKENS_JSON is required") {
+		t.Fatalf("expected production empty token config to be rejected, got %v", err)
+	}
+}
+
+func TestValidateProductionAuthConfigRejectsDefaultDevTokens(t *testing.T) {
+	tests := []struct {
+		name       string
+		tokensJSON string
+	}{
+		{name: "dev public", tokensJSON: `{"tokens":[{"name":"public","token":"dev-public-token","scopes":["job:read"]}]}`},
+		{name: "dev worker", tokensJSON: `{"tokens":[{"name":"worker","token":"dev-worker-token","scopes":["worker:claim"]}]}`},
+		{name: "dev admin", tokensJSON: `{"tokens":[{"name":"admin","token":"dev-admin-token","scopes":["artifact:admin"]}]}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateProductionAuthConfig(compute.Config{Environment: "production", TokensJSON: tt.tokensJSON})
+			if err == nil || !strings.Contains(err.Error(), "default development token") {
+				t.Fatalf("expected default development token to be rejected, got %v", err)
+			}
+		})
+	}
+}
+
+func TestValidateProductionAuthConfigAllowsExplicitTokens(t *testing.T) {
+	err := validateProductionAuthConfig(compute.Config{
+		Environment: "production",
+		TokensJSON:  `{"tokens":[{"name":"platform","token":"prod-token-from-secret-manager","scopes":["job:read"]}]}`,
+	})
+	if err != nil {
+		t.Fatalf("expected explicit production token config to be accepted: %v", err)
+	}
+}
+
 func TestOpenArchiveStoreRejectsOverlappingArtifactDirs(t *testing.T) {
 	base := t.TempDir()
 	artifactDir := filepath.Join(base, "artifacts")

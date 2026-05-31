@@ -90,6 +90,21 @@ export interface EvidenceDownloadResult {
   checksum?: string
 }
 
+export type {
+  ArtifactRecord,
+  ArtifactRetentionAction,
+  ArtifactRetentionSweepReport,
+  ContractValidationResponse,
+  EventRecord,
+  EvidenceReferenceResolution,
+  JobSnapshot,
+  ModelCatalog,
+  ModelCatalogRecord,
+  ModelParameterSetPromotionPlan,
+  ModelRun,
+  ProductionReadinessReport,
+} from "@/client/compute"
+
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
@@ -279,6 +294,10 @@ export const buildComputeJobFromFlowExport = (
 }
 
 export const computeJobsService = {
+  getBaseUrl(): string {
+    return ComputeOpenAPI.BASE
+  },
+
   checkHealth(): Promise<ComputeHealthStatus> {
     return Promise.all([
       DefaultService.getHealthz(),

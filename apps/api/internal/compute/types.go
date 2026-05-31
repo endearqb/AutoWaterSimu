@@ -19,6 +19,7 @@ const (
 )
 
 type Config struct {
+	Environment            string
 	DatabaseURL            string
 	ArtifactDir            string
 	ArchiveDir             string

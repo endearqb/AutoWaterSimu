@@ -1,0 +1,67 @@
+name: AutoWaterSimu Next Desktop Package Smoke
+
+concurrency:
+  group: next-desktop-package-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+'on':
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-package-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+          enable-cache: true
+
+      - name: Install backend Python dependencies
+        run: uv sync
+        working-directory: backend
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build outputs
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+          cache-on-failure: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - name: Install Desktop dependencies
+        run: npm ci
+        working-directory: apps/desktop
+
+      - name: Run Desktop package smoke evidence
+        shell: powershell
+        run: .\scripts\ci\desktop-package-smoke.ps1
+
+      - name: Upload Desktop package smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-desktop-package-smoke-evidence
+          path: tmp/ci-evidence
+          include-hidden-files: true

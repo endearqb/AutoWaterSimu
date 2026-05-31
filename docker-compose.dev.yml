@@ -1,0 +1,119 @@
+services:
+  compute-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: autowatersimu_compute
+      POSTGRES_USER: autowatersimu
+      POSTGRES_PASSWORD: autowatersimu
+    ports:
+      - "5434:5432"
+    volumes:
+      - compute-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autowatersimu -d autowatersimu_compute"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done;
+      /usr/bin/mc mb -p local/autowatersimu-archive || true;
+      /usr/bin/mc anonymous set none local/autowatersimu-archive;
+      "
+
+  compute-api:
+    image: golang:1.26
+    working_dir: /workspace
+    restart: unless-stopped
+    depends_on:
+      compute-postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      COMPUTE_API_PORT: "8088"
+      COMPUTE_API_DATABASE_URL: postgres://autowatersimu:autowatersimu@compute-postgres:5432/autowatersimu_compute?sslmode=disable
+      COMPUTE_API_ARTIFACT_DIR: /workspace/tmp/compute-api-artifacts
+      COMPUTE_API_ARCHIVE_S3_ENDPOINT: http://minio:9000
+      COMPUTE_API_ARCHIVE_S3_BUCKET: autowatersimu-archive
+      COMPUTE_API_ARCHIVE_S3_REGION: us-east-1
+      COMPUTE_API_ARCHIVE_S3_ACCESS_KEY_ID: minioadmin
+      COMPUTE_API_ARCHIVE_S3_SECRET_ACCESS_KEY: minioadmin
+      COMPUTE_API_ARCHIVE_S3_PREFIX: compute-api/dev
+      COMPUTE_API_TOKENS_JSON: >-
+        {"tokens":[{"name":"dev-public","token":"dev-public-token","scopes":["job:create","job:read","artifact:read","evidence:read","model:write","explanation:write"]},{"name":"dev-worker","token":"dev-worker-token","scopes":["worker:register","worker:claim","worker:heartbeat","job:write","artifact:write"]},{"name":"dev-admin","token":"dev-admin-token","scopes":["job:create","job:read","artifact:read","artifact:write","artifact:admin","evidence:read","model:write","explanation:write"]}]}
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./apps/api:/workspace/apps/api
+      - ./contracts:/workspace/contracts:ro
+      - ./tmp:/workspace/tmp
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    command: sh -c "cd apps/api && go run ./cmd/compute-api"
+
+  simulation-worker:
+    image: python:3.11-slim
+    working_dir: /workspace
+    restart: unless-stopped
+    depends_on:
+      - compute-api
+    environment:
+      PYTHONPATH: /workspace/simulation_core/python:/workspace/contracts/python:/workspace/services/simulation-worker
+      SIMULATION_WORKER_API_BASE_URL: http://compute-api:8088
+      SIMULATION_WORKER_API_TOKEN: dev-worker-token
+    volumes:
+      - ./services/simulation-worker:/workspace/services/simulation-worker:ro
+      - ./simulation_core:/workspace/simulation_core:ro
+      - ./contracts:/workspace/contracts:ro
+      - ./tmp:/workspace/tmp
+      - python-pip-cache:/pip-cache
+    command: >
+      sh -lc "
+      python -m pip install --cache-dir /pip-cache --root-user-action=ignore pydantic numpy scipy torch torchdiffeq &&
+      until python -c \"import urllib.request; urllib.request.urlopen('http://compute-api:8088/readyz', timeout=2).read()\"; do sleep 2; done;
+      python services/simulation-worker/simulation_worker/cli.py --run-api-loop --api-base-url http://compute-api:8088 --api-token dev-worker-token --artifact-dir /workspace/tmp/worker-api-artifacts --max-idle-polls 120 --idle-sleep-seconds 2
+      "
+
+  frontend:
+    image: node:20
+    working_dir: /workspace/frontend
+    restart: unless-stopped
+    depends_on:
+      - compute-api
+    environment:
+      VITE_COMPUTE_API_URL: http://localhost:8088
+      VITE_COMPUTE_API_TOKEN: dev-public-token
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/workspace/frontend
+      - frontend-node-modules:/workspace/frontend/node_modules
+    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  compute-postgres-data:
+  minio-data:
+  go-mod-cache:
+  go-build-cache:
+  python-pip-cache:
+  frontend-node-modules:

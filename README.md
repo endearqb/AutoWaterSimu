@@ -132,11 +132,14 @@ The repository root is the AutoWaterSimu project root. The core structure is:
   - `src/components/Flow/`: flow editor and related UI
   - `src/routes/`: page routes (material balance pages, model config pages, etc.)
 - `docs/`: usage and development documentation
+  - `docs/architecture/`: AutoWaterSimu Next module map, dependency graph, ontology model, local-dev entry, and current-state summary
 - `contracts/`: AutoWaterSimu Next JSON Schema contracts and examples
+- `ontology/`: Water Ontology object/action/link/policy registries and README context
 - `simulation_core/`: pure Python simulation core extraction target
 - `services/simulation-worker/`: Python worker CLI / sidecar target
 - `apps/api/`: Go Compute API target
 - `apps/desktop/`: Tauri/Rust + React Desktop target
+- `Justfile`: monorepo task entry for doctor, check, dependency checks, generation, dev helpers, and release gates
 - `scripts/`: repository-level automation such as AutoWaterSimu Next release gates
 - `.ai/`: README First change, decision, plan, and review records
 - `.github/`: GitHub Actions and repository automation
@@ -152,6 +155,43 @@ The repository root is the AutoWaterSimu project root. The core structure is:
 ## Quick Start
 
 Run all commands from the repository root (where this README is located).
+
+### AutoWaterSimu Next Task Entry
+
+For Next monorepo work, the root `Justfile` is the preferred task entry:
+
+```powershell
+just doctor
+just dev-detached
+just check-deps
+just check-ontology
+just check
+just pr-fast
+just integration-smoke
+just check-security
+just browser-smoke
+just desktop-package-smoke
+```
+
+If `just` is not installed, run the underlying scripts and checks directly:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\doctor.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+backend\.venv\Scripts\python -m pytest contracts\tests -q
+cd apps\api; go test ./...
+cd frontend; npx tsc --noEmit
+```
+
+The long-term architecture entry for Next lives under [docs/architecture](./docs/architecture/README.md).
+The source-mounted Next local stack candidate is [docker-compose.dev.yml](./docker-compose.dev.yml).
 
 ### 1. Environment Setup
 

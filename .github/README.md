@@ -9,6 +9,8 @@
 - GitHub Actions workflows。
 - Dependabot、labeler 等仓库协作配置。
 - AutoWaterSimu Next merge/release gate CI 入口。
+- Manual dispatch 下的 Desktop project package/support bundle smoke evidence 编排。
+- Manual dispatch 下的 mock-backed browser smoke evidence 编排。
 - Manual dispatch 下的 unsigned Desktop release artifact 构建、workflow artifact 上传与下载校验编排。
 - Manual dispatch 下的 PostgreSQL migration up/down smoke CI 编排。
 

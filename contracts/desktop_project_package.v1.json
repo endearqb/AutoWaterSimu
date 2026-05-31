@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "desktop_project_package.v1.json",
+  "title": "desktop_project_package.v1",
+  "type": "object",
+  "required": ["schema_version", "exported_at", "project", "contents", "content_counts"],
+  "properties": {
+    "schema_version": { "const": "desktop_project_package.v1" },
+    "exported_at": { "type": "string", "format": "date-time" },
+    "project": { "$ref": "#/$defs/project" },
+    "contents": {
+      "type": "object",
+      "required": [
+        "compute_jobs",
+        "canvas_graphs",
+        "artifact_refs",
+        "artifact_files",
+        "support_bundle_refs",
+        "support_bundle_files",
+        "redaction"
+      ],
+      "properties": {
+        "compute_jobs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/compute_job_snapshot" }
+        },
+        "canvas_graphs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/canvas_graph_snapshot" }
+        },
+        "artifact_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_ref" }
+        },
+        "artifact_files": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_file" }
+        },
+        "support_bundle_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/support_bundle_ref" }
+        },
+        "support_bundle_files": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/support_bundle_file" }
+        },
+        "redaction": { "$ref": "#/$defs/project_redaction" }
+      },
+      "additionalProperties": false
+    },
+    "content_counts": { "$ref": "#/$defs/content_counts" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "checksum": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-fA-F]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "project": {
+      "type": "object",
+      "required": ["project_id", "name", "created_at", "updated_at"],
+      "properties": {
+        "project_id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "updated_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "compute_job_snapshot": {
+      "type": "object",
+      "required": ["job", "input", "artifacts", "model_runs", "event_count", "events"],
+      "properties": {
+        "job": { "$ref": "#/$defs/job" },
+        "input": {
+          "type": "object",
+          "required": ["schema_version", "job_id"],
+          "properties": {
+            "schema_version": { "const": "compute_job.v1" },
+            "job_id": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": true
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_ref" }
+        },
+        "model_runs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/model_run_ref" }
+        },
+        "event_count": { "type": "integer", "minimum": 0 },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/job_event" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "job": {
+      "type": "object",
+      "required": ["job_id", "schema_version", "job_type", "status", "created_at"],
+      "properties": {
+        "job_id": { "type": "string", "minLength": 1 },
+        "project_id": { "type": ["string", "null"] },
+        "schema_version": { "const": "compute_job.v1" },
+        "job_type": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["queued", "running", "succeeded", "failed", "cancelled", "timed_out"]
+        },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "job_event": {
+      "type": "object",
+      "required": ["id", "event_type", "event", "created_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "event_type": { "type": "string", "minLength": 1 },
+        "event": { "type": "object" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "artifact_ref": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "job_id",
+        "schema_version",
+        "artifact_type",
+        "object_key",
+        "content_type",
+        "size_bytes",
+        "checksum",
+        "created_at"
+      ],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "job_id": { "type": "string", "minLength": 1 },
+        "schema_version": { "const": "artifact.v1" },
+        "artifact_type": { "type": "string", "minLength": 1 },
+        "object_key": { "type": "string", "minLength": 1 },
+        "content_type": { "type": "string", "minLength": 1 },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "checksum": { "$ref": "#/$defs/checksum" },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "metadata": { "type": ["object", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "artifact_file": {
+      "type": "object",
+      "required": ["artifact_id", "object_key", "size_bytes", "checksum", "content_encoding", "content_hex"],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "object_key": { "type": "string", "minLength": 1 },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "checksum": { "$ref": "#/$defs/checksum" },
+        "content_encoding": { "const": "hex" },
+        "content_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-fA-F]{2})*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "model_run_ref": {
+      "type": "object",
+      "required": ["schema_version", "model_run_id", "job_id", "model_key", "model_version"],
+      "properties": {
+        "schema_version": { "const": "model_run.v1" },
+        "model_run_id": { "type": "string", "minLength": 1 },
+        "job_id": { "type": "string", "minLength": 1 },
+        "model_key": { "type": "string", "minLength": 1 },
+        "model_version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "canvas_graph_snapshot": {
+      "type": "object",
+      "required": ["graph_id", "schema_version", "graph", "created_at", "updated_at"],
+      "properties": {
+        "graph_id": { "type": "string", "minLength": 1 },
+        "project_id": { "type": ["string", "null"] },
+        "schema_version": { "const": "canvas_graph.v1" },
+        "graph": { "type": "object" },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "updated_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "support_bundle_ref": {
+      "type": "object",
+      "required": ["bundle_id", "object_key", "size_bytes", "checksum", "created_at"],
+      "properties": {
+        "bundle_id": { "type": "string", "minLength": 1 },
+        "job_id": { "type": ["string", "null"] },
+        "object_key": { "type": "string", "minLength": 1 },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "checksum": { "$ref": "#/$defs/checksum" },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "metadata": { "type": ["object", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "support_bundle_file": {
+      "type": "object",
+      "required": ["bundle_id", "object_key", "size_bytes", "checksum", "content_encoding", "content_hex"],
+      "properties": {
+        "bundle_id": { "type": "string", "minLength": 1 },
+        "object_key": { "type": "string", "minLength": 1 },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "checksum": { "$ref": "#/$defs/checksum" },
+        "content_encoding": { "const": "hex" },
+        "content_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-fA-F]{2})*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "project_redaction": {
+      "type": "object",
+      "required": [
+        "artifact_contents_included",
+        "support_bundle_contents_included",
+        "job_events_included"
+      ],
+      "properties": {
+        "artifact_contents_included": { "type": "boolean" },
+        "support_bundle_contents_included": { "type": "boolean" },
+        "job_events_included": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "content_counts": {
+      "type": "object",
+      "required": [
+        "compute_jobs",
+        "job_events",
+        "canvas_graphs",
+        "artifact_refs",
+        "artifact_files",
+        "support_bundle_refs",
+        "support_bundle_files"
+      ],
+      "properties": {
+        "compute_jobs": { "type": "integer", "minimum": 0 },
+        "job_events": { "type": "integer", "minimum": 0 },
+        "canvas_graphs": { "type": "integer", "minimum": 0 },
+        "artifact_refs": { "type": "integer", "minimum": 0 },
+        "artifact_files": { "type": "integer", "minimum": 0 },
+        "support_bundle_refs": { "type": "integer", "minimum": 0 },
+        "support_bundle_files": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

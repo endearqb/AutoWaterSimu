@@ -21,7 +21,7 @@ import { FiArchive, FiRefreshCw, FiSearch } from "react-icons/fi"
 import type {
   ArtifactRetentionAction,
   ArtifactRetentionSweepReport,
-} from "@/client/compute"
+} from "@/services/computeJobsService"
 import { computeJobsService } from "@/services/computeJobsService"
 
 export const Route = createFileRoute("/_layout/compute-lifecycle")({

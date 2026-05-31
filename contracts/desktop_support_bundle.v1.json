@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "desktop_support_bundle.v1.json",
+  "title": "desktop_support_bundle.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "job",
+    "events",
+    "artifacts",
+    "model_runs",
+    "versions",
+    "redaction"
+  ],
+  "properties": {
+    "schema_version": { "const": "desktop_support_bundle.v1" },
+    "bundle_id": { "type": "string", "minLength": 1 },
+    "job": { "$ref": "#/$defs/job" },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/job_event" }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact_ref" }
+    },
+    "model_runs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/model_run_ref" }
+    },
+    "versions": {
+      "type": "object",
+      "required": ["desktop_runtime", "migration_version"],
+      "properties": {
+        "desktop_runtime": { "type": "string", "minLength": 1 },
+        "migration_version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "redaction": {
+      "type": "object",
+      "required": ["artifact_contents_included", "stderr_tail_only"],
+      "properties": {
+        "artifact_contents_included": { "const": false },
+        "stderr_tail_only": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "checksum": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-fA-F]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "job": {
+      "type": "object",
+      "required": ["job_id", "schema_version", "job_type", "status", "created_at"],
+      "properties": {
+        "job_id": { "type": "string", "minLength": 1 },
+        "project_id": { "type": ["string", "null"] },
+        "schema_version": { "const": "compute_job.v1" },
+        "job_type": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["queued", "running", "succeeded", "failed", "cancelled", "timed_out"]
+        },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "job_event": {
+      "type": "object",
+      "required": ["id", "event_type", "event", "created_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "event_type": { "type": "string", "minLength": 1 },
+        "event": { "type": "object" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": true
+    },
+    "artifact_ref": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "job_id",
+        "schema_version",
+        "artifact_type",
+        "object_key",
+        "content_type",
+        "size_bytes",
+        "checksum",
+        "created_at"
+      ],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "job_id": { "type": "string", "minLength": 1 },
+        "schema_version": { "const": "artifact.v1" },
+        "artifact_type": { "type": "string", "minLength": 1 },
+        "object_key": { "type": "string", "minLength": 1 },
+        "content_type": { "type": "string", "minLength": 1 },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "checksum": { "$ref": "#/$defs/checksum" },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "metadata": { "type": ["object", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "model_run_ref": {
+      "type": "object",
+      "required": ["schema_version", "model_run_id", "job_id", "model_key", "model_version"],
+      "properties": {
+        "schema_version": { "const": "model_run.v1" },
+        "model_run_id": { "type": "string", "minLength": 1 },
+        "job_id": { "type": "string", "minLength": 1 },
+        "model_key": { "type": "string", "minLength": 1 },
+        "model_version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    }
+  }
+}

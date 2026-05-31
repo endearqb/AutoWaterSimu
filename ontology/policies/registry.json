@@ -1,0 +1,60 @@
+{
+  "schema_version": "ontology_policies_registry.v1",
+  "policies": [
+    {
+      "key": "water_ops_read",
+      "description": "Read operational water objects within the caller's tenant/site/project scope.",
+      "applies_to_objects": ["WaterStation", "ProcessGraph", "ProcessUnit", "EquipmentAsset", "MonitoringPoint", "WaterQualitySample", "ChemicalMaterial", "InventoryBalance", "WorkOrder", "MaintenanceEvent", "ComputeJob", "ModelRun", "EvidencePackage", "RiskFinding"],
+      "allowed_actions": ["view"],
+      "required_roles": ["viewer", "operator", "engineer", "admin"],
+      "required_scope": ["tenant_id", "project_id", "site_id"],
+      "audit_required": true,
+      "approval_required": false,
+      "evidence_required": ["access_log"]
+    },
+    {
+      "key": "water_ops_write",
+      "description": "Mutate operational station, process, quality, inventory, and maintenance objects with an audit reason.",
+      "applies_to_objects": ["WaterStation", "ProcessGraph", "ProcessUnit", "EquipmentAsset", "MonitoringPoint", "WaterQualitySample", "ChemicalMaterial", "InventoryBalance", "WorkOrder", "MaintenanceEvent"],
+      "allowed_actions": ["update_metadata", "register_process_graph", "register_sample", "register_inventory_balance", "create_work_order", "close_work_order", "record_maintenance_event"],
+      "required_roles": ["operator", "engineer", "admin"],
+      "required_scope": ["tenant_id", "project_id", "site_id"],
+      "audit_required": true,
+      "approval_required": false,
+      "evidence_required": ["audit_event"]
+    },
+    {
+      "key": "model_governance_write",
+      "description": "Register model governance records, queue benchmark compute jobs, and promote parameter sets with benchmark evidence.",
+      "applies_to_objects": ["BenchmarkCase", "ModelVersion", "ParameterSet", "ComputeJob", "ModelRun"],
+      "allowed_actions": ["view", "update_metadata", "queue_compute_job", "register_model_version", "promote_parameter_set"],
+      "required_roles": ["model_owner", "admin"],
+      "required_scope": ["tenant_id", "project_id"],
+      "audit_required": true,
+      "approval_required": true,
+      "evidence_required": ["benchmark_case", "benchmark_run", "model_run", "audit_event"]
+    },
+    {
+      "key": "evidence_publish",
+      "description": "Publish evidence packages and acknowledge risk findings for review handoff, without granting production auto-publish.",
+      "applies_to_objects": ["EvidencePackage", "RiskFinding", "ModelRun", "ComputeJob"],
+      "allowed_actions": ["view", "publish_evidence_package", "acknowledge_risk_finding"],
+      "required_roles": ["evidence_reviewer", "admin"],
+      "required_scope": ["tenant_id", "project_id", "site_id"],
+      "audit_required": true,
+      "approval_required": true,
+      "evidence_required": ["evidence_package", "production_readiness", "audit_event"]
+    },
+    {
+      "key": "agent_draft_approve",
+      "description": "Approve confirmed agent drafts before they can register a process graph or queue a compute job.",
+      "applies_to_objects": ["AgentDraft", "ProcessGraph", "ComputeJob"],
+      "allowed_actions": ["view", "approve_agent_draft", "register_process_graph", "queue_compute_job"],
+      "required_roles": ["engineer", "admin"],
+      "required_scope": ["tenant_id", "project_id", "site_id"],
+      "audit_required": true,
+      "approval_required": true,
+      "evidence_required": ["agent_draft", "draft_confirmation", "audit_event"]
+    }
+  ]
+}

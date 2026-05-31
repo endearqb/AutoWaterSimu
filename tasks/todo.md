@@ -1,3 +1,803 @@
+# 2026-05-31 AutoWaterSimu Next mutation audit smoke TODO
+
+- [x] Re-read README First, root README, docs/rebuild, docs/architecture, apps/api, internal compute, scripts/ci, tasks, and current security smoke context
+- [x] Confirm the current security gap is mutation audit and data scope, while OIDC/JWKS/RBAC remain out of scope for this slice
+- [x] Add selected mutation audit event envelopes for job create and artifact retention/archive events
+- [x] Add focused Go tests and extend security smoke coverage summary
+- [x] Update API/security docs, Certainty/Elegance plan, current-state summary, task review, and README First records
+- [x] Run focused Go tests, full Go API tests, security smoke, dependency/PR fast, and diff-check validation
+
+## Plan
+
+- Keep the change inside existing `compute_job_events.event_json`; do not add migrations, OpenAPI fields, or generated clients.
+- Capture HTTP principal and route in request context for selected mutation handlers, with service/system fallback for non-HTTP paths.
+- Cover job create plus artifact retention delete/archive as a minimal, test-backed audit envelope slice.
+- Keep tenant/project/site data-scope and all-mutation audit enforcement explicitly incomplete.
+
+## Review
+
+- Added `apps/api/internal/compute/audit.go` for selected mutation audit context and envelope helpers.
+- `job.created` and `job.queued` events now include `event_json.audit` with `who/when/where/target_object/action/before/after/reason/trace_id/approval_ref`.
+- Artifact retention delete/archive events now include the same audit envelope, with artifact before state and delete/archive after state.
+- HTTP job create, simulation-check, draft promotion, benchmark schedule, and retention sweep paths inject the static-token principal and route into audit context; scheduler/service paths fall back to system/service context.
+- Extended Go coverage for HTTP job-create audit and artifact retention audit envelopes.
+- Extended `scripts/ci/security-smoke.ps1` evidence to mark `mutation_audit_events=covered_for_job_create_and_artifact_retention_events`, while keeping `tenant_project_site_data_scope=not_covered`.
+- Updated API READMEs, scripts/ci README, architecture current-state/local-dev, and Certainty/Elegance Development Plan to distinguish selected mutation audit from all-mutation/data-scope security.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "TestHTTPMutationAuditEventEnvelopeForJobCreate|TestHTTPArtifactRetentionSweepRequiresAdminScope|TestArtifactRetentionSweepArchivesCandidateWithConfiguredBackend" -count=1` passed.
+  - `cd apps\api; go test ./internal/compute -run "TestArtifactRetentionSweepDeletesOnlyUnreferencedExpiredTTL" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1` passed; evidence status `passed`, 3 steps passed, 0 failed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 7 steps passed, 0 failed.
+  - `git diff --check -- apps\api scripts docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full production OIDC/JWKS or service-token secret manager is still not implemented.
+  - Tenant/project/site data-scope filtering remains uncovered.
+  - All-mutation audit enforcement is not complete; this slice covers selected job/artifact mutation events only.
+
+# 2026-05-31 AutoWaterSimu Next browser smoke TODO
+
+- [x] Re-read README First, root README, docs/rebuild, docs/architecture, scripts/ci, `.github/workflows`, frontend, frontend/tests, routes, and services README context
+- [x] Locate existing mock-backed Playwright smokes for Compute Jobs/current-flow, Model governance, and lifecycle retention
+- [x] Add a dedicated contract validation browser smoke
+- [x] Add `scripts/ci/browser-smoke.ps1` with machine-readable evidence
+- [x] Add `just browser-smoke`
+- [x] Add `.github/workflows/next-browser-smoke.yml` as manual/reusable hosted lane
+- [x] Update root README, scripts READMEs, GitHub READMEs, frontend tests README, architecture docs, Certainty/Elegance plan, and README First records
+- [x] Run browser smoke, frontend typecheck, workflow parser, dependency/PR fast, and diff-check validation
+
+## Plan
+
+- Keep browser smoke opt-in and mock-backed for speed and determinism.
+- Cover the current Web orchestration surfaces explicitly: Compute Jobs/current-flow, contract validation, Model governance, and lifecycle retention.
+- Do not claim live backend browser evidence until the browser lane is connected to the real Postgres/MinIO/worker integration stack or hosted environment.
+- Upload `tmp/ci-evidence/browser-smoke.json` from the manual/reusable workflow.
+
+## Review
+
+- Added `frontend/tests/contract-validation.spec.ts` to cover the Compute Jobs contract validation panel with a mock-backed `POST /api/v1/contracts/validate`.
+- Added `scripts/ci/browser-smoke.ps1`, which writes `tmp/ci-evidence/browser-smoke.json` and runs:
+  - Compute Jobs current-flow submission and production readiness smoke
+  - Contract validation panel smoke
+  - Model governance catalog snapshot and promotion readiness smoke
+  - Compute lifecycle metrics and retention guard smoke
+- Added `just browser-smoke`.
+- Added `.github/workflows/next-browser-smoke.yml` with manual/reusable triggers, frontend dependency install, Chromium install, smoke execution, and evidence upload.
+- Updated root README, scripts READMEs, GitHub READMEs, frontend tests README, architecture current-state/local-dev, and Certainty/Elegance Development Plan.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1` passed; evidence status `passed`, 4 steps passed, 0 failed, with live backend and hosted workflow explicitly recorded as `not_covered`.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - Python/PyYAML parser check for `.github/workflows/next-browser-smoke.yml` passed; required triggers, Node setup, Chromium install, browser smoke execution, and upload-artifact step found, `runs-on=windows-latest`, 6 steps.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 7 steps passed, 0 failed, workflow list includes `next-browser-smoke.yml`.
+  - `git diff --check -- .github scripts Justfile README.md docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md frontend\tests tasks\todo.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Browser smoke is still mock-backed; it does not prove live Postgres/MinIO/worker backend reads or a real authenticated legacy backend session.
+  - No hosted GitHub Actions browser-smoke run was triggered from this local session.
+
+# 2026-05-31 AutoWaterSimu Next Water Ontology registry TODO
+
+- [x] Re-read README First, root README, docs/rebuild README, architecture README/current-state/local-dev, Certainty/Elegance PRD and Development Plan
+- [x] Confirm `ontology/` was not yet landed and locate the plan checklist entries
+- [x] Add Water Ontology objects/actions/links/policies registries with local README context
+- [x] Add `scripts/check-ontology.ps1`
+- [x] Wire `just check-ontology`, `just check`, and `pr-fast`
+- [x] Update architecture docs, script READMEs, root README, Certainty/Elegance checklist, and README First records
+- [x] Run ontology, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep ontology as a semantic registry layer, not a runtime authorization implementation.
+- Validate references across objects, actions, links, and policies before adding generated types or runtime enforcement.
+- Record current gaps explicitly: RBAC/ABAC, tenant/project/site data scope, approval workflow, mutation audit, and ontology-backed UI remain future work.
+- Add ontology to the fast lane because the registry check is dependency-free and low cost.
+
+## Review
+
+- Added `ontology/` with object, action, link, and policy registries plus local README context.
+- Added `docs/architecture/ontology-model.md` to make the semantic layer, validation gate, and runtime-enforcement gap explicit.
+- Added `scripts/check-ontology.ps1`; it validates registry schema versions, unique keys, required fields, and object/action/link/policy references.
+- Added `just check-ontology`, included ontology validation in `just check`, and wired the same check into `scripts/ci/pr-fast.ps1`.
+- Updated root README, scripts READMEs, architecture current-state/local-dev, and Certainty/Elegance Development Plan checklist.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1` passed, reporting 18 objects, 14 actions, 18 links, and 5 policies.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 7 steps passed, 0 failed, including the new ontology registry check.
+  - `git diff --check -- ontology scripts Justfile README.md docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Ontology is registry-backed only; runtime RBAC/ABAC, tenant/project/site data scope, approval workflow, mutation audit, UI graph explorer, and generated domain types remain future work.
+
+# 2026-05-31 AutoWaterSimu Next desktop package smoke TODO
+
+- [x] Re-read README First, scripts/ci README, GitHub workflow README, Desktop READMEs, architecture current-state/local-dev, Certainty/Elegance PRD and Development Plan
+- [x] Add `scripts/ci/desktop-package-smoke.ps1` with machine-readable evidence
+- [x] Add `just desktop-package-smoke`
+- [x] Add `.github/workflows/next-desktop-package-smoke.yml` as manual/reusable hosted lane
+- [x] Add `docs/architecture/desktop-runtime.md`
+- [x] Update root README, scripts README, scripts/ci README, GitHub READMEs, architecture docs, Certainty/Elegance plan, and README First records
+- [x] Run Desktop package smoke, workflow parser check, dependency check, PR fast, and diff-check validation
+
+## Plan
+
+- Keep Desktop package smoke opt-in, not part of default PR fast.
+- Reuse existing Rust round-trip and support bundle tests instead of duplicating package logic in PowerShell.
+- Pair contract fixture validation with runtime package import/export evidence.
+- Record uncovered boundaries explicitly: packaged worker exe, NSIS installer, release artifact download, and hosted green run.
+
+## Review
+
+- Added `scripts/ci/desktop-package-smoke.ps1`.
+- The script writes `tmp/ci-evidence/desktop-package-smoke.json` and currently runs:
+  - Desktop package/support bundle contract fixture tests
+  - Rust clean-runtime project package export/import round-trip test
+  - Rust support bundle redaction test
+  - Desktop React wrapper typecheck
+- Added `just desktop-package-smoke`.
+- Added `.github/workflows/next-desktop-package-smoke.yml` with `workflow_dispatch` / `workflow_call`, Windows runner, Python/uv, Rust, Rust cache, Node, Desktop dependency install, smoke execution, and evidence upload.
+- Added `docs/architecture/desktop-runtime.md` to summarize Desktop runtime ownership, package/support bundle contracts, evidence entry, release boundary, and current gaps.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1` passed; evidence status `passed`, 4 steps passed, 0 failed, with packaged worker / NSIS installer / hosted workflow explicitly recorded as `not_covered`.
+  - Python/PyYAML parser check for `.github/workflows/next-desktop-package-smoke.yml` passed; required triggers and setup/upload steps found, `runs-on=windows-latest`, 10 steps.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, workflow list includes `next-desktop-package-smoke.yml`, dirty worktree recorded.
+  - `git diff --check -- .github scripts Justfile README.md docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - Trailing-whitespace scan on the new script/workflow/desktop-runtime/doc files found only pre-existing Markdown hard-break spaces in the Certainty/Elegance Development Plan header.
+- Remaining scope:
+  - No actual hosted GitHub Actions run was triggered from this local session.
+  - Packaged worker exe, NSIS installer artifact, release artifact download verification, signing/auto-update policy work, browser smoke, ontology, and full golden scenarios remain future work.
+
+# 2026-05-31 AutoWaterSimu Next desktop package contracts TODO
+
+- [x] Re-read README First, root README, docs/rebuild README, contracts README/tests, Desktop READMEs, Certainty/Elegance PRD and Development Plan
+- [x] Locate Desktop project package/support bundle runtime shape and existing smoke tests
+- [x] Add `desktop_project_package.v1` and `desktop_support_bundle.v1` schemas with valid/invalid fixtures
+- [x] Register schemas in `contracts/registry.json` and `contracts/codegen/manifest.json`
+- [x] Switch new Desktop project exports to `desktop_project_package.v1` while keeping legacy `desktop_project_export.v1` import compatibility
+- [x] Update contracts/Desktop/architecture docs and Certainty/Elegance checklist
+- [x] Run contract, Desktop Rust, PR fast, and diff-check validation
+
+## Plan
+
+- Treat this as a contract/runtime-alignment slice, not the full Desktop offline golden scenario.
+- Keep the package format file-backed and checksum-verified, matching the existing Rust import/export implementation.
+- Preserve legacy `desktop_project_export.v1` import compatibility so older local package files remain usable.
+- Do not introduce generated Rust DTOs until package runtime validation and scenario evidence are stable.
+
+## Review
+
+- Added `contracts/desktop_project_package.v1.json` and `contracts/desktop_support_bundle.v1.json`.
+- Added valid fixtures for a Desktop project package and support bundle, plus invalid fixtures for missing project metadata and unsafe support-bundle artifact-content redaction.
+- `contracts/registry.json` now covers 19 schemas; `contracts/codegen/manifest.json` includes the two Desktop contracts while keeping Rust generation deferred.
+- Desktop runtime now emits `desktop_project_package.v1` for new project package exports and accepts both `desktop_project_package.v1` and legacy `desktop_project_export.v1` on import.
+- Updated `contracts/README.md`, contract examples READMEs, Desktop READMEs, `docs/architecture/contracts.md`, `docs/architecture/current-state.md`, and the Certainty/Elegance Development Plan checklist.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed, `99 passed`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1` passed; registry coverage reported 19 schemas, 38 valid examples, 14 invalid examples, and generated client drift passed.
+  - `cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml` passed, `22 passed`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- contracts apps\desktop docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - Trailing-whitespace scan on the new contract/runtime/doc files found only pre-existing Markdown hard-break spaces in the Certainty/Elegance Development Plan header.
+- Remaining scope:
+  - No generated Rust contract DTOs yet.
+  - No hosted Desktop package export/import CI artifact evidence yet.
+  - The Desktop offline golden scenario is not complete until clean-runtime/package evidence is wired into a CI or scheduled lane.
+
+# 2026-05-31 AutoWaterSimu Next security smoke TODO
+
+- [x] Re-read README First, scripts README, scripts/ci README, Justfile, architecture local-dev/current-state, Certainty/Elegance PRD and Development Plan
+- [x] Locate existing Go auth/scope/revocation and production guard tests
+- [x] Add `scripts/ci/security-smoke.ps1` with machine-readable evidence
+- [x] Add `just check-security`
+- [x] Update root README, scripts READMEs, architecture docs, Certainty/Elegance plan, and README First records
+- [x] Run security smoke, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep security smoke opt-in and fast; do not add it to default PR fast until the team wants that lane.
+- Reuse existing Go tests instead of duplicating HTTP scenarios in PowerShell.
+- Record coverage boundaries directly in `tmp/ci-evidence/security-smoke.json`.
+- Do not claim full security scenario completion until tenant/project/site data-scope and mutation audit are implemented and covered.
+
+## Review
+
+- Added `scripts/ci/security-smoke.ps1`.
+- The script currently runs:
+  - production auth config guard tests in `./cmd/compute-api`
+  - static token revocation, auth scope, and artifact admin-scope tests in `./internal/compute`
+  - governance route scope-denial tests in `./internal/compute`
+- `security-smoke.json` explicitly records `mutation_audit_events` and `tenant_project_site_data_scope` as `not_covered`.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1` passed; evidence status `passed`, 3 steps passed, 0 failed, with mutation audit and data scope explicitly recorded as `not_covered`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- README.md Justfile scripts docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - No hosted security workflow yet.
+  - No OIDC/JWKS or service-token secret manager integration yet.
+  - No tenant/project/site data-scope filtering or mutation audit event smoke yet.
+
+# 2026-05-31 AutoWaterSimu Next production dev-token guard TODO
+
+- [x] Re-read README First, root README, apps/api README, cmd/compute-api README, internal compute README, Certainty/Elegance PRD and Development Plan
+- [x] Locate current Compute API static token wiring and production-security gap
+- [x] Add `cmd/compute-api` startup guard for production token config
+- [x] Add focused Go tests for production empty/default-token rejection and non-production/default behavior
+- [x] Update `.env.example`, API/cmd README, architecture current-state, Certainty/Elegance plan, and README First records
+- [x] Run focused cmd tests, full Go API tests, dependency/PR fast, and diff-check validation
+
+## Plan
+
+- Keep P0 static token auth behavior unchanged for local/development runs.
+- Treat `APP_ENV=production` and `ENVIRONMENT=production` as production startup.
+- In production, reject missing `COMPUTE_API_TOKENS_JSON`, empty token lists, and default development token values.
+- Do not pretend this is full OIDC/RBAC/data-scope security; keep those as follow-up hardening work.
+
+## Review
+
+- `compute.Config` now carries `Environment`.
+- `cmd/compute-api` reads `APP_ENV` first and falls back to root `ENVIRONMENT`.
+- `validateProductionAuthConfig` rejects empty production token config, invalid token JSON, empty token lists, and default development token values (`dev-public-token`, `dev-worker-token`, `dev-admin-token`).
+- Non-production still allows the existing default development authenticator behavior used by local smoke tests.
+- Verification:
+  - `cd apps\api; go test ./cmd/compute-api -run "TestValidateProductionAuthConfig|TestOpenArchiveStore|TestOpenStore" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- .env.example apps\api docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Real OIDC/JWKS or service-token secret manager integration is not implemented.
+  - Tenant/project/site data-scope filtering, mutation audit event coverage, and a dedicated security smoke lane remain future work.
+
+# 2026-05-31 AutoWaterSimu Next hosted integration workflow TODO
+
+- [x] Re-read README First, `.github/workflows/README.md`, scripts/ci README, local-dev/current-state, Certainty/Elegance PRD and Development Plan
+- [x] Make `scripts/ci/integration-smoke.ps1` path handling cross-platform for Ubuntu `pwsh` runners
+- [x] Add `.github/workflows/next-integration-smoke.yml` as a manual/reusable integration smoke workflow
+- [x] Upload `tmp/ci-evidence/integration-smoke.json` as `next-integration-smoke-evidence`
+- [x] Update workflow README, scripts README, architecture current-state/local-dev, and Certainty/Elegance plan without claiming hosted green evidence
+- [x] Run local integration smoke regression, workflow YAML parser check, dependency check, PR fast, and diff-check validation
+- [ ] Trigger real GitHub Actions hosted run and record the green run URL/evidence after it completes
+
+## Plan
+
+- Keep the integration workflow opt-in through `workflow_dispatch` / `workflow_call`, not a default PR gate.
+- Use `ubuntu-latest` because Docker Compose integration is a Linux-container path.
+- Install backend dependencies with `uv sync` so `backend/.venv/bin/python` can run the host worker CLI.
+- Let the existing PowerShell smoke script own all business validation and evidence JSON generation.
+- Do not mark the `integration` lane checklist complete until there is an actual hosted green run.
+
+## Review
+
+- Added `.github/workflows/next-integration-smoke.yml`.
+- `integration-smoke.ps1` now uses path segment joining for repo root, Python resolution, fixture lookup, smoke dirs, and worker CLI invocation instead of hard-coded Windows separators.
+- Workflow syntax is intentionally small: checkout, setup Python/uv, install backend deps, verify Docker Compose, run smoke, upload evidence.
+- Documentation now distinguishes "workflow exists" from "hosted evidence is green".
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose` passed after the cross-platform path changes; latest evidence status `passed`, 9 steps passed, 0 failed, main job `job_integration_20260531131955`.
+  - Python/PyYAML parser check for `.github/workflows/next-integration-smoke.yml` passed; required keys found, `runs-on=ubuntu-latest`, 7 steps, upload-artifact step present.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, and workflow file list includes `next-integration-smoke.yml`.
+  - `docker compose -p autowatersimu-next-integration-smoke -f docker-compose.dev.yml ps` showed no running services after smoke cleanup.
+  - `git diff --check -- .github\workflows scripts docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - No actual GitHub Actions hosted run was triggered from this local session.
+  - Frontend/browser reads, packaged worker, release artifact, security scope/audit, Desktop package schema, ontology, and golden scenario lanes remain future work.
+
+# 2026-05-31 AutoWaterSimu Next integration smoke TODO
+
+- [x] Re-read README First, root README, scripts/ci README, architecture local-dev/current-state, simulation-worker README, compose config, worker API client/runner, and Certainty/Elegance Phase 1 smoke requirements
+- [x] Add `scripts/ci/integration-smoke.ps1` for real Postgres + MinIO + Compute API + worker HTTP bridge smoke
+- [x] Add `just integration-smoke` root task entry
+- [x] Fix the dev Compose Compute API command so the `golang:1.26` image keeps `go` on PATH
+- [x] Verify job/result/model_run/artifact/evidence/retention dry-run/metrics and compose cleanup
+- [x] Update architecture docs, script READMEs, Certainty/Elegance development plan, and README First records
+- [x] Run integration smoke, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Use an isolated Docker Compose project for PostgreSQL, MinIO, MinIO bucket init, and source-mounted Go Compute API.
+- Run the Python worker through `backend/.venv` in API once mode so the smoke validates the HTTP worker bridge without depending on first-start worker container dependency installation.
+- Exercise a unique material-balance job from the contracts fixture, then verify persisted result, model_run lookup, artifact download checksum, evidence package checksum, archive-candidate retention dry-run, and metrics.
+- Keep this as opt-in integration evidence; do not claim browser/frontend reads, hosted CI integration workflow, packaged worker, release artifact, security, or Desktop package coverage.
+
+## Review
+
+- Added `scripts/ci/integration-smoke.ps1`.
+- Added `just integration-smoke`.
+- `docker-compose.dev.yml` now starts `compute-api` with `sh -c` because `sh -lc` in `golang:1.26` reset PATH and failed to find `go`.
+- The integration smoke writes `tmp/ci-evidence/integration-smoke.json`, records dirty worktree state, runs compose diagnostics on failure, and tears down containers/volumes by default.
+- Early smoke runs exposed two implementation issues: Compute API container PATH with login shell, and PowerShell multipart upload behavior for archive-candidate artifacts. The final script uses direct .NET multipart upload and the final smoke passed.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose` passed; evidence status `passed`, 9 steps passed, 0 failed, compose project cleaned down; latest main job `job_integration_20260531131136`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- README.md Justfile docker-compose.dev.yml scripts docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Hosted `integration` workflow is not yet added.
+  - Frontend/browser reads of job/result/evidence are not covered by this smoke.
+  - Packaged worker, release artifact, security scope/audit, Desktop package schema, ontology, and 8 golden scenarios remain future lanes.
+
+# 2026-05-31 AutoWaterSimu Next metrics service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, and Certainty/Elegance Phase 1 context
+- [x] Introduce `MetricsService` with narrow metrics-store and clock dependencies
+- [x] Delegate public `Service.Metrics` to the narrow service
+- [x] Update the Compute API boundary audit to count the `metrics` narrow repository field
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep `/metrics` behavior and Prometheus rendering unchanged.
+- Keep metrics read-only: no retention sweep, timeout sweep, job mutation, artifact mutation, or archive mutation.
+- Keep `Service.Metrics` as the compatibility delegate.
+- Do not change public constructor signatures, OpenAPI, auth scopes, generated clients, migrations, or metric names.
+
+## Review
+
+- Added `metrics.go`.
+- `MetricsService` now owns metrics snapshot reads through `MetricsStore` and a clock.
+- `Service.Metrics` keeps the existing public method and delegates to the metrics boundary.
+- The Compute API boundary audit now counts metrics Store calls through the `metrics` narrow repository field; metrics Store calls are sourced from `metrics.go`.
+- Focused verification:
+  - `cd apps\api; go test ./internal/compute -run "TestHTTPAuthScopeAndMetrics" -count=1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - `NewService` / `NewServiceWithArchive` still wire narrowed services from the aggregate `Store`.
+  - Go package split, handler/package surface reduction, and public constructor signature narrowing remain future work.
+
+
+# 2026-05-31 AutoWaterSimu Next job lifecycle service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, and Certainty/Elegance Phase 1 context
+- [x] Introduce `JobLifecycleService` with narrow job-store, model-run-store, validator, clock, and artifact-listing dependencies
+- [x] Delegate public `Service.CreateJob`, `Service.GetJob`, `Service.ListJobs`, `Service.Events`, `Service.CancelJob`, `Service.Complete`, `Service.Fail`, and `Service.TimeoutSweep` methods to the narrow service
+- [x] Preserve public HTTP/API behavior, OpenAPI, contracts, generated clients, migrations, auth scopes, artifact object writes, model catalog mutation, and evidence semantics
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep job lifecycle responsible for job creation, listing/read snapshots, events, cancellation, completion/failure, timeout sweep, and model-run persistence from worker results.
+- Keep artifact object writes in `ArtifactLifecycleService` and evidence package generation in `EvidenceGovernanceService`.
+- Keep `Service` public methods as compatibility delegates.
+- Do not change idempotency semantics, list pagination, event records, stale worker handling, compute_result validation, model_run persistence rules, or timeout behavior.
+
+## Review
+
+- Added `job_lifecycle.go`.
+- `JobLifecycleService` now owns job create/list/read/events, cancel, complete/fail, timeout sweep, snapshot assembly, and model-run extraction from valid worker results.
+- `Service` keeps existing job public methods as compatibility delegates.
+- The job boundary uses `JobStore`, `ModelRunStore`, validator, clock, and artifact listing callback; it does not perform artifact object writes, model catalog mutation, or evidence package generation.
+- Focused verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(CreateJob|CancelRejectsLateResult|ValidatedWorkerFailPersistsTerminalResult|TimeoutSweep|WorkerLifecycleArtifactSucceedAndDownload|ValidatedCompletePersistsModelRun|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Metrics remains the last obvious service-constructor narrowing candidate in `Service`.
+  - `NewService` / `NewServiceWithArchive` still wire narrowed services from the aggregate `Store`.
+  - Go package split remains future work.
+
+
+# 2026-05-31 AutoWaterSimu Next evidence governance service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, and Certainty/Elegance Phase 1 context
+- [x] Introduce `EvidenceGovernanceService` with narrow job, model-run, process-graph, validator, clock, model catalog resolver, and artifact resolver dependencies
+- [x] Delegate public `Service.Result`, `Service.EvidencePackage`, `Service.ProductionReadiness`, and `Service.ResolveEvidenceReference` methods to the narrow service
+- [x] Preserve public HTTP/API behavior, OpenAPI, contracts, generated clients, migrations, auth scopes, model catalog mutation, artifact mutation, and approval semantics
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep evidence governance read-only: it may assemble result views, evidence packages, readiness reports, and evidence-ref payloads, but must not mutate jobs, model catalog snapshots, artifacts, or approval state.
+- Use callbacks for model catalog and artifact metadata/listing so this service keeps only three repository interfaces: `JobStore`, `ModelRunStore`, and `ProcessGraphStore`.
+- Keep `Service` public methods as compatibility delegates.
+- Do not change evidence package schema, production readiness policy text, supported evidence-ref formats, checksum generation, or route/auth behavior.
+
+## Review
+
+- Added `evidence_governance.go`.
+- `EvidenceGovernanceService` now owns result read, evidence package export, production readiness report generation, evidence-ref resolution, evidence governance summary, and related risk/readiness helpers.
+- `Service.Result`, `Service.EvidencePackage`, `Service.ProductionReadiness`, and `Service.ResolveEvidenceReference` now delegate to the evidence boundary.
+- The evidence boundary uses `JobStore`, `ModelRunStore`, `ProcessGraphStore`, model catalog resolver callback, artifact listing callback, and artifact metadata callback. It does not write to metadata stores.
+- Focused verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(NewSystemEvidenceReferenceE2E|ProductionReadiness|ValidatedCompletePersistsModelRun|RiskFindings|HTTPAuthScopeAndMetrics)" -count=1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Job lifecycle and metrics remain future service-constructor narrowing candidates.
+  - `NewService` / `NewServiceWithArchive` still wire narrowed services from the aggregate `Store`.
+
+
+# 2026-05-31 AutoWaterSimu Next worker lifecycle service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, and Certainty/Elegance Phase 1 context
+- [x] Introduce `WorkerLifecycleService` with narrow worker-store and clock dependencies
+- [x] Delegate public `Service.RegisterWorker`, `Service.Claim`, and `Service.Heartbeat` methods to the narrow service
+- [x] Update Compute API boundary audit to count the `workers` narrow repository field
+- [x] Preserve public HTTP/API behavior, OpenAPI, contracts, generated clients, migrations, auth scopes, job completion, and artifact behavior
+- [x] Run full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Move only worker registration, claim, and heartbeat logic into the narrow service.
+- Keep artifact upload and job succeed/fail on their existing artifact/job lifecycle paths.
+- Keep `Service` public methods as compatibility delegates.
+- Do not change worker wire payloads, capability matching, lease duration, job terminal semantics, or cancellation response shape.
+
+## Review
+
+- Added `worker_lifecycle.go`.
+- `WorkerLifecycleService` now owns worker registration, worker lookup for claim, queue claim, and heartbeat lease extension.
+- `Service` keeps `RegisterWorker`, `Claim`, and `Heartbeat` as public compatibility delegates.
+- The Compute API boundary audit now counts worker Store calls through the `workers` narrow repository field; all worker Store calls are sourced from `worker_lifecycle.go`.
+- Focused verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(WorkerLifecycleArtifactSucceedAndDownload|WorkerClaim|ValidatedWorkerFailPersistsTerminalResult|HTTPArtifactUploadMultipart|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+- Verification:
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Job lifecycle, evidence governance, and metrics remain future service-constructor narrowing candidates.
+  - `NewService` / `NewServiceWithArchive` still wire narrowed services from the aggregate `Store`.
+
+
+# 2026-05-31 AutoWaterSimu Next artifact upload/listing service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, Certainty/Elegance Phase 1 context, artifact implementation, HTTP handler, and artifact tests
+- [x] Move artifact upload, job artifact listing, and artifact metadata lookup into `ArtifactLifecycleService`
+- [x] Delegate public `Service.UploadArtifact` and existing artifact list/evidence-ref lookups to the artifact boundary
+- [x] Preserve public HTTP/API behavior, OpenAPI, contracts, generated clients, migrations, auth scopes, and object-store behavior
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep the existing `ArtifactLifecycleService` as the artifact boundary instead of creating a parallel artifact service.
+- Extend its constructor only as far as upload requires: `JobStore`, `ArtifactMetadataStore`, `ArchiveMetadataStore`, hot/archive object stores, validator, and clock.
+- Keep the public `Service` methods as compatibility delegates.
+- Do not change multipart upload behavior, artifact retention/archive behavior, or artifact download fallback semantics.
+
+## Review
+
+- `ArtifactLifecycleService` now owns artifact upload validation/write/metadata insertion, job artifact listing, artifact metadata lookup, download, retention sweep, and archive copy/checksum/delete.
+- `Service.UploadArtifact`, job snapshot assembly, job list artifact assembly, and artifact evidence-ref resolution now delegate to the artifact boundary.
+- The Compute API boundary audit now reports artifact metadata Store calls from `artifact_lifecycle.go`; `service.go` no longer directly calls artifact metadata Store methods for upload/listing/evidence lookup.
+- Earlier remaining-scope notes that artifact upload/listing sat outside `ArtifactLifecycleService` are superseded by this slice.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(WorkerLifecycleArtifactSucceedAndDownload|ArtifactRetention|HTTPArtifactUploadMultipart|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Worker lifecycle remains the next likely constructor-narrowing candidate before jobs + metrics.
+  - `NewService` / `NewServiceWithArchive` still wire narrowed services from the aggregate `Store`.
+
+# 2026-05-31 AutoWaterSimu Next model governance service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, and Certainty/Elegance Phase 1 context
+- [x] Introduce `ModelGovernanceService` with narrow model catalog, benchmark run, model run, validator, clock, simulation input resolver, job creation, and evidence resolver dependencies
+- [x] Delegate public model catalog / parameter set promotion / benchmark run / model run / benchmark case scheduling Service methods to the narrow service
+- [x] Update Compute API boundary audit to count `catalogs` and `benchmarkRuns` narrowed repository fields
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep public HTTP/API behavior stable.
+- Do not modify OpenAPI, contracts, generated clients, migrations, auth scopes, or database implementations.
+- Treat this as one service-constructor narrowing slice, not a package split.
+- Preserve existing benchmark case queueing, default parameter set promotion, benchmark run evidence ref validation, and model_run lookup semantics.
+
+## Review
+
+- Added `model_governance.go`.
+- `ModelGovernanceService` now owns model catalog registration/read/list, default parameter set status transitions, promotion planning/approval gating, benchmark case job queueing, benchmark run history, and model run read/list lookup.
+- `Service` keeps the existing public methods as compatibility delegates; HTTP handlers, OpenAPI, contracts, migrations, and auth scopes are unchanged.
+- Benchmark case scheduling still resolves simulation input references through `SimulationInputService`, creates jobs through the existing compute-job path, and validates benchmark run evidence refs through the existing job-scoped evidence resolver callback.
+- The Compute API boundary audit now counts Store calls through `catalogs` and `benchmarkRuns` narrow repository fields.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(ModelCatalog|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint|ValidatedCompletePersistsModelRun|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Artifact upload/listing still sits outside `ArtifactLifecycleService` and should be revisited before package movement.
+  - Worker lifecycle and jobs + metrics remain future service-constructor narrowing candidates.
+
+# 2026-05-31 AutoWaterSimu Next draft and explanation service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, and Certainty/Elegance Phase 1 context
+- [x] Introduce `DraftWorkflowService` with narrow draft confirmation, validator, clock, and simulation-check creation dependencies
+- [x] Introduce `ResultExplanationService` with narrow result explanation, job, validator, clock, and evidence resolver dependencies
+- [x] Delegate public draft confirmation / constraint plan / promotion / result explanation Service methods to the narrow services
+- [x] Move reusable contract validation response construction into `contract_validation.go`
+- [x] Tighten Compute API boundary audit so public service delegates are not counted as Store calls
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run focused Go tests, full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep public HTTP/API behavior stable.
+- Do not modify OpenAPI, contracts, generated clients, migrations, auth scopes, or database implementations.
+- Treat this as one service-constructor narrowing slice, not a package split.
+- Preserve existing Agent draft promotion semantics and job-scoped result explanation evidence ref validation.
+
+## Review
+
+- Added `draft_workflows.go`, `result_explanations.go`, and `contract_validation.go`.
+- `DraftWorkflowService` now owns draft confirmation persistence/readback, advisory constraint application plans, and explicit approved Agent draft promotion to simulation-check jobs through the existing creation callback.
+- `ResultExplanationService` now owns result explanation submit/read/review/publish and validates job-scoped evidence refs through the existing evidence resolver callback.
+- `Service` keeps the existing public methods as compatibility delegates; HTTP handlers, OpenAPI, contracts, migrations, and auth scopes are unchanged.
+- The Compute API boundary audit now counts Store calls only through known aggregate/narrow repository fields, avoiding false positives from public service delegates.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(Contract|Draft|Constraint|ResultExplanation|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Model catalog / benchmark run / model run paths remain the next likely service-constructor narrowing slice.
+  - Artifact upload/listing still sits outside `ArtifactLifecycleService` and should be revisited before package movement.
+
+# 2026-05-31 AutoWaterSimu Next simulation input service boundary TODO
+
+- [x] Re-read README First, apps/api README, internal compute README, architecture compute/current-state, and Certainty/Elegance Phase 1 context
+- [x] Introduce `SimulationInputService` with narrow simulation input, process graph, model run, job, validator, and clock dependencies
+- [x] Delegate public simulation input/process graph Service methods to the narrow service
+- [x] Move `simulation_request.input_ref` resolution to the narrow service for inline input, registered input id, process graph id, and model run replay
+- [x] Update Compute API boundary audit to count resolved Store method calls across narrowed service files
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run focused Go tests, full Go API tests, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep public HTTP/API behavior stable.
+- Do not modify OpenAPI, contracts, generated clients, migrations, auth scopes, or database implementations.
+- Treat this as one service-constructor narrowing slice, not a package split.
+- Preserve existing material-balance-only ProcessGraph transformation and conservative model_run replay semantics.
+
+## Review
+
+- Added `simulation_inputs.go`.
+- `SimulationInputService` now owns simulation input registration/read, process graph registration/read, ProcessGraph-to-SimulationInput transformation, and model_run replay input lookup.
+- `Service` keeps the existing public methods as compatibility delegates, while `CreateSimulationCheck` and benchmark case scheduling call `SimulationInputService.ResolveSimulationInput`.
+- The Compute API boundary audit now filters calls by resolved Store method names across service-layer files, so calls made through narrowed fields such as `inputs`, `processGraphs`, `modelRuns`, and `jobs` are counted without hard-coding field names.
+- Latest audit reports 41 resolved Store methods, 12 embedded interfaces, and source-aware calls including `simulation_inputs.go`.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run "Test(ProcessGraph|SimulationInput|ModelRunReplay|NewSystemEvidenceReferenceE2E|DefaultParameterSetPromotionPlanEndpoint)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Draft confirmation/result explanation constructor narrowing remains the next likely small service-boundary slice.
+  - HTTP handler direct Store calls are now visible in audit source evidence and should be reduced in a later boundary cleanup.
+
+# 2026-05-31 AutoWaterSimu Next Compute API boundary audit TODO
+
+- [x] Re-read README First, root README, apps/api README, internal compute README, current-state, and Certainty/Elegance Phase 1 context
+- [x] Add `scripts/audit-compute-api-boundary.ps1`
+- [x] Add `just audit-compute-api`
+- [x] Generate Compute API Store/domain boundary evidence under `tmp/architecture-evidence/compute-api-boundary.json`
+- [x] Add `docs/architecture/compute-api.md`
+- [x] Update apps/api, internal compute, architecture, scripts, current-state, and Certainty/Elegance checklist
+- [x] Run audit, Go tests, dependency, PR fast, and diff validation
+
+## Plan
+
+- Treat this as the Store/interface split baseline, not the split itself.
+- Keep the audit read-only and machine-readable.
+- Use the current Store interface and service call distribution to decide the first safe split domain.
+- Avoid touching endpoint behavior, OpenAPI, database migrations, auth scopes, contracts, or generated clients in this slice.
+
+## Review
+
+- Added a Compute API boundary audit script that reports file sizes, Store method count, domain grouping, service call counts, MemoryStore/PostgresStore implementation coverage, and recommended split order.
+- Latest audit reports 41 Store methods across 12 candidate domains, with both MemoryStore and PostgresStore covering all methods.
+- Added `docs/architecture/compute-api.md`; it records large-file signals, domain grouping, recommended split order, split rules, and verification commands.
+- Recommended first Store split is `artifacts` + `archive_metadata`, then `simulation_inputs` + `process_graphs`.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+
+# 2026-05-31 AutoWaterSimu Next contracts codegen policy TODO
+
+- [x] Re-read README First, docs/architecture, contracts, scripts, current-state, and Certainty/Elegance plan context
+- [x] Add `contracts/codegen/README.md`
+- [x] Add `contracts/codegen/manifest.json` covering every registered schema and TypeScript/OpenAPI/Go/Python/Rust target decision
+- [x] Add `docs/architecture/contracts.md`
+- [x] Extend `scripts/check-contracts.ps1` to validate codegen manifest coverage
+- [x] Update contracts/architecture/scripts/current-state README and Certainty/Elegance checklist
+- [x] Run contract, dependency, PR fast, and diff validation
+
+## Plan
+
+- Treat `contracts/codegen/` as the current codegen/validation policy home, not a generated output directory.
+- Keep TypeScript generation tied to the existing OpenAPI Compute client.
+- Explicitly record that Go/Python/Rust generated contract types are deferred and current safety comes from runtime schema validation, hand-written boundary DTOs, and tests.
+- Gate the manifest so new schemas cannot be added without a codegen/validation decision.
+
+## Review
+
+- Added `contracts/codegen/manifest.json`; it covers all 17 registered schemas and records 5 target decisions: TypeScript, OpenAPI, Go, Python, Rust.
+- Added `docs/architecture/contracts.md` summarizing source of truth, drift gates, change rules, current gaps, and next decisions.
+- `scripts/check-contracts.ps1` now validates `contracts/codegen/README.md`, manifest schema version, source of truth, schema coverage, and required target decision fields.
+- `scripts/check-deps.ps1` excludes `contracts/codegen/manifest.json` from runtime dependency scanning because it records target ownership paths rather than importing runtime code.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1` passed; codegen manifest covered 17 schemas and 5 target decisions; contract tests `91 passed`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+  - `frontend/src/client/compute` had no generated content diff after validation.
+
+# 2026-05-31 AutoWaterSimu Next contracts registry gate TODO
+
+- [x] Re-read README First, contracts README/tests/examples, scripts README, Justfile, architecture current-state, and Certainty/Elegance plan context
+- [x] Add `contracts/registry.json` covering every current `*.v1.json` schema, consumer list, examples, compatibility notes, and breaking-change policy
+- [x] Add `scripts/check-contracts.ps1` for registry consistency, schema tests, Compute TS client generation, whitespace normalization, and drift gate
+- [x] Route `just check-contracts` and `pr-fast` through the registry-backed gate
+- [x] Update contracts/scripts/architecture/root README context and Certainty/Elegance checklist
+- [x] Run contract, dependency, and PR fast validation
+
+## Plan
+
+- Keep this as a registry and drift gate slice, not a new generated-type pipeline.
+- Make every schema and every valid/invalid example explicitly listed in `contracts/registry.json`.
+- Keep the current drift proof scoped to registry consistency, Python contract tests, OpenAPI, and frontend Compute TS client output.
+- Leave Go/Python/Rust generated type decisions to a later `contracts/codegen/` design.
+
+## Review
+
+- Added `contracts/registry.json` with 17 schemas, 36 valid examples, and 12 invalid examples.
+- Added `scripts/check-contracts.ps1`; it verifies registry coverage, runs `contracts/tests`, regenerates the Compute TS client, normalizes generated whitespace, and checks OpenAPI/client drift.
+- Updated `Justfile` so `check-contracts` calls the script; updated `pr-fast` so default PR evidence includes the registry-backed contract gate.
+- `scripts/check-deps.ps1` now excludes `contracts/registry.json` from runtime dependency scans because it records consumers and drift paths rather than importing runtime code.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1` passed; `91 passed`; registry covered 17 schemas, 36 valid examples, and 12 invalid examples.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 6 steps passed, 0 failed, dirty worktree recorded.
+
+# 2026-05-31 AutoWaterSimu Next PR fast evidence lane TODO
+
+- [x] Re-read README First, root README, scripts README, GitHub workflow README, Certainty/Elegance plan, and architecture current-state context
+- [x] Add `scripts/ci/pr-fast.ps1` and `scripts/ci/README.md`
+- [x] Add `just pr-fast` and `.github/workflows/next-pr-fast.yml`
+- [x] Record dirty worktree, workflow catalog, step results, and generated client drift in `tmp/ci-evidence/pr-fast.json`
+- [x] Update root/architecture/workflow/script documentation and Certainty/Elegance next-step guidance
+- [x] Run `scripts\ci\pr-fast.ps1` and inspect evidence
+
+## Plan
+
+- Keep the fast lane as a PR feedback/evidence gate, not a release artifact or production approval gate.
+- Put validation logic in `scripts/ci/pr-fast.ps1`; keep GitHub Actions focused on dependency setup, script invocation, and evidence upload.
+- Run all fast checks even if an earlier step fails so the evidence file can show the full failure surface.
+- Treat local dirty worktree evidence as useful local equivalence only; clean HEAD proof still requires running after the current changes are committed.
+
+## Review
+
+- Added a PR fast lane script that records commit SHA, branch, dirty worktree state, workflow files, GitHub Actions metadata when present, and every step result under `tmp/ci-evidence/pr-fast.json`.
+- Added `.github/workflows/next-pr-fast.yml` as the default PR fast lane and kept validation logic in `scripts/ci/pr-fast.ps1`.
+- Added `just pr-fast` and documented the entry in root, scripts, CI, and architecture context.
+- Initial `scripts\ci\pr-fast.ps1` passed locally with 9 passed steps and 0 failed steps before the later registry-backed contract gate consolidation.
+- Evidence was generated from a dirty worktree, so it is local equivalence evidence rather than clean HEAD proof.
+- PyYAML parsing verified `.github/workflows/next-pr-fast.yml` core run/upload steps; `scripts\doctor.ps1` and `git diff --check` passed with only LF/CRLF warnings.
+
+# 2026-05-31 AutoWaterSimu Next dev compose TODO
+
+- [x] Re-read README First, Certainty/Elegance PRD/Plan, root README, Compute API command README, worker CLI, and architecture local-dev context
+- [x] Add Next Compute API / worker / MinIO / frontend defaults to root `.env.example`
+- [x] Add source-mounted `docker-compose.dev.yml` for PostgreSQL, MinIO, Go Compute API, Python worker loop, and Vite frontend
+- [x] Update root `Justfile` `dev` entry to use the Next dev compose stack
+- [x] Update `docs/architecture/local-dev.md`, current-state, root README, and Certainty/Elegance checklist
+- [x] Run compose config and focused validation
+
+## Plan
+
+- Keep this as a local development candidate stack, not production deployment evidence.
+- Use official Docker images and source mounts instead of introducing new Dockerfiles in this slice.
+- Configure PostgreSQL persistence, MinIO archive bucket initialization, Compute API S3 archive env, worker API loop, and Vite frontend against the local Compute API.
+- Do not claim integration smoke completion until the stack is actually started and a job lifecycle is exercised.
+
+## Review
+
+- Added Next Compute API, MinIO archive, frontend, and worker dev defaults to root `.env.example`.
+- Added `docker-compose.dev.yml` with source-mounted services for `compute-postgres`, `minio`, `minio-init`, `compute-api`, `simulation-worker`, and `frontend`.
+- Updated `Justfile` so `just dev` uses the Next dev stack, with `dev-detached` and `dev-down` helpers.
+- Updated `docs/architecture/local-dev.md`, `docs/architecture/current-state.md`, root README, and the Certainty/Elegance checklist.
+- Verification:
+  - `docker compose -f docker-compose.dev.yml config --quiet` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\doctor.ps1` passed for required tools; `just` remains optional-missing on this machine.
+  - `git diff --check -- .env.example docker-compose.dev.yml Justfile README.md docs\architecture docs\rebuild\AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+  - Full stack startup and job lifecycle smoke were not run in this slice because first-run image pulls and Python scientific dependency installation can be slow; this remains the next evidence item.
+
+# 2026-05-31 AutoWaterSimu Next Phase 0 task graph and dependency boundary TODO
+
+- [x] Re-read README First, root README, docs/rebuild quality PRD/Plan, docs/scripts/frontend/tasks/.ai README context
+- [x] Add root `Justfile` task graph entry for doctor, bootstrap, dev helpers, checks, generation, and release gate
+- [x] Add repository `doctor` and `check-deps` PowerShell scripts
+- [x] Move frontend route generated Compute client usage behind `computeJobsService`
+- [x] Add `docs/architecture` module map, dependency graph, local-dev, and current-state entry docs
+- [x] Update related README/context records and the Certainty/Elegance checklist
+- [x] Run dependency, frontend type, doctor, Biome, and diff validation
+
+## Plan
+
+- Treat the broad "完善和优化" request as the first low-risk Phase 0 slice from the Certainty/Elegance plan.
+- Implement a root task graph and minimal dependency boundary check before attempting higher-risk Go API package splitting, Store interface refactors, production auth, or full Docker dev stack work.
+- Make the first `check-deps` rule set pass on current code by removing route/component direct imports of `frontend/src/client/compute`.
+- Document current state and remaining gaps in `docs/architecture` instead of encoding unverified future work as completed.
+
+## Review
+
+- Added root `Justfile` recipes for `doctor`, `bootstrap`, `dev`, `dev-api`, `dev-worker-loop`, `dev-frontend`, `check`, `check-full`, `check-deps`, `check-contracts`, `gen`, `lint`, and `release-gate`.
+- Added `scripts/doctor.ps1` and PowerShell-native `scripts/check-deps.ps1`.
+- Added `docs/architecture/README.md`, `module-map.md`, `dependency-graph.md`, `local-dev.md`, and `current-state.md`.
+- Removed route-level direct imports from `@/client/compute` by re-exporting UI-facing Compute types and API base URL through `computeJobsService`.
+- Updated root/docs/scripts/frontend README context and marked the landed Phase 0 checklist items in the Certainty/Elegance Development Plan.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\doctor.ps1` passed for required tools; `just` is optional-missing on this machine.
+  - `cd frontend; npx biome check src\services\computeJobsService.ts src\routes\_layout\compute-jobs.tsx src\routes\_layout\compute-lifecycle.tsx src\routes\_layout\model-governance.tsx` passed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check -- ...` passed with LF/CRLF warnings only.
+
+# 2026-05-31 AutoWaterSimu Next certainty and elegance documentation TODO
+
+- [x] Re-read README First, root README, docs/rebuild README, tasks README, .ai README, and .ai/changes README
+- [x] Create certainty/elegance PRD as a supplemental quality-target document
+- [x] Create certainty/elegance development plan as a staged implementation and acceptance document
+- [x] Update docs/rebuild README to register the supplemental documents
+- [x] Update `.ai/changes/2026-05-31.md` with scope, assumptions, uncertainty, and verification
+- [x] Run documentation drift/format checks
+
+## Plan
+
+- Treat the pasted text as a quality-improvement input, not as an instruction to implement runtime refactors.
+- Add supplemental PRD/Plan files instead of modifying the existing Next PRD/Technical Spec/Development Plan authority set.
+- Keep the scope limited to AutoWaterSimu Next certainty and elegance improvements: monorepo entry, dependency boundaries, contracts, modular Go API, Store split, frontend feature architecture, Desktop package schema, Water Ontology, production security, CI/release evidence, and scenario-level acceptance.
+- Do not include Hteinfo/IMS expansion beyond the pasted text, do not change runtime code, and do not overwrite the existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md`.
+
+## Review
+
+- Added `docs/rebuild/AutoWaterSimu_Next_Certainty_Elegance_PRD_v1.0.md` as a supplemental quality-target PRD.
+- Added `docs/rebuild/AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md` as the staged quality-improvement plan.
+- Updated `docs/rebuild/README.md` to register both documents and clarify that they do not alter the current Next PRD/Spec/Plan P0/P1/P2 commitments.
+- Updated `.ai/changes/2026-05-31.md` with the documentation-only scope, assumptions, remaining uncertainty, and validation.
+- Left the existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` untouched.
+- Verification:
+  - `git diff --check -- docs/rebuild tasks/todo.md .ai/changes/2026-05-31.md` passed with LF/CRLF warnings only.
+  - `rg -n "P0|P1|P2|95|ontology|release evidence|single source of truth" docs\rebuild` returned expected matches in the new supplemental docs and existing rebuild context.
+
 # 2026-05-31 AutoWaterSimu Next legacy compute read-only guard TODO
 
 - [x] Re-read README First, backend app/api/routes/core/test README, Development Plan checklist, completion audit, and legacy migration guide
@@ -3854,3 +4654,65 @@
 - `git diff --check` passed with LF/CRLF warnings only.
 - Remaining scope:
 - UI integration for approval pages, richer evidence ref grammar, process graph registry dereference, full result explanation review/publish, and NewSystem service-level E2E remain follow-up work.
+
+# 2026-05-31 AutoWaterSimu Next Store Interface Split TODO
+
+- [x] Re-read README First context for Compute API, scripts, architecture docs, and Certainty/Elegance plan
+- [x] Split the aggregate Compute API metadata `Store` into embedded domain store interfaces
+- [x] Update the Compute API boundary audit script to resolve embedded interfaces
+- [x] Update architecture and directory README context for the first Store split
+- [x] Run Go API, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep `apps/api/internal/compute` as one package in this pass.
+- Do not move PostgreSQL or MemoryStore implementations.
+- Do not change HTTP behavior, OpenAPI, contracts, migrations, generated clients, or auth scopes.
+- Treat this as the first Store split slice: aggregate interface first, service constructor narrowing later.
+
+## Review
+
+- `Store` now embeds 12 domain metadata store interfaces: jobs, workers, artifact metadata, archive metadata, model runs, benchmark runs, model catalog, process graphs, simulation inputs, draft confirmations, result explanations, and metrics.
+- The existing byte/object `ArtifactStore` name in `artifacts.go` is preserved; metadata persistence uses `ArtifactMetadataStore`.
+- `scripts/audit-compute-api-boundary.ps1` now resolves embedded interfaces, records embedded interface evidence, and fails if expected domain interfaces are missing.
+- Documentation now distinguishes this first aggregate-interface split from the remaining service-constructor narrowing and package split work.
+- Verification:
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed, reporting 41 resolved Store methods, 12 embedded interfaces, and 12 domain groups.
+- `cd apps\api; go test ./...` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with 6 passed steps.
+- `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+- Service constructors still depend on the aggregate `Store`; next split should narrow artifact retention/archive paths first.
+- `apps/api/internal/compute` remains a large single package; Go domain package movement remains follow-up work.
+
+# 2026-05-31 AutoWaterSimu Next Artifact Lifecycle Service Boundary TODO
+
+- [x] Re-read README First context for Compute API, internal compute, architecture, and Certainty/Elegance plan
+- [x] Introduce `ArtifactLifecycleService` with narrow artifact metadata, archive metadata, and object-store dependencies
+- [x] Delegate public `Service.DownloadArtifact` and `Service.SweepArtifactRetention` to the narrow service
+- [x] Update Compute API README, architecture current-state, and Certainty/Elegance checklist
+- [x] Run focused retention tests, Go API, audit, dependency, PR fast, and diff-check validation
+
+## Plan
+
+- Keep public HTTP/API behavior stable.
+- Do not modify OpenAPI, contracts, generated clients, migrations, auth scopes, or object-store implementations.
+- Treat this as one service-constructor narrowing slice, not the full Go API package split.
+- Preserve existing hot artifact and archive object-store behavior by moving logic rather than rewriting it.
+
+## Review
+
+- Added `artifact_lifecycle.go`.
+- `ArtifactLifecycleService` constructor now depends on `ArtifactMetadataStore`, `ArchiveMetadataStore`, hot artifact storage, optional archive storage, and a clock.
+- `Service.DownloadArtifact` and `Service.SweepArtifactRetention` remain as compatibility methods and delegate to the narrow service.
+- Verification:
+- `cd apps\api; go test ./internal/compute -run "TestArtifactRetention|TestHTTPArtifactRetention|TestS3ArtifactStore" -count=1` passed.
+- `cd apps\api; go test ./...` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed, reporting 41 resolved Store methods, 12 embedded interfaces, and 12 domain groups.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with 6 passed steps.
+- `git diff --check -- apps\api docs scripts tasks\todo.md .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+- Remaining scope:
+- Most `Service` behavior still depends on the aggregate `Store`; continue with simulation input/process graph or draft confirmation/result explanation constructor narrowing.
+- Go package movement remains follow-up work.

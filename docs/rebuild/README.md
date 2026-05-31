@@ -24,6 +24,8 @@
 | `AutoWaterSimu_Next_PRD_v1.0.md` | 产品需求和范围控制 |
 | `AutoWaterSimu_Next_Technical_Spec_v1.0.md` | 技术接口、状态机、存储和治理规格 |
 | `AutoWaterSimu_Next_Development_Plan_v1.0.md` | 分阶段开发计划和验收 |
+| `AutoWaterSimu_Next_Certainty_Elegance_PRD_v1.0.md` | Next 确定性与优雅性补充 PRD，定义 95 分质量目标 |
+| `AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md` | Next 确定性与优雅性补充开发计划，定义分阶段质量提升路线 |
 | `AutoWaterSimu_Next_Legacy_Phase0_Drift_Audit_2026-05-31.md` | Phase 0 legacy print/schema/client drift 精确审计 |
 | `AutoWaterSimu_Next_COSS_Source_Manifest_2026-05-31.md` | COSS-compatible UI source copy/license manifest |
 | `AutoWaterSimu_Next_Legacy_Migration_Guide_2026-05-31.md` | legacy FastAPI/React baseline 到 Next worker/API/Desktop 的迁移指南 |
@@ -36,6 +38,7 @@
 2. 合同命名使用 snake_case，例如 `compute_job.v1`。
 3. 文档修改应同步记录到 `.ai/changes/`。
 4. 重大架构决策同步写入 `.ai/decisions/`。
+5. Certainty/Elegance 补充文档只定义质量目标和后续路线，不直接改变现有 PRD/Spec/Plan 的 P0/P1/P2 承诺。
 
 ## 4. 对外接口
 

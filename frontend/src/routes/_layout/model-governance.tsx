@@ -20,7 +20,7 @@ import type {
   ModelCatalog,
   ModelCatalogRecord,
   ModelParameterSetPromotionPlan,
-} from "@/client/compute"
+} from "@/services/computeJobsService"
 import { computeJobsService } from "@/services/computeJobsService"
 
 export const Route = createFileRoute("/_layout/model-governance")({
@@ -177,10 +177,10 @@ function CatalogVersionTable({
         displayName: model.display_name,
         modelKey: model.model_key,
         parameterHash: version.default_parameter_set?.parameter_hash ?? "N/A",
-        parameterSet:
-          version.default_parameter_set?.parameter_set_id ?? "N/A",
+        parameterSet: version.default_parameter_set?.parameter_set_id ?? "N/A",
         parameterStatus: version.default_parameter_set?.status ?? "N/A",
-        promotionPlan: promotionPlans[versionKey(model.model_key, version.model_version)],
+        promotionPlan:
+          promotionPlans[versionKey(model.model_key, version.model_version)],
         status: version.status,
         templateCount: version.parameter_templates.length,
         version: version.model_version,
@@ -407,7 +407,10 @@ function ModelGovernance() {
               target.modelKey,
               target.modelVersion,
             )
-          return [versionKey(target.modelKey, target.modelVersion), plan] as const
+          return [
+            versionKey(target.modelKey, target.modelVersion),
+            plan,
+          ] as const
         }),
       )
       return Object.fromEntries(entries)
@@ -430,7 +433,8 @@ function ModelGovernance() {
     (plan) => plan.can_promote_to_approved,
   ).length
   const snapshotItems = snapshotQuery.data?.items ?? []
-  const error = catalogQuery.error || snapshotQuery.error || promotionPlansQuery.error
+  const error =
+    catalogQuery.error || snapshotQuery.error || promotionPlansQuery.error
 
   return (
     <Container maxW="7xl" py={8}>
@@ -497,7 +501,13 @@ function ModelGovernance() {
         />
 
         <Box borderWidth="1px" borderRadius="md" p={4}>
-          <Flex justify="space-between" align="center" gap={3} wrap="wrap" mb={3}>
+          <Flex
+            justify="space-between"
+            align="center"
+            gap={3}
+            wrap="wrap"
+            mb={3}
+          >
             <Box>
               <Heading size="md">Catalog snapshots</Heading>
               <Text fontSize="sm" color="fg.muted">

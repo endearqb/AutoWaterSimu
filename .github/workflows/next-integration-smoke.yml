@@ -1,0 +1,50 @@
+name: AutoWaterSimu Next Integration Smoke
+
+concurrency:
+  group: next-integration-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+'on':
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+          enable-cache: true
+
+      - name: Install backend Python dependencies
+        run: uv sync
+        working-directory: backend
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Run integration smoke evidence
+        shell: pwsh
+        run: ./scripts/ci/integration-smoke.ps1 -StartCompose
+
+      - name: Upload integration smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-integration-smoke-evidence
+          path: tmp/ci-evidence
+          include-hidden-files: true

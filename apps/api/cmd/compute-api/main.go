@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -27,6 +28,7 @@ func run() error {
 		return err
 	}
 	config := compute.Config{
+		Environment:            getenv("APP_ENV", os.Getenv("ENVIRONMENT")),
 		DatabaseURL:            os.Getenv("COMPUTE_API_DATABASE_URL"),
 		ArtifactDir:            getenv("COMPUTE_API_ARTIFACT_DIR", filepath.Join(repoRoot, "tmp", "compute-api-artifacts")),
 		ArchiveDir:             os.Getenv("COMPUTE_API_ARCHIVE_DIR"),
@@ -42,6 +44,9 @@ func run() error {
 		RetentionSweepInterval: durationEnv("COMPUTE_API_RETENTION_SWEEP_INTERVAL", 0),
 		RetentionSweepDryRun:   boolEnv("COMPUTE_API_RETENTION_SWEEP_DRY_RUN", true),
 		RetentionSweepLimit:    intEnv("COMPUTE_API_RETENTION_SWEEP_LIMIT", 100),
+	}
+	if err := validateProductionAuthConfig(config); err != nil {
+		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -100,6 +105,41 @@ func run() error {
 	server := compute.NewServer(service, auth, slog.Default())
 	slog.Info("starting compute api", "port", config.Port)
 	return http.ListenAndServe(":"+config.Port, server.Routes())
+}
+
+func validateProductionAuthConfig(config compute.Config) error {
+	if !isProductionEnv(config.Environment) {
+		return nil
+	}
+	if strings.TrimSpace(config.TokensJSON) == "" {
+		return fmt.Errorf("COMPUTE_API_TOKENS_JSON is required when APP_ENV or ENVIRONMENT is production")
+	}
+	var tokenConfig compute.TokenConfig
+	if err := json.Unmarshal([]byte(config.TokensJSON), &tokenConfig); err != nil {
+		return fmt.Errorf("COMPUTE_API_TOKENS_JSON is invalid")
+	}
+	if len(tokenConfig.Tokens) == 0 {
+		return fmt.Errorf("COMPUTE_API_TOKENS_JSON must define at least one token when APP_ENV or ENVIRONMENT is production")
+	}
+	for _, token := range tokenConfig.Tokens {
+		if isDefaultDevelopmentToken(token.Token) {
+			return fmt.Errorf("default development token value for %q is not allowed when APP_ENV or ENVIRONMENT is production", token.Name)
+		}
+	}
+	return nil
+}
+
+func isProductionEnv(environment string) bool {
+	return strings.EqualFold(strings.TrimSpace(environment), "production")
+}
+
+func isDefaultDevelopmentToken(token string) bool {
+	switch strings.TrimSpace(token) {
+	case "dev-public-token", "dev-worker-token", "dev-admin-token":
+		return true
+	default:
+		return false
+	}
 }
 
 func openStore(ctx context.Context, config compute.Config, migrationsDir string) (compute.Store, func(), error) {

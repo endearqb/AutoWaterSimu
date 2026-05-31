@@ -1,0 +1,69 @@
+{
+  "schema_version": "contracts_codegen_manifest.v1",
+  "updated_on": "2026-05-31",
+  "description": "Current codegen and validation strategy for AutoWaterSimu Next contracts.",
+  "source_of_truth": "contracts/registry.json",
+  "covered_schema_versions": [
+    "agent_scenario_draft.v1",
+    "artifact.v1",
+    "benchmark_run.v1",
+    "canvas_graph.v1",
+    "compute_job.v1",
+    "compute_result.v1",
+    "constraint_draft.v1",
+    "contract_error.v1",
+    "draft_confirmation.v1",
+    "desktop_project_package.v1",
+    "desktop_support_bundle.v1",
+    "evidence_package.v1",
+    "model_catalog.v1",
+    "model_run.v1",
+    "process_graph.v1",
+    "production_readiness.v1",
+    "result_explanation.v1",
+    "simulation_input.v1",
+    "simulation_request.v1"
+  ],
+  "target_decisions": {
+    "typescript": {
+      "status": "generated_via_openapi_compute_client",
+      "output": "frontend/src/client/compute",
+      "command": "cd frontend; npm run generate-compute-client",
+      "drift_gate": "git diff --exit-code -- apps/api/openapi/compute.openapi.json frontend/src/client/compute",
+      "reason": "Web UI consumes the Go Compute API through OpenAPI; generated TS types must stay isolated behind frontend services."
+    },
+    "openapi": {
+      "status": "authoritative_api_projection",
+      "output": "apps/api/openapi/compute.openapi.json",
+      "command": "cd apps/api; go test ./...",
+      "drift_gate": "git diff --exit-code -- apps/api/openapi/compute.openapi.json frontend/src/client/compute",
+      "reason": "OpenAPI is the current API-facing projection used by the generated Compute TS client."
+    },
+    "go": {
+      "status": "manual_dtos_runtime_schema_validation",
+      "output": "apps/api/internal/compute",
+      "command": "cd apps/api; go test ./...",
+      "drift_gate": "scripts/check-contracts.ps1 plus Go API tests",
+      "reason": "The Go API already owns HTTP DTOs and validates contract payloads at runtime; generated Go contract types are deferred until package boundaries are split."
+    },
+    "python": {
+      "status": "runtime_schema_validation_and_transform_helpers",
+      "output": "contracts/python and services/simulation-worker",
+      "command": "backend/.venv/Scripts/python -m pytest contracts/tests services/simulation-worker/tests -q",
+      "drift_gate": "contracts tests plus worker tests",
+      "reason": "The worker executes schema-validated payloads and focused transform helpers; generated Python types are deferred until they remove duplicated runtime checks."
+    },
+    "rust": {
+      "status": "manual_tauri_boundary_types",
+      "output": "apps/desktop/src-tauri/src",
+      "command": "cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml",
+      "drift_gate": "desktop Rust tests and project package smoke",
+      "reason": "Desktop currently owns local runtime/package DTOs and does not consume every contract directly; generated Rust types need a scoped package-schema plan first."
+    }
+  },
+  "current_non_goals": [
+    "Do not commit generated Go, Python, or Rust contract types in this slice.",
+    "Do not replace runtime JSON Schema validation with generated type checks alone.",
+    "Do not move generated frontend Compute client imports into route or component code."
+  ]
+}

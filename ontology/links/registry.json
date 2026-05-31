@@ -1,0 +1,149 @@
+{
+  "schema_version": "ontology_links_registry.v1",
+  "links": [
+    {
+      "key": "station_has_process_graph",
+      "from": "WaterStation",
+      "to": "ProcessGraph",
+      "cardinality": "one_to_many",
+      "description": "A station can own multiple process graph versions or alternatives.",
+      "evidence_refs": ["process_graph", "audit_event"]
+    },
+    {
+      "key": "station_has_process_unit",
+      "from": "WaterStation",
+      "to": "ProcessUnit",
+      "cardinality": "one_to_many",
+      "description": "A station contains process units used by operations and model graphs.",
+      "evidence_refs": ["process_graph", "audit_event"]
+    },
+    {
+      "key": "process_graph_contains_process_unit",
+      "from": "ProcessGraph",
+      "to": "ProcessUnit",
+      "cardinality": "many_to_many",
+      "description": "A process graph references the process units represented by its nodes.",
+      "evidence_refs": ["process_graph"]
+    },
+    {
+      "key": "process_unit_has_equipment_asset",
+      "from": "ProcessUnit",
+      "to": "EquipmentAsset",
+      "cardinality": "one_to_many",
+      "description": "A process unit can be supported by one or more equipment assets.",
+      "evidence_refs": ["audit_event", "work_order"]
+    },
+    {
+      "key": "process_unit_has_monitoring_point",
+      "from": "ProcessUnit",
+      "to": "MonitoringPoint",
+      "cardinality": "one_to_many",
+      "description": "A process unit can have sampling or measurement points.",
+      "evidence_refs": ["quality_sample", "audit_event"]
+    },
+    {
+      "key": "monitoring_point_has_quality_sample",
+      "from": "MonitoringPoint",
+      "to": "WaterQualitySample",
+      "cardinality": "one_to_many",
+      "description": "A monitoring point can produce many time-bound quality samples.",
+      "evidence_refs": ["quality_sample"]
+    },
+    {
+      "key": "chemical_material_has_inventory_balance",
+      "from": "ChemicalMaterial",
+      "to": "InventoryBalance",
+      "cardinality": "one_to_many",
+      "description": "A material can have many inventory balance records.",
+      "evidence_refs": ["inventory_balance", "audit_event"]
+    },
+    {
+      "key": "work_order_targets_equipment_asset",
+      "from": "WorkOrder",
+      "to": "EquipmentAsset",
+      "cardinality": "many_to_one",
+      "description": "A work order can target an equipment asset.",
+      "evidence_refs": ["work_order", "audit_event"]
+    },
+    {
+      "key": "maintenance_event_closes_work_order",
+      "from": "MaintenanceEvent",
+      "to": "WorkOrder",
+      "cardinality": "many_to_one",
+      "description": "A maintenance event can close or update a work order.",
+      "evidence_refs": ["maintenance_event", "work_order", "audit_event"]
+    },
+    {
+      "key": "benchmark_case_validates_model_version",
+      "from": "BenchmarkCase",
+      "to": "ModelVersion",
+      "cardinality": "many_to_one",
+      "description": "Benchmark cases validate model version behavior or parameter readiness.",
+      "evidence_refs": ["benchmark_case", "benchmark_run"]
+    },
+    {
+      "key": "model_version_has_parameter_set",
+      "from": "ModelVersion",
+      "to": "ParameterSet",
+      "cardinality": "one_to_many",
+      "description": "A model version can expose governed parameter sets.",
+      "evidence_refs": ["model_catalog", "audit_event"]
+    },
+    {
+      "key": "parameter_set_produces_model_run",
+      "from": "ParameterSet",
+      "to": "ModelRun",
+      "cardinality": "one_to_many",
+      "description": "A parameter set can be referenced by many model runs.",
+      "evidence_refs": ["model_run", "benchmark_run"]
+    },
+    {
+      "key": "process_graph_drives_compute_job",
+      "from": "ProcessGraph",
+      "to": "ComputeJob",
+      "cardinality": "one_to_many",
+      "description": "A process graph can generate simulation input for compute jobs.",
+      "evidence_refs": ["process_graph", "simulation_input", "compute_job"]
+    },
+    {
+      "key": "compute_job_produces_model_run",
+      "from": "ComputeJob",
+      "to": "ModelRun",
+      "cardinality": "one_to_one",
+      "description": "A completed compute job can persist a model run summary.",
+      "evidence_refs": ["compute_job", "model_run", "artifact"]
+    },
+    {
+      "key": "evidence_package_summarizes_model_run",
+      "from": "EvidencePackage",
+      "to": "ModelRun",
+      "cardinality": "many_to_one",
+      "description": "An evidence package summarizes a model run and its verification context.",
+      "evidence_refs": ["evidence_package", "model_run"]
+    },
+    {
+      "key": "evidence_package_references_compute_job",
+      "from": "EvidencePackage",
+      "to": "ComputeJob",
+      "cardinality": "many_to_one",
+      "description": "An evidence package references the compute job that produced the result.",
+      "evidence_refs": ["evidence_package", "compute_job"]
+    },
+    {
+      "key": "risk_finding_blocks_evidence_package",
+      "from": "RiskFinding",
+      "to": "EvidencePackage",
+      "cardinality": "many_to_one",
+      "description": "A high or critical risk finding can block evidence package readiness.",
+      "evidence_refs": ["risk_finding", "production_readiness"]
+    },
+    {
+      "key": "agent_draft_proposes_process_graph",
+      "from": "AgentDraft",
+      "to": "ProcessGraph",
+      "cardinality": "many_to_one",
+      "description": "An agent draft can propose a new or revised process graph.",
+      "evidence_refs": ["agent_draft", "draft_confirmation", "process_graph"]
+    }
+  ]
+}

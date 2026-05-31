@@ -1,0 +1,68 @@
+# AutoWaterSimu Next Current State
+
+> Snapshot date: 2026-05-31.
+
+This document summarizes long-lived facts from README files, `.ai/decisions/`, release gate scripts, and the Certainty/Elegance quality plan. It does not replace source code, tests, OpenAPI, contracts, or `.ai/changes/`.
+
+## Landed
+
+- README First protocol is active through `AGENTS.md`, `README_First.md`, directory README files, `.ai/changes/`, and `.ai/decisions/`.
+- Next monorepo surfaces exist beside legacy `frontend/` and `backend/`: `contracts/`, `apps/api/`, `services/simulation-worker/`, `apps/desktop/`, and `simulation_core/`.
+- `contracts/` contains versioned JSON Schemas, a registry, a codegen/validation policy manifest, valid/invalid examples, and contract tests.
+- `contracts/desktop_project_package.v1.json` and `contracts/desktop_support_bundle.v1.json` define the Desktop project package and support bundle wire shapes with valid/invalid fixtures.
+- `ontology/` contains the first Water Ontology registries for objects, actions, links, and policies; `docs/architecture/ontology-model.md` records their purpose and runtime enforcement boundary.
+- `scripts/check-ontology.ps1` validates Water Ontology schema versions, unique keys, object/action/link/policy references, and required descriptive fields.
+- `apps/api/` exposes the Go Compute API with job lifecycle, worker lifecycle, artifacts, model governance, evidence, simulation checks, result explanation workflow, production readiness, metrics, retention, and archive boundaries.
+- `apps/api/internal/compute/store.go` expresses the aggregate metadata `Store` as 12 embedded domain store interfaces.
+- `apps/api/internal/compute/artifact_lifecycle.go` is the first narrowed service-boundary slice for artifact upload, listing, metadata lookup, download, retention sweep, and archive copy/checksum/delete flow.
+- `apps/api/internal/compute/simulation_inputs.go` is the second narrowed service-boundary slice for simulation input registry, process graph registry, and `simulation_request.input_ref` resolution.
+- `apps/api/internal/compute/draft_workflows.go` and `apps/api/internal/compute/result_explanations.go` narrow draft confirmation/promotion and result explanation workflows behind domain store interfaces.
+- `apps/api/internal/compute/model_governance.go` narrows model catalog, benchmark run, model run lookup, default parameter set promotion planning, and benchmark case queueing behind domain store interfaces.
+- `apps/api/internal/compute/worker_lifecycle.go` narrows worker register, claim, and heartbeat behind `WorkerStore`.
+- `apps/api/internal/compute/evidence_governance.go` narrows result read, evidence package export, production readiness, and evidence-ref resolution behind job/model-run/process-graph stores and artifact/model-catalog callbacks.
+- `apps/api/internal/compute/job_lifecycle.go` narrows job create/list/read/events, cancel, complete/fail, timeout sweep, and model-run persistence behind job/model-run stores and artifact listing callback.
+- `apps/api/internal/compute/audit.go` adds selected mutation audit envelopes under `compute_job_events.event_json.audit` for job create/queue and artifact retention delete/archive events; this is a partial audit slice, not full all-mutation/data-scope enforcement.
+- `apps/api/internal/compute/metrics.go` narrows metrics snapshot reads behind `MetricsStore` and a clock.
+- `apps/api/cmd/compute-api` rejects production startup when static token config is empty or contains default development token values.
+- `scripts/audit-compute-api-boundary.ps1` verifies the current Compute API Store/domain interface shape, resolved Store-call source files, and writes evidence under `tmp/architecture-evidence/compute-api-boundary.json`.
+- `services/simulation-worker/` supports self-check, direct job execution, API once mode, API loop mode, and Desktop sidecar JSON-RPC mode.
+- `frontend/` has generated Compute client isolation under `frontend/src/client/compute`; route/component code should use service wrappers rather than importing the generated client directly.
+- `apps/desktop/` has Tauri runtime, local project package/export/import, worker sidecar management, support bundle and packaging smoke boundaries.
+- New Desktop project exports use `desktop_project_package.v1`; the runtime still imports legacy `desktop_project_export.v1` files for backward compatibility.
+- `scripts/release/next-release-gates.ps1` generates local/CI release gate evidence under `tmp/release-evidence`.
+- Root `Justfile`, `scripts/doctor.ps1`, and `scripts/check-deps.ps1` now provide the first Phase 0 task graph and dependency check entry.
+- `docker-compose.dev.yml` now provides a source-mounted Next dev stack candidate for PostgreSQL, MinIO, Go Compute API, Python worker loop, and Vite frontend.
+- `scripts/ci/pr-fast.ps1` and `.github/workflows/next-pr-fast.yml` define a PR fast lane that writes `tmp/ci-evidence/pr-fast.json`.
+- `scripts/ci/integration-smoke.ps1` defines an opt-in local integration smoke that starts an isolated Compose project for PostgreSQL + MinIO + Compute API, runs the host Python worker API once, verifies job/result/model_run/artifact/evidence/retention dry-run/metrics, and writes `tmp/ci-evidence/integration-smoke.json`.
+- `.github/workflows/next-integration-smoke.yml` exposes the integration smoke as a manual/reusable hosted workflow that uploads `next-integration-smoke-evidence`.
+- `scripts/ci/security-smoke.ps1` defines an opt-in security smoke for production token guard, static token revocation, scope-denial, artifact admin-scope checks, and selected mutation audit envelopes, writing `tmp/ci-evidence/security-smoke.json`.
+- `scripts/ci/browser-smoke.ps1` defines an opt-in mock-backed Playwright browser smoke for Compute Jobs/current-flow, contract validation, Model governance, and lifecycle retention, writing `tmp/ci-evidence/browser-smoke.json`.
+- `.github/workflows/next-browser-smoke.yml` exposes the browser smoke as a manual/reusable hosted workflow that uploads `next-browser-smoke-evidence`.
+- `scripts/ci/desktop-package-smoke.ps1` defines an opt-in Desktop package smoke for Desktop package/support bundle fixtures, clean-runtime project package export/import, support bundle redaction, and Desktop typecheck, writing `tmp/ci-evidence/desktop-package-smoke.json`.
+- `.github/workflows/next-desktop-package-smoke.yml` exposes the Desktop package smoke as a manual/reusable hosted workflow that uploads `next-desktop-package-smoke-evidence`.
+- `scripts/check-contracts.ps1` validates `contracts/registry.json`, runs contract tests, regenerates the Compute TS client, and checks OpenAPI/client drift.
+
+## Accepted Current Gaps
+
+- `apps/api/internal/compute` is still a large package. The aggregate `Store` resolves to 41 methods across 12 embedded domain metadata interfaces. Artifact lifecycle including upload/listing, simulation input/process graph, draft workflow, result explanation, model governance, worker register/claim/heartbeat, evidence governance, job lifecycle, and metrics paths now have narrowed constructors, but package-level wiring, public constructor signatures, and some handler-facing behavior still remain in the large package; `service.go`, `postgres.go`, `http.go`, and `store.go` remain large-file split targets.
+- Multi-language generated contract type output for Go, Python, and Rust is not yet implemented; `contracts/codegen/manifest.json` records the current decision to use runtime schema validation or hand-written boundary DTOs for those targets. Desktop package/support-bundle contracts now exist, but Rust generated DTO adoption is still deferred.
+- The Next dev compose stack now has initial API runtime smoke evidence for PostgreSQL + MinIO + Compute API + host Python worker. A hosted/manual integration workflow file exists, but a real GitHub Actions green run is still pending. Frontend/browser reads, packaged worker first-start timing, and full compose `simulation-worker` container behavior still need dedicated evidence.
+- Local `pr-fast` evidence records dirty worktree state; a clean HEAD proof requires running the same lane after the current changes are committed.
+- Full production OIDC/RBAC/data-scope policy is not implemented. P0 static tokens remain the current auth model, but production startup now blocks empty token config and default development token values, and security smoke covers token revocation, scope denial, admin-only artifact retention, and selected mutation audit envelopes for job create plus artifact retention delete/archive events.
+- Browser smoke is mock-backed and route-focused. A hosted/manual workflow file exists, but a real GitHub Actions green run is still pending. It does not prove live backend reads through PostgreSQL/MinIO/worker or a legacy authenticated backend session.
+- Desktop package smoke is source-mode runtime focused. A hosted/manual workflow file exists, but a real GitHub Actions green run is still pending. It does not prove packaged-worker exe startup, NSIS installer behavior, release artifact download verification, signing, or auto update.
+- Water Ontology has a first registry-backed semantic layer, but it is not yet a runtime policy enforcement layer. Full OIDC/RBAC/ABAC/data-scope and all-mutation audit enforcement remain future work.
+- The 8 golden scenarios are not all automated. Existing release gate, worker, contract, Go, frontend, and desktop checks cover many single-lane validations but not every scenario end to end.
+
+## Immediate Quality Direction
+
+The next low-risk increments are:
+
+1. Expand `check-deps` only after existing code is brought into compliance with each new rule.
+2. Trigger or wire the hosted integration and browser smoke workflows, then add live backend browser reads on top of the current mock-backed browser lane.
+3. Use the now-narrowed service boundaries as preparation for Go package movement, handler/package surface reduction, and later public constructor signature narrowing while preserving MemoryStore/PostgresStore coverage.
+4. Expand scenario-level smoke evidence beyond the current material-balance job path to browser, packaged Desktop worker/installer, security, release, and golden scenario lanes.
+5. Promote Desktop package evidence to hosted CI or release-evidence lane before treating the Desktop offline golden scenario as complete.
+6. Connect Water Ontology policies to real authorization/data-scope/audit implementation only after the runtime security model is explicit and test-backed.
+7. Revisit Go/Python/Rust generated contract and ontology types only after package boundaries and Desktop package runtime validation are stable.
+8. Continue production security with real issuer/JWKS or service-token secret integration, data-scope filtering, all-mutation audit coverage, and a security smoke lane.

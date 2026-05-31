@@ -26,6 +26,8 @@
 | `udm_independent.compute_job.v1.json` | `simulation.udm.v1` worker fixture |
 | `udm_independent.simulation_input.v1.json` | `simulation.udm.v1` core/backend adapter fixture |
 | `udm_independent.simulation_request.v1.json` | `simulation.udm.v1` reference-only simulation check request fixture |
+| `desktop_smoke.desktop_project_package.v1.json` | Desktop project package fixture covering project metadata, job snapshots, CanvasGraph, artifact file records and support bundle file records |
+| `desktop_job.desktop_support_bundle.v1.json` | Desktop support bundle fixture covering job/event/artifact metadata and model_run refs without artifact contents |
 
 ## 3. 维护约定
 

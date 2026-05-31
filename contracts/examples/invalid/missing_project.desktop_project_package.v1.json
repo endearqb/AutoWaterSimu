@@ -1,0 +1,26 @@
+{
+  "schema_version": "desktop_project_package.v1",
+  "exported_at": "2026-05-31T13:00:00Z",
+  "contents": {
+    "compute_jobs": [],
+    "canvas_graphs": [],
+    "artifact_refs": [],
+    "artifact_files": [],
+    "support_bundle_refs": [],
+    "support_bundle_files": [],
+    "redaction": {
+      "artifact_contents_included": true,
+      "support_bundle_contents_included": true,
+      "job_events_included": true
+    }
+  },
+  "content_counts": {
+    "compute_jobs": 0,
+    "job_events": 0,
+    "canvas_graphs": 0,
+    "artifact_refs": 0,
+    "artifact_files": 0,
+    "support_bundle_refs": 0,
+    "support_bundle_files": 0
+  }
+}

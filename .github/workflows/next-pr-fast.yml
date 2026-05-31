@@ -1,0 +1,90 @@
+name: AutoWaterSimu Next PR Fast
+
+concurrency:
+  group: next-pr-fast-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+    paths:
+      - ".github/workflows/next-pr-fast.yml"
+      - ".github/workflows/README.md"
+      - "scripts/ci/**"
+      - "scripts/README.md"
+      - "scripts/check-deps.ps1"
+      - "contracts/**"
+      - "apps/api/**"
+      - "apps/desktop/**"
+      - "frontend/src/client/compute/**"
+      - "frontend/src/services/computeJobsService.ts"
+      - "frontend/src/routes/_layout/compute-jobs.tsx"
+      - "frontend/src/routes/_layout/compute-lifecycle.tsx"
+      - "frontend/src/routes/_layout/model-governance.tsx"
+      - "docs/architecture/**"
+      - "docs/rebuild/AutoWaterSimu_Next_Certainty_Elegance_*.md"
+      - "Justfile"
+      - "docker-compose.dev.yml"
+  workflow_dispatch:
+
+jobs:
+  pr-fast:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+          enable-cache: true
+
+      - name: Install backend Python dependencies
+        run: uv sync
+        working-directory: backend
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            apps/desktop/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Desktop dependencies
+        run: npm ci
+        working-directory: apps/desktop
+
+      - name: Run PR fast evidence
+        shell: powershell
+        run: .\scripts\ci\pr-fast.ps1
+
+      - name: Upload PR fast evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-pr-fast-evidence
+          path: tmp/ci-evidence
+          include-hidden-files: true

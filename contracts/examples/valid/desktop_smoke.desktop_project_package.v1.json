@@ -1,0 +1,192 @@
+{
+  "schema_version": "desktop_project_package.v1",
+  "exported_at": "2026-05-31T13:00:00Z",
+  "project": {
+    "project_id": "project_desktop_smoke",
+    "name": "Desktop Smoke Project",
+    "created_at": "2026-05-31T12:00:00Z",
+    "updated_at": "2026-05-31T12:30:00Z"
+  },
+  "contents": {
+    "compute_jobs": [
+      {
+        "job": {
+          "job_id": "job_desktop_smoke",
+          "project_id": "project_desktop_smoke",
+          "schema_version": "compute_job.v1",
+          "job_type": "simulation.material_balance.v1",
+          "status": "succeeded",
+          "cancel_requested": false,
+          "input_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "result_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "worker_version": "simulation-worker/0.1.0",
+          "error_code": null,
+          "error_message": null,
+          "stderr_tail": null,
+          "summary": {
+            "status": "ok",
+            "steps": 2
+          },
+          "created_at": "2026-05-31T12:01:00Z",
+          "queued_at": "2026-05-31T12:01:00Z",
+          "started_at": "2026-05-31T12:01:05Z",
+          "finished_at": "2026-05-31T12:01:10Z"
+        },
+        "input": {
+          "schema_version": "compute_job.v1",
+          "job_id": "job_desktop_smoke",
+          "job_type": "simulation.material_balance.v1",
+          "queue": "desktop-local",
+          "request_id": "req_desktop_smoke",
+          "idempotency_key": "idem_desktop_smoke",
+          "payload": {
+            "schema_version": "simulation_input.v1",
+            "input_id": "input_desktop_smoke"
+          },
+          "context": {
+            "source_system": "desktop",
+            "requested_by": "local-user",
+            "trace_id": "trace_desktop_smoke",
+            "project_id": "project_desktop_smoke"
+          },
+          "execution": {
+            "time_limit_sec": 60,
+            "priority": "normal",
+            "required_capabilities": ["material_balance"]
+          }
+        },
+        "artifacts": [
+          {
+            "artifact_id": "artifact_desktop_smoke",
+            "job_id": "job_desktop_smoke",
+            "schema_version": "artifact.v1",
+            "artifact_type": "time_series",
+            "object_key": "job_desktop_smoke/time_series.json",
+            "content_type": "application/json",
+            "size_bytes": 2,
+            "checksum": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "created_at": "2026-05-31T12:01:10Z",
+            "metadata": {
+              "format": "json"
+            }
+          }
+        ],
+        "model_runs": [
+          {
+            "schema_version": "model_run.v1",
+            "model_run_id": "model_run_desktop_smoke",
+            "job_id": "job_desktop_smoke",
+            "model_key": "material_balance",
+            "model_version": "p0",
+            "parameter_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "input_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "quality_metrics": {
+              "mass_balance_error": 0
+            },
+            "warnings": [],
+            "evidence_refs": ["artifact:artifact_desktop_smoke"]
+          }
+        ],
+        "event_count": 2,
+        "events": [
+          {
+            "id": "event_job_created",
+            "event_type": "job.created",
+            "event": {
+              "status": "queued"
+            },
+            "created_at": "2026-05-31T12:01:00Z"
+          },
+          {
+            "id": "event_job_succeeded",
+            "event_type": "job.succeeded",
+            "event": {
+              "status": "succeeded"
+            },
+            "created_at": "2026-05-31T12:01:10Z"
+          }
+        ]
+      }
+    ],
+    "canvas_graphs": [
+      {
+        "graph_id": "graph_desktop_smoke",
+        "project_id": "project_desktop_smoke",
+        "schema_version": "canvas_graph.v1",
+        "graph": {
+          "schema_version": "canvas_graph.v1",
+          "graph_id": "graph_desktop_smoke",
+          "name": "Desktop smoke graph",
+          "nodes": [],
+          "edges": [],
+          "exported_at": "2026-05-31T12:30:00Z"
+        },
+        "created_at": "2026-05-31T12:02:00Z",
+        "updated_at": "2026-05-31T12:30:00Z"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "artifact_id": "artifact_desktop_smoke",
+        "job_id": "job_desktop_smoke",
+        "schema_version": "artifact.v1",
+        "artifact_type": "time_series",
+        "object_key": "job_desktop_smoke/time_series.json",
+        "content_type": "application/json",
+        "size_bytes": 2,
+        "checksum": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "created_at": "2026-05-31T12:01:10Z",
+        "metadata": {
+          "format": "json"
+        }
+      }
+    ],
+    "artifact_files": [
+      {
+        "artifact_id": "artifact_desktop_smoke",
+        "object_key": "job_desktop_smoke/time_series.json",
+        "size_bytes": 2,
+        "checksum": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "content_encoding": "hex",
+        "content_hex": "7b7d"
+      }
+    ],
+    "support_bundle_refs": [
+      {
+        "bundle_id": "support_job_desktop_smoke",
+        "job_id": "job_desktop_smoke",
+        "object_key": "support_job_desktop_smoke.json",
+        "size_bytes": 2,
+        "checksum": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "created_at": "2026-05-31T12:01:11Z",
+        "metadata": {
+          "artifact_contents_included": false
+        }
+      }
+    ],
+    "support_bundle_files": [
+      {
+        "bundle_id": "support_job_desktop_smoke",
+        "object_key": "support_job_desktop_smoke.json",
+        "size_bytes": 2,
+        "checksum": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "content_encoding": "hex",
+        "content_hex": "7b7d"
+      }
+    ],
+    "redaction": {
+      "artifact_contents_included": true,
+      "support_bundle_contents_included": true,
+      "job_events_included": true
+    }
+  },
+  "content_counts": {
+    "compute_jobs": 1,
+    "job_events": 2,
+    "canvas_graphs": 1,
+    "artifact_refs": 1,
+    "artifact_files": 1,
+    "support_bundle_refs": 1,
+    "support_bundle_files": 1
+  }
+}

@@ -11,6 +11,7 @@
 - Starting HTTP server.
 - Wiring optional artifact retention scheduler configuration.
 - Wiring optional local filesystem or S3-compatible artifact archive store configuration.
+- Enforcing production startup guardrails for static token configuration.
 
 本目录不负责：
 
@@ -32,6 +33,15 @@
 4. Missing `COMPUTE_API_DATABASE_URL` intentionally starts a non-persistent memory store for local Web UI smoke tests only; PostgreSQL remains required for durable platform runs。
 5. Artifact retention scheduler is disabled unless `COMPUTE_API_RETENTION_SWEEP_INTERVAL` is set; `COMPUTE_API_RETENTION_SWEEP_DRY_RUN` defaults to `true` and must be explicitly set to `false` to delete.
 6. Artifact archive handling is disabled unless one archive backend is explicitly configured. `COMPUTE_API_ARCHIVE_DIR` enables a separate non-overlapping `local_fs_archive` store; `COMPUTE_API_ARCHIVE_S3_ENDPOINT` plus S3 bucket/access key env vars enables path-style `s3_archive`. Set only one backend. Business behavior remains in `internal/compute`.
+7. `APP_ENV=production` or `ENVIRONMENT=production` rejects empty `COMPUTE_API_TOKENS_JSON` and the default development token values (`dev-public-token`、`dev-worker-token`、`dev-admin-token`). This is a P0 production guard for static token auth, not full OIDC/RBAC.
+
+Production auth guard env vars:
+
+| Variable | Required | Meaning |
+|---|---|---|
+| `APP_ENV` | no | Preferred Compute API environment flag; `production` enables production auth startup checks |
+| `ENVIRONMENT` | no | Fallback environment flag when `APP_ENV` is empty |
+| `COMPUTE_API_TOKENS_JSON` | yes in production | Static token config JSON; must not be empty or contain default dev token values in production |
 
 S3-compatible archive env vars:
 
