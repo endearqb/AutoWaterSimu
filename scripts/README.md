@@ -20,7 +20,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `doctor.ps1` | 根级工具链检查，供 `just doctor` 调用 |
-| `audit-compute-api-boundary.ps1` | Compute API Store/domain 边界只读审计，解析聚合 Store 嵌入接口、内部 domain/platform service constructor 边界、internal package boundary（含已拆出的 artifacts/jobs/models/simulation/workers domain helpers 与 platform helpers）、通过 aggregate/narrow repository 字段发起的 resolved Store method 调用来源，并输出 `tmp/architecture-evidence/compute-api-boundary.json` |
+| `audit-compute-api-boundary.ps1` | Compute API Store/domain 边界只读审计，解析聚合 Store 嵌入接口、内部 domain/platform service constructor 边界、internal package boundary（含已拆出的 artifacts/evidence/jobs/models/simulation/workers domain helpers 与 platform helpers）、通过 aggregate/narrow repository 字段发起的 resolved Store method 调用来源，并输出 `tmp/architecture-evidence/compute-api-boundary.json` |
 | `check-deps.ps1` | 最小依赖边界检查，覆盖 contracts/runtime、legacy/Next、frontend generated client、API platform/domain-to-compute reverse import 等规则，供 `just check-deps` / `just check` 调用 |
 | `check-ontology.ps1` | Water Ontology objects/actions/links/policies registry 一致性检查，供 `just check-ontology` / `just check` / `pr-fast` 调用 |
 | `check-contracts.ps1` | Contracts registry、codegen manifest、schema tests、Compute TS client drift gate，供 `just check-contracts` / `pr-fast` 调用 |

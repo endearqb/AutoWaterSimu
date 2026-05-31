@@ -2,7 +2,7 @@
 
 > Snapshot date: 2026-06-01.
 
-This document records the current Go Compute API boundary after the first Store/interface split, the current service-constructor narrowing slices, the first platform helper package movement, and the first artifacts/jobs/models/simulation/workers domain package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/domain/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
+This document records the current Go Compute API boundary after the first Store/interface split, the current service-constructor narrowing slices, the first platform helper package movement, and the first artifacts/evidence/jobs/models/simulation/workers domain package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/domain/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
@@ -12,7 +12,7 @@ The script writes evidence to `tmp/architecture-evidence/compute-api-boundary.js
 
 ## Current Shape
 
-The Compute API domain is still mostly wired through the modular-monolith compatibility package under `apps/api/internal/compute`. The first artifacts/jobs/models/simulation/workers domain packages now live under `apps/api/internal/domain`, and the first non-domain platform packages, including contract schema validation, live under `apps/api/internal/platform`.
+The Compute API domain is still mostly wired through the modular-monolith compatibility package under `apps/api/internal/compute`. The first artifacts/evidence/jobs/models/simulation/workers domain packages now live under `apps/api/internal/domain`, and the first non-domain platform packages, including contract schema validation, live under `apps/api/internal/platform`.
 
 The aggregate `Store` is expressed as embedded domain metadata interfaces. Job create/list/read/events, cancel, complete/fail, and timeout logic now lives behind `JobLifecycleService`; artifact upload / listing / metadata lookup / download / retention / archive logic now lives behind `ArtifactLifecycleService`; worker register / claim / heartbeat now lives behind `WorkerLifecycleService`; simulation input registration, process graph registration, and `simulation_request.input_ref` resolution now live behind `SimulationInputService`; draft confirmation / promotion workflows now live behind `DraftWorkflowService`; result explanation submit/review/publish now lives behind `ResultExplanationService`; model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing now live behind `ModelGovernanceService`; result read, evidence package export, production readiness, and evidence-ref resolution now live behind `EvidenceGovernanceService`; metrics snapshot reads now live behind `MetricsService`. Internal domain service constructors now expose 1-3 store-like parameters and the audit fails if they accept the aggregate `Store`.
 
@@ -29,6 +29,8 @@ The wider `Service` still owns package-level construction and compatibility dele
 
 `apps/api/internal/domain/artifacts` owns stable artifact retention policy constants, metadata parsing for `retention_policy` / `retain_until`, and retention candidate policy checks. `apps/api/internal/compute` uses it from artifact upload, MemoryStore retention candidate selection, and in-memory metrics candidate counting while artifact object storage, archive execution, metadata persistence, audit envelopes, and HTTP behavior remain in the compatibility package.
 
+`apps/api/internal/domain/evidence` owns stable evidence package input reference extraction, evidence ref parsing, embedded simulation input payload lookup, and `risk_findings` extraction/summary rules. `apps/api/internal/compute` uses it from evidence package export, evidence-ref resolution, process graph evidence lookup, and production-readiness risk checks while store-backed evidence governance, response DTOs, HTTP behavior, and approval boundaries remain in the compatibility package.
+
 `apps/api/internal/domain/jobs` owns stable job status constants, terminal/worker-result status invariants, and worker claim capability/contract-version matching. `apps/api/internal/compute` keeps compatibility aliases for status constants and projects MemoryStore/PostgresStore claim fields into this package while job records, store interfaces, lifecycle persistence, audit envelopes, and HTTP behavior remain in the compatibility package.
 
 `apps/api/internal/domain/models` owns stable `model_run.v1` raw field extraction, evidence ref extraction, and warning extraction. `apps/api/internal/compute` uses it from MemoryStore/PostgresStore persistence and evidence/simulation read paths while model catalog governance, benchmark workflow DTOs, promotion planning, and HTTP response types remain in the compatibility package.
@@ -43,6 +45,7 @@ The wider `Service` still owns package-level construction and compatibility dele
 |---|---|
 | `compute` | Current compute domain package and compatibility wiring |
 | `domain/artifacts` | Artifact retention policy parsing and candidate helpers |
+| `domain/evidence` | Evidence input/ref/risk parsing helpers |
 | `domain/jobs` | Job status constants, worker claim matching, and invariant helpers |
 | `domain/models` | `model_run.v1` raw field/ref/warning parsing helpers |
 | `domain/simulation` | Simulation job execution profile, worker capability, and material-balance process graph projection helpers |
@@ -53,7 +56,7 @@ The wider `Service` still owns package-level construction and compatibility dele
 | `platform/httpx` | Platform HTTP helper package |
 | `platform/metrics` | Metrics snapshot shape, read-only collector, and Prometheus renderer |
 
-This is still an early domain package movement step, following the low-coupling platform auth, config, contracts, HTTP, and metrics helper movement. Remaining package movement includes full jobs lifecycle plus full artifact lifecycle, full model governance, evidence, full simulation input/process graph metadata service movement, and agent.
+This is still an early domain package movement step, following the low-coupling platform auth, config, contracts, HTTP, and metrics helper movement. Remaining package movement includes full jobs lifecycle plus full artifact lifecycle, full model governance, full evidence governance, full simulation input/process graph metadata service movement, and agent.
 `scripts/check-deps.ps1` enforces reverse-dependency rules so `apps/api/internal/platform` and `apps/api/internal/domain` cannot import `apps/api/internal/compute`.
 
 Selected files from the latest audit:
@@ -62,7 +65,7 @@ Selected files from the latest audit:
 |---|---:|---|
 | `service.go` | 722 | orchestration and compatibility delegates |
 | `model_governance.go` | 668 | model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing |
-| `evidence_governance.go` | 639 | result read, evidence package export, production readiness, and evidence-ref resolution |
+| `evidence_governance.go` | 538 | result read, evidence package export, production readiness, and evidence-ref resolution |
 | `job_lifecycle.go` | 271 | job create/list/read/events, cancel, complete/fail, timeout sweep, and model-run persistence |
 | `simulation_inputs.go` | 289 | simulation input registry, process graph registry, and input-ref resolution |
 | `draft_workflows.go` | 254 | draft confirmation validation, advisory constraint plans, and explicit simulation-check promotion |
@@ -187,6 +190,17 @@ The public `Service.RegisterModelCatalog`, `Service.ModelCatalog`, `Service.Mode
 
 Compute uses this package through upload metadata parsing and MemoryStore retention/metrics candidate checks; full artifact lifecycle persistence, archive execution, audit envelopes, object-store abstractions, and HTTP mapping have not moved yet.
 
+`apps/api/internal/domain/evidence` owns stable evidence input/ref/risk parsing:
+
+- `InputRefs`
+- `ParseRef`
+- `SimulationInputPayload`
+- `RiskFindingsFromSummary`
+- `RiskFindingEvidenceRefs`
+- `SummarizeRiskFindings`
+
+Compute uses this package through evidence package export, evidence-ref resolution, process graph evidence lookup, and production-readiness risk checks; store-backed evidence governance, evidence package response assembly, production-readiness DTO mapping, model catalog callbacks, artifact/model-run/process-graph metadata reads, and HTTP mapping have not moved yet.
+
 `apps/api/internal/domain/jobs` owns stable job status constants, status invariant helpers, and worker claim matching:
 
 - `IsTerminal`
@@ -264,7 +278,7 @@ Recommended order for narrowing service boundaries and later file/package moveme
 7. `jobs`
 8. `metrics`
 
-This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `domain/workers.WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `platform/metrics.MetricsService`. Artifact upload/listing has also joined the artifact boundary, and simulation execution plus material-balance process graph projection helpers have joined `domain/simulation`. Internal domain/platform service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. The first platform package movement is underway through `platform/auth`, `platform/config`, `platform/contracts`, `platform/httpx`, and `platform/metrics`; domain package movement is underway through `domain/artifacts`, `domain/jobs`, `domain/models`, `domain/simulation`, and `domain/workers`. Remaining near-term work is additional domain package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
+This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `domain/workers.WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `platform/metrics.MetricsService`. Artifact upload/listing has also joined the artifact boundary, evidence input/ref/risk parsing has joined `domain/evidence`, and simulation execution plus material-balance process graph projection helpers have joined `domain/simulation`. Internal domain/platform service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. The first platform package movement is underway through `platform/auth`, `platform/config`, `platform/contracts`, `platform/httpx`, and `platform/metrics`; domain package movement is underway through `domain/artifacts`, `domain/evidence`, `domain/jobs`, `domain/models`, `domain/simulation`, and `domain/workers`. Remaining near-term work is additional domain package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
 
 ## Split Rules
 
@@ -279,7 +293,7 @@ Future service-boundary and package splitting should follow these rules:
 ## Current Non-Goals
 
 - `NewService` / `NewServiceWithArchive` still accept the aggregate `Store` for backward-compatible construction; narrowed internal services receive domain interfaces but are still wired from the aggregate in this package.
-- This split has moved platform auth, config, contract validation/document response, HTTP, and metrics helpers/collector into platform packages, artifact retention policy helpers into `domain/artifacts`, job status plus claim matching invariants into `domain/jobs`, `model_run.v1` raw parsing into `domain/models`, simulation execution profile plus material-balance process graph projection helpers into `domain/simulation`, and worker register/claim/heartbeat into `domain/workers`. Most compute domain files have not moved into domain packages yet.
+- This split has moved platform auth, config, contract validation/document response, HTTP, and metrics helpers/collector into platform packages, artifact retention policy helpers into `domain/artifacts`, evidence input/ref/risk parsing into `domain/evidence`, job status plus claim matching invariants into `domain/jobs`, `model_run.v1` raw parsing into `domain/models`, simulation execution profile plus material-balance process graph projection helpers into `domain/simulation`, and worker register/claim/heartbeat into `domain/workers`. Most compute domain files have not moved into domain packages yet.
 - This split does not change endpoint behavior, OpenAPI, auth scopes, contracts, database schema, or PostgreSQL migrations.
 
 ## Verification

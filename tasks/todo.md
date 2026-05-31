@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next evidence domain parsing split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and evidence governance call sites
+- [x] Confirm next low-risk gap: stable evidence input/ref/risk parsing still lives in compute helpers
+- [x] Add `apps/api/internal/domain/evidence` with direct tests
+- [x] Route `EvidenceGovernanceService` through domain evidence helpers
+- [x] Update audit/docs/checklists/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, diff-check validation, then commit and push
+
+## Plan
+
+- Move only stable JSON parsing helpers for evidence package input refs, evidence ref grammar, embedded `simulation_input.v1` payload lookup, and `risk_findings` summary.
+- Keep store-backed evidence package export, production-readiness response assembly, process graph/model run/artifact lookup callbacks, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as the first `domain/evidence` package movement step, not the full evidence governance package split.
+
+## Review
+
+- Added `apps/api/internal/domain/evidence` with `InputRefs`, `ParseRef`, `SimulationInputPayload`, `RiskFindingsFromSummary`, `RiskFindingEvidenceRefs`, and `SummarizeRiskFindings`.
+- Added direct evidence domain tests for input refs/hash behavior, legacy and typed evidence refs, simulation input payload lookup, and risk finding summary/evidence refs.
+- Updated `EvidenceGovernanceService` to use the domain evidence helper for evidence package export, evidence-ref resolution, process graph evidence lookup, and production-readiness risk checks.
+- Removed compute-local evidence input/ref/risk parsing helpers from `evidence_governance.go`; store-backed evidence governance, response DTO mapping, artifact/model-run/process-graph callbacks, HTTP routes, OpenAPI, contracts, migrations, generated clients, and auth scopes stayed unchanged.
+- Updated API/internal/domain/compute/scripts READMEs, `docs/architecture/compute-api.md`, current-state, Certainty/Elegance checklist, boundary audit note, and change records.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/evidence ./internal/compute -run "Test(InputRefs|ParseRef|SimulationInputPayload|RiskFindings|EvidencePackage|ProductionReadiness|NewSystemEvidenceReferenceE2E|ProcessGraphEvidenceReference)" -count=1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full evidence governance package movement is not complete; store-backed evidence package generation, production-readiness DTO assembly, process graph/model run/artifact callbacks, and HTTP mapping remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full model governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next simulation domain process graph transform split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and process graph transform call sites

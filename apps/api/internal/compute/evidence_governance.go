@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	domainevidence "autowatersimu/apps/api/internal/domain/evidence"
 	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
 
@@ -84,7 +85,7 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 	if err != nil {
 		return nil, "", err
 	}
-	inputRef, inputHash, processGraphRef, simulationInputRef := evidenceInputRefs(snapshot.Job.InputJSON)
+	inputRefs := domainevidence.InputRefs(snapshot.Job.InputJSON)
 	artifactRefs := make([]any, 0, len(snapshot.Artifacts))
 	for _, artifact := range snapshot.Artifacts {
 		artifactRefs = append(artifactRefs, artifact.ArtifactID)
@@ -111,10 +112,10 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 		"schema_version":       "evidence_package.v1",
 		"evidence_package_id":  "evidence_" + safeIDPart(snapshot.Job.JobID),
 		"job_id":               snapshot.Job.JobID,
-		"input_hash":           inputHash,
+		"input_hash":           inputRefs.InputHash,
 		"result_hash":          snapshot.Job.ResultHash,
-		"process_graph_ref":    processGraphRef,
-		"simulation_input_ref": simulationInputRef,
+		"process_graph_ref":    inputRefs.ProcessGraphRef,
+		"simulation_input_ref": inputRefs.SimulationInputRef,
 		"model_run_refs":       modelRunRefs,
 		"artifact_refs":        artifactRefs,
 		"runtime_audit": map[string]any{
@@ -123,7 +124,7 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 			"job_timeline":    evidenceTimeline(events),
 			"artifact_count":  len(snapshot.Artifacts),
 			"model_run_count": len(modelRuns),
-			"input_ref":       inputRef,
+			"input_ref":       inputRefs.InputRef,
 		},
 		"governance":   governance,
 		"warnings":     warnings,
@@ -209,8 +210,8 @@ func (svc *EvidenceGovernanceService) ProductionReadiness(ctx context.Context, j
 		blockingReasons = append(blockingReasons, "governance_not_production_allowed")
 	}
 
-	riskSummary := productionReadinessRiskSummary(riskFindingsFromSummary(snapshot.Job.Summary))
-	riskEvidenceRefs := riskFindingEvidenceRefs(snapshot.Job.Summary)
+	riskSummary := productionReadinessRiskSummary(domainevidence.RiskFindingsFromSummary(snapshot.Job.Summary))
+	riskEvidenceRefs := domainevidence.RiskFindingEvidenceRefs(snapshot.Job.Summary)
 	if len(riskSummary.Blocking) > 0 {
 		checks = append(checks, ProductionReadinessCheck{
 			CheckID:      "risk_findings_no_high_or_critical",
@@ -286,7 +287,7 @@ func (svc *EvidenceGovernanceService) ResolveEvidenceReference(ctx context.Conte
 	if strings.TrimSpace(snapshot.Job.ResultHash) == "" {
 		return EvidenceReferenceResolution{}, Conflict(CodeEvidenceUnavailable, "job result is not available")
 	}
-	refType, refID := parseEvidenceRef(required(evidenceRef, "ref"))
+	refType, refID := domainevidence.ParseRef(required(evidenceRef, "ref"))
 	if refType == "" {
 		if resolution, ok := svc.resolveModelRunEvidenceRef(ctx, snapshot.Job.JobID, evidenceRef, refID); ok {
 			return resolution, nil
@@ -319,7 +320,7 @@ func (svc *EvidenceGovernanceService) ResolveEvidenceReference(ctx context.Conte
 			}, nil
 		}
 	case "simulation_input":
-		if payload := simulationInputPayloadForEvidence(snapshot.Job.InputJSON, refID); payload != nil {
+		if payload := domainevidence.SimulationInputPayload(snapshot.Job.InputJSON, refID); payload != nil {
 			return EvidenceReferenceResolution{
 				JobID:       snapshot.Job.JobID,
 				EvidenceRef: evidenceRef,
@@ -403,7 +404,7 @@ func (svc *EvidenceGovernanceService) resolveArtifactEvidenceRef(ctx context.Con
 }
 
 func (svc *EvidenceGovernanceService) resolveProcessGraphEvidenceRef(ctx context.Context, jobID, evidenceRef, processGraphID string, input json.RawMessage) (EvidenceReferenceResolution, bool) {
-	_, _, processGraphRef, _ := evidenceInputRefs(input)
+	processGraphRef := domainevidence.InputRefs(input).ProcessGraphRef
 	if stringValue(processGraphRef, "process_graph_id") != processGraphID {
 		return EvidenceReferenceResolution{}, false
 	}
@@ -471,57 +472,6 @@ func (svc *EvidenceGovernanceService) evidenceGovernance(ctx context.Context, mo
 	}, nil
 }
 
-func evidenceInputRefs(input json.RawMessage) (map[string]any, string, map[string]any, map[string]any) {
-	inputRef := map[string]any{}
-	processGraphRef := map[string]any{}
-	simulationInputRef := map[string]any{}
-	inputHash := "sha256:" + SHA256Hex(input)
-	var job map[string]any
-	if err := json.Unmarshal(input, &job); err != nil {
-		return inputRef, inputHash, processGraphRef, simulationInputRef
-	}
-	payload, _ := job["payload"].(map[string]any)
-	if payloadBytes, err := json.Marshal(payload); err == nil && len(payloadBytes) > 0 {
-		inputHash = "sha256:" + SHA256Hex(payloadBytes)
-	}
-	if processGraphID := stringValue(payload, "process_graph_id"); processGraphID != "" {
-		processGraphRef["process_graph_id"] = processGraphID
-	}
-	if version, ok := payload["process_graph_version"]; ok {
-		processGraphRef["version"] = version
-	}
-	if simulationInputID := stringValue(payload, "simulation_input_id"); simulationInputID != "" {
-		simulationInputRef["simulation_input_id"] = simulationInputID
-	}
-	inputRef["job_id"] = stringValue(job, "job_id")
-	inputRef["payload_schema_version"] = stringValue(payload, "schema_version")
-	return inputRef, inputHash, processGraphRef, simulationInputRef
-}
-
-func parseEvidenceRef(evidenceRef string) (string, string) {
-	evidenceRef = strings.TrimSpace(evidenceRef)
-	refType, refID, ok := strings.Cut(evidenceRef, ":")
-	if !ok {
-		return "", evidenceRef
-	}
-	return strings.TrimSpace(refType), strings.TrimSpace(refID)
-}
-
-func simulationInputPayloadForEvidence(input json.RawMessage, simulationInputID string) map[string]any {
-	var job map[string]any
-	if err := json.Unmarshal(input, &job); err != nil {
-		return nil
-	}
-	payload := mapValue(job, "payload")
-	if payload == nil || stringValue(payload, "schema_version") != "simulation_input.v1" {
-		return nil
-	}
-	if stringValue(payload, "simulation_input_id") != simulationInputID {
-		return nil
-	}
-	return payload
-}
-
 func evidenceTimeline(events []EventRecord) []map[string]any {
 	timeline := make([]map[string]any, 0, len(events))
 	for _, event := range events {
@@ -556,63 +506,12 @@ func productionReadinessReportMap(report ProductionReadinessReport) (map[string]
 	return payload, nil
 }
 
-func riskFindingsFromSummary(raw json.RawMessage) []map[string]any {
-	var summary map[string]any
-	if len(raw) == 0 {
-		return nil
-	}
-	if err := json.Unmarshal(raw, &summary); err != nil {
-		return nil
-	}
-	rawFindings, ok := summary["risk_findings"].([]any)
-	if !ok {
-		return nil
-	}
-	findings := make([]map[string]any, 0, len(rawFindings))
-	for _, rawFinding := range rawFindings {
-		finding, ok := rawFinding.(map[string]any)
-		if !ok {
-			continue
-		}
-		findings = append(findings, finding)
-	}
-	return findings
-}
-
-func riskFindingEvidenceRefs(raw json.RawMessage) []string {
-	findings := riskFindingsFromSummary(raw)
-	refs := []string{}
-	for _, finding := range findings {
-		refs = append(refs, stringsFromAny(finding["evidence_refs"])...)
-	}
-	return uniqueStrings(refs)
-}
-
 func productionReadinessRiskSummary(findings []map[string]any) ProductionReadinessRiskSummary {
-	bySeverity := map[string]int{
-		"info":     0,
-		"low":      0,
-		"medium":   0,
-		"high":     0,
-		"critical": 0,
-	}
-	blocking := []string{}
-	for _, finding := range findings {
-		severity := stringValue(finding, "severity")
-		if _, ok := bySeverity[severity]; ok {
-			bySeverity[severity]++
-		}
-		if severity == "high" || severity == "critical" {
-			riskCode := stringValue(finding, "risk_code")
-			if riskCode != "" {
-				blocking = append(blocking, riskCode)
-			}
-		}
-	}
+	summary := domainevidence.SummarizeRiskFindings(findings)
 	return ProductionReadinessRiskSummary{
-		Total:      len(findings),
-		BySeverity: bySeverity,
-		Blocking:   uniqueStrings(blocking),
+		Total:      summary.Total,
+		BySeverity: summary.BySeverity,
+		Blocking:   summary.Blocking,
 	}
 }
 
