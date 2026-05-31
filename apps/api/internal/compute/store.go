@@ -580,16 +580,27 @@ func (store *MemoryStore) ListModelCatalogSnapshots(_ context.Context, filter Mo
 	defer store.mu.Unlock()
 	catalogID := defaultString(filter.CatalogID, "default")
 	snapshots := append([]ModelCatalogRecord(nil), store.modelCatalogs[catalogID]...)
-	records := make([]ModelCatalogRecord, 0, len(snapshots))
-	for _, snapshot := range snapshots {
-		records = append(records, cloneModelCatalogRecord(snapshot))
+	type indexedModelCatalogRecord struct {
+		index  int
+		record ModelCatalogRecord
 	}
-	sort.Slice(records, func(i, j int) bool {
-		if records[i].CreatedAt.Equal(records[j].CreatedAt) {
-			return records[i].PayloadHash > records[j].PayloadHash
+	indexed := make([]indexedModelCatalogRecord, 0, len(snapshots))
+	for index, snapshot := range snapshots {
+		indexed = append(indexed, indexedModelCatalogRecord{
+			index:  index,
+			record: cloneModelCatalogRecord(snapshot),
+		})
+	}
+	sort.Slice(indexed, func(i, j int) bool {
+		if indexed[i].record.CreatedAt.Equal(indexed[j].record.CreatedAt) {
+			return indexed[i].index > indexed[j].index
 		}
-		return records[i].CreatedAt.After(records[j].CreatedAt)
+		return indexed[i].record.CreatedAt.After(indexed[j].record.CreatedAt)
 	})
+	records := make([]ModelCatalogRecord, 0, len(indexed))
+	for _, snapshot := range indexed {
+		records = append(records, snapshot.record)
+	}
 	total := len(records)
 	offset := decodeCursor(filter.Cursor)
 	if offset > len(records) {

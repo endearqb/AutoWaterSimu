@@ -390,6 +390,7 @@
 
 - model catalog。
 - model versions。
+- built-in model catalog coverage for material_balance plus worker-smoke-backed ASM1Slim / ASM1 / ASM3 / UDM entries。
 - parameter templates。
 - parameter sets。
 - persisted model catalog snapshot history listing。

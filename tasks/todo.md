@@ -1,3 +1,31 @@
+# 2026-05-31 AutoWaterSimu Next Built-in Model Catalog Coverage TODO
+
+- [x] Re-read Compute API model catalog, contracts, worker fixture, and worker README context
+- [x] Expand built-in catalog beyond material_balance for tested worker model job types
+- [x] Keep ASM/UDM entries read-only without default parameter sets
+- [x] Update model catalog endpoint tests
+- [x] Update README/context records
+- [x] Run focused Go validation and diff check
+- [x] Commit checkpoint
+
+## Plan
+
+- Add ASM1Slim, ASM1, ASM3, and UDM to the built-in fallback catalog because their independent worker job types already have contract fixtures and worker smoke evidence.
+- For these entries, include active model versions, runtime parameter templates, and validated worker-smoke benchmark cases.
+- Do not invent default parameter sets, parameter promotion, production approval, or benchmark scheduling for ASM/UDM in this slice.
+- Preserve persisted catalog precedence: a registered `default` catalog still overrides the built-in fallback.
+
+## Review
+
+- Added built-in ASM1Slim/ASM1/ASM3/UDM catalog entries backed by existing `contracts/examples/valid/*_independent.simulation_input.v1.json` fixtures and worker model_run evidence refs.
+- Kept only `material_balance` with an approved default parameter set; ASM/UDM entries carry benchmark cases but no default parameter set.
+- Extended `TestModelCatalogEndpoint` to expect five fallback models and to read the built-in `asm1` model by key before persisted catalog registration.
+- Fixed memory-store catalog snapshot listing to keep later inserts first when snapshots share the same `created_at`, matching PostgreSQL's `snapshot_id DESC` tie-breaker intent.
+- Remaining governance work still includes multi-parameter-set lifecycle design, scheduled benchmark execution, benchmark-backed promotion, and approval workflow semantics.
+- Verification:
+  - Initial `cd apps\api; go test ./internal/compute -count=1` exposed the same-timestamp memory snapshot ordering bug.
+  - `cd apps\api; go test ./internal/compute -count=1` passed after fixing the memory tie-breaker.
+
 # 2026-05-31 AutoWaterSimu Next Web Model Governance UI TODO
 
 - [x] Re-read frontend route/sidebar/i18n/service/test README context
