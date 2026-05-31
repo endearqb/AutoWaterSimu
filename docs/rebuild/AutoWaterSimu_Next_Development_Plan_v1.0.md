@@ -443,12 +443,17 @@
   - `source_system`
 - simulation check API。
 - evidence package export。
+- read-only production readiness policy report:
+  - job succeeded / evidence available / governance allowed / high-critical risk blocker checks。
+  - `external_approval_required=true`。
+  - `auto_publish_allowed=false`。
 
 验收:
 
 - milp plan 可创建 simulation check job。
 - 结果含 risk findings。
 - NewSystem 可引用 evidence refs。
+- NewSystem/milp 可读取只读 production readiness report 判断是否可提交外部审批。
 - AutoWaterSimu 不发布生产指令。
 - revoked token 后续请求被拒绝。
 

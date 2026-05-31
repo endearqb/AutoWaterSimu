@@ -19,6 +19,7 @@
 - Agent result explanation wire shape with required evidence refs。
 - compute result risk findings wire shape。
 - evidence governance summary wire shape。
+- read-only production readiness policy report wire shape。
 - Web、Desktop、Worker、Agent 集成方共享的 wire shape。
 
 本目录不负责：
@@ -50,8 +51,9 @@
 10. `result_explanation.v1` 只表达 Agent/外部系统对结果的结构化解释，且 top-level 与 statement 都必须引用 `evidence_refs`；本合同不生成解释。Go API 可持久化 evidence-backed explanation review/publish 状态，但发布解释仍只是审计 metadata，不代表生产审批完成。
 11. `compute_result.v1.risk_findings` 是面向 NewSystem/milp 审批集成的结构化风险结论；每条 finding 必须带 `evidence_refs`，API 可把它同步到 result summary 便于只读查询，并可在 job 边界内解析支持的证据引用。
 12. `evidence_package.v1.governance` 汇总 model version、parameter set status 与 `production_allowed`；该字段只供审批/审计读取，不代表 AutoWaterSimu 发布生产指令。
-13. `simulation_request.v1.input_ref` 可表达 `process_graph_id`、`simulation_input_id`、`model_run_id` 或内嵌 `simulation_input`；Go Compute API 当前可把内嵌 `simulation_input.v1`、已登记的 `simulation_input_id`，或可回溯到源 job 的已持久化 `model_run_id` 转为对应 job type 的 `compute_job.v1`。`process_graph_id` / `process_graph_version` 自动转换当前只支持 material-balance job，ASM/UDM ProcessGraph-to-SimulationInput 语义需要单独设计。
-14. `compute_job.v1`、`simulation_input.v1`、`compute_result.v1` 和 `simulation_request.v1` 当前支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；新增 job type 进入 `simulation_request.v1` 时必须同步 Go API、OpenAPI 和 generated compute client。
+13. `production_readiness.v1` 汇总 job 成功、evidence package、governance.production_allowed 与 risk_findings 阻断状态，只表达“可提交外部审批”的只读政策判断；`external_approval_required=true` 且 `auto_publish_allowed=false` 是合同约束。
+14. `simulation_request.v1.input_ref` 可表达 `process_graph_id`、`simulation_input_id`、`model_run_id` 或内嵌 `simulation_input`；Go Compute API 当前可把内嵌 `simulation_input.v1`、已登记的 `simulation_input_id`，或可回溯到源 job 的已持久化 `model_run_id` 转为对应 job type 的 `compute_job.v1`。`process_graph_id` / `process_graph_version` 自动转换当前只支持 material-balance job，ASM/UDM ProcessGraph-to-SimulationInput 语义需要单独设计。
+15. `compute_job.v1`、`simulation_input.v1`、`compute_result.v1` 和 `simulation_request.v1` 当前支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；新增 job type 进入 `simulation_request.v1` 时必须同步 Go API、OpenAPI 和 generated compute client。
 
 ## 4. 对外接口
 

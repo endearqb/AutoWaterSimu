@@ -440,6 +440,134 @@ func (svc *Service) EvidencePackage(ctx context.Context, jobID string) (map[stri
 	return evidence, checksum, nil
 }
 
+func (svc *Service) ProductionReadiness(ctx context.Context, jobID string) (ProductionReadinessReport, error) {
+	snapshot, err := svc.snapshot(ctx, required(jobID, "job_id"))
+	if err != nil {
+		return ProductionReadinessReport{}, err
+	}
+	if strings.TrimSpace(snapshot.Job.ResultHash) == "" {
+		return ProductionReadinessReport{}, Conflict(CodeEvidenceUnavailable, "job result is not available")
+	}
+	evidence, _, err := svc.EvidencePackage(ctx, snapshot.Job.JobID)
+	if err != nil {
+		return ProductionReadinessReport{}, err
+	}
+	evidencePackageID := stringValue(evidence, "evidence_package_id")
+	evidenceRef := "evidence_package:" + evidencePackageID
+	checks := []ProductionReadinessCheck{}
+	blockingReasons := []string{}
+	warnings := []string{}
+
+	if snapshot.Job.Status == StatusSucceeded {
+		checks = append(checks, productionReadinessCheck(
+			"job_succeeded",
+			"passed",
+			"Job completed successfully.",
+			"job:"+snapshot.Job.JobID,
+		))
+	} else {
+		checks = append(checks, productionReadinessCheck(
+			"job_succeeded",
+			"failed",
+			"Job is not in succeeded status.",
+			"job:"+snapshot.Job.JobID,
+		))
+		blockingReasons = append(blockingReasons, "job_not_succeeded")
+	}
+
+	checks = append(checks, productionReadinessCheck(
+		"evidence_package_available",
+		"passed",
+		"Evidence package is available for external review.",
+		evidenceRef,
+	))
+
+	governance := mapValue(evidence, "governance")
+	if governance != nil && boolValue(governance, "production_allowed") {
+		checks = append(checks, productionReadinessCheck(
+			"governance_production_allowed",
+			"passed",
+			"Evidence governance allows this model/parameter evidence for production review.",
+			evidenceRef,
+		))
+	} else {
+		checks = append(checks, productionReadinessCheck(
+			"governance_production_allowed",
+			"failed",
+			"Evidence governance does not allow this model/parameter evidence for production review.",
+			evidenceRef,
+		))
+		blockingReasons = append(blockingReasons, "governance_not_production_allowed")
+	}
+
+	riskSummary := productionReadinessRiskSummary(riskFindingsFromSummary(snapshot.Job.Summary))
+	riskEvidenceRefs := riskFindingEvidenceRefs(snapshot.Job.Summary)
+	if len(riskSummary.Blocking) > 0 {
+		checks = append(checks, ProductionReadinessCheck{
+			CheckID:      "risk_findings_no_high_or_critical",
+			Status:       "failed",
+			Message:      "High or critical risk findings must be resolved before external approval review.",
+			EvidenceRefs: riskEvidenceRefs,
+		})
+		blockingReasons = append(blockingReasons, "risk_findings_blocking_severity")
+	} else if riskSummary.BySeverity["medium"] > 0 {
+		checks = append(checks, ProductionReadinessCheck{
+			CheckID:      "risk_findings_no_high_or_critical",
+			Status:       "warning",
+			Message:      "Medium risk findings require external reviewer attention.",
+			EvidenceRefs: riskEvidenceRefs,
+		})
+		warnings = append(warnings, "medium_risk_findings_present")
+	} else {
+		checks = append(checks, ProductionReadinessCheck{
+			CheckID:      "risk_findings_no_high_or_critical",
+			Status:       "passed",
+			Message:      "No high or critical risk findings were reported.",
+			EvidenceRefs: riskEvidenceRefs,
+		})
+	}
+
+	blockingReasons = uniqueStrings(blockingReasons)
+	warnings = uniqueStrings(warnings)
+	productionReady := len(blockingReasons) == 0
+	readinessStatus := "blocked"
+	if productionReady {
+		readinessStatus = "ready_for_external_approval"
+	}
+	report := ProductionReadinessReport{
+		SchemaVersion:            "production_readiness.v1",
+		JobID:                    snapshot.Job.JobID,
+		EvidencePackageID:        evidencePackageID,
+		PolicyVersion:            "production_readiness_policy.v1",
+		ReadinessStatus:          readinessStatus,
+		ProductionReady:          productionReady,
+		ExternalApprovalRequired: true,
+		AutoPublishAllowed:       false,
+		BlockingReasons:          blockingReasons,
+		Warnings:                 warnings,
+		Checks:                   checks,
+		RiskFindingsSummary:      riskSummary,
+		GeneratedAt:              svc.now().Format(time.RFC3339Nano),
+		Metadata: map[string]any{
+			"source_system": snapshot.Job.SourceSystem,
+			"requested_by":  snapshot.Job.RequestedBy,
+			"trace_id":      snapshot.Job.TraceID,
+			"tenant_id":     snapshot.Job.TenantID,
+			"project_id":    snapshot.Job.ProjectID,
+		},
+	}
+	if svc.validator != nil {
+		payload, err := productionReadinessReportMap(report)
+		if err != nil {
+			return ProductionReadinessReport{}, err
+		}
+		if err := svc.validator.Validate("production_readiness.v1.json", payload); err != nil {
+			return ProductionReadinessReport{}, err
+		}
+	}
+	return report, nil
+}
+
 func (svc *Service) ResolveEvidenceReference(ctx context.Context, jobID, evidenceRef string) (EvidenceReferenceResolution, error) {
 	snapshot, err := svc.snapshot(ctx, required(jobID, "job_id"))
 	if err != nil {
@@ -1962,6 +2090,87 @@ func warningsFromModelRun(raw json.RawMessage) []string {
 	return stringsFromAny(modelRun["warnings"])
 }
 
+func productionReadinessCheck(checkID, status, message string, evidenceRefs ...string) ProductionReadinessCheck {
+	return ProductionReadinessCheck{
+		CheckID:      checkID,
+		Status:       status,
+		Message:      message,
+		EvidenceRefs: uniqueStrings(evidenceRefs),
+	}
+}
+
+func productionReadinessReportMap(report ProductionReadinessReport) (map[string]any, error) {
+	bytes, err := json.Marshal(report)
+	if err != nil {
+		return nil, err
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(bytes, &payload); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
+func riskFindingsFromSummary(raw json.RawMessage) []map[string]any {
+	var summary map[string]any
+	if len(raw) == 0 {
+		return nil
+	}
+	if err := json.Unmarshal(raw, &summary); err != nil {
+		return nil
+	}
+	rawFindings, ok := summary["risk_findings"].([]any)
+	if !ok {
+		return nil
+	}
+	findings := make([]map[string]any, 0, len(rawFindings))
+	for _, rawFinding := range rawFindings {
+		finding, ok := rawFinding.(map[string]any)
+		if !ok {
+			continue
+		}
+		findings = append(findings, finding)
+	}
+	return findings
+}
+
+func riskFindingEvidenceRefs(raw json.RawMessage) []string {
+	findings := riskFindingsFromSummary(raw)
+	refs := []string{}
+	for _, finding := range findings {
+		refs = append(refs, stringsFromAny(finding["evidence_refs"])...)
+	}
+	return uniqueStrings(refs)
+}
+
+func productionReadinessRiskSummary(findings []map[string]any) ProductionReadinessRiskSummary {
+	bySeverity := map[string]int{
+		"info":     0,
+		"low":      0,
+		"medium":   0,
+		"high":     0,
+		"critical": 0,
+	}
+	blocking := []string{}
+	for _, finding := range findings {
+		severity := stringValue(finding, "severity")
+		if _, ok := bySeverity[severity]; ok {
+			bySeverity[severity]++
+		}
+		if severity == "high" || severity == "critical" {
+			riskCode := stringValue(finding, "risk_code")
+			if riskCode != "" {
+				blocking = append(blocking, riskCode)
+			}
+		}
+	}
+	return ProductionReadinessRiskSummary{
+		Total:      len(findings),
+		BySeverity: bySeverity,
+		Blocking:   uniqueStrings(blocking),
+	}
+}
+
 func (svc *Service) evidenceGovernance(ctx context.Context, modelRuns []json.RawMessage) (map[string]any, error) {
 	catalog, err := svc.ModelCatalog(ctx)
 	if err != nil {
@@ -2666,6 +2875,15 @@ func stringValue(value map[string]any, key string) string {
 		return strings.TrimSpace(text)
 	}
 	return ""
+}
+
+func boolValue(value map[string]any, key string) bool {
+	raw, ok := value[key]
+	if !ok || raw == nil {
+		return false
+	}
+	boolean, ok := raw.(bool)
+	return ok && boolean
 }
 
 func mapValue(value map[string]any, key string) map[string]any {

@@ -214,6 +214,36 @@ type EvidenceReferenceResolution struct {
 	Payload     any    `json:"payload,omitempty"`
 }
 
+type ProductionReadinessReport struct {
+	SchemaVersion            string                         `json:"schema_version"`
+	JobID                    string                         `json:"job_id"`
+	EvidencePackageID        string                         `json:"evidence_package_id"`
+	PolicyVersion            string                         `json:"policy_version"`
+	ReadinessStatus          string                         `json:"readiness_status"`
+	ProductionReady          bool                           `json:"production_ready"`
+	ExternalApprovalRequired bool                           `json:"external_approval_required"`
+	AutoPublishAllowed       bool                           `json:"auto_publish_allowed"`
+	BlockingReasons          []string                       `json:"blocking_reasons"`
+	Warnings                 []string                       `json:"warnings"`
+	Checks                   []ProductionReadinessCheck     `json:"checks"`
+	RiskFindingsSummary      ProductionReadinessRiskSummary `json:"risk_findings_summary"`
+	GeneratedAt              string                         `json:"generated_at"`
+	Metadata                 map[string]any                 `json:"metadata,omitempty"`
+}
+
+type ProductionReadinessCheck struct {
+	CheckID      string   `json:"check_id"`
+	Status       string   `json:"status"`
+	Message      string   `json:"message"`
+	EvidenceRefs []string `json:"evidence_refs"`
+}
+
+type ProductionReadinessRiskSummary struct {
+	Total      int            `json:"total"`
+	BySeverity map[string]int `json:"by_severity"`
+	Blocking   []string       `json:"blocking"`
+}
+
 type ProcessGraphRecord struct {
 	ProcessGraphID      string          `json:"process_graph_id"`
 	SchemaVersion       string          `json:"schema_version"`

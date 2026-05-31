@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, GetDefaultParameterSetPromotionPlanData, GetDefaultParameterSetPromotionPlanResponse, PromoteDefaultParameterSetToApprovedData, PromoteDefaultParameterSetToApprovedResponse, ScheduleBenchmarkCaseRunData, ScheduleBenchmarkCaseRunResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, GetComputeJobProductionReadinessData, GetComputeJobProductionReadinessResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, GetDefaultParameterSetPromotionPlanData, GetDefaultParameterSetPromotionPlanResponse, PromoteDefaultParameterSetToApprovedData, PromoteDefaultParameterSetToApprovedResponse, ScheduleBenchmarkCaseRunData, ScheduleBenchmarkCaseRunResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -281,6 +281,27 @@ export class DefaultService {
             },
             errors: {
                 403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.jobId
+     * @returns ProductionReadinessReport Read-only production readiness report
+     * @throws ApiError
+     */
+    public static getComputeJobProductionReadiness(data: GetComputeJobProductionReadinessData): CancelablePromise<GetComputeJobProductionReadinessResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/compute/jobs/{job_id}/production-readiness',
+            path: {
+                job_id: data.jobId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error',
                 409: 'Contract error'
             }
         });

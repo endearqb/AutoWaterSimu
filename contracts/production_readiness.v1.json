@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "production_readiness.v1.json",
+  "title": "production_readiness.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "job_id",
+    "evidence_package_id",
+    "policy_version",
+    "readiness_status",
+    "production_ready",
+    "external_approval_required",
+    "auto_publish_allowed",
+    "blocking_reasons",
+    "warnings",
+    "checks",
+    "risk_findings_summary",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "production_readiness.v1" },
+    "job_id": { "type": "string", "minLength": 1 },
+    "evidence_package_id": { "type": "string", "minLength": 1 },
+    "policy_version": { "type": "string", "minLength": 1 },
+    "readiness_status": {
+      "type": "string",
+      "enum": ["ready_for_external_approval", "blocked"]
+    },
+    "production_ready": { "type": "boolean" },
+    "external_approval_required": { "const": true },
+    "auto_publish_allowed": { "const": false },
+    "blocking_reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/check" },
+      "minItems": 1
+    },
+    "risk_findings_summary": { "$ref": "#/$defs/risk_findings_summary" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "check": {
+      "type": "object",
+      "required": ["check_id", "status", "message", "evidence_refs"],
+      "properties": {
+        "check_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "warning", "failed"] },
+        "message": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "risk_findings_summary": {
+      "type": "object",
+      "required": ["total", "by_severity", "blocking"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "by_severity": {
+          "type": "object",
+          "required": ["info", "low", "medium", "high", "critical"],
+          "properties": {
+            "info": { "type": "integer", "minimum": 0 },
+            "low": { "type": "integer", "minimum": 0 },
+            "medium": { "type": "integer", "minimum": 0 },
+            "high": { "type": "integer", "minimum": 0 },
+            "critical": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "blocking": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

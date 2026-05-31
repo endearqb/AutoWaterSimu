@@ -430,6 +430,17 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("X-Evidence-Checksum", checksum)
 		WriteJSON(w, http.StatusOK, evidence)
+	case "production-readiness":
+		if _, err := server.auth.Principal(r, "evidence:read"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		report, err := server.service.ProductionReadiness(r.Context(), jobID)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, report)
 	case "evidence-ref":
 		if _, err := server.auth.Principal(r, "evidence:read"); err != nil {
 			WriteError(w, err)

@@ -1,3 +1,38 @@
+# 2026-05-31 AutoWaterSimu Next production readiness TODO
+
+- [x] Re-read README First, PRD/Spec/Development Plan, completion audit, contracts, Compute API, OpenAPI, and frontend service context
+- [x] Add `production_readiness.v1` schema plus valid/invalid fixtures
+- [x] Add read-only Compute API production readiness endpoint behind `evidence:read`
+- [x] Evaluate readiness from job status, evidence package availability, governance production allowance, and stored risk findings
+- [x] Preserve external approval boundary with `external_approval_required=true` and `auto_publish_allowed=false`
+- [x] Sync OpenAPI and generated Compute client
+- [x] Add frontend service wrapper
+- [x] Update README/context records
+- [x] Run full Go/OpenAPI/frontend validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Add `GET /api/v1/compute/jobs/{job_id}/production-readiness` as read-only evidence integration.
+- Return schema-valid `production_readiness.v1` with checks for job succeeded, evidence package available, governance production allowed, and no high/critical risk findings.
+- Treat medium risk findings as warnings and high/critical findings as blockers.
+- Do not create production approvals, mutate jobs/catalogs/results, or publish production commands.
+
+## Review
+
+- Added `production_readiness.v1` with ready and auto-publish-forbidden fixtures.
+- Added `GET /api/v1/compute/jobs/{job_id}/production-readiness` behind `evidence:read`.
+- The report is read-only and derives readiness from job status, evidence package availability, `governance.production_allowed`, and stored `risk_findings`.
+- High/critical risk findings block readiness; medium findings produce warnings; all reports keep `external_approval_required=true` and `auto_publish_allowed=false`.
+- Synced OpenAPI, generated Compute client, and `computeJobsService.getProductionReadiness()`.
+- Verification:
+  - `backend\.venv\Scripts\python -m pytest contracts\tests -q` passed, `91 passed`.
+  - `cd apps\api; go test ./internal/compute -run "Test(ValidatedCompletePersistsModelRun|ProductionReadinessBlocksHighRiskFindings)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `cd frontend; npm run generate-compute-client` passed.
+  - `cd frontend; npx tsc --noEmit` passed.
+  - `git diff --check -- contracts apps\api frontend\src\client\compute frontend\src\services docs\rebuild tasks\todo.md .ai\plans .ai\changes\2026-05-31.md` passed with LF/CRLF warnings only.
+
 # 2026-05-31 AutoWaterSimu Next S3 archive backend TODO
 
 - [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API, command entrypoint, artifact retention, and operations context

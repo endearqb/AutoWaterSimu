@@ -1,0 +1,54 @@
+{
+  "schema_version": "production_readiness.v1",
+  "job_id": "job_material_balance_minimal",
+  "evidence_package_id": "evidence_material_balance_minimal",
+  "policy_version": "production_readiness_policy.v1",
+  "readiness_status": "ready_for_external_approval",
+  "production_ready": true,
+  "external_approval_required": true,
+  "auto_publish_allowed": false,
+  "blocking_reasons": [],
+  "warnings": [],
+  "checks": [
+    {
+      "check_id": "job_succeeded",
+      "status": "passed",
+      "message": "Job completed successfully.",
+      "evidence_refs": ["job:job_material_balance_minimal"]
+    },
+    {
+      "check_id": "evidence_package_available",
+      "status": "passed",
+      "message": "Evidence package is available for external review.",
+      "evidence_refs": ["evidence_package:evidence_material_balance_minimal"]
+    },
+    {
+      "check_id": "governance_production_allowed",
+      "status": "passed",
+      "message": "Evidence governance allows this model/parameter evidence for production review.",
+      "evidence_refs": ["evidence_package:evidence_material_balance_minimal"]
+    },
+    {
+      "check_id": "risk_findings_no_high_or_critical",
+      "status": "passed",
+      "message": "No high or critical risk findings were reported.",
+      "evidence_refs": []
+    }
+  ],
+  "risk_findings_summary": {
+    "total": 1,
+    "by_severity": {
+      "info": 1,
+      "low": 0,
+      "medium": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "blocking": []
+  },
+  "generated_at": "2026-05-31T00:00:00Z",
+  "metadata": {
+    "source_system": "autowatersimu",
+    "requested_by": "user_or_service"
+  }
+}

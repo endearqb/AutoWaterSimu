@@ -26,6 +26,7 @@ import type {
   ModelParameterSetTransitionResponse,
   ParameterSetPromotionRequest,
   ParameterSetStatusUpdateRequest,
+  ProductionReadinessReport,
   ResultExplanationRecord,
   ResultExplanationReviewRequest,
 } from "@/client/compute"
@@ -319,6 +320,10 @@ export const computeJobsService = {
       jobId,
       ref: evidenceRef,
     })
+  },
+
+  getProductionReadiness(jobId: string): Promise<ProductionReadinessReport> {
+    return DefaultService.getComputeJobProductionReadiness({ jobId })
   },
 
   submitResultExplanation(

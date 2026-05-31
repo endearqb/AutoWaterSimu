@@ -1,0 +1,32 @@
+{
+  "schema_version": "production_readiness.v1",
+  "job_id": "job_material_balance_minimal",
+  "evidence_package_id": "evidence_material_balance_minimal",
+  "policy_version": "production_readiness_policy.v1",
+  "readiness_status": "ready_for_external_approval",
+  "production_ready": true,
+  "external_approval_required": true,
+  "auto_publish_allowed": true,
+  "blocking_reasons": [],
+  "warnings": [],
+  "checks": [
+    {
+      "check_id": "job_succeeded",
+      "status": "passed",
+      "message": "Job completed successfully.",
+      "evidence_refs": ["job:job_material_balance_minimal"]
+    }
+  ],
+  "risk_findings_summary": {
+    "total": 0,
+    "by_severity": {
+      "info": 0,
+      "low": 0,
+      "medium": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "blocking": []
+  },
+  "generated_at": "2026-05-31T00:00:00Z"
+}

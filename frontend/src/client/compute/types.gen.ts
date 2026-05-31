@@ -487,6 +487,50 @@ export type ProcessGraphRecord = {
 
 export type schema_version9 = 'process_graph.v1';
 
+export type ProductionReadinessCheck = {
+    check_id: string;
+    status: 'passed' | 'warning' | 'failed';
+    message: string;
+    evidence_refs: Array<(string)>;
+};
+
+export type status5 = 'passed' | 'warning' | 'failed';
+
+export type ProductionReadinessReport = {
+    schema_version: 'production_readiness.v1';
+    job_id: string;
+    evidence_package_id: string;
+    policy_version: string;
+    readiness_status: 'ready_for_external_approval' | 'blocked';
+    production_ready: boolean;
+    external_approval_required: boolean;
+    auto_publish_allowed: boolean;
+    blocking_reasons: Array<(string)>;
+    warnings: Array<(string)>;
+    checks: Array<ProductionReadinessCheck>;
+    risk_findings_summary: ProductionReadinessRiskSummary;
+    generated_at: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type schema_version10 = 'production_readiness.v1';
+
+export type readiness_status = 'ready_for_external_approval' | 'blocked';
+
+export type ProductionReadinessRiskSummary = {
+    total: number;
+    by_severity: {
+        info: number;
+        low: number;
+        medium: number;
+        high: number;
+        critical: number;
+    };
+    blocking: Array<(string)>;
+};
+
 export type ResultExplanationRecord = {
     schema_version: 'result_explanation_record.v1';
     explanation_id: string;
@@ -517,11 +561,11 @@ export type ResultExplanationRecord = {
     updated_at: string;
 };
 
-export type schema_version10 = 'result_explanation_record.v1';
+export type schema_version11 = 'result_explanation_record.v1';
 
 export type explanation_schema_version = 'result_explanation.v1';
 
-export type status5 = 'submitted' | 'approved' | 'rejected' | 'published';
+export type status6 = 'submitted' | 'approved' | 'rejected' | 'published';
 
 export type review_decision = 'approved' | 'rejected';
 
@@ -554,7 +598,7 @@ export type SimulationInputRecord = {
     created_at: string;
 };
 
-export type schema_version11 = 'simulation_input.v1';
+export type schema_version12 = 'simulation_input.v1';
 
 export type SimulationRequest = {
     schema_version: 'simulation_request.v1';
@@ -581,7 +625,7 @@ export type SimulationRequest = {
     [key: string]: unknown | string;
 };
 
-export type schema_version12 = 'simulation_request.v1';
+export type schema_version13 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1' | 'simulation.asm1slim.v1' | 'simulation.asm1.v1' | 'simulation.asm3.v1' | 'simulation.udm.v1';
 
@@ -684,6 +728,12 @@ export type GetComputeJobEvidenceData = {
 };
 
 export type GetComputeJobEvidenceResponse = (EvidencePackage);
+
+export type GetComputeJobProductionReadinessData = {
+    jobId: string;
+};
+
+export type GetComputeJobProductionReadinessResponse = (ProductionReadinessReport);
 
 export type ResolveEvidenceReferenceData = {
     jobId: string;
