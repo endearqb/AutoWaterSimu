@@ -956,6 +956,42 @@ func (svc *Service) DefaultParameterSetPromotionPlan(ctx context.Context, modelK
 	return plan, nil
 }
 
+func (svc *Service) PromoteDefaultParameterSetToApproved(ctx context.Context, modelKey, modelVersion string, request ParameterSetPromotionRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
+	plan, err := svc.DefaultParameterSetPromotionPlan(ctx, modelKey, modelVersion)
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	if request.ParameterSetID != "" && strings.TrimSpace(request.ParameterSetID) != plan.ParameterSetID {
+		return ModelParameterSetTransitionResponse{}, 0, NotFound(CodeParameterSetNotFound, "parameter set not found")
+	}
+	if !plan.CanPromoteToApproved {
+		return ModelParameterSetTransitionResponse{}, 0, NewAppError(
+			http.StatusConflict,
+			CodeParameterSetTransitionFailed,
+			"default parameter set is not ready for benchmark-backed promotion",
+			false,
+			map[string]any{
+				"blocking_reasons": plan.BlockingReasons,
+				"current_status":   plan.CurrentStatus,
+				"parameter_set_id": plan.ParameterSetID,
+			},
+		)
+	}
+	metadata := copyStringAnyMap(request.Metadata)
+	metadata["promotion_source"] = "default_parameter_set_promotion_plan"
+	metadata["promotion_plan_verified_at"] = svc.now().Format(time.RFC3339Nano)
+	metadata["benchmark_cases_checked"] = plan.BenchmarkCasesChecked
+	metadata["benchmark_cases_passed"] = plan.BenchmarkCasesPassed
+	metadata["case_results"] = plan.CaseResults
+	return svc.UpdateDefaultParameterSetStatus(ctx, modelKey, modelVersion, ParameterSetStatusUpdateRequest{
+		ParameterSetID: plan.ParameterSetID,
+		FromStatus:     plan.CurrentStatus,
+		ToStatus:       "approved",
+		Reason:         defaultString(request.Reason, "benchmark-backed promotion"),
+		Metadata:       metadata,
+	}, defaultSourceSystem, defaultRequestedBy)
+}
+
 func (svc *Service) benchmarkCasePromotionResult(ctx context.Context, benchmarkCase ModelBenchmarkCase, modelKey, modelVersion string, parameterSet ModelParameterSet) (BenchmarkCasePromotionResult, error) {
 	result := BenchmarkCasePromotionResult{
 		BenchmarkCaseID:      benchmarkCase.BenchmarkCaseID,

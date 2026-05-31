@@ -1461,6 +1461,39 @@ func TestDefaultParameterSetPromotionPlanEndpoint(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	promotionPath := "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/promote-approved"
+	promotionBody := `{"parameter_set_id":"ps_material_balance_default_v1","reason":"regression evidence gate","metadata":{"release_ticket":"PROMO-1"}}`
+	req = httptest.NewRequest(http.MethodPost, promotionPath, strings.NewReader(promotionBody))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("promotion without benchmark evidence should conflict, got %d %s", rec.Code, rec.Body.String())
+	}
+	var appErr AppError
+	if err := json.Unmarshal(rec.Body.Bytes(), &appErr); err != nil {
+		t.Fatal(err)
+	}
+	blockingReasons, ok := appErr.Details["blocking_reasons"].([]any)
+	if appErr.ErrorCode != CodeParameterSetTransitionFailed || !ok || len(blockingReasons) != 1 ||
+		blockingReasons[0] != "benchmark_run_missing_for_parameter_set" {
+		t.Fatalf("expected benchmark promotion blocker, got %#v", appErr)
+	}
+	blockedCatalog, err := svc.ModelCatalog(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if blockedCatalog.Models[0].Versions[0].DefaultParameterSet.Status != "validated" {
+		t.Fatalf("blocked promotion should not mutate catalog: %#v", blockedCatalog.Models[0].Versions[0].DefaultParameterSet)
+	}
+	req = httptest.NewRequest(http.MethodPost, promotionPath, strings.NewReader(promotionBody))
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("worker token should not promote parameter set, got %d %s", rec.Code, rec.Body.String())
+	}
+
 	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
 		t.Fatal(err)
 	}
@@ -1529,6 +1562,42 @@ func TestDefaultParameterSetPromotionPlanEndpoint(t *testing.T) {
 	if !plan.CanPromoteToApproved || plan.WouldModifyCatalog || plan.BenchmarkCasesPassed != 1 ||
 		len(plan.BlockingReasons) != 0 || len(plan.CaseResults) != 1 || !plan.CaseResults[0].Ready {
 		t.Fatalf("expected promotable advisory plan without mutation, got %#v", plan)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, promotionPath, strings.NewReader(promotionBody))
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("benchmark-backed promotion failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var transition ModelParameterSetTransitionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &transition); err != nil {
+		t.Fatal(err)
+	}
+	promotedParameterSet := transition.Catalog.Models[0].Versions[0].DefaultParameterSet
+	if !transition.CreatedSnapshot || transition.FromStatus != "validated" || transition.ToStatus != "approved" ||
+		transition.ParameterSetID != "ps_material_balance_default_v1" || promotedParameterSet == nil ||
+		promotedParameterSet.Status != "approved" {
+		t.Fatalf("unexpected benchmark-backed transition response: %#v", transition)
+	}
+	lastTransition, ok := promotedParameterSet.Metadata["last_status_transition"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected last_status_transition metadata, got %#v", promotedParameterSet.Metadata)
+	}
+	transitionMetadata, ok := lastTransition["metadata"].(map[string]any)
+	if !ok || transitionMetadata["release_ticket"] != "PROMO-1" ||
+		transitionMetadata["promotion_source"] != "default_parameter_set_promotion_plan" ||
+		transitionMetadata["benchmark_cases_checked"] != float64(1) ||
+		transitionMetadata["benchmark_cases_passed"] != float64(1) {
+		t.Fatalf("unexpected promotion transition metadata: %#v", lastTransition)
+	}
+	promotedCatalog, err := svc.ModelCatalog(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if promotedCatalog.Models[0].Versions[0].DefaultParameterSet.Status != "approved" {
+		t.Fatalf("promotion should persist approved status: %#v", promotedCatalog.Models[0].Versions[0].DefaultParameterSet)
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/promotion-plan", nil)

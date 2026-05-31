@@ -320,6 +320,12 @@ type ParameterSetStatusUpdateRequest struct {
 	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
+type ParameterSetPromotionRequest struct {
+	ParameterSetID string         `json:"parameter_set_id,omitempty"`
+	Reason         string         `json:"reason,omitempty"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
+}
+
 type ModelParameterSetTransitionResponse struct {
 	ModelKey           string               `json:"model_key"`
 	ModelVersion       string               `json:"model_version"`

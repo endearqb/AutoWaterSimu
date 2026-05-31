@@ -398,6 +398,7 @@
 - parameter sets。
 - persisted model catalog snapshot history listing。
 - read-only default parameter set promotion plan backed by latest benchmark_run/model_run evidence。
+- explicit benchmark-backed default parameter set promotion API that only changes `validated` to `approved` after the promotion plan passes。
 - read-only Web model governance page for current catalog, promotion readiness, and persisted snapshot history。
 - benchmark cases。
 - manual benchmark case schedule-run API that queues `compute_job.v1` without recording benchmark history or mutating parameter status。
@@ -421,7 +422,7 @@
   - validated。
   - approved。
   - retired。
-- `validated` default parameter set can be checked against benchmark evidence before manual promotion to `approved`。
+- `validated` default parameter set can be checked against benchmark evidence and explicitly promoted to `approved` only when the promotion plan passes。
 - evidence package 可导出并校验 checksum。
 
 ### 8.2 NewSystem / milp

@@ -438,6 +438,14 @@ export type ParameterModelVersionPath = string;
 
 export type ParameterProcessGraphID = string;
 
+export type ParameterSetPromotionRequest = {
+    parameter_set_id?: string;
+    reason?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
 export type ParameterSetStatusUpdateRequest = {
     parameter_set_id?: string;
     from_status?: 'draft' | 'candidate' | 'validated' | 'approved' | 'retired';
@@ -797,6 +805,14 @@ export type GetDefaultParameterSetPromotionPlanData = {
 };
 
 export type GetDefaultParameterSetPromotionPlanResponse = (ModelParameterSetPromotionPlan);
+
+export type PromoteDefaultParameterSetToApprovedData = {
+    modelKey: string;
+    modelVersion: string;
+    requestBody?: ParameterSetPromotionRequest;
+};
+
+export type PromoteDefaultParameterSetToApprovedResponse = (ModelParameterSetTransitionResponse);
 
 export type ScheduleBenchmarkCaseRunData = {
     benchmarkCaseId: string;

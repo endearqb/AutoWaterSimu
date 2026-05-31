@@ -24,6 +24,7 @@ import type {
   ModelCatalogRecord,
   ModelParameterSetPromotionPlan,
   ModelParameterSetTransitionResponse,
+  ParameterSetPromotionRequest,
   ParameterSetStatusUpdateRequest,
   ResultExplanationRecord,
   ResultExplanationReviewRequest,
@@ -411,6 +412,18 @@ export const computeJobsService = {
     return DefaultService.getDefaultParameterSetPromotionPlan({
       modelKey,
       modelVersion,
+    })
+  },
+
+  promoteDefaultParameterSetToApproved(
+    modelKey: string,
+    modelVersion: string,
+    request: ParameterSetPromotionRequest = {},
+  ): Promise<ModelParameterSetTransitionResponse> {
+    return DefaultService.promoteDefaultParameterSetToApproved({
+      modelKey,
+      modelVersion,
+      requestBody: request,
     })
   },
 

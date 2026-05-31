@@ -428,6 +428,23 @@
         }
       }
     },
+    "/api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/promote-approved": {
+      "post": {
+        "operationId": "promoteDefaultParameterSetToApproved",
+        "parameters": [
+          { "$ref": "#/components/parameters/ModelKey" },
+          { "$ref": "#/components/parameters/ModelVersionPath" }
+        ],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ParameterSetPromotionRequest" } } } },
+        "responses": {
+          "201": { "description": "Created a new catalog snapshot after benchmark-backed parameter set promotion", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelParameterSetTransitionResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-cases/{benchmark_case_id}/schedule-run": {
       "post": {
         "operationId": "scheduleBenchmarkCaseRun",
@@ -983,6 +1000,14 @@
           "parameter_set_id": { "type": "string" },
           "from_status": { "type": "string", "enum": ["draft", "candidate", "validated", "approved", "retired"] },
           "to_status": { "type": "string", "enum": ["draft", "candidate", "validated", "approved", "retired"] },
+          "reason": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ParameterSetPromotionRequest": {
+        "type": "object",
+        "properties": {
+          "parameter_set_id": { "type": "string" },
           "reason": { "type": "string" },
           "metadata": { "type": "object", "additionalProperties": true }
         }

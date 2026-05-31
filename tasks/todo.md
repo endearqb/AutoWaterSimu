@@ -1,3 +1,28 @@
+# 2026-05-31 AutoWaterSimu Next benchmark-backed parameter promotion TODO
+
+- [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API, OpenAPI, and frontend service context
+- [x] Add benchmark-backed default parameter set promote-approved endpoint
+- [x] Gate promotion on the existing promotion plan and preserve production approval boundary
+- [x] Sync OpenAPI and generated Compute client
+- [x] Add frontend service wrapper
+- [x] Update README/context records
+- [x] Run Go/OpenAPI/frontend validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Add `POST /api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/promote-approved` behind `model:write`.
+- Reuse the existing promotion plan as the gate: require active model version, current `validated` default parameter set, and passed latest benchmark_run/model_run evidence for every validated benchmark case.
+- Store a new catalog snapshot by changing only the current default parameter set status to `approved` and adding transition metadata.
+- Preserve separation of concerns: the endpoint does not execute Python, does not record `benchmark_run.v1`, does not manage multiple parameter sets, and does not complete production approval.
+
+## Review
+
+- Added `ParameterSetPromotionRequest`, HTTP route, service method, OpenAPI path/schema, generated Compute client method, and `computeJobsService.promoteDefaultParameterSetToApproved()`.
+- Extended focused Go coverage for missing benchmark blockers, worker-token denial, successful evidence-backed promotion, transition metadata, and persisted `approved` status.
+- Updated API/OpenAPI/frontend service README, Development Plan, completion audit, and `.ai/changes`.
+- Remaining governance work: multi-parameter-set management, automated/scheduled benchmark execution, automatic result-to-benchmark_run-to-promotion orchestration, and production approval workflow semantics remain separate Phase 6 work.
+
 # 2026-05-31 AutoWaterSimu Next benchmark case schedule-run TODO
 
 - [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API, OpenAPI, and frontend service context

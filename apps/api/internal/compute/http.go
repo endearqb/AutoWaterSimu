@@ -709,6 +709,25 @@ func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) 
 		WriteJSON(w, http.StatusOK, response)
 		return
 	}
+	if len(parts) == 5 && parts[1] == "versions" && parts[3] == "default-parameter-set" && parts[4] == "promote-approved" && r.Method == http.MethodPost {
+		principal, err := server.auth.Principal(r, "model:write")
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		request, err := readParameterSetPromotionRequest(r)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		response, status, err := server.service.PromoteDefaultParameterSetToApproved(r.Context(), parts[0], parts[2], request, "compute-api", principal.Name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, status, response)
+		return
+	}
 	if len(parts) == 6 && parts[1] == "versions" && parts[3] == "benchmark-cases" && parts[5] == "schedule-run" && r.Method == http.MethodPost {
 		principal, err := server.auth.Principal(r, "job:create")
 		if err != nil {
@@ -1031,6 +1050,21 @@ func readBenchmarkCaseRunRequest(r *http.Request) (BenchmarkCaseRunRequest, erro
 	}
 	if err := json.Unmarshal(body, &request); err != nil {
 		return request, ValidationError("benchmark case run request JSON is invalid")
+	}
+	return request, nil
+}
+
+func readParameterSetPromotionRequest(r *http.Request) (ParameterSetPromotionRequest, error) {
+	var request ParameterSetPromotionRequest
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return request, ValidationError("read request body failed")
+	}
+	if strings.TrimSpace(string(body)) == "" {
+		return request, nil
+	}
+	if err := json.Unmarshal(body, &request); err != nil {
+		return request, ValidationError("parameter set promotion request JSON is invalid")
 	}
 	return request, nil
 }

@@ -42,7 +42,7 @@
 2. P0 合同使用 snake_case，例如 `compute_job.v1`。
 3. 合同变更必须同步更新示例、测试和生成类型。
 4. 不把 UI-only 字段放入 worker 可执行合同。
-5. `model_catalog.v1` 只定义跨边界 catalog/版本/参数模板/默认参数集/benchmark case 形状；Go Compute API 可持久化 schema-valid catalog snapshots 用于治理读取，并可对现有 default parameter set 做最小状态迁移或只读 promotion plan；完整多参数集审批流或自动 benchmark-backed 状态机仍应由 API/数据库实现补充。
+5. `model_catalog.v1` 只定义跨边界 catalog/版本/参数模板/默认参数集/benchmark case 形状；Go Compute API 可持久化 schema-valid catalog snapshots 用于治理读取，并可对现有 default parameter set 做最小状态迁移、只读 promotion plan，或在 promotion plan 已通过时执行 evidence-backed `approved` 晋升；完整多参数集审批流或自动 benchmark-backed 状态机仍应由 API/数据库实现补充。
 6. `benchmark_run.v1` 记录某个已完成 `model_run.v1` 对 catalog 中 benchmark case 的执行结果、指标、容差和 evidence refs；它是审计历史，不自动执行 benchmark、不推进参数集状态、不代表生产审批。
 7. `artifact.v1.retention_policy` / `retain_until` 只是生命周期 metadata；实际删除、归档或引用计数必须由 API/存储层另行实现并验证。
 8. `constraint_draft.v1` 只表达 Agent/外部系统提出的约束草案；必须经 API 校验和用户确认后，才能参与 simulation request 或生产相关决策。Go API 对 approved constraint confirmation 只能生成只读 application plan，不能直接修改目标对象或发布生产动作。
