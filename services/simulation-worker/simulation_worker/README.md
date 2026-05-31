@@ -11,13 +11,14 @@
 - `--run-job` material balance、ASM1Slim model-bound fixture、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 和 `simulation.udm.v1` 独立 job type 执行链路。
 - stdio JSON-RPC protocol。
 - `--run-api-once` one-shot Go Compute API worker bridge。
+- `--run-api-loop` bounded Go Compute API worker loop。
 - time-series artifact 写入。
 - packaged mode resource root resolution。
 
 本目录不负责：
 
 - 打包 sidecar。
-- 长驻 Web worker 调度、复杂 heartbeat 和生产部署编排。
+- 生产部署编排、异步求解中断和复杂 cancel acknowledgement。
 - simulation core 运行时实现。
 
 ## 2. 核心文件
@@ -25,7 +26,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `cli.py` | CLI 与 JSON-RPC 入口 |
-| `api_client.py` | one-shot Go Compute API register/claim/run/upload/succeed/fail client |
+| `api_client.py` | Go Compute API register/claim/heartbeat/run/upload/succeed/fail client and bounded loop |
 | `runner.py` | compute job 执行、schema 校验、core adapter 调用、artifact 输出 |
 | `__main__.py` | `python -m simulation_worker` 入口 |
 
@@ -63,9 +64,10 @@ HTTP worker bridge 目标形态：
 
 ```powershell
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-once --api-base-url http://localhost:8088 --api-token dev-worker-token --artifact-dir tmp\worker-api-artifacts
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-loop --api-base-url http://localhost:8088 --api-token dev-worker-token --artifact-dir tmp\worker-api-artifacts --max-jobs 1 --max-idle-polls 1
 ```
 
-该模式执行一次 register -> claim -> run -> artifact upload -> succeed/fail 后退出，用于本地 smoke 和 CI，不替代后续长驻 worker 调度。
+`--run-api-once` 执行一次 register -> claim -> heartbeat -> run -> artifact upload -> succeed/fail 后退出，用于本地 smoke 和 CI。`--run-api-loop` 执行一次 register 后重复 claim；每个已 claim job 执行前都会 heartbeat 以刷新 lease 并读取 `cancel_requested` / terminal 状态，适合 dev/CI 和简单长运行 worker。该 loop 不实现异步求解中断或生产部署编排。
 
 ## 5. 依赖边界
 

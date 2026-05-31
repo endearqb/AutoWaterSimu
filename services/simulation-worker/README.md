@@ -10,6 +10,7 @@
 - `simulation-worker --run-job <path>`。
 - `simulation-worker --stdio-jsonrpc`。
 - `simulation-worker --run-api-once` 本地/CI worker HTTP smoke。
+- `simulation-worker --run-api-loop` bounded worker HTTP loop。
 - Desktop sidecar 和 Web worker 的共享执行逻辑。
 
 本目录不负责：
@@ -27,7 +28,7 @@
 | `simulation_worker/` | Python CLI、job runner、self-check 和 JSON-RPC protocol |
 | `tests/` | Worker CLI contract tests |
 
-Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runtime，不再直接依赖 `backend/app`。当前 worker 接受 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；ASM1Slim/ASM1/ASM3/UDM 仍通过既有 material balance runtime 的节点模型分支执行。self-check 声明 `material_balance`、`asm1slim`、`asm1`、`asm3`、`udm`、`ode` capabilities。`--run-api-once` 是 Phase 4/5 的本地/CI HTTP worker bridge，用于 register -> claim -> run -> upload artifact -> succeed/fail 的单次闭环；长驻 worker 调度、复杂 heartbeat 和生产部署仍是后续工作。
+Phase 2B 后 worker 通过 `simulation_core/python` 调用 material balance runtime，不再直接依赖 `backend/app`。当前 worker 接受 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；ASM1Slim/ASM1/ASM3/UDM 仍通过既有 material balance runtime 的节点模型分支执行。self-check 声明 `material_balance`、`asm1slim`、`asm1`、`asm3`、`udm`、`ode` capabilities。`--run-api-once` 是 Phase 4/5 的本地/CI HTTP worker bridge，用于 register -> claim -> heartbeat -> run -> upload artifact -> succeed/fail 的单次闭环；`--run-api-loop` 在同一 HTTP contract 上复用一次注册并重复 claim，支持 `--max-jobs` / `--max-idle-polls` / `--idle-sleep-seconds` 做 bounded loop。生产部署编排、异步求解中断和复杂 cancel acknowledgement 仍是后续工作。
 
 Packaged sidecar build/smoke 由 `apps/desktop/packaging/build-packaged-sidecar.ps1` 和 `apps/desktop/scripts/smoke-packaged-sidecar.ps1` 负责；本目录只定义 worker CLI 行为和测试。
 
@@ -73,6 +74,7 @@ backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm3_independent.compute_job.v1.json --artifact-dir tmp\worker-asm3-artifacts
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\udm_independent.compute_job.v1.json --artifact-dir tmp\worker-udm-artifacts
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-once --api-base-url http://localhost:8088 --api-token dev-worker-token --artifact-dir tmp\worker-api-artifacts
+backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-loop --api-base-url http://localhost:8088 --api-token dev-worker-token --artifact-dir tmp\worker-api-artifacts --max-jobs 1 --max-idle-polls 1
 backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
 ```
 

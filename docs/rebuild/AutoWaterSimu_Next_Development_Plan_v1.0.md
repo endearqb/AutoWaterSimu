@@ -281,6 +281,7 @@
 - Worker lifecycle:
   - claim 原子更新 lease。
   - heartbeat 刷新 lease 并返回 cancel_requested。
+  - bounded API loop 可重复 claim，并在每个 job 执行前 heartbeat。
   - stale worker late succeed 被拒绝。
   - retry attempt 写 event。
 
@@ -288,6 +289,7 @@
 
 - 可提交 `simulation.material_balance.v1` demo job。
 - worker 可 claim 并写回 result。
+- worker loop 可重复 claim 并在执行前 heartbeat。
 - heartbeat 超时能标记 job。
 - cancel_requested 能被 worker 看到。
 - late succeed 被拒绝。

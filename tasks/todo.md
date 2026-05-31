@@ -1,3 +1,31 @@
+# 2026-05-31 AutoWaterSimu Next Worker API Loop TODO
+
+- [x] Re-read README First, worker, worker tests, Go API heartbeat, and active audit context
+- [x] Add bounded `--run-api-loop` worker HTTP mode
+- [x] Add per-claimed-job heartbeat preflight before execution
+- [x] Extend worker HTTP bridge tests
+- [x] Update worker README/context and completion audit
+- [x] Run worker tests and focused CLI validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Keep `--run-api-once` behavior compatible, but route it through shared register/claim/heartbeat/run/upload/complete helpers.
+- Add `--run-api-loop` for dev/CI and simple long-running worker use: one registration, repeated claim attempts, configurable `--max-jobs`, `--max-idle-polls`, and `--idle-sleep-seconds`.
+- After a job is claimed, call worker heartbeat with `job_id` before executing; if heartbeat reports terminal/cancelled, skip execution and return a conservative status.
+- Do not implement asynchronous solver interruption or production scheduler semantics in this slice.
+
+## Review
+
+- Added `run_api_loop()` in the worker HTTP client and `--run-api-loop` CLI mode.
+- `--run-api-once` and loop mode now share register/claim/heartbeat/run/upload/complete helpers; each claimed job heartbeats before execution.
+- Loop mode registers once, repeats claim attempts, supports `--max-jobs`, `--max-idle-polls`, and `--idle-sleep-seconds`, and returns a compact JSON summary instead of full compute results for every job.
+- Extended fake Compute API tests to assert one-shot heartbeat order and a two-job bounded loop.
+- Remaining production work: asynchronous solver cancellation, deployment supervisor policy, and real deployed worker process monitoring.
+- Verification:
+  - `backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --self-check` passed.
+  - `backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q` passed, `22 passed`.
+
 # 2026-05-31 AutoWaterSimu Next Simulation Request ASM/UDM Entry TODO
 
 - [x] Re-read README First, contracts, Go API, OpenAPI, and generated client context

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import time
 import uuid
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ except ImportError:
 
 DEFAULT_API_BASE_URL = "http://localhost:8088"
 DEFAULT_API_TOKEN = "dev-worker-token"
+DEFAULT_IDLE_SLEEP_SECONDS = 5.0
 
 
 class ComputeAPIClientError(RuntimeError):
@@ -89,6 +91,12 @@ class ComputeAPIClient:
         )
         return self._send_json(req)
 
+    def heartbeat(self, *, worker_id: str, job_id: str) -> dict[str, Any]:
+        return self.post_json(
+            f"/api/v1/workers/{_quote(worker_id)}/heartbeat",
+            {"job_id": job_id},
+        )
+
     def _send_json(self, req: request.Request) -> dict[str, Any]:
         try:
             with request.urlopen(req, timeout=self.timeout_seconds) as resp:
@@ -121,9 +129,62 @@ def run_api_once(
     artifact_dir: str | Path = "artifacts",
 ) -> dict[str, Any]:
     worker_id = worker_id or default_worker_id()
-    artifact_dir_path = Path(artifact_dir)
     client = ComputeAPIClient(base_url=base_url, token=token)
+    _register_worker(client, worker_id)
+    return _claim_and_run_once(
+        client=client,
+        worker_id=worker_id,
+        artifact_dir_path=Path(artifact_dir),
+    )
 
+
+def run_api_loop(
+    *,
+    base_url: str = DEFAULT_API_BASE_URL,
+    token: str = DEFAULT_API_TOKEN,
+    worker_id: str | None = None,
+    artifact_dir: str | Path = "artifacts",
+    max_jobs: int | None = None,
+    max_idle_polls: int | None = None,
+    idle_sleep_seconds: float = DEFAULT_IDLE_SLEEP_SECONDS,
+) -> dict[str, Any]:
+    worker_id = worker_id or default_worker_id()
+    client = ComputeAPIClient(base_url=base_url, token=token)
+    artifact_dir_path = Path(artifact_dir)
+    _register_worker(client, worker_id)
+
+    processed = 0
+    idle_polls = 0
+    results: list[dict[str, Any]] = []
+    while max_jobs is None or processed < max_jobs:
+        result = _claim_and_run_once(
+            client=client,
+            worker_id=worker_id,
+            artifact_dir_path=artifact_dir_path,
+            include_compute_result=False,
+        )
+        if result.get("status") == "idle":
+            idle_polls += 1
+            if max_idle_polls is not None and idle_polls >= max_idle_polls:
+                break
+            if idle_sleep_seconds > 0:
+                time.sleep(idle_sleep_seconds)
+            continue
+
+        idle_polls = 0
+        processed += 1
+        results.append(_loop_result_summary(result))
+
+    return {
+        "status": "completed",
+        "worker_id": worker_id,
+        "jobs_processed": processed,
+        "idle_polls": idle_polls,
+        "results": results,
+    }
+
+
+def _register_worker(client: ComputeAPIClient, worker_id: str) -> None:
     registration = {
         "worker_id": worker_id,
         "capabilities": SUPPORTED_CAPABILITIES,
@@ -132,6 +193,14 @@ def run_api_once(
     }
     client.post_json("/api/v1/workers/register", registration)
 
+
+def _claim_and_run_once(
+    *,
+    client: ComputeAPIClient,
+    worker_id: str,
+    artifact_dir_path: Path,
+    include_compute_result: bool = True,
+) -> dict[str, Any]:
     claim = client.post_json(f"/api/v1/workers/{_quote(worker_id)}/claim", {})
     job = claim.get("job")
     if job is None:
@@ -145,6 +214,16 @@ def run_api_once(
     attempt = _int_value(claim.get("attempt"))
     if attempt <= 0:
         raise ComputeAPIClientError("claim response missing positive attempt")
+
+    heartbeat = client.heartbeat(worker_id=worker_id, job_id=job_id)
+    if bool(heartbeat.get("job_terminal")) or bool(heartbeat.get("cancel_requested")):
+        return {
+            "status": "cancelled" if heartbeat.get("cancel_requested") else "skipped",
+            "worker_id": worker_id,
+            "job_id": job_id,
+            "attempt": attempt,
+            "heartbeat": heartbeat,
+        }
 
     compute_result = run_job(job, artifact_dir_path)
     status = str(compute_result.get("status") or "failed")
@@ -181,7 +260,15 @@ def run_api_once(
         "job_id": job_id,
         "attempt": attempt,
         "snapshot": snapshot,
-        "compute_result": compute_result,
+        **({"compute_result": compute_result} if include_compute_result else {}),
+    }
+
+
+def _loop_result_summary(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: result[key]
+        for key in ("status", "worker_id", "job_id", "attempt")
+        if key in result
     }
 
 
