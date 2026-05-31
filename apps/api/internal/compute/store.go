@@ -9,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
 
 type Store interface {
@@ -350,11 +353,11 @@ func (store *MemoryStore) ArtifactReferences(_ context.Context, artifactID strin
 	defer store.mu.Unlock()
 	var refs []string
 	for _, modelRun := range store.modelRuns {
-		modelRunID := modelRunIDFromRaw(modelRun)
+		modelRunID := domainmodels.RunIDFromRaw(modelRun)
 		if modelRunID == "" {
 			continue
 		}
-		for _, evidenceRef := range modelRunEvidenceRefsFromRaw(modelRun) {
+		for _, evidenceRef := range domainmodels.RunEvidenceRefsFromRaw(modelRun) {
 			if evidenceRef == artifactID || evidenceRef == "artifact:"+artifactID {
 				refs = append(refs, "model_run:"+modelRunID)
 				break
@@ -450,7 +453,7 @@ func (store *MemoryStore) InsertModelRuns(_ context.Context, jobID string, model
 		return NotFound(CodeJobNotFound, "job not found")
 	}
 	for _, modelRun := range modelRuns {
-		modelRunID := modelRunIDFromRaw(modelRun)
+		modelRunID := domainmodels.RunIDFromRaw(modelRun)
 		if modelRunID == "" {
 			return ValidationError("model_run_id is required")
 		}
@@ -474,7 +477,7 @@ func (store *MemoryStore) ListModelRuns(_ context.Context, filter ModelRunFilter
 	defer store.mu.Unlock()
 	var modelRuns []json.RawMessage
 	for _, modelRun := range store.modelRuns {
-		modelRunID, jobID, modelKey, modelVersion, _, err := modelRunFieldsFromRaw(modelRun)
+		modelRunID, jobID, modelKey, modelVersion, _, err := domainmodels.RunFieldsFromRaw(modelRun)
 		if err != nil || modelRunID == "" {
 			continue
 		}
@@ -490,8 +493,8 @@ func (store *MemoryStore) ListModelRuns(_ context.Context, filter ModelRunFilter
 		modelRuns = append(modelRuns, append(json.RawMessage(nil), modelRun...))
 	}
 	sort.Slice(modelRuns, func(i, j int) bool {
-		leftID := modelRunIDFromRaw(modelRuns[i])
-		rightID := modelRunIDFromRaw(modelRuns[j])
+		leftID := domainmodels.RunIDFromRaw(modelRuns[i])
+		rightID := domainmodels.RunIDFromRaw(modelRuns[j])
 		return leftID > rightID
 	})
 	total := len(modelRuns)
@@ -524,13 +527,13 @@ func (store *MemoryStore) ModelRuns(_ context.Context, jobID string) ([]json.Raw
 	}
 	var modelRuns []json.RawMessage
 	for _, modelRun := range store.modelRuns {
-		_, modelRunJobID, _, _, _, err := modelRunFieldsFromRaw(modelRun)
+		_, modelRunJobID, _, _, _, err := domainmodels.RunFieldsFromRaw(modelRun)
 		if err == nil && modelRunJobID == jobID {
 			modelRuns = append(modelRuns, append(json.RawMessage(nil), modelRun...))
 		}
 	}
 	sort.Slice(modelRuns, func(i, j int) bool {
-		return modelRunIDFromRaw(modelRuns[i]) < modelRunIDFromRaw(modelRuns[j])
+		return domainmodels.RunIDFromRaw(modelRuns[i]) < domainmodels.RunIDFromRaw(modelRuns[j])
 	})
 	return modelRuns, nil
 }
@@ -898,7 +901,16 @@ func (store *MemoryStore) ClaimNext(_ context.Context, worker WorkerRecord, leas
 		if job.Status != StatusQueued || job.CancelRequested {
 			continue
 		}
-		if !jobMatchesWorker(job, worker) {
+		if !domainjobs.MatchesWorker(
+			domainjobs.ClaimCandidate{
+				SchemaVersion: job.SchemaVersion,
+				InputJSON:     job.InputJSON,
+			},
+			domainjobs.WorkerCapabilities{
+				Capabilities:              worker.Capabilities,
+				SupportedContractVersions: worker.SupportedContractVersions,
+			},
+		) {
 			continue
 		}
 		if selected == nil || job.CreatedAt.Before(selected.CreatedAt) || (job.CreatedAt.Equal(selected.CreatedAt) && job.JobID < selected.JobID) {
@@ -1012,7 +1024,7 @@ func (store *MemoryStore) appendEventLocked(event EventRecord) {
 }
 
 func isTerminal(status string) bool {
-	return status == StatusSucceeded || status == StatusFailed || status == StatusCancelled || status == StatusTimedOut
+	return domainjobs.IsTerminal(status)
 }
 
 func mustJSON(value any) json.RawMessage {
@@ -1050,61 +1062,6 @@ func normalizeListLimit(limit int) int {
 	return limit
 }
 
-func jobMatchesWorker(job JobRecord, worker WorkerRecord) bool {
-	capabilities := stringSetFromJSON(worker.Capabilities)
-	for _, capability := range jobRequiredCapabilities(job) {
-		if !capabilities[capability] {
-			return false
-		}
-	}
-	versions := stringSetFromJSON(worker.SupportedContractVersions)
-	for _, version := range jobContractVersions(job) {
-		if !versions[version] {
-			return false
-		}
-	}
-	return true
-}
-
-func jobRequiredCapabilities(job JobRecord) []string {
-	var raw map[string]any
-	if err := json.Unmarshal(job.InputJSON, &raw); err != nil {
-		return nil
-	}
-	execution, ok := raw["execution"].(map[string]any)
-	if !ok {
-		return nil
-	}
-	return stringsFromAny(execution["required_capabilities"])
-}
-
-func jobContractVersions(job JobRecord) []string {
-	versions := []string{job.SchemaVersion}
-	var raw map[string]any
-	if err := json.Unmarshal(job.InputJSON, &raw); err != nil {
-		return versions
-	}
-	if payload, ok := raw["payload"].(map[string]any); ok {
-		if schemaVersion, ok := payload["schema_version"].(string); ok && strings.TrimSpace(schemaVersion) != "" {
-			versions = append(versions, strings.TrimSpace(schemaVersion))
-		}
-	}
-	return versions
-}
-
-func stringSetFromJSON(raw json.RawMessage) map[string]bool {
-	values := map[string]bool{}
-	var items []string
-	if err := json.Unmarshal(raw, &items); err == nil {
-		for _, item := range items {
-			if text := strings.TrimSpace(item); text != "" {
-				values[text] = true
-			}
-		}
-	}
-	return values
-}
-
 func stringsFromAny(value any) []string {
 	items, ok := value.([]any)
 	if !ok {
@@ -1117,33 +1074,6 @@ func stringsFromAny(value any) []string {
 		}
 	}
 	return result
-}
-
-func modelRunIDFromRaw(raw json.RawMessage) string {
-	modelRunID, _, _, _, _, _ := modelRunFieldsFromRaw(raw)
-	return modelRunID
-}
-
-func modelRunFieldsFromRaw(raw json.RawMessage) (modelRunID, jobID, modelKey, modelVersion, parameterSetID string, err error) {
-	var value map[string]any
-	if err = json.Unmarshal(raw, &value); err != nil {
-		return "", "", "", "", "", err
-	}
-	metadata, _ := value["metadata"].(map[string]any)
-	return stringValue(value, "model_run_id"),
-		stringValue(value, "job_id"),
-		stringValue(value, "model_key"),
-		stringValue(value, "model_version"),
-		stringValue(metadata, "parameter_set_id"),
-		nil
-}
-
-func modelRunEvidenceRefsFromRaw(raw json.RawMessage) []string {
-	var value map[string]any
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return nil
-	}
-	return stringsFromAny(value["evidence_refs"])
 }
 
 func artifactRetentionPolicyEligible(policy string) bool {

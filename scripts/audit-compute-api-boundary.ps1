@@ -42,6 +42,8 @@ function Get-MissingExpectedGoPackageDirs {
     param([string[]]$PackageDirs)
     $expected = @(
         "compute",
+        "domain/jobs",
+        "domain/models",
         "domain/workers",
         "platform/auth",
         "platform/config",
@@ -515,7 +517,7 @@ $report = [ordered]@{
         "This is a read-only architecture audit; it verifies that the aggregate Store embeds the expected domain interfaces.",
         "Public Service constructors can still accept the aggregate Store while narrowed internal services receive domain-specific interfaces.",
         "Internal domain service constructors must not accept aggregate Store and should expose at most 3 store-like constructor parameters.",
-        "The package movement guardrail expects platform helpers under apps/api/internal/platform, including contracts validation, and the first worker domain package under apps/api/internal/domain/workers.",
+        "The package movement guardrail expects platform helpers under apps/api/internal/platform, jobs status and claim matching invariants under apps/api/internal/domain/jobs, model_run parsing helpers under apps/api/internal/domain/models, and worker lifecycle under apps/api/internal/domain/workers.",
         "Large file thresholds are advisory: non-test files >800 lines and test files >1500 lines."
     )
 }

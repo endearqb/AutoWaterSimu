@@ -11,6 +11,9 @@ import (
 	"strings"
 	"time"
 
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -439,7 +442,7 @@ func (store *PostgresStore) InsertModelRuns(ctx context.Context, jobID string, m
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	for _, modelRun := range modelRuns {
-		modelRunID, modelRunJobID, modelKey, modelVersion, parameterSetID, err := modelRunFieldsFromRaw(modelRun)
+		modelRunID, modelRunJobID, modelKey, modelVersion, parameterSetID, err := domainmodels.RunFieldsFromRaw(modelRun)
 		if err != nil {
 			return ValidationError("model_run JSON is invalid")
 		}
@@ -995,7 +998,16 @@ func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, 
 			rows.Close()
 			return nil, err
 		}
-		if jobMatchesWorker(*job, worker) {
+		if domainjobs.MatchesWorker(
+			domainjobs.ClaimCandidate{
+				SchemaVersion: job.SchemaVersion,
+				InputJSON:     job.InputJSON,
+			},
+			domainjobs.WorkerCapabilities{
+				Capabilities:              worker.Capabilities,
+				SupportedContractVersions: worker.SupportedContractVersions,
+			},
+		) {
 			selected = job
 			break
 		}

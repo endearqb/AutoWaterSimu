@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 )
 
 type JobLifecycleService struct {
@@ -150,7 +152,7 @@ func (svc *JobLifecycleService) Complete(ctx context.Context, workerID, jobID st
 		return JobSnapshot{}, Conflict(CodeWorkerStale, "worker result is stale")
 	}
 	status := stringValue(result, "status")
-	if !isTerminal(status) || status == StatusCancelled {
+	if !domainjobs.IsWorkerResultStatus(status) {
 		return JobSnapshot{}, ValidationError("result.status must be succeeded, failed, or timed_out")
 	}
 	if svc.validator != nil {

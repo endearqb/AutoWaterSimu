@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 )
 
@@ -44,7 +45,7 @@ func (adapter workerStoreAdapter) Heartbeat(ctx context.Context, workerID, jobID
 	return &domainworkers.HeartbeatJob{
 		JobID:           job.JobID,
 		CancelRequested: job.CancelRequested || job.Status == StatusCancelled,
-		Terminal:        isTerminal(job.Status),
+		Terminal:        domainjobs.IsTerminal(job.Status),
 		Status:          job.Status,
 	}, nil
 }

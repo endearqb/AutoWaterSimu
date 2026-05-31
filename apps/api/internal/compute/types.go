@@ -4,19 +4,20 @@ import (
 	"encoding/json"
 	"time"
 
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 	platformcontracts "autowatersimu/apps/api/internal/platform/contracts"
 	platformmetrics "autowatersimu/apps/api/internal/platform/metrics"
 )
 
 const (
-	StatusCreated   = "created"
-	StatusQueued    = "queued"
-	StatusRunning   = "running"
-	StatusSucceeded = "succeeded"
-	StatusFailed    = "failed"
-	StatusCancelled = "cancelled"
-	StatusTimedOut  = "timed_out"
+	StatusCreated   = domainjobs.StatusCreated
+	StatusQueued    = domainjobs.StatusQueued
+	StatusRunning   = domainjobs.StatusRunning
+	StatusSucceeded = domainjobs.StatusSucceeded
+	StatusFailed    = domainjobs.StatusFailed
+	StatusCancelled = domainjobs.StatusCancelled
+	StatusTimedOut  = domainjobs.StatusTimedOut
 
 	DefaultLeaseSeconds = 90
 	MaxAttempts         = 1

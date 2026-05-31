@@ -1,3 +1,107 @@
+# 2026-06-01 AutoWaterSimu Next models domain model-run parsing split TODO
+
+- [x] Re-read current worktree, domain README, jobs domain README, and compute model_run raw parsing call sites
+- [x] Confirm next low-risk gap: `model_run.v1` raw field/evidence parsing still lives in compute helper functions
+- [x] Add `apps/api/internal/domain/models` with model_run raw parsing helpers and direct tests
+- [x] Route compute MemoryStore/PostgresStore/evidence/simulation callers through domain models helpers
+- [x] Update audit/docs/checklists/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Move only stable `model_run.v1` raw JSON extraction for id/job/model/version/parameter_set/evidence_refs/warnings.
+- Keep model catalog governance, benchmark run validation, persistence, HTTP routes, OpenAPI, contracts, migrations, generated clients, and store interfaces unchanged.
+- Treat this as initial models domain movement, not the full model governance package split.
+
+## Review
+
+- Added `apps/api/internal/domain/models` with `RunIDFromRaw`, `RunFieldsFromRaw`, `RunEvidenceRefsFromRaw`, and `RunWarningsFromRaw`.
+- Added direct models domain tests for field trimming, evidence refs, warnings, ignored non-string values, and invalid raw JSON behavior.
+- Routed MemoryStore, PostgresStore, evidence governance, and simulation input replay callers through `domain/models` helpers.
+- Removed compute-local model-run field/ref/warning parsing helpers.
+- Updated API/internal/domain/compute/scripts READMEs, `docs/architecture/compute-api.md`, current-state, Certainty/Elegance checklist, boundary audit expected package dirs/notes, and change records.
+- Kept model catalog governance, benchmark run validation, promotion planning, store interfaces, HTTP routes, OpenAPI, contracts, migrations, and generated clients unchanged.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/domain/jobs ./internal/domain/workers ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 9.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files were still uncommitted.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshots, benchmark runs, promotion planning, DTOs, HTTP mapping, and PostgreSQL implementation remain in compute compatibility wiring.
+  - Full jobs lifecycle, artifacts, evidence, simulation, and agent domain packages remain follow-up.
+
+# 2026-06-01 AutoWaterSimu Next jobs domain worker match split TODO
+
+- [x] Re-read current worktree, jobs domain package, compute store worker claim matching code, and README First task context
+- [x] Confirm next low-risk gap: worker claim capability / contract-version matching still lives in compute store helpers
+- [x] Move job/worker matching invariants into `apps/api/internal/domain/jobs`
+- [x] Keep MemoryStore/PostgresStore claim behavior stable through small compute projection calls
+- [x] Update README/architecture/tasks/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Add domain-level claim candidate and worker capability projection types in `internal/domain/jobs`.
+- Move only matching rules for `execution.required_capabilities` and job/payload schema versions.
+- Keep queue selection, state mutation, event writes, Store interfaces, PostgreSQL implementation, HTTP behavior, OpenAPI, contracts, migrations, and generated clients unchanged.
+- Treat this as a continuation of jobs domain package movement, not full jobs lifecycle migration.
+
+## Review
+
+- Added `domain/jobs.ClaimCandidate`, `WorkerCapabilities`, `MatchesWorker`, `RequiredCapabilities`, and `ContractVersions`.
+- Added direct jobs domain tests for required capability extraction, contract version extraction, matching success, missing capability rejection, and missing payload contract rejection.
+- Updated MemoryStore and PostgresStore worker claim paths to project compute records into `domain/jobs` matching helpers.
+- Removed compute-local worker matching helpers from `store.go`.
+- Updated jobs/domain/compute README, compute-api architecture, current-state, Certainty/Elegance checklist, scripts README/audit note, and change records.
+- Verification:
+  - Initial focused test failed because PostgresStore still referenced the removed compute helper; fixed by routing Postgres claim through `domain/jobs.MatchesWorker`.
+  - `cd apps\api; go test ./internal/domain/jobs ./internal/domain/workers ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 8.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files were still uncommitted.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Queue selection, state mutation, event writes, job records, store interfaces, HTTP mapping, and audit envelopes still live in compute compatibility wiring.
+  - Full jobs lifecycle package movement and artifacts/models/evidence/simulation/agent packages remain follow-up.
+
+# 2026-06-01 AutoWaterSimu Next jobs domain status split TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/plan, Compute API architecture/current-state, compute/domain README, and current job lifecycle/status code
+- [x] Confirm next low-risk gap: stable job status invariants still live in compute instead of a jobs domain package
+- [x] Add `apps/api/internal/domain/jobs` with status constants and terminal/result-state helpers
+- [x] Keep compute status constants and helper compatibility stable
+- [x] Extend boundary audit/docs/checklists to include the jobs domain package
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Move only stable job status constants and status invariant helpers into `internal/domain/jobs`.
+- Keep job records, store interfaces, lifecycle persistence, HTTP handlers, audit envelopes, OpenAPI, contracts, migrations, and generated clients unchanged.
+- Keep compute constants as aliases so existing package tests and callers do not require broad mechanical churn.
+- Treat this as a small package-movement step, not the full jobs lifecycle package split.
+
+## Review
+
+- Added `apps/api/internal/domain/jobs` with status constants, `IsTerminal`, `IsWorkerResultStatus`, direct tests, and README context.
+- Updated compute status constants to alias `domain/jobs` constants, preserving existing names for callers/tests.
+- Switched worker heartbeat terminal projection and worker result status validation to the jobs domain helpers.
+- Kept job records, store interfaces, lifecycle persistence, HTTP routes, audit envelopes, OpenAPI, contracts, migrations, and generated clients unchanged.
+- Extended `scripts/audit-compute-api-boundary.ps1` expected package dirs to include `domain/jobs`.
+- Updated API/internal/domain/compute README, compute-api architecture, current-state, Certainty/Elegance checklist, and scripts README.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/jobs ./internal/domain/workers ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 8.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files were still uncommitted.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full jobs lifecycle package movement is not complete; job records, store interfaces, persistence, audit envelopes, and HTTP mapping remain in compute compatibility wiring.
+  - artifacts/models/evidence/simulation/agent domain packages have not moved yet.
+
 # 2026-06-01 AutoWaterSimu Next platform contract document validation split TODO
 
 - [x] Re-read README First context, platform/contracts README, compute contract validation helper, response types, and call sites
@@ -291,7 +395,7 @@
 - Keep `apps/api/internal/compute` HTTP handlers and `AppError` mapping stable; do not change routes, OpenAPI, auth scopes, contracts, migrations, or generated clients.
 - Add README context for the new `internal/platform` and `internal/platform/httpx` directories.
 - Add audit evidence that the expected platform package exists before treating this as a real package-split step.
-- Keep `Go API domain package split` unchecked until domain packages such as jobs/artifacts/models/evidence move out of `internal/compute`.
+- Keep `Go API domain package split` unchecked until full jobs lifecycle and artifacts/models/evidence packages move out of `internal/compute`.
 
 ## Review
 

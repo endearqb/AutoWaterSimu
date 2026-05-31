@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
 
 type SimulationInputService struct {
@@ -176,7 +178,7 @@ func (svc *SimulationInputService) simulationInputFromModelRun(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-	_, jobID, _, _, _, err := modelRunFieldsFromRaw(modelRun)
+	_, jobID, _, _, _, err := domainmodels.RunFieldsFromRaw(modelRun)
 	if err != nil {
 		return nil, NewAppError(500, CodeInternal, "stored model_run JSON is invalid", true, nil)
 	}

@@ -7,6 +7,8 @@
 本目录负责：
 
 - jobs、workers、artifacts、models、evidence、simulation、agent 等业务领域边界。
+- 已稳定的 compute job status 与 worker claim matching 不变量。
+- 已稳定的 `model_run.v1` 字段、evidence refs 和 warnings 解析规则。
 - 不依赖 `apps/api/internal/compute` 的领域服务、领域类型和最小 store 接口。
 - 为 `internal/compute` 的兼容 wiring 与 HTTP handler 逐步减负。
 
@@ -20,6 +22,8 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
+| `jobs/` | compute job status constants, worker claim matching, and invariant helpers |
+| `models/` | model_run raw JSON field/ref/warning helpers |
 | `workers/` | worker register / claim / heartbeat 领域服务 |
 
 ## 3. 维护约定

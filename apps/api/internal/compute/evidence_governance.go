@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
 
 type EvidenceGovernanceService struct {
@@ -90,11 +92,11 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 	modelRunRefs := make([]any, 0, len(modelRuns))
 	warnings := []any{}
 	for _, modelRun := range modelRuns {
-		modelRunID, _, _, _, _, _ := modelRunFieldsFromRaw(modelRun)
+		modelRunID, _, _, _, _, _ := domainmodels.RunFieldsFromRaw(modelRun)
 		if modelRunID != "" {
 			modelRunRefs = append(modelRunRefs, modelRunID)
 		}
-		for _, warning := range warningsFromModelRun(modelRun) {
+		for _, warning := range domainmodels.RunWarningsFromRaw(modelRun) {
 			warnings = append(warnings, warning)
 		}
 	}
@@ -371,7 +373,7 @@ func (svc *EvidenceGovernanceService) resolveModelRunEvidenceRef(ctx context.Con
 	if err != nil {
 		return EvidenceReferenceResolution{}, false
 	}
-	modelRunID, modelRunJobID, _, _, _, err := modelRunFieldsFromRaw(raw)
+	modelRunID, modelRunJobID, _, _, _, err := domainmodels.RunFieldsFromRaw(raw)
 	if err != nil || modelRunJobID != jobID {
 		return EvidenceReferenceResolution{}, false
 	}
@@ -439,7 +441,7 @@ func (svc *EvidenceGovernanceService) evidenceGovernance(ctx context.Context, mo
 			productionAllowed = false
 			continue
 		}
-		modelRunID, _, modelKey, modelVersion, parameterSetID, err := modelRunFieldsFromRaw(raw)
+		modelRunID, _, modelKey, modelVersion, parameterSetID, err := domainmodels.RunFieldsFromRaw(raw)
 		if err != nil || modelRunID == "" {
 			productionAllowed = false
 			continue
@@ -531,14 +533,6 @@ func evidenceTimeline(events []EventRecord) []map[string]any {
 		})
 	}
 	return timeline
-}
-
-func warningsFromModelRun(raw json.RawMessage) []string {
-	var modelRun map[string]any
-	if err := json.Unmarshal(raw, &modelRun); err != nil {
-		return nil
-	}
-	return stringsFromAny(modelRun["warnings"])
 }
 
 func productionReadinessCheck(checkID, status, message string, evidenceRefs ...string) ProductionReadinessCheck {
