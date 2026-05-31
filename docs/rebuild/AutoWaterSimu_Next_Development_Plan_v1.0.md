@@ -529,7 +529,7 @@
 
 ## 11. Deliverable Checklist
 
-Status note (2026-05-31): checked implementation items are completed and verified in the active branch. Human approval, live deployment, final merge, and 30-day read-only comparison remain external governance steps.
+Status note (2026-05-31): checked implementation items are completed and verified in the active branch. Human approval, live deployment, final merge, and 30-day read-only comparison remain external governance steps. Legacy FastAPI compute now has an opt-in `LEGACY_COMPUTE_READ_ONLY` guard, but the production/read-only comparison deployment evidence is still pending.
 
 ### Documentation
 
@@ -564,7 +564,7 @@ Status note (2026-05-31): checked implementation items are completed and verifie
 - [x] Schema/codegen gate passed.
 - [x] Workflow artifact download verification scripted.
 - [ ] Web deploy smoke passed.
-- [ ] Legacy FastAPI compute marked read-only.
+- [ ] Legacy FastAPI compute marked read-only in deployment and verified through the 30-day comparison window. The opt-in guard exists in code.
 - [x] Migration guide published.
 - [x] Evidence export documented.
 - [x] Installer signing and auto update explicitly marked post-P0.

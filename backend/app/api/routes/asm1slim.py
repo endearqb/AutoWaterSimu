@@ -11,6 +11,7 @@ from app.api.deps import (
     SessionDep,
     get_current_active_superuser,
 )
+from app.api.routes.legacy_compute import ensure_legacy_compute_writable
 from app.models import (
     MaterialBalanceInput,
     MaterialBalanceResult,
@@ -37,7 +38,11 @@ asm1slim_service = ASM1SlimService()
 data_conversion_service = DataConversionService()
 
 
-@router.post("/calculate", response_model=ASM1SlimJobPublic)
+@router.post(
+    "/calculate",
+    response_model=ASM1SlimJobPublic,
+    dependencies=[Depends(ensure_legacy_compute_writable)],
+)
 def create_calculation_job(
     *,
     session: SessionDep,
@@ -89,7 +94,11 @@ def create_calculation_job(
     )
 
 
-@router.post("/calculate-from-flowchart", response_model=ASM1SlimJobPublic)
+@router.post(
+    "/calculate-from-flowchart",
+    response_model=ASM1SlimJobPublic,
+    dependencies=[Depends(ensure_legacy_compute_writable)],
+)
 def create_calculation_job_from_flowchart(
     *,
     session: SessionDep,
@@ -559,7 +568,11 @@ def get_user_calculation_jobs(
     )
 
 
-@router.delete("/jobs/{job_id}", response_model=Message)
+@router.delete(
+    "/jobs/{job_id}",
+    response_model=Message,
+    dependencies=[Depends(ensure_legacy_compute_writable)],
+)
 def delete_calculation_job(
     *,
     session: SessionDep,

@@ -4,7 +4,7 @@
 
 This guide explains how the legacy FastAPI/React system is kept as the migration baseline while AutoWaterSimu Next moves long-running simulation work to shared contracts, the Python worker, the Go Compute API, and Desktop runtime.
 
-It does not mark legacy calculation endpoints read-only yet. The PRD exit condition requires the new worker-backed path to cover Material Balance, ASM, and UDM workloads, the new frontend to stop depending on legacy compute endpoints, and the old FastAPI compute API to run as read-only comparison for at least 30 days.
+It does not claim legacy calculation endpoints are already deployed as read-only. The current branch includes the opt-in `LEGACY_COMPUTE_READ_ONLY` guard so a deployment can enter read-only comparison mode after the PRD exit criteria are met. The PRD exit condition still requires the new worker-backed path to cover Material Balance, ASM, and UDM workloads, the new frontend to stop depending on legacy compute endpoints, and the old FastAPI compute API to run as read-only comparison for at least 30 days.
 
 ## Current Baseline
 
@@ -38,6 +38,19 @@ npm run generate-client
 
 `frontend/openapi.json` is an ignored local generator input. Commit generated client output under `frontend/src/client`.
 
+## Opt-In Read-Only Mode
+
+`LEGACY_COMPUTE_READ_ONLY=false` is the default and preserves current legacy baseline behavior.
+
+Set `LEGACY_COMPUTE_READ_ONLY=true` only after the read-only exit checklist is satisfied. In that mode the legacy FastAPI compute routes reject new job creation and job deletion while keeping read/validation endpoints available:
+
+- `POST /api/v1/material-balance/calculate`
+- `POST /api/v1/material-balance/calculate-from-flowchart`
+- `DELETE /api/v1/material-balance/jobs/{job_id}`
+- the equivalent `asm1`, `asm1slim`, `asm3`, and `udm` compute write paths
+
+The guard returns `409` with code `LEGACY_COMPUTE_READ_ONLY` and points callers at `/api/v1/simulation-checks`.
+
 ## Worker Migration Status
 
 The current branch has executable worker coverage for:
@@ -58,6 +71,7 @@ Do not mark legacy FastAPI compute read-only until all items are true:
 - Worker path covers Material Balance, ASM1Slim, ASM1, ASM3, and UDM with accepted tolerances.
 - Frontend core compute pages submit to the Go Compute API.
 - Legacy FastAPI compute endpoints have been used only as comparison paths for at least 30 days.
+- `LEGACY_COMPUTE_READ_ONLY=true` has been enabled for the comparison deployment and verified without blocking legacy read/result endpoints.
 - README files and route descriptions explicitly state the legacy compute status.
 - Release gates include schema/codegen, worker matrix, and browser smoke evidence for the replacement path.
 

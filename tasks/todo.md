@@ -1,3 +1,29 @@
+# 2026-05-31 AutoWaterSimu Next legacy compute read-only guard TODO
+
+- [x] Re-read README First, backend app/api/routes/core/test README, Development Plan checklist, completion audit, and legacy migration guide
+- [x] Add opt-in `LEGACY_COMPUTE_READ_ONLY` backend setting
+- [x] Add centralized `ensure_legacy_compute_writable` guard for legacy compute write paths
+- [x] Wire the guard to material balance / ASM1Slim / ASM1 / ASM3 / UDM `/calculate`, `/calculate-from-flowchart`, and `DELETE /jobs/{job_id}`
+- [x] Keep validate/status/result/input-data read paths available for read-only comparison mode
+- [x] Update `.env.example`, backend route/core README, legacy migration guide, Development Plan, completion audit, and change record
+- [x] Run targeted backend validation
+
+## Plan
+
+- Default `LEGACY_COMPUTE_READ_ONLY=false` so legacy FastAPI remains usable as the current migration baseline.
+- When explicitly enabled by deployment, reject mutating legacy compute routes with `LEGACY_COMPUTE_READ_ONLY` and direct callers to the Next simulation-check API.
+- Do not claim the actual 30-day read-only comparison period or live deployment smoke is complete.
+
+## Review
+
+- Added `backend/app/api/routes/legacy_compute.py` and `Settings.LEGACY_COMPUTE_READ_ONLY`.
+- The legacy compute write surface is now guarded consistently across Material Balance, ASM1Slim, ASM1, ASM3, and UDM route modules.
+- `legacy_compute_read_only_test.py` verifies default writable mode, read-only rejection payload, and route dependency coverage for all guarded endpoints.
+- Verification:
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\api\routes\legacy_compute_read_only_test.py -q` passed, `7 passed`, existing `python_multipart` warning only.
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\api\routes\legacy_compute_read_only_test.py app\tests\api\routes\test_asm_udm_validate_response.py app\tests\api\routes\test_flowchart_routes_no_print.py -q` passed, `29 passed`, existing `python_multipart` warning only.
+  - `cd backend; .venv\Scripts\python -m pytest app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q` passed, `17 passed`, existing `python_multipart` warning only.
+
 # 2026-05-31 AutoWaterSimu Next NewSystem production readiness E2E TODO
 
 - [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API README, and NewSystem E2E test context

@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     # 调试和日志配置
     DEBUG: bool = False
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    LEGACY_COMPUTE_READ_ONLY: bool = False
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)

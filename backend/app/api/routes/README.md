@@ -23,6 +23,7 @@
 | `material_balance.py` | material balance validate/calculate route |
 | `asm1*.py`、`asm3*.py` | ASM route 和 flowchart route |
 | `udm*.py` | UDM model、flowchart、hybrid config 和 calculation routes |
+| `legacy_compute.py` | legacy compute read-only mode guard |
 | `flowcharts.py` | legacy material balance flowchart persistence |
 | `login.py`、`users.py`、`items.py` | template 基础业务 routes |
 
@@ -32,6 +33,7 @@
 2. 后端返回字段变更必须补 route 或 service 测试，并同步 frontend OpenAPI client。
 3. validate route 的 response shape 应保持各模型一致，避免前端分支膨胀。
 4. 不要在 route 中 `print` 完整 flow data、token、水质数据或 time series。
+5. `LEGACY_COMPUTE_READ_ONLY=true` 时，legacy material balance / ASM / UDM 的 `/calculate`、`/calculate-from-flowchart` 和 `DELETE /jobs/{job_id}` 必须被 `ensure_legacy_compute_writable` 拦截；validate、status、result 和 input-data 读取路径保持可用，用于只读对照。
 
 ## 4. 对外接口
 

@@ -32,6 +32,7 @@
 1. 配置项变化要同步 `.env.example`、部署文档和相关 tests。
 2. 安全、认证、数据库连接属于高风险改动，修改前扩大影响分析。
 3. logging 配置不得默认输出敏感 payload 或 token。
+4. `LEGACY_COMPUTE_READ_ONLY=false` 是默认值；只有迁移验收进入 legacy 只读对照期时才显式设为 `true`，用于阻止旧 FastAPI 计算创建/删除入口。
 
 ## 4. 对外接口
 
