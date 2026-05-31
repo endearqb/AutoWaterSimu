@@ -1,3 +1,40 @@
+# 2026-06-01 AutoWaterSimu Next simulation domain process graph transform split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and process graph transform call sites
+- [x] Confirm next aligned gap: ProcessGraph-to-SimulationInput validation/transform still lives in compute helpers
+- [x] Move stable material-balance process graph validation and transformation helpers into `apps/api/internal/domain/simulation`
+- [x] Keep compute `SimulationInputService` responsible for schema validation, metadata records, store operations, and HTTP error mapping
+- [x] Update README/architecture/checklists/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Move only stable `process_graph.v1` structural validation and material-balance `simulation_input.v1` projection rules.
+- Keep `POST /api/v1/process-graphs`, `POST /api/v1/simulation-checks`, schema validation, metadata records, idempotency, process graph store interfaces, PostgreSQL implementation, OpenAPI, contracts, migrations, generated clients, and worker execution unchanged.
+- Map domain helper errors back to compute `ValidationError` at the compute boundary so HTTP response shape stays stable.
+- Treat this as a second simulation domain movement step, not the full simulation input/process graph service package split.
+
+## Review
+
+- Added `process_graph.go` and direct tests under `apps/api/internal/domain/simulation`.
+- Moved stable process graph structural validation, material-balance ProcessGraph-to-SimulationInput projection, default runtime parameter merge, node/edge projection, and time segment collection out of compute helpers.
+- Updated `SimulationInputService` to keep schema validation, metadata record assembly, store/idempotency, and `ValidationError` mapping while calling `domain/simulation`.
+- Removed compute-local process graph validation/projection helpers from `service.go`; `service.go` now drops from 894 to 722 lines.
+- Updated API/internal/domain/compute/scripts READMEs, `docs/architecture/compute-api.md`, current-state, Certainty/Elegance checklist, boundary audit note, and change records.
+- Kept HTTP routes, OpenAPI, contracts, migrations, generated clients, store interfaces, PostgreSQL implementation, metadata records, evidence-ref lookup, and worker execution unchanged.
+- Verification:
+  - Initial focused domain test failed because the new test expected `seg_2` for a fallback segment id; the original behavior is per-edge override index, so the expected id was corrected to `seg_1`.
+  - `cd apps\api; go test ./internal/domain/simulation ./internal/compute -run "Test(ValidateProcessGraph|ProcessGraphToSimulationInput|SimulationCheckEndpointCreatesComputeJob|ProcessGraphEvidenceReference)" -count=1` passed.
+  - `cd apps\api; go test ./internal/domain/simulation ./internal/domain/artifacts ./internal/domain/models ./internal/domain/jobs ./internal/domain/workers ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 11.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full simulation input/process graph service package movement is not complete; metadata persistence, store implementation, evidence-ref lookup, and HTTP mapping remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full model governance, evidence, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next simulation domain execution profile split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and simulation execution call sites

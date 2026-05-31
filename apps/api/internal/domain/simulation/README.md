@@ -7,11 +7,12 @@
 本目录负责：
 
 - simulation job type 的 execution profile / worker capability 映射。
+- material-balance ProcessGraph-to-SimulationInput 的结构校验与 payload projection 规则。
 
 本目录不负责：
 
 - simulation input metadata persistence。
-- process graph registry or ProcessGraph-to-SimulationInput transformation。
+- process graph registry metadata persistence。
 - HTTP route、OpenAPI、database migration or worker execution。
 
 ## 2. 核心文件
@@ -20,12 +21,15 @@
 |---|---|
 | `execution.go` | simulation job type execution profile and required capability helpers |
 | `execution_test.go` | direct tests for execution profile behavior |
+| `process_graph.go` | process graph structural validation and material-balance simulation input projection helpers |
+| `process_graph_test.go` | direct tests for process graph validation and projection behavior |
 
 ## 3. 维护约定
 
 1. 本 package 不应 import `apps/api/internal/compute`。
 2. Execution profile helper must preserve the existing `compute_job.v1.execution` JSON shape.
 3. Unsupported job types return an execution profile with an empty `required_capabilities` list; callers decide whether that is an error.
+4. Process graph projection remains material-balance-only until ASM/UDM process graph semantics are explicitly defined and tested.
 
 ## 4. 对外接口
 
@@ -34,6 +38,8 @@
 - `ExecutionProfile(jobType string) map[string]any`
 - `RequiredCapabilities(jobType string) []string`
 - `IsSupportedJobType(jobType string) bool`
+- `ValidateProcessGraphForSimulationInput(processGraph map[string]any) error`
+- `ProcessGraphToSimulationInput(processGraph map[string]any, parameters map[string]any, simulationInputID string, jobType string) (map[string]any, error)`
 
 ## 5. 依赖边界
 

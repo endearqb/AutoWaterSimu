@@ -3,10 +3,10 @@ package compute
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"time"
 
 	domainmodels "autowatersimu/apps/api/internal/domain/models"
+	domainsimulation "autowatersimu/apps/api/internal/domain/simulation"
 )
 
 type SimulationInputService struct {
@@ -215,8 +215,8 @@ func (svc *SimulationInputService) processGraphRecord(processGraph map[string]an
 			return ProcessGraphRecord{}, err
 		}
 	}
-	if err := validateProcessGraphForSimulationInput(processGraph); err != nil {
-		return ProcessGraphRecord{}, err
+	if err := domainsimulation.ValidateProcessGraphForSimulationInput(processGraph); err != nil {
+		return ProcessGraphRecord{}, ValidationError(err.Error())
 	}
 	version := int(numberValue(processGraph, "version"))
 	if version <= 0 {
@@ -276,52 +276,14 @@ func (svc *SimulationInputService) simulationInputRecord(input map[string]any, d
 }
 
 func (svc *SimulationInputService) processGraphToSimulationInput(processGraph map[string]any, parameters map[string]any, simulationInputID, jobType string) (map[string]any, error) {
-	if jobType != "simulation.material_balance.v1" {
-		return nil, ValidationError("process_graph lookup only supports simulation.material_balance.v1")
-	}
 	if svc.validator != nil {
 		if err := svc.validator.Validate("process_graph.v1.json", processGraph); err != nil {
 			return nil, err
 		}
 	}
-	if err := validateProcessGraphForSimulationInput(processGraph); err != nil {
-		return nil, err
+	simulationInput, err := domainsimulation.ProcessGraphToSimulationInput(processGraph, parameters, simulationInputID, jobType)
+	if err != nil {
+		return nil, ValidationError(err.Error())
 	}
-	resolvedParameters := map[string]any{
-		"hours":          4.0,
-		"steps_per_hour": 60,
-		"solver_method":  "scipy_solver",
-		"tolerance":      0.000001,
-		"max_iterations": 1000,
-		"max_memory_mb":  1000,
-	}
-	metadata := mapValue(processGraph, "metadata")
-	for key, value := range mapValue(metadata, "source_calculation_parameters") {
-		resolvedParameters[key] = value
-	}
-	for key, value := range parameters {
-		resolvedParameters[key] = value
-	}
-	processGraphID := required(stringValue(processGraph, "process_graph_id"), "process_graph_id")
-	processGraphVersion := int(numberValue(processGraph, "version"))
-	if processGraphVersion <= 0 {
-		return nil, ValidationError("process_graph.version must be a positive integer")
-	}
-	if strings.TrimSpace(simulationInputID) == "" {
-		simulationInputID = "si_" + processGraphID
-	}
-	return map[string]any{
-		"schema_version":        "simulation_input.v1",
-		"simulation_input_id":   simulationInputID,
-		"process_graph_id":      processGraphID,
-		"process_graph_version": processGraphVersion,
-		"job_type":              jobType,
-		"component_schema":      mapValue(processGraph, "component_schema"),
-		"nodes":                 processGraphSimulationNodes(processGraph),
-		"edges":                 processGraphSimulationEdges(processGraph),
-		"time_segments":         collectProcessGraphTimeSegments(processGraph),
-		"parameters":            resolvedParameters,
-		"runtime_options":       map[string]any{"numerical_tolerance": map[string]any{"rtol": 0.000001, "atol": 0.000000001}},
-		"metadata":              map[string]any{"source_canvas_graph_id": stringValue(processGraph, "source_canvas_graph_id"), "transform": "process_graph_to_simulation_input.v1"},
-	}, nil
+	return simulationInput, nil
 }

@@ -10,7 +10,7 @@
 - 已稳定的 artifact retention policy 解析和候选判断规则。
 - 已稳定的 compute job status 与 worker claim matching 不变量。
 - 已稳定的 `model_run.v1` 字段、evidence refs 和 warnings 解析规则。
-- 已稳定的 simulation job type execution profile / required capability 映射规则。
+- 已稳定的 simulation job type execution profile / required capability 映射规则，以及 material-balance ProcessGraph-to-SimulationInput projection 规则。
 - 不依赖 `apps/api/internal/compute` 的领域服务、领域类型和最小 store 接口。
 - 为 `internal/compute` 的兼容 wiring 与 HTTP handler 逐步减负。
 
@@ -27,7 +27,7 @@
 | `artifacts/` | artifact retention policy parsing and candidate helpers |
 | `jobs/` | compute job status constants, worker claim matching, and invariant helpers |
 | `models/` | model_run raw JSON field/ref/warning helpers |
-| `simulation/` | simulation job type execution profile and required capability helpers |
+| `simulation/` | simulation job type execution profile, required capability, and material-balance process graph projection helpers |
 | `workers/` | worker register / claim / heartbeat 领域服务 |
 
 ## 3. 维护约定
