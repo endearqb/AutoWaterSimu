@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"autowatersimu/apps/api/internal/compute"
+	platformauth "autowatersimu/apps/api/internal/platform/auth"
+	platformconfig "autowatersimu/apps/api/internal/platform/config"
 )
 
 func main() {
@@ -27,7 +29,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	config := compute.Config{
+	config := platformconfig.Config{
 		Environment:            getenv("APP_ENV", os.Getenv("ENVIRONMENT")),
 		DatabaseURL:            os.Getenv("COMPUTE_API_DATABASE_URL"),
 		ArtifactDir:            getenv("COMPUTE_API_ARTIFACT_DIR", filepath.Join(repoRoot, "tmp", "compute-api-artifacts")),
@@ -75,7 +77,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	auth, err := compute.NewAuthenticator(config.TokensJSON)
+	auth, err := platformauth.NewAuthenticator(config.TokensJSON)
 	if err != nil {
 		return err
 	}
@@ -107,14 +109,14 @@ func run() error {
 	return http.ListenAndServe(":"+config.Port, server.Routes())
 }
 
-func validateProductionAuthConfig(config compute.Config) error {
+func validateProductionAuthConfig(config platformconfig.Config) error {
 	if !isProductionEnv(config.Environment) {
 		return nil
 	}
 	if strings.TrimSpace(config.TokensJSON) == "" {
 		return fmt.Errorf("COMPUTE_API_TOKENS_JSON is required when APP_ENV or ENVIRONMENT is production")
 	}
-	var tokenConfig compute.TokenConfig
+	var tokenConfig platformauth.TokenConfig
 	if err := json.Unmarshal([]byte(config.TokensJSON), &tokenConfig); err != nil {
 		return fmt.Errorf("COMPUTE_API_TOKENS_JSON is invalid")
 	}
@@ -142,7 +144,7 @@ func isDefaultDevelopmentToken(token string) bool {
 	}
 }
 
-func openStore(ctx context.Context, config compute.Config, migrationsDir string) (compute.Store, func(), error) {
+func openStore(ctx context.Context, config platformconfig.Config, migrationsDir string) (compute.Store, func(), error) {
 	if config.DatabaseURL == "" {
 		slog.Warn("COMPUTE_API_DATABASE_URL not set; using in-memory compute metadata store")
 		return compute.NewMemoryStore(), func() {}, nil
@@ -158,7 +160,7 @@ func openStore(ctx context.Context, config compute.Config, migrationsDir string)
 	return store, store.Close, nil
 }
 
-func openArchiveStore(config compute.Config) (compute.ArtifactStore, error) {
+func openArchiveStore(config platformconfig.Config) (compute.ArtifactStore, error) {
 	if s3ArchiveConfigured(config) {
 		if strings.TrimSpace(config.ArchiveDir) != "" {
 			return nil, fmt.Errorf("set either COMPUTE_API_ARCHIVE_DIR or COMPUTE_API_ARCHIVE_S3_ENDPOINT, not both")
@@ -185,7 +187,7 @@ func openArchiveStore(config compute.Config) (compute.ArtifactStore, error) {
 	return compute.NewLocalArtifactStore(config.ArchiveDir)
 }
 
-func s3ArchiveConfigured(config compute.Config) bool {
+func s3ArchiveConfigured(config platformconfig.Config) bool {
 	return strings.TrimSpace(config.ArchiveS3Endpoint) != "" ||
 		strings.TrimSpace(config.ArchiveS3Bucket) != "" ||
 		strings.TrimSpace(config.ArchiveS3Region) != "" ||

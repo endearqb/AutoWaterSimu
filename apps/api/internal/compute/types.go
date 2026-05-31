@@ -3,6 +3,8 @@ package compute
 import (
 	"encoding/json"
 	"time"
+
+	platformmetrics "autowatersimu/apps/api/internal/platform/metrics"
 )
 
 const (
@@ -17,25 +19,6 @@ const (
 	DefaultLeaseSeconds = 90
 	MaxAttempts         = 1
 )
-
-type Config struct {
-	Environment            string
-	DatabaseURL            string
-	ArtifactDir            string
-	ArchiveDir             string
-	ArchiveS3Endpoint      string
-	ArchiveS3Bucket        string
-	ArchiveS3Region        string
-	ArchiveS3AccessKeyID   string
-	ArchiveS3SecretKey     string
-	ArchiveS3Prefix        string
-	TokensJSON             string
-	Port                   string
-	RepoRoot               string
-	RetentionSweepInterval time.Duration
-	RetentionSweepDryRun   bool
-	RetentionSweepLimit    int
-}
 
 type ComputeJob struct {
 	SchemaVersion  string         `json:"schema_version"`
@@ -171,14 +154,7 @@ type ArtifactRetentionAction struct {
 	ArchiveObjectKey string     `json:"archive_object_key,omitempty"`
 }
 
-type MetricsSnapshot struct {
-	GeneratedAt         time.Time      `json:"generated_at"`
-	JobsByStatus        map[string]int `json:"jobs_by_status"`
-	WorkersRegistered   int            `json:"workers_registered"`
-	ArtifactsTotal      int            `json:"artifacts_total"`
-	ArtifactArchives    int            `json:"artifact_archives"`
-	RetentionCandidates int            `json:"retention_candidates"`
-}
+type MetricsSnapshot = platformmetrics.Snapshot
 
 type WorkerRecord struct {
 	WorkerID                  string          `json:"worker_id"`
@@ -546,27 +522,4 @@ type DraftConfirmationRecord struct {
 	ProjectID          string          `json:"project_id,omitempty"`
 	Metadata           json.RawMessage `json:"metadata,omitempty"`
 	CreatedAt          time.Time       `json:"created_at"`
-}
-
-type TokenConfig struct {
-	Tokens []TokenRecord `json:"tokens"`
-}
-
-type TokenRecord struct {
-	Name      string   `json:"name"`
-	Token     string   `json:"token"`
-	Scopes    []string `json:"scopes"`
-	Revoked   bool     `json:"revoked,omitempty"`
-	TenantID  string   `json:"tenant_id,omitempty"`
-	ProjectID string   `json:"project_id,omitempty"`
-	SiteID    string   `json:"site_id,omitempty"`
-}
-
-type Principal struct {
-	Name      string
-	Scopes    map[string]bool
-	Revoked   bool
-	TenantID  string
-	ProjectID string
-	SiteID    string
 }

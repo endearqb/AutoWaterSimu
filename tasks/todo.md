@@ -1,3 +1,175 @@
+# 2026-06-01 AutoWaterSimu Next platform metrics package split TODO
+
+- [x] Re-read README First context, current worktree, compute metrics service/store/HTTP rendering code, and platform package context
+- [x] Confirm next gap: `platform/metrics` remains planned while metrics snapshot/rendering still live in compute/httpx
+- [x] Move metrics snapshot shape and Prometheus renderer into `internal/platform/metrics`
+- [x] Keep compute MetricsService/store ownership limited to collecting counts
+- [x] Remove Prometheus label escaping from `platform/httpx`
+- [x] Extend package boundary audit/docs/checklists to include `platform/metrics`
+- [x] Update task review and README First records
+- [x] Run focused metrics/httpx/compute tests, full Go, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Define a domain-free `platform/metrics.Snapshot` and `RenderPrometheus` function.
+- Keep compute `MetricsSnapshot` as an alias for compatibility while store/service code migrates gradually.
+- Keep `/metrics` text output stable, including metric names and exposed gauges.
+- Do not change HTTP routes, auth, OpenAPI, contracts, migrations, generated clients, or metadata store queries.
+
+## Review
+
+- Added `apps/api/internal/platform/metrics` with `Snapshot` and `RenderPrometheus`.
+- Added direct renderer tests for sorted job status output and Prometheus label escaping.
+- Moved `MetricsSnapshot` to a compute compatibility alias of `platformmetrics.Snapshot`.
+- Updated `/metrics` HTTP handler to render through `platformmetrics.RenderPrometheus`; compute `MetricsService` and stores still collect metadata counts.
+- Removed Prometheus label escaping from `platform/httpx`, leaving `httpx` focused on JSON response writing and loopback CORS.
+- Extended boundary audit and architecture docs/checklists to include `platform/metrics`.
+- Verification:
+  - `cd apps\api; go test ./internal/platform/metrics ./internal/platform/httpx ./internal/platform/... ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; package dirs are `compute`, `platform/auth`, `platform/config`, `platform/httpx`, and `platform/metrics`.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Metrics store collection still lives in compute because it depends on metadata store interfaces.
+
+# 2026-06-01 AutoWaterSimu Next platform auth package split TODO
+
+- [x] Re-read README First, current worktree, command entrypoint, compute auth/audit/error/server code, and platform package context
+- [x] Confirm next gap: `platform/auth` remains planned but Authenticator / token config / principal still live in compute
+- [x] Move Authenticator, TokenConfig, TokenRecord, Principal, and platform auth errors into `internal/platform/auth`
+- [x] Keep compute data-scope helpers and `contract_error.v1` mapping behavior stable
+- [x] Extend package boundary audit/docs/checklists to include `platform/auth`
+- [x] Update task review and README First records
+- [x] Run focused auth/compute/command tests, full Go, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Make `platform/auth` independent from compute; it must import only standard library.
+- Let platform auth return a small platform `Error` with status/code/message/details, then map that in compute `ToAppError` to preserve the existing HTTP response shape.
+- Keep compute-level data-scope authorization against `JobRecord` in compute because it depends on compute domain metadata.
+- Keep compatibility aliases in compute for this slice so existing tests and package-level wiring do not require broad mechanical churn.
+- Do not change scopes, token JSON shape, production token guard policy, routes, OpenAPI, contracts, migrations, or generated clients.
+
+## Review
+
+- Added `apps/api/internal/platform/auth` with `Authenticator`, `TokenConfig`, `TokenRecord`, `Principal`, and platform auth `Error`.
+- Added direct platform auth tests for default dev token success, missing scope denial, revoked token denial, and duplicate token validation.
+- Updated compute to keep compatibility aliases for existing package tests/callers while moving the implementation to `platform/auth`.
+- Updated compute `ToAppError` to map platform auth errors back to the existing `contract_error.v1` HTTP shape.
+- Updated `cmd/compute-api` production token guard to parse `platformauth.TokenConfig` and instantiate `platformauth.NewAuthenticator`.
+- Extended boundary audit docs/checklist to include `platform/auth`; `check-deps` already prevents platform packages from importing compute.
+- Verification:
+  - `cd apps\api; go test ./internal/platform/auth ./internal/platform/... ./internal/compute ./cmd/compute-api` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; package dirs are `compute`, `platform/auth`, `platform/config`, and `platform/httpx`.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Compute still owns job-specific tenant/project/site data-scope authorization because it depends on `JobRecord`.
+  - OIDC/JWKS, RBAC/ABAC, all-mutation audit, and full object-level data scope remain future security work.
+
+# 2026-06-01 AutoWaterSimu Next platform config package split TODO
+
+- [x] Re-read README First, root README, apps/api internal platform context, command entrypoint, compute types, and current package split context
+- [x] Confirm next gap: runtime `Config` is still a compute domain type even though it only configures the command/runtime boundary
+- [x] Move runtime config shape from `internal/compute` into `internal/platform/config`
+- [x] Extend package boundary audit and docs to include `platform/config`
+- [x] Update task review and README First records
+- [x] Run command/platform/compute Go tests, dependency checks, audit, PR fast, and diff-check validation
+
+## Plan
+
+- Move only the deployment/runtime `Config` struct; do not move auth principal/token types in this slice because they still participate in compute HTTP handler and data-scope logic.
+- Keep command behavior, environment variable names, OpenAPI, contracts, migrations, generated clients, routes, and storage behavior unchanged.
+- Make `platform/config` a domain-free package that imports only standard library.
+- Keep the existing platform-to-compute reverse import guard in `check-deps` as the protection for this package.
+
+## Review
+
+- Added `apps/api/internal/platform/config` with a domain-free runtime `Config` type and README.
+- Removed runtime `Config` from `apps/api/internal/compute/types.go`.
+- Updated `cmd/compute-api` wiring and command tests to use `platformconfig.Config` while keeping environment variable names and runtime behavior unchanged.
+- Extended the boundary audit expected package dirs to include `platform/config`.
+- Updated API/internal/platform/compute architecture docs and Certainty/Elegance checklist to distinguish `platform/config` from domain package movement.
+- Verification:
+  - `cd apps\api; go test ./cmd/compute-api ./internal/platform/... ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; package dirs are `compute`, `platform/config`, and `platform/httpx`.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Auth principal/token types remain in compute for now because handler/data-scope logic still depends on compute domain records.
+  - Domain package movement for jobs/artifacts/models/evidence/simulation remains future work.
+
+# 2026-06-01 AutoWaterSimu Next platform dependency guard TODO
+
+- [x] Re-read README First, root README, scripts, dependency graph, apps/api internal platform, and current package split context
+- [x] Confirm next gap: `platform/httpx` is split out, but `check-deps` does not yet enforce that platform helpers stay independent from compute domain
+- [x] Add a dependency rule that prevents `apps/api/internal/platform` from importing `apps/api/internal/compute`
+- [x] Update dependency graph, scripts/API docs, task review, and README First records
+- [x] Run dependency, audit, Go, PR fast, and diff-check validation
+
+## Plan
+
+- Add the rule to `scripts/check-deps.ps1` because this is a cross-directory architecture boundary, not a compute-only audit.
+- Scan only non-Markdown source files, consistent with existing dependency rules.
+- Keep compute importing platform helpers allowed; only block platform-to-compute reverse dependency.
+- Do not change API behavior, OpenAPI, contracts, migrations, generated clients, or package names.
+
+## Review
+
+- Added `apps-api-platform-must-not-import-compute-domain` to `scripts/check-deps.ps1`.
+- Updated `docs/architecture/dependency-graph.md` so the new enforced rule is visible from the architecture entry.
+- Updated scripts/API/platform/current-state/Certainty-Elegance docs to tie the new rule to the `platform/httpx` package split.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+  - `cd apps\api; go test ./internal/platform/... ./internal/compute` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - The guard only prevents platform-to-compute reverse imports; it does not complete domain package movement.
+  - Future domain packages still need their own import direction rules once they exist.
+
+# 2026-06-01 AutoWaterSimu Next platform HTTP package split TODO
+
+- [x] Re-read README First, root README, docs/rebuild, docs/architecture, apps/api, internal compute, scripts, tasks, and current Compute API package context
+- [x] Confirm next gap: internal service boundaries are narrowed, but no Go package movement has started yet
+- [x] Extract low-coupling HTTP platform helpers into an internal platform package without changing API behavior
+- [x] Extend Compute API boundary audit to record the first package split guardrail
+- [x] Update API/architecture/current-state/Certainty-Elegance docs, task review, and README First records
+- [x] Run focused Go tests, boundary audit, PR fast, and diff-check validation
+
+## Plan
+
+- Start package movement with `apps/api/internal/platform/httpx` because CORS and JSON writing are platform HTTP concerns and do not own compute domain state.
+- Keep `apps/api/internal/compute` HTTP handlers and `AppError` mapping stable; do not change routes, OpenAPI, auth scopes, contracts, migrations, or generated clients.
+- Add README context for the new `internal/platform` and `internal/platform/httpx` directories.
+- Add audit evidence that the expected platform package exists before treating this as a real package-split step.
+- Keep `Go API domain package split` unchecked until domain packages such as jobs/artifacts/models/evidence move out of `internal/compute`.
+
+## Review
+
+- Added `apps/api/internal/platform/README.md` and `apps/api/internal/platform/httpx/README.md` to define the first platform package boundary and prevent platform helpers from importing compute domain types.
+- Added `apps/api/internal/platform/httpx` with `WriteJSON` and `WithLocalCORS`, plus direct tests for loopback CORS. Prometheus label escaping later moved to `platform/metrics` in this same work set.
+- Updated `compute/http.go` to use `httpx.WithLocalCORS`; `compute/errors.go` delegates JSON writing to `httpx.WriteJSON` while preserving existing `WriteError` / `AppError` behavior.
+- Extended `scripts/audit-compute-api-boundary.ps1` to emit `package_boundaries` and fail if expected internal package dirs (`compute`, `platform/httpx`) are missing.
+- Updated API/internal/compute/scripts READMEs, `docs/architecture/compute-api.md`, current-state, and Certainty/Elegance Development Plan to distinguish first platform package movement from the still-incomplete domain package split.
+- Verification:
+  - `cd apps\api; go test ./internal/platform/httpx ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; package dirs are `compute` and `platform/httpx`.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - `apps/api/internal/compute` remains the main compute domain package.
+  - Domain package movement for jobs/artifacts/models/evidence/simulation/agent/workers, handler/package surface reduction, and public `Service` constructor signature narrowing remain future work.
+
 # 2026-06-01 AutoWaterSimu Next service constructor boundary TODO
 
 - [x] Re-read README First, root README, docs/rebuild, docs/architecture, apps/api, internal compute, scripts, tasks, and current Go API structure context

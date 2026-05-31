@@ -2,7 +2,7 @@
 
 > Snapshot date: 2026-06-01.
 
-This document records the current Go Compute API boundary after the first Store/interface split and the current service-constructor narrowing slices. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, and the read-only audit script:
+This document records the current Go Compute API boundary after the first Store/interface split, the current service-constructor narrowing slices, and the first platform helper package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
@@ -12,11 +12,33 @@ The script writes evidence to `tmp/architecture-evidence/compute-api-boundary.js
 
 ## Current Shape
 
-The Compute API is still a single modular-monolith package under `apps/api/internal/compute`.
+The Compute API domain is still mostly a single modular-monolith package under `apps/api/internal/compute`. The first non-domain platform packages now live under `apps/api/internal/platform`.
 
 The aggregate `Store` is expressed as embedded domain metadata interfaces. Job create/list/read/events, cancel, complete/fail, and timeout logic now lives behind `JobLifecycleService`; artifact upload / listing / metadata lookup / download / retention / archive logic now lives behind `ArtifactLifecycleService`; worker register / claim / heartbeat now lives behind `WorkerLifecycleService`; simulation input registration, process graph registration, and `simulation_request.input_ref` resolution now live behind `SimulationInputService`; draft confirmation / promotion workflows now live behind `DraftWorkflowService`; result explanation submit/review/publish now lives behind `ResultExplanationService`; model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing now live behind `ModelGovernanceService`; result read, evidence package export, production readiness, and evidence-ref resolution now live behind `EvidenceGovernanceService`; metrics snapshot reads now live behind `MetricsService`. Internal domain service constructors now expose 1-3 store-like parameters and the audit fails if they accept the aggregate `Store`.
 
-The wider `Service` still owns package-level construction and compatibility delegates, so this is not yet a full service-boundary or package split.
+The wider `Service` still owns package-level construction and compatibility delegates, so this is not yet a full domain package split.
+
+## Package Boundary
+
+`apps/api/internal/platform/auth` owns static bearer token config parsing, principal parsing, scope/revocation checks, and platform auth errors. Compute maps those errors back to `contract_error.v1` responses. `apps/api/internal/platform/config` owns the command/runtime `Config` shape used by `cmd/compute-api` for environment-derived wiring. `apps/api/internal/platform/httpx` owns platform HTTP helpers that do not hold compute domain state:
+
+- JSON response writing
+- loopback-only local browser CORS
+
+`apps/api/internal/platform/metrics` owns the metrics snapshot shape and Prometheus exposition text rendering. Compute still owns metadata-store count collection through `MetricsService`.
+
+`apps/api/internal/compute` may call this helper package, but `platform/httpx` must not import compute domain types. The boundary audit records internal Go package dirs and currently expects:
+
+| Package Dir | Role |
+|---|---|
+| `compute` | Current compute domain package and compatibility wiring |
+| `platform/auth` | Static bearer token authentication and platform auth errors |
+| `platform/config` | Runtime configuration shape for command/deployment wiring |
+| `platform/httpx` | Platform HTTP helper package |
+| `platform/metrics` | Metrics snapshot shape and Prometheus renderer |
+
+This is the first package movement step. It intentionally starts with low-coupling platform auth, config, HTTP, and metrics helpers before moving domain packages such as jobs, artifacts, models, evidence, simulation, agent, and workers.
+`scripts/check-deps.ps1` enforces the reverse-dependency rule so `apps/api/internal/platform` cannot import `apps/api/internal/compute`.
 
 Selected files from the latest audit:
 
@@ -34,7 +56,7 @@ Selected files from the latest audit:
 | `metrics.go` | 25 | read-only metrics snapshot service |
 | `contract_validation.go` | 45 | reusable contract validation response helper |
 | `postgres.go` | 1477 | PostgreSQL store implementation and migrations smoke helpers |
-| `http.go` | 1166 | route handlers and HTTP mapping |
+| `http.go` | 1124 | route handlers and HTTP mapping |
 | `store.go` | 1166 | aggregate Store, domain metadata interfaces, and MemoryStore implementation |
 | `service_test.go` | 3134 | broad lifecycle and governance tests |
 
@@ -187,7 +209,7 @@ Recommended order for narrowing service boundaries and later file/package moveme
 7. `jobs`
 8. `metrics`
 
-This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `MetricsService`. Artifact upload/listing has also joined the artifact boundary. Internal domain service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. Remaining near-term work is Go package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
+This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `MetricsService`. Artifact upload/listing has also joined the artifact boundary. Internal domain service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. The first platform package movement is underway through `platform/auth`, `platform/config`, `platform/httpx`, and `platform/metrics`; remaining near-term work is domain package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
 
 ## Split Rules
 
@@ -202,7 +224,7 @@ Future service-boundary and package splitting should follow these rules:
 ## Current Non-Goals
 
 - `NewService` / `NewServiceWithArchive` still accept the aggregate `Store` for backward-compatible construction; narrowed internal services receive domain interfaces but are still wired from the aggregate in this package.
-- This split does not move files into new Go packages.
+- This split has only moved platform auth, config, HTTP, and metrics helpers into new Go packages; it has not moved compute domain files into domain packages yet.
 - This split does not change endpoint behavior, OpenAPI, auth scopes, contracts, database schema, or PostgreSQL migrations.
 
 ## Verification

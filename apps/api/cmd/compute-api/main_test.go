@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	"autowatersimu/apps/api/internal/compute"
+	platformconfig "autowatersimu/apps/api/internal/platform/config"
 )
 
 func TestOpenStoreUsesMemoryStoreWhenDatabaseURLMissing(t *testing.T) {
-	store, closeStore, err := openStore(context.Background(), compute.Config{}, t.TempDir())
+	store, closeStore, err := openStore(context.Background(), platformconfig.Config{}, t.TempDir())
 	if err != nil {
 		t.Fatalf("openStore returned error: %v", err)
 	}
@@ -22,13 +23,13 @@ func TestOpenStoreUsesMemoryStoreWhenDatabaseURLMissing(t *testing.T) {
 }
 
 func TestValidateProductionAuthConfigAllowsNonProductionDefaults(t *testing.T) {
-	if err := validateProductionAuthConfig(compute.Config{Environment: "local"}); err != nil {
+	if err := validateProductionAuthConfig(platformconfig.Config{Environment: "local"}); err != nil {
 		t.Fatalf("non-production defaults should be accepted: %v", err)
 	}
 }
 
 func TestValidateProductionAuthConfigRejectsEmptyTokens(t *testing.T) {
-	err := validateProductionAuthConfig(compute.Config{Environment: "production"})
+	err := validateProductionAuthConfig(platformconfig.Config{Environment: "production"})
 	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_TOKENS_JSON is required") {
 		t.Fatalf("expected production empty token config to be rejected, got %v", err)
 	}
@@ -45,7 +46,7 @@ func TestValidateProductionAuthConfigRejectsDefaultDevTokens(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateProductionAuthConfig(compute.Config{Environment: "production", TokensJSON: tt.tokensJSON})
+			err := validateProductionAuthConfig(platformconfig.Config{Environment: "production", TokensJSON: tt.tokensJSON})
 			if err == nil || !strings.Contains(err.Error(), "default development token") {
 				t.Fatalf("expected default development token to be rejected, got %v", err)
 			}
@@ -54,7 +55,7 @@ func TestValidateProductionAuthConfigRejectsDefaultDevTokens(t *testing.T) {
 }
 
 func TestValidateProductionAuthConfigAllowsExplicitTokens(t *testing.T) {
-	err := validateProductionAuthConfig(compute.Config{
+	err := validateProductionAuthConfig(platformconfig.Config{
 		Environment: "production",
 		TokensJSON:  `{"tokens":[{"name":"platform","token":"prod-token-from-secret-manager","scopes":["job:read"]}]}`,
 	})
@@ -76,7 +77,7 @@ func TestOpenArchiveStoreRejectsOverlappingArtifactDirs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := openArchiveStore(compute.Config{
+			_, err := openArchiveStore(platformconfig.Config{
 				ArtifactDir: artifactDir,
 				ArchiveDir:  tt.archiveDir,
 			})
@@ -89,7 +90,7 @@ func TestOpenArchiveStoreRejectsOverlappingArtifactDirs(t *testing.T) {
 
 func TestOpenArchiveStoreAllowsSeparateArtifactDirs(t *testing.T) {
 	base := t.TempDir()
-	store, err := openArchiveStore(compute.Config{
+	store, err := openArchiveStore(platformconfig.Config{
 		ArtifactDir: filepath.Join(base, "artifacts"),
 		ArchiveDir:  filepath.Join(base, "archives"),
 	})
@@ -102,7 +103,7 @@ func TestOpenArchiveStoreAllowsSeparateArtifactDirs(t *testing.T) {
 }
 
 func TestOpenArchiveStoreAllowsS3ArchiveBackend(t *testing.T) {
-	store, err := openArchiveStore(compute.Config{
+	store, err := openArchiveStore(platformconfig.Config{
 		ArtifactDir:          t.TempDir(),
 		ArchiveS3Endpoint:    "https://archive.example.test",
 		ArchiveS3Bucket:      "autowatersimu-archive",
@@ -121,7 +122,7 @@ func TestOpenArchiveStoreAllowsS3ArchiveBackend(t *testing.T) {
 }
 
 func TestOpenArchiveStoreRejectsAmbiguousArchiveBackends(t *testing.T) {
-	_, err := openArchiveStore(compute.Config{
+	_, err := openArchiveStore(platformconfig.Config{
 		ArtifactDir:          filepath.Join(t.TempDir(), "artifacts"),
 		ArchiveDir:           filepath.Join(t.TempDir(), "archives"),
 		ArchiveS3Endpoint:    "https://archive.example.test",

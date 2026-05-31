@@ -46,7 +46,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `http.go` | HTTP handlers and routing |
+| `http.go` | HTTP handlers and route mapping; platform HTTP helpers live in `../platform/httpx` |
 | `service.go` | remaining lifecycle orchestration and compatibility delegates |
 | `job_lifecycle.go` | job create, list/read, events, cancel, complete/fail, timeout sweep, and model-run persistence with narrow job/model-run dependencies |
 | `artifact_lifecycle.go` | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow with narrow store/object-store dependencies |
@@ -56,12 +56,12 @@
 | `result_explanations.go` | result explanation submit/review/publish workflow with narrow result/job store dependencies |
 | `model_governance.go` | model catalog, benchmark run, model run lookup, default parameter set promotion planning, and benchmark case queueing with narrow metadata-store dependencies |
 | `evidence_governance.go` | result read, evidence package export, production readiness, and evidence-ref resolution with narrow metadata-store dependencies |
-| `metrics.go` | Prometheus metrics snapshot read boundary with narrow metrics-store dependency |
+| `metrics.go` | metrics snapshot collection boundary with narrow metrics-store dependency; Prometheus rendering lives in `../platform/metrics` |
 | `contract_validation.go` | reusable contract validation response helper |
 | `audit.go` | selected mutation audit context/envelope helpers for job and artifact lifecycle events |
 | `store.go`、`postgres.go` | aggregate metadata store plus domain store interfaces and PostgreSQL implementation, including model catalog / process graph / simulation input / draft confirmation metadata persistence |
 | `types.go` | internal DTO/domain types |
-| `auth.go` | static bearer token scopes |
+| `auth.go` | compute data-scope helpers and compatibility aliases for `../platform/auth` |
 | `contracts.go`、`errors.go`、`hash.go`、`artifacts.go` | contract/error/hash/artifact helpers |
 | `*_test.go` | lifecycle and store tests |
 
@@ -98,6 +98,7 @@
 29. Metrics snapshot reads live in `MetricsService`; its constructor should stay limited to `MetricsStore` and a clock. It must remain read-only and must not trigger retention sweep, timeout sweep, job mutation, artifact mutation, or archive mutation.
 30. Selected mutation audit envelopes currently live in `compute_job_events.event_json.audit` for `job.created` / `job.queued` and artifact retention delete/archive events. HTTP-triggered paths capture the static-token principal and route; non-HTTP scheduler/service paths fall back to system/service context. This is not yet full all-mutation audit or OIDC/RBAC. Tenant/project/site read-scope is currently enforced for job list/get and artifact download; full object-level data-scope enforcement remains future work.
 31. Internal domain service constructors must not accept aggregate `Store` directly and should expose at most three store-like constructor parameters. `scripts/audit-compute-api-boundary.ps1` records `service_constructor_boundaries` and fails on aggregate `Store` regressions or over-wide internal constructor signatures. Public `NewService` / `NewServiceWithArchive` may keep aggregate `Store` while this package owns compatibility wiring.
+32. Platform-level static bearer token parsing lives in `apps/api/internal/platform/auth`, runtime config lives in `apps/api/internal/platform/config`, HTTP helpers such as JSON response writing and local loopback CORS live in `apps/api/internal/platform/httpx`, and metrics snapshot / Prometheus rendering live in `apps/api/internal/platform/metrics`. This package may use platform helpers, but platform packages must not import compute domain types. Compute still owns job-specific tenant/project/site data-scope checks because those depend on `JobRecord`, and `MetricsService` still owns metadata-store count collection.
 
 ## 4. 对外接口
 

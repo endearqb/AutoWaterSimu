@@ -20,12 +20,13 @@
 | 子目录 | 作用 |
 |---|---|
 | `compute/` | Phase 4A compute job lifecycle skeleton |
+| `platform/` | 平台级 auth、config、HTTP、metrics/security 等横切 helper，不能反向依赖 compute domain |
 
 ## 3. 维护约定
 
 1. 外部 HTTP contract 由 `openapi/compute.openapi.json` 描述。
 2. internal package 重构不应改变 API 行为，除非同步 OpenAPI、client 和 tests。
-3. P0 阶段保持 package 简洁，领域稳定后再拆分。
+3. P0 阶段保持 package 简洁，领域稳定后再拆分；已经拆出的 platform helper 不应重新依赖 compute。
 
 ## 4. 对外接口
 

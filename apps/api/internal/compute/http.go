@@ -3,15 +3,15 @@ package compute
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"autowatersimu/apps/api/internal/platform/httpx"
+	platformmetrics "autowatersimu/apps/api/internal/platform/metrics"
 )
 
 type Server struct {
@@ -52,7 +52,7 @@ func (server *Server) Routes() http.Handler {
 	mux.HandleFunc("/api/v1/model-runs/", server.modelRunByID)
 	mux.HandleFunc("/api/v1/workers/register", server.registerWorker)
 	mux.HandleFunc("/api/v1/workers/", server.workerRoute)
-	return recoverPanics(withLocalCORS(mux))
+	return recoverPanics(httpx.WithLocalCORS(mux))
 }
 
 func (server *Server) metrics(w http.ResponseWriter, r *http.Request) {
@@ -66,85 +66,7 @@ func (server *Server) metrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4")
-	_, _ = w.Write([]byte(renderPrometheusMetrics(snapshot)))
-}
-
-func renderPrometheusMetrics(snapshot MetricsSnapshot) string {
-	var builder strings.Builder
-	builder.WriteString("# HELP autowatersimu_compute_api_up Compute API health\n")
-	builder.WriteString("# TYPE autowatersimu_compute_api_up gauge\n")
-	builder.WriteString("autowatersimu_compute_api_up 1\n")
-	builder.WriteString("# HELP autowatersimu_compute_jobs_total Compute jobs by status\n")
-	builder.WriteString("# TYPE autowatersimu_compute_jobs_total gauge\n")
-	statuses := make([]string, 0, len(snapshot.JobsByStatus))
-	for status := range snapshot.JobsByStatus {
-		statuses = append(statuses, status)
-	}
-	sort.Strings(statuses)
-	for _, status := range statuses {
-		_, _ = fmt.Fprintf(
-			&builder,
-			"autowatersimu_compute_jobs_total{status=\"%s\"} %d\n",
-			prometheusLabelValue(status),
-			snapshot.JobsByStatus[status],
-		)
-	}
-	builder.WriteString("# HELP autowatersimu_compute_workers_registered_total Registered workers\n")
-	builder.WriteString("# TYPE autowatersimu_compute_workers_registered_total gauge\n")
-	_, _ = fmt.Fprintf(&builder, "autowatersimu_compute_workers_registered_total %d\n", snapshot.WorkersRegistered)
-	builder.WriteString("# HELP autowatersimu_compute_artifacts_total Stored artifact metadata records\n")
-	builder.WriteString("# TYPE autowatersimu_compute_artifacts_total gauge\n")
-	_, _ = fmt.Fprintf(&builder, "autowatersimu_compute_artifacts_total %d\n", snapshot.ArtifactsTotal)
-	builder.WriteString("# HELP autowatersimu_compute_artifact_archives_total Archived artifact metadata records\n")
-	builder.WriteString("# TYPE autowatersimu_compute_artifact_archives_total gauge\n")
-	_, _ = fmt.Fprintf(&builder, "autowatersimu_compute_artifact_archives_total %d\n", snapshot.ArtifactArchives)
-	builder.WriteString("# HELP autowatersimu_compute_artifact_retention_candidates_total Artifacts currently eligible for retention processing\n")
-	builder.WriteString("# TYPE autowatersimu_compute_artifact_retention_candidates_total gauge\n")
-	_, _ = fmt.Fprintf(&builder, "autowatersimu_compute_artifact_retention_candidates_total %d\n", snapshot.RetentionCandidates)
-	return builder.String()
-}
-
-func prometheusLabelValue(value string) string {
-	value = strings.ReplaceAll(value, "\\", "\\\\")
-	value = strings.ReplaceAll(value, "\n", "\\n")
-	value = strings.ReplaceAll(value, "\"", "\\\"")
-	return value
-}
-
-func withLocalCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if allowLocalOrigin(w, r.Header.Get("Origin")) {
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key")
-			w.Header().Set("Access-Control-Expose-Headers", "X-Artifact-Checksum, X-Evidence-Checksum")
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func allowLocalOrigin(w http.ResponseWriter, origin string) bool {
-	if origin == "" {
-		return false
-	}
-	parsed, err := url.Parse(origin)
-	if err != nil {
-		return false
-	}
-	if parsed.Scheme != "http" && parsed.Scheme != "https" {
-		return false
-	}
-	switch strings.ToLower(parsed.Hostname()) {
-	case "localhost", "127.0.0.1", "::1":
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Add("Vary", "Origin")
-		return true
-	default:
-		return false
-	}
+	_, _ = w.Write([]byte(platformmetrics.RenderPrometheus(snapshot)))
 }
 
 func (server *Server) jobs(w http.ResponseWriter, r *http.Request) {

@@ -112,6 +112,13 @@ Invoke-DependencyRule `
 
 Invoke-DependencyRule `
     -Root $root `
+    -RuleName "apps-api-platform-must-not-import-compute-domain" `
+    -RelativePaths @("apps/api/internal/platform") `
+    -Pattern 'apps[/\\]api[/\\]internal[/\\]compute|autowatersimu/apps/api/internal/compute' `
+    -Violations $violations
+
+Invoke-DependencyRule `
+    -Root $root `
     -RuleName "apps-desktop-must-not-import-legacy-frontend" `
     -RelativePaths @("apps/desktop") `
     -Pattern 'frontend[/\\]src|from\s+[''"].*frontend[/\\]|import\s+.*frontend[/\\]' `

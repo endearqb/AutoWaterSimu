@@ -1,9 +1,11 @@
 package compute
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
+
+	platformauth "autowatersimu/apps/api/internal/platform/auth"
+	"autowatersimu/apps/api/internal/platform/httpx"
 )
 
 const (
@@ -76,13 +78,15 @@ func ToAppError(err error) *AppError {
 	if errors.As(err, &appErr) {
 		return appErr
 	}
+	var authErr *platformauth.Error
+	if errors.As(err, &authErr) {
+		return NewAppError(authErr.Status, authErr.Code, authErr.Message, authErr.Retryable, authErr.Details)
+	}
 	return NewAppError(http.StatusInternalServerError, CodeInternal, err.Error(), true, nil)
 }
 
 func WriteJSON(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
+	httpx.WriteJSON(w, status, value)
 }
 
 func WriteError(w http.ResponseWriter, err error) {

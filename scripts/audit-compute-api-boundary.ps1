@@ -19,6 +19,37 @@ function Get-LineCount {
     return @([System.IO.File]::ReadLines($Path)).Count
 }
 
+function Get-GoPackageDirs {
+    param([string]$InternalRoot)
+    $dirs = [System.Collections.Generic.HashSet[string]]::new()
+    $resolvedRoot = (Resolve-Path $InternalRoot).Path.TrimEnd('\', '/')
+    foreach ($file in Get-ChildItem -LiteralPath $InternalRoot -Recurse -File -Filter "*.go") {
+        $resolvedDir = (Resolve-Path $file.DirectoryName).Path
+        if (-not $resolvedDir.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        $relative = $resolvedDir.Substring($resolvedRoot.Length).TrimStart('\', '/')
+        $normalized = ($relative -replace '\\', '/')
+        if ([string]::IsNullOrWhiteSpace($normalized) -or $normalized -eq ".") {
+            continue
+        }
+        $dirs.Add($normalized) | Out-Null
+    }
+    return @($dirs | Sort-Object)
+}
+
+function Get-MissingExpectedGoPackageDirs {
+    param([string[]]$PackageDirs)
+    $expected = @(
+        "compute",
+        "platform/auth",
+        "platform/config",
+        "platform/httpx",
+        "platform/metrics"
+    )
+    return @($expected | Where-Object { $_ -notin $PackageDirs })
+}
+
 function Get-StoreInterfaces {
     param([string]$StorePath)
     $interfaces = @{}
@@ -344,6 +375,7 @@ if ([string]::IsNullOrWhiteSpace($EvidenceDir)) {
 New-Item -ItemType Directory -Force -Path $EvidenceDir | Out-Null
 
 $computeDir = Join-Path $root "apps\api\internal\compute"
+$internalDir = Join-Path $root "apps\api\internal"
 $storePath = Join-Path $computeDir "store.go"
 $postgresPath = Join-Path $computeDir "postgres.go"
 $servicePath = Join-Path $computeDir "service.go"
@@ -384,6 +416,8 @@ $serviceConstructorViolations = @(
         $_["accepts_aggregate_store"] -or $_["exceeds_internal_store_parameter_limit"]
     }
 )
+$internalPackageDirs = @(Get-GoPackageDirs -InternalRoot $internalDir)
+$missingExpectedPackageDirs = @(Get-MissingExpectedGoPackageDirs -PackageDirs $internalPackageDirs)
 
 $domains = @{}
 foreach ($method in $storeMethods) {
@@ -439,6 +473,11 @@ $report = [ordered]@{
         constructors = $serviceConstructorBoundaries
         violations = $serviceConstructorViolations
     }
+    package_boundaries = [ordered]@{
+        internal_root = "apps/api/internal"
+        package_dirs = $internalPackageDirs
+        missing_expected_package_dirs = $missingExpectedPackageDirs
+    }
     file_stats = $fileStats
     large_files = $largeFiles
     recommended_split_order = @(
@@ -455,6 +494,7 @@ $report = [ordered]@{
         "This is a read-only architecture audit; it verifies that the aggregate Store embeds the expected domain interfaces.",
         "Public Service constructors can still accept the aggregate Store while narrowed internal services receive domain-specific interfaces.",
         "Internal domain service constructors must not accept aggregate Store and should expose at most 3 store-like constructor parameters.",
+        "The first Go package movement guardrail expects apps/api/internal/platform/httpx to hold platform HTTP helpers outside the compute domain package.",
         "Large file thresholds are advisory: non-test files >800 lines and test files >1500 lines."
     )
 }
@@ -467,7 +507,8 @@ Write-Host "Store interface methods: $($storeMethods.Count)"
 Write-Host "Store embedded interfaces: $($storeEmbeddedInterfaces.Count)"
 Write-Host "Domain groups: $($domainSummaries.Count)"
 Write-Host "Service constructors audited: $($serviceConstructorBoundaries.Count)"
-if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassified.Count -gt 0 -or $missingExpectedStoreEmbeds.Count -gt 0 -or $serviceConstructorViolations.Count -gt 0) {
+Write-Host "Internal Go package dirs: $($internalPackageDirs.Count)"
+if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassified.Count -gt 0 -or $missingExpectedStoreEmbeds.Count -gt 0 -or $serviceConstructorViolations.Count -gt 0 -or $missingExpectedPackageDirs.Count -gt 0) {
     if ($missingMemory.Count -gt 0) {
         Write-Host "Missing MemoryStore methods: $($missingMemory -join ', ')"
     }
@@ -483,6 +524,9 @@ if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassifie
     if ($serviceConstructorViolations.Count -gt 0) {
         $violationNames = @($serviceConstructorViolations | ForEach-Object { $_["name"] })
         Write-Host "Service constructor boundary violations: $($violationNames -join ', ')"
+    }
+    if ($missingExpectedPackageDirs.Count -gt 0) {
+        Write-Host "Missing expected internal Go package dirs: $($missingExpectedPackageDirs -join ', ')"
     }
     exit 1
 }
