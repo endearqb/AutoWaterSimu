@@ -13,6 +13,7 @@ export interface I18nMessages {
   nav: {
     home: string
     computeJobs: string
+    modelGovernance: string
     computeLifecycle: string
     flowingFlow: string
     materialBalance: string

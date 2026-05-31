@@ -28,6 +28,7 @@ export const commonMessages: Pick<
   nav: {
     home: "Home",
     computeJobs: "Compute Jobs",
+    modelGovernance: "Model Governance",
     computeLifecycle: "Compute Lifecycle",
     flowingFlow: "FlowingFlow",
     materialBalance: "Material Balance",

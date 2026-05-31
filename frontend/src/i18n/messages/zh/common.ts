@@ -28,6 +28,7 @@ export const commonMessages: Pick<
   nav: {
     home: "首页",
     computeJobs: "计算任务",
+    modelGovernance: "模型治理",
     computeLifecycle: "计算生命周期",
     flowingFlow: "FlowingFlow",
     materialBalance: "物料平衡计算",

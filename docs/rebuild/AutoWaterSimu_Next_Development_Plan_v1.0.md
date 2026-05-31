@@ -393,6 +393,7 @@
 - parameter templates。
 - parameter sets。
 - persisted model catalog snapshot history listing。
+- read-only Web model governance page for current catalog and persisted snapshot history。
 - benchmark cases。
 - model run records。
 - production allowed status:

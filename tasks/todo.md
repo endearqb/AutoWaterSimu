@@ -1,3 +1,32 @@
+# 2026-05-31 AutoWaterSimu Next Web Model Governance UI TODO
+
+- [x] Re-read frontend route/sidebar/i18n/service/test README context
+- [x] Add a dedicated read-only model governance route
+- [x] Wire sidebar navigation and route tree
+- [x] Add mock-backed Playwright smoke for catalog and snapshot pagination
+- [x] Update route/test README and completion records
+- [x] Run frontend typecheck, route generation/build, and focused Playwright validation
+- [x] Commit checkpoint
+
+## Plan
+
+- Add `/model-governance` under the authenticated layout as a read-only page.
+- Show current model catalog versions, default parameter set status/hash, benchmark case counts, and persisted snapshot history from the generated Compute client service wrapper.
+- Keep route behavior display-only: no parameter set state transition, benchmark scheduling, benchmark-backed promotion, or approval workflow.
+- Keep built-in fallback catalogs separate from persisted snapshot history.
+
+## Review
+
+- Added `frontend/src/routes/_layout/model-governance.tsx`.
+- Added a sidebar item, `nav.modelGovernance` translations, and regenerated `frontend/src/routeTree.gen.ts` through the TanStack Router Vite plugin.
+- Added `frontend/tests/model-governance.spec.ts` to mock `/api/v1/model-catalog` and `/api/v1/model-catalog/snapshots`, including next-page snapshot pagination.
+- Updated `frontend/src/routes/README.md` and `frontend/tests/README.md`.
+- Remaining governance work still includes multi-parameter-set lifecycle design, scheduled benchmark execution, benchmark-backed promotion, and approval workflow semantics.
+- Verification:
+  - `cd frontend; npx vite build --mode development` passed and regenerated routes; output kept existing `gray-matter` eval / toaster chunking / bundle-size warnings.
+  - `cd frontend; npx tsc --noEmit` passed after tightening snapshot status type narrowing.
+  - `cd frontend; npx playwright test tests/model-governance.spec.ts --project=chromium --no-deps --reporter=line` passed.
+
 # 2026-05-31 AutoWaterSimu Next model catalog snapshot listing TODO
 
 - [x] Re-read Compute API model governance, OpenAPI, generated client, and frontend service context

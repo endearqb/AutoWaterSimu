@@ -7,7 +7,7 @@
 本目录负责：
 
 - App root route、layout route、登录/注册/更新/计算器等页面 route。
-- `_layout/` 下 legacy authenticated pages、Compute Jobs/evidence export/model catalog/model_run history/contract validation page、Compute lifecycle admin page 和 model-specific flow pages。
+- `_layout/` 下 legacy authenticated pages、Compute Jobs/evidence export/model catalog/model_run history/contract validation page、Model governance snapshot history page、Compute lifecycle admin page 和 model-specific flow pages。
 - 驱动 generated `routeTree.gen.ts`。
 
 本目录不负责：

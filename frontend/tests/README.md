@@ -25,6 +25,7 @@
 | `utils/` | Playwright helper functions |
 | `peterson-matrix-workbook.test.ts` | workbook helper test |
 | `compute-jobs-current-flow.spec.ts` | Mock-backed Compute Jobs current-flow submission smoke |
+| `model-governance.spec.ts` | Mock-backed Model governance catalog snapshot history smoke |
 | `compute-lifecycle.spec.ts` | Mock-backed Compute lifecycle metrics and retention sweep smoke |
 
 ## 3. 维护约定
@@ -49,6 +50,7 @@
 ```powershell
 cd frontend; npx playwright test
 cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps
+cd frontend; npx playwright test tests/model-governance.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line
 ```
 

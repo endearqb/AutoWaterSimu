@@ -7,6 +7,7 @@ import {
   FiBarChart,
   FiBookOpen,
   FiBriefcase,
+  FiClipboard,
   FiDatabase,
   FiGitBranch,
   FiGitMerge,
@@ -55,6 +56,11 @@ const getItems = (
 ) => [
   { icon: FiHome, title: t("nav.home"), path: "/dashboard" },
   { icon: FiActivity, title: t("nav.computeJobs"), path: "/compute-jobs" },
+  {
+    icon: FiClipboard,
+    title: t("nav.modelGovernance"),
+    path: "/model-governance",
+  },
   {
     icon: FiShield,
     title: t("nav.computeLifecycle"),
