@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	domainsimulation "autowatersimu/apps/api/internal/domain/simulation"
 )
 
 type SimulationInputResolver func(context.Context, map[string]any, string, string, string) (map[string]any, error)
@@ -74,7 +76,7 @@ func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context,
 	if parameterSet.Status == "retired" {
 		return JobSnapshot{}, 0, Conflict(CodeParameterSetTransitionFailed, "retired parameter sets cannot be benchmarked")
 	}
-	execution := simulationCheckExecution(benchmarkCase.JobType)
+	execution := domainsimulation.ExecutionProfile(benchmarkCase.JobType)
 	if len(sliceFromAny(execution["required_capabilities"])) == 0 {
 		return JobSnapshot{}, 0, ValidationError("benchmark_case job_type is unsupported")
 	}

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	domainsimulation "autowatersimu/apps/api/internal/domain/simulation"
 	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 )
 
@@ -133,7 +134,7 @@ func (svc *Service) CreateSimulationCheck(ctx context.Context, bytes []byte) (Jo
 		"idempotency_key": idempotencyKey,
 		"payload":         simulationInput,
 		"context":         jobContext,
-		"execution":       simulationCheckExecution(jobType),
+		"execution":       domainsimulation.ExecutionProfile(jobType),
 		"created_at":      svc.now().Format(time.RFC3339Nano),
 		"metadata":        simulationCheckMetadata(requestID, inputRef, externalRefs),
 	}
@@ -403,27 +404,6 @@ func modelCatalogResponseToMap(catalog ModelCatalogResponse) map[string]any {
 	bytes, _ := json.Marshal(catalog)
 	_ = json.Unmarshal(bytes, &value)
 	return value
-}
-
-func simulationCheckExecution(jobType string) map[string]any {
-	requiredCapabilities := []any{}
-	switch jobType {
-	case "simulation.material_balance.v1":
-		requiredCapabilities = []any{"material_balance", "ode"}
-	case "simulation.asm1slim.v1":
-		requiredCapabilities = []any{"asm1slim", "ode"}
-	case "simulation.asm1.v1":
-		requiredCapabilities = []any{"asm1", "ode"}
-	case "simulation.asm3.v1":
-		requiredCapabilities = []any{"asm3", "ode"}
-	case "simulation.udm.v1":
-		requiredCapabilities = []any{"udm", "ode"}
-	}
-	return map[string]any{
-		"time_limit_sec":        600,
-		"priority":              "normal",
-		"required_capabilities": requiredCapabilities,
-	}
 }
 
 func validateProcessGraphForSimulationInput(processGraph map[string]any) error {

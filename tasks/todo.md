@@ -1,3 +1,38 @@
+# 2026-06-01 AutoWaterSimu Next simulation domain execution profile split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and simulation execution call sites
+- [x] Confirm next low-risk gap: simulation job type execution profile helper still lives in compute
+- [x] Add `apps/api/internal/domain/simulation` with execution profile helpers and direct tests
+- [x] Route simulation-check creation and benchmark case queueing through domain simulation helpers
+- [x] Update audit/docs/checklists/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Move only stable simulation job type to `compute_job.v1.execution` profile mapping.
+- Preserve existing execution JSON shape: `time_limit_sec=600`, `priority=normal`, and `required_capabilities` as an array.
+- Keep simulation input persistence, process graph transformation, model catalog governance, store interfaces, HTTP routes, OpenAPI, contracts, migrations, generated clients, and worker execution unchanged.
+- Treat this as initial simulation domain movement, not the full simulation input/process graph package split.
+
+## Review
+
+- Added `apps/api/internal/domain/simulation` with `ExecutionProfile`, `RequiredCapabilities`, `IsSupportedJobType`, direct tests, and README context.
+- Routed `CreateSimulationCheck` and `ModelGovernanceService.ScheduleBenchmarkCaseRun` through the domain simulation helper.
+- Removed compute-local `simulationCheckExecution`.
+- Updated API/internal/domain/compute/scripts READMEs, `docs/architecture/compute-api.md`, current-state, Certainty/Elegance checklist, boundary audit expected package dirs/notes, and change records.
+- Kept simulation input persistence, process graph transformation, model catalog governance, store interfaces, HTTP routes, OpenAPI, contracts, migrations, generated clients, and worker execution unchanged.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/simulation ./internal/compute -run "Test(RequiredCapabilities|ExecutionProfile|SimulationCheckEndpointCreatesComputeJob|BenchmarkCaseScheduleRunEndpoint)" -count=1` passed.
+  - `cd apps\api; go test ./internal/domain/simulation ./internal/domain/artifacts ./internal/domain/models ./internal/domain/jobs ./internal/domain/workers ./internal/compute` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 11.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full simulation input/process graph domain package movement is not complete; persistence, transformation, HTTP mapping, and store implementation remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full model governance, evidence, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next artifacts domain retention policy split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and artifact retention call sites
