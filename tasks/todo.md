@@ -1,3 +1,24 @@
+# 2026-05-31 AutoWaterSimu Next NewSystem production readiness E2E TODO
+
+- [x] Re-read README First, PRD/Spec/Development Plan, completion audit, Compute API README, and NewSystem E2E test context
+- [x] Extend `TestNewSystemEvidenceReferenceE2E` to read production readiness in the same NewSystem-style job-scoped workflow
+- [x] Assert `ready_for_external_approval`, external approval required, auto-publish forbidden, evidence package link, risk summary, and source metadata
+- [x] Run focused Go validation
+- [x] Update completion audit and change record
+
+## Plan
+
+- Keep this as service-level regression coverage only.
+- Reuse the existing NewSystem-style simulation check E2E after worker completion and evidence ref dereference.
+- Do not add endpoints, mutate production state, create approval records, or claim external NewSystem acceptance is complete.
+
+## Review
+
+- `TestNewSystemEvidenceReferenceE2E` now covers `/api/v1/compute/jobs/{job_id}/production-readiness` after process graph registration, simulation check creation, worker completion, result risk summary, and evidence ref dereference.
+- The assertion verifies the report is `ready_for_external_approval`, still requires external approval, keeps `auto_publish_allowed=false`, carries the generated evidence package id, preserves NewSystem/project metadata, and summarizes the info-level risk finding.
+- Verification:
+  - `cd apps\api; go test ./internal/compute -run TestNewSystemEvidenceReferenceE2E -count=1` passed.
+
 # 2026-05-31 AutoWaterSimu Next production readiness UI TODO
 
 - [x] Re-read README First, frontend route/test/service README, Compute Jobs route, current-flow Playwright smoke, and service wrapper context

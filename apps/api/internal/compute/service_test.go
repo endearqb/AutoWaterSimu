@@ -2638,6 +2638,34 @@ func TestNewSystemEvidenceReferenceE2E(t *testing.T) {
 	if evidencePackageResolution.RefType != "evidence_package" || stringValue(evidencePackageResolution.Payload.(map[string]any), "job_id") != created.Job.JobID {
 		t.Fatalf("unexpected evidence_package resolution: %#v", evidencePackageResolution)
 	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/"+created.Job.JobID+"/production-readiness", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("NewSystem production readiness read failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var readiness ProductionReadinessReport
+	if err := json.Unmarshal(rec.Body.Bytes(), &readiness); err != nil {
+		t.Fatal(err)
+	}
+	if readiness.SchemaVersion != "production_readiness.v1" ||
+		readiness.JobID != created.Job.JobID ||
+		readiness.ReadinessStatus != "ready_for_external_approval" ||
+		!readiness.ProductionReady ||
+		!readiness.ExternalApprovalRequired ||
+		readiness.AutoPublishAllowed ||
+		readiness.EvidencePackageID != stringValue(evidencePackageResolution.Payload.(map[string]any), "evidence_package_id") {
+		t.Fatalf("unexpected NewSystem production readiness report: %#v", readiness)
+	}
+	if readiness.RiskFindingsSummary.Total != 1 ||
+		readiness.RiskFindingsSummary.BySeverity["info"] != 1 ||
+		len(readiness.BlockingReasons) != 0 {
+		t.Fatalf("unexpected NewSystem production readiness risk summary: %#v", readiness.RiskFindingsSummary)
+	}
+	if readiness.Metadata["source_system"] != "NewSystem" || readiness.Metadata["project_id"] != "project_demo" {
+		t.Fatalf("unexpected NewSystem production readiness metadata: %#v", readiness.Metadata)
+	}
 
 	explanationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.result_explanation.v1.json"))
 	if err != nil {
