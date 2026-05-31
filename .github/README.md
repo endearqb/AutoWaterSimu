@@ -12,6 +12,7 @@
 - Manual dispatch 下的 Desktop project package/support bundle smoke evidence 编排。
 - Manual dispatch 下的 mock-backed browser smoke evidence 编排。
 - Manual dispatch 下的 unsigned Desktop release artifact 构建、workflow artifact 上传与下载校验编排。
+- Release gate workflow 下的 fixture-backed artifact download verifier smoke 编排。
 - Manual dispatch 下的 PostgreSQL migration up/down smoke CI 编排。
 
 本目录不负责：
@@ -52,6 +53,7 @@ GitHub Actions 对 pull request、push 和 manual dispatch 提供 CI gate。
 
 ```powershell
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
+.\scripts\release\smoke-release-artifact-download.ps1
 ```
 
 ## 7. AI 操作提示

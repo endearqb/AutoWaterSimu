@@ -171,6 +171,7 @@ just integration-smoke
 just check-security
 just browser-smoke
 just desktop-package-smoke
+just release-artifact-download-smoke
 ```
 
 If `just` is not installed, run the underlying scripts and checks directly:
@@ -185,6 +186,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
 backend\.venv\Scripts\python -m pytest contracts\tests -q
 cd apps\api; go test ./...
 cd frontend; npx tsc --noEmit

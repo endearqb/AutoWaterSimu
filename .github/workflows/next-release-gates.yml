@@ -101,6 +101,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate release artifact download verifier
+        shell: powershell
+        run: .\scripts\release\smoke-release-artifact-download.ps1 -EvidenceDir "tmp\release-evidence"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

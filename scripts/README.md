@@ -25,7 +25,7 @@
 | `check-ontology.ps1` | Water Ontology objects/actions/links/policies registry 一致性检查，供 `just check-ontology` / `just check` / `pr-fast` 调用 |
 | `check-contracts.ps1` | Contracts registry、codegen manifest、schema tests、Compute TS client drift gate，供 `just check-contracts` / `pr-fast` 调用 |
 | `ci/` | AutoWaterSimu Next PR fast、opt-in integration smoke、opt-in security smoke、browser smoke 与 Desktop package smoke evidence 脚本 |
-| `release/` | AutoWaterSimu Next merge/release gate 脚本 |
+| `release/` | AutoWaterSimu Next merge/release gate、release artifact download verifier smoke 脚本 |
 
 ## 3. 维护约定
 
@@ -63,6 +63,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
 ```
 

@@ -54,6 +54,9 @@ browser-smoke:
 desktop-package-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 
+release-artifact-download-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
+
 check-deps:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 

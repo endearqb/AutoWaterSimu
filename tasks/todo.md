@@ -1,3 +1,38 @@
+# 2026-06-01 AutoWaterSimu Next release artifact download smoke TODO
+
+- [x] Re-read README First, root README, scripts, release, GitHub workflow, architecture, and Certainty/Elegance context
+- [x] Confirm existing `next-release-gates.yml` already supports real unsigned artifact upload/download verification when `build_release_artifacts=true`
+- [x] Add a fixture-backed release artifact download verifier smoke under `scripts/release`
+- [x] Wire the smoke into `Justfile` and the release gate workflow evidence
+- [x] Update scripts/workflow/architecture/Certainty-Elegance docs and README First records
+- [x] Run focused smoke, workflow parser, release gate dry run, PR fast, and diff-check validation
+
+## Plan
+
+- Keep the new smoke in `scripts/release`, not `scripts/ci`, because it validates release artifact evidence rather than PR fast behavior.
+- Use generated fixture artifacts under `tmp/`, not committed binaries.
+- Cover both a passing artifact bundle and an expected failure for a missing installer executable.
+- Do not claim a hosted release-evidence green run or production signed release; those still require real GitHub Actions execution and the existing post-P0 signing policy.
+
+## Review
+
+- Added `scripts/release/smoke-release-artifact-download.ps1`.
+- The smoke generates temporary release artifact fixtures under `tmp/`, runs the existing `verify-release-artifact-download.ps1`, and records both:
+  - a valid unsigned release artifact bundle passing verification
+  - a missing installer executable fixture failing as expected
+- Wired the smoke into `just release-artifact-download-smoke` and `.github/workflows/next-release-gates.yml`, so release gate evidence uploads include `release-artifact-download-smoke.json`.
+- Updated root README, scripts READMEs, GitHub workflow READMEs, architecture current-state, and the Certainty/Elegance checklist.
+- Verification:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1` passed; evidence status `passed`, 2 steps passed.
+  - Python/PyYAML parser check for `.github/workflows/next-release-gates.yml` passed; required release artifact verifier, release gate, downloaded artifact verification, and evidence upload steps found.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\next-release-gates.ps1 -Mode merge -SkipLong` passed; evidence status `passed`, 10 steps passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, 7 steps passed, dirty worktree recorded.
+  - `git diff --check -- .github Justfile README.md docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - No real hosted GitHub Actions release-evidence run was triggered from this local session.
+  - The smoke does not prove a real unsigned workflow artifact upload/download round trip; that is still covered only when `next-release-gates.yml` runs with `build_release_artifacts=true`.
+  - Signing, auto update, GitHub Release publication, and production distribution remain post-P0 per ADR `0011`.
+
 # 2026-05-31 AutoWaterSimu Next mutation audit smoke TODO
 
 - [x] Re-read README First, root README, docs/rebuild, docs/architecture, apps/api, internal compute, scripts/ci, tasks, and current security smoke context

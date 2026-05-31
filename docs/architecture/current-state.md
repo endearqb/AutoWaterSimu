@@ -1,6 +1,6 @@
 # AutoWaterSimu Next Current State
 
-> Snapshot date: 2026-05-31.
+> Snapshot date: 2026-06-01.
 
 This document summarizes long-lived facts from README files, `.ai/decisions/`, release gate scripts, and the Certainty/Elegance quality plan. It does not replace source code, tests, OpenAPI, contracts, or `.ai/changes/`.
 
@@ -30,6 +30,7 @@ This document summarizes long-lived facts from README files, `.ai/decisions/`, r
 - `apps/desktop/` has Tauri runtime, local project package/export/import, worker sidecar management, support bundle and packaging smoke boundaries.
 - New Desktop project exports use `desktop_project_package.v1`; the runtime still imports legacy `desktop_project_export.v1` files for backward compatibility.
 - `scripts/release/next-release-gates.ps1` generates local/CI release gate evidence under `tmp/release-evidence`.
+- `scripts/release/smoke-release-artifact-download.ps1` generates temporary release artifact fixtures, verifies the download validator success path, verifies the missing-installer rejection path, and writes `tmp/release-evidence/release-artifact-download-smoke.json`.
 - Root `Justfile`, `scripts/doctor.ps1`, and `scripts/check-deps.ps1` now provide the first Phase 0 task graph and dependency check entry.
 - `docker-compose.dev.yml` now provides a source-mounted Next dev stack candidate for PostgreSQL, MinIO, Go Compute API, Python worker loop, and Vite frontend.
 - `scripts/ci/pr-fast.ps1` and `.github/workflows/next-pr-fast.yml` define a PR fast lane that writes `tmp/ci-evidence/pr-fast.json`.
@@ -50,7 +51,7 @@ This document summarizes long-lived facts from README files, `.ai/decisions/`, r
 - Local `pr-fast` evidence records dirty worktree state; a clean HEAD proof requires running the same lane after the current changes are committed.
 - Full production OIDC/RBAC/data-scope policy is not implemented. P0 static tokens remain the current auth model, but production startup now blocks empty token config and default development token values, and security smoke covers token revocation, scope denial, admin-only artifact retention, and selected mutation audit envelopes for job create plus artifact retention delete/archive events.
 - Browser smoke is mock-backed and route-focused. A hosted/manual workflow file exists, but a real GitHub Actions green run is still pending. It does not prove live backend reads through PostgreSQL/MinIO/worker or a legacy authenticated backend session.
-- Desktop package smoke is source-mode runtime focused. A hosted/manual workflow file exists, but a real GitHub Actions green run is still pending. It does not prove packaged-worker exe startup, NSIS installer behavior, release artifact download verification, signing, or auto update.
+- Desktop package smoke is source-mode runtime focused. A hosted/manual workflow file exists, but a real GitHub Actions green run is still pending. The release artifact download verifier now has fixture-backed smoke coverage and is wired into `next-release-gates.yml`, but a real hosted unsigned artifact upload/download round trip is still pending. This does not prove packaged-worker exe startup, NSIS installer behavior, signing, or auto update.
 - Water Ontology has a first registry-backed semantic layer, but it is not yet a runtime policy enforcement layer. Full OIDC/RBAC/ABAC/data-scope and all-mutation audit enforcement remain future work.
 - The 8 golden scenarios are not all automated. Existing release gate, worker, contract, Go, frontend, and desktop checks cover many single-lane validations but not every scenario end to end.
 

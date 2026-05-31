@@ -10,6 +10,7 @@
 - release gate 编排。
 - 生成本地/CI evidence JSON。
 - 校验 GitHub workflow 下载后的 unsigned Desktop release artifact 内容。
+- 用 fixture-backed smoke 验证下载校验器的成功/失败路径。
 
 本目录不负责：
 
@@ -24,6 +25,7 @@
 |---|---|
 | `next-release-gates.ps1` | 编排 Next merge/release gate，并写出 `tmp/release-evidence/next-release-gates.json` |
 | `verify-release-artifact-download.ps1` | 校验下载后的 unsigned Desktop workflow artifact 是否包含 sidecar、installer 和 smoke evidence，并写出 `tmp/release-evidence/downloaded-release-artifacts.json` |
+| `smoke-release-artifact-download.ps1` | 生成临时 release artifact fixtures，覆盖下载校验器通过路径与缺失 installer 的失败路径，并写出 `tmp/release-evidence/release-artifact-download-smoke.json` |
 
 ## 3. 维护约定
 
@@ -37,6 +39,7 @@
 8. GitHub workflow artifact 下载校验只确认 artifact 可下载且包含 unsigned sidecar/installer/evidence，不代表签名、发布或自动更新已完成。
 9. Installer signing、auto update 和 GitHub Release publication 不属于本脚本职责；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 10. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
+11. `smoke-release-artifact-download.ps1` 只使用 `tmp/` 下的 fixture 文件验证校验器逻辑，不代表真实 GitHub artifact round trip 已通过。
 
 ## 4. 对外接口
 
@@ -58,6 +61,7 @@
 ## 6. 测试与验证
 
 ```powershell
+.\scripts\release\smoke-release-artifact-download.ps1
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
 ```
 
