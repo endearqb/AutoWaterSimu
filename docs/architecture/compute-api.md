@@ -20,12 +20,12 @@ The wider `Service` still owns package-level construction and compatibility dele
 
 ## Package Boundary
 
-`apps/api/internal/platform/auth` owns static bearer token config parsing, principal parsing, scope/revocation checks, and platform auth errors. Compute maps those errors back to `contract_error.v1` responses. `apps/api/internal/platform/config` owns the command/runtime `Config` shape used by `cmd/compute-api` for environment-derived wiring. `apps/api/internal/platform/contracts` owns JSON Schema loading, schema_version-to-file mapping, and reusable schema validation; compute keeps DTO decoding and response mapping around it. `apps/api/internal/platform/httpx` owns platform HTTP helpers that do not hold compute domain state:
+`apps/api/internal/platform/auth` owns static bearer token config parsing, principal parsing, scope/revocation checks, and platform auth errors. Compute maps those errors back to `contract_error.v1` responses. `apps/api/internal/platform/config` owns the command/runtime `Config` shape used by `cmd/compute-api` for environment-derived wiring. `apps/api/internal/platform/contracts` owns JSON Schema loading, schema_version-to-file mapping, reusable schema validation, and the base contract document validation response; compute keeps DTO decoding, `contract_error.v1` mapping, and draft confirmation response attachment around it. `apps/api/internal/platform/httpx` owns platform HTTP helpers that do not hold compute domain state:
 
 - JSON response writing
 - loopback-only local browser CORS
 
-`apps/api/internal/platform/metrics` owns the metrics snapshot shape and Prometheus exposition text rendering. Compute still owns metadata-store count collection through `MetricsService`.
+`apps/api/internal/platform/metrics` owns the metrics snapshot shape, read-only metrics collector over a narrow snapshot store, and Prometheus exposition text rendering. Compute still owns the concrete MemoryStore/PostgresStore count queries because they depend on metadata storage.
 
 `apps/api/internal/domain/workers` owns worker register / claim / heartbeat request normalization and response assembly behind a minimal worker store interface. `apps/api/internal/compute` adapts the existing `WorkerStore` and job state projection into that package so HTTP routes and storage behavior stay unchanged.
 
@@ -37,9 +37,9 @@ The wider `Service` still owns package-level construction and compatibility dele
 | `domain/workers` | Worker register / claim / heartbeat domain package |
 | `platform/auth` | Static bearer token authentication and platform auth errors |
 | `platform/config` | Runtime configuration shape for command/deployment wiring |
-| `platform/contracts` | Contract schema loading, schema_version mapping, and JSON Schema validation |
+| `platform/contracts` | Contract schema loading, schema_version mapping, JSON Schema validation, and base document validation response |
 | `platform/httpx` | Platform HTTP helper package |
-| `platform/metrics` | Metrics snapshot shape and Prometheus renderer |
+| `platform/metrics` | Metrics snapshot shape, read-only collector, and Prometheus renderer |
 
 This is the first domain package movement step, following the low-coupling platform auth, config, contracts, HTTP, and metrics helper movement. Remaining domain packages include jobs, artifacts, models, evidence, simulation, and agent.
 `scripts/check-deps.ps1` enforces reverse-dependency rules so `apps/api/internal/platform` and `apps/api/internal/domain` cannot import `apps/api/internal/compute`.
@@ -57,8 +57,8 @@ Selected files from the latest audit:
 | `artifact_lifecycle.go` | 367 | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow |
 | `result_explanations.go` | 175 | result explanation submit/review/publish and job-scoped evidence ref validation |
 | `worker_lifecycle.go` | 50 | adapter from compute worker/job records to the workers domain package |
-| `metrics.go` | 25 | read-only metrics snapshot service |
-| `contract_validation.go` | 45 | reusable contract validation response helper |
+| `metrics.go` | 7 | compatibility aliases for platform metrics collector |
+| `contract_validation.go` | 14 | compatibility wrapper over platform contract document validation |
 | `postgres.go` | 1477 | PostgreSQL store implementation and migrations smoke helpers |
 | `http.go` | 1124 | route handlers and HTTP mapping |
 | `store.go` | 1166 | aggregate Store, domain metadata interfaces, and MemoryStore implementation |
@@ -193,12 +193,12 @@ The public `Service.Result`, `Service.EvidencePackage`, `Service.ProductionReadi
 
 The public `Service.CreateJob`, `Service.GetJob`, `Service.ListJobs`, `Service.Events`, `Service.CancelJob`, `Service.Complete`, `Service.Fail`, and `Service.TimeoutSweep` methods remain stable and delegate to this narrower service. The service owns job mutation, completion summaries, timeout sweeps, and persisted model-run extraction; artifact object writes and evidence package generation stay in their existing boundaries.
 
-`MetricsService` is the ninth narrowed slice. Its constructor depends on:
+`MetricsService` is the ninth narrowed slice and now lives in `apps/api/internal/platform/metrics`. Its constructor depends on:
 
-- `MetricsStore`
+- a `platform/metrics.SnapshotStore` implemented by compute `MetricsStore`
 - a clock
 
-The public `Service.Metrics` method remains stable and delegates to this narrower service. The service is read-only and must not trigger retention sweep, timeout sweep, job mutation, artifact mutation, or archive mutation.
+The public `Service.Metrics` method remains stable and delegates to this platform service. The service is read-only and must not trigger retention sweep, timeout sweep, job mutation, artifact mutation, or archive mutation. Concrete metadata count queries remain in compute `MemoryStore` / `PostgresStore`.
 
 ## Recommended Next Split Order
 
@@ -213,7 +213,7 @@ Recommended order for narrowing service boundaries and later file/package moveme
 7. `jobs`
 8. `metrics`
 
-This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `domain/workers.WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `MetricsService`. Artifact upload/listing has also joined the artifact boundary. Internal domain service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. The first platform package movement is underway through `platform/auth`, `platform/config`, `platform/contracts`, `platform/httpx`, and `platform/metrics`; the first true domain package movement is underway through `domain/workers`. Remaining near-term work is additional domain package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
+This order starts with domains that have clear data ownership and smaller method groups before touching core job lifecycle behavior. All eight listed split groups have begun; they are currently implemented through `ArtifactLifecycleService`, `SimulationInputService`, `DraftWorkflowService`, `ResultExplanationService`, `ModelGovernanceService`, `domain/workers.WorkerLifecycleService`, `EvidenceGovernanceService`, `JobLifecycleService`, and `platform/metrics.MetricsService`. Artifact upload/listing has also joined the artifact boundary. Internal domain/platform service constructors are now audited for aggregate `Store` leaks and over-wide store-like parameter lists. The first platform package movement is underway through `platform/auth`, `platform/config`, `platform/contracts`, `platform/httpx`, and `platform/metrics`; the first true domain package movement is underway through `domain/workers`. Remaining near-term work is additional domain package movement, handler/package surface reduction, and eventually public `Service` constructor signature narrowing.
 
 ## Split Rules
 
@@ -228,7 +228,7 @@ Future service-boundary and package splitting should follow these rules:
 ## Current Non-Goals
 
 - `NewService` / `NewServiceWithArchive` still accept the aggregate `Store` for backward-compatible construction; narrowed internal services receive domain interfaces but are still wired from the aggregate in this package.
-- This split has moved platform auth, config, contract validation, HTTP, and metrics helpers into platform packages and worker register/claim/heartbeat into the first domain package. Most compute domain files have not moved into domain packages yet.
+- This split has moved platform auth, config, contract validation/document response, HTTP, and metrics helpers/collector into platform packages and worker register/claim/heartbeat into the first domain package. Most compute domain files have not moved into domain packages yet.
 - This split does not change endpoint behavior, OpenAPI, auth scopes, contracts, database schema, or PostgreSQL migrations.
 
 ## Verification

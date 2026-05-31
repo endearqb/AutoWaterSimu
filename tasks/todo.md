@@ -1,3 +1,72 @@
+# 2026-06-01 AutoWaterSimu Next platform contract document validation split TODO
+
+- [x] Re-read README First context, platform/contracts README, compute contract validation helper, response types, and call sites
+- [x] Confirm next low-risk gap: schema_version document validation helper still lives in compute even though it is domain-free
+- [x] Move base contract document validation response and helper into `internal/platform/contracts`
+- [x] Keep compute `ContractValidationResponse` compatibility wrapper because draft confirmation record depends on compute metadata type
+- [x] Add direct platform contracts tests for missing, unsupported, invalid, and valid documents
+- [x] Update README/architecture/tasks/change records
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Add `ValidationIssue`, `DocumentValidationResponse`, and `ValidateDocument` to `platform/contracts`.
+- Keep `compute.ContractValidationResponse` as the HTTP-facing response that can optionally attach `DraftConfirmationRecord`.
+- Replace compute `validateContractDocument` internals with a mapping wrapper over `platform/contracts.ValidateDocument`.
+- Do not change routes, JSON response fields, OpenAPI, schema files, migrations, generated clients, or draft confirmation persistence behavior.
+
+## Review
+
+- Added `platform/contracts.ValidationIssue`, `DocumentValidationResponse`, and `ValidateDocument`.
+- Added direct platform contracts tests for missing `schema_version`, unsupported `schema_version`, invalid known schema, and valid `contract_error.v1`.
+- Replaced compute `validateContractDocument` internals with a mapping wrapper over `platform/contracts.ValidateDocument`.
+- Kept `compute.ContractValidationResponse` as the HTTP-facing response that can attach `DraftConfirmationRecord`; `ContractValidationIssue` is now a platform type alias.
+- Updated API/platform/contracts/compute README, compute-api architecture, current-state, Certainty/Elegance checklist, and change records.
+- Verification:
+  - `cd apps\api; go test ./internal/platform/contracts ./internal/platform/metrics ./internal/compute` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, package dirs: 7.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files were still uncommitted.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Compute still owns draft confirmation persistence and response attachment because it depends on `DraftConfirmationRecord`.
+  - Contract schemas, OpenAPI, migrations, and generated clients were intentionally unchanged.
+
+# 2026-06-01 AutoWaterSimu Next platform metrics collector split TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/plan, Compute API architecture/current-state, platform/metrics README, compute metrics service, store interface, and HTTP metrics handler
+- [x] Confirm next low-risk gap: metrics snapshot/rendering live in `platform/metrics`, but read-only metrics collector still lives in compute
+- [x] Move read-only metrics collector into `internal/platform/metrics`
+- [x] Keep compute compatibility aliases and store implementations stable
+- [x] Extend boundary audit/docs/checklists to record the platform metrics collector
+- [x] Run focused/full Go tests, dependency/audit/PR fast, and diff-check validation
+
+## Plan
+
+- Add a `SnapshotStore` and `MetricsService` to `platform/metrics`, with a clock-injected read-only `Metrics` method.
+- Replace compute `MetricsService` implementation with aliases to the platform metrics service so public `Service.Metrics` remains stable.
+- Extend the architecture audit to scan platform package service constructors and store calls, without adding new dependencies from platform to compute.
+- Do not change `/metrics` route, metric names, output text, OpenAPI, contracts, migrations, generated clients, or metadata store SQL.
+
+## Review
+
+- Added `platform/metrics.SnapshotStore` and `platform/metrics.MetricsService` with injected clock and direct unit coverage.
+- Replaced compute `MetricsService` implementation with compatibility aliases to `platform/metrics`, preserving `Service.Metrics` and `/metrics` behavior.
+- Kept concrete MemoryStore/PostgresStore metrics count queries in compute storage implementations.
+- Extended `scripts/audit-compute-api-boundary.ps1` to scan platform Go files for internal service constructors and Store method calls.
+- Updated API/platform/compute README, compute-api architecture, current-state, scripts README, and Certainty/Elegance checklist to reflect that the metrics collector moved to platform.
+- Verification:
+  - `cd apps\api; go test ./internal/platform/metrics ./internal/compute` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, package dirs: 7.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files were still uncommitted.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Concrete metrics count queries still live in compute MemoryStore/PostgresStore by design.
+  - jobs/artifacts/models/evidence/simulation/agent domain packages have not moved yet.
+
 # 2026-06-01 AutoWaterSimu Next platform contracts package split TODO
 
 - [x] Re-read README First context, current worktree, Certainty/Elegance plan, Compute API architecture, contract validator code, and platform package context

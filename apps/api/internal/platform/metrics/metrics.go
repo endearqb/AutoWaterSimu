@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -14,6 +15,29 @@ type Snapshot struct {
 	ArtifactsTotal      int            `json:"artifacts_total"`
 	ArtifactArchives    int            `json:"artifact_archives"`
 	RetentionCandidates int            `json:"retention_candidates"`
+}
+
+type SnapshotStore interface {
+	Metrics(ctx context.Context, now time.Time) (Snapshot, error)
+}
+
+type MetricsService struct {
+	metrics SnapshotStore
+	now     func() time.Time
+}
+
+func NewMetricsService(metrics SnapshotStore, now func() time.Time) *MetricsService {
+	if now == nil {
+		now = func() time.Time { return time.Now().UTC() }
+	}
+	return &MetricsService{
+		metrics: metrics,
+		now:     now,
+	}
+}
+
+func (svc *MetricsService) Metrics(ctx context.Context) (Snapshot, error) {
+	return svc.metrics.Metrics(ctx, svc.now())
 }
 
 func RenderPrometheus(snapshot Snapshot) string {

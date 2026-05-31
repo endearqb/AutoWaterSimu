@@ -5,6 +5,7 @@ import (
 	"time"
 
 	domainworkers "autowatersimu/apps/api/internal/domain/workers"
+	platformcontracts "autowatersimu/apps/api/internal/platform/contracts"
 	platformmetrics "autowatersimu/apps/api/internal/platform/metrics"
 )
 
@@ -437,10 +438,7 @@ type ListBenchmarkRunsResponse struct {
 	TotalEstimate int                  `json:"total_estimate"`
 }
 
-type ContractValidationIssue struct {
-	Path    string `json:"path"`
-	Message string `json:"message"`
-}
+type ContractValidationIssue = platformcontracts.ValidationIssue
 
 type ContractValidationResponse struct {
 	SchemaVersion         string                    `json:"schema_version"`

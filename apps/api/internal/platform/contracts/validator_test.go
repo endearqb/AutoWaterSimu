@@ -61,3 +61,76 @@ func TestValidatorAcceptsMinimalContractError(t *testing.T) {
 		t.Fatalf("expected valid contract_error payload: %v", err)
 	}
 }
+
+func TestValidateDocumentMissingSchemaVersion(t *testing.T) {
+	validator, err := NewValidator(repoRootForTest(t))
+	if err != nil {
+		t.Fatalf("NewValidator returned error: %v", err)
+	}
+
+	response, err := ValidateDocument([]byte(`{"request_id":"req_missing_schema"}`), validator)
+	if err != nil {
+		t.Fatalf("ValidateDocument returned error: %v", err)
+	}
+	if response.Valid {
+		t.Fatalf("expected missing schema_version to be invalid")
+	}
+	if len(response.Errors) != 1 || response.Errors[0].Path != "/schema_version" {
+		t.Fatalf("unexpected errors: %#v", response.Errors)
+	}
+}
+
+func TestValidateDocumentUnsupportedSchemaVersion(t *testing.T) {
+	validator, err := NewValidator(repoRootForTest(t))
+	if err != nil {
+		t.Fatalf("NewValidator returned error: %v", err)
+	}
+
+	response, err := ValidateDocument([]byte(`{"schema_version":"future_contract.v1"}`), validator)
+	if err != nil {
+		t.Fatalf("ValidateDocument returned error: %v", err)
+	}
+	if response.Valid || response.ContractSchema != "" {
+		t.Fatalf("expected unsupported schema to be invalid without contract schema: %#v", response)
+	}
+	if len(response.Errors) != 1 || response.Errors[0].Path != "/schema_version" {
+		t.Fatalf("unexpected errors: %#v", response.Errors)
+	}
+}
+
+func TestValidateDocumentInvalidKnownSchema(t *testing.T) {
+	validator, err := NewValidator(repoRootForTest(t))
+	if err != nil {
+		t.Fatalf("NewValidator returned error: %v", err)
+	}
+
+	response, err := ValidateDocument([]byte(`{"schema_version":"simulation_request.v1"}`), validator)
+	if err != nil {
+		t.Fatalf("ValidateDocument returned error: %v", err)
+	}
+	if response.Valid || response.ContractSchema != "simulation_request.v1.json" || len(response.Errors) == 0 {
+		t.Fatalf("expected known schema validation error, got: %#v", response)
+	}
+}
+
+func TestValidateDocumentValidContractError(t *testing.T) {
+	validator, err := NewValidator(repoRootForTest(t))
+	if err != nil {
+		t.Fatalf("NewValidator returned error: %v", err)
+	}
+
+	response, err := ValidateDocument([]byte(`{
+		"schema_version":"contract_error.v1",
+		"error_code":"VALIDATION_FAILED",
+		"message":"invalid payload",
+		"details":{},
+		"retryable":false,
+		"trace_id":"trace-test"
+	}`), validator)
+	if err != nil {
+		t.Fatalf("ValidateDocument returned error: %v", err)
+	}
+	if !response.Valid || response.ContractSchema != "contract_error.v1.json" || len(response.Errors) != 0 {
+		t.Fatalf("expected valid contract_error document, got: %#v", response)
+	}
+}

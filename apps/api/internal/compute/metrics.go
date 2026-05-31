@@ -1,25 +1,7 @@
 package compute
 
-import (
-	"context"
-	"time"
-)
+import platformmetrics "autowatersimu/apps/api/internal/platform/metrics"
 
-type MetricsService struct {
-	metrics MetricsStore
-	now     func() time.Time
-}
+type MetricsService = platformmetrics.MetricsService
 
-func NewMetricsService(metrics MetricsStore, now func() time.Time) *MetricsService {
-	if now == nil {
-		now = func() time.Time { return time.Now().UTC() }
-	}
-	return &MetricsService{
-		metrics: metrics,
-		now:     now,
-	}
-}
-
-func (svc *MetricsService) Metrics(ctx context.Context) (MetricsSnapshot, error) {
-	return svc.metrics.Metrics(ctx, svc.now())
-}
+var NewMetricsService = platformmetrics.NewMetricsService

@@ -6,7 +6,7 @@
 
 本目录负责：
 
-- auth、HTTP helper、配置、合同 schema validation、日志、metrics 等不持有 compute domain 状态的横切能力。
+- auth、HTTP helper、配置、合同 schema validation、日志、metrics snapshot/collector 等不持有 compute domain 状态的横切能力。
 - 为 `apps/api/internal/compute` 后续领域拆包提供低耦合基础。
 
 本目录不负责：
@@ -21,9 +21,9 @@
 |---|---|
 | `auth/` | static bearer token config, principal parsing, and platform auth errors |
 | `config/` | command/runtime configuration shape |
-| `contracts/` | contract schema loading, schema_version mapping, and JSON Schema validation |
+| `contracts/` | contract schema loading, schema_version mapping, JSON Schema validation, and base document validation response |
 | `httpx/` | JSON response and local CORS HTTP helper |
-| `metrics/` | metrics snapshot shape and Prometheus text renderer |
+| `metrics/` | metrics snapshot shape, read-only collector, and Prometheus text renderer |
 
 ## 3. 维护约定
 

@@ -2,17 +2,18 @@
 
 ## 1. 目录职责
 
-本目录保存 Go Compute API 的平台 metrics snapshot 和 Prometheus 文本渲染 helper。
+本目录保存 Go Compute API 的平台 metrics snapshot、read-only collector 和 Prometheus 文本渲染 helper。
 
 本目录负责：
 
 - API metrics snapshot shape。
+- 通过抽象 `SnapshotStore` 收集 read-only metrics snapshot。
 - Prometheus exposition text rendering。
 - Prometheus label value escaping。
 
 本目录不负责：
 
-- 从 metadata store 收集 metrics。
+- PostgreSQL / memory metadata store 具体查询实现。
 - 触发 retention sweep、timeout sweep 或任何 lifecycle mutation。
 - HTTP route 编排或认证。
 
@@ -20,13 +21,13 @@
 
 | 文件 | 作用 |
 |---|---|
-| `metrics.go` | Snapshot 和 Prometheus renderer |
-| `metrics_test.go` | renderer 和 label escaping 测试 |
+| `metrics.go` | Snapshot、read-only metrics service 和 Prometheus renderer |
+| `metrics_test.go` | metrics service、renderer 和 label escaping 测试 |
 
 ## 3. 维护约定
 
 1. 本 package 不 import `internal/compute`。
-2. renderer 必须保持只读，不执行任何 lifecycle 操作。
+2. metrics service 和 renderer 必须保持只读，不执行任何 lifecycle 操作。
 3. 新增指标时同步更新 compute metrics store 查询、README 和相关 smoke 检查。
 
 ## 4. 对外接口
@@ -34,13 +35,16 @@
 本 package 对 `apps/api/internal/*` 暴露：
 
 - `Snapshot`
+- `SnapshotStore`
+- `MetricsService`
+- `NewMetricsService`
 - `RenderPrometheus`
 
 ## 5. 依赖边界
 
 可以依赖 Go standard library。
 
-不应该依赖 compute domain package、storage、contracts 或 HTTP handlers。
+不应该依赖 compute domain package、concrete storage implementation、contracts 或 HTTP handlers。
 
 ## 6. 测试与验证
 

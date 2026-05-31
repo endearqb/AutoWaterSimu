@@ -379,6 +379,7 @@ New-Item -ItemType Directory -Force -Path $EvidenceDir | Out-Null
 $computeDir = Join-Path $root "apps\api\internal\compute"
 $internalDir = Join-Path $root "apps\api\internal"
 $domainDir = Join-Path $internalDir "domain"
+$platformDir = Join-Path $internalDir "platform"
 $storePath = Join-Path $computeDir "store.go"
 $postgresPath = Join-Path $computeDir "postgres.go"
 $servicePath = Join-Path $computeDir "service.go"
@@ -402,7 +403,15 @@ if (Test-Path -LiteralPath $domainDir) {
         } | Sort-Object FullName
     )
 }
-$serviceAuditFiles = @($serviceLayerFiles + $domainLayerFiles)
+$platformLayerFiles = @()
+if (Test-Path -LiteralPath $platformDir) {
+    $platformLayerFiles = @(
+        Get-ChildItem -LiteralPath $platformDir -Recurse -File -Filter "*.go" | Where-Object {
+            -not $_.Name.EndsWith("_test.go")
+        } | Sort-Object FullName
+    )
+}
+$serviceAuditFiles = @($serviceLayerFiles + $domainLayerFiles + $platformLayerFiles)
 $fileStats = @(
     $goFiles | ForEach-Object {
         [ordered]@{

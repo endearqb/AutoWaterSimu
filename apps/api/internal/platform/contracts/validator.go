@@ -1,6 +1,7 @@
 package contracts
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 )
 
 const CodeValidationFailed = "VALIDATION_FAILED"
+const CodeInternal = "INTERNAL_ERROR"
 
 var schemaFiles = []string{
 	"compute_job.v1.json",
@@ -56,6 +58,20 @@ type Error struct {
 	Details   map[string]any
 }
 
+type ValidationIssue struct {
+	Path    string `json:"path"`
+	Message string `json:"message"`
+}
+
+type DocumentValidationResponse struct {
+	SchemaVersion         string            `json:"schema_version"`
+	DocumentSchemaVersion string            `json:"document_schema_version,omitempty"`
+	ContractSchema        string            `json:"contract_schema,omitempty"`
+	Valid                 bool              `json:"valid"`
+	Errors                []ValidationIssue `json:"errors"`
+	Warnings              []string          `json:"warnings"`
+}
+
 func (err *Error) Error() string {
 	return err.Message
 }
@@ -65,6 +81,15 @@ func validationError(message string) *Error {
 		Status:  http.StatusBadRequest,
 		Code:    CodeValidationFailed,
 		Message: message,
+	}
+}
+
+func internalError(message string) *Error {
+	return &Error{
+		Status:    http.StatusInternalServerError,
+		Code:      CodeInternal,
+		Message:   message,
+		Retryable: true,
 	}
 }
 
@@ -101,6 +126,60 @@ func (validator *Validator) Validate(schemaName string, value any) error {
 func SchemaName(schemaVersion string) (string, bool) {
 	schemaName, ok := schemaByVersion[schemaVersion]
 	return schemaName, ok
+}
+
+func ValidateDocument(bytes []byte, validator *Validator) (DocumentValidationResponse, error) {
+	response := DocumentValidationResponse{
+		SchemaVersion: "contract_validation.v1",
+		Errors:        []ValidationIssue{},
+		Warnings:      []string{},
+	}
+	var document map[string]any
+	if err := json.Unmarshal(bytes, &document); err != nil {
+		return response, validationError("contract document JSON is invalid")
+	}
+	schemaVersion := stringValue(document, "schema_version")
+	response.DocumentSchemaVersion = schemaVersion
+	if schemaVersion == "" {
+		response.Errors = append(response.Errors, ValidationIssue{
+			Path:    "/schema_version",
+			Message: "schema_version is required",
+		})
+		return response, nil
+	}
+	schemaName, ok := SchemaName(schemaVersion)
+	if !ok {
+		response.Errors = append(response.Errors, ValidationIssue{
+			Path:    "/schema_version",
+			Message: "unsupported schema_version: " + schemaVersion,
+		})
+		return response, nil
+	}
+	response.ContractSchema = schemaName
+	if validator == nil {
+		return response, internalError("contract validator is not configured")
+	}
+	if err := validator.Validate(schemaName, document); err != nil {
+		response.Errors = append(response.Errors, ValidationIssue{
+			Path:    "/",
+			Message: err.Error(),
+		})
+		return response, nil
+	}
+	response.Valid = true
+	return response, nil
+}
+
+func stringValue(value map[string]any, key string) string {
+	if value == nil {
+		return ""
+	}
+	raw, ok := value[key]
+	if !ok || raw == nil {
+		return ""
+	}
+	text, _ := raw.(string)
+	return text
 }
 
 func fileURL(path string) string {
