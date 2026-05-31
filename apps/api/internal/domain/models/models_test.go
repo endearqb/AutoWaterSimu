@@ -39,6 +39,54 @@ func TestRunRefsAndWarningsFromRaw(t *testing.T) {
 	}
 }
 
+func TestParameterSetStatuses(t *testing.T) {
+	valid := []string{
+		ParameterSetStatusDraft,
+		ParameterSetStatusCandidate,
+		ParameterSetStatusValidated,
+		ParameterSetStatusApproved,
+		ParameterSetStatusRetired,
+	}
+	for _, status := range valid {
+		if !IsParameterSetStatus(status) {
+			t.Fatalf("expected %q to be valid", status)
+		}
+	}
+	for _, status := range []string{"", "unknown", " draft "} {
+		if IsParameterSetStatus(status) {
+			t.Fatalf("expected %q to be invalid", status)
+		}
+	}
+}
+
+func TestCanTransitionParameterSetStatus(t *testing.T) {
+	allowed := [][2]string{
+		{ParameterSetStatusDraft, ParameterSetStatusCandidate},
+		{ParameterSetStatusCandidate, ParameterSetStatusValidated},
+		{ParameterSetStatusValidated, ParameterSetStatusApproved},
+		{ParameterSetStatusDraft, ParameterSetStatusRetired},
+		{ParameterSetStatusApproved, ParameterSetStatusRetired},
+	}
+	for _, transition := range allowed {
+		if !CanTransitionParameterSetStatus(transition[0], transition[1]) {
+			t.Fatalf("expected transition %q -> %q to be allowed", transition[0], transition[1])
+		}
+	}
+
+	blocked := [][2]string{
+		{ParameterSetStatusDraft, ParameterSetStatusValidated},
+		{ParameterSetStatusApproved, ParameterSetStatusValidated},
+		{ParameterSetStatusRetired, ParameterSetStatusApproved},
+		{"unknown", ParameterSetStatusCandidate},
+		{ParameterSetStatusCandidate, "unknown"},
+	}
+	for _, transition := range blocked {
+		if CanTransitionParameterSetStatus(transition[0], transition[1]) {
+			t.Fatalf("expected transition %q -> %q to be blocked", transition[0], transition[1])
+		}
+	}
+}
+
 func TestInvalidRawReturnsEmptyValues(t *testing.T) {
 	raw := json.RawMessage(`{`)
 	if id := RunIDFromRaw(raw); id != "" {

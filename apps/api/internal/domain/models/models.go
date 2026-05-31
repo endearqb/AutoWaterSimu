@@ -5,6 +5,14 @@ import (
 	"strings"
 )
 
+const (
+	ParameterSetStatusDraft     = "draft"
+	ParameterSetStatusCandidate = "candidate"
+	ParameterSetStatusValidated = "validated"
+	ParameterSetStatusApproved  = "approved"
+	ParameterSetStatusRetired   = "retired"
+)
+
 func RunIDFromRaw(raw json.RawMessage) string {
 	modelRunID, _, _, _, _, _ := RunFieldsFromRaw(raw)
 	return modelRunID
@@ -38,6 +46,33 @@ func RunWarningsFromRaw(raw json.RawMessage) []string {
 		return nil
 	}
 	return stringsFromAny(value["warnings"])
+}
+
+func IsParameterSetStatus(status string) bool {
+	switch status {
+	case ParameterSetStatusDraft, ParameterSetStatusCandidate, ParameterSetStatusValidated, ParameterSetStatusApproved, ParameterSetStatusRetired:
+		return true
+	default:
+		return false
+	}
+}
+
+func CanTransitionParameterSetStatus(fromStatus, toStatus string) bool {
+	if fromStatus == ParameterSetStatusRetired {
+		return false
+	}
+	if toStatus == ParameterSetStatusRetired {
+		return true
+	}
+	order := map[string]int{
+		ParameterSetStatusDraft:     0,
+		ParameterSetStatusCandidate: 1,
+		ParameterSetStatusValidated: 2,
+		ParameterSetStatusApproved:  3,
+	}
+	from, fromOK := order[fromStatus]
+	to, toOK := order[toStatus]
+	return fromOK && toOK && to == from+1
 }
 
 func stringValue(value map[string]any, key string) string {

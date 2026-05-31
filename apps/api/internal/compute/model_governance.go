@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 	domainsimulation "autowatersimu/apps/api/internal/domain/simulation"
 )
 
@@ -213,10 +214,10 @@ func (svc *ModelGovernanceService) UpdateDefaultParameterSetStatus(ctx context.C
 	modelKey = required(modelKey, "model_key")
 	modelVersion = required(modelVersion, "model_version")
 	toStatus := strings.TrimSpace(request.ToStatus)
-	if !validParameterSetStatus(toStatus) {
+	if !domainmodels.IsParameterSetStatus(toStatus) {
 		return ModelParameterSetTransitionResponse{}, 0, ValidationError("to_status must be one of draft, candidate, validated, approved, retired")
 	}
-	if request.FromStatus != "" && !validParameterSetStatus(request.FromStatus) {
+	if request.FromStatus != "" && !domainmodels.IsParameterSetStatus(request.FromStatus) {
 		return ModelParameterSetTransitionResponse{}, 0, ValidationError("from_status must be one of draft, candidate, validated, approved, retired")
 	}
 	catalog, err := svc.ModelCatalog(ctx)
@@ -254,7 +255,7 @@ func (svc *ModelGovernanceService) UpdateDefaultParameterSetStatus(ctx context.C
 			Catalog:            catalog,
 		}, http.StatusOK, nil
 	}
-	if !allowedParameterSetTransition(fromStatus, toStatus) {
+	if !domainmodels.CanTransitionParameterSetStatus(fromStatus, toStatus) {
 		return ModelParameterSetTransitionResponse{}, 0, Conflict(CodeParameterSetTransitionFailed, "parameter set status transition is not allowed")
 	}
 	parameterSet.Status = toStatus

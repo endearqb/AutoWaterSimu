@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next models parameter-set status split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model governance call sites
+- [x] Confirm next aligned gap: default parameter set status validation and transition invariants still lived in compute helpers
+- [x] Add parameter-set status constants and transition helpers to `apps/api/internal/domain/models` with direct tests
+- [x] Route `ModelGovernanceService` status updates through the domain models helper while preserving catalog snapshot mutation and HTTP mapping
+- [x] Update README/architecture/checklists/audit note
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only stable default parameter set status constants, valid status recognition, forward transition checks, and retirement checks.
+- Keep model catalog persistence, snapshot mutation, benchmark run validation, promotion planning, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as a small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added parameter-set status constants, valid status checks, and allowed transition checks to `apps/api/internal/domain/models`.
+- Added direct models domain tests for allowed statuses, forward transitions, retirement, blocked backwards/skipped transitions, retired-source transitions, and unknown statuses.
+- Updated `ModelGovernanceService.UpdateDefaultParameterSetStatus` to delegate status validation and transition checks to the domain helper while keeping catalog lookup, snapshot mutation, idempotent same-status response, HTTP error mapping, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Removed compute-local parameter set status helper functions from `service.go`.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(ParameterSet|ModelCatalog|DefaultParameterSet|Promotion|BenchmarkRun)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshot mutation, benchmark run validation, promotion workflows, HTTP mapping, and DTOs remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full evidence governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next evidence result explanation refs split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/evidence/compute READMEs, and result explanation call sites

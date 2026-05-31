@@ -363,33 +363,6 @@ func findBenchmarkCase(version ModelCatalogVersion, benchmarkCaseID string) (Mod
 	return ModelBenchmarkCase{}, false
 }
 
-func validParameterSetStatus(status string) bool {
-	switch status {
-	case "draft", "candidate", "validated", "approved", "retired":
-		return true
-	default:
-		return false
-	}
-}
-
-func allowedParameterSetTransition(fromStatus, toStatus string) bool {
-	if fromStatus == "retired" {
-		return false
-	}
-	if toStatus == "retired" {
-		return true
-	}
-	order := map[string]int{
-		"draft":     0,
-		"candidate": 1,
-		"validated": 2,
-		"approved":  3,
-	}
-	from, fromOK := order[fromStatus]
-	to, toOK := order[toStatus]
-	return fromOK && toOK && to == from+1
-}
-
 func copyStringAnyMap(value map[string]any) map[string]any {
 	copy := map[string]any{}
 	for key, raw := range value {
