@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next models benchmark parsing split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model governance call sites
+- [x] Confirm next aligned gap: benchmark run evidence ref parsing and model_run identity/parameter_hash parsing still lived in model governance helpers
+- [x] Add `RunIdentityFromRaw` and benchmark run evidence-ref helpers to `apps/api/internal/domain/models` with direct tests
+- [x] Route benchmark run validation and promotion planning through the domain models helpers while preserving store/HTTP behavior
+- [x] Update README/architecture/checklists/audit note
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only stable raw JSON extraction for `model_run.v1` identity/parameter hash and `benchmark_run.v1.evidence_refs`.
+- Keep model catalog persistence, benchmark run record assembly, evidence reference resolution, promotion planning orchestration, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as another small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added `RunIdentity` / `RunIdentityFromRaw` to `apps/api/internal/domain/models` for stable `model_run.v1` identity and `parameter_hash` extraction.
+- Added `BenchmarkRunEvidenceRefs` / `BenchmarkRunEvidenceRefsFromRaw` to collect stable `benchmark_run.v1.evidence_refs`.
+- Added direct models domain tests for model run identity, parameter hash, benchmark evidence refs, invalid raw JSON, and existing status/ref/warning behavior.
+- Updated `ModelGovernanceService` benchmark run validation and promotion result calculation to use the domain models helpers while preserving store calls, resolver callbacks, blocking reasons, HTTP errors, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(RunIdentity|BenchmarkRunEvidenceRefs|BenchmarkRun|DefaultParameterSet|Promotion|ModelCatalog)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshot mutation, benchmark run persistence workflow, promotion workflow orchestration, HTTP mapping, and DTOs remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full evidence governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models parameter-set status split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model governance call sites

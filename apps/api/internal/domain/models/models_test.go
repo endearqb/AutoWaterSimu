@@ -21,8 +21,32 @@ func TestRunFieldsFromRaw(t *testing.T) {
 	if modelRunID != "mr_1" || jobID != "job_1" || modelKey != "material_balance" || modelVersion != "1.0.0" || parameterSetID != "ps_default" {
 		t.Fatalf("unexpected fields: %q %q %q %q %q", modelRunID, jobID, modelKey, modelVersion, parameterSetID)
 	}
+	identity, err := RunIdentityFromRaw(raw)
+	if err != nil {
+		t.Fatalf("unexpected identity error: %v", err)
+	}
+	if identity.ModelRunID != "mr_1" || identity.JobID != "job_1" || identity.ModelKey != "material_balance" || identity.ModelVersion != "1.0.0" || identity.ParameterSetID != "ps_default" {
+		t.Fatalf("unexpected identity: %#v", identity)
+	}
 	if RunIDFromRaw(raw) != "mr_1" {
 		t.Fatalf("unexpected model run id: %q", RunIDFromRaw(raw))
+	}
+}
+
+func TestRunIdentityFromRawIncludesParameterHash(t *testing.T) {
+	raw := json.RawMessage(`{
+		"model_run_id": "mr_1",
+		"job_id": "job_1",
+		"model_key": "material_balance",
+		"model_version": "material_balance.v1",
+		"parameter_hash": " sha256:abc "
+	}`)
+	identity, err := RunIdentityFromRaw(raw)
+	if err != nil {
+		t.Fatalf("unexpected identity error: %v", err)
+	}
+	if identity.ParameterHash != "sha256:abc" {
+		t.Fatalf("unexpected parameter hash: %q", identity.ParameterHash)
 	}
 }
 
@@ -36,6 +60,22 @@ func TestRunRefsAndWarningsFromRaw(t *testing.T) {
 	}
 	if got, want := RunWarningsFromRaw(raw), []string{"warn-1", "warn-2"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("warnings mismatch: got %#v want %#v", got, want)
+	}
+}
+
+func TestBenchmarkRunEvidenceRefs(t *testing.T) {
+	document := map[string]any{
+		"evidence_refs": []any{" model_run:mr_1 ", "", 42, "artifact:a1"},
+	}
+	if got, want := BenchmarkRunEvidenceRefs(document), []string{"model_run:mr_1", "artifact:a1"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("benchmark evidence refs mismatch: got %#v want %#v", got, want)
+	}
+	raw := json.RawMessage(`{"evidence_refs":[" job:j1 ","",false]}`)
+	if got, want := BenchmarkRunEvidenceRefsFromRaw(raw), []string{"job:j1"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("benchmark raw evidence refs mismatch: got %#v want %#v", got, want)
+	}
+	if refs := BenchmarkRunEvidenceRefsFromRaw(json.RawMessage(`{`)); refs != nil {
+		t.Fatalf("expected nil refs for invalid benchmark raw, got %#v", refs)
 	}
 }
 
@@ -100,5 +140,8 @@ func TestInvalidRawReturnsEmptyValues(t *testing.T) {
 	}
 	if _, _, _, _, _, err := RunFieldsFromRaw(raw); err == nil {
 		t.Fatal("expected error for invalid raw")
+	}
+	if _, err := RunIdentityFromRaw(raw); err == nil {
+		t.Fatal("expected identity error for invalid raw")
 	}
 }

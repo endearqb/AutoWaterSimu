@@ -495,10 +495,7 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 	if record.Status != "passed" {
 		result.BlockingReasons = append(result.BlockingReasons, "latest_benchmark_run_not_passed")
 	}
-	var benchmarkPayload map[string]any
-	if err := json.Unmarshal(record.Payload, &benchmarkPayload); err == nil {
-		result.EvidenceRefCount = len(stringsFromAny(benchmarkPayload["evidence_refs"]))
-	}
+	result.EvidenceRefCount = len(domainmodels.BenchmarkRunEvidenceRefsFromRaw(record.Payload))
 	modelRun, err := svc.modelRuns.FindModelRun(ctx, record.ModelRunID)
 	if err != nil {
 		if appErr := ToAppError(err); appErr.ErrorCode == CodeModelRunNotFound {
@@ -507,17 +504,17 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 		}
 		return BenchmarkCasePromotionResult{}, err
 	}
-	var modelRunPayload map[string]any
-	if err := json.Unmarshal(modelRun, &modelRunPayload); err != nil {
+	runIdentity, err := domainmodels.RunIdentityFromRaw(modelRun)
+	if err != nil {
 		result.BlockingReasons = append(result.BlockingReasons, "model_run_payload_invalid")
 		return result, nil
 	}
-	if stringValue(modelRunPayload, "job_id") != record.JobID ||
-		stringValue(modelRunPayload, "model_key") != modelKey ||
-		stringValue(modelRunPayload, "model_version") != modelVersion {
+	if runIdentity.JobID != record.JobID ||
+		runIdentity.ModelKey != modelKey ||
+		runIdentity.ModelVersion != modelVersion {
 		result.BlockingReasons = append(result.BlockingReasons, "model_run_identity_mismatch")
 	}
-	result.ParameterHash = stringValue(modelRunPayload, "parameter_hash")
+	result.ParameterHash = runIdentity.ParameterHash
 	result.ParameterHashMatches = result.ParameterHash == parameterSet.ParameterHash
 	if !result.ParameterHashMatches {
 		result.BlockingReasons = append(result.BlockingReasons, "model_run_parameter_hash_mismatch")
@@ -564,19 +561,19 @@ func (svc *ModelGovernanceService) benchmarkRunRecord(ctx context.Context, docum
 	if err != nil {
 		return BenchmarkRunRecord{}, err
 	}
-	var modelRunPayload map[string]any
-	if err := json.Unmarshal(modelRun, &modelRunPayload); err != nil {
+	runIdentity, err := domainmodels.RunIdentityFromRaw(modelRun)
+	if err != nil {
 		return BenchmarkRunRecord{}, NewAppError(http.StatusInternalServerError, CodeInternal, "stored model_run JSON is invalid", true, nil)
 	}
-	if stringValue(modelRunPayload, "job_id") != jobID ||
-		stringValue(modelRunPayload, "model_key") != modelKey ||
-		stringValue(modelRunPayload, "model_version") != modelVersion {
+	if runIdentity.JobID != jobID ||
+		runIdentity.ModelKey != modelKey ||
+		runIdentity.ModelVersion != modelVersion {
 		return BenchmarkRunRecord{}, ValidationError("benchmark_run model_run does not match job/model/version")
 	}
-	if stringValue(modelRunPayload, "parameter_hash") != version.DefaultParameterSet.ParameterHash {
+	if runIdentity.ParameterHash != version.DefaultParameterSet.ParameterHash {
 		return BenchmarkRunRecord{}, Conflict(CodeParameterSetTransitionFailed, "benchmark_run model_run parameter_hash does not match parameter_set")
 	}
-	for _, ref := range stringsFromAny(document["evidence_refs"]) {
+	for _, ref := range domainmodels.BenchmarkRunEvidenceRefs(document) {
 		if svc.resolveEvidenceReference == nil {
 			return BenchmarkRunRecord{}, NewAppError(500, CodeInternal, "evidence reference resolver is not configured", true, nil)
 		}

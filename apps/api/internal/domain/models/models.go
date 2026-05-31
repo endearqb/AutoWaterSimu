@@ -14,22 +14,44 @@ const (
 )
 
 func RunIDFromRaw(raw json.RawMessage) string {
-	modelRunID, _, _, _, _, _ := RunFieldsFromRaw(raw)
-	return modelRunID
+	identity, err := RunIdentityFromRaw(raw)
+	if err != nil {
+		return ""
+	}
+	return identity.ModelRunID
+}
+
+type RunIdentity struct {
+	ModelRunID     string
+	JobID          string
+	ModelKey       string
+	ModelVersion   string
+	ParameterSetID string
+	ParameterHash  string
 }
 
 func RunFieldsFromRaw(raw json.RawMessage) (modelRunID, jobID, modelKey, modelVersion, parameterSetID string, err error) {
-	var value map[string]any
-	if err = json.Unmarshal(raw, &value); err != nil {
+	identity, err := RunIdentityFromRaw(raw)
+	if err != nil {
 		return "", "", "", "", "", err
 	}
+	return identity.ModelRunID, identity.JobID, identity.ModelKey, identity.ModelVersion, identity.ParameterSetID, nil
+}
+
+func RunIdentityFromRaw(raw json.RawMessage) (RunIdentity, error) {
+	var value map[string]any
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return RunIdentity{}, err
+	}
 	metadata, _ := value["metadata"].(map[string]any)
-	return stringValue(value, "model_run_id"),
-		stringValue(value, "job_id"),
-		stringValue(value, "model_key"),
-		stringValue(value, "model_version"),
-		stringValue(metadata, "parameter_set_id"),
-		nil
+	return RunIdentity{
+		ModelRunID:     stringValue(value, "model_run_id"),
+		JobID:          stringValue(value, "job_id"),
+		ModelKey:       stringValue(value, "model_key"),
+		ModelVersion:   stringValue(value, "model_version"),
+		ParameterSetID: stringValue(metadata, "parameter_set_id"),
+		ParameterHash:  stringValue(value, "parameter_hash"),
+	}, nil
 }
 
 func RunEvidenceRefsFromRaw(raw json.RawMessage) []string {
@@ -46,6 +68,18 @@ func RunWarningsFromRaw(raw json.RawMessage) []string {
 		return nil
 	}
 	return stringsFromAny(value["warnings"])
+}
+
+func BenchmarkRunEvidenceRefs(document map[string]any) []string {
+	return stringsFromAny(document["evidence_refs"])
+}
+
+func BenchmarkRunEvidenceRefsFromRaw(raw json.RawMessage) []string {
+	var value map[string]any
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return nil
+	}
+	return BenchmarkRunEvidenceRefs(value)
 }
 
 func IsParameterSetStatus(status string) bool {
