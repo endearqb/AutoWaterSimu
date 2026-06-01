@@ -499,16 +499,15 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 		result.BlockingReasons = append(result.BlockingReasons, "model_run_payload_invalid")
 		return result, nil
 	}
-	if runIdentity.JobID != record.JobID ||
-		runIdentity.ModelKey != modelKey ||
-		runIdentity.ModelVersion != modelVersion {
-		result.BlockingReasons = append(result.BlockingReasons, "model_run_identity_mismatch")
-	}
+	identityCheck := domainmodels.CheckRunIdentity(runIdentity, domainmodels.RunIdentityExpectation{
+		JobID:         record.JobID,
+		ModelKey:      modelKey,
+		ModelVersion:  modelVersion,
+		ParameterHash: parameterSet.ParameterHash,
+	})
 	result.ParameterHash = runIdentity.ParameterHash
-	result.ParameterHashMatches = result.ParameterHash == parameterSet.ParameterHash
-	if !result.ParameterHashMatches {
-		result.BlockingReasons = append(result.BlockingReasons, "model_run_parameter_hash_mismatch")
-	}
+	result.ParameterHashMatches = identityCheck.ParameterHashMatches
+	result.BlockingReasons = append(result.BlockingReasons, identityCheck.BlockingReasons...)
 	result.BlockingReasons = uniqueStrings(result.BlockingReasons)
 	result.Ready = record.Status == domainmodels.BenchmarkRunStatusPassed && result.ParameterHashMatches && len(result.BlockingReasons) == 0
 	return result, nil
@@ -555,12 +554,16 @@ func (svc *ModelGovernanceService) benchmarkRunRecord(ctx context.Context, docum
 	if err != nil {
 		return BenchmarkRunRecord{}, NewAppError(http.StatusInternalServerError, CodeInternal, "stored model_run JSON is invalid", true, nil)
 	}
-	if runIdentity.JobID != jobID ||
-		runIdentity.ModelKey != modelKey ||
-		runIdentity.ModelVersion != modelVersion {
+	identityCheck := domainmodels.CheckRunIdentity(runIdentity, domainmodels.RunIdentityExpectation{
+		JobID:         jobID,
+		ModelKey:      modelKey,
+		ModelVersion:  modelVersion,
+		ParameterHash: version.DefaultParameterSet.ParameterHash,
+	})
+	if !identityCheck.IdentityMatches {
 		return BenchmarkRunRecord{}, ValidationError("benchmark_run model_run does not match job/model/version")
 	}
-	if runIdentity.ParameterHash != version.DefaultParameterSet.ParameterHash {
+	if !identityCheck.ParameterHashMatches {
 		return BenchmarkRunRecord{}, Conflict(CodeParameterSetTransitionFailed, "benchmark_run model_run parameter_hash does not match parameter_set")
 	}
 	for _, ref := range domainmodels.BenchmarkRunEvidenceRefs(document) {

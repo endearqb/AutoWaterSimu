@@ -1,3 +1,35 @@
+# 2026-06-01 AutoWaterSimu Next models run identity check split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and benchmark run identity check call sites
+- [x] Confirm next aligned gap: benchmark run validation and promotion result still compared model_run identity/parameter_hash inside compute workflow code
+- [x] Add `RunIdentityExpectation`, `RunIdentityCheck`, and `CheckRunIdentity` to `apps/api/internal/domain/models` with direct tests
+- [x] Route benchmark run record validation and promotion case result checks through the domain models helper while preserving HTTP errors and blocking reasons
+- [x] Update README/architecture/checklists/audit note
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only stable `model_run.v1` identity/hash comparison: expected job/model/version/parameter_hash against parsed `RunIdentity`, plus domain blocking reason codes for promotion planning.
+- Keep model catalog lookup, benchmark case lookup, benchmark run record assembly, evidence reference resolution, promotion workflow orchestration, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as another small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added `RunIdentityExpectation`, `RunIdentityCheck`, `CheckRunIdentity`, and model-run identity/hash mismatch blocking constants to `apps/api/internal/domain/models`.
+- Added direct domain tests for matching identity/hash, identity-only mismatch, hash-only mismatch, and combined mismatch.
+- Updated benchmark run record validation and promotion case result calculation to use the shared domain helper while preserving existing `ValidationError`, conflict mapping, promotion blocking reasons, and DTO fields.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(CheckRunIdentity|BenchmarkRun|DefaultParameterSetPromotionPlan|Promotion|ModelCatalog)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshot mutation, benchmark run persistence workflow, benchmark query orchestration, promotion workflow orchestration, HTTP mapping, and DTOs remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full evidence governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models promotion gate split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and promotion planning call sites

@@ -50,6 +50,70 @@ func TestRunIdentityFromRawIncludesParameterHash(t *testing.T) {
 	}
 }
 
+func TestCheckRunIdentity(t *testing.T) {
+	identity := RunIdentity{
+		JobID:         "job_1",
+		ModelKey:      "material_balance",
+		ModelVersion:  "material_balance.v1",
+		ParameterHash: "sha256:abc",
+	}
+	check := CheckRunIdentity(identity, RunIdentityExpectation{
+		JobID:         " job_1 ",
+		ModelKey:      " material_balance ",
+		ModelVersion:  " material_balance.v1 ",
+		ParameterHash: " sha256:abc ",
+	})
+	if !check.IdentityMatches || !check.ParameterHashMatches {
+		t.Fatalf("expected identity and hash match: %#v", check)
+	}
+	if len(check.BlockingReasons) != 0 {
+		t.Fatalf("expected no blocking reasons, got %#v", check.BlockingReasons)
+	}
+
+	check = CheckRunIdentity(identity, RunIdentityExpectation{
+		JobID:         "job_other",
+		ModelKey:      "material_balance",
+		ModelVersion:  "material_balance.v1",
+		ParameterHash: "sha256:abc",
+	})
+	if check.IdentityMatches || !check.ParameterHashMatches {
+		t.Fatalf("expected only identity mismatch: %#v", check)
+	}
+	if got, want := check.BlockingReasons, []string{PromotionBlockModelRunIdentityMismatch}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", got, want)
+	}
+
+	check = CheckRunIdentity(identity, RunIdentityExpectation{
+		JobID:         "job_1",
+		ModelKey:      "material_balance",
+		ModelVersion:  "material_balance.v1",
+		ParameterHash: "sha256:other",
+	})
+	if !check.IdentityMatches || check.ParameterHashMatches {
+		t.Fatalf("expected only parameter hash mismatch: %#v", check)
+	}
+	if got, want := check.BlockingReasons, []string{PromotionBlockModelRunParameterHashMismatch}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", got, want)
+	}
+
+	check = CheckRunIdentity(identity, RunIdentityExpectation{
+		JobID:         "job_other",
+		ModelKey:      "material_balance",
+		ModelVersion:  "material_balance.v2",
+		ParameterHash: "sha256:other",
+	})
+	want := []string{
+		PromotionBlockModelRunIdentityMismatch,
+		PromotionBlockModelRunParameterHashMismatch,
+	}
+	if check.IdentityMatches || check.ParameterHashMatches {
+		t.Fatalf("expected identity and hash mismatch: %#v", check)
+	}
+	if !reflect.DeepEqual(check.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", check.BlockingReasons, want)
+	}
+}
+
 func TestRunRefsAndWarningsFromRaw(t *testing.T) {
 	raw := json.RawMessage(`{
 		"evidence_refs": ["artifact:a1", " model_run:m1 ", "", 42],

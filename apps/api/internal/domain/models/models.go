@@ -22,6 +22,8 @@ const (
 
 const (
 	PromotionBlockModelVersionNotActive             = "model_version_not_active"
+	PromotionBlockModelRunIdentityMismatch          = "model_run_identity_mismatch"
+	PromotionBlockModelRunParameterHashMismatch     = "model_run_parameter_hash_mismatch"
 	PromotionBlockNoValidatedBenchmarkCases         = "no_validated_benchmark_cases"
 	PromotionBlockParameterSetAlreadyApproved       = "parameter_set_already_approved"
 	PromotionBlockParameterSetStatusMustBeValidated = "parameter_set_status_must_be_validated"
@@ -57,6 +59,19 @@ type RunIdentity struct {
 	ParameterHash  string
 }
 
+type RunIdentityExpectation struct {
+	JobID         string
+	ModelKey      string
+	ModelVersion  string
+	ParameterHash string
+}
+
+type RunIdentityCheck struct {
+	IdentityMatches      bool
+	ParameterHashMatches bool
+	BlockingReasons      []string
+}
+
 func RunFieldsFromRaw(raw json.RawMessage) (modelRunID, jobID, modelKey, modelVersion, parameterSetID string, err error) {
 	identity, err := RunIdentityFromRaw(raw)
 	if err != nil {
@@ -79,6 +94,25 @@ func RunIdentityFromRaw(raw json.RawMessage) (RunIdentity, error) {
 		ParameterSetID: stringValue(metadata, "parameter_set_id"),
 		ParameterHash:  stringValue(value, "parameter_hash"),
 	}, nil
+}
+
+func CheckRunIdentity(identity RunIdentity, expected RunIdentityExpectation) RunIdentityCheck {
+	blockingReasons := []string{}
+	identityMatches := identity.JobID == strings.TrimSpace(expected.JobID) &&
+		identity.ModelKey == strings.TrimSpace(expected.ModelKey) &&
+		identity.ModelVersion == strings.TrimSpace(expected.ModelVersion)
+	if !identityMatches {
+		blockingReasons = append(blockingReasons, PromotionBlockModelRunIdentityMismatch)
+	}
+	parameterHashMatches := identity.ParameterHash == strings.TrimSpace(expected.ParameterHash)
+	if !parameterHashMatches {
+		blockingReasons = append(blockingReasons, PromotionBlockModelRunParameterHashMismatch)
+	}
+	return RunIdentityCheck{
+		IdentityMatches:      identityMatches,
+		ParameterHashMatches: parameterHashMatches,
+		BlockingReasons:      uniqueStrings(blockingReasons),
+	}
 }
 
 func RunEvidenceRefsFromRaw(raw json.RawMessage) []string {
