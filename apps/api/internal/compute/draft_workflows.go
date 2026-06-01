@@ -180,12 +180,9 @@ func (svc *DraftWorkflowService) PromoteDraftConfirmationToSimulationCheck(ctx c
 		return JobSnapshot{}, 0, NewAppError(500, CodeInternal, "stored draft confirmation JSON is invalid", true, nil)
 	}
 	draft := mapValue(confirmation, "draft")
-	if draft == nil {
-		return JobSnapshot{}, 0, ValidationError("draft confirmation draft is required")
-	}
-	proposedRequest := mapValue(draft, "proposed_request")
-	if proposedRequest == nil {
-		return JobSnapshot{}, 0, ValidationError("agent_scenario_draft.proposed_request is required")
+	proposedRequest, err := domainagent.ProposedSimulationRequestFromDraft(draft)
+	if err != nil {
+		return JobSnapshot{}, 0, ValidationError(err.Error())
 	}
 	if svc.validator != nil {
 		if err := svc.validator.Validate("simulation_request.v1.json", proposedRequest); err != nil {

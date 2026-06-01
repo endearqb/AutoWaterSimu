@@ -66,6 +66,17 @@ func ConstraintApplicationPlanFromDraft(input ConstraintApplicationPlanInput) (C
 	}, nil
 }
 
+func ProposedSimulationRequestFromDraft(draft map[string]any) (map[string]any, error) {
+	if draft == nil {
+		return nil, errors.New("draft confirmation draft is required")
+	}
+	proposedRequest := mapValue(draft, "proposed_request")
+	if proposedRequest == nil {
+		return nil, errors.New("agent_scenario_draft.proposed_request is required")
+	}
+	return proposedRequest, nil
+}
+
 func mapValue(value map[string]any, key string) map[string]any {
 	if value == nil {
 		return nil

@@ -67,3 +67,37 @@ func TestConstraintApplicationPlanFromDraftRequiresConstraintsArray(t *testing.T
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestProposedSimulationRequestFromDraft(t *testing.T) {
+	proposed := map[string]any{
+		"schema_version": "simulation_request.v1",
+		"request_id":     "sim_req_1",
+	}
+	got, err := ProposedSimulationRequestFromDraft(map[string]any{
+		"proposed_request": proposed,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got["request_id"] != "sim_req_1" {
+		t.Fatalf("unexpected proposed request: %#v", got)
+	}
+	got["request_id"] = "sim_req_changed"
+	if proposed["request_id"] != "sim_req_changed" {
+		t.Fatalf("expected helper to return the draft proposed_request object for compute-side validation")
+	}
+}
+
+func TestProposedSimulationRequestFromDraftRequiresDraft(t *testing.T) {
+	_, err := ProposedSimulationRequestFromDraft(nil)
+	if err == nil || err.Error() != "draft confirmation draft is required" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestProposedSimulationRequestFromDraftRequiresObject(t *testing.T) {
+	_, err := ProposedSimulationRequestFromDraft(map[string]any{"proposed_request": "not-object"})
+	if err == nil || err.Error() != "agent_scenario_draft.proposed_request is required" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

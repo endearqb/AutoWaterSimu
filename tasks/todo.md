@@ -1,3 +1,26 @@
+# 2026-06-01 AutoWaterSimu Next agent proposed request extraction split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/agent/compute READMEs, and draft promotion call sites
+- [x] Confirm next aligned gap: `agent_scenario_draft.v1.proposed_request` extraction for explicit simulation-check promotion still lived in draft workflow compatibility code
+- [x] Add a `domain/agent` helper for stable proposed simulation request extraction, with direct tests
+- [x] Route `DraftWorkflowService.PromoteDraftConfirmationToSimulationCheck` through the domain helper while preserving confirmation lookup, approval/schema gating, simulation request schema validation, marshaling, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and job creation callback
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure `proposed_request` extraction: require a draft object and require object-valued `agent_scenario_draft.proposed_request`.
+- Keep draft confirmation lookup, approved decision gate, `agent_scenario_draft.v1` schema gate, stored JSON decoding, `simulation_request.v1` validation, request JSON marshaling, simulation-check creation callback, HTTP route, OpenAPI, contracts, migrations, generated clients, auth scopes, and error mapping unchanged.
+- Treat this as a second small `domain/agent` package movement step, not a full draft workflow or Agent runtime package split.
+
+## Review
+
+- Added `domain/agent.ProposedSimulationRequestFromDraft` with direct tests for happy path, missing draft, and non-object/missing `proposed_request`.
+- `DraftWorkflowService.PromoteDraftConfirmationToSimulationCheck` now delegates only stable `agent_scenario_draft.v1.proposed_request` extraction to `domain/agent`; confirmation lookup, approval/schema gating, `simulation_request.v1` schema validation, marshaling, simulation-check job creation callback, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes remain unchanged.
+- Updated API/domain/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, boundary audit notes, and `.ai/changes`.
+- Validation passed: focused agent/compute Go tests, `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full Agent draft workflow package movement, store-backed draft confirmation orchestration, HTTP mapping reduction, and broader jobs/artifacts/models/evidence/simulation package movement remain future slices.
+
 # 2026-06-01 AutoWaterSimu Next agent constraint application plan split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and draft workflow call sites
