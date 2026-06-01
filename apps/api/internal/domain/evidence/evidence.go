@@ -99,6 +99,28 @@ func SimulationInputPayload(input json.RawMessage, simulationInputID string) map
 	return payload
 }
 
+// StoredResultSummary returns the summary value persisted for compute result reads.
+func StoredResultSummary(result map[string]any) any {
+	if result == nil {
+		return nil
+	}
+	summaryValue := result["summary"]
+	riskFindings, ok := result["risk_findings"]
+	if !ok {
+		return summaryValue
+	}
+	summaryMap, ok := summaryValue.(map[string]any)
+	if !ok {
+		return summaryValue
+	}
+	summaryCopy := make(map[string]any, len(summaryMap)+1)
+	for key, value := range summaryMap {
+		summaryCopy[key] = value
+	}
+	summaryCopy["risk_findings"] = riskFindings
+	return summaryCopy
+}
+
 func RiskFindingsFromSummary(raw json.RawMessage) []map[string]any {
 	var summary map[string]any
 	if len(raw) == 0 {

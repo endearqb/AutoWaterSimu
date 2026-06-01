@@ -81,6 +81,50 @@ func TestSimulationInputPayload(t *testing.T) {
 	}
 }
 
+func TestStoredResultSummaryCopiesRiskFindingsIntoObjectSummary(t *testing.T) {
+	originalSummary := map[string]any{"converged": true}
+	riskFindings := []any{
+		map[string]any{"risk_code": "info_1", "severity": "info"},
+	}
+	stored, ok := StoredResultSummary(map[string]any{
+		"summary":       originalSummary,
+		"risk_findings": riskFindings,
+	}).(map[string]any)
+	if !ok {
+		t.Fatalf("expected stored summary object, got %#v", stored)
+	}
+	if stored["converged"] != true || !reflect.DeepEqual(stored["risk_findings"], riskFindings) {
+		t.Fatalf("unexpected stored summary: %#v", stored)
+	}
+	if _, exists := originalSummary["risk_findings"]; exists {
+		t.Fatalf("expected original summary to remain unchanged: %#v", originalSummary)
+	}
+}
+
+func TestStoredResultSummaryPreservesSummaryWithoutTopLevelRiskFindings(t *testing.T) {
+	summary := map[string]any{"converged": true}
+	stored := StoredResultSummary(map[string]any{"summary": summary})
+	if !reflect.DeepEqual(stored, summary) {
+		t.Fatalf("unexpected stored summary: got %#v want %#v", stored, summary)
+	}
+}
+
+func TestStoredResultSummaryPreservesNonObjectSummary(t *testing.T) {
+	stored := StoredResultSummary(map[string]any{
+		"summary":       "worker failed",
+		"risk_findings": []any{map[string]any{"risk_code": "ignored_for_non_object"}},
+	})
+	if stored != "worker failed" {
+		t.Fatalf("expected non-object summary to be preserved, got %#v", stored)
+	}
+}
+
+func TestStoredResultSummaryNilResult(t *testing.T) {
+	if stored := StoredResultSummary(nil); stored != nil {
+		t.Fatalf("expected nil summary for nil result, got %#v", stored)
+	}
+}
+
 func TestRiskFindingsAndSummary(t *testing.T) {
 	summaryRaw := json.RawMessage(`{
 		"risk_findings": [

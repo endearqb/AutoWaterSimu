@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	domainevidence "autowatersimu/apps/api/internal/domain/evidence"
 	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
@@ -169,18 +170,7 @@ func (svc *JobLifecycleService) Complete(ctx context.Context, workerID, jobID st
 	if err != nil {
 		return JobSnapshot{}, err
 	}
-	summaryValue := result["summary"]
-	if riskFindings, ok := result["risk_findings"]; ok {
-		if summaryMap, ok := result["summary"].(map[string]any); ok {
-			summaryCopy := make(map[string]any, len(summaryMap)+1)
-			for key, value := range summaryMap {
-				summaryCopy[key] = value
-			}
-			summaryCopy["risk_findings"] = riskFindings
-			summaryValue = summaryCopy
-		}
-	}
-	summary := mustJSON(summaryValue)
+	summary := mustJSON(domainevidence.StoredResultSummary(result))
 	errorCode := ""
 	errorMessage := ""
 	if status != StatusSucceeded {

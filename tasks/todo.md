@@ -1,3 +1,37 @@
+# 2026-06-01 AutoWaterSimu Next evidence stored risk summary split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/evidence/compute READMEs, and job completion call sites
+- [x] Confirm next aligned gap: `compute_result.v1.risk_findings` stored summary projection still lived in job lifecycle workflow code
+- [x] Add a `domain/evidence` helper for stored result summary risk projection, with direct tests
+- [x] Route `JobLifecycleService.Complete` through the domain helper while preserving compute_result validation, result hashing, error extraction, persistence, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure stored-summary projection: when a valid compute result has top-level `risk_findings` and an object `summary`, copy the summary map and attach `risk_findings` to the copy before persistence.
+- Keep compute_result validation, result hash, model_run extraction/persistence, job completion, error code/message extraction, store implementations, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as a small `domain/evidence` helper movement step, not a full job lifecycle or evidence governance package split.
+
+## Review
+
+- Added `StoredResultSummary` to `apps/api/internal/domain/evidence`.
+- Added direct domain tests covering object summary projection, original summary immutability, missing top-level risk findings, non-object summary preservation, and nil input.
+- Updated `JobLifecycleService.Complete` to delegate stored summary risk projection to the domain helper while preserving compute_result validation, result hashing, model_run extraction/persistence, failed-worker error extraction, job completion persistence, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and approval boundaries.
+- Updated API/internal/domain/evidence/compute READMEs, architecture/current-state, Certainty/Elegance checklist, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/evidence ./internal/compute -run "Test(StoredResultSummary|RiskFindings|ProductionReadiness|Complete|EvidencePackage|NewSystemEvidenceReferenceE2E)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, but the worktree is dirty because this task's files and an unrelated untracked rebuild plan file are present.
+  - `git diff --check -- apps\api docs tasks .ai` passed with LF/CRLF warnings only.
+  - `rg -n "schema_version|P0|P1|P2" docs\rebuild --glob "AutoWaterSimu_Next_*.md"` completed and returned the expected rebuild document references.
+- Remaining scope:
+  - Full job lifecycle package movement is not complete; job records, events, completion persistence, timeout sweep, artifact listing callback, schema validation, and HTTP mapping remain in compute compatibility wiring.
+  - Full evidence governance package movement is not complete; store-backed evidence assembly, callbacks, response DTOs, and HTTP mapping remain in compute compatibility wiring.
+  - Full artifacts/models/simulation/agent domain package movement remains follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models result model_runs extraction split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and job lifecycle completion call sites
