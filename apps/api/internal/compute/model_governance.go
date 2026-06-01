@@ -473,7 +473,7 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 		return BenchmarkCasePromotionResult{}, err
 	}
 	if len(records) == 0 {
-		result.BlockingReasons = append(result.BlockingReasons, "benchmark_run_missing_for_parameter_set")
+		result.BlockingReasons = append(result.BlockingReasons, domainmodels.PromotionBlockBenchmarkRunMissingForParameterSet)
 		return result, nil
 	}
 	record := records[0]
@@ -482,21 +482,32 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 	result.ModelRunID = record.ModelRunID
 	result.JobID = record.JobID
 	result.ExecutedAt = record.ExecutedAt.Format(time.RFC3339Nano)
-	if record.Status != domainmodels.BenchmarkRunStatusPassed {
-		result.BlockingReasons = append(result.BlockingReasons, "latest_benchmark_run_not_passed")
-	}
 	result.EvidenceRefCount = len(domainmodels.BenchmarkRunEvidenceRefsFromRaw(record.Payload))
 	modelRun, err := svc.modelRuns.FindModelRun(ctx, record.ModelRunID)
 	if err != nil {
 		if appErr := ToAppError(err); appErr.ErrorCode == CodeModelRunNotFound {
-			result.BlockingReasons = append(result.BlockingReasons, "model_run_not_found")
+			result.BlockingReasons = append(result.BlockingReasons, domainmodels.PromotionBlockModelRunNotFound)
+			readiness := domainmodels.EvaluateBenchmarkCasePromotionReadiness(domainmodels.BenchmarkCasePromotionReadinessInput{
+				BenchmarkRunStatus:   record.Status,
+				ParameterHashMatches: true,
+				BlockingReasons:      result.BlockingReasons,
+			})
+			result.BlockingReasons = readiness.BlockingReasons
+			result.Ready = readiness.Ready
 			return result, nil
 		}
 		return BenchmarkCasePromotionResult{}, err
 	}
 	runIdentity, err := domainmodels.RunIdentityFromRaw(modelRun)
 	if err != nil {
-		result.BlockingReasons = append(result.BlockingReasons, "model_run_payload_invalid")
+		result.BlockingReasons = append(result.BlockingReasons, domainmodels.PromotionBlockModelRunPayloadInvalid)
+		readiness := domainmodels.EvaluateBenchmarkCasePromotionReadiness(domainmodels.BenchmarkCasePromotionReadinessInput{
+			BenchmarkRunStatus:   record.Status,
+			ParameterHashMatches: true,
+			BlockingReasons:      result.BlockingReasons,
+		})
+		result.BlockingReasons = readiness.BlockingReasons
+		result.Ready = readiness.Ready
 		return result, nil
 	}
 	identityCheck := domainmodels.CheckRunIdentity(runIdentity, domainmodels.RunIdentityExpectation{
@@ -507,9 +518,13 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 	})
 	result.ParameterHash = runIdentity.ParameterHash
 	result.ParameterHashMatches = identityCheck.ParameterHashMatches
-	result.BlockingReasons = append(result.BlockingReasons, identityCheck.BlockingReasons...)
-	result.BlockingReasons = uniqueStrings(result.BlockingReasons)
-	result.Ready = record.Status == domainmodels.BenchmarkRunStatusPassed && result.ParameterHashMatches && len(result.BlockingReasons) == 0
+	readiness := domainmodels.EvaluateBenchmarkCasePromotionReadiness(domainmodels.BenchmarkCasePromotionReadinessInput{
+		BenchmarkRunStatus:   record.Status,
+		ParameterHashMatches: result.ParameterHashMatches,
+		BlockingReasons:      append(result.BlockingReasons, identityCheck.BlockingReasons...),
+	})
+	result.BlockingReasons = readiness.BlockingReasons
+	result.Ready = readiness.Ready
 	return result, nil
 }
 

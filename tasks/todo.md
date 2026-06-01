@@ -1,3 +1,35 @@
+# 2026-06-01 AutoWaterSimu Next models benchmark case readiness split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and promotion planning call sites
+- [x] Confirm next aligned gap: single benchmark case promotion readiness still normalized latest benchmark status, model_run blockers, and parameter hash readiness inside compute workflow code
+- [x] Add `BenchmarkCasePromotionReadinessInput`, `BenchmarkCasePromotionReadiness`, `EvaluateBenchmarkCasePromotionReadiness`, and case-level blocking reason constants to `apps/api/internal/domain/models` with direct tests
+- [x] Route `ModelGovernanceService.benchmarkCasePromotionResult` through the domain models readiness helper while preserving benchmark/model-run lookup and HTTP behavior
+- [x] Update README/architecture/checklists/audit note
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only pure single-case promotion readiness: latest benchmark run status blocking, parameter hash mismatch blocking, existing blocking-reason normalization, and final `Ready` predicate.
+- Keep model catalog lookup, benchmark run query orchestration, model_run lookup/parsing error mapping, catalog snapshot mutation, benchmark run persistence, promotion workflow orchestration, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as another small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added case-level promotion blocker constants and `EvaluateBenchmarkCasePromotionReadiness` to `apps/api/internal/domain/models`.
+- Added direct domain tests for ready benchmark cases, status/hash blockers, duplicate/trimmed blockers, and existing blockers.
+- Updated promotion case result assembly to use domain readiness while preserving existing missing benchmark, missing model_run, invalid payload, failed benchmark, and parameter hash blocker semantics.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(BenchmarkCasePromotionReadiness|BenchmarkRun|DefaultParameterSetPromotionPlan|Promotion|ModelCatalog)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed` with dirty worktree because this task's files and an unrelated untracked rebuild plan file were present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshot mutation, benchmark run persistence workflow, benchmark query orchestration, promotion workflow orchestration, HTTP mapping, and DTOs remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full evidence governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models run identity check split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and benchmark run identity check call sites

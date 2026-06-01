@@ -21,12 +21,16 @@ const (
 )
 
 const (
-	PromotionBlockModelVersionNotActive             = "model_version_not_active"
-	PromotionBlockModelRunIdentityMismatch          = "model_run_identity_mismatch"
-	PromotionBlockModelRunParameterHashMismatch     = "model_run_parameter_hash_mismatch"
-	PromotionBlockNoValidatedBenchmarkCases         = "no_validated_benchmark_cases"
-	PromotionBlockParameterSetAlreadyApproved       = "parameter_set_already_approved"
-	PromotionBlockParameterSetStatusMustBeValidated = "parameter_set_status_must_be_validated"
+	PromotionBlockModelVersionNotActive              = "model_version_not_active"
+	PromotionBlockBenchmarkRunMissingForParameterSet = "benchmark_run_missing_for_parameter_set"
+	PromotionBlockLatestBenchmarkRunNotPassed        = "latest_benchmark_run_not_passed"
+	PromotionBlockModelRunNotFound                   = "model_run_not_found"
+	PromotionBlockModelRunIdentityMismatch           = "model_run_identity_mismatch"
+	PromotionBlockModelRunParameterHashMismatch      = "model_run_parameter_hash_mismatch"
+	PromotionBlockModelRunPayloadInvalid             = "model_run_payload_invalid"
+	PromotionBlockNoValidatedBenchmarkCases          = "no_validated_benchmark_cases"
+	PromotionBlockParameterSetAlreadyApproved        = "parameter_set_already_approved"
+	PromotionBlockParameterSetStatusMustBeValidated  = "parameter_set_status_must_be_validated"
 )
 
 type ParameterSetPromotionGateInput struct {
@@ -40,6 +44,17 @@ type ParameterSetPromotionGateInput struct {
 type ParameterSetPromotionGate struct {
 	BlockingReasons      []string
 	CanPromoteToApproved bool
+}
+
+type BenchmarkCasePromotionReadinessInput struct {
+	BenchmarkRunStatus   string
+	ParameterHashMatches bool
+	BlockingReasons      []string
+}
+
+type BenchmarkCasePromotionReadiness struct {
+	BlockingReasons []string
+	Ready           bool
 }
 
 func RunIDFromRaw(raw json.RawMessage) string {
@@ -168,6 +183,24 @@ func CanTransitionParameterSetStatus(fromStatus, toStatus string) bool {
 	from, fromOK := order[fromStatus]
 	to, toOK := order[toStatus]
 	return fromOK && toOK && to == from+1
+}
+
+func EvaluateBenchmarkCasePromotionReadiness(input BenchmarkCasePromotionReadinessInput) BenchmarkCasePromotionReadiness {
+	blockingReasons := make([]string, 0, len(input.BlockingReasons)+2)
+	blockingReasons = append(blockingReasons, input.BlockingReasons...)
+	if input.BenchmarkRunStatus != BenchmarkRunStatusPassed {
+		blockingReasons = append(blockingReasons, PromotionBlockLatestBenchmarkRunNotPassed)
+	}
+	if !input.ParameterHashMatches {
+		blockingReasons = append(blockingReasons, PromotionBlockModelRunParameterHashMismatch)
+	}
+	blockingReasons = uniqueStrings(blockingReasons)
+	return BenchmarkCasePromotionReadiness{
+		BlockingReasons: blockingReasons,
+		Ready: input.BenchmarkRunStatus == BenchmarkRunStatusPassed &&
+			input.ParameterHashMatches &&
+			len(blockingReasons) == 0,
+	}
 }
 
 func EvaluateParameterSetPromotionGate(input ParameterSetPromotionGateInput) ParameterSetPromotionGate {

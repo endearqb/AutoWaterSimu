@@ -191,6 +191,60 @@ func TestCanTransitionParameterSetStatus(t *testing.T) {
 	}
 }
 
+func TestEvaluateBenchmarkCasePromotionReadinessReady(t *testing.T) {
+	readiness := EvaluateBenchmarkCasePromotionReadiness(BenchmarkCasePromotionReadinessInput{
+		BenchmarkRunStatus:   BenchmarkRunStatusPassed,
+		ParameterHashMatches: true,
+	})
+	if !readiness.Ready {
+		t.Fatalf("expected benchmark case to be ready: %#v", readiness)
+	}
+	if len(readiness.BlockingReasons) != 0 {
+		t.Fatalf("expected no blocking reasons, got %#v", readiness.BlockingReasons)
+	}
+}
+
+func TestEvaluateBenchmarkCasePromotionReadinessBlocksRunStatusAndHash(t *testing.T) {
+	readiness := EvaluateBenchmarkCasePromotionReadiness(BenchmarkCasePromotionReadinessInput{
+		BenchmarkRunStatus:   "failed",
+		ParameterHashMatches: false,
+		BlockingReasons: []string{
+			" custom_blocker ",
+			PromotionBlockLatestBenchmarkRunNotPassed,
+			"",
+		},
+	})
+	want := []string{
+		"custom_blocker",
+		PromotionBlockLatestBenchmarkRunNotPassed,
+		PromotionBlockModelRunParameterHashMismatch,
+	}
+	if readiness.Ready {
+		t.Fatalf("expected benchmark case to be blocked")
+	}
+	if !reflect.DeepEqual(readiness.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", readiness.BlockingReasons, want)
+	}
+}
+
+func TestEvaluateBenchmarkCasePromotionReadinessPreservesExistingBlockers(t *testing.T) {
+	readiness := EvaluateBenchmarkCasePromotionReadiness(BenchmarkCasePromotionReadinessInput{
+		BenchmarkRunStatus:   BenchmarkRunStatusPassed,
+		ParameterHashMatches: true,
+		BlockingReasons: []string{
+			PromotionBlockModelRunNotFound,
+			" " + PromotionBlockModelRunNotFound + " ",
+		},
+	})
+	want := []string{PromotionBlockModelRunNotFound}
+	if readiness.Ready {
+		t.Fatalf("expected existing blocker to keep benchmark case blocked")
+	}
+	if !reflect.DeepEqual(readiness.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", readiness.BlockingReasons, want)
+	}
+}
+
 func TestEvaluateParameterSetPromotionGateReady(t *testing.T) {
 	gate := EvaluateParameterSetPromotionGate(ParameterSetPromotionGateInput{
 		ModelVersionStatus:    ModelVersionStatusActive,
