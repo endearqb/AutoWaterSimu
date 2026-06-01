@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"time"
+
+	domainagent "autowatersimu/apps/api/internal/domain/agent"
 )
 
 type DraftWorkflowService struct {
@@ -151,31 +153,15 @@ func (svc *DraftWorkflowService) ConstraintApplicationPlan(ctx context.Context, 
 			return ConstraintApplicationPlan{}, err
 		}
 	}
-	targetRef := mapValue(draft, "target_ref")
-	if targetRef == nil {
-		return ConstraintApplicationPlan{}, ValidationError("constraint_draft.target_ref is required")
+	plan, err := domainagent.ConstraintApplicationPlanFromDraft(domainagent.ConstraintApplicationPlanInput{
+		ConfirmationID: record.ConfirmationID,
+		DraftID:        record.DraftID,
+		Draft:          draft,
+	})
+	if err != nil {
+		return ConstraintApplicationPlan{}, ValidationError(err.Error())
 	}
-	constraints, ok := draft["constraints"].([]any)
-	if !ok {
-		return ConstraintApplicationPlan{}, ValidationError("constraint_draft.constraints is required")
-	}
-	return ConstraintApplicationPlan{
-		SchemaVersion:              "constraint_application_plan.v1",
-		ConfirmationID:             record.ConfirmationID,
-		DraftID:                    record.DraftID,
-		ConstraintID:               stringValue(draft, "constraint_id"),
-		Scope:                      stringValue(draft, "scope"),
-		TargetRef:                  targetRef,
-		Constraints:                constraints,
-		ApplicationMode:            "advisory_only",
-		WouldCreateJob:             false,
-		WouldModifyTarget:          false,
-		ProductionApprovalRequired: true,
-		Warnings: []string{
-			"constraint application plan is advisory only; no compute job was created",
-			"production approval is owned by the consuming approval system",
-		},
-	}, nil
+	return plan, nil
 }
 
 func (svc *DraftWorkflowService) PromoteDraftConfirmationToSimulationCheck(ctx context.Context, confirmationID string) (JobSnapshot, int, error) {

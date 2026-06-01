@@ -1,3 +1,36 @@
+# 2026-06-01 AutoWaterSimu Next agent constraint application plan split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/compute READMEs, and draft workflow call sites
+- [x] Confirm next aligned gap: advisory `constraint_application_plan.v1` assembly still lived in draft workflow compatibility code and no `domain/agent` package existed
+- [x] Add a `domain/agent` helper for stable constraint application plan assembly, with direct tests
+- [x] Route `DraftWorkflowService.ConstraintApplicationPlan` through the domain helper while preserving confirmation lookup, approval/schema gating, schema validation, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure advisory plan assembly: copy confirmation/draft identifiers, `constraint_id`, `scope`, `target_ref`, `constraints`, and stable flags/warnings for advisory-only/no-job/no-target-mutation/external-production-approval.
+- Keep draft confirmation lookup, approved decision gate, `constraint_draft.v1` schema gate, stored JSON decoding, schema validation, HTTP route, OpenAPI, contracts, migrations, generated clients, auth scopes, and error mapping unchanged.
+- Treat this as the first small `domain/agent` package movement step, not a full draft workflow or Agent runtime package split.
+
+## Review
+
+- Added `apps/api/internal/domain/agent` with `ConstraintApplicationPlan`, `ConstraintApplicationPlanInput`, and `ConstraintApplicationPlanFromDraft`.
+- Added direct domain tests for advisory plan assembly and missing draft / target_ref / constraints rejection.
+- Updated `DraftWorkflowService.ConstraintApplicationPlan` to delegate stable advisory plan assembly to the agent domain helper while preserving confirmation lookup, approval/schema gating, stored payload decoding, schema validation, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and simulation-check promotion behavior.
+- Updated API/internal/domain/compute READMEs, scripts audit README, architecture/current-state, compute-api architecture, Certainty/Elegance checklist, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/agent ./internal/compute -run "Test(ConstraintApplicationPlan|ContractValidationEndpoint)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 13.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, but the worktree is dirty because this task's files and an unrelated untracked rebuild plan file are present.
+  - `git diff --check -- apps\api docs scripts tasks .ai` passed with LF/CRLF warnings only.
+  - `rg -n "schema_version|P0|P1|P2" docs\rebuild --glob "AutoWaterSimu_Next_*.md"` completed and returned the expected rebuild document references.
+- Remaining scope:
+  - Full agent draft workflow package movement is not complete; draft confirmation persistence/readback, approval/schema gating, schema validation, simulation-check promotion, HTTP mapping, and store access remain in compute compatibility wiring.
+  - Full jobs/artifacts/models/evidence/simulation package movement, handler/package surface reduction, and public `Service` constructor signature narrowing remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next jobs worker result completion split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/jobs/compute READMEs, and job completion call sites

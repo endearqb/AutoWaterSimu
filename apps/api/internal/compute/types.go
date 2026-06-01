@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	domainagent "autowatersimu/apps/api/internal/domain/agent"
 	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 	platformcontracts "autowatersimu/apps/api/internal/platform/contracts"
@@ -451,20 +452,7 @@ type ContractValidationResponse struct {
 	ConfirmationRecord    *DraftConfirmationRecord  `json:"confirmation_record,omitempty"`
 }
 
-type ConstraintApplicationPlan struct {
-	SchemaVersion              string         `json:"schema_version"`
-	ConfirmationID             string         `json:"confirmation_id"`
-	DraftID                    string         `json:"draft_id"`
-	ConstraintID               string         `json:"constraint_id"`
-	Scope                      string         `json:"scope"`
-	TargetRef                  map[string]any `json:"target_ref"`
-	Constraints                []any          `json:"constraints"`
-	ApplicationMode            string         `json:"application_mode"`
-	WouldCreateJob             bool           `json:"would_create_job"`
-	WouldModifyTarget          bool           `json:"would_modify_target"`
-	ProductionApprovalRequired bool           `json:"production_approval_required"`
-	Warnings                   []string       `json:"warnings"`
-}
+type ConstraintApplicationPlan = domainagent.ConstraintApplicationPlan
 
 type ResultExplanationRecord struct {
 	SchemaVersion            string          `json:"schema_version"`
