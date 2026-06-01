@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"sort"
 	"strings"
 )
@@ -197,6 +198,31 @@ func RunWarningsFromRaw(raw json.RawMessage) []string {
 		return nil
 	}
 	return stringsFromAny(value["warnings"])
+}
+
+func ModelRunDocumentsFromComputeResult(result map[string]any, jobID string) ([]map[string]any, error) {
+	runtimeAudit, ok := result["runtime_audit"].(map[string]any)
+	if !ok {
+		return nil, nil
+	}
+	items, ok := runtimeAudit["model_runs"].([]any)
+	if !ok || len(items) == 0 {
+		return nil, nil
+	}
+	modelRuns := make([]map[string]any, 0, len(items))
+	expectedJobID := strings.TrimSpace(jobID)
+	for _, item := range items {
+		modelRun, ok := item.(map[string]any)
+		if !ok {
+			return nil, errors.New("runtime_audit.model_runs items must be objects")
+		}
+		modelRunJobID := stringValue(modelRun, "job_id")
+		if modelRunJobID != "" && modelRunJobID != expectedJobID {
+			return nil, errors.New("model_run job_id does not match completed job")
+		}
+		modelRuns = append(modelRuns, modelRun)
+	}
+	return modelRuns, nil
 }
 
 func BenchmarkRunEvidenceRefs(document map[string]any) []string {

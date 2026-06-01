@@ -1,3 +1,33 @@
+# 2026-06-01 AutoWaterSimu Next models result model_runs extraction split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and job lifecycle completion call sites
+- [x] Confirm next aligned gap: `compute_result.v1.runtime_audit.model_runs` extraction and job_id consistency check still lived in job lifecycle workflow code
+- [x] Add a `domain/models` helper for extracting model_run raw payloads from compute result runtime audit, with direct tests
+- [x] Route `JobLifecycleService.Complete` through the domain helper while preserving contract validation, worker stale checks, result hashing, summary/risk handling, persistence, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure extraction/precheck: locate `runtime_audit.model_runs`, require each item to be an object, allow missing `job_id`, and reject a present `job_id` that does not match the completed job.
+- Keep schema validation through the existing compute `ContractValidator`, worker/job status transitions, `compute_result.v1` validation, result summary/risk handling, model_run persistence, store implementations, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as another small `domain/models` package movement step, not a job lifecycle or full model governance package split.
+
+## Review
+
+- Added `ModelRunDocumentsFromComputeResult` to `apps/api/internal/domain/models`.
+- Added direct domain tests for extraction with matching/missing job_id, missing runtime audit, invalid non-object items, and job_id mismatch.
+- Updated `JobLifecycleService.modelRunsFromResult` to delegate pure extraction and job_id precheck to the domain helper while preserving compute-owned schema validation, raw JSON conversion, result hashing, summary/risk handling, model_run persistence, worker stale checks, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and approval boundaries.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(ModelRunDocumentsFromComputeResult|Complete|ModelRun|ArtifactRetention|NewSystemEvidenceReferenceE2E|DefaultParameterSetPromotionPlan|ProductionReadiness)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, but the worktree is dirty because this task's files and an unrelated untracked rebuild plan file are present.
+  - `git diff --check -- apps\api docs tasks .ai` passed with LF/CRLF warnings only.
+  - `rg -n "schema_version|P0|P1|P2" docs\rebuild --glob "AutoWaterSimu_Next_*.md"` completed and returned the expected rebuild document references.
+
 # 2026-06-01 AutoWaterSimu Next models production governance gate split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and evidence governance call sites

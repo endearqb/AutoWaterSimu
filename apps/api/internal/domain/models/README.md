@@ -7,6 +7,7 @@
 本目录负责：
 
 - `model_run.v1` 原始 JSON 的字段提取。
+- `compute_result.v1.runtime_audit.model_runs` 中 model_run 文档提取和 job_id 一致性预检。
 - model run evidence refs / warnings 提取。
 - model run identity / parameter_hash 提取与预期值比对，供 benchmark history 和 promotion planning 验证使用。
 - `benchmark_run.v1` evidence refs 提取。
@@ -24,13 +25,13 @@
 
 | 文件 | 作用 |
 |---|---|
-| `models.go` | model_run identity/ref/warning helpers, model_run identity check helpers, benchmark_run evidence ref helpers, benchmark workflow gates, benchmark case readiness helper, parameter-set status invariants, promotion gate policy, and production governance gate |
+| `models.go` | model_run identity/ref/warning helpers, compute result model_run extraction helper, model_run identity check helpers, benchmark_run evidence ref helpers, benchmark workflow gates, benchmark case readiness helper, parameter-set status invariants, promotion gate policy, and production governance gate |
 | `models_test.go` | Direct models domain tests |
 
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 model/model_run 领域解析/比对规则、benchmark workflow gate、参数集状态不变量、单个 benchmark case readiness 判定、纯 promotion gate 判定和 production governance gate 判定；治理 workflow、catalog mutation、benchmark validation 暂留 compute compatibility package，直到边界可安全迁移。
+2. 只放稳定 model/model_run 领域解析/比对规则、compute result model_run extraction/precheck、benchmark workflow gate、参数集状态不变量、单个 benchmark case readiness 判定、纯 promotion gate 判定和 production governance gate 判定；治理 workflow、catalog mutation、benchmark validation 暂留 compute compatibility package，直到边界可安全迁移。
 3. 新增 `model_run.v1` 或 `benchmark_run.v1` 字段解析时需同步检查 contracts fixtures、evidence package、model governance 和 storage callers。
 4. 新增或改变参数集状态时需同步检查 model catalog schema、status endpoint、promotion plan、benchmark queueing 和 evidence governance。
 
@@ -47,6 +48,7 @@
 - `RunFieldsFromRaw`
 - `RunEvidenceRefsFromRaw`
 - `RunWarningsFromRaw`
+- `ModelRunDocumentsFromComputeResult`
 - `BenchmarkRunEvidenceRefs`
 - `BenchmarkRunEvidenceRefsFromRaw`
 - `ModelVersionStatusActive` / `BenchmarkCaseStatusValidated` / `BenchmarkRunStatusPassed`
@@ -85,4 +87,4 @@ cd apps\api; go test ./internal/domain/models ./internal/compute
 
 ## 7. AI 操作提示
 
-如果要迁移完整 model governance，请先补 store/DTO adapter，避免把 compute `ModelCatalogResponse`、benchmark DTO 或 HTTP response 类型直接搬入本 package。Benchmark workflow gate、参数集状态、benchmark case readiness、promotion gate 与 production governance gate helper 只能表达稳定不变量，catalog snapshot 写入、benchmark 查询编排、evidence package assembly 和 HTTP 错误映射仍由 compute compatibility package 负责。
+如果要迁移完整 model governance，请先补 store/DTO adapter，避免把 compute `ModelCatalogResponse`、benchmark DTO 或 HTTP response 类型直接搬入本 package。Compute result model_run extraction helper 只做稳定 JSON 定位和 job_id 预检，schema validation、raw persistence adapter 和 job lifecycle error mapping 仍由 compute 负责。Benchmark workflow gate、参数集状态、benchmark case readiness、promotion gate 与 production governance gate helper 只能表达稳定不变量，catalog snapshot 写入、benchmark 查询编排、evidence package assembly 和 HTTP 错误映射仍由 compute compatibility package 负责。

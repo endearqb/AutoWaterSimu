@@ -7,6 +7,7 @@ import (
 	"time"
 
 	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
 
 type JobLifecycleService struct {
@@ -243,23 +244,12 @@ func (svc *JobLifecycleService) snapshot(ctx context.Context, jobID string) (Job
 }
 
 func (svc *JobLifecycleService) modelRunsFromResult(result map[string]any, jobID string) ([]json.RawMessage, error) {
-	runtimeAudit, ok := result["runtime_audit"].(map[string]any)
-	if !ok {
-		return nil, nil
+	documents, err := domainmodels.ModelRunDocumentsFromComputeResult(result, jobID)
+	if err != nil {
+		return nil, ValidationError(err.Error())
 	}
-	items, ok := runtimeAudit["model_runs"].([]any)
-	if !ok || len(items) == 0 {
-		return nil, nil
-	}
-	modelRuns := make([]json.RawMessage, 0, len(items))
-	for _, item := range items {
-		modelRun, ok := item.(map[string]any)
-		if !ok {
-			return nil, ValidationError("runtime_audit.model_runs items must be objects")
-		}
-		if stringValue(modelRun, "job_id") != "" && stringValue(modelRun, "job_id") != jobID {
-			return nil, ValidationError("model_run job_id does not match completed job")
-		}
+	modelRuns := make([]json.RawMessage, 0, len(documents))
+	for _, modelRun := range documents {
 		if svc.validator != nil {
 			if err := svc.validator.Validate("model_run.v1.json", modelRun); err != nil {
 				return nil, err

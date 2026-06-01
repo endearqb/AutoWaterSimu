@@ -127,6 +127,71 @@ func TestRunRefsAndWarningsFromRaw(t *testing.T) {
 	}
 }
 
+func TestModelRunDocumentsFromComputeResult(t *testing.T) {
+	result := map[string]any{
+		"runtime_audit": map[string]any{
+			"model_runs": []any{
+				map[string]any{
+					"model_run_id": "mr_1",
+					"job_id":       " job_1 ",
+				},
+				map[string]any{
+					"model_run_id": "mr_2",
+				},
+			},
+		},
+	}
+	modelRuns, err := ModelRunDocumentsFromComputeResult(result, "job_1")
+	if err != nil {
+		t.Fatalf("unexpected extraction error: %v", err)
+	}
+	if len(modelRuns) != 2 {
+		t.Fatalf("expected 2 model runs, got %d", len(modelRuns))
+	}
+	if modelRuns[0]["model_run_id"] != "mr_1" || modelRuns[1]["model_run_id"] != "mr_2" {
+		t.Fatalf("unexpected model runs: %#v", modelRuns)
+	}
+}
+
+func TestModelRunDocumentsFromComputeResultMissingRuntimeAudit(t *testing.T) {
+	modelRuns, err := ModelRunDocumentsFromComputeResult(map[string]any{}, "job_1")
+	if err != nil {
+		t.Fatalf("unexpected extraction error: %v", err)
+	}
+	if modelRuns != nil {
+		t.Fatalf("expected nil model runs for missing runtime_audit, got %#v", modelRuns)
+	}
+}
+
+func TestModelRunDocumentsFromComputeResultRejectsInvalidItems(t *testing.T) {
+	result := map[string]any{
+		"runtime_audit": map[string]any{
+			"model_runs": []any{"not_an_object"},
+		},
+	}
+	_, err := ModelRunDocumentsFromComputeResult(result, "job_1")
+	if err == nil || err.Error() != "runtime_audit.model_runs items must be objects" {
+		t.Fatalf("unexpected extraction error: %v", err)
+	}
+}
+
+func TestModelRunDocumentsFromComputeResultRejectsJobIDMismatch(t *testing.T) {
+	result := map[string]any{
+		"runtime_audit": map[string]any{
+			"model_runs": []any{
+				map[string]any{
+					"model_run_id": "mr_1",
+					"job_id":       "job_other",
+				},
+			},
+		},
+	}
+	_, err := ModelRunDocumentsFromComputeResult(result, "job_1")
+	if err == nil || err.Error() != "model_run job_id does not match completed job" {
+		t.Fatalf("unexpected extraction error: %v", err)
+	}
+}
+
 func TestBenchmarkRunEvidenceRefs(t *testing.T) {
 	document := map[string]any{
 		"evidence_refs": []any{" model_run:mr_1 ", "", 42, "artifact:a1"},
