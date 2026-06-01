@@ -38,6 +38,55 @@ func TestIsWorkerResultStatus(t *testing.T) {
 	}
 }
 
+func TestWorkerResultCompletionFromSucceededResult(t *testing.T) {
+	completion, ok := WorkerResultCompletionFromResult(map[string]any{
+		"status":  " succeeded ",
+		"summary": map[string]any{"error_code": "SHOULD_NOT_LEAK"},
+	})
+	if !ok {
+		t.Fatal("expected succeeded worker result to be accepted")
+	}
+	if completion.Status != StatusSucceeded || completion.ErrorCode != "" || completion.ErrorMessage != "" {
+		t.Fatalf("unexpected completion: %#v", completion)
+	}
+}
+
+func TestWorkerResultCompletionFromFailedResult(t *testing.T) {
+	completion, ok := WorkerResultCompletionFromResult(map[string]any{
+		"status": "failed",
+		"summary": map[string]any{
+			"error_code":    " SOLVER_FAILED ",
+			"error_message": " solver diverged ",
+		},
+	})
+	if !ok {
+		t.Fatal("expected failed worker result to be accepted")
+	}
+	if completion.Status != StatusFailed || completion.ErrorCode != "SOLVER_FAILED" || completion.ErrorMessage != "solver diverged" {
+		t.Fatalf("unexpected completion: %#v", completion)
+	}
+}
+
+func TestWorkerResultCompletionDefaultsFailureCode(t *testing.T) {
+	completion, ok := WorkerResultCompletionFromResult(map[string]any{
+		"status":  StatusTimedOut,
+		"summary": map[string]any{"error_message": "worker timed out"},
+	})
+	if !ok {
+		t.Fatal("expected timed_out worker result to be accepted")
+	}
+	if completion.Status != StatusTimedOut || completion.ErrorCode != DefaultWorkerFailureCode || completion.ErrorMessage != "worker timed out" {
+		t.Fatalf("unexpected completion: %#v", completion)
+	}
+}
+
+func TestWorkerResultCompletionRejectsInvalidStatus(t *testing.T) {
+	completion, ok := WorkerResultCompletionFromResult(map[string]any{"status": "cancelled"})
+	if ok {
+		t.Fatalf("expected invalid worker result to be rejected: %#v", completion)
+	}
+}
+
 func TestRequiredCapabilities(t *testing.T) {
 	input := json.RawMessage(`{
 		"execution": {

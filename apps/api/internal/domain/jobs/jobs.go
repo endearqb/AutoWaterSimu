@@ -15,6 +15,8 @@ const (
 	StatusTimedOut  = "timed_out"
 )
 
+const DefaultWorkerFailureCode = "WORKER_FAILED"
+
 type ClaimCandidate struct {
 	SchemaVersion string
 	InputJSON     json.RawMessage
@@ -25,12 +27,36 @@ type WorkerCapabilities struct {
 	SupportedContractVersions json.RawMessage
 }
 
+type WorkerResultCompletion struct {
+	Status       string
+	ErrorCode    string
+	ErrorMessage string
+}
+
 func IsTerminal(status string) bool {
 	return status == StatusSucceeded || status == StatusFailed || status == StatusCancelled || status == StatusTimedOut
 }
 
 func IsWorkerResultStatus(status string) bool {
 	return IsTerminal(status) && status != StatusCancelled
+}
+
+func WorkerResultCompletionFromResult(result map[string]any) (WorkerResultCompletion, bool) {
+	status := stringValue(result, "status")
+	if !IsWorkerResultStatus(status) {
+		return WorkerResultCompletion{Status: status}, false
+	}
+	completion := WorkerResultCompletion{Status: status}
+	if status == StatusSucceeded {
+		return completion, true
+	}
+	summary, _ := result["summary"].(map[string]any)
+	completion.ErrorCode = stringValue(summary, "error_code")
+	completion.ErrorMessage = stringValue(summary, "error_message")
+	if completion.ErrorCode == "" {
+		completion.ErrorCode = DefaultWorkerFailureCode
+	}
+	return completion, true
 }
 
 func MatchesWorker(candidate ClaimCandidate, worker WorkerCapabilities) bool {
@@ -100,4 +126,14 @@ func stringsFromAny(value any) []string {
 		}
 	}
 	return result
+}
+
+func stringValue(value map[string]any, key string) string {
+	if value == nil {
+		return ""
+	}
+	if text, ok := value[key].(string); ok {
+		return strings.TrimSpace(text)
+	}
+	return ""
 }

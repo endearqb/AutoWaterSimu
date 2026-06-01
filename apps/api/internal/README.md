@@ -20,7 +20,7 @@
 | 子目录 | 作用 |
 |---|---|
 | `compute/` | Phase 4A compute job lifecycle skeleton |
-| `domain/` | 领域 package，目前包含 artifacts retention policy/action planner、evidence input/ref/risk parsing/stored summary risk projection/result explanation refs/readiness policy、jobs status/claim invariants、models compute_result model_run extraction、model_run parsing/check、benchmark_run parsing、benchmark workflow gates、benchmark case readiness、parameter-set status rules、promotion gate 与 production governance gate policy、simulation execution/process-graph helpers 和 workers lifecycle domain service，不能反向依赖 compute compatibility package |
+| `domain/` | 领域 package，目前包含 artifacts retention policy/action planner、evidence input/ref/risk parsing/stored summary risk projection/result explanation refs/readiness policy、jobs status/worker result completion/claim invariants、models compute_result model_run extraction、model_run parsing/check、benchmark_run parsing、benchmark workflow gates、benchmark case readiness、parameter-set status rules、promotion gate 与 production governance gate policy、simulation execution/process-graph helpers 和 workers lifecycle domain service，不能反向依赖 compute compatibility package |
 | `platform/` | 平台级 auth、config、contracts、HTTP、metrics/security 等横切 helper，不能反向依赖 compute domain |
 
 ## 3. 维护约定

@@ -9,7 +9,7 @@
 - jobs、workers、artifacts、models、evidence、simulation、agent 等业务领域边界。
 - 已稳定的 artifact retention policy 解析、候选判断和 retention sweep action planning 规则。
 - 已稳定的 evidence input/ref/risk parsing、stored result summary risk projection、result explanation evidence ref 提取与 production-readiness policy 规则。
-- 已稳定的 compute job status 与 worker claim matching 不变量。
+- 已稳定的 compute job status、worker result completion 解释与 worker claim matching 不变量。
 - 已稳定的 `compute_result.v1.runtime_audit.model_runs` 提取预检、`model_run.v1` identity、evidence refs、warnings、parameter_hash 解析与 identity/hash 比对规则，`benchmark_run.v1` evidence refs 解析规则，benchmark workflow gate，default parameter set status 常量/迁移不变量、单个 benchmark case promotion readiness 判定、default parameter set promotion gate 判定，以及 model_run production governance gate 判定。
 - 已稳定的 simulation job type execution profile / required capability 映射规则，以及 material-balance ProcessGraph-to-SimulationInput projection 规则。
 - 不依赖 `apps/api/internal/compute` 的领域服务、领域类型和最小 store 接口。
@@ -27,7 +27,7 @@
 |---|---|
 | `artifacts/` | artifact retention policy parsing, candidate checks, and sweep action planning helpers |
 | `evidence/` | evidence input/ref/risk parsing, stored result summary risk projection, result explanation ref extraction, and readiness policy helpers |
-| `jobs/` | compute job status constants, worker claim matching, and invariant helpers |
+| `jobs/` | compute job status constants, worker result completion extraction, worker claim matching, and invariant helpers |
 | `models/` | compute result model_run extraction, model_run identity/ref/warning/check helpers, benchmark_run evidence ref helpers, benchmark workflow gates, benchmark case readiness helper, parameter-set status invariants, promotion gate policy, and production governance gate |
 | `simulation/` | simulation job type execution profile, required capability, and material-balance process graph projection helpers |
 | `workers/` | worker register / claim / heartbeat 领域服务 |

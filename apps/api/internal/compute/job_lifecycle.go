@@ -153,8 +153,8 @@ func (svc *JobLifecycleService) Complete(ctx context.Context, workerID, jobID st
 	if job.WorkerID != required(workerID, "worker_id") || job.Attempt != attempt {
 		return JobSnapshot{}, Conflict(CodeWorkerStale, "worker result is stale")
 	}
-	status := stringValue(result, "status")
-	if !domainjobs.IsWorkerResultStatus(status) {
+	completion, ok := domainjobs.WorkerResultCompletionFromResult(result)
+	if !ok {
 		return JobSnapshot{}, ValidationError("result.status must be succeeded, failed, or timed_out")
 	}
 	if svc.validator != nil {
@@ -171,16 +171,7 @@ func (svc *JobLifecycleService) Complete(ctx context.Context, workerID, jobID st
 		return JobSnapshot{}, err
 	}
 	summary := mustJSON(domainevidence.StoredResultSummary(result))
-	errorCode := ""
-	errorMessage := ""
-	if status != StatusSucceeded {
-		if summaryMap, ok := result["summary"].(map[string]any); ok {
-			errorCode = stringValue(summaryMap, "error_code")
-			errorMessage = stringValue(summaryMap, "error_message")
-		}
-		errorCode = defaultString(errorCode, "WORKER_FAILED")
-	}
-	completed, err := svc.jobs.CompleteJob(ctx, jobID, workerID, attempt, status, summary, resultHash, errorCode, errorMessage, svc.now())
+	completed, err := svc.jobs.CompleteJob(ctx, jobID, workerID, attempt, completion.Status, summary, resultHash, completion.ErrorCode, completion.ErrorMessage, svc.now())
 	if err != nil {
 		return JobSnapshot{}, err
 	}
@@ -196,7 +187,7 @@ func (svc *JobLifecycleService) Fail(ctx context.Context, workerID, jobID string
 		return JobSnapshot{}, err
 	}
 	summary := map[string]any{
-		"error_code":    defaultString(errorCode, "WORKER_FAILED"),
+		"error_code":    defaultString(errorCode, domainjobs.DefaultWorkerFailureCode),
 		"error_message": defaultString(errorMessage, "worker failed"),
 	}
 	result := map[string]any{

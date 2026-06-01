@@ -1,3 +1,37 @@
+# 2026-06-01 AutoWaterSimu Next jobs worker result completion split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/jobs/compute READMEs, and job completion call sites
+- [x] Confirm next aligned gap: worker result status acceptance and failed result error extraction still lived in job lifecycle workflow code
+- [x] Add a `domain/jobs` helper for worker result completion status/error extraction, with direct tests
+- [x] Route `JobLifecycleService.Complete` and `Fail` defaults through the domain helper/constants while preserving compute_result validation, result hashing, summary persistence, model_run extraction/persistence, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure worker-result completion interpretation: trim/extract `status`, accept only `succeeded` / `failed` / `timed_out`, and for non-succeeded results derive `error_code` / `error_message` from the result summary with the existing `WORKER_FAILED` default.
+- Keep worker stale checks, schema validation, result hash, stored summary projection, model_run extraction/persistence, job completion persistence, timeout sweep, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and audit boundaries unchanged.
+- Treat this as a small `domain/jobs` invariant movement step, not a full job lifecycle package split.
+
+## Review
+
+- Added `DefaultWorkerFailureCode`, `WorkerResultCompletion`, and `WorkerResultCompletionFromResult` to `apps/api/internal/domain/jobs`.
+- Added direct domain tests for succeeded worker results, failed result error extraction, default failure code, and invalid status rejection.
+- Updated `JobLifecycleService.Complete` to delegate worker result status/error interpretation to the domain helper, and updated `Fail` to use the jobs domain default failure code.
+- Preserved worker stale checks, compute_result validation, result hashing, stored summary projection, model_run extraction/persistence, job completion persistence, timeout sweep, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and audit boundaries.
+- Updated API/internal/domain/jobs/compute READMEs, architecture/current-state, Certainty/Elegance checklist, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/jobs ./internal/compute -run "Test(WorkerResultCompletion|IsWorkerResultStatus|Complete|Fail|TimeoutSweep|WorkerStale|ValidatedComplete)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, but the worktree is dirty because this task's files and an unrelated untracked rebuild plan file are present.
+  - `git diff --check -- apps\api docs tasks .ai` passed with LF/CRLF warnings only.
+  - `rg -n "schema_version|P0|P1|P2" docs\rebuild --glob "AutoWaterSimu_Next_*.md"` completed and returned the expected rebuild document references.
+- Remaining scope:
+  - Full job lifecycle package movement is not complete; job records, events, completion persistence, timeout sweep, artifact listing callback, schema validation, failed-worker fallback result construction, and HTTP mapping remain in compute compatibility wiring.
+  - Full artifacts/models/evidence/simulation/agent domain package movement remains follow-up.
+
 # 2026-06-01 AutoWaterSimu Next evidence stored risk summary split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/evidence/compute READMEs, and job completion call sites
