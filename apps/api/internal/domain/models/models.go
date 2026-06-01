@@ -33,6 +33,48 @@ const (
 	PromotionBlockParameterSetStatusMustBeValidated  = "parameter_set_status_must_be_validated"
 )
 
+const (
+	BenchmarkWorkflowBlockModelVersionNotActive   = "model_version_not_active"
+	BenchmarkWorkflowBlockBenchmarkCaseNotFound   = "benchmark_case_not_found"
+	BenchmarkWorkflowBlockBenchmarkCaseNotValid   = "benchmark_case_not_validated"
+	BenchmarkWorkflowBlockDefaultParameterSetMiss = "default_parameter_set_missing"
+	BenchmarkWorkflowBlockParameterSetMismatch    = "parameter_set_mismatch"
+	BenchmarkWorkflowBlockParameterSetRetired     = "parameter_set_retired"
+)
+
+type BenchmarkCaseRunGateInput struct {
+	ModelVersionStatus     string
+	BenchmarkCaseFound     bool
+	BenchmarkCaseStatus    string
+	HasDefaultParameterSet bool
+	ParameterSetStatus     string
+}
+
+type BenchmarkCaseRunGate struct {
+	ModelVersionActive     bool
+	BenchmarkCaseFound     bool
+	BenchmarkCaseValidated bool
+	HasDefaultParameterSet bool
+	ParameterSetRetired    bool
+	BlockingReasons        []string
+	CanSchedule            bool
+}
+
+type BenchmarkRunAdmissionInput struct {
+	BenchmarkCaseFound    bool
+	BenchmarkCaseStatus   string
+	DefaultParameterSetID string
+	RequestedParameterSet string
+}
+
+type BenchmarkRunAdmission struct {
+	BenchmarkCaseFound     bool
+	BenchmarkCaseValidated bool
+	ParameterSetMatches    bool
+	BlockingReasons        []string
+	CanRecord              bool
+}
+
 type ParameterSetPromotionGateInput struct {
 	ModelVersionStatus    string
 	ParameterSetStatus    string
@@ -183,6 +225,59 @@ func CanTransitionParameterSetStatus(fromStatus, toStatus string) bool {
 	from, fromOK := order[fromStatus]
 	to, toOK := order[toStatus]
 	return fromOK && toOK && to == from+1
+}
+
+func EvaluateBenchmarkCaseRunGate(input BenchmarkCaseRunGateInput) BenchmarkCaseRunGate {
+	modelVersionActive := input.ModelVersionStatus == ModelVersionStatusActive
+	benchmarkCaseValidated := input.BenchmarkCaseFound && input.BenchmarkCaseStatus == BenchmarkCaseStatusValidated
+	parameterSetRetired := input.HasDefaultParameterSet && input.ParameterSetStatus == ParameterSetStatusRetired
+	blockingReasons := []string{}
+	if !modelVersionActive {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockModelVersionNotActive)
+	}
+	if !input.BenchmarkCaseFound {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockBenchmarkCaseNotFound)
+	} else if !benchmarkCaseValidated {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockBenchmarkCaseNotValid)
+	}
+	if !input.HasDefaultParameterSet {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockDefaultParameterSetMiss)
+	} else if parameterSetRetired {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockParameterSetRetired)
+	}
+	blockingReasons = uniqueStrings(blockingReasons)
+	return BenchmarkCaseRunGate{
+		ModelVersionActive:     modelVersionActive,
+		BenchmarkCaseFound:     input.BenchmarkCaseFound,
+		BenchmarkCaseValidated: benchmarkCaseValidated,
+		HasDefaultParameterSet: input.HasDefaultParameterSet,
+		ParameterSetRetired:    parameterSetRetired,
+		BlockingReasons:        blockingReasons,
+		CanSchedule:            len(blockingReasons) == 0,
+	}
+}
+
+func EvaluateBenchmarkRunAdmission(input BenchmarkRunAdmissionInput) BenchmarkRunAdmission {
+	benchmarkCaseValidated := input.BenchmarkCaseFound && input.BenchmarkCaseStatus == BenchmarkCaseStatusValidated
+	parameterSetMatches := strings.TrimSpace(input.DefaultParameterSetID) != "" &&
+		strings.TrimSpace(input.DefaultParameterSetID) == strings.TrimSpace(input.RequestedParameterSet)
+	blockingReasons := []string{}
+	if !input.BenchmarkCaseFound {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockBenchmarkCaseNotFound)
+	} else if !benchmarkCaseValidated {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockBenchmarkCaseNotValid)
+	}
+	if !parameterSetMatches {
+		blockingReasons = append(blockingReasons, BenchmarkWorkflowBlockParameterSetMismatch)
+	}
+	blockingReasons = uniqueStrings(blockingReasons)
+	return BenchmarkRunAdmission{
+		BenchmarkCaseFound:     input.BenchmarkCaseFound,
+		BenchmarkCaseValidated: benchmarkCaseValidated,
+		ParameterSetMatches:    parameterSetMatches,
+		BlockingReasons:        blockingReasons,
+		CanRecord:              len(blockingReasons) == 0,
+	}
 }
 
 func EvaluateBenchmarkCasePromotionReadiness(input BenchmarkCasePromotionReadinessInput) BenchmarkCasePromotionReadiness {

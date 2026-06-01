@@ -60,21 +60,32 @@ func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context,
 		return JobSnapshot{}, 0, NotFound("MODEL_NOT_FOUND", "model version not found")
 	}
 	version := catalog.Models[modelIndex].Versions[versionIndex]
-	if version.Status != domainmodels.ModelVersionStatusActive {
+	benchmarkCase, benchmarkCaseFound := findBenchmarkCase(version, benchmarkCaseID)
+	parameterSet := version.DefaultParameterSet
+	parameterSetStatus := ""
+	if parameterSet != nil {
+		parameterSetStatus = parameterSet.Status
+	}
+	gate := domainmodels.EvaluateBenchmarkCaseRunGate(domainmodels.BenchmarkCaseRunGateInput{
+		ModelVersionStatus:     version.Status,
+		BenchmarkCaseFound:     benchmarkCaseFound,
+		BenchmarkCaseStatus:    benchmarkCase.Status,
+		HasDefaultParameterSet: parameterSet != nil,
+		ParameterSetStatus:     parameterSetStatus,
+	})
+	if !gate.ModelVersionActive {
 		return JobSnapshot{}, 0, Conflict(CodeParameterSetTransitionFailed, "benchmark case run requires an active model version")
 	}
-	benchmarkCase, ok := findBenchmarkCase(version, benchmarkCaseID)
-	if !ok {
+	if !gate.BenchmarkCaseFound {
 		return JobSnapshot{}, 0, NotFound("BENCHMARK_CASE_NOT_FOUND", "benchmark case not found")
 	}
-	if benchmarkCase.Status != domainmodels.BenchmarkCaseStatusValidated {
+	if !gate.BenchmarkCaseValidated {
 		return JobSnapshot{}, 0, Conflict("BENCHMARK_CASE_NOT_VALIDATED", "benchmark case must be validated before scheduling runs")
 	}
-	parameterSet := version.DefaultParameterSet
-	if parameterSet == nil {
+	if !gate.HasDefaultParameterSet {
 		return JobSnapshot{}, 0, NotFound(CodeParameterSetNotFound, "default parameter set not found")
 	}
-	if parameterSet.Status == domainmodels.ParameterSetStatusRetired {
+	if gate.ParameterSetRetired {
 		return JobSnapshot{}, 0, Conflict(CodeParameterSetTransitionFailed, "retired parameter sets cannot be benchmarked")
 	}
 	execution := domainsimulation.ExecutionProfile(benchmarkCase.JobType)
@@ -550,14 +561,24 @@ func (svc *ModelGovernanceService) benchmarkRunRecord(ctx context.Context, docum
 		return BenchmarkRunRecord{}, NotFound("MODEL_NOT_FOUND", "model version not found")
 	}
 	version := catalog.Models[modelIndex].Versions[versionIndex]
-	benchmarkCase, ok := findBenchmarkCase(version, benchmarkCaseID)
-	if !ok {
+	benchmarkCase, benchmarkCaseFound := findBenchmarkCase(version, benchmarkCaseID)
+	defaultParameterSetID := ""
+	if version.DefaultParameterSet != nil {
+		defaultParameterSetID = version.DefaultParameterSet.ParameterSetID
+	}
+	admission := domainmodels.EvaluateBenchmarkRunAdmission(domainmodels.BenchmarkRunAdmissionInput{
+		BenchmarkCaseFound:    benchmarkCaseFound,
+		BenchmarkCaseStatus:   benchmarkCase.Status,
+		DefaultParameterSetID: defaultParameterSetID,
+		RequestedParameterSet: parameterSetID,
+	})
+	if !admission.BenchmarkCaseFound {
 		return BenchmarkRunRecord{}, NotFound("BENCHMARK_CASE_NOT_FOUND", "benchmark case not found")
 	}
-	if benchmarkCase.Status != domainmodels.BenchmarkCaseStatusValidated {
+	if !admission.BenchmarkCaseValidated {
 		return BenchmarkRunRecord{}, Conflict("BENCHMARK_CASE_NOT_VALIDATED", "benchmark case must be validated before recording runs")
 	}
-	if version.DefaultParameterSet == nil || version.DefaultParameterSet.ParameterSetID != parameterSetID {
+	if !admission.ParameterSetMatches {
 		return BenchmarkRunRecord{}, NotFound(CodeParameterSetNotFound, "parameter set not found")
 	}
 

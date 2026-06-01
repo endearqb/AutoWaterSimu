@@ -10,6 +10,7 @@
 - model run evidence refs / warnings 提取。
 - model run identity / parameter_hash 提取与预期值比对，供 benchmark history 和 promotion planning 验证使用。
 - `benchmark_run.v1` evidence refs 提取。
+- benchmark case scheduling gate 与 benchmark run admission 的稳定前置判定。
 - default parameter set status 常量、合法性判断和允许迁移不变量。
 - model version / benchmark case / benchmark run status 常量、单个 benchmark case promotion readiness 判定，以及 default parameter set promotion gate 判定。
 
@@ -23,13 +24,13 @@
 
 | 文件 | 作用 |
 |---|---|
-| `models.go` | model_run identity/ref/warning helpers, model_run identity check helpers, benchmark_run evidence ref helpers, benchmark case readiness helper, parameter-set status invariants, and promotion gate policy |
+| `models.go` | model_run identity/ref/warning helpers, model_run identity check helpers, benchmark_run evidence ref helpers, benchmark workflow gates, benchmark case readiness helper, parameter-set status invariants, and promotion gate policy |
 | `models_test.go` | Direct models domain tests |
 
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 model/model_run 领域解析/比对规则、参数集状态不变量、单个 benchmark case readiness 判定和纯 promotion gate 判定；治理 workflow、catalog mutation、benchmark validation 暂留 compute compatibility package，直到边界可安全迁移。
+2. 只放稳定 model/model_run 领域解析/比对规则、benchmark workflow gate、参数集状态不变量、单个 benchmark case readiness 判定和纯 promotion gate 判定；治理 workflow、catalog mutation、benchmark validation 暂留 compute compatibility package，直到边界可安全迁移。
 3. 新增 `model_run.v1` 或 `benchmark_run.v1` 字段解析时需同步检查 contracts fixtures、evidence package、model governance 和 storage callers。
 4. 新增或改变参数集状态时需同步检查 model catalog schema、status endpoint、promotion plan、benchmark queueing 和 evidence governance。
 
@@ -51,8 +52,15 @@
 - `ModelVersionStatusActive` / `BenchmarkCaseStatusValidated` / `BenchmarkRunStatusPassed`
 - `ParameterSetStatusDraft` / `ParameterSetStatusCandidate` / `ParameterSetStatusValidated` / `ParameterSetStatusApproved` / `ParameterSetStatusRetired`
 - `PromotionBlockModelVersionNotActive` / `PromotionBlockBenchmarkRunMissingForParameterSet` / `PromotionBlockLatestBenchmarkRunNotPassed` / `PromotionBlockModelRunNotFound` / `PromotionBlockModelRunIdentityMismatch` / `PromotionBlockModelRunParameterHashMismatch` / `PromotionBlockModelRunPayloadInvalid` / `PromotionBlockNoValidatedBenchmarkCases` / `PromotionBlockParameterSetAlreadyApproved` / `PromotionBlockParameterSetStatusMustBeValidated`
+- `BenchmarkWorkflowBlockModelVersionNotActive` / `BenchmarkWorkflowBlockBenchmarkCaseNotFound` / `BenchmarkWorkflowBlockBenchmarkCaseNotValid` / `BenchmarkWorkflowBlockDefaultParameterSetMiss` / `BenchmarkWorkflowBlockParameterSetMismatch` / `BenchmarkWorkflowBlockParameterSetRetired`
 - `IsParameterSetStatus`
 - `CanTransitionParameterSetStatus`
+- `BenchmarkCaseRunGateInput`
+- `BenchmarkCaseRunGate`
+- `EvaluateBenchmarkCaseRunGate`
+- `BenchmarkRunAdmissionInput`
+- `BenchmarkRunAdmission`
+- `EvaluateBenchmarkRunAdmission`
 - `BenchmarkCasePromotionReadinessInput`
 - `BenchmarkCasePromotionReadiness`
 - `EvaluateBenchmarkCasePromotionReadiness`
@@ -74,4 +82,4 @@ cd apps\api; go test ./internal/domain/models ./internal/compute
 
 ## 7. AI 操作提示
 
-如果要迁移完整 model governance，请先补 store/DTO adapter，避免把 compute `ModelCatalogResponse`、benchmark DTO 或 HTTP response 类型直接搬入本 package。参数集状态、benchmark case readiness 与 promotion gate helper 只能表达稳定不变量，catalog snapshot 写入、benchmark 查询编排和 HTTP 错误映射仍由 compute compatibility package 负责。
+如果要迁移完整 model governance，请先补 store/DTO adapter，避免把 compute `ModelCatalogResponse`、benchmark DTO 或 HTTP response 类型直接搬入本 package。Benchmark workflow gate、参数集状态、benchmark case readiness 与 promotion gate helper 只能表达稳定不变量，catalog snapshot 写入、benchmark 查询编排和 HTTP 错误映射仍由 compute compatibility package 负责。

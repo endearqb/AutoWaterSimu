@@ -1,3 +1,35 @@
+# 2026-06-01 AutoWaterSimu Next models benchmark workflow gate split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model governance call sites
+- [x] Confirm next aligned gap: benchmark case schedule-run and benchmark_run record admission preconditions still lived in compute workflow code
+- [x] Add `BenchmarkCaseRunGate`, `EvaluateBenchmarkCaseRunGate`, `BenchmarkRunAdmission`, and `EvaluateBenchmarkRunAdmission` to `apps/api/internal/domain/models` with direct tests
+- [x] Route model governance schedule-run and benchmark-run recording through the domain models helpers while preserving store orchestration and HTTP error mapping
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only stable benchmark workflow preconditions: active model version, benchmark case presence/validated status, default parameter set presence/match, and retired parameter set blocking for schedule-run.
+- Keep model catalog lookup, simulation input resolution, compute job creation, benchmark run persistence, evidence reference resolution, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as another small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added benchmark workflow blocker constants, `BenchmarkCaseRunGate`, `EvaluateBenchmarkCaseRunGate`, `BenchmarkRunAdmission`, and `EvaluateBenchmarkRunAdmission` to `apps/api/internal/domain/models`.
+- Added direct domain tests for ready schedule-run gates, blocked inactive/unvalidated/retired scheduling, missing case/default parameter set, ready benchmark run admission, unvalidated case, parameter mismatch, and missing default parameter set.
+- Updated `ModelGovernanceService.ScheduleBenchmarkCaseRun` and `benchmarkRunRecord` to use the domain models helpers while preserving existing catalog/store orchestration, resolver callbacks, response/error mapping, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(BenchmarkCaseRunGate|BenchmarkRunAdmission|BenchmarkCaseScheduleRunEndpoint|BenchmarkRun|DefaultParameterSetPromotionPlan|Promotion|ModelCatalog)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, but the worktree is dirty because this task's files and an unrelated untracked rebuild plan file are present.
+  - `git diff --check -- apps\api docs tasks .ai` passed with LF/CRLF warnings only.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshot mutation, benchmark query orchestration, benchmark run persistence workflow, promotion workflow orchestration, HTTP mapping, and DTOs remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full evidence governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models benchmark case readiness split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and promotion planning call sites

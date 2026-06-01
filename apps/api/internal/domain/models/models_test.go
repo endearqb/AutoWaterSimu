@@ -191,6 +191,121 @@ func TestCanTransitionParameterSetStatus(t *testing.T) {
 	}
 }
 
+func TestEvaluateBenchmarkCaseRunGateReady(t *testing.T) {
+	gate := EvaluateBenchmarkCaseRunGate(BenchmarkCaseRunGateInput{
+		ModelVersionStatus:     ModelVersionStatusActive,
+		BenchmarkCaseFound:     true,
+		BenchmarkCaseStatus:    BenchmarkCaseStatusValidated,
+		HasDefaultParameterSet: true,
+		ParameterSetStatus:     ParameterSetStatusValidated,
+	})
+	if !gate.CanSchedule {
+		t.Fatalf("expected benchmark case to be schedulable: %#v", gate)
+	}
+	if !gate.ModelVersionActive || !gate.BenchmarkCaseFound || !gate.BenchmarkCaseValidated || !gate.HasDefaultParameterSet || gate.ParameterSetRetired {
+		t.Fatalf("unexpected gate fields: %#v", gate)
+	}
+	if len(gate.BlockingReasons) != 0 {
+		t.Fatalf("expected no blockers, got %#v", gate.BlockingReasons)
+	}
+}
+
+func TestEvaluateBenchmarkCaseRunGateBlocksInvalidInputs(t *testing.T) {
+	gate := EvaluateBenchmarkCaseRunGate(BenchmarkCaseRunGateInput{
+		ModelVersionStatus:     "deprecated",
+		BenchmarkCaseFound:     true,
+		BenchmarkCaseStatus:    "draft",
+		HasDefaultParameterSet: true,
+		ParameterSetStatus:     ParameterSetStatusRetired,
+	})
+	want := []string{
+		BenchmarkWorkflowBlockBenchmarkCaseNotValid,
+		BenchmarkWorkflowBlockModelVersionNotActive,
+		BenchmarkWorkflowBlockParameterSetRetired,
+	}
+	if gate.CanSchedule {
+		t.Fatalf("expected benchmark case scheduling to be blocked")
+	}
+	if !reflect.DeepEqual(gate.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", gate.BlockingReasons, want)
+	}
+}
+
+func TestEvaluateBenchmarkCaseRunGateBlocksMissingCaseAndParameterSet(t *testing.T) {
+	gate := EvaluateBenchmarkCaseRunGate(BenchmarkCaseRunGateInput{
+		ModelVersionStatus:     ModelVersionStatusActive,
+		BenchmarkCaseFound:     false,
+		BenchmarkCaseStatus:    BenchmarkCaseStatusValidated,
+		HasDefaultParameterSet: false,
+	})
+	want := []string{
+		BenchmarkWorkflowBlockBenchmarkCaseNotFound,
+		BenchmarkWorkflowBlockDefaultParameterSetMiss,
+	}
+	if gate.CanSchedule {
+		t.Fatalf("expected benchmark case scheduling to be blocked")
+	}
+	if !reflect.DeepEqual(gate.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", gate.BlockingReasons, want)
+	}
+}
+
+func TestEvaluateBenchmarkRunAdmissionReady(t *testing.T) {
+	admission := EvaluateBenchmarkRunAdmission(BenchmarkRunAdmissionInput{
+		BenchmarkCaseFound:    true,
+		BenchmarkCaseStatus:   BenchmarkCaseStatusValidated,
+		DefaultParameterSetID: " ps_default ",
+		RequestedParameterSet: "ps_default",
+	})
+	if !admission.CanRecord {
+		t.Fatalf("expected benchmark run to be recordable: %#v", admission)
+	}
+	if !admission.BenchmarkCaseFound || !admission.BenchmarkCaseValidated || !admission.ParameterSetMatches {
+		t.Fatalf("unexpected admission fields: %#v", admission)
+	}
+	if len(admission.BlockingReasons) != 0 {
+		t.Fatalf("expected no blockers, got %#v", admission.BlockingReasons)
+	}
+}
+
+func TestEvaluateBenchmarkRunAdmissionBlocksCaseAndParameterSet(t *testing.T) {
+	admission := EvaluateBenchmarkRunAdmission(BenchmarkRunAdmissionInput{
+		BenchmarkCaseFound:    true,
+		BenchmarkCaseStatus:   "draft",
+		DefaultParameterSetID: "ps_default",
+		RequestedParameterSet: "ps_other",
+	})
+	want := []string{
+		BenchmarkWorkflowBlockBenchmarkCaseNotValid,
+		BenchmarkWorkflowBlockParameterSetMismatch,
+	}
+	if admission.CanRecord {
+		t.Fatalf("expected benchmark run admission to be blocked")
+	}
+	if !reflect.DeepEqual(admission.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", admission.BlockingReasons, want)
+	}
+}
+
+func TestEvaluateBenchmarkRunAdmissionBlocksMissingCaseAndDefaultParameterSet(t *testing.T) {
+	admission := EvaluateBenchmarkRunAdmission(BenchmarkRunAdmissionInput{
+		BenchmarkCaseFound:    false,
+		BenchmarkCaseStatus:   BenchmarkCaseStatusValidated,
+		DefaultParameterSetID: "",
+		RequestedParameterSet: "ps_default",
+	})
+	want := []string{
+		BenchmarkWorkflowBlockBenchmarkCaseNotFound,
+		BenchmarkWorkflowBlockParameterSetMismatch,
+	}
+	if admission.CanRecord {
+		t.Fatalf("expected benchmark run admission to be blocked")
+	}
+	if !reflect.DeepEqual(admission.BlockingReasons, want) {
+		t.Fatalf("blocking reasons mismatch: got %#v want %#v", admission.BlockingReasons, want)
+	}
+}
+
 func TestEvaluateBenchmarkCasePromotionReadinessReady(t *testing.T) {
 	readiness := EvaluateBenchmarkCasePromotionReadiness(BenchmarkCasePromotionReadinessInput{
 		BenchmarkRunStatus:   BenchmarkRunStatusPassed,
