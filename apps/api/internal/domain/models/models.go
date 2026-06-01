@@ -88,6 +88,17 @@ type ParameterSetPromotionGate struct {
 	CanPromoteToApproved bool
 }
 
+type ModelRunProductionGateInput struct {
+	ModelVersionStatus string
+	ParameterSetStatus string
+}
+
+type ModelRunProductionGate struct {
+	ModelVersionActive   bool
+	ParameterSetApproved bool
+	ProductionAllowed    bool
+}
+
 type BenchmarkCasePromotionReadinessInput struct {
 	BenchmarkRunStatus   string
 	ParameterHashMatches bool
@@ -322,6 +333,16 @@ func EvaluateParameterSetPromotionGate(input ParameterSetPromotionGateInput) Par
 			input.BenchmarkCasesChecked > 0 &&
 			input.BenchmarkCasesPassed == input.BenchmarkCasesChecked &&
 			len(blockingReasons) == 0,
+	}
+}
+
+func EvaluateModelRunProductionGate(input ModelRunProductionGateInput) ModelRunProductionGate {
+	modelVersionActive := strings.TrimSpace(input.ModelVersionStatus) == ModelVersionStatusActive
+	parameterSetApproved := strings.TrimSpace(input.ParameterSetStatus) == ParameterSetStatusApproved
+	return ModelRunProductionGate{
+		ModelVersionActive:   modelVersionActive,
+		ParameterSetApproved: parameterSetApproved,
+		ProductionAllowed:    modelVersionActive && parameterSetApproved,
 	}
 }
 

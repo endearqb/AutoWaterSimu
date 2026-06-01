@@ -1,3 +1,37 @@
+# 2026-06-01 AutoWaterSimu Next models production governance gate split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and evidence governance call sites
+- [x] Confirm next aligned gap: evidence governance `production_allowed` active+approved predicate still lived in compute workflow code
+- [x] Add `ModelRunProductionGateInput`, `ModelRunProductionGate`, and `EvaluateModelRunProductionGate` to `apps/api/internal/domain/models` with direct tests
+- [x] Route `EvidenceGovernanceService` model governance allowed check through the domain models helper while preserving catalog lookup and evidence package assembly
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure production governance predicate: active model version and approved matching default parameter set.
+- Keep catalog lookup, model_run parsing, status extraction, evidence package assembly, production-readiness DTO mapping, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and approval boundaries unchanged.
+- Treat this as another small `domain/models` package movement step, not the full model governance or evidence governance package split.
+
+## Review
+
+- Added `ModelRunProductionGateInput`, `ModelRunProductionGate`, and `EvaluateModelRunProductionGate` to `apps/api/internal/domain/models`.
+- Added direct domain tests for active+approved allow, inactive model version block, non-approved parameter set block, empty status block, and whitespace normalization.
+- Updated `EvidenceGovernanceService` model governance assembly to delegate `production_allowed` to the domain models helper while preserving existing catalog lookup, status extraction, evidence package assembly, production-readiness DTO mapping, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and approval boundaries.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, Certainty/Elegance checklist, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/models ./internal/compute -run "Test(EvaluateModelRunProductionGate|ProductionReadiness|EvidencePackage|NewSystemEvidenceReferenceE2E|ModelCatalog|DefaultParameterSetPromotionPlan)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, but the worktree is dirty because this task's files and an unrelated untracked rebuild plan file are present.
+  - `git diff --check -- apps\api docs tasks .ai` passed with LF/CRLF warnings only.
+  - `rg -n "schema_version|P0|P1|P2" docs\rebuild --glob "AutoWaterSimu_Next_*.md"` completed and returned the expected rebuild document references.
+- Remaining scope:
+  - Full model governance package movement is not complete; catalog snapshot mutation, benchmark query orchestration, benchmark run persistence workflow, promotion workflow orchestration, HTTP mapping, and DTOs remain in compute compatibility wiring.
+  - Full evidence governance package movement is not complete; store-backed evidence assembly, model catalog/artifact/process graph callbacks, response DTOs, and HTTP mapping remain in compute compatibility wiring.
+  - Full jobs lifecycle, full artifact lifecycle, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next artifacts retention action planner split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/artifacts/compute READMEs, and retention sweep call sites

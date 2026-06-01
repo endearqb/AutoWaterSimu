@@ -463,7 +463,11 @@ func modelGovernance(catalog ModelCatalogResponse, modelKey, modelVersion, param
 				parameterSetID = version.DefaultParameterSet.ParameterSetID
 				parameterSetStatus = version.DefaultParameterSet.Status
 			}
-			return modelStatus, parameterSetID, parameterSetStatus, modelStatus == "active" && parameterSetStatus == "approved"
+			gate := domainmodels.EvaluateModelRunProductionGate(domainmodels.ModelRunProductionGateInput{
+				ModelVersionStatus: modelStatus,
+				ParameterSetStatus: parameterSetStatus,
+			})
+			return modelStatus, parameterSetID, parameterSetStatus, gate.ProductionAllowed
 		}
 	}
 	return "unknown", "", "unknown", false

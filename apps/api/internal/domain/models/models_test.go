@@ -437,6 +437,33 @@ func TestEvaluateParameterSetPromotionGatePreservesCaseBlockingReasons(t *testin
 	}
 }
 
+func TestEvaluateModelRunProductionGate(t *testing.T) {
+	gate := EvaluateModelRunProductionGate(ModelRunProductionGateInput{
+		ModelVersionStatus: " " + ModelVersionStatusActive + " ",
+		ParameterSetStatus: " " + ParameterSetStatusApproved + " ",
+	})
+	if !gate.ModelVersionActive || !gate.ParameterSetApproved || !gate.ProductionAllowed {
+		t.Fatalf("expected active approved model run to be production allowed: %#v", gate)
+	}
+
+	for _, input := range []ModelRunProductionGateInput{
+		{ModelVersionStatus: "retired", ParameterSetStatus: ParameterSetStatusApproved},
+		{ModelVersionStatus: ModelVersionStatusActive, ParameterSetStatus: ParameterSetStatusValidated},
+		{ModelVersionStatus: "", ParameterSetStatus: ""},
+	} {
+		gate := EvaluateModelRunProductionGate(input)
+		if gate.ProductionAllowed {
+			t.Fatalf("expected production gate to block %#v, got %#v", input, gate)
+		}
+		if gate.ModelVersionActive != (input.ModelVersionStatus == ModelVersionStatusActive) {
+			t.Fatalf("unexpected model active flag for %#v: %#v", input, gate)
+		}
+		if gate.ParameterSetApproved != (input.ParameterSetStatus == ParameterSetStatusApproved) {
+			t.Fatalf("unexpected parameter approved flag for %#v: %#v", input, gate)
+		}
+	}
+}
+
 func TestInvalidRawReturnsEmptyValues(t *testing.T) {
 	raw := json.RawMessage(`{`)
 	if id := RunIDFromRaw(raw); id != "" {
