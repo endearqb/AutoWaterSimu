@@ -169,47 +169,47 @@ func (svc *ArtifactLifecycleService) SweepArtifactRetention(ctx context.Context,
 		if err != nil {
 			return ArtifactRetentionSweepReport{}, err
 		}
-		if len(blockingRefs) > 0 {
-			action.Action = "skipped"
-			action.Reason = "referenced_by_model_run"
-			action.BlockingRefs = blockingRefs
+		plan := domainartifacts.EvaluateRetentionAction(domainartifacts.RetentionActionInput{
+			Policy:          artifact.RetentionPolicy,
+			HasBlockingRefs: len(blockingRefs) > 0,
+			ArchiveEnabled:  svc.archiveArtifacts != nil,
+			DryRun:          options.DryRun,
+		})
+		if plan.Action == domainartifacts.RetentionActionSkipped {
+			action.Action = plan.Action
+			action.Reason = plan.Reason
+			if len(blockingRefs) > 0 {
+				action.BlockingRefs = blockingRefs
+			}
 			report.Skipped++
 			report.Items = append(report.Items, action)
 			continue
 		}
-		if artifact.RetentionPolicy == domainartifacts.PolicyArchiveCandidate {
-			if svc.archiveArtifacts == nil {
-				action.Action = "skipped"
-				action.Reason = "archive_executor_not_configured"
-				report.Skipped++
-				report.Items = append(report.Items, action)
-				continue
-			}
-			if options.DryRun {
-				action.Action = "would_archive"
-				report.Items = append(report.Items, action)
-				continue
-			}
+		if plan.ShouldArchive {
 			archive, err := svc.archiveArtifact(ctx, artifact, now)
 			if err != nil {
 				return ArtifactRetentionSweepReport{}, err
 			}
-			action.Action = "archived"
+			action.Action = plan.Action
 			action.ArchiveProvider = archive.ArchiveProvider
 			action.ArchiveObjectKey = archive.ArchiveObjectKey
 			report.Archived++
 			report.Items = append(report.Items, action)
 			continue
 		}
-		if artifact.RetentionPolicy != domainartifacts.PolicyTTL {
-			action.Action = "skipped"
-			action.Reason = "unsupported_retention_policy"
-			report.Skipped++
+		if plan.Action == domainartifacts.RetentionActionWouldArchive {
+			action.Action = plan.Action
 			report.Items = append(report.Items, action)
 			continue
 		}
-		if options.DryRun {
-			action.Action = "would_delete"
+		if plan.Action == domainartifacts.RetentionActionWouldDelete {
+			action.Action = plan.Action
+			report.Items = append(report.Items, action)
+			continue
+		}
+		if !plan.ShouldDelete {
+			action.Action = plan.Action
+			action.Reason = plan.Reason
 			report.Items = append(report.Items, action)
 			continue
 		}
@@ -245,7 +245,7 @@ func (svc *ArtifactLifecycleService) SweepArtifactRetention(ctx context.Context,
 		if err := svc.metadata.DeleteArtifact(ctx, artifact.ArtifactID, event); err != nil {
 			return ArtifactRetentionSweepReport{}, err
 		}
-		action.Action = "deleted"
+		action.Action = plan.Action
 		report.Deleted++
 		report.Items = append(report.Items, action)
 	}

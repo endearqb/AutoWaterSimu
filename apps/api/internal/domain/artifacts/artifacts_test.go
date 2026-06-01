@@ -52,3 +52,62 @@ func TestIsRetentionCandidate(t *testing.T) {
 		}
 	}
 }
+
+func TestEvaluateRetentionActionSkipsBlockingRefs(t *testing.T) {
+	plan := EvaluateRetentionAction(RetentionActionInput{
+		Policy:          PolicyTTL,
+		HasBlockingRefs: true,
+		ArchiveEnabled:  true,
+	})
+	if plan.Action != RetentionActionSkipped || plan.Reason != RetentionReasonReferencedByModelRun || plan.ShouldDelete || plan.ShouldArchive {
+		t.Fatalf("unexpected retention action plan: %#v", plan)
+	}
+}
+
+func TestEvaluateRetentionActionArchiveCandidate(t *testing.T) {
+	plan := EvaluateRetentionAction(RetentionActionInput{Policy: PolicyArchiveCandidate})
+	if plan.Action != RetentionActionSkipped || plan.Reason != RetentionReasonArchiveExecutorMissing {
+		t.Fatalf("expected archive candidate without backend to be skipped, got %#v", plan)
+	}
+
+	plan = EvaluateRetentionAction(RetentionActionInput{
+		Policy:         PolicyArchiveCandidate,
+		ArchiveEnabled: true,
+		DryRun:         true,
+	})
+	if plan.Action != RetentionActionWouldArchive || plan.ShouldArchive || plan.ShouldDelete || plan.Reason != "" {
+		t.Fatalf("expected dry-run archive plan, got %#v", plan)
+	}
+
+	plan = EvaluateRetentionAction(RetentionActionInput{
+		Policy:         PolicyArchiveCandidate,
+		ArchiveEnabled: true,
+	})
+	if plan.Action != RetentionActionArchived || !plan.ShouldArchive || plan.ShouldDelete || plan.Reason != "" {
+		t.Fatalf("expected archive execution plan, got %#v", plan)
+	}
+}
+
+func TestEvaluateRetentionActionTTL(t *testing.T) {
+	plan := EvaluateRetentionAction(RetentionActionInput{Policy: PolicyTTL, DryRun: true})
+	if plan.Action != RetentionActionWouldDelete || plan.ShouldDelete || plan.ShouldArchive || plan.Reason != "" {
+		t.Fatalf("expected dry-run delete plan, got %#v", plan)
+	}
+
+	plan = EvaluateRetentionAction(RetentionActionInput{Policy: " " + PolicyTTL + " "})
+	if plan.Action != RetentionActionDeleted || !plan.ShouldDelete || plan.ShouldArchive || plan.Reason != "" {
+		t.Fatalf("expected delete execution plan, got %#v", plan)
+	}
+}
+
+func TestEvaluateRetentionActionUnsupportedPolicy(t *testing.T) {
+	for _, policy := range []string{"", PolicyRetainForever, "delete_now"} {
+		plan := EvaluateRetentionAction(RetentionActionInput{
+			Policy:         policy,
+			ArchiveEnabled: true,
+		})
+		if plan.Action != RetentionActionSkipped || plan.Reason != RetentionReasonUnsupportedPolicy || plan.ShouldDelete || plan.ShouldArchive {
+			t.Fatalf("expected unsupported policy skip for %q, got %#v", policy, plan)
+		}
+	}
+}

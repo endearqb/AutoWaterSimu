@@ -7,7 +7,7 @@
 本目录负责：
 
 - jobs、workers、artifacts、models、evidence、simulation、agent 等业务领域边界。
-- 已稳定的 artifact retention policy 解析和候选判断规则。
+- 已稳定的 artifact retention policy 解析、候选判断和 retention sweep action planning 规则。
 - 已稳定的 evidence input/ref/risk parsing、result explanation evidence ref 提取与 production-readiness policy 规则。
 - 已稳定的 compute job status 与 worker claim matching 不变量。
 - 已稳定的 `model_run.v1` identity、evidence refs、warnings、parameter_hash 解析与 identity/hash 比对规则，`benchmark_run.v1` evidence refs 解析规则，benchmark workflow gate，default parameter set status 常量/迁移不变量、单个 benchmark case promotion readiness 判定，以及 default parameter set promotion gate 判定。
@@ -25,7 +25,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
-| `artifacts/` | artifact retention policy parsing and candidate helpers |
+| `artifacts/` | artifact retention policy parsing, candidate checks, and sweep action planning helpers |
 | `evidence/` | evidence input/ref/risk parsing, result explanation ref extraction, and readiness policy helpers |
 | `jobs/` | compute job status constants, worker claim matching, and invariant helpers |
 | `models/` | model_run identity/ref/warning/check helpers, benchmark_run evidence ref helpers, benchmark workflow gates, benchmark case readiness helper, parameter-set status invariants, and promotion gate policy |

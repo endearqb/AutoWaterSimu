@@ -12,9 +12,37 @@ const (
 	PolicyArchiveCandidate = "archive_candidate"
 )
 
+const (
+	RetentionActionSkipped      = "skipped"
+	RetentionActionWouldArchive = "would_archive"
+	RetentionActionArchived     = "archived"
+	RetentionActionWouldDelete  = "would_delete"
+	RetentionActionDeleted      = "deleted"
+)
+
+const (
+	RetentionReasonReferencedByModelRun   = "referenced_by_model_run"
+	RetentionReasonArchiveExecutorMissing = "archive_executor_not_configured"
+	RetentionReasonUnsupportedPolicy      = "unsupported_retention_policy"
+)
+
 type Retention struct {
 	Policy      string
 	RetainUntil *time.Time
+}
+
+type RetentionActionInput struct {
+	Policy          string
+	HasBlockingRefs bool
+	ArchiveEnabled  bool
+	DryRun          bool
+}
+
+type RetentionActionPlan struct {
+	Action        string
+	Reason        string
+	ShouldArchive bool
+	ShouldDelete  bool
 }
 
 func RetentionFromMetadata(metadata map[string]any) (Retention, error) {
@@ -44,6 +72,44 @@ func IsRetentionCandidate(policy string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func EvaluateRetentionAction(input RetentionActionInput) RetentionActionPlan {
+	if input.HasBlockingRefs {
+		return RetentionActionPlan{
+			Action: RetentionActionSkipped,
+			Reason: RetentionReasonReferencedByModelRun,
+		}
+	}
+	switch strings.TrimSpace(input.Policy) {
+	case PolicyArchiveCandidate:
+		if !input.ArchiveEnabled {
+			return RetentionActionPlan{
+				Action: RetentionActionSkipped,
+				Reason: RetentionReasonArchiveExecutorMissing,
+			}
+		}
+		if input.DryRun {
+			return RetentionActionPlan{Action: RetentionActionWouldArchive}
+		}
+		return RetentionActionPlan{
+			Action:        RetentionActionArchived,
+			ShouldArchive: true,
+		}
+	case PolicyTTL:
+		if input.DryRun {
+			return RetentionActionPlan{Action: RetentionActionWouldDelete}
+		}
+		return RetentionActionPlan{
+			Action:       RetentionActionDeleted,
+			ShouldDelete: true,
+		}
+	default:
+		return RetentionActionPlan{
+			Action: RetentionActionSkipped,
+			Reason: RetentionReasonUnsupportedPolicy,
+		}
 	}
 }
 

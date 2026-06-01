@@ -1,3 +1,34 @@
+# 2026-06-01 AutoWaterSimu Next artifacts retention action planner split TODO
+
+- [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/artifacts/compute READMEs, and retention sweep call sites
+- [x] Confirm next aligned gap: retention sweep action/reason selection still lived in compute workflow code
+- [x] Add `RetentionActionInput`, `RetentionActionPlan`, `EvaluateRetentionAction`, and action/reason constants to `apps/api/internal/domain/artifacts` with direct tests
+- [x] Route `ArtifactLifecycleService.SweepArtifactRetention` through the domain artifacts helper while preserving object-store/archive/delete/audit execution in compute
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only pure retention action planning: blocking reference skip, archive executor missing skip, archive dry-run/execution action, ttl dry-run/delete action, and unsupported policy skip.
+- Keep artifact object storage, archive copy/checksum/delete, metadata persistence, audit envelopes, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and scheduler wiring unchanged.
+- Treat this as another small `domain/artifacts` package movement step, not the full artifact lifecycle package split.
+
+## Review
+
+- Added retention action/reason constants, `RetentionActionInput`, `RetentionActionPlan`, and `EvaluateRetentionAction` to `apps/api/internal/domain/artifacts`.
+- Added direct domain tests for blocking refs, archive candidate without backend, archive dry-run/execution, ttl dry-run/delete, and unsupported policies.
+- Updated `ArtifactLifecycleService.SweepArtifactRetention` to delegate action selection to the domain helper while preserving existing compute-owned archive/delete execution, audit envelopes, metadata updates, object-store calls, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and scheduler behavior.
+- Updated API/internal/domain/artifacts/compute READMEs, architecture/current-state, Certainty/Elegance checklist, and `.ai/changes`.
+- Verification:
+  - `cd apps\api; go test ./internal/domain/artifacts ./internal/compute -run "Test(EvaluateRetentionAction|ArtifactRetention|HTTPArtifactRetention|S3ArtifactStore)" -count=1` passed.
+  - `cd apps\api; go test ./...` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1` passed.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed; service constructors audited: 10, internal Go package dirs: 12.
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1` passed; evidence status `passed`, but the worktree is dirty because this task's files and an unrelated untracked rebuild plan file are present.
+- Remaining scope:
+  - Full artifact lifecycle package movement is not complete; object-store abstractions, archive execution, metadata persistence, audit envelopes, HTTP mapping, and scheduler wiring remain in compute compatibility wiring.
+  - Full jobs lifecycle, full model governance, full evidence governance, full simulation input/process graph metadata service handling, and agent domain packages remain follow-up.
+
 # 2026-06-01 AutoWaterSimu Next models benchmark workflow gate split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model governance call sites
