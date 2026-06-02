@@ -46,7 +46,8 @@
 
 | 文件 | 作用 |
 |---|---|
-| `http.go` | HTTP handlers and route mapping; platform HTTP helpers live in `../platform/httpx` |
+| `http.go` | server entrypoint, route mapping, health/ready routes, and panic recovery; platform HTTP helpers live in `../platform/httpx` |
+| `http_jobs.go`、`http_artifacts.go`、`http_models.go`、`http_contracts.go`、`http_simulation.go`、`http_workers.go`、`http_metrics.go` | HTTP handlers and request helpers split by route group while preserving `Routes` registrations |
 | `service.go` | remaining lifecycle orchestration and compatibility delegates; built-in model catalog fallback uses `../domain/models` for stable document shape and simulation check job document assembly/execution profile uses `../domain/simulation` |
 | `job_lifecycle.go` | job create, list/read, events, cancel, complete/fail, timeout sweep, and model-run persistence with narrow job/model-run dependencies; stable failed-worker fallback result construction and worker-result completion interpretation live in `../domain/jobs`, compute_result model_run extraction/precheck lives in `../domain/models`, and stored result summary risk projection lives in `../domain/evidence` |
 | `artifact_lifecycle.go` | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow with narrow store/object-store dependencies and `../domain/artifacts` retention policy/action planner helpers |

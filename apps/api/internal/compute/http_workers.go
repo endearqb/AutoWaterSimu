@@ -1,0 +1,124 @@
+package compute
+
+import (
+	"encoding/json"
+	"net/http"
+	"strings"
+)
+
+func (server *Server) registerWorker(w http.ResponseWriter, r *http.Request) {
+	if _, err := server.auth.Principal(r, "worker:register"); err != nil {
+		WriteError(w, err)
+		return
+	}
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	var request map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		WriteError(w, ValidationError("worker register JSON is invalid"))
+		return
+	}
+	worker, err := server.service.RegisterWorker(r.Context(), request)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	WriteJSON(w, http.StatusOK, worker)
+}
+
+func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
+	rest := strings.TrimPrefix(r.URL.Path, "/api/v1/workers/")
+	parts := strings.Split(strings.Trim(rest, "/"), "/")
+	if len(parts) < 2 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	workerID := parts[0]
+	switch {
+	case len(parts) == 2 && parts[1] == "claim":
+		if _, err := server.auth.Principal(r, "worker:claim"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		result, err := server.service.Claim(r.Context(), workerID)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, result)
+	case len(parts) == 2 && parts[1] == "heartbeat":
+		if _, err := server.auth.Principal(r, "worker:heartbeat"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		var request struct {
+			JobID string `json:"job_id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&request)
+		result, err := server.service.Heartbeat(r.Context(), workerID, request.JobID)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, result)
+	case len(parts) == 4 && parts[1] == "jobs" && parts[3] == "artifact":
+		if _, err := server.auth.Principal(r, "artifact:write"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		if err := r.ParseMultipartForm(32 << 20); err != nil {
+			WriteError(w, ValidationError("multipart artifact upload is invalid"))
+			return
+		}
+		file, _, err := r.FormFile("file")
+		if err != nil {
+			WriteError(w, ValidationError("multipart file is required"))
+			return
+		}
+		defer file.Close()
+		artifact, err := server.service.UploadArtifact(r.Context(), workerID, parts[2], r.FormValue("metadata"), file)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, artifact)
+	case len(parts) == 4 && parts[1] == "jobs" && (parts[3] == "succeed" || parts[3] == "fail"):
+		if _, err := server.auth.Principal(r, "job:write"); err != nil {
+			WriteError(w, err)
+			return
+		}
+		var request map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			WriteError(w, ValidationError("worker completion JSON is invalid"))
+			return
+		}
+		attempt := int(numberValue(request, "attempt"))
+		var snapshot JobSnapshot
+		var err error
+		if parts[3] == "succeed" {
+			result, ok := request["compute_result"].(map[string]any)
+			if !ok {
+				result = request
+			}
+			snapshot, err = server.service.Complete(r.Context(), workerID, parts[2], attempt, result)
+		} else {
+			snapshot, err = server.service.Fail(r.Context(), workerID, parts[2], attempt, stringValue(request, "error_code"), stringValue(request, "error_message"))
+		}
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, snapshot)
+	default:
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func numberValue(value map[string]any, key string) float64 {
+	if raw, ok := value[key].(float64); ok {
+		return raw
+	}
+	return 0
+}

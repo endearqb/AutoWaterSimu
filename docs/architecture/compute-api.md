@@ -2,7 +2,7 @@
 
 > Snapshot date: 2026-06-02.
 
-This document records the current Go Compute API boundary after the first Store/interface split, the MemoryStore domain file split, the current service-constructor narrowing slices, the first platform helper package movement, and the first agent/artifacts/evidence/jobs/models/simulation/workers domain package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/domain/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
+This document records the current Go Compute API boundary after the first Store/interface split, the MemoryStore domain file split, the HTTP route-group handler file split, the current service-constructor narrowing slices, the first platform helper package movement, and the first agent/artifacts/evidence/jobs/models/simulation/workers domain package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/domain/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
@@ -14,7 +14,7 @@ The script writes evidence to `tmp/architecture-evidence/compute-api-boundary.js
 
 The Compute API domain is still mostly wired through the modular-monolith compatibility package under `apps/api/internal/compute`. The first agent/artifacts/evidence/jobs/models/simulation/workers domain packages now live under `apps/api/internal/domain`, and the first non-domain platform packages, including contract schema validation, live under `apps/api/internal/platform`.
 
-The aggregate `Store` is expressed as embedded domain metadata interfaces. Job create/list/read/events, cancel, complete/fail, and timeout logic now lives behind `JobLifecycleService`; artifact upload / listing / metadata lookup / download / retention / archive logic now lives behind `ArtifactLifecycleService`; worker register / claim / heartbeat now lives behind `WorkerLifecycleService`; simulation input registration, process graph registration, and `simulation_request.input_ref` resolution now live behind `SimulationInputService`; draft confirmation / promotion workflows now live behind `DraftWorkflowService`; result explanation submit/review/publish now lives behind `ResultExplanationService`; model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing now live behind `ModelGovernanceService`; result read, evidence package export, production readiness, and evidence-ref resolution now live behind `EvidenceGovernanceService`; metrics snapshot reads now live behind `MetricsService`. Internal domain service constructors now expose 1-3 store-like parameters and the audit fails if they accept the aggregate `Store`.
+The aggregate `Store` is expressed as embedded domain metadata interfaces. `http.go` keeps the server entrypoint and unchanged route registration block while route handlers live in route-group files. Job create/list/read/events, cancel, complete/fail, and timeout logic now lives behind `JobLifecycleService`; artifact upload / listing / metadata lookup / download / retention / archive logic now lives behind `ArtifactLifecycleService`; worker register / claim / heartbeat now lives behind `WorkerLifecycleService`; simulation input registration, process graph registration, and `simulation_request.input_ref` resolution now live behind `SimulationInputService`; draft confirmation / promotion workflows now live behind `DraftWorkflowService`; result explanation submit/review/publish now lives behind `ResultExplanationService`; model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing now live behind `ModelGovernanceService`; result read, evidence package export, production readiness, and evidence-ref resolution now live behind `EvidenceGovernanceService`; metrics snapshot reads now live behind `MetricsService`. Internal domain service constructors now expose 1-3 store-like parameters and the audit fails if they accept the aggregate `Store`.
 
 The wider `Service` still owns package-level construction and compatibility delegates, so this is not yet a full domain package split.
 
@@ -78,7 +78,14 @@ Selected files from the latest audit:
 | `metrics.go` | 7 | compatibility aliases for platform metrics collector |
 | `contract_validation.go` | 15 | compatibility wrapper over platform contract document validation |
 | `postgres.go` | 1489 | PostgreSQL store implementation and migrations smoke helpers |
-| `http.go` | 1088 | route handlers and HTTP mapping |
+| `http_models.go` | 344 | model catalog, benchmark run, and model run HTTP handlers/helpers |
+| `http_jobs.go` | 258 | compute job HTTP handlers, job subroutes, list filter, and job data-scope helper |
+| `http_simulation.go` | 138 | simulation input, process graph, and simulation-check HTTP handlers/helpers |
+| `http_workers.go` | 124 | worker register/claim/heartbeat/artifact/completion HTTP handlers/helpers |
+| `http_contracts.go` | 103 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
+| `http_artifacts.go` | 86 | artifact download and retention sweep HTTP handlers/helpers |
+| `http.go` | 63 | server entrypoint, route registration, health/ready routes, and panic recovery |
+| `http_metrics.go` | 20 | Prometheus metrics HTTP handler |
 | `memory_models.go` | 252 | in-memory model run, benchmark run, and model catalog metadata store implementation |
 | `memory_jobs.go` | 235 | in-memory job metadata store implementation and shared memory cursor/list helpers |
 | `memory_artifacts.go` | 168 | in-memory artifact metadata and archive metadata store implementation |

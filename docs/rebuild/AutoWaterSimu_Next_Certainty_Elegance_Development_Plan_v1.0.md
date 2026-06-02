@@ -492,6 +492,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 
 - [x] Store aggregate embeds domain store interfaces
 - [x] MemoryStore implementation split into same-package domain files
+- [x] HTTP handlers split into same-package route-group files
 - [x] Artifact lifecycle service constructor narrowed
 - [x] Artifact upload / listing joined artifact lifecycle service boundary
 - [x] Simulation input / process graph service constructor narrowed
