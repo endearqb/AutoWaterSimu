@@ -400,9 +400,9 @@ $internalDir = Join-Path $root "apps\api\internal"
 $domainDir = Join-Path $internalDir "domain"
 $platformDir = Join-Path $internalDir "platform"
 $storeInterfacePath = Join-Path $computeDir "store_interfaces.go"
-$postgresPath = Join-Path $computeDir "postgres.go"
+$postgresEntrypointPath = Join-Path $computeDir "postgres.go"
 $servicePath = Join-Path $computeDir "service.go"
-foreach ($path in @($computeDir, $storeInterfacePath, $postgresPath, $servicePath)) {
+foreach ($path in @($computeDir, $storeInterfacePath, $postgresEntrypointPath, $servicePath)) {
     if (-not (Test-Path -LiteralPath $path)) {
         throw "Missing required Compute API path: $path"
     }
@@ -413,7 +413,11 @@ $memoryPaths = @($goFiles | Where-Object { $_.Name -like "memory_*.go" })
 if ($memoryPaths.Count -eq 0) {
     throw "Missing MemoryStore domain implementation files under $computeDir"
 }
-$storeImplementationNames = @("store_interfaces.go", "postgres.go") + @($memoryPaths | ForEach-Object { $_.Name })
+$postgresPaths = @($goFiles | Where-Object { $_.Name -like "postgres*.go" })
+if ($postgresPaths.Count -eq 0) {
+    throw "Missing PostgresStore implementation files under $computeDir"
+}
+$storeImplementationNames = @("store_interfaces.go") + @($memoryPaths | ForEach-Object { $_.Name }) + @($postgresPaths | ForEach-Object { $_.Name })
 $serviceLayerFiles = @(
     $goFiles | Where-Object {
         -not $_.Name.EndsWith("_test.go") -and $_.Name -notin $storeImplementationNames
@@ -451,7 +455,7 @@ $storeEmbeddedInterfaces = @(Get-StoreEmbeddedInterfaces -StorePath $storeInterf
 $storeInterfaceSummary = @(Get-StoreInterfaceSummary -StorePath $storeInterfacePath)
 $missingExpectedStoreEmbeds = @(Get-MissingExpectedStoreEmbeds -EmbeddedInterfaces $storeEmbeddedInterfaces)
 $memoryMethods = Get-ImplementedMethodsInFiles -Paths @($memoryPaths | ForEach-Object { $_.FullName }) -ReceiverType "MemoryStore"
-$postgresMethods = Get-ImplementedMethods -Path $postgresPath -ReceiverType "PostgresStore"
+$postgresMethods = Get-ImplementedMethodsInFiles -Paths @($postgresPaths | ForEach-Object { $_.FullName }) -ReceiverType "PostgresStore"
 $serviceStoreCalls = Get-ServiceStoreCalls -ServicePaths @($serviceAuditFiles | ForEach-Object { $_.FullName }) -StoreMethods $storeMethods
 $serviceCalls = $serviceStoreCalls["calls"]
 $serviceCallSources = $serviceStoreCalls["sources"]

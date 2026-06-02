@@ -493,6 +493,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Store aggregate embeds domain store interfaces
 - [x] MemoryStore implementation split into same-package domain files
 - [x] HTTP handlers split into same-package route-group files
+- [x] PostgreSQL persistence split into same-package domain files
 - [x] Artifact lifecycle service constructor narrowed
 - [x] Artifact upload / listing joined artifact lifecycle service boundary
 - [x] Simulation input / process graph service constructor narrowed
@@ -538,7 +539,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Simulation check job document helper package split (`apps/api/internal/domain/simulation`)
 - [x] First worker domain package split (`apps/api/internal/domain/workers`)
 - [x] Domain package reverse-dependency guard in `check-deps`
-- [ ] Go API domain package split
+- [x] Go API domain package split（file-level Store/MemoryStore、HTTP route group、PostgreSQL persistence split complete；`service.go` 后续随 domain workflow 迁出继续瘦身）
 
 ---
 

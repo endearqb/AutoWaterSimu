@@ -10,7 +10,11 @@
 - [x] Stage 2: update README/architecture/checklists/change records
 - [x] Stage 2: run full stage validation
 - [x] Stage 2: commit and push
-- [ ] Stage 3: split `postgres.go` persistence by domain, run DB smoke when configured, validate, commit, and push
+- [x] Stage 3: split `postgres.go` persistence by domain
+- [x] Stage 3: update Compute API boundary audit to scan all `postgres*.go` for PostgresStore method coverage
+- [x] Stage 3: update README/architecture/checklists/change records
+- [x] Stage 3: run full stage validation and configured DB smoke
+- [x] Stage 3: commit and push
 
 ## Plan
 
@@ -26,6 +30,8 @@
 - Stage 1 validation passed: `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
 - Stage 2 kept `http.go` as the server entrypoint with unchanged `Routes` registration and panic recovery, then moved handlers/helpers into `http_jobs.go`, `http_artifacts.go`, `http_models.go`, `http_contracts.go`, `http_simulation.go`, `http_workers.go`, and `http_metrics.go`.
 - Stage 2 validation passed: `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Stage 3 kept `postgres.go` as the PostgreSQL store entrypoint and migration helper file, then moved persistence methods/select SQL/scan helpers into `postgres_jobs.go`, `postgres_artifacts.go`, `postgres_models.go`, `postgres_simulation.go`, `postgres_agent.go`, `postgres_workers.go`, `postgres_metrics.go`, and `postgres_sql_helpers.go`.
+- Stage 3 validation passed: `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only. PostgreSQL migration smoke was skipped because `COMPUTE_API_DATABASE_URL` is absent.
 
 # 2026-06-02 AutoWaterSimu Next benchmark case job document split TODO
 
