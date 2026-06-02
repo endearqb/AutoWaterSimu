@@ -116,6 +116,135 @@ func TestBuiltInModelCatalogDocument(t *testing.T) {
 	}
 }
 
+func TestBuildBenchmarkCaseRunJobDocument(t *testing.T) {
+	metadata := map[string]any{
+		"project_id": "project_benchmark",
+		"note":       "keep",
+	}
+	simulationInput := map[string]any{
+		"schema_version":        "simulation_input.v1",
+		"simulation_input_id":   "si_material_balance_minimal",
+		"job_type":              "simulation.material_balance.v1",
+		"resolved_from_fixture": true,
+	}
+	execution := map[string]any{
+		"required_capabilities": []any{"material_balance", "ode"},
+	}
+	expectedMetrics := map[string]any{
+		"warning_count": 0,
+	}
+	tolerance := map[string]any{
+		"relative": 0.000001,
+	}
+	inputRef := map[string]any{
+		"simulation_input_id": "si_material_balance_minimal",
+	}
+
+	document := BuildBenchmarkCaseRunJobDocument(BenchmarkCaseRunJobDocumentInput{
+		ModelKey:           "material_balance",
+		ModelVersion:       "material_balance.v1",
+		BenchmarkCaseID:    "bc_material_balance_minimal_v1",
+		JobType:            "simulation.material_balance.v1",
+		RequestID:          "bench_req_material_balance_minimal",
+		SourceSystem:       "compute-api",
+		RequestedBy:        "tester",
+		CreatedAt:          "2026-06-02T20:45:00Z",
+		Metadata:           metadata,
+		SimulationInput:    simulationInput,
+		Execution:          execution,
+		ParameterSetID:     "ps_material_balance_default_v1",
+		ParameterHash:      "sha256:abc",
+		ParameterSetStatus: ParameterSetStatusApproved,
+		ExpectedMetrics:    expectedMetrics,
+		Tolerance:          tolerance,
+		InputRef:           inputRef,
+	})
+
+	if document.IdempotencyKey != "benchmark:bench_req_material_balance_minimal" {
+		t.Fatalf("unexpected idempotency key: %q", document.IdempotencyKey)
+	}
+	job := document.Job
+	if job["schema_version"] != "compute_job.v1" ||
+		job["job_id"] != "job_benchmark_bench_req_material_balance_minimal" ||
+		job["job_type"] != "simulation.material_balance.v1" ||
+		job["queue"] != "simulation" ||
+		job["request_id"] != "bench_req_material_balance_minimal" ||
+		job["idempotency_key"] != document.IdempotencyKey ||
+		job["created_at"] != "2026-06-02T20:45:00Z" {
+		t.Fatalf("unexpected benchmark job document: %#v", job)
+	}
+	if payload := testMap(t, job, "payload"); payload["simulation_input_id"] != "si_material_balance_minimal" {
+		t.Fatalf("unexpected payload: %#v", payload)
+	}
+	jobExecution := testMap(t, job, "execution")
+	if !reflect.DeepEqual(jobExecution["required_capabilities"], []any{"material_balance", "ode"}) {
+		t.Fatalf("unexpected execution profile: %#v", jobExecution)
+	}
+	context := testMap(t, job, "context")
+	if context["source_system"] != "compute-api" ||
+		context["requested_by"] != "tester" ||
+		context["trace_id"] != "trace_benchmark_bench_req_material_balance_minimal" ||
+		context["project_id"] != "project_benchmark" {
+		t.Fatalf("unexpected job context: %#v", context)
+	}
+	jobMetadata := testMap(t, job, "metadata")
+	if jobMetadata["note"] != "keep" ||
+		jobMetadata["source"] != "model_catalog_benchmark_case" ||
+		jobMetadata["model_key"] != "material_balance" ||
+		jobMetadata["model_version"] != "material_balance.v1" ||
+		jobMetadata["benchmark_case_id"] != "bc_material_balance_minimal_v1" ||
+		jobMetadata["parameter_set_id"] != "ps_material_balance_default_v1" ||
+		jobMetadata["parameter_hash"] != "sha256:abc" ||
+		jobMetadata["parameter_set_status"] != ParameterSetStatusApproved ||
+		jobMetadata["benchmark_run_required"] != true {
+		t.Fatalf("unexpected benchmark metadata: %#v", jobMetadata)
+	}
+	if !reflect.DeepEqual(jobMetadata["expected_metrics"], expectedMetrics) ||
+		!reflect.DeepEqual(jobMetadata["tolerance"], tolerance) ||
+		!reflect.DeepEqual(jobMetadata["input_ref"], inputRef) {
+		t.Fatalf("unexpected benchmark metadata refs: %#v", jobMetadata)
+	}
+	if _, ok := metadata["source"]; ok {
+		t.Fatalf("input metadata should not be mutated: %#v", metadata)
+	}
+}
+
+func TestBuildBenchmarkCaseRunJobDocumentDefaultsSanitizedIDs(t *testing.T) {
+	document := BuildBenchmarkCaseRunJobDocument(BenchmarkCaseRunJobDocumentInput{
+		ModelKey:        " material balance ",
+		ModelVersion:    "model/version v1",
+		BenchmarkCaseID: "bc:demo/v1",
+		JobType:         "simulation.material_balance.v1",
+		SourceSystem:    "compute-api",
+		RequestedBy:     "tester",
+		TimestampID:     "20260602204530",
+		CreatedAt:       "2026-06-02T20:45:30Z",
+		Metadata: map[string]any{
+			"tenant_id":  "tenant_a",
+			"site_id":    "site_1",
+			"project_id": "project_1",
+		},
+		SimulationInput: map[string]any{"simulation_input_id": "si_1"},
+		Execution:       map[string]any{"required_capabilities": []any{"material_balance"}},
+	})
+
+	expectedRequestID := "bench_req_material_balance_model_version_v1_bc_demo_v1_20260602204530"
+	job := document.Job
+	if job["request_id"] != expectedRequestID ||
+		job["job_id"] != "job_benchmark_"+expectedRequestID ||
+		job["idempotency_key"] != "benchmark:"+expectedRequestID ||
+		document.IdempotencyKey != "benchmark:"+expectedRequestID {
+		t.Fatalf("unexpected default ids: %#v", job)
+	}
+	context := testMap(t, job, "context")
+	if context["trace_id"] != "trace_benchmark_"+expectedRequestID ||
+		context["tenant_id"] != "tenant_a" ||
+		context["site_id"] != "site_1" ||
+		context["project_id"] != "project_1" {
+		t.Fatalf("unexpected default context: %#v", context)
+	}
+}
+
 func testMap(t *testing.T, value map[string]any, key string) map[string]any {
 	t.Helper()
 	raw, ok := value[key].(map[string]any)

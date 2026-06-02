@@ -104,53 +104,37 @@ func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context,
 	if stringValue(simulationInput, "job_type") != "" && stringValue(simulationInput, "job_type") != benchmarkCase.JobType {
 		return JobSnapshot{}, 0, ValidationError("benchmark_case job_type must match simulation_input job_type")
 	}
-	requestID := defaultString(request.RequestID, "bench_req_"+safeIDPart(modelKey)+"_"+safeIDPart(modelVersion)+"_"+safeIDPart(benchmarkCaseID)+"_"+svc.now().Format("20060102150405"))
-	jobID := defaultString(request.JobID, "job_benchmark_"+safeIDPart(requestID))
-	idempotencyKey := defaultString(request.IdempotencyKey, "benchmark:"+requestID)
-	traceID := defaultString(request.TraceID, "trace_benchmark_"+safeIDPart(requestID))
-	metadata := copyStringAnyMap(request.Metadata)
-	metadata["source"] = "model_catalog_benchmark_case"
-	metadata["model_key"] = modelKey
-	metadata["model_version"] = modelVersion
-	metadata["benchmark_case_id"] = benchmarkCaseID
-	metadata["parameter_set_id"] = parameterSet.ParameterSetID
-	metadata["parameter_hash"] = parameterSet.ParameterHash
-	metadata["parameter_set_status"] = parameterSet.Status
-	metadata["expected_metrics"] = benchmarkCase.ExpectedMetrics
-	metadata["tolerance"] = benchmarkCase.Tolerance
-	metadata["input_ref"] = benchmarkCase.InputRef
-	metadata["benchmark_run_required"] = true
-	jobContext := map[string]any{
-		"source_system": sourceSystem,
-		"requested_by":  requestedBy,
-		"trace_id":      traceID,
-	}
-	for _, key := range []string{"tenant_id", "project_id", "site_id"} {
-		if value := stringValue(request.Metadata, key); value != "" {
-			jobContext[key] = value
-		}
-	}
-	job := map[string]any{
-		"schema_version":  "compute_job.v1",
-		"job_id":          jobID,
-		"job_type":        benchmarkCase.JobType,
-		"queue":           "simulation",
-		"request_id":      requestID,
-		"idempotency_key": idempotencyKey,
-		"payload":         simulationInput,
-		"context":         jobContext,
-		"execution":       execution,
-		"created_at":      svc.now().Format(time.RFC3339Nano),
-		"metadata":        metadata,
-	}
-	jobBytes, err := json.Marshal(job)
+	jobDocument := domainmodels.BuildBenchmarkCaseRunJobDocument(domainmodels.BenchmarkCaseRunJobDocumentInput{
+		ModelKey:           modelKey,
+		ModelVersion:       modelVersion,
+		BenchmarkCaseID:    benchmarkCaseID,
+		JobType:            benchmarkCase.JobType,
+		RequestID:          request.RequestID,
+		JobID:              request.JobID,
+		IdempotencyKey:     request.IdempotencyKey,
+		TraceID:            request.TraceID,
+		SourceSystem:       sourceSystem,
+		RequestedBy:        requestedBy,
+		TimestampID:        svc.now().Format("20060102150405"),
+		CreatedAt:          svc.now().Format(time.RFC3339Nano),
+		Metadata:           request.Metadata,
+		SimulationInput:    simulationInput,
+		Execution:          execution,
+		ParameterSetID:     parameterSet.ParameterSetID,
+		ParameterHash:      parameterSet.ParameterHash,
+		ParameterSetStatus: parameterSet.Status,
+		ExpectedMetrics:    benchmarkCase.ExpectedMetrics,
+		Tolerance:          benchmarkCase.Tolerance,
+		InputRef:           benchmarkCase.InputRef,
+	})
+	jobBytes, err := json.Marshal(jobDocument.Job)
 	if err != nil {
 		return JobSnapshot{}, 0, err
 	}
 	if svc.createJob == nil {
 		return JobSnapshot{}, 0, NewAppError(500, CodeInternal, "compute job creator is not configured", true, nil)
 	}
-	return svc.createJob(ctx, jobBytes, idempotencyKey)
+	return svc.createJob(ctx, jobBytes, jobDocument.IdempotencyKey)
 }
 
 func (svc *ModelGovernanceService) RegisterModelCatalog(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ModelCatalogRecord, int, error) {

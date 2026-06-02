@@ -265,6 +265,35 @@ type BenchmarkCaseRunGate struct {
 	CanSchedule            bool
 }
 
+type BenchmarkCaseRunJobDocumentInput struct {
+	ModelKey           string
+	ModelVersion       string
+	BenchmarkCaseID    string
+	JobType            string
+	RequestID          string
+	JobID              string
+	IdempotencyKey     string
+	TraceID            string
+	SourceSystem       string
+	RequestedBy        string
+	TimestampID        string
+	CreatedAt          string
+	Metadata           map[string]any
+	SimulationInput    map[string]any
+	Execution          map[string]any
+	ParameterSetID     string
+	ParameterHash      string
+	ParameterSetStatus string
+	ExpectedMetrics    map[string]any
+	Tolerance          map[string]any
+	InputRef           map[string]any
+}
+
+type BenchmarkCaseRunJobDocument struct {
+	Job            map[string]any
+	IdempotencyKey string
+}
+
 type BenchmarkRunAdmissionInput struct {
 	BenchmarkCaseFound    bool
 	BenchmarkCaseStatus   string
@@ -468,6 +497,52 @@ func CanTransitionParameterSetStatus(fromStatus, toStatus string) bool {
 	return fromOK && toOK && to == from+1
 }
 
+func BuildBenchmarkCaseRunJobDocument(input BenchmarkCaseRunJobDocumentInput) BenchmarkCaseRunJobDocument {
+	requestID := defaultString(input.RequestID, "bench_req_"+safeIDPart(input.ModelKey)+"_"+safeIDPart(input.ModelVersion)+"_"+safeIDPart(input.BenchmarkCaseID)+"_"+input.TimestampID)
+	jobID := defaultString(input.JobID, "job_benchmark_"+safeIDPart(requestID))
+	idempotencyKey := defaultString(input.IdempotencyKey, "benchmark:"+requestID)
+	traceID := defaultString(input.TraceID, "trace_benchmark_"+safeIDPart(requestID))
+	metadata := copyStringAnyMap(input.Metadata)
+	metadata["source"] = "model_catalog_benchmark_case"
+	metadata["model_key"] = input.ModelKey
+	metadata["model_version"] = input.ModelVersion
+	metadata["benchmark_case_id"] = input.BenchmarkCaseID
+	metadata["parameter_set_id"] = input.ParameterSetID
+	metadata["parameter_hash"] = input.ParameterHash
+	metadata["parameter_set_status"] = input.ParameterSetStatus
+	metadata["expected_metrics"] = input.ExpectedMetrics
+	metadata["tolerance"] = input.Tolerance
+	metadata["input_ref"] = input.InputRef
+	metadata["benchmark_run_required"] = true
+	jobContext := map[string]any{
+		"source_system": input.SourceSystem,
+		"requested_by":  input.RequestedBy,
+		"trace_id":      traceID,
+	}
+	for _, key := range []string{"tenant_id", "project_id", "site_id"} {
+		if value := stringValue(input.Metadata, key); value != "" {
+			jobContext[key] = value
+		}
+	}
+	job := map[string]any{
+		"schema_version":  "compute_job.v1",
+		"job_id":          jobID,
+		"job_type":        input.JobType,
+		"queue":           "simulation",
+		"request_id":      requestID,
+		"idempotency_key": idempotencyKey,
+		"payload":         input.SimulationInput,
+		"context":         jobContext,
+		"execution":       input.Execution,
+		"created_at":      input.CreatedAt,
+		"metadata":        metadata,
+	}
+	return BenchmarkCaseRunJobDocument{
+		Job:            job,
+		IdempotencyKey: idempotencyKey,
+	}
+}
+
 func EvaluateBenchmarkCaseRunGate(input BenchmarkCaseRunGateInput) BenchmarkCaseRunGate {
 	modelVersionActive := input.ModelVersionStatus == ModelVersionStatusActive
 	benchmarkCaseValidated := input.BenchmarkCaseFound && input.BenchmarkCaseStatus == BenchmarkCaseStatusValidated
@@ -584,6 +659,49 @@ func stringValue(value map[string]any, key string) string {
 		return strings.TrimSpace(text)
 	}
 	return ""
+}
+
+func copyStringAnyMap(value map[string]any) map[string]any {
+	copied := make(map[string]any, len(value))
+	for key, item := range value {
+		copied[key] = item
+	}
+	return copied
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
+}
+
+func safeIDPart(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "unknown"
+	}
+	var builder strings.Builder
+	builder.Grow(len(value))
+	for _, char := range value {
+		switch {
+		case char >= 'a' && char <= 'z':
+			builder.WriteRune(char)
+		case char >= 'A' && char <= 'Z':
+			builder.WriteRune(char)
+		case char >= '0' && char <= '9':
+			builder.WriteRune(char)
+		case char == '_' || char == '-':
+			builder.WriteRune(char)
+		default:
+			builder.WriteRune('_')
+		}
+	}
+	result := strings.Trim(builder.String(), "_-")
+	if result == "" {
+		return "unknown"
+	}
+	return result
 }
 
 func stringsFromAny(value any) []string {

@@ -1,3 +1,26 @@
+# 2026-06-02 AutoWaterSimu Next benchmark case job document split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and benchmark schedule-run call sites
+- [x] Confirm next aligned gap: pure benchmark case schedule-run `compute_job.v1` document assembly still lived in model governance compatibility code
+- [x] Add a `domain/models` helper for benchmark case schedule-run job document construction, with direct tests
+- [x] Route `ModelGovernanceService.ScheduleBenchmarkCaseRun` through the domain helper while preserving catalog lookup, gate checks, execution profile lookup, simulation input resolution, job type mismatch validation, idempotent job creation, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and store writes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure benchmark case schedule-run `compute_job.v1` document assembly: default request/job/trace/idempotency ids, benchmark metadata, context propagation, payload/execution placement, queue, and created_at.
+- Keep catalog lookup, benchmark case/default parameter set gates, execution profile lookup, simulation input resolution, job type mismatch validation, JSON marshaling, idempotent createJob, store implementations, HTTP routes, OpenAPI, contracts, migrations, generated clients, and auth scopes unchanged.
+- Treat this as a small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added `domain/models.BuildBenchmarkCaseRunJobDocument` with direct tests for explicit request id behavior, benchmark metadata/context propagation, simulation input/execution placement, metadata copy safety, and sanitized default request/job/trace/idempotency ids.
+- `ModelGovernanceService.ScheduleBenchmarkCaseRun` now delegates only pure benchmark case `compute_job.v1` document assembly to `domain/models`; catalog lookup, benchmark/default parameter set gates, execution profile lookup, simulation input resolution, job_type mismatch rejection, JSON marshaling, idempotent createJob, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and store writes remain unchanged.
+- Updated API/domain/models/compute READMEs, architecture/current-state, compute-api architecture notes and audited line counts, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Validation passed: focused models/compute Go tests, `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full model governance package movement is not complete; catalog snapshot mutation, typed catalog DTOs, schema validation, benchmark query/persistence workflows, promotion orchestration, HTTP mapping, and broader jobs/artifacts/evidence/simulation/agent package movement remain future slices.
+
 # 2026-06-02 AutoWaterSimu Next built-in model catalog document split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model catalog call sites
