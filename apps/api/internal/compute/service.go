@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 	domainsimulation "autowatersimu/apps/api/internal/domain/simulation"
 	domainworkers "autowatersimu/apps/api/internal/domain/workers"
 )
@@ -429,203 +430,16 @@ func mapValue(value map[string]any, key string) map[string]any {
 }
 
 func builtInModelCatalog(generatedAt string) ModelCatalogResponse {
-	minZero := 0.0
-	minOne := 1.0
-	runtimeTemplates := func(hours float64) []ModelParameterTemplate {
-		return []ModelParameterTemplate{
-			{
-				ParameterKey: "hours",
-				DisplayName:  "Simulation horizon",
-				Unit:         "h",
-				ValueType:    "number",
-				Required:     true,
-				DefaultValue: hours,
-				MinValue:     &minZero,
-			},
-			{
-				ParameterKey: "steps_per_hour",
-				DisplayName:  "Steps per hour",
-				ValueType:    "integer",
-				Required:     true,
-				DefaultValue: 20,
-				MinValue:     &minOne,
-			},
-			{
-				ParameterKey: "tolerance",
-				DisplayName:  "Solver tolerance",
-				ValueType:    "number",
-				Required:     true,
-				DefaultValue: 0.000001,
-				MinValue:     &minZero,
-			},
-		}
-	}
-	workerSmokeBenchmark := func(modelKey, displayName, jobType, inputID, fixture, modelRunID string) ModelBenchmarkCase {
-		return ModelBenchmarkCase{
-			BenchmarkCaseID: "bc_" + modelKey + "_independent_v1",
-			DisplayName:     displayName,
-			Description:     displayName + " contract fixture covered by the worker CLI smoke matrix.",
-			JobType:         jobType,
-			InputRef: map[string]any{
-				"simulation_input_id": inputID,
-				"fixture":             fixture,
-			},
-			ExpectedMetrics: map[string]any{
-				"convergence_status": "completed",
-				"total_steps":        11,
-			},
-			Tolerance: map[string]any{
-				"relative": 0.000001,
-				"absolute": 0.000001,
-			},
-			Status:       "validated",
-			Source:       "worker_cli_smoke",
-			EvidenceRefs: []string{"model_run:" + modelRunID},
-		}
-	}
-	workerModel := func(modelKey, displayName, description, jobType, inputID, fixture, modelRunID string, hours float64) ModelCatalogModel {
-		return ModelCatalogModel{
-			ModelKey:          modelKey,
-			DisplayName:       displayName,
-			Description:       description,
-			SupportedJobTypes: []string{jobType},
-			Versions: []ModelCatalogVersion{
-				{
-					ModelVersion:       modelKey + ".v1",
-					Status:             "active",
-					Runtime:            "simulation-worker",
-					ReleasedAt:         "2026-05-30T00:00:00Z",
-					ParameterTemplates: runtimeTemplates(hours),
-					BenchmarkCases: []ModelBenchmarkCase{
-						workerSmokeBenchmark(modelKey, displayName+" independent smoke", jobType, inputID, fixture, modelRunID),
-					},
-					Metadata: map[string]any{
-						"default_parameter_set": "not_defined",
-						"parameter_hash_source": "worker_model_parameter_payload",
-					},
-				},
-			},
-		}
-	}
 	parameters := map[string]any{
 		"hours":          4,
 		"steps_per_hour": 60,
 	}
 	parameterHash, _ := ResultHash(parameters)
-	return ModelCatalogResponse{
-		SchemaVersion: "model_catalog.v1",
-		GeneratedAt:   generatedAt,
-		Models: []ModelCatalogModel{
-			{
-				ModelKey:          "material_balance",
-				DisplayName:       "Material Balance",
-				Description:       "Deterministic material-balance model for P0/P1 smoke jobs.",
-				SupportedJobTypes: []string{"simulation.material_balance.v1"},
-				Versions: []ModelCatalogVersion{
-					{
-						ModelVersion: "material_balance.v1",
-						Status:       "active",
-						Runtime:      "simulation-worker",
-						ReleasedAt:   "2026-05-25T00:00:00Z",
-						ParameterTemplates: []ModelParameterTemplate{
-							{
-								ParameterKey: "hours",
-								DisplayName:  "Simulation horizon",
-								Unit:         "h",
-								ValueType:    "number",
-								Required:     true,
-								DefaultValue: 4,
-								MinValue:     &minZero,
-							},
-							{
-								ParameterKey: "steps_per_hour",
-								DisplayName:  "Steps per hour",
-								ValueType:    "integer",
-								Required:     true,
-								DefaultValue: 60,
-								MinValue:     &minOne,
-							},
-						},
-						BenchmarkCases: []ModelBenchmarkCase{
-							{
-								BenchmarkCaseID: "bc_material_balance_minimal_v1",
-								DisplayName:     "Material balance minimal smoke",
-								Description:     "Minimal three-node material-balance case used as a reproducible P0 benchmark.",
-								JobType:         "simulation.material_balance.v1",
-								InputRef: map[string]any{
-									"simulation_input_id": "si_material_balance_minimal",
-									"fixture":             "contracts/examples/valid/material_balance_minimal.simulation_input.v1.json",
-								},
-								ExpectedMetrics: map[string]any{
-									"convergence_status": "completed",
-									"warning_count":      0,
-								},
-								Tolerance: map[string]any{
-									"relative": 0.000001,
-									"absolute": 0.000001,
-								},
-								Status:       "validated",
-								Source:       "built_in_smoke",
-								EvidenceRefs: []string{"model_run:mr_material_balance_minimal"},
-							},
-						},
-						DefaultParameterSet: &ModelParameterSet{
-							ParameterSetID: "ps_material_balance_default_v1",
-							Status:         "approved",
-							ParameterHash:  parameterHash,
-							Parameters:     parameters,
-							Metadata: map[string]any{
-								"scope": "p0_default",
-							},
-						},
-					},
-				},
-			},
-			workerModel(
-				"asm1slim",
-				"ASM1 Slim",
-				"Independent ASM1Slim model job type covered by the simulation worker smoke matrix.",
-				"simulation.asm1slim.v1",
-				"si_asm1slim_independent",
-				"contracts/examples/valid/asm1slim_independent.simulation_input.v1.json",
-				"mr_job_asm1slim_independent_asm1slim",
-				1.0,
-			),
-			workerModel(
-				"asm1",
-				"ASM1",
-				"Independent ASM1 model job type covered by the simulation worker smoke matrix.",
-				"simulation.asm1.v1",
-				"si_asm1_independent",
-				"contracts/examples/valid/asm1_independent.simulation_input.v1.json",
-				"mr_job_asm1_independent_asm1",
-				0.5,
-			),
-			workerModel(
-				"asm3",
-				"ASM3",
-				"Independent ASM3 model job type covered by the simulation worker smoke matrix.",
-				"simulation.asm3.v1",
-				"si_asm3_independent",
-				"contracts/examples/valid/asm3_independent.simulation_input.v1.json",
-				"mr_job_asm3_independent_asm3",
-				0.5,
-			),
-			workerModel(
-				"udm",
-				"UDM",
-				"Independent UDM model job type covered by the simulation worker smoke matrix.",
-				"simulation.udm.v1",
-				"si_udm_independent",
-				"contracts/examples/valid/udm_independent.simulation_input.v1.json",
-				"mr_job_udm_independent_udm",
-				0.5,
-			),
-		},
-		Metadata: map[string]any{
-			"source": "built_in",
-		},
-	}
+	document := domainmodels.BuiltInModelCatalogDocument(generatedAt, parameterHash)
+	bytes, _ := json.Marshal(document)
+	var catalog ModelCatalogResponse
+	_ = json.Unmarshal(bytes, &catalog)
+	return catalog
 }
 
 func defaultString(value, fallback string) string {

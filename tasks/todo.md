@@ -1,3 +1,27 @@
+# 2026-06-02 AutoWaterSimu Next built-in model catalog document split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and model catalog call sites
+- [x] Confirm next aligned gap: built-in `model_catalog.v1` fallback document assembly still lived in compute compatibility service code
+- [x] Add a `domain/models` helper for built-in model catalog document construction, with direct tests
+- [x] Route compute `builtInModelCatalog` through the domain helper while preserving typed DTO conversion, parameter hash generation, persisted catalog fallback behavior, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, schema validation, and store writes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure built-in `model_catalog.v1` document shape for material balance and worker smoke models into `apps/api/internal/domain/models`.
+- Keep the material-balance default parameter hash generation in compute because it depends on compute result canonicalization.
+- Keep typed DTO unmarshaling, schema validation, persisted catalog snapshot mutation, benchmark workflow orchestration, model catalog HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and store behavior unchanged.
+- Treat this as a small `domain/models` package movement step, not the full model governance package split.
+
+## Review
+
+- Added `domain/models.BuiltInModelCatalogDocument` with direct tests for catalog metadata, five built-in model entries, material-balance approved default parameter set/hash, benchmark fixture refs, worker-smoke benchmark cases, and worker models without default parameter sets.
+- `compute.builtInModelCatalog` now keeps material-balance default parameter hash generation in compute, delegates only stable built-in `model_catalog.v1` document shape to `domain/models`, and converts back into the existing `ModelCatalogResponse` DTO.
+- Updated API/domain/models/compute READMEs, architecture/current-state, compute-api architecture notes and audited line counts, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Validation passed: focused models/compute Go tests, `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full model governance package movement is not complete; catalog snapshot mutation, typed catalog DTOs, schema validation, benchmark query/persistence workflows, promotion orchestration, HTTP mapping, and broader jobs/artifacts/evidence/simulation/agent package movement remain future slices.
+
 # 2026-06-02 AutoWaterSimu Next simulation check job document split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/simulation/compute READMEs, and simulation-check call sites

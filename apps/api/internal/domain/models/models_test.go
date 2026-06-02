@@ -6,6 +6,190 @@ import (
 	"testing"
 )
 
+func TestBuiltInModelCatalogDocument(t *testing.T) {
+	catalog := BuiltInModelCatalogDocument("2026-06-02T00:00:00Z", "sha256:test")
+	if catalog["schema_version"] != "model_catalog.v1" {
+		t.Fatalf("unexpected schema version: %#v", catalog["schema_version"])
+	}
+	if catalog["generated_at"] != "2026-06-02T00:00:00Z" {
+		t.Fatalf("unexpected generated_at: %#v", catalog["generated_at"])
+	}
+	metadata := testMap(t, catalog, "metadata")
+	if metadata["source"] != BuiltInModelCatalogSource {
+		t.Fatalf("unexpected metadata source: %#v", metadata["source"])
+	}
+
+	models := testSlice(t, catalog, "models")
+	if len(models) != 5 {
+		t.Fatalf("expected 5 built-in models, got %d", len(models))
+	}
+
+	material := testModelByKey(t, models, "material_balance")
+	materialVersion := testFirstVersion(t, material)
+	if materialVersion["status"] != ModelVersionStatusActive || materialVersion["model_version"] != "material_balance.v1" {
+		t.Fatalf("unexpected material balance version: %#v", materialVersion)
+	}
+	defaultParameterSet := testMap(t, materialVersion, "default_parameter_set")
+	if defaultParameterSet["status"] != ParameterSetStatusApproved {
+		t.Fatalf("unexpected default parameter set status: %#v", defaultParameterSet["status"])
+	}
+	if defaultParameterSet["parameter_hash"] != "sha256:test" {
+		t.Fatalf("unexpected default parameter hash: %#v", defaultParameterSet["parameter_hash"])
+	}
+	parameters := testMap(t, defaultParameterSet, "parameters")
+	if parameters["hours"] != 4 || parameters["steps_per_hour"] != 60 {
+		t.Fatalf("unexpected default parameters: %#v", parameters)
+	}
+	materialCase := testFirstBenchmarkCase(t, materialVersion)
+	if materialCase["benchmark_case_id"] != "bc_material_balance_minimal_v1" || materialCase["status"] != BenchmarkCaseStatusValidated {
+		t.Fatalf("unexpected material benchmark case: %#v", materialCase)
+	}
+	materialInputRef := testMap(t, materialCase, "input_ref")
+	if materialInputRef["fixture"] != "contracts/examples/valid/material_balance_minimal.simulation_input.v1.json" {
+		t.Fatalf("unexpected material fixture: %#v", materialInputRef["fixture"])
+	}
+
+	workerCases := map[string]struct {
+		jobType    string
+		fixture    string
+		modelRunID string
+		hours      float64
+	}{
+		"asm1slim": {
+			jobType:    "simulation.asm1slim.v1",
+			fixture:    "contracts/examples/valid/asm1slim_independent.simulation_input.v1.json",
+			modelRunID: "mr_job_asm1slim_independent_asm1slim",
+			hours:      1.0,
+		},
+		"asm1": {
+			jobType:    "simulation.asm1.v1",
+			fixture:    "contracts/examples/valid/asm1_independent.simulation_input.v1.json",
+			modelRunID: "mr_job_asm1_independent_asm1",
+			hours:      0.5,
+		},
+		"asm3": {
+			jobType:    "simulation.asm3.v1",
+			fixture:    "contracts/examples/valid/asm3_independent.simulation_input.v1.json",
+			modelRunID: "mr_job_asm3_independent_asm3",
+			hours:      0.5,
+		},
+		"udm": {
+			jobType:    "simulation.udm.v1",
+			fixture:    "contracts/examples/valid/udm_independent.simulation_input.v1.json",
+			modelRunID: "mr_job_udm_independent_udm",
+			hours:      0.5,
+		},
+	}
+	for modelKey, expected := range workerCases {
+		model := testModelByKey(t, models, modelKey)
+		version := testFirstVersion(t, model)
+		if version["status"] != ModelVersionStatusActive || version["model_version"] != modelKey+".v1" {
+			t.Fatalf("unexpected %s version: %#v", modelKey, version)
+		}
+		if _, ok := version["default_parameter_set"]; ok {
+			t.Fatalf("worker model %s should not define default_parameter_set: %#v", modelKey, version["default_parameter_set"])
+		}
+		templates := testSlice(t, version, "parameter_templates")
+		hoursTemplate := testParameterTemplateByKey(t, templates, "hours")
+		if hoursTemplate["default_value"] != expected.hours {
+			t.Fatalf("unexpected %s hours template: %#v", modelKey, hoursTemplate)
+		}
+		metadata := testMap(t, version, "metadata")
+		if metadata["default_parameter_set"] != "not_defined" || metadata["parameter_hash_source"] != "worker_model_parameter_payload" {
+			t.Fatalf("unexpected %s metadata: %#v", modelKey, metadata)
+		}
+		benchmarkCase := testFirstBenchmarkCase(t, version)
+		if benchmarkCase["benchmark_case_id"] != "bc_"+modelKey+"_independent_v1" || benchmarkCase["job_type"] != expected.jobType {
+			t.Fatalf("unexpected %s benchmark case: %#v", modelKey, benchmarkCase)
+		}
+		if benchmarkCase["status"] != BenchmarkCaseStatusValidated || benchmarkCase["source"] != "worker_cli_smoke" {
+			t.Fatalf("unexpected %s benchmark status/source: %#v", modelKey, benchmarkCase)
+		}
+		inputRef := testMap(t, benchmarkCase, "input_ref")
+		if inputRef["fixture"] != expected.fixture {
+			t.Fatalf("unexpected %s fixture: %#v", modelKey, inputRef["fixture"])
+		}
+		evidenceRefs := testSlice(t, benchmarkCase, "evidence_refs")
+		if len(evidenceRefs) != 1 || evidenceRefs[0] != "model_run:"+expected.modelRunID {
+			t.Fatalf("unexpected %s evidence refs: %#v", modelKey, evidenceRefs)
+		}
+	}
+}
+
+func testMap(t *testing.T, value map[string]any, key string) map[string]any {
+	t.Helper()
+	raw, ok := value[key].(map[string]any)
+	if !ok {
+		t.Fatalf("expected %s to be object, got %#v", key, value[key])
+	}
+	return raw
+}
+
+func testSlice(t *testing.T, value map[string]any, key string) []any {
+	t.Helper()
+	raw, ok := value[key].([]any)
+	if !ok {
+		t.Fatalf("expected %s to be array, got %#v", key, value[key])
+	}
+	return raw
+}
+
+func testModelByKey(t *testing.T, models []any, modelKey string) map[string]any {
+	t.Helper()
+	for _, item := range models {
+		model, ok := item.(map[string]any)
+		if !ok {
+			t.Fatalf("expected model to be object, got %#v", item)
+		}
+		if model["model_key"] == modelKey {
+			return model
+		}
+	}
+	t.Fatalf("model %q not found in %#v", modelKey, models)
+	return nil
+}
+
+func testFirstVersion(t *testing.T, model map[string]any) map[string]any {
+	t.Helper()
+	versions := testSlice(t, model, "versions")
+	if len(versions) != 1 {
+		t.Fatalf("expected one version, got %#v", versions)
+	}
+	version, ok := versions[0].(map[string]any)
+	if !ok {
+		t.Fatalf("expected version object, got %#v", versions[0])
+	}
+	return version
+}
+
+func testFirstBenchmarkCase(t *testing.T, version map[string]any) map[string]any {
+	t.Helper()
+	cases := testSlice(t, version, "benchmark_cases")
+	if len(cases) != 1 {
+		t.Fatalf("expected one benchmark case, got %#v", cases)
+	}
+	benchmarkCase, ok := cases[0].(map[string]any)
+	if !ok {
+		t.Fatalf("expected benchmark case object, got %#v", cases[0])
+	}
+	return benchmarkCase
+}
+
+func testParameterTemplateByKey(t *testing.T, templates []any, parameterKey string) map[string]any {
+	t.Helper()
+	for _, item := range templates {
+		template, ok := item.(map[string]any)
+		if !ok {
+			t.Fatalf("expected parameter template object, got %#v", item)
+		}
+		if template["parameter_key"] == parameterKey {
+			return template
+		}
+	}
+	t.Fatalf("parameter template %q not found in %#v", parameterKey, templates)
+	return nil
+}
+
 func TestRunFieldsFromRaw(t *testing.T) {
 	raw := json.RawMessage(`{
 		"model_run_id": " mr_1 ",

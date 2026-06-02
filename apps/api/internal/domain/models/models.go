@@ -43,6 +43,210 @@ const (
 	BenchmarkWorkflowBlockParameterSetRetired     = "parameter_set_retired"
 )
 
+const BuiltInModelCatalogSource = "built_in"
+
+func BuiltInModelCatalogDocument(generatedAt, materialBalanceParameterHash string) map[string]any {
+	minZero := 0.0
+	minOne := 1.0
+	materialBalanceParameters := map[string]any{
+		"hours":          4,
+		"steps_per_hour": 60,
+	}
+	return map[string]any{
+		"schema_version": "model_catalog.v1",
+		"generated_at":   generatedAt,
+		"models": []any{
+			map[string]any{
+				"model_key":           "material_balance",
+				"display_name":        "Material Balance",
+				"description":         "Deterministic material-balance model for P0/P1 smoke jobs.",
+				"supported_job_types": []any{"simulation.material_balance.v1"},
+				"versions": []any{
+					map[string]any{
+						"model_version": "material_balance.v1",
+						"status":        ModelVersionStatusActive,
+						"runtime":       "simulation-worker",
+						"released_at":   "2026-05-25T00:00:00Z",
+						"parameter_templates": []any{
+							map[string]any{
+								"parameter_key": "hours",
+								"display_name":  "Simulation horizon",
+								"unit":          "h",
+								"value_type":    "number",
+								"required":      true,
+								"default_value": 4,
+								"min_value":     minZero,
+							},
+							map[string]any{
+								"parameter_key": "steps_per_hour",
+								"display_name":  "Steps per hour",
+								"value_type":    "integer",
+								"required":      true,
+								"default_value": 60,
+								"min_value":     minOne,
+							},
+						},
+						"benchmark_cases": []any{
+							map[string]any{
+								"benchmark_case_id": "bc_material_balance_minimal_v1",
+								"display_name":      "Material balance minimal smoke",
+								"description":       "Minimal three-node material-balance case used as a reproducible P0 benchmark.",
+								"job_type":          "simulation.material_balance.v1",
+								"input_ref": map[string]any{
+									"simulation_input_id": "si_material_balance_minimal",
+									"fixture":             "contracts/examples/valid/material_balance_minimal.simulation_input.v1.json",
+								},
+								"expected_metrics": map[string]any{
+									"convergence_status": "completed",
+									"warning_count":      0,
+								},
+								"tolerance": map[string]any{
+									"relative": 0.000001,
+									"absolute": 0.000001,
+								},
+								"status":        BenchmarkCaseStatusValidated,
+								"source":        "built_in_smoke",
+								"evidence_refs": []any{"model_run:mr_material_balance_minimal"},
+							},
+						},
+						"default_parameter_set": map[string]any{
+							"parameter_set_id": "ps_material_balance_default_v1",
+							"status":           ParameterSetStatusApproved,
+							"parameter_hash":   materialBalanceParameterHash,
+							"parameters":       materialBalanceParameters,
+							"metadata": map[string]any{
+								"scope": "p0_default",
+							},
+						},
+					},
+				},
+			},
+			builtInWorkerModelDocument(
+				"asm1slim",
+				"ASM1 Slim",
+				"Independent ASM1Slim model job type covered by the simulation worker smoke matrix.",
+				"simulation.asm1slim.v1",
+				"si_asm1slim_independent",
+				"contracts/examples/valid/asm1slim_independent.simulation_input.v1.json",
+				"mr_job_asm1slim_independent_asm1slim",
+				1.0,
+			),
+			builtInWorkerModelDocument(
+				"asm1",
+				"ASM1",
+				"Independent ASM1 model job type covered by the simulation worker smoke matrix.",
+				"simulation.asm1.v1",
+				"si_asm1_independent",
+				"contracts/examples/valid/asm1_independent.simulation_input.v1.json",
+				"mr_job_asm1_independent_asm1",
+				0.5,
+			),
+			builtInWorkerModelDocument(
+				"asm3",
+				"ASM3",
+				"Independent ASM3 model job type covered by the simulation worker smoke matrix.",
+				"simulation.asm3.v1",
+				"si_asm3_independent",
+				"contracts/examples/valid/asm3_independent.simulation_input.v1.json",
+				"mr_job_asm3_independent_asm3",
+				0.5,
+			),
+			builtInWorkerModelDocument(
+				"udm",
+				"UDM",
+				"Independent UDM model job type covered by the simulation worker smoke matrix.",
+				"simulation.udm.v1",
+				"si_udm_independent",
+				"contracts/examples/valid/udm_independent.simulation_input.v1.json",
+				"mr_job_udm_independent_udm",
+				0.5,
+			),
+		},
+		"metadata": map[string]any{
+			"source": BuiltInModelCatalogSource,
+		},
+	}
+}
+
+func builtInWorkerModelDocument(modelKey, displayName, description, jobType, inputID, fixture, modelRunID string, hours float64) map[string]any {
+	return map[string]any{
+		"model_key":           modelKey,
+		"display_name":        displayName,
+		"description":         description,
+		"supported_job_types": []any{jobType},
+		"versions": []any{
+			map[string]any{
+				"model_version":       modelKey + ".v1",
+				"status":              ModelVersionStatusActive,
+				"runtime":             "simulation-worker",
+				"released_at":         "2026-05-30T00:00:00Z",
+				"parameter_templates": builtInRuntimeTemplates(hours),
+				"benchmark_cases": []any{
+					builtInWorkerSmokeBenchmarkDocument(modelKey, displayName+" independent smoke", jobType, inputID, fixture, modelRunID),
+				},
+				"metadata": map[string]any{
+					"default_parameter_set": "not_defined",
+					"parameter_hash_source": "worker_model_parameter_payload",
+				},
+			},
+		},
+	}
+}
+
+func builtInRuntimeTemplates(hours float64) []any {
+	return []any{
+		map[string]any{
+			"parameter_key": "hours",
+			"display_name":  "Simulation horizon",
+			"unit":          "h",
+			"value_type":    "number",
+			"required":      true,
+			"default_value": hours,
+			"min_value":     0.0,
+		},
+		map[string]any{
+			"parameter_key": "steps_per_hour",
+			"display_name":  "Steps per hour",
+			"value_type":    "integer",
+			"required":      true,
+			"default_value": 20,
+			"min_value":     1.0,
+		},
+		map[string]any{
+			"parameter_key": "tolerance",
+			"display_name":  "Solver tolerance",
+			"value_type":    "number",
+			"required":      true,
+			"default_value": 0.000001,
+			"min_value":     0.0,
+		},
+	}
+}
+
+func builtInWorkerSmokeBenchmarkDocument(modelKey, displayName, jobType, inputID, fixture, modelRunID string) map[string]any {
+	return map[string]any{
+		"benchmark_case_id": "bc_" + modelKey + "_independent_v1",
+		"display_name":      displayName,
+		"description":       displayName + " contract fixture covered by the worker CLI smoke matrix.",
+		"job_type":          jobType,
+		"input_ref": map[string]any{
+			"simulation_input_id": inputID,
+			"fixture":             fixture,
+		},
+		"expected_metrics": map[string]any{
+			"convergence_status": "completed",
+			"total_steps":        11,
+		},
+		"tolerance": map[string]any{
+			"relative": 0.000001,
+			"absolute": 0.000001,
+		},
+		"status":        BenchmarkCaseStatusValidated,
+		"source":        "worker_cli_smoke",
+		"evidence_refs": []any{"model_run:" + modelRunID},
+	}
+}
+
 type BenchmarkCaseRunGateInput struct {
 	ModelVersionStatus     string
 	BenchmarkCaseFound     bool
