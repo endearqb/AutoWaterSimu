@@ -1,3 +1,27 @@
+# 2026-06-02 Go API Domain Package Split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, compute architecture docs, API READMEs, and current compute store/audit files
+- [x] Stage 1: split `store.go` into `store_interfaces.go` plus domain-focused `memory_*.go` files inside the same `compute` package
+- [x] Stage 1: update Compute API boundary audit to read Store interfaces from `store_interfaces.go` and MemoryStore methods from all `memory_*.go`
+- [x] Stage 1: update README/architecture/checklists/change records
+- [x] Stage 1: run full stage validation
+- [x] Stage 1: commit and push
+- [ ] Stage 2: split `http.go` route handlers by route group, validate, commit, and push
+- [ ] Stage 3: split `postgres.go` persistence by domain, run DB smoke when configured, validate, commit, and push
+
+## Plan
+
+- Keep all Go API split work inside `apps/api/internal/compute` for this pass; do not change package names, HTTP routes, OpenAPI/client output, contracts, migrations, auth scopes, SQL semantics, or `Service` signatures.
+- Execute low-risk to high-risk: MemoryStore/interface file split first, HTTP handler file split second, PostgreSQL persistence split last.
+- Leave unrelated untracked rebuild-plan document untouched.
+
+## Review
+
+- Stage 1 moved the aggregate Store/domain interfaces and filters to `store_interfaces.go`.
+- Stage 1 moved `MemoryStore` into `memory_store.go` and kept existing method bodies grouped by jobs, artifacts/archive, models, simulation, agent workflows, workers, and metrics.
+- Stage 1 updated the boundary audit to exclude store implementation files from service-call attribution while scanning all `memory_*.go` files for MemoryStore method coverage.
+- Stage 1 validation passed: `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+
 # 2026-06-02 AutoWaterSimu Next benchmark case job document split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/models/compute READMEs, and benchmark schedule-run call sites

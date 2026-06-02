@@ -194,6 +194,19 @@ function Get-ImplementedMethods {
     return @([regex]::Matches($text, $pattern) | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
 }
 
+function Get-ImplementedMethodsInFiles {
+    param(
+        [string[]]$Paths,
+        [string]$ReceiverType
+    )
+    $methods = @(
+        foreach ($path in $Paths) {
+            Get-ImplementedMethods -Path $path -ReceiverType $ReceiverType
+        }
+    )
+    return @($methods | Sort-Object -Unique)
+}
+
 function Get-ServiceStoreCalls {
     param(
         [string[]]$ServicePaths,
@@ -386,19 +399,24 @@ $computeDir = Join-Path $root "apps\api\internal\compute"
 $internalDir = Join-Path $root "apps\api\internal"
 $domainDir = Join-Path $internalDir "domain"
 $platformDir = Join-Path $internalDir "platform"
-$storePath = Join-Path $computeDir "store.go"
+$storeInterfacePath = Join-Path $computeDir "store_interfaces.go"
 $postgresPath = Join-Path $computeDir "postgres.go"
 $servicePath = Join-Path $computeDir "service.go"
-foreach ($path in @($computeDir, $storePath, $postgresPath, $servicePath)) {
+foreach ($path in @($computeDir, $storeInterfacePath, $postgresPath, $servicePath)) {
     if (-not (Test-Path -LiteralPath $path)) {
         throw "Missing required Compute API path: $path"
     }
 }
 
 $goFiles = @(Get-ChildItem -LiteralPath $computeDir -File -Filter "*.go" | Sort-Object Name)
+$memoryPaths = @($goFiles | Where-Object { $_.Name -like "memory_*.go" })
+if ($memoryPaths.Count -eq 0) {
+    throw "Missing MemoryStore domain implementation files under $computeDir"
+}
+$storeImplementationNames = @("store_interfaces.go", "postgres.go") + @($memoryPaths | ForEach-Object { $_.Name })
 $serviceLayerFiles = @(
     $goFiles | Where-Object {
-        -not $_.Name.EndsWith("_test.go") -and $_.Name -notin @("store.go", "postgres.go")
+        -not $_.Name.EndsWith("_test.go") -and $_.Name -notin $storeImplementationNames
     }
 )
 $domainLayerFiles = @()
@@ -428,11 +446,11 @@ $fileStats = @(
     }
 )
 
-$storeMethods = @(Get-StoreMethods -StorePath $storePath)
-$storeEmbeddedInterfaces = @(Get-StoreEmbeddedInterfaces -StorePath $storePath)
-$storeInterfaceSummary = @(Get-StoreInterfaceSummary -StorePath $storePath)
+$storeMethods = @(Get-StoreMethods -StorePath $storeInterfacePath)
+$storeEmbeddedInterfaces = @(Get-StoreEmbeddedInterfaces -StorePath $storeInterfacePath)
+$storeInterfaceSummary = @(Get-StoreInterfaceSummary -StorePath $storeInterfacePath)
 $missingExpectedStoreEmbeds = @(Get-MissingExpectedStoreEmbeds -EmbeddedInterfaces $storeEmbeddedInterfaces)
-$memoryMethods = Get-ImplementedMethods -Path $storePath -ReceiverType "MemoryStore"
+$memoryMethods = Get-ImplementedMethodsInFiles -Paths @($memoryPaths | ForEach-Object { $_.FullName }) -ReceiverType "MemoryStore"
 $postgresMethods = Get-ImplementedMethods -Path $postgresPath -ReceiverType "PostgresStore"
 $serviceStoreCalls = Get-ServiceStoreCalls -ServicePaths @($serviceAuditFiles | ForEach-Object { $_.FullName }) -StoreMethods $storeMethods
 $serviceCalls = $serviceStoreCalls["calls"]

@@ -2,7 +2,7 @@
 
 > Snapshot date: 2026-06-02.
 
-This document records the current Go Compute API boundary after the first Store/interface split, the current service-constructor narrowing slices, the first platform helper package movement, and the first agent/artifacts/evidence/jobs/models/simulation/workers domain package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/domain/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
+This document records the current Go Compute API boundary after the first Store/interface split, the MemoryStore domain file split, the current service-constructor narrowing slices, the first platform helper package movement, and the first agent/artifacts/evidence/jobs/models/simulation/workers domain package movement. It is based on `apps/api/README.md`, `apps/api/internal/compute/README.md`, `apps/api/internal/domain/README.md`, `apps/api/internal/platform/README.md`, and the read-only audit script:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
@@ -79,18 +79,26 @@ Selected files from the latest audit:
 | `contract_validation.go` | 15 | compatibility wrapper over platform contract document validation |
 | `postgres.go` | 1489 | PostgreSQL store implementation and migrations smoke helpers |
 | `http.go` | 1088 | route handlers and HTTP mapping |
-| `store.go` | 1088 | aggregate Store, domain metadata interfaces, and MemoryStore implementation |
+| `memory_models.go` | 252 | in-memory model run, benchmark run, and model catalog metadata store implementation |
+| `memory_jobs.go` | 235 | in-memory job metadata store implementation and shared memory cursor/list helpers |
+| `memory_artifacts.go` | 168 | in-memory artifact metadata and archive metadata store implementation |
+| `memory_agent.go` | 134 | in-memory draft confirmation and result explanation metadata store implementation |
+| `store_interfaces.go` | 119 | aggregate Store, domain metadata interfaces, and list filters |
+| `memory_workers.go` | 84 | in-memory worker register/claim/heartbeat store implementation |
+| `memory_simulation.go` | 69 | in-memory process graph and simulation input metadata store implementation |
+| `memory_metrics.go` | 43 | in-memory metrics snapshot query |
+| `memory_store.go` | 40 | MemoryStore struct and constructor |
 | `service_test.go` | 3134 | broad lifecycle and governance tests |
 
 These numbers are audit signals, not hard failure thresholds.
 
 ## Store Shape
 
-The current aggregate `Store` embeds 12 domain metadata interfaces and resolves to 41 methods. The audit checks both the embedded interfaces and MemoryStore/PostgresStore implementation coverage.
+The current aggregate `Store` embeds 12 domain metadata interfaces and resolves to 41 methods. The audit checks the embedded interfaces from `store_interfaces.go`, MemoryStore method coverage across `memory_*.go`, and PostgresStore method coverage in `postgres.go`.
 
 `ArtifactMetadataStore` is used for artifact metadata because `apps/api/internal/compute/artifacts.go` already defines the byte/object `ArtifactStore` abstraction.
 
-The audit groups the resolved methods into these domains. `Service Calls` counts resolved `Store` method calls made through known aggregate or narrowed repository fields across non-test compute files excluding `store.go` and `postgres.go`; it records per-method source files in `tmp/architecture-evidence/compute-api-boundary.json`.
+The audit groups the resolved methods into these domains. `Service Calls` counts resolved `Store` method calls made through known aggregate or narrowed repository fields across non-test compute files excluding `store_interfaces.go`, `memory_*.go`, and `postgres.go`; it records per-method source files in `tmp/architecture-evidence/compute-api-boundary.json`.
 
 | Candidate Domain | Methods | Service Calls |
 |---|---:|---:|
