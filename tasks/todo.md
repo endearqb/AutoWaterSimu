@@ -1,3 +1,26 @@
+# 2026-06-02 AutoWaterSimu Next jobs failed-worker fallback result split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/jobs/compute READMEs, and job failure call sites
+- [x] Confirm next aligned gap: failed-worker fallback `compute_result.v1` construction still lived in job lifecycle workflow code
+- [x] Add a `domain/jobs` helper for failed-worker fallback compute result construction, with direct tests
+- [x] Route `JobLifecycleService.Fail` through the domain helper while preserving worker stale checks, compute_result validation, result hash, summary persistence, model_run extraction/persistence, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and job store writes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure fallback result document construction for worker-reported failures.
+- Preserve the existing `compute_result.v1` shape, default `WORKER_FAILED` code, `worker failed` message fallback, raw error text behavior before later completion parsing, `runtime_audit.fallback_reason`, and empty data/artifacts/model_runs fields.
+- Keep stale worker detection, schema validation, result hashing, stored summary projection, worker result completion parsing, model_run validation/persistence, store writes, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, and audit boundaries unchanged.
+
+## Review
+
+- Added `domain/jobs.FailedWorkerComputeResult` with direct tests for custom error details, default failure summary, quality warnings, runtime audit shape, and raw nonblank error text preservation before completion parsing.
+- `JobLifecycleService.Fail` now delegates only worker-reported failure fallback `compute_result.v1` construction to `domain/jobs`; worker stale checks, schema validation, result hash, stored summary projection, worker result completion parsing, model_run extraction/persistence, store writes, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and audit boundaries remain unchanged.
+- Updated API/domain/jobs/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, boundary audit note, and `.ai/changes`.
+- Validation passed: focused jobs/compute Go tests, `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full job lifecycle package movement, job records/events/completion persistence/timeout sweep/HTTP mapping, and broader artifacts/models/evidence/simulation/agent package movement remain future slices.
+
 # 2026-06-01 AutoWaterSimu Next agent proposed request extraction split TODO
 
 - [x] Re-read current worktree, Certainty/Elegance plan/current-state, API/domain/agent/compute READMEs, and draft promotion call sites

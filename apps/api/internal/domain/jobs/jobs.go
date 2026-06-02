@@ -59,6 +59,24 @@ func WorkerResultCompletionFromResult(result map[string]any) (WorkerResultComple
 	return completion, true
 }
 
+func FailedWorkerComputeResult(jobID, jobType, errorCode, errorMessage string) map[string]any {
+	summary := map[string]any{
+		"error_code":    defaultString(errorCode, DefaultWorkerFailureCode),
+		"error_message": defaultString(errorMessage, "worker failed"),
+	}
+	return map[string]any{
+		"schema_version": "compute_result.v1",
+		"job_id":         jobID,
+		"job_type":       jobType,
+		"status":         StatusFailed,
+		"summary":        summary,
+		"data":           map[string]any{},
+		"quality":        map[string]any{"data_quality": "none", "warnings": []any{summary["error_message"]}},
+		"artifacts":      []any{},
+		"runtime_audit":  map[string]any{"model_runs": []any{}, "timings_ms": map[string]any{}, "fallback_used": false, "fallback_reason": "worker reported failure"},
+	}
+}
+
 func MatchesWorker(candidate ClaimCandidate, worker WorkerCapabilities) bool {
 	capabilities := stringSetFromJSON(worker.Capabilities)
 	for _, capability := range RequiredCapabilities(candidate.InputJSON) {
@@ -136,4 +154,11 @@ func stringValue(value map[string]any, key string) string {
 		return strings.TrimSpace(text)
 	}
 	return ""
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
 }

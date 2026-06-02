@@ -10,6 +10,7 @@
 - 终态 status 判断。
 - worker result 可提交 status 判断。
 - worker result completion 的 status / error_code / error_message 提取规则。
+- worker-reported failure fallback `compute_result.v1` 文档构造规则。
 - worker claim 时 job 所需 capability 与 contract version 匹配规则。
 
 本目录不负责：
@@ -22,13 +23,13 @@
 
 | 文件 | 作用 |
 |---|---|
-| `jobs.go` | Job status constants, worker result completion extraction, worker claim matching, and invariant helpers |
+| `jobs.go` | Job status constants, failed-worker fallback result construction, worker result completion extraction, worker claim matching, and invariant helpers |
 | `jobs_test.go` | Direct jobs domain tests |
 
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 job domain 不变量和 worker result completion 的纯解释规则；涉及队列选择、状态写入、存储、audit、artifact、result summary 持久化的逻辑继续由 compute compatibility package 承接，直到对应边界可安全迁移。
+2. 只放稳定 job domain 不变量、failed-worker fallback result construction 和 worker result completion 的纯解释规则；涉及队列选择、状态写入、存储、audit、artifact、result summary 持久化的逻辑继续由 compute compatibility package 承接，直到对应边界可安全迁移。
 3. 新增 status 时必须同步检查 worker、store、HTTP response 和 contract fixtures。
 
 ## 4. 对外接口
@@ -43,6 +44,7 @@
 - `StatusCancelled`
 - `StatusTimedOut`
 - `DefaultWorkerFailureCode`
+- `FailedWorkerComputeResult`
 - `IsTerminal`
 - `IsWorkerResultStatus`
 - `WorkerResultCompletion`

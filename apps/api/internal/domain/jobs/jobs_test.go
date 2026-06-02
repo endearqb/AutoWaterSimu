@@ -87,6 +87,66 @@ func TestWorkerResultCompletionRejectsInvalidStatus(t *testing.T) {
 	}
 }
 
+func TestFailedWorkerComputeResult(t *testing.T) {
+	result := FailedWorkerComputeResult("job_1", "simulation.material_balance.v1", "SOLVER_FAILED", "solver diverged")
+	if result["schema_version"] != "compute_result.v1" ||
+		result["job_id"] != "job_1" ||
+		result["job_type"] != "simulation.material_balance.v1" ||
+		result["status"] != StatusFailed {
+		t.Fatalf("unexpected failed worker result identity: %#v", result)
+	}
+	summary, ok := result["summary"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected summary object, got %#v", result["summary"])
+	}
+	if summary["error_code"] != "SOLVER_FAILED" || summary["error_message"] != "solver diverged" {
+		t.Fatalf("unexpected summary: %#v", summary)
+	}
+	quality, ok := result["quality"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected quality object, got %#v", result["quality"])
+	}
+	warnings, ok := quality["warnings"].([]any)
+	if !ok || len(warnings) != 1 || warnings[0] != "solver diverged" {
+		t.Fatalf("unexpected quality warnings: %#v", quality["warnings"])
+	}
+	runtimeAudit, ok := result["runtime_audit"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected runtime audit object, got %#v", result["runtime_audit"])
+	}
+	if runtimeAudit["fallback_used"] != false || runtimeAudit["fallback_reason"] != "worker reported failure" {
+		t.Fatalf("unexpected runtime audit: %#v", runtimeAudit)
+	}
+}
+
+func TestFailedWorkerComputeResultDefaults(t *testing.T) {
+	result := FailedWorkerComputeResult("job_1", "simulation.material_balance.v1", " ", "")
+	summary := result["summary"].(map[string]any)
+	if summary["error_code"] != DefaultWorkerFailureCode || summary["error_message"] != "worker failed" {
+		t.Fatalf("unexpected default summary: %#v", summary)
+	}
+	quality := result["quality"].(map[string]any)
+	warnings := quality["warnings"].([]any)
+	if len(warnings) != 1 || warnings[0] != "worker failed" {
+		t.Fatalf("unexpected default warning: %#v", warnings)
+	}
+}
+
+func TestFailedWorkerComputeResultPreservesRawNonBlankErrorText(t *testing.T) {
+	result := FailedWorkerComputeResult("job_1", "simulation.material_balance.v1", " SOLVER_FAILED ", " solver diverged ")
+	summary := result["summary"].(map[string]any)
+	if summary["error_code"] != " SOLVER_FAILED " || summary["error_message"] != " solver diverged " {
+		t.Fatalf("expected raw nonblank error text to be preserved before completion parsing, got %#v", summary)
+	}
+	completion, ok := WorkerResultCompletionFromResult(result)
+	if !ok {
+		t.Fatal("expected constructed result to be accepted by completion parser")
+	}
+	if completion.ErrorCode != "SOLVER_FAILED" || completion.ErrorMessage != "solver diverged" {
+		t.Fatalf("expected completion parser to preserve existing trim semantics, got %#v", completion)
+	}
+}
+
 func TestRequiredCapabilities(t *testing.T) {
 	input := json.RawMessage(`{
 		"execution": {

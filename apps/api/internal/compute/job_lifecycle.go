@@ -186,21 +186,7 @@ func (svc *JobLifecycleService) Fail(ctx context.Context, workerID, jobID string
 	if err != nil {
 		return JobSnapshot{}, err
 	}
-	summary := map[string]any{
-		"error_code":    defaultString(errorCode, domainjobs.DefaultWorkerFailureCode),
-		"error_message": defaultString(errorMessage, "worker failed"),
-	}
-	result := map[string]any{
-		"schema_version": "compute_result.v1",
-		"job_id":         job.JobID,
-		"job_type":       job.JobType,
-		"status":         StatusFailed,
-		"summary":        summary,
-		"data":           map[string]any{},
-		"quality":        map[string]any{"data_quality": "none", "warnings": []any{summary["error_message"]}},
-		"artifacts":      []any{},
-		"runtime_audit":  map[string]any{"model_runs": []any{}, "timings_ms": map[string]any{}, "fallback_used": false, "fallback_reason": "worker reported failure"},
-	}
+	result := domainjobs.FailedWorkerComputeResult(job.JobID, job.JobType, errorCode, errorMessage)
 	return svc.Complete(ctx, workerID, jobID, attempt, result)
 }
 
