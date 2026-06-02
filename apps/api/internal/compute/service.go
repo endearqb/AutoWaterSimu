@@ -103,45 +103,22 @@ func (svc *Service) CreateSimulationCheck(ctx context.Context, bytes []byte) (Jo
 
 	metadata := mapValue(request, "metadata")
 	externalRefs := mapValue(request, "external_refs")
-	traceID := defaultString(stringValue(metadata, "trace_id"), "trace_simcheck_"+safeIDPart(requestID))
-	jobID := defaultString(stringValue(metadata, "job_id"), "job_simcheck_"+safeIDPart(requestID))
-	idempotencyKey := defaultString(stringValue(metadata, "idempotency_key"), "simcheck:"+requestID)
-	jobContext := map[string]any{
-		"source_system": sourceSystem,
-		"requested_by":  requestedBy,
-		"trace_id":      traceID,
-	}
-	for _, key := range []string{"tenant_id", "project_id", "site_id"} {
-		if value := stringValue(metadata, key); value != "" {
-			jobContext[key] = value
-		} else if key == "site_id" {
-			if value := stringValue(externalRefs, key); value != "" {
-				jobContext[key] = value
-			}
-		}
-	}
-	if externalRefs != nil {
-		jobContext["external_refs"] = externalRefs
-	}
-
-	job := map[string]any{
-		"schema_version":  "compute_job.v1",
-		"job_id":          jobID,
-		"job_type":        jobType,
-		"queue":           "simulation",
-		"request_id":      requestID,
-		"idempotency_key": idempotencyKey,
-		"payload":         simulationInput,
-		"context":         jobContext,
-		"execution":       domainsimulation.ExecutionProfile(jobType),
-		"created_at":      svc.now().Format(time.RFC3339Nano),
-		"metadata":        simulationCheckMetadata(requestID, inputRef, externalRefs),
-	}
-	jobBytes, err := json.Marshal(job)
+	jobDocument := domainsimulation.BuildSimulationCheckJobDocument(domainsimulation.SimulationCheckJobInput{
+		RequestID:       requestID,
+		JobType:         jobType,
+		SourceSystem:    sourceSystem,
+		RequestedBy:     requestedBy,
+		InputRef:        inputRef,
+		SimulationInput: simulationInput,
+		Metadata:        metadata,
+		ExternalRefs:    externalRefs,
+		CreatedAt:       svc.now().Format(time.RFC3339Nano),
+	})
+	jobBytes, err := json.Marshal(jobDocument.Job)
 	if err != nil {
 		return JobSnapshot{}, 0, err
 	}
-	return svc.CreateJob(ctx, jobBytes, idempotencyKey)
+	return svc.CreateJob(ctx, jobBytes, jobDocument.IdempotencyKey)
 }
 
 func (svc *Service) ScheduleBenchmarkCaseRun(ctx context.Context, modelKey, modelVersion, benchmarkCaseID string, request BenchmarkCaseRunRequest, defaultSourceSystem, defaultRequestedBy string) (JobSnapshot, int, error) {
@@ -384,27 +361,6 @@ func sliceFromAny(value any) []any {
 		return nil
 	}
 	return items
-}
-
-func simulationCheckMetadata(requestID string, inputRef map[string]any, externalRefs map[string]any) map[string]any {
-	metadata := map[string]any{
-		"source":                "simulation_check_api",
-		"simulation_request_id": requestID,
-	}
-	if externalRefs != nil {
-		metadata["external_refs"] = externalRefs
-	}
-	inputRefMetadata := map[string]any{}
-	for key, value := range inputRef {
-		if key == "simulation_input" {
-			continue
-		}
-		inputRefMetadata[key] = value
-	}
-	if len(inputRefMetadata) > 0 {
-		metadata["input_ref"] = inputRefMetadata
-	}
-	return metadata
 }
 
 func safeIDPart(value string) string {

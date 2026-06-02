@@ -1,3 +1,26 @@
+# 2026-06-02 AutoWaterSimu Next simulation check job document split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/simulation/compute READMEs, and simulation-check call sites
+- [x] Confirm next aligned gap: pure `simulation_request.v1` to `compute_job.v1` job document assembly still lived in compute compatibility service code
+- [x] Add a `domain/simulation` helper for simulation check job document construction, with direct tests
+- [x] Route `Service.CreateSimulationCheck` through the domain helper while preserving request decode, schema validation, `input_ref` resolution, job type/input mismatch validation, idempotent job creation, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and store writes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation, then commit and push
+
+## Plan
+
+- Move only the pure `compute_job.v1` document assembly: default simulation check job id, trace id, idempotency key, context propagation, external refs, metadata, and execution profile.
+- Keep JSON decode, `simulation_request.v1` schema validation, required field validation, simulation input/process graph/model-run replay resolution, job type mismatch rejection, JSON marshaling, idempotent `CreateJob`, store implementations, HTTP routes, OpenAPI, contracts, migrations, generated clients, and auth scopes unchanged.
+- Treat this as a small `domain/simulation` package movement step, not the full simulation input/process graph service or simulation-check workflow package split.
+
+## Review
+
+- Added `domain/simulation.BuildSimulationCheckJobDocument` with direct tests for default simulation check job id/trace/idempotency, context external_refs/site fallback, metadata input_ref filtering, metadata overrides, and execution profile inclusion.
+- `Service.CreateSimulationCheck` now delegates only pure `compute_job.v1` document assembly to `domain/simulation`; request decode, `simulation_request.v1` schema validation, required field validation, `input_ref` resolution, job type mismatch rejection, JSON marshaling, idempotent `CreateJob`, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and store writes remain unchanged.
+- Updated API/domain/simulation/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, boundary audit notes, and `.ai/changes`.
+- Validation passed: focused simulation/compute Go tests, `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full simulation-check workflow package movement, simulation request schema validation, input_ref resolution, simulation input/process graph metadata records, job persistence, store implementation, evidence-ref lookup, HTTP mapping, and broader jobs/artifacts/models/evidence/agent package movement remain future slices.
+
 # 2026-06-02 AutoWaterSimu Next jobs failed-worker fallback result split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance plan/current-state, API/domain/jobs/compute READMEs, and job failure call sites
