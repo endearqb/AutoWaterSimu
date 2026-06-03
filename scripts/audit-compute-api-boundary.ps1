@@ -49,6 +49,7 @@ function Get-MissingExpectedGoPackageDirs {
         "domain/models",
         "domain/simulation",
         "domain/workers",
+        "platform/audit",
         "platform/auth",
         "platform/config",
         "platform/contracts",
@@ -543,7 +544,7 @@ $report = [ordered]@{
         "This is a read-only architecture audit; it verifies that the aggregate Store embeds the expected domain interfaces.",
         "Public Service constructors can still accept the aggregate Store while narrowed internal services receive domain-specific interfaces.",
         "Internal domain service constructors must not accept aggregate Store and should expose at most 3 store-like constructor parameters.",
-        "The package movement guardrail expects platform helpers under apps/api/internal/platform, Agent draft proposed request and constraint draft advisory helpers under apps/api/internal/domain/agent, artifact retention policy helpers under apps/api/internal/domain/artifacts, evidence input/ref/risk parsing, result explanation ref extraction, and readiness policy helpers under apps/api/internal/domain/evidence, jobs status, failed-worker fallback result, and claim matching invariants under apps/api/internal/domain/jobs, built-in model catalog document shape, benchmark case run job document shape, model_run parsing, model_run identity/hash checks, benchmark_run evidence-ref parsing, benchmark case readiness, parameter-set status invariants, and promotion gate policy under apps/api/internal/domain/models, simulation execution profile, simulation check job document assembly, and process graph projection helpers under apps/api/internal/domain/simulation, and worker lifecycle under apps/api/internal/domain/workers.",
+        "The package movement guardrail expects platform helpers under apps/api/internal/platform, mutation audit envelope helpers under apps/api/internal/platform/audit, Agent draft proposed request and constraint draft advisory helpers under apps/api/internal/domain/agent, artifact retention policy helpers under apps/api/internal/domain/artifacts, evidence input/ref/risk parsing, result explanation ref extraction, and readiness policy helpers under apps/api/internal/domain/evidence, jobs status, failed-worker fallback result, and claim matching invariants under apps/api/internal/domain/jobs, built-in model catalog document shape, benchmark case run job document shape, model_run parsing, model_run identity/hash checks, benchmark_run evidence-ref parsing, benchmark case readiness, parameter-set status invariants, and promotion gate policy under apps/api/internal/domain/models, simulation execution profile, simulation check job document assembly, and process graph projection helpers under apps/api/internal/domain/simulation, and worker lifecycle under apps/api/internal/domain/workers.",
         "Large file thresholds are advisory: non-test files >800 lines and test files >1500 lines."
     )
 }

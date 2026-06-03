@@ -119,6 +119,7 @@ git diff --check -- docs Justfile .env.example docker-compose.dev.yml
 
 ```text
 platform/auth
+platform/audit
 platform/httpx
 platform/config
 platform/contracts
@@ -278,7 +279,7 @@ trace_id
 approval_ref
 ```
 
-当前已落地 selected mutation audit event envelope：`job.created` / `job.queued` 以及 artifact retention delete/archive events 会在 `compute_job_events.event_json.audit` 中记录 `who/when/where/target_object/action/before/after/reason/trace_id/approval_ref`。HTTP job create、simulation-check、draft promotion、benchmark schedule 和 retention sweep 可把静态 token principal 与 route 写入 audit context；scheduler/service path 回退为 system/service context。静态 token config 也可携带 `tenant_id` / `project_id` / `site_id`，并已对 job list/get 与 artifact download 的 HTTP read path 做 tenant/project/site 跨 scope 拒绝。完整 all-mutation audit、OIDC/RBAC、全对象 tenant/project/site data scope 和 ontology-backed policy enforcement 仍需后续实现。
+当前已落地 selected mutation audit event envelope：`job.created` / `job.queued` 以及 artifact retention delete/archive events 会在 `compute_job_events.event_json.audit` 中记录 `who/when/where/target_object/action/before/after/reason/trace_id/approval_ref`；其稳定 envelope shape 与 event JSON helper 位于 `apps/api/internal/platform/audit`。HTTP job create、simulation-check、draft promotion、benchmark schedule 和 retention sweep 可把静态 token principal 与 route 写入 audit context；scheduler/service path 回退为 system/service context。静态 token config 也可携带 `tenant_id` / `project_id` / `site_id`，并已对 job list/get 与 artifact download 的 HTTP read path 做 tenant/project/site 跨 scope 拒绝。完整 all-mutation audit、OIDC/RBAC、全对象 tenant/project/site data scope 和 ontology-backed policy enforcement 仍需后续实现。
 
 #### Water Ontology 首批对象
 
@@ -505,6 +506,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Metrics service constructor narrowed
 - [x] Service constructors narrowed to 1-3 necessary store interfaces
 - [x] Static bearer auth package split (`apps/api/internal/platform/auth`)
+- [x] Selected mutation audit envelope helper package split (`apps/api/internal/platform/audit`)
 - [x] First platform HTTP helper package split (`apps/api/internal/platform/httpx`)
 - [x] Runtime config package split (`apps/api/internal/platform/config`)
 - [x] Contract schema validator package split (`apps/api/internal/platform/contracts`)
@@ -565,6 +567,6 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 2. 触发或接入 `.github/workflows/next-integration-smoke.yml` 的真实 GitHub Actions run，并把 hosted green run 作为 integration evidence 记录。
 3. 在 integration smoke 之上补 frontend/browser reads job/result/evidence 的验证。
 4. 继续 production security：补 issuer/JWKS 或 service-token secret manager、全对象 data scope、all-mutation audit，并把 security smoke 扩展到这些场景。
-5. 基于已完成的 artifact lifecycle（含 upload/listing）、simulation input/process graph、draft workflow、result explanation、model governance、worker lifecycle、evidence governance、job lifecycle、metrics 构造函数收窄、constructor boundary audit、`platform/auth`、`platform/config`、`platform/contracts`（含 validator 与 base document validation response）、`platform/httpx`、`platform/metrics` package movement（含 read-only collector），以及 `domain/agent` draft confirmation envelope validation、record data projection、constraint application plan helper 与 proposed simulation request extraction helper、`domain/artifacts` retention policy helper 与 retention action planner、`domain/evidence` input/ref/risk parsing、stored result summary risk projection、result explanation ref extraction、result explanation record data projection 与 production-readiness policy helper、`domain/jobs` status/claim matching invariant、failed-worker fallback result helper 与 worker result completion helper、`domain/models` built-in model catalog document helper、benchmark case run job document helper、compute result model_runs extraction、model_run raw parsing、model run identity/hash check、benchmark run evidence refs、benchmark workflow gate、benchmark case readiness、default parameter set status invariant、promotion gate policy 与 model-run production governance gate、`domain/simulation` execution profile、simulation check job document、process graph validation/projection helper 与 simulation input/process graph record data projection helper、`domain/workers` package movement，继续推进完整 jobs/artifacts/models/evidence/simulation/agent 等 Go domain package movement、handler/package surface reduction 和后续公共 `Service` 构造签名收窄。
+5. 基于已完成的 artifact lifecycle（含 upload/listing）、simulation input/process graph、draft workflow、result explanation、model governance、worker lifecycle、evidence governance、job lifecycle、metrics 构造函数收窄、constructor boundary audit、`platform/audit`、`platform/auth`、`platform/config`、`platform/contracts`（含 validator 与 base document validation response）、`platform/httpx`、`platform/metrics` package movement（含 read-only collector），以及 `domain/agent` draft confirmation envelope validation、record data projection、constraint application plan helper 与 proposed simulation request extraction helper、`domain/artifacts` retention policy helper 与 retention action planner、`domain/evidence` input/ref/risk parsing、stored result summary risk projection、result explanation ref extraction、result explanation record data projection 与 production-readiness policy helper、`domain/jobs` status/claim matching invariant、failed-worker fallback result helper 与 worker result completion helper、`domain/models` built-in model catalog document helper、benchmark case run job document helper、compute result model_runs extraction、model_run raw parsing、model run identity/hash check、benchmark run evidence refs、benchmark workflow gate、benchmark case readiness、default parameter set status invariant、promotion gate policy 与 model-run production governance gate、`domain/simulation` execution profile、simulation check job document、process graph validation/projection helper 与 simulation input/process graph record data projection helper、`domain/workers` package movement，继续推进完整 jobs/artifacts/models/evidence/simulation/agent 等 Go domain package movement、handler/package surface reduction 和后续公共 `Service` 构造签名收窄。
 
 这些步骤风险仍低于直接拆分 Go API 巨型 package，且能继续提高后续结构性重构的确定性。

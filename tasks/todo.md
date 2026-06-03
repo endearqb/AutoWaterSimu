@@ -1,3 +1,27 @@
+# 2026-06-03 AutoWaterSimu Next platform audit envelope split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/platform/compute READMEs, current-state, and audit code
+- [x] Confirm next aligned gap: selected mutation audit envelope shape still lived in compute compatibility code
+- [x] Add `platform/audit` helper package for stable mutation audit envelope, request context, and event JSON helpers, with direct tests
+- [x] Route compute audit wrappers through platform helpers while preserving selected audit call sites, principal/route context, event JSON shape, job/artifact event persistence, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Move only the stable selected mutation audit envelope shape, HTTP request audit context projection, and audit event JSON payload attachment from `apps/api/internal/compute` into `apps/api/internal/platform/audit`.
+- Keep selected audit call sites, persistence decisions, event store writes, HTTP mapping, OpenAPI/contracts/migrations/generated clients, auth scopes, OIDC/RBAC, and all-mutation audit coverage unchanged.
+- Treat this as a platform helper package split, not the full production security / all mutation audit completion.
+
+## Review
+
+- Added `apps/api/internal/platform/audit` with `MutationEnvelope`, request context, and event JSON helpers plus direct tests for defaults, trimming, request override, and payload copy behavior.
+- `apps/api/internal/compute/audit.go` now delegates to platform audit helpers while preserving wrapper names, selected audit call sites, principal/route context behavior, event JSON shape, persistence decisions, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes.
+- Updated API/platform/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, boundary audit expected package list, and `.ai/changes`.
+- Validation passed: `cd apps\api; go test ./internal/platform/audit ./internal/compute ./cmd/compute-api`, `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: all-mutation audit coverage, OIDC/RBAC, full object data scope checks, broader security smoke expansion, and audit persistence policy completion remain future production-security slices.
+
 # 2026-06-03 AutoWaterSimu Next simulation registry record data split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/domain/simulation/compute READMEs, current-state, and simulation registry code

@@ -6,7 +6,7 @@
 
 本目录负责：
 
-- auth、HTTP helper、配置、合同 schema validation、日志、metrics snapshot/collector 等不持有 compute domain 状态的横切能力。
+- audit、auth、HTTP helper、配置、合同 schema validation、日志、metrics snapshot/collector 等不持有 compute domain 状态的横切能力。
 - 为 `apps/api/internal/compute` 后续领域拆包提供低耦合基础。
 
 本目录不负责：
@@ -19,6 +19,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
+| `audit/` | selected mutation audit envelope shape and event JSON helper |
 | `auth/` | static bearer token config, principal parsing, and platform auth errors |
 | `config/` | command/runtime configuration shape |
 | `contracts/` | contract schema loading, schema_version mapping, JSON Schema validation, and base document validation response |
