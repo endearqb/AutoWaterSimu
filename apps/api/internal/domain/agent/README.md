@@ -6,6 +6,7 @@
 
 本目录负责：
 
+- `draft_confirmation.v1` envelope 的稳定跨字段校验规则。
 - `constraint_application_plan.v1` 的 advisory-only 计划组装规则。
 - 约束草案应用计划的稳定安全不变量：不创建 job、不修改 target、需要外部 production approval。
 - `agent_scenario_draft.v1.proposed_request` 的稳定提取规则，供显式 simulation-check promotion 使用。
@@ -21,7 +22,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `agent.go` | Agent draft / constraint draft domain helpers |
+| `agent.go` | Agent draft / constraint draft / draft confirmation envelope domain helpers |
 | `agent_test.go` | Direct agent domain tests |
 
 ## 3. 维护约定
@@ -37,6 +38,7 @@
 - `ConstraintApplicationPlan`
 - `ConstraintApplicationPlanInput`
 - `ConstraintApplicationPlanFromDraft`
+- `ValidateDraftConfirmationEnvelope`
 - `ProposedSimulationRequestFromDraft`
 
 ## 5. 依赖边界
@@ -53,4 +55,4 @@ cd apps\api; go test ./internal/domain/agent ./internal/compute
 
 ## 7. AI 操作提示
 
-如果要迁移完整 draft workflow，请先补 store/DTO adapter，避免把 compute `DraftConfirmationRecord`、`JobSnapshot` 或 HTTP response/error 类型直接搬入本 package。`ConstraintApplicationPlanFromDraft` 只能做纯计划组装，不应读取 store、创建 job、修改 target 或执行生产审批。`ProposedSimulationRequestFromDraft` 只能返回 draft 内的 proposed request；schema validation、JSON marshal 和 job 创建回调仍由 compute 负责。
+如果要迁移完整 draft workflow，请先补 store/DTO adapter，避免把 compute `DraftConfirmationRecord`、`JobSnapshot` 或 HTTP response/error 类型直接搬入本 package。`ValidateDraftConfirmationEnvelope` 只做 wrapper / embedded draft 跨字段校验；schema 文件选择、JSON Schema validation、确认记录持久化和 response attachment 仍由 compute 负责。`ConstraintApplicationPlanFromDraft` 只能做纯计划组装，不应读取 store、创建 job、修改 target 或执行生产审批。`ProposedSimulationRequestFromDraft` 只能返回 draft 内的 proposed request；schema validation、JSON marshal 和 job 创建回调仍由 compute 负责。

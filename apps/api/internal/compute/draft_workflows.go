@@ -36,61 +36,27 @@ func (svc *DraftWorkflowService) ConfirmDraftDocument(ctx context.Context, bytes
 	if err := json.Unmarshal(bytes, &document); err != nil {
 		return response, ValidationError("draft confirmation JSON is invalid")
 	}
-	if stringValue(document, "schema_version") != "draft_confirmation.v1" {
+	envelope, issues := domainagent.ValidateDraftConfirmationEnvelope(document)
+	for _, issue := range issues {
 		response.Valid = false
 		response.Errors = append(response.Errors, ContractValidationIssue{
-			Path:    "/schema_version",
-			Message: "schema_version must be draft_confirmation.v1",
+			Path:    issue.Path,
+			Message: issue.Message,
 		})
-		return response, nil
+		if issue.Path == "/schema_version" {
+			return response, nil
+		}
 	}
-	draft := mapValue(document, "draft")
-	if draft == nil {
-		response.Valid = false
-		response.Errors = append(response.Errors, ContractValidationIssue{
-			Path:    "/draft",
-			Message: "draft is required",
-		})
-		return response, nil
-	}
-	expectedDraftSchema := stringValue(document, "draft_schema_version")
-	actualDraftSchema := stringValue(draft, "schema_version")
-	if actualDraftSchema != expectedDraftSchema {
-		response.Valid = false
-		response.Errors = append(response.Errors, ContractValidationIssue{
-			Path:    "/draft/schema_version",
-			Message: "draft.schema_version must match draft_schema_version",
-		})
-	}
-	expectedDraftID := stringValue(document, "draft_id")
-	actualDraftID := stringValue(draft, "draft_id")
-	if actualDraftID == "" {
-		actualDraftID = stringValue(draft, "constraint_id")
-	}
-	if actualDraftID != expectedDraftID {
-		response.Valid = false
-		response.Errors = append(response.Errors, ContractValidationIssue{
-			Path:    "/draft_id",
-			Message: "draft_id must match the embedded draft id",
-		})
-	}
-	if requiresConfirmation, ok := draft["requires_confirmation"].(bool); !ok || !requiresConfirmation {
-		response.Valid = false
-		response.Errors = append(response.Errors, ContractValidationIssue{
-			Path:    "/draft/requires_confirmation",
-			Message: "embedded draft must explicitly require confirmation",
-		})
-	}
-	draftSchemaName, ok := ContractSchemaName(actualDraftSchema)
+	draftSchemaName, ok := ContractSchemaName(envelope.ActualDraftSchemaVersion)
 	if !ok {
 		response.Valid = false
 		response.Errors = append(response.Errors, ContractValidationIssue{
 			Path:    "/draft/schema_version",
-			Message: "unsupported draft schema_version: " + actualDraftSchema,
+			Message: "unsupported draft schema_version: " + envelope.ActualDraftSchemaVersion,
 		})
 	} else if svc.validator == nil {
 		return response, NewAppError(500, CodeInternal, "contract validator is not configured", true, nil)
-	} else if err := svc.validator.Validate(draftSchemaName, draft); err != nil {
+	} else if err := svc.validator.Validate(draftSchemaName, envelope.Draft); err != nil {
 		response.Valid = false
 		response.Errors = append(response.Errors, ContractValidationIssue{
 			Path:    "/draft",

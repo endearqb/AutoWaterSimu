@@ -6,12 +6,27 @@ import (
 )
 
 const (
+	DraftConfirmationSchema = "draft_confirmation.v1"
+
 	ConstraintApplicationPlanSchema = "constraint_application_plan.v1"
 	ConstraintApplicationMode       = "advisory_only"
 
 	ConstraintPlanWarningAdvisoryOnly = "constraint application plan is advisory only; no compute job was created"
 	ConstraintPlanWarningApproval     = "production approval is owned by the consuming approval system"
 )
+
+type ValidationIssue struct {
+	Path    string
+	Message string
+}
+
+type DraftConfirmationEnvelope struct {
+	Draft                    map[string]any
+	DraftSchemaVersion       string
+	ActualDraftSchemaVersion string
+	DraftID                  string
+	ActualDraftID            string
+}
 
 type ConstraintApplicationPlan struct {
 	SchemaVersion              string         `json:"schema_version"`
@@ -32,6 +47,51 @@ type ConstraintApplicationPlanInput struct {
 	ConfirmationID string
 	DraftID        string
 	Draft          map[string]any
+}
+
+func ValidateDraftConfirmationEnvelope(document map[string]any) (DraftConfirmationEnvelope, []ValidationIssue) {
+	envelope := DraftConfirmationEnvelope{
+		Draft:              mapValue(document, "draft"),
+		DraftSchemaVersion: stringValue(document, "draft_schema_version"),
+		DraftID:            stringValue(document, "draft_id"),
+	}
+	issues := []ValidationIssue{}
+	if stringValue(document, "schema_version") != DraftConfirmationSchema {
+		issues = append(issues, ValidationIssue{
+			Path:    "/schema_version",
+			Message: "schema_version must be draft_confirmation.v1",
+		})
+	}
+	if envelope.Draft == nil {
+		issues = append(issues, ValidationIssue{
+			Path:    "/draft",
+			Message: "draft is required",
+		})
+	}
+	envelope.ActualDraftSchemaVersion = stringValue(envelope.Draft, "schema_version")
+	if envelope.ActualDraftSchemaVersion != envelope.DraftSchemaVersion {
+		issues = append(issues, ValidationIssue{
+			Path:    "/draft/schema_version",
+			Message: "draft.schema_version must match draft_schema_version",
+		})
+	}
+	envelope.ActualDraftID = stringValue(envelope.Draft, "draft_id")
+	if envelope.ActualDraftID == "" {
+		envelope.ActualDraftID = stringValue(envelope.Draft, "constraint_id")
+	}
+	if envelope.ActualDraftID != envelope.DraftID {
+		issues = append(issues, ValidationIssue{
+			Path:    "/draft_id",
+			Message: "draft_id must match the embedded draft id",
+		})
+	}
+	if requiresConfirmation, ok := envelope.Draft["requires_confirmation"].(bool); !ok || !requiresConfirmation {
+		issues = append(issues, ValidationIssue{
+			Path:    "/draft/requires_confirmation",
+			Message: "embedded draft must explicitly require confirmation",
+		})
+	}
+	return envelope, issues
 }
 
 func ConstraintApplicationPlanFromDraft(input ConstraintApplicationPlanInput) (ConstraintApplicationPlan, error) {

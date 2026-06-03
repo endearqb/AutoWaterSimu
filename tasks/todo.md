@@ -1,3 +1,27 @@
+# 2026-06-03 AutoWaterSimu Next agent draft confirmation envelope split TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, API/domain/compute READMEs, architecture current-state, and draft workflow code
+- [x] Confirm next aligned gap: draft confirmation envelope cross-field validation still lived inside compute draft workflow compatibility code
+- [x] Add a `domain/agent` helper for stable draft confirmation envelope validation, with direct tests
+- [x] Route `DraftWorkflowService.ConfirmDraftDocument` through the domain helper while preserving base contract validation, schema file lookup, embedded draft JSON Schema validation, confirmation record assembly, persistence, response attachment, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and promotion behavior
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Move only pure wrapper / embedded draft cross-field rules: `schema_version=draft_confirmation.v1`, embedded draft presence, draft schema version match, draft id / constraint id match, and explicit `requires_confirmation=true`.
+- Keep `draft_confirmation.v1` schema validation, embedded draft schema file lookup and JSON Schema validation, confirmation record assembly, idempotent persistence, confirmation readback, constraint application plan gating, Agent draft promotion, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes unchanged.
+- Treat this as another small `domain/agent` package movement step, not the full draft workflow package migration.
+
+## Review
+
+- Added `domain/agent.ValidateDraftConfirmationEnvelope` with direct tests for valid Agent draft confirmation, constraint draft `constraint_id` fallback, cross-field issue aggregation, and missing embedded draft diagnostics.
+- `DraftWorkflowService.ConfirmDraftDocument` now delegates stable wrapper / embedded draft cross-field validation to `domain/agent` while preserving base contract validation, unsupported non-draft early return semantics, schema file lookup, embedded draft JSON Schema validation, confirmation record assembly, idempotent persistence, response attachment, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and promotion behavior.
+- Updated API/domain/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: `cd apps\api; go test ./internal/domain/agent ./internal/compute`, `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full draft workflow package migration is not complete; draft confirmation record assembly/persistence, schema file lookup/JSON Schema validation, confirmation readback, promotion orchestration, HTTP mapping, store implementations, and broader jobs/artifacts/models/evidence/simulation/agent package movement remain future slices.
+
 # 2026-06-02 Go API Domain Package Split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, compute architecture docs, API READMEs, and current compute store/audit files
