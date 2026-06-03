@@ -55,6 +55,8 @@ Phase 4A 仍以 `internal/compute` 作为主要 compute compatibility wiring pac
 
 `ModelGovernanceService` 仍留在 `internal/compute` compatibility package；`model_governance.go` 仅保留 struct/constructor/store/callback wiring，catalog、parameter promotion、benchmark case queueing、benchmark run history 和 model run lookup workflow 分组位于同 package 的 `model_governance_*.go` 文件。
 
+`EvidenceGovernanceService` 仍留在 `internal/compute` compatibility package；`evidence_governance.go` 仅保留 struct/constructor/store/callback wiring，result read、evidence package export、production readiness 和 evidence-ref resolution workflow 分组位于同 package 的 `evidence_governance_*.go` 文件。
+
 ## 3. 维护约定
 
 1. P0 metadata DB 使用 PostgreSQL。

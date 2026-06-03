@@ -1,3 +1,28 @@
+# 2026-06-03 AutoWaterSimu Next evidence governance workflow file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-evidence READMEs, current-state, compute-api architecture, and evidence governance code
+- [x] Confirm next aligned gap: `evidence_governance.go` remained a large compute workflow file after model governance workflow split
+- [x] Split `EvidenceGovernanceService` workflows into same-package result read, evidence package export, production readiness, and evidence-ref resolution files
+- [x] Preserve evidence governance behavior, HTTP/OpenAPI/contracts/migrations/generated clients/auth scopes/store interfaces/public `Service` methods and constructor boundaries
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Keep `evidence_governance.go` as `EvidenceGovernanceService` struct, constructor, store interface, and callback wiring.
+- Move only same-package workflow methods into `evidence_governance_result.go`, `evidence_governance_package.go`, `evidence_governance_readiness.go`, and `evidence_governance_references.go`.
+- Treat this as handler/package surface reduction and large-file cleanup, not a full evidence governance domain package migration or public constructor signature change.
+
+## Review
+
+- `evidence_governance.go` now keeps only `EvidenceGovernanceService` struct, constructor, store interface, and callback wiring, reducing it from 474 lines in the previous architecture snapshot to 42 lines in the latest audit.
+- Evidence governance workflows were split into same-package `evidence_governance_result.go`, `evidence_governance_package.go`, `evidence_governance_readiness.go`, and `evidence_governance_references.go`.
+- Public `Service` delegates, evidence governance method signatures, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, store interfaces, persistence semantics, and workflow behavior were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `cd apps\api; go test ./internal/compute ./cmd/compute-api`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full evidence governance domain package migration, evidence package/readiness DTO and HTTP mapping migration, public `NewService` / `NewServiceWithArchive` signature narrowing, and broader production-security work remain future slices.
+
 # 2026-06-03 AutoWaterSimu Next model governance workflow file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-models READMEs, current-state, compute-api architecture, and model governance code
