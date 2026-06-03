@@ -1,3 +1,29 @@
+# 2026-06-03 AutoWaterSimu Next Service delegate file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain READMEs, architecture current-state, and service wiring code
+- [x] Confirm next aligned gap: `service.go` still held constructor wiring, public compatibility delegates, and shared helpers in one large file
+- [x] Split public `Service` compatibility delegates into same-package `service_*.go` files grouped by jobs, artifacts, models, simulation, contracts, evidence, workers, and metrics
+- [x] Move shared compatibility helper functions into `service_helpers.go` while preserving package-private names and call sites
+- [x] Preserve HTTP/OpenAPI/contracts/migrations/generated clients/auth scopes/store interfaces/public `Service` method signatures and narrowed internal service constructors
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Keep `service.go` as the `Service` struct and `NewService` / `NewServiceWithArchive` wiring entrypoint.
+- Move only same-package public delegate methods and helper functions; do not change workflow behavior, DTOs, idempotency, persistence, OpenAPI, auth scopes, or package boundaries.
+- Treat this as handler/package surface reduction and large-file cleanup, not a full domain workflow migration or public constructor signature narrowing.
+
+## Review
+
+- `service.go` now keeps only the `Service` struct and `NewService` / `NewServiceWithArchive` wiring, reducing it from 465 lines in the previous architecture snapshot to 67 lines in the latest audit.
+- Public `Service` compatibility delegates were split into `service_jobs.go`, `service_artifacts.go`, `service_models.go`, `service_simulation.go`, `service_contracts.go`, `service_evidence.go`, `service_workers.go`, and `service_metrics.go`.
+- Original package-private helper functions moved unchanged into `service_helpers.go`, so current compute service files keep the same helper names and call sites.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `cd apps\api; go test ./internal/compute ./cmd/compute-api`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full jobs/artifacts/models/evidence/simulation/agent workflow package migration, public `NewService` / `NewServiceWithArchive` signature narrowing, and broader production-security work remain future slices.
+
 # 2026-06-03 AutoWaterSimu Next platform audit envelope split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/platform/compute READMEs, current-state, and audit code

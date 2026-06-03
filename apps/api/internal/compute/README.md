@@ -48,7 +48,9 @@
 |---|---|
 | `http.go` | server entrypoint, route mapping, health/ready routes, and panic recovery; platform HTTP helpers live in `../platform/httpx` |
 | `http_jobs.go`、`http_artifacts.go`、`http_models.go`、`http_contracts.go`、`http_simulation.go`、`http_workers.go`、`http_metrics.go` | HTTP handlers and request helpers split by route group while preserving `Routes` registrations |
-| `service.go` | remaining lifecycle orchestration and compatibility delegates; built-in model catalog fallback uses `../domain/models` for stable document shape and simulation check job document assembly/execution profile uses `../domain/simulation` |
+| `service.go` | `Service` struct and package-level constructor wiring for narrowed services |
+| `service_jobs.go`、`service_artifacts.go`、`service_models.go`、`service_simulation.go`、`service_contracts.go`、`service_evidence.go`、`service_workers.go`、`service_metrics.go` | public `Service` compatibility delegates split by domain while preserving stable method signatures |
+| `service_helpers.go` | shared compute helper functions used across compatibility services, including built-in catalog fallback conversion |
 | `job_lifecycle.go` | job create, list/read, events, cancel, complete/fail, timeout sweep, and model-run persistence with narrow job/model-run dependencies; stable failed-worker fallback result construction and worker-result completion interpretation live in `../domain/jobs`, compute_result model_run extraction/precheck lives in `../domain/models`, and stored result summary risk projection lives in `../domain/evidence` |
 | `artifact_lifecycle.go` | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow with narrow store/object-store dependencies and `../domain/artifacts` retention policy/action planner helpers |
 | `worker_lifecycle.go` | adapter from existing compute `WorkerStore` / job records into `../domain/workers` |
