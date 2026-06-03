@@ -37,7 +37,7 @@ The wider `Service` still owns package-level construction and compatibility dele
 
 `apps/api/internal/domain/models` owns stable built-in `model_catalog.v1` document shape, benchmark case schedule-run `compute_job.v1` document shape, `compute_result.v1.runtime_audit.model_runs` extraction/precheck, `model_run.v1` raw identity extraction, evidence ref extraction, warning extraction, parameter hash extraction, identity/hash comparison against benchmark expectations, `benchmark_run.v1` evidence ref extraction, benchmark case scheduling and benchmark run admission gates, single benchmark case promotion readiness, default parameter set status transition invariants, the pure default-parameter-set promotion gate, and the pure model-run production governance gate. `apps/api/internal/compute` uses it from built-in catalog fallback assembly, benchmark case schedule-run job assembly after validation/input resolution, job completion, MemoryStore/PostgresStore persistence, evidence/simulation read paths, evidence governance production-allowed calculation, model catalog status workflow validation, benchmark schedule/record validation, and promotion planning while material-balance default parameter hash generation, typed catalog DTO conversion, model_run schema validation/raw persistence, catalog snapshot mutation, benchmark schedule-run catalog lookup/gate/error mapping/execution profile lookup/simulation input resolution/createJob, benchmark query orchestration, workflow DTOs, evidence package assembly, and HTTP response types remain in the compatibility package.
 
-`apps/api/internal/domain/simulation` owns stable simulation job type to execution profile / worker capability mapping, pure simulation check `compute_job.v1` document assembly, and material-balance process graph validation/projection rules. `apps/api/internal/compute` uses it from simulation-check job creation, benchmark case scheduling, process graph registration validation, and ProcessGraph-to-SimulationInput resolution while simulation request schema validation, input_ref resolution, simulation input/process graph metadata persistence, model catalog governance, and HTTP behavior remain in the compatibility package.
+`apps/api/internal/domain/simulation` owns stable simulation job type to execution profile / worker capability mapping, pure simulation check `compute_job.v1` document assembly, material-balance process graph validation/projection rules, and simulation input/process graph record data projection. `apps/api/internal/compute` uses it from simulation-check job creation, benchmark case scheduling, process graph registration validation, ProcessGraph-to-SimulationInput resolution, and simulation registry record assembly while simulation request schema validation, input_ref resolution, simulation input/process graph metadata persistence, compute record mapping, model catalog governance, and HTTP behavior remain in the compatibility package.
 
 `apps/api/internal/domain/workers` owns worker register / claim / heartbeat request normalization and response assembly behind a minimal worker store interface. `apps/api/internal/compute` adapts the existing `WorkerStore` and job state projection into that package so HTTP routes and storage behavior stay unchanged.
 
@@ -51,7 +51,7 @@ The wider `Service` still owns package-level construction and compatibility dele
 | `domain/evidence` | Evidence input/ref/risk parsing, stored result summary risk projection, result explanation ref extraction / record data projection, and readiness policy helpers |
 | `domain/jobs` | Job status constants, failed-worker fallback result construction, worker result completion extraction, worker claim matching, and invariant helpers |
 | `domain/models` | Built-in model catalog document helper, benchmark case run job document helper, compute result model_run extraction/precheck, `model_run.v1` identity/ref/warning parsing and identity-check helpers, `benchmark_run.v1` evidence ref helpers, benchmark workflow gates, benchmark case readiness helper, parameter-set status invariants, promotion gate policy, and production governance gate |
-| `domain/simulation` | Simulation job execution profile, worker capability, simulation-check job document, and material-balance process graph projection helpers |
+| `domain/simulation` | Simulation job execution profile, worker capability, simulation-check job document, material-balance process graph projection, and simulation registry record data projection helpers |
 | `domain/workers` | Worker register / claim / heartbeat domain package |
 | `platform/auth` | Static bearer token authentication and platform auth errors |
 | `platform/config` | Runtime configuration shape for command/deployment wiring |
@@ -70,7 +70,7 @@ Selected files from the latest audit:
 | `model_governance.go` | 679 | model catalog, benchmark run, model run lookup, promotion planning, and benchmark case queueing |
 | `evidence_governance.go` | 474 | result read, evidence package export, production readiness, and evidence-ref resolution |
 | `job_lifecycle.go` | 228 | job create/list/read/events, cancel, complete/fail, timeout sweep, and model-run persistence |
-| `simulation_inputs.go` | 289 | simulation input registry, process graph registry, and input-ref resolution |
+| `simulation_inputs.go` | 289 | simulation input registry, process graph registry, input-ref resolution, and compute record mapping |
 | `draft_workflows.go` | 237 | draft confirmation validation, advisory constraint plans, and explicit simulation-check promotion |
 | `artifact_lifecycle.go` | 369 | artifact upload, listing, metadata lookup, download, retention sweep, archive copy/checksum/delete flow |
 | `result_explanations.go` | 150 | result explanation submit/review/publish, job-scoped evidence ref validation, and compute record mapping |
@@ -278,7 +278,7 @@ Compute uses this package through compatibility constants, worker-reported failu
 
 Compute uses this package through built-in model catalog fallback document assembly, benchmark case schedule-run job document assembly after catalog/gate/execution/input validation, job completion model_run extraction before schema validation/persistence, MemoryStore/PostgresStore model-run persistence, evidence/simulation read paths, evidence governance production-allowed calculation, default-parameter-set status transition validation, benchmark case schedule-run gate checks, benchmark run admission checks, benchmark run evidence-ref validation, benchmark run model-run identity/hash validation, promotion planning per-case readiness checks, and final promotion gate evaluation; material-balance default parameter hash generation, typed catalog DTO conversion, full job lifecycle persistence, full model catalog governance, catalog snapshot mutation, benchmark schedule-run catalog lookup/gate/error mapping/execution profile lookup/simulation input resolution/JSON marshaling/createJob, benchmark run persistence workflow, benchmark query orchestration, promotion workflow orchestration, evidence package assembly, HTTP mapping, and DTOs have not moved yet.
 
-`apps/api/internal/domain/simulation` owns stable simulation execution profile and simulation check document helpers:
+`apps/api/internal/domain/simulation` owns stable simulation execution profile, simulation check document, process graph, and simulation registry record data helpers:
 
 - `ExecutionProfile`
 - `RequiredCapabilities`
@@ -286,8 +286,10 @@ Compute uses this package through built-in model catalog fallback document assem
 - `BuildSimulationCheckJobDocument`
 - `ValidateProcessGraphForSimulationInput`
 - `ProcessGraphToSimulationInput`
+- `ProcessGraphRecordDataFromDocument`
+- `SimulationInputRecordDataFromDocument`
 
-Compute uses this package from simulation-check creation, benchmark case scheduling, process graph registration validation, and material-balance ProcessGraph-to-SimulationInput resolution. Simulation request schema validation, input_ref resolution, simulation input/process graph metadata records, job persistence/idempotency execution, store implementation, evidence-ref lookup, and HTTP mapping have not moved yet.
+Compute uses this package from simulation-check creation, benchmark case scheduling, process graph registration validation, material-balance ProcessGraph-to-SimulationInput resolution, and neutral simulation input/process graph record data projection before mapping into compute metadata records. Simulation request schema validation, input_ref resolution, simulation input/process graph metadata persistence, compute record mapping, job persistence/idempotency execution, store implementation, evidence-ref lookup, and HTTP mapping have not moved yet.
 
 `WorkerLifecycleService` is the sixth narrowed slice and a moved domain package under `apps/api/internal/domain/workers`. Its constructor depends on:
 

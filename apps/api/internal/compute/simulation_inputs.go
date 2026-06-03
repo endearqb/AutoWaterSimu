@@ -218,30 +218,28 @@ func (svc *SimulationInputService) processGraphRecord(processGraph map[string]an
 	if err := domainsimulation.ValidateProcessGraphForSimulationInput(processGraph); err != nil {
 		return ProcessGraphRecord{}, ValidationError(err.Error())
 	}
-	version := int(numberValue(processGraph, "version"))
-	if version <= 0 {
-		return ProcessGraphRecord{}, ValidationError("process_graph.version must be a positive integer")
-	}
-	payloadHash, err := ResultHash(processGraph)
-	if err != nil {
-		return ProcessGraphRecord{}, err
-	}
-	metadata := mapValue(processGraph, "metadata")
-	sourceSystem := defaultString(stringValue(metadata, "source_system"), defaultString(defaultSourceSystem, "compute-api"))
-	requestedBy := defaultString(stringValue(metadata, "requested_by"), defaultString(defaultRequestedBy, "compute-api"))
-	return ProcessGraphRecord{
-		ProcessGraphID:      required(stringValue(processGraph, "process_graph_id"), "process_graph_id"),
-		SchemaVersion:       required(stringValue(processGraph, "schema_version"), "schema_version"),
-		Version:             version,
-		SourceCanvasGraphID: required(stringValue(processGraph, "source_canvas_graph_id"), "source_canvas_graph_id"),
-		PayloadHash:         payloadHash,
-		Payload:             mustJSON(processGraph),
-		SourceSystem:        sourceSystem,
-		RequestedBy:         requestedBy,
-		TenantID:            stringValue(metadata, "tenant_id"),
-		ProjectID:           stringValue(metadata, "project_id"),
-		Metadata:            mustJSON(metadata),
+	recordData, err := domainsimulation.ProcessGraphRecordDataFromDocument(domainsimulation.ProcessGraphRecordDataInput{
+		ProcessGraph:        processGraph,
+		DefaultSourceSystem: defaultSourceSystem,
+		DefaultRequestedBy:  defaultRequestedBy,
 		CreatedAt:           svc.now(),
+	})
+	if err != nil {
+		return ProcessGraphRecord{}, ValidationError(err.Error())
+	}
+	return ProcessGraphRecord{
+		ProcessGraphID:      recordData.ProcessGraphID,
+		SchemaVersion:       recordData.SchemaVersion,
+		Version:             recordData.Version,
+		SourceCanvasGraphID: recordData.SourceCanvasGraphID,
+		PayloadHash:         recordData.PayloadHash,
+		Payload:             recordData.Payload,
+		SourceSystem:        recordData.SourceSystem,
+		RequestedBy:         recordData.RequestedBy,
+		TenantID:            recordData.TenantID,
+		ProjectID:           recordData.ProjectID,
+		Metadata:            recordData.Metadata,
+		CreatedAt:           recordData.CreatedAt,
 	}, nil
 }
 
@@ -251,27 +249,29 @@ func (svc *SimulationInputService) simulationInputRecord(input map[string]any, d
 			return SimulationInputRecord{}, err
 		}
 	}
-	payloadHash, err := ResultHash(input)
-	if err != nil {
-		return SimulationInputRecord{}, err
-	}
-	metadata := mapValue(input, "metadata")
-	sourceSystem := defaultString(stringValue(metadata, "source_system"), defaultString(defaultSourceSystem, "compute-api"))
-	requestedBy := defaultString(stringValue(metadata, "requested_by"), defaultString(defaultRequestedBy, "compute-api"))
-	return SimulationInputRecord{
-		SimulationInputID:   required(stringValue(input, "simulation_input_id"), "simulation_input_id"),
-		SchemaVersion:       required(stringValue(input, "schema_version"), "schema_version"),
-		JobType:             required(stringValue(input, "job_type"), "job_type"),
-		ProcessGraphID:      required(stringValue(input, "process_graph_id"), "process_graph_id"),
-		ProcessGraphVersion: int(numberValue(input, "process_graph_version")),
-		PayloadHash:         payloadHash,
-		Payload:             mustJSON(input),
-		SourceSystem:        sourceSystem,
-		RequestedBy:         requestedBy,
-		TenantID:            stringValue(metadata, "tenant_id"),
-		ProjectID:           stringValue(metadata, "project_id"),
-		Metadata:            mustJSON(metadata),
+	recordData, err := domainsimulation.SimulationInputRecordDataFromDocument(domainsimulation.SimulationInputRecordDataInput{
+		SimulationInput:     input,
+		DefaultSourceSystem: defaultSourceSystem,
+		DefaultRequestedBy:  defaultRequestedBy,
 		CreatedAt:           svc.now(),
+	})
+	if err != nil {
+		return SimulationInputRecord{}, ValidationError(err.Error())
+	}
+	return SimulationInputRecord{
+		SimulationInputID:   recordData.SimulationInputID,
+		SchemaVersion:       recordData.SchemaVersion,
+		JobType:             recordData.JobType,
+		ProcessGraphID:      recordData.ProcessGraphID,
+		ProcessGraphVersion: recordData.ProcessGraphVersion,
+		PayloadHash:         recordData.PayloadHash,
+		Payload:             recordData.Payload,
+		SourceSystem:        recordData.SourceSystem,
+		RequestedBy:         recordData.RequestedBy,
+		TenantID:            recordData.TenantID,
+		ProjectID:           recordData.ProjectID,
+		Metadata:            recordData.Metadata,
+		CreatedAt:           recordData.CreatedAt,
 	}, nil
 }
 

@@ -1,3 +1,27 @@
+# 2026-06-03 AutoWaterSimu Next simulation registry record data split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/domain/simulation/compute READMEs, current-state, and simulation registry code
+- [x] Confirm next aligned gap: simulation input / process graph record data projection still lived inside compute simulation registry compatibility code
+- [x] Add `domain/simulation` helpers for stable simulation input and process graph record data projection, with direct tests
+- [x] Route `SimulationInputService` record assembly through the domain helpers while preserving schema validation, process graph structure validation, compute `SimulationInputRecord` / `ProcessGraphRecord` mapping, store persistence/idempotency, input-ref resolution, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Move only pure `process_graph.v1` and `simulation_input.v1` record data projection: canonical payload JSON/hash, metadata JSON/defaults, identity fields, source/requested defaults, tenant/project projection, process graph version handling, and caller-supplied timestamps.
+- Keep JSON Schema validation, material-balance process graph structure validation, compute DTO mapping, metadata store persistence, idempotency/conflict behavior, input-ref resolution, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes unchanged.
+- Treat this as a continuation of `domain/simulation` package movement, not the full simulation input/process graph metadata service migration.
+
+## Review
+
+- Added `domain/simulation.ProcessGraphRecordDataFromDocument` and `domain/simulation.SimulationInputRecordDataFromDocument` with direct tests for payload hash, metadata projection, default metadata behavior, required identity fields, and invalid process graph version rejection.
+- `SimulationInputService.processGraphRecord` and `SimulationInputService.simulationInputRecord` now delegate stable record data projection to `domain/simulation` and only map the neutral data into existing compute metadata records.
+- Updated API/domain/simulation/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: `cd apps\api; go test ./internal/domain/simulation ./internal/compute`, `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full simulation input/process graph metadata service migration is not complete; schema validation, store persistence/idempotency, input-ref resolution, HTTP mapping, and Memory/Postgres implementations remain in compute compatibility package.
+
 # 2026-06-03 AutoWaterSimu Next evidence result explanation record data split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/domain/evidence/compute READMEs, current-state, and result explanation workflow code
