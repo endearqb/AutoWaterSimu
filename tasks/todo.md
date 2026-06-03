@@ -1,3 +1,28 @@
+# 2026-06-03 AutoWaterSimu Next model governance workflow file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-models READMEs, current-state, compute-api architecture, and model governance code
+- [x] Confirm next aligned gap: `model_governance.go` remained the largest non-test compute workflow file after service delegate split
+- [x] Split `ModelGovernanceService` workflows into same-package catalog, parameter promotion, benchmark case queueing, benchmark run history, and model run lookup files
+- [x] Preserve model governance behavior, HTTP/OpenAPI/contracts/migrations/generated clients/auth scopes/store interfaces/public `Service` methods and constructor boundaries
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Keep `model_governance.go` as `ModelGovernanceService` struct, constructor, store interface, and callback wiring.
+- Move only same-package workflow methods into `model_governance_catalog.go`, `model_governance_parameters.go`, `model_governance_benchmark_cases.go`, `model_governance_benchmark_runs.go`, and `model_governance_model_runs.go`.
+- Treat this as handler/package surface reduction and large-file cleanup, not a full model governance domain package migration or public constructor signature change.
+
+## Review
+
+- `model_governance.go` now keeps only `ModelGovernanceService` struct, constructor, store interface, and callback wiring, reducing it from 679 lines in the previous architecture snapshot to 37 lines in the latest audit.
+- Model governance workflows were split into same-package `model_governance_catalog.go`, `model_governance_parameters.go`, `model_governance_benchmark_cases.go`, `model_governance_benchmark_runs.go`, and `model_governance_model_runs.go`.
+- Public `Service` delegates, model governance method signatures, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, store interfaces, persistence semantics, and workflow behavior were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `cd apps\api; go test ./internal/compute ./cmd/compute-api`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full models governance domain package migration, catalog snapshot mutation/DTO/persistence/HTTP migration, public `NewService` / `NewServiceWithArchive` signature narrowing, and broader production-security work remain future slices.
+
 # 2026-06-03 AutoWaterSimu Next Service delegate file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain READMEs, architecture current-state, and service wiring code
