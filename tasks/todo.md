@@ -1,3 +1,27 @@
+# 2026-06-03 AutoWaterSimu Next evidence result explanation record data split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/domain/evidence/compute READMEs, current-state, and result explanation workflow code
+- [x] Confirm next aligned gap: result explanation record data projection still lived inside compute result explanation compatibility code
+- [x] Add a `domain/evidence` helper for stable result explanation record data projection, with direct tests
+- [x] Route `ResultExplanationService` record assembly through the domain helper while preserving schema validation, job/result availability checks, job-scoped evidence ref resolution, compute `ResultExplanationRecord` mapping, persistence, review/publish, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Move only pure `result_explanation.v1` record data projection: canonical payload JSON/hash, metadata JSON/defaults, job tenant/project fallback, resolved evidence ref copy, submitted status, and submitted/created/updated timestamps.
+- Keep contract schema validation, route `job_id` check, job/result availability gate, job-scoped evidence ref resolution, compute `ResultExplanationRecord` DTO mapping, store persistence, review/publish mutations, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes unchanged.
+- Treat this as a continuation of `domain/evidence` package movement, not the full result explanation workflow package migration.
+
+## Review
+
+- Added `domain/evidence.ResultExplanationRecordDataFromDocument` with direct tests for metadata projection, payload hash, job tenant/project fallback, default metadata behavior, copy safety for resolved evidence refs, and required identity fields.
+- `ResultExplanationService.resultExplanationRecord` now delegates stable record data projection to `domain/evidence` and only maps the neutral data into the existing compute `ResultExplanationRecord`.
+- Updated API/domain/evidence/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: `cd apps\api; go test ./internal/domain/evidence ./internal/compute`, `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full result explanation workflow package migration is not complete; schema validation, job/result availability checks, evidence ref resolution callback, persistence/review/publish, HTTP mapping, and Memory/Postgres implementations remain future slices.
+
 # 2026-06-03 AutoWaterSimu Next agent draft confirmation record data split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/domain/compute READMEs, current-state, and draft workflow code after the envelope split

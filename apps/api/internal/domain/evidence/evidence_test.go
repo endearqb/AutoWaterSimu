@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestInputRefs(t *testing.T) {
@@ -171,6 +172,104 @@ func TestResultExplanationEvidenceRefs(t *testing.T) {
 	}
 	if got, want := ResultExplanationEvidenceRefs(document), []string{"artifact:a1", "evidence_package:evidence_job_1", "model_run:m1"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("result explanation evidence refs mismatch: got %#v want %#v", got, want)
+	}
+}
+
+func TestResultExplanationRecordDataFromDocument(t *testing.T) {
+	now := time.Date(2026, 6, 3, 12, 34, 56, 0, time.UTC)
+	document := map[string]any{
+		"schema_version": "result_explanation.v1",
+		"explanation_id": " explanation_1 ",
+		"job_id":         " job_1 ",
+		"created_by":     " agent:evidence ",
+		"evidence_refs":  []any{"model_run:mr_1"},
+		"metadata": map[string]any{
+			"source_system": " NewSystem ",
+			"requested_by":  " user_1 ",
+			"tenant_id":     " tenant_override ",
+			"project_id":    " project_override ",
+		},
+	}
+	resolvedRefs := []string{"model_run:mr_1", "artifact:a1"}
+	record, err := ResultExplanationRecordDataFromDocument(ResultExplanationRecordDataInput{
+		Document:             document,
+		Job:                  ResultExplanationJobContext{JobID: " job_1 ", TenantID: "tenant_job", ProjectID: "project_job"},
+		ResolvedEvidenceRefs: resolvedRefs,
+		DefaultSourceSystem:  "compute-api",
+		DefaultRequestedBy:   "fallback-user",
+		Now:                  now,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	resolvedRefs[0] = "model_run:changed"
+	payload, _ := json.Marshal(document)
+	if record.SchemaVersion != ResultExplanationRecordSchema ||
+		record.ExplanationID != "explanation_1" ||
+		record.ExplanationSchemaVersion != ResultExplanationSchema ||
+		record.JobID != "job_1" ||
+		record.Status != ResultExplanationStatusSubmitted ||
+		record.CreatedBy != "agent:evidence" ||
+		record.PayloadHash != "sha256:"+sha256Hex(payload) ||
+		string(record.Payload) != string(payload) ||
+		!reflect.DeepEqual(record.ResolvedEvidenceRefs, []string{"model_run:mr_1", "artifact:a1"}) ||
+		record.SourceSystem != "NewSystem" ||
+		record.RequestedBy != "user_1" ||
+		record.TenantID != "tenant_override" ||
+		record.ProjectID != "project_override" ||
+		string(record.Metadata) == "null" ||
+		!record.SubmittedAt.Equal(now) ||
+		!record.CreatedAt.Equal(now) ||
+		!record.UpdatedAt.Equal(now) {
+		t.Fatalf("unexpected record data: %#v", record)
+	}
+}
+
+func TestResultExplanationRecordDataFromDocumentDefaultsMetadata(t *testing.T) {
+	now := time.Date(2026, 6, 3, 12, 0, 0, 0, time.UTC)
+	record, err := ResultExplanationRecordDataFromDocument(ResultExplanationRecordDataInput{
+		Document: map[string]any{
+			"schema_version": "result_explanation.v1",
+			"explanation_id": "explanation_1",
+			"created_by":     "agent:evidence",
+		},
+		Job: ResultExplanationJobContext{
+			JobID:     "job_1",
+			TenantID:  "tenant_job",
+			ProjectID: "project_job",
+		},
+		Now: now,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if record.SourceSystem != "compute-api" ||
+		record.RequestedBy != "unknown" ||
+		record.TenantID != "tenant_job" ||
+		record.ProjectID != "project_job" ||
+		string(record.Metadata) != "null" {
+		t.Fatalf("unexpected defaults: %#v", record)
+	}
+}
+
+func TestResultExplanationRecordDataFromDocumentRequiresIdentityFields(t *testing.T) {
+	_, err := ResultExplanationRecordDataFromDocument(ResultExplanationRecordDataInput{
+		Document: map[string]any{
+			"schema_version": "result_explanation.v1",
+			"created_by":     "agent:evidence",
+		},
+	})
+	if err == nil || err.Error() != "explanation_id is required" {
+		t.Fatalf("unexpected explanation_id error: %v", err)
+	}
+	_, err = ResultExplanationRecordDataFromDocument(ResultExplanationRecordDataInput{
+		Document: map[string]any{
+			"schema_version": "result_explanation.v1",
+			"explanation_id": "explanation_1",
+		},
+	})
+	if err == nil || err.Error() != "created_by is required" {
+		t.Fatalf("unexpected created_by error: %v", err)
 	}
 }
 

@@ -4,8 +4,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"sort"
 	"strings"
+	"time"
+)
+
+const (
+	ResultExplanationRecordSchema    = "result_explanation_record.v1"
+	ResultExplanationSchema          = "result_explanation.v1"
+	ResultExplanationStatusSubmitted = "submitted"
 )
 
 type InputReferenceSummary struct {
@@ -44,6 +52,41 @@ type ReadinessCheck struct {
 	Status       string
 	Message      string
 	EvidenceRefs []string
+}
+
+type ResultExplanationJobContext struct {
+	JobID     string
+	TenantID  string
+	ProjectID string
+}
+
+type ResultExplanationRecordDataInput struct {
+	Document             map[string]any
+	Job                  ResultExplanationJobContext
+	ResolvedEvidenceRefs []string
+	DefaultSourceSystem  string
+	DefaultRequestedBy   string
+	Now                  time.Time
+}
+
+type ResultExplanationRecordData struct {
+	SchemaVersion            string
+	ExplanationID            string
+	ExplanationSchemaVersion string
+	JobID                    string
+	Status                   string
+	CreatedBy                string
+	PayloadHash              string
+	Payload                  json.RawMessage
+	ResolvedEvidenceRefs     []string
+	SourceSystem             string
+	RequestedBy              string
+	TenantID                 string
+	ProjectID                string
+	Metadata                 json.RawMessage
+	SubmittedAt              time.Time
+	CreatedAt                time.Time
+	UpdatedAt                time.Time
 }
 
 func InputRefs(input json.RawMessage) InputReferenceSummary {
@@ -166,6 +209,49 @@ func ResultExplanationEvidenceRefs(document map[string]any) []string {
 		}
 	}
 	return uniqueStrings(refs)
+}
+
+func ResultExplanationRecordDataFromDocument(input ResultExplanationRecordDataInput) (ResultExplanationRecordData, error) {
+	document := input.Document
+	payload, err := json.Marshal(document)
+	if err != nil {
+		return ResultExplanationRecordData{}, err
+	}
+	metadata := mapValue(document, "metadata")
+	metadataBytes := json.RawMessage("null")
+	if metadata != nil {
+		metadataBytes, err = json.Marshal(metadata)
+		if err != nil {
+			return ResultExplanationRecordData{}, err
+		}
+	}
+	explanationID, err := requiredString(stringValue(document, "explanation_id"), "explanation_id")
+	if err != nil {
+		return ResultExplanationRecordData{}, err
+	}
+	createdBy, err := requiredString(stringValue(document, "created_by"), "created_by")
+	if err != nil {
+		return ResultExplanationRecordData{}, err
+	}
+	return ResultExplanationRecordData{
+		SchemaVersion:            ResultExplanationRecordSchema,
+		ExplanationID:            explanationID,
+		ExplanationSchemaVersion: ResultExplanationSchema,
+		JobID:                    strings.TrimSpace(input.Job.JobID),
+		Status:                   ResultExplanationStatusSubmitted,
+		CreatedBy:                createdBy,
+		PayloadHash:              "sha256:" + sha256Hex(payload),
+		Payload:                  payload,
+		ResolvedEvidenceRefs:     append([]string(nil), input.ResolvedEvidenceRefs...),
+		SourceSystem:             defaultString(stringValue(metadata, "source_system"), defaultString(input.DefaultSourceSystem, "compute-api")),
+		RequestedBy:              defaultString(stringValue(metadata, "requested_by"), defaultString(input.DefaultRequestedBy, "unknown")),
+		TenantID:                 defaultString(stringValue(metadata, "tenant_id"), strings.TrimSpace(input.Job.TenantID)),
+		ProjectID:                defaultString(stringValue(metadata, "project_id"), strings.TrimSpace(input.Job.ProjectID)),
+		Metadata:                 metadataBytes,
+		SubmittedAt:              input.Now,
+		CreatedAt:                input.Now,
+		UpdatedAt:                input.Now,
+	}, nil
 }
 
 func SummarizeRiskFindings(findings []map[string]any) RiskSummary {
@@ -310,6 +396,20 @@ func stringValue(value map[string]any, key string) string {
 		return strings.TrimSpace(text)
 	}
 	return ""
+}
+
+func requiredString(value, name string) (string, error) {
+	if strings.TrimSpace(value) == "" {
+		return "", errors.New(name + " is required")
+	}
+	return strings.TrimSpace(value), nil
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return strings.TrimSpace(value)
 }
 
 func stringsFromAny(value any) []string {

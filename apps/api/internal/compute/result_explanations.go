@@ -104,37 +104,35 @@ func (svc *ResultExplanationService) PublishResultExplanation(ctx context.Contex
 }
 
 func (svc *ResultExplanationService) resultExplanationRecord(document map[string]any, job JobRecord, resolvedRefs []string, defaultSourceSystem, defaultRequestedBy string) (ResultExplanationRecord, error) {
-	payload, err := json.Marshal(document)
+	recordData, err := domainevidence.ResultExplanationRecordDataFromDocument(domainevidence.ResultExplanationRecordDataInput{
+		Document:             document,
+		Job:                  domainevidence.ResultExplanationJobContext{JobID: job.JobID, TenantID: job.TenantID, ProjectID: job.ProjectID},
+		ResolvedEvidenceRefs: resolvedRefs,
+		DefaultSourceSystem:  defaultSourceSystem,
+		DefaultRequestedBy:   defaultRequestedBy,
+		Now:                  svc.now(),
+	})
 	if err != nil {
-		return ResultExplanationRecord{}, err
+		return ResultExplanationRecord{}, ValidationError(err.Error())
 	}
-	metadata := mapValue(document, "metadata")
-	metadataBytes := json.RawMessage("null")
-	if metadata != nil {
-		metadataBytes, err = json.Marshal(metadata)
-		if err != nil {
-			return ResultExplanationRecord{}, err
-		}
-	}
-	now := svc.now()
 	return ResultExplanationRecord{
-		SchemaVersion:            "result_explanation_record.v1",
-		ExplanationID:            required(stringValue(document, "explanation_id"), "explanation_id"),
-		ExplanationSchemaVersion: "result_explanation.v1",
-		JobID:                    job.JobID,
-		Status:                   "submitted",
-		CreatedBy:                required(stringValue(document, "created_by"), "created_by"),
-		PayloadHash:              "sha256:" + SHA256Hex(payload),
-		Payload:                  payload,
-		ResolvedEvidenceRefs:     append([]string(nil), resolvedRefs...),
-		SourceSystem:             defaultString(stringValue(metadata, "source_system"), defaultString(defaultSourceSystem, "compute-api")),
-		RequestedBy:              defaultString(stringValue(metadata, "requested_by"), defaultString(defaultRequestedBy, "unknown")),
-		TenantID:                 defaultString(stringValue(metadata, "tenant_id"), job.TenantID),
-		ProjectID:                defaultString(stringValue(metadata, "project_id"), job.ProjectID),
-		Metadata:                 metadataBytes,
-		SubmittedAt:              now,
-		CreatedAt:                now,
-		UpdatedAt:                now,
+		SchemaVersion:            recordData.SchemaVersion,
+		ExplanationID:            recordData.ExplanationID,
+		ExplanationSchemaVersion: recordData.ExplanationSchemaVersion,
+		JobID:                    recordData.JobID,
+		Status:                   recordData.Status,
+		CreatedBy:                recordData.CreatedBy,
+		PayloadHash:              recordData.PayloadHash,
+		Payload:                  recordData.Payload,
+		ResolvedEvidenceRefs:     recordData.ResolvedEvidenceRefs,
+		SourceSystem:             recordData.SourceSystem,
+		RequestedBy:              recordData.RequestedBy,
+		TenantID:                 recordData.TenantID,
+		ProjectID:                recordData.ProjectID,
+		Metadata:                 recordData.Metadata,
+		SubmittedAt:              recordData.SubmittedAt,
+		CreatedAt:                recordData.CreatedAt,
+		UpdatedAt:                recordData.UpdatedAt,
 	}, nil
 }
 
