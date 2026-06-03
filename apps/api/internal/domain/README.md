@@ -7,7 +7,7 @@
 本目录负责：
 
 - jobs、workers、artifacts、models、evidence、simulation、agent 等业务领域边界。
-- 已稳定的 draft confirmation envelope 跨字段校验规则。
+- 已稳定的 draft confirmation envelope 跨字段校验和确认记录 data projection 规则。
 - 已稳定的 constraint application advisory plan 组装与 Agent draft proposed request 提取规则。
 - 已稳定的 artifact retention policy 解析、候选判断和 retention sweep action planning 规则。
 - 已稳定的 evidence input/ref/risk parsing、stored result summary risk projection、result explanation evidence ref 提取与 production-readiness policy 规则。
@@ -27,7 +27,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
-| `agent/` | draft confirmation envelope validation, Agent draft proposed request extraction, and constraint draft advisory plan helpers |
+| `agent/` | draft confirmation envelope validation / record data projection, Agent draft proposed request extraction, and constraint draft advisory plan helpers |
 | `artifacts/` | artifact retention policy parsing, candidate checks, and sweep action planning helpers |
 | `evidence/` | evidence input/ref/risk parsing, stored result summary risk projection, result explanation ref extraction, and readiness policy helpers |
 | `jobs/` | compute job status constants, failed-worker fallback result construction, worker result completion extraction, worker claim matching, and invariant helpers |

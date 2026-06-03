@@ -1,3 +1,27 @@
+# 2026-06-03 AutoWaterSimu Next agent draft confirmation record data split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/domain/compute READMEs, current-state, and draft workflow code after the envelope split
+- [x] Confirm next aligned gap: draft confirmation record data projection still lived inside compute draft workflow compatibility code
+- [x] Add a `domain/agent` helper for stable draft confirmation record data projection, with direct tests
+- [x] Route `DraftWorkflowService` record assembly through the domain helper while preserving compute `DraftConfirmationRecord` mapping, idempotent persistence, response attachment, HTTP/OpenAPI/contracts/migrations/generated clients, auth scopes, and promotion behavior
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Move only pure record data projection: canonical payload JSON/hash, `confirmed_at` RFC3339 parsing, metadata JSON, source/requested defaults, tenant/project projection, and stable field trimming.
+- Keep `draft_confirmation.v1` base schema validation, embedded draft schema lookup/validation, compute `DraftConfirmationRecord` DTO mapping, store persistence, confirmation readback, constraint application plan gating, Agent draft promotion, HTTP/OpenAPI/contracts/migrations/generated clients, and auth scopes unchanged.
+- Treat this as a continuation of `domain/agent` package movement, not the full draft workflow package migration.
+
+## Review
+
+- Added `domain/agent.DraftConfirmationRecordDataFromDocument` with direct tests for metadata projection, payload hash, timezone normalization, default metadata behavior, and invalid `confirmed_at` rejection.
+- `DraftWorkflowService.draftConfirmationRecord` now delegates stable record data projection to `domain/agent` and only maps the neutral data into the existing compute `DraftConfirmationRecord`.
+- Updated API/domain/compute READMEs, architecture/current-state, compute-api architecture notes, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: `cd apps\api; go test ./internal/domain/agent ./internal/compute`, `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full draft workflow package migration is not complete; schema file lookup/JSON Schema validation, confirmation store read/write, response attachment, HTTP mapping, promotion orchestration, and store implementations remain future slices.
+
 # 2026-06-03 AutoWaterSimu Next agent draft confirmation envelope split TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, API/domain/compute READMEs, architecture current-state, and draft workflow code

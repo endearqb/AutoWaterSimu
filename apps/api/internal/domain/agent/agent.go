@@ -1,8 +1,12 @@
 package agent
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 )
 
 const (
@@ -26,6 +30,32 @@ type DraftConfirmationEnvelope struct {
 	ActualDraftSchemaVersion string
 	DraftID                  string
 	ActualDraftID            string
+}
+
+type DraftConfirmationRecordDataInput struct {
+	Document            map[string]any
+	DefaultSourceSystem string
+	DefaultRequestedBy  string
+	CreatedAt           time.Time
+}
+
+type DraftConfirmationRecordData struct {
+	ConfirmationID     string
+	SchemaVersion      string
+	DraftSchemaVersion string
+	DraftID            string
+	Decision           string
+	DecisionReason     string
+	ConfirmedBy        string
+	ConfirmedAt        time.Time
+	PayloadHash        string
+	Payload            json.RawMessage
+	SourceSystem       string
+	RequestedBy        string
+	TenantID           string
+	ProjectID          string
+	Metadata           json.RawMessage
+	CreatedAt          time.Time
 }
 
 type ConstraintApplicationPlan struct {
@@ -94,6 +124,68 @@ func ValidateDraftConfirmationEnvelope(document map[string]any) (DraftConfirmati
 	return envelope, issues
 }
 
+func DraftConfirmationRecordDataFromDocument(input DraftConfirmationRecordDataInput) (DraftConfirmationRecordData, error) {
+	document := input.Document
+	payload, err := json.Marshal(document)
+	if err != nil {
+		return DraftConfirmationRecordData{}, err
+	}
+	metadata := mapValue(document, "metadata")
+	metadataBytes := json.RawMessage("null")
+	if metadata != nil {
+		metadataBytes, err = json.Marshal(metadata)
+		if err != nil {
+			return DraftConfirmationRecordData{}, err
+		}
+	}
+	confirmedAtText, err := requiredString(stringValue(document, "confirmed_at"), "confirmed_at")
+	if err != nil {
+		return DraftConfirmationRecordData{}, err
+	}
+	confirmedAt, err := time.Parse(time.RFC3339, confirmedAtText)
+	if err != nil {
+		return DraftConfirmationRecordData{}, errors.New("confirmed_at must be RFC3339 date-time")
+	}
+	confirmationID, err := requiredString(stringValue(document, "confirmation_id"), "confirmation_id")
+	if err != nil {
+		return DraftConfirmationRecordData{}, err
+	}
+	draftSchemaVersion, err := requiredString(stringValue(document, "draft_schema_version"), "draft_schema_version")
+	if err != nil {
+		return DraftConfirmationRecordData{}, err
+	}
+	draftID, err := requiredString(stringValue(document, "draft_id"), "draft_id")
+	if err != nil {
+		return DraftConfirmationRecordData{}, err
+	}
+	decision, err := requiredString(stringValue(document, "decision"), "decision")
+	if err != nil {
+		return DraftConfirmationRecordData{}, err
+	}
+	confirmedBy, err := requiredString(stringValue(document, "confirmed_by"), "confirmed_by")
+	if err != nil {
+		return DraftConfirmationRecordData{}, err
+	}
+	return DraftConfirmationRecordData{
+		ConfirmationID:     confirmationID,
+		SchemaVersion:      DraftConfirmationSchema,
+		DraftSchemaVersion: draftSchemaVersion,
+		DraftID:            draftID,
+		Decision:           decision,
+		DecisionReason:     stringValue(document, "decision_reason"),
+		ConfirmedBy:        confirmedBy,
+		ConfirmedAt:        confirmedAt.UTC(),
+		PayloadHash:        "sha256:" + sha256Hex(payload),
+		Payload:            payload,
+		SourceSystem:       defaultString(stringValue(metadata, "source_system"), defaultString(input.DefaultSourceSystem, "compute-api")),
+		RequestedBy:        defaultString(stringValue(metadata, "requested_by"), defaultString(input.DefaultRequestedBy, "unknown")),
+		TenantID:           stringValue(metadata, "tenant_id"),
+		ProjectID:          stringValue(metadata, "project_id"),
+		Metadata:           metadataBytes,
+		CreatedAt:          input.CreatedAt,
+	}, nil
+}
+
 func ConstraintApplicationPlanFromDraft(input ConstraintApplicationPlanInput) (ConstraintApplicationPlan, error) {
 	draft := input.Draft
 	if draft == nil {
@@ -153,4 +245,23 @@ func stringValue(value map[string]any, key string) string {
 		return strings.TrimSpace(text)
 	}
 	return ""
+}
+
+func requiredString(value, name string) (string, error) {
+	if strings.TrimSpace(value) == "" {
+		return "", errors.New(name + " is required")
+	}
+	return strings.TrimSpace(value), nil
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return strings.TrimSpace(value)
+}
+
+func sha256Hex(bytes []byte) string {
+	sum := sha256.Sum256(bytes)
+	return hex.EncodeToString(sum[:])
 }

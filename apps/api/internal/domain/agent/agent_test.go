@@ -1,6 +1,10 @@
 package agent
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+	"time"
+)
 
 func TestValidateDraftConfirmationEnvelope(t *testing.T) {
 	envelope, issues := ValidateDraftConfirmationEnvelope(map[string]any{
@@ -85,6 +89,94 @@ func TestValidateDraftConfirmationEnvelopeReportsMissingDraft(t *testing.T) {
 		issues[2].Path != "/draft_id" ||
 		issues[3].Path != "/draft/requires_confirmation" {
 		t.Fatalf("unexpected issue order: %#v", issues)
+	}
+}
+
+func TestDraftConfirmationRecordDataFromDocument(t *testing.T) {
+	createdAt := time.Date(2026, 6, 3, 12, 34, 56, 0, time.UTC)
+	document := map[string]any{
+		"schema_version":        "draft_confirmation.v1",
+		"confirmation_id":       " confirm_1 ",
+		"draft_schema_version":  " agent_scenario_draft.v1 ",
+		"draft_id":              " draft_1 ",
+		"decision":              " approved ",
+		"decision_reason":       " ready ",
+		"confirmed_by":          " reviewer@example.com ",
+		"confirmed_at":          "2026-06-03T08:09:10+08:00",
+		"requires_confirmation": true,
+		"metadata": map[string]any{
+			"source_system": " web ",
+			"requested_by":  " user_1 ",
+			"tenant_id":     " tenant_1 ",
+			"project_id":    " project_1 ",
+		},
+	}
+	record, err := DraftConfirmationRecordDataFromDocument(DraftConfirmationRecordDataInput{
+		Document:            document,
+		DefaultSourceSystem: "compute-api",
+		DefaultRequestedBy:  "fallback-user",
+		CreatedAt:           createdAt,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	payload, _ := json.Marshal(document)
+	if record.ConfirmationID != "confirm_1" ||
+		record.SchemaVersion != DraftConfirmationSchema ||
+		record.DraftSchemaVersion != "agent_scenario_draft.v1" ||
+		record.DraftID != "draft_1" ||
+		record.Decision != "approved" ||
+		record.DecisionReason != "ready" ||
+		record.ConfirmedBy != "reviewer@example.com" ||
+		!record.ConfirmedAt.Equal(time.Date(2026, 6, 3, 0, 9, 10, 0, time.UTC)) ||
+		record.PayloadHash != "sha256:"+sha256Hex(payload) ||
+		string(record.Payload) != string(payload) ||
+		record.SourceSystem != "web" ||
+		record.RequestedBy != "user_1" ||
+		record.TenantID != "tenant_1" ||
+		record.ProjectID != "project_1" ||
+		string(record.Metadata) == "null" ||
+		!record.CreatedAt.Equal(createdAt) {
+		t.Fatalf("unexpected record data: %#v", record)
+	}
+}
+
+func TestDraftConfirmationRecordDataFromDocumentDefaultsMetadata(t *testing.T) {
+	record, err := DraftConfirmationRecordDataFromDocument(DraftConfirmationRecordDataInput{
+		Document: map[string]any{
+			"schema_version":       "draft_confirmation.v1",
+			"confirmation_id":      "confirm_1",
+			"draft_schema_version": "constraint_draft.v1",
+			"draft_id":             "constraint_1",
+			"decision":             "rejected",
+			"confirmed_by":         "reviewer@example.com",
+			"confirmed_at":         "2026-06-03T00:00:00Z",
+		},
+		DefaultSourceSystem: "",
+		DefaultRequestedBy:  "",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if record.SourceSystem != "compute-api" || record.RequestedBy != "unknown" || string(record.Metadata) != "null" {
+		t.Fatalf("unexpected defaults: %#v", record)
+	}
+}
+
+func TestDraftConfirmationRecordDataFromDocumentRejectsInvalidConfirmedAt(t *testing.T) {
+	_, err := DraftConfirmationRecordDataFromDocument(DraftConfirmationRecordDataInput{
+		Document: map[string]any{
+			"schema_version":       "draft_confirmation.v1",
+			"confirmation_id":      "confirm_1",
+			"draft_schema_version": "constraint_draft.v1",
+			"draft_id":             "constraint_1",
+			"decision":             "approved",
+			"confirmed_by":         "reviewer@example.com",
+			"confirmed_at":         "not-a-date",
+		},
+	})
+	if err == nil || err.Error() != "confirmed_at must be RFC3339 date-time" {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

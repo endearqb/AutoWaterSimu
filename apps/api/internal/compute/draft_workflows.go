@@ -166,38 +166,31 @@ func (svc *DraftWorkflowService) PromoteDraftConfirmationToSimulationCheck(ctx c
 }
 
 func (svc *DraftWorkflowService) draftConfirmationRecord(document map[string]any, defaultSourceSystem, defaultRequestedBy string) (DraftConfirmationRecord, error) {
-	payload, err := json.Marshal(document)
+	recordData, err := domainagent.DraftConfirmationRecordDataFromDocument(domainagent.DraftConfirmationRecordDataInput{
+		Document:            document,
+		DefaultSourceSystem: defaultSourceSystem,
+		DefaultRequestedBy:  defaultRequestedBy,
+		CreatedAt:           svc.now(),
+	})
 	if err != nil {
-		return DraftConfirmationRecord{}, err
-	}
-	metadata := mapValue(document, "metadata")
-	metadataBytes := json.RawMessage("null")
-	if metadata != nil {
-		metadataBytes, err = json.Marshal(metadata)
-		if err != nil {
-			return DraftConfirmationRecord{}, err
-		}
-	}
-	confirmedAt, err := time.Parse(time.RFC3339, required(stringValue(document, "confirmed_at"), "confirmed_at"))
-	if err != nil {
-		return DraftConfirmationRecord{}, ValidationError("confirmed_at must be RFC3339 date-time")
+		return DraftConfirmationRecord{}, ValidationError(err.Error())
 	}
 	return DraftConfirmationRecord{
-		ConfirmationID:     required(stringValue(document, "confirmation_id"), "confirmation_id"),
-		SchemaVersion:      "draft_confirmation.v1",
-		DraftSchemaVersion: required(stringValue(document, "draft_schema_version"), "draft_schema_version"),
-		DraftID:            required(stringValue(document, "draft_id"), "draft_id"),
-		Decision:           required(stringValue(document, "decision"), "decision"),
-		DecisionReason:     stringValue(document, "decision_reason"),
-		ConfirmedBy:        required(stringValue(document, "confirmed_by"), "confirmed_by"),
-		ConfirmedAt:        confirmedAt.UTC(),
-		PayloadHash:        "sha256:" + SHA256Hex(payload),
-		Payload:            payload,
-		SourceSystem:       defaultString(stringValue(metadata, "source_system"), defaultString(defaultSourceSystem, "compute-api")),
-		RequestedBy:        defaultString(stringValue(metadata, "requested_by"), defaultString(defaultRequestedBy, "unknown")),
-		TenantID:           stringValue(metadata, "tenant_id"),
-		ProjectID:          stringValue(metadata, "project_id"),
-		Metadata:           metadataBytes,
-		CreatedAt:          svc.now(),
+		ConfirmationID:     recordData.ConfirmationID,
+		SchemaVersion:      recordData.SchemaVersion,
+		DraftSchemaVersion: recordData.DraftSchemaVersion,
+		DraftID:            recordData.DraftID,
+		Decision:           recordData.Decision,
+		DecisionReason:     recordData.DecisionReason,
+		ConfirmedBy:        recordData.ConfirmedBy,
+		ConfirmedAt:        recordData.ConfirmedAt,
+		PayloadHash:        recordData.PayloadHash,
+		Payload:            recordData.Payload,
+		SourceSystem:       recordData.SourceSystem,
+		RequestedBy:        recordData.RequestedBy,
+		TenantID:           recordData.TenantID,
+		ProjectID:          recordData.ProjectID,
+		Metadata:           recordData.Metadata,
+		CreatedAt:          recordData.CreatedAt,
 	}, nil
 }

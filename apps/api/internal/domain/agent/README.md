@@ -7,6 +7,7 @@
 本目录负责：
 
 - `draft_confirmation.v1` envelope 的稳定跨字段校验规则。
+- `draft_confirmation.v1` 确认记录的稳定字段投影、metadata 默认值、payload hash 和 `confirmed_at` 解析规则。
 - `constraint_application_plan.v1` 的 advisory-only 计划组装规则。
 - 约束草案应用计划的稳定安全不变量：不创建 job、不修改 target、需要外部 production approval。
 - `agent_scenario_draft.v1.proposed_request` 的稳定提取规则，供显式 simulation-check promotion 使用。
@@ -15,6 +16,7 @@
 
 - draft confirmation 持久化或读取。
 - contract schema validation。
+- compute `DraftConfirmationRecord` DTO 映射或 response attachment。
 - simulation-check promotion workflow。
 - HTTP route、OpenAPI、PostgreSQL implementation 或 auth scope。
 
@@ -22,7 +24,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `agent.go` | Agent draft / constraint draft / draft confirmation envelope domain helpers |
+| `agent.go` | Agent draft / constraint draft / draft confirmation envelope and record data domain helpers |
 | `agent_test.go` | Direct agent domain tests |
 
 ## 3. 维护约定
@@ -39,6 +41,9 @@
 - `ConstraintApplicationPlanInput`
 - `ConstraintApplicationPlanFromDraft`
 - `ValidateDraftConfirmationEnvelope`
+- `DraftConfirmationRecordData`
+- `DraftConfirmationRecordDataInput`
+- `DraftConfirmationRecordDataFromDocument`
 - `ProposedSimulationRequestFromDraft`
 
 ## 5. 依赖边界
@@ -55,4 +60,4 @@ cd apps\api; go test ./internal/domain/agent ./internal/compute
 
 ## 7. AI 操作提示
 
-如果要迁移完整 draft workflow，请先补 store/DTO adapter，避免把 compute `DraftConfirmationRecord`、`JobSnapshot` 或 HTTP response/error 类型直接搬入本 package。`ValidateDraftConfirmationEnvelope` 只做 wrapper / embedded draft 跨字段校验；schema 文件选择、JSON Schema validation、确认记录持久化和 response attachment 仍由 compute 负责。`ConstraintApplicationPlanFromDraft` 只能做纯计划组装，不应读取 store、创建 job、修改 target 或执行生产审批。`ProposedSimulationRequestFromDraft` 只能返回 draft 内的 proposed request；schema validation、JSON marshal 和 job 创建回调仍由 compute 负责。
+如果要迁移完整 draft workflow，请先补 store/DTO adapter，避免把 compute `DraftConfirmationRecord`、`JobSnapshot` 或 HTTP response/error 类型直接搬入本 package。`ValidateDraftConfirmationEnvelope` 只做 wrapper / embedded draft 跨字段校验；`DraftConfirmationRecordDataFromDocument` 只做中立 record data 投影；schema 文件选择、JSON Schema validation、compute DTO 映射、确认记录持久化和 response attachment 仍由 compute 负责。`ConstraintApplicationPlanFromDraft` 只能做纯计划组装，不应读取 store、创建 job、修改 target 或执行生产审批。`ProposedSimulationRequestFromDraft` 只能返回 draft 内的 proposed request；schema validation、JSON marshal 和 job 创建回调仍由 compute 负责。
