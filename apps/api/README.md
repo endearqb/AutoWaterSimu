@@ -63,6 +63,8 @@ Model governance HTTP mapping 仍由 `internal/compute` 暴露；原宽泛 `http
 
 Model governance PostgreSQL metadata persistence 仍由 `internal/compute` 的 `PostgresStore` 实现；原宽泛 `postgres_models.go` 已按 `ModelRunStore`、`BenchmarkRunStore` 和 `ModelCatalogStore` 责任拆分为 `postgres_model_runs.go`、`postgres_benchmark_runs.go` 和 `postgres_model_catalog.go`，SQL 与迁移保持不变。
 
+Model governance in-memory metadata persistence 仍由 `internal/compute` 的 `MemoryStore` 实现；原宽泛 `memory_models.go` 已按 `ModelRunStore`、`BenchmarkRunStore` 和 `ModelCatalogStore` 责任拆分为 `memory_model_runs.go`、`memory_benchmark_runs.go` 和 `memory_model_catalog.go`，locking、cursor pagination、排序与 clone 语义保持不变。
+
 `EvidenceGovernanceService` 仍留在 `internal/compute` compatibility package；`evidence_governance.go` 仅保留 struct/constructor/store/callback wiring，result read、evidence package export、production readiness 和 evidence-ref resolution workflow 分组位于同 package 的 `evidence_governance_*.go` 文件。
 
 `SimulationInputService` 仍留在 `internal/compute` compatibility package；`simulation_inputs.go` 仅保留 struct/constructor/store wiring，simulation input registration/read、process graph registration/projection 和 `simulation_request.input_ref` resolution / model-run replay workflow 分组位于同 package 的 `simulation_inputs_*.go` 文件。

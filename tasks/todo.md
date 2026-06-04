@@ -1,3 +1,28 @@
+# 2026-06-04 AutoWaterSimu Next model governance MemoryStore persistence file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute READMEs, current-state, compute-api architecture, and model governance MemoryStore persistence code
+- [x] Confirm next aligned gap: `memory_models.go` still bundled model_run, benchmark_run, and model_catalog in-memory persistence after workflow, HTTP, and PostgreSQL splits
+- [x] Split model governance MemoryStore persistence into same-package files aligned with existing store interfaces
+- [x] Preserve Store interfaces, PostgresStore behavior, service/HTTP/OpenAPI/contracts/generated clients, DTOs, pagination, ordering, idempotency/conflict, clone semantics, and error mapping
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Delete the old broad `memory_models.go` file and move its functions unchanged into `memory_model_runs.go`, `memory_benchmark_runs.go`, and `memory_model_catalog.go`.
+- Keep `MemoryStore`, maps, locking, cursor pagination, sort order, raw JSON clone behavior, list filters, and idempotency semantics unchanged.
+- Treat this as MemoryStore persistence surface reduction only, not a model governance domain package migration or store schema/API change.
+
+## Review
+
+- Replaced `memory_models.go` with `memory_model_runs.go`, `memory_benchmark_runs.go`, and `memory_model_catalog.go`.
+- The split follows the existing `ModelRunStore`, `BenchmarkRunStore`, and `ModelCatalogStore` boundaries from `store_interfaces.go`.
+- `MemoryStore` maps, locking, raw JSON clone behavior, list filters, cursor pagination, sort order, idempotency/conflict behavior, Store interfaces, PostgresStore behavior, service/HTTP/OpenAPI/contracts/generated clients, DTOs, and error mapping were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `go test ./internal/compute -run "Test(ValidatedCompletePersistsModelRun|ModelCatalogEndpoint|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint)$" -count=1`, full `go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full model governance domain package migration, future in-memory adapter extraction, public constructor signature narrowing, hosted integration/browser/release evidence, full object-level data scope, and all-mutation audit remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next model governance PostgreSQL persistence file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute READMEs, current-state, compute-api architecture, and model governance PostgreSQL persistence code

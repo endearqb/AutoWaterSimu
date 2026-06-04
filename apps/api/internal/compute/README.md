@@ -71,7 +71,8 @@
 | `contract_validation.go` | compatibility wrapper over `../platform/contracts` document validation, with optional draft confirmation record support |
 | `audit.go` | compatibility wrappers for selected mutation audit context/envelope helpers; stable envelope/event JSON shape lives in `../platform/audit` |
 | `store_interfaces.go` | aggregate metadata `Store`, domain metadata store interfaces, and list filters |
-| `memory_store.go`、`memory_jobs.go`、`memory_artifacts.go`、`memory_models.go`、`memory_simulation.go`、`memory_agent.go`、`memory_workers.go`、`memory_metrics.go` | in-memory metadata store implementation split by domain, preserving the existing single-package `MemoryStore` behavior |
+| `memory_store.go`、`memory_jobs.go`、`memory_artifacts.go`、`memory_simulation.go`、`memory_agent.go`、`memory_workers.go`、`memory_metrics.go` | in-memory metadata store implementation split by domain, preserving the existing single-package `MemoryStore` behavior |
+| `memory_model_runs.go`, `memory_benchmark_runs.go`, `memory_model_catalog.go` | model governance MemoryStore persistence split by `ModelRunStore`, `BenchmarkRunStore`, and `ModelCatalogStore` responsibilities |
 | `postgres.go` | PostgreSQL store entrypoint, open/close, and migration apply/check helpers |
 | `postgres_jobs.go`、`postgres_artifacts.go`、`postgres_simulation.go`、`postgres_agent.go`、`postgres_workers.go`、`postgres_metrics.go`、`postgres_sql_helpers.go` | PostgreSQL metadata persistence split by domain, with select SQL and scan functions kept near their domain methods where practical |
 | `postgres_model_runs.go`, `postgres_benchmark_runs.go`, `postgres_model_catalog.go` | model governance PostgreSQL persistence split by `ModelRunStore`, `BenchmarkRunStore`, and `ModelCatalogStore` responsibilities |
