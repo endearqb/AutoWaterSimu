@@ -1,3 +1,29 @@
+# 2026-06-04 AutoWaterSimu Next frontend Compute service facade split TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, frontend README hierarchy, current service wrapper, caller usage, and recent Compute client boundary record
+- [x] Confirm next aligned gap: `computeJobsService.ts` still bundled jobs, artifacts/evidence, model governance, contracts/drafts/result explanations, process graph registry, demo job builders, shared types, and facade wiring after generated client boundary tightening
+- [x] Split Compute service wrapper into same-directory handwritten service submodules while preserving the existing `computeJobsService` facade and public type exports
+- [x] Preserve generated client output, route imports/call sites, method names, environment/token behavior, service return shapes, OpenAPI, backend API, and UI behavior
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Keep `frontend/src/services/computeJobsService.ts` as the route-compatible facade.
+- Move stable helper/build/API groups into `computeJobsTypes.ts`, `computeJobBuilders.ts`, `computeJobApi.ts`, `computeArtifactsApi.ts`, `computeModelGovernanceApi.ts`, `computeContractsApi.ts`, and `computeSimulationRegistryApi.ts`.
+- Do not create `features/*` yet; this is a low-risk same-directory service surface split that prepares later feature-sliced migration.
+
+## Review
+
+- `computeJobsService.ts` now composes same-directory service groups instead of holding all Compute API wrapper logic in one large file.
+- Added `computeJobsTypes.ts` for UI-facing wrapper interfaces and generated type re-exports.
+- Added `computeJobBuilders.ts` for demo/current-flow job document builders.
+- Added `computeJobApi.ts`, `computeArtifactsApi.ts`, `computeModelGovernanceApi.ts`, `computeContractsApi.ts`, and `computeSimulationRegistryApi.ts` for route-compatible handwritten API wrapper groups.
+- Existing route imports and `computeJobsService.*` call sites remain unchanged.
+- Validation passed: `cd frontend; npx tsc --noEmit`, `scripts\check-deps.ps1`, direct Compute generated client import scan, `scripts\ci\pr-fast.ps1`, and `git diff --check -- frontend docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full `frontend/src/features/*/api.ts` / `queries.ts` migration, live backend browser reads, hosted integration/browser/release evidence, golden scenarios, full production data scope, and all-mutation audit remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next frontend Compute client boundary TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, frontend README hierarchy, dependency graph, check-deps script, and current Compute client imports

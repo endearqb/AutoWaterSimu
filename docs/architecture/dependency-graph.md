@@ -43,8 +43,8 @@ Current rules:
 
 ## Allowed Exceptions
 
-- `frontend/src/services/computeApiClient.ts` may configure the generated Compute client base URL/token.
-- `frontend/src/services/computeJobsService.ts` may import `frontend/src/client/compute` and re-export stable UI-facing types.
+- `frontend/src/services/compute*.ts` files may configure or call the generated Compute client and re-export stable UI-facing types.
+- `frontend/src/services/computeJobsService.ts` remains the route-compatible facade over narrower service wrapper groups.
 - Documentation may reference paths across modules.
 - Release gate scripts may orchestrate commands across modules but must not inline business logic.
 
