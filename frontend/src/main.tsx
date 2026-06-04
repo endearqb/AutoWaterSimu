@@ -16,24 +16,16 @@ import ReactDOM from "react-dom/client"
 import { routeTree } from "./routeTree.gen"
 
 import { ApiError, OpenAPI } from "./client"
-import { OpenAPI as ComputeOpenAPI } from "./client/compute"
 import { CustomProvider } from "./components/ui/provider"
 import { I18nProvider } from "./i18n"
+import { configureComputeApiClient } from "./services/computeApiClient"
 
 OpenAPI.BASE = import.meta.env.VITE_API_URL
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
 }
 
-ComputeOpenAPI.BASE =
-  import.meta.env.VITE_COMPUTE_API_URL || "http://localhost:8088"
-ComputeOpenAPI.TOKEN = async () => {
-  return (
-    localStorage.getItem("compute_access_token") ||
-    import.meta.env.VITE_COMPUTE_API_TOKEN ||
-    "dev-public-token"
-  )
-}
+configureComputeApiClient()
 
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {

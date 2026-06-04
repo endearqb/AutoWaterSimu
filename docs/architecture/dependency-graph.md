@@ -38,11 +38,12 @@ Current rules:
 | `apps/api/internal/platform` must not import `apps/api/internal/compute` | Platform auth/config/http/metrics helpers must stay below compute domain packages and avoid reverse domain dependencies |
 | `apps/api/internal/domain` must not import `apps/api/internal/compute` | Domain packages such as workers must stay independent from the compute compatibility wiring package |
 | `apps/desktop/` must not import legacy `frontend/src` | Desktop runtime and UI are owned separately from legacy Web |
-| `frontend/src/routes` and `frontend/src/components` must not import `frontend/src/client/compute` directly | Generated Compute client belongs behind service wrappers |
+| `frontend/src` must not import `frontend/src/client/compute` directly outside `frontend/src/services` and `frontend/src/client/compute` itself | Generated Compute client belongs behind service/API wrappers |
 | `backend/app` must not depend on Next runtime modules | Legacy backend remains a migration baseline |
 
 ## Allowed Exceptions
 
+- `frontend/src/services/computeApiClient.ts` may configure the generated Compute client base URL/token.
 - `frontend/src/services/computeJobsService.ts` may import `frontend/src/client/compute` and re-export stable UI-facing types.
 - Documentation may reference paths across modules.
 - Release gate scripts may orchestrate commands across modules but must not inline business logic.

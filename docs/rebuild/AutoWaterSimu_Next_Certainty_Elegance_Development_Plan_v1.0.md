@@ -199,6 +199,8 @@ frontend/src/features/contracts/
 - `features/*/queries.ts` 封装 query/mutation。
 - UI components 不直接 import generated client。
 
+当前已落地 Compute client 最小隔离：`frontend/src/client/compute` 只允许从 `frontend/src/services/` 下的手写 service/API wrapper 直接 import；`frontend/src/services/computeApiClient.ts` 负责 Web bootstrap 所需的 base URL/token 配置，`computeJobsService.ts` 负责 route/component 可用的 typed service facade；`scripts/check-deps.ps1` 会扫描 `frontend/src` 并拒绝其他位置直接 import generated Compute client。完整 feature-sliced `features/*/api.ts` / `queries.ts` 迁移仍需后续逐步完成。
+
 #### 本地真实栈 smoke
 
 基于 Postgres + MinIO + Worker 建立 smoke：
@@ -518,6 +520,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Job lifecycle service constructor narrowed
 - [x] Metrics service constructor narrowed
 - [x] Service constructors narrowed to 1-3 necessary store interfaces
+- [x] Frontend Compute generated client direct imports limited to service/API wrapper layer
 - [x] Static bearer auth package split (`apps/api/internal/platform/auth`)
 - [x] Selected mutation audit envelope helper package split (`apps/api/internal/platform/audit`)
 - [x] First platform HTTP helper package split (`apps/api/internal/platform/httpx`)

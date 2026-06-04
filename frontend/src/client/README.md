@@ -31,7 +31,7 @@
 
 ## 4. 对外接口
 
-对 frontend routes、hooks 和 future COSS-compatible jobs UI 暴露 typed API client。
+对 `frontend/src/services/` 下的手写 service/API wrapper 暴露 typed API client；route/component 不直接 import `frontend/src/client/compute`。
 
 ## 5. 依赖边界
 

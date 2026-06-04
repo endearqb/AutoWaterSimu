@@ -93,6 +93,36 @@ function Invoke-DependencyRule {
     }
 }
 
+function Invoke-GeneratedComputeClientBoundaryRule {
+    param(
+        [string]$Root,
+        [System.Collections.Generic.List[object]]$Violations
+    )
+    $ruleName = "frontend-src-generated-compute-client-imports-must-stay-in-services"
+    $files = Get-SearchFiles -Root $Root -RelativePaths @("frontend/src")
+    if ($files.Count -eq 0) {
+        return
+    }
+
+    $pattern = 'client/compute|@/client/compute|src/client/compute|\.\./.*client/compute|\.\/client\/compute|\.\\client\\compute'
+    $matches = Select-String -LiteralPath ($files | ForEach-Object { $_.FullName }) -Pattern $pattern -AllMatches
+    foreach ($match in $matches) {
+        $relativePath = ConvertTo-RelativePath -Root $Root -Path $match.Path
+        $normalized = $relativePath.Replace("/", "\")
+        if ($normalized.StartsWith("frontend\src\client\compute\", [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        if ($normalized.StartsWith("frontend\src\services\", [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        $matchText = "{0}:{1}:{2}" -f $relativePath, $match.LineNumber, $match.Line.Trim()
+        $Violations.Add([ordered]@{
+            rule = $ruleName
+            match = $matchText
+        }) | Out-Null
+    }
+}
+
 $root = Resolve-RepoRoot -InputRoot $RepoRoot
 $violations = [System.Collections.Generic.List[object]]::new()
 
@@ -131,11 +161,8 @@ Invoke-DependencyRule `
     -Pattern 'frontend[/\\]src|from\s+[''"].*frontend[/\\]|import\s+.*frontend[/\\]' `
     -Violations $violations
 
-Invoke-DependencyRule `
+Invoke-GeneratedComputeClientBoundaryRule `
     -Root $root `
-    -RuleName "frontend-routes-components-must-not-import-generated-compute-client" `
-    -RelativePaths @("frontend/src/routes", "frontend/src/components") `
-    -Pattern 'client/compute|@/client/compute|src/client/compute|\.\./.*client/compute' `
     -Violations $violations
 
 Invoke-DependencyRule `

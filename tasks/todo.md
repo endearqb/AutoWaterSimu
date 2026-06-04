@@ -1,3 +1,31 @@
+# 2026-06-04 AutoWaterSimu Next frontend Compute client boundary TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, frontend README hierarchy, dependency graph, check-deps script, and current Compute client imports
+- [x] Confirm next aligned gap: `frontend/src/main.tsx` still imported `frontend/src/client/compute` directly for bootstrap configuration while the quality plan wants generated Compute client access isolated behind service/API wrappers
+- [x] Move Compute API base URL/token configuration behind a handwritten frontend service wrapper
+- [x] Update `computeJobsService` to reuse the wrapper instead of reading generated `OpenAPI` directly
+- [x] Tighten `check-deps` so generated Compute client imports are allowed only from `frontend/src/services` or the generated client directory itself
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [ ] Commit and push
+
+## Plan
+
+- Add `frontend/src/services/computeApiClient.ts` as the service/API wrapper for Compute generated client configuration and token resolution.
+- Keep `frontend/src/client/compute` generated files untouched.
+- Preserve `VITE_COMPUTE_API_URL`, `VITE_COMPUTE_API_TOKEN`, `localStorage.compute_access_token`, default `dev-public-token`, service method behavior, routes, OpenAPI, and generated client output.
+- Treat this as frontend dependency-boundary tightening only, not a feature-sliced UI migration or API behavior change.
+
+## Review
+
+- Added `frontend/src/services/computeApiClient.ts` as the handwritten service/API wrapper for generated Compute client base URL, token resolution, path construction, and bootstrap configuration.
+- `frontend/src/main.tsx` now calls `configureComputeApiClient()` instead of importing `frontend/src/client/compute` directly.
+- `computeJobsService.ts` now reuses `computeApiBaseUrl`, `computeApiPath`, and `resolveComputeApiToken`, while still keeping generated Compute endpoint calls behind the service layer.
+- `scripts/check-deps.ps1` now scans all `frontend/src` code and only allows direct generated Compute client imports from `frontend/src/services` or `frontend/src/client/compute` itself.
+- Updated frontend README context, dependency graph/current-state docs, Certainty/Elegance plan checklist, and `.ai/changes`.
+- Validation passed: `scripts\check-deps.ps1`, `cd frontend; npx tsc --noEmit`, `scripts\ci\pr-fast.ps1`, direct import `rg` check, and `git diff --check -- frontend scripts docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: complete feature-sliced `features/*/api.ts` and `queries.ts` migration, live backend browser evidence, hosted integration/browser/release evidence, and broader golden scenario automation remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next draft/result explanation persistence file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute READMEs, current-state, compute-api architecture, and draft/result explanation persistence code

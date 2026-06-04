@@ -1,4 +1,4 @@
-import { OpenAPI as ComputeOpenAPI, DefaultService } from "@/client/compute"
+import { DefaultService } from "@/client/compute"
 import type {
   ArtifactRecord,
   ArtifactRetentionSweepReport,
@@ -30,7 +30,6 @@ import type {
   ResultExplanationRecord,
   ResultExplanationReviewRequest,
 } from "@/client/compute"
-import type { ApiRequestOptions } from "@/client/compute/core/ApiRequestOptions"
 import {
   SUPPORTED_JOB_TYPE,
   canvasGraphToProcessGraph,
@@ -42,6 +41,11 @@ import type {
   ProcessGraph,
   SimulationInput,
 } from "@/contracts"
+import {
+  computeApiBaseUrl,
+  computeApiPath,
+  resolveComputeApiToken,
+} from "./computeApiClient"
 
 export interface ComputeHealthStatus {
   health: unknown
@@ -114,17 +118,8 @@ const downloadBlob = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url)
 }
 
-const computeApiPath = (path: string) =>
-  `${ComputeOpenAPI.BASE.replace(/\/$/, "")}${path}`
-
 const resolveComputeToken = async () => {
-  if (typeof ComputeOpenAPI.TOKEN === "function") {
-    return ComputeOpenAPI.TOKEN({
-      method: "GET",
-      url: "",
-    } as ApiRequestOptions<string>)
-  }
-  return ComputeOpenAPI.TOKEN || ""
+  return resolveComputeApiToken({ method: "GET", url: "" })
 }
 
 const readErrorBody = async (response: Response): Promise<unknown> => {
@@ -295,7 +290,7 @@ export const buildComputeJobFromFlowExport = (
 
 export const computeJobsService = {
   getBaseUrl(): string {
-    return ComputeOpenAPI.BASE
+    return computeApiBaseUrl()
   },
 
   checkHealth(): Promise<ComputeHealthStatus> {
