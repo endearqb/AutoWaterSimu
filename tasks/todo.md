@@ -1,3 +1,28 @@
+# 2026-06-04 AutoWaterSimu Next simulation input workflow file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-simulation READMEs, current-state, compute-api architecture, and simulation input workflow code
+- [x] Confirm next aligned gap: `simulation_inputs.go` remained the largest unsplit narrowed compute workflow file after artifact/model/evidence governance workflow splits
+- [x] Split `SimulationInputService` workflows into same-package simulation input registry, process graph registry/projection, and input-ref resolution files
+- [x] Preserve simulation input/process graph behavior, HTTP/OpenAPI/contracts/migrations/generated clients/auth scopes/store interfaces/public `Service` methods and constructor boundaries
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [ ] Commit and push
+
+## Plan
+
+- Keep `simulation_inputs.go` as `SimulationInputService` struct, constructor, replay store interface, and store wiring.
+- Move only same-package workflow methods into `simulation_inputs_registry.go`, `simulation_inputs_process_graphs.go`, and `simulation_inputs_resolution.go`.
+- Treat this as handler/package surface reduction and large-file cleanup, not a full simulation input/process graph domain package migration or public constructor signature change.
+
+## Review
+
+- `simulation_inputs.go` now keeps only the `SimulationInputService` struct, replay store interface, constructor, and store wiring, reducing it from 289 lines in the previous architecture snapshot to 33 lines.
+- Simulation input workflows were split into same-package `simulation_inputs_registry.go`, `simulation_inputs_process_graphs.go`, and `simulation_inputs_resolution.go`.
+- Public `Service` delegates, `SimulationInputService` method signatures, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, store interfaces, process graph validation/projection, record mapping, idempotency, and model-run replay behavior were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `cd apps\api; go test ./internal/compute -run "TestSimulationCheckEndpointCreatesComputeJob|TestProcessGraphEvidenceReference|TestBenchmarkCaseScheduleRunEndpoint" -count=1`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full simulation input/process graph domain package migration, schema validation/input_ref orchestration, metadata persistence, Memory/Postgres implementations, evidence-ref lookup, HTTP mapping, public `NewService` / `NewServiceWithArchive` signature narrowing, and broader production-security work remain future slices.
+
 # 2026-06-03 AutoWaterSimu Next artifact lifecycle workflow file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-artifacts READMEs, current-state, compute-api architecture, archive ADR, and artifact lifecycle code
