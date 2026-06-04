@@ -59,6 +59,8 @@ Phase 4A 仍以 `internal/compute` 作为主要 compute compatibility wiring pac
 
 `ModelGovernanceService` 仍留在 `internal/compute` compatibility package；`model_governance.go` 仅保留 struct/constructor/store/callback wiring，catalog、parameter promotion、benchmark case queueing、benchmark run history 和 model run lookup workflow 分组位于同 package 的 `model_governance_*.go` 文件。
 
+Model governance HTTP mapping 仍由 `internal/compute` 暴露；原宽泛 `http_models.go` 已按同 package 文件拆分为 `http_model_catalog.go`、`http_model_parameters.go`、`http_model_benchmark_cases.go`、`http_benchmark_runs.go` 和 `http_model_runs.go`，`http.go` 的 route registration 与 HTTP 行为保持不变。
+
 `EvidenceGovernanceService` 仍留在 `internal/compute` compatibility package；`evidence_governance.go` 仅保留 struct/constructor/store/callback wiring，result read、evidence package export、production readiness 和 evidence-ref resolution workflow 分组位于同 package 的 `evidence_governance_*.go` 文件。
 
 `SimulationInputService` 仍留在 `internal/compute` compatibility package；`simulation_inputs.go` 仅保留 struct/constructor/store wiring，simulation input registration/read、process graph registration/projection 和 `simulation_request.input_ref` resolution / model-run replay workflow 分组位于同 package 的 `simulation_inputs_*.go` 文件。

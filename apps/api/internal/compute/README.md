@@ -47,7 +47,8 @@
 | 文件 | 作用 |
 |---|---|
 | `http.go` | server entrypoint, route mapping, health/ready routes, and panic recovery; platform HTTP helpers live in `../platform/httpx` |
-| `http_jobs.go`、`http_artifacts.go`、`http_models.go`、`http_contracts.go`、`http_simulation.go`、`http_workers.go`、`http_metrics.go` | HTTP handlers and request helpers split by route group while preserving `Routes` registrations |
+| `http_jobs.go`、`http_artifacts.go`、`http_contracts.go`、`http_simulation.go`、`http_workers.go`、`http_metrics.go` | HTTP handlers and request helpers split by route group while preserving `Routes` registrations |
+| `http_model_catalog.go`, `http_model_parameters.go`, `http_model_benchmark_cases.go`, `http_benchmark_runs.go`, `http_model_runs.go` | model governance HTTP handlers split by catalog, default parameter set, benchmark case queueing, benchmark run history, and model run lookup while preserving `http.go` route registrations |
 | `service.go` | `Service` struct and package-level constructor wiring for narrowed services |
 | `service_jobs.go`、`service_artifacts.go`、`service_models.go`、`service_simulation.go`、`service_contracts.go`、`service_evidence.go`、`service_workers.go`、`service_metrics.go` | public `Service` compatibility delegates split by domain while preserving stable method signatures |
 | `service_helpers.go` | shared compute helper functions used across compatibility services, including built-in catalog fallback conversion |
