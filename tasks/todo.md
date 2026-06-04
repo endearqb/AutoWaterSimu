@@ -1,3 +1,30 @@
+# 2026-06-04 AutoWaterSimu Next draft/result explanation persistence file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute READMEs, current-state, compute-api architecture, and draft/result explanation persistence code
+- [x] Confirm next aligned gap: `memory_agent.go` and `postgres_agent.go` still bundled `DraftConfirmationStore` and `ResultExplanationStore` persistence after workflow and constructor boundary splits
+- [x] Split MemoryStore draft confirmation/result explanation persistence into same-package store-interface files
+- [x] Split PostgreSQL draft confirmation/result explanation persistence into same-package store-interface files
+- [x] Preserve Store interfaces, service/HTTP/OpenAPI/contracts/generated clients, DTOs, SQL, migrations, scan field order, transaction semantics, idempotency/conflict, review/publish state transitions, clone semantics, and error mapping
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Delete the old broad `memory_agent.go` and move its functions unchanged into `memory_draft_confirmations.go` and `memory_result_explanations.go`.
+- Delete the old broad `postgres_agent.go` and move its functions unchanged into `postgres_draft_confirmations.go` and `postgres_result_explanations.go`.
+- Treat this as persistence surface reduction only, not a draft/result explanation domain package migration, schema migration, API behavior change, or constructor signature change.
+
+## Review
+
+- Replaced `memory_agent.go` with `memory_draft_confirmations.go` and `memory_result_explanations.go`.
+- Replaced `postgres_agent.go` with `postgres_draft_confirmations.go` and `postgres_result_explanations.go`.
+- The split follows the existing `DraftConfirmationStore` and `ResultExplanationStore` boundaries from `store_interfaces.go`.
+- `MemoryStore` maps/locking/clone behavior, `PostgresStore` SQL/transactions/select helpers/scan field order, idempotency/conflict behavior, review/publish state transitions, Store interfaces, service/HTTP/OpenAPI/contracts/generated clients, DTOs, migrations, and error mapping were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `go test ./internal/domain/agent ./internal/domain/evidence ./internal/compute -run "Test(ContractValidationEndpoint|NewSystemEvidenceReferenceE2E|ValidateDraftConfirmationEnvelope|DraftConfirmationRecordDataFromDocument|ResultExplanationEvidenceRefs|ResultExplanationRecordDataFromDocument)$" -count=1`, full `go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full agent draft workflow domain package migration, full result explanation workflow domain package migration, future persistence adapter extraction, public constructor signature narrowing, hosted integration/browser/release evidence, full object-level data scope, and all-mutation audit remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next model governance MemoryStore persistence file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute READMEs, current-state, compute-api architecture, and model governance MemoryStore persistence code
