@@ -61,6 +61,8 @@ Phase 4A 仍以 `internal/compute` 作为主要 compute compatibility wiring pac
 
 `SimulationInputService` 仍留在 `internal/compute` compatibility package；`simulation_inputs.go` 仅保留 struct/constructor/store wiring，simulation input registration/read、process graph registration/projection 和 `simulation_request.input_ref` resolution / model-run replay workflow 分组位于同 package 的 `simulation_inputs_*.go` 文件。
 
+`DraftWorkflowService` 仍留在 `internal/compute` compatibility package；`draft_workflows.go` 仅保留 struct/constructor/callback wiring，draft confirmation validation/persistence/read、constraint application plan 和 explicit simulation-check promotion workflow 分组位于同 package 的 `draft_workflows_*.go` 文件。
+
 ## 3. 维护约定
 
 1. P0 metadata DB 使用 PostgreSQL。

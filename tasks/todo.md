@@ -1,3 +1,28 @@
+# 2026-06-04 AutoWaterSimu Next draft workflow file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-agent READMEs, current-state, compute-api architecture, and draft workflow code
+- [x] Confirm next aligned gap: `draft_workflows.go` remained a large narrowed compute workflow file after simulation input workflow split
+- [x] Split `DraftWorkflowService` workflows into same-package confirmation, constraint plan, and promotion files
+- [x] Preserve draft workflow behavior, HTTP/OpenAPI/contracts/migrations/generated clients/auth scopes/store interfaces/public `Service` methods and constructor boundaries
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Keep `draft_workflows.go` as `DraftWorkflowService` struct, constructor, store dependency, validator, clock, and simulation-check callback wiring.
+- Move only same-package workflow methods into `draft_workflows_confirmations.go`, `draft_workflows_constraints.go`, and `draft_workflows_promotion.go`.
+- Treat this as handler/package surface reduction and large-file cleanup, not a full agent draft workflow domain package migration or public constructor signature change.
+
+## Review
+
+- `draft_workflows.go` now keeps only the `DraftWorkflowService` struct, constructor, store dependency, validator, clock, and simulation-check callback wiring, reducing it from 237 lines in the previous architecture snapshot to 25 lines.
+- Draft workflows were split into same-package `draft_workflows_confirmations.go`, `draft_workflows_constraints.go`, and `draft_workflows_promotion.go`.
+- Public `Service` delegates, `DraftWorkflowService` method signatures, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, store interfaces, draft confirmation persistence/idempotency, advisory constraint plan behavior, and explicit simulation-check promotion behavior were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `cd apps\api; go test ./internal/domain/agent ./internal/compute -run "TestContractValidationEndpoint|TestSimulationCheckEndpointCreatesComputeJob" -count=1`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full agent draft workflow domain package migration, schema validation, confirmation persistence/readback, promotion orchestration, Memory/Postgres implementations, HTTP mapping, public `NewService` / `NewServiceWithArchive` signature narrowing, and broader production-security work remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next simulation input workflow file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-simulation READMEs, current-state, compute-api architecture, and simulation input workflow code
@@ -6,7 +31,7 @@
 - [x] Preserve simulation input/process graph behavior, HTTP/OpenAPI/contracts/migrations/generated clients/auth scopes/store interfaces/public `Service` methods and constructor boundaries
 - [x] Update README/architecture/checklists/change records
 - [x] Run full validation
-- [ ] Commit and push
+- [x] Commit and push
 
 ## Plan
 
