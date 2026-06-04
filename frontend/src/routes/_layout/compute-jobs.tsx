@@ -27,6 +27,34 @@ import {
 } from "react-icons/fi"
 
 import { ContractTransformError } from "@/contracts"
+import {
+  cancelComputeJobMutationOptions,
+  computeHealthQueryOptions,
+  computeJobDetailQueryOptions,
+  computeJobEventsQueryOptions,
+  computeJobProductionReadinessQueryOptions,
+  computeJobQueryKeys,
+  computeJobResultQueryOptions,
+  createDemoJobMutationOptions,
+  createJobFromFlowExportMutationOptions,
+  getComputeJobsBaseUrl,
+  listComputeJobsQueryOptions,
+  resolveEvidenceReferenceMutationOptions,
+} from "@/features/compute-jobs/queries"
+import {
+  confirmDraftTextMutationOptions,
+  validateContractTextMutationOptions,
+} from "@/features/contracts/queries"
+import {
+  downloadArtifactMutationOptions,
+  downloadEvidencePackageMutationOptions,
+  sweepArtifactRetentionMutationOptions,
+} from "@/features/lifecycle/queries"
+import {
+  modelCatalogQueryOptions,
+  modelGovernanceQueryKeys,
+  modelRunsQueryOptions,
+} from "@/features/model-governance/queries"
 import type {
   ArtifactRecord,
   ArtifactRetentionSweepReport,
@@ -37,11 +65,8 @@ import type {
   ModelCatalog,
   ModelRun,
   ProductionReadinessReport,
-} from "@/services/computeJobsService"
-import {
-  type EvidenceDownloadResult,
-  computeJobsService,
-} from "@/services/computeJobsService"
+  EvidenceDownloadResult,
+} from "@/shared/api/computeTypes"
 import useFlowStore from "@/stores/flowStore"
 
 export const Route = createFileRoute("/_layout/compute-jobs")({
@@ -1222,18 +1247,12 @@ function ComputeJobs() {
   }
 
   const healthQuery = useQuery({
-    queryKey: ["compute-api-health"],
-    queryFn: computeJobsService.checkHealth,
+    ...computeHealthQueryOptions(),
     retry: false,
   })
 
   const jobsQuery = useQuery({
-    queryKey: ["compute-jobs", { status: statusFilter }],
-    queryFn: () =>
-      computeJobsService.listJobs({
-        status: statusFilter.trim(),
-        limit: 20,
-      }),
+    ...listComputeJobsQueryOptions(statusFilter),
     refetchInterval: 10000,
   })
 
@@ -1243,45 +1262,31 @@ function ComputeJobs() {
     [jobs, selectedJobId],
   )
 
-  const detailQuery = useQuery({
-    queryKey: ["compute-job", selectedJobId],
-    queryFn: () => computeJobsService.getJob(selectedJobId as string),
-    enabled: Boolean(selectedJobId),
-  })
+  const detailQuery = useQuery(computeJobDetailQueryOptions(selectedJobId))
 
   const resultQuery = useQuery({
-    queryKey: ["compute-job-result", selectedJobId],
-    queryFn: () => computeJobsService.getJobResult(selectedJobId as string),
-    enabled: Boolean(selectedJobId),
+    ...computeJobResultQueryOptions(selectedJobId),
     retry: false,
   })
 
-  const eventsQuery = useQuery({
-    queryKey: ["compute-job-events", selectedJobId],
-    queryFn: () => computeJobsService.getJobEvents(selectedJobId as string),
-    enabled: Boolean(selectedJobId),
-  })
+  const eventsQuery = useQuery(computeJobEventsQueryOptions(selectedJobId))
 
   const modelRunsQuery = useQuery({
-    queryKey: ["model-runs", appliedModelRunFilters],
-    queryFn: () =>
-      computeJobsService.listModelRuns({
-        jobId: appliedModelRunFilters.jobId.trim(),
-        limit: 20,
-        modelKey: appliedModelRunFilters.modelKey.trim(),
-        modelVersion: appliedModelRunFilters.modelVersion.trim(),
-      }),
+    ...modelRunsQueryOptions({
+      jobId: appliedModelRunFilters.jobId.trim(),
+      modelKey: appliedModelRunFilters.modelKey.trim(),
+      modelVersion: appliedModelRunFilters.modelVersion.trim(),
+    }),
     refetchInterval: 15000,
   })
 
   const modelCatalogQuery = useQuery({
-    queryKey: ["model-catalog"],
-    queryFn: computeJobsService.listModelCatalog,
+    ...modelCatalogQueryOptions(modelGovernanceQueryKeys.catalogSummary),
     staleTime: 60000,
   })
 
   const createDemoMutation = useMutation({
-    mutationFn: computeJobsService.createDemoJob,
+    ...createDemoJobMutationOptions(),
     onMutate: () => setTransformIssues([]),
     onSuccess: (snapshot) => {
       selectJob(snapshot.job.job_id)
@@ -1290,11 +1295,10 @@ function ComputeJobs() {
   })
 
   const submitCurrentFlowMutation = useMutation({
-    mutationFn: () =>
-      computeJobsService.createJobFromFlowExport(
-        exportCurrentFlowData(),
-        currentFlowChartName || undefined,
-      ),
+    ...createJobFromFlowExportMutationOptions(
+      () => exportCurrentFlowData(),
+      currentFlowChartName || undefined,
+    ),
     onMutate: () => setTransformIssues([]),
     onError: (error) => {
       if (error instanceof ContractTransformError) {
@@ -1308,65 +1312,53 @@ function ComputeJobs() {
   })
 
   const cancelMutation = useMutation({
-    mutationFn: (jobId: string) => computeJobsService.cancelJob(jobId),
+    ...cancelComputeJobMutationOptions(),
     onSuccess: (snapshot) => {
       selectJob(snapshot.job.job_id)
       queryClient.invalidateQueries({ queryKey: ["compute-jobs"] })
       queryClient.invalidateQueries({
-        queryKey: ["compute-job", snapshot.job.job_id],
+        queryKey: computeJobQueryKeys.detail(snapshot.job.job_id),
       })
     },
   })
 
-  const downloadMutation = useMutation({
-    mutationFn: (artifact: ArtifactRecord) =>
-      computeJobsService.downloadArtifact(artifact),
-  })
+  const downloadMutation = useMutation(downloadArtifactMutationOptions())
 
   const downloadEvidenceMutation = useMutation({
-    mutationFn: (jobId: string) =>
-      computeJobsService.downloadEvidencePackage(jobId),
+    ...downloadEvidencePackageMutationOptions(),
     onMutate: () => setEvidenceDownload(null),
     onSuccess: (download) => setEvidenceDownload(download),
   })
 
   const resolveEvidenceMutation = useMutation({
-    mutationFn: ({
-      evidenceRef,
-      jobId,
-    }: {
-      evidenceRef: string
-      jobId: string
-    }) => computeJobsService.resolveEvidenceReference(jobId, evidenceRef),
+    ...resolveEvidenceReferenceMutationOptions(),
     onMutate: () => setEvidenceResolution(null),
     onSuccess: (resolution) => setEvidenceResolution(resolution),
   })
 
   const contractValidationMutation = useMutation({
-    mutationFn: (text: string) => {
-      const document = JSON.parse(text) as Record<string, unknown>
-      return computeJobsService.validateContractDocument(document)
-    },
+    ...validateContractTextMutationOptions(),
     onSuccess: (result) => setContractValidationResult(result),
   })
 
   const draftConfirmationMutation = useMutation({
-    mutationFn: (text: string) => {
-      const document = JSON.parse(text) as Record<string, unknown>
-      return computeJobsService.confirmDraftDocument(document)
-    },
+    ...confirmDraftTextMutationOptions(),
     onSuccess: (result) => setContractValidationResult(result),
   })
 
   const retentionDryRunMutation = useMutation({
-    mutationFn: () =>
-      computeJobsService.sweepArtifactRetention({ dry_run: true, limit: 100 }),
+    ...sweepArtifactRetentionMutationOptions(() => ({
+      dry_run: true,
+      limit: 100,
+    })),
     onSuccess: (report) => setRetentionSweepReport(report),
   })
 
   const retentionDeleteMutation = useMutation({
-    mutationFn: () =>
-      computeJobsService.sweepArtifactRetention({ dry_run: false, limit: 100 }),
+    ...sweepArtifactRetentionMutationOptions(() => ({
+      dry_run: false,
+      limit: 100,
+    })),
     onSuccess: (report) => {
       setRetentionSweepReport(report)
       queryClient.invalidateQueries({ queryKey: ["compute-jobs"] })
@@ -1375,10 +1367,10 @@ function ComputeJobs() {
 
   const selectedSnapshot = detailQuery.data ?? selectedFromList
   const productionReadinessQuery = useQuery({
-    queryKey: ["compute-job-production-readiness", selectedJobId],
-    queryFn: () =>
-      computeJobsService.getProductionReadiness(selectedJobId as string),
-    enabled: Boolean(selectedJobId && selectedSnapshot?.job.result_hash),
+    ...computeJobProductionReadinessQueryOptions(
+      selectedJobId,
+      Boolean(selectedJobId && selectedSnapshot?.job.result_hash),
+    ),
     retry: false,
   })
   const healthStatus = healthQuery.isError
@@ -1441,7 +1433,7 @@ function ComputeJobs() {
             <HStack gap={3} wrap="wrap">
               <Field
                 label="Compute API"
-                value={computeJobsService.getBaseUrl()}
+                value={getComputeJobsBaseUrl()}
               />
               <Field label="Health" value={healthStatus} />
               <Field

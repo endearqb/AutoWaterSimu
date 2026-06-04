@@ -21,6 +21,7 @@
 | 文件 | 作用 |
 |---|---|
 | `api.ts` | Contract validation、draft confirmation/promotion 和 result explanation workflow wrapper |
+| `queries.ts` | Contract validation and draft confirmation mutation options |
 
 ## 3. 维护约定
 
@@ -30,7 +31,7 @@
 
 ## 4. 对外接口
 
-对 `frontend/src/services/computeJobsService.ts` 暴露 `computeContractsApi`。
+对 Compute routes 暴露 contract/draft mutation options；对 `frontend/src/services/computeJobsService.ts` 暴露 `computeContractsApi` 以维持兼容 facade。
 
 ## 5. 依赖边界
 

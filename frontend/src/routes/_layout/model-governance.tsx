@@ -16,12 +16,18 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 import { FiChevronRight, FiRefreshCw } from "react-icons/fi"
 
+import {
+  defaultParameterSetPromotionPlansQueryOptions,
+  modelCatalogQueryOptions,
+  modelCatalogSnapshotsQueryOptions,
+  modelGovernanceQueryKeys,
+  modelGovernanceVersionKey,
+} from "@/features/model-governance/queries"
 import type {
   ModelCatalog,
   ModelCatalogRecord,
   ModelParameterSetPromotionPlan,
-} from "@/services/computeJobsService"
-import { computeJobsService } from "@/services/computeJobsService"
+} from "@/shared/api/computeTypes"
 
 export const Route = createFileRoute("/_layout/model-governance")({
   component: ModelGovernance,
@@ -102,9 +108,6 @@ function metricSummary(catalog: ModelCatalog | undefined) {
   }
 }
 
-const versionKey = (modelKey: string, modelVersion: string) =>
-  `${modelKey}:${modelVersion}`
-
 function promotionStatusPalette(
   plan: ModelParameterSetPromotionPlan | undefined,
 ) {
@@ -180,7 +183,9 @@ function CatalogVersionTable({
         parameterSet: version.default_parameter_set?.parameter_set_id ?? "N/A",
         parameterStatus: version.default_parameter_set?.status ?? "N/A",
         promotionPlan:
-          promotionPlans[versionKey(model.model_key, version.model_version)],
+          promotionPlans[
+            modelGovernanceVersionKey(model.model_key, version.model_version)
+          ],
         status: version.status,
         templateCount: version.parameter_templates.length,
         version: version.model_version,
@@ -371,19 +376,10 @@ function ModelGovernance() {
   const [cursor, setCursor] = useState("")
   const queryClient = useQueryClient()
 
-  const catalogQuery = useQuery({
-    queryFn: computeJobsService.listModelCatalog,
-    queryKey: ["model-governance", "catalog"],
-  })
-  const snapshotQuery = useQuery({
-    queryFn: () =>
-      computeJobsService.listModelCatalogSnapshots({
-        catalogId: "default",
-        cursor: cursor || undefined,
-        limit: 20,
-      }),
-    queryKey: ["model-governance", "snapshots", cursor],
-  })
+  const catalogQuery = useQuery(
+    modelCatalogQueryOptions(modelGovernanceQueryKeys.catalog),
+  )
+  const snapshotQuery = useQuery(modelCatalogSnapshotsQueryOptions(cursor))
 
   const promotionTargets = useMemo(
     () =>
@@ -397,32 +393,9 @@ function ModelGovernance() {
       ) ?? [],
     [catalogQuery.data],
   )
-  const promotionPlansQuery = useQuery({
-    enabled: promotionTargets.length > 0,
-    queryFn: async () => {
-      const entries = await Promise.all(
-        promotionTargets.map(async (target) => {
-          const plan =
-            await computeJobsService.getDefaultParameterSetPromotionPlan(
-              target.modelKey,
-              target.modelVersion,
-            )
-          return [
-            versionKey(target.modelKey, target.modelVersion),
-            plan,
-          ] as const
-        }),
-      )
-      return Object.fromEntries(entries)
-    },
-    queryKey: [
-      "model-governance",
-      "promotion-plans",
-      promotionTargets
-        .map((target) => versionKey(target.modelKey, target.modelVersion))
-        .join("|"),
-    ],
-  })
+  const promotionPlansQuery = useQuery(
+    defaultParameterSetPromotionPlansQueryOptions(promotionTargets),
+  )
 
   const catalogSummary = useMemo(
     () => metricSummary(catalogQuery.data),
@@ -451,7 +424,9 @@ function ModelGovernance() {
             size="sm"
             variant="outline"
             onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ["model-governance"] })
+              queryClient.invalidateQueries({
+                queryKey: modelGovernanceQueryKeys.root,
+              })
             }}
           >
             <FiRefreshCw />

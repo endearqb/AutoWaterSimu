@@ -22,6 +22,7 @@
 | 文件 | 作用 |
 |---|---|
 | `api.ts` | Artifact retention/download 和 evidence package download wrapper |
+| `queries.ts` | Lifecycle route query/mutation options |
 
 ## 3. 维护约定
 
@@ -31,7 +32,7 @@
 
 ## 4. 对外接口
 
-对 `frontend/src/services/computeJobsService.ts` 暴露 `computeArtifactsApi`。
+对 Compute routes 暴露 lifecycle query/mutation options；对 `frontend/src/services/computeJobsService.ts` 暴露 `computeArtifactsApi` 以维持兼容 facade。
 
 ## 5. 依赖边界
 

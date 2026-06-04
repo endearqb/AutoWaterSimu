@@ -42,4 +42,4 @@ cd frontend; npx tsc --noEmit
 
 ## 7. AI 操作提示
 
-如果把 evidence wrapper 从 job/lifecycle 迁入本目录，必须保持 `computeJobsService` facade 兼容并更新 README/check-deps 说明。
+如果把 evidence wrapper 从 job/lifecycle 迁入本目录，必须保持现有 query/mutation options 和 `computeJobsService` facade 兼容，并更新 README/check-deps 说明。

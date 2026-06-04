@@ -10,8 +10,8 @@ flowchart TD
   API["apps/api/"]
   Worker["services/simulation-worker/"]
   WebShared["frontend/src/shared/api/"]
-  WebFeatures["frontend/src/features/"]
-  WebServices["frontend/src/services facade"]
+  WebFeatures["frontend/src/features api + queries"]
+  WebServices["frontend/src/services compatibility facade"]
   WebRoutes["frontend/src/routes and components"]
   Desktop["apps/desktop/"]
   LegacyBackend["backend/app"]
@@ -25,7 +25,7 @@ flowchart TD
   WebFeatures --> API
   WebServices --> WebFeatures
   WebServices --> WebShared
-  WebRoutes --> WebServices
+  WebRoutes --> WebFeatures
   Desktop --> Contracts
   Desktop --> Worker
   LegacyBackend -.baseline only.-> LegacyBackend
@@ -51,8 +51,8 @@ Current rules:
 
 - `frontend/src/shared/api/computeApiClient.ts` may configure generated Compute client base URL/token behavior.
 - `frontend/src/shared/api/computeTypes.ts` may re-export stable UI-facing generated Compute types.
-- `frontend/src/features/*/api.ts` and closely related feature wrapper files may call the generated Compute client.
-- `frontend/src/services/computeJobsService.ts` remains the route-compatible facade over feature API wrappers and must not import the generated Compute client directly.
+- `frontend/src/features/*/api.ts` and closely related feature wrapper files may call the generated Compute client; `features/*/queries.ts` is the route-facing query/mutation boundary.
+- `frontend/src/services/computeJobsService.ts` remains a compatibility facade over feature API wrappers and must not import the generated Compute client directly.
 - Documentation may reference paths across modules.
 - Release gate scripts may orchestrate commands across modules but must not inline business logic.
 

@@ -1,3 +1,30 @@
+# 2026-06-05 AutoWaterSimu Next frontend feature query migration TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, frontend README hierarchy, feature READMEs, Compute routes, and current feature API wrappers
+- [x] Confirm next aligned gap: feature API wrappers existed, but Compute Jobs / Lifecycle / Model Governance routes still encoded query keys, query functions, and mutation functions directly around `computeJobsService`
+- [x] Add feature query/mutation option files for compute jobs, lifecycle, model governance, and contract validation/draft confirmation
+- [x] Migrate Compute Jobs, Compute Lifecycle, and Model Governance routes to feature query/mutation options while preserving UI state, route markup, query keys, retry/refetch/stale behavior, invalidation behavior, and local onSuccess/onError handlers
+- [x] Keep generated client output, OpenAPI, backend API, route paths, UI layout, service facade export, and service return shapes unchanged
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Add `features/*/queries.ts` files that wrap existing feature APIs as TanStack Query query/mutation options.
+- Keep routes responsible for layout, local state, result display, and invalidation side effects.
+- Remove Compute route imports of `computeJobsService`; keep `computeJobsService.ts` as a compatibility facade for old/transition call sites.
+- Treat live backend browser reads and deeper route/component decomposition as later slices.
+
+## Review
+
+- Added `features/compute-jobs/queries.ts`, `features/lifecycle/queries.ts`, `features/model-governance/queries.ts`, and `features/contracts/queries.ts`.
+- Compute Jobs, Compute Lifecycle, and Model Governance routes now import feature query/mutation options instead of `computeJobsService`.
+- Existing route UI, route paths, query invalidation, local state updates, retry/refetch/stale behavior, and generated client/API behavior were preserved.
+- `computeJobsService.ts` remains as a compatibility facade, but it is no longer used by the three Compute routes.
+- Validation passed: `cd frontend; npx tsc --noEmit`, `scripts\check-deps.ps1`, direct `computeJobsService` route/feature scan, direct generated Compute client import scan, `scripts\ci\pr-fast.ps1`, and `git diff --check -- frontend docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: live backend browser reads, hosted integration/browser/release evidence, deeper route/component decomposition, golden scenarios, full production data scope, and all-mutation audit remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next frontend feature API wrapper migration TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, frontend README hierarchy, current service wrapper groups, caller usage, dependency graph, and `check-deps`

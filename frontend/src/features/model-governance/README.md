@@ -22,6 +22,7 @@
 | 文件 | 作用 |
 |---|---|
 | `api.ts` | Model catalog、model run、benchmark run、parameter set 和 benchmark case wrapper |
+| `queries.ts` | Model governance route query options |
 
 ## 3. 维护约定
 
@@ -31,7 +32,7 @@
 
 ## 4. 对外接口
 
-对 `frontend/src/services/computeJobsService.ts` 暴露 `computeModelGovernanceApi`。
+对 Compute routes 暴露 model governance query options；对 `frontend/src/services/computeJobsService.ts` 暴露 `computeModelGovernanceApi` 以维持兼容 facade。
 
 ## 5. 依赖边界
 
@@ -47,4 +48,4 @@ cd frontend; npx tsc --noEmit
 
 ## 7. AI 操作提示
 
-改 model governance wrapper 前先检查 `frontend/src/routes/_layout/model-governance.tsx` 和 `compute-jobs.tsx` 的 facade 调用。
+改 model governance wrapper 前先检查 `frontend/src/routes/_layout/model-governance.tsx` 和 `compute-jobs.tsx` 的 query option 调用。

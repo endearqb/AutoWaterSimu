@@ -24,16 +24,17 @@
 | `api.ts` | Job lifecycle、health、metrics、evidence ref 和 production readiness wrapper |
 | `builders.ts` | Demo/current-flow Compute job document builders |
 | `processGraphApi.ts` | ProcessGraph registry wrapper |
+| `queries.ts` | Compute Jobs route query/mutation options |
 
 ## 3. 维护约定
 
 1. Job document builders 必须输出 schema-valid `compute_job.v1` payload。
 2. Wrapper 只调用 backend generated endpoints，不在前端伪造 job/result/evidence 状态。
-3. API shape 变更时保持 `services/computeJobsService.ts` facade 兼容，除非明确迁移 route call sites。
+3. API shape 变更时保持 `queries.ts` 和 `services/computeJobsService.ts` facade 兼容，除非明确迁移对应调用方。
 
 ## 4. 对外接口
 
-对 `frontend/src/services/computeJobsService.ts` 暴露 `computeJobApi`、`computeSimulationRegistryApi` 和 builder exports。
+对 Compute routes 暴露 query/mutation options；对 `frontend/src/services/computeJobsService.ts` 暴露 `computeJobApi`、`computeSimulationRegistryApi` 和 builder exports。
 
 ## 5. 依赖边界
 
@@ -49,4 +50,4 @@ cd frontend; npx tsc --noEmit
 
 ## 7. AI 操作提示
 
-新增 job endpoint 时先检查 `frontend/src/routes/_layout/compute-jobs.tsx` 现有 facade 调用和 generated client 类型。
+新增 job endpoint 时先检查 `frontend/src/routes/_layout/compute-jobs.tsx` 的 query/mutation option 调用和 generated client 类型。

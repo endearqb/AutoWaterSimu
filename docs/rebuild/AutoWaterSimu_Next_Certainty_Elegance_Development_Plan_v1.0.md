@@ -199,7 +199,7 @@ frontend/src/features/contracts/
 - `features/*/queries.ts` 封装 query/mutation。
 - UI components 不直接 import generated client。
 
-当前已落地第一层 feature-sliced API wrapper：`frontend/src/client/compute` 只允许从 `frontend/src/shared/api/`、`frontend/src/features/` 和 generated client 目录自身直接 import；`frontend/src/shared/api/computeApiClient.ts` 负责 Web bootstrap 所需的 base URL/token 配置，`shared/api/computeTypes.ts` 负责 shared UI-facing wrapper 类型与 generated type re-export，`features/compute-jobs`、`features/lifecycle`、`features/model-governance` 和 `features/contracts` 按 feature group 承担 API 调用，`computeJobsService.ts` 保持 route/component 可用的 typed compatibility facade；`scripts/check-deps.ps1` 会扫描 `frontend/src` 并拒绝其他位置直接 import generated Compute client。完整 `features/*/queries.ts` 与 route call site 迁移仍需后续逐步完成。
+当前已落地 feature-sliced API/query wrapper：`frontend/src/client/compute` 只允许从 `frontend/src/shared/api/`、`frontend/src/features/` 和 generated client 目录自身直接 import；`frontend/src/shared/api/computeApiClient.ts` 负责 Web bootstrap 所需的 base URL/token 配置，`shared/api/computeTypes.ts` 负责 shared UI-facing wrapper 类型与 generated type re-export，`features/compute-jobs`、`features/lifecycle`、`features/model-governance` 和 `features/contracts` 按 feature group 承担 API 调用与 `features/*/queries.ts` query/mutation options，Compute Jobs / Lifecycle / Model Governance routes 已经通过 feature queries 使用这些能力；`computeJobsService.ts` 保留为 typed compatibility facade；`scripts/check-deps.ps1` 会扫描 `frontend/src` 并拒绝其他位置直接 import generated Compute client。后续重点转向 live backend browser reads、hosted evidence 和更细的 route/component decomposition。
 
 #### 本地真实栈 smoke
 

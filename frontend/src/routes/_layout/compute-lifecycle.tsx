@@ -18,11 +18,16 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 import { FiArchive, FiRefreshCw, FiSearch } from "react-icons/fi"
 
+import {
+  computeLifecycleHealthQueryOptions,
+  computeLifecycleMetricsQueryOptions,
+  computeLifecycleQueryKeys,
+  sweepArtifactRetentionMutationOptions,
+} from "@/features/lifecycle/queries"
 import type {
   ArtifactRetentionAction,
   ArtifactRetentionSweepReport,
-} from "@/services/computeJobsService"
-import { computeJobsService } from "@/services/computeJobsService"
+} from "@/shared/api/computeTypes"
 
 export const Route = createFileRoute("/_layout/compute-lifecycle")({
   component: ComputeLifecycle,
@@ -237,14 +242,8 @@ function ComputeLifecycle() {
   const [retentionReport, setRetentionReport] =
     useState<ArtifactRetentionSweepReport | null>(null)
 
-  const healthQuery = useQuery({
-    queryKey: ["compute-lifecycle", "health"],
-    queryFn: () => computeJobsService.checkHealth(),
-  })
-  const metricsQuery = useQuery({
-    queryKey: ["compute-lifecycle", "metrics"],
-    queryFn: () => computeJobsService.getMetrics(),
-  })
+  const healthQuery = useQuery(computeLifecycleHealthQueryOptions())
+  const metricsQuery = useQuery(computeLifecycleMetricsQueryOptions())
 
   const metrics = useMemo(
     () =>
@@ -268,15 +267,14 @@ function ComputeLifecycle() {
   )
 
   const refreshAll = () => {
-    queryClient.invalidateQueries({ queryKey: ["compute-lifecycle"] })
+    queryClient.invalidateQueries({ queryKey: computeLifecycleQueryKeys.root })
   }
 
   const dryRunMutation = useMutation({
-    mutationFn: () =>
-      computeJobsService.sweepArtifactRetention({
+    ...sweepArtifactRetentionMutationOptions(() => ({
         dry_run: true,
         limit: sweepLimit,
-      }),
+      })),
     onSuccess: (report) => {
       setRetentionReport(report)
       refreshAll()
@@ -284,11 +282,10 @@ function ComputeLifecycle() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: () =>
-      computeJobsService.sweepArtifactRetention({
+    ...sweepArtifactRetentionMutationOptions(() => ({
         dry_run: false,
         limit: sweepLimit,
-      }),
+      })),
     onSuccess: (report) => {
       setRetentionReport(report)
       refreshAll()

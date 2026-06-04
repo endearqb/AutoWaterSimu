@@ -28,13 +28,13 @@
 ## 3. 维护约定
 
 1. `features/*/api.ts` 可以调用 `frontend/src/client/compute` generated client。
-2. Routes 目前继续通过 `frontend/src/services/computeJobsService.ts` 兼容 facade 使用这些 wrapper；后续可逐步迁入 `features/*/queries.ts`。
+2. `features/*/queries.ts` 封装 route 使用的 TanStack Query query/mutation options。
 3. UI components 不直接 import generated client。
 4. 新增 endpoint wrapper 时优先放入对应 feature，避免继续扩大 compatibility facade。
 
 ## 4. 对外接口
 
-本目录对 `frontend/src/services/computeJobsService.ts` 暴露 feature API wrapper；后续可对 routes 暴露 query/mutation hooks。
+本目录对 Compute routes 暴露 query/mutation options，并对 `frontend/src/services/computeJobsService.ts` 保留 feature API wrapper exports 以维持兼容 facade。
 
 ## 5. 依赖边界
 
@@ -59,4 +59,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 
 ## 7. AI 操作提示
 
-迁移 route 直接使用 feature queries 前，先保持 `computeJobsService` facade 行为不变并补浏览器/route 验证。
+新增 route 数据调用时优先通过 feature query/mutation options；不要让 routes 直接 import generated Compute client 或 compatibility facade。
