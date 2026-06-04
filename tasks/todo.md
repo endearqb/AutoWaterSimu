@@ -1,3 +1,28 @@
+# 2026-06-04 AutoWaterSimu Next result explanation workflow file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-evidence READMEs, current-state, compute-api architecture, and result explanation workflow code
+- [x] Confirm next aligned gap: `result_explanations.go` remained an unsplit narrowed compute workflow file after draft workflow split
+- [x] Split `ResultExplanationService` workflows into same-package submit, read, and review/publish files
+- [x] Preserve result explanation behavior, HTTP/OpenAPI/contracts/migrations/generated clients/auth scopes/store interfaces/public `Service` methods and constructor boundaries
+- [x] Update README/architecture/checklists/change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Keep `result_explanations.go` as `ResultExplanationService` struct, constructor, and job-scoped evidence resolver callback wiring.
+- Move only same-package workflow methods into `result_explanations_submit.go`, `result_explanations_read.go`, and `result_explanations_review.go`.
+- Treat this as handler/package surface reduction and large-file cleanup, not a full result explanation workflow domain package migration or public constructor signature change.
+
+## Review
+
+- `result_explanations.go` now keeps only the `ResultExplanationService` struct, constructor, store dependencies, validator, clock, and evidence resolver callback wiring, reducing it from 150 lines in the previous architecture snapshot to 29 lines.
+- Result explanation workflows were split into same-package `result_explanations_submit.go`, `result_explanations_read.go`, and `result_explanations_review.go`.
+- Public `Service` delegates, `ResultExplanationService` method signatures, HTTP routes, OpenAPI, contracts, migrations, generated clients, auth scopes, store interfaces, result explanation persistence/idempotency, review/publish behavior, and job-scoped evidence ref validation behavior were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `cd apps\api; go test ./internal/domain/evidence ./internal/compute -run "TestValidatedCompletePersistsModelRun|TestNewSystemEvidenceReferenceE2E" -count=1`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full result explanation workflow domain package migration, schema validation/job availability/evidence resolver orchestration migration, Memory/Postgres implementations, HTTP mapping, public `NewService` / `NewServiceWithArchive` signature narrowing, and broader production-security work remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next draft workflow file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute/domain-agent READMEs, current-state, compute-api architecture, and draft workflow code
