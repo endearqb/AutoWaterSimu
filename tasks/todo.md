@@ -1,3 +1,28 @@
+# 2026-06-04 AutoWaterSimu Next model governance PostgreSQL persistence file split TODO
+
+- [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute READMEs, current-state, compute-api architecture, and model governance PostgreSQL persistence code
+- [x] Confirm next aligned gap: `postgres_models.go` still bundled model_run, benchmark_run, and model_catalog persistence after workflow and HTTP handler splits
+- [x] Split model governance PostgreSQL persistence into same-package files aligned with existing store interfaces
+- [x] Preserve SQL, migrations, Store interfaces, MemoryStore behavior, service/HTTP/OpenAPI/contracts/generated clients, DTOs, pagination, ordering, and error mapping
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Delete the old broad `postgres_models.go` file and move its functions unchanged into `postgres_model_runs.go`, `postgres_benchmark_runs.go`, and `postgres_model_catalog.go`.
+- Keep `PostgresStore`, migrations, table schema, select SQL, scan functions, list filters, cursor behavior, and idempotency semantics unchanged.
+- Treat this as PostgreSQL persistence surface reduction only, not a model governance domain package migration or schema migration.
+
+## Review
+
+- Replaced `postgres_models.go` with `postgres_model_runs.go`, `postgres_benchmark_runs.go`, and `postgres_model_catalog.go`.
+- The split follows the existing `ModelRunStore`, `BenchmarkRunStore`, and `ModelCatalogStore` boundaries from `store_interfaces.go`.
+- SQL statements, query ordering, cursor pagination, idempotency/conflict behavior, scan field order, null handling, Store interfaces, MemoryStore behavior, service/HTTP/OpenAPI/contracts/generated clients, DTOs, migrations, and persistence semantics were preserved.
+- Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused `cd apps\api; go test ./internal/compute -run "Test(ValidatedCompletePersistsModelRun|ModelCatalogEndpoint|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint)$" -count=1`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: full model governance domain package migration, future PostgreSQL adapter extraction, public constructor signature narrowing, hosted integration/browser/release evidence, full object-level data scope, and all-mutation audit remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next model governance HTTP handler file split TODO
 
 - [x] Re-read current worktree, README First context, Certainty/Elegance PRD/Plan, API/compute READMEs, current-state, compute-api architecture, and model governance HTTP handler code
@@ -21,7 +46,7 @@
 - HTTP methods, paths, auth scopes, request validation errors, audit principal propagation for benchmark case schedule-run, service calls, response statuses, OpenAPI, contracts, migrations, generated clients, DTOs, and store/service behavior were preserved.
 - Updated API/compute README, architecture current-state, compute-api audit summary, Certainty/Elegance checklist, and `.ai/changes`.
 - Validation passed: focused `cd apps\api; go test ./internal/compute -run "Test(ValidatedCompletePersistsModelRun|ModelCatalogEndpoint|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint)$" -count=1`, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, rebuild docs `rg` scan, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
-- Remaining scope: full model governance HTTP mapping migration to a future domain/app boundary, `postgres_models.go` persistence split, full model governance domain package migration, public constructor signature narrowing, hosted integration/browser/release evidence, full object-level data scope, and all-mutation audit remain future slices.
+- Remaining scope: full model governance HTTP mapping migration to a future domain/app boundary, future PostgreSQL adapter extraction, full model governance domain package migration, public constructor signature narrowing, hosted integration/browser/release evidence, full object-level data scope, and all-mutation audit remain future slices.
 
 # 2026-06-04 AutoWaterSimu Next job lifecycle workflow file split TODO
 
@@ -376,7 +401,7 @@
 - Stage 1 validation passed: `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
 - Stage 2 kept `http.go` as the server entrypoint with unchanged `Routes` registration and panic recovery, then moved handlers/helpers into route-group files; the original model governance `http_models.go` grouping has since been further split into narrower `http_model_*.go` / `http_benchmark_runs.go` files.
 - Stage 2 validation passed: `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only.
-- Stage 3 kept `postgres.go` as the PostgreSQL store entrypoint and migration helper file, then moved persistence methods/select SQL/scan helpers into `postgres_jobs.go`, `postgres_artifacts.go`, `postgres_models.go`, `postgres_simulation.go`, `postgres_agent.go`, `postgres_workers.go`, `postgres_metrics.go`, and `postgres_sql_helpers.go`.
+- Stage 3 kept `postgres.go` as the PostgreSQL store entrypoint and migration helper file, then moved persistence methods/select SQL/scan helpers into domain files; the original model governance `postgres_models.go` grouping has since been further split into `postgres_model_runs.go`, `postgres_benchmark_runs.go`, and `postgres_model_catalog.go`.
 - Stage 3 validation passed: `cd apps\api; go test ./...`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps\api docs scripts tasks .ai` with LF/CRLF warnings only. PostgreSQL migration smoke was skipped because `COMPUTE_API_DATABASE_URL` is absent.
 
 # 2026-06-02 AutoWaterSimu Next benchmark case job document split TODO
