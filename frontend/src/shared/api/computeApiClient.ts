@@ -22,7 +22,9 @@ export const resolveComputeApiToken = async (
 }
 
 export const computeApiBaseUrl = (): string =>
-  ComputeOpenAPI.BASE || import.meta.env.VITE_COMPUTE_API_URL || DEFAULT_COMPUTE_API_URL
+  ComputeOpenAPI.BASE ||
+  import.meta.env.VITE_COMPUTE_API_URL ||
+  DEFAULT_COMPUTE_API_URL
 
 export const computeApiPath = (path: string): string =>
   `${computeApiBaseUrl().replace(/\/$/, "")}${path}`

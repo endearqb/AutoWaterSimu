@@ -1,13 +1,13 @@
-import { computeArtifactsApi } from "./computeArtifactsApi"
-import { computeContractsApi } from "./computeContractsApi"
-import { computeJobApi } from "./computeJobApi"
-import { computeModelGovernanceApi } from "./computeModelGovernanceApi"
-import { computeSimulationRegistryApi } from "./computeSimulationRegistryApi"
+import { computeContractsApi } from "@/features/contracts/api"
+import { computeJobApi } from "@/features/compute-jobs/api"
+import { computeSimulationRegistryApi } from "@/features/compute-jobs/processGraphApi"
+import { computeArtifactsApi } from "@/features/lifecycle/api"
+import { computeModelGovernanceApi } from "@/features/model-governance/api"
 
 export {
   buildComputeJobFromFlowExport,
   buildMaterialBalanceDemoJob,
-} from "./computeJobBuilders"
+} from "@/features/compute-jobs/builders"
 
 export type {
   BuildFlowComputeJobResult,
@@ -17,7 +17,7 @@ export type {
   ListComputeJobsParams,
   ListModelCatalogSnapshotsParams,
   ListModelRunsParams,
-} from "./computeJobsTypes"
+} from "@/shared/api/computeTypes"
 
 export type {
   ArtifactRecord,
@@ -32,7 +32,7 @@ export type {
   ModelParameterSetPromotionPlan,
   ModelRun,
   ProductionReadinessReport,
-} from "./computeJobsTypes"
+} from "@/shared/api/computeTypes"
 
 export const computeJobsService = {
   ...computeJobApi,

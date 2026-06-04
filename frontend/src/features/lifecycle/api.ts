@@ -5,12 +5,11 @@ import type {
   ArtifactRetentionSweepRequest,
   EvidencePackage,
 } from "@/client/compute"
-
 import {
   computeApiPath,
   resolveComputeApiToken,
-} from "./computeApiClient"
-import type { EvidenceDownloadResult } from "./computeJobsTypes"
+} from "@/shared/api/computeApiClient"
+import type { EvidenceDownloadResult } from "@/shared/api/computeTypes"
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob)

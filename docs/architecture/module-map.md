@@ -23,7 +23,7 @@ AutoWaterSimu Next is developed as a monorepo-style evolution beside the legacy 
 flowchart LR
   Contracts["contracts JSON Schema"] --> API["apps/api Go Compute API"]
   Contracts --> Worker["services/simulation-worker"]
-  Contracts --> Web["frontend service wrappers"]
+  Contracts --> Web["frontend shared/api + features + service facade"]
   Contracts --> Desktop["apps/desktop Tauri runtime"]
   API --> Worker
   Worker --> API
@@ -37,7 +37,7 @@ flowchart LR
 - `contracts/` is the cross-runtime wire-shape source. Runtime modules can consume contracts; contracts must not import runtime modules.
 - `apps/api/` owns HTTP lifecycle and metadata. It must not import legacy `backend/app`.
 - `services/simulation-worker/` executes jobs through contracts and the Compute API bridge. It must not write PostgreSQL or legacy FastAPI internals directly.
-- `frontend/src/routes` should call `frontend/src/services` wrappers. Generated Compute client imports stay in the service layer.
+- `frontend/src/routes` currently call `frontend/src/services/computeJobsService.ts` compatibility facade for Compute flows. Generated Compute client imports stay in `frontend/src/shared/api` and `frontend/src/features` wrappers, not in routes/components or the facade.
 - `apps/desktop/` owns local runtime and worker lifecycle. It must not depend on legacy `frontend/`.
 - `backend/` remains the legacy baseline and should not depend on Next runtime modules.
 

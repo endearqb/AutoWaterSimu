@@ -6,8 +6,7 @@ import {
   processGraphToSimulationInput,
 } from "@/contracts"
 import type { LegacyFlowExport } from "@/contracts"
-
-import type { BuildFlowComputeJobResult } from "./computeJobsTypes"
+import type { BuildFlowComputeJobResult } from "@/shared/api/computeTypes"
 
 const uniqueSuffix = () => {
   const uuid = globalThis.crypto?.randomUUID?.()

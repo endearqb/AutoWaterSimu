@@ -98,7 +98,7 @@ function Invoke-GeneratedComputeClientBoundaryRule {
         [string]$Root,
         [System.Collections.Generic.List[object]]$Violations
     )
-    $ruleName = "frontend-src-generated-compute-client-imports-must-stay-in-services"
+    $ruleName = "frontend-generated-compute-client-imports-must-stay-in-features-or-shared-api"
     $files = Get-SearchFiles -Root $Root -RelativePaths @("frontend/src")
     if ($files.Count -eq 0) {
         return
@@ -112,7 +112,10 @@ function Invoke-GeneratedComputeClientBoundaryRule {
         if ($normalized.StartsWith("frontend\src\client\compute\", [System.StringComparison]::OrdinalIgnoreCase)) {
             continue
         }
-        if ($normalized.StartsWith("frontend\src\services\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        if ($normalized.StartsWith("frontend\src\features\", [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        if ($normalized.StartsWith("frontend\src\shared\api\", [System.StringComparison]::OrdinalIgnoreCase)) {
             continue
         }
         $matchText = "{0}:{1}:{2}" -f $relativePath, $match.LineNumber, $match.Line.Trim()

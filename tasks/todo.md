@@ -1,3 +1,33 @@
+# 2026-06-04 AutoWaterSimu Next frontend feature API wrapper migration TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, frontend README hierarchy, current service wrapper groups, caller usage, dependency graph, and `check-deps`
+- [x] Confirm next aligned gap: previous same-directory Compute service split still left generated client access inside `frontend/src/services`, while the quality plan calls for `shared/api` and `features/*` wrapper slices
+- [x] Move Compute API base URL/token config and shared UI-facing types into `frontend/src/shared/api`
+- [x] Move jobs/builders/process graph, artifact lifecycle, model governance, and contract/draft/result explanation wrappers into `frontend/src/features/*`
+- [x] Preserve `computeJobsService` as route-compatible facade and keep existing route imports/call sites unchanged
+- [x] Tighten `check-deps` so direct generated Compute client imports are allowed only in `frontend/src/shared/api`, `frontend/src/features`, or generated client files
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Keep `frontend/src/services/computeJobsService.ts` as the compatibility facade for existing routes/components.
+- Move generated client configuration and shared wrapper types to `frontend/src/shared/api`.
+- Move concrete Compute endpoint wrappers to `frontend/src/features/compute-jobs`, `features/lifecycle`, `features/model-governance`, and `features/contracts`.
+- Add directory READMEs for the new long-lived feature/shared boundaries.
+- Treat `features/*/queries.ts` and route call site migration as a later slice after the facade-backed API wrapper structure is verified.
+
+## Review
+
+- Added `frontend/src/shared/api/computeApiClient.ts` and `computeTypes.ts` for shared Compute client configuration and UI-facing wrapper types.
+- Moved concrete Compute wrappers into `features/compute-jobs`, `features/lifecycle`, `features/model-governance`, and `features/contracts`; added `features/evidence/README.md` as the future evidence-specific boundary while current evidence calls remain in job/lifecycle wrappers.
+- `computeJobsService.ts` now only composes feature wrappers and re-exports existing compatibility types/builders; route imports and call sites remain unchanged.
+- `scripts/check-deps.ps1` now rejects direct generated Compute client imports outside `frontend/src/shared/api`, `frontend/src/features`, and generated client files.
+- Updated frontend README hierarchy, architecture docs, Certainty/Elegance plan, and change records.
+- Validation passed: `cd frontend; npx tsc --noEmit`, `scripts\check-deps.ps1`, direct Compute generated client import scan, `scripts\ci\pr-fast.ps1`, and `git diff --check -- frontend scripts docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: `features/*/queries.ts`, route call site migration, live backend browser reads, hosted integration/browser/release evidence, golden scenarios, full production data scope, and all-mutation audit remain future slices.
+
 # 2026-06-04 AutoWaterSimu Next frontend Compute service facade split TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, frontend README hierarchy, current service wrapper, caller usage, and recent Compute client boundary record

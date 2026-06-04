@@ -8,13 +8,16 @@ import type {
   ProductionReadinessReport,
 } from "@/client/compute"
 import type { LegacyFlowExport } from "@/contracts"
+import { computeApiBaseUrl } from "@/shared/api/computeApiClient"
+import type {
+  ComputeHealthStatus,
+  ListComputeJobsParams,
+} from "@/shared/api/computeTypes"
 
-import { computeApiBaseUrl } from "./computeApiClient"
 import {
   buildComputeJobFromFlowExport,
   buildMaterialBalanceDemoJob,
-} from "./computeJobBuilders"
-import type { ComputeHealthStatus, ListComputeJobsParams } from "./computeJobsTypes"
+} from "./builders"
 
 export const computeJobApi = {
   getBaseUrl(): string {

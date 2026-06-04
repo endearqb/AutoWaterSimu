@@ -156,6 +156,8 @@ The frontend code is structured as follows:
 * `frontend/src` - The main frontend code.
 * `frontend/src/assets` - Static assets.
 * `frontend/src/client` - The generated OpenAPI client.
+* `frontend/src/shared` - Shared frontend API configuration, types, and helpers.
+* `frontend/src/features` - AutoWaterSimu Next feature API wrappers.
 * `frontend/src/components` -  The different components of the frontend.
 * `frontend/src/hooks` - Custom hooks.
 * `frontend/src/routes` - The different routes of the frontend which include the pages.

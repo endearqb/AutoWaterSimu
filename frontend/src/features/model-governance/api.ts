@@ -14,12 +14,11 @@ import type {
   ParameterSetPromotionRequest,
   ParameterSetStatusUpdateRequest,
 } from "@/client/compute"
-
 import type {
   ListBenchmarkRunsParams,
   ListModelCatalogSnapshotsParams,
   ListModelRunsParams,
-} from "./computeJobsTypes"
+} from "@/shared/api/computeTypes"
 
 export const computeModelGovernanceApi = {
   listModelRuns(

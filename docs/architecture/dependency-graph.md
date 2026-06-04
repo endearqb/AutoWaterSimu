@@ -9,7 +9,9 @@ flowchart TD
   Contracts["contracts/"]
   API["apps/api/"]
   Worker["services/simulation-worker/"]
-  WebServices["frontend/src/services/"]
+  WebShared["frontend/src/shared/api/"]
+  WebFeatures["frontend/src/features/"]
+  WebServices["frontend/src/services facade"]
   WebRoutes["frontend/src/routes and components"]
   Desktop["apps/desktop/"]
   LegacyBackend["backend/app"]
@@ -17,8 +19,12 @@ flowchart TD
   API --> Contracts
   Worker --> Contracts
   Worker --> API
-  WebServices --> Contracts
-  WebServices --> API
+  WebShared --> API
+  WebFeatures --> Contracts
+  WebFeatures --> WebShared
+  WebFeatures --> API
+  WebServices --> WebFeatures
+  WebServices --> WebShared
   WebRoutes --> WebServices
   Desktop --> Contracts
   Desktop --> Worker
@@ -38,13 +44,15 @@ Current rules:
 | `apps/api/internal/platform` must not import `apps/api/internal/compute` | Platform auth/config/http/metrics helpers must stay below compute domain packages and avoid reverse domain dependencies |
 | `apps/api/internal/domain` must not import `apps/api/internal/compute` | Domain packages such as workers must stay independent from the compute compatibility wiring package |
 | `apps/desktop/` must not import legacy `frontend/src` | Desktop runtime and UI are owned separately from legacy Web |
-| `frontend/src` must not import `frontend/src/client/compute` directly outside `frontend/src/services` and `frontend/src/client/compute` itself | Generated Compute client belongs behind service/API wrappers |
+| `frontend/src` must not import `frontend/src/client/compute` directly outside `frontend/src/shared/api`, `frontend/src/features`, and `frontend/src/client/compute` itself | Generated Compute client belongs behind shared API configuration and feature API wrappers |
 | `backend/app` must not depend on Next runtime modules | Legacy backend remains a migration baseline |
 
 ## Allowed Exceptions
 
-- `frontend/src/services/compute*.ts` files may configure or call the generated Compute client and re-export stable UI-facing types.
-- `frontend/src/services/computeJobsService.ts` remains the route-compatible facade over narrower service wrapper groups.
+- `frontend/src/shared/api/computeApiClient.ts` may configure generated Compute client base URL/token behavior.
+- `frontend/src/shared/api/computeTypes.ts` may re-export stable UI-facing generated Compute types.
+- `frontend/src/features/*/api.ts` and closely related feature wrapper files may call the generated Compute client.
+- `frontend/src/services/computeJobsService.ts` remains the route-compatible facade over feature API wrappers and must not import the generated Compute client directly.
 - Documentation may reference paths across modules.
 - Release gate scripts may orchestrate commands across modules but must not inline business logic.
 

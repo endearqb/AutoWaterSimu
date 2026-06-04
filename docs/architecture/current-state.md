@@ -38,7 +38,7 @@ This document summarizes long-lived facts from README files, `.ai/decisions/`, r
 - `apps/api/cmd/compute-api` rejects production startup when static token config is empty or contains default development token values.
 - `scripts/audit-compute-api-boundary.ps1` verifies the current Compute API Store/domain interface shape, internal domain/platform service constructor boundaries, internal package boundary, resolved Store-call source files, and writes evidence under `tmp/architecture-evidence/compute-api-boundary.json`.
 - `services/simulation-worker/` supports self-check, direct job execution, API once mode, API loop mode, and Desktop sidecar JSON-RPC mode.
-- `frontend/` has generated Compute client isolation under `frontend/src/client/compute`; `frontend/src/services/computeApiClient.ts` owns Compute client base URL/token configuration, narrower same-directory `compute*Api.ts` wrappers own jobs, artifacts/evidence, model governance, contracts/drafts/result explanations, and process graph registry access, `computeJobsService.ts` remains the route-compatible facade, and `check-deps` rejects direct generated Compute client imports from other `frontend/src` files.
+- `frontend/` has generated Compute client isolation under `frontend/src/client/compute`; `frontend/src/shared/api/computeApiClient.ts` owns Compute client base URL/token configuration, `frontend/src/shared/api/computeTypes.ts` owns shared UI-facing Compute wrapper types, `frontend/src/features/compute-jobs`, `features/lifecycle`, `features/model-governance`, and `features/contracts` own the first feature API wrapper slices, `computeJobsService.ts` remains the route-compatible facade over those wrappers, and `check-deps` rejects direct generated Compute client imports outside `frontend/src/shared/api`, `frontend/src/features`, and the generated client directory.
 - `apps/desktop/` has Tauri runtime, local project package/export/import, worker sidecar management, support bundle and packaging smoke boundaries.
 - New Desktop project exports use `desktop_project_package.v1`; the runtime still imports legacy `desktop_project_export.v1` files for backward compatibility.
 - `scripts/release/next-release-gates.ps1` generates local/CI release gate evidence under `tmp/release-evidence`.
@@ -73,11 +73,12 @@ This document summarizes long-lived facts from README files, `.ai/decisions/`, r
 
 The next low-risk increments are:
 
-1. Expand `check-deps` only after existing code is brought into compliance with each new rule.
-2. Trigger or wire the hosted integration and browser smoke workflows, then add live backend browser reads on top of the current mock-backed browser lane.
-3. Continue Go package movement from `domain/agent` / `domain/artifacts` / `domain/jobs` / `domain/models` / `domain/simulation` / `domain/workers` and the first platform auth/config/contracts/HTTP/metrics packages toward additional domain packages, handler/package surface reduction, and later public constructor signature narrowing while preserving MemoryStore/PostgresStore coverage.
-4. Expand scenario-level smoke evidence beyond the current material-balance job path to browser, packaged Desktop worker/installer, security, release, and golden scenario lanes.
-5. Promote Desktop package evidence to hosted CI or release-evidence lane before treating the Desktop offline golden scenario as complete.
-6. Connect Water Ontology policies to real authorization/data-scope/audit implementation only after the runtime security model is explicit and test-backed.
-7. Revisit Go/Python/Rust generated contract and ontology types only after package boundaries and Desktop package runtime validation are stable.
-8. Continue production security with real issuer/JWKS or service-token secret integration, data-scope filtering, all-mutation audit coverage, and a security smoke lane.
+1. Add `frontend/src/features/*/queries.ts` only after the facade-backed API wrapper migration is stable and route call sites can be moved with focused browser/typecheck coverage.
+2. Expand `check-deps` only after existing code is brought into compliance with each new rule.
+3. Trigger or wire the hosted integration and browser smoke workflows, then add live backend browser reads on top of the current mock-backed browser lane.
+4. Continue Go package movement from `domain/agent` / `domain/artifacts` / `domain/jobs` / `domain/models` / `domain/simulation` / `domain/workers` and the first platform auth/config/contracts/HTTP/metrics packages toward additional domain packages, handler/package surface reduction, and later public constructor signature narrowing while preserving MemoryStore/PostgresStore coverage.
+5. Expand scenario-level smoke evidence beyond the current material-balance job path to browser, packaged Desktop worker/installer, security, release, and golden scenario lanes.
+6. Promote Desktop package evidence to hosted CI or release-evidence lane before treating the Desktop offline golden scenario as complete.
+7. Connect Water Ontology policies to real authorization/data-scope/audit implementation only after the runtime security model is explicit and test-backed.
+8. Revisit Go/Python/Rust generated contract and ontology types only after package boundaries and Desktop package runtime validation are stable.
+9. Continue production security with real issuer/JWKS or service-token secret integration, data-scope filtering, all-mutation audit coverage, and a security smoke lane.

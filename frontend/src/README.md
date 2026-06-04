@@ -25,7 +25,9 @@
 | `components/` | UI components and domain panels |
 | `routes/` | route files |
 | `stores/` | Zustand stores |
-| `services/` | hand-written API/domain service wrappers |
+| `services/` | compatibility service facades and legacy service wrappers |
+| `shared/` | shared frontend API configuration, types, and helpers |
+| `features/` | AutoWaterSimu Next feature API wrapper slices |
 | `client/` | generated API clients |
 | `contracts/` | frontend contract transform prototype |
 | `i18n/` | localization provider and messages |
@@ -35,7 +37,7 @@
 1. React Flow / XYFlow import 必须符合项目固定格式。
 2. Chakra UI v3 改动前先读本地 `llms-*.txt` 文档。
 3. generated client 不手改，按 `frontend/README.md` 的命令重新生成。
-4. `frontend/src/client/compute` 只允许 `frontend/src/services/` 下的 service/API wrapper 层直接使用；`main.tsx`、routes 和 components 不直接 import generated Compute client。
+4. `frontend/src/client/compute` 只允许 `frontend/src/shared/api/` 和 `frontend/src/features/` 下的手写 API wrapper 直接使用；`main.tsx` 只调用 shared 配置入口，routes、components 和 compatibility service facade 不直接 import generated Compute client。
 5. 前端改动完成后运行 `cd frontend; npx tsc --noEmit`。
 
 ## 4. 对外接口

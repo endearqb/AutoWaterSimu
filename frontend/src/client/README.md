@@ -31,7 +31,7 @@
 
 ## 4. 对外接口
 
-对 `frontend/src/services/` 下的手写 service/API wrapper 暴露 typed API client；route/component 不直接 import `frontend/src/client/compute`。
+对 `frontend/src/shared/api/` 和 `frontend/src/features/` 下的手写 API wrapper 暴露 Compute typed API client；route/component 和 `frontend/src/services/computeJobsService.ts` facade 不直接 import `frontend/src/client/compute`。
 
 ## 5. 依赖边界
 

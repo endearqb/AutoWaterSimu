@@ -18,7 +18,7 @@ import { routeTree } from "./routeTree.gen"
 import { ApiError, OpenAPI } from "./client"
 import { CustomProvider } from "./components/ui/provider"
 import { I18nProvider } from "./i18n"
-import { configureComputeApiClient } from "./services/computeApiClient"
+import { configureComputeApiClient } from "./shared/api/computeApiClient"
 
 OpenAPI.BASE = import.meta.env.VITE_API_URL
 OpenAPI.TOKEN = async () => {
