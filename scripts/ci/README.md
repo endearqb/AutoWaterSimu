@@ -30,7 +30,7 @@
 | `pr-fast.ps1` | 运行 Next PR fast checks（含 README path、ontology registry、contracts drift、Go/frontend/desktop checks）并写出 `tmp/ci-evidence/pr-fast.json` |
 | `integration-smoke.ps1` | 启动隔离 Compose API 栈，运行本地 Python worker API once，验证 job/result/model_run/artifact/evidence/retention dry-run/metrics，并写出 `tmp/ci-evidence/integration-smoke.json` |
 | `security-smoke.ps1` | 聚合 production token guard、static token revocation、scope denial、artifact admin scope、tenant/project/site read-scope 和 selected mutation audit envelope 的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
-| `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
+| `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
 
 ## 3. 维护约定

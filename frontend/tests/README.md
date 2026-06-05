@@ -24,7 +24,7 @@
 | `auth.setup.ts` | auth setup |
 | `utils/` | Playwright helper functions |
 | `peterson-matrix-workbook.test.ts` | workbook helper test |
-| `compute-jobs-current-flow.spec.ts` | Mock-backed Compute Jobs current-flow submission and production readiness smoke |
+| `compute-jobs-current-flow.spec.ts` | Mock-backed Compute Jobs current-flow submission, result/readiness, evidence package download, and evidence ref lookup smoke |
 | `contract-validation.spec.ts` | Mock-backed Compute Jobs contract validation panel smoke |
 | `model-governance.spec.ts` | Mock-backed Model governance catalog snapshot history smoke |
 | `compute-lifecycle.spec.ts` | Mock-backed Compute lifecycle metrics and retention sweep smoke |

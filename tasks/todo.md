@@ -1,3 +1,28 @@
+# 2026-06-05 AutoWaterSimu Next browser current-flow evidence TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, frontend route/feature READMEs, and existing Playwright smokes
+- [x] Confirm next aligned gap: current-flow browser smoke submitted jobs and read result/readiness, but mocked evidence package and evidence-ref endpoints were not exercised by UI interactions
+- [x] Extend `compute-jobs-current-flow.spec.ts` to click evidence package download and resolve an evidence ref for the selected job
+- [x] Update browser smoke evidence summary and documentation
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Keep route code, feature query wrappers, generated client, backend API, OpenAPI, and UI markup unchanged.
+- Strengthen the existing mock-backed current-flow browser smoke instead of creating a parallel test entry.
+- Record that this improves browser evidence only; live PostgreSQL/MinIO/worker authenticated browser reads remain a later slice.
+
+## Review
+
+- Extended `compute-jobs-current-flow.spec.ts` to exercise the selected job's evidence package download and evidence ref resolution UI paths.
+- `scripts/ci/browser-smoke.ps1` now records `evidence_package_download` and `evidence_ref_resolution` in `coverage_summary`.
+- Updated `frontend/tests/README.md`, `scripts/ci/README.md`, architecture current-state, Certainty/Elegance plan, and `.ai/changes`.
+- No route code, feature query wrappers, generated client, backend API, OpenAPI, route path, or UI markup changed.
+- Validation passed: focused Playwright current-flow spec, full `scripts\ci\browser-smoke.ps1`, `cd frontend; npx tsc --noEmit`, `scripts\check-deps.ps1`, and `scripts\ci\pr-fast.ps1`.
+- `tmp\ci-evidence\browser-smoke.json` includes the new coverage fields and correctly records `is_dirty_before=true` / `is_dirty_after=true` because this stage was not committed yet.
+- Remaining scope: live PostgreSQL/MinIO/worker browser reads, hosted browser workflow green run, hosted integration/release evidence, deeper route/component decomposition, golden scenarios, full production data scope, and all-mutation audit remain future slices.
+
 # 2026-06-05 AutoWaterSimu Next frontend route query boundary check TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, frontend route/feature/service READMEs, scripts README, and existing dependency graph
@@ -5,7 +30,7 @@
 - [x] Add a `frontend-routes-must-use-feature-query-boundaries-for-compute` dependency rule to `scripts/check-deps.ps1`
 - [x] Update README/architecture/checklists/change records
 - [x] Run validation
-- [ ] Commit and push
+- [x] Commit and push
 
 ## Plan
 

@@ -7,6 +7,7 @@ const corsHeaders = {
     "authorization,content-type,idempotency-key",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Expose-Headers": "X-Evidence-Checksum",
   "Content-Type": "application/json",
 }
 
@@ -62,6 +63,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 test("submits current flow graph as a compute job", async ({ page }) => {
   const jobs: JobSnapshot[] = []
+  const evidenceDownloads: string[] = []
+  const resolvedEvidenceRefs: string[] = []
   const submittedJobs: Array<Record<string, unknown>> = []
   const unexpectedComputeRequests: string[] = []
 
@@ -225,6 +228,36 @@ test("submits current flow graph as a compute job", async ({ page }) => {
       return
     }
 
+    const evidencePackageMatch = path.match(
+      /^\/api\/v1\/compute\/jobs\/([^/]+)\/evidence$/,
+    )
+    if (method === "GET" && evidencePackageMatch) {
+      evidenceDownloads.push(evidencePackageMatch[1])
+      await route.fulfill({
+        body: JSON.stringify({
+          evidence_package_id: `evidence_${evidencePackageMatch[1]}`,
+          generated_at: now,
+          job_id: evidencePackageMatch[1],
+          refs: [
+            `job:${evidencePackageMatch[1]}`,
+            "model_run:mr_current_flow_smoke",
+            "artifact:artifact_current_flow_smoke",
+          ],
+          schema_version: "evidence_package.v1",
+          summary: {
+            process_graph_id: "pg_graph_current_flow_smoke",
+            risk_findings_count: 1,
+          },
+        }),
+        headers: {
+          ...corsHeaders,
+          "X-Evidence-Checksum": "sha256:evidence-package",
+        },
+        status: 200,
+      })
+      return
+    }
+
     const eventsMatch = path.match(
       /^\/api\/v1\/compute\/jobs\/([^/]+)\/events$/,
     )
@@ -249,6 +282,7 @@ test("submits current flow graph as a compute job", async ({ page }) => {
       /^\/api\/v1\/compute\/jobs\/([^/]+)\/evidence-ref$/,
     )
     if (method === "GET" && evidenceMatch) {
+      resolvedEvidenceRefs.push(url.searchParams.get("ref") || "")
       await route.fulfill(
         json({
           evidence_ref: url.searchParams.get("ref") || "",
@@ -433,5 +467,33 @@ test("submits current flow graph as a compute job", async ({ page }) => {
   await expect(page.getByText("pg_graph_current_flow_smoke")).toBeVisible()
   await expect(page.getByText("Production readiness")).toBeVisible()
   await expect(page.getByText("ready_for_external_approval")).toBeVisible()
+
+  const evidenceDownload = page.waitForEvent("download")
+  await page.getByRole("button", { name: /^Evidence$/ }).click()
+  const download = await evidenceDownload
+  await expect
+    .poll(() => evidenceDownloads, {
+      message: "evidence package download should read the selected job",
+    })
+    .toEqual([String(submittedJob.job_id)])
+  expect(download.suggestedFilename()).toBe(
+    `evidence_${String(submittedJob.job_id)}.json`,
+  )
+  await expect(page.getByText("sha256:evidence-package")).toBeVisible()
+
+  await page
+    .getByPlaceholder("model_run:...")
+    .fill("model_run:mr_current_flow_smoke")
+  await page.getByRole("button", { name: /^Resolve$/ }).click()
+  await expect
+    .poll(() => resolvedEvidenceRefs, {
+      message: "evidence ref lookup should read the selected job",
+    })
+    .toEqual(["model_run:mr_current_flow_smoke"])
+  await expect(page.getByText("model_run", { exact: true })).toBeVisible()
+  await expect(page.getByText("Reference ID")).toBeVisible()
+  await expect(
+    page.getByText("mr_current_flow_smoke", { exact: true }),
+  ).toBeVisible()
   expect(unexpectedComputeRequests).toEqual([])
 })
