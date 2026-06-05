@@ -83,6 +83,73 @@ function Read-Evidence {
     }
 }
 
+function Read-ReleaseGateStepEvidence {
+    param(
+        [string]$Lane,
+        [string]$Path,
+        [string]$HeadCommit,
+        [string]$StepName
+    )
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return [ordered]@{
+            lane = $Lane
+            path = $Path
+            exists = $false
+            status = "missing"
+            schema_version = $null
+            generated_at = $null
+            commit_sha = $null
+            commit_relation = "missing"
+            source_lane = "release_gate"
+            required_step = $StepName
+            error = $null
+        }
+    }
+    try {
+        $json = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+        $names = $json.PSObject.Properties.Name
+        $commitSha = if ($names -contains "commit_sha") { [string]$json.commit_sha } else { "" }
+        $commitRelation = "unknown"
+        if (-not [string]::IsNullOrWhiteSpace($commitSha)) {
+            $commitRelation = if ($commitSha -eq $HeadCommit) { "current" } else { "stale" }
+        }
+        $stepMatches = @()
+        if ($names -contains "steps") {
+            $stepMatches = @($json.steps | Where-Object { $_.name -eq $StepName })
+        }
+        $stepPassed = @($stepMatches | Where-Object { $_.status -eq "passed" }).Count -gt 0
+        $status = if ($json.status -eq "passed" -and $stepPassed) { "passed" } else { "missing" }
+        return [ordered]@{
+            lane = $Lane
+            path = $Path
+            exists = $true
+            status = $status
+            schema_version = if ($names -contains "schema_version") { $json.schema_version } else { $null }
+            generated_at = if ($names -contains "generated_at") { $json.generated_at } else { $null }
+            commit_sha = if ([string]::IsNullOrWhiteSpace($commitSha)) { $null } else { $commitSha }
+            commit_relation = $commitRelation
+            source_lane = "release_gate"
+            required_step = $StepName
+            error = $null
+        }
+    }
+    catch {
+        return [ordered]@{
+            lane = $Lane
+            path = $Path
+            exists = $true
+            status = "unreadable"
+            schema_version = $null
+            generated_at = $null
+            commit_sha = $null
+            commit_relation = "unreadable"
+            source_lane = "release_gate"
+            required_step = $StepName
+            error = $_.Exception.Message
+        }
+    }
+}
+
 function ConvertTo-GitStatusLines {
     param([string]$StatusText)
     return @($StatusText -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
@@ -190,6 +257,7 @@ $laneEvidence = @(
     (Read-Evidence -Lane "security" -Path (Join-Path $EvidenceDir "security-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "desktop_package" -Path (Join-Path $EvidenceDir "desktop-package-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "release_gate" -Path (Join-Path $ReleaseEvidenceDir "next-release-gates.json") -HeadCommit $headCommit),
+    (Read-ReleaseGateStepEvidence -Lane "postgres_migration_release_gate" -Path (Join-Path $ReleaseEvidenceDir "next-release-gates.json") -HeadCommit $headCommit -StepName "postgres migration up/down smoke"),
     (Read-Evidence -Lane "release_artifact_download_smoke" -Path (Join-Path $ReleaseEvidenceDir "release-artifact-download-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "downloaded_release_artifacts" -Path (Join-Path $ReleaseEvidenceDir "downloaded-release-artifacts.json") -HeadCommit $headCommit)
 )
@@ -205,7 +273,7 @@ $scenarios = @(
     (New-Scenario -LaneMap $laneMap -Id "agent_draft_confirmation" -Title "Agent draft confirmation" -EvidenceSources @("pr_fast", "security") -CoveredBy @("PR fast includes contracts and Go API checks when available.", "Security smoke covers selected mutation audit paths when available.") -RemainingGaps @("No full Agent draft to confirmation to promoted simulation-check to explanation publish scenario lane.", "No user-facing approval workflow evidence.")),
     (New-Scenario -LaneMap $laneMap -Id "artifact_lifecycle" -Title "Artifact lifecycle" -EvidenceSources @("integration", "security", "release_gate") -CoveredBy @("Integration smoke covers artifact upload/download checksum and retention dry-run when available.", "Security smoke covers artifact admin-scope and selected retention audit checks when available.", "Release gate covers worker/artifact release checks when available.") -RemainingGaps @("No complete archive to hot delete to fallback download golden scenario evidence.", "No hosted release artifact round trip evidence.")),
     (New-Scenario -LaneMap $laneMap -Id "desktop_offline_project" -Title "Desktop offline project" -EvidenceSources @("desktop_package", "release_gate") -CoveredBy @("Desktop package smoke covers source-mode package export/import and support bundle redaction when available.", "Release gate may cover packaged artifacts when available.") -RemainingGaps @("No packaged worker exe or NSIS installer startup evidence in this scenario summary.", "No hosted Desktop package/release artifact evidence recorded.")),
-    (New-Scenario -LaneMap $laneMap -Id "postgresql_migration" -Title "PostgreSQL migration" -EvidenceSources @("integration", "release_gate") -CoveredBy @("Integration smoke starts an isolated PostgreSQL-backed API stack when available.", "Release gate can run PostgreSQL migration smoke when configured.") -RemainingGaps @("No dedicated fresh DB migration up/down scenario evidence is required by this summary.", "No hosted migration green run recorded.")),
+    (New-Scenario -LaneMap $laneMap -Id "postgresql_migration" -Title "PostgreSQL migration" -EvidenceSources @("integration", "postgres_migration_release_gate") -CoveredBy @("Integration smoke starts an isolated PostgreSQL-backed API stack when available.", "Release gate counts only when the postgres migration up/down smoke step is present and passed.") -RemainingGaps @("No current-HEAD dedicated fresh DB migration up/down scenario evidence is required by this summary unless the postgres migration release gate step ran.", "No hosted migration green run recorded.")),
     (New-Scenario -LaneMap $laneMap -Id "security_permissions" -Title "Security permissions" -EvidenceSources @("security", "pr_fast") -CoveredBy @("Security smoke covers production token guard, token revocation, scope denial, selected audit, and job/artifact read-scope checks when available.") -RemainingGaps @("Full OIDC/JWKS, RBAC/ABAC, all-object data scope, ontology-backed policy enforcement, and all-mutation audit remain incomplete.", "No hosted security green run recorded.")),
     (New-Scenario -LaneMap $laneMap -Id "release_evidence" -Title "Release evidence" -EvidenceSources @("release_gate", "release_artifact_download_smoke", "downloaded_release_artifacts") -CoveredBy @("Release gate and fixture-backed artifact download smoke provide partial local release evidence when available.") -RemainingGaps @("No hosted unsigned artifact upload/download round trip is required by this summary.", "No signing, installer publish, or auto-update evidence."))
 )

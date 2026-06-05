@@ -1,3 +1,26 @@
+# 2026-06-05 AutoWaterSimu Next release gate traceability TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, and scripts/release README
+- [x] Confirm next aligned gap: `next-release-gates.json` lacked commit/dirty metadata, so golden scenario summary could not distinguish current release evidence from unknown-commit evidence
+- [x] Add commit/branch/tracked-untracked dirty-state metadata to release gate evidence
+- [x] Make golden scenario summary count PostgreSQL migration release evidence only when the `postgres migration up/down smoke` step exists and passed
+- [x] Update README/architecture/plan/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Keep release gate steps and workflow behavior unchanged.
+- Add metadata to `next-release-gates.json` for traceability.
+- Add a derived `postgres_migration_release_gate` source in `golden-scenarios.ps1` so generic release-gate success is not treated as migration proof.
+
+## Review
+
+- Added commit SHA, branch, dirty-state, tracked changes, and untracked files to `next-release-gates.json`.
+- Added a derived `postgres_migration_release_gate` source to `golden-scenarios.ps1`; it remains `missing` unless the release gate includes a passed `postgres migration up/down smoke` step.
+- Updated release/ci README, architecture current-state/local-dev, Certainty/Elegance plan, and `.ai/changes`.
+- Validation passed: `scripts\release\next-release-gates.ps1 -Mode merge -SkipLong`, `scripts\ci\golden-scenarios.ps1`, JSON assertion that `release_gate` is current and `postgres_migration_release_gate` remains missing when the migration step did not run, PowerShell parse checks for both edited scripts, `git diff --check -- scripts docs tasks .ai`, and the docs/rebuild P0/P1/P2/schema search.
+
 # 2026-06-05 AutoWaterSimu Next golden scenario evidence summary TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, workflow README, and root task entry

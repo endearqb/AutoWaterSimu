@@ -55,7 +55,7 @@
 
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
 
-本目录对 `Justfile` 暴露 `golden-scenarios` 本地汇总入口；它只解释已有 lane evidence，不启动 Docker、浏览器或 release build，也不表示 8 条金标场景已经完成。
+本目录对 `Justfile` 暴露 `golden-scenarios` 本地汇总入口；它只解释已有 lane evidence，不启动 Docker、浏览器或 release build，也不表示 8 条金标场景已经完成。Release gate 只有在 commit SHA 匹配当前 HEAD 时才作为 current source；PostgreSQL migration 场景还要求 release gate 内存在并通过 `postgres migration up/down smoke` step。
 
 ## 5. 依赖边界
 

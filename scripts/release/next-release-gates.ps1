@@ -77,6 +77,34 @@ function ConvertTo-ProcessArgument {
     return $Argument
 }
 
+function Get-GitText {
+    param(
+        [string]$Root,
+        [string[]]$Arguments
+    )
+    try {
+        return [string](& git -C $Root @Arguments 2>$null)
+    }
+    catch {
+        return ""
+    }
+}
+
+function ConvertTo-GitStatusLines {
+    param([string]$StatusText)
+    return @($StatusText -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Get-TrackedStatusLines {
+    param([string[]]$StatusLines)
+    return @($StatusLines | Where-Object { -not $_.StartsWith("??") })
+}
+
+function Get-UntrackedStatusLines {
+    param([string[]]$StatusLines)
+    return @($StatusLines | Where-Object { $_.StartsWith("??") })
+}
+
 function Invoke-Gate {
     param(
         [string]$Name,
@@ -166,6 +194,12 @@ $script:DryRunSkippedArtifacts = $false
 $python = Resolve-Python -Root $Root
 $npm = Resolve-NativeCommand -Name "npm"
 $npx = Resolve-NativeCommand -Name "npx"
+$commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
+$branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
+$statusBefore = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
+$statusBeforeLines = @(ConvertTo-GitStatusLines -StatusText $statusBefore)
+$trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
+$untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 
 Invoke-Gate -Name "contracts schema tests" -WorkingDirectory $Root -Executable $python -Arguments @("-m", "pytest", "contracts\tests", "-q")
 Invoke-Gate -Name "worker self-check" -WorkingDirectory $Root -Executable $python -Arguments @("services\simulation-worker\simulation_worker\cli.py", "--self-check")
@@ -229,16 +263,33 @@ if ($Mode -eq "release") {
     }
 }
 
+$statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
+$statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
+$trackedStatusAfter = @(Get-TrackedStatusLines -StatusLines $statusAfterLines)
+$untrackedStatusAfter = @(Get-UntrackedStatusLines -StatusLines $statusAfterLines)
+
 $report = [ordered]@{
     schema_version = "autowatersimu_next_release_gate_evidence.v1"
     mode = $Mode
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
     repo_root = $Root
+    commit_sha = $commitSha
+    branch = $branchName
     status = if ($script:Failed) { "failed" } elseif ($script:DryRunSkippedArtifacts) { "dry_run_skipped_artifacts" } else { "passed" }
     allow_missing_package_artifacts = [bool]$AllowMissingPackageArtifacts
     skip_long = [bool]$SkipLong
     run_worker_matrix = [bool]$RunWorkerMatrix
     run_browser_smoke = [bool]$RunBrowserSmoke
+    is_dirty_before = -not [string]::IsNullOrWhiteSpace($statusBefore)
+    is_dirty_after = -not [string]::IsNullOrWhiteSpace($statusAfter)
+    has_tracked_changes_before = $trackedStatusBefore.Count -gt 0
+    has_tracked_changes_after = $trackedStatusAfter.Count -gt 0
+    dirty_files_before = $statusBeforeLines
+    dirty_files_after = $statusAfterLines
+    tracked_changes_before = $trackedStatusBefore
+    tracked_changes_after = $trackedStatusAfter
+    untracked_files_before = $untrackedStatusBefore
+    untracked_files_after = $untrackedStatusAfter
     steps = $script:Steps
 }
 

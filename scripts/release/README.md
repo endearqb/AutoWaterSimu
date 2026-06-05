@@ -40,6 +40,7 @@
 9. Installer signing、auto update 和 GitHub Release publication 不属于本脚本职责；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 10. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
 11. `smoke-release-artifact-download.ps1` 只使用 `tmp/` 下的 fixture 文件验证校验器逻辑，不代表真实 GitHub artifact round trip 已通过。
+12. `next-release-gates.ps1` evidence 必须记录 commit SHA、branch、dirty-state、tracked/untracked changes 和每步结果；PostgreSQL migration 只在 `postgres migration up/down smoke` step 实际存在且通过时才可作为 migration evidence。
 
 ## 4. 对外接口
 
