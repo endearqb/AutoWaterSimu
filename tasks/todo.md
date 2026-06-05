@@ -1,3 +1,29 @@
+# 2026-06-05 AutoWaterSimu Next golden scenario evidence summary TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, workflow README, and root task entry
+- [x] Attempt hosted integration workflow dispatch for the pushed branch
+- [x] Record that hosted dispatch is not yet usable from this branch because GitHub returned `workflow not found on the default branch`
+- [x] Add local golden scenario evidence summary script and root task
+- [x] Update README/architecture/plan/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Add a summary-only script that reads existing CI/release evidence and writes `tmp\ci-evidence\golden-scenarios.json`.
+- Require lane evidence commit SHA to match the current report commit before counting it as a passed source for a scenario.
+- Keep all 8 golden scenarios incomplete unless direct scenario evidence proves completion; this stage creates the map, not the final scenario coverage.
+
+## Review
+
+- Added `scripts/ci/golden-scenarios.ps1` and `just golden-scenarios`.
+- The summary reads existing `tmp\ci-evidence` and `tmp\release-evidence` lane JSON files, records commit relation (`current` / `stale` / `unknown` / `missing`), and counts only current-commit passed lanes as scenario evidence sources.
+- Fixed the CI dirty-state helper arrays in pr-fast, browser, security, Desktop package, and integration smoke scripts after post-commit validation exposed a single-item `.Count` strict-mode failure.
+- Updated root README, scripts READMEs, architecture current-state/local-dev, Certainty/Elegance plan, and `.ai/changes`.
+- Hosted integration dispatch was attempted with `gh workflow run next-integration-smoke.yml --ref codex/autowatersimu-next-rebuild`, but GitHub returned `workflow not found on the default branch`; no hosted green evidence was claimed.
+- Validation passed: `scripts\ci\pr-fast.ps1`, `scripts\ci\browser-smoke.ps1`, `scripts\ci\security-smoke.ps1`, `scripts\ci\desktop-package-smoke.ps1`, `scripts\release\smoke-release-artifact-download.ps1`, `scripts\ci\golden-scenarios.ps1`, JSON assertion for 8 scenarios and schema version, `git diff --check -- README.md Justfile scripts docs tasks .ai`, and the docs/rebuild P0/P1/P2/schema search.
+- Current generated summary reported `status=partial`, `covered=0`, `partial=7`, `missing=1`, `blocked=0`; `integration` remained stale, `release_gate` had unknown commit relation, and `downloaded_release_artifacts` was missing.
+
 # 2026-06-05 AutoWaterSimu Next CI evidence dirty-state taxonomy TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, local-dev, and scripts/ci README

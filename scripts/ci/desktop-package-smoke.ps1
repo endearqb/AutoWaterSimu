@@ -150,9 +150,9 @@ $npm = Resolve-NativeCommand -Name "npm"
 $commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
 $branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
 $statusBefore = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
-$statusBeforeLines = ConvertTo-GitStatusLines -StatusText $statusBefore
-$trackedStatusBefore = Get-TrackedStatusLines -StatusLines $statusBeforeLines
-$untrackedStatusBefore = Get-UntrackedStatusLines -StatusLines $statusBeforeLines
+$statusBeforeLines = @(ConvertTo-GitStatusLines -StatusText $statusBefore)
+$trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
+$untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 $desktopDir = Join-Path $Root "apps\desktop"
 
 Invoke-Step -Name "desktop package contract fixtures" -WorkingDirectory $Root -Executable $python -Arguments @("-m", "pytest", "contracts\tests\test_contract_schemas.py", "-q", "-k", "desktop_project_package or desktop_support_bundle")
@@ -161,9 +161,9 @@ Invoke-Step -Name "desktop support bundle redaction" -WorkingDirectory $Root -Ex
 Invoke-Step -Name "desktop typecheck" -WorkingDirectory $desktopDir -Executable $npm -Arguments @("run", "typecheck")
 
 $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
-$statusAfterLines = ConvertTo-GitStatusLines -StatusText $statusAfter
-$trackedStatusAfter = Get-TrackedStatusLines -StatusLines $statusAfterLines
-$untrackedStatusAfter = Get-UntrackedStatusLines -StatusLines $statusAfterLines
+$statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
+$trackedStatusAfter = @(Get-TrackedStatusLines -StatusLines $statusAfterLines)
+$untrackedStatusAfter = @(Get-UntrackedStatusLines -StatusLines $statusAfterLines)
 $report = [ordered]@{
     schema_version = "autowatersimu_next_desktop_package_smoke_evidence.v1"
     generated_at = (Get-Date).ToUniversalTime().ToString("o")

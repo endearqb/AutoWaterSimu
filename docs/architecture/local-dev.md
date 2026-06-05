@@ -18,6 +18,7 @@ just integration-smoke
 just check-security
 just browser-smoke
 just desktop-package-smoke
+just golden-scenarios
 ```
 
 If `just` is not installed, run the underlying PowerShell scripts directly:
@@ -33,6 +34,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 backend\.venv\Scripts\python -m pytest contracts\tests -q
 cd apps\api; go test ./...
 cd frontend; npx tsc --noEmit
@@ -57,6 +59,7 @@ cd frontend; npx tsc --noEmit
 | `just check-security` | Runs token guard, scope denial, revocation, admin-scope, and selected mutation audit checks and writes `tmp/ci-evidence/security-smoke.json` |
 | `just browser-smoke` | Runs mock-backed Playwright Compute Jobs/current-flow/result/evidence, contract validation, Model governance, and lifecycle smokes and writes `tmp/ci-evidence/browser-smoke.json` |
 | `just desktop-package-smoke` | Runs Desktop package/support bundle contract fixtures, Rust clean-runtime round-trip, support bundle redaction, Desktop typecheck, and writes `tmp/ci-evidence/desktop-package-smoke.json` |
+| `just golden-scenarios` | Summarizes existing CI/release evidence against the 8 golden scenarios and writes `tmp/ci-evidence/golden-scenarios.json` |
 | `just audit-compute-api` | Runs the Compute API Store/domain boundary audit |
 | `just check-ontology` | Validates Water Ontology object/action/link/policy registry consistency |
 | `just check-contracts` | Runs the registry-backed contract and Compute TS client drift gate |
@@ -74,6 +77,7 @@ cd frontend; npx tsc --noEmit
 - The current security smoke proves production default-token startup guard, static token revocation, scope denial, admin-only artifact retention, and selected mutation audit envelopes for job create plus artifact retention events. It does not yet prove full RBAC, tenant/project/site data scope, all-mutation audit, or real issuer/JWKS integration.
 - The current browser smoke proves Web route orchestration with mock-backed Playwright for Compute Jobs/current-flow, contract validation, Model governance, and lifecycle retention. It does not prove a live Postgres/MinIO/worker backend or an authenticated legacy backend session.
 - The current Desktop package smoke proves schema fixtures, source-mode runtime clean export/import, checksum-verified restore, metadata restoration, artifact/model_run refs, support bundle redaction, and Desktop React wrapper typechecking. It does not prove packaged worker exe, NSIS installer, or hosted release artifact behavior.
+- The current golden scenario summary reads existing lane evidence and reports scenario-level `partial` / `missing` / `blocked` status. It is an evidence map, not a replacement for live scenario execution.
 - CI smoke evidence keeps backward-compatible dirty fields and also records tracked/untracked dirty-state fields: `has_tracked_changes_*`, `tracked_changes_*`, and `untracked_files_*`. Treat `is_dirty_*` as the broad worktree flag; use tracked fields to decide whether local evidence contains uncommitted code/doc edits.
 - The current Water Ontology gate proves registry consistency only. It does not prove runtime RBAC/ABAC, tenant/project/site data-scope filtering, approval workflow, or mutation audit enforcement.
 - Release mode must not use `-AllowMissingPackageArtifacts` to claim a release passed.

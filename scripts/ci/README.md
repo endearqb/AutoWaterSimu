@@ -11,6 +11,7 @@
 - opt-in security smoke 验证。
 - opt-in mock-backed browser smoke 验证。
 - opt-in Desktop project package/support bundle smoke 验证。
+- 8 条金标场景的现有 lane evidence 汇总。
 - 输出机器可读 evidence 到 `tmp/ci-evidence/`。
 - 编排跨 dependency boundary、README path、registry-backed contracts、Go API、frontend 和 desktop 的快速检查。
 - 编排 Water Ontology registry 一致性检查，防止对象、动作、关系和策略 drift。
@@ -32,6 +33,7 @@
 | `security-smoke.ps1` | 聚合 production token guard、static token revocation、scope denial、artifact admin scope、tenant/project/site read-scope 和 selected mutation audit envelope 的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
+| `golden-scenarios.ps1` | 读取现有 CI/release evidence，汇总 8 条金标场景的 `partial` / `missing` / `blocked` 状态，并写出 `tmp/ci-evidence/golden-scenarios.json` |
 
 ## 3. 维护约定
 
@@ -52,6 +54,8 @@
 本目录对 `Justfile` 和 `.github/workflows/next-browser-smoke.yml` 暴露 `browser-smoke` opt-in 入口；当前 browser smoke 使用 Playwright request mocking 验证 Web 编排，不覆盖真实 Postgres/MinIO/worker backend 或 live authenticated legacy session。
 
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
+
+本目录对 `Justfile` 暴露 `golden-scenarios` 本地汇总入口；它只解释已有 lane evidence，不启动 Docker、浏览器或 release build，也不表示 8 条金标场景已经完成。
 
 ## 5. 依赖边界
 
@@ -79,6 +83,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 ```
 
 ## 7. AI 操作提示

@@ -54,6 +54,9 @@ browser-smoke:
 desktop-package-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 
+golden-scenarios:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
+
 release-artifact-download-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
 

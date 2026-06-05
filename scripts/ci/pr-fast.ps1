@@ -216,9 +216,9 @@ $powershell = if (Test-IsWindows) { "powershell" } else { "pwsh" }
 $commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
 $branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
 $statusBefore = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
-$statusBeforeLines = ConvertTo-GitStatusLines -StatusText $statusBefore
-$trackedStatusBefore = Get-TrackedStatusLines -StatusLines $statusBeforeLines
-$untrackedStatusBefore = Get-UntrackedStatusLines -StatusLines $statusBeforeLines
+$statusBeforeLines = @(ConvertTo-GitStatusLines -StatusText $statusBefore)
+$trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
+$untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 
 Invoke-Step -Name "dependency boundary check" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-deps.ps1")
 Invoke-InternalStep -Name "README path check" -Body { Test-ReadmePaths -Root $Root }
@@ -239,9 +239,9 @@ if (Test-Path -LiteralPath (Join-Path $Root ".github\workflows")) {
 }
 
 $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
-$statusAfterLines = ConvertTo-GitStatusLines -StatusText $statusAfter
-$trackedStatusAfter = Get-TrackedStatusLines -StatusLines $statusAfterLines
-$untrackedStatusAfter = Get-UntrackedStatusLines -StatusLines $statusAfterLines
+$statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
+$trackedStatusAfter = @(Get-TrackedStatusLines -StatusLines $statusAfterLines)
+$untrackedStatusAfter = @(Get-UntrackedStatusLines -StatusLines $statusAfterLines)
 $report = [ordered]@{
     schema_version = "autowatersimu_next_pr_fast_evidence.v1"
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
