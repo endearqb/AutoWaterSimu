@@ -216,7 +216,7 @@ artifact archive dry-run
 frontend reads job/result/evidence
 ```
 
-当前已落地的 `scripts/ci/integration-smoke.ps1 -StartCompose` 覆盖前 7 项（到 artifact archive dry-run），并额外验证 metrics；frontend reads 仍需 browser/frontend smoke 补齐。
+当前已落地的 `scripts/ci/integration-smoke.ps1 -StartCompose` 覆盖前 7 项（到 artifact archive dry-run），并额外验证 metrics；frontend reads 仍需 live backend browser/frontend smoke 补齐。当前 local CI smoke evidence 已把 dirty worktree 拆成兼容的 `is_dirty_*` / `dirty_files_*` 与新增的 tracked/untracked 字段，便于区分未提交 tracked 修改和本地未跟踪文档，但 hosted green evidence 仍需实际 GitHub Actions 运行确认。
 
 当前已落地 `scripts/ci/browser-smoke.ps1` 和 `.github/workflows/next-browser-smoke.yml`，用 mock-backed Playwright 覆盖 Compute Jobs/current-flow submission、job result/readiness read、evidence package download、evidence ref lookup、contract validation、Model governance 和 lifecycle retention 的 Web 编排。它补齐 browser lane 入口与 feature-query backed route evidence，但仍不等同于 live Postgres/MinIO/worker backend 上的 authenticated browser read。
 

@@ -36,8 +36,8 @@
 ## 3. 维护约定
 
 1. 脚本只编排已有公开命令，业务规则留在各模块测试中。
-2. evidence 必须记录 commit SHA、dirty 状态、workflow 状态和每步结果。
-3. 本地 dirty worktree 下运行时，不得声称 evidence 证明 clean HEAD；必须记录 `is_dirty=true`。
+2. evidence 必须记录 commit SHA、workflow 状态、每步结果，并保留兼容的 `is_dirty_*` / `dirty_files_*` 字段。
+3. 本地 dirty worktree 下运行时，不得声称 evidence 证明 clean HEAD；必须记录 `is_dirty_*`，并用 `has_tracked_changes_*`、`tracked_changes_*`、`untracked_files_*` 区分未提交 tracked 修改与本地未跟踪文件。
 4. 生成客户端 drift gate 可以运行 codegen 和机械 whitespace 归一化，但不得手写修改 generated client。
 5. Integration smoke 必须明确记录 dirty worktree、compose project、是否保留容器，以及每个验证步骤结果。
 

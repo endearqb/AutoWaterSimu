@@ -55,7 +55,7 @@ cd frontend; npx tsc --noEmit
 | `just pr-fast` | Runs the PR fast lane and writes `tmp/ci-evidence/pr-fast.json` |
 | `just integration-smoke` | Starts an isolated Compose API stack, runs local Python worker API once, and writes `tmp/ci-evidence/integration-smoke.json` |
 | `just check-security` | Runs token guard, scope denial, revocation, admin-scope, and selected mutation audit checks and writes `tmp/ci-evidence/security-smoke.json` |
-| `just browser-smoke` | Runs mock-backed Playwright Compute Jobs/current-flow, contract validation, Model governance, and lifecycle smokes and writes `tmp/ci-evidence/browser-smoke.json` |
+| `just browser-smoke` | Runs mock-backed Playwright Compute Jobs/current-flow/result/evidence, contract validation, Model governance, and lifecycle smokes and writes `tmp/ci-evidence/browser-smoke.json` |
 | `just desktop-package-smoke` | Runs Desktop package/support bundle contract fixtures, Rust clean-runtime round-trip, support bundle redaction, Desktop typecheck, and writes `tmp/ci-evidence/desktop-package-smoke.json` |
 | `just audit-compute-api` | Runs the Compute API Store/domain boundary audit |
 | `just check-ontology` | Validates Water Ontology object/action/link/policy registry consistency |
@@ -74,6 +74,7 @@ cd frontend; npx tsc --noEmit
 - The current security smoke proves production default-token startup guard, static token revocation, scope denial, admin-only artifact retention, and selected mutation audit envelopes for job create plus artifact retention events. It does not yet prove full RBAC, tenant/project/site data scope, all-mutation audit, or real issuer/JWKS integration.
 - The current browser smoke proves Web route orchestration with mock-backed Playwright for Compute Jobs/current-flow, contract validation, Model governance, and lifecycle retention. It does not prove a live Postgres/MinIO/worker backend or an authenticated legacy backend session.
 - The current Desktop package smoke proves schema fixtures, source-mode runtime clean export/import, checksum-verified restore, metadata restoration, artifact/model_run refs, support bundle redaction, and Desktop React wrapper typechecking. It does not prove packaged worker exe, NSIS installer, or hosted release artifact behavior.
+- CI smoke evidence keeps backward-compatible dirty fields and also records tracked/untracked dirty-state fields: `has_tracked_changes_*`, `tracked_changes_*`, and `untracked_files_*`. Treat `is_dirty_*` as the broad worktree flag; use tracked fields to decide whether local evidence contains uncommitted code/doc edits.
 - The current Water Ontology gate proves registry consistency only. It does not prove runtime RBAC/ABAC, tenant/project/site data-scope filtering, approval workflow, or mutation audit enforcement.
 - Release mode must not use `-AllowMissingPackageArtifacts` to claim a release passed.
 

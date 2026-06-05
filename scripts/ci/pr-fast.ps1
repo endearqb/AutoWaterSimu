@@ -146,6 +146,21 @@ function Get-GitText {
     }
 }
 
+function ConvertTo-GitStatusLines {
+    param([string]$StatusText)
+    return @($StatusText -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Get-TrackedStatusLines {
+    param([string[]]$StatusLines)
+    return @($StatusLines | Where-Object { -not $_.StartsWith("??") })
+}
+
+function Get-UntrackedStatusLines {
+    param([string[]]$StatusLines)
+    return @($StatusLines | Where-Object { $_.StartsWith("??") })
+}
+
 function Test-ReadmePaths {
     param([string]$Root)
     $requiredPaths = @(
@@ -201,6 +216,9 @@ $powershell = if (Test-IsWindows) { "powershell" } else { "pwsh" }
 $commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
 $branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
 $statusBefore = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
+$statusBeforeLines = ConvertTo-GitStatusLines -StatusText $statusBefore
+$trackedStatusBefore = Get-TrackedStatusLines -StatusLines $statusBeforeLines
+$untrackedStatusBefore = Get-UntrackedStatusLines -StatusLines $statusBeforeLines
 
 Invoke-Step -Name "dependency boundary check" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-deps.ps1")
 Invoke-InternalStep -Name "README path check" -Body { Test-ReadmePaths -Root $Root }
@@ -221,6 +239,9 @@ if (Test-Path -LiteralPath (Join-Path $Root ".github\workflows")) {
 }
 
 $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
+$statusAfterLines = ConvertTo-GitStatusLines -StatusText $statusAfter
+$trackedStatusAfter = Get-TrackedStatusLines -StatusLines $statusAfterLines
+$untrackedStatusAfter = Get-UntrackedStatusLines -StatusLines $statusAfterLines
 $report = [ordered]@{
     schema_version = "autowatersimu_next_pr_fast_evidence.v1"
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
@@ -230,8 +251,14 @@ $report = [ordered]@{
     status = if ($script:Failed) { "failed" } else { "passed" }
     is_dirty_before = -not [string]::IsNullOrWhiteSpace($statusBefore)
     is_dirty_after = -not [string]::IsNullOrWhiteSpace($statusAfter)
-    dirty_files_before = @($statusBefore -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-    dirty_files_after = @($statusAfter -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    has_tracked_changes_before = $trackedStatusBefore.Count -gt 0
+    has_tracked_changes_after = $trackedStatusAfter.Count -gt 0
+    dirty_files_before = $statusBeforeLines
+    dirty_files_after = $statusAfterLines
+    tracked_changes_before = $trackedStatusBefore
+    tracked_changes_after = $trackedStatusAfter
+    untracked_files_before = $untrackedStatusBefore
+    untracked_files_after = $untrackedStatusAfter
     workflow = [ordered]@{
         lane = "pr-fast"
         workflow_files = $workflowFiles

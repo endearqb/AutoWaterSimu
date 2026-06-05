@@ -1,3 +1,26 @@
+# 2026-06-05 AutoWaterSimu Next CI evidence dirty-state taxonomy TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, local-dev, and scripts/ci README
+- [x] Confirm next aligned gap: local smoke evidence had broad dirty flags only, so untracked local docs made evidence hard to interpret even when tracked HEAD intent was clear
+- [x] Add tracked/untracked dirty-state fields to PR fast, integration, security, browser, and Desktop package smoke evidence
+- [x] Update CI and architecture documentation plus change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Preserve existing `is_dirty_*` and `dirty_files_*` fields for backward compatibility.
+- Add only evidence metadata fields; do not change smoke steps, workflow files, business code, API shape, generated clients, or UI behavior.
+- Treat the new fields as local evidence interpretation help only; hosted green runs and true clean HEAD proof remain separate requirements.
+
+## Review
+
+- Added backward-compatible tracked/untracked dirty-state fields to `pr-fast`, integration, security, browser, and Desktop package smoke evidence.
+- Existing `is_dirty_*` and `dirty_files_*` fields remain unchanged for readers that already consume them.
+- Updated `scripts/ci/README.md`, `docs/architecture/current-state.md`, `docs/architecture/local-dev.md`, the Certainty/Elegance development plan, and `.ai/changes`.
+- Validation passed: `scripts\ci\browser-smoke.ps1`, `scripts\ci\security-smoke.ps1`, `scripts\ci\desktop-package-smoke.ps1`, `scripts\ci\pr-fast.ps1`, PowerShell parse check for `scripts\ci\integration-smoke.ps1`, generated evidence JSON field assertions for browser/security/Desktop/pr-fast, and `git diff --check -- scripts docs tasks .ai` with LF/CRLF warnings only.
+- Full `scripts\ci\integration-smoke.ps1 -StartCompose` was not run in this slice because it requires starting the Docker Compose stack; the edited integration script path was syntax-checked and keeps the same execution steps.
+
 # 2026-06-05 AutoWaterSimu Next browser current-flow evidence TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, frontend route/feature READMEs, and existing Playwright smokes
