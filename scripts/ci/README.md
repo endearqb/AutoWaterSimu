@@ -55,7 +55,7 @@
 
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
 
-本目录对 `Justfile` 暴露 `golden-scenarios` 本地汇总入口；它只解释已有 lane evidence，不启动 Docker、浏览器或 release build，也不表示 8 条金标场景已经完成。`golden-scenarios-refresh` 调用同一脚本的 `-RefreshLocalEvidence` 模式，会先刷新非 Docker 本地 lanes：`pr-fast`、browser smoke、security smoke、Desktop package smoke、release artifact download smoke 和 merge release gate `-SkipLong`。Docker integration 仍需显式传入 `-RunIntegrationSmoke`。Release gate 只有在 commit SHA 匹配当前 HEAD 时才作为 current source；PostgreSQL migration 场景还要求 release gate 内存在并通过 `postgres migration up/down smoke` step。
+本目录对 `Justfile` 暴露 `golden-scenarios` 本地汇总入口；它只解释已有 lane evidence，不启动 Docker、浏览器或 release build，也不表示 8 条金标场景已经完成。`golden-scenarios-refresh` 调用同一脚本的 `-RefreshLocalEvidence` 模式，会先刷新非 Docker 本地 lanes：`pr-fast`、browser smoke、security smoke、Desktop package smoke、release artifact download smoke 和 merge release gate `-SkipLong`。`golden-scenarios-refresh-integration` 会额外传入 `-RunIntegrationSmoke`，通过 `integration-smoke.ps1 -StartCompose` 启动 Docker-backed PostgreSQL + MinIO + Compute API + worker smoke。Release gate 只有在 commit SHA 匹配当前 HEAD 时才作为 current source；PostgreSQL migration 场景还要求 release gate 内存在并通过 `postgres migration up/down smoke` step，或存在 current integration smoke evidence。
 
 ## 5. 依赖边界
 
@@ -85,6 +85,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke
 ```
 
 ## 7. AI 操作提示

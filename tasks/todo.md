@@ -1,3 +1,27 @@
+# 2026-06-06 AutoWaterSimu Next integration-backed golden refresh TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, task records, root task entry, and current evidence state
+- [x] Confirm next aligned gap: `-RunIntegrationSmoke` existed but had no root recipe, so refreshing current Docker integration evidence still required remembering script flags
+- [x] Add a root integration-backed golden scenario refresh entry and update README/architecture/plan/change records
+- [x] Run integration-backed refresh and validation
+- [x] Commit and push
+
+## Plan
+
+- Add `just golden-scenarios-refresh-integration` as the explicit Docker-backed scenario refresh entry.
+- Keep `just golden-scenarios-refresh` as the non-Docker default refresh.
+- Document that the integration-backed entry starts Compose through `integration-smoke.ps1 -StartCompose`, and still does not prove live browser reads, hosted workflows, packaged release artifacts, or complete golden scenarios.
+- Run the new entry to produce current HEAD integration evidence and confirm the scenario summary moves PostgreSQL migration from `missing` to `partial`.
+
+## Review
+
+- Added `just golden-scenarios-refresh-integration`, which calls `scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke`.
+- Updated root README, local-dev/current-state architecture docs, scripts READMEs, Certainty/Elegance plan, and `.ai/changes`.
+- Validation passed: `scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke` ran 7 refresh steps successfully, including Docker-backed integration smoke; golden scenario summary moved to `partial=8`, `missing=0`, `blocked=0`.
+- Integration evidence passed with 9 steps and 0 failed steps, and no `autowatersimu-next-integration-smoke` Compose containers remained after cleanup.
+- `git diff --check -- README.md Justfile docs scripts tasks .ai` passed with LF/CRLF warnings only; docs/rebuild P0/P1/P2/schema search completed.
+- Remaining scope: this still does not prove hosted workflow green runs, live backend browser reads, release artifact upload/download, signing/installer behavior, or complete 8 golden scenarios.
+
 # 2026-06-06 AutoWaterSimu Next golden scenario refresh TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, scripts/release README, workflow README, and root task entry
