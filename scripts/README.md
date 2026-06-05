@@ -24,7 +24,7 @@
 | `check-deps.ps1` | 最小依赖边界检查，覆盖 contracts/runtime、legacy/Next、frontend generated client、frontend route-to-feature-query boundary、API platform/domain-to-compute reverse import 等规则，供 `just check-deps` / `just check` 调用 |
 | `check-ontology.ps1` | Water Ontology objects/actions/links/policies registry 一致性检查，供 `just check-ontology` / `just check` / `pr-fast` 调用 |
 | `check-contracts.ps1` | Contracts registry、codegen manifest、schema tests、Compute TS client drift gate，供 `just check-contracts` / `pr-fast` 调用 |
-| `ci/` | AutoWaterSimu Next PR fast、opt-in integration smoke、opt-in security smoke、browser smoke、Desktop package smoke 与 golden scenario evidence 汇总脚本 |
+| `ci/` | AutoWaterSimu Next PR fast、opt-in integration smoke、opt-in security smoke、browser smoke、Desktop package smoke 与 golden scenario evidence 汇总/刷新脚本 |
 | `release/` | AutoWaterSimu Next merge/release gate、release artifact download verifier smoke 脚本 |
 
 ## 3. 维护约定
@@ -63,6 +63,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
 ```

@@ -2,7 +2,15 @@ param(
     [string]$RepoRoot = "",
     [string]$EvidenceDir = "",
     [string]$ReleaseEvidenceDir = "",
-    [string]$OutputPath = ""
+    [string]$OutputPath = "",
+    [switch]$RefreshLocalEvidence,
+    [switch]$RunPrFast,
+    [switch]$RunBrowserSmoke,
+    [switch]$RunSecuritySmoke,
+    [switch]$RunDesktopPackageSmoke,
+    [switch]$RunReleaseArtifactDownloadSmoke,
+    [switch]$RunReleaseGate,
+    [switch]$RunIntegrationSmoke
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,6 +22,82 @@ function Resolve-RepoRoot {
         return (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
     }
     return (Resolve-Path $InputRoot).Path
+}
+
+function Test-IsWindows {
+    return [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+        [System.Runtime.InteropServices.OSPlatform]::Windows
+    )
+}
+
+function Resolve-PowerShell {
+    if (Test-IsWindows) {
+        return "powershell"
+    }
+    return "pwsh"
+}
+
+function ConvertTo-ProcessArgument {
+    param([string]$Argument)
+    if ($Argument -match '[\s"]') {
+        return '"' + ($Argument -replace '"', '\"') + '"'
+    }
+    return $Argument
+}
+
+function New-RefreshStep {
+    param(
+        [string]$Name,
+        [string]$Status,
+        [int]$ExitCode,
+        [string]$Output,
+        [string]$StartedAt,
+        [string]$FinishedAt
+    )
+    return [ordered]@{
+        name = $Name
+        status = $Status
+        exit_code = $ExitCode
+        started_at = $StartedAt
+        finished_at = $FinishedAt
+        output_excerpt = if ($Output.Length -gt 4000) { $Output.Substring($Output.Length - 4000) } else { $Output }
+    }
+}
+
+function Invoke-RefreshStep {
+    param(
+        [string]$Name,
+        [string]$WorkingDirectory,
+        [string]$Executable,
+        [string[]]$Arguments
+    )
+    $started = (Get-Date).ToUniversalTime().ToString("o")
+    $stdoutFile = New-TemporaryFile
+    $stderrFile = New-TemporaryFile
+    $exitCode = 0
+    $outputText = ""
+    try {
+        $argumentList = ($Arguments | ForEach-Object { ConvertTo-ProcessArgument -Argument $_ }) -join " "
+        $process = Start-Process -FilePath $Executable -ArgumentList $argumentList -WorkingDirectory $WorkingDirectory -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+        $exitCode = $process.ExitCode
+        $stdout = [string](Get-Content -Path $stdoutFile -Raw)
+        $stderr = [string](Get-Content -Path $stderrFile -Raw)
+        $outputText = (($stdout, $stderr) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join "`n"
+    }
+    catch {
+        $exitCode = 1
+        $outputText = $_.Exception.Message
+    }
+    finally {
+        Remove-Item -LiteralPath $stdoutFile -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $stderrFile -Force -ErrorAction SilentlyContinue
+    }
+    $finished = (Get-Date).ToUniversalTime().ToString("o")
+    $status = if ($exitCode -eq 0) { "passed" } else { "failed" }
+    $script:RefreshSteps.Add((New-RefreshStep -Name $Name -Status $status -ExitCode $exitCode -Output $outputText -StartedAt $started -FinishedAt $finished)) | Out-Null
+    if ($exitCode -ne 0) {
+        $script:RefreshFailed = $true
+    }
 }
 
 function Get-GitText {
@@ -250,6 +334,46 @@ $statusBeforeLines = @(ConvertTo-GitStatusLines -StatusText $statusBefore)
 $trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
 $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 
+$script:RefreshSteps = [System.Collections.Generic.List[object]]::new()
+$script:RefreshFailed = $false
+$powershell = Resolve-PowerShell
+
+if ($RefreshLocalEvidence) {
+    $RunPrFast = $true
+    $RunBrowserSmoke = $true
+    $RunSecuritySmoke = $true
+    $RunDesktopPackageSmoke = $true
+    $RunReleaseArtifactDownloadSmoke = $true
+    $RunReleaseGate = $true
+}
+
+if ($RunPrFast) {
+    Invoke-RefreshStep -Name "refresh pr-fast evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\pr-fast.ps1", "-RepoRoot", $Root, "-EvidenceDir", $EvidenceDir)
+}
+if ($RunBrowserSmoke) {
+    Invoke-RefreshStep -Name "refresh browser smoke evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\browser-smoke.ps1", "-RepoRoot", $Root, "-EvidenceDir", $EvidenceDir)
+}
+if ($RunSecuritySmoke) {
+    Invoke-RefreshStep -Name "refresh security smoke evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\security-smoke.ps1", "-RepoRoot", $Root, "-EvidenceDir", $EvidenceDir)
+}
+if ($RunDesktopPackageSmoke) {
+    Invoke-RefreshStep -Name "refresh desktop package smoke evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\desktop-package-smoke.ps1", "-RepoRoot", $Root, "-EvidenceDir", $EvidenceDir)
+}
+if ($RunReleaseArtifactDownloadSmoke) {
+    Invoke-RefreshStep -Name "refresh release artifact download smoke evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\release\smoke-release-artifact-download.ps1", "-RepoRoot", $Root, "-EvidenceDir", $ReleaseEvidenceDir)
+}
+if ($RunReleaseGate) {
+    Invoke-RefreshStep -Name "refresh merge release gate evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\release\next-release-gates.ps1", "-Mode", "merge", "-RepoRoot", $Root, "-EvidenceDir", $ReleaseEvidenceDir, "-SkipLong")
+}
+if ($RunIntegrationSmoke) {
+    Invoke-RefreshStep -Name "refresh integration smoke evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\integration-smoke.ps1", "-RepoRoot", $Root, "-EvidenceDir", $EvidenceDir, "-StartCompose")
+}
+
+$statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
+$statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
+$trackedStatusAfter = @(Get-TrackedStatusLines -StatusLines $statusAfterLines)
+$untrackedStatusAfter = @(Get-UntrackedStatusLines -StatusLines $statusAfterLines)
+
 $laneEvidence = @(
     (Read-Evidence -Lane "pr_fast" -Path (Join-Path $EvidenceDir "pr-fast.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "integration" -Path (Join-Path $EvidenceDir "integration-smoke.json") -HeadCommit $headCommit),
@@ -306,14 +430,26 @@ $report = [ordered]@{
     status = $overallStatus
     status_counts = $statusCounts
     interpretation = "Scenario-level summary only. Partial status does not mean the golden scenario is complete. Passed sources count only when the lane evidence commit matches this report commit."
+    refresh_requested = [bool]($RefreshLocalEvidence -or $RunPrFast -or $RunBrowserSmoke -or $RunSecuritySmoke -or $RunDesktopPackageSmoke -or $RunReleaseArtifactDownloadSmoke -or $RunReleaseGate -or $RunIntegrationSmoke)
+    refresh_failed = [bool]$script:RefreshFailed
+    refresh_steps = $script:RefreshSteps
     is_dirty_before = -not [string]::IsNullOrWhiteSpace($statusBefore)
     has_tracked_changes_before = $trackedStatusBefore.Count -gt 0
     dirty_files_before = $statusBeforeLines
     tracked_changes_before = $trackedStatusBefore
     untracked_files_before = $untrackedStatusBefore
+    is_dirty_after = -not [string]::IsNullOrWhiteSpace($statusAfter)
+    has_tracked_changes_after = $trackedStatusAfter.Count -gt 0
+    dirty_files_after = $statusAfterLines
+    tracked_changes_after = $trackedStatusAfter
+    untracked_files_after = $untrackedStatusAfter
     lane_evidence = $laneEvidence
     scenarios = $scenarios
 }
 
 $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $OutputPath -Encoding UTF8
 Write-Host "Golden scenario evidence: $OutputPath"
+
+if ($script:RefreshFailed) {
+    exit 1
+}

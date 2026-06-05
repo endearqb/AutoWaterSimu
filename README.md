@@ -172,6 +172,7 @@ just check-security
 just browser-smoke
 just desktop-package-smoke
 just golden-scenarios
+just golden-scenarios-refresh
 just release-artifact-download-smoke
 ```
 

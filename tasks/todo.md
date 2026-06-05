@@ -1,3 +1,29 @@
+# 2026-06-06 AutoWaterSimu Next golden scenario refresh TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, scripts/release README, workflow README, and root task entry
+- [x] Confirm next aligned gap: `golden-scenarios.ps1` only summarized existing lane evidence, so developers still had to manually refresh multiple local lanes before scenario interpretation
+- [x] Add an explicit local evidence refresh mode to `golden-scenarios.ps1` while keeping default summary-only behavior
+- [x] Add root task entry and README/architecture/plan/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Preserve the default `golden-scenarios` summary-only behavior.
+- Add `-RefreshLocalEvidence` to run non-Docker local lanes before summarizing: PR fast, browser smoke, security smoke, Desktop package smoke, release artifact download smoke, and merge release gate with `-SkipLong`.
+- Keep Docker integration smoke as explicit `-RunIntegrationSmoke`, because it starts Compose and can be slow.
+- Record refresh step outcomes inside `golden-scenarios.json` so failed refreshes are visible even before scenario aggregation.
+- Do not claim 8 golden scenarios are complete; this stage improves evidence freshness and orchestration only.
+
+## Review
+
+- Added `-RefreshLocalEvidence` plus individual lane switches to `scripts/ci/golden-scenarios.ps1`.
+- Default summary-only behavior is unchanged: it writes `refresh_requested=false`, no refresh steps, and reported `status=partial`, `partial=7`, `missing=1` against the current local evidence set.
+- `-RefreshLocalEvidence` now refreshes 6 non-Docker local lanes before summarizing: `pr-fast`, browser smoke, security smoke, Desktop package smoke, release artifact download smoke, and merge release gate with `-SkipLong`; all 6 passed in this run.
+- Added `just golden-scenarios-refresh` and updated root/local-dev/scripts/current-state/Certainty-Elegance plan docs.
+- Validation passed: PowerShell parse check for `golden-scenarios.ps1`, summary-only `scripts\ci\golden-scenarios.ps1`, refresh-mode `scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence`, docs/rebuild P0/P1/P2/schema search, and `git diff --check -- scripts docs README.md Justfile tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: Docker integration smoke was intentionally not part of default refresh; PostgreSQL migration remains `missing` until current integration smoke or a release gate with the actual `postgres migration up/down smoke` step runs.
+
 # 2026-06-05 AutoWaterSimu Next release gate traceability TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, scripts/ci README, and scripts/release README
