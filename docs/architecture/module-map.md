@@ -37,7 +37,7 @@ flowchart LR
 - `contracts/` is the cross-runtime wire-shape source. Runtime modules can consume contracts; contracts must not import runtime modules.
 - `apps/api/` owns HTTP lifecycle and metadata. It must not import legacy `backend/app`.
 - `services/simulation-worker/` executes jobs through contracts and the Compute API bridge. It must not write PostgreSQL or legacy FastAPI internals directly.
-- Compute routes call `frontend/src/features/*/queries.ts` for query/mutation options. Generated Compute client imports stay in `frontend/src/shared/api` and `frontend/src/features` wrappers, not in routes/components or the compatibility facade.
+- Compute routes call `frontend/src/features/*/queries.ts` for query/mutation options, and `check-deps` rejects route imports that bypass this boundary through `computeJobsService` or feature private API/builder/process-graph files. Generated Compute client imports stay in `frontend/src/shared/api` and `frontend/src/features` wrappers, not in routes/components or the compatibility facade.
 - `apps/desktop/` owns local runtime and worker lifecycle. It must not depend on legacy `frontend/`.
 - `backend/` remains the legacy baseline and should not depend on Next runtime modules.
 

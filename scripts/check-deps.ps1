@@ -170,6 +170,13 @@ Invoke-GeneratedComputeClientBoundaryRule `
 
 Invoke-DependencyRule `
     -Root $root `
+    -RuleName "frontend-routes-must-use-feature-query-boundaries-for-compute" `
+    -RelativePaths @("frontend/src/routes") `
+    -Pattern '@/services/computeJobsService|services[/\\]computeJobsService|@/features/[^''"]+/(api|builders|processGraphApi)|features[/\\][^''"]+[/\\](api|builders|processGraphApi)' `
+    -Violations $violations
+
+Invoke-DependencyRule `
+    -Root $root `
     -RuleName "legacy-backend-must-not-depend-on-next-runtime" `
     -RelativePaths @("backend/app") `
     -Pattern 'apps[/\\]api|apps[/\\]desktop|services[/\\]simulation-worker|frontend[/\\]src[/\\]client[/\\]compute' `

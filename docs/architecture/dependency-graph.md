@@ -45,13 +45,14 @@ Current rules:
 | `apps/api/internal/domain` must not import `apps/api/internal/compute` | Domain packages such as workers must stay independent from the compute compatibility wiring package |
 | `apps/desktop/` must not import legacy `frontend/src` | Desktop runtime and UI are owned separately from legacy Web |
 | `frontend/src` must not import `frontend/src/client/compute` directly outside `frontend/src/shared/api`, `frontend/src/features`, and `frontend/src/client/compute` itself | Generated Compute client belongs behind shared API configuration and feature API wrappers |
+| `frontend/src/routes` must not import `computeJobsService` or feature private `api` / `builders` / `processGraphApi` files for Compute data calls | Routes should consume feature query/mutation options so page orchestration does not bypass the feature boundary |
 | `backend/app` must not depend on Next runtime modules | Legacy backend remains a migration baseline |
 
 ## Allowed Exceptions
 
 - `frontend/src/shared/api/computeApiClient.ts` may configure generated Compute client base URL/token behavior.
 - `frontend/src/shared/api/computeTypes.ts` may re-export stable UI-facing generated Compute types.
-- `frontend/src/features/*/api.ts` and closely related feature wrapper files may call the generated Compute client; `features/*/queries.ts` is the route-facing query/mutation boundary.
+- `frontend/src/features/*/api.ts` and closely related feature wrapper files may call the generated Compute client; `features/*/queries.ts` is the route-facing query/mutation boundary. Compute route files may import `features/*/queries.ts`, but should not import `computeJobsService` or feature private API/builder/process-graph files.
 - `frontend/src/services/computeJobsService.ts` remains a compatibility facade over feature API wrappers and must not import the generated Compute client directly.
 - Documentation may reference paths across modules.
 - Release gate scripts may orchestrate commands across modules but must not inline business logic.

@@ -1,3 +1,28 @@
+# 2026-06-05 AutoWaterSimu Next frontend route query boundary check TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, frontend route/feature/service READMEs, scripts README, and existing dependency graph
+- [x] Confirm next aligned gap: Compute routes now use `features/*/queries.ts`, but `check-deps` did not yet reject route imports that bypassed the feature query boundary through `computeJobsService` or feature private API files
+- [x] Add a `frontend-routes-must-use-feature-query-boundaries-for-compute` dependency rule to `scripts/check-deps.ps1`
+- [x] Update README/architecture/checklists/change records
+- [x] Run validation
+- [ ] Commit and push
+
+## Plan
+
+- Keep business code, generated clients, OpenAPI, route UI, route paths, and service facade exports unchanged.
+- Add only an enforceable dependency rule for the already-migrated route/query boundary.
+- Record the rule in `scripts/README.md`, `docs/architecture`, the Certainty/Elegance plan, and `.ai/changes`.
+- Treat live backend browser reads, hosted green evidence, and deeper component decomposition as later slices.
+
+## Review
+
+- Added `frontend-routes-must-use-feature-query-boundaries-for-compute` to `scripts/check-deps.ps1`.
+- The new rule scans `frontend/src/routes` and rejects route imports of `computeJobsService` or feature private `api` / `builders` / `processGraphApi` files.
+- No business code, generated clients, OpenAPI, route paths, route UI, service facade exports, or feature API exports changed.
+- Updated `scripts/README.md`, architecture dependency/current-state/module-map docs, Certainty/Elegance plan checklist, and `.ai/changes`.
+- Validation passed: `scripts\check-deps.ps1`, direct route boundary `rg` scan with no matches, direct generated Compute client import scan limited to allowed `features` and `shared/api` paths, `cd frontend; npx tsc --noEmit`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- scripts docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: live backend browser reads, hosted integration/browser/release evidence, deeper route/component decomposition, golden scenarios, full production data scope, and all-mutation audit remain future slices.
+
 # 2026-06-05 AutoWaterSimu Next frontend feature query migration TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, frontend README hierarchy, feature READMEs, Compute routes, and current feature API wrappers
