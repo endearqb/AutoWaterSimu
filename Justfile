@@ -51,6 +51,9 @@ check-security:
 browser-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 
+live-backend-browser-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
+
 desktop-package-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 
@@ -62,6 +65,9 @@ golden-scenarios-refresh:
 
 golden-scenarios-refresh-integration:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke
+
+golden-scenarios-refresh-live:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunLiveBackendBrowserSmoke
 
 release-artifact-download-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
