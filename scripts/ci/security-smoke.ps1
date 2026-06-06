@@ -132,7 +132,7 @@ $trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
 $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 
 $apiDir = Join-Path $Root "apps\api"
-Invoke-Step -Name "production auth config guard" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./cmd/compute-api", "-run", "TestValidateProductionAuthConfig", "-count=1")
+Invoke-Step -Name "production auth config guard and token file source" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./cmd/compute-api", "-run", "Test(ValidateProductionAuthConfig|LoadAuthTokensJSON)", "-count=1")
 Invoke-Step -Name "auth scope revocation admin audit and data-scope checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(HTTPAuthScopeAndMetrics|StaticTokenRevocation|HTTPArtifactRetentionSweepRequiresAdminScope|HTTPMutationAuditEventEnvelopeForJobCreate|HTTPJobReadTenantProjectSiteScope|HTTPArtifactDownloadTenantProjectSiteScope)", "-count=1")
 Invoke-Step -Name "governance route scope denial checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(ModelCatalogEndpoint|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint|ContractValidationEndpoint|SimulationCheckEndpointCreatesComputeJob|NewSystemEvidenceReferenceE2E)", "-count=1")
 
@@ -149,6 +149,7 @@ $report = [ordered]@{
     status = if ($script:Failed) { "failed" } else { "passed" }
     coverage_summary = [ordered]@{
         production_default_token_guard = "covered_by_cmd_compute_api_tests"
+        production_service_token_file_source = "COMPUTE_API_TOKENS_FILE covered_by_cmd_compute_api_tests"
         static_token_revocation = "covered_by_internal_compute_tests"
         scope_denial = "covered_by_internal_compute_http_tests"
         artifact_admin_scope = "covered_by_artifact_retention_http_test"

@@ -6,7 +6,7 @@
 
 本目录负责：
 
-- `COMPUTE_API_TOKENS_JSON` token 配置解析。
+- Static token config JSON 解析；`cmd/compute-api` 可先从 `COMPUTE_API_TOKENS_JSON` 或 `COMPUTE_API_TOKENS_FILE` 取得同一 JSON shape。
 - 静态 bearer token principal 解析。
 - scope、revoked token、tenant/project/site principal metadata。
 - 返回不依赖 compute domain 的平台 auth error。
@@ -27,7 +27,7 @@
 ## 3. 维护约定
 
 1. 本 package 不 import `internal/compute`。
-2. token JSON shape 必须保持与 `COMPUTE_API_TOKENS_JSON` 兼容。
+2. token JSON shape 必须保持与 `COMPUTE_API_TOKENS_JSON` / `COMPUTE_API_TOKENS_FILE` 兼容。
 3. 新增生产认证能力前先确认是否属于 static-token P0，还是 OIDC/JWKS/RBAC 后续范围。
 
 ## 4. 对外接口

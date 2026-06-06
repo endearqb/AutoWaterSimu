@@ -6,12 +6,12 @@
 
 本目录负责：
 
-- 描述 `cmd/compute-api` 从环境变量组装出的 runtime 配置结构。
+- 描述 `cmd/compute-api` 从环境变量组装出的 runtime 配置结构，包括 inline token JSON 与 file-mounted token JSON secret 路径。
 - 为 command entry、store/archive wiring、scheduler wiring 提供 domain-free config type。
 
 本目录不负责：
 
-- 读取环境变量。
+- 读取环境变量或 secret 文件内容。
 - 校验 production auth token 规则。
 - compute job、artifact、model governance 或 evidence 业务逻辑。
 
@@ -46,4 +46,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 
 ## 7. AI 操作提示
 
-配置字段变更通常影响启动和部署行为；修改时同步检查 production guard、archive backend wiring 和 scheduler wiring。
+配置字段变更通常影响启动和部署行为；修改时同步检查 production guard、auth token source wiring、archive backend wiring 和 scheduler wiring。

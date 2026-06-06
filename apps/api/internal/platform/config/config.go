@@ -14,6 +14,7 @@ type Config struct {
 	ArchiveS3SecretKey     string
 	ArchiveS3Prefix        string
 	TokensJSON             string
+	TokensFile             string
 	Port                   string
 	RepoRoot               string
 	RetentionSweepInterval time.Duration

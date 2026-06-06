@@ -41,12 +41,18 @@ func run() error {
 		ArchiveS3SecretKey:     os.Getenv("COMPUTE_API_ARCHIVE_S3_SECRET_ACCESS_KEY"),
 		ArchiveS3Prefix:        os.Getenv("COMPUTE_API_ARCHIVE_S3_PREFIX"),
 		TokensJSON:             os.Getenv("COMPUTE_API_TOKENS_JSON"),
+		TokensFile:             os.Getenv("COMPUTE_API_TOKENS_FILE"),
 		Port:                   getenv("COMPUTE_API_PORT", "8088"),
 		RepoRoot:               repoRoot,
 		RetentionSweepInterval: durationEnv("COMPUTE_API_RETENTION_SWEEP_INTERVAL", 0),
 		RetentionSweepDryRun:   boolEnv("COMPUTE_API_RETENTION_SWEEP_DRY_RUN", true),
 		RetentionSweepLimit:    intEnv("COMPUTE_API_RETENTION_SWEEP_LIMIT", 100),
 	}
+	tokensJSON, err := loadAuthTokensJSON(config)
+	if err != nil {
+		return err
+	}
+	config.TokensJSON = tokensJSON
 	if err := validateProductionAuthConfig(config); err != nil {
 		return err
 	}
@@ -77,7 +83,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	auth, err := platformauth.NewAuthenticator(config.TokensJSON)
+	auth, err := platformauth.NewAuthenticator(tokensJSON)
 	if err != nil {
 		return err
 	}
@@ -109,19 +115,38 @@ func run() error {
 	return http.ListenAndServe(":"+config.Port, server.Routes())
 }
 
+func loadAuthTokensJSON(config platformconfig.Config) (string, error) {
+	inlineTokens := strings.TrimSpace(config.TokensJSON)
+	tokensFile := strings.TrimSpace(config.TokensFile)
+	if inlineTokens != "" && tokensFile != "" {
+		return "", fmt.Errorf("set either COMPUTE_API_TOKENS_JSON or COMPUTE_API_TOKENS_FILE, not both")
+	}
+	if tokensFile == "" {
+		return config.TokensJSON, nil
+	}
+	tokensBytes, err := os.ReadFile(tokensFile)
+	if err != nil {
+		return "", fmt.Errorf("read COMPUTE_API_TOKENS_FILE: %w", err)
+	}
+	if strings.TrimSpace(string(tokensBytes)) == "" {
+		return "", fmt.Errorf("COMPUTE_API_TOKENS_FILE must not be empty")
+	}
+	return string(tokensBytes), nil
+}
+
 func validateProductionAuthConfig(config platformconfig.Config) error {
 	if !isProductionEnv(config.Environment) {
 		return nil
 	}
 	if strings.TrimSpace(config.TokensJSON) == "" {
-		return fmt.Errorf("COMPUTE_API_TOKENS_JSON is required when APP_ENV or ENVIRONMENT is production")
+		return fmt.Errorf("COMPUTE_API_TOKENS_JSON or COMPUTE_API_TOKENS_FILE is required when APP_ENV or ENVIRONMENT is production")
 	}
 	var tokenConfig platformauth.TokenConfig
 	if err := json.Unmarshal([]byte(config.TokensJSON), &tokenConfig); err != nil {
-		return fmt.Errorf("COMPUTE_API_TOKENS_JSON is invalid")
+		return fmt.Errorf("compute API token config JSON is invalid")
 	}
 	if len(tokenConfig.Tokens) == 0 {
-		return fmt.Errorf("COMPUTE_API_TOKENS_JSON must define at least one token when APP_ENV or ENVIRONMENT is production")
+		return fmt.Errorf("compute API token config must define at least one token when APP_ENV or ENVIRONMENT is production")
 	}
 	for _, token := range tokenConfig.Tokens {
 		if isDefaultDevelopmentToken(token.Token) {

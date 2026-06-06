@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -30,7 +31,7 @@ func TestValidateProductionAuthConfigAllowsNonProductionDefaults(t *testing.T) {
 
 func TestValidateProductionAuthConfigRejectsEmptyTokens(t *testing.T) {
 	err := validateProductionAuthConfig(platformconfig.Config{Environment: "production"})
-	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_TOKENS_JSON is required") {
+	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_TOKENS_JSON or COMPUTE_API_TOKENS_FILE is required") {
 		t.Fatalf("expected production empty token config to be rejected, got %v", err)
 	}
 }
@@ -55,12 +56,66 @@ func TestValidateProductionAuthConfigRejectsDefaultDevTokens(t *testing.T) {
 }
 
 func TestValidateProductionAuthConfigAllowsExplicitTokens(t *testing.T) {
-	err := validateProductionAuthConfig(platformconfig.Config{
+	config := platformconfig.Config{
 		Environment: "production",
 		TokensJSON:  `{"tokens":[{"name":"platform","token":"prod-token-from-secret-manager","scopes":["job:read"]}]}`,
-	})
+	}
+	tokensJSON, err := loadAuthTokensJSON(config)
+	if err != nil {
+		t.Fatalf("expected explicit production token config to load: %v", err)
+	}
+	config.TokensJSON = tokensJSON
+	err = validateProductionAuthConfig(config)
 	if err != nil {
 		t.Fatalf("expected explicit production token config to be accepted: %v", err)
+	}
+}
+
+func TestLoadAuthTokensJSONReadsTokenFile(t *testing.T) {
+	tokensPath := filepath.Join(t.TempDir(), "compute-api-tokens.json")
+	expected := `{"tokens":[{"name":"platform","token":"prod-token-from-mounted-secret","scopes":["job:read"]}]}`
+	if err := os.WriteFile(tokensPath, []byte(expected), 0o600); err != nil {
+		t.Fatalf("write token fixture: %v", err)
+	}
+	config := platformconfig.Config{
+		Environment: "production",
+		TokensFile:  tokensPath,
+	}
+	tokensJSON, err := loadAuthTokensJSON(config)
+	if err != nil {
+		t.Fatalf("expected token file to load: %v", err)
+	}
+	if strings.TrimSpace(tokensJSON) != expected {
+		t.Fatalf("unexpected token file contents: %q", tokensJSON)
+	}
+	config.TokensJSON = tokensJSON
+	if err := validateProductionAuthConfig(config); err != nil {
+		t.Fatalf("expected token file source to pass production guard: %v", err)
+	}
+}
+
+func TestLoadAuthTokensJSONRejectsAmbiguousSources(t *testing.T) {
+	tokensPath := filepath.Join(t.TempDir(), "compute-api-tokens.json")
+	if err := os.WriteFile(tokensPath, []byte(`{"tokens":[]}`), 0o600); err != nil {
+		t.Fatalf("write token fixture: %v", err)
+	}
+	_, err := loadAuthTokensJSON(platformconfig.Config{
+		TokensJSON: `{"tokens":[{"name":"platform","token":"prod-token","scopes":["job:read"]}]}`,
+		TokensFile: tokensPath,
+	})
+	if err == nil || !strings.Contains(err.Error(), "set either COMPUTE_API_TOKENS_JSON or COMPUTE_API_TOKENS_FILE") {
+		t.Fatalf("expected ambiguous token source error, got %v", err)
+	}
+}
+
+func TestLoadAuthTokensJSONRejectsEmptyTokenFile(t *testing.T) {
+	tokensPath := filepath.Join(t.TempDir(), "compute-api-tokens.json")
+	if err := os.WriteFile(tokensPath, []byte("  \n"), 0o600); err != nil {
+		t.Fatalf("write token fixture: %v", err)
+	}
+	_, err := loadAuthTokensJSON(platformconfig.Config{TokensFile: tokensPath})
+	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_TOKENS_FILE must not be empty") {
+		t.Fatalf("expected empty token file error, got %v", err)
 	}
 }
 

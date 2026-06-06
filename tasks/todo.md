@@ -1,3 +1,31 @@
+# 2026-06-06 AutoWaterSimu Next production token secret file source TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API command/config/auth, security smoke, and architecture docs
+- [x] Confirm next aligned gap: hosted release-evidence workflow entry exists, while production security still lacked a service-token secret file source
+- [x] Add `COMPUTE_API_TOKENS_FILE` as a mounted token JSON source for `cmd/compute-api`
+- [x] Keep `COMPUTE_API_TOKENS_JSON` compatibility and reject ambiguous inline/file token sources
+- [x] Extend production guard tests and security smoke coverage summary
+- [x] Update Compute API, platform, scripts, architecture, Certainty/Elegance plan, and change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Treat this as a conservative static-token P0 hardening slice, not OIDC/JWKS/RBAC.
+- Preserve the existing token JSON shape and `internal/platform/auth` behavior.
+- Do file reading only in `cmd/compute-api` wiring; platform auth keeps parsing/principal/scope logic only.
+- Record that all-object data scope and all-mutation audit remain future work.
+
+## Review
+
+- Added `COMPUTE_API_TOKENS_FILE` to `cmd/compute-api` runtime config.
+- Production auth config now accepts exactly one static-token source: inline `COMPUTE_API_TOKENS_JSON` or file-mounted `COMPUTE_API_TOKENS_FILE`.
+- Added tests for token file loading, ambiguous inline/file source rejection, empty token file rejection, and production guard acceptance of file-sourced token JSON.
+- Updated `scripts/ci/security-smoke.ps1` so the security lane runs the new token file source tests and records `production_service_token_file_source` coverage.
+- Updated Compute API, platform auth/config, scripts/ci, architecture, Certainty/Elegance plan, and `.ai/changes` context.
+- Validation passed: focused Go tests for `cmd/compute-api` / platform / compute, full `cd apps\api; go test ./...`, security smoke, dependency check, PowerShell parser for `security-smoke.ps1`, docs/rebuild P0/P1/P2/schema scan, and diff-check with LF/CRLF warnings only.
+- Remaining scope: OIDC/JWKS, external secret-manager provider integration, all-object data scope, all-mutation audit, hosted security workflow green run, and complete security golden scenario remain future work.
+
 # 2026-06-06 AutoWaterSimu Next desktop release artifacts TODO
 
 - [x] Re-read README First context for Desktop packaging/scripts, Tauri runtime, release scripts, local-dev/current-state, and Certainty/Elegance plan
