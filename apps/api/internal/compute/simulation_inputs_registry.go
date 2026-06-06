@@ -16,7 +16,7 @@ func (svc *SimulationInputService) RegisterSimulationInput(ctx context.Context, 
 	if err != nil {
 		return SimulationInputRecord{}, 0, err
 	}
-	created, err := svc.inputs.UpsertSimulationInput(ctx, record)
+	created, err := svc.inputs.UpsertSimulationInput(ctx, record, svc.simulationInputRegisteredAudit(ctx, record))
 	if err != nil {
 		return SimulationInputRecord{}, 0, err
 	}

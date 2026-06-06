@@ -6,7 +6,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (store *PostgresStore) UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord) (bool, error) {
+func (store *PostgresStore) UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord, audit *MutationAuditRecord) (bool, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return false, err
@@ -36,6 +36,11 @@ func (store *PostgresStore) UpsertProcessGraph(ctx context.Context, record Proce
 	if err != nil {
 		return false, err
 	}
+	if audit != nil {
+		if err := insertMutationAuditEvent(ctx, tx, *audit); err != nil {
+			return false, err
+		}
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return false, err
 	}
@@ -51,7 +56,7 @@ func (store *PostgresStore) FindProcessGraph(ctx context.Context, processGraphID
 	return record, err
 }
 
-func (store *PostgresStore) UpsertSimulationInput(ctx context.Context, record SimulationInputRecord) (bool, error) {
+func (store *PostgresStore) UpsertSimulationInput(ctx context.Context, record SimulationInputRecord, audit *MutationAuditRecord) (bool, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return false, err
@@ -81,6 +86,11 @@ func (store *PostgresStore) UpsertSimulationInput(ctx context.Context, record Si
 		nullString(record.SiteID), record.Metadata, record.CreatedAt)
 	if err != nil {
 		return false, err
+	}
+	if audit != nil {
+		if err := insertMutationAuditEvent(ctx, tx, *audit); err != nil {
+			return false, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return false, err

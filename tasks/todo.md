@@ -1,3 +1,31 @@
+# 2026-06-06 AutoWaterSimu Next simulation registry mutation audit TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API, platform audit, simulation registry stores/handlers, security smoke, and recent change records
+- [x] Confirm next aligned gap: simulation registry read-scope is done, but process_graph / simulation_input registration mutations still lacked selected audit events
+- [x] Add compact `process_graph.registered` and `simulation_input.registered` mutation audit construction
+- [x] Persist registry audit events only on newly created idempotent upserts, including simulation-check auto-created simulation_input records
+- [x] Wire HTTP registry registration paths into audit principal/route context
+- [x] Add focused HTTP regression coverage and update security smoke coverage
+- [x] Update Compute API/security/docs context and change records
+- [x] Run focused tests, full Go tests, dependency/security validation, commit, and push
+
+## Plan
+
+- Treat this as a selected all-mutation audit slice, not full RBAC/OIDC or full all-mutation audit.
+- Store compact registry audit payloads only: ids, schema version, payload hash, tenant/project/site metadata, source process graph/job type links, and audit envelope.
+- Preserve registry idempotency: duplicate same-hash POST/upsert returns existing records and does not append duplicate audit events.
+- Keep contracts, OpenAPI, generated client, schema migrations, endpoint paths, and read-scope behavior unchanged.
+
+## Review
+
+- Added `simulation_inputs_audit.go` with compact `process_graph.registered` and `simulation_input.registered` mutation audit records.
+- `POST /api/v1/process-graphs`, `POST /api/v1/simulation-inputs`, and simulation-check paths that auto-create `simulation_input.v1` records now pass route/principal audit context into registry upserts.
+- MemoryStore and PostgresStore write registry audit events only after first successful insert; duplicate same-hash idempotent upserts do not append audit events.
+- Added `TestHTTPSimulationRegistryMutationAuditEvents` covering explicit registry POST audit, duplicate no-duplicate behavior, compact payloads, and simulation-check auto-created simulation input audit.
+- Updated security smoke coverage and long-lived Compute API / architecture / Certainty-Elegance docs.
+- Validation passed: focused registry audit/scope test, full `cd apps\api; go test ./...`, security smoke, Compute API boundary audit, dependency check, PowerShell parse check, docs/rebuild scan, and final diff-check with LF/CRLF warnings only.
+- Remaining scope: complete all-mutation audit, full object-level data scope for draft confirmation/model catalog/global objects, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next simulation registry read-scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API auth/data-scope, simulation registry records, migrations, OpenAPI generated client, security smoke, and recent change records

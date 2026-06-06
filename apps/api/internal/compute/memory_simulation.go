@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (store *MemoryStore) UpsertProcessGraph(_ context.Context, record ProcessGraphRecord) (bool, error) {
+func (store *MemoryStore) UpsertProcessGraph(_ context.Context, record ProcessGraphRecord, audit *MutationAuditRecord) (bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	key := processGraphStoreKey(record.ProcessGraphID, record.Version)
@@ -21,6 +21,9 @@ func (store *MemoryStore) UpsertProcessGraph(_ context.Context, record ProcessGr
 	record.Payload = append(json.RawMessage(nil), record.Payload...)
 	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
 	store.processGraphs[key] = record
+	if audit != nil {
+		store.appendMutationAuditLocked(*audit)
+	}
 	return true, nil
 }
 
@@ -36,7 +39,7 @@ func (store *MemoryStore) FindProcessGraph(_ context.Context, processGraphID str
 	return &record, nil
 }
 
-func (store *MemoryStore) UpsertSimulationInput(_ context.Context, record SimulationInputRecord) (bool, error) {
+func (store *MemoryStore) UpsertSimulationInput(_ context.Context, record SimulationInputRecord, audit *MutationAuditRecord) (bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	existing, ok := store.inputs[record.SimulationInputID]
@@ -49,6 +52,9 @@ func (store *MemoryStore) UpsertSimulationInput(_ context.Context, record Simula
 	record.Payload = append(json.RawMessage(nil), record.Payload...)
 	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
 	store.inputs[record.SimulationInputID] = record
+	if audit != nil {
+		store.appendMutationAuditLocked(*audit)
+	}
 	return true, nil
 }
 

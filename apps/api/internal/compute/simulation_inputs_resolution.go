@@ -13,7 +13,7 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 		if err != nil {
 			return nil, err
 		}
-		if _, err := svc.inputs.UpsertSimulationInput(ctx, record); err != nil {
+		if _, err := svc.inputs.UpsertSimulationInput(ctx, record, svc.simulationInputRegisteredAudit(ctx, record)); err != nil {
 			return nil, err
 		}
 		return simulationInput, nil
@@ -44,7 +44,7 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 		if err != nil {
 			return nil, err
 		}
-		if _, err := svc.inputs.UpsertSimulationInput(ctx, inputRecord); err != nil {
+		if _, err := svc.inputs.UpsertSimulationInput(ctx, inputRecord, svc.simulationInputRegisteredAudit(ctx, inputRecord)); err != nil {
 			return nil, err
 		}
 		return simulationInput, nil
@@ -58,7 +58,7 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 		if err != nil {
 			return nil, err
 		}
-		if _, err := svc.inputs.UpsertSimulationInput(ctx, record); err != nil {
+		if _, err := svc.inputs.UpsertSimulationInput(ctx, record, svc.simulationInputRegisteredAudit(ctx, record)); err != nil {
 			return nil, err
 		}
 		return simulationInput, nil

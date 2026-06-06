@@ -16,7 +16,7 @@ func (svc *SimulationInputService) RegisterProcessGraph(ctx context.Context, byt
 	if err != nil {
 		return ProcessGraphRecord{}, 0, err
 	}
-	created, err := svc.processGraphs.UpsertProcessGraph(ctx, record)
+	created, err := svc.processGraphs.UpsertProcessGraph(ctx, record, svc.processGraphRegisteredAudit(ctx, record))
 	if err != nil {
 		return ProcessGraphRecord{}, 0, err
 	}

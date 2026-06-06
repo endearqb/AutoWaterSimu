@@ -79,12 +79,12 @@ type MutationAuditStore interface {
 }
 
 type ProcessGraphStore interface {
-	UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord) (bool, error)
+	UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord, audit *MutationAuditRecord) (bool, error)
 	FindProcessGraph(ctx context.Context, processGraphID string, version int) (*ProcessGraphRecord, error)
 }
 
 type SimulationInputStore interface {
-	UpsertSimulationInput(ctx context.Context, record SimulationInputRecord) (bool, error)
+	UpsertSimulationInput(ctx context.Context, record SimulationInputRecord, audit *MutationAuditRecord) (bool, error)
 	FindSimulationInput(ctx context.Context, simulationInputID string) (*SimulationInputRecord, error)
 }
 
