@@ -93,7 +93,7 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, ValidationError("read request body failed"))
 			return
 		}
-		record, status, err := server.service.SubmitResultExplanation(r.Context(), jobID, bytes, "compute-api", principal.Name)
+		record, status, err := server.service.SubmitResultExplanation(withAuditPrincipal(r.Context(), *principal, r), jobID, bytes, "compute-api", principal.Name)
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -121,7 +121,7 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, ValidationError("result explanation review JSON is invalid"))
 			return
 		}
-		record, err := server.service.ReviewResultExplanation(r.Context(), jobID, parts[2], request, principal.Name)
+		record, err := server.service.ReviewResultExplanation(withAuditPrincipal(r.Context(), *principal, r), jobID, parts[2], request, principal.Name)
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -135,7 +135,7 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, err)
 			return
 		}
-		record, err := server.service.PublishResultExplanation(r.Context(), jobID, parts[2], principal.Name)
+		record, err := server.service.PublishResultExplanation(withAuditPrincipal(r.Context(), *principal, r), jobID, parts[2], principal.Name)
 		if err != nil {
 			WriteError(w, err)
 			return

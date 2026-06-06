@@ -37,7 +37,7 @@ func (svc *ResultExplanationService) SubmitResultExplanation(ctx context.Context
 	if err != nil {
 		return ResultExplanationRecord{}, 0, err
 	}
-	created, err := svc.explanations.UpsertResultExplanation(ctx, record)
+	created, err := svc.explanations.UpsertResultExplanation(ctx, record, svc.resultExplanationSubmittedAuditEvent(ctx, record))
 	if err != nil {
 		return ResultExplanationRecord{}, 0, err
 	}

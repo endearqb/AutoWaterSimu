@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (store *PostgresStore) UpsertResultExplanation(ctx context.Context, record ResultExplanationRecord) (bool, error) {
+func (store *PostgresStore) UpsertResultExplanation(ctx context.Context, record ResultExplanationRecord, createdEvent *EventRecord) (bool, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return false, err
@@ -43,6 +43,9 @@ func (store *PostgresStore) UpsertResultExplanation(ctx context.Context, record 
 	if err != nil {
 		return false, err
 	}
+	if err := insertOptionalJobEvent(ctx, tx, createdEvent); err != nil {
+		return false, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return false, err
 	}
@@ -58,7 +61,7 @@ func (store *PostgresStore) FindResultExplanation(ctx context.Context, jobID, ex
 	return record, err
 }
 
-func (store *PostgresStore) UpdateResultExplanationReview(ctx context.Context, jobID, explanationID, reviewedBy, decision, reason string, metadata json.RawMessage, now time.Time) (*ResultExplanationRecord, error) {
+func (store *PostgresStore) UpdateResultExplanationReview(ctx context.Context, jobID, explanationID, reviewedBy, decision, reason string, metadata json.RawMessage, now time.Time, event *EventRecord) (*ResultExplanationRecord, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -94,13 +97,16 @@ func (store *PostgresStore) UpdateResultExplanationReview(ctx context.Context, j
 	if err != nil {
 		return nil, err
 	}
+	if err := insertOptionalJobEvent(ctx, tx, event); err != nil {
+		return nil, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 	return updated, nil
 }
 
-func (store *PostgresStore) PublishResultExplanation(ctx context.Context, jobID, explanationID, publishedBy string, now time.Time) (*ResultExplanationRecord, error) {
+func (store *PostgresStore) PublishResultExplanation(ctx context.Context, jobID, explanationID, publishedBy string, now time.Time, event *EventRecord) (*ResultExplanationRecord, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -133,10 +139,28 @@ func (store *PostgresStore) PublishResultExplanation(ctx context.Context, jobID,
 	if err != nil {
 		return nil, err
 	}
+	if err := insertOptionalJobEvent(ctx, tx, event); err != nil {
+		return nil, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 	return updated, nil
+}
+
+func insertOptionalJobEvent(ctx context.Context, tx pgx.Tx, event *EventRecord) error {
+	if event == nil {
+		return nil
+	}
+	copy := *event
+	if copy.CreatedAt.IsZero() {
+		copy.CreatedAt = time.Now().UTC()
+	}
+	if len(copy.EventJSON) == 0 {
+		copy.EventJSON = mustJSON(map[string]any{})
+	}
+	_, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", copy.JobID, copy.EventType, copy.EventJSON, copy.CreatedAt)
+	return err
 }
 
 func scanResultExplanation(row rowScanner) (*ResultExplanationRecord, error) {

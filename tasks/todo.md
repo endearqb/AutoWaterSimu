@@ -1,3 +1,32 @@
+# 2026-06-06 AutoWaterSimu Next result explanation audit events TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API result explanation workflow, audit helper, security smoke, and architecture docs
+- [x] Confirm next aligned gap: selected mutation audit coverage remained partial, and result explanation submit/review/publish were job-scoped mutations without audit events
+- [x] Add compact `compute_job_events.event_json.audit` envelopes for result explanation submit/review/publish
+- [x] Preserve result explanation idempotency and avoid duplicate audit events for duplicate submit/publish
+- [x] Extend focused HTTP coverage and security smoke coverage summary
+- [x] Update Compute API, scripts/ci, architecture/current-state/local-dev/compute-api, Certainty/Elegance plan, and change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Treat this as a conservative job-scoped mutation audit slice, not full all-mutation audit.
+- Keep audit payloads compact: explanation id, status, payload hash, resolved ref count, decision, and before/after state only; do not store the full explanation payload in the event JSON.
+- Keep result explanation status semantics, HTTP routes, OpenAPI, contracts, generated clients, and database schema unchanged.
+- Record that global model catalog mutations, full object-level data scope, OIDC/JWKS, RBAC/ABAC, and all-mutation audit remain future work.
+
+## Review
+
+- Added `result_explanations_audit.go` with submit/review/publish audit event construction.
+- Result explanation submit/review/publish now pass selected audit events into Memory/Postgres result explanation store mutations so PostgreSQL writes the record change and audit event in the same transaction.
+- HTTP result explanation mutation paths now inject the static-token principal and route into audit context.
+- Added `TestHTTPResultExplanationAuditEvents`, covering submit, duplicate submit, review, publish, duplicate publish, compact event payloads, before/after states, route/principal projection, trace id, and no full payload embedding.
+- Extended `scripts/ci/security-smoke.ps1` to run the focused result explanation audit test and updated security coverage summaries.
+- Updated API/compute README, scripts/ci README, architecture current-state/local-dev/compute-api, and Certainty/Elegance Development Plan.
+- Validation passed: focused result explanation audit test, full `cd apps\api; go test ./...`, security smoke with updated coverage summary, dependency check, docs/rebuild P0/P1/P2/schema scan, and diff-check with LF/CRLF warnings only.
+- Remaining scope: full all-mutation audit, model catalog/global mutation audit, all-object tenant/project/site data scope, OIDC/JWKS, RBAC/ABAC, hosted security workflow green evidence, and complete security golden scenario remain future work.
+
 # 2026-06-06 AutoWaterSimu Next production token secret file source TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API command/config/auth, security smoke, and architecture docs

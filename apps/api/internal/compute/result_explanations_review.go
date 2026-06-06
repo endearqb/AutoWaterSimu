@@ -7,7 +7,15 @@ func (svc *ResultExplanationService) ReviewResultExplanation(ctx context.Context
 	if decision != "approved" && decision != "rejected" {
 		return ResultExplanationRecord{}, ValidationError("decision must be approved or rejected")
 	}
-	record, err := svc.explanations.UpdateResultExplanationReview(ctx, required(jobID, "job_id"), required(explanationID, "explanation_id"), defaultString(reviewer, "unknown"), decision, request.Reason, nil, svc.now())
+	jobID = required(jobID, "job_id")
+	explanationID = required(explanationID, "explanation_id")
+	before, err := svc.explanations.FindResultExplanation(ctx, jobID, explanationID)
+	if err != nil {
+		return ResultExplanationRecord{}, err
+	}
+	now := svc.now()
+	reviewer = defaultString(reviewer, "unknown")
+	record, err := svc.explanations.UpdateResultExplanationReview(ctx, jobID, explanationID, reviewer, decision, request.Reason, nil, now, svc.resultExplanationReviewedAuditEvent(ctx, *before, reviewer, decision, request.Reason, now))
 	if err != nil {
 		return ResultExplanationRecord{}, err
 	}
@@ -15,7 +23,19 @@ func (svc *ResultExplanationService) ReviewResultExplanation(ctx context.Context
 }
 
 func (svc *ResultExplanationService) PublishResultExplanation(ctx context.Context, jobID, explanationID, publisher string) (ResultExplanationRecord, error) {
-	record, err := svc.explanations.PublishResultExplanation(ctx, required(jobID, "job_id"), required(explanationID, "explanation_id"), defaultString(publisher, "unknown"), svc.now())
+	jobID = required(jobID, "job_id")
+	explanationID = required(explanationID, "explanation_id")
+	before, err := svc.explanations.FindResultExplanation(ctx, jobID, explanationID)
+	if err != nil {
+		return ResultExplanationRecord{}, err
+	}
+	now := svc.now()
+	publisher = defaultString(publisher, "unknown")
+	var event *EventRecord
+	if before.Status != "published" {
+		event = svc.resultExplanationPublishedAuditEvent(ctx, *before, publisher, now)
+	}
+	record, err := svc.explanations.PublishResultExplanation(ctx, jobID, explanationID, publisher, now, event)
 	if err != nil {
 		return ResultExplanationRecord{}, err
 	}

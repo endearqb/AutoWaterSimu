@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (store *MemoryStore) UpsertResultExplanation(_ context.Context, record ResultExplanationRecord) (bool, error) {
+func (store *MemoryStore) UpsertResultExplanation(_ context.Context, record ResultExplanationRecord, createdEvent *EventRecord) (bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	key := resultExplanationStoreKey(record.JobID, record.ExplanationID)
@@ -19,6 +19,7 @@ func (store *MemoryStore) UpsertResultExplanation(_ context.Context, record Resu
 		return false, nil
 	}
 	store.explanations[key] = cloneResultExplanationRecord(record)
+	store.appendOptionalEventLocked(createdEvent)
 	return true, nil
 }
 
@@ -33,7 +34,7 @@ func (store *MemoryStore) FindResultExplanation(_ context.Context, jobID, explan
 	return &record, nil
 }
 
-func (store *MemoryStore) UpdateResultExplanationReview(_ context.Context, jobID, explanationID, reviewedBy, decision, reason string, metadata json.RawMessage, now time.Time) (*ResultExplanationRecord, error) {
+func (store *MemoryStore) UpdateResultExplanationReview(_ context.Context, jobID, explanationID, reviewedBy, decision, reason string, metadata json.RawMessage, now time.Time, event *EventRecord) (*ResultExplanationRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	key := resultExplanationStoreKey(jobID, explanationID)
@@ -58,11 +59,12 @@ func (store *MemoryStore) UpdateResultExplanationReview(_ context.Context, jobID
 	}
 	record.UpdatedAt = now
 	store.explanations[key] = cloneResultExplanationRecord(record)
+	store.appendOptionalEventLocked(event)
 	record = cloneResultExplanationRecord(record)
 	return &record, nil
 }
 
-func (store *MemoryStore) PublishResultExplanation(_ context.Context, jobID, explanationID, publishedBy string, now time.Time) (*ResultExplanationRecord, error) {
+func (store *MemoryStore) PublishResultExplanation(_ context.Context, jobID, explanationID, publishedBy string, now time.Time, event *EventRecord) (*ResultExplanationRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	key := resultExplanationStoreKey(jobID, explanationID)
@@ -82,8 +84,16 @@ func (store *MemoryStore) PublishResultExplanation(_ context.Context, jobID, exp
 	record.PublishedAt = &now
 	record.UpdatedAt = now
 	store.explanations[key] = cloneResultExplanationRecord(record)
+	store.appendOptionalEventLocked(event)
 	record = cloneResultExplanationRecord(record)
 	return &record, nil
+}
+
+func (store *MemoryStore) appendOptionalEventLocked(event *EventRecord) {
+	if event == nil {
+		return
+	}
+	store.appendEventLocked(*event)
 }
 
 func resultExplanationStoreKey(jobID, explanationID string) string {

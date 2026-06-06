@@ -88,10 +88,10 @@ type DraftConfirmationStore interface {
 }
 
 type ResultExplanationStore interface {
-	UpsertResultExplanation(ctx context.Context, record ResultExplanationRecord) (bool, error)
+	UpsertResultExplanation(ctx context.Context, record ResultExplanationRecord, createdEvent *EventRecord) (bool, error)
 	FindResultExplanation(ctx context.Context, jobID, explanationID string) (*ResultExplanationRecord, error)
-	UpdateResultExplanationReview(ctx context.Context, jobID, explanationID, reviewedBy, decision, reason string, metadata json.RawMessage, now time.Time) (*ResultExplanationRecord, error)
-	PublishResultExplanation(ctx context.Context, jobID, explanationID, publishedBy string, now time.Time) (*ResultExplanationRecord, error)
+	UpdateResultExplanationReview(ctx context.Context, jobID, explanationID, reviewedBy, decision, reason string, metadata json.RawMessage, now time.Time, event *EventRecord) (*ResultExplanationRecord, error)
+	PublishResultExplanation(ctx context.Context, jobID, explanationID, publishedBy string, now time.Time, event *EventRecord) (*ResultExplanationRecord, error)
 }
 
 type MetricsStore interface {
