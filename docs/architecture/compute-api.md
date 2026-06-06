@@ -113,7 +113,7 @@ Selected files from the latest audit:
 | `worker_lifecycle.go` | 51 | adapter from compute worker/job records to the workers domain package |
 | `metrics.go` | 7 | compatibility aliases for platform metrics collector |
 | `contract_validation.go` | 15 | compatibility wrapper over platform contract document validation |
-| `postgres_benchmark_runs.go` | 147 | PostgreSQL benchmark run register/read/list persistence, scan helper, select SQL, and list filter |
+| `postgres_benchmark_runs.go` | 155 | PostgreSQL benchmark run register/read/list persistence, scan helper, select SQL, and list filter |
 | `postgres_model_runs.go` | 134 | PostgreSQL model run insert/read/list/job-scoped lookup persistence and list filter |
 | `postgres_model_catalog.go` | 113 | PostgreSQL model catalog snapshot upsert/latest/list persistence, scan helper, and select SQL |
 | `postgres_result_explanations.go` | 182 | PostgreSQL result explanation submit/read/review/publish persistence, scan helper, and select SQL |
@@ -126,7 +126,7 @@ Selected files from the latest audit:
 | `postgres_metrics.go` | 58 | PostgreSQL metrics snapshot query |
 | `postgres_sql_helpers.go` | 12 | shared PostgreSQL row scanner interface and nullable-string helper |
 | `http_model_catalog.go` | 125 | model catalog root, snapshot list, model lookup, and model-catalog subroute dispatch |
-| `http_benchmark_runs.go` | 96 | benchmark run register/read/list HTTP handlers/helpers |
+| `http_benchmark_runs.go` | 113 | benchmark run register/read/list HTTP handlers/helpers and job-scoped read authorization |
 | `http_model_parameters.go` | 74 | default parameter set status, promotion plan, and promote-approved HTTP handlers/helpers |
 | `http_model_runs.go` | 66 | model run read/list HTTP handlers/helpers |
 | `http_model_benchmark_cases.go` | 42 | benchmark case schedule-run HTTP handler/helper |
@@ -138,13 +138,13 @@ Selected files from the latest audit:
 | `http.go` | 63 | server entrypoint, route registration, health/ready routes, and panic recovery |
 | `http_metrics.go` | 20 | Prometheus metrics HTTP handler |
 | `memory_model_runs.go` | 101 | in-memory model run insert/read/list/job-scoped lookup metadata store implementation |
-| `memory_benchmark_runs.go` | 85 | in-memory benchmark run register/read/list metadata store implementation and clone helper |
+| `memory_benchmark_runs.go` | 91 | in-memory benchmark run register/read/list metadata store implementation and clone helper |
 | `memory_model_catalog.go` | 80 | in-memory model catalog snapshot upsert/latest/list metadata store implementation and clone helper |
 | `memory_jobs.go` | 235 | in-memory job metadata store implementation and shared memory cursor/list helpers |
 | `memory_artifacts.go` | 168 | in-memory artifact metadata and archive metadata store implementation |
 | `memory_result_explanations.go` | 106 | in-memory result explanation submit/read/review/publish metadata store implementation and clone helper |
 | `memory_draft_confirmations.go` | 34 | in-memory draft confirmation upsert/read metadata store implementation |
-| `store_interfaces.go` | 119 | aggregate Store, domain metadata interfaces, and list filters |
+| `store_interfaces.go` | 125 | aggregate Store, domain metadata interfaces, and list filters |
 | `memory_workers.go` | 84 | in-memory worker register/claim/heartbeat store implementation |
 | `memory_simulation.go` | 69 | in-memory process graph and simulation input metadata store implementation |
 | `memory_metrics.go` | 43 | in-memory metrics snapshot query |
@@ -340,7 +340,7 @@ Compute uses this package through compatibility constants, worker-reported failu
 - `EvaluateParameterSetPromotionGate`
 - `EvaluateModelRunProductionGate`
 
-Compute uses this package through built-in model catalog fallback document assembly, benchmark case schedule-run job document assembly after catalog/gate/execution/input validation, job completion model_run extraction before schema validation/persistence, MemoryStore/PostgresStore model-run persistence, evidence/simulation read paths, evidence governance production-allowed calculation, default-parameter-set status transition validation, benchmark case schedule-run gate checks, benchmark run admission checks, benchmark run evidence-ref validation, benchmark run model-run identity/hash validation, promotion planning per-case readiness checks, and final promotion gate evaluation; material-balance default parameter hash generation, typed catalog DTO conversion, full job lifecycle persistence, full model catalog governance, catalog snapshot mutation, benchmark schedule-run catalog lookup/gate/error mapping/execution profile lookup/simulation input resolution/JSON marshaling/createJob, benchmark run persistence workflow, benchmark query orchestration, promotion workflow orchestration, evidence package assembly, HTTP mapping, and DTOs have not moved yet.
+Compute uses this package through built-in model catalog fallback document assembly, benchmark case schedule-run job document assembly after catalog/gate/execution/input validation, job completion model_run extraction before schema validation/persistence, MemoryStore/PostgresStore model-run persistence, evidence/simulation read paths, evidence governance production-allowed calculation, default-parameter-set status transition validation, benchmark case schedule-run gate checks, benchmark run admission checks, benchmark run evidence-ref validation, benchmark run model-run identity/hash validation, promotion planning per-case readiness checks, and final promotion gate evaluation; material-balance default parameter hash generation, typed catalog DTO conversion, full job lifecycle persistence, full model catalog governance, catalog snapshot mutation, benchmark schedule-run catalog lookup/gate/error mapping/execution profile lookup/simulation input resolution/JSON marshaling/createJob, benchmark run persistence workflow, benchmark query orchestration and job-scoped read authorization, promotion workflow orchestration, evidence package assembly, HTTP mapping, and DTOs have not moved yet.
 
 `apps/api/internal/domain/simulation` owns stable simulation execution profile, simulation check document, process graph, and simulation registry record data helpers:
 

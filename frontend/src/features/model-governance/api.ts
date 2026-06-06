@@ -91,6 +91,7 @@ export const computeModelGovernanceApi = {
     return DefaultService.listBenchmarkRuns({
       benchmarkCaseId: params.benchmarkCaseId || undefined,
       cursor: params.cursor,
+      jobId: params.jobId || undefined,
       limit: params.limit ?? 20,
       modelKey: params.modelKey,
       modelVersion: params.modelVersion,

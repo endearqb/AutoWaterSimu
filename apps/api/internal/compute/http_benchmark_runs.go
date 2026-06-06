@@ -11,7 +11,8 @@ import (
 func handleBenchmarkRuns(server *Server, w http.ResponseWriter, r *http.Request, modelKey, modelVersion string) {
 	switch r.Method {
 	case http.MethodGet:
-		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+		principal, err := server.auth.Principal(r, "job:read")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -19,6 +20,16 @@ func handleBenchmarkRuns(server *Server, w http.ResponseWriter, r *http.Request,
 		if err != nil {
 			WriteError(w, err)
 			return
+		}
+		if principalHasDataScope(*principal) {
+			if strings.TrimSpace(filter.JobID) == "" {
+				WriteError(w, NewAppError(http.StatusForbidden, CodeForbidden, "job_id is required for scoped benchmark_run list", false, nil))
+				return
+			}
+			if err := server.authorizeJobRouteDataScope(r.Context(), *principal, filter.JobID); err != nil {
+				WriteError(w, err)
+				return
+			}
 		}
 		response, err := server.service.ListBenchmarkRuns(r.Context(), filter)
 		if err != nil {
@@ -58,7 +69,8 @@ func handleBenchmarkRuns(server *Server, w http.ResponseWriter, r *http.Request,
 }
 
 func (server *Server) benchmarkRunByID(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
+	principal, err := server.auth.Principal(r, "job:read")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -69,6 +81,10 @@ func (server *Server) benchmarkRunByID(w http.ResponseWriter, r *http.Request) {
 	benchmarkRunID := strings.TrimPrefix(r.URL.Path, "/api/v1/benchmark-runs/")
 	record, err := server.service.GetBenchmarkRun(r.Context(), benchmarkRunID)
 	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if err := server.authorizeJobRouteDataScope(r.Context(), *principal, record.JobID); err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -88,6 +104,7 @@ func benchmarkRunListFilter(r *http.Request, modelKey, modelVersion string) (Ben
 	return BenchmarkRunFilter{
 		Limit:           limit,
 		Cursor:          query.Get("cursor"),
+		JobID:           query.Get("job_id"),
 		ModelKey:        modelKey,
 		ModelVersion:    modelVersion,
 		BenchmarkCaseID: query.Get("benchmark_case_id"),

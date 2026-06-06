@@ -139,6 +139,9 @@ func benchmarkRunListWhere(filter BenchmarkRunFilter) (string, []any) {
 	if filter.ModelVersion != "" {
 		add("model_version=$%d", filter.ModelVersion)
 	}
+	if filter.JobID != "" {
+		add("job_id=$%d", filter.JobID)
+	}
 	if filter.BenchmarkCaseID != "" {
 		add("benchmark_case_id=$%d", filter.BenchmarkCaseID)
 	}

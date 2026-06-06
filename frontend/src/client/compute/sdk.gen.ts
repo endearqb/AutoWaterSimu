@@ -761,6 +761,7 @@ export class DefaultService {
      * @param data.modelVersion
      * @param data.limit
      * @param data.cursor
+     * @param data.jobId
      * @param data.benchmarkCaseId
      * @param data.parameterSetId
      * @returns ListBenchmarkRunsResponse Benchmark run history
@@ -777,6 +778,7 @@ export class DefaultService {
             query: {
                 limit: data.limit,
                 cursor: data.cursor,
+                job_id: data.jobId,
                 benchmark_case_id: data.benchmarkCaseId,
                 parameter_set_id: data.parameterSetId
             },

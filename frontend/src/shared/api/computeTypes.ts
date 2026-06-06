@@ -23,6 +23,7 @@ export interface ListModelRunsParams {
 export interface ListBenchmarkRunsParams {
   benchmarkCaseId?: string
   cursor?: string
+  jobId?: string
   limit?: number
   modelKey: string
   modelVersion: string

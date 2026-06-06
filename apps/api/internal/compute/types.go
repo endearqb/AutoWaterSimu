@@ -445,6 +445,7 @@ type BenchmarkRunRecord struct {
 type BenchmarkRunFilter struct {
 	Limit           int
 	Cursor          string
+	JobID           string
 	ModelKey        string
 	ModelVersion    string
 	BenchmarkCaseID string

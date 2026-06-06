@@ -1,3 +1,32 @@
+# 2026-06-06 AutoWaterSimu Next benchmark run read-scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API auth/data-scope, model governance benchmark runs, OpenAPI generated client, security smoke, and recent change records
+- [x] Confirm next aligned gap: selected mutation audit progressed, while benchmark_run read/list still lacked tenant/project/site read-scope despite carrying `job_id`
+- [x] Add benchmark_run get/list data-scope authorization via associated job
+- [x] Add `job_id` filter for benchmark_run list so scoped tokens can list only an authorized job
+- [x] Update OpenAPI source and generated Compute client
+- [x] Extend focused HTTP coverage and security smoke coverage summary
+- [x] Update Compute API/frontend/security/docs context and change records
+- [x] Run focused tests, full Go tests, client generation/typecheck, dependency/security validation, commit, and push
+
+## Plan
+
+- Treat this as a narrow static-token object data-scope slice, not full RBAC/ABAC or all-object policy enforcement.
+- Reuse existing job tenant/project/site authorization through `BenchmarkRunRecord.JobID`.
+- Require scoped tokens to provide an authorized `job_id` for benchmark_run list; global tokens keep unfiltered list behavior.
+- Preserve benchmark_run persistence, promotion-plan behavior, contracts, and endpoint semantics except the scoped-token safety tightening.
+
+## Review
+
+- Added `BenchmarkRunFilter.JobID` and Memory/Postgres list filtering on `job_id`.
+- `GET /api/v1/benchmark-runs/{benchmark_run_id}` now authorizes the associated job against scoped token tenant/project/site metadata.
+- `GET /api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-runs` now requires scoped tokens to provide an authorized `job_id`; global tokens retain unfiltered list behavior.
+- Updated OpenAPI and regenerated the Compute TypeScript client; feature model-governance wrapper now forwards optional `jobId`.
+- Added `TestHTTPBenchmarkRunTenantProjectSiteScope` and included it in `scripts/ci/security-smoke.ps1`; coverage summary now names benchmark_run read-scope.
+- Updated Compute API/frontend/scripts/architecture/Certainty-Elegance docs and `.ai/changes`.
+- Validation passed: focused benchmark_run data-scope test, full `cd apps\api; go test ./...`, `cd frontend; npx tsc --noEmit`, security smoke, dependency check, OpenAPI JSON parse, docs/rebuild P0/P1/P2/schema scan, and diff-check with LF/CRLF warnings only.
+- Remaining scope: full object-level data scope for process_graph/simulation_input/draft confirmation/model catalog/global objects, OIDC/JWKS, RBAC/ABAC, all-mutation audit, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next model governance mutation audit TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API, platform audit, model governance, migrations, and recent change records

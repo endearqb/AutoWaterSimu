@@ -879,6 +879,7 @@ export type ScheduleBenchmarkCaseRunResponse = (JobSnapshot);
 export type ListBenchmarkRunsData = {
     benchmarkCaseId?: string;
     cursor?: string;
+    jobId?: string;
     limit?: number;
     modelKey: string;
     modelVersion: string;

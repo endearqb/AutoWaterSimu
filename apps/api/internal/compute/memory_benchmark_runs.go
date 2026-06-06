@@ -39,6 +39,9 @@ func (store *MemoryStore) ListBenchmarkRuns(_ context.Context, filter BenchmarkR
 	defer store.mu.Unlock()
 	var records []BenchmarkRunRecord
 	for _, record := range store.benchmarkRuns {
+		if filter.JobID != "" && record.JobID != filter.JobID {
+			continue
+		}
 		if filter.ModelKey != "" && record.ModelKey != filter.ModelKey {
 			continue
 		}

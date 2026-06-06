@@ -484,6 +484,7 @@
           { "$ref": "#/components/parameters/ModelVersionPath" },
           { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
           { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "job_id", "in": "query", "schema": { "type": "string" } },
           { "name": "benchmark_case_id", "in": "query", "schema": { "type": "string" } },
           { "name": "parameter_set_id", "in": "query", "schema": { "type": "string" } }
         ],
