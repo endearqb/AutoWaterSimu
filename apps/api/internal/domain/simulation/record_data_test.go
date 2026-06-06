@@ -13,6 +13,7 @@ func TestProcessGraphRecordDataFromDocument(t *testing.T) {
 	processGraph["metadata"].(map[string]any)["requested_by"] = " planner "
 	processGraph["metadata"].(map[string]any)["tenant_id"] = " tenant_1 "
 	processGraph["metadata"].(map[string]any)["project_id"] = " project_1 "
+	processGraph["metadata"].(map[string]any)["site_id"] = " site_1 "
 
 	record, err := ProcessGraphRecordDataFromDocument(ProcessGraphRecordDataInput{
 		ProcessGraph:        processGraph,
@@ -34,6 +35,7 @@ func TestProcessGraphRecordDataFromDocument(t *testing.T) {
 		record.RequestedBy != "planner" ||
 		record.TenantID != "tenant_1" ||
 		record.ProjectID != "project_1" ||
+		record.SiteID != "site_1" ||
 		string(record.Metadata) == "null" ||
 		!record.CreatedAt.Equal(createdAt) {
 		t.Fatalf("unexpected process graph record data: %#v", record)
@@ -89,6 +91,7 @@ func TestSimulationInputRecordDataFromDocument(t *testing.T) {
 		record.RequestedBy != "operator" ||
 		record.TenantID != "tenant_1" ||
 		record.ProjectID != "project_1" ||
+		record.SiteID != "site_1" ||
 		string(record.Metadata) == "null" ||
 		!record.CreatedAt.Equal(createdAt) {
 		t.Fatalf("unexpected simulation input record data: %#v", record)
@@ -140,6 +143,7 @@ func testSimulationInput() map[string]any {
 			"requested_by":  " operator ",
 			"tenant_id":     " tenant_1 ",
 			"project_id":    " project_1 ",
+			"site_id":       " site_1 ",
 		},
 	}
 }

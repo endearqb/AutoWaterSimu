@@ -27,6 +27,7 @@ type ProcessGraphRecordData struct {
 	RequestedBy         string
 	TenantID            string
 	ProjectID           string
+	SiteID              string
 	Metadata            json.RawMessage
 	CreatedAt           time.Time
 }
@@ -50,6 +51,7 @@ type SimulationInputRecordData struct {
 	RequestedBy         string
 	TenantID            string
 	ProjectID           string
+	SiteID              string
 	Metadata            json.RawMessage
 	CreatedAt           time.Time
 }
@@ -95,6 +97,7 @@ func ProcessGraphRecordDataFromDocument(input ProcessGraphRecordDataInput) (Proc
 		RequestedBy:         defaultString(stringValue(metadata, "requested_by"), defaultString(input.DefaultRequestedBy, "compute-api")),
 		TenantID:            stringValue(metadata, "tenant_id"),
 		ProjectID:           stringValue(metadata, "project_id"),
+		SiteID:              stringValue(metadata, "site_id"),
 		Metadata:            metadataBytes,
 		CreatedAt:           input.CreatedAt,
 	}, nil
@@ -142,6 +145,7 @@ func SimulationInputRecordDataFromDocument(input SimulationInputRecordDataInput)
 		RequestedBy:         defaultString(stringValue(metadata, "requested_by"), defaultString(input.DefaultRequestedBy, "compute-api")),
 		TenantID:            stringValue(metadata, "tenant_id"),
 		ProjectID:           stringValue(metadata, "project_id"),
+		SiteID:              stringValue(metadata, "site_id"),
 		Metadata:            metadataBytes,
 		CreatedAt:           input.CreatedAt,
 	}, nil

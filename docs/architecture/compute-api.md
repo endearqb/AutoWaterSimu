@@ -94,8 +94,8 @@ Selected files from the latest audit:
 | `job_lifecycle.go` | 27 | `JobLifecycleService` struct and constructor wiring |
 | `job_lifecycle_state.go` | 15 | job cancel and timeout sweep workflow |
 | `simulation_inputs_resolution.go` | 115 | input-ref resolution for inline simulation input, registered simulation input, process graph, and model-run replay |
-| `simulation_inputs_process_graphs.go` | 89 | process graph registration/read, process graph record mapping, and material-balance ProcessGraph-to-SimulationInput orchestration |
-| `simulation_inputs_registry.go` | 71 | simulation input registration/read and compute record mapping |
+| `simulation_inputs_process_graphs.go` | 90 | process graph registration/read, process graph record mapping, and material-balance ProcessGraph-to-SimulationInput orchestration |
+| `simulation_inputs_registry.go` | 72 | simulation input registration/read and compute record mapping |
 | `simulation_inputs.go` | 33 | `SimulationInputService` struct and constructor wiring |
 | `draft_workflows_confirmations.go` | 106 | draft confirmation validation, persistence, readback, and compute record mapping |
 | `draft_workflows_constraints.go` | 43 | approved constraint draft advisory application plan workflow |
@@ -120,7 +120,7 @@ Selected files from the latest audit:
 | `postgres_draft_confirmations.go` | 88 | PostgreSQL draft confirmation upsert/read persistence, scan helper, and select SQL |
 | `postgres_jobs.go` | 245 | PostgreSQL job/event persistence, list filtering, and lifecycle mutations |
 | `postgres_artifacts.go` | 239 | PostgreSQL artifact metadata and archive metadata persistence |
-| `postgres_simulation.go` | 155 | PostgreSQL process graph and simulation input persistence |
+| `postgres_simulation.go` | 157 | PostgreSQL process graph and simulation input persistence |
 | `postgres_workers.go` | 110 | PostgreSQL worker register/claim/heartbeat persistence |
 | `postgres.go` | 85 | PostgreSQL store entrypoint, open/close, and migration apply/check helpers |
 | `postgres_metrics.go` | 58 | PostgreSQL metrics snapshot query |
@@ -131,7 +131,7 @@ Selected files from the latest audit:
 | `http_model_runs.go` | 66 | model run read/list HTTP handlers/helpers |
 | `http_model_benchmark_cases.go` | 42 | benchmark case schedule-run HTTP handler/helper |
 | `http_jobs.go` | 258 | compute job HTTP handlers, job subroutes, list filter, and job data-scope helper |
-| `http_simulation.go` | 138 | simulation input, process graph, and simulation-check HTTP handlers/helpers |
+| `http_simulation.go` | 148 | simulation input, process graph, and simulation-check HTTP handlers/helpers |
 | `http_workers.go` | 124 | worker register/claim/heartbeat/artifact/completion HTTP handlers/helpers |
 | `http_contracts.go` | 103 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
 | `http_artifacts.go` | 86 | artifact download and retention sweep HTTP handlers/helpers |
@@ -223,7 +223,7 @@ The public `Service.UploadArtifact`, `Service.DownloadArtifact`, and `Service.Sw
 
 The public `Service.RegisterSimulationInput`, `Service.GetSimulationInput`, `Service.RegisterProcessGraph`, and `Service.GetProcessGraph` methods remain stable and delegate to this narrower service. `CreateSimulationCheck` and benchmark case scheduling also use `SimulationInputService.ResolveSimulationInput` for inline input, registered simulation input id, process graph id, and model run replay input references.
 
-`simulation_inputs.go` now keeps only the service struct, replay store interface, and constructor wiring. Same-package workflow methods are grouped into `simulation_inputs_registry.go`, `simulation_inputs_process_graphs.go`, and `simulation_inputs_resolution.go`. HTTP handlers, OpenAPI, auth scopes, contracts, database schema, generated clients, store interfaces, process graph validation/projection behavior, record mapping, idempotency, and model-run replay behavior are unchanged.
+`simulation_inputs.go` now keeps only the service struct, replay store interface, and constructor wiring. Same-package workflow methods are grouped into `simulation_inputs_registry.go`, `simulation_inputs_process_graphs.go`, and `simulation_inputs_resolution.go`. Process graph and simulation input registry records now persist optional `site_id` alongside existing tenant/project metadata, expose it through OpenAPI/generated client record types, and enforce tenant/project/site read-scope on GET handlers. Auth scopes, contracts, store interfaces, process graph validation/projection behavior, idempotency, and model-run replay behavior are unchanged.
 
 `DraftWorkflowService` is the third narrowed slice. Its constructor depends on:
 

@@ -482,6 +482,7 @@ export type ProcessGraphRecord = {
     requested_by: string;
     tenant_id?: string;
     project_id?: string;
+    site_id?: string;
     metadata?: {
         [key: string]: unknown;
     };
@@ -595,6 +596,7 @@ export type SimulationInputRecord = {
     requested_by: string;
     tenant_id?: string;
     project_id?: string;
+    site_id?: string;
     metadata?: {
         [key: string]: unknown;
     };

@@ -4,7 +4,8 @@
 
 This runbook records the current AutoWaterSimu Next Compute API deployment boundary for:
 
-- reserved tenant/project identity fields;
+- reserved tenant/project/site identity fields;
+- selected static-token HTTP read-scope checks;
 - static token scope boundaries;
 - trace id propagation and current metrics/logging expectations;
 - OpenTelemetry adoption triggers.
@@ -13,19 +14,20 @@ It does not introduce full RBAC, tenant billing, quota, rate limits, OpenTelemet
 
 ## Current Tenancy Boundary
 
-P0 keeps tenant and project data as metadata, not as an enforced tenant isolation platform.
+P0 keeps tenant/project/site data as metadata and uses it for selected static-token HTTP read-scope checks, not as a full tenant isolation platform.
 
 Current reserved fields include:
 
 | Field | Current meaning | Enforcement status |
 |---|---|---|
-| `tenant_id` | Optional metadata copied from request context/metadata into jobs and governance records | Not a security boundary in P0 |
-| `project_id` | Optional project grouping metadata for jobs, simulation checks, model/evidence records, and Desktop project wiring | Not a cross-tenant authorization boundary in P0 |
+| `tenant_id` | Optional metadata copied from request context/metadata into jobs, simulation registry records, and governance records | Enforced for selected static-token HTTP reads: job list/get, process_graph get, simulation_input get, model_run get / job-filtered list, benchmark_run get / job-filtered list, and artifact download. Not full RBAC or database-level isolation |
+| `project_id` | Optional project grouping metadata for jobs, simulation checks, simulation registry records, model/evidence records, and Desktop project wiring | Enforced for the same selected static-token HTTP reads. Not full cross-tenant authorization or billing isolation |
+| `site_id` | Optional site metadata copied into jobs and simulation registry records where supplied | Enforced for the same selected static-token HTTP reads when the stored object/job has site metadata. Not a complete site authorization model |
 | `created_by` | Optional creator metadata in Compute API tables | Audit metadata only |
 | `requested_by` | Required request actor/source label in contracts and records | Required for traceability, not full identity proof |
 | `source_system` | Integration source such as Web, NewSystem, milp, Agent, or Desktop export | Audit/integration metadata |
 
-Operators must not rely on these fields alone to isolate customer data. Production tenancy requires a separate authorization design, request authentication model, database access policy, and operational approval.
+Operators must not rely on these fields alone to isolate customer data beyond the selected HTTP read-scope checks above. Production tenancy requires a separate authorization design, request authentication model, database access policy, and operational approval.
 
 ## Token Boundary
 
@@ -40,7 +42,7 @@ Use narrow scopes:
 
 Token storage and rotation are covered in `docs/operations/compute_api_token_secret_runbook.md`.
 
-Do not model tenant membership by issuing broad tokens. A token with broad scopes can access the corresponding route class unless future RBAC is added.
+Do not model tenant membership by issuing broad tokens. A token with broad scopes and no tenant/project/site metadata remains a global token for the corresponding route class; scoped tokens constrain only the selected HTTP read paths listed in this runbook until future RBAC is added.
 
 ## Trace And Logging Boundary
 
@@ -79,7 +81,7 @@ Before enabling OpenTelemetry, record:
 1. Confirm `COMPUTE_API_TOKENS_JSON` is set for any shared environment.
 2. Confirm no production deployment uses development default tokens.
 3. Confirm logs redact authorization headers and deployment secrets.
-4. Confirm `tenant_id` / `project_id` are treated as metadata until RBAC exists.
+4. Confirm `tenant_id` / `project_id` / `site_id` are treated as metadata with selected static-token read-scope only until RBAC exists.
 5. Confirm `/metrics` is scraped and alert examples are reviewed.
 6. Confirm an OpenTelemetry decision exists before adding exporters or tracing dependencies.
 
@@ -88,7 +90,6 @@ Before enabling OpenTelemetry, record:
 Recommended local checks after changing this boundary:
 
 ```powershell
-cd apps\api; go test ./internal/compute -run "TestHTTPAuthScopeAndMetrics|TestStaticTokenRevocation|TestNewSystemEvidenceEndToEnd" -count=1
+cd apps\api; go test ./internal/compute -run "TestHTTPAuthScopeAndMetrics|TestStaticTokenRevocation|TestHTTPJobReadTenantProjectSiteScope|TestHTTPSimulationRegistryTenantProjectSiteScope|TestNewSystemEvidenceEndToEnd" -count=1
 git diff --check -- docs\operations docs\rebuild
 ```
-

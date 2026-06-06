@@ -28,29 +28,33 @@ func principalHasDataScope(principal Principal) bool {
 }
 
 func authorizeJobDataScope(principal Principal, job JobRecord) error {
-	tenantID := strings.TrimSpace(principal.TenantID)
-	projectID := strings.TrimSpace(principal.ProjectID)
-	siteID := strings.TrimSpace(principal.SiteID)
-	if tenantID == "" && projectID == "" && siteID == "" {
+	return authorizeRecordDataScope(principal, "job", job.TenantID, job.ProjectID, job.SiteID)
+}
+
+func authorizeRecordDataScope(principal Principal, objectLabel, tenantID, projectID, siteID string) error {
+	requiredTenantID := strings.TrimSpace(principal.TenantID)
+	requiredProjectID := strings.TrimSpace(principal.ProjectID)
+	requiredSiteID := strings.TrimSpace(principal.SiteID)
+	if requiredTenantID == "" && requiredProjectID == "" && requiredSiteID == "" {
 		return nil
 	}
 	details := map[string]any{}
-	if tenantID != "" {
-		details["tenant_id"] = tenantID
-		if strings.TrimSpace(job.TenantID) != tenantID {
-			return NewAppError(http.StatusForbidden, CodeForbidden, "job is outside token tenant scope", false, details)
+	if requiredTenantID != "" {
+		details["tenant_id"] = requiredTenantID
+		if strings.TrimSpace(tenantID) != requiredTenantID {
+			return NewAppError(http.StatusForbidden, CodeForbidden, objectLabel+" is outside token tenant scope", false, details)
 		}
 	}
-	if projectID != "" {
-		details["project_id"] = projectID
-		if strings.TrimSpace(job.ProjectID) != projectID {
-			return NewAppError(http.StatusForbidden, CodeForbidden, "job is outside token project scope", false, details)
+	if requiredProjectID != "" {
+		details["project_id"] = requiredProjectID
+		if strings.TrimSpace(projectID) != requiredProjectID {
+			return NewAppError(http.StatusForbidden, CodeForbidden, objectLabel+" is outside token project scope", false, details)
 		}
 	}
-	if siteID != "" {
-		details["site_id"] = siteID
-		if strings.TrimSpace(job.SiteID) != siteID {
-			return NewAppError(http.StatusForbidden, CodeForbidden, "job is outside token site scope", false, details)
+	if requiredSiteID != "" {
+		details["site_id"] = requiredSiteID
+		if strings.TrimSpace(siteID) != requiredSiteID {
+			return NewAppError(http.StatusForbidden, CodeForbidden, objectLabel+" is outside token site scope", false, details)
 		}
 	}
 	return nil

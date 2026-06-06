@@ -22,7 +22,7 @@
 | `compute_api_job_event_retention_runbook.md` | Compute API job event retention / archive policy and future dry-run-first pruning boundary |
 | `compute_api_backup_restore_runbook.md` | Compute API PostgreSQL metadata 与 artifact 目录备份/恢复手册 |
 | `compute_api_token_secret_runbook.md` | Compute API 静态 bearer token、scope、rotation、revocation 与 secret handling 操作手册 |
-| `compute_api_tenancy_observability_runbook.md` | Compute API tenant/project metadata boundary、trace/logging expectations 与 OpenTelemetry adoption trigger |
+| `compute_api_tenancy_observability_runbook.md` | Compute API tenant/project/site metadata boundary、selected static-token read-scope、trace/logging expectations 与 OpenTelemetry adoption trigger |
 | `support_bundle_runbook.md` | Desktop support bundle、project package support files 与 Compute API evidence package 操作边界 |
 | `monitoring/` | Compute API Prometheus alert rules、Alertmanager route 示例、Grafana dashboard 示例、receiver policy 与 monitoring deployment runbook |
 
@@ -33,7 +33,7 @@
 3. 涉及 destructive 操作时必须先写 dry-run 和回滚限制。
 4. Compute API retention deletion 前必须明确 PostgreSQL metadata 与 artifact object files 的一致性备份/恢复边界。
 5. Token/secret runbook 只能使用占位符，不得记录真实 bearer token、签名 key、数据库密码或更新通道密钥。
-6. tenant/project 字段在 P0 是 metadata boundary，不得写成完整 RBAC 或计费隔离已实现。
+6. tenant/project/site 字段在 P0 是 metadata boundary，并已用于 selected static-token HTTP read-scope；不得写成完整 RBAC、计费隔离或全对象 data-scope 已实现。
 7. job event retention 当前只记录策略边界；未实现自动裁剪前不得写成已有后台 worker 或 endpoint。
 
 ## 4. 对外接口

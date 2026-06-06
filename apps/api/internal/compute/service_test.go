@@ -87,6 +87,44 @@ func scopedFixtureJobBytes(t *testing.T, jobID, tenantID, projectID, siteID stri
 	return encodeMap(t, job)
 }
 
+func scopedProcessGraphBytes(t *testing.T, processGraphID, tenantID, projectID, siteID string) []byte {
+	t.Helper()
+	processGraphBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_3_node.process_graph.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	processGraph := decodeMap(t, processGraphBytes)
+	processGraph["process_graph_id"] = processGraphID
+	processGraph["source_canvas_graph_id"] = "graph_" + processGraphID
+	processGraph["metadata"] = map[string]any{
+		"source_system": "test",
+		"requested_by":  "registry-test",
+		"tenant_id":     tenantID,
+		"project_id":    projectID,
+		"site_id":       siteID,
+	}
+	return encodeMap(t, processGraph)
+}
+
+func scopedSimulationInputBytes(t *testing.T, simulationInputID, processGraphID, tenantID, projectID, siteID string) []byte {
+	t.Helper()
+	inputBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance_minimal.simulation_input.v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := decodeMap(t, inputBytes)
+	input["simulation_input_id"] = simulationInputID
+	input["process_graph_id"] = processGraphID
+	input["metadata"] = map[string]any{
+		"source_system": "test",
+		"requested_by":  "registry-test",
+		"tenant_id":     tenantID,
+		"project_id":    projectID,
+		"site_id":       siteID,
+	}
+	return encodeMap(t, input)
+}
+
 func decodeMap(t *testing.T, bytes []byte) map[string]any {
 	t.Helper()
 	var value map[string]any
@@ -1695,6 +1733,84 @@ func TestHTTPJobReadTenantProjectSiteScope(t *testing.T) {
 	}
 	if list.TotalEstimate != 3 {
 		t.Fatalf("global token should see all jobs, got %#v", list)
+	}
+}
+
+func TestHTTPSimulationRegistryTenantProjectSiteScope(t *testing.T) {
+	svc := testValidatedService(t)
+	auth, err := NewAuthenticator(`{"tokens":[
+		{"name":"scope-a","token":"scope-a-token","scopes":["job:create","job:read"],"tenant_id":"tenant_a","project_id":"project_a","site_id":"site_a"},
+		{"name":"global","token":"global-token","scopes":["job:create","job:read"]}
+	]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+
+	post := func(path string, body []byte) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer global-token")
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("register %s failed: %d %s", path, rec.Code, rec.Body.String())
+		}
+		return rec
+	}
+	get := func(path, token string) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+		return rec
+	}
+
+	rec := post("/api/v1/process-graphs", scopedProcessGraphBytes(t, "pg_scope_alpha", "tenant_a", "project_a", "site_a"))
+	var processGraph ProcessGraphRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &processGraph); err != nil {
+		t.Fatal(err)
+	}
+	if processGraph.TenantID != "tenant_a" || processGraph.ProjectID != "project_a" || processGraph.SiteID != "site_a" {
+		t.Fatalf("process graph should persist tenant/project/site metadata, got %#v", processGraph)
+	}
+	post("/api/v1/process-graphs", scopedProcessGraphBytes(t, "pg_scope_cross_site", "tenant_a", "project_a", "site_b"))
+
+	rec = get("/api/v1/process-graphs/pg_scope_alpha?version=1", "scope-a-token")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("scope-matching process graph read should pass: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = get("/api/v1/process-graphs/pg_scope_cross_site?version=1", "scope-a-token")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("cross-site process graph read should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+	rec = get("/api/v1/process-graphs/pg_scope_cross_site?version=1", "global-token")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("global process graph read should pass: %d %s", rec.Code, rec.Body.String())
+	}
+
+	rec = post("/api/v1/simulation-inputs", scopedSimulationInputBytes(t, "si_scope_alpha", "pg_scope_alpha", "tenant_a", "project_a", "site_a"))
+	var simulationInput SimulationInputRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &simulationInput); err != nil {
+		t.Fatal(err)
+	}
+	if simulationInput.TenantID != "tenant_a" || simulationInput.ProjectID != "project_a" || simulationInput.SiteID != "site_a" {
+		t.Fatalf("simulation input should persist tenant/project/site metadata, got %#v", simulationInput)
+	}
+	post("/api/v1/simulation-inputs", scopedSimulationInputBytes(t, "si_scope_cross_project", "pg_scope_alpha", "tenant_a", "project_b", "site_a"))
+
+	rec = get("/api/v1/simulation-inputs/si_scope_alpha", "scope-a-token")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("scope-matching simulation input read should pass: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = get("/api/v1/simulation-inputs/si_scope_cross_project", "scope-a-token")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("cross-project simulation input read should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+	rec = get("/api/v1/simulation-inputs/si_scope_cross_project", "global-token")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("global simulation input read should pass: %d %s", rec.Code, rec.Body.String())
 	}
 }
 

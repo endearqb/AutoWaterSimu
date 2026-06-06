@@ -28,11 +28,11 @@ func (store *PostgresStore) UpsertProcessGraph(ctx context.Context, record Proce
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO process_graphs (
 		id, schema_version, version, source_canvas_graph_id, payload_hash, payload_json,
-		source_system, requested_by, tenant_id, project_id, metadata_json, created_at
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+		source_system, requested_by, tenant_id, project_id, site_id, metadata_json, created_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
 		record.ProcessGraphID, record.SchemaVersion, record.Version, record.SourceCanvasGraphID,
 		record.PayloadHash, record.Payload, record.SourceSystem, record.RequestedBy,
-		nullString(record.TenantID), nullString(record.ProjectID), record.Metadata, record.CreatedAt)
+		nullString(record.TenantID), nullString(record.ProjectID), nullString(record.SiteID), record.Metadata, record.CreatedAt)
 	if err != nil {
 		return false, err
 	}
@@ -74,11 +74,11 @@ func (store *PostgresStore) UpsertSimulationInput(ctx context.Context, record Si
 	_, err = tx.Exec(ctx, `INSERT INTO simulation_inputs (
 		id, schema_version, job_type, process_graph_id, process_graph_version,
 		payload_hash, payload_json, source_system, requested_by, tenant_id, project_id,
-		metadata_json, created_at
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+		site_id, metadata_json, created_at
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
 		record.SimulationInputID, record.SchemaVersion, record.JobType, record.ProcessGraphID, record.ProcessGraphVersion,
 		record.PayloadHash, record.Payload, record.SourceSystem, record.RequestedBy, nullString(record.TenantID), nullString(record.ProjectID),
-		record.Metadata, record.CreatedAt)
+		nullString(record.SiteID), record.Metadata, record.CreatedAt)
 	if err != nil {
 		return false, err
 	}
@@ -110,6 +110,7 @@ func scanProcessGraph(row rowScanner) (*ProcessGraphRecord, error) {
 		&record.RequestedBy,
 		&record.TenantID,
 		&record.ProjectID,
+		&record.SiteID,
 		&record.Metadata,
 		&record.CreatedAt,
 	)
@@ -133,6 +134,7 @@ func scanSimulationInput(row rowScanner) (*SimulationInputRecord, error) {
 		&record.RequestedBy,
 		&record.TenantID,
 		&record.ProjectID,
+		&record.SiteID,
 		&record.Metadata,
 		&record.CreatedAt,
 	)
@@ -144,12 +146,12 @@ func scanSimulationInput(row rowScanner) (*SimulationInputRecord, error) {
 
 func processGraphSelectSQL() string {
 	return `SELECT id, schema_version, version, source_canvas_graph_id, payload_hash, payload_json,
-		source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''),
+		source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''), COALESCE(site_id,''),
 		COALESCE(metadata_json,'null'::jsonb), created_at FROM process_graphs`
 }
 
 func simulationInputSelectSQL() string {
 	return `SELECT id, schema_version, job_type, process_graph_id, process_graph_version,
-		payload_hash, payload_json, source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''),
+		payload_hash, payload_json, source_system, requested_by, COALESCE(tenant_id,''), COALESCE(project_id,''), COALESCE(site_id,''),
 		COALESCE(metadata_json,'null'::jsonb), created_at FROM simulation_inputs`
 }

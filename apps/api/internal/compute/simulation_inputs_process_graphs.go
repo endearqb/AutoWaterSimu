@@ -70,6 +70,7 @@ func (svc *SimulationInputService) processGraphRecord(processGraph map[string]an
 		RequestedBy:         recordData.RequestedBy,
 		TenantID:            recordData.TenantID,
 		ProjectID:           recordData.ProjectID,
+		SiteID:              recordData.SiteID,
 		Metadata:            recordData.Metadata,
 		CreatedAt:           recordData.CreatedAt,
 	}, nil

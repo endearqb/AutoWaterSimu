@@ -31,7 +31,8 @@ func (server *Server) simulationInputs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) simulationInputByID(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
+	principal, err := server.auth.Principal(r, "job:read")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -46,6 +47,10 @@ func (server *Server) simulationInputByID(w http.ResponseWriter, r *http.Request
 	}
 	record, err := server.service.GetSimulationInput(r.Context(), simulationInputID)
 	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if err := authorizeRecordDataScope(*principal, "simulation input", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -76,7 +81,8 @@ func (server *Server) processGraphs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) processGraphByID(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
+	principal, err := server.auth.Principal(r, "job:read")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -96,6 +102,10 @@ func (server *Server) processGraphByID(w http.ResponseWriter, r *http.Request) {
 	}
 	record, err := server.service.GetProcessGraph(r.Context(), processGraphID, version)
 	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if err := authorizeRecordDataScope(*principal, "process graph", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 		WriteError(w, err)
 		return
 	}

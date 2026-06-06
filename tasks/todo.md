@@ -1,3 +1,31 @@
+# 2026-06-06 AutoWaterSimu Next simulation registry read-scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API auth/data-scope, simulation registry records, migrations, OpenAPI generated client, security smoke, and recent change records
+- [x] Confirm next aligned gap: process_graph / simulation_input registries persisted tenant/project metadata but lacked site metadata and GET data-scope authorization
+- [x] Add site metadata projection and persistence for process_graph / simulation_input records
+- [x] Add tenant/project/site read-scope authorization for process_graph / simulation_input GET endpoints
+- [x] Update OpenAPI source and generated Compute client
+- [x] Extend focused HTTP coverage and security smoke coverage summary
+- [x] Update Compute API/migrations/security/docs context and change records
+- [x] Run focused tests, full Go tests, client generation/typecheck, dependency/security validation, commit, and push
+
+## Plan
+
+- Treat this as a narrow static-token object data-scope slice, not full RBAC/ABAC or all-object policy enforcement.
+- Reuse existing metadata fields from `process_graph.v1.metadata` and `simulation_input.v1.metadata`; add `site_id` persistence because site-scoped tokens cannot otherwise be verified.
+- Enforce GET read-scope against stored record tenant/project/site metadata; global tokens retain existing read behavior.
+- Preserve registry idempotency, payload hashes, contracts, endpoint paths, and write behavior.
+
+## Review
+
+- Added `site_id` projection from `process_graph.v1.metadata` and `simulation_input.v1.metadata` into domain record data, compute records, PostgreSQL persistence, OpenAPI, and the generated Compute TypeScript client.
+- Added migration `0012_simulation_registry_site_scope` to add reversible `site_id` columns to `process_graphs` and `simulation_inputs`.
+- `GET /api/v1/process-graphs/{process_graph_id}` and `GET /api/v1/simulation-inputs/{simulation_input_id}` now deny scoped tokens when stored tenant/project/site metadata does not match.
+- Added `TestHTTPSimulationRegistryTenantProjectSiteScope` and included it in `scripts/ci/security-smoke.ps1`; security evidence now names registry read-scope coverage.
+- Updated Compute API, domain simulation, migrations, security, operations, architecture, Certainty/Elegance docs, and `.ai/changes`.
+- Validation passed: focused registry read-scope test, focused domain/HTTP scope tests, full `cd apps\api; go test ./...`, `cd frontend; npx tsc --noEmit`, security smoke, dependency check, OpenAPI JSON parse, docs/rebuild P0/P1/P2/schema scan, PowerShell parse checks, and final diff-check with LF/CRLF warnings only.
+- Remaining scope: full object-level data scope for draft confirmation/model catalog/global objects, OIDC/JWKS, RBAC/ABAC, all-mutation audit, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next benchmark run read-scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API auth/data-scope, model governance benchmark runs, OpenAPI generated client, security smoke, and recent change records

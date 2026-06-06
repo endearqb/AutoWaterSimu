@@ -65,6 +65,7 @@ func (svc *SimulationInputService) simulationInputRecord(input map[string]any, d
 		RequestedBy:         recordData.RequestedBy,
 		TenantID:            recordData.TenantID,
 		ProjectID:           recordData.ProjectID,
+		SiteID:              recordData.SiteID,
 		Metadata:            recordData.Metadata,
 		CreatedAt:           recordData.CreatedAt,
 	}, nil
