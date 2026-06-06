@@ -173,11 +173,13 @@ just browser-smoke
 just live-backend-browser-smoke
 just current-flow-live-smoke
 just desktop-package-smoke
+just desktop-release-artifacts-smoke
 just golden-scenarios
 just golden-scenarios-refresh
 just golden-scenarios-refresh-integration
 just golden-scenarios-refresh-live
 just golden-scenarios-refresh-current-flow-live
+just golden-scenarios-refresh-desktop-release
 just release-artifact-download-smoke
 ```
 
@@ -195,6 +197,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke

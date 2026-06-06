@@ -46,6 +46,7 @@
 
 本目录对本地 PowerShell 和 `.github/workflows/next-release-gates.yml` 暴露 release gate 入口。
 `verify-release-artifact-download.ps1` 也作为 workflow 下载 artifact 后的内容校验入口。
+`scripts/ci/desktop-release-artifacts-smoke.ps1` 会先构建真实 unsigned Desktop sidecar/installer artifact，再调用本目录 release gate 和下载校验器生成本地 release evidence。
 
 ## 5. 依赖边界
 
@@ -83,6 +84,12 @@ $env:COMPUTE_API_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:
 
 ```powershell
 .\scripts\release\next-release-gates.ps1 -Mode release -SidecarPath <path-to-sidecar.exe> -InstallerPath <path-to-installer.exe>
+```
+
+本地真实 unsigned Desktop release artifact smoke 可直接运行：
+
+```powershell
+.\scripts\ci\desktop-release-artifacts-smoke.ps1
 ```
 
 ## 7. AI 操作提示

@@ -52,6 +52,14 @@ It writes `tmp/ci-evidence/desktop-package-smoke.json` and currently proves:
 
 This evidence is local/opt-in. It does not prove packaged-worker exe startup, NSIS installer behavior, code signing, auto update, or hosted workflow status.
 
+The heavier local unsigned release artifact smoke entry is:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
+```
+
+It builds a PyInstaller one-folder sidecar, runs sidecar CLI smoke, runs the Rust packaged-worker runtime smoke, builds an unsigned NSIS installer, runs silent install plus installed sidecar smoke, verifies a local unsigned artifact bundle, and runs `next-release-gates.ps1 -Mode release` with real sidecar/installer paths. This still does not prove GitHub hosted artifact upload/download round trip, code signing, auto update, or publication.
+
 ## Release Boundary
 
 P0 release artifacts remain unsigned packaged-worker and NSIS installer artifacts with smoke evidence. Signing, auto update, Microsoft Store packaging, and automated GitHub Release publication remain post-P0 and are governed by `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`.
@@ -62,5 +70,5 @@ Release artifact smoke commands live under `apps/desktop/scripts/` and require e
 
 - No generated Rust DTOs are committed for Desktop contracts.
 - `desktop-package-smoke.ps1` is not yet a hosted workflow.
-- Packaged-worker exe, NSIS installer, and download verification remain release-evidence work.
+- GitHub hosted artifact upload/download round trip remains release-evidence work.
 - The Desktop offline golden scenario is only partially covered until packaged worker and hosted/package artifact evidence are connected.

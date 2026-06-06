@@ -1,3 +1,30 @@
+# 2026-06-06 AutoWaterSimu Next desktop release artifacts TODO
+
+- [x] Re-read README First context for Desktop packaging/scripts, Tauri runtime, release scripts, local-dev/current-state, and Certainty/Elegance plan
+- [x] Confirm next aligned gap: Desktop package smoke covered source-mode export/import, but packaged worker, NSIS installer, and release gate with real artifacts lacked a root local evidence lane
+- [x] Verify existing sidecar build/smoke, NSIS installer build/smoke, and release gate with real artifact paths can pass locally
+- [x] Add `scripts/ci/desktop-release-artifacts-smoke.ps1` to build unsigned sidecar/installer artifacts, run packaged-worker runtime smoke, run release gate `Mode=release`, and verify a local unsigned artifact bundle
+- [x] Add root `just desktop-release-artifacts-smoke` and `just golden-scenarios-refresh-desktop-release` entries
+- [x] Update root README, scripts READMEs, Desktop packaging/scripts README, release README, architecture current-state/local-dev/desktop-runtime, Certainty/Elegance plan, and change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Reuse existing Desktop packaging and smoke scripts; do not duplicate sidecar/installer business logic in the wrapper.
+- Keep generated sidecar, installer, release evidence, and local artifact bundle under `tmp/`.
+- Record this as local real unsigned artifact evidence only; GitHub hosted artifact upload/download, signing, auto update, and publication remain separate gaps.
+- Use `-SkipLong` for the nested release gate by default to keep the smoke bounded; allow `-RunLongReleaseGate` when full release gate build steps are explicitly desired.
+
+## Review
+
+- Added `scripts/ci/desktop-release-artifacts-smoke.ps1`.
+- Added `just desktop-release-artifacts-smoke` and `just golden-scenarios-refresh-desktop-release`.
+- The new script builds or reuses real unsigned Desktop artifacts, runs packaged sidecar smoke, Rust packaged-worker runtime smoke, NSIS installer smoke, `next-release-gates.ps1 -Mode release`, and local unsigned artifact bundle verification.
+- Updated root README, scripts READMEs, Desktop packaging/scripts README, release README, architecture current-state/local-dev/desktop-runtime, Certainty/Elegance plan, and `.ai/changes`.
+- Validation passed: PowerShell parse check, first full default script attempt produced passing sidecar and NSIS build/smoke evidence before the external 20-minute tool timeout, `scripts\ci\desktop-release-artifacts-smoke.ps1 -OutputDir tmp\desktop-packaging\local-release-20260606110553 -ReuseExistingArtifacts`, `scripts\ci\golden-scenarios.ps1`, `scripts\check-deps.ps1`, docs/rebuild P0/P1/P2/schema scan, and `git diff --check -- README.md Justfile scripts apps docs tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: clean-HEAD rerun after commit, GitHub hosted artifact upload/download round trip, hosted workflow green evidence, signing/auto update/publication, full legacy auth, all-object data scope, all-mutation audit, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next live backend hosted workflow TODO
 
 - [x] Re-read README First context for `.github/workflows`, `scripts/ci`, current-state/local-dev, Certainty/Elegance plan, and the live backend browser smoke script

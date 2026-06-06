@@ -13,6 +13,7 @@
 - opt-in live backend browser smoke 验证。
 - opt-in current-flow live smoke 验证。
 - opt-in Desktop project package/support bundle smoke 验证。
+- opt-in Desktop unsigned release artifacts smoke 验证。
 - 8 条金标场景的现有 lane evidence 汇总，以及显式本地 evidence refresh 编排。
 - 输出机器可读 evidence 到 `tmp/ci-evidence/`。
 - 编排跨 dependency boundary、README path、registry-backed contracts、Go API、frontend 和 desktop 的快速检查。
@@ -21,7 +22,7 @@
 
 本目录不负责：
 
-- Release artifact build、installer smoke 或发布验证。
+- GitHub hosted artifact upload/download 或发布验证。
 - 需要真实 legacy backend session 的 authenticated frontend smoke。
 - 单个应用内部测试细节。
 - 修改 generated client 内容，除机械 codegen drift 检查外不手写生成物。
@@ -37,6 +38,7 @@
 | `live-backend-browser-smoke.ps1` | 启动 integration-backed Compute API/PostgreSQL/MinIO/worker job，再运行 Playwright 读取真实 job/result/evidence/ref，并写出 `tmp/ci-evidence/live-backend-browser-smoke.json` |
 | `current-flow-live-smoke.ps1` | 启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再运行 Playwright 从 UI 提交 current flow、等待真实 worker 完成、下载 evidence package 并解析 evidence ref，写出 `tmp/ci-evidence/current-flow-live-smoke.json` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
+| `desktop-release-artifacts-smoke.ps1` | 构建真实 PyInstaller sidecar 和 NSIS installer，运行 packaged worker runtime smoke、release gate `Mode=release` 与本地 unsigned artifact bundle verifier，并写出 `tmp/ci-evidence/desktop-release-artifacts-smoke.json` |
 | `golden-scenarios.ps1` | 读取现有 CI/release evidence，汇总 8 条金标场景的 `partial` / `missing` / `blocked` 状态；可用 `-RefreshLocalEvidence` 先刷新非 Docker 本地 evidence lanes，并写出 `tmp/ci-evidence/golden-scenarios.json` |
 
 ## 3. 维护约定
@@ -63,6 +65,9 @@
 
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
 
+本目录对 `Justfile` 暴露 `desktop-release-artifacts-smoke` opt-in 重型入口；它构建真实 PyInstaller one-folder sidecar 和 unsigned NSIS installer，运行 sidecar smoke、Rust packaged-worker runtime smoke、installer smoke、`next-release-gates.ps1 -Mode release` 与本地 unsigned artifact bundle verifier。它不覆盖 GitHub hosted artifact upload/download round trip、signing、auto update 或 GitHub Release publication。
+该脚本支持 `-ReuseExistingArtifacts -OutputDir <dir>` 从已有 sidecar/installer manifest 与 smoke evidence 继续后续 release gate / bundle verifier 步骤，适合长构建被外部超时中断后的恢复验证。
+
 本目录对 `Justfile` 暴露 `golden-scenarios` 本地汇总入口；它只解释已有 lane evidence，不启动 Docker、浏览器或 release build，也不表示 8 条金标场景已经完成。`golden-scenarios-refresh` 调用同一脚本的 `-RefreshLocalEvidence` 模式，会先刷新非 Docker 本地 lanes：`pr-fast`、browser smoke、security smoke、Desktop package smoke、release artifact download smoke 和 merge release gate `-SkipLong`。`golden-scenarios-refresh-integration` 会额外传入 `-RunIntegrationSmoke`，通过 `integration-smoke.ps1 -StartCompose` 启动 Docker-backed PostgreSQL + MinIO + Compute API + worker smoke。Release gate 只有在 commit SHA 匹配当前 HEAD 时才作为 current source；PostgreSQL migration 场景还要求 release gate 内存在并通过 `postgres migration up/down smoke` step，或存在 current integration smoke evidence。
 `golden-scenarios-refresh-live` 会传入 `-RunLiveBackendBrowserSmoke`，刷新 live backend browser lane；该 lane 会同步刷新 integration evidence，因为它需要先准备真实 succeeded job。
 `golden-scenarios-refresh-current-flow-live` 会传入 `-RunCurrentFlowLiveSmoke`，刷新 current-flow live lane；该 lane 会启动隔离 live Compute stack 和本地主机 worker loop，属于显式 opt-in 重型验证。
@@ -87,6 +92,8 @@ Live backend browser smoke 可以调用 `docker compose`、`integration-smoke.ps
 
 Current-flow live smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker loop；它不应替代完整 legacy authenticated session 或 release artifact evidence。
 
+Desktop release artifacts smoke 可以调用 Desktop packaging scripts、PyInstaller、Tauri/NSIS、Cargo、release gate 和本地 artifact verifier；它不应提交生成的 sidecar、installer、release evidence 或下载 bundle。
+
 ## 6. 测试与验证
 
 修改本目录后建议运行：
@@ -99,6 +106,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke

@@ -20,11 +20,13 @@ just browser-smoke
 just live-backend-browser-smoke
 just current-flow-live-smoke
 just desktop-package-smoke
+just desktop-release-artifacts-smoke
 just golden-scenarios
 just golden-scenarios-refresh
 just golden-scenarios-refresh-integration
 just golden-scenarios-refresh-live
 just golden-scenarios-refresh-current-flow-live
+just golden-scenarios-refresh-desktop-release
 ```
 
 If `just` is not installed, run the underlying PowerShell scripts directly:
@@ -42,6 +44,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke
@@ -73,11 +76,13 @@ cd frontend; npx tsc --noEmit
 | `just live-backend-browser-smoke` | Starts a real integration-backed Compute API job, runs Playwright against the live API without Compute route mocks, and writes `tmp/ci-evidence/live-backend-browser-smoke.json` |
 | `just current-flow-live-smoke` | Starts a live Compute stack plus worker loop, submits current flow through the browser, verifies worker completion/evidence/ref, and writes `tmp/ci-evidence/current-flow-live-smoke.json` |
 | `just desktop-package-smoke` | Runs Desktop package/support bundle contract fixtures, Rust clean-runtime round-trip, support bundle redaction, Desktop typecheck, and writes `tmp/ci-evidence/desktop-package-smoke.json` |
+| `just desktop-release-artifacts-smoke` | Builds real unsigned sidecar/NSIS artifacts, runs packaged worker runtime smoke, release gate `Mode=release`, local artifact verifier, and writes `tmp/ci-evidence/desktop-release-artifacts-smoke.json` |
 | `just golden-scenarios` | Summarizes existing CI/release evidence against the 8 golden scenarios and writes `tmp/ci-evidence/golden-scenarios.json` |
 | `just golden-scenarios-refresh` | Refreshes non-Docker local evidence lanes, then writes the 8 golden scenario summary |
 | `just golden-scenarios-refresh-integration` | Refreshes non-Docker local evidence lanes, runs Docker-backed integration smoke, then writes the 8 golden scenario summary |
 | `just golden-scenarios-refresh-live` | Refreshes non-Docker local evidence lanes, runs live backend browser smoke, then writes the 8 golden scenario summary |
 | `just golden-scenarios-refresh-current-flow-live` | Refreshes non-Docker local evidence lanes, runs current-flow live smoke, then writes the 8 golden scenario summary |
+| `just golden-scenarios-refresh-desktop-release` | Runs the real unsigned Desktop release artifact smoke, then writes the 8 golden scenario summary from refreshed release evidence |
 | `just audit-compute-api` | Runs the Compute API Store/domain boundary audit |
 | `just check-ontology` | Validates Water Ontology object/action/link/policy registry consistency |
 | `just check-contracts` | Runs the registry-backed contract and Compute TS client drift gate |
@@ -96,7 +101,7 @@ cd frontend; npx tsc --noEmit
 - The current browser smoke proves Web route orchestration with mock-backed Playwright for Compute Jobs/current-flow, contract validation, Model governance, and lifecycle retention. It does not prove a live Postgres/MinIO/worker backend or an authenticated legacy backend session.
 - The live backend browser smoke starts the integration-backed Compute API/PostgreSQL/MinIO/worker path, keeps the API up, and runs Playwright against Compute Jobs without Compute API route mocks. `.github/workflows/next-live-backend-browser-smoke.yml` can run the same lane manually or through `workflow_call`. It proves job/result/evidence/ref reads from the live Compute API, while still mocking only legacy `/api/v1/users/me`; it does not prove a full legacy authenticated backend session or UI current-flow submit to live worker in one browser scenario, and a hosted green run must still be checked in GitHub Actions before claiming hosted evidence.
 - The current-flow live smoke starts an isolated Compute API/PostgreSQL/MinIO stack plus a bounded host Python worker loop, submits current flow from the browser, waits for the real worker result, and verifies evidence package download plus evidence ref resolution. `.github/workflows/next-current-flow-live-smoke.yml` can run the same lane manually or through `workflow_call`; it still mocks only legacy `/api/v1/users/me`, and a hosted green run must still be checked in GitHub Actions before claiming hosted evidence.
-- The current Desktop package smoke proves schema fixtures, source-mode runtime clean export/import, checksum-verified restore, metadata restoration, artifact/model_run refs, support bundle redaction, and Desktop React wrapper typechecking. It does not prove packaged worker exe, NSIS installer, or hosted release artifact behavior.
+- The current Desktop package smoke proves schema fixtures, source-mode runtime clean export/import, checksum-verified restore, metadata restoration, artifact/model_run refs, support bundle redaction, and Desktop React wrapper typechecking. `desktop-release-artifacts-smoke.ps1` is the heavier local unsigned release artifact lane: it builds the PyInstaller sidecar and NSIS installer, runs packaged worker CLI/runtime/installed-sidecar smoke, verifies a local unsigned artifact bundle, and runs release gate `Mode=release` with real artifact paths. It does not prove GitHub hosted artifact upload/download round trip, signing, auto update, or publication.
 - The current golden scenario summary reads existing lane evidence and reports scenario-level `partial` / `missing` / `blocked` status. `just golden-scenarios-refresh` first runs the non-Docker local lanes (`pr-fast`, browser, security, Desktop package, release artifact download smoke, and merge release gate with `-SkipLong`) and records refresh step results in `golden-scenarios.json`; it is still an evidence map, not a replacement for live scenario execution. PostgreSQL migration coverage is counted only from current integration smoke evidence or a current release gate that actually ran the `postgres migration up/down smoke` step. Docker integration is explicit through `just golden-scenarios-refresh-integration` or `scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke`.
 - Live browser backend coverage is explicit through `just golden-scenarios-refresh-live` or `scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunLiveBackendBrowserSmoke`; this also refreshes integration evidence because the browser lane needs a real succeeded job.
 - Current-flow live coverage is explicit through `just golden-scenarios-refresh-current-flow-live` or `scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunCurrentFlowLiveSmoke`.

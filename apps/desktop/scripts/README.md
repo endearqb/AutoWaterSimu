@@ -32,7 +32,7 @@
 
 ## 4. 对外接口
 
-供 `scripts/release/next-release-gates.ps1`、本地 PowerShell 和 GitHub Actions 调用。
+供 `scripts/release/next-release-gates.ps1`、`scripts/ci/desktop-release-artifacts-smoke.ps1`、本地 PowerShell 和 GitHub Actions 调用。
 
 ## 5. 依赖边界
 

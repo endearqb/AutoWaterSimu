@@ -324,7 +324,7 @@ desktop_project_package.v1
 desktop_support_bundle.v1
 ```
 
-当前已落地 `contracts/desktop_project_package.v1.json` 与 `contracts/desktop_support_bundle.v1.json`，并登记 registry/codegen manifest。Desktop 新导出使用 `desktop_project_package.v1`，导入保留 legacy `desktop_project_export.v1` 兼容；`scripts/ci/desktop-package-smoke.ps1` 已提供本地 opt-in package evidence。完整 hosted package evidence、packaged worker/installer 证据和 Desktop offline golden scenario 仍需后续补齐。
+当前已落地 `contracts/desktop_project_package.v1.json` 与 `contracts/desktop_support_bundle.v1.json`，并登记 registry/codegen manifest。Desktop 新导出使用 `desktop_project_package.v1`，导入保留 legacy `desktop_project_export.v1` 兼容；`scripts/ci/desktop-package-smoke.ps1` 已提供本地 opt-in package evidence；`scripts/ci/desktop-release-artifacts-smoke.ps1` 已提供本地真实 unsigned sidecar / NSIS installer / packaged worker runtime / release gate `Mode=release` / 本地 artifact bundle verifier evidence。完整 hosted package evidence、GitHub artifact upload/download round trip 和 Desktop offline golden scenario 仍需后续补齐。
 
 验证：
 
@@ -486,10 +486,10 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [ ] `release-evidence`
 - [x] `nightly`（scheduled/manual orchestrator 已接入 pr-fast、integration、browser、live backend browser、current-flow live、security、Desktop package smoke；真实 hosted nightly green 尚未完成）
 - [x] Postgres + MinIO + Worker integration smoke
-- [x] Release artifact download verification（fixture-backed verifier smoke 已落地并接入 `next-release-gates.yml`；真实 hosted unsigned artifact round trip 尚未完成）
+- [x] Release artifact download verification（fixture-backed verifier smoke 和本地真实 unsigned artifact bundle verifier 已落地并接入 release evidence；真实 hosted unsigned artifact round trip 尚未完成）
 - [ ] Security scope/audit scenario（token guard / scope denial / revocation / selected mutation audit smoke / job-artifact tenant/project/site read-scope 与 hosted/manual workflow 已落地；全对象 data scope 与 all-mutation audit 尚未完成）
-- [x] Desktop package export/import smoke（local opt-in；packaged worker / NSIS installer / hosted evidence 尚未完成）
-- [ ] 8 golden scenarios（已有 `scripts/ci/golden-scenarios.ps1` 本地 evidence 汇总、`-RefreshLocalEvidence` 非 Docker 本地 lane 刷新入口、`just golden-scenarios-refresh-integration` Docker integration 刷新入口、`just golden-scenarios-refresh-live` live backend browser read 刷新入口，以及 `just golden-scenarios-refresh-current-flow-live` current-flow live submit 刷新入口；仍未完成 hosted/release/legacy auth 等自动或半自动完整场景证明）
+- [x] Desktop package export/import smoke（local opt-in；packaged worker / NSIS installer / release gate with real artifacts 已有本地 evidence；hosted evidence 尚未完成）
+- [ ] 8 golden scenarios（已有 `scripts/ci/golden-scenarios.ps1` 本地 evidence 汇总、`-RefreshLocalEvidence` 非 Docker 本地 lane 刷新入口、`just golden-scenarios-refresh-integration` Docker integration 刷新入口、`just golden-scenarios-refresh-live` live backend browser read 刷新入口、`just golden-scenarios-refresh-current-flow-live` current-flow live submit 刷新入口，以及 `just golden-scenarios-refresh-desktop-release` 本地真实 unsigned Desktop release artifact 刷新入口；仍未完成 hosted/legacy auth 等自动或半自动完整场景证明）
 
 ### Go API Structure
 
