@@ -21,6 +21,12 @@ func filterForPrincipalDataScope(filter ListFilter, principal Principal) ListFil
 	return filter
 }
 
+func principalHasDataScope(principal Principal) bool {
+	return strings.TrimSpace(principal.TenantID) != "" ||
+		strings.TrimSpace(principal.ProjectID) != "" ||
+		strings.TrimSpace(principal.SiteID) != ""
+}
+
 func authorizeJobDataScope(principal Principal, job JobRecord) error {
 	tenantID := strings.TrimSpace(principal.TenantID)
 	projectID := strings.TrimSpace(principal.ProjectID)

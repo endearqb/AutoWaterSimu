@@ -1,3 +1,30 @@
+# 2026-06-06 AutoWaterSimu Next model run read-scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API auth/data-scope, model run HTTP handlers, security smoke, and architecture docs
+- [x] Confirm next aligned gap: model_run HTTP read endpoints checked `job:read` scope but did not constrain tenant/project/site by the associated job
+- [x] Add model_run get data-scope authorization via stored `model_run.job_id`
+- [x] Require scoped tokens to provide an authorized `job_id` for `/api/v1/model-runs` list to avoid cross-job enumeration
+- [x] Extend focused HTTP coverage and security smoke coverage summary
+- [x] Update Compute API, scripts/ci, architecture/current-state/local-dev, Certainty/Elegance plan, and change records
+- [x] Run full validation
+- [x] Commit and push
+
+## Plan
+
+- Treat this as a narrow static-token data-scope slice, not full RBAC/ABAC or all-object policy enforcement.
+- Keep service/store list pagination unchanged for global tokens; scoped tokens must use `job_id` so the HTTP layer can authorize against `JobRecord`.
+- Preserve OpenAPI, contracts, generated clients, database schema, model_run persistence, and model governance service behavior.
+
+## Review
+
+- Added `principalHasDataScope` and model_run HTTP authorization checks.
+- `GET /api/v1/model-runs/{model_run_id}` now parses the stored model_run `job_id` and authorizes the associated job context for scoped tokens.
+- `GET /api/v1/model-runs` now requires scoped tokens to include an authorized `job_id`; global tokens retain unfiltered list behavior.
+- Added `TestHTTPModelRunTenantProjectSiteScope` covering allowed same-scope get/list, cross-scope denial, scoped unfiltered list denial, and global list behavior.
+- Extended `scripts/ci/security-smoke.ps1` coverage and updated README/current-state/Certainty-Elegance plan wording.
+- Validation passed: focused model_run scope test, full `cd apps\api; go test ./...`, security smoke with updated data-scope coverage summary, dependency check, docs/rebuild P0/P1/P2/schema scan, and diff-check with LF/CRLF warnings only.
+- Remaining scope: full object-level data scope for all resources, model catalog/global object policy, OIDC/JWKS, RBAC/ABAC, all-mutation audit, hosted security workflow green evidence, and complete security golden scenario remain future work.
+
 # 2026-06-06 AutoWaterSimu Next result explanation audit events TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API result explanation workflow, audit helper, security smoke, and architecture docs
