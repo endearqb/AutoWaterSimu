@@ -20,7 +20,7 @@ The wider `Service` still owns package-level construction and public compatibili
 
 ## Package Boundary
 
-`apps/api/internal/platform/audit` owns selected mutation audit envelope field shape, HTTP request audit context projection, and event JSON attachment. Compute keeps selected audit call sites and persistence decisions for job-scoped `compute_job_events` and global `mutation_audit_events`: job create/queue, draft promotion / benchmark schedule-run job creation, artifact retention delete/archive, result explanation submit/review/publish, model catalog registration, default parameter set status/promote, benchmark_run registration, process_graph registration, and simulation_input registration. `apps/api/internal/platform/auth` owns static bearer token config parsing, principal parsing, scope/revocation checks, and platform auth errors; `cmd/compute-api` may provide the same JSON shape from inline `COMPUTE_API_TOKENS_JSON` or a mounted `COMPUTE_API_TOKENS_FILE`. Compute maps auth errors back to `contract_error.v1` responses. `apps/api/internal/platform/config` owns the command/runtime `Config` shape used by `cmd/compute-api` for environment-derived wiring. `apps/api/internal/platform/contracts` owns JSON Schema loading, schema_version-to-file mapping, reusable schema validation, and the base contract document validation response; compute keeps DTO decoding, `contract_error.v1` mapping, and draft confirmation response attachment around it. `apps/api/internal/platform/httpx` owns platform HTTP helpers that do not hold compute domain state:
+`apps/api/internal/platform/audit` owns selected mutation audit envelope field shape, HTTP request audit context projection, and event JSON attachment. Compute keeps selected audit call sites and persistence decisions for job-scoped `compute_job_events` and global `mutation_audit_events`: job create/queue, draft confirmation record, draft promotion / benchmark schedule-run job creation, artifact retention delete/archive, result explanation submit/review/publish, model catalog registration, default parameter set status/promote, benchmark_run registration, process_graph registration, and simulation_input registration. `apps/api/internal/platform/auth` owns static bearer token config parsing, principal parsing, scope/revocation checks, and platform auth errors; `cmd/compute-api` may provide the same JSON shape from inline `COMPUTE_API_TOKENS_JSON` or a mounted `COMPUTE_API_TOKENS_FILE`. Compute maps auth errors back to `contract_error.v1` responses. `apps/api/internal/platform/config` owns the command/runtime `Config` shape used by `cmd/compute-api` for environment-derived wiring. `apps/api/internal/platform/contracts` owns JSON Schema loading, schema_version-to-file mapping, reusable schema validation, and the base contract document validation response; compute keeps DTO decoding, `contract_error.v1` mapping, and draft confirmation response attachment around it. `apps/api/internal/platform/httpx` owns platform HTTP helpers that do not hold compute domain state:
 
 - JSON response writing
 - loopback-only local browser CORS
@@ -28,6 +28,8 @@ The wider `Service` still owns package-level construction and public compatibili
 `apps/api/internal/platform/metrics` owns the metrics snapshot shape, read-only metrics collector over a narrow snapshot store, and Prometheus exposition text rendering. Compute still owns the concrete MemoryStore/PostgresStore count queries because they depend on metadata storage.
 
 `apps/api/internal/domain/agent` owns stable `draft_confirmation.v1` envelope cross-field validation, stable draft confirmation record data projection, stable `constraint_application_plan.v1` advisory-only plan assembly, including no-job/no-target-mutation/external-production-approval flags and warnings, and stable `agent_scenario_draft.v1.proposed_request` extraction for explicit simulation-check promotion. `apps/api/internal/compute` uses it from `DraftWorkflowService.ConfirmDraftDocument`, `ConstraintApplicationPlan`, and `PromoteDraftConfirmationToSimulationCheck` while schema file lookup, JSON Schema validation, compute record mapping, confirmation lookup, approved/schema gating, stored payload decoding, JSON marshaling, simulation-check job creation, HTTP behavior, and persistence remain in the compatibility package.
+
+Current draft confirmation delta: `domain/agent` also projects optional `site_id` from confirmation metadata, while compute keeps HTTP data-scope checks and selected audit persistence. `POST /contracts/confirm-draft` writes compact `draft_confirmation.recorded` events in `mutation_audit_events` on first insert only; confirmation get, constraint plan, and promotion handlers now constrain scoped tokens to stored tenant/project/site metadata.
 
 `apps/api/internal/domain/artifacts` owns stable artifact retention policy constants, metadata parsing for `retention_policy` / `retain_until`, retention candidate policy checks, and retention sweep action planning. `apps/api/internal/compute` uses it from artifact upload, MemoryStore retention candidate selection, in-memory metrics candidate counting, and retention sweep action selection while artifact object storage, archive execution, metadata persistence, audit envelopes, and HTTP behavior remain in the compatibility package.
 
@@ -98,7 +100,8 @@ Selected files from the latest audit:
 | `simulation_inputs_registry.go` | 72 | simulation input registration/read and compute record mapping |
 | `simulation_inputs_audit.go` | 89 | compact process_graph and simulation_input registration mutation audit construction |
 | `simulation_inputs.go` | 33 | `SimulationInputService` struct and constructor wiring |
-| `draft_workflows_confirmations.go` | 106 | draft confirmation validation, persistence, readback, and compute record mapping |
+| `draft_workflows_confirmations.go` | 102 | draft confirmation validation, persistence, readback, and compute record mapping |
+| `draft_workflows_audit.go` | 82 | compact draft confirmation mutation audit construction |
 | `draft_workflows_constraints.go` | 43 | approved constraint draft advisory application plan workflow |
 | `draft_workflows_promotion.go` | 43 | approved Agent draft explicit simulation-check promotion workflow |
 | `draft_workflows.go` | 25 | `DraftWorkflowService` struct and constructor wiring |
@@ -134,7 +137,7 @@ Selected files from the latest audit:
 | `http_jobs.go` | 258 | compute job HTTP handlers, job subroutes, list filter, and job data-scope helper |
 | `http_simulation.go` | 148 | simulation input, process graph, and simulation-check HTTP handlers/helpers |
 | `http_workers.go` | 124 | worker register/claim/heartbeat/artifact/completion HTTP handlers/helpers |
-| `http_contracts.go` | 103 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
+| `http_contracts.go` | 123 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
 | `http_artifacts.go` | 86 | artifact download and retention sweep HTTP handlers/helpers |
 | `http.go` | 63 | server entrypoint, route registration, health/ready routes, and panic recovery |
 | `http_metrics.go` | 20 | Prometheus metrics HTTP handler |
@@ -226,7 +229,7 @@ The public `Service.RegisterSimulationInput`, `Service.GetSimulationInput`, `Ser
 
 `simulation_inputs.go` now keeps only the service struct, replay store interface, and constructor wiring. Same-package workflow methods are grouped into `simulation_inputs_registry.go`, `simulation_inputs_process_graphs.go`, and `simulation_inputs_resolution.go`. Process graph and simulation input registry records now persist optional `site_id` alongside existing tenant/project metadata, expose it through OpenAPI/generated client record types, and enforce tenant/project/site read-scope on GET handlers. Auth scopes, contracts, store interfaces, process graph validation/projection behavior, idempotency, and model-run replay behavior are unchanged.
 
-`DraftWorkflowService` is the third narrowed slice. Its constructor depends on:
+`DraftWorkflowService` is the third narrowed slice. Draft confirmation records now persist optional `site_id` alongside existing tenant/project metadata, expose it through OpenAPI/generated client record types, enforce tenant/project/site read-scope on confirmation read, constraint application plan, and promotion handlers, and write compact `draft_confirmation.recorded` audit events in `mutation_audit_events` only for first inserts. Its constructor depends on:
 
 - `DraftConfirmationStore`
 - `ContractValidator`
@@ -235,7 +238,7 @@ The public `Service.RegisterSimulationInput`, `Service.GetSimulationInput`, `Ser
 
 The public `Service.ConfirmDraftDocument`, `Service.GetDraftConfirmation`, `Service.ConstraintApplicationPlan`, and `Service.PromoteDraftConfirmationToSimulationCheck` methods remain stable and delegate to this narrower service. Promotion still reuses the existing simulation-check creation path after validating an approved Agent scenario draft.
 
-`draft_workflows.go` now keeps only the service struct, constructor, store dependency, validator, clock, and simulation-check callback wiring. Same-package workflow methods are grouped into `draft_workflows_confirmations.go`, `draft_workflows_constraints.go`, and `draft_workflows_promotion.go`. HTTP handlers, OpenAPI, auth scopes, contracts, database schema, generated clients, store interfaces, confirmation persistence/idempotency, advisory constraint plan behavior, and explicit promotion behavior are unchanged.
+`draft_workflows.go` now keeps only the service struct, constructor, store dependency, validator, clock, and simulation-check callback wiring. Same-package workflow methods are grouped into `draft_workflows_confirmations.go`, `draft_workflows_audit.go`, `draft_workflows_constraints.go`, and `draft_workflows_promotion.go`. Auth scopes, contracts, confirmation persistence/idempotency, advisory constraint plan behavior, and explicit promotion behavior are unchanged except for the scope checks and compact audit described above.
 
 `apps/api/internal/domain/agent` owns stable draft confirmation / Agent / constraint draft helpers:
 
@@ -245,7 +248,7 @@ The public `Service.ConfirmDraftDocument`, `Service.GetDraftConfirmation`, `Serv
 - `ConstraintApplicationPlan`
 - `ProposedSimulationRequestFromDraft`
 
-Compute uses this package for draft confirmation envelope cross-field validation before compute applies schema file lookup and embedded draft JSON Schema validation, for draft confirmation record data projection before compute maps into `DraftConfirmationRecord` and persists it, for advisory constraint application plan assembly after it loads an approved `constraint_draft.v1` confirmation and applies schema validation, and for proposed simulation request extraction after it loads an approved `agent_scenario_draft.v1` confirmation. Draft confirmation compute DTO mapping/persistence, schema file lookup, JSON Schema validation, JSON marshaling, simulation-check job creation, HTTP mapping, and store access have not moved yet.
+Compute uses this package for draft confirmation envelope cross-field validation before compute applies schema file lookup and embedded draft JSON Schema validation, for draft confirmation record data projection before compute maps into `DraftConfirmationRecord` and persists it, for advisory constraint application plan assembly after it loads an approved `constraint_draft.v1` confirmation and applies schema validation, and for proposed simulation request extraction after it loads an approved `agent_scenario_draft.v1` confirmation. Draft confirmation compute DTO mapping/persistence, schema file lookup, JSON Schema validation, JSON marshaling, simulation-check job creation, HTTP mapping/data-scope checks, selected audit call sites, and store access have not moved yet.
 
 `ResultExplanationService` is the fourth narrowed slice. Its constructor depends on:
 

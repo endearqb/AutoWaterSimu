@@ -43,7 +43,7 @@ func (server *Server) confirmDraft(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, ValidationError("read request body failed"))
 		return
 	}
-	response, err := server.service.ConfirmDraftDocument(r.Context(), bytes, "compute-api", principal.Name)
+	response, err := server.service.ConfirmDraftDocument(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -60,12 +60,17 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 	}
 	confirmationID := parts[0]
 	if len(parts) == 1 && r.Method == http.MethodGet {
-		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+		principal, err := server.auth.Principal(r, "job:read")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
 		record, err := server.service.GetDraftConfirmation(r.Context(), confirmationID)
 		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		if err := authorizeRecordDataScope(*principal, "draft confirmation", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -78,6 +83,15 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 			WriteError(w, err)
 			return
 		}
+		record, err := server.service.GetDraftConfirmation(r.Context(), confirmationID)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		if err := authorizeRecordDataScope(*principal, "draft confirmation", record.TenantID, record.ProjectID, record.SiteID); err != nil {
+			WriteError(w, err)
+			return
+		}
 		snapshot, status, err := server.service.PromoteDraftConfirmationToSimulationCheck(withAuditPrincipal(r.Context(), *principal, r), confirmationID)
 		if err != nil {
 			WriteError(w, err)
@@ -87,7 +101,17 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if len(parts) == 2 && parts[1] == "constraint-application-plan" && r.Method == http.MethodGet {
-		if _, err := server.auth.Principal(r, "job:read"); err != nil {
+		principal, err := server.auth.Principal(r, "job:read")
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		record, err := server.service.GetDraftConfirmation(r.Context(), confirmationID)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		if err := authorizeRecordDataScope(*principal, "draft confirmation", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 			WriteError(w, err)
 			return
 		}

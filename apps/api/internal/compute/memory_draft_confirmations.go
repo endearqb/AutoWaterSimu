@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-func (store *MemoryStore) UpsertDraftConfirmation(_ context.Context, record DraftConfirmationRecord) (bool, error) {
+func (store *MemoryStore) UpsertDraftConfirmation(_ context.Context, record DraftConfirmationRecord, audit *MutationAuditRecord) (bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	existing, ok := store.confirmations[record.ConfirmationID]
@@ -18,6 +18,9 @@ func (store *MemoryStore) UpsertDraftConfirmation(_ context.Context, record Draf
 	record.Payload = append(json.RawMessage(nil), record.Payload...)
 	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
 	store.confirmations[record.ConfirmationID] = record
+	if audit != nil {
+		store.appendMutationAuditLocked(*audit)
+	}
 	return true, nil
 }
 

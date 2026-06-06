@@ -7,7 +7,7 @@
 本目录负责：
 
 - `draft_confirmation.v1` envelope 的稳定跨字段校验规则。
-- `draft_confirmation.v1` 确认记录的稳定字段投影、metadata 默认值、payload hash 和 `confirmed_at` 解析规则。
+- `draft_confirmation.v1` 确认记录的稳定字段投影、metadata 默认值、tenant/project/site metadata 提取、payload hash 和 `confirmed_at` 解析规则。
 - `constraint_application_plan.v1` 的 advisory-only 计划组装规则。
 - 约束草案应用计划的稳定安全不变量：不创建 job、不修改 target、需要外部 production approval。
 - `agent_scenario_draft.v1.proposed_request` 的稳定提取规则，供显式 simulation-check promotion 使用。

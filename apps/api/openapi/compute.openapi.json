@@ -751,6 +751,7 @@
           "requested_by": { "type": "string" },
           "tenant_id": { "type": "string" },
           "project_id": { "type": "string" },
+          "site_id": { "type": "string" },
           "metadata": { "type": "object", "additionalProperties": true },
           "created_at": { "type": "string", "format": "date-time" }
         }

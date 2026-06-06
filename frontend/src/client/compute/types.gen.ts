@@ -203,6 +203,7 @@ export type DraftConfirmationRecord = {
     requested_by: string;
     tenant_id?: string;
     project_id?: string;
+    site_id?: string;
     metadata?: {
         [key: string]: unknown;
     };

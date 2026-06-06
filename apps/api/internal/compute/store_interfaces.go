@@ -89,7 +89,7 @@ type SimulationInputStore interface {
 }
 
 type DraftConfirmationStore interface {
-	UpsertDraftConfirmation(ctx context.Context, record DraftConfirmationRecord) (bool, error)
+	UpsertDraftConfirmation(ctx context.Context, record DraftConfirmationRecord, audit *MutationAuditRecord) (bool, error)
 	FindDraftConfirmation(ctx context.Context, confirmationID string) (*DraftConfirmationRecord, error)
 }
 

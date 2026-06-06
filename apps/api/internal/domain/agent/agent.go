@@ -54,6 +54,7 @@ type DraftConfirmationRecordData struct {
 	RequestedBy        string
 	TenantID           string
 	ProjectID          string
+	SiteID             string
 	Metadata           json.RawMessage
 	CreatedAt          time.Time
 }
@@ -181,6 +182,7 @@ func DraftConfirmationRecordDataFromDocument(input DraftConfirmationRecordDataIn
 		RequestedBy:        defaultString(stringValue(metadata, "requested_by"), defaultString(input.DefaultRequestedBy, "unknown")),
 		TenantID:           stringValue(metadata, "tenant_id"),
 		ProjectID:          stringValue(metadata, "project_id"),
+		SiteID:             stringValue(metadata, "site_id"),
 		Metadata:           metadataBytes,
 		CreatedAt:          input.CreatedAt,
 	}, nil

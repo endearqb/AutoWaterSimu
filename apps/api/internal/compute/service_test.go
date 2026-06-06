@@ -125,6 +125,47 @@ func scopedSimulationInputBytes(t *testing.T, simulationInputID, processGraphID,
 	return encodeMap(t, input)
 }
 
+func scopedDraftConfirmationBytes(t *testing.T, fixtureName, confirmationID, tenantID, projectID, siteID string) []byte {
+	t.Helper()
+	confirmationBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", fixtureName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	confirmation := decodeMap(t, confirmationBytes)
+	confirmation["confirmation_id"] = confirmationID
+	confirmation["decision_reason"] = "scope regression"
+	confirmation["metadata"] = map[string]any{
+		"source_system": "test",
+		"requested_by":  "draft-test",
+		"tenant_id":     tenantID,
+		"project_id":    projectID,
+		"site_id":       siteID,
+		"trace_id":      "trace_" + confirmationID,
+		"approval_ref":  "approval_" + confirmationID,
+	}
+	if draft := mapValue(confirmation, "draft"); draft != nil {
+		if proposed := mapValue(draft, "proposed_request"); proposed != nil {
+			proposed["request_id"] = "sim_req_" + confirmationID
+			metadata := mapValue(proposed, "metadata")
+			if metadata == nil {
+				metadata = map[string]any{}
+				proposed["metadata"] = metadata
+			}
+			metadata["trace_id"] = "trace_" + confirmationID
+			metadata["tenant_id"] = tenantID
+			metadata["project_id"] = projectID
+			metadata["site_id"] = siteID
+			externalRefs := mapValue(proposed, "external_refs")
+			if externalRefs == nil {
+				externalRefs = map[string]any{}
+				proposed["external_refs"] = externalRefs
+			}
+			externalRefs["site_id"] = siteID
+		}
+	}
+	return encodeMap(t, confirmation)
+}
+
 func decodeMap(t *testing.T, bytes []byte) map[string]any {
 	t.Helper()
 	var value map[string]any
@@ -1952,6 +1993,167 @@ func TestHTTPSimulationRegistryMutationAuditEvents(t *testing.T) {
 		generatedInputAudit["target_id"] != "si_pg_audit_alpha" ||
 		generatedInputAudit["action"] != "simulation_input.register" {
 		t.Fatalf("unexpected generated simulation input audit envelope: %#v", generatedInputAudit)
+	}
+}
+
+func TestHTTPDraftConfirmationTenantProjectSiteScope(t *testing.T) {
+	svc := testValidatedService(t)
+	auth, err := NewAuthenticator(`{"tokens":[
+		{"name":"scope-a","token":"scope-a-token","scopes":["job:create","job:read"],"tenant_id":"tenant_a","project_id":"project_a","site_id":"site_a"},
+		{"name":"global","token":"global-token","scopes":["job:create","job:read"]}
+	]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+
+	postConfirmation := func(body []byte, token string) ContractValidationResponse {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirm-draft", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("confirm draft failed: %d %s", rec.Code, rec.Body.String())
+		}
+		var response ContractValidationResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+			t.Fatal(err)
+		}
+		if !response.Valid || response.ConfirmationRecord == nil {
+			t.Fatalf("unexpected confirmation response: %#v", response)
+		}
+		return response
+	}
+	request := func(method, path, token string) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(method, path, nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+		return rec
+	}
+
+	agentAlpha := postConfirmation(scopedDraftConfirmationBytes(t, "material_balance_promotable.draft_confirmation.v1.json", "confirm_scope_alpha", "tenant_a", "project_a", "site_a"), "global-token")
+	if agentAlpha.ConfirmationRecord.TenantID != "tenant_a" ||
+		agentAlpha.ConfirmationRecord.ProjectID != "project_a" ||
+		agentAlpha.ConfirmationRecord.SiteID != "site_a" {
+		t.Fatalf("draft confirmation should persist tenant/project/site metadata, got %#v", agentAlpha.ConfirmationRecord)
+	}
+	postConfirmation(scopedDraftConfirmationBytes(t, "material_balance_promotable.draft_confirmation.v1.json", "confirm_scope_cross_site", "tenant_a", "project_a", "site_b"), "global-token")
+	postConfirmation(scopedDraftConfirmationBytes(t, "material_balance_constraint.draft_confirmation.v1.json", "confirm_scope_constraint_alpha", "tenant_a", "project_a", "site_a"), "global-token")
+	postConfirmation(scopedDraftConfirmationBytes(t, "material_balance_constraint.draft_confirmation.v1.json", "confirm_scope_constraint_cross_project", "tenant_a", "project_b", "site_a"), "global-token")
+
+	rec := request(http.MethodGet, "/api/v1/contracts/confirmations/confirm_scope_alpha", "scope-a-token")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("scope-matching draft confirmation read should pass: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = request(http.MethodGet, "/api/v1/contracts/confirmations/confirm_scope_cross_site", "scope-a-token")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("cross-site draft confirmation read should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+	rec = request(http.MethodGet, "/api/v1/contracts/confirmations/confirm_scope_cross_site", "global-token")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("global draft confirmation read should pass: %d %s", rec.Code, rec.Body.String())
+	}
+
+	rec = request(http.MethodGet, "/api/v1/contracts/confirmations/confirm_scope_constraint_alpha/constraint-application-plan", "scope-a-token")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("scope-matching constraint plan should pass: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = request(http.MethodGet, "/api/v1/contracts/confirmations/confirm_scope_constraint_cross_project/constraint-application-plan", "scope-a-token")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("cross-project constraint plan should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	rec = request(http.MethodPost, "/api/v1/contracts/confirmations/confirm_scope_alpha/promote-simulation-check", "scope-a-token")
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("scope-matching draft promotion should pass: %d %s", rec.Code, rec.Body.String())
+	}
+	var promoted JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &promoted); err != nil {
+		t.Fatal(err)
+	}
+	if promoted.Job.TenantID != "tenant_a" || promoted.Job.ProjectID != "project_a" || promoted.Job.SiteID != "site_a" {
+		t.Fatalf("promoted job should keep scoped metadata, got %#v", promoted.Job)
+	}
+	rec = request(http.MethodPost, "/api/v1/contracts/confirmations/confirm_scope_cross_site/promote-simulation-check", "scope-a-token")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("cross-site draft promotion should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestHTTPDraftConfirmationMutationAuditEvents(t *testing.T) {
+	svc := testValidatedService(t)
+	auth, err := NewAuthenticator(`{"tokens":[
+		{"name":"draft-auditor","token":"draft-audit-token","scopes":["job:create","job:read"]}
+	]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+	confirmationBytes := scopedDraftConfirmationBytes(t, "material_balance_promotable.draft_confirmation.v1.json", "confirm_audit_alpha", "tenant_audit", "project_audit", "site_audit")
+
+	post := func(expectedStatus int) ContractValidationResponse {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/contracts/confirm-draft", bytes.NewReader(confirmationBytes))
+		req.Header.Set("Authorization", "Bearer draft-audit-token")
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+		if rec.Code != expectedStatus {
+			t.Fatalf("confirm draft expected %d, got %d %s", expectedStatus, rec.Code, rec.Body.String())
+		}
+		var response ContractValidationResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+			t.Fatal(err)
+		}
+		if !response.Valid || response.ConfirmationRecord == nil {
+			t.Fatalf("unexpected confirmation response: %#v", response)
+		}
+		return response
+	}
+	response := post(http.StatusOK)
+	post(http.StatusOK)
+
+	auditEvents, _, auditTotal, err := svc.store.ListMutationAuditEvents(context.Background(), MutationAuditFilter{Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if auditTotal != 1 || len(auditEvents) != 1 {
+		t.Fatalf("expected one draft confirmation audit event, total=%d events=%#v", auditTotal, auditEvents)
+	}
+	event := auditEvents[0]
+	if event.EventType != draftConfirmationRecordedEvent ||
+		event.TargetObject != "DraftConfirmation" ||
+		event.TargetID != "confirm_audit_alpha" {
+		t.Fatalf("unexpected draft confirmation audit record: %#v", event)
+	}
+	payload := mutationAuditPayloadMap(t, event)
+	if _, ok := payload["payload"]; ok {
+		t.Fatalf("draft confirmation audit must not include full payload: %#v", payload)
+	}
+	audit := mutationAuditMap(t, event)
+	if audit["who"] != "draft-auditor" ||
+		audit["where"] != "POST /api/v1/contracts/confirm-draft" ||
+		audit["target_object"] != "DraftConfirmation" ||
+		audit["target_id"] != "confirm_audit_alpha" ||
+		audit["action"] != "draft_confirmation.record" ||
+		audit["reason"] != "scope regression" ||
+		audit["trace_id"] != "trace_confirm_audit_alpha" ||
+		audit["approval_ref"] != "approval_confirm_audit_alpha" {
+		t.Fatalf("unexpected draft confirmation audit envelope: %#v", audit)
+	}
+	after, ok := audit["after"].(map[string]any)
+	if !ok ||
+		after["confirmation_id"] != "confirm_audit_alpha" ||
+		after["payload_hash"] != response.ConfirmationRecord.PayloadHash ||
+		after["draft_schema_version"] != "agent_scenario_draft.v1" ||
+		after["decision"] != "approved" ||
+		after["decision_reason"] != "scope regression" ||
+		after["tenant_id"] != "tenant_audit" ||
+		after["project_id"] != "project_audit" ||
+		after["site_id"] != "site_audit" {
+		t.Fatalf("draft confirmation audit should include compact after state, got %#v", audit["after"])
 	}
 }
 

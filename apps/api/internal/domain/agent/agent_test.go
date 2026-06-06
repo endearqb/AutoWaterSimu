@@ -109,6 +109,7 @@ func TestDraftConfirmationRecordDataFromDocument(t *testing.T) {
 			"requested_by":  " user_1 ",
 			"tenant_id":     " tenant_1 ",
 			"project_id":    " project_1 ",
+			"site_id":       " site_1 ",
 		},
 	}
 	record, err := DraftConfirmationRecordDataFromDocument(DraftConfirmationRecordDataInput{
@@ -135,6 +136,7 @@ func TestDraftConfirmationRecordDataFromDocument(t *testing.T) {
 		record.RequestedBy != "user_1" ||
 		record.TenantID != "tenant_1" ||
 		record.ProjectID != "project_1" ||
+		record.SiteID != "site_1" ||
 		string(record.Metadata) == "null" ||
 		!record.CreatedAt.Equal(createdAt) {
 		t.Fatalf("unexpected record data: %#v", record)

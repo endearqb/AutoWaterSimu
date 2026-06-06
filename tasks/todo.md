@@ -1,3 +1,32 @@
+# 2026-06-06 AutoWaterSimu Next draft confirmation scope/audit TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API draft workflow, security smoke, migrations, OpenAPI, and recent change records
+- [x] Confirm next aligned gap: draft confirmation records carried tenant/project metadata but lacked site metadata, HTTP data-scope checks, and selected mutation audit
+- [x] Add `site_id` projection and persistence for draft confirmation records
+- [x] Enforce tenant/project/site read-scope on draft confirmation get, constraint plan, and promotion HTTP paths
+- [x] Add compact `draft_confirmation.recorded` selected mutation audit on first idempotent insert
+- [x] Update OpenAPI source and generated Compute client
+- [x] Extend focused HTTP/domain coverage and security smoke coverage summary
+- [x] Update Compute API/security/docs context and change records
+- [x] Run focused tests, full Go tests, client generation/typecheck, dependency/security validation, commit, and push
+
+## Plan
+
+- Treat this as a narrow static-token object data-scope plus selected all-mutation audit slice, not full RBAC/ABAC or all-mutation audit completion.
+- Reuse `draft_confirmation.v1.metadata` for tenant/project/site projection; add reversible PostgreSQL `site_id` persistence because site-scoped tokens cannot otherwise be checked.
+- Keep write behavior unchanged except compact audit on first insert; duplicate same-hash confirmation remains idempotent and does not append duplicate audit.
+- Keep contracts, endpoint paths, draft validation semantics, and explicit promotion behavior unchanged.
+
+## Review
+
+- Added `site_id` projection from `draft_confirmation.v1.metadata` into `domain/agent`, compute records, PostgreSQL persistence, OpenAPI, and generated Compute TypeScript record types.
+- `GET /api/v1/contracts/confirmations/{id}`, constraint application plan, and explicit simulation-check promotion now authorize scoped tokens against stored tenant/project/site metadata before returning or mutating derived state.
+- Added compact `draft_confirmation.recorded` mutation audit events in `mutation_audit_events`; Memory/Postgres write the event only on first successful insert, and duplicate same-hash confirmations remain idempotent without duplicate audit rows.
+- Added focused domain/HTTP regression coverage and included the scope/audit tests in `scripts/ci/security-smoke.ps1`.
+- Updated Compute API, domain agent, migrations, security smoke, architecture, Certainty/Elegance plan, and README context.
+- Validation passed: focused domain/HTTP tests, full `cd apps\api; go test ./...`, Compute client generation, `cd frontend; npx tsc --noEmit`, security smoke, Compute API boundary audit, dependency check, OpenAPI JSON parse, PowerShell parse check, docs/rebuild scan, and final diff-check with LF/CRLF warnings only.
+- Remaining scope: model catalog/global object data scope, OIDC/JWKS, RBAC/ABAC, complete all-mutation audit, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next simulation registry mutation audit TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API, platform audit, simulation registry stores/handlers, security smoke, and recent change records

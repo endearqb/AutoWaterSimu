@@ -48,7 +48,7 @@ func (svc *DraftWorkflowService) ConfirmDraftDocument(ctx context.Context, bytes
 		if err != nil {
 			return response, err
 		}
-		created, err := svc.confirmations.UpsertDraftConfirmation(ctx, record)
+		created, err := svc.confirmations.UpsertDraftConfirmation(ctx, record, svc.draftConfirmationRecordedAudit(ctx, record))
 		if err != nil {
 			return response, err
 		}
@@ -100,6 +100,7 @@ func (svc *DraftWorkflowService) draftConfirmationRecord(document map[string]any
 		RequestedBy:        recordData.RequestedBy,
 		TenantID:           recordData.TenantID,
 		ProjectID:          recordData.ProjectID,
+		SiteID:             recordData.SiteID,
 		Metadata:           recordData.Metadata,
 		CreatedAt:          recordData.CreatedAt,
 	}, nil
