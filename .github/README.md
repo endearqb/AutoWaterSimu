@@ -11,6 +11,7 @@
 - AutoWaterSimu Next merge/release gate CI 入口。
 - Manual dispatch 下的 Desktop project package/support bundle smoke evidence 编排。
 - Manual dispatch 下的 mock-backed browser smoke evidence 编排。
+- Manual dispatch / reusable 下的 live backend browser smoke evidence 编排。
 - Manual dispatch / reusable 下的 current-flow live smoke evidence 编排。
 - Manual dispatch / reusable 下的 security smoke evidence 编排。
 - Scheduled / manual nightly evidence 编排。
