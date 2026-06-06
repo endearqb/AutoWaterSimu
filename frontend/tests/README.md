@@ -26,6 +26,7 @@
 | `peterson-matrix-workbook.test.ts` | workbook helper test |
 | `compute-jobs-current-flow.spec.ts` | Mock-backed Compute Jobs current-flow submission, result/readiness, evidence package download, and evidence ref lookup smoke |
 | `compute-jobs-live-backend.spec.ts` | Live Compute API browser read smoke for an integration-prepared job/result/evidence/ref |
+| `compute-jobs-current-flow-live.spec.ts` | Live Compute API current-flow submit smoke with a real worker completion, evidence package download, and evidence ref lookup |
 | `contract-validation.spec.ts` | Mock-backed Compute Jobs contract validation panel smoke |
 | `model-governance.spec.ts` | Mock-backed Model governance catalog snapshot history smoke |
 | `compute-lifecycle.spec.ts` | Mock-backed Compute lifecycle metrics and retention sweep smoke |
@@ -37,6 +38,7 @@
 3. UI selector 变更需同步 tests。
 4. Mock-backed Compute Jobs smokes may override `storageState` and use `--no-deps` for local focused runs when they do not require `auth.setup.ts` or a live backend.
 5. Live Compute API browser smoke uses `AUTOWATERSIMU_LIVE_COMPUTE_*` environment variables and should be run through `scripts/ci/live-backend-browser-smoke.ps1`, which prepares the backend job and cleanup.
+6. Current-flow live smoke uses `AUTOWATERSIMU_CURRENT_FLOW_LIVE_*` environment variables and should be run through `scripts/ci/current-flow-live-smoke.ps1`, which prepares the live Compute stack, worker loop, and cleanup.
 
 ## 4. 对外接口
 
@@ -58,6 +60,7 @@ cd frontend; npx playwright test tests/model-governance.spec.ts --project=chromi
 cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\live-backend-browser-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\current-flow-live-smoke.ps1
 ```
 
 ## 7. AI 操作提示

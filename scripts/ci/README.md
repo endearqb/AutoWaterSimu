@@ -11,6 +11,7 @@
 - opt-in security smoke 验证。
 - opt-in mock-backed browser smoke 验证。
 - opt-in live backend browser smoke 验证。
+- opt-in current-flow live smoke 验证。
 - opt-in Desktop project package/support bundle smoke 验证。
 - 8 条金标场景的现有 lane evidence 汇总，以及显式本地 evidence refresh 编排。
 - 输出机器可读 evidence 到 `tmp/ci-evidence/`。
@@ -34,6 +35,7 @@
 | `security-smoke.ps1` | 聚合 production token guard、static token revocation、scope denial、artifact admin scope、tenant/project/site read-scope 和 selected mutation audit envelope 的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
 | `live-backend-browser-smoke.ps1` | 启动 integration-backed Compute API/PostgreSQL/MinIO/worker job，再运行 Playwright 读取真实 job/result/evidence/ref，并写出 `tmp/ci-evidence/live-backend-browser-smoke.json` |
+| `current-flow-live-smoke.ps1` | 启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再运行 Playwright 从 UI 提交 current flow、等待真实 worker 完成、下载 evidence package 并解析 evidence ref，写出 `tmp/ci-evidence/current-flow-live-smoke.json` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
 | `golden-scenarios.ps1` | 读取现有 CI/release evidence，汇总 8 条金标场景的 `partial` / `missing` / `blocked` 状态；可用 `-RefreshLocalEvidence` 先刷新非 Docker 本地 evidence lanes，并写出 `tmp/ci-evidence/golden-scenarios.json` |
 
@@ -57,10 +59,13 @@
 
 本目录对 `Justfile` 暴露 `live-backend-browser-smoke` opt-in 入口；它通过 `integration-smoke.ps1 -StartCompose -KeepCompose` 准备一个真实 PostgreSQL/MinIO/worker-backed succeeded job，再运行 Playwright 验证 Compute Jobs route 不 mock Compute API 时能读取 job/result/evidence package/evidence ref。它只 mock legacy `/api/v1/users/me`，不覆盖完整 legacy authenticated backend session，也不覆盖 UI current-flow submit 到 live worker 的单场景闭环。
 
+本目录对 `Justfile` 暴露 `current-flow-live-smoke` opt-in 入口；它启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再用 Playwright 从 Compute Jobs route 提交 current flow，等待真实 worker 完成，并验证 UI evidence package 下载和 evidence ref 解析。它只 mock legacy `/api/v1/users/me`，不覆盖完整 legacy authenticated backend session，也没有 hosted workflow evidence。
+
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
 
 本目录对 `Justfile` 暴露 `golden-scenarios` 本地汇总入口；它只解释已有 lane evidence，不启动 Docker、浏览器或 release build，也不表示 8 条金标场景已经完成。`golden-scenarios-refresh` 调用同一脚本的 `-RefreshLocalEvidence` 模式，会先刷新非 Docker 本地 lanes：`pr-fast`、browser smoke、security smoke、Desktop package smoke、release artifact download smoke 和 merge release gate `-SkipLong`。`golden-scenarios-refresh-integration` 会额外传入 `-RunIntegrationSmoke`，通过 `integration-smoke.ps1 -StartCompose` 启动 Docker-backed PostgreSQL + MinIO + Compute API + worker smoke。Release gate 只有在 commit SHA 匹配当前 HEAD 时才作为 current source；PostgreSQL migration 场景还要求 release gate 内存在并通过 `postgres migration up/down smoke` step，或存在 current integration smoke evidence。
 `golden-scenarios-refresh-live` 会传入 `-RunLiveBackendBrowserSmoke`，刷新 live backend browser lane；该 lane 会同步刷新 integration evidence，因为它需要先准备真实 succeeded job。
+`golden-scenarios-refresh-current-flow-live` 会传入 `-RunCurrentFlowLiveSmoke`，刷新 current-flow live lane；该 lane 会启动隔离 live Compute stack 和本地主机 worker loop，属于显式 opt-in 重型验证。
 
 ## 5. 依赖边界
 
@@ -78,6 +83,8 @@
 
 Integration smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO 和本地 `backend/.venv` Python worker CLI；它不应替代 release gate、browser smoke 或 packaged worker/desktop smoke。
 
+Current-flow live smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker loop；它不应替代 hosted browser workflow、完整 legacy authenticated session 或 release artifact evidence。
+
 ## 6. 测试与验证
 
 修改本目录后建议运行：
@@ -88,11 +95,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunLiveBackendBrowserSmoke
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunCurrentFlowLiveSmoke
 ```
 
 ## 7. AI 操作提示

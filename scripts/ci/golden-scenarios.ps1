@@ -11,7 +11,8 @@ param(
     [switch]$RunReleaseArtifactDownloadSmoke,
     [switch]$RunReleaseGate,
     [switch]$RunIntegrationSmoke,
-    [switch]$RunLiveBackendBrowserSmoke
+    [switch]$RunLiveBackendBrowserSmoke,
+    [switch]$RunCurrentFlowLiveSmoke
 )
 
 $ErrorActionPreference = "Stop"
@@ -372,6 +373,9 @@ if ($RunIntegrationSmoke) {
 if ($RunLiveBackendBrowserSmoke) {
     Invoke-RefreshStep -Name "refresh live backend browser smoke evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\live-backend-browser-smoke.ps1", "-RepoRoot", $Root, "-EvidenceDir", $EvidenceDir)
 }
+if ($RunCurrentFlowLiveSmoke) {
+    Invoke-RefreshStep -Name "refresh current-flow live smoke evidence" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\current-flow-live-smoke.ps1", "-RepoRoot", $Root, "-EvidenceDir", $EvidenceDir)
+}
 
 $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
 $statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
@@ -383,6 +387,7 @@ $laneEvidence = @(
     (Read-Evidence -Lane "integration" -Path (Join-Path $EvidenceDir "integration-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "browser" -Path (Join-Path $EvidenceDir "browser-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "live_backend_browser" -Path (Join-Path $EvidenceDir "live-backend-browser-smoke.json") -HeadCommit $headCommit),
+    (Read-Evidence -Lane "current_flow_live" -Path (Join-Path $EvidenceDir "current-flow-live-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "security" -Path (Join-Path $EvidenceDir "security-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "desktop_package" -Path (Join-Path $EvidenceDir "desktop-package-smoke.json") -HeadCommit $headCommit),
     (Read-Evidence -Lane "release_gate" -Path (Join-Path $ReleaseEvidenceDir "next-release-gates.json") -HeadCommit $headCommit),
@@ -397,7 +402,7 @@ foreach ($lane in $laneEvidence) {
 }
 
 $scenarios = @(
-    (New-Scenario -LaneMap $laneMap -Id "current_flow_to_evidence" -Title "Current flow to evidence" -EvidenceSources @("integration", "browser", "live_backend_browser") -CoveredBy @("Integration smoke proves API job/worker/artifact/model_run/evidence package path when available.", "Browser smoke proves mock-backed Compute Jobs current-flow/result/evidence UI orchestration when available.", "Live backend browser smoke proves the Compute Jobs route can read a real PostgreSQL/MinIO/worker-backed job result, evidence package, and evidence ref without Compute API route mocks.") -RemainingGaps @("No single UI current-flow submit to live worker to evidence scenario is recorded yet; live backend browser smoke starts from an integration-prepared job.", "No hosted green run has been recorded in this branch evidence.")),
+    (New-Scenario -LaneMap $laneMap -Id "current_flow_to_evidence" -Title "Current flow to evidence" -EvidenceSources @("integration", "browser", "live_backend_browser", "current_flow_live") -CoveredBy @("Integration smoke proves API job/worker/artifact/model_run/evidence package path when available.", "Browser smoke proves mock-backed Compute Jobs current-flow/result/evidence UI orchestration when available.", "Live backend browser smoke proves the Compute Jobs route can read a real PostgreSQL/MinIO/worker-backed job result, evidence package, and evidence ref without Compute API route mocks.", "Current-flow live smoke proves the browser can submit current flow to the live Compute API, a real worker loop completes it, and the UI downloads evidence plus resolves a model_run ref.") -RemainingGaps @("No hosted green run has been recorded in this branch evidence.", "Legacy authenticated backend session is still mocked for this smoke.")),
     (New-Scenario -LaneMap $laneMap -Id "model_parameter_governance" -Title "Model parameter governance" -EvidenceSources @("browser", "security", "pr_fast") -CoveredBy @("Browser smoke covers mock-backed Model governance route orchestration when available.", "Security/pr-fast lanes cover selected governance API checks when available.") -RemainingGaps @("No end-to-end benchmark worker run to benchmark_run to promotion plan to approved parameter set scenario evidence.", "No hosted model governance scenario evidence.")),
     (New-Scenario -LaneMap $laneMap -Id "agent_draft_confirmation" -Title "Agent draft confirmation" -EvidenceSources @("pr_fast", "security") -CoveredBy @("PR fast includes contracts and Go API checks when available.", "Security smoke covers selected mutation audit paths when available.") -RemainingGaps @("No full Agent draft to confirmation to promoted simulation-check to explanation publish scenario lane.", "No user-facing approval workflow evidence.")),
     (New-Scenario -LaneMap $laneMap -Id "artifact_lifecycle" -Title "Artifact lifecycle" -EvidenceSources @("integration", "security", "release_gate") -CoveredBy @("Integration smoke covers artifact upload/download checksum and retention dry-run when available.", "Security smoke covers artifact admin-scope and selected retention audit checks when available.", "Release gate covers worker/artifact release checks when available.") -RemainingGaps @("No complete archive to hot delete to fallback download golden scenario evidence.", "No hosted release artifact round trip evidence.")),
@@ -435,7 +440,7 @@ $report = [ordered]@{
     status = $overallStatus
     status_counts = $statusCounts
     interpretation = "Scenario-level summary only. Partial status does not mean the golden scenario is complete. Passed sources count only when the lane evidence commit matches this report commit."
-    refresh_requested = [bool]($RefreshLocalEvidence -or $RunPrFast -or $RunBrowserSmoke -or $RunSecuritySmoke -or $RunDesktopPackageSmoke -or $RunReleaseArtifactDownloadSmoke -or $RunReleaseGate -or $RunIntegrationSmoke -or $RunLiveBackendBrowserSmoke)
+    refresh_requested = [bool]($RefreshLocalEvidence -or $RunPrFast -or $RunBrowserSmoke -or $RunSecuritySmoke -or $RunDesktopPackageSmoke -or $RunReleaseArtifactDownloadSmoke -or $RunReleaseGate -or $RunIntegrationSmoke -or $RunLiveBackendBrowserSmoke -or $RunCurrentFlowLiveSmoke)
     refresh_failed = [bool]$script:RefreshFailed
     refresh_steps = $script:RefreshSteps
     is_dirty_before = -not [string]::IsNullOrWhiteSpace($statusBefore)

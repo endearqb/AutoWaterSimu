@@ -1,3 +1,31 @@
+# 2026-06-06 AutoWaterSimu Next current-flow live smoke TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, local-dev, scripts/ci README, frontend tests README, worker README, and current Compute Jobs smoke context
+- [x] Confirm next aligned gap: live backend browser read evidence existed, but no local browser lane submitted current flow to the live Compute API and waited for a real worker completion
+- [x] Add live Compute API current-flow Playwright smoke that mocks only legacy `/api/v1/users/me`
+- [x] Add a CI script that starts an isolated Compute API/PostgreSQL/MinIO stack plus bounded host worker loop, runs the browser smoke, writes evidence, and cleans Compose
+- [x] Add root task entries and wire current-flow live evidence into golden scenario summary
+- [x] Update README/architecture/plan/change records
+- [x] Run validation
+- [x] Commit and push
+
+## Plan
+
+- Keep API, worker implementation, route UI, generated client, and feature query wrappers unchanged.
+- Use a dedicated `current-flow-live-smoke` lane instead of overloading the existing integration-prepared live backend read lane.
+- Start only the live Compute stack needed for the smoke, then run a bounded host Python worker loop with `--max-jobs 1`.
+- Record that this proves a local UI current-flow submit -> live worker -> evidence/ref path, but still does not prove hosted green runs or full legacy authenticated backend browser session.
+
+## Review
+
+- Added `frontend/tests/compute-jobs-current-flow-live.spec.ts`.
+- Added `scripts/ci/current-flow-live-smoke.ps1`, `just current-flow-live-smoke`, and `just golden-scenarios-refresh-current-flow-live`.
+- `scripts/ci/golden-scenarios.ps1` now reads `current-flow-live-smoke.json`, supports `-RunCurrentFlowLiveSmoke`, and includes `current_flow_live` as current-flow scenario evidence.
+- Updated root README, scripts READMEs, frontend tests README, architecture current-state/local-dev, Certainty/Elegance plan, and `.ai/changes`.
+- Validation passed: PowerShell parse checks for edited scripts, `cd frontend; npx tsc --noEmit`, `scripts\ci\current-flow-live-smoke.ps1`, `scripts\ci\golden-scenarios.ps1`, `scripts\ci\golden-scenarios.ps1 -RunCurrentFlowLiveSmoke`, `scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunCurrentFlowLiveSmoke`, `scripts\check-deps.ps1`, and `scripts\ci\pr-fast.ps1`.
+- Full current-flow live refresh evidence passed with a succeeded UI-submitted job, model_run, artifact, evidence package download, and evidence ref resolution; golden summary after full refresh reported `partial=7`, `missing=1`, `blocked=0`.
+- Remaining scope: hosted workflow green runs, full legacy authenticated backend browser session, Docker-backed integration/live backend read freshness after this commit, full release artifact upload/download, signing/installer behavior, all-object data scope, all-mutation audit, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next live backend browser evidence TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, local-dev, scripts/ci README, frontend tests README, and Compute Jobs route/feature context

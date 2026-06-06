@@ -171,11 +171,13 @@ just integration-smoke
 just check-security
 just browser-smoke
 just live-backend-browser-smoke
+just current-flow-live-smoke
 just desktop-package-smoke
 just golden-scenarios
 just golden-scenarios-refresh
 just golden-scenarios-refresh-integration
 just golden-scenarios-refresh-live
+just golden-scenarios-refresh-current-flow-live
 just release-artifact-download-smoke
 ```
 
@@ -191,11 +193,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunIntegrationSmoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunLiveBackendBrowserSmoke
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunCurrentFlowLiveSmoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
 backend\.venv\Scripts\python -m pytest contracts\tests -q
 cd apps\api; go test ./...

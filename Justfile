@@ -54,6 +54,9 @@ browser-smoke:
 live-backend-browser-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 
+current-flow-live-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
+
 desktop-package-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 
@@ -68,6 +71,9 @@ golden-scenarios-refresh-integration:
 
 golden-scenarios-refresh-live:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunLiveBackendBrowserSmoke
+
+golden-scenarios-refresh-current-flow-live:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunCurrentFlowLiveSmoke
 
 release-artifact-download-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
