@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sort"
+	"strings"
 )
 
 func (store *MemoryStore) UpsertModelCatalog(_ context.Context, record ModelCatalogRecord, audit *MutationAuditRecord) (ModelCatalogRecord, bool, error) {
@@ -45,6 +46,9 @@ func (store *MemoryStore) ListModelCatalogSnapshots(_ context.Context, filter Mo
 	}
 	indexed := make([]indexedModelCatalogRecord, 0, len(snapshots))
 	for index, snapshot := range snapshots {
+		if !modelCatalogMatchesFilterScope(snapshot, filter) {
+			continue
+		}
 		indexed = append(indexed, indexedModelCatalogRecord{
 			index:  index,
 			record: cloneModelCatalogRecord(snapshot),
@@ -80,4 +84,17 @@ func cloneModelCatalogRecord(record ModelCatalogRecord) ModelCatalogRecord {
 	record.Payload = append(json.RawMessage(nil), record.Payload...)
 	record.Metadata = append(json.RawMessage(nil), record.Metadata...)
 	return record
+}
+
+func modelCatalogMatchesFilterScope(record ModelCatalogRecord, filter ModelCatalogSnapshotFilter) bool {
+	if strings.TrimSpace(filter.TenantID) != "" && strings.TrimSpace(record.TenantID) != strings.TrimSpace(filter.TenantID) {
+		return false
+	}
+	if strings.TrimSpace(filter.ProjectID) != "" && strings.TrimSpace(record.ProjectID) != strings.TrimSpace(filter.ProjectID) {
+		return false
+	}
+	if strings.TrimSpace(filter.SiteID) != "" && strings.TrimSpace(record.SiteID) != strings.TrimSpace(filter.SiteID) {
+		return false
+	}
+	return true
 }

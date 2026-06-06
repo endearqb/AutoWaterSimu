@@ -1,3 +1,32 @@
+# 2026-06-06 AutoWaterSimu Next model catalog scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API model governance, contracts, migrations, OpenAPI, security smoke, and recent change records
+- [x] Confirm next aligned gap: persisted model catalog snapshots carried tenant/project metadata but lacked site metadata and scoped read filtering
+- [x] Add `site_id` projection and persistence for model catalog snapshot records
+- [x] Enforce tenant/project/site filtering for persisted model catalog root/model/snapshot read paths
+- [x] Reject scoped-token default parameter set promotion plan until job-scoped benchmark/model_run evidence filtering is implemented
+- [x] Update OpenAPI source and generated Compute client
+- [x] Extend focused HTTP coverage and security smoke coverage summary
+- [x] Update Compute API/security/docs context and change records
+- [x] Run focused tests, full Go tests, client generation/typecheck, dependency/security validation, commit, and push
+
+## Plan
+
+- Treat this as a persisted model catalog read-scope slice, not full RBAC/ABAC, mutation data-scope, or full all-object policy enforcement.
+- Reuse `model_catalog.v1.metadata` for tenant/project/site projection; add reversible PostgreSQL `site_id` persistence and a scoped latest index because site-scoped tokens cannot otherwise be filtered.
+- For scoped tokens, read only matching persisted snapshots; if no matching persisted snapshot exists, return the built-in reference catalog rather than leaking another tenant's persisted payload.
+- Keep model catalog writes, status transitions, promotion mutations, contracts, endpoint paths, and public `Service` signatures unchanged except for safe internal read helpers.
+
+## Review
+
+- Added `site_id` to `ModelCatalogRecord`, PostgreSQL persistence, OpenAPI, and the generated Compute TypeScript record type.
+- `GET /api/v1/model-catalog`, `GET /api/v1/model-catalog/{model_key}`, and `GET /api/v1/model-catalog/snapshots` now apply tenant/project/site scoped persisted snapshot filtering.
+- `GET /api/v1/model-catalog/{model_key}/versions/{model_version}/default-parameter-set/promotion-plan` now rejects scoped tokens until the plan can filter benchmark/model_run evidence by job scope.
+- Model catalog registration audit now includes compact tenant/project/site fields without embedding the full catalog payload.
+- Added `TestHTTPModelCatalogTenantProjectSiteScope` and included it in `scripts/ci/security-smoke.ps1`.
+- Validation passed: focused model catalog tests, full `cd apps\api; go test ./...`, Compute client generation, `cd frontend; npx tsc --noEmit`, security smoke, Compute API boundary audit, dependency check, OpenAPI JSON parse, PowerShell parse check, docs/rebuild scan, and final diff-check with LF/CRLF warnings only.
+- Remaining scope: mutation data-scope for model governance writes, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next draft confirmation scope/audit TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API draft workflow, security smoke, migrations, OpenAPI, and recent change records

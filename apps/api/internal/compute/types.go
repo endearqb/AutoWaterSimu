@@ -279,6 +279,7 @@ type ModelCatalogRecord struct {
 	RequestedBy   string          `json:"requested_by"`
 	TenantID      string          `json:"tenant_id,omitempty"`
 	ProjectID     string          `json:"project_id,omitempty"`
+	SiteID        string          `json:"site_id,omitempty"`
 	Metadata      json.RawMessage `json:"metadata,omitempty"`
 	CreatedAt     time.Time       `json:"created_at"`
 }
@@ -287,6 +288,9 @@ type ModelCatalogSnapshotFilter struct {
 	CatalogID string
 	Limit     int
 	Cursor    string
+	TenantID  string
+	ProjectID string
+	SiteID    string
 }
 
 type ListModelCatalogSnapshotsResponse struct {

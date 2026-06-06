@@ -34,6 +34,7 @@
 | `0011_mutation_audit_events.*.sql` | compact non-job-scoped selected mutation audit events, starting with model governance mutations |
 | `0012_simulation_registry_site_scope.*.sql` | optional `process_graphs.site_id` and `simulation_inputs.site_id` metadata for registry read-scope checks |
 | `0013_draft_confirmation_site_scope.*.sql` | optional `draft_confirmations.site_id` metadata for confirmation read-scope checks |
+| `0014_model_catalog_site_scope.*.sql` | optional `model_catalogs.site_id` metadata and scope index for catalog snapshot read-scope checks |
 
 ## 3. 维护约定
 

@@ -27,8 +27,13 @@ func handleDefaultParameterSetStatus(server *Server, w http.ResponseWriter, r *h
 }
 
 func handleDefaultParameterSetPromotionPlan(server *Server, w http.ResponseWriter, r *http.Request, modelKey, modelVersion string) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
+	principal, err := server.auth.Principal(r, "job:read")
+	if err != nil {
 		WriteError(w, err)
+		return
+	}
+	if principalHasDataScope(*principal) {
+		WriteError(w, NewAppError(http.StatusForbidden, CodeForbidden, "model catalog promotion plan requires a global token until job-scoped evidence filtering is available", false, nil))
 		return
 	}
 	response, err := server.service.DefaultParameterSetPromotionPlan(r.Context(), modelKey, modelVersion)

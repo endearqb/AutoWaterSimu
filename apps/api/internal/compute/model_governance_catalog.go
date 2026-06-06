@@ -27,39 +27,82 @@ func (svc *ModelGovernanceService) RegisterModelCatalog(ctx context.Context, byt
 }
 
 func (svc *ModelGovernanceService) ModelCatalog(ctx context.Context) (ModelCatalogResponse, error) {
+	catalog, _, err := svc.ModelCatalogForRead(ctx, ModelCatalogSnapshotFilter{CatalogID: "default"})
+	return catalog, err
+}
+
+func (svc *ModelGovernanceService) ModelCatalogForRead(ctx context.Context, filter ModelCatalogSnapshotFilter) (ModelCatalogResponse, *ModelCatalogRecord, error) {
+	filter.CatalogID = defaultString(filter.CatalogID, "default")
+	if modelCatalogFilterHasScope(filter) {
+		records, _, _, err := svc.catalogs.ListModelCatalogSnapshots(ctx, ModelCatalogSnapshotFilter{
+			CatalogID: filter.CatalogID,
+			Limit:     1,
+			TenantID:  filter.TenantID,
+			ProjectID: filter.ProjectID,
+			SiteID:    filter.SiteID,
+		})
+		if err != nil {
+			return ModelCatalogResponse{}, nil, err
+		}
+		if len(records) > 0 {
+			catalog, err := svc.modelCatalogFromRecord(records[0])
+			if err != nil {
+				return ModelCatalogResponse{}, nil, err
+			}
+			return catalog, &records[0], nil
+		}
+		return svc.builtInModelCatalogForRead()
+	}
 	record, err := svc.catalogs.LatestModelCatalog(ctx, "default")
 	if err == nil {
-		var catalog ModelCatalogResponse
-		if err := json.Unmarshal(record.Payload, &catalog); err != nil {
-			return ModelCatalogResponse{}, NewAppError(500, CodeInternal, "persisted model catalog JSON is invalid", true, nil)
+		catalog, err := svc.modelCatalogFromRecord(*record)
+		if err != nil {
+			return ModelCatalogResponse{}, nil, err
 		}
-		if err := svc.validateModelCatalog(catalog); err != nil {
-			return ModelCatalogResponse{}, err
-		}
-		return catalog, nil
+		return catalog, record, nil
 	}
 	if appErr := ToAppError(err); appErr.ErrorCode != CodeModelCatalogNotFound {
-		return ModelCatalogResponse{}, err
+		return ModelCatalogResponse{}, nil, err
 	}
-	catalog := builtInModelCatalog(svc.now().Format(time.RFC3339Nano))
+	return svc.builtInModelCatalogForRead()
+}
+
+func (svc *ModelGovernanceService) modelCatalogFromRecord(record ModelCatalogRecord) (ModelCatalogResponse, error) {
+	var catalog ModelCatalogResponse
+	if err := json.Unmarshal(record.Payload, &catalog); err != nil {
+		return ModelCatalogResponse{}, NewAppError(500, CodeInternal, "persisted model catalog JSON is invalid", true, nil)
+	}
 	if err := svc.validateModelCatalog(catalog); err != nil {
 		return ModelCatalogResponse{}, err
 	}
 	return catalog, nil
 }
 
+func (svc *ModelGovernanceService) builtInModelCatalogForRead() (ModelCatalogResponse, *ModelCatalogRecord, error) {
+	catalog := builtInModelCatalog(svc.now().Format(time.RFC3339Nano))
+	if err := svc.validateModelCatalog(catalog); err != nil {
+		return ModelCatalogResponse{}, nil, err
+	}
+	return catalog, nil, nil
+}
+
 func (svc *ModelGovernanceService) ModelCatalogModel(ctx context.Context, modelKey string) (ModelCatalogModel, error) {
-	catalog, err := svc.ModelCatalog(ctx)
+	model, _, err := svc.ModelCatalogModelForRead(ctx, modelKey, ModelCatalogSnapshotFilter{CatalogID: "default"})
+	return model, err
+}
+
+func (svc *ModelGovernanceService) ModelCatalogModelForRead(ctx context.Context, modelKey string, filter ModelCatalogSnapshotFilter) (ModelCatalogModel, *ModelCatalogRecord, error) {
+	catalog, record, err := svc.ModelCatalogForRead(ctx, filter)
 	if err != nil {
-		return ModelCatalogModel{}, err
+		return ModelCatalogModel{}, nil, err
 	}
 	modelKey = required(modelKey, "model_key")
 	for _, model := range catalog.Models {
 		if model.ModelKey == modelKey {
-			return model, nil
+			return model, record, nil
 		}
 	}
-	return ModelCatalogModel{}, NotFound("MODEL_NOT_FOUND", "model not found")
+	return ModelCatalogModel{}, nil, NotFound("MODEL_NOT_FOUND", "model not found")
 }
 
 func (svc *ModelGovernanceService) ListModelCatalogSnapshots(ctx context.Context, filter ModelCatalogSnapshotFilter) (ListModelCatalogSnapshotsResponse, error) {
@@ -125,7 +168,12 @@ func (svc *ModelGovernanceService) modelCatalogRecord(catalog map[string]any, de
 		RequestedBy:   requestedBy,
 		TenantID:      stringValue(metadata, "tenant_id"),
 		ProjectID:     stringValue(metadata, "project_id"),
+		SiteID:        stringValue(metadata, "site_id"),
 		Metadata:      mustJSON(metadata),
 		CreatedAt:     svc.now(),
 	}, nil
+}
+
+func modelCatalogFilterHasScope(filter ModelCatalogSnapshotFilter) bool {
+	return filter.TenantID != "" || filter.ProjectID != "" || filter.SiteID != ""
 }

@@ -17,8 +17,16 @@ func (svc *Service) ModelCatalog(ctx context.Context) (ModelCatalogResponse, err
 	return svc.modelGovernance.ModelCatalog(ctx)
 }
 
+func (svc *Service) ModelCatalogForRead(ctx context.Context, filter ModelCatalogSnapshotFilter) (ModelCatalogResponse, *ModelCatalogRecord, error) {
+	return svc.modelGovernance.ModelCatalogForRead(ctx, filter)
+}
+
 func (svc *Service) ModelCatalogModel(ctx context.Context, modelKey string) (ModelCatalogModel, error) {
 	return svc.modelGovernance.ModelCatalogModel(ctx, modelKey)
+}
+
+func (svc *Service) ModelCatalogModelForRead(ctx context.Context, modelKey string, filter ModelCatalogSnapshotFilter) (ModelCatalogModel, *ModelCatalogRecord, error) {
+	return svc.modelGovernance.ModelCatalogModelForRead(ctx, modelKey, filter)
 }
 
 func (svc *Service) ListModelCatalogSnapshots(ctx context.Context, filter ModelCatalogSnapshotFilter) (ListModelCatalogSnapshotsResponse, error) {

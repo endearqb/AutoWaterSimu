@@ -10,14 +10,21 @@ import (
 func (server *Server) modelCatalog(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		if _, err := server.auth.Principal(r, "job:read"); err != nil {
-			WriteError(w, err)
-			return
-		}
-		catalog, err := server.service.ModelCatalog(r.Context())
+		principal, err := server.auth.Principal(r, "job:read")
 		if err != nil {
 			WriteError(w, err)
 			return
+		}
+		catalog, record, err := server.service.ModelCatalogForRead(r.Context(), modelCatalogSnapshotFilterForPrincipal(ModelCatalogSnapshotFilter{CatalogID: "default"}, *principal))
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		if record != nil {
+			if err := authorizeModelCatalogRecordScope(*principal, *record); err != nil {
+				WriteError(w, err)
+				return
+			}
 		}
 		WriteJSON(w, http.StatusOK, catalog)
 	case http.MethodPost:
@@ -77,7 +84,8 @@ func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) 
 }
 
 func handleModelCatalogSnapshots(server *Server, w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
+	principal, err := server.auth.Principal(r, "job:read")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -86,6 +94,7 @@ func handleModelCatalogSnapshots(server *Server, w http.ResponseWriter, r *http.
 		WriteError(w, err)
 		return
 	}
+	filter = modelCatalogSnapshotFilterForPrincipal(filter, *principal)
 	response, err := server.service.ListModelCatalogSnapshots(r.Context(), filter)
 	if err != nil {
 		WriteError(w, err)
@@ -95,14 +104,21 @@ func handleModelCatalogSnapshots(server *Server, w http.ResponseWriter, r *http.
 }
 
 func handleModelCatalogModel(server *Server, w http.ResponseWriter, r *http.Request, modelKey string) {
-	if _, err := server.auth.Principal(r, "job:read"); err != nil {
-		WriteError(w, err)
-		return
-	}
-	model, err := server.service.ModelCatalogModel(r.Context(), modelKey)
+	principal, err := server.auth.Principal(r, "job:read")
 	if err != nil {
 		WriteError(w, err)
 		return
+	}
+	model, record, err := server.service.ModelCatalogModelForRead(r.Context(), modelKey, modelCatalogSnapshotFilterForPrincipal(ModelCatalogSnapshotFilter{CatalogID: "default"}, *principal))
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if record != nil {
+		if err := authorizeModelCatalogRecordScope(*principal, *record); err != nil {
+			WriteError(w, err)
+			return
+		}
 	}
 	WriteJSON(w, http.StatusOK, model)
 }
@@ -122,4 +138,15 @@ func modelCatalogSnapshotFilter(r *http.Request) (ModelCatalogSnapshotFilter, er
 		Limit:     limit,
 		Cursor:    query.Get("cursor"),
 	}, nil
+}
+
+func modelCatalogSnapshotFilterForPrincipal(filter ModelCatalogSnapshotFilter, principal Principal) ModelCatalogSnapshotFilter {
+	filter.TenantID = strings.TrimSpace(principal.TenantID)
+	filter.ProjectID = strings.TrimSpace(principal.ProjectID)
+	filter.SiteID = strings.TrimSpace(principal.SiteID)
+	return filter
+}
+
+func authorizeModelCatalogRecordScope(principal Principal, record ModelCatalogRecord) error {
+	return authorizeRecordDataScope(principal, "model catalog", record.TenantID, record.ProjectID, record.SiteID)
 }

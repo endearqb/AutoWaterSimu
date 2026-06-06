@@ -37,7 +37,7 @@ Current draft confirmation delta: `domain/agent` also projects optional `site_id
 
 `apps/api/internal/domain/jobs` owns stable job status constants, terminal/worker-result status invariants, failed-worker fallback result construction, worker result completion status/error extraction, worker claim capability/contract-version matching, and cancel/timeout state lifecycle mutation planning. `apps/api/internal/compute` keeps compatibility aliases for status constants, projects MemoryStore/PostgresStore claim fields into this package, and adapts concrete job stores into `JobStateService` while job records, concrete state persistence, audit envelopes, snapshots, and HTTP behavior remain in the compatibility package.
 
-`apps/api/internal/domain/models` owns stable built-in `model_catalog.v1` document shape, benchmark case schedule-run `compute_job.v1` document shape, `compute_result.v1.runtime_audit.model_runs` extraction/precheck, `model_run.v1` raw identity extraction, evidence ref extraction, warning extraction, parameter hash extraction, identity/hash comparison against benchmark expectations, `benchmark_run.v1` evidence ref extraction, benchmark case scheduling and benchmark run admission gates, single benchmark case promotion readiness, default parameter set status transition invariants, the pure default-parameter-set promotion gate, and the pure model-run production governance gate. `apps/api/internal/compute` uses it from built-in catalog fallback assembly, benchmark case schedule-run job assembly after validation/input resolution, job completion, MemoryStore/PostgresStore persistence, evidence/simulation read paths, evidence governance production-allowed calculation, model catalog status workflow validation, benchmark schedule/record validation, and promotion planning while material-balance default parameter hash generation, typed catalog DTO conversion, model_run schema validation/raw persistence, catalog snapshot mutation, benchmark schedule-run catalog lookup/gate/error mapping/execution profile lookup/simulation input resolution/createJob, benchmark query orchestration, workflow DTOs, evidence package assembly, and HTTP response types remain in the compatibility package.
+`apps/api/internal/domain/models` owns stable built-in `model_catalog.v1` document shape, benchmark case schedule-run `compute_job.v1` document shape, `compute_result.v1.runtime_audit.model_runs` extraction/precheck, `model_run.v1` raw identity extraction, evidence ref extraction, warning extraction, parameter hash extraction, identity/hash comparison against benchmark expectations, `benchmark_run.v1` evidence ref extraction, benchmark case scheduling and benchmark run admission gates, single benchmark case promotion readiness, default parameter set status transition invariants, the pure default-parameter-set promotion gate, and the pure model-run production governance gate. `apps/api/internal/compute` uses it from built-in catalog fallback assembly, benchmark case schedule-run job assembly after validation/input resolution, job completion, MemoryStore/PostgresStore persistence, evidence/simulation read paths, evidence governance production-allowed calculation, model catalog status workflow validation, benchmark schedule/record validation, and promotion planning while material-balance default parameter hash generation, typed catalog DTO conversion, model_run schema validation/raw persistence, catalog snapshot mutation, persisted model catalog tenant/project/site read-scope filtering, benchmark schedule-run catalog lookup/gate/error mapping/execution profile lookup/simulation input resolution/createJob, benchmark query orchestration, workflow DTOs, evidence package assembly, and HTTP response types remain in the compatibility package. Scoped tokens can read matching persisted catalog root/model/snapshot records and cannot call the default-parameter-set promotion plan until that plan gets job-scoped benchmark/model_run evidence filtering.
 
 `apps/api/internal/domain/simulation` owns stable simulation job type to execution profile / worker capability mapping, pure simulation check `compute_job.v1` document assembly, material-balance process graph validation/projection rules, and simulation input/process graph record data projection. `apps/api/internal/compute` uses it from simulation-check job creation, benchmark case scheduling, process graph registration validation, ProcessGraph-to-SimulationInput resolution, and simulation registry record assembly while simulation request schema validation, input_ref resolution, simulation input/process graph metadata persistence, compute record mapping, model catalog governance, and HTTP behavior remain in the compatibility package.
 
@@ -72,7 +72,7 @@ Selected files from the latest audit:
 | `service_helpers.go` | 171 | shared compute helper functions used by compatibility services |
 | `service_simulation.go` | 71 | simulation-check and simulation registry public delegates |
 | `service.go` | 67 | `Service` struct and constructor wiring |
-| `service_models.go` | 58 | model catalog, benchmark run, model run, and benchmark queue public delegates |
+| `service_models.go` | 50 | model catalog, benchmark run, model run, and benchmark queue public delegates |
 | `service_contracts.go` | 39 | contract validation, draft workflow, and result explanation public delegates |
 | `service_jobs.go` | 35 | job lifecycle public delegates |
 | `service_artifacts.go` | 22 | artifact lifecycle public delegates |
@@ -81,7 +81,7 @@ Selected files from the latest audit:
 | `service_metrics.go` | 7 | metrics public delegate |
 | `model_governance_parameters.go` | 270 | default parameter set status workflow, promotion planning, and benchmark-backed promotion |
 | `model_governance_benchmark_runs.go` | 137 | benchmark run register/read/list workflow and record validation |
-| `model_governance_catalog.go` | 124 | model catalog snapshot register/read/list workflow and catalog record validation |
+| `model_governance_catalog.go` | 167 | model catalog snapshot register/read/list workflow, scoped read selection, and catalog record validation |
 | `model_governance_benchmark_cases.go` | 97 | benchmark case schedule-run queueing workflow |
 | `model_governance.go` | 37 | `ModelGovernanceService` struct and constructor wiring |
 | `model_governance_model_runs.go` | 19 | model run read/list workflow |
@@ -119,7 +119,7 @@ Selected files from the latest audit:
 | `contract_validation.go` | 15 | compatibility wrapper over platform contract document validation |
 | `postgres_benchmark_runs.go` | 155 | PostgreSQL benchmark run register/read/list persistence, scan helper, select SQL, and list filter |
 | `postgres_model_runs.go` | 134 | PostgreSQL model run insert/read/list/job-scoped lookup persistence and list filter |
-| `postgres_model_catalog.go` | 113 | PostgreSQL model catalog snapshot upsert/latest/list persistence, scan helper, and select SQL |
+| `postgres_model_catalog.go` | 133 | PostgreSQL model catalog snapshot upsert/latest/list persistence, scope filter, scan helper, and select SQL |
 | `postgres_result_explanations.go` | 182 | PostgreSQL result explanation submit/read/review/publish persistence, scan helper, and select SQL |
 | `postgres_draft_confirmations.go` | 88 | PostgreSQL draft confirmation upsert/read persistence, scan helper, and select SQL |
 | `postgres_jobs.go` | 245 | PostgreSQL job/event persistence, list filtering, and lifecycle mutations |
@@ -129,7 +129,7 @@ Selected files from the latest audit:
 | `postgres.go` | 85 | PostgreSQL store entrypoint, open/close, and migration apply/check helpers |
 | `postgres_metrics.go` | 58 | PostgreSQL metrics snapshot query |
 | `postgres_sql_helpers.go` | 12 | shared PostgreSQL row scanner interface and nullable-string helper |
-| `http_model_catalog.go` | 125 | model catalog root, snapshot list, model lookup, and model-catalog subroute dispatch |
+| `http_model_catalog.go` | 144 | model catalog root, scoped snapshot list, model lookup, and model-catalog subroute dispatch |
 | `http_benchmark_runs.go` | 113 | benchmark run register/read/list HTTP handlers/helpers and job-scoped read authorization |
 | `http_model_parameters.go` | 74 | default parameter set status, promotion plan, and promote-approved HTTP handlers/helpers |
 | `http_model_runs.go` | 66 | model run read/list HTTP handlers/helpers |
@@ -143,7 +143,7 @@ Selected files from the latest audit:
 | `http_metrics.go` | 20 | Prometheus metrics HTTP handler |
 | `memory_model_runs.go` | 101 | in-memory model run insert/read/list/job-scoped lookup metadata store implementation |
 | `memory_benchmark_runs.go` | 91 | in-memory benchmark run register/read/list metadata store implementation and clone helper |
-| `memory_model_catalog.go` | 80 | in-memory model catalog snapshot upsert/latest/list metadata store implementation and clone helper |
+| `memory_model_catalog.go` | 94 | in-memory model catalog snapshot upsert/latest/list metadata store implementation, scope filter, and clone helper |
 | `memory_jobs.go` | 235 | in-memory job metadata store implementation and shared memory cursor/list helpers |
 | `memory_artifacts.go` | 168 | in-memory artifact metadata and archive metadata store implementation |
 | `memory_result_explanations.go` | 106 | in-memory result explanation submit/read/review/publish metadata store implementation and clone helper |
@@ -153,7 +153,7 @@ Selected files from the latest audit:
 | `memory_simulation.go` | 69 | in-memory process graph and simulation input metadata store implementation |
 | `memory_metrics.go` | 43 | in-memory metrics snapshot query |
 | `memory_store.go` | 40 | MemoryStore struct and constructor |
-| `service_test.go` | 3134 | broad lifecycle and governance tests |
+| `service_test.go` | 4051 | broad lifecycle, security scope, and governance tests |
 
 These numbers are audit signals, not hard failure thresholds.
 

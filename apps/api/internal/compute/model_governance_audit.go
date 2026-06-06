@@ -18,6 +18,9 @@ func (svc *ModelGovernanceService) modelCatalogRegisteredAudit(ctx context.Conte
 		"catalog_id":     record.CatalogID,
 		"schema_version": record.SchemaVersion,
 		"payload_hash":   record.PayloadHash,
+		"tenant_id":      record.TenantID,
+		"project_id":     record.ProjectID,
+		"site_id":        record.SiteID,
 	}
 	return svc.modelGovernanceMutationAudit(
 		ctx,
@@ -36,6 +39,9 @@ func (svc *ModelGovernanceService) modelCatalogRegisteredAudit(ctx context.Conte
 			"catalog_id":     record.CatalogID,
 			"schema_version": record.SchemaVersion,
 			"payload_hash":   record.PayloadHash,
+			"tenant_id":      record.TenantID,
+			"project_id":     record.ProjectID,
+			"site_id":        record.SiteID,
 		},
 	)
 }
