@@ -1,12 +1,14 @@
 package compute
 
 import (
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	"context"
 	"time"
 )
 
 type JobLifecycleService struct {
 	jobs          JobStore
+	jobStates     *domainjobs.JobStateService
 	modelRuns     ModelRunStore
 	validator     *ContractValidator
 	now           func() time.Time
@@ -19,6 +21,7 @@ func NewJobLifecycleService(jobs JobStore, modelRuns ModelRunStore, validator *C
 	}
 	return &JobLifecycleService{
 		jobs:          jobs,
+		jobStates:     domainjobs.NewJobStateService(jobStateStoreAdapter{jobs: jobs}, now),
 		modelRuns:     modelRuns,
 		validator:     validator,
 		now:           now,

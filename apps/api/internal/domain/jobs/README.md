@@ -12,24 +12,28 @@
 - worker result completion 的 status / error_code / error_message 提取规则。
 - worker-reported failure fallback `compute_result.v1` 文档构造规则。
 - worker claim 时 job 所需 capability 与 contract version 匹配规则。
+- job cancel / timeout sweep 的 DTO-neutral state lifecycle service、状态 mutation plan、事件 payload 和 timeout error 语义。
 
 本目录不负责：
 
 - job metadata 持久化。
 - HTTP route、auth scope、response/error mapping。
 - artifact、model_run 或 evidence package 生成。
+- compute `JobRecord` / `JobSnapshot` 映射与 MemoryStore/PostgresStore 具体写入。
 
 ## 2. 核心文件
 
 | 文件 | 作用 |
 |---|---|
 | `jobs.go` | Job status constants, failed-worker fallback result construction, worker result completion extraction, worker claim matching, and invariant helpers |
+| `state_lifecycle.go` | Job cancel / timeout state lifecycle service, mutation plans, event payloads, and domain validation error |
 | `jobs_test.go` | Direct jobs domain tests |
+| `state_lifecycle_test.go` | Direct jobs state lifecycle tests |
 
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 job domain 不变量、failed-worker fallback result construction 和 worker result completion 的纯解释规则；涉及队列选择、状态写入、存储、audit、artifact、result summary 持久化的逻辑继续由 compute compatibility package 承接，直到对应边界可安全迁移。
+2. 只放稳定 job domain 不变量、failed-worker fallback result construction、worker result completion 纯解释规则，以及 DTO-neutral cancel/timeout state lifecycle mutation plan；涉及队列选择、具体状态写入、存储、audit、artifact、result summary 持久化的逻辑继续由 compute compatibility package 承接，直到对应边界可安全迁移。
 3. 新增 status 时必须同步检查 worker、store、HTTP response 和 contract fixtures。
 
 ## 4. 对外接口
@@ -51,9 +55,20 @@
 - `WorkerResultCompletionFromResult`
 - `ClaimCandidate`
 - `WorkerCapabilities`
+- `StateMutation`
+- `StateRecord`
+- `JobStateStore`
+- `JobStateService`
+- `NewJobStateService`
+- `CancelMutation`
+- `TimeoutMutation`
 - `MatchesWorker`
 - `RequiredCapabilities`
 - `ContractVersions`
+- `TimeoutErrorCode`
+- `TimeoutErrorMessage`
+- `EventJobCancelled`
+- `EventJobTimedOut`
 
 ## 5. 依赖边界
 

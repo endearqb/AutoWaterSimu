@@ -1,3 +1,32 @@
+# 2026-06-06 AutoWaterSimu Next jobs state domain package split TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API, compute compatibility package, and `domain/jobs`
+- [x] Confirm next aligned gap: recent evidence/workflow wrapper and same-package file-split work has diminishing returns unless it produces actual hosted green evidence or package movement
+- [x] Select a bounded real package split: move job cancel/timeout state lifecycle rules into `apps/api/internal/domain/jobs`
+- [x] Add DTO-neutral jobs state service, mutation plan, and domain tests
+- [x] Keep `apps/api/internal/compute` as HTTP/snapshot/store adapter and concrete Memory/Postgres persistence
+- [x] Update Compute API boundary audit, README/architecture context, Certainty/Elegance plan, and change records
+- [x] Run focused tests, `go test ./...`, boundary audit, dependency check, `pr-fast`, and diff-check
+- [x] Commit and push
+
+## Plan
+
+- Treat this as a real `jobs` package movement, not another same-package split.
+- Domain package owns cancel/timeout state mutation planning, event payloads, timeout error semantics, and the state lifecycle service interface.
+- Compute package keeps HTTP mapping, `JobSnapshot` assembly, compatibility `Service` methods, concrete `MemoryStore` / `PostgresStore` writes, and AppError mapping.
+- Preserve endpoint behavior, OpenAPI, contracts, generated clients, migrations, auth scopes, and public `Service` method signatures.
+- Do not continue evidence wrapper/workflow-entry work in this slice unless validation needs it.
+
+## Review
+
+- Added `apps/api/internal/domain/jobs/state_lifecycle.go` with DTO-neutral `JobStateService`, `StateMutation`, cancel/timeout mutation plans, event payloads, timeout error semantics, and domain validation error mapping.
+- Added direct domain tests for cancel mutation planning, timeout mutation planning, and missing job id validation.
+- `JobLifecycleService.CancelJob` / `TimeoutSweep` now delegate through `domain/jobs.JobStateService`; `job_lifecycle_state.go` keeps only the compute adapter, snapshot assembly, and compatibility return types.
+- `MemoryStore` and `PostgresStore` now apply domain `StateMutation` for cancel/timeout instead of hardcoding status/event/error details in the compute package.
+- Updated Compute API/domain README context, architecture current-state/compute-api docs, and Certainty/Elegance Development Plan to record the strategy pivot away from wrapper/evidence loops and toward real package movement.
+- Validation passed: focused jobs state tests and cancel/timeout regression tests, full `cd apps\api; go test ./...`, `scripts\audit-compute-api-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1`, and `git diff --check -- apps/api docs/architecture docs/rebuild tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: complete jobs lifecycle package movement, full artifact/model/evidence/simulation/agent workflow package movement, hosted green evidence, all-mutation audit, and all-object data scope remain future work.
+
 # 2026-06-06 AutoWaterSimu Next model run read-scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API auth/data-scope, model run HTTP handlers, security smoke, and architecture docs

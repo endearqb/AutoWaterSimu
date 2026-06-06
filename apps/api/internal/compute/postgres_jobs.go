@@ -1,6 +1,7 @@
 package compute
 
 import (
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	"context"
 	"encoding/json"
 	"errors"
@@ -107,13 +108,13 @@ func (store *PostgresStore) Events(ctx context.Context, jobID string) ([]EventRe
 	return events, rows.Err()
 }
 
-func (store *PostgresStore) CancelJob(ctx context.Context, jobID string, now time.Time) (*JobRecord, error) {
+func (store *PostgresStore) CancelJob(ctx context.Context, jobID string, mutation domainjobs.StateMutation) (*JobRecord, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	tag, err := tx.Exec(ctx, "UPDATE compute_jobs SET status='cancelled', cancel_requested=true, finished_at=$2 WHERE id=$1 AND status IN ('queued','running')", jobID, now)
+	tag, err := tx.Exec(ctx, "UPDATE compute_jobs SET status=$3, cancel_requested=$4, finished_at=$2 WHERE id=$1 AND status IN ('queued','running')", jobID, mutation.FinishedAt, mutation.Status, mutation.CancelRequested)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +126,7 @@ func (store *PostgresStore) CancelJob(ctx context.Context, jobID string, now tim
 		}
 		return nil, Conflict(CodeJobAlreadyTerminal, "job is already terminal")
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.cancelled',$2,$3)", jobID, mustJSON(map[string]any{"status": StatusCancelled}), now); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", jobID, mutation.EventType, mutation.EventJSON, mutation.FinishedAt); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -161,8 +162,8 @@ func (store *PostgresStore) CompleteJob(ctx context.Context, jobID, workerID str
 	return store.FindJobByID(ctx, jobID)
 }
 
-func (store *PostgresStore) TimeoutExpired(ctx context.Context, now time.Time) ([]JobRecord, error) {
-	rows, err := store.pool.Query(ctx, "UPDATE compute_jobs SET status='timed_out', error_code=$1, error_message='worker lease expired', finished_at=$2 WHERE status='running' AND lease_expires_at < $2 RETURNING id", CodeTimeout, now)
+func (store *PostgresStore) TimeoutExpired(ctx context.Context, mutation domainjobs.StateMutation) ([]JobRecord, error) {
+	rows, err := store.pool.Query(ctx, "UPDATE compute_jobs SET status=$1, error_code=$2, error_message=$3, finished_at=$4 WHERE status='running' AND lease_expires_at < $4 RETURNING id", mutation.Status, mutation.ErrorCode, mutation.ErrorMessage, mutation.FinishedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +178,7 @@ func (store *PostgresStore) TimeoutExpired(ctx context.Context, now time.Time) (
 	}
 	var jobs []JobRecord
 	for _, id := range ids {
-		_, _ = store.pool.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.timed_out',$2,$3)", id, mustJSON(map[string]any{"status": StatusTimedOut, "error_code": CodeTimeout}), now)
+		_, _ = store.pool.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", id, mutation.EventType, mutation.EventJSON, mutation.FinishedAt)
 		job, err := store.FindJobByID(ctx, id)
 		if err != nil {
 			return nil, err

@@ -1,6 +1,7 @@
 package compute
 
 import (
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	"context"
 	"encoding/json"
 	"time"
@@ -27,9 +28,9 @@ type JobStore interface {
 	InsertJob(ctx context.Context, job JobRecord, events []EventRecord) error
 	ListJobs(ctx context.Context, filter ListFilter) ([]JobRecord, string, int, error)
 	Events(ctx context.Context, jobID string) ([]EventRecord, error)
-	CancelJob(ctx context.Context, jobID string, now time.Time) (*JobRecord, error)
+	CancelJob(ctx context.Context, jobID string, mutation domainjobs.StateMutation) (*JobRecord, error)
 	CompleteJob(ctx context.Context, jobID, workerID string, attempt int, status string, summary json.RawMessage, resultHash, errorCode, errorMessage string, now time.Time) (*JobRecord, error)
-	TimeoutExpired(ctx context.Context, now time.Time) ([]JobRecord, error)
+	TimeoutExpired(ctx context.Context, mutation domainjobs.StateMutation) ([]JobRecord, error)
 }
 
 type WorkerStore interface {

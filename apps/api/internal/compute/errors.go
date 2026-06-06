@@ -1,6 +1,7 @@
 package compute
 
 import (
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	"errors"
 	"net/http"
 
@@ -32,7 +33,7 @@ const (
 	CodeEvidenceRefNotFound           = "EVIDENCE_REF_NOT_FOUND"
 	CodeJobAlreadyTerminal            = "JOB_ALREADY_TERMINAL"
 	CodeWorkerStale                   = "WORKER_STALE"
-	CodeTimeout                       = "TIMEOUT"
+	CodeTimeout                       = domainjobs.TimeoutErrorCode
 	CodeInternal                      = "INTERNAL_ERROR"
 )
 
@@ -87,6 +88,10 @@ func ToAppError(err error) *AppError {
 	var contractErr *platformcontracts.Error
 	if errors.As(err, &contractErr) {
 		return NewAppError(contractErr.Status, contractErr.Code, contractErr.Message, contractErr.Retryable, contractErr.Details)
+	}
+	var jobErr *domainjobs.Error
+	if errors.As(err, &jobErr) {
+		return NewAppError(jobErr.Status, jobErr.Code, jobErr.Message, jobErr.Retryable, jobErr.Details)
 	}
 	var workerErr *domainworkers.Error
 	if errors.As(err, &workerErr) {

@@ -111,7 +111,7 @@ func (store *MemoryStore) Events(_ context.Context, jobID string) ([]EventRecord
 	return events, nil
 }
 
-func (store *MemoryStore) CancelJob(_ context.Context, jobID string, now time.Time) (*JobRecord, error) {
+func (store *MemoryStore) CancelJob(_ context.Context, jobID string, mutation domainjobs.StateMutation) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	job, ok := store.jobs[jobID]
@@ -121,11 +121,13 @@ func (store *MemoryStore) CancelJob(_ context.Context, jobID string, now time.Ti
 	if isTerminal(job.Status) {
 		return nil, Conflict(CodeJobAlreadyTerminal, "job is already terminal")
 	}
-	job.Status = StatusCancelled
-	job.CancelRequested = true
-	job.FinishedAt = &now
+	job.Status = mutation.Status
+	if mutation.SetCancelRequested {
+		job.CancelRequested = mutation.CancelRequested
+	}
+	job.FinishedAt = &mutation.FinishedAt
 	store.jobs[jobID] = job
-	store.appendEventLocked(EventRecord{JobID: jobID, EventType: "job.cancelled", EventJSON: mustJSON(map[string]any{"status": StatusCancelled}), CreatedAt: now})
+	store.appendEventLocked(EventRecord{JobID: jobID, EventType: mutation.EventType, EventJSON: copyJSON(mutation.EventJSON), CreatedAt: mutation.FinishedAt})
 	return &job, nil
 }
 
@@ -151,18 +153,18 @@ func (store *MemoryStore) CompleteJob(_ context.Context, jobID, workerID string,
 	return &job, nil
 }
 
-func (store *MemoryStore) TimeoutExpired(_ context.Context, now time.Time) ([]JobRecord, error) {
+func (store *MemoryStore) TimeoutExpired(_ context.Context, mutation domainjobs.StateMutation) ([]JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var timedOut []JobRecord
 	for id, job := range store.jobs {
-		if job.Status == StatusRunning && job.LeaseExpiresAt != nil && job.LeaseExpiresAt.Before(now) {
-			job.Status = StatusTimedOut
-			job.ErrorCode = CodeTimeout
-			job.ErrorMessage = "worker lease expired"
-			job.FinishedAt = &now
+		if job.Status == StatusRunning && job.LeaseExpiresAt != nil && job.LeaseExpiresAt.Before(mutation.FinishedAt) {
+			job.Status = mutation.Status
+			job.ErrorCode = mutation.ErrorCode
+			job.ErrorMessage = mutation.ErrorMessage
+			job.FinishedAt = &mutation.FinishedAt
 			store.jobs[id] = job
-			store.appendEventLocked(EventRecord{JobID: id, EventType: "job.timed_out", EventJSON: mustJSON(map[string]any{"status": StatusTimedOut, "error_code": CodeTimeout}), CreatedAt: now})
+			store.appendEventLocked(EventRecord{JobID: id, EventType: mutation.EventType, EventJSON: copyJSON(mutation.EventJSON), CreatedAt: mutation.FinishedAt})
 			timedOut = append(timedOut, job)
 		}
 	}
@@ -188,6 +190,10 @@ func isTerminal(status string) bool {
 func mustJSON(value any) json.RawMessage {
 	bytes, _ := json.Marshal(value)
 	return bytes
+}
+
+func copyJSON(value json.RawMessage) json.RawMessage {
+	return append(json.RawMessage(nil), value...)
 }
 
 func encodeCursor(offset int) string {
