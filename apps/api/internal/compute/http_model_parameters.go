@@ -18,7 +18,7 @@ func handleDefaultParameterSetStatus(server *Server, w http.ResponseWriter, r *h
 		WriteError(w, ValidationError("parameter set status update JSON is invalid"))
 		return
 	}
-	response, status, err := server.service.UpdateDefaultParameterSetStatus(r.Context(), modelKey, modelVersion, request, "compute-api", principal.Name)
+	response, status, err := server.service.UpdateDefaultParameterSetStatus(withAuditPrincipal(r.Context(), *principal, r), modelKey, modelVersion, request, "compute-api", principal.Name)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -50,7 +50,7 @@ func handleDefaultParameterSetPromoteApproved(server *Server, w http.ResponseWri
 		WriteError(w, err)
 		return
 	}
-	response, status, err := server.service.PromoteDefaultParameterSetToApproved(r.Context(), modelKey, modelVersion, request, "compute-api", principal.Name)
+	response, status, err := server.service.PromoteDefaultParameterSetToApproved(withAuditPrincipal(r.Context(), *principal, r), modelKey, modelVersion, request, "compute-api", principal.Name)
 	if err != nil {
 		WriteError(w, err)
 		return

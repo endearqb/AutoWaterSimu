@@ -15,6 +15,7 @@ type Store interface {
 	ModelRunStore
 	BenchmarkRunStore
 	ModelCatalogStore
+	MutationAuditStore
 	ProcessGraphStore
 	SimulationInputStore
 	DraftConfirmationStore
@@ -62,15 +63,19 @@ type ModelRunStore interface {
 }
 
 type BenchmarkRunStore interface {
-	UpsertBenchmarkRun(ctx context.Context, record BenchmarkRunRecord) (BenchmarkRunRecord, bool, error)
+	UpsertBenchmarkRun(ctx context.Context, record BenchmarkRunRecord, audit *MutationAuditRecord) (BenchmarkRunRecord, bool, error)
 	FindBenchmarkRun(ctx context.Context, benchmarkRunID string) (*BenchmarkRunRecord, error)
 	ListBenchmarkRuns(ctx context.Context, filter BenchmarkRunFilter) ([]BenchmarkRunRecord, string, int, error)
 }
 
 type ModelCatalogStore interface {
-	UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error)
+	UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord, audit *MutationAuditRecord) (ModelCatalogRecord, bool, error)
 	LatestModelCatalog(ctx context.Context, catalogID string) (*ModelCatalogRecord, error)
 	ListModelCatalogSnapshots(ctx context.Context, filter ModelCatalogSnapshotFilter) ([]ModelCatalogRecord, string, int, error)
+}
+
+type MutationAuditStore interface {
+	ListMutationAuditEvents(ctx context.Context, filter MutationAuditFilter) ([]MutationAuditRecord, string, int, error)
 }
 
 type ProcessGraphStore interface {

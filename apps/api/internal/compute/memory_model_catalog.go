@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-func (store *MemoryStore) UpsertModelCatalog(_ context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error) {
+func (store *MemoryStore) UpsertModelCatalog(_ context.Context, record ModelCatalogRecord, audit *MutationAuditRecord) (ModelCatalogRecord, bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	snapshots := store.modelCatalogs[record.CatalogID]
@@ -17,6 +17,9 @@ func (store *MemoryStore) UpsertModelCatalog(_ context.Context, record ModelCata
 	}
 	record = cloneModelCatalogRecord(record)
 	store.modelCatalogs[record.CatalogID] = append(snapshots, record)
+	if audit != nil {
+		store.appendMutationAuditLocked(*audit)
+	}
 	return cloneModelCatalogRecord(record), true, nil
 }
 

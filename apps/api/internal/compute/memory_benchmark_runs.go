@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-func (store *MemoryStore) UpsertBenchmarkRun(_ context.Context, record BenchmarkRunRecord) (BenchmarkRunRecord, bool, error) {
+func (store *MemoryStore) UpsertBenchmarkRun(_ context.Context, record BenchmarkRunRecord, audit *MutationAuditRecord) (BenchmarkRunRecord, bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	existing, ok := store.benchmarkRuns[record.BenchmarkRunID]
@@ -17,6 +17,9 @@ func (store *MemoryStore) UpsertBenchmarkRun(_ context.Context, record Benchmark
 		return cloneBenchmarkRunRecord(existing), false, nil
 	}
 	store.benchmarkRuns[record.BenchmarkRunID] = cloneBenchmarkRunRecord(record)
+	if audit != nil {
+		store.appendMutationAuditLocked(*audit)
+	}
 	return cloneBenchmarkRunRecord(record), true, nil
 }
 

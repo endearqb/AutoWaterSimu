@@ -10,6 +10,10 @@ import (
 )
 
 func (svc *ModelGovernanceService) UpdateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
+	return svc.updateDefaultParameterSetStatus(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy, modelParameterSetStatusChangedEvent, "model.parameter_set.status_update")
+}
+
+func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy, auditEventType, auditAction string) (ModelParameterSetTransitionResponse, int, error) {
 	modelKey = required(modelKey, "model_key")
 	modelVersion = required(modelVersion, "model_version")
 	toStatus := strings.TrimSpace(request.ToStatus)
@@ -38,18 +42,18 @@ func (svc *ModelGovernanceService) UpdateDefaultParameterSetStatus(ctx context.C
 	if request.FromStatus != "" && strings.TrimSpace(request.FromStatus) != fromStatus {
 		return ModelParameterSetTransitionResponse{}, 0, Conflict(CodeParameterSetTransitionFailed, "parameter set current status does not match from_status")
 	}
+	beforeCatalogHash, err := ResultHash(catalog)
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
 	if fromStatus == toStatus {
-		hash, err := ResultHash(catalog)
-		if err != nil {
-			return ModelParameterSetTransitionResponse{}, 0, err
-		}
 		return ModelParameterSetTransitionResponse{
 			ModelKey:           modelKey,
 			ModelVersion:       modelVersion,
 			ParameterSetID:     parameterSet.ParameterSetID,
 			FromStatus:         fromStatus,
 			ToStatus:           toStatus,
-			CatalogPayloadHash: hash,
+			CatalogPayloadHash: beforeCatalogHash,
 			CreatedSnapshot:    false,
 			Catalog:            catalog,
 		}, http.StatusOK, nil
@@ -85,7 +89,8 @@ func (svc *ModelGovernanceService) UpdateDefaultParameterSetStatus(ctx context.C
 	if err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
 	}
-	stored, created, err := svc.catalogs.UpsertModelCatalog(ctx, record)
+	audit := svc.parameterSetTransitionAudit(ctx, auditEventType, auditAction, modelKey, modelVersion, parameterSet.ParameterSetID, fromStatus, toStatus, beforeCatalogHash, record.PayloadHash, strings.TrimSpace(request.Reason), defaultString(defaultRequestedBy, "compute-api"), record.CreatedAt, true)
+	stored, created, err := svc.catalogs.UpsertModelCatalog(ctx, record, audit)
 	if err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
 	}
@@ -193,13 +198,13 @@ func (svc *ModelGovernanceService) PromoteDefaultParameterSetToApproved(ctx cont
 	metadata["benchmark_cases_checked"] = plan.BenchmarkCasesChecked
 	metadata["benchmark_cases_passed"] = plan.BenchmarkCasesPassed
 	metadata["case_results"] = plan.CaseResults
-	return svc.UpdateDefaultParameterSetStatus(ctx, modelKey, modelVersion, ParameterSetStatusUpdateRequest{
+	return svc.updateDefaultParameterSetStatus(ctx, modelKey, modelVersion, ParameterSetStatusUpdateRequest{
 		ParameterSetID: plan.ParameterSetID,
 		FromStatus:     plan.CurrentStatus,
 		ToStatus:       domainmodels.ParameterSetStatusApproved,
 		Reason:         defaultString(request.Reason, "benchmark-backed promotion"),
 		Metadata:       metadata,
-	}, defaultSourceSystem, defaultRequestedBy)
+	}, defaultSourceSystem, defaultRequestedBy, modelParameterSetPromotedApprovedEvent, "model.parameter_set.promote_approved")
 }
 
 func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Context, benchmarkCase ModelBenchmarkCase, modelKey, modelVersion string, parameterSet ModelParameterSet) (BenchmarkCasePromotionResult, error) {

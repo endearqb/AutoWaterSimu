@@ -134,7 +134,7 @@ $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLi
 $apiDir = Join-Path $Root "apps\api"
 Invoke-Step -Name "production auth config guard and token file source" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./cmd/compute-api", "-run", "Test(ValidateProductionAuthConfig|LoadAuthTokensJSON)", "-count=1")
 Invoke-Step -Name "auth scope revocation admin audit and data-scope checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(HTTPAuthScopeAndMetrics|StaticTokenRevocation|HTTPArtifactRetentionSweepRequiresAdminScope|HTTPMutationAuditEventEnvelopeForJobCreate|HTTPResultExplanationAuditEvents|HTTPJobReadTenantProjectSiteScope|HTTPModelRunTenantProjectSiteScope|HTTPArtifactDownloadTenantProjectSiteScope)", "-count=1")
-Invoke-Step -Name "governance route scope denial checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(ModelCatalogEndpoint|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint|ContractValidationEndpoint|SimulationCheckEndpointCreatesComputeJob|NewSystemEvidenceReferenceE2E)", "-count=1")
+Invoke-Step -Name "governance route scope denial and mutation audit checks" -WorkingDirectory $apiDir -Executable "go" -Arguments @("test", "./internal/compute", "-run", "Test(ModelCatalogEndpoint|DefaultParameterSetPromotionPlanEndpoint|BenchmarkCaseScheduleRunEndpoint|ContractValidationEndpoint|SimulationCheckEndpointCreatesComputeJob|NewSystemEvidenceReferenceE2E)", "-count=1")
 
 $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
 $statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
@@ -153,7 +153,7 @@ $report = [ordered]@{
         static_token_revocation = "covered_by_internal_compute_tests"
         scope_denial = "covered_by_internal_compute_http_tests"
         artifact_admin_scope = "covered_by_artifact_retention_http_test"
-        mutation_audit_events = "covered_for_job_create_artifact_retention_and_result_explanation_events"
+        mutation_audit_events = "covered_for_job_create_artifact_retention_result_explanation_draft_promotion_and_model_governance_events"
         tenant_project_site_data_scope = "tenant_project_site_read_scope_covered_for_job_list_get_model_run_get_job_filtered_list_and_artifact_download"
     }
     is_dirty_before = -not [string]::IsNullOrWhiteSpace($statusBefore)

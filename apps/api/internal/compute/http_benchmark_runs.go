@@ -46,7 +46,7 @@ func handleBenchmarkRuns(server *Server, w http.ResponseWriter, r *http.Request,
 			WriteError(w, ValidationError("benchmark_run model_key/model_version must match route"))
 			return
 		}
-		record, status, err := server.service.RegisterBenchmarkRun(r.Context(), bytes, "compute-api", principal.Name)
+		record, status, err := server.service.RegisterBenchmarkRun(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name)
 		if err != nil {
 			WriteError(w, err)
 			return

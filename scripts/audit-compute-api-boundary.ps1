@@ -175,6 +175,7 @@ function Get-MissingExpectedStoreEmbeds {
         "ModelRunStore",
         "BenchmarkRunStore",
         "ModelCatalogStore",
+        "MutationAuditStore",
         "ProcessGraphStore",
         "SimulationInputStore",
         "DraftConfirmationStore",
@@ -363,6 +364,7 @@ function ConvertTo-Domain {
         '^(InsertModelRuns|FindModelRun|ListModelRuns|ModelRuns)$' { return "model_runs" }
         '^(UpsertBenchmarkRun|FindBenchmarkRun|ListBenchmarkRuns)$' { return "benchmark_runs" }
         '^(UpsertModelCatalog|LatestModelCatalog|ListModelCatalogSnapshots)$' { return "model_catalog" }
+        '^ListMutationAuditEvents$' { return "mutation_audit" }
         '^(UpsertProcessGraph|FindProcessGraph)$' { return "process_graphs" }
         '^(UpsertSimulationInput|FindSimulationInput)$' { return "simulation_inputs" }
         '^(UpsertDraftConfirmation|FindDraftConfirmation)$' { return "draft_confirmations" }
@@ -535,6 +537,7 @@ $report = [ordered]@{
         "simulation_inputs + process_graphs",
         "draft_confirmations + result_explanations",
         "model_catalog + benchmark_runs + model_runs",
+        "mutation_audit",
         "workers",
         "evidence governance",
         "jobs",

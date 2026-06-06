@@ -31,7 +31,7 @@ func (server *Server) modelCatalog(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, ValidationError("read request body failed"))
 			return
 		}
-		record, status, err := server.service.RegisterModelCatalog(r.Context(), bytes, "compute-api", principal.Name)
+		record, status, err := server.service.RegisterModelCatalog(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name)
 		if err != nil {
 			WriteError(w, err)
 			return

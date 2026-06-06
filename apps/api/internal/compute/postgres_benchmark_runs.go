@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (store *PostgresStore) UpsertBenchmarkRun(ctx context.Context, record BenchmarkRunRecord) (BenchmarkRunRecord, bool, error) {
+func (store *PostgresStore) UpsertBenchmarkRun(ctx context.Context, record BenchmarkRunRecord, audit *MutationAuditRecord) (BenchmarkRunRecord, bool, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return BenchmarkRunRecord{}, false, err
@@ -38,6 +38,11 @@ func (store *PostgresStore) UpsertBenchmarkRun(ctx context.Context, record Bench
 		nullString(record.TenantID), nullString(record.ProjectID), record.Metadata, record.ExecutedAt, record.CreatedAt)
 	if err != nil {
 		return BenchmarkRunRecord{}, false, err
+	}
+	if audit != nil {
+		if err := insertMutationAuditEvent(ctx, tx, *audit); err != nil {
+			return BenchmarkRunRecord{}, false, err
+		}
 	}
 	return record, true, tx.Commit(ctx)
 }

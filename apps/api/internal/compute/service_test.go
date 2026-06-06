@@ -153,6 +153,25 @@ func eventAuditMap(t *testing.T, event EventRecord) map[string]any {
 	return audit
 }
 
+func mutationAuditPayloadMap(t *testing.T, event MutationAuditRecord) map[string]any {
+	t.Helper()
+	var payload map[string]any
+	if err := json.Unmarshal(event.EventJSON, &payload); err != nil {
+		t.Fatal(err)
+	}
+	return payload
+}
+
+func mutationAuditMap(t *testing.T, event MutationAuditRecord) map[string]any {
+	t.Helper()
+	payload := mutationAuditPayloadMap(t, event)
+	audit, ok := payload["audit"].(map[string]any)
+	if !ok {
+		t.Fatalf("mutation audit %s should include audit envelope, got %#v", event.EventType, payload)
+	}
+	return audit
+}
+
 func uploadTestArtifact(t *testing.T, svc *Service, ctx context.Context, workerID, jobID, artifactID string, artifactBytes []byte, retainUntil string) ArtifactRecord {
 	t.Helper()
 	return uploadTestArtifactWithRetention(t, svc, ctx, workerID, jobID, artifactID, artifactBytes, "ttl", retainUntil)
@@ -2014,6 +2033,47 @@ func TestModelCatalogEndpoint(t *testing.T) {
 		t.Fatalf("expected second page of catalog snapshots, got %#v", snapshotList)
 	}
 
+	auditEvents, _, auditTotal, err := svc.store.ListMutationAuditEvents(context.Background(), MutationAuditFilter{Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if auditTotal != 2 || len(auditEvents) != 2 {
+		t.Fatalf("expected catalog register and status mutation audit events only, total=%d events=%#v", auditTotal, auditEvents)
+	}
+	auditByType := map[string]MutationAuditRecord{}
+	for _, event := range auditEvents {
+		auditByType[event.EventType] = event
+	}
+	catalogAudit := mutationAuditMap(t, auditByType[modelCatalogRegisteredEvent])
+	if catalogAudit["who"] != "dev-public" ||
+		catalogAudit["where"] != "POST /api/v1/model-catalog" ||
+		catalogAudit["target_object"] != "ModelCatalog" ||
+		catalogAudit["target_id"] != "default" ||
+		catalogAudit["action"] != "model.catalog.register" {
+		t.Fatalf("unexpected model catalog audit envelope: %#v", catalogAudit)
+	}
+	catalogAfter, ok := catalogAudit["after"].(map[string]any)
+	if !ok || catalogAfter["payload_hash"] != record.PayloadHash {
+		t.Fatalf("catalog audit should include compact after hash, got %#v", catalogAudit["after"])
+	}
+	statusAudit := mutationAuditMap(t, auditByType[modelParameterSetStatusChangedEvent])
+	if statusAudit["who"] != "dev-public" ||
+		statusAudit["where"] != "POST /api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/status" ||
+		statusAudit["target_object"] != "ModelParameterSet" ||
+		statusAudit["target_id"] != "material_balance:material_balance.v1:ps_material_balance_default_v1" ||
+		statusAudit["action"] != "model.parameter_set.status_update" ||
+		statusAudit["reason"] != "regression test" {
+		t.Fatalf("unexpected parameter set status audit envelope: %#v", statusAudit)
+	}
+	statusBefore, ok := statusAudit["before"].(map[string]any)
+	if !ok || statusBefore["status"] != "approved" {
+		t.Fatalf("status audit should include approved before state, got %#v", statusAudit["before"])
+	}
+	statusAfter, ok := statusAudit["after"].(map[string]any)
+	if !ok || statusAfter["status"] != "retired" || statusAfter["catalog_payload_hash"] != transition.CatalogPayloadHash {
+		t.Fatalf("status audit should include retired after state, got %#v", statusAudit["after"])
+	}
+
 	req = httptest.NewRequest(http.MethodPost, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/status", strings.NewReader(`{"from_status":"retired","to_status":"approved"}`))
 	req.Header.Set("Authorization", "Bearer dev-public-token")
 	rec = httptest.NewRecorder()
@@ -2249,6 +2309,46 @@ func TestDefaultParameterSetPromotionPlanEndpoint(t *testing.T) {
 	if promotedCatalog.Models[0].Versions[0].DefaultParameterSet.Status != "approved" {
 		t.Fatalf("promotion should persist approved status: %#v", promotedCatalog.Models[0].Versions[0].DefaultParameterSet)
 	}
+	auditEvents, _, auditTotal, err := svc.store.ListMutationAuditEvents(ctx, MutationAuditFilter{Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if auditTotal != 3 || len(auditEvents) != 3 {
+		t.Fatalf("expected catalog register, benchmark run, and promotion audit events only, total=%d events=%#v", auditTotal, auditEvents)
+	}
+	auditByType := map[string]MutationAuditRecord{}
+	for _, event := range auditEvents {
+		auditByType[event.EventType] = event
+	}
+	benchmarkAudit := mutationAuditMap(t, auditByType[benchmarkRunRegisteredEvent])
+	if benchmarkAudit["who"] != "dev-public" ||
+		benchmarkAudit["where"] != "POST /api/v1/model-catalog/material_balance/versions/material_balance.v1/benchmark-runs" ||
+		benchmarkAudit["target_object"] != "BenchmarkRun" ||
+		benchmarkAudit["target_id"] != "br_material_balance_promotion" ||
+		benchmarkAudit["action"] != "model.benchmark_run.register" {
+		t.Fatalf("unexpected benchmark run audit envelope: %#v", benchmarkAudit)
+	}
+	benchmarkAfter, ok := benchmarkAudit["after"].(map[string]any)
+	if !ok || benchmarkAfter["status"] != "passed" || benchmarkAfter["job_id"] != "job_material_balance_minimal" || benchmarkAfter["evidence_ref_count"] != float64(1) {
+		t.Fatalf("benchmark run audit should include compact after state, got %#v", benchmarkAudit["after"])
+	}
+	promotionAudit := mutationAuditMap(t, auditByType[modelParameterSetPromotedApprovedEvent])
+	if promotionAudit["who"] != "dev-public" ||
+		promotionAudit["where"] != "POST "+promotionPath ||
+		promotionAudit["target_object"] != "ModelParameterSet" ||
+		promotionAudit["target_id"] != "material_balance:material_balance.v1:ps_material_balance_default_v1" ||
+		promotionAudit["action"] != "model.parameter_set.promote_approved" ||
+		promotionAudit["reason"] != "regression evidence gate" {
+		t.Fatalf("unexpected parameter set promotion audit envelope: %#v", promotionAudit)
+	}
+	promotionBefore, ok := promotionAudit["before"].(map[string]any)
+	if !ok || promotionBefore["status"] != "validated" {
+		t.Fatalf("promotion audit should include validated before state, got %#v", promotionAudit["before"])
+	}
+	promotionAfter, ok := promotionAudit["after"].(map[string]any)
+	if !ok || promotionAfter["status"] != "approved" || promotionAfter["created_snapshot"] != true || promotionAfter["catalog_payload_hash"] != transition.CatalogPayloadHash {
+		t.Fatalf("promotion audit should include approved after state, got %#v", promotionAudit["after"])
+	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/model-catalog/material_balance/versions/material_balance.v1/default-parameter-set/promotion-plan", nil)
 	req.Header.Set("Authorization", "Bearer dev-worker-token")
@@ -2325,6 +2425,27 @@ func TestBenchmarkCaseScheduleRunEndpoint(t *testing.T) {
 	}
 	if benchmarkRuns.TotalEstimate != 0 || len(benchmarkRuns.Items) != 0 {
 		t.Fatalf("schedule-run must not record benchmark_run history, got %#v", benchmarkRuns)
+	}
+	scheduledEvents, err := svc.Events(context.Background(), snapshot.Job.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scheduleAuditCounts := map[string]int{}
+	for _, event := range scheduledEvents {
+		if event.EventType != "job.created" && event.EventType != "job.queued" {
+			continue
+		}
+		scheduleAuditCounts[event.EventType]++
+		audit := eventAuditMap(t, event)
+		if audit["who"] != "dev-public" ||
+			audit["where"] != "POST "+path ||
+			audit["target_object"] != "ComputeJob" ||
+			audit["target_id"] != snapshot.Job.JobID {
+			t.Fatalf("unexpected benchmark schedule job audit envelope for %s: %#v", event.EventType, audit)
+		}
+	}
+	if scheduleAuditCounts["job.created"] != 1 || scheduleAuditCounts["job.queued"] != 1 {
+		t.Fatalf("benchmark schedule-run should write one create and one queue audit event, got counts=%#v events=%#v", scheduleAuditCounts, scheduledEvents)
 	}
 
 	req = httptest.NewRequest(http.MethodPost, path, strings.NewReader(requestBody))
@@ -2566,6 +2687,28 @@ func TestContractValidationEndpoint(t *testing.T) {
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("duplicate promotion should be idempotent, got %d %s", rec.Code, rec.Body.String())
+	}
+	promotionEvents, err := svc.Events(context.Background(), promoted.Job.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	promotionAuditCounts := map[string]int{}
+	for _, event := range promotionEvents {
+		if event.EventType != "job.created" && event.EventType != "job.queued" {
+			continue
+		}
+		promotionAuditCounts[event.EventType]++
+		audit := eventAuditMap(t, event)
+		if audit["who"] != "dev-public" ||
+			audit["where"] != "POST /api/v1/contracts/confirmations/confirm_promote_material_balance_minimal/promote-simulation-check" ||
+			audit["target_object"] != "ComputeJob" ||
+			audit["target_id"] != promoted.Job.JobID ||
+			audit["trace_id"] != "trace_promoted_material_balance_minimal" {
+			t.Fatalf("unexpected draft promotion job audit envelope for %s: %#v", event.EventType, audit)
+		}
+	}
+	if promotionAuditCounts["job.created"] != 1 || promotionAuditCounts["job.queued"] != 1 {
+		t.Fatalf("draft promotion should write one create and one queue audit event, got counts=%#v events=%#v", promotionAuditCounts, promotionEvents)
 	}
 
 	mismatchedConfirmation := strings.Replace(string(confirmationBytes), `"draft_schema_version": "agent_scenario_draft.v1"`, `"draft_schema_version": "constraint_draft.v1"`, 1)

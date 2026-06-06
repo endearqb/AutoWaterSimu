@@ -1,3 +1,30 @@
+# 2026-06-06 AutoWaterSimu Next model governance mutation audit TODO
+
+- [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API, platform audit, model governance, migrations, and recent change records
+- [x] Confirm next aligned gap: evidence/workflow wrapper loops and same-package split work have diminishing returns; model governance mutations still lack selected audit events
+- [x] Add bounded global mutation audit metadata store for non-job-scoped model governance mutations
+- [x] Cover model catalog registration, default parameter set status/promote, and benchmark_run registration audit events
+- [x] Add draft promotion regression proving route/principal flows into job.create/job.queue audit events
+- [x] Update Compute API/migrations/security/docs context and change records
+- [x] Run focused tests, full Go tests, migration/dependency/security validation, commit, and push
+
+## Plan
+
+- Treat this as a selected all-mutation audit slice, not a full audit/RBAC system.
+- Keep global audit compact and metadata-only: no large model catalog or benchmark_run payloads in audit events.
+- Do not expose new HTTP/OpenAPI read endpoints in this stage; tests verify persistence through the store.
+- Preserve existing model governance endpoint behavior, idempotency, contracts, generated clients, and public service signatures.
+
+## Review
+
+- Added compact `MutationAuditRecord` / `MutationAuditStore`, Memory/Postgres mutation audit persistence, and migration `0011_mutation_audit_events`.
+- Model catalog registration, default parameter set status transitions, approved parameter promotion, and benchmark_run registration now write selected non-job-scoped mutation audit events with route/principal context.
+- Draft promotion and benchmark schedule-run regressions now assert the existing job-scoped `job.created` / `job.queued` audit events carry route, principal, and trace context.
+- Updated Compute API, migrations, scripts, security smoke, boundary audit, architecture docs, Certainty/Elegance plan, and `.ai/changes` context.
+- Validation passed: focused model governance/draft promotion tests, full `cd apps\api; go test ./...`, security smoke, dependency check, Compute API boundary audit, docs/rebuild P0/P1/P2/schema scan, and diff-check with LF/CRLF warnings only.
+- PostgreSQL migration up/down smoke was not run because `COMPUTE_API_DATABASE_URL` is unset; the migration is covered by full Go compilation and will need a temporary Postgres URL for live up/down verification.
+- Remaining scope: full all-mutation audit, audit query API if needed, full object-level tenant/project/site data scope, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next jobs state domain package split TODO
 
 - [x] Re-read README First context for Certainty/Elegance PRD/Plan, Compute API, compute compatibility package, and `domain/jobs`

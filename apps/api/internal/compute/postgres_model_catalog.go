@@ -6,7 +6,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (store *PostgresStore) UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord) (ModelCatalogRecord, bool, error) {
+func (store *PostgresStore) UpsertModelCatalog(ctx context.Context, record ModelCatalogRecord, audit *MutationAuditRecord) (ModelCatalogRecord, bool, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return ModelCatalogRecord{}, false, err
@@ -31,6 +31,11 @@ func (store *PostgresStore) UpsertModelCatalog(ctx context.Context, record Model
 		nullString(record.ProjectID), record.Metadata, record.CreatedAt)
 	if err != nil {
 		return ModelCatalogRecord{}, false, err
+	}
+	if audit != nil {
+		if err := insertMutationAuditEvent(ctx, tx, *audit); err != nil {
+			return ModelCatalogRecord{}, false, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return ModelCatalogRecord{}, false, err

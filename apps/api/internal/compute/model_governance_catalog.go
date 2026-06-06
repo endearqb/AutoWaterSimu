@@ -16,7 +16,7 @@ func (svc *ModelGovernanceService) RegisterModelCatalog(ctx context.Context, byt
 	if err != nil {
 		return ModelCatalogRecord{}, 0, err
 	}
-	stored, created, err := svc.catalogs.UpsertModelCatalog(ctx, record)
+	stored, created, err := svc.catalogs.UpsertModelCatalog(ctx, record, svc.modelCatalogRegisteredAudit(ctx, record))
 	if err != nil {
 		return ModelCatalogRecord{}, 0, err
 	}

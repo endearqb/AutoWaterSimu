@@ -31,6 +31,7 @@
 | `0008_benchmark_runs.*.sql` | persisted `benchmark_run.v1` execution history for model governance reads |
 | `0009_artifact_archives.*.sql` | durable archive metadata for opt-in `local_fs_archive` retention handling |
 | `0010_job_site_scope.*.sql` | optional `compute_jobs.site_id` metadata and scope query index |
+| `0011_mutation_audit_events.*.sql` | compact non-job-scoped selected mutation audit events, starting with model governance mutations |
 
 ## 3. 维护约定
 
@@ -42,6 +43,7 @@
 6. Draft confirmation records are audit metadata only; they must not create jobs, approvals, or production actions by themselves.
 7. Result explanation records are audit metadata only; publish status must not be treated as production approval or control publication.
 8. Benchmark run records are execution history only; they must not automatically change parameter set lifecycle state or production approval.
+9. `mutation_audit_events` stores compact audit envelopes for non-job-scoped selected mutations; do not store full model catalog, benchmark run, artifact, result, or time-series payloads in audit event JSON.
 
 ## 4. 对外接口
 

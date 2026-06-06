@@ -18,7 +18,8 @@ func (svc *ModelGovernanceService) RegisterBenchmarkRun(ctx context.Context, byt
 	if err != nil {
 		return BenchmarkRunRecord{}, 0, err
 	}
-	stored, created, err := svc.benchmarkRuns.UpsertBenchmarkRun(ctx, record)
+	audit := svc.benchmarkRunRegisteredAudit(ctx, record, len(domainmodels.BenchmarkRunEvidenceRefs(document)))
+	stored, created, err := svc.benchmarkRuns.UpsertBenchmarkRun(ctx, record, audit)
 	if err != nil {
 		return BenchmarkRunRecord{}, 0, err
 	}

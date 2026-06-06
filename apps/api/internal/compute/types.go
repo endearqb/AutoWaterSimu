@@ -88,6 +88,23 @@ type EventRecord struct {
 	CreatedAt time.Time       `json:"created_at"`
 }
 
+type MutationAuditRecord struct {
+	ID           int64           `json:"id"`
+	EventType    string          `json:"event_type"`
+	TargetObject string          `json:"target_object"`
+	TargetID     string          `json:"target_id"`
+	EventJSON    json.RawMessage `json:"event"`
+	CreatedAt    time.Time       `json:"created_at"`
+}
+
+type MutationAuditFilter struct {
+	Limit        int
+	Cursor       string
+	EventType    string
+	TargetObject string
+	TargetID     string
+}
+
 type ArtifactRecord struct {
 	ArtifactID      string          `json:"artifact_id"`
 	JobID           string          `json:"job_id"`
