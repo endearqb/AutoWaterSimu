@@ -22,6 +22,7 @@
 | `next-pr-fast.yml` | 运行 AutoWaterSimu Next PR fast lane，上传 `tmp/ci-evidence/pr-fast.json` |
 | `next-integration-smoke.yml` | 手动或 `workflow_call` 运行 AutoWaterSimu Next integration smoke，上传 `tmp/ci-evidence/integration-smoke.json` |
 | `next-browser-smoke.yml` | 手动或 `workflow_call` 运行 mock-backed Playwright browser smoke，上传 `tmp/ci-evidence/browser-smoke.json` |
+| `next-current-flow-live-smoke.yml` | 手动或 `workflow_call` 运行 current-flow live smoke，上传 `tmp/ci-evidence/current-flow-live-smoke.json` |
 | `next-desktop-package-smoke.yml` | 手动或 `workflow_call` 运行 Desktop package/support bundle smoke，上传 `tmp/ci-evidence/desktop-package-smoke.json` |
 | `next-security-smoke.yml` | 手动或 `workflow_call` 运行 production token guard、scope denial、revocation、artifact admin scope 和 selected mutation audit smoke，上传 `tmp/ci-evidence/security-smoke.json` |
 | `next-nightly.yml` | 每日定时或手动编排 pr-fast、integration、browser、security、Desktop package smoke，并上传 nightly summary evidence |
@@ -44,7 +45,8 @@
 9. `next-integration-smoke.yml` 是 opt-in/manual integration lane；它在 Ubuntu runner 上安装 backend Python dependencies，使用 Docker Compose 启动 PostgreSQL + MinIO + Compute API，并调用 `scripts/ci/integration-smoke.ps1 -StartCompose`。它不属于默认 PR fast lane。
 10. `next-desktop-package-smoke.yml` 是 opt-in/manual Desktop package lane；它在 Windows runner 上安装 backend Python dependencies、Rust 和 Desktop Node dependencies，并调用 `scripts/ci/desktop-package-smoke.ps1`。它不构建 packaged worker 或 NSIS installer，不属于 release-evidence lane。
 11. `next-security-smoke.yml` 是 opt-in/manual security lane；它不声明完整 RBAC/data-scope/all-mutation coverage。
-12. `next-nightly.yml` 是 scheduled/manual orchestrator；它复用已有 workflow_call lanes 并写出 summary evidence，不替代 manual release-evidence artifact build/download run。
+12. `next-current-flow-live-smoke.yml` 是 opt-in/manual current-flow live lane；它在 Ubuntu runner 上安装 backend Python dependencies、frontend Node dependencies、Playwright Chromium 和 Docker Compose 依赖，调用 `scripts/ci/current-flow-live-smoke.ps1`。它不属于默认 PR fast lane，也不证明完整 legacy authenticated backend session。
+13. `next-nightly.yml` 是 scheduled/manual orchestrator；它复用已有 workflow_call lanes 并写出 summary evidence，不替代 manual release-evidence artifact build/download run。
 
 ## 4. 对外接口
 
@@ -53,6 +55,8 @@
 `next-integration-smoke.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被 Docker Compose integration 耗时拖慢。
 
 `next-browser-smoke.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被浏览器 smoke 拖慢；它使用 mock-backed Playwright 覆盖 Web 编排，不替代真实 backend integration smoke。
+
+`next-current-flow-live-smoke.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被 Docker/browser live smoke 拖慢；它使用 live Compute API/PostgreSQL/MinIO/host worker loop 覆盖 UI current-flow submit 到 evidence/ref 的本地真实链路，但仍 mock legacy `/api/v1/users/me`。
 
 `next-desktop-package-smoke.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被 Desktop Rust/package smoke 耗时拖慢。
 
@@ -83,6 +87,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 涉及 `run_postgres_migration_smoke` 时还需用 YAML parser 确认 opt-in job 的 PostgreSQL service、database URL 和 `COMPUTE_API_MIGRATION_DOWN_SMOKE=true` wiring。
 涉及 `next-integration-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\integration-smoke.ps1 -StartCompose`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-browser-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\browser-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
+涉及 `next-current-flow-live-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\current-flow-live-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-desktop-package-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\desktop-package-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-security-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\security-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-nightly.yml` 时还需用 YAML parser 确认 schedule、called workflow references、needs summary 和 artifact upload；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。

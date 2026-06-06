@@ -1,0 +1,65 @@
+name: AutoWaterSimu Next Current Flow Live Smoke
+
+concurrency:
+  group: next-current-flow-live-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+'on':
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  current-flow-live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+          enable-cache: true
+
+      - name: Install backend Python dependencies
+        run: uv sync
+        working-directory: backend
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Chromium browser
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Run current-flow live smoke evidence
+        shell: pwsh
+        run: ./scripts/ci/current-flow-live-smoke.ps1
+
+      - name: Upload current-flow live smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-current-flow-live-smoke-evidence
+          path: tmp/ci-evidence
+          include-hidden-files: true

@@ -1,3 +1,28 @@
+# 2026-06-06 AutoWaterSimu Next current-flow hosted workflow TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, `.github` README, workflow README, current-state/local-dev, scripts/ci README, and recent change records
+- [x] Confirm next aligned gap: current-flow live local lane existed, but no dedicated hosted/manual workflow could produce GitHub Actions evidence for that lane
+- [x] Add a manual/reusable current-flow live smoke workflow that calls the existing repository script
+- [x] Add current-flow live smoke to the nightly workflow_call orchestrator and summary
+- [x] Update workflow README, `.github` README, current-state/local-dev, Certainty/Elegance plan, and change records
+- [x] Run workflow syntax/local script validation
+- [x] Commit and push
+
+## Plan
+
+- Keep the workflow as orchestration only: setup dependencies, call `scripts/ci/current-flow-live-smoke.ps1`, upload `tmp/ci-evidence`.
+- Use Ubuntu for the hosted lane because Docker Compose is available and PowerShell Core can run the repository script.
+- Do not claim hosted green evidence until GitHub Actions actually runs the new workflow successfully.
+- Keep full legacy authenticated browser session as a separate remaining gap; the current-flow live smoke still mocks only `/api/v1/users/me`.
+
+## Review
+
+- Added `.github/workflows/next-current-flow-live-smoke.yml` as a manual/reusable hosted entry for the existing current-flow live smoke script.
+- Wired `next-nightly.yml` to call the current-flow live smoke workflow and include its result in the nightly summary.
+- Updated `.github` / workflow README, `scripts/ci` README, architecture current-state/local-dev, Certainty/Elegance plan, and `.ai/changes`.
+- Validation passed: workflow YAML structure parser checks, `scripts\ci\current-flow-live-smoke.ps1`, `scripts\check-deps.ps1`, docs/rebuild P0/P1/P2/schema scan, and `git diff --check -- .github docs scripts tasks .ai` with LF/CRLF warnings only.
+- Remaining scope: actual hosted current-flow live workflow green evidence, hosted live backend browser read workflow, full legacy authenticated backend browser session, release artifact upload/download, signing/installer behavior, all-object data scope, all-mutation audit, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next current-flow live smoke TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current-state, local-dev, scripts/ci README, frontend tests README, worker README, and current Compute Jobs smoke context

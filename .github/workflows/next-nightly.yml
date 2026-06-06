@@ -22,6 +22,9 @@ jobs:
   browser_smoke:
     uses: ./.github/workflows/next-browser-smoke.yml
 
+  current_flow_live_smoke:
+    uses: ./.github/workflows/next-current-flow-live-smoke.yml
+
   security_smoke:
     uses: ./.github/workflows/next-security-smoke.yml
 
@@ -35,6 +38,7 @@ jobs:
       - pr_fast
       - integration_smoke
       - browser_smoke
+      - current_flow_live_smoke
       - security_smoke
       - desktop_package_smoke
     steps:
@@ -55,6 +59,7 @@ jobs:
               "pr_fast": "${{ needs.pr_fast.result }}",
               "integration_smoke": "${{ needs.integration_smoke.result }}",
               "browser_smoke": "${{ needs.browser_smoke.result }}",
+              "current_flow_live_smoke": "${{ needs.current_flow_live_smoke.result }}",
               "security_smoke": "${{ needs.security_smoke.result }}",
               "desktop_package_smoke": "${{ needs.desktop_package_smoke.result }}"
             },
