@@ -4,16 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 )
 
 func (svc *ModelGovernanceService) RegisterModelCatalog(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ModelCatalogRecord, int, error) {
+	return svc.RegisterModelCatalogForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, ModelCatalogSnapshotFilter{})
+}
+
+func (svc *ModelGovernanceService) RegisterModelCatalogForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ModelCatalogSnapshotFilter) (ModelCatalogRecord, int, error) {
 	var catalog map[string]any
 	if err := json.Unmarshal(bytes, &catalog); err != nil {
 		return ModelCatalogRecord{}, 0, ValidationError("model_catalog JSON is invalid")
 	}
 	record, err := svc.modelCatalogRecord(catalog, defaultSourceSystem, defaultRequestedBy)
 	if err != nil {
+		return ModelCatalogRecord{}, 0, err
+	}
+	if err := authorizeModelCatalogRecordFilterScope(filter, record); err != nil {
 		return ModelCatalogRecord{}, 0, err
 	}
 	stored, created, err := svc.catalogs.UpsertModelCatalog(ctx, record, svc.modelCatalogRegisteredAudit(ctx, record))
@@ -65,6 +73,31 @@ func (svc *ModelGovernanceService) ModelCatalogForRead(ctx context.Context, filt
 		return ModelCatalogResponse{}, nil, err
 	}
 	return svc.builtInModelCatalogForRead()
+}
+
+func (svc *ModelGovernanceService) ModelCatalogForMutation(ctx context.Context, filter ModelCatalogSnapshotFilter) (ModelCatalogResponse, *ModelCatalogRecord, error) {
+	filter.CatalogID = defaultString(filter.CatalogID, "default")
+	if modelCatalogFilterHasScope(filter) {
+		records, _, _, err := svc.catalogs.ListModelCatalogSnapshots(ctx, ModelCatalogSnapshotFilter{
+			CatalogID: filter.CatalogID,
+			Limit:     1,
+			TenantID:  filter.TenantID,
+			ProjectID: filter.ProjectID,
+			SiteID:    filter.SiteID,
+		})
+		if err != nil {
+			return ModelCatalogResponse{}, nil, err
+		}
+		if len(records) == 0 {
+			return ModelCatalogResponse{}, nil, NewAppError(http.StatusForbidden, CodeForbidden, "model catalog mutation requires a matching scoped persisted catalog", false, modelCatalogFilterScopeDetails(filter))
+		}
+		catalog, err := svc.modelCatalogFromRecord(records[0])
+		if err != nil {
+			return ModelCatalogResponse{}, nil, err
+		}
+		return catalog, &records[0], nil
+	}
+	return svc.ModelCatalogForRead(ctx, filter)
 }
 
 func (svc *ModelGovernanceService) modelCatalogFromRecord(record ModelCatalogRecord) (ModelCatalogResponse, error) {
@@ -175,5 +208,39 @@ func (svc *ModelGovernanceService) modelCatalogRecord(catalog map[string]any, de
 }
 
 func modelCatalogFilterHasScope(filter ModelCatalogSnapshotFilter) bool {
-	return filter.TenantID != "" || filter.ProjectID != "" || filter.SiteID != ""
+	return strings.TrimSpace(filter.TenantID) != "" || strings.TrimSpace(filter.ProjectID) != "" || strings.TrimSpace(filter.SiteID) != ""
+}
+
+func authorizeModelCatalogRecordFilterScope(filter ModelCatalogSnapshotFilter, record ModelCatalogRecord) error {
+	if !modelCatalogFilterHasScope(filter) {
+		return nil
+	}
+	requiredTenantID := strings.TrimSpace(filter.TenantID)
+	requiredProjectID := strings.TrimSpace(filter.ProjectID)
+	requiredSiteID := strings.TrimSpace(filter.SiteID)
+	details := modelCatalogFilterScopeDetails(filter)
+	if requiredTenantID != "" && strings.TrimSpace(record.TenantID) != requiredTenantID {
+		return NewAppError(http.StatusForbidden, CodeForbidden, "model catalog is outside token tenant scope", false, details)
+	}
+	if requiredProjectID != "" && strings.TrimSpace(record.ProjectID) != requiredProjectID {
+		return NewAppError(http.StatusForbidden, CodeForbidden, "model catalog is outside token project scope", false, details)
+	}
+	if requiredSiteID != "" && strings.TrimSpace(record.SiteID) != requiredSiteID {
+		return NewAppError(http.StatusForbidden, CodeForbidden, "model catalog is outside token site scope", false, details)
+	}
+	return nil
+}
+
+func modelCatalogFilterScopeDetails(filter ModelCatalogSnapshotFilter) map[string]any {
+	details := map[string]any{}
+	if tenantID := strings.TrimSpace(filter.TenantID); tenantID != "" {
+		details["tenant_id"] = tenantID
+	}
+	if projectID := strings.TrimSpace(filter.ProjectID); projectID != "" {
+		details["project_id"] = projectID
+	}
+	if siteID := strings.TrimSpace(filter.SiteID); siteID != "" {
+		details["site_id"] = siteID
+	}
+	return details
 }

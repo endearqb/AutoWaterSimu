@@ -10,10 +10,14 @@ import (
 )
 
 func (svc *ModelGovernanceService) UpdateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
-	return svc.updateDefaultParameterSetStatus(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy, modelParameterSetStatusChangedEvent, "model.parameter_set.status_update")
+	return svc.UpdateDefaultParameterSetStatusForScope(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy, ModelCatalogSnapshotFilter{})
 }
 
-func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy, auditEventType, auditAction string) (ModelParameterSetTransitionResponse, int, error) {
+func (svc *ModelGovernanceService) UpdateDefaultParameterSetStatusForScope(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy string, filter ModelCatalogSnapshotFilter) (ModelParameterSetTransitionResponse, int, error) {
+	return svc.updateDefaultParameterSetStatus(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy, modelParameterSetStatusChangedEvent, "model.parameter_set.status_update", filter)
+}
+
+func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy, auditEventType, auditAction string, filter ModelCatalogSnapshotFilter) (ModelParameterSetTransitionResponse, int, error) {
 	modelKey = required(modelKey, "model_key")
 	modelVersion = required(modelVersion, "model_version")
 	toStatus := strings.TrimSpace(request.ToStatus)
@@ -23,7 +27,7 @@ func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.C
 	if request.FromStatus != "" && !domainmodels.IsParameterSetStatus(request.FromStatus) {
 		return ModelParameterSetTransitionResponse{}, 0, ValidationError("from_status must be one of draft, candidate, validated, approved, retired")
 	}
-	catalog, err := svc.ModelCatalog(ctx)
+	catalog, _, err := svc.ModelCatalogForMutation(ctx, filter)
 	if err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
 	}
@@ -87,6 +91,9 @@ func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.C
 	}
 	record, err := svc.modelCatalogRecord(modelCatalogResponseToMap(catalog), defaultSourceSystem, defaultRequestedBy)
 	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	if err := authorizeModelCatalogRecordFilterScope(filter, record); err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
 	}
 	audit := svc.parameterSetTransitionAudit(ctx, auditEventType, auditAction, modelKey, modelVersion, parameterSet.ParameterSetID, fromStatus, toStatus, beforeCatalogHash, record.PayloadHash, strings.TrimSpace(request.Reason), defaultString(defaultRequestedBy, "compute-api"), record.CreatedAt, true)
@@ -204,7 +211,7 @@ func (svc *ModelGovernanceService) PromoteDefaultParameterSetToApproved(ctx cont
 		ToStatus:       domainmodels.ParameterSetStatusApproved,
 		Reason:         defaultString(request.Reason, "benchmark-backed promotion"),
 		Metadata:       metadata,
-	}, defaultSourceSystem, defaultRequestedBy, modelParameterSetPromotedApprovedEvent, "model.parameter_set.promote_approved")
+	}, defaultSourceSystem, defaultRequestedBy, modelParameterSetPromotedApprovedEvent, "model.parameter_set.promote_approved", ModelCatalogSnapshotFilter{})
 }
 
 func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Context, benchmarkCase ModelBenchmarkCase, modelKey, modelVersion string, parameterSet ModelParameterSet) (BenchmarkCasePromotionResult, error) {

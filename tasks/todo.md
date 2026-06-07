@@ -1,3 +1,33 @@
+# 2026-06-07 AutoWaterSimu Next model catalog mutation scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API model governance, security smoke, architecture current-state, and recent `.ai/changes`
+- [x] Confirm next aligned gap: persisted model catalog read-scope was done, while model catalog registration/default parameter set status writes still lacked tenant/project/site mutation data-scope
+- [x] Enforce scoped model catalog registration before store writes
+- [x] Enforce scoped default parameter set status mutation against matching persisted catalog snapshots only
+- [x] Keep scoped promotion plan / promote-approved denied until job-scoped benchmark/model_run evidence filtering exists
+- [x] Add focused HTTP regression coverage and security smoke inclusion
+- [x] Update Compute API/security/docs context and change records
+- [x] Run focused/full validation
+- [x] Prepare validated changes for commit/push
+
+## Plan
+
+- Treat this as a narrow model governance mutation data-scope slice, not full RBAC/ABAC, all-object data-scope, or all-mutation audit completion.
+- Reuse existing `model_catalog.v1.metadata.tenant_id/project_id/site_id` projection; no schema, OpenAPI, migration, or generated client change is needed.
+- For scoped registration, reject cross-scope payloads before `UpsertModelCatalog` so failed writes do not create snapshots or audit events.
+- For scoped status transitions, load only a matching persisted catalog snapshot; do not let scoped tokens mutate the built-in fallback or global latest catalog.
+- Keep promote-approved global-token-only until the promotion plan and approval path can filter benchmark/model_run evidence by job/data scope.
+
+## Review
+
+- Implemented scoped `RegisterModelCatalogForScope` and `UpdateDefaultParameterSetStatusForScope` delegates while preserving existing unscoped service methods.
+- Added mutation-scope helpers for model catalog payload metadata and a mutation-only catalog lookup that returns 403 when scoped tokens have no matching persisted catalog.
+- Updated HTTP model catalog/status handlers to pass principal-derived tenant/project/site filters; scoped promote-approved now returns 403 for the same evidence-filtering reason as promotion plan.
+- Added `TestHTTPModelCatalogMutationTenantProjectSiteScope` and included it in `scripts/ci/security-smoke.ps1`.
+- Updated Compute API, security smoke, architecture, Certainty/Elegance plan, and task context.
+- Validation passed: focused model catalog mutation/read-scope and promotion tests, full `cd apps\api; go test ./...`, `cd frontend; npx tsc --noEmit`, security smoke, Compute API boundary audit, dependency check, docs/rebuild scan, and diff-check with LF/CRLF warnings only.
+- Remaining scope: promotion plan / promote-approved job-scoped evidence filtering, benchmark_run registration mutation data-scope, other object write data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-06 AutoWaterSimu Next model catalog scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API model governance, contracts, migrations, OpenAPI, security smoke, and recent change records

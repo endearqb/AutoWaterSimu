@@ -38,7 +38,8 @@ func (server *Server) modelCatalog(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, ValidationError("read request body failed"))
 			return
 		}
-		record, status, err := server.service.RegisterModelCatalog(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name)
+		filter := modelCatalogSnapshotFilterForPrincipal(ModelCatalogSnapshotFilter{CatalogID: "default"}, *principal)
+		record, status, err := server.service.RegisterModelCatalogForScope(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name, filter)
 		if err != nil {
 			WriteError(w, err)
 			return

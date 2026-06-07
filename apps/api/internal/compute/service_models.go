@@ -13,6 +13,10 @@ func (svc *Service) RegisterModelCatalog(ctx context.Context, bytes []byte, defa
 	return svc.modelGovernance.RegisterModelCatalog(ctx, bytes, defaultSourceSystem, defaultRequestedBy)
 }
 
+func (svc *Service) RegisterModelCatalogForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ModelCatalogSnapshotFilter) (ModelCatalogRecord, int, error) {
+	return svc.modelGovernance.RegisterModelCatalogForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, filter)
+}
+
 func (svc *Service) ModelCatalog(ctx context.Context) (ModelCatalogResponse, error) {
 	return svc.modelGovernance.ModelCatalog(ctx)
 }
@@ -35,6 +39,10 @@ func (svc *Service) ListModelCatalogSnapshots(ctx context.Context, filter ModelC
 
 func (svc *Service) UpdateDefaultParameterSetStatus(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
 	return svc.modelGovernance.UpdateDefaultParameterSetStatus(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy)
+}
+
+func (svc *Service) UpdateDefaultParameterSetStatusForScope(ctx context.Context, modelKey, modelVersion string, request ParameterSetStatusUpdateRequest, defaultSourceSystem, defaultRequestedBy string, filter ModelCatalogSnapshotFilter) (ModelParameterSetTransitionResponse, int, error) {
+	return svc.modelGovernance.UpdateDefaultParameterSetStatusForScope(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy, filter)
 }
 
 func (svc *Service) DefaultParameterSetPromotionPlan(ctx context.Context, modelKey, modelVersion string) (ModelParameterSetPromotionPlan, error) {
