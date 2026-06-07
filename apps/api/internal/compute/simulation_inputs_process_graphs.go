@@ -8,12 +8,19 @@ import (
 )
 
 func (svc *SimulationInputService) RegisterProcessGraph(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ProcessGraphRecord, int, error) {
+	return svc.RegisterProcessGraphForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, ListFilter{})
+}
+
+func (svc *SimulationInputService) RegisterProcessGraphForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (ProcessGraphRecord, int, error) {
 	var processGraph map[string]any
 	if err := json.Unmarshal(bytes, &processGraph); err != nil {
 		return ProcessGraphRecord{}, 0, ValidationError("process_graph JSON is invalid")
 	}
 	record, err := svc.processGraphRecord(processGraph, defaultSourceSystem, defaultRequestedBy)
 	if err != nil {
+		return ProcessGraphRecord{}, 0, err
+	}
+	if err := authorizeListFilterDataScope(filter, "process graph", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 		return ProcessGraphRecord{}, 0, err
 	}
 	created, err := svc.processGraphs.UpsertProcessGraph(ctx, record, svc.processGraphRegisteredAudit(ctx, record))

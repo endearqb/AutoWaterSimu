@@ -58,12 +58,20 @@ func (svc *Service) RegisterSimulationInput(ctx context.Context, bytes []byte, d
 	return svc.simulationInputs.RegisterSimulationInput(ctx, bytes, defaultSourceSystem, defaultRequestedBy)
 }
 
+func (svc *Service) RegisterSimulationInputForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (SimulationInputRecord, int, error) {
+	return svc.simulationInputs.RegisterSimulationInputForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, filter)
+}
+
 func (svc *Service) GetSimulationInput(ctx context.Context, simulationInputID string) (SimulationInputRecord, error) {
 	return svc.simulationInputs.GetSimulationInput(ctx, simulationInputID)
 }
 
 func (svc *Service) RegisterProcessGraph(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ProcessGraphRecord, int, error) {
 	return svc.simulationInputs.RegisterProcessGraph(ctx, bytes, defaultSourceSystem, defaultRequestedBy)
+}
+
+func (svc *Service) RegisterProcessGraphForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (ProcessGraphRecord, int, error) {
+	return svc.simulationInputs.RegisterProcessGraphForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, filter)
 }
 
 func (svc *Service) GetProcessGraph(ctx context.Context, processGraphID string, version int) (ProcessGraphRecord, error) {

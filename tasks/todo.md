@@ -1,3 +1,31 @@
+# 2026-06-07 AutoWaterSimu Next simulation registry mutation scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API simulation registry, security smoke, and recent `.ai/changes`
+- [x] Confirm next aligned gap: simulation registry read-scope and selected audit existed, while explicit process_graph/simulation_input registry POST writes still lacked tenant/project/site mutation data-scope
+- [x] Enforce scoped explicit process_graph registration against payload metadata before store/audit writes
+- [x] Enforce scoped explicit simulation_input registration against payload metadata before store/audit writes
+- [x] Add focused HTTP regression coverage and include it in security smoke
+- [x] Update Compute API/security/docs context and change records
+- [x] Run full validation
+- [x] Commit and push this completed slice
+
+## Plan
+
+- Treat this as a narrow explicit registry POST mutation data-scope slice, not full RBAC/ABAC, all-object data-scope, job-create data-scope, or complete all-mutation audit.
+- Reuse existing static-token tenant/project/site filters against `process_graph.v1.metadata` and `simulation_input.v1.metadata`.
+- Reject cross-scope scoped-token registration before registry upsert so failed writes do not create registry records or mutation audit events.
+- Preserve route shape, schemas, OpenAPI, migrations, generated clients, global token behavior, registry idempotency, read-scope behavior, and simulation-check input-ref resolution.
+
+## Review
+
+- Added scoped registration delegates for `ProcessGraphRecord` and `SimulationInputRecord` while preserving existing unscoped service methods for internal/global callers.
+- Updated explicit `POST /api/v1/process-graphs` and `POST /api/v1/simulation-inputs` HTTP handlers to pass principal-derived tenant/project/site filters before store/audit writes.
+- Added `TestHTTPSimulationRegistryMutationTenantProjectSiteScope` covering same-scope successful registration, cross-scope 403, and no denied record/audit write for both registry objects.
+- Included the new mutation-scope test in `scripts/ci/security-smoke.ps1`.
+- Updated Compute API, security smoke, Certainty/Elegance plan, and task context.
+- Validation passed: focused registry mutation/read/audit tests, full `cd apps\api; go test ./...`, `cd frontend; npx tsc --noEmit`, security smoke, Compute API boundary audit, dependency check, docs/rebuild scan, and diff-check with LF/CRLF warnings only.
+- Remaining scope: job create / simulation-check mutation data-scope, promotion plan / promote-approved job-scoped evidence filtering, other object write data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next benchmark_run mutation scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API benchmark/model governance, security smoke, and recent `.ai/changes`

@@ -8,12 +8,19 @@ import (
 )
 
 func (svc *SimulationInputService) RegisterSimulationInput(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (SimulationInputRecord, int, error) {
+	return svc.RegisterSimulationInputForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, ListFilter{})
+}
+
+func (svc *SimulationInputService) RegisterSimulationInputForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (SimulationInputRecord, int, error) {
 	var input map[string]any
 	if err := json.Unmarshal(bytes, &input); err != nil {
 		return SimulationInputRecord{}, 0, ValidationError("simulation_input JSON is invalid")
 	}
 	record, err := svc.simulationInputRecord(input, defaultSourceSystem, defaultRequestedBy)
 	if err != nil {
+		return SimulationInputRecord{}, 0, err
+	}
+	if err := authorizeListFilterDataScope(filter, "simulation input", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 		return SimulationInputRecord{}, 0, err
 	}
 	created, err := svc.inputs.UpsertSimulationInput(ctx, record, svc.simulationInputRegisteredAudit(ctx, record))

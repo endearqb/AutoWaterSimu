@@ -22,7 +22,8 @@ func (server *Server) simulationInputs(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, ValidationError("read request body failed"))
 		return
 	}
-	record, status, err := server.service.RegisterSimulationInput(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name)
+	filter := filterForPrincipalDataScope(ListFilter{}, *principal)
+	record, status, err := server.service.RegisterSimulationInputForScope(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name, filter)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -72,7 +73,8 @@ func (server *Server) processGraphs(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, ValidationError("read request body failed"))
 		return
 	}
-	record, status, err := server.service.RegisterProcessGraph(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name)
+	filter := filterForPrincipalDataScope(ListFilter{}, *principal)
+	record, status, err := server.service.RegisterProcessGraphForScope(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name, filter)
 	if err != nil {
 		WriteError(w, err)
 		return
