@@ -26,7 +26,7 @@
 
 ## 3. 维护约定
 
-1. Promotion plan 读取保持 advisory，不在前端本地批准或突变 catalog。
+1. Promotion plan 读取保持 advisory，不在前端本地批准或突变 catalog；promotion plan / promote-approved wrapper 支持可选 `jobId`，供 scoped Compute token 调用后端 job-scoped evidence filter。
 2. Benchmark run list wrapper 支持可选 `jobId`，供 scoped Compute token 调用后端 job-scoped read filter。
 3. Benchmark case schedule-run 只排队后端 job，不合成 benchmark_run 记录。
 4. `model_catalog.v1` 和 `benchmark_run.v1` 文档必须交给后端校验。

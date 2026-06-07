@@ -33,11 +33,12 @@ func handleDefaultParameterSetPromotionPlan(server *Server, w http.ResponseWrite
 		WriteError(w, err)
 		return
 	}
-	if principalHasDataScope(*principal) {
-		WriteError(w, NewAppError(http.StatusForbidden, CodeForbidden, "model catalog promotion plan requires a global token until job-scoped evidence filtering is available", false, nil))
+	catalogFilter := modelCatalogSnapshotFilterForPrincipal(ModelCatalogSnapshotFilter{CatalogID: "default"}, *principal)
+	evidenceFilter, err := modelPromotionEvidenceFilter(server, w, r, *principal, "promotion plan")
+	if err != nil {
 		return
 	}
-	response, err := server.service.DefaultParameterSetPromotionPlan(r.Context(), modelKey, modelVersion)
+	response, err := server.service.DefaultParameterSetPromotionPlanForScope(r.Context(), modelKey, modelVersion, catalogFilter, evidenceFilter)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -51,8 +52,9 @@ func handleDefaultParameterSetPromoteApproved(server *Server, w http.ResponseWri
 		WriteError(w, err)
 		return
 	}
-	if principalHasDataScope(*principal) {
-		WriteError(w, NewAppError(http.StatusForbidden, CodeForbidden, "model catalog promotion requires a global token until job-scoped evidence filtering is available", false, nil))
+	catalogFilter := modelCatalogSnapshotFilterForPrincipal(ModelCatalogSnapshotFilter{CatalogID: "default"}, *principal)
+	evidenceFilter, err := modelPromotionEvidenceFilter(server, w, r, *principal, "promotion")
+	if err != nil {
 		return
 	}
 	request, err := readParameterSetPromotionRequest(r)
@@ -60,12 +62,29 @@ func handleDefaultParameterSetPromoteApproved(server *Server, w http.ResponseWri
 		WriteError(w, err)
 		return
 	}
-	response, status, err := server.service.PromoteDefaultParameterSetToApproved(withAuditPrincipal(r.Context(), *principal, r), modelKey, modelVersion, request, "compute-api", principal.Name)
+	response, status, err := server.service.PromoteDefaultParameterSetToApprovedForScope(withAuditPrincipal(r.Context(), *principal, r), modelKey, modelVersion, request, "compute-api", principal.Name, catalogFilter, evidenceFilter)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
 	WriteJSON(w, status, response)
+}
+
+func modelPromotionEvidenceFilter(server *Server, w http.ResponseWriter, r *http.Request, principal Principal, actionLabel string) (BenchmarkRunFilter, error) {
+	jobID := strings.TrimSpace(r.URL.Query().Get("job_id"))
+	if jobID == "" {
+		if principalHasDataScope(principal) {
+			err := NewAppError(http.StatusForbidden, CodeForbidden, "scoped model catalog "+actionLabel+" requires authorized job_id", false, nil)
+			WriteError(w, err)
+			return BenchmarkRunFilter{}, err
+		}
+		return BenchmarkRunFilter{}, nil
+	}
+	if err := server.authorizeJobRouteDataScope(r.Context(), principal, jobID); err != nil {
+		WriteError(w, err)
+		return BenchmarkRunFilter{}, err
+	}
+	return BenchmarkRunFilter{JobID: jobID}, nil
 }
 
 func readParameterSetPromotionRequest(r *http.Request) (ParameterSetPromotionRequest, error) {

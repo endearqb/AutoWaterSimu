@@ -1,3 +1,32 @@
+# 2026-06-07 AutoWaterSimu Next scoped promotion evidence TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API model governance, frontend generated compute client, security smoke, and recent `.ai/changes`
+- [x] Confirm next aligned gap: result explanation mutations already use job route data-scope, while model catalog promotion-plan/promote-approved still rejected scoped tokens due missing job-scoped evidence filtering
+- [x] Add scoped promotion plan support that requires authorized `job_id` and filters benchmark_run/model_run evidence to that job
+- [x] Add scoped promote-approved support that requires authorized `job_id`, reuses the job-scoped plan gate, and mutates only a matching persisted scoped catalog
+- [x] Update OpenAPI source, regenerate Compute TypeScript client, and expose optional `jobId` through model-governance wrapper
+- [x] Add focused HTTP regression coverage and include it in security smoke
+- [x] Update Compute API/security/docs context and change records
+- [x] Run validation
+- [x] Commit and push this completed slice
+
+## Plan
+
+- Treat this as a narrow model governance evidence-filtering / mutation-scope slice, not full RBAC/ABAC, all-object data-scope, all-mutation audit, hosted evidence, or complete golden scenarios.
+- Preserve existing global-token behavior: no `job_id` still uses unfiltered latest promotion evidence for global tokens.
+- For scoped tokens, require a route/query `job_id` that passes tenant/project/site authorization before benchmark evidence lookup; promote-approved must update a matching persisted catalog and must not fall back to built-in/global catalog.
+- Keep endpoint paths, request body schema, database schema, benchmark admission, audit envelope shape, and domain package auth boundaries unchanged; only add optional OpenAPI query params and generated client types.
+
+## Review
+
+- Added scoped `DefaultParameterSetPromotionPlanForScope` / `PromoteDefaultParameterSetToApprovedForScope` delegates that pass catalog and benchmark evidence filters through `ModelGovernanceService`.
+- Updated promotion-plan and promote-approved HTTP handlers to require scoped tokens to provide an authorized `job_id`; matching scoped calls filter benchmark_run lookup by that job.
+- Scoped promote-approved now uses `ModelCatalogForMutation` and the principal-derived catalog filter, so it mutates only the matching persisted catalog and still denies missing scoped catalogs.
+- Added `TestHTTPModelCatalogPromotionTenantProjectSiteScope` covering missing `job_id`, cross-scope `job_id`, authorized promotion plan, authorized promote-approved, and scoped catalog metadata preservation.
+- Regenerated `frontend/src/client/compute` from `apps/api/openapi/compute.openapi.json` and updated `frontend/src/features/model-governance/api.ts` to pass optional `jobId`.
+- Updated Compute API, architecture current-state, frontend model-governance README, Certainty/Elegance plan, security smoke, and task context.
+- Remaining scope: other object write data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next indirect job workflow mutation scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API draft promotion, model governance benchmark schedule-run, domain agent/models boundaries, security smoke, and recent `.ai/changes`

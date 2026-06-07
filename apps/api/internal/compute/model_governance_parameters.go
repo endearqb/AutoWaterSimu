@@ -119,12 +119,22 @@ func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.C
 }
 
 func (svc *ModelGovernanceService) DefaultParameterSetPromotionPlan(ctx context.Context, modelKey, modelVersion string) (ModelParameterSetPromotionPlan, error) {
+	return svc.DefaultParameterSetPromotionPlanForScope(ctx, modelKey, modelVersion, ModelCatalogSnapshotFilter{}, BenchmarkRunFilter{})
+}
+
+func (svc *ModelGovernanceService) DefaultParameterSetPromotionPlanForScope(ctx context.Context, modelKey, modelVersion string, catalogFilter ModelCatalogSnapshotFilter, evidenceFilter BenchmarkRunFilter) (ModelParameterSetPromotionPlan, error) {
 	modelKey = required(modelKey, "model_key")
 	modelVersion = required(modelVersion, "model_version")
-	catalog, err := svc.ModelCatalog(ctx)
+	catalog, _, err := svc.ModelCatalogForRead(ctx, catalogFilter)
 	if err != nil {
 		return ModelParameterSetPromotionPlan{}, err
 	}
+	return svc.defaultParameterSetPromotionPlan(ctx, modelKey, modelVersion, catalog, evidenceFilter)
+}
+
+func (svc *ModelGovernanceService) defaultParameterSetPromotionPlan(ctx context.Context, modelKey, modelVersion string, catalog ModelCatalogResponse, evidenceFilter BenchmarkRunFilter) (ModelParameterSetPromotionPlan, error) {
+	modelKey = required(modelKey, "model_key")
+	modelVersion = required(modelVersion, "model_version")
 	modelIndex, versionIndex := findModelVersionIndex(catalog, modelKey, modelVersion)
 	if modelIndex < 0 || versionIndex < 0 {
 		return ModelParameterSetPromotionPlan{}, NotFound("MODEL_NOT_FOUND", "model version not found")
@@ -156,7 +166,7 @@ func (svc *ModelGovernanceService) DefaultParameterSetPromotionPlan(ctx context.
 	}
 	plan.BenchmarkCasesChecked = len(validatedCases)
 	for _, benchmarkCase := range validatedCases {
-		result, err := svc.benchmarkCasePromotionResult(ctx, benchmarkCase, modelKey, modelVersion, *parameterSet)
+		result, err := svc.benchmarkCasePromotionResult(ctx, benchmarkCase, modelKey, modelVersion, *parameterSet, evidenceFilter)
 		if err != nil {
 			return ModelParameterSetPromotionPlan{}, err
 		}
@@ -179,7 +189,17 @@ func (svc *ModelGovernanceService) DefaultParameterSetPromotionPlan(ctx context.
 }
 
 func (svc *ModelGovernanceService) PromoteDefaultParameterSetToApproved(ctx context.Context, modelKey, modelVersion string, request ParameterSetPromotionRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
-	plan, err := svc.DefaultParameterSetPromotionPlan(ctx, modelKey, modelVersion)
+	return svc.PromoteDefaultParameterSetToApprovedForScope(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy, ModelCatalogSnapshotFilter{}, BenchmarkRunFilter{})
+}
+
+func (svc *ModelGovernanceService) PromoteDefaultParameterSetToApprovedForScope(ctx context.Context, modelKey, modelVersion string, request ParameterSetPromotionRequest, defaultSourceSystem, defaultRequestedBy string, catalogFilter ModelCatalogSnapshotFilter, evidenceFilter BenchmarkRunFilter) (ModelParameterSetTransitionResponse, int, error) {
+	modelKey = required(modelKey, "model_key")
+	modelVersion = required(modelVersion, "model_version")
+	catalog, _, err := svc.ModelCatalogForMutation(ctx, catalogFilter)
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	plan, err := svc.defaultParameterSetPromotionPlan(ctx, modelKey, modelVersion, catalog, evidenceFilter)
 	if err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
 	}
@@ -211,10 +231,10 @@ func (svc *ModelGovernanceService) PromoteDefaultParameterSetToApproved(ctx cont
 		ToStatus:       domainmodels.ParameterSetStatusApproved,
 		Reason:         defaultString(request.Reason, "benchmark-backed promotion"),
 		Metadata:       metadata,
-	}, defaultSourceSystem, defaultRequestedBy, modelParameterSetPromotedApprovedEvent, "model.parameter_set.promote_approved", ModelCatalogSnapshotFilter{})
+	}, defaultSourceSystem, defaultRequestedBy, modelParameterSetPromotedApprovedEvent, "model.parameter_set.promote_approved", catalogFilter)
 }
 
-func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Context, benchmarkCase ModelBenchmarkCase, modelKey, modelVersion string, parameterSet ModelParameterSet) (BenchmarkCasePromotionResult, error) {
+func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Context, benchmarkCase ModelBenchmarkCase, modelKey, modelVersion string, parameterSet ModelParameterSet, evidenceFilter BenchmarkRunFilter) (BenchmarkCasePromotionResult, error) {
 	result := BenchmarkCasePromotionResult{
 		BenchmarkCaseID:      benchmarkCase.BenchmarkCaseID,
 		CaseStatus:           benchmarkCase.Status,
@@ -222,13 +242,14 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 		ParameterHashMatches: false,
 		Ready:                false,
 	}
-	records, _, _, err := svc.benchmarkRuns.ListBenchmarkRuns(ctx, BenchmarkRunFilter{
-		Limit:           1,
-		ModelKey:        modelKey,
-		ModelVersion:    modelVersion,
-		BenchmarkCaseID: benchmarkCase.BenchmarkCaseID,
-		ParameterSetID:  parameterSet.ParameterSetID,
-	})
+	filter := evidenceFilter
+	filter.Limit = 1
+	filter.Cursor = ""
+	filter.ModelKey = modelKey
+	filter.ModelVersion = modelVersion
+	filter.BenchmarkCaseID = benchmarkCase.BenchmarkCaseID
+	filter.ParameterSetID = parameterSet.ParameterSetID
+	records, _, _, err := svc.benchmarkRuns.ListBenchmarkRuns(ctx, filter)
 	if err != nil {
 		return BenchmarkCasePromotionResult{}, err
 	}

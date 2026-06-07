@@ -857,6 +857,10 @@ export type UpdateDefaultParameterSetStatusData = {
 export type UpdateDefaultParameterSetStatusResponse = (ModelParameterSetTransitionResponse);
 
 export type GetDefaultParameterSetPromotionPlanData = {
+    /**
+     * Optional benchmark evidence job filter; required for tenant/project/site scoped tokens.
+     */
+    jobId?: string;
     modelKey: string;
     modelVersion: string;
 };
@@ -864,6 +868,10 @@ export type GetDefaultParameterSetPromotionPlanData = {
 export type GetDefaultParameterSetPromotionPlanResponse = (ModelParameterSetPromotionPlan);
 
 export type PromoteDefaultParameterSetToApprovedData = {
+    /**
+     * Optional benchmark evidence job filter; required for tenant/project/site scoped tokens.
+     */
+    jobId?: string;
     modelKey: string;
     modelVersion: string;
     requestBody?: ParameterSetPromotionRequest;

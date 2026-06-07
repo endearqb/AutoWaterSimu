@@ -66,8 +66,10 @@ export const computeModelGovernanceApi = {
   getDefaultParameterSetPromotionPlan(
     modelKey: string,
     modelVersion: string,
+    jobId?: string,
   ): Promise<ModelParameterSetPromotionPlan> {
     return DefaultService.getDefaultParameterSetPromotionPlan({
+      jobId: jobId || undefined,
       modelKey,
       modelVersion,
     })
@@ -77,8 +79,10 @@ export const computeModelGovernanceApi = {
     modelKey: string,
     modelVersion: string,
     request: ParameterSetPromotionRequest = {},
+    jobId?: string,
   ): Promise<ModelParameterSetTransitionResponse> {
     return DefaultService.promoteDefaultParameterSetToApproved({
+      jobId: jobId || undefined,
       modelKey,
       modelVersion,
       requestBody: request,

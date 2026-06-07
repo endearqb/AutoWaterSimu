@@ -680,6 +680,7 @@ export class DefaultService {
      * @param data The data for the request.
      * @param data.modelKey
      * @param data.modelVersion
+     * @param data.jobId Optional benchmark evidence job filter; required for tenant/project/site scoped tokens.
      * @returns ModelParameterSetPromotionPlan Read-only default parameter set promotion plan
      * @throws ApiError
      */
@@ -690,6 +691,9 @@ export class DefaultService {
             path: {
                 model_key: data.modelKey,
                 model_version: data.modelVersion
+            },
+            query: {
+                job_id: data.jobId
             },
             errors: {
                 403: 'Contract error',
@@ -702,6 +706,7 @@ export class DefaultService {
      * @param data The data for the request.
      * @param data.modelKey
      * @param data.modelVersion
+     * @param data.jobId Optional benchmark evidence job filter; required for tenant/project/site scoped tokens.
      * @param data.requestBody
      * @returns ModelParameterSetTransitionResponse Created a new catalog snapshot after benchmark-backed parameter set promotion
      * @throws ApiError
@@ -713,6 +718,9 @@ export class DefaultService {
             path: {
                 model_key: data.modelKey,
                 model_version: data.modelVersion
+            },
+            query: {
+                job_id: data.jobId
             },
             body: data.requestBody,
             mediaType: 'application/json',

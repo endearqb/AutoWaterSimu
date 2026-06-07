@@ -54,8 +54,16 @@ func (svc *Service) DefaultParameterSetPromotionPlan(ctx context.Context, modelK
 	return svc.modelGovernance.DefaultParameterSetPromotionPlan(ctx, modelKey, modelVersion)
 }
 
+func (svc *Service) DefaultParameterSetPromotionPlanForScope(ctx context.Context, modelKey, modelVersion string, catalogFilter ModelCatalogSnapshotFilter, evidenceFilter BenchmarkRunFilter) (ModelParameterSetPromotionPlan, error) {
+	return svc.modelGovernance.DefaultParameterSetPromotionPlanForScope(ctx, modelKey, modelVersion, catalogFilter, evidenceFilter)
+}
+
 func (svc *Service) PromoteDefaultParameterSetToApproved(ctx context.Context, modelKey, modelVersion string, request ParameterSetPromotionRequest, defaultSourceSystem, defaultRequestedBy string) (ModelParameterSetTransitionResponse, int, error) {
 	return svc.modelGovernance.PromoteDefaultParameterSetToApproved(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy)
+}
+
+func (svc *Service) PromoteDefaultParameterSetToApprovedForScope(ctx context.Context, modelKey, modelVersion string, request ParameterSetPromotionRequest, defaultSourceSystem, defaultRequestedBy string, catalogFilter ModelCatalogSnapshotFilter, evidenceFilter BenchmarkRunFilter) (ModelParameterSetTransitionResponse, int, error) {
+	return svc.modelGovernance.PromoteDefaultParameterSetToApprovedForScope(ctx, modelKey, modelVersion, request, defaultSourceSystem, defaultRequestedBy, catalogFilter, evidenceFilter)
 }
 
 func (svc *Service) RegisterBenchmarkRun(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (BenchmarkRunRecord, int, error) {

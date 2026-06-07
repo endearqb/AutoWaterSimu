@@ -431,7 +431,8 @@
         "operationId": "getDefaultParameterSetPromotionPlan",
         "parameters": [
           { "$ref": "#/components/parameters/ModelKey" },
-          { "$ref": "#/components/parameters/ModelVersionPath" }
+          { "$ref": "#/components/parameters/ModelVersionPath" },
+          { "name": "job_id", "in": "query", "description": "Optional benchmark evidence job filter; required for tenant/project/site scoped tokens.", "schema": { "type": "string" } }
         ],
         "responses": {
           "200": { "description": "Read-only default parameter set promotion plan", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelParameterSetPromotionPlan" } } } },
@@ -445,7 +446,8 @@
         "operationId": "promoteDefaultParameterSetToApproved",
         "parameters": [
           { "$ref": "#/components/parameters/ModelKey" },
-          { "$ref": "#/components/parameters/ModelVersionPath" }
+          { "$ref": "#/components/parameters/ModelVersionPath" },
+          { "name": "job_id", "in": "query", "description": "Optional benchmark evidence job filter; required for tenant/project/site scoped tokens.", "schema": { "type": "string" } }
         ],
         "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ParameterSetPromotionRequest" } } } },
         "responses": {
