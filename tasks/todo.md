@@ -1,3 +1,30 @@
+# 2026-06-07 AutoWaterSimu Next benchmark_run mutation scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API benchmark/model governance, security smoke, and recent `.ai/changes`
+- [x] Confirm next aligned gap: benchmark_run read-scope and selected audit existed, while benchmark_run registration writes still lacked tenant/project/site mutation data-scope
+- [x] Enforce scoped benchmark_run registration against the payload `job_id` associated job scope before store/audit writes
+- [x] Add focused HTTP regression coverage and include it in security smoke
+- [x] Update Compute API/security/docs context and change records
+- [x] Run focused/full validation
+- [x] Commit and push this completed slice
+
+## Plan
+
+- Treat this as a narrow benchmark_run mutation data-scope slice, not full RBAC/ABAC, all-object data-scope, or complete all-mutation audit.
+- Reuse existing job tenant/project/site authorization through `benchmark_run.v1.job_id`.
+- Reject cross-scope scoped-token registration before `UpsertBenchmarkRun` so failed writes do not create benchmark_run records or mutation audit events.
+- Preserve route shape, schemas, OpenAPI, migrations, generated clients, global token behavior, and benchmark admission/evidence checks.
+
+## Review
+
+- Added `RegisterBenchmarkRunForScope` on `Service` so scoped HTTP writes authorize the payload `job_id` associated job before delegating to existing model governance registration.
+- Added list-filter data-scope helpers in compute auth and updated `POST /api/v1/model-catalog/{model_key}/versions/{model_version}/benchmark-runs` to pass principal-derived tenant/project/site filters.
+- Added `TestHTTPBenchmarkRunMutationTenantProjectSiteScope` covering same-scope successful registration, cross-scope 403, and no denied record/audit write.
+- Included the new mutation-scope test in `scripts/ci/security-smoke.ps1`.
+- Updated Compute API, security smoke, Certainty/Elegance PRD/plan, and task context.
+- Validation passed: focused benchmark/model governance tests, full `cd apps\api; go test ./...`, `cd frontend; npx tsc --noEmit`, security smoke, Compute API boundary audit, dependency check, docs/rebuild scan, and diff-check with LF/CRLF warnings only.
+- Remaining scope: promotion plan / promote-approved job-scoped evidence filtering, other object write data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next model catalog mutation scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API model governance, security smoke, architecture current-state, and recent `.ai/changes`

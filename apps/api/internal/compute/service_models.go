@@ -3,6 +3,7 @@ package compute
 import (
 	"context"
 	"encoding/json"
+	"strings"
 )
 
 func (svc *Service) ScheduleBenchmarkCaseRun(ctx context.Context, modelKey, modelVersion, benchmarkCaseID string, request BenchmarkCaseRunRequest, defaultSourceSystem, defaultRequestedBy string) (JobSnapshot, int, error) {
@@ -57,6 +58,23 @@ func (svc *Service) RegisterBenchmarkRun(ctx context.Context, bytes []byte, defa
 	return svc.modelGovernance.RegisterBenchmarkRun(ctx, bytes, defaultSourceSystem, defaultRequestedBy)
 }
 
+func (svc *Service) RegisterBenchmarkRunForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (BenchmarkRunRecord, int, error) {
+	if listFilterHasDataScope(filter) {
+		jobID, err := benchmarkRunJobIDFromBytes(bytes)
+		if err != nil {
+			return BenchmarkRunRecord{}, 0, err
+		}
+		job, err := svc.store.FindJobByID(ctx, jobID)
+		if err != nil {
+			return BenchmarkRunRecord{}, 0, err
+		}
+		if err := authorizeListFilterDataScope(filter, "benchmark run job", job.TenantID, job.ProjectID, job.SiteID); err != nil {
+			return BenchmarkRunRecord{}, 0, err
+		}
+	}
+	return svc.RegisterBenchmarkRun(ctx, bytes, defaultSourceSystem, defaultRequestedBy)
+}
+
 func (svc *Service) GetBenchmarkRun(ctx context.Context, benchmarkRunID string) (BenchmarkRunRecord, error) {
 	return svc.modelGovernance.GetBenchmarkRun(ctx, benchmarkRunID)
 }
@@ -71,4 +89,16 @@ func (svc *Service) GetModelRun(ctx context.Context, modelRunID string) (json.Ra
 
 func (svc *Service) ListModelRuns(ctx context.Context, filter ModelRunFilter) (ListModelRunsResponse, error) {
 	return svc.modelGovernance.ListModelRuns(ctx, filter)
+}
+
+func benchmarkRunJobIDFromBytes(bytes []byte) (string, error) {
+	var document map[string]any
+	if err := json.Unmarshal(bytes, &document); err != nil {
+		return "", ValidationError("benchmark_run JSON is invalid")
+	}
+	jobID := strings.TrimSpace(stringValue(document, "job_id"))
+	if jobID == "" {
+		return "", ValidationError("job_id is required")
+	}
+	return jobID, nil
 }

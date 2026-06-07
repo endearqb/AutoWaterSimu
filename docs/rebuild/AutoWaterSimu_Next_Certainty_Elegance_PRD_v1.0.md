@@ -409,7 +409,7 @@ docs/architecture/desktop-runtime.md
 | Artifact lifecycle | upload archive_candidate -> retention dry-run -> archive -> hot delete -> fallback download |
 | Desktop 离线项目 | create project -> run packaged worker -> export -> import clean runtime -> checksum verified |
 | PostgreSQL migration | fresh DB -> migrations up -> seed/smoke -> down smoke on temp DB |
-| 安全权限 | worker token cannot model:write, web token cannot artifact:admin, cross-scope read denied, mutation audit exists |
+| 安全权限 | worker token cannot model:write, web token cannot artifact:admin, cross-scope read/write denied for covered slices, mutation audit exists |
 | Release evidence | sidecar build -> installer build -> install smoke -> upload -> download -> verify evidence |
 
 ---
