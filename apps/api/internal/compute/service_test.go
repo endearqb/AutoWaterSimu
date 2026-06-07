@@ -1010,6 +1010,58 @@ func TestCancelRejectsLateResult(t *testing.T) {
 	}
 }
 
+func TestHTTPJobCancelMutationAuditEvents(t *testing.T) {
+	svc := testService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	auth, err := NewAuthenticator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/compute/jobs/job_material_balance_minimal/cancel", nil)
+	req.Header.Set("Authorization", "Bearer dev-public-token")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("cancel failed: %d %s", rec.Code, rec.Body.String())
+	}
+	events, err := svc.Events(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cancelEvent *EventRecord
+	for _, event := range events {
+		if event.EventType == "job.cancelled" {
+			copy := event
+			cancelEvent = &copy
+			break
+		}
+	}
+	if cancelEvent == nil {
+		t.Fatalf("cancel should write job.cancelled event: %#v", events)
+	}
+	audit := eventAuditMap(t, *cancelEvent)
+	if audit["who"] != "dev-public" ||
+		audit["where"] != "POST /api/v1/compute/jobs/job_material_balance_minimal/cancel" ||
+		audit["target_object"] != "ComputeJob" ||
+		audit["target_id"] != "job_material_balance_minimal" ||
+		audit["action"] != "job.cancel" ||
+		audit["trace_id"] != "trace_material_balance_minimal" {
+		t.Fatalf("unexpected cancel audit envelope: %#v", audit)
+	}
+	before, ok := audit["before"].(map[string]any)
+	if !ok || before["status"] != StatusQueued || before["cancel_requested"] != false {
+		t.Fatalf("cancel audit should include queued before state, got %#v", audit["before"])
+	}
+	after, ok := audit["after"].(map[string]any)
+	if !ok || after["status"] != StatusCancelled || after["cancel_requested"] != true {
+		t.Fatalf("cancel audit should include cancelled after state, got %#v", audit["after"])
+	}
+}
+
 func TestValidatedWorkerFailPersistsTerminalResult(t *testing.T) {
 	svc := testValidatedService(t)
 	ctx := context.Background()
@@ -1495,6 +1547,38 @@ func TestTimeoutSweepAndPagination(t *testing.T) {
 	}
 	if len(timedOut) != 1 || timedOut[0].Status != StatusTimedOut {
 		t.Fatalf("expected one timed out job, got %#v", timedOut)
+	}
+	events, err := svc.Events(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var timeoutEvent *EventRecord
+	for _, event := range events {
+		if event.EventType == "job.timed_out" {
+			copy := event
+			timeoutEvent = &copy
+			break
+		}
+	}
+	if timeoutEvent == nil {
+		t.Fatalf("timeout sweep should write job.timed_out event: %#v", events)
+	}
+	audit := eventAuditMap(t, *timeoutEvent)
+	if audit["who"] != "user:test" ||
+		audit["where"] != "service:job_lifecycle.timeout_sweep" ||
+		audit["target_object"] != "ComputeJob" ||
+		audit["target_id"] != "job_material_balance_minimal" ||
+		audit["action"] != "job.timeout" ||
+		audit["trace_id"] != "trace_material_balance_minimal" {
+		t.Fatalf("unexpected timeout audit envelope: %#v", audit)
+	}
+	before, ok := audit["before"].(map[string]any)
+	if !ok || before["status"] != StatusRunning || before["worker_id"] != "worker_1" {
+		t.Fatalf("timeout audit should include running before state, got %#v", audit["before"])
+	}
+	after, ok := audit["after"].(map[string]any)
+	if !ok || after["status"] != StatusTimedOut || after["error_code"] != "TIMEOUT" {
+		t.Fatalf("timeout audit should include timed-out after state, got %#v", audit["after"])
 	}
 	listed, err := svc.ListJobs(ctx, ListFilter{Limit: 1})
 	if err != nil {

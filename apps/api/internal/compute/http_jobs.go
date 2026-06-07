@@ -154,11 +154,12 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if _, err := server.auth.Principal(r, "job:create"); err != nil {
+		principal, err := server.auth.Principal(r, "job:create")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
-		snapshot, err := server.service.CancelJob(r.Context(), jobID)
+		snapshot, err := server.service.CancelJob(withAuditPrincipal(r.Context(), *principal, r), jobID)
 		if err != nil {
 			WriteError(w, err)
 			return

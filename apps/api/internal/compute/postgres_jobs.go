@@ -114,19 +114,27 @@ func (store *PostgresStore) CancelJob(ctx context.Context, jobID string, mutatio
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	before, err := scanJob(tx.QueryRow(ctx, jobSelectSQL()+" WHERE id=$1", jobID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, NotFound(CodeJobNotFound, "job not found")
+	}
+	if err != nil {
+		return nil, err
+	}
 	tag, err := tx.Exec(ctx, "UPDATE compute_jobs SET status=$3, cancel_requested=$4, finished_at=$2 WHERE id=$1 AND status IN ('queued','running')", jobID, mutation.FinishedAt, mutation.Status, mutation.CancelRequested)
 	if err != nil {
 		return nil, err
 	}
 	if tag.RowsAffected() == 0 {
-		var status string
-		err := tx.QueryRow(ctx, "SELECT status FROM compute_jobs WHERE id=$1", jobID).Scan(&status)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, NotFound(CodeJobNotFound, "job not found")
-		}
 		return nil, Conflict(CodeJobAlreadyTerminal, "job is already terminal")
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", jobID, mutation.EventType, mutation.EventJSON, mutation.FinishedAt); err != nil {
+	after := *before
+	after.Status = mutation.Status
+	if mutation.SetCancelRequested {
+		after.CancelRequested = mutation.CancelRequested
+	}
+	after.FinishedAt = &mutation.FinishedAt
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", jobID, mutation.EventType, jobStateMutationEventJSON(ctx, mutation, *before, after), mutation.FinishedAt); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -165,27 +173,49 @@ func (store *PostgresStore) CompleteJob(ctx context.Context, jobID, workerID str
 }
 
 func (store *PostgresStore) TimeoutExpired(ctx context.Context, mutation domainjobs.StateMutation) ([]JobRecord, error) {
-	rows, err := store.pool.Query(ctx, "UPDATE compute_jobs SET status=$1, error_code=$2, error_message=$3, finished_at=$4 WHERE status='running' AND lease_expires_at < $4 RETURNING id", mutation.Status, mutation.ErrorCode, mutation.ErrorMessage, mutation.FinishedAt)
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	rows, err := tx.Query(ctx, jobSelectSQL()+" WHERE status='running' AND lease_expires_at < $1 ORDER BY id", mutation.FinishedAt)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var ids []string
+	var beforeJobs []JobRecord
 	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	var jobs []JobRecord
-	for _, id := range ids {
-		_, _ = store.pool.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", id, mutation.EventType, mutation.EventJSON, mutation.FinishedAt)
-		job, err := store.FindJobByID(ctx, id)
+		job, err := scanJob(rows)
 		if err != nil {
 			return nil, err
 		}
-		jobs = append(jobs, *job)
+		beforeJobs = append(beforeJobs, *job)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	var jobs []JobRecord
+	for _, before := range beforeJobs {
+		tag, err := tx.Exec(ctx, "UPDATE compute_jobs SET status=$1, error_code=$2, error_message=$3, finished_at=$4 WHERE id=$5 AND status='running' AND lease_expires_at < $4", mutation.Status, mutation.ErrorCode, mutation.ErrorMessage, mutation.FinishedAt, before.JobID)
+		if err != nil {
+			return nil, err
+		}
+		if tag.RowsAffected() == 0 {
+			continue
+		}
+		after := before
+		after.Status = mutation.Status
+		after.ErrorCode = mutation.ErrorCode
+		after.ErrorMessage = mutation.ErrorMessage
+		after.FinishedAt = &mutation.FinishedAt
+		if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", before.JobID, mutation.EventType, jobStateMutationEventJSON(ctx, mutation, before, after), mutation.FinishedAt); err != nil {
+			return nil, err
+		}
+		jobs = append(jobs, after)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
 	}
 	return jobs, nil
 }

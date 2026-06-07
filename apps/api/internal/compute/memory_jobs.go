@@ -111,7 +111,7 @@ func (store *MemoryStore) Events(_ context.Context, jobID string) ([]EventRecord
 	return events, nil
 }
 
-func (store *MemoryStore) CancelJob(_ context.Context, jobID string, mutation domainjobs.StateMutation) (*JobRecord, error) {
+func (store *MemoryStore) CancelJob(ctx context.Context, jobID string, mutation domainjobs.StateMutation) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	job, ok := store.jobs[jobID]
@@ -121,13 +121,14 @@ func (store *MemoryStore) CancelJob(_ context.Context, jobID string, mutation do
 	if isTerminal(job.Status) {
 		return nil, Conflict(CodeJobAlreadyTerminal, "job is already terminal")
 	}
+	before := job
 	job.Status = mutation.Status
 	if mutation.SetCancelRequested {
 		job.CancelRequested = mutation.CancelRequested
 	}
 	job.FinishedAt = &mutation.FinishedAt
 	store.jobs[jobID] = job
-	store.appendEventLocked(EventRecord{JobID: jobID, EventType: mutation.EventType, EventJSON: copyJSON(mutation.EventJSON), CreatedAt: mutation.FinishedAt})
+	store.appendEventLocked(EventRecord{JobID: jobID, EventType: mutation.EventType, EventJSON: jobStateMutationEventJSON(ctx, mutation, before, job), CreatedAt: mutation.FinishedAt})
 	return &job, nil
 }
 
@@ -158,18 +159,19 @@ func (store *MemoryStore) CompleteJob(ctx context.Context, jobID, workerID strin
 	return &job, nil
 }
 
-func (store *MemoryStore) TimeoutExpired(_ context.Context, mutation domainjobs.StateMutation) ([]JobRecord, error) {
+func (store *MemoryStore) TimeoutExpired(ctx context.Context, mutation domainjobs.StateMutation) ([]JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var timedOut []JobRecord
 	for id, job := range store.jobs {
 		if job.Status == StatusRunning && job.LeaseExpiresAt != nil && job.LeaseExpiresAt.Before(mutation.FinishedAt) {
+			before := job
 			job.Status = mutation.Status
 			job.ErrorCode = mutation.ErrorCode
 			job.ErrorMessage = mutation.ErrorMessage
 			job.FinishedAt = &mutation.FinishedAt
 			store.jobs[id] = job
-			store.appendEventLocked(EventRecord{JobID: id, EventType: mutation.EventType, EventJSON: copyJSON(mutation.EventJSON), CreatedAt: mutation.FinishedAt})
+			store.appendEventLocked(EventRecord{JobID: id, EventType: mutation.EventType, EventJSON: jobStateMutationEventJSON(ctx, mutation, before, job), CreatedAt: mutation.FinishedAt})
 			timedOut = append(timedOut, job)
 		}
 	}

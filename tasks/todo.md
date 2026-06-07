@@ -1,3 +1,31 @@
+# 2026-06-07 AutoWaterSimu Next job state lifecycle mutation audit TODO
+
+- [x] Confirm next aligned gap: job cancel and timeout sweep wrote durable job events but lacked selected mutation audit envelopes.
+- [x] Add compact audit event JSON helper for job cancel/timeout state lifecycle events in compute compatibility code.
+- [x] Preserve `apps/api/internal/domain/jobs` as DTO-neutral mutation planning only; keep audit call sites and persistence decisions in compute.
+- [x] Pass HTTP cancel principal/route context into the cancel path.
+- [x] Add focused cancel/timeout audit tests and include them in security smoke.
+- [x] Update Compute API, security smoke, architecture, Certainty/Elegance plan, and README First records.
+- [x] Run focused tests, security smoke, full API tests, boundary audit, dependency check, docs scan, and diff-check.
+- [x] Commit and push this job state lifecycle audit stage.
+
+## Plan
+
+- Treat this as a narrow selected all-mutation audit slice for job state lifecycle, not full all-mutation audit, full job lifecycle domain migration, cancel data-scope enforcement, RBAC/ABAC, hosted evidence, or complete golden scenarios.
+- Wrap existing `job.cancelled` and `job.timed_out` event payloads with the standard selected audit envelope.
+- For HTTP cancel, capture the static-token principal and route; for timeout sweep, use the existing scheduler/service fallback context and job trace/requester.
+- Preserve endpoint shape, domain/jobs API, database schema, job status semantics, timeout sweep behavior, and existing conflict behavior.
+
+## Review
+
+- Added `job_state_audit.go` for compact cancel/timeout audit payloads and before/after state projection.
+- MemoryStore and PostgresStore now write `job.cancelled` and `job.timed_out` events with `event_json.audit`.
+- HTTP cancel now calls `withAuditPrincipal`, so cancel audit records show the token principal and route instead of only service fallback.
+- Added `TestHTTPJobCancelMutationAuditEvents` and extended `TestTimeoutSweepAndPagination`; included both in `scripts/ci/security-smoke.ps1`.
+- Updated long-lived Compute API, security smoke, architecture, and Certainty/Elegance context.
+- Validation passed with focused job state audit tests, security smoke, full `go test ./...`, Compute API boundary audit, dependency boundary audit, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: cancel mutation data-scope, high-volume heartbeat audit, other remaining all-mutation audit, full object-level data-scope, remaining mutation data-scope, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next worker registration mutation audit TODO
 
 - [x] Confirm next aligned gap: worker job-event audit was covered, while worker registration/upsert still lacked selected non-job-scoped mutation audit.
