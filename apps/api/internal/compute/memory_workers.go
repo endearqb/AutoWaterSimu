@@ -6,10 +6,16 @@ import (
 	"time"
 )
 
-func (store *MemoryStore) UpsertWorker(_ context.Context, worker WorkerRecord) error {
+func (store *MemoryStore) UpsertWorker(ctx context.Context, worker WorkerRecord) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	var before *WorkerRecord
+	if existing, ok := store.workers[worker.WorkerID]; ok {
+		copy := existing
+		before = &copy
+	}
 	store.workers[worker.WorkerID] = worker
+	store.appendMutationAuditLocked(workerRegistrationAudit(ctx, before, worker))
 	return nil
 }
 

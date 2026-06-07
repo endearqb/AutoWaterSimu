@@ -9,7 +9,20 @@ import (
 )
 
 func (store *PostgresStore) UpsertWorker(ctx context.Context, worker WorkerRecord) error {
-	_, err := store.pool.Exec(ctx, `INSERT INTO workers (
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var before *WorkerRecord
+	existing, err := scanWorker(tx.QueryRow(ctx, `SELECT worker_id, capabilities, supported_contract_versions, COALESCE(runtime_version,''), COALESCE(current_job_id,''), heartbeat_at, registered_at FROM workers WHERE worker_id=$1`, worker.WorkerID))
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+	if err == nil {
+		before = existing
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO workers (
 		worker_id, capabilities, supported_contract_versions, runtime_version, current_job_id, heartbeat_at, registered_at
 	) VALUES ($1,$2,$3,$4,$5,$6,$7)
 	ON CONFLICT (worker_id) DO UPDATE SET
@@ -20,7 +33,13 @@ func (store *PostgresStore) UpsertWorker(ctx context.Context, worker WorkerRecor
 		heartbeat_at=EXCLUDED.heartbeat_at`,
 		worker.WorkerID, worker.Capabilities, worker.SupportedContractVersions, worker.RuntimeVersion,
 		nullString(worker.CurrentJobID), worker.HeartbeatAt, worker.RegisteredAt)
-	return err
+	if err != nil {
+		return err
+	}
+	if err := insertMutationAuditEvent(ctx, tx, workerRegistrationAudit(ctx, before, worker)); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func (store *PostgresStore) FindWorkerByID(ctx context.Context, workerID string) (*WorkerRecord, error) {

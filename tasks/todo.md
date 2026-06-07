@@ -1,3 +1,30 @@
+# 2026-06-07 AutoWaterSimu Next worker registration mutation audit TODO
+
+- [x] Confirm next aligned gap: worker job-event audit was covered, while worker registration/upsert still lacked selected non-job-scoped mutation audit.
+- [x] Add compact `worker.registered` mutation audit records for MemoryStore and PostgresStore worker upserts.
+- [x] Keep worker registration audit payload bounded to worker id, runtime version, current job id, capability count, and supported contract version count.
+- [x] Add focused HTTP regression coverage and include worker registration in security smoke.
+- [x] Update Compute API, security smoke, architecture, Certainty/Elegance plan, and README First records.
+- [x] Run focused tests, security smoke, full API tests, boundary audit, dependency check, docs scan, and diff-check.
+- [x] Commit and push this worker registration audit stage.
+
+## Plan
+
+- Treat this as a narrow worker registration selected audit slice, not full all-mutation audit, high-volume heartbeat audit, full RBAC/ABAC, full object data-scope, hosted evidence, or complete golden scenarios.
+- Write audit rows from existing worker upsert persistence paths after successful store mutation.
+- Preserve worker register endpoint shape, token behavior, worker lifecycle invariants, and worker domain package boundaries.
+- Avoid storing full capabilities or full supported contract version arrays in mutation audit payloads.
+
+## Review
+
+- Added `worker_registration_audit.go` to build compact `worker.registered` mutation audit events with the existing selected audit envelope shape.
+- MemoryStore and PostgresStore worker upserts now record worker registration mutation audit rows, including prior compact state on updates.
+- Added `TestHTTPWorkerRegistrationMutationAuditEvents` to assert route/principal context, compact payload fields, and no full capability array leakage.
+- Updated `scripts/ci/security-smoke.ps1` coverage and long-lived README/architecture/Certainty-Elegance context.
+- Adjusted one existing model governance test to filter model-governance audit objects instead of asserting a global audit event count, because worker registration is now a valid background mutation audit row.
+- Validation passed with focused audit tests, security smoke, full `go test ./...`, Compute API boundary audit, dependency boundary audit, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: high-volume heartbeat audit, other remaining all-mutation audit, full object-level data-scope, remaining mutation data-scope, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next worker job-event mutation audit TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API worker/job/artifact boundaries, scripts/ci security smoke, and recent `.ai/changes`
