@@ -1,3 +1,33 @@
+# 2026-06-07 AutoWaterSimu Next job create mutation scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API job lifecycle, simulation-check, simulation registry, security smoke, and recent `.ai/changes`
+- [x] Confirm next aligned gap: read-scope and several registry/model-governance mutation scopes existed, while direct job create and direct simulation-check create still lacked tenant/project/site mutation data-scope
+- [x] Enforce scoped direct `POST /api/v1/compute/jobs` against `compute_job.context` before job/event writes
+- [x] Enforce scoped direct `POST /api/v1/simulation-checks` against request metadata before input-ref resolution and job/registry writes
+- [x] Preserve embedded simulation_input auto-registration by inheriting authorized simulation request scope only when embedded metadata is missing
+- [x] Add focused HTTP regression coverage and include it in security smoke
+- [x] Update Compute API/security/docs context and change records
+- [x] Run full validation
+- [x] Commit and push this completed slice
+
+## Plan
+
+- Treat this as a narrow direct HTTP job-create/simulation-check mutation data-scope slice, not full RBAC/ABAC, all job-producing workflow data-scope, all-object data-scope, or complete all-mutation audit.
+- Reuse existing static-token tenant/project/site filters against `compute_job.context` and `simulation_request.metadata` plus `external_refs.site_id`.
+- Reject cross-scope direct job create before `InsertJob`, and reject cross-scope direct simulation-check before input-ref auto-registration or job create.
+- Preserve route shape, schemas, OpenAPI, migrations, generated clients, global token behavior, idempotency, read-scope behavior, and existing internal unscoped service methods.
+
+## Review
+
+- Added `CreateJobForScope` on job lifecycle and public service delegates; direct HTTP job create now passes principal-derived tenant/project/site filters.
+- Added `CreateSimulationCheckForScope`; direct HTTP simulation-check create now checks request scope before input-ref resolution, applies scoped input-ref resolution, and then calls scoped job create.
+- Added scoped simulation input resolution checks for embedded input, registered simulation_input_id, process_graph_id, and model_run replay source jobs; generated/embedded inputs inherit missing scope metadata from authorized request/process graph context before auto-registration.
+- Added `TestHTTPJobCreateMutationTenantProjectSiteScope` and `TestHTTPSimulationCheckMutationTenantProjectSiteScope`; both assert denied cross-scope writes do not persist jobs, registry records, or mutation audit events.
+- Included the new tests in `scripts/ci/security-smoke.ps1`.
+- Updated Compute API, security smoke, Certainty/Elegance plan, and task context.
+- Validation passed with focused compute tests, full `go test ./...`, frontend `npx tsc --noEmit`, security smoke, compute API boundary audit, dependency boundary audit, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: indirect job-producing workflows such as draft promotion and benchmark schedule-run, promotion plan / promote-approved job-scoped evidence filtering, other object write data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next simulation registry mutation scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API simulation registry, security smoke, and recent `.ai/changes`

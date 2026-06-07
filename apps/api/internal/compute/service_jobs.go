@@ -6,6 +6,10 @@ func (svc *Service) CreateJob(ctx context.Context, bytes []byte, headerIdempoten
 	return svc.jobLifecycle.CreateJob(ctx, bytes, headerIdempotencyKey)
 }
 
+func (svc *Service) CreateJobForScope(ctx context.Context, bytes []byte, headerIdempotencyKey string, filter ListFilter) (JobSnapshot, int, error) {
+	return svc.jobLifecycle.CreateJobForScope(ctx, bytes, headerIdempotencyKey, filter)
+}
+
 func (svc *Service) GetJob(ctx context.Context, jobID string) (JobSnapshot, error) {
 	return svc.jobLifecycle.GetJob(ctx, jobID)
 }

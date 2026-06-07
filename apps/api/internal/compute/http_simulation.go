@@ -129,7 +129,8 @@ func (server *Server) simulationChecks(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, ValidationError("read request body failed"))
 		return
 	}
-	snapshot, status, err := server.service.CreateSimulationCheck(withAuditPrincipal(r.Context(), *principal, r), bytes)
+	filter := filterForPrincipalDataScope(ListFilter{}, *principal)
+	snapshot, status, err := server.service.CreateSimulationCheckForScope(withAuditPrincipal(r.Context(), *principal, r), bytes, filter)
 	if err != nil {
 		WriteError(w, err)
 		return

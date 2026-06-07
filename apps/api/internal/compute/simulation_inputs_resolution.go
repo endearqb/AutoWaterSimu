@@ -3,14 +3,22 @@ package compute
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
 
 func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, inputRef map[string]any, sourceSystem, requestedBy, jobType string) (map[string]any, error) {
+	return svc.ResolveSimulationInputForScope(ctx, inputRef, sourceSystem, requestedBy, jobType, ListFilter{})
+}
+
+func (svc *SimulationInputService) ResolveSimulationInputForScope(ctx context.Context, inputRef map[string]any, sourceSystem, requestedBy, jobType string, filter ListFilter) (map[string]any, error) {
 	if simulationInput := mapValue(inputRef, "simulation_input"); simulationInput != nil {
 		record, err := svc.simulationInputRecord(simulationInput, sourceSystem, requestedBy)
 		if err != nil {
+			return nil, err
+		}
+		if err := authorizeListFilterDataScope(filter, "simulation input", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 			return nil, err
 		}
 		if _, err := svc.inputs.UpsertSimulationInput(ctx, record, svc.simulationInputRegisteredAudit(ctx, record)); err != nil {
@@ -27,6 +35,9 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 		if err != nil {
 			return nil, err
 		}
+		if err := authorizeListFilterDataScope(filter, "process graph", record.TenantID, record.ProjectID, record.SiteID); err != nil {
+			return nil, err
+		}
 		var processGraph map[string]any
 		if err := json.Unmarshal(record.Payload, &processGraph); err != nil {
 			return nil, NewAppError(500, CodeInternal, "stored process graph JSON is invalid", true, nil)
@@ -40,8 +51,12 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 		if err != nil {
 			return nil, err
 		}
+		inheritSimulationInputScopeFromRecord(simulationInput, record.TenantID, record.ProjectID, record.SiteID)
 		inputRecord, err := svc.simulationInputRecord(simulationInput, sourceSystem, requestedBy)
 		if err != nil {
+			return nil, err
+		}
+		if err := authorizeListFilterDataScope(filter, "simulation input", inputRecord.TenantID, inputRecord.ProjectID, inputRecord.SiteID); err != nil {
 			return nil, err
 		}
 		if _, err := svc.inputs.UpsertSimulationInput(ctx, inputRecord, svc.simulationInputRegisteredAudit(ctx, inputRecord)); err != nil {
@@ -50,7 +65,7 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 		return simulationInput, nil
 	}
 	if modelRunID := stringValue(inputRef, "model_run_id"); modelRunID != "" {
-		simulationInput, err := svc.simulationInputFromModelRun(ctx, modelRunID)
+		simulationInput, err := svc.simulationInputFromModelRunForScope(ctx, modelRunID, filter)
 		if err != nil {
 			return nil, err
 		}
@@ -71,6 +86,9 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
+	if err := authorizeListFilterDataScope(filter, "simulation input", record.TenantID, record.ProjectID, record.SiteID); err != nil {
+		return nil, err
+	}
 	var simulationInput map[string]any
 	if err := json.Unmarshal(record.Payload, &simulationInput); err != nil {
 		return nil, NewAppError(500, CodeInternal, "stored simulation input JSON is invalid", true, nil)
@@ -79,6 +97,10 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 }
 
 func (svc *SimulationInputService) simulationInputFromModelRun(ctx context.Context, modelRunID string) (map[string]any, error) {
+	return svc.simulationInputFromModelRunForScope(ctx, modelRunID, ListFilter{})
+}
+
+func (svc *SimulationInputService) simulationInputFromModelRunForScope(ctx context.Context, modelRunID string, filter ListFilter) (map[string]any, error) {
 	modelRun, err := svc.modelRuns.FindModelRun(ctx, required(modelRunID, "model_run_id"))
 	if err != nil {
 		return nil, err
@@ -98,6 +120,9 @@ func (svc *SimulationInputService) simulationInputFromModelRun(ctx context.Conte
 		}
 		return nil, err
 	}
+	if err := authorizeListFilterDataScope(filter, "model run source job", job.TenantID, job.ProjectID, job.SiteID); err != nil {
+		return nil, err
+	}
 	var sourceJob map[string]any
 	if err := json.Unmarshal(job.InputJSON, &sourceJob); err != nil {
 		return nil, NewAppError(500, CodeInternal, "model run source job JSON is invalid", true, nil)
@@ -112,4 +137,28 @@ func (svc *SimulationInputService) simulationInputFromModelRun(ctx context.Conte
 		}
 	}
 	return payload, nil
+}
+
+func inheritSimulationInputScopeFromRecord(simulationInput map[string]any, tenantID, projectID, siteID string) {
+	inheritSimulationInputScopeFromFilter(simulationInput, ListFilter{TenantID: tenantID, ProjectID: projectID, SiteID: siteID})
+}
+
+func inheritSimulationInputScopeFromFilter(simulationInput map[string]any, scope ListFilter) {
+	if simulationInput == nil || !listFilterHasDataScope(scope) {
+		return
+	}
+	metadata := mapValue(simulationInput, "metadata")
+	if metadata == nil {
+		metadata = map[string]any{}
+		simulationInput["metadata"] = metadata
+	}
+	if strings.TrimSpace(scope.TenantID) != "" && stringValue(metadata, "tenant_id") == "" {
+		metadata["tenant_id"] = strings.TrimSpace(scope.TenantID)
+	}
+	if strings.TrimSpace(scope.ProjectID) != "" && stringValue(metadata, "project_id") == "" {
+		metadata["project_id"] = strings.TrimSpace(scope.ProjectID)
+	}
+	if strings.TrimSpace(scope.SiteID) != "" && stringValue(metadata, "site_id") == "" {
+		metadata["site_id"] = strings.TrimSpace(scope.SiteID)
+	}
 }

@@ -9,6 +9,10 @@ import (
 )
 
 func (svc *Service) CreateSimulationCheck(ctx context.Context, bytes []byte) (JobSnapshot, int, error) {
+	return svc.CreateSimulationCheckForScope(ctx, bytes, ListFilter{})
+}
+
+func (svc *Service) CreateSimulationCheckForScope(ctx context.Context, bytes []byte, filter ListFilter) (JobSnapshot, int, error) {
 	var request map[string]any
 	if err := json.Unmarshal(bytes, &request); err != nil {
 		return JobSnapshot{}, 0, ValidationError("simulation_request JSON is invalid")
@@ -26,7 +30,19 @@ func (svc *Service) CreateSimulationCheck(ctx context.Context, bytes []byte) (Jo
 	}
 	sourceSystem := required(stringValue(request, "source_system"), "source_system")
 	requestedBy := required(stringValue(request, "requested_by"), "requested_by")
-	simulationInput, err := svc.simulationInputs.ResolveSimulationInput(ctx, inputRef, sourceSystem, requestedBy, jobType)
+	metadata := mapValue(request, "metadata")
+	externalRefs := mapValue(request, "external_refs")
+	if err := authorizeListFilterDataScope(filter, "simulation check", stringValue(metadata, "tenant_id"), stringValue(metadata, "project_id"), simulationCheckSiteID(metadata, externalRefs)); err != nil {
+		return JobSnapshot{}, 0, err
+	}
+	if simulationInput := mapValue(inputRef, "simulation_input"); simulationInput != nil {
+		inheritSimulationInputScopeFromFilter(simulationInput, ListFilter{
+			TenantID:  stringValue(metadata, "tenant_id"),
+			ProjectID: stringValue(metadata, "project_id"),
+			SiteID:    simulationCheckSiteID(metadata, externalRefs),
+		})
+	}
+	simulationInput, err := svc.simulationInputs.ResolveSimulationInputForScope(ctx, inputRef, sourceSystem, requestedBy, jobType, filter)
 	if err != nil {
 		return JobSnapshot{}, 0, err
 	}
@@ -34,8 +50,6 @@ func (svc *Service) CreateSimulationCheck(ctx context.Context, bytes []byte) (Jo
 		return JobSnapshot{}, 0, ValidationError("simulation_request job_type must match simulation_input job_type")
 	}
 
-	metadata := mapValue(request, "metadata")
-	externalRefs := mapValue(request, "external_refs")
 	jobDocument := domainsimulation.BuildSimulationCheckJobDocument(domainsimulation.SimulationCheckJobInput{
 		RequestID:       requestID,
 		JobType:         jobType,
@@ -51,7 +65,14 @@ func (svc *Service) CreateSimulationCheck(ctx context.Context, bytes []byte) (Jo
 	if err != nil {
 		return JobSnapshot{}, 0, err
 	}
-	return svc.CreateJob(ctx, jobBytes, jobDocument.IdempotencyKey)
+	return svc.CreateJobForScope(ctx, jobBytes, jobDocument.IdempotencyKey, filter)
+}
+
+func simulationCheckSiteID(metadata, externalRefs map[string]any) string {
+	if siteID := stringValue(metadata, "site_id"); siteID != "" {
+		return siteID
+	}
+	return stringValue(externalRefs, "site_id")
 }
 
 func (svc *Service) RegisterSimulationInput(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (SimulationInputRecord, int, error) {

@@ -7,6 +7,10 @@ import (
 )
 
 func (svc *JobLifecycleService) CreateJob(ctx context.Context, bytes []byte, headerIdempotencyKey string) (JobSnapshot, int, error) {
+	return svc.CreateJobForScope(ctx, bytes, headerIdempotencyKey, ListFilter{})
+}
+
+func (svc *JobLifecycleService) CreateJobForScope(ctx context.Context, bytes []byte, headerIdempotencyKey string, filter ListFilter) (JobSnapshot, int, error) {
 	job, err := DecodeComputeJob(bytes, svc.validator)
 	if err != nil {
 		return JobSnapshot{}, 0, err
@@ -20,6 +24,9 @@ func (svc *JobLifecycleService) CreateJob(ctx context.Context, bytes []byte, hea
 	}
 	payloadHash, err := PayloadHash(job)
 	if err != nil {
+		return JobSnapshot{}, 0, err
+	}
+	if err := authorizeListFilterDataScope(filter, "job", job.Context.TenantID, job.Context.ProjectID, job.Context.SiteID); err != nil {
 		return JobSnapshot{}, 0, err
 	}
 	existing, err := svc.jobs.FindJobByIdempotency(ctx, job.Context.SourceSystem, job.Context.RequestedBy, job.IdempotencyKey)

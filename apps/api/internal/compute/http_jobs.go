@@ -23,7 +23,8 @@ func (server *Server) jobs(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, ValidationError("read request body failed"))
 			return
 		}
-		snapshot, status, err := server.service.CreateJob(withAuditPrincipal(r.Context(), *principal, r), bytes, r.Header.Get("Idempotency-Key"))
+		filter := filterForPrincipalDataScope(ListFilter{}, *principal)
+		snapshot, status, err := server.service.CreateJobForScope(withAuditPrincipal(r.Context(), *principal, r), bytes, r.Header.Get("Idempotency-Key"), filter)
 		if err != nil {
 			WriteError(w, err)
 			return
