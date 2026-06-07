@@ -29,12 +29,15 @@ func (store *MemoryStore) FindWorkerByID(_ context.Context, workerID string) (*W
 	return &worker, nil
 }
 
-func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error) {
+func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time, filter ListFilter) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var selected *JobRecord
 	for _, job := range store.jobs {
 		if job.Status != StatusQueued || job.CancelRequested {
+			continue
+		}
+		if !recordMatchesListFilterDataScope(filter, job.TenantID, job.ProjectID, job.SiteID) {
 			continue
 		}
 		if !domainjobs.MatchesWorker(

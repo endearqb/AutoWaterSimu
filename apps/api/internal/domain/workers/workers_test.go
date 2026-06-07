@@ -11,6 +11,7 @@ type fakeStore struct {
 	worker       Record
 	upserted     bool
 	claimJob     *ClaimedJob
+	claimScope   ClaimScope
 	heartbeatJob *HeartbeatJob
 }
 
@@ -27,7 +28,8 @@ func (store *fakeStore) FindWorkerByID(_ context.Context, workerID string) (*Rec
 	return &store.worker, nil
 }
 
-func (store *fakeStore) ClaimNext(_ context.Context, _ Record, _ time.Time) (*ClaimedJob, error) {
+func (store *fakeStore) ClaimNext(_ context.Context, _ Record, _ time.Time, scope ClaimScope) (*ClaimedJob, error) {
+	store.claimScope = scope
 	return store.claimJob, nil
 }
 
@@ -107,6 +109,23 @@ func TestClaimReturnsJobPayloadAndLease(t *testing.T) {
 	}
 	if !claim["lease_expires_at"].(time.Time).Equal(now.Add(45 * time.Second)) {
 		t.Fatalf("unexpected lease: %#v", claim["lease_expires_at"])
+	}
+}
+
+func TestClaimForScopePassesScopeToStore(t *testing.T) {
+	now := time.Date(2026, 6, 1, 2, 52, 30, 0, time.UTC)
+	store := &fakeStore{
+		worker:   Record{WorkerID: "worker-1"},
+		claimJob: &ClaimedJob{InputJSON: json.RawMessage(`{"job_id":"job-1"}`), Attempt: 1},
+	}
+	service := NewWorkerLifecycleService(store, func() time.Time { return now }, 45*time.Second)
+	scope := ClaimScope{TenantID: "tenant_a", ProjectID: "project_a", SiteID: "site_a"}
+
+	if _, err := service.ClaimForScope(context.Background(), "worker-1", scope); err != nil {
+		t.Fatalf("ClaimForScope returned error: %v", err)
+	}
+	if store.claimScope != scope {
+		t.Fatalf("expected store claim scope %#v, got %#v", scope, store.claimScope)
 	}
 }
 

@@ -46,6 +46,12 @@ type ClaimedJob struct {
 	Attempt   int
 }
 
+type ClaimScope struct {
+	TenantID  string
+	ProjectID string
+	SiteID    string
+}
+
 type HeartbeatJob struct {
 	JobID           string
 	CancelRequested bool
@@ -56,7 +62,7 @@ type HeartbeatJob struct {
 type WorkerStore interface {
 	UpsertWorker(ctx context.Context, worker Record) error
 	FindWorkerByID(ctx context.Context, workerID string) (*Record, error)
-	ClaimNext(ctx context.Context, worker Record, leaseExpiresAt time.Time) (*ClaimedJob, error)
+	ClaimNext(ctx context.Context, worker Record, leaseExpiresAt time.Time, scope ClaimScope) (*ClaimedJob, error)
 	Heartbeat(ctx context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*HeartbeatJob, error)
 }
 
@@ -108,6 +114,10 @@ func (svc *WorkerLifecycleService) RegisterWorker(ctx context.Context, request m
 }
 
 func (svc *WorkerLifecycleService) Claim(ctx context.Context, workerID string) (map[string]any, error) {
+	return svc.ClaimForScope(ctx, workerID, ClaimScope{})
+}
+
+func (svc *WorkerLifecycleService) ClaimForScope(ctx context.Context, workerID string, scope ClaimScope) (map[string]any, error) {
 	workerID, err := required(workerID, "worker_id")
 	if err != nil {
 		return nil, err
@@ -117,7 +127,7 @@ func (svc *WorkerLifecycleService) Claim(ctx context.Context, workerID string) (
 		return nil, err
 	}
 	lease := svc.now().Add(svc.leaseDuration)
-	job, err := svc.workers.ClaimNext(ctx, *worker, lease)
+	job, err := svc.workers.ClaimNext(ctx, *worker, lease, scope)
 	if err != nil {
 		return nil, err
 	}

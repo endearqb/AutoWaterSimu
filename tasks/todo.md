@@ -1,3 +1,30 @@
+# 2026-06-07 AutoWaterSimu Next worker mutation data-scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API worker lifecycle, domain workers, security smoke, architecture current-state, and recent `.ai/changes`.
+- [x] Confirm next aligned gap: worker job mutation audit was covered, but scoped worker claim/heartbeat/artifact/completion still needed tenant/project/site data-scope proof.
+- [x] Add scoped worker claim candidate filtering without moving auth/principal logic into `internal/domain/workers`.
+- [x] Add stored-job tenant/project/site checks before worker heartbeat, artifact upload, and result completion mutations.
+- [x] Add focused HTTP regression coverage and include it in security smoke.
+- [x] Update Compute API, domain workers, security smoke, architecture, Certainty/Elegance plan, and README First records.
+- [x] Run focused tests, security smoke, full API tests, boundary audit, dependency check, docs scan, and diff-check.
+- [x] Commit and push this worker mutation data-scope stage.
+
+## Plan
+
+- Treat this as a narrow worker mutation data-scope slice, not full RBAC/ABAC, full object-level data-scope, high-volume heartbeat audit, complete all-mutation audit, hosted evidence, or complete golden scenarios.
+- Keep auth/principal interpretation in compute HTTP/platform; `domain/workers.ClaimScope` is only a store-filtering hint.
+- Preserve worker endpoint shapes, worker audit event shape, OpenAPI, migrations, generated clients, and global-token behavior.
+
+## Review
+
+- Added auth-free `ClaimScope` to `internal/domain/workers` and passed it through compute's worker adapter to MemoryStore/PostgresStore claim filtering.
+- Scoped worker claim now skips queued jobs outside the token tenant/project/site scope instead of claiming them and relying on later rejection.
+- Worker heartbeat, artifact upload, and result completion HTTP paths now authorize the stored job tenant/project/site before service mutation.
+- Added `TestHTTPWorkerJobMutationTenantProjectSiteScope` covering scoped claim filtering, cross-scope denial with no job/artifact mutation, and same-scope heartbeat/artifact/completion success.
+- Included the new test in `scripts/ci/security-smoke.ps1` and updated API/security/architecture/Certainty-Elegance context.
+- Validation passed: focused domain/compute worker data-scope tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: full object-level data-scope, other remaining mutation data-scope, high-volume heartbeat audit, remaining all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next job cancel mutation scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API job HTTP/data-scope rules, security smoke, architecture current-state, and recent `.ai/changes`.

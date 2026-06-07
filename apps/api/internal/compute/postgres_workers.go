@@ -51,13 +51,21 @@ func (store *PostgresStore) FindWorkerByID(ctx context.Context, workerID string)
 	return worker, err
 }
 
-func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error) {
+func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time, filter ListFilter) (*JobRecord, error) {
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	rows, err := tx.Query(ctx, jobSelectSQL()+" WHERE status='queued' AND cancel_requested=false ORDER BY created_at, id FOR UPDATE SKIP LOCKED")
+	claimFilter := filter
+	claimFilter.Status = StatusQueued
+	where, args := listWhere(claimFilter)
+	if where == "" {
+		where = " WHERE cancel_requested=false"
+	} else {
+		where += " AND cancel_requested=false"
+	}
+	rows, err := tx.Query(ctx, jobSelectSQL()+where+" ORDER BY created_at, id FOR UPDATE SKIP LOCKED", args...)
 	if err != nil {
 		return nil, err
 	}

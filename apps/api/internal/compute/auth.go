@@ -94,3 +94,19 @@ func authorizeListFilterDataScope(filter ListFilter, objectLabel, tenantID, proj
 	}
 	return nil
 }
+
+func recordMatchesListFilterDataScope(filter ListFilter, tenantID, projectID, siteID string) bool {
+	requiredTenantID := strings.TrimSpace(filter.TenantID)
+	requiredProjectID := strings.TrimSpace(filter.ProjectID)
+	requiredSiteID := strings.TrimSpace(filter.SiteID)
+	if requiredTenantID != "" && strings.TrimSpace(tenantID) != requiredTenantID {
+		return false
+	}
+	if requiredProjectID != "" && strings.TrimSpace(projectID) != requiredProjectID {
+		return false
+	}
+	if requiredSiteID != "" && strings.TrimSpace(siteID) != requiredSiteID {
+		return false
+	}
+	return true
+}

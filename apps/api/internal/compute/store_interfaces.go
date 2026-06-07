@@ -37,7 +37,7 @@ type JobStore interface {
 type WorkerStore interface {
 	UpsertWorker(ctx context.Context, worker WorkerRecord) error
 	FindWorkerByID(ctx context.Context, workerID string) (*WorkerRecord, error)
-	ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error)
+	ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time, filter ListFilter) (*JobRecord, error)
 	Heartbeat(ctx context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*JobRecord, error)
 }
 

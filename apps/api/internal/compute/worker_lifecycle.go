@@ -20,8 +20,12 @@ func (adapter workerStoreAdapter) FindWorkerByID(ctx context.Context, workerID s
 	return adapter.store.FindWorkerByID(ctx, workerID)
 }
 
-func (adapter workerStoreAdapter) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*domainworkers.ClaimedJob, error) {
-	job, err := adapter.store.ClaimNext(ctx, worker, leaseExpiresAt)
+func (adapter workerStoreAdapter) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time, scope domainworkers.ClaimScope) (*domainworkers.ClaimedJob, error) {
+	job, err := adapter.store.ClaimNext(ctx, worker, leaseExpiresAt, ListFilter{
+		TenantID:  scope.TenantID,
+		ProjectID: scope.ProjectID,
+		SiteID:    scope.SiteID,
+	})
 	if err != nil {
 		return nil, err
 	}

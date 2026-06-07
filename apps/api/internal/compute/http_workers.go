@@ -44,7 +44,11 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, err)
 			return
 		}
-		result, err := server.service.Claim(withAuditPrincipal(r.Context(), *principal, r), workerID)
+		result, err := server.service.ClaimForScope(
+			withAuditPrincipal(r.Context(), *principal, r),
+			workerID,
+			filterForPrincipalDataScope(ListFilter{}, *principal),
+		)
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -60,6 +64,12 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 			JobID string `json:"job_id"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&request)
+		if strings.TrimSpace(request.JobID) != "" {
+			if err := server.authorizeJobRouteDataScope(r.Context(), *principal, request.JobID); err != nil {
+				WriteError(w, err)
+				return
+			}
+		}
 		result, err := server.service.Heartbeat(withAuditPrincipal(r.Context(), *principal, r), workerID, request.JobID)
 		if err != nil {
 			WriteError(w, err)
@@ -69,6 +79,11 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 	case len(parts) == 4 && parts[1] == "jobs" && parts[3] == "artifact":
 		principal, err := server.auth.Principal(r, "artifact:write")
 		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		jobID := parts[2]
+		if err := server.authorizeJobRouteDataScope(r.Context(), *principal, jobID); err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -82,7 +97,7 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
-		artifact, err := server.service.UploadArtifact(withAuditPrincipal(r.Context(), *principal, r), workerID, parts[2], r.FormValue("metadata"), file)
+		artifact, err := server.service.UploadArtifact(withAuditPrincipal(r.Context(), *principal, r), workerID, jobID, r.FormValue("metadata"), file)
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -91,6 +106,11 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 	case len(parts) == 4 && parts[1] == "jobs" && (parts[3] == "succeed" || parts[3] == "fail"):
 		principal, err := server.auth.Principal(r, "job:write")
 		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		jobID := parts[2]
+		if err := server.authorizeJobRouteDataScope(r.Context(), *principal, jobID); err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -107,9 +127,9 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 			if !ok {
 				result = request
 			}
-			snapshot, serviceErr = server.service.Complete(withAuditPrincipal(r.Context(), *principal, r), workerID, parts[2], attempt, result)
+			snapshot, serviceErr = server.service.Complete(withAuditPrincipal(r.Context(), *principal, r), workerID, jobID, attempt, result)
 		} else {
-			snapshot, serviceErr = server.service.Fail(withAuditPrincipal(r.Context(), *principal, r), workerID, parts[2], attempt, stringValue(request, "error_code"), stringValue(request, "error_message"))
+			snapshot, serviceErr = server.service.Fail(withAuditPrincipal(r.Context(), *principal, r), workerID, jobID, attempt, stringValue(request, "error_code"), stringValue(request, "error_message"))
 		}
 		if serviceErr != nil {
 			WriteError(w, serviceErr)

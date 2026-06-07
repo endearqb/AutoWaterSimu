@@ -8,6 +8,7 @@
 
 - worker registration request normalization。
 - worker claim response shape assembly。
+- optional claim tenant/project/site scope forwarding to the store adapter。
 - heartbeat response shape assembly。
 - 只依赖 worker lifecycle 所需的最小 store interface。
 
@@ -28,7 +29,8 @@
 
 1. 本 package 不得 import `apps/api/internal/compute`。
 2. `Store` 只保留 worker register/claim/heartbeat 必需方法。
-3. 与 job 状态相关的细节由 compute adapter 转成 `ClaimedJob` / `HeartbeatJob`，避免 workers package 依赖完整 `JobRecord`。
+3. `ClaimScope` 只能作为 claim candidate filtering hint 透传给 store adapter；HTTP auth、principal 解析和数据范围判定仍留在 compute/platform。
+4. 与 job 状态相关的细节由 compute adapter 转成 `ClaimedJob` / `HeartbeatJob`，避免 workers package 依赖完整 `JobRecord`。
 
 ## 4. 对外接口
 
@@ -38,6 +40,7 @@
 - `WorkerStore`
 - `WorkerLifecycleService`
 - `NewWorkerLifecycleService`
+- `ClaimScope`
 - `ClaimedJob`
 - `HeartbeatJob`
 - `Error`
