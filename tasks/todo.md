@@ -1,3 +1,31 @@
+# 2026-06-07 AutoWaterSimu Next worker job-event mutation audit TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API worker/job/artifact boundaries, scripts/ci security smoke, and recent `.ai/changes`
+- [x] Confirm next aligned gap: worker claim, artifact upload, and result completion wrote job events without selected mutation audit envelopes
+- [x] Propagate worker HTTP principal/route context into worker claim, artifact upload, heartbeat, and completion service calls
+- [x] Add selected audit envelopes to existing worker `job.running`, `artifact.recorded`, and `job.<terminal_status>` events in MemoryStore/PostgresStore paths
+- [x] Add focused HTTP regression coverage and include it in security smoke
+- [x] Update Compute API/security/docs context and change records
+- [x] Run validation
+- [x] Commit and push this completed slice
+
+## Plan
+
+- Treat this as a narrow worker job-event selected audit slice, not a new hosted evidence lane, same-package file split, full RBAC/ABAC, full object data-scope, high-volume heartbeat audit, or complete all-mutation audit.
+- Preserve endpoint paths, request/response schemas, OpenAPI, migrations, worker domain package responsibilities, store state transitions, global/dev token behavior, and existing event business payload fields.
+- Add audit envelopes only to persisted events that already exist: claim `job.running`, artifact upload `artifact.recorded`, and worker result completion `job.<terminal_status>`.
+- Keep `apps/api/internal/domain/workers` DTO-neutral and free of compute/platform audit imports; audit call sites stay in compute compatibility wiring.
+
+## Review
+
+- Added worker HTTP audit context propagation so static-token principal and route are available to worker claim/artifact/completion event writers.
+- Added `worker_job_event_audit.go` helper functions for compact worker claim, artifact upload, and result completion audit event JSON.
+- Updated MemoryStore/PostgresStore claim/completion event writes and artifact upload event writes to attach audit envelopes while preserving existing payload fields.
+- Added `TestHTTPWorkerJobMutationAuditEvents` to assert worker token principal, route, target, action, trace, and compact after-state for claim, artifact upload, and succeed.
+- Included the new test in `scripts/ci/security-smoke.ps1` and updated security coverage summaries.
+- Validation passed with focused audit tests, security smoke, full `go test ./...`, Compute API boundary audit, dependency boundary audit, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: high-volume heartbeat audit, worker registration audit, complete all-mutation audit, full object-level data scope, remaining mutation data-scope, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next scoped promotion evidence TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API model governance, frontend generated compute client, security smoke, and recent `.ai/changes`

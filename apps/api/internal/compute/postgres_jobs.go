@@ -141,6 +141,8 @@ func (store *PostgresStore) CompleteJob(ctx context.Context, jobID, workerID str
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	jobForAudit := JobRecord{JobID: jobID, Status: StatusRunning, WorkerID: workerID, Attempt: attempt}
+	_ = tx.QueryRow(ctx, "SELECT COALESCE(trace_id,'') FROM compute_jobs WHERE id=$1", jobID).Scan(&jobForAudit.TraceID)
 	tag, err := tx.Exec(ctx, `UPDATE compute_jobs SET
 		status=$4, summary_json=$5, result_hash=$6, error_code=$7, error_message=$8, finished_at=$9
 		WHERE id=$1 AND worker_id=$2 AND attempt=$3 AND status='running' AND lease_expires_at >= $9`,
@@ -153,7 +155,7 @@ func (store *PostgresStore) CompleteJob(ctx context.Context, jobID, workerID str
 		_ = tx.Commit(ctx)
 		return nil, Conflict(CodeWorkerStale, "worker result is stale")
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", jobID, "job."+status, mustJSON(map[string]any{"status": status, "error_code": errorCode, "error_message": errorMessage}), now); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", jobID, "job."+status, jobCompletionEventJSON(ctx, now, jobForAudit, workerID, attempt, status, errorCode, errorMessage), now); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {

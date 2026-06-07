@@ -7,7 +7,8 @@ import (
 )
 
 func (server *Server) registerWorker(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "worker:register"); err != nil {
+	principal, err := server.auth.Principal(r, "worker:register")
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -20,7 +21,7 @@ func (server *Server) registerWorker(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, ValidationError("worker register JSON is invalid"))
 		return
 	}
-	worker, err := server.service.RegisterWorker(r.Context(), request)
+	worker, err := server.service.RegisterWorker(withAuditPrincipal(r.Context(), *principal, r), request)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -38,18 +39,20 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 	workerID := parts[0]
 	switch {
 	case len(parts) == 2 && parts[1] == "claim":
-		if _, err := server.auth.Principal(r, "worker:claim"); err != nil {
+		principal, err := server.auth.Principal(r, "worker:claim")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
-		result, err := server.service.Claim(r.Context(), workerID)
+		result, err := server.service.Claim(withAuditPrincipal(r.Context(), *principal, r), workerID)
 		if err != nil {
 			WriteError(w, err)
 			return
 		}
 		WriteJSON(w, http.StatusOK, result)
 	case len(parts) == 2 && parts[1] == "heartbeat":
-		if _, err := server.auth.Principal(r, "worker:heartbeat"); err != nil {
+		principal, err := server.auth.Principal(r, "worker:heartbeat")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -57,14 +60,15 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 			JobID string `json:"job_id"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&request)
-		result, err := server.service.Heartbeat(r.Context(), workerID, request.JobID)
+		result, err := server.service.Heartbeat(withAuditPrincipal(r.Context(), *principal, r), workerID, request.JobID)
 		if err != nil {
 			WriteError(w, err)
 			return
 		}
 		WriteJSON(w, http.StatusOK, result)
 	case len(parts) == 4 && parts[1] == "jobs" && parts[3] == "artifact":
-		if _, err := server.auth.Principal(r, "artifact:write"); err != nil {
+		principal, err := server.auth.Principal(r, "artifact:write")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -78,14 +82,15 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
-		artifact, err := server.service.UploadArtifact(r.Context(), workerID, parts[2], r.FormValue("metadata"), file)
+		artifact, err := server.service.UploadArtifact(withAuditPrincipal(r.Context(), *principal, r), workerID, parts[2], r.FormValue("metadata"), file)
 		if err != nil {
 			WriteError(w, err)
 			return
 		}
 		WriteJSON(w, http.StatusOK, artifact)
 	case len(parts) == 4 && parts[1] == "jobs" && (parts[3] == "succeed" || parts[3] == "fail"):
-		if _, err := server.auth.Principal(r, "job:write"); err != nil {
+		principal, err := server.auth.Principal(r, "job:write")
+		if err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -96,18 +101,18 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 		}
 		attempt := int(numberValue(request, "attempt"))
 		var snapshot JobSnapshot
-		var err error
+		var serviceErr error
 		if parts[3] == "succeed" {
 			result, ok := request["compute_result"].(map[string]any)
 			if !ok {
 				result = request
 			}
-			snapshot, err = server.service.Complete(r.Context(), workerID, parts[2], attempt, result)
+			snapshot, serviceErr = server.service.Complete(withAuditPrincipal(r.Context(), *principal, r), workerID, parts[2], attempt, result)
 		} else {
-			snapshot, err = server.service.Fail(r.Context(), workerID, parts[2], attempt, stringValue(request, "error_code"), stringValue(request, "error_message"))
+			snapshot, serviceErr = server.service.Fail(withAuditPrincipal(r.Context(), *principal, r), workerID, parts[2], attempt, stringValue(request, "error_code"), stringValue(request, "error_message"))
 		}
-		if err != nil {
-			WriteError(w, err)
+		if serviceErr != nil {
+			WriteError(w, serviceErr)
 			return
 		}
 		WriteJSON(w, http.StatusOK, snapshot)

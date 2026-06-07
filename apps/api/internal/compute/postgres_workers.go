@@ -73,10 +73,11 @@ func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, 
 		return nil, nil
 	}
 	now := time.Now().UTC()
+	attempt := selected.Attempt + 1
 	if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET status='running', worker_id=$2, attempt=attempt+1, claimed_at=$3, started_at=$3, lease_expires_at=$4 WHERE id=$1", selected.JobID, worker.WorkerID, now, leaseExpiresAt); err != nil {
 		return nil, err
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.running',$2,$3)", selected.JobID, mustJSON(map[string]any{"worker_id": worker.WorkerID}), now); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.running',$2,$3)", selected.JobID, workerClaimEventJSON(ctx, now, *selected, worker.WorkerID, attempt), now); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {

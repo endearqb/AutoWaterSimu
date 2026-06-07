@@ -23,7 +23,7 @@ func (store *MemoryStore) FindWorkerByID(_ context.Context, workerID string) (*W
 	return &worker, nil
 }
 
-func (store *MemoryStore) ClaimNext(_ context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error) {
+func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var selected *JobRecord
@@ -59,7 +59,12 @@ func (store *MemoryStore) ClaimNext(_ context.Context, worker WorkerRecord, leas
 	selected.StartedAt = &now
 	selected.LeaseExpiresAt = &leaseExpiresAt
 	store.jobs[selected.JobID] = *selected
-	store.appendEventLocked(EventRecord{JobID: selected.JobID, EventType: "job.running", EventJSON: mustJSON(map[string]any{"worker_id": worker.WorkerID, "attempt": selected.Attempt}), CreatedAt: now})
+	store.appendEventLocked(EventRecord{
+		JobID:     selected.JobID,
+		EventType: "job.running",
+		EventJSON: workerClaimEventJSON(ctx, now, *selected, worker.WorkerID, selected.Attempt),
+		CreatedAt: now,
+	})
 	return selected, nil
 }
 

@@ -56,7 +56,7 @@ func (svc *ArtifactLifecycleService) UploadArtifact(ctx context.Context, workerI
 		Metadata:        mustJSON(metadata["metadata"]),
 		CreatedAt:       now,
 	}
-	event := EventRecord{JobID: jobID, EventType: "artifact.recorded", EventJSON: mustJSON(artifact), CreatedAt: now}
+	event := EventRecord{JobID: jobID, EventType: "artifact.recorded", EventJSON: artifactRecordedEventJSON(ctx, now, *job, artifact), CreatedAt: now}
 	if err := svc.metadata.InsertArtifact(ctx, artifact, event); err != nil {
 		return ArtifactRecord{}, err
 	}

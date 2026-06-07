@@ -131,7 +131,7 @@ func (store *MemoryStore) CancelJob(_ context.Context, jobID string, mutation do
 	return &job, nil
 }
 
-func (store *MemoryStore) CompleteJob(_ context.Context, jobID, workerID string, attempt int, status string, summary json.RawMessage, resultHash, errorCode, errorMessage string, now time.Time) (*JobRecord, error) {
+func (store *MemoryStore) CompleteJob(ctx context.Context, jobID, workerID string, attempt int, status string, summary json.RawMessage, resultHash, errorCode, errorMessage string, now time.Time) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	job, ok := store.jobs[jobID]
@@ -149,7 +149,12 @@ func (store *MemoryStore) CompleteJob(_ context.Context, jobID, workerID string,
 	job.ErrorMessage = errorMessage
 	job.FinishedAt = &now
 	store.jobs[jobID] = job
-	store.appendEventLocked(EventRecord{JobID: jobID, EventType: "job." + status, EventJSON: mustJSON(map[string]any{"status": status, "error_code": errorCode, "error_message": errorMessage}), CreatedAt: now})
+	store.appendEventLocked(EventRecord{
+		JobID:     jobID,
+		EventType: "job." + status,
+		EventJSON: jobCompletionEventJSON(ctx, now, job, workerID, attempt, status, errorCode, errorMessage),
+		CreatedAt: now,
+	})
 	return &job, nil
 }
 
