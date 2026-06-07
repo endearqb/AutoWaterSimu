@@ -84,7 +84,8 @@
 | `types.go` | internal DTO/domain types and compatibility aliases for `../domain/jobs` status constants |
 | `auth.go` | compute data-scope helpers and compatibility aliases for `../platform/auth` |
 | `contracts.go`、`errors.go`、`hash.go`、`artifacts.go` | compute DTO decode, platform contract validator compatibility aliases, error, hash, and artifact helpers |
-| `*_test.go` | lifecycle and store tests |
+| `service_*_test.go` | service/lifecycle regression tests split by helpers, jobs, workers, artifacts, simulation, contracts/drafts, model governance, evidence, and HTTP/auth |
+| `artifacts_test.go`, `postgres_test.go` | object store and PostgreSQL-focused tests |
 
 ## 3. 维护约定
 

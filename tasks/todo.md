@@ -1,3 +1,30 @@
+# 2026-06-07 AutoWaterSimu Next service_test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute` and current task history.
+- [x] Confirm maintenance gap: `apps/api/internal/compute/service_test.go` is a single 230KB+ mixed-domain test file.
+- [x] Split service tests into domain-grouped `_test.go` files without changing test bodies or production behavior.
+- [x] Update compute README test-file map if the split changes long-term navigation.
+- [x] Run focused and full API tests plus boundary/diff checks.
+- [x] Record README First change log.
+- [x] Commit and push this service test split stage.
+
+## Plan
+
+- Keep all helpers package-private and shared inside package `compute`.
+- Move existing top-level test functions into domain-grouped files only; do not rewrite assertions or introduce new behavior.
+- Preserve existing test names so `scripts/ci/security-smoke.ps1` and focused `go test -run` commands continue to work.
+- Do not stage the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Deleted the monolithic `apps/api/internal/compute/service_test.go`.
+- Added shared helpers in `service_test_helpers_test.go`.
+- Split existing top-level tests into `service_jobs_test.go`, `service_workers_test.go`, `service_artifacts_test.go`, `service_simulation_test.go`, `service_contracts_test.go`, `service_model_governance_test.go`, `service_evidence_test.go`, and `service_http_test.go`.
+- Preserved existing test function names and assertions so focused `go test -run` and security smoke entries keep working.
+- Updated compute README test-file navigation.
+- Validation passed: focused cross-domain service tests, full `go test ./...` in `apps/api`, Compute API boundary audit, `scripts/ci/security-smoke.ps1`, dependency boundary check, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: this is a test maintainability split only; it does not advance package migration, all-object data-scope, remaining mutation data-scope, hosted evidence, or golden scenarios directly.
+
 # 2026-06-07 AutoWaterSimu Next worker mutation data-scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API worker lifecycle, domain workers, security smoke, architecture current-state, and recent `.ai/changes`.
