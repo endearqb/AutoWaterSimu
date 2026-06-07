@@ -1,3 +1,28 @@
+# 2026-06-07 AutoWaterSimu Next job cancel mutation scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API job HTTP/data-scope rules, security smoke, architecture current-state, and recent `.ai/changes`.
+- [x] Confirm next aligned gap: job cancel had selected audit coverage but still needed explicit tenant/project/site mutation data-scope proof.
+- [x] Enforce scoped HTTP job cancel against the stored job tenant/project/site before cancel state/event writes.
+- [x] Add focused HTTP regression coverage and include it in security smoke.
+- [x] Update Compute API, security smoke, architecture, Certainty/Elegance plan, and README First records.
+- [x] Run focused tests, security smoke, full API tests, boundary audit, dependency check, docs scan, and diff-check.
+- [x] Commit and push this job cancel mutation-scope stage.
+
+## Plan
+
+- Treat this as a narrow direct job cancel mutation data-scope slice, not full RBAC/ABAC, full object-level data-scope, remaining mutation data-scope, high-volume heartbeat audit, or complete all-mutation audit.
+- Preserve existing endpoint shape, schemas, OpenAPI, migrations, generated clients, global token behavior, selected audit event shape, and cancel/timeout domain state semantics.
+- Keep the explicit cancel check in the HTTP adapter because it depends on the static-token principal and stored `JobRecord` scope.
+
+## Review
+
+- HTTP job cancel now re-authorizes the stored job data-scope with the `job:create` principal before calling `CancelJob`.
+- Added `TestHTTPJobCancelMutationTenantProjectSiteScope` covering cross-scope deny with no state/event write, same-scope cancel success, global cancel success, and scoped cancel audit envelope context.
+- Included the new test in `scripts/ci/security-smoke.ps1` and updated the security evidence summary from direct job create only to direct job create/cancel.
+- Updated Compute API, compute package, scripts/ci, architecture current-state, and Certainty/Elegance security context.
+- Validation passed: focused cancel/read/create scope tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: other remaining mutation data-scope, full object-level data-scope, high-volume heartbeat audit, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next job state lifecycle mutation audit TODO
 
 - [x] Confirm next aligned gap: job cancel and timeout sweep wrote durable job events but lacked selected mutation audit envelopes.

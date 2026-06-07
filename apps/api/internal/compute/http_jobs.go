@@ -159,6 +159,10 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, err)
 			return
 		}
+		if err := server.authorizeJobRouteDataScope(r.Context(), *principal, jobID); err != nil {
+			WriteError(w, err)
+			return
+		}
 		snapshot, err := server.service.CancelJob(withAuditPrincipal(r.Context(), *principal, r), jobID)
 		if err != nil {
 			WriteError(w, err)
