@@ -1,3 +1,31 @@
+# 2026-06-07 AutoWaterSimu Next worker heartbeat audit TODO
+
+- [x] Re-read README First context for Compute API worker lifecycle, selected mutation audit, security smoke, architecture current-state, Certainty/Elegance plan, and recent `.ai/changes`.
+- [x] Confirm next aligned gap: worker heartbeat already has tenant/project/site mutation data-scope, but lease-refresh mutations still lack compact audit events.
+- [x] Add compact `job.heartbeat` event JSON with standard audit envelope for lease-extending worker heartbeats.
+- [x] Make MemoryStore and PostgresStore heartbeat updates write the heartbeat event without changing endpoint or schema contracts.
+- [x] Extend focused HTTP worker audit coverage and security smoke.
+- [x] Update Compute API/security/architecture/Certainty-Elegance context and README First change log.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Commit and push this worker heartbeat audit stage.
+
+## Plan
+
+- Treat this as a narrow high-volume heartbeat audit slice, not full all-mutation audit, full object-level data-scope, remaining mutation data-scope, OIDC/RBAC, hosted evidence, release artifact round trip, or complete golden scenarios.
+- Record heartbeat audit only when the heartbeat actually refreshes a running job lease for the assigned worker; keep denied or cross-scope requests from mutating state or writing events.
+- Preserve worker endpoint shapes, response JSON, OpenAPI, migrations, generated clients, worker domain package boundary, and global-token behavior.
+- Keep heartbeat event payload compact: worker id, status, cancel flag, before/after lease, and the existing standard audit envelope.
+
+## Review
+
+- Added compact `job.heartbeat` event JSON with the standard audit envelope for successful worker heartbeat lease refreshes.
+- MemoryStore now appends `job.heartbeat` when the assigned worker refreshes a running job lease.
+- PostgresStore heartbeat now runs in a transaction, locks the job row, updates worker/job state, and inserts the heartbeat audit event before commit.
+- Extended `TestHTTPWorkerJobMutationAuditEvents` to hit the HTTP heartbeat route and assert principal/route/target/trace plus compact before/after lease state.
+- Updated API/security/architecture/Certainty-Elegance context and security smoke coverage wording.
+- Validation passed: focused worker tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: full object-level data-scope, remaining mutation data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next service_test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute` and current task history.

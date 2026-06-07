@@ -250,6 +250,16 @@ func TestHTTPWorkerJobMutationAuditEvents(t *testing.T) {
 		t.Fatalf("worker claim failed: %d %s", rec.Code, rec.Body.String())
 	}
 
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/workers/worker_audit/heartbeat", bytes.NewReader(encodeMap(t, map[string]any{
+		"job_id": "job_material_balance_minimal",
+	})))
+	req.Header.Set("Authorization", "Bearer dev-worker-token")
+	rec = httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("worker heartbeat failed: %d %s", rec.Code, rec.Body.String())
+	}
+
 	artifactBody := &bytes.Buffer{}
 	writer := multipart.NewWriter(artifactBody)
 	artifactBytes := []byte(`{"audit":true}`)
@@ -331,6 +341,15 @@ func TestHTTPWorkerJobMutationAuditEvents(t *testing.T) {
 	claimAudit := assertWorkerAudit("job.running", "POST /api/v1/workers/worker_audit/claim", "ComputeJob", "job_material_balance_minimal", "job.claim")
 	if after, ok := claimAudit["after"].(map[string]any); !ok || after["status"] != StatusRunning || after["worker_id"] != "worker_audit" {
 		t.Fatalf("claim audit should include compact running state, got %#v", claimAudit["after"])
+	}
+	heartbeatAudit := assertWorkerAudit("job.heartbeat", "POST /api/v1/workers/worker_audit/heartbeat", "ComputeJob", "job_material_balance_minimal", "job.heartbeat")
+	heartbeatBefore, ok := heartbeatAudit["before"].(map[string]any)
+	if !ok || heartbeatBefore["status"] != StatusRunning || heartbeatBefore["lease_expires_at"] == "" {
+		t.Fatalf("heartbeat audit should include compact before lease state, got %#v", heartbeatAudit["before"])
+	}
+	heartbeatAfter, ok := heartbeatAudit["after"].(map[string]any)
+	if !ok || heartbeatAfter["status"] != StatusRunning || heartbeatAfter["worker_id"] != "worker_audit" || heartbeatAfter["lease_expires_at"] == "" {
+		t.Fatalf("heartbeat audit should include compact after lease state, got %#v", heartbeatAudit["after"])
 	}
 	artifactAudit := assertWorkerAudit("artifact.recorded", "POST /api/v1/workers/worker_audit/jobs/job_material_balance_minimal/artifact", "Artifact", "art_worker_audit", "artifact.record")
 	if after, ok := artifactAudit["after"].(map[string]any); !ok || after["artifact_id"] != "art_worker_audit" || after["job_id"] != "job_material_balance_minimal" {

@@ -77,7 +77,7 @@ func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, le
 	return selected, nil
 }
 
-func (store *MemoryStore) Heartbeat(_ context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*JobRecord, error) {
+func (store *MemoryStore) Heartbeat(ctx context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	job, ok := store.jobs[jobID]
@@ -91,8 +91,15 @@ func (store *MemoryStore) Heartbeat(_ context.Context, workerID, jobID string, l
 	worker.HeartbeatAt = &now
 	store.workers[workerID] = worker
 	if job.Status == StatusRunning && job.WorkerID == workerID {
+		before := job
 		job.LeaseExpiresAt = &leaseExpiresAt
 		store.jobs[jobID] = job
+		store.appendEventLocked(EventRecord{
+			JobID:     jobID,
+			EventType: "job.heartbeat",
+			EventJSON: workerHeartbeatEventJSON(ctx, now, before, job, workerID),
+			CreatedAt: now,
+		})
 	}
 	return &job, nil
 }

@@ -25,6 +25,33 @@ func workerClaimEventJSON(ctx context.Context, now time.Time, job JobRecord, wor
 	)
 }
 
+func workerHeartbeatEventJSON(ctx context.Context, now time.Time, before JobRecord, after JobRecord, workerID string) json.RawMessage {
+	payload := map[string]any{
+		"worker_id":        workerID,
+		"status":           after.Status,
+		"cancel_requested": after.CancelRequested,
+		"lease_expires_at": after.LeaseExpiresAt,
+	}
+	beforeState := map[string]any{
+		"status":           before.Status,
+		"worker_id":        before.WorkerID,
+		"attempt":          before.Attempt,
+		"cancel_requested": before.CancelRequested,
+		"lease_expires_at": before.LeaseExpiresAt,
+	}
+	afterState := map[string]any{
+		"status":           after.Status,
+		"worker_id":        after.WorkerID,
+		"attempt":          after.Attempt,
+		"cancel_requested": after.CancelRequested,
+		"lease_expires_at": after.LeaseExpiresAt,
+	}
+	return eventJSONWithAudit(
+		payload,
+		mutationAuditEnvelope(ctx, now, workerID, "service:worker_lifecycle.heartbeat", "ComputeJob", after.JobID, "job.heartbeat", beforeState, afterState, "worker heartbeat refreshed lease", after.TraceID, ""),
+	)
+}
+
 func artifactRecordedEventJSON(ctx context.Context, now time.Time, job JobRecord, artifact ArtifactRecord) json.RawMessage {
 	return eventJSONWithAudit(
 		artifactRecordPayload(artifact),

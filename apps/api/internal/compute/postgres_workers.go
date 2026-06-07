@@ -115,8 +115,34 @@ func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, 
 
 func (store *PostgresStore) Heartbeat(ctx context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*JobRecord, error) {
 	now := time.Now().UTC()
-	_, _ = store.pool.Exec(ctx, "UPDATE workers SET heartbeat_at=$2, current_job_id=$3 WHERE worker_id=$1", workerID, now, jobID)
-	_, _ = store.pool.Exec(ctx, "UPDATE compute_jobs SET lease_expires_at=$3 WHERE id=$1 AND worker_id=$2 AND status='running'", jobID, workerID, leaseExpiresAt)
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	job, err := scanJob(tx.QueryRow(ctx, jobSelectSQL()+" WHERE id=$1 FOR UPDATE", jobID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, NotFound(CodeJobNotFound, "job not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(ctx, "UPDATE workers SET heartbeat_at=$2, current_job_id=$3 WHERE worker_id=$1", workerID, now, jobID); err != nil {
+		return nil, err
+	}
+	if job.Status == StatusRunning && job.WorkerID == workerID {
+		after := *job
+		after.LeaseExpiresAt = &leaseExpiresAt
+		if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET lease_expires_at=$3 WHERE id=$1 AND worker_id=$2 AND status='running'", jobID, workerID, leaseExpiresAt); err != nil {
+			return nil, err
+		}
+		if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.heartbeat',$2,$3)", jobID, workerHeartbeatEventJSON(ctx, now, *job, after, workerID), now); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
 	return store.FindJobByID(ctx, jobID)
 }
 
