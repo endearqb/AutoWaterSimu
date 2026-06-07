@@ -42,16 +42,16 @@ func NewServiceWithArchive(store Store, artifacts ArtifactStore, archiveArtifact
 	})
 	svc.workerLifecycle = domainworkers.NewWorkerLifecycleService(workerStoreAdapter{store: store}, func() time.Time { return svc.now() }, DefaultLeaseSeconds*time.Second)
 	svc.simulationInputs = NewSimulationInputService(store, store, store, validator, func() time.Time { return svc.now() })
-	svc.draftWorkflows = NewDraftWorkflowService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, bytes []byte) (JobSnapshot, int, error) {
-		return svc.CreateSimulationCheck(ctx, bytes)
+	svc.draftWorkflows = NewDraftWorkflowService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, bytes []byte, filter ListFilter) (JobSnapshot, int, error) {
+		return svc.CreateSimulationCheckForScope(ctx, bytes, filter)
 	})
 	svc.resultExplanations = NewResultExplanationService(store, store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, jobID, evidenceRef string) (EvidenceReferenceResolution, error) {
 		return svc.ResolveEvidenceReference(ctx, jobID, evidenceRef)
 	})
-	svc.modelGovernance = NewModelGovernanceService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, inputRef map[string]any, sourceSystem, requestedBy, jobType string) (map[string]any, error) {
-		return svc.simulationInputs.ResolveSimulationInput(ctx, inputRef, sourceSystem, requestedBy, jobType)
-	}, func(ctx context.Context, bytes []byte, idempotencyKey string) (JobSnapshot, int, error) {
-		return svc.CreateJob(ctx, bytes, idempotencyKey)
+	svc.modelGovernance = NewModelGovernanceService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, inputRef map[string]any, sourceSystem, requestedBy, jobType string, filter ListFilter) (map[string]any, error) {
+		return svc.simulationInputs.ResolveSimulationInputForScope(ctx, inputRef, sourceSystem, requestedBy, jobType, filter)
+	}, func(ctx context.Context, bytes []byte, idempotencyKey string, filter ListFilter) (JobSnapshot, int, error) {
+		return svc.CreateJobForScope(ctx, bytes, idempotencyKey, filter)
 	}, func(ctx context.Context, jobID, evidenceRef string) (EvidenceReferenceResolution, error) {
 		return svc.ResolveEvidenceReference(ctx, jobID, evidenceRef)
 	})

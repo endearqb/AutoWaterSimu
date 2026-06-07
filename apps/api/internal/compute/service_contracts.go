@@ -22,6 +22,10 @@ func (svc *Service) PromoteDraftConfirmationToSimulationCheck(ctx context.Contex
 	return svc.draftWorkflows.PromoteDraftConfirmationToSimulationCheck(ctx, confirmationID)
 }
 
+func (svc *Service) PromoteDraftConfirmationToSimulationCheckForScope(ctx context.Context, confirmationID string, filter ListFilter) (JobSnapshot, int, error) {
+	return svc.draftWorkflows.PromoteDraftConfirmationToSimulationCheckForScope(ctx, confirmationID, filter)
+}
+
 func (svc *Service) SubmitResultExplanation(ctx context.Context, jobID string, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ResultExplanationRecord, int, error) {
 	return svc.resultExplanations.SubmitResultExplanation(ctx, jobID, bytes, defaultSourceSystem, defaultRequestedBy)
 }

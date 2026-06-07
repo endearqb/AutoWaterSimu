@@ -1,3 +1,30 @@
+# 2026-06-07 AutoWaterSimu Next indirect job workflow mutation scope TODO
+
+- [x] Re-read README First context for Certainty/Elegance plan, Compute API draft promotion, model governance benchmark schedule-run, domain agent/models boundaries, security smoke, and recent `.ai/changes`
+- [x] Confirm next aligned gap: direct job/simulation-check and several registry/model-governance mutation scopes existed, while draft promotion and benchmark schedule-run still used unscoped creation callbacks after route auth
+- [x] Enforce scoped draft promotion through proposed simulation_request, input-ref resolution, and final job create
+- [x] Enforce scoped benchmark schedule-run through referenced input-ref object and final benchmark job context
+- [x] Add focused HTTP regression coverage and include it in security smoke
+- [x] Update Compute API/security/docs context and change records
+- [x] Run full validation
+- [x] Commit and push this completed slice
+
+## Plan
+
+- Treat this as a narrow indirect job-producing workflow mutation data-scope slice, not full RBAC/ABAC, all-object data-scope, model catalog promote-approved evidence filtering, or complete all-mutation audit.
+- Preserve existing route shape, schemas, OpenAPI, migrations, generated clients, global token behavior, idempotency, selected audit event shape, and internal unscoped service methods.
+- Keep domain packages free of auth and compute DTO dependencies; pass principal-derived filters only through compute service callbacks.
+
+## Review
+
+- Added scoped callback/delegate paths for draft promotion so scoped tokens must pass both stored confirmation scope and proposed simulation request / input-ref / final job scope before writes.
+- Added scoped callback/delegate paths for benchmark schedule-run so scoped tokens must pass referenced input-ref object scope and request metadata-derived job context before writes.
+- Added regression coverage for a matching draft confirmation that contains a cross-scope proposed request, and for benchmark schedule-run cross-scope job metadata and cross-scope input_ref cases.
+- Included the new benchmark schedule-run scope test in `scripts/ci/security-smoke.ps1`; draft promotion coverage extends the existing draft confirmation scope test already in security smoke.
+- Updated Compute API, security smoke, Certainty/Elegance plan, and task context.
+- Validation passed with focused compute tests, full `go test ./...`, frontend `npx tsc --noEmit`, security smoke, compute API boundary audit, dependency boundary audit, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: promotion plan / promote-approved job-scoped evidence filtering, other object write data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, and complete golden scenarios remain future work.
+
 # 2026-06-07 AutoWaterSimu Next job create mutation scope TODO
 
 - [x] Re-read README First context for Certainty/Elegance plan, Compute API job lifecycle, simulation-check, simulation registry, security smoke, and recent `.ai/changes`

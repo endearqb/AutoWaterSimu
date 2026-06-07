@@ -205,6 +205,28 @@ func scopedDraftConfirmationBytes(t *testing.T, fixtureName, confirmationID, ten
 	return encodeMap(t, confirmation)
 }
 
+func scopedDraftConfirmationBytesWithProposedScope(t *testing.T, fixtureName, confirmationID, tenantID, projectID, siteID, proposedTenantID, proposedProjectID, proposedSiteID string) []byte {
+	t.Helper()
+	confirmation := decodeMap(t, scopedDraftConfirmationBytes(t, fixtureName, confirmationID, tenantID, projectID, siteID))
+	draft := mapValue(confirmation, "draft")
+	proposed := mapValue(draft, "proposed_request")
+	metadata := mapValue(proposed, "metadata")
+	if metadata == nil {
+		metadata = map[string]any{}
+		proposed["metadata"] = metadata
+	}
+	metadata["tenant_id"] = proposedTenantID
+	metadata["project_id"] = proposedProjectID
+	metadata["site_id"] = proposedSiteID
+	externalRefs := mapValue(proposed, "external_refs")
+	if externalRefs == nil {
+		externalRefs = map[string]any{}
+		proposed["external_refs"] = externalRefs
+	}
+	externalRefs["site_id"] = proposedSiteID
+	return encodeMap(t, confirmation)
+}
+
 func scopedModelCatalogBytes(t *testing.T, generatedAt, tenantID, projectID, siteID string) []byte {
 	t.Helper()
 	catalogBytes, err := os.ReadFile(filepath.Join(repoRootForTest(t), "contracts", "examples", "valid", "material_balance.model_catalog.v1.json"))
@@ -2245,6 +2267,7 @@ func TestHTTPDraftConfirmationTenantProjectSiteScope(t *testing.T) {
 		t.Fatal(err)
 	}
 	server := NewServer(svc, auth, nil).Routes()
+	ctx := context.Background()
 
 	postConfirmation := func(body []byte, token string) ContractValidationResponse {
 		t.Helper()
@@ -2280,6 +2303,7 @@ func TestHTTPDraftConfirmationTenantProjectSiteScope(t *testing.T) {
 		t.Fatalf("draft confirmation should persist tenant/project/site metadata, got %#v", agentAlpha.ConfirmationRecord)
 	}
 	postConfirmation(scopedDraftConfirmationBytes(t, "material_balance_promotable.draft_confirmation.v1.json", "confirm_scope_cross_site", "tenant_a", "project_a", "site_b"), "global-token")
+	postConfirmation(scopedDraftConfirmationBytesWithProposedScope(t, "material_balance_promotable.draft_confirmation.v1.json", "confirm_scope_proposed_cross", "tenant_a", "project_a", "site_a", "tenant_a", "project_a", "site_b"), "global-token")
 	postConfirmation(scopedDraftConfirmationBytes(t, "material_balance_constraint.draft_confirmation.v1.json", "confirm_scope_constraint_alpha", "tenant_a", "project_a", "site_a"), "global-token")
 	postConfirmation(scopedDraftConfirmationBytes(t, "material_balance_constraint.draft_confirmation.v1.json", "confirm_scope_constraint_cross_project", "tenant_a", "project_b", "site_a"), "global-token")
 
@@ -2319,6 +2343,13 @@ func TestHTTPDraftConfirmationTenantProjectSiteScope(t *testing.T) {
 	rec = request(http.MethodPost, "/api/v1/contracts/confirmations/confirm_scope_cross_site/promote-simulation-check", "scope-a-token")
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("cross-site draft promotion should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+	rec = request(http.MethodPost, "/api/v1/contracts/confirmations/confirm_scope_proposed_cross/promote-simulation-check", "scope-a-token")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("draft promotion with cross-scope proposed request should be denied, got %d %s", rec.Code, rec.Body.String())
+	}
+	if _, err := svc.GetJob(ctx, "job_simcheck_sim_req_confirm_scope_proposed_cross"); err == nil {
+		t.Fatalf("cross-scope proposed request promotion must not write a job")
 	}
 }
 
@@ -3570,6 +3601,65 @@ func TestBenchmarkCaseScheduleRunEndpoint(t *testing.T) {
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("ASM benchmark without default parameter set should not schedule, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestHTTPBenchmarkScheduleRunMutationTenantProjectSiteScope(t *testing.T) {
+	path := "/api/v1/model-catalog/material_balance/versions/material_balance.v1/benchmark-cases/bc_material_balance_minimal_v1/schedule-run"
+	ctx := context.Background()
+	newScopedServer := func(inputTenantID, inputProjectID, inputSiteID string) (*Service, http.Handler) {
+		t.Helper()
+		svc := testValidatedService(t)
+		auth, err := NewAuthenticator(`{"tokens":[
+			{"name":"scope-a","token":"scope-a-token","scopes":["job:create"],"tenant_id":"tenant_a","project_id":"project_a","site_id":"site_a"},
+			{"name":"global","token":"global-token","scopes":["job:create"]}
+		]}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		server := NewServer(svc, auth, nil).Routes()
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/simulation-inputs", bytes.NewReader(scopedSimulationInputBytes(t, "si_material_balance_minimal", "pg_benchmark_scope_"+inputSiteID, inputTenantID, inputProjectID, inputSiteID)))
+		req.Header.Set("Authorization", "Bearer global-token")
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("scoped benchmark simulation input register failed: %d %s", rec.Code, rec.Body.String())
+		}
+		return svc, server
+	}
+	schedule := func(server http.Handler, body string, expectedStatus int) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+		req.Header.Set("Authorization", "Bearer scope-a-token")
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+		if rec.Code != expectedStatus {
+			t.Fatalf("benchmark schedule-run got %d want %d: %s", rec.Code, expectedStatus, rec.Body.String())
+		}
+		return rec
+	}
+
+	svc, server := newScopedServer("tenant_a", "project_a", "site_a")
+	rec := schedule(server, `{"request_id":"bench_req_scope_alpha","metadata":{"tenant_id":"tenant_a","project_id":"project_a","site_id":"site_a"}}`, http.StatusAccepted)
+	var snapshot JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Job.JobID != "job_benchmark_bench_req_scope_alpha" ||
+		snapshot.Job.TenantID != "tenant_a" ||
+		snapshot.Job.ProjectID != "project_a" ||
+		snapshot.Job.SiteID != "site_a" {
+		t.Fatalf("scoped benchmark schedule-run should create scoped job, got %#v", snapshot.Job)
+	}
+	schedule(server, `{"request_id":"bench_req_scope_cross_job","metadata":{"tenant_id":"tenant_a","project_id":"project_a","site_id":"site_b"}}`, http.StatusForbidden)
+	if _, err := svc.GetJob(ctx, "job_benchmark_bench_req_scope_cross_job"); err == nil {
+		t.Fatalf("cross-scope benchmark schedule-run job metadata must not write a job")
+	}
+
+	svcInput, serverInput := newScopedServer("tenant_b", "project_b", "site_b")
+	schedule(serverInput, `{"request_id":"bench_req_scope_cross_input","metadata":{"tenant_id":"tenant_a","project_id":"project_a","site_id":"site_a"}}`, http.StatusForbidden)
+	if _, err := svcInput.GetJob(ctx, "job_benchmark_bench_req_scope_cross_input"); err == nil {
+		t.Fatalf("cross-scope benchmark schedule-run input_ref must not write a job")
 	}
 }
 

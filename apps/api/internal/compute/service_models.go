@@ -10,6 +10,10 @@ func (svc *Service) ScheduleBenchmarkCaseRun(ctx context.Context, modelKey, mode
 	return svc.modelGovernance.ScheduleBenchmarkCaseRun(ctx, modelKey, modelVersion, benchmarkCaseID, request, defaultSourceSystem, defaultRequestedBy)
 }
 
+func (svc *Service) ScheduleBenchmarkCaseRunForScope(ctx context.Context, modelKey, modelVersion, benchmarkCaseID string, request BenchmarkCaseRunRequest, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (JobSnapshot, int, error) {
+	return svc.modelGovernance.ScheduleBenchmarkCaseRunForScope(ctx, modelKey, modelVersion, benchmarkCaseID, request, defaultSourceSystem, defaultRequestedBy, filter)
+}
+
 func (svc *Service) RegisterModelCatalog(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ModelCatalogRecord, int, error) {
 	return svc.modelGovernance.RegisterModelCatalog(ctx, bytes, defaultSourceSystem, defaultRequestedBy)
 }

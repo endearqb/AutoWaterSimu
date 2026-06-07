@@ -18,7 +18,8 @@ func handleBenchmarkCaseScheduleRun(server *Server, w http.ResponseWriter, r *ht
 		WriteError(w, err)
 		return
 	}
-	response, status, err := server.service.ScheduleBenchmarkCaseRun(withAuditPrincipal(r.Context(), *principal, r), modelKey, modelVersion, benchmarkCaseID, request, "compute-api", principal.Name)
+	filter := filterForPrincipalDataScope(ListFilter{}, *principal)
+	response, status, err := server.service.ScheduleBenchmarkCaseRunForScope(withAuditPrincipal(r.Context(), *principal, r), modelKey, modelVersion, benchmarkCaseID, request, "compute-api", principal.Name, filter)
 	if err != nil {
 		WriteError(w, err)
 		return

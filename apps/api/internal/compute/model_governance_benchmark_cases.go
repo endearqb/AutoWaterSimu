@@ -10,6 +10,10 @@ import (
 )
 
 func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context, modelKey, modelVersion, benchmarkCaseID string, request BenchmarkCaseRunRequest, defaultSourceSystem, defaultRequestedBy string) (JobSnapshot, int, error) {
+	return svc.ScheduleBenchmarkCaseRunForScope(ctx, modelKey, modelVersion, benchmarkCaseID, request, defaultSourceSystem, defaultRequestedBy, ListFilter{})
+}
+
+func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRunForScope(ctx context.Context, modelKey, modelVersion, benchmarkCaseID string, request BenchmarkCaseRunRequest, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (JobSnapshot, int, error) {
 	modelKey = required(modelKey, "model_key")
 	modelVersion = required(modelVersion, "model_version")
 	benchmarkCaseID = required(benchmarkCaseID, "benchmark_case_id")
@@ -59,7 +63,7 @@ func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context,
 	if svc.resolveSimulationInput == nil {
 		return JobSnapshot{}, 0, NewAppError(500, CodeInternal, "simulation input resolver is not configured", true, nil)
 	}
-	simulationInput, err := svc.resolveSimulationInput(ctx, benchmarkCase.InputRef, sourceSystem, requestedBy, benchmarkCase.JobType)
+	simulationInput, err := svc.resolveSimulationInput(ctx, benchmarkCase.InputRef, sourceSystem, requestedBy, benchmarkCase.JobType, filter)
 	if err != nil {
 		return JobSnapshot{}, 0, err
 	}
@@ -96,5 +100,5 @@ func (svc *ModelGovernanceService) ScheduleBenchmarkCaseRun(ctx context.Context,
 	if svc.createJob == nil {
 		return JobSnapshot{}, 0, NewAppError(500, CodeInternal, "compute job creator is not configured", true, nil)
 	}
-	return svc.createJob(ctx, jobBytes, jobDocument.IdempotencyKey)
+	return svc.createJob(ctx, jobBytes, jobDocument.IdempotencyKey, filter)
 }

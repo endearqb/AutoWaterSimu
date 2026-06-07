@@ -92,7 +92,8 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 			WriteError(w, err)
 			return
 		}
-		snapshot, status, err := server.service.PromoteDraftConfirmationToSimulationCheck(withAuditPrincipal(r.Context(), *principal, r), confirmationID)
+		filter := filterForPrincipalDataScope(ListFilter{}, *principal)
+		snapshot, status, err := server.service.PromoteDraftConfirmationToSimulationCheckForScope(withAuditPrincipal(r.Context(), *principal, r), confirmationID, filter)
 		if err != nil {
 			WriteError(w, err)
 			return

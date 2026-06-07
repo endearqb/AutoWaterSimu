@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-type SimulationInputResolver func(context.Context, map[string]any, string, string, string) (map[string]any, error)
-type ComputeJobCreator func(context.Context, []byte, string) (JobSnapshot, int, error)
+type SimulationInputResolver func(context.Context, map[string]any, string, string, string, ListFilter) (map[string]any, error)
+type ComputeJobCreator func(context.Context, []byte, string, ListFilter) (JobSnapshot, int, error)
 
 type ModelGovernanceService struct {
 	catalogs                 ModelCatalogStore

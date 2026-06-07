@@ -9,10 +9,10 @@ type DraftWorkflowService struct {
 	confirmations         DraftConfirmationStore
 	validator             *ContractValidator
 	now                   func() time.Time
-	createSimulationCheck func(context.Context, []byte) (JobSnapshot, int, error)
+	createSimulationCheck func(context.Context, []byte, ListFilter) (JobSnapshot, int, error)
 }
 
-func NewDraftWorkflowService(confirmations DraftConfirmationStore, validator *ContractValidator, now func() time.Time, createSimulationCheck func(context.Context, []byte) (JobSnapshot, int, error)) *DraftWorkflowService {
+func NewDraftWorkflowService(confirmations DraftConfirmationStore, validator *ContractValidator, now func() time.Time, createSimulationCheck func(context.Context, []byte, ListFilter) (JobSnapshot, int, error)) *DraftWorkflowService {
 	if now == nil {
 		now = func() time.Time { return time.Now().UTC() }
 	}

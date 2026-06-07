@@ -8,6 +8,10 @@ import (
 )
 
 func (svc *DraftWorkflowService) PromoteDraftConfirmationToSimulationCheck(ctx context.Context, confirmationID string) (JobSnapshot, int, error) {
+	return svc.PromoteDraftConfirmationToSimulationCheckForScope(ctx, confirmationID, ListFilter{})
+}
+
+func (svc *DraftWorkflowService) PromoteDraftConfirmationToSimulationCheckForScope(ctx context.Context, confirmationID string, filter ListFilter) (JobSnapshot, int, error) {
 	record, err := svc.confirmations.FindDraftConfirmation(ctx, required(confirmationID, "confirmation_id"))
 	if err != nil {
 		return JobSnapshot{}, 0, err
@@ -39,5 +43,5 @@ func (svc *DraftWorkflowService) PromoteDraftConfirmationToSimulationCheck(ctx c
 	if svc.createSimulationCheck == nil {
 		return JobSnapshot{}, 0, NewAppError(500, CodeInternal, "simulation check promoter is not configured", true, nil)
 	}
-	return svc.createSimulationCheck(ctx, requestBytes)
+	return svc.createSimulationCheck(ctx, requestBytes, filter)
 }
