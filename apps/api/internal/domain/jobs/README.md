@@ -8,6 +8,7 @@
 
 - compute job status 常量。
 - 终态 status 判断。
+- job create queued record projection 和 create/queue event plan。
 - worker result 可提交 status 判断。
 - worker result completion 的 status / error_code / error_message 提取规则。
 - worker-reported failure fallback `compute_result.v1` 文档构造规则。
@@ -26,14 +27,16 @@
 | 文件 | 作用 |
 |---|---|
 | `jobs.go` | Job status constants, failed-worker fallback result construction, worker result completion extraction, worker claim matching, and invariant helpers |
+| `create_lifecycle.go` | DTO-neutral job create queued record projection and create/queue event plan |
 | `state_lifecycle.go` | Job cancel / timeout state lifecycle service, mutation plans, event payloads, and domain validation error |
 | `jobs_test.go` | Direct jobs domain tests |
+| `create_lifecycle_test.go` | Direct job create projection tests |
 | `state_lifecycle_test.go` | Direct jobs state lifecycle tests |
 
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 job domain 不变量、failed-worker fallback result construction、worker result completion 纯解释规则，以及 DTO-neutral cancel/timeout state lifecycle mutation plan；涉及队列选择、具体状态写入、存储、audit、artifact、result summary 持久化的逻辑继续由 compute compatibility package 承接，直到对应边界可安全迁移。
+2. 只放稳定 job domain 不变量、job create queued record projection / event plan、failed-worker fallback result construction、worker result completion 纯解释规则，以及 DTO-neutral cancel/timeout state lifecycle mutation plan；涉及队列选择、具体状态写入、存储、audit envelope、artifact、result summary 持久化的逻辑继续由 compute compatibility package 承接，直到对应边界可安全迁移。
 3. 新增 status 时必须同步检查 worker、store、HTTP response 和 contract fixtures。
 
 ## 4. 对外接口
@@ -53,6 +56,14 @@
 - `IsWorkerResultStatus`
 - `WorkerResultCompletion`
 - `WorkerResultCompletionFromResult`
+- `CreateContext`
+- `CreateInput`
+- `QueuedJob`
+- `CreateEventPlan`
+- `NewQueuedJob`
+- `CreateEventPlans`
+- `EventJobCreated`
+- `EventJobQueued`
 - `ClaimCandidate`
 - `WorkerCapabilities`
 - `StateMutation`

@@ -1,3 +1,28 @@
+# 2026-06-12 AutoWaterSimu Next jobs create projection split TODO
+
+- [x] Re-read README First context for Compute API, domain/jobs, architecture current-state, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: recent guidance says avoid more wrapper/evidence loops and prefer real package movement or explicit security/object data-scope slices.
+- [x] Move DTO-neutral queued job create record projection and create/queue event plans into `apps/api/internal/domain/jobs`.
+- [x] Keep compute responsible for schema validation, payload hash, idempotency, tenant/project/site data-scope, audit envelope assembly, store writes, snapshots, HTTP behavior, and concrete `JobRecord` / `EventRecord` mapping.
+- [x] Add direct domain tests for queued-job projection and create event plans.
+- [x] Update Compute API, domain/jobs, architecture, and Certainty/Elegance package movement context.
+- [x] Run domain/compute focused tests, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this jobs create projection split stage.
+
+## Plan
+
+- Treat this as a narrow jobs domain package movement slice, not full jobs lifecycle migration, public API redesign, schema change, store migration, OpenAPI/generated client update, all-mutation audit completion, full object-level data-scope, OIDC/RBAC, hosted evidence, release round trip, or complete golden scenarios.
+- Preserve create-job HTTP request/response shape, idempotency semantics, tenant/project/site data-scope, selected audit envelope shape, store interfaces, migrations, OpenAPI, and generated clients.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added `apps/api/internal/domain/jobs/create_lifecycle.go` and direct tests for DTO-neutral queued job create projection plus create/queue event plans.
+- `job_lifecycle_create.go` now calls the domain projection/event-plan helper and maps the result back into compute `JobRecord` / audit `EventRecord`, preserving schema validation, payload hash, idempotency, data-scope, audit envelope assembly, store writes, snapshots, HTTP behavior, and public response shape in compute.
+- Updated API/domain/jobs/compute/architecture/Certainty-Elegance context to distinguish this package movement slice from full jobs lifecycle migration.
+- Validation passed: focused domain/compute create tests, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-12 AutoWaterSimu Next service test contract/simulation split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, current service test split history, and the latest user direction to split `service_test.go` first.

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+
+	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 )
 
 func (svc *JobLifecycleService) CreateJob(ctx context.Context, bytes []byte, headerIdempotencyKey string) (JobSnapshot, int, error) {
@@ -41,50 +43,72 @@ func (svc *JobLifecycleService) CreateJobForScope(ctx context.Context, bytes []b
 		return snapshot, 200, err
 	}
 	now := svc.now()
-	record := JobRecord{
+	queuedJob := domainjobs.NewQueuedJob(domainjobs.CreateInput{
 		JobID:          job.JobID,
 		SchemaVersion:  job.SchemaVersion,
 		JobType:        job.JobType,
 		Queue:          job.Queue,
-		Status:         StatusQueued,
 		RequestID:      job.RequestID,
 		IdempotencyKey: job.IdempotencyKey,
-		SourceSystem:   job.Context.SourceSystem,
-		RequestedBy:    job.Context.RequestedBy,
-		TraceID:        job.Context.TraceID,
-		TenantID:       job.Context.TenantID,
-		ProjectID:      job.Context.ProjectID,
-		SiteID:         job.Context.SiteID,
-		CreatedBy:      job.Context.RequestedBy,
-		PayloadHash:    payloadHash,
-		InputJSON:      append([]byte(nil), bytes...),
-		Attempt:        0,
-		CreatedAt:      now,
-		QueuedAt:       &now,
-	}
-	events := []EventRecord{
-		{
-			JobID:     job.JobID,
-			EventType: "job.created",
-			EventJSON: eventJSONWithAudit(
-				map[string]any{"status": StatusCreated},
-				mutationAuditEnvelope(ctx, now, job.Context.RequestedBy, "service:job_lifecycle.create", "ComputeJob", job.JobID, "job.create", nil, map[string]any{"status": StatusCreated}, "compute job accepted", job.Context.TraceID, ""),
-			),
-			CreatedAt: now,
+		Context: domainjobs.CreateContext{
+			SourceSystem: job.Context.SourceSystem,
+			RequestedBy:  job.Context.RequestedBy,
+			TraceID:      job.Context.TraceID,
+			TenantID:     job.Context.TenantID,
+			ProjectID:    job.Context.ProjectID,
+			SiteID:       job.Context.SiteID,
 		},
-		{
-			JobID:     job.JobID,
-			EventType: "job.queued",
-			EventJSON: eventJSONWithAudit(
-				map[string]any{"status": StatusQueued},
-				mutationAuditEnvelope(ctx, now, job.Context.RequestedBy, "service:job_lifecycle.create", "ComputeJob", job.JobID, "job.queue", nil, map[string]any{"status": StatusQueued}, "compute job queued", job.Context.TraceID, ""),
-			),
-			CreatedAt: now,
-		},
-	}
+		PayloadHash: payloadHash,
+		InputJSON:   bytes,
+		CreatedAt:   now,
+	})
+	record := jobRecordFromDomainQueuedJob(queuedJob)
+	events := jobCreateEventsFromDomainPlans(ctx, queuedJob, domainjobs.CreateEventPlans())
 	if err := svc.jobs.InsertJob(ctx, record, events); err != nil {
 		return JobSnapshot{}, 0, err
 	}
 	snapshot, err := svc.snapshot(ctx, job.JobID)
 	return snapshot, 202, err
+}
+
+func jobRecordFromDomainQueuedJob(job domainjobs.QueuedJob) JobRecord {
+	queuedAt := job.QueuedAt
+	return JobRecord{
+		JobID:          job.JobID,
+		SchemaVersion:  job.SchemaVersion,
+		JobType:        job.JobType,
+		Queue:          job.Queue,
+		Status:         job.Status,
+		RequestID:      job.RequestID,
+		IdempotencyKey: job.IdempotencyKey,
+		SourceSystem:   job.SourceSystem,
+		RequestedBy:    job.RequestedBy,
+		TraceID:        job.TraceID,
+		TenantID:       job.TenantID,
+		ProjectID:      job.ProjectID,
+		SiteID:         job.SiteID,
+		CreatedBy:      job.CreatedBy,
+		PayloadHash:    job.PayloadHash,
+		InputJSON:      append([]byte(nil), job.InputJSON...),
+		Attempt:        job.Attempt,
+		CreatedAt:      job.CreatedAt,
+		QueuedAt:       &queuedAt,
+	}
+}
+
+func jobCreateEventsFromDomainPlans(ctx context.Context, job domainjobs.QueuedJob, plans []domainjobs.CreateEventPlan) []EventRecord {
+	events := make([]EventRecord, 0, len(plans))
+	for _, plan := range plans {
+		after := map[string]any{"status": plan.Status}
+		events = append(events, EventRecord{
+			JobID:     job.JobID,
+			EventType: plan.EventType,
+			EventJSON: eventJSONWithAudit(
+				after,
+				mutationAuditEnvelope(ctx, job.CreatedAt, job.RequestedBy, "service:job_lifecycle.create", "ComputeJob", job.JobID, plan.Action, nil, after, plan.Reason, job.TraceID, ""),
+			),
+			CreatedAt: job.CreatedAt,
+		})
+	}
+	return events
 }
