@@ -1,3 +1,33 @@
+# 2026-06-12 AutoWaterSimu Next service test contract/simulation split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, current service test split history, and the latest user direction to split `service_test.go` first.
+- [x] Confirm `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Treat the user request as continuing service test maintainability work across the remaining oversized `service_*_test.go` files.
+- [x] Measure remaining service test files and identify `service_contracts_test.go` and `service_simulation_test.go` as the next clean split candidates.
+- [x] Move complete draft confirmation scope tests to `service_contracts_scope_test.go`.
+- [x] Move draft confirmation mutation audit coverage to `service_draft_confirmation_audit_test.go`.
+- [x] Move simulation-check mutation data-scope coverage to `service_simulation_scope_test.go`.
+- [x] Preserve existing test names and assertions.
+- [x] Run focused compute package tests, full API tests, boundary audit, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this service test split stage.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Move only complete top-level `Test...` function blocks across same-package `_test.go` files.
+- Do not modify production code, schemas, HTTP behavior, OpenAPI, generated clients, migrations, security smoke entries, test names, or assertions.
+- Leave the existing untracked user document under `docs/rebuild/` untouched.
+- Do not stage the unrelated in-progress jobs domain projection files from the previous interrupted stage.
+
+## Review
+
+- Added `service_contracts_scope_test.go` for draft confirmation read/mutation scope coverage.
+- Added `service_draft_confirmation_audit_test.go` for draft confirmation compact mutation audit coverage.
+- Added `service_simulation_scope_test.go` for simulation-check mutation data-scope coverage.
+- Reduced `service_contracts_test.go` to contract validation endpoint coverage and `service_simulation_test.go` to simulation-check endpoint orchestration coverage.
+- Validation passed: focused moved-function tests, full `go test ./...` in `apps/api`, Compute API boundary audit, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-12 AutoWaterSimu Next confirm-draft data-scope TODO
 
 - [x] Re-read README First context for Compute API, security smoke, architecture current-state, and Certainty/Elegance plan.
