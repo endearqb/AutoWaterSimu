@@ -1,3 +1,26 @@
+# 2026-06-12 AutoWaterSimu Next result explanation data-scope TODO
+
+- [x] Re-read README First context for Compute API, security smoke, architecture current-state, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: result explanation submit/review/publish already route through job data-scope authorization, but security smoke lacked a focused mutation data-scope proof.
+- [x] Add HTTP regression coverage proving cross-scope result explanation submit does not persist, cross-scope review/publish do not mutate state or audit, and same-scope submit/review/publish still succeeds.
+- [x] Include the regression in security smoke and update long-term context.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this result explanation data-scope stage.
+
+## Plan
+
+- Treat this as a narrow result explanation mutation data-scope evidence slice, not a production-code refactor, full object-level data-scope, complete all-mutation audit, OIDC/RBAC, hosted evidence, release round trip, or complete golden scenarios.
+- Preserve result explanation HTTP request/response shape, schema validation, evidence ref resolution, review/publish semantics, audit envelope shape, migrations, OpenAPI, and generated clients.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added `TestHTTPResultExplanationMutationTenantProjectSiteScope` to prove scoped tokens cannot submit, review, or publish result explanations across stored job tenant/project/site scope.
+- Extended `scripts/ci/security-smoke.ps1` and its evidence summary so the focused regression runs in the security lane.
+- Updated Compute API, security smoke, architecture, Certainty/Elegance plan, task, and README First change records to distinguish this covered slice from remaining object/data-scope and all-mutation audit work.
+- Validation passed: focused result explanation tests, security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, docs/rebuild P0/P1/P2/schema scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-12 AutoWaterSimu Next service test second split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute` and current service test split history.
