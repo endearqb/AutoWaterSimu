@@ -1,3 +1,27 @@
+# 2026-06-12 AutoWaterSimu Next confirm-draft data-scope TODO
+
+- [x] Re-read README First context for Compute API, security smoke, architecture current-state, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: `POST /api/v1/contracts/confirm-draft` persisted draft confirmation records with audit/read-scope coverage, but lacked mutation data-scope rejection before persistence.
+- [x] Add scoped confirm-draft service path that rejects cross-scope payload metadata before `UpsertDraftConfirmation` and before mutation audit writes.
+- [x] Add HTTP regression coverage proving cross-scope confirm-draft does not persist a confirmation or audit event, while same-scope persistence still succeeds.
+- [x] Include the regression in security smoke and update long-term context.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this confirm-draft data-scope stage.
+
+## Plan
+
+- Treat this as a narrow confirm-draft record mutation data-scope slice, not a public API redesign, schema change, full object-level data-scope, complete all-mutation audit, OIDC/RBAC, hosted evidence, release round trip, or complete golden scenarios.
+- Preserve confirm-draft request/response shape, schema validation, idempotency, compact audit envelope, migrations, OpenAPI, and generated clients.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added scoped confirm-draft service/HTTP path so scoped tokens reject cross-scope draft confirmation payload metadata before persistence or compact mutation audit writes.
+- Added `TestHTTPDraftConfirmationMutationTenantProjectSiteScope` and included it in `scripts/ci/security-smoke.ps1`.
+- Updated Compute API, security smoke, architecture, Certainty/Elegance plan, task, and README First change records to distinguish this covered slice from remaining full object data-scope and all-mutation audit work.
+- Validation passed: focused confirm-draft tests, security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, docs/rebuild P0/P1/P2/schema scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-12 AutoWaterSimu Next result explanation data-scope TODO
 
 - [x] Re-read README First context for Compute API, security smoke, architecture current-state, and Certainty/Elegance plan.

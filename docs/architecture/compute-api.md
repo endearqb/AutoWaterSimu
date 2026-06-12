@@ -29,7 +29,7 @@ The wider `Service` still owns package-level construction and public compatibili
 
 `apps/api/internal/domain/agent` owns stable `draft_confirmation.v1` envelope cross-field validation, stable draft confirmation record data projection, stable `constraint_application_plan.v1` advisory-only plan assembly, including no-job/no-target-mutation/external-production-approval flags and warnings, and stable `agent_scenario_draft.v1.proposed_request` extraction for explicit simulation-check promotion. `apps/api/internal/compute` uses it from `DraftWorkflowService.ConfirmDraftDocument`, `ConstraintApplicationPlan`, and `PromoteDraftConfirmationToSimulationCheck` while schema file lookup, JSON Schema validation, compute record mapping, confirmation lookup, approved/schema gating, stored payload decoding, JSON marshaling, simulation-check job creation, HTTP behavior, and persistence remain in the compatibility package.
 
-Current draft confirmation delta: `domain/agent` also projects optional `site_id` from confirmation metadata, while compute keeps HTTP data-scope checks and selected audit persistence. `POST /contracts/confirm-draft` writes compact `draft_confirmation.recorded` events in `mutation_audit_events` on first insert only; confirmation get, constraint plan, and promotion handlers now constrain scoped tokens to stored tenant/project/site metadata.
+Current draft confirmation delta: `domain/agent` also projects optional `site_id` from confirmation metadata, while compute keeps HTTP data-scope checks and selected audit persistence. `POST /contracts/confirm-draft` constrains scoped tokens to the confirmation payload tenant/project/site before persistence and writes compact `draft_confirmation.recorded` events in `mutation_audit_events` on first insert only; confirmation get, constraint plan, and promotion handlers constrain scoped tokens to stored tenant/project/site metadata.
 
 `apps/api/internal/domain/artifacts` owns stable artifact retention policy constants, metadata parsing for `retention_policy` / `retain_until`, retention candidate policy checks, and retention sweep action planning. `apps/api/internal/compute` uses it from artifact upload, MemoryStore retention candidate selection, in-memory metrics candidate counting, and retention sweep action selection while artifact object storage, archive execution, metadata persistence, audit envelopes, and HTTP behavior remain in the compatibility package.
 
@@ -73,7 +73,7 @@ Selected files from the latest audit:
 | `service_simulation.go` | 71 | simulation-check and simulation registry public delegates |
 | `service.go` | 67 | `Service` struct and constructor wiring |
 | `service_models.go` | 50 | model catalog, benchmark run, model run, and benchmark queue public delegates |
-| `service_contracts.go` | 39 | contract validation, draft workflow, and result explanation public delegates |
+| `service_contracts.go` | 43 | contract validation, draft workflow, and result explanation public delegates |
 | `service_jobs.go` | 35 | job lifecycle public delegates |
 | `service_artifacts.go` | 22 | artifact lifecycle public delegates |
 | `service_evidence.go` | 19 | evidence/readiness public delegates |
@@ -100,7 +100,7 @@ Selected files from the latest audit:
 | `simulation_inputs_registry.go` | 72 | simulation input registration/read and compute record mapping |
 | `simulation_inputs_audit.go` | 89 | compact process_graph and simulation_input registration mutation audit construction |
 | `simulation_inputs.go` | 33 | `SimulationInputService` struct and constructor wiring |
-| `draft_workflows_confirmations.go` | 102 | draft confirmation validation, persistence, readback, and compute record mapping |
+| `draft_workflows_confirmations.go` | 109 | draft confirmation validation, scope check, persistence, readback, and compute record mapping |
 | `draft_workflows_audit.go` | 82 | compact draft confirmation mutation audit construction |
 | `draft_workflows_constraints.go` | 43 | approved constraint draft advisory application plan workflow |
 | `draft_workflows_promotion.go` | 43 | approved Agent draft explicit simulation-check promotion workflow |
@@ -137,7 +137,7 @@ Selected files from the latest audit:
 | `http_jobs.go` | 258 | compute job HTTP handlers, job subroutes, list filter, and job data-scope helper |
 | `http_simulation.go` | 148 | simulation input, process graph, and simulation-check HTTP handlers/helpers |
 | `http_workers.go` | 124 | worker register/claim/heartbeat/artifact/completion HTTP handlers/helpers |
-| `http_contracts.go` | 123 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
+| `http_contracts.go` | 129 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
 | `http_artifacts.go` | 86 | artifact download and retention sweep HTTP handlers/helpers |
 | `http.go` | 63 | server entrypoint, route registration, health/ready routes, and panic recovery |
 | `http_metrics.go` | 20 | Prometheus metrics HTTP handler |
@@ -236,7 +236,7 @@ The public `Service.RegisterSimulationInput`, `Service.GetSimulationInput`, `Ser
 - a clock
 - a simulation-check creation callback
 
-The public `Service.ConfirmDraftDocument`, `Service.GetDraftConfirmation`, `Service.ConstraintApplicationPlan`, and `Service.PromoteDraftConfirmationToSimulationCheck` methods remain stable and delegate to this narrower service. Promotion still reuses the existing simulation-check creation path after validating an approved Agent scenario draft.
+The public `Service.ConfirmDraftDocument`, scoped `Service.ConfirmDraftDocumentForScope`, `Service.GetDraftConfirmation`, `Service.ConstraintApplicationPlan`, and `Service.PromoteDraftConfirmationToSimulationCheck` methods delegate to this narrower service. Promotion still reuses the existing simulation-check creation path after validating an approved Agent scenario draft.
 
 `draft_workflows.go` now keeps only the service struct, constructor, store dependency, validator, clock, and simulation-check callback wiring. Same-package workflow methods are grouped into `draft_workflows_confirmations.go`, `draft_workflows_audit.go`, `draft_workflows_constraints.go`, and `draft_workflows_promotion.go`. Auth scopes, contracts, confirmation persistence/idempotency, advisory constraint plan behavior, and explicit promotion behavior are unchanged except for the scope checks and compact audit described above.
 

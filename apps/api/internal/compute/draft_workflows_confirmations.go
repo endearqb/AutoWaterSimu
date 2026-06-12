@@ -8,6 +8,10 @@ import (
 )
 
 func (svc *DraftWorkflowService) ConfirmDraftDocument(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ContractValidationResponse, error) {
+	return svc.ConfirmDraftDocumentForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, ListFilter{})
+}
+
+func (svc *DraftWorkflowService) ConfirmDraftDocumentForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (ContractValidationResponse, error) {
 	response, err := validateContractDocument(bytes, svc.validator)
 	if err != nil || !response.Valid {
 		return response, err
@@ -46,6 +50,9 @@ func (svc *DraftWorkflowService) ConfirmDraftDocument(ctx context.Context, bytes
 	if response.Valid {
 		record, err := svc.draftConfirmationRecord(document, defaultSourceSystem, defaultRequestedBy)
 		if err != nil {
+			return response, err
+		}
+		if err := authorizeListFilterDataScope(filter, "draft confirmation", record.TenantID, record.ProjectID, record.SiteID); err != nil {
 			return response, err
 		}
 		created, err := svc.confirmations.UpsertDraftConfirmation(ctx, record, svc.draftConfirmationRecordedAudit(ctx, record))

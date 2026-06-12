@@ -43,7 +43,13 @@ func (server *Server) confirmDraft(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, ValidationError("read request body failed"))
 		return
 	}
-	response, err := server.service.ConfirmDraftDocument(withAuditPrincipal(r.Context(), *principal, r), bytes, "compute-api", principal.Name)
+	response, err := server.service.ConfirmDraftDocumentForScope(
+		withAuditPrincipal(r.Context(), *principal, r),
+		bytes,
+		"compute-api",
+		principal.Name,
+		filterForPrincipalDataScope(ListFilter{}, *principal),
+	)
 	if err != nil {
 		WriteError(w, err)
 		return

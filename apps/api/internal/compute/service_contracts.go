@@ -10,6 +10,10 @@ func (svc *Service) ConfirmDraftDocument(ctx context.Context, bytes []byte, defa
 	return svc.draftWorkflows.ConfirmDraftDocument(ctx, bytes, defaultSourceSystem, defaultRequestedBy)
 }
 
+func (svc *Service) ConfirmDraftDocumentForScope(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string, filter ListFilter) (ContractValidationResponse, error) {
+	return svc.draftWorkflows.ConfirmDraftDocumentForScope(ctx, bytes, defaultSourceSystem, defaultRequestedBy, filter)
+}
+
 func (svc *Service) GetDraftConfirmation(ctx context.Context, confirmationID string) (DraftConfirmationRecord, error) {
 	return svc.draftWorkflows.GetDraftConfirmation(ctx, confirmationID)
 }
