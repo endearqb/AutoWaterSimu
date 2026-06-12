@@ -1,3 +1,25 @@
+# 2026-06-12 AutoWaterSimu Next service test second split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute` and current service test split history.
+- [x] Confirm `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Treat the user request as continuing the service test maintainability split across the remaining oversized `service_*_test.go` files.
+- [x] Split complete `Test...` function blocks by job audit/scope, artifact retention, worker audit/scope, model catalog scope/promotion, evidence references/result explanations, simulation registry, and benchmark schedule-run scope.
+- [x] Preserve existing test names and assertions.
+- [x] Update compute README test-file navigation.
+- [x] Run focused compute package tests, full API tests, boundary audit, and diff-check.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Do not modify production code, schemas, HTTP behavior, OpenAPI, generated clients, migrations, security smoke entries, or test assertions.
+- Leave the existing untracked user document under `docs/rebuild/` untouched.
+
+## Review
+
+- Added narrower test files for job audit/scope, artifact retention, worker audit/scope, model catalog scope/promotion, evidence references/result explanations, simulation registry, and benchmark schedule-run scope.
+- Reduced the residual mixed-domain `service_jobs_test.go`, `service_artifacts_test.go`, `service_workers_test.go`, `service_model_catalog_test.go`, `service_evidence_test.go`, and `service_simulation_test.go` files to their remaining core subjects.
+- Validation passed: `go test ./internal/compute`, full `go test ./...` in `apps/api`, Compute API boundary audit, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-12 AutoWaterSimu Next artifact retention sweep data-scope TODO
 
 - [x] Re-read README First context for Compute API, Certainty/Elegance plan, current-state summary, and recent task/change history.
