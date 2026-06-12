@@ -1,3 +1,27 @@
+# 2026-06-12 AutoWaterSimu Next model governance service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute` and current `service_test.go` split history.
+- [x] Confirm `service_test.go` was already deleted and split; identify `service_model_governance_test.go` as the remaining oversized split artifact.
+- [x] Mechanically split model governance service tests by model runs, benchmark runs, model catalog, model parameters, and benchmark cases.
+- [x] Preserve existing test names and assertions.
+- [x] Update compute README test-file navigation.
+- [x] Run focused and full API tests plus diff checks.
+- [x] Record README First change log.
+- [ ] Commit and push this test maintainability stage.
+
+## Plan
+
+- Treat this as the second stage of the service test split, not a behavior change.
+- Move only complete `Test...` function blocks across same-package `_test.go` files.
+- Do not change production code, HTTP routes, OpenAPI, migrations, generated clients, security smoke test names, or existing assertions.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Deleted the oversized `service_model_governance_test.go` split artifact.
+- Added `service_model_runs_test.go`, `service_benchmark_runs_test.go`, `service_model_catalog_test.go`, `service_model_parameters_test.go`, and `service_benchmark_cases_test.go`.
+- Validation passed: focused model governance tests, full `go test ./...` in `apps/api`, Compute API boundary audit, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-07 AutoWaterSimu Next worker heartbeat audit TODO
 
 - [x] Re-read README First context for Compute API worker lifecycle, selected mutation audit, security smoke, architecture current-state, Certainty/Elegance plan, and recent `.ai/changes`.
