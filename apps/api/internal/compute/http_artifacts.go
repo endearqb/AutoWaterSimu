@@ -57,8 +57,9 @@ func (server *Server) artifactRetentionSweep(w http.ResponseWriter, r *http.Requ
 		dryRun = *request.DryRun
 	}
 	report, err := server.service.SweepArtifactRetention(withAuditPrincipal(r.Context(), *principal, r), ArtifactRetentionSweepOptions{
-		DryRun: dryRun,
-		Limit:  request.Limit,
+		DryRun:    dryRun,
+		Limit:     request.Limit,
+		DataScope: filterForPrincipalDataScope(ListFilter{}, *principal),
 	})
 	if err != nil {
 		WriteError(w, err)

@@ -59,11 +59,14 @@ func (store *MemoryStore) InsertArtifact(_ context.Context, artifact ArtifactRec
 	return nil
 }
 
-func (store *MemoryStore) ListArtifactRetentionCandidates(_ context.Context, now time.Time, limit int) ([]ArtifactRecord, error) {
+func (store *MemoryStore) ListArtifactRetentionCandidates(_ context.Context, now time.Time, limit int, filter ListFilter) ([]ArtifactRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var artifacts []ArtifactRecord
 	for _, artifact := range store.artifacts {
+		if !store.artifactMatchesDataScopeLocked(artifact, filter) {
+			continue
+		}
 		if !domainartifacts.IsRetentionCandidate(artifact.RetentionPolicy) {
 			continue
 		}
@@ -93,6 +96,17 @@ func (store *MemoryStore) ListArtifactRetentionCandidates(_ context.Context, now
 		artifacts = artifacts[:limit]
 	}
 	return append([]ArtifactRecord(nil), artifacts...), nil
+}
+
+func (store *MemoryStore) artifactMatchesDataScopeLocked(artifact ArtifactRecord, filter ListFilter) bool {
+	if !listFilterHasDataScope(filter) {
+		return true
+	}
+	job, ok := store.jobs[artifact.JobID]
+	if !ok {
+		return false
+	}
+	return recordMatchesListFilterDataScope(filter, job.TenantID, job.ProjectID, job.SiteID)
 }
 
 func (store *MemoryStore) ArtifactReferences(_ context.Context, artifactID string) ([]string, error) {

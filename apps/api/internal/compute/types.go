@@ -136,9 +136,10 @@ type ArtifactArchiveRecord struct {
 }
 
 type ArtifactRetentionSweepOptions struct {
-	DryRun bool
-	Limit  int
-	Now    time.Time
+	DryRun    bool
+	Limit     int
+	Now       time.Time
+	DataScope ListFilter
 }
 
 type ArtifactRetentionSchedulerOptions struct {

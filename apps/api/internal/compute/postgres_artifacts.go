@@ -3,7 +3,9 @@ package compute
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5"
+	"strings"
 	"time"
 )
 
@@ -57,20 +59,35 @@ func (store *PostgresStore) InsertArtifact(ctx context.Context, artifact Artifac
 	return tx.Commit(ctx)
 }
 
-func (store *PostgresStore) ListArtifactRetentionCandidates(ctx context.Context, now time.Time, limit int) ([]ArtifactRecord, error) {
+func (store *PostgresStore) ListArtifactRetentionCandidates(ctx context.Context, now time.Time, limit int, filter ListFilter) ([]ArtifactRecord, error) {
+	args := []any{now}
+	clauses := []string{
+		"artifacts.retention_policy IN ('ttl','archive_candidate')",
+		"artifacts.retain_until IS NOT NULL",
+		"artifacts.retain_until <= $1",
+		`NOT EXISTS (
+			SELECT 1 FROM artifact_archives aa
+			WHERE aa.artifact_id = artifacts.id AND aa.status = 'archived'
+		)`,
+	}
+	addScopeClause := func(column string, value string) {
+		if value == "" {
+			return
+		}
+		args = append(args, value)
+		clauses = append(clauses, fmt.Sprintf("compute_jobs.%s=$%d", column, len(args)))
+	}
+	addScopeClause("tenant_id", filter.TenantID)
+	addScopeClause("project_id", filter.ProjectID)
+	addScopeClause("site_id", filter.SiteID)
+	args = append(args, normalizeRetentionLimit(limit))
 	rows, err := store.pool.Query(
 		ctx,
-		artifactSelectSQL()+` WHERE retention_policy IN ('ttl','archive_candidate')
-			AND retain_until IS NOT NULL
-			AND retain_until <= $1
-			AND NOT EXISTS (
-				SELECT 1 FROM artifact_archives aa
-				WHERE aa.artifact_id = artifacts.id AND aa.status = 'archived'
-			)
-			ORDER BY retain_until, created_at, id
-			LIMIT $2`,
-		now,
-		normalizeRetentionLimit(limit),
+		artifactSelectSQL()+` JOIN compute_jobs ON compute_jobs.id = artifacts.job_id
+			WHERE `+strings.Join(clauses, " AND ")+`
+			ORDER BY artifacts.retain_until, artifacts.created_at, artifacts.id
+			LIMIT $`+fmt.Sprint(len(args)),
+		args...,
 	)
 	if err != nil {
 		return nil, err
@@ -233,7 +250,8 @@ func scanArtifacts(rows pgx.Rows) ([]ArtifactRecord, error) {
 }
 
 func artifactSelectSQL() string {
-	return `SELECT id, job_id, schema_version, artifact_type, storage_provider, object_key, content_type,
-		size_bytes, checksum, COALESCE(retention_policy,'retain_forever'), retain_until,
-		COALESCE(metadata_json,'null'::jsonb), created_at FROM artifacts`
+	return `SELECT artifacts.id, artifacts.job_id, artifacts.schema_version, artifacts.artifact_type,
+		artifacts.storage_provider, artifacts.object_key, artifacts.content_type,
+		artifacts.size_bytes, artifacts.checksum, COALESCE(artifacts.retention_policy,'retain_forever'),
+		artifacts.retain_until, COALESCE(artifacts.metadata_json,'null'::jsonb), artifacts.created_at FROM artifacts`
 }

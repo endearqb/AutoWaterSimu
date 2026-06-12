@@ -1,3 +1,30 @@
+# 2026-06-12 AutoWaterSimu Next artifact retention sweep data-scope TODO
+
+- [x] Re-read README First context for Compute API, Certainty/Elegance plan, current-state summary, and recent task/change history.
+- [x] Confirm next aligned gap: `POST /api/v1/admin/artifacts/retention-sweep` had admin scope and audit coverage but did not filter candidates by scoped token tenant/project/site.
+- [x] Add internal retention sweep `DataScope` and pass HTTP principal tenant/project/site into candidate selection.
+- [x] Make MemoryStore and PostgresStore retention candidate queries filter by artifact owner job scope before report/delete/archive actions.
+- [x] Add HTTP regression coverage proving scoped admin sweep does not report/delete cross-scope artifacts.
+- [x] Include the new regression in security smoke and update long-term context.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this artifact retention data-scope stage.
+
+## Plan
+
+- Treat this as a narrow artifact retention mutation data-scope slice, not full object-level data-scope, complete all-mutation audit, OIDC/RBAC, hosted evidence, release round trip, or complete golden scenarios.
+- Preserve retention sweep HTTP request/response shape, default dry-run behavior, scheduler behavior, archive backend behavior, selected audit envelope shape, migrations, OpenAPI, and generated clients.
+- Keep scheduler/service calls global by default; only HTTP principal-scoped sweeps filter candidates by token tenant/project/site.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- `ArtifactRetentionSweepOptions` now carries an internal `DataScope`; HTTP retention sweep passes the authenticated static-token tenant/project/site into candidate selection.
+- MemoryStore and PostgresStore candidate queries now filter by the artifact owner job's tenant/project/site before report/delete/archive handling.
+- Added `TestHTTPArtifactRetentionSweepTenantProjectSiteScope` to prove scoped admin sweep deletes only matching candidates, does not leak cross-scope candidate IDs in the report, and leaves cross-scope artifacts/events untouched.
+- Added the regression to `scripts/ci/security-smoke.ps1` and updated API/security/architecture/Certainty-Elegance context.
+- Validation passed: focused artifact retention tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-12 AutoWaterSimu Next model governance service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute` and current `service_test.go` split history.

@@ -45,7 +45,7 @@ type ArtifactMetadataStore interface {
 	Artifacts(ctx context.Context, jobID string) ([]ArtifactRecord, error)
 	FindArtifact(ctx context.Context, artifactID string) (*ArtifactRecord, error)
 	InsertArtifact(ctx context.Context, artifact ArtifactRecord, event EventRecord) error
-	ListArtifactRetentionCandidates(ctx context.Context, now time.Time, limit int) ([]ArtifactRecord, error)
+	ListArtifactRetentionCandidates(ctx context.Context, now time.Time, limit int, filter ListFilter) ([]ArtifactRecord, error)
 	ArtifactReferences(ctx context.Context, artifactID string) ([]string, error)
 	DeleteArtifact(ctx context.Context, artifactID string, event EventRecord) error
 }

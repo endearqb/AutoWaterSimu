@@ -12,7 +12,7 @@ func (svc *ArtifactLifecycleService) SweepArtifactRetention(ctx context.Context,
 		now = svc.now()
 	}
 	limit := normalizeRetentionLimit(options.Limit)
-	candidates, err := svc.metadata.ListArtifactRetentionCandidates(ctx, now, limit)
+	candidates, err := svc.metadata.ListArtifactRetentionCandidates(ctx, now, limit, options.DataScope)
 	if err != nil {
 		return ArtifactRetentionSweepReport{}, err
 	}
