@@ -1,3 +1,31 @@
+# 2026-06-13 AutoWaterSimu Next model catalog service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, model governance service tests, and current architecture evidence.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Measure remaining `service*_test.go` files and identify `service_model_catalog_test.go` as the largest residual service test aggregation point.
+- [x] Split built-in/read endpoint, catalog registration/idempotency/readback, and default parameter set status/snapshot/audit assertions into focused tests.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, test assertions, and fixture payloads.
+- [x] Keep `TestModelCatalogEndpoint` as the focused built-in/read smoke because `scripts/ci/security-smoke.ps1` references that test name.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused model catalog tests and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Extract shared model catalog HTTP/fixture helpers to avoid repeated request setup.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, or CI scripts.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_model_catalog_test.go` from a 278-line mixed test to built-in catalog service/read endpoint coverage while preserving the `TestModelCatalogEndpoint` name used by security smoke.
+- Added `service_model_catalog_registration_test.go`, `service_model_catalog_status_test.go`, and `service_model_catalog_http_helpers_test.go`.
+- Preserved assertions for five built-in fallback models, persisted catalog registration/idempotency/readback, model-by-key behavior, default parameter set status transition, snapshot pagination, compact model governance mutation audit records, invalid transition conflict, and worker-token denial.
+- Updated `docs/architecture/compute-api.md` because it hard-coded the stale `service_model_catalog_test.go` line count.
+- Validation passed: focused model catalog tests and full `go test ./...` in `apps/api`.
+- Remaining largest service test files are now `service_artifact_retention_test.go`, `service_model_parameters_test.go`, `service_benchmark_runs_test.go`, and `service_evidence_references_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next simulation registry service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, service test organization, and current architecture evidence.
