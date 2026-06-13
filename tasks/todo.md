@@ -1,3 +1,34 @@
+# 2026-06-13 AutoWaterSimu Next job scope service test split TODO
+
+- [x] Read the attached elegance closeout priority note and confirm P0 now prioritizes finishing Compute service test split before broader package movement.
+- [x] Re-read README First context for `apps/api/internal/compute`, service test organization, current architecture evidence, and security-smoke test-name usage.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Split `service_job_scope_test.go` by read-scope, cancel mutation-scope, and create mutation-scope responsibilities.
+- [x] Preserve `TestHTTPJobCancelMutationTenantProjectSiteScope`, `TestHTTPJobReadTenantProjectSiteScope`, and `TestHTTPJobCreateMutationTenantProjectSiteScope` names so security-smoke keeps selecting all three tests.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, and assertion semantics.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused job scope tests, security-smoke equivalent data-scope regex, and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Leave `TestHTTPJobReadTenantProjectSiteScope` in `service_job_scope_test.go`.
+- Move `TestHTTPJobCancelMutationTenantProjectSiteScope` into `service_job_cancel_scope_test.go`.
+- Move `TestHTTPJobCreateMutationTenantProjectSiteScope` into `service_job_create_scope_test.go`.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, or CI scripts.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_job_scope_test.go` from 217 lines to 84 lines focused on job list/get tenant/project/site read-scope behavior.
+- Added `service_job_cancel_scope_test.go` with 95 lines focused on scoped job cancel mutation, cross-scope no-write denial, same/global-scope success, and audit envelope context.
+- Added `service_job_create_scope_test.go` with 55 lines focused on scoped job create mutation and cross-scope denied no-write behavior.
+- Preserved the original test names and assertions; all three remain covered by the existing security smoke data-scope regex without changing `scripts/ci/security-smoke.ps1`.
+- Updated `docs/architecture/compute-api.md` because it did not yet list the job scope test split evidence rows.
+- Validation passed: focused job scope tests, security-smoke equivalent data-scope Go regex, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check.
+- Remaining large service test files include `service_artifact_retention_http_test.go`, `service_model_catalog_scope_test.go`, `service_worker_audit_test.go`, and `service_result_explanation_audit_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next NewSystem evidence reference service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, Certainty/Elegance PRD/Plan, service test organization, current architecture evidence, and security-smoke test-name usage.
