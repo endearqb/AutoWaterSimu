@@ -14,15 +14,16 @@
 - 从 result summary 中提取 `risk_findings`、risk evidence refs 和 production-readiness risk summary。
 - 从 `result_explanation.v1` 中提取顶层和 statement-level evidence refs。
 - 将 `result_explanation.v1` 投影为中立的 result explanation record data，包括 payload hash、metadata defaults、job tenant/project fallback 和 submitted/created/updated 时间戳。
+- 将 result explanation submit/review/publish 审计所需字段投影为 compact audit state。
 - 评估 production-readiness 的稳定策略：job succeeded、evidence package available、governance production_allowed 和 risk severity checks。
 
 本目录不负责：
 
 - evidence package 生成编排。
 - artifact / model run / process graph store lookup。
-- result explanation 持久化、review/publish 状态流或 HTTP response mapping。
+- result explanation 持久化、review/publish 状态流、selected audit envelope/call site/persistence 或 HTTP response mapping。
 - HTTP route、OpenAPI、PostgreSQL implementation。
-- 生产审批、授权策略或 mutation audit。
+- 生产审批或授权策略。
 
 ## 2. 核心文件
 
@@ -34,7 +35,7 @@
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 JSON 解析、引用语法、stored summary risk projection、result explanation evidence ref 提取 / record data projection、risk summary 和 production-readiness policy 规则；store-backed evidence governance workflow、result explanation persistence/review/publish 和 job completion persistence 暂留 compute compatibility package。
+2. 只放稳定 JSON 解析、引用语法、stored summary risk projection、result explanation evidence ref 提取 / record data projection / compact audit state projection、risk summary 和 production-readiness policy 规则；store-backed evidence governance workflow、result explanation persistence/review/publish、selected audit envelope/call site/persistence 和 job completion persistence 暂留 compute compatibility package。
 3. 新增 evidence ref 类型或 risk severity 规则时需同步检查 evidence package、production-readiness、result explanation、model governance 和相关 contracts fixtures。
 
 ## 4. 对外接口
@@ -53,6 +54,8 @@
 - `RiskFindingEvidenceRefs`
 - `ResultExplanationEvidenceRefs`
 - `ResultExplanationRecordDataFromDocument`
+- `ResultExplanationAuditStateInput`
+- `ResultExplanationAuditState`
 - `SummarizeRiskFindings`
 - `EvaluateProductionReadiness`
 

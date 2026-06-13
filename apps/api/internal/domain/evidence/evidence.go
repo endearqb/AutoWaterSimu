@@ -95,6 +95,22 @@ type ResultExplanationRecordData struct {
 	UpdatedAt                time.Time
 }
 
+type ResultExplanationAuditStateInput struct {
+	ExplanationID        string
+	JobID                string
+	Status               string
+	PayloadHash          string
+	ResolvedEvidenceRefs []string
+	SourceSystem         string
+	RequestedBy          string
+	TenantID             string
+	ProjectID            string
+	ReviewedBy           string
+	ReviewDecision       string
+	ReviewReason         string
+	PublishedBy          string
+}
+
 func InputRefs(input json.RawMessage) InputReferenceSummary {
 	summary := InputReferenceSummary{
 		InputRef:           map[string]any{},
@@ -283,6 +299,37 @@ func ResultExplanationRecordDataFromDocument(input ResultExplanationRecordDataIn
 		CreatedAt:                input.Now,
 		UpdatedAt:                input.Now,
 	}, nil
+}
+
+func ResultExplanationAuditState(input ResultExplanationAuditStateInput) map[string]any {
+	state := map[string]any{
+		"explanation_id":              input.ExplanationID,
+		"job_id":                      input.JobID,
+		"status":                      input.Status,
+		"payload_hash":                input.PayloadHash,
+		"resolved_evidence_ref_count": len(input.ResolvedEvidenceRefs),
+		"source_system":               input.SourceSystem,
+		"requested_by":                input.RequestedBy,
+	}
+	if input.TenantID != "" {
+		state["tenant_id"] = input.TenantID
+	}
+	if input.ProjectID != "" {
+		state["project_id"] = input.ProjectID
+	}
+	if input.ReviewedBy != "" {
+		state["reviewed_by"] = input.ReviewedBy
+	}
+	if input.ReviewDecision != "" {
+		state["review_decision"] = input.ReviewDecision
+	}
+	if input.ReviewReason != "" {
+		state["review_reason"] = input.ReviewReason
+	}
+	if input.PublishedBy != "" {
+		state["published_by"] = input.PublishedBy
+	}
+	return state
 }
 
 func SummarizeRiskFindings(findings []map[string]any) RiskSummary {

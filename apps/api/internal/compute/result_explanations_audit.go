@@ -1,6 +1,7 @@
 package compute
 
 import (
+	domainevidence "autowatersimu/apps/api/internal/domain/evidence"
 	"context"
 	"time"
 )
@@ -132,32 +133,19 @@ func (svc *ResultExplanationService) resultExplanationAuditTraceID(ctx context.C
 }
 
 func resultExplanationAuditState(record ResultExplanationRecord) map[string]any {
-	state := map[string]any{
-		"explanation_id":              record.ExplanationID,
-		"job_id":                      record.JobID,
-		"status":                      record.Status,
-		"payload_hash":                record.PayloadHash,
-		"resolved_evidence_ref_count": len(record.ResolvedEvidenceRefs),
-		"source_system":               record.SourceSystem,
-		"requested_by":                record.RequestedBy,
-	}
-	if record.TenantID != "" {
-		state["tenant_id"] = record.TenantID
-	}
-	if record.ProjectID != "" {
-		state["project_id"] = record.ProjectID
-	}
-	if record.ReviewedBy != "" {
-		state["reviewed_by"] = record.ReviewedBy
-	}
-	if record.ReviewDecision != "" {
-		state["review_decision"] = record.ReviewDecision
-	}
-	if record.ReviewReason != "" {
-		state["review_reason"] = record.ReviewReason
-	}
-	if record.PublishedBy != "" {
-		state["published_by"] = record.PublishedBy
-	}
-	return state
+	return domainevidence.ResultExplanationAuditState(domainevidence.ResultExplanationAuditStateInput{
+		ExplanationID:        record.ExplanationID,
+		JobID:                record.JobID,
+		Status:               record.Status,
+		PayloadHash:          record.PayloadHash,
+		ResolvedEvidenceRefs: record.ResolvedEvidenceRefs,
+		SourceSystem:         record.SourceSystem,
+		RequestedBy:          record.RequestedBy,
+		TenantID:             record.TenantID,
+		ProjectID:            record.ProjectID,
+		ReviewedBy:           record.ReviewedBy,
+		ReviewDecision:       record.ReviewDecision,
+		ReviewReason:         record.ReviewReason,
+		PublishedBy:          record.PublishedBy,
+	})
 }

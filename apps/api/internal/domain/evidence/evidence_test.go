@@ -314,6 +314,60 @@ func TestResultExplanationRecordDataFromDocumentRequiresIdentityFields(t *testin
 	}
 }
 
+func TestResultExplanationAuditStateProjectsCompactState(t *testing.T) {
+	state := ResultExplanationAuditState(ResultExplanationAuditStateInput{
+		ExplanationID:        "exp_1",
+		JobID:                "job_1",
+		Status:               "approved",
+		PayloadHash:          "sha256:abc",
+		ResolvedEvidenceRefs: []string{"model_run:mr_1", "artifact:art_1"},
+		SourceSystem:         "NewSystem",
+		RequestedBy:          "reviewer_1",
+		TenantID:             "tenant_a",
+		ProjectID:            "project_a",
+		ReviewedBy:           "reviewer_1",
+		ReviewDecision:       "approved",
+		ReviewReason:         "evidence accepted",
+		PublishedBy:          "publisher_1",
+	})
+
+	if state["explanation_id"] != "exp_1" ||
+		state["job_id"] != "job_1" ||
+		state["status"] != "approved" ||
+		state["payload_hash"] != "sha256:abc" ||
+		state["resolved_evidence_ref_count"] != 2 ||
+		state["source_system"] != "NewSystem" ||
+		state["requested_by"] != "reviewer_1" ||
+		state["tenant_id"] != "tenant_a" ||
+		state["project_id"] != "project_a" ||
+		state["reviewed_by"] != "reviewer_1" ||
+		state["review_decision"] != "approved" ||
+		state["review_reason"] != "evidence accepted" ||
+		state["published_by"] != "publisher_1" {
+		t.Fatalf("unexpected result explanation audit state: %#v", state)
+	}
+}
+
+func TestResultExplanationAuditStateOmitsEmptyOptionalFields(t *testing.T) {
+	state := ResultExplanationAuditState(ResultExplanationAuditStateInput{
+		ExplanationID: "exp_1",
+		JobID:         "job_1",
+		Status:        "submitted",
+		PayloadHash:   "sha256:abc",
+		SourceSystem:  "compute-api",
+		RequestedBy:   "agent",
+	})
+
+	if state["resolved_evidence_ref_count"] != 0 {
+		t.Fatalf("expected zero resolved ref count, got %#v", state)
+	}
+	for _, key := range []string{"tenant_id", "project_id", "reviewed_by", "review_decision", "review_reason", "published_by"} {
+		if _, ok := state[key]; ok {
+			t.Fatalf("expected optional field %q to be omitted from %#v", key, state)
+		}
+	}
+}
+
 func TestEvaluateProductionReadinessReady(t *testing.T) {
 	evaluation := EvaluateProductionReadiness(ReadinessInput{
 		JobID:                       "job_1",
