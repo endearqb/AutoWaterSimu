@@ -1,3 +1,26 @@
+# 2026-06-13 AutoWaterSimu Next artifact archive audit smoke coverage TODO
+
+- [x] Continue P2 selected mutation-audit closeout after worker fail audit coverage.
+- [x] Re-read README First context for `apps/api/internal/compute`, `scripts/ci`, Certainty/Elegance PRD/Plan, and current task history.
+- [x] Confirm concrete gap: `artifact.archived` audit behavior already has a focused Go regression, but `scripts/ci/security-smoke.ps1` did not select the archive branch while long-lived docs described artifact retention delete/archive audit coverage.
+- [x] Add `TestArtifactRetentionSweepArchivesCandidateWithConfiguredBackend` to the security-smoke Go test selection and update evidence summaries/context wording.
+- [x] Run focused artifact archive audit tests, security smoke, full apps/api Go tests, boundary checks, pr-fast, and diff checks.
+- [x] Commit and push this closeout slice.
+
+## Plan
+
+- Keep this as evidence coverage alignment, not a production behavior change.
+- Do not change artifact retention/archive logic, archive stores, HTTP behavior, schemas, OpenAPI, migrations, generated clients, or auth scopes.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added existing archive audit regression `TestArtifactRetentionSweepArchivesCandidateWithConfiguredBackend` to `scripts/ci/security-smoke.ps1`.
+- Updated security-smoke evidence wording and Certainty/Elegance development-plan context from generic artifact retention to artifact retention delete/archive.
+- Validation passed: focused artifact retention/audit tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, and `pr-fast`.
+- Did not change artifact retention/archive production behavior, HTTP/API shape, schemas, OpenAPI, migrations, generated clients, auth scopes, or persistence.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next worker failure audit coverage TODO
 
 - [x] Read the attached elegance closeout note and verify the named P0 service-test split files are already structurally split in the current worktree.
