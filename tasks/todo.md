@@ -1,3 +1,25 @@
+# 2026-06-13 AutoWaterSimu Next process graph evidence scope test split TODO
+
+- [x] Continue P0 service-test split after worker claim filter split.
+- [x] Confirm `service_evidence_process_graph_test.go` mixes normal process graph evidence-ref resolution with source-job object-scope denial coverage.
+- [x] Move `TestProcessGraphEvidenceReferenceHonorsJobObjectScope` and its dedicated completion helper into a focused object-scope test file without changing test names or assertions.
+- [x] Run focused process graph evidence tests, security smoke, full apps/api Go tests, boundary checks, pr-fast, and diff checks.
+- [x] Commit and push this P0 split slice.
+
+## Plan
+
+- Keep this as test organization only.
+- Preserve process graph evidence-ref behavior, object-scope denial semantics, security-smoke test-name coverage, HTTP behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, persistence, and audit envelopes.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `service_evidence_process_graph_scope_test.go` for source-job object-scope denial around process graph evidence refs.
+- Reduced `service_evidence_process_graph_test.go` to normal process graph evidence-ref registration/completion/resolution coverage.
+- Updated architecture evidence table with the normal process graph evidence-ref and object-scope test files.
+- Validation passed: focused process graph evidence tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, and `pr-fast`.
+- Did not change production behavior, HTTP/API shape, schemas, OpenAPI, migrations, generated clients, auth scopes, persistence, or audit envelopes.
+
 # 2026-06-13 AutoWaterSimu Next worker claim service test split TODO
 
 - [x] Re-read attached elegance closeout priority and current README First context before continuing P0 service-test split work.
