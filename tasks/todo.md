@@ -1,3 +1,32 @@
+# 2026-06-13 AutoWaterSimu Next benchmark run service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, benchmark run service tests, current architecture evidence, and security-smoke test-name usage.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Measure remaining `service*_test.go` files and identify `service_benchmark_runs_test.go` as the largest residual service test aggregation point.
+- [x] Split benchmark_run read-scope coverage from mutation-scope/no-write audit coverage.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, test names, and assertion semantics.
+- [x] Confirm `TestHTTPBenchmarkRunMutationTenantProjectSiteScope` remains selected by the existing security smoke regex after moving files.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused benchmark_run tests, security-smoke equivalent Go regex, and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Leave `TestHTTPBenchmarkRunTenantProjectSiteScope` in `service_benchmark_runs_test.go`.
+- Move `TestHTTPBenchmarkRunMutationTenantProjectSiteScope` into `service_benchmark_runs_mutation_scope_test.go` without changing its name, setup, or assertions.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, or CI scripts.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_benchmark_runs_test.go` from 227 lines to 120 lines focused on benchmark_run tenant/project/site read-scope behavior.
+- Added `service_benchmark_runs_mutation_scope_test.go` with 117 lines focused on scoped benchmark_run registration, cross-scope denial, no-write behavior, and compact mutation audit no-leakage.
+- Preserved the original test names and assertions; `TestHTTPBenchmarkRunMutationTenantProjectSiteScope` remains covered by the existing security smoke regex.
+- Updated `docs/architecture/compute-api.md` because it hard-coded the stale `service_benchmark_runs_test.go` line count.
+- Validation passed: focused benchmark_run tests, security-smoke equivalent Go regex, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining large service test files include `service_evidence_references_test.go`, `service_job_scope_test.go`, `service_artifact_retention_http_test.go`, and `service_model_catalog_scope_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next model parameters service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, model governance service tests, current architecture evidence, and security-smoke test-name usage.

@@ -166,11 +166,12 @@ Selected files from the latest audit:
 | `service_model_catalog_registration_test.go` | 65 | persisted model catalog registration/read/idempotency coverage |
 | `service_model_catalog_status_test.go` | 115 | default parameter set status transition, snapshot pagination, and audit coverage |
 | `service_model_catalog_http_helpers_test.go` | 39 | shared model catalog HTTP and fixture helpers |
-| `service_benchmark_runs_test.go` | 227 | benchmark run tenant/project/site scope coverage |
 | `service_evidence_references_test.go` | 223 | NewSystem evidence reference integration coverage |
 | `service_artifact_retention_archive_test.go` | 155 | artifact retention archive candidate skip/archive service coverage |
 | `service_simulation_reference_test.go` | 145 | registered simulation input reference coverage for material-balance and ASM/UDM simulation-check jobs |
+| `service_benchmark_runs_test.go` | 120 | benchmark run tenant/project/site read-scope coverage |
 | `service_model_runs_helpers_test.go` | 119 | shared completed model-run integration scenario fixture |
+| `service_benchmark_runs_mutation_scope_test.go` | 117 | benchmark run mutation tenant/project/site scope and no-write audit coverage |
 | `service_model_parameters_promotion_test.go` | 117 | default parameter set promote-approved mutation, persistence, and audit coverage |
 | `service_artifact_retention_test.go` | 104 | artifact retention TTL deletion, reference protection, and deletion audit coverage |
 | `service_model_runs_evidence_test.go` | 100 | model run evidence package/readiness endpoint coverage |
