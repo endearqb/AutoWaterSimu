@@ -36,6 +36,10 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	if isWorkerMutationRoute(parts) && r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 	workerID := parts[0]
 	switch {
 	case len(parts) == 2 && parts[1] == "claim":
@@ -139,6 +143,13 @@ func (server *Server) workerRoute(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
+}
+
+func isWorkerMutationRoute(parts []string) bool {
+	if len(parts) == 2 && (parts[1] == "claim" || parts[1] == "heartbeat") {
+		return true
+	}
+	return len(parts) == 4 && parts[1] == "jobs" && (parts[3] == "artifact" || parts[3] == "succeed" || parts[3] == "fail")
 }
 
 func numberValue(value map[string]any, key string) float64 {

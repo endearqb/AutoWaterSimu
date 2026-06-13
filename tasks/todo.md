@@ -1,3 +1,30 @@
+# 2026-06-13 AutoWaterSimu Next worker mutation method guard TODO
+
+- [x] Continue P2 security closeout after compute-boundary-freeze instead of adding another evidence wrapper.
+- [x] Re-read README First context for `apps/api`, `apps/api/internal/compute`, `scripts/ci`, security smoke, architecture current-state, and Certainty/Elegance plan.
+- [x] Confirm concrete gap: worker claim/heartbeat/artifact/succeed/fail mutation subroutes did not require POST before service calls.
+- [x] Add a worker mutation route method guard before auth/service calls.
+- [x] Add focused no-write regression coverage for non-POST worker mutation routes.
+- [x] Include the regression in `scripts/ci/security-smoke.ps1` and update long-lived security/architecture context.
+- [x] Run focused worker tests, security smoke, full apps/api Go tests, boundary checks, and diff checks.
+
+## Plan
+
+- Treat this as a correctness/security slice for HTTP mutation semantics, not a package movement or API redesign.
+- Preserve existing POST behavior, auth scopes, audit envelopes, data-scope checks, store interfaces, schemas, OpenAPI, migrations, and generated clients.
+- Prove non-POST worker mutation routes return 405 and do not write job state, artifact metadata, or worker mutation events.
+- Leave the existing untracked `docs/rebuild` items untouched.
+
+## Review
+
+- Added a `workerRoute` method guard so recognized worker mutation subroutes return 405 before auth/service calls when the method is not POST.
+- Added `service_worker_method_test.go` proving non-POST claim/heartbeat/artifact/succeed/fail routes do not mutate job state, artifact metadata, or worker mutation events.
+- Included `TestHTTPWorkerMutationRoutesRequirePost` in `scripts/ci/security-smoke.ps1` and added a `worker_mutation_http_method_guard` evidence field.
+- Updated API, Compute API, security-smoke, architecture, and Certainty/Elegance context to record the POST-only worker mutation boundary.
+- Validation passed: focused worker method/audit/scope tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: full object-level data-scope, remaining mutation data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next compute boundary freeze TODO
 
 - [x] Continue after P0 service test split closeout by switching to the attached P1 `compute-boundary-freeze` priority.
