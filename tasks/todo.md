@@ -1,3 +1,31 @@
+# 2026-06-13 AutoWaterSimu Next artifact retention service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, artifact lifecycle service tests, and current architecture evidence.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Inspect artifact retention service, HTTP, scheduler, and helper tests to identify a behavior-preserving split boundary.
+- [x] Split archive candidate skip/archive service assertions out of `service_artifact_retention_test.go`.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, test assertions, and fixture payloads.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused artifact retention tests and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Leave TTL deletion/reference-protection coverage in `service_artifact_retention_test.go`.
+- Move archive candidate no-backend and configured-backend archive coverage into `service_artifact_retention_archive_test.go`.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, or CI scripts.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_artifact_retention_test.go` from a 252-line mixed retention/archive service file to 104 lines focused on TTL deletion, referenced-artifact protection, and deletion audit coverage.
+- Added `service_artifact_retention_archive_test.go` with 155 lines focused on archive candidate skip behavior without a backend and local archive backend execution/audit/download/metrics behavior.
+- Preserved all original service-level assertions and helper usage; no production files, API surfaces, schemas, migrations, generated clients, or auth scopes changed.
+- Updated `docs/architecture/compute-api.md` because it hard-coded the stale `service_artifact_retention_test.go` line count.
+- Validation passed: focused artifact retention tests, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining large service test files include `service_model_parameters_test.go`, `service_benchmark_runs_test.go`, `service_evidence_references_test.go`, and `service_artifact_retention_http_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next model catalog service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, model governance service tests, and current architecture evidence.
