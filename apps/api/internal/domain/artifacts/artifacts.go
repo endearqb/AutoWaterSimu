@@ -107,6 +107,27 @@ type ArchiveRecord struct {
 	ArchivedAt              time.Time
 }
 
+type ArtifactAuditStateInput struct {
+	ArtifactID      string
+	JobID           string
+	StorageProvider string
+	ObjectKey       string
+	Checksum        string
+	RetentionPolicy string
+	RetainUntil     *time.Time
+}
+
+type ArchiveAuditStateInput struct {
+	ArtifactID       string
+	JobID            string
+	ArchiveProvider  string
+	ArchiveObjectKey string
+	Checksum         string
+	SizeBytes        int64
+	Status           string
+	ArchivedAt       time.Time
+}
+
 func RetentionFromMetadata(metadata map[string]any) (Retention, error) {
 	policy := stringValue(metadata, "retention_policy")
 	if policy == "" {
@@ -206,6 +227,31 @@ func NewArchiveRecord(input ArchiveRecordInput) ArchiveRecord {
 		Status:                  ArchiveStatusArchived,
 		Metadata:                map[string]any{"retention_policy": input.RetentionPolicy},
 		ArchivedAt:              input.ArchivedAt,
+	}
+}
+
+func ArtifactAuditState(input ArtifactAuditStateInput) map[string]any {
+	return map[string]any{
+		"artifact_id":      input.ArtifactID,
+		"job_id":           input.JobID,
+		"storage_provider": input.StorageProvider,
+		"object_key":       input.ObjectKey,
+		"checksum":         input.Checksum,
+		"retention_policy": input.RetentionPolicy,
+		"retain_until":     input.RetainUntil,
+	}
+}
+
+func ArchiveAuditState(input ArchiveAuditStateInput) map[string]any {
+	return map[string]any{
+		"artifact_id":        input.ArtifactID,
+		"job_id":             input.JobID,
+		"archive_provider":   input.ArchiveProvider,
+		"archive_object_key": input.ArchiveObjectKey,
+		"checksum":           input.Checksum,
+		"size_bytes":         input.SizeBytes,
+		"status":             input.Status,
+		"archived_at":        input.ArchivedAt,
 	}
 }
 

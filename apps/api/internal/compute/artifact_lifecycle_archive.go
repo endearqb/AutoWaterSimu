@@ -103,14 +103,14 @@ func artifactArchiveRecordFromDomain(record domainartifacts.ArchiveRecord) Artif
 }
 
 func artifactArchiveAuditState(archive ArtifactArchiveRecord) map[string]any {
-	return map[string]any{
-		"artifact_id":        archive.ArtifactID,
-		"job_id":             archive.JobID,
-		"archive_provider":   archive.ArchiveProvider,
-		"archive_object_key": archive.ArchiveObjectKey,
-		"checksum":           archive.Checksum,
-		"size_bytes":         archive.SizeBytes,
-		"status":             archive.Status,
-		"archived_at":        archive.ArchivedAt,
-	}
+	return domainartifacts.ArchiveAuditState(domainartifacts.ArchiveAuditStateInput{
+		ArtifactID:       archive.ArtifactID,
+		JobID:            archive.JobID,
+		ArchiveProvider:  archive.ArchiveProvider,
+		ArchiveObjectKey: archive.ArchiveObjectKey,
+		Checksum:         archive.Checksum,
+		SizeBytes:        archive.SizeBytes,
+		Status:           archive.Status,
+		ArchivedAt:       archive.ArchivedAt,
+	})
 }

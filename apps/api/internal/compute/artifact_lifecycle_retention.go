@@ -129,13 +129,13 @@ func (svc *ArtifactLifecycleService) auditTraceID(ctx context.Context, jobID str
 }
 
 func artifactAuditState(artifact ArtifactRecord) map[string]any {
-	return map[string]any{
-		"artifact_id":      artifact.ArtifactID,
-		"job_id":           artifact.JobID,
-		"storage_provider": artifact.StorageProvider,
-		"object_key":       artifact.ObjectKey,
-		"checksum":         artifact.Checksum,
-		"retention_policy": artifact.RetentionPolicy,
-		"retain_until":     artifact.RetainUntil,
-	}
+	return domainartifacts.ArtifactAuditState(domainartifacts.ArtifactAuditStateInput{
+		ArtifactID:      artifact.ArtifactID,
+		JobID:           artifact.JobID,
+		StorageProvider: artifact.StorageProvider,
+		ObjectKey:       artifact.ObjectKey,
+		Checksum:        artifact.Checksum,
+		RetentionPolicy: artifact.RetentionPolicy,
+		RetainUntil:     artifact.RetainUntil,
+	})
 }

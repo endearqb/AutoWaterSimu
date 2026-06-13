@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next artifact audit state domain split TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, and the attached priority note before continuing.
+- [x] Confirm this is a narrow P1 compute-boundary freeze slice: compact artifact/archive audit state projection can move to `domain/artifacts`, while audit envelopes, call sites, persistence decisions, HTTP mapping, object/archive execution, and metadata persistence stay in compute.
+- [x] Add DTO-neutral artifact/archive audit state inputs and projection helpers to `apps/api/internal/domain/artifacts`.
+- [x] Adapt existing compute artifact audit state helpers to call the domain projection helpers without changing audit key shape.
+- [x] Add focused domain tests for compact artifact/archive audit state projection.
+- [x] Update README / architecture / development-plan / boundary-audit notes for the new package boundary.
+- [x] Run focused domain/compute tests, security smoke, full apps/api Go tests, dependency/boundary checks, pr-fast, whitespace scan, and scoped diff-check.
+- [x] Commit and push this P1 boundary slice.
+
+## Plan
+
+- Keep this as a pure projection movement under `domain/artifacts`.
+- Preserve production behavior, HTTP routes, auth scopes, contracts, schemas, OpenAPI, migrations, generated clients, store interfaces, archive execution, checksum verification, object-store behavior, and selected mutation audit envelope shape.
+- Keep compute as the compatibility adapter that supplies current `ArtifactRecord` / `ArtifactArchiveRecord` fields and writes selected audit events.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added compact `ArtifactAuditState` / `ArchiveAuditState` domain helpers and focused projection tests.
+- Adapted compute artifact audit-state helpers to call `domain/artifacts` while keeping existing selected audit key shape.
+- Updated README / architecture / development-plan / boundary-audit notes to freeze this boundary: domain owns pure projection; compute owns envelope, call sites, persistence, HTTP mapping, object/archive execution, checksum, and store orchestration.
+- Validation passed: focused domain/compute tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, `pr-fast`, trailing-whitespace scan, and scoped diff-check.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next worker audit final service test split TODO
 
 - [x] Re-read README First context and the attached P0 closeout priority before continuing service-test split work.

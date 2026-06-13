@@ -191,3 +191,54 @@ func TestNewArchiveRecordProjectsArchivedMetadata(t *testing.T) {
 		t.Fatalf("expected retention metadata, got %#v", record.Metadata)
 	}
 }
+
+func TestArtifactAuditStateProjectsCompactState(t *testing.T) {
+	retainUntil := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	state := ArtifactAuditState(ArtifactAuditStateInput{
+		ArtifactID:      "art_1",
+		JobID:           "job_1",
+		StorageProvider: "local_fs",
+		ObjectKey:       "jobs/job_1/art_1.json",
+		Checksum:        "sha256:abc",
+		RetentionPolicy: PolicyTTL,
+		RetainUntil:     &retainUntil,
+	})
+
+	if state["artifact_id"] != "art_1" ||
+		state["job_id"] != "job_1" ||
+		state["storage_provider"] != "local_fs" ||
+		state["object_key"] != "jobs/job_1/art_1.json" ||
+		state["checksum"] != "sha256:abc" ||
+		state["retention_policy"] != PolicyTTL {
+		t.Fatalf("unexpected artifact audit state: %#v", state)
+	}
+	gotRetainUntil, ok := state["retain_until"].(*time.Time)
+	if !ok || gotRetainUntil == nil || !gotRetainUntil.Equal(retainUntil) {
+		t.Fatalf("expected retain_until pointer to be preserved, got %#v", state["retain_until"])
+	}
+}
+
+func TestArchiveAuditStateProjectsCompactState(t *testing.T) {
+	archivedAt := time.Date(2026, 6, 13, 12, 0, 0, 0, time.UTC)
+	state := ArchiveAuditState(ArchiveAuditStateInput{
+		ArtifactID:       "art_1",
+		JobID:            "job_1",
+		ArchiveProvider:  "local_fs_archive",
+		ArchiveObjectKey: "archive/jobs/job_1/art_1.json",
+		Checksum:         "sha256:abc",
+		SizeBytes:        456,
+		Status:           ArchiveStatusArchived,
+		ArchivedAt:       archivedAt,
+	})
+
+	if state["artifact_id"] != "art_1" ||
+		state["job_id"] != "job_1" ||
+		state["archive_provider"] != "local_fs_archive" ||
+		state["archive_object_key"] != "archive/jobs/job_1/art_1.json" ||
+		state["checksum"] != "sha256:abc" ||
+		state["size_bytes"] != int64(456) ||
+		state["status"] != ArchiveStatusArchived ||
+		state["archived_at"] != archivedAt {
+		t.Fatalf("unexpected archive audit state: %#v", state)
+	}
+}

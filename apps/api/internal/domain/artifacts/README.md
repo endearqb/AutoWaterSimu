@@ -12,12 +12,13 @@
 - retention sweep 候选 policy 判断。
 - retention sweep action planning，包括 skip / would_archive / archived / would_delete / deleted 的纯判定。
 - archive metadata record projection，包括 archived status 与 retention policy metadata。
+- artifact / archive compact audit state projection，用于 selected mutation audit 的 before/after state。
 
 本目录不负责：
 
 - artifact object storage 读写。
 - archive backend 执行、upload/archive checksum 校验或 hot object 删除。
-- metadata store、PostgreSQL implementation、HTTP route 或 audit envelope。
+- metadata store、PostgreSQL implementation、HTTP route、audit envelope、audit call site 或 persistence decision。
 
 ## 2. 核心文件
 
@@ -29,7 +30,7 @@
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 artifact 领域规则；上传文件读取、对象写入、归档执行、checksum、audit 和 store 行为继续由 compute compatibility package 承接，直到对应边界可安全迁移。
+2. 只放稳定 artifact 领域规则；上传文件读取、对象写入、归档执行、checksum、audit envelope / call site / persistence 和 store 行为继续由 compute compatibility package 承接，直到对应边界可安全迁移。
 3. 新增 retention policy 时需同步检查 artifact upload、retention sweep、archive backend、metrics、PostgreSQL candidate query 和 tests。
 4. 新增 retention action / reason 时需同步检查 `ArtifactRetentionAction` response、retention sweep tests、archive/delete audit event 和 metrics/report 计数语义。
 
@@ -57,11 +58,15 @@
 - `RetentionActionPlan`
 - `ArchiveRecordInput`
 - `ArchiveRecord`
+- `ArtifactAuditStateInput`
+- `ArchiveAuditStateInput`
 - `RetentionFromMetadata`
 - `IsRetentionCandidate`
 - `EvaluateRetentionAction`
 - `NewArtifactRecord`
 - `NewArchiveRecord`
+- `ArtifactAuditState`
+- `ArchiveAuditState`
 
 ## 5. 依赖边界
 
