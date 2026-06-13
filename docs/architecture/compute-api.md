@@ -166,7 +166,9 @@ Selected files from the latest audit:
 | `service_model_catalog_registration_test.go` | 65 | persisted model catalog registration/read/idempotency coverage |
 | `service_model_catalog_status_test.go` | 115 | default parameter set status transition, snapshot pagination, and audit coverage |
 | `service_model_catalog_http_helpers_test.go` | 39 | shared model catalog HTTP and fixture helpers |
-| `service_evidence_references_test.go` | 223 | NewSystem evidence reference integration coverage |
+| `service_evidence_references_test.go` | 63 | NewSystem result summary, evidence-ref, and production-readiness integration assertions |
+| `service_evidence_references_helpers_test.go` | 165 | shared NewSystem process-graph simulation-check completion fixture and evidence-ref helpers |
+| `service_evidence_references_explanation_test.go` | 24 | NewSystem result explanation submission with resolved evidence refs |
 | `service_artifact_retention_archive_test.go` | 155 | artifact retention archive candidate skip/archive service coverage |
 | `service_simulation_reference_test.go` | 145 | registered simulation input reference coverage for material-balance and ASM/UDM simulation-check jobs |
 | `service_benchmark_runs_test.go` | 120 | benchmark run tenant/project/site read-scope coverage |

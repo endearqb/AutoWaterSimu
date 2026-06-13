@@ -1,3 +1,35 @@
+# 2026-06-13 AutoWaterSimu Next NewSystem evidence reference service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, Certainty/Elegance PRD/Plan, service test organization, current architecture evidence, and security-smoke test-name usage.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Measure remaining `service*_test.go` files and identify `service_evidence_references_test.go` as the largest residual service test aggregation point.
+- [x] Split NewSystem evidence reference/readiness assertions from result explanation evidence-ref submission assertions.
+- [x] Extract a shared NewSystem process-graph simulation-check completion scenario helper.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, and assertion semantics.
+- [x] Update `scripts/ci/security-smoke.ps1` regex so the newly split NewSystem result explanation evidence-ref test remains in the governance smoke selection.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused NewSystem evidence tests, security-smoke equivalent governance regex, and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change plus a CI test-selection preservation edit.
+- Retain `TestNewSystemEvidenceReferenceE2E` for NewSystem result summary, evidence-ref, and production-readiness coverage because security smoke already references that test name.
+- Move result explanation submission and resolved evidence-ref assertions into `TestNewSystemResultExplanationResolvesEvidenceRefs`.
+- Extract only shared scenario setup needed by both tests; do not move production logic or change endpoint behavior.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, or auth scopes.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_evidence_references_test.go` from 223 lines to 63 lines focused on NewSystem result summary, evidence-ref, and production-readiness assertions.
+- Added `service_evidence_references_helpers_test.go` with 165 lines of shared NewSystem process-graph simulation-check completion setup and evidence-ref helpers.
+- Added `service_evidence_references_explanation_test.go` with 24 lines focused on result explanation submission and resolved evidence-ref assertions.
+- Updated `scripts/ci/security-smoke.ps1` so `TestNewSystemResultExplanationResolvesEvidenceRefs` remains part of the governance route scope denial and mutation audit smoke selection after the split.
+- Updated `docs/architecture/compute-api.md` because it hard-coded the stale `service_evidence_references_test.go` line count.
+- Validation passed: focused NewSystem evidence tests, security-smoke equivalent governance regex, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check.
+- Remaining large service test files include `service_job_scope_test.go`, `service_artifact_retention_http_test.go`, `service_model_catalog_scope_test.go`, `service_worker_audit_test.go`, and `service_result_explanation_audit_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next benchmark run service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, benchmark run service tests, current architecture evidence, and security-smoke test-name usage.
