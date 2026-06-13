@@ -1,3 +1,35 @@
+# 2026-06-13 AutoWaterSimu Next model parameters service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, model governance service tests, current architecture evidence, and security-smoke test-name usage.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Measure remaining `service*_test.go` files and identify `service_model_parameters_test.go` as the largest residual service test aggregation point.
+- [x] Split advisory promotion-plan coverage from promote-approved mutation/persistence/audit coverage.
+- [x] Extract shared validated catalog and benchmark-backed evidence fixture helpers.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, and assertion semantics.
+- [x] Update `scripts/ci/security-smoke.ps1` regex so the newly split promote-approved mutation/audit test remains in the security smoke selection.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused model parameter tests, security-smoke equivalent Go regex, and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change plus a CI test-selection preservation edit.
+- Retain `TestDefaultParameterSetPromotionPlanEndpoint` for advisory promotion-plan coverage because security smoke already references that test name.
+- Move promote-approved conflict, worker denial, benchmark-backed transition, persistence, and compact mutation audit assertions into `TestDefaultParameterSetPromoteApprovedEndpoint`.
+- Update only the security smoke regex needed to keep the split promote-approved mutation/audit coverage in the existing smoke lane.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, or auth scopes.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_model_parameters_test.go` from 247 lines to 45 lines focused on advisory promotion-plan blockers and benchmark-backed readiness without mutation.
+- Added `service_model_parameters_promotion_test.go` with 117 lines focused on promote-approved conflict/no-mutation behavior, worker denial, successful benchmark-backed transition, persistence, and compact mutation audit envelopes.
+- Added `service_model_parameters_helpers_test.go` with 87 lines of shared validated-catalog and benchmark-backed evidence setup.
+- Updated `scripts/ci/security-smoke.ps1` so `TestDefaultParameterSetPromoteApprovedEndpoint` remains part of the governance route scope denial and mutation audit smoke selection after the split.
+- Updated `docs/architecture/compute-api.md` because it hard-coded the stale `service_model_parameters_test.go` line count.
+- Validation passed: focused model parameter tests, security-smoke equivalent Go regex, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining large service test files include `service_benchmark_runs_test.go`, `service_evidence_references_test.go`, `service_job_scope_test.go`, and `service_artifact_retention_http_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next artifact retention service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, artifact lifecycle service tests, and current architecture evidence.
