@@ -1,3 +1,26 @@
+# 2026-06-13 AutoWaterSimu Next evidence governance service test split TODO
+
+- [x] Re-read README First context, Certainty/Elegance plan snippets, and current task history before continuing.
+- [x] Confirm `EvidenceGovernanceService.ResolveEvidenceReference` already constrains model_run/artifact/job/simulation_input/process_graph refs to source job or object scope, so there is no obvious small dereference bug to patch in this slice.
+- [x] Confirm `service_evidence_test.go` mixes production-readiness high-risk policy coverage with job-scoped model catalog governance scope coverage.
+- [x] Move `TestEvidenceGovernanceUsesJobScopedModelCatalog` into a focused governance-scope test file without changing test name or assertions.
+- [x] Run focused evidence governance/readiness tests, security smoke, full apps/api Go tests, boundary checks, pr-fast, and diff checks.
+- [x] Commit and push this P0/P2-supporting split slice.
+
+## Plan
+
+- Keep this as test organization only after confirming no narrow evidence-ref object-scope fix was available.
+- Preserve evidence package governance, production-readiness behavior, security-smoke test-name coverage, HTTP behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, persistence, and audit envelopes.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `service_evidence_governance_scope_test.go` for job-scoped model catalog selection in evidence package / production-readiness governance.
+- Reduced `service_evidence_test.go` to production-readiness high-risk finding blocking coverage.
+- Updated architecture evidence table with the readiness and governance-scope test entries.
+- Validation passed: focused evidence governance/readiness tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, and `pr-fast`.
+- Did not change production behavior, HTTP/API shape, schemas, OpenAPI, migrations, generated clients, auth scopes, persistence, or audit envelopes.
+
 # 2026-06-13 AutoWaterSimu Next process graph evidence scope test split TODO
 
 - [x] Continue P0 service-test split after worker claim filter split.
