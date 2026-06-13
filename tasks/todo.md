@@ -1,3 +1,28 @@
+# 2026-06-13 AutoWaterSimu Next worker audit final service test split TODO
+
+- [x] Re-read README First context and the attached P0 closeout priority before continuing service-test split work.
+- [x] Confirm `service_job_scope_test.go` is already a single-topic job read/list scope file and should not be split just to satisfy a stale residual-file list.
+- [x] Split `service_worker_audit_test.go` so claim/heartbeat audit coverage and artifact/succeed completion audit coverage have separate focused test entries.
+- [x] Add the new artifact/completion audit test name to `scripts/ci/security-smoke.ps1` so selected mutation-audit smoke coverage does not narrow.
+- [x] Update architecture test-file evidence and README First change log.
+- [x] Run security smoke, full apps/api Go tests, boundary checks, pr-fast, whitespace scan, and scoped diff-check.
+- [x] Commit and push this P0 closeout slice.
+
+## Plan
+
+- Keep this as test organization only.
+- Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, persistence, and audit envelope assertions.
+- Keep `TestHTTPWorkerJobMutationAuditEvents` as the existing smoke-selected claim/heartbeat audit entry, and add `TestHTTPWorkerArtifactCompletionMutationAuditEvents` for artifact upload plus succeed completion.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Reduced `service_worker_audit_test.go` to claim and heartbeat job-scoped audit assertions.
+- Added `service_worker_artifact_completion_audit_test.go` for artifact upload and succeed completion audit assertions.
+- Added `service_worker_audit_helpers_test.go` for worker audit setup, multipart artifact upload, success result, event collection, and shared envelope assertion helpers.
+- Validation passed: focused worker audit tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, `pr-fast`, trailing-whitespace scan, and scoped diff-check.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next evidence governance service test split TODO
 
 - [x] Re-read README First context, Certainty/Elegance plan snippets, and current task history before continuing.

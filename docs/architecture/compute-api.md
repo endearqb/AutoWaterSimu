@@ -180,7 +180,9 @@ Selected files from the latest audit:
 | `service_worker_registration_audit_test.go` | 61 | worker registration compact mutation audit coverage |
 | `service_worker_method_test.go` | 113 | worker mutation route non-POST no-write method guard coverage |
 | `service_worker_claim_filters_test.go` | 56 | worker claim capability and contract-version mismatch filter coverage |
-| `service_worker_audit_test.go` | 145 | worker claim, heartbeat, artifact upload, and succeed completion job-scoped audit coverage |
+| `service_worker_audit_test.go` | 36 | worker claim and heartbeat job-scoped audit coverage |
+| `service_worker_audit_helpers_test.go` | 119 | worker job audit scenario, artifact upload, success result, event collection, and envelope assertion helpers |
+| `service_worker_artifact_completion_audit_test.go` | 36 | worker artifact upload and succeed completion job-scoped audit coverage |
 | `service_worker_failure_audit_test.go` | 83 | worker fail completion job-scoped audit coverage |
 | `service_evidence_test.go` | 84 | production-readiness high-risk finding blocking coverage |
 | `service_evidence_governance_scope_test.go` | 81 | evidence package and production-readiness job-scoped model catalog selection coverage |
