@@ -1,13 +1,14 @@
 package compute
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
 )
 
 func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
-	_, server := newSimulationTestServer(t)
+	svc, server := newSimulationTestServer(t)
 
 	validBytes := validContractFixture(t, "milp_material_balance.simulation_request.v1.json")
 	rec := serveWithToken(t, server, http.MethodPost, "/api/v1/simulation-checks", "dev-public-token", validBytes)
@@ -38,6 +39,28 @@ func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
 		t.Fatalf("expected plan id in job context external_refs, got %#v", externalRefs)
 	}
 	assertRequiredCapabilities(t, jobPayload, []string{"material_balance", "ode"})
+	events, err := svc.Events(context.Background(), created.Job.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	auditCounts := map[string]int{}
+	for _, event := range events {
+		if event.EventType != "job.created" && event.EventType != "job.queued" {
+			continue
+		}
+		auditCounts[event.EventType]++
+		audit := eventAuditMap(t, event)
+		if audit["who"] != "dev-public" ||
+			audit["where"] != "POST /api/v1/simulation-checks" ||
+			audit["target_object"] != "ComputeJob" ||
+			audit["target_id"] != created.Job.JobID ||
+			audit["trace_id"] != "trace_milp_material_balance_minimal" {
+			t.Fatalf("unexpected simulation-check job audit envelope for %s: %#v", event.EventType, audit)
+		}
+	}
+	if auditCounts["job.created"] != 1 || auditCounts["job.queued"] != 1 {
+		t.Fatalf("simulation-check create should write one create and one queue audit event, got counts=%#v events=%#v", auditCounts, events)
+	}
 
 	rec = serveWithToken(t, server, http.MethodPost, "/api/v1/simulation-checks", "dev-public-token", validBytes)
 	if rec.Code != http.StatusOK {

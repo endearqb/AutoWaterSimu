@@ -1,10 +1,43 @@
 package compute
 
 import (
+	"bytes"
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
+
+func TestHTTPJobCollectionRequiresDeclaredMethods(t *testing.T) {
+	svc := testService(t)
+	auth, err := NewAuthenticator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(svc, auth, nil).Routes()
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/compute/jobs", bytes.NewReader(fixtureJobBytes(t)))
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("PUT /api/v1/compute/jobs got %d want %d: %s", rec.Code, http.StatusMethodNotAllowed, rec.Body.String())
+	}
+
+	jobs, err := svc.ListJobs(context.Background(), ListFilter{Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if jobs.TotalEstimate != 0 || len(jobs.Items) != 0 {
+		t.Fatalf("method-mismatched job collection route must not create jobs, got %#v", jobs)
+	}
+	events, _, total, err := svc.store.ListMutationAuditEvents(context.Background(), MutationAuditFilter{Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total != 0 || len(events) != 0 {
+		t.Fatalf("method-mismatched job collection route must not write mutation audit events, total=%d events=%#v", total, events)
+	}
+}
 
 func TestHTTPJobRoutesRequireDeclaredMethods(t *testing.T) {
 	svc := testService(t)

@@ -1,3 +1,33 @@
+# 2026-06-14 AutoWaterSimu Next P2 matrix red/yellow closeout TODO
+
+- [x] Re-read README First context for docs, docs/rebuild, docs/architecture, apps/api, internal compute, scripts, scripts/ci, security-smoke, and current P2 matrix.
+- [x] Confirm the next slice is closing P2 matrix red/yellow rows, not adding another summary, wrapper, hosted workflow entry, or generic service-test split.
+- [x] Add focused `POST /api/v1/compute/jobs` collection method/no-write coverage and include it in `security-smoke`.
+- [x] Align `security-smoke` selection with existing draft promotion and model catalog route-specific audit tests.
+- [x] Add direct simulation-check route-specific job create/queue audit assertions.
+- [x] Add HTTP scoped archive cross-scope no-write proof for artifact retention archive.
+- [x] Update matrix/current-state/development-plan/scripts CI context for the closeout.
+- [x] Run validation and record exact results.
+- [x] Commit and push this P2 closeout slice.
+
+## Plan
+
+- Keep this as selected mutation evidence closeout only.
+- Preserve production behavior, HTTP routes, auth scopes, schemas, OpenAPI, migrations, generated clients, store interfaces, and selected audit envelope shape.
+- Treat the matrix red/yellow rows as selected-smoke coverage gaps, not as full RBAC/all-mutation audit completion.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added focused method/no-write coverage for `PUT /api/v1/compute/jobs` and selected it in `scripts/ci/security-smoke.ps1`.
+- Added route-specific direct simulation-check `job.created` / `job.queued` audit assertions.
+- Added HTTP scoped archive cross-scope no-write coverage for artifact retention archive and selected it in `security-smoke`.
+- Added existing draft promotion and model catalog registration/status route-specific audit tests to `security-smoke`.
+- Updated `docs/architecture/compute-mutation-scope-matrix.md`, `docs/architecture/current-state.md`, `scripts/ci/README.md`, and the Certainty/Elegance Development Plan so the P2 matrix red/yellow rows are closed and the next priority is P3 simulation_core / worker / legacy backend boundary audit.
+- Validation passed: focused Go tests, `scripts\ci\security-smoke.ps1` (`status=passed`, 3 steps), `go test ./...` in `apps/api`, `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1` (0 import boundary violations), docs/rebuild P0/P1/P2/schema scan, `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), changed-file trailing-whitespace scan, and `git diff --check -- .`.
+- Remaining scope: full issuer/JWKS/RBAC, complete object-level tenant/project/site data scope, complete all-mutation audit, ontology-backed policy enforcement, P3 simulation_core/worker/backend boundary audit, hosted green evidence, legacy authenticated session, and complete golden scenarios remain future work.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-14 AutoWaterSimu Next P2 mutation scope gap matrix TODO
 
 - [x] Read the new attached priority reassessment and confirm the next slice is P2 mutation/data-scope gap matrix, not another service-test split, wrapper, or hosted workflow entry.
