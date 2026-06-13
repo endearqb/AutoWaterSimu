@@ -1,3 +1,30 @@
+# 2026-06-13 AutoWaterSimu Next contracts scope service test split TODO
+
+- [x] Continue the attached P0 service-test closeout by handling the next natural security/correctness aggregate after the named residual files were already split.
+- [x] Re-read README First context for `apps/api/internal/compute`, `scripts/ci`, Certainty/Elegance PRD/Plan, current task history, and security-smoke test-name usage.
+- [x] Confirm `service_contracts_scope_test.go` currently mixes draft confirmation read/plan/promotion scope and confirm-draft mutation no-write scope.
+- [x] Move `TestHTTPDraftConfirmationMutationTenantProjectSiteScope` into a focused mutation-scope test file without changing the test name or assertions.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, and assertion semantics.
+- [x] Update architecture test-file evidence and README First change log.
+- [x] Run focused draft confirmation scope tests, security-smoke, full apps/api Go tests, boundary checks, pr-fast, and diff checks.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Leave `TestHTTPDraftConfirmationTenantProjectSiteScope` in `service_contracts_scope_test.go` for read, constraint-plan, and promotion scope behavior.
+- Move `TestHTTPDraftConfirmationMutationTenantProjectSiteScope` to `service_contracts_mutation_scope_test.go` so confirm-draft mutation data-scope/no-write coverage is isolated and still selected by `security-smoke.ps1`.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, or CI regex unless verification shows the existing test-name selection no longer matches.
+- Do not touch or stage the existing untracked `docs/rebuild` files.
+
+## Review
+
+- Reduced `service_contracts_scope_test.go` to draft confirmation read, constraint-plan, and promotion tenant/project/site scope behavior.
+- Added `service_contracts_mutation_scope_test.go` focused on confirm-draft mutation tenant/project/site data-scope, cross-scope no-write denial, and same-scope persistence.
+- Preserved `TestHTTPDraftConfirmationTenantProjectSiteScope` and `TestHTTPDraftConfirmationMutationTenantProjectSiteScope`; the existing `scripts/ci/security-smoke.ps1` regex still selects both tests without script changes.
+- Updated `docs/architecture/compute-api.md` because the test-file evidence table did not list the contracts scope split rows.
+- Validation passed: focused draft confirmation scope tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, and `pr-fast`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next job route method guard TODO
 
 - [x] Read the attached elegance closeout priority note and verify current repository state against its P0 service-test split recommendation.

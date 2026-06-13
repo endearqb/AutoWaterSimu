@@ -157,6 +157,8 @@ Selected files from the latest audit:
 | `service_contracts_confirmations_test.go` | 76 | draft confirmation persistence/read/idempotency coverage |
 | `service_contracts_constraints_test.go` | 58 | constraint draft confirmation and advisory constraint application plan coverage |
 | `service_contracts_promotion_test.go` | 59 | approved Agent draft promotion and promotion audit coverage |
+| `service_contracts_scope_test.go` | 106 | draft confirmation read, constraint-plan, and promotion tenant/project/site scope coverage |
+| `service_contracts_mutation_scope_test.go` | 70 | confirm-draft mutation tenant/project/site data-scope and no-write denial coverage |
 | `service_contracts_http_helpers_test.go` | 39 | shared contracts endpoint HTTP and fixture helpers |
 | `service_simulation_registry_test.go` | 61 | simulation registry tenant/project/site read-scope coverage |
 | `service_simulation_registry_mutation_scope_test.go` | 61 | simulation registry mutation tenant/project/site scope coverage |
