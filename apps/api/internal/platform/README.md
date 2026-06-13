@@ -28,7 +28,7 @@
 
 ## 3. 维护约定
 
-1. 本目录 package 不应 import `apps/api/internal/compute`，避免平台层反向依赖领域层。
+1. 本目录 package 不应 import `apps/api/internal/compute` 或 `apps/api/internal/domain`，避免平台层反向依赖领域层或兼容 wiring 包。
 2. 只放可复用、无领域状态的 helper；领域服务继续留在对应 domain package。
 3. 新增 helper 时补充直接测试，避免只靠 HTTP handler 间接覆盖。
 
@@ -46,6 +46,7 @@
 不应该依赖：
 
 - `apps/api/internal/compute`。
+- `apps/api/internal/domain`。
 - legacy FastAPI、frontend、Desktop runtime。
 
 ## 6. 测试与验证

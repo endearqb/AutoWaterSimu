@@ -145,9 +145,9 @@ Invoke-DependencyRule `
 
 Invoke-DependencyRule `
     -Root $root `
-    -RuleName "apps-api-platform-must-not-import-compute-domain" `
+    -RuleName "apps-api-platform-must-not-import-compute-or-domain" `
     -RelativePaths @("apps/api/internal/platform") `
-    -Pattern 'apps[/\\]api[/\\]internal[/\\]compute|autowatersimu/apps/api/internal/compute' `
+    -Pattern 'apps[/\\]api[/\\]internal[/\\](compute|domain)|autowatersimu/apps/api/internal/(compute|domain)' `
     -Violations $violations
 
 Invoke-DependencyRule `

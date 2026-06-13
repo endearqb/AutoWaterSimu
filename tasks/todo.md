@@ -1,3 +1,26 @@
+# 2026-06-13 AutoWaterSimu Next compute boundary freeze TODO
+
+- [x] Continue after P0 service test split closeout by switching to the attached P1 `compute-boundary-freeze` priority.
+- [x] Re-read README First context for `scripts/`, `apps/api/internal`, platform/domain/compute boundaries, Certainty/Elegance PRD/Plan, and current worktree status.
+- [x] Strengthen `scripts/check-deps.ps1` so `apps/api/internal/platform` cannot import `apps/api/internal/domain` in addition to `apps/api/internal/compute`.
+- [x] Update long-lived README/architecture/plan context for the frozen platform/domain/compute dependency boundary.
+- [x] Run dependency boundary, architecture audit, focused platform/domain Go tests, full apps/api Go tests, `pr-fast`, and diff checks.
+
+## Plan
+
+- Keep this as a boundary-freeze guard, not package movement or service signature refactoring.
+- Do not modify production behavior, HTTP routes, schemas, OpenAPI, migrations, generated clients, auth scopes, or service constructors.
+- Treat `platform` as the lowest internal helper layer: compute may call domain/platform, domain may call platform when needed, but platform must not depend upward on either compute or domain.
+- Leave the existing untracked `docs/rebuild` items untouched.
+
+## Review
+
+- Strengthened `scripts/check-deps.ps1` so `apps/api/internal/platform` rejects imports of both `autowatersimu/apps/api/internal/compute` and `autowatersimu/apps/api/internal/domain`.
+- Updated `apps/api/internal/README.md`, `apps/api/internal/platform/README.md`, `scripts/README.md`, `docs/architecture/compute-api.md`, and the Certainty/Elegance development plan so the frozen platform/domain/compute boundary is explicit.
+- Kept production behavior, service constructors, HTTP routes, schemas, OpenAPI, migrations, generated clients, and auth scopes unchanged.
+- Validation passed: dependency boundary check, Compute API boundary audit, focused platform/domain/compute tests, full `apps/api` Go tests, `pr-fast`, and scoped diff-check.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next result explanation audit service test split TODO
 
 - [x] Continue the attached P0 closeout priority by handling `service_result_explanation_audit_test.go` after the model catalog scope split.

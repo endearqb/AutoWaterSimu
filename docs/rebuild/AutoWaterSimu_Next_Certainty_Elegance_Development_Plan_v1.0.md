@@ -531,7 +531,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Contract document validation response helper split (`apps/api/internal/platform/contracts`)
 - [x] Metrics snapshot / Prometheus renderer package split (`apps/api/internal/platform/metrics`)
 - [x] Metrics read-only collector package split (`apps/api/internal/platform/metrics`)
-- [x] Platform package reverse-dependency guard in `check-deps`
+- [x] Platform package compute/domain reverse-dependency guard in `check-deps`
 - [x] Agent constraint application plan helper package split (`apps/api/internal/domain/agent`)
 - [x] Agent proposed simulation request extraction helper package split (`apps/api/internal/domain/agent`)
 - [x] Agent draft confirmation envelope validation helper package split (`apps/api/internal/domain/agent`)

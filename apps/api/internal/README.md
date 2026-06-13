@@ -21,13 +21,13 @@
 |---|---|
 | `compute/` | Phase 4A compute job lifecycle skeleton |
 | `domain/` | 领域 package，目前包含 agent draft confirmation envelope validation / record data projection / constraint application plan / proposed request helpers、artifacts retention policy/action planner/upload metadata projection/archive metadata projection、evidence input/ref/risk parsing/object-scope matching/stored summary risk projection/result explanation refs/record data projection/readiness policy、jobs status/create idempotency/queued create projection/failed-worker fallback result/worker result completion/claim invariants/claim-heartbeat mutation plan/cancel-timeout state lifecycle、models built-in catalog document / catalog snapshot record data projection / benchmark_run record data projection / default parameter set status transition document mutation projection / benchmark case run job document、compute_result model_run extraction、model_run parsing/check、benchmark_run parsing、benchmark workflow gates、benchmark case promotion evidence/readiness、parameter-set status rules、promotion gate 与 production governance gate policy、simulation execution/simulation-check job document/process-graph helpers/record data projection 和 workers lifecycle domain service，不能反向依赖 compute compatibility package |
-| `platform/` | 平台级 audit、auth、config、contracts、HTTP、metrics/security 等横切 helper，不能反向依赖 compute domain |
+| `platform/` | 平台级 audit、auth、config、contracts、HTTP、metrics/security 等横切 helper，不能依赖 compute compatibility package 或 domain package |
 
 ## 3. 维护约定
 
 1. 外部 HTTP contract 由 `openapi/compute.openapi.json` 描述。
 2. internal package 重构不应改变 API 行为，除非同步 OpenAPI、client 和 tests。
-3. P0 阶段保持 package 简洁，领域稳定后再拆分；已经拆出的 domain package 和 platform helper 不应重新依赖 compute。
+3. P0 阶段保持 package 简洁，领域稳定后再拆分；已经拆出的 domain package 不应重新依赖 compute，platform helper 不应依赖 compute 或 domain。
 
 ## 4. 对外接口
 
