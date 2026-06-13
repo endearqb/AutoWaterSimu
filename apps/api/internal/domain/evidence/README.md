@@ -9,6 +9,7 @@
 - 从 compute job input JSON 提取 evidence package 所需的 input ref、input hash、process graph ref 和 simulation input ref。
 - 解析 job-scoped evidence ref 语法。
 - 从 job input 中定位内嵌 `simulation_input.v1` payload。
+- 表达 evidence object tenant/project/site scope 与 source job scope 的稳定匹配规则，用于 evidence-ref dereference。
 - 将 `compute_result.v1` 顶层 `risk_findings` 投影进 stored result summary 的稳定规则。
 - 从 result summary 中提取 `risk_findings`、risk evidence refs 和 production-readiness risk summary。
 - 从 `result_explanation.v1` 中提取顶层和 statement-level evidence refs。
@@ -43,6 +44,10 @@
 - `InputRefs`
 - `ParseRef`
 - `SimulationInputPayload`
+- `ObjectScope`
+- `ObjectScopeFromMetadata`
+- `PayloadScopeMatchesSource`
+- `ObjectScopeMatchesSource`
 - `StoredResultSummary`
 - `RiskFindingsFromSummary`
 - `RiskFindingEvidenceRefs`

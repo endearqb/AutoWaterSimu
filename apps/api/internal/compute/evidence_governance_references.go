@@ -50,7 +50,7 @@ func (svc *EvidenceGovernanceService) ResolveEvidenceReference(ctx context.Conte
 		}
 	case "simulation_input":
 		if payload := domainevidence.SimulationInputPayload(snapshot.Job.InputJSON, refID); payload != nil &&
-			evidencePayloadMatchesJobScope(snapshot.Job, payload) {
+			domainevidence.PayloadScopeMatchesSource(evidenceObjectScopeFromJob(snapshot.Job), payload) {
 			return EvidenceReferenceResolution{
 				JobID:       snapshot.Job.JobID,
 				EvidenceRef: evidenceRef,
@@ -130,7 +130,7 @@ func (svc *EvidenceGovernanceService) resolveProcessGraphEvidenceRef(ctx context
 	if err != nil {
 		return EvidenceReferenceResolution{}, false
 	}
-	if !evidenceObjectMatchesJobScope(job, record.TenantID, record.ProjectID, record.SiteID) {
+	if !domainevidence.ObjectScopeMatchesSource(evidenceObjectScopeFromJob(job), evidenceObjectScopeFromProcessGraph(record)) {
 		return EvidenceReferenceResolution{}, false
 	}
 	return EvidenceReferenceResolution{
@@ -143,25 +143,21 @@ func (svc *EvidenceGovernanceService) resolveProcessGraphEvidenceRef(ctx context
 	}, true
 }
 
-func evidencePayloadMatchesJobScope(job JobRecord, payload map[string]any) bool {
-	metadata := mapValue(payload, "metadata")
-	return evidenceObjectMatchesJobScope(
-		job,
-		stringValue(metadata, "tenant_id"),
-		stringValue(metadata, "project_id"),
-		stringValue(metadata, "site_id"),
-	)
+func evidenceObjectScopeFromJob(job JobRecord) domainevidence.ObjectScope {
+	return domainevidence.ObjectScope{
+		TenantID:  job.TenantID,
+		ProjectID: job.ProjectID,
+		SiteID:    job.SiteID,
+	}
 }
 
-func evidenceObjectMatchesJobScope(job JobRecord, tenantID, projectID, siteID string) bool {
-	if tenantID != "" && strings.TrimSpace(job.TenantID) != tenantID {
-		return false
+func evidenceObjectScopeFromProcessGraph(record *ProcessGraphRecord) domainevidence.ObjectScope {
+	if record == nil {
+		return domainevidence.ObjectScope{}
 	}
-	if projectID != "" && strings.TrimSpace(job.ProjectID) != projectID {
-		return false
+	return domainevidence.ObjectScope{
+		TenantID:  record.TenantID,
+		ProjectID: record.ProjectID,
+		SiteID:    record.SiteID,
 	}
-	if siteID != "" && strings.TrimSpace(job.SiteID) != siteID {
-		return false
-	}
-	return true
 }

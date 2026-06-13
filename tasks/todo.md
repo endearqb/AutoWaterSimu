@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next evidence object-scope domain helper TODO
+
+- [x] Re-read README First context for Compute API, domain/evidence, architecture, and Certainty/Elegance plan.
+- [x] Confirm this stage is a package-boundary move, not a new evidence wrapper or hosted workflow entry.
+- [x] Move evidence object tenant/project/site matching rules into `apps/api/internal/domain/evidence`.
+- [x] Keep compute responsible for `JobRecord` / `ProcessGraphRecord` adapters, store lookup, evidence-ref workflow, response DTOs, HTTP behavior, and public `Service` signatures.
+- [x] Add direct domain tests for object scope matching and embedded payload metadata scope matching.
+- [x] Update domain/compute/architecture/Certainty-Elegance context and README First change log.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Commit and push this evidence object-scope domain helper stage.
+
+## Plan
+
+- Treat this as a narrow domain helper movement slice, not a new security behavior, hosted evidence run, evidence wrapper, public API redesign, schema change, migration, generated client update, complete all-mutation audit, full object-level data-scope, OIDC/RBAC, release round trip, or complete golden scenarios.
+- Preserve existing process graph evidence-ref object-scope behavior and 404 shape; only move the stable matching rule into `domain/evidence`.
+- Keep compute-owned record adapters, store lookup, evidence-ref response mapping, job-scoped model catalog callbacks, HTTP behavior, and public `Service` method signatures unchanged.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Moved the stable tenant/project/site target matching rule from compute-local helper code into `apps/api/internal/domain/evidence`.
+- Added `ObjectScope`, `ObjectScopeFromMetadata`, `PayloadScopeMatchesSource`, and `ObjectScopeMatchesSource` plus direct domain tests for matching, mismatch, and legacy/global empty target scope behavior.
+- `EvidenceGovernanceService` now maps `JobRecord` and `ProcessGraphRecord` into domain scope values, while compute keeps store lookup, evidence-ref workflow, response mapping, HTTP behavior, and public service signatures.
+- Updated API/domain/compute/architecture/Certainty-Elegance context to distinguish this helper movement from the earlier evidence-ref object-scope behavior change.
+- Validation passed: focused evidence/domain tests, security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next service simulation test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, architecture docs, and current service test split history.

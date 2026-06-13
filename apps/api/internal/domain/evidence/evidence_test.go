@@ -82,6 +82,47 @@ func TestSimulationInputPayload(t *testing.T) {
 	}
 }
 
+func TestObjectScopeMatchesSource(t *testing.T) {
+	source := ObjectScope{TenantID: " tenant_a ", ProjectID: "project_a", SiteID: "site_a"}
+	if !ObjectScopeMatchesSource(source, ObjectScope{TenantID: "tenant_a", ProjectID: "project_a", SiteID: "site_a"}) {
+		t.Fatalf("expected matching scope to pass")
+	}
+	if !ObjectScopeMatchesSource(source, ObjectScope{}) {
+		t.Fatalf("empty target scope should remain legacy/global compatible")
+	}
+	if ObjectScopeMatchesSource(source, ObjectScope{TenantID: "tenant_b"}) {
+		t.Fatalf("cross-tenant target should fail")
+	}
+	if ObjectScopeMatchesSource(source, ObjectScope{ProjectID: "project_b"}) {
+		t.Fatalf("cross-project target should fail")
+	}
+	if ObjectScopeMatchesSource(source, ObjectScope{SiteID: "site_b"}) {
+		t.Fatalf("cross-site target should fail")
+	}
+}
+
+func TestPayloadScopeMatchesSource(t *testing.T) {
+	source := ObjectScope{TenantID: "tenant_a", ProjectID: "project_a", SiteID: "site_a"}
+	payload := map[string]any{
+		"metadata": map[string]any{
+			"tenant_id":  " tenant_a ",
+			"project_id": "project_a",
+			"site_id":    "site_a",
+		},
+	}
+	if !PayloadScopeMatchesSource(source, payload) {
+		t.Fatalf("matching payload metadata should pass")
+	}
+	payload["metadata"].(map[string]any)["site_id"] = "site_b"
+	if PayloadScopeMatchesSource(source, payload) {
+		t.Fatalf("cross-site payload metadata should fail")
+	}
+	delete(payload, "metadata")
+	if !PayloadScopeMatchesSource(source, payload) {
+		t.Fatalf("missing payload metadata should remain legacy/global compatible")
+	}
+}
+
 func TestStoredResultSummaryCopiesRiskFindingsIntoObjectSummary(t *testing.T) {
 	originalSummary := map[string]any{"converged": true}
 	riskFindings := []any{

@@ -23,6 +23,12 @@ type InputReferenceSummary struct {
 	SimulationInputRef map[string]any
 }
 
+type ObjectScope struct {
+	TenantID  string
+	ProjectID string
+	SiteID    string
+}
+
 type RiskSummary struct {
 	Total      int
 	BySeverity map[string]int
@@ -140,6 +146,31 @@ func SimulationInputPayload(input json.RawMessage, simulationInputID string) map
 		return nil
 	}
 	return payload
+}
+
+func ObjectScopeFromMetadata(metadata map[string]any) ObjectScope {
+	return ObjectScope{
+		TenantID:  stringValue(metadata, "tenant_id"),
+		ProjectID: stringValue(metadata, "project_id"),
+		SiteID:    stringValue(metadata, "site_id"),
+	}
+}
+
+func PayloadScopeMatchesSource(source ObjectScope, payload map[string]any) bool {
+	return ObjectScopeMatchesSource(source, ObjectScopeFromMetadata(mapValue(payload, "metadata")))
+}
+
+func ObjectScopeMatchesSource(source, target ObjectScope) bool {
+	if target.TenantID != "" && strings.TrimSpace(source.TenantID) != target.TenantID {
+		return false
+	}
+	if target.ProjectID != "" && strings.TrimSpace(source.ProjectID) != target.ProjectID {
+		return false
+	}
+	if target.SiteID != "" && strings.TrimSpace(source.SiteID) != target.SiteID {
+		return false
+	}
+	return true
 }
 
 // StoredResultSummary returns the summary value persisted for compute result reads.
