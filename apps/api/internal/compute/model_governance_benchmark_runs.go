@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
@@ -116,31 +115,37 @@ func (svc *ModelGovernanceService) benchmarkRunRecord(ctx context.Context, docum
 			return BenchmarkRunRecord{}, ValidationError("benchmark_run evidence_ref is not resolvable within job: " + ref)
 		}
 	}
-	executedAt, err := time.Parse(time.RFC3339Nano, required(stringValue(document, "executed_at"), "executed_at"))
+	recordData, err := domainmodels.BenchmarkRunRecordDataFromDocument(domainmodels.BenchmarkRunRecordDataInput{
+		Document:            document,
+		DefaultSourceSystem: defaultSourceSystem,
+		DefaultRequestedBy:  defaultRequestedBy,
+		CreatedAt:           svc.now(),
+	})
 	if err != nil {
-		return BenchmarkRunRecord{}, ValidationError("benchmark_run.executed_at must be RFC3339")
+		return BenchmarkRunRecord{}, ValidationError(err.Error())
 	}
-	payload := mustJSON(document)
-	metadata := mapValue(document, "metadata")
-	now := svc.now()
+	return benchmarkRunRecordFromDomainData(recordData), nil
+}
+
+func benchmarkRunRecordFromDomainData(recordData domainmodels.BenchmarkRunRecordData) BenchmarkRunRecord {
 	return BenchmarkRunRecord{
-		BenchmarkRunID:  required(stringValue(document, "benchmark_run_id"), "benchmark_run_id"),
-		SchemaVersion:   "benchmark_run.v1",
-		ModelKey:        modelKey,
-		ModelVersion:    modelVersion,
-		BenchmarkCaseID: benchmarkCaseID,
-		ParameterSetID:  parameterSetID,
-		ModelRunID:      modelRunID,
-		JobID:           jobID,
-		Status:          required(stringValue(document, "status"), "status"),
-		PayloadHash:     "sha256:" + SHA256Hex(payload),
-		Payload:         payload,
-		SourceSystem:    defaultString(stringValue(metadata, "source_system"), defaultString(defaultSourceSystem, "compute-api")),
-		RequestedBy:     defaultString(stringValue(document, "executed_by"), defaultString(defaultRequestedBy, "unknown")),
-		TenantID:        stringValue(metadata, "tenant_id"),
-		ProjectID:       stringValue(metadata, "project_id"),
-		Metadata:        mustJSON(metadata),
-		ExecutedAt:      executedAt.UTC(),
-		CreatedAt:       now,
-	}, nil
+		BenchmarkRunID:  recordData.BenchmarkRunID,
+		SchemaVersion:   recordData.SchemaVersion,
+		ModelKey:        recordData.ModelKey,
+		ModelVersion:    recordData.ModelVersion,
+		BenchmarkCaseID: recordData.BenchmarkCaseID,
+		ParameterSetID:  recordData.ParameterSetID,
+		ModelRunID:      recordData.ModelRunID,
+		JobID:           recordData.JobID,
+		Status:          recordData.Status,
+		PayloadHash:     recordData.PayloadHash,
+		Payload:         recordData.Payload,
+		SourceSystem:    recordData.SourceSystem,
+		RequestedBy:     recordData.RequestedBy,
+		TenantID:        recordData.TenantID,
+		ProjectID:       recordData.ProjectID,
+		Metadata:        recordData.Metadata,
+		ExecutedAt:      recordData.ExecutedAt,
+		CreatedAt:       recordData.CreatedAt,
+	}
 }

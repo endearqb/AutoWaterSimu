@@ -641,6 +641,165 @@ func TestBenchmarkRunEvidenceRefs(t *testing.T) {
 	}
 }
 
+func TestBenchmarkRunRecordDataFromDocument(t *testing.T) {
+	createdAt := time.Date(2026, 6, 13, 12, 30, 0, 0, time.UTC)
+	document := map[string]any{
+		"benchmark_run_id":  " br_1 ",
+		"model_key":         " material_balance ",
+		"model_version":     " material_balance.v1 ",
+		"benchmark_case_id": " bc_material_balance_minimal_v1 ",
+		"parameter_set_id":  " ps_material_balance_default_v1 ",
+		"model_run_id":      " mr_1 ",
+		"job_id":            " job_1 ",
+		"status":            " passed ",
+		"executed_at":       "2026-06-13T04:30:00-08:00",
+		"executed_by":       " reviewer ",
+		"metadata": map[string]any{
+			"source_system": " governance-admin ",
+			"tenant_id":     " tenant_a ",
+			"project_id":    " project_1 ",
+		},
+		"metrics": map[string]any{"rmse": 0.01},
+	}
+	record, err := BenchmarkRunRecordDataFromDocument(BenchmarkRunRecordDataInput{
+		Document:            document,
+		DefaultSourceSystem: "fallback-source",
+		DefaultRequestedBy:  "fallback-user",
+		CreatedAt:           createdAt,
+	})
+	if err != nil {
+		t.Fatalf("unexpected benchmark run record data error: %v", err)
+	}
+	payload, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if record.BenchmarkRunID != "br_1" ||
+		record.SchemaVersion != "benchmark_run.v1" ||
+		record.ModelKey != "material_balance" ||
+		record.ModelVersion != "material_balance.v1" ||
+		record.BenchmarkCaseID != "bc_material_balance_minimal_v1" ||
+		record.ParameterSetID != "ps_material_balance_default_v1" ||
+		record.ModelRunID != "mr_1" ||
+		record.JobID != "job_1" ||
+		record.Status != "passed" ||
+		record.PayloadHash != "sha256:"+sha256Hex(payload) ||
+		record.SourceSystem != "governance-admin" ||
+		record.RequestedBy != "reviewer" ||
+		record.TenantID != "tenant_a" ||
+		record.ProjectID != "project_1" ||
+		!record.CreatedAt.Equal(createdAt) {
+		t.Fatalf("unexpected benchmark run record data: %#v", record)
+	}
+	if got, want := record.ExecutedAt.Format(time.RFC3339), "2026-06-13T12:30:00Z"; got != want {
+		t.Fatalf("unexpected executed_at: got %s want %s", got, want)
+	}
+	var recordPayload map[string]any
+	if err := json.Unmarshal(record.Payload, &recordPayload); err != nil {
+		t.Fatalf("record payload should be JSON: %v", err)
+	}
+	if recordPayload["benchmark_run_id"] != " br_1 " {
+		t.Fatalf("record payload should preserve source document: %#v", recordPayload)
+	}
+	var metadata map[string]any
+	if err := json.Unmarshal(record.Metadata, &metadata); err != nil {
+		t.Fatalf("record metadata should be JSON: %v", err)
+	}
+	if metadata["source_system"] != " governance-admin " || metadata["tenant_id"] != " tenant_a " {
+		t.Fatalf("record metadata should preserve source metadata: %#v", metadata)
+	}
+}
+
+func TestBenchmarkRunRecordDataFromDocumentDefaultsMetadata(t *testing.T) {
+	createdAt := time.Date(2026, 6, 13, 12, 45, 0, 0, time.UTC)
+	document := map[string]any{
+		"benchmark_run_id":  "br_defaults",
+		"model_key":         "material_balance",
+		"model_version":     "material_balance.v1",
+		"benchmark_case_id": "bc_material_balance_minimal_v1",
+		"parameter_set_id":  "ps_material_balance_default_v1",
+		"model_run_id":      "mr_defaults",
+		"job_id":            "job_defaults",
+		"status":            "passed",
+		"executed_at":       "2026-06-13T12:45:00Z",
+	}
+	record, err := BenchmarkRunRecordDataFromDocument(BenchmarkRunRecordDataInput{
+		Document:            document,
+		DefaultSourceSystem: "system-source",
+		DefaultRequestedBy:  "system-user",
+		CreatedAt:           createdAt,
+	})
+	if err != nil {
+		t.Fatalf("unexpected benchmark run record data error: %v", err)
+	}
+	if record.SourceSystem != "system-source" ||
+		record.RequestedBy != "system-user" ||
+		record.TenantID != "" ||
+		record.ProjectID != "" ||
+		string(record.Metadata) != "null" ||
+		!record.CreatedAt.Equal(createdAt) {
+		t.Fatalf("unexpected default benchmark run record data: %#v", record)
+	}
+
+	document["metadata"] = map[string]any{}
+	record, err = BenchmarkRunRecordDataFromDocument(BenchmarkRunRecordDataInput{Document: document})
+	if err != nil {
+		t.Fatalf("unexpected benchmark run record data error: %v", err)
+	}
+	if record.SourceSystem != "compute-api" || record.RequestedBy != "unknown" || string(record.Metadata) != "{}" {
+		t.Fatalf("unexpected empty metadata defaults: %#v", record)
+	}
+}
+
+func TestBenchmarkRunRecordDataFromDocumentRequiresFields(t *testing.T) {
+	valid := map[string]any{
+		"benchmark_run_id":  "br_required",
+		"model_key":         "material_balance",
+		"model_version":     "material_balance.v1",
+		"benchmark_case_id": "bc_material_balance_minimal_v1",
+		"parameter_set_id":  "ps_material_balance_default_v1",
+		"model_run_id":      "mr_required",
+		"job_id":            "job_required",
+		"status":            "passed",
+		"executed_at":       "2026-06-13T12:45:00Z",
+	}
+	for _, tc := range []struct {
+		name    string
+		field   string
+		message string
+	}{
+		{name: "benchmark_run_id", field: "benchmark_run_id", message: "benchmark_run_id is required"},
+		{name: "status", field: "status", message: "status is required"},
+		{name: "model_key", field: "model_key", message: "model_key is required"},
+		{name: "model_version", field: "model_version", message: "model_version is required"},
+		{name: "benchmark_case_id", field: "benchmark_case_id", message: "benchmark_case_id is required"},
+		{name: "parameter_set_id", field: "parameter_set_id", message: "parameter_set_id is required"},
+		{name: "model_run_id", field: "model_run_id", message: "model_run_id is required"},
+		{name: "job_id", field: "job_id", message: "job_id is required"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			document := copyStringAnyMap(valid)
+			delete(document, tc.field)
+			_, err := BenchmarkRunRecordDataFromDocument(BenchmarkRunRecordDataInput{Document: document})
+			if err == nil || err.Error() != tc.message {
+				t.Fatalf("unexpected required field error: %v", err)
+			}
+		})
+	}
+	invalidTime := copyStringAnyMap(valid)
+	invalidTime["executed_at"] = "not-a-time"
+	_, err := BenchmarkRunRecordDataFromDocument(BenchmarkRunRecordDataInput{Document: invalidTime})
+	if err == nil || err.Error() != "benchmark_run.executed_at must be RFC3339" {
+		t.Fatalf("unexpected invalid executed_at error: %v", err)
+	}
+	missingTime := copyStringAnyMap(valid)
+	delete(missingTime, "executed_at")
+	_, err = BenchmarkRunRecordDataFromDocument(BenchmarkRunRecordDataInput{Document: missingTime})
+	if err == nil || err.Error() != "executed_at is required" {
+		t.Fatalf("unexpected missing executed_at error: %v", err)
+	}
+}
+
 func TestParameterSetStatuses(t *testing.T) {
 	valid := []string{
 		ParameterSetStatusDraft,

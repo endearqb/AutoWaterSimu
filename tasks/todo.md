@@ -1,3 +1,30 @@
+# 2026-06-13 AutoWaterSimu Next benchmark run record data projection TODO
+
+- [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.
+- [x] Confirm this stage is real package-boundary movement, not another evidence wrapper, hosted workflow entry, or same-package file split.
+- [x] Move stable `benchmark_run.v1` record data projection into `apps/api/internal/domain/models`.
+- [x] Keep compute responsible for schema validation, catalog lookup, benchmark case admission, model_run identity/hash checks, evidence resolution, scoped mutation checks, store writes, audit envelopes, HTTP mapping, OpenAPI, contracts, migrations, generated clients, and public service signatures.
+- [x] Add direct domain tests for benchmark run record projection, metadata/defaults, required fields, and executed_at parsing.
+- [x] Update API/domain/compute/architecture/Certainty-Elegance context and README First change log.
+- [x] Run focused tests, full API tests, boundary/dependency checks, stale-text scan, trailing-whitespace scan, and diff-check.
+- [x] Commit and push this benchmark run record data projection stage.
+
+## Plan
+
+- Treat this as a narrow `domain/models` helper extraction, not a full model governance package migration.
+- Preserve existing benchmark_run registration behavior, model_run/evidence checks, scoped mutation data-scope, selected mutation audit events, persistence implementations, response DTOs, HTTP routes, OpenAPI, contracts, migrations, generated clients, and auth scopes.
+- Adapt the neutral domain record data back to the existing compute `BenchmarkRunRecord`.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Added `BenchmarkRunRecordDataInput`, `BenchmarkRunRecordData`, and `BenchmarkRunRecordDataFromDocument` under `apps/api/internal/domain/models`.
+- `ModelGovernanceService.benchmarkRunRecord` now validates the schema/workflow in compute, calls the domain projection helper after catalog/model_run/evidence checks, and adapts the neutral record data back to the existing compute `BenchmarkRunRecord`.
+- Kept benchmark_run registration behavior, scoped mutation data-scope, selected mutation audit envelopes, persistence implementations, HTTP/OpenAPI/schema/migration/generated client surfaces, and public service signatures unchanged.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, architecture/compute-api, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: direct domain helper tests, focused compute benchmark_run/model_run regression tests, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, stale-text scan, trailing-whitespace scan, and scoped diff-check.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next model run service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, architecture test evidence, and current `service_test.go` split history.
