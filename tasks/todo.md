@@ -1,3 +1,29 @@
+# 2026-06-14 AutoWaterSimu Next compute boundary import guard TODO
+
+- [x] Read the attached priority note and confirm P0 service-test split status before continuing.
+- [x] Confirm `service_job_scope_test.go` and `service_worker_audit_test.go` are already single-topic focused files in current HEAD, so further same-package test splitting would be low value.
+- [x] Continue with the attached P1 priority by strengthening the Compute API boundary audit instead of adding another evidence summary.
+- [x] Extend `scripts/audit-compute-api-boundary.ps1` to parse Go imports and fail if `internal/domain/*` imports compute or `internal/platform/*` imports compute/domain.
+- [x] Update stable README / architecture / development-plan notes for the new boundary guard.
+- [x] Run boundary/dependency checks, focused Go package tests, pr-fast, whitespace scan, and diff-check.
+- [x] Commit and push this P1 boundary-freeze guard.
+
+## Plan
+
+- Keep this as an executable boundary guard only.
+- Preserve production behavior, public service signatures, HTTP routes, auth scopes, schemas, OpenAPI, migrations, generated clients, store interfaces, and audit event shapes.
+- Reuse the existing `check-deps` rule intent, but make the Compute API boundary audit evidence fail on the same reverse-import drift so package-boundary evidence is self-contained.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added a read-only import parser to `scripts/audit-compute-api-boundary.ps1`.
+- The boundary audit now reports import boundary rules/violations and fails when domain imports compute or platform imports compute/domain.
+- Confirmed the attached P0 service-test files are already focused: `service_job_scope_test.go` remains job read/list scope only, and `service_worker_audit_test.go` remains worker claim/heartbeat audit only.
+- Updated scripts/compute README, Compute API architecture, and the Certainty/Elegance development plan for the new self-contained boundary guard.
+- Validation passed: Compute API boundary audit, dependency boundary check, domain/platform/compute Go tests, `pr-fast`, changed-file trailing-whitespace scan, and `git diff --check -- .`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-14 AutoWaterSimu Next model governance audit state domain split TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current TODO, latest change log, and compute/domain models README before continuing.

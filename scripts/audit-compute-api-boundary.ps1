@@ -59,6 +59,91 @@ function Get-MissingExpectedGoPackageDirs {
     return @($expected | Where-Object { $_ -notin $PackageDirs })
 }
 
+function ConvertTo-RepoRelativePath {
+    param(
+        [string]$Root,
+        [string]$Path
+    )
+    $rootPath = (Resolve-Path $Root).Path.TrimEnd([char[]]@("\", "/"))
+    $fullPath = (Resolve-Path $Path).Path
+    if ($fullPath.StartsWith($rootPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ($fullPath.Substring($rootPath.Length).TrimStart([char[]]@("\", "/")) -replace '\\', '/')
+    }
+    return ($fullPath -replace '\\', '/')
+}
+
+function Get-GoImportEntries {
+    param(
+        [string]$Root,
+        [string[]]$Paths
+    )
+    $entries = [System.Collections.Generic.List[object]]::new()
+    foreach ($path in $Paths) {
+        $lines = @(Get-Content -LiteralPath $path)
+        $relativePath = ConvertTo-RepoRelativePath -Root $Root -Path $path
+        $inImportBlock = $false
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = [string]$lines[$i]
+            if ($inImportBlock) {
+                if ($line -match '^\s*\)') {
+                    $inImportBlock = $false
+                    continue
+                }
+                foreach ($match in [regex]::Matches($line, '"([^"]+)"')) {
+                    $entries.Add([ordered]@{
+                        file = $relativePath
+                        line = $i + 1
+                        import = $match.Groups[1].Value
+                    }) | Out-Null
+                }
+                continue
+            }
+            if ($line -match '^\s*import\s*\(') {
+                $inImportBlock = $true
+                continue
+            }
+            if ($line -match '^\s*import\s+(?:[._A-Za-z][._A-Za-z0-9]*\s+)?\"([^\"]+)\"') {
+                $entries.Add([ordered]@{
+                    file = $relativePath
+                    line = $i + 1
+                    import = $Matches[1]
+                }) | Out-Null
+            }
+        }
+    }
+    return @($entries)
+}
+
+function Get-ImportBoundaryViolations {
+    param(
+        [string]$Root,
+        [string[]]$DomainPaths,
+        [string[]]$PlatformPaths
+    )
+    $violations = [System.Collections.Generic.List[object]]::new()
+    foreach ($entry in @(Get-GoImportEntries -Root $Root -Paths $DomainPaths)) {
+        if ($entry["import"] -match '^autowatersimu/apps/api/internal/compute($|/)') {
+            $violations.Add([ordered]@{
+                rule = "domain-must-not-import-compute"
+                file = $entry["file"]
+                line = $entry["line"]
+                import = $entry["import"]
+            }) | Out-Null
+        }
+    }
+    foreach ($entry in @(Get-GoImportEntries -Root $Root -Paths $PlatformPaths)) {
+        if ($entry["import"] -match '^autowatersimu/apps/api/internal/(compute|domain)($|/)') {
+            $violations.Add([ordered]@{
+                rule = "platform-must-not-import-compute-or-domain"
+                file = $entry["file"]
+                line = $entry["line"]
+                import = $entry["import"]
+            }) | Out-Null
+        }
+    }
+    return @($violations)
+}
+
 function Get-StoreInterfaces {
     param([string]$StorePath)
     $interfaces = @{}
@@ -427,19 +512,27 @@ $serviceLayerFiles = @(
     }
 )
 $domainLayerFiles = @()
+$domainImportFiles = @()
 if (Test-Path -LiteralPath $domainDir) {
+    $domainImportFiles = @(
+        Get-ChildItem -LiteralPath $domainDir -Recurse -File -Filter "*.go" | Sort-Object FullName
+    )
     $domainLayerFiles = @(
-        Get-ChildItem -LiteralPath $domainDir -Recurse -File -Filter "*.go" | Where-Object {
+        $domainImportFiles | Where-Object {
             -not $_.Name.EndsWith("_test.go")
-        } | Sort-Object FullName
+        }
     )
 }
 $platformLayerFiles = @()
+$platformImportFiles = @()
 if (Test-Path -LiteralPath $platformDir) {
+    $platformImportFiles = @(
+        Get-ChildItem -LiteralPath $platformDir -Recurse -File -Filter "*.go" | Sort-Object FullName
+    )
     $platformLayerFiles = @(
-        Get-ChildItem -LiteralPath $platformDir -Recurse -File -Filter "*.go" | Where-Object {
+        $platformImportFiles | Where-Object {
             -not $_.Name.EndsWith("_test.go")
-        } | Sort-Object FullName
+        }
     )
 }
 $serviceAuditFiles = @($serviceLayerFiles + $domainLayerFiles + $platformLayerFiles)
@@ -470,6 +563,7 @@ $serviceConstructorViolations = @(
 )
 $internalPackageDirs = @(Get-GoPackageDirs -InternalRoot $internalDir)
 $missingExpectedPackageDirs = @(Get-MissingExpectedGoPackageDirs -PackageDirs $internalPackageDirs)
+$importBoundaryViolations = @(Get-ImportBoundaryViolations -Root $root -DomainPaths @($domainImportFiles | ForEach-Object { $_.FullName }) -PlatformPaths @($platformImportFiles | ForEach-Object { $_.FullName }))
 
 $domains = @{}
 foreach ($method in $storeMethods) {
@@ -529,6 +623,22 @@ $report = [ordered]@{
         internal_root = "apps/api/internal"
         package_dirs = $internalPackageDirs
         missing_expected_package_dirs = $missingExpectedPackageDirs
+        import_boundary_rules = @(
+            [ordered]@{
+                rule = "domain-must-not-import-compute"
+                scanned_files = $domainImportFiles.Count
+                forbidden_imports = @("autowatersimu/apps/api/internal/compute")
+            },
+            [ordered]@{
+                rule = "platform-must-not-import-compute-or-domain"
+                scanned_files = $platformImportFiles.Count
+                forbidden_imports = @(
+                    "autowatersimu/apps/api/internal/compute",
+                    "autowatersimu/apps/api/internal/domain"
+                )
+            }
+        )
+        import_boundary_violations = $importBoundaryViolations
     }
     file_stats = $fileStats
     large_files = $largeFiles
@@ -547,6 +657,7 @@ $report = [ordered]@{
         "This is a read-only architecture audit; it verifies that the aggregate Store embeds the expected domain interfaces.",
         "Public Service constructors can still accept the aggregate Store while narrowed internal services receive domain-specific interfaces.",
         "Internal domain service constructors must not accept aggregate Store and should expose at most 3 store-like constructor parameters.",
+        "Domain packages must not import the compute compatibility package; platform packages must not import compute or domain packages.",
         "The package movement guardrail expects platform helpers under apps/api/internal/platform, mutation audit envelope helpers under apps/api/internal/platform/audit, Agent draft proposed request and constraint draft advisory helpers under apps/api/internal/domain/agent, artifact retention policy, upload/archive metadata projection, and compact audit state projection helpers under apps/api/internal/domain/artifacts, evidence input/ref/risk parsing, result explanation ref extraction, record/audit state projection, and readiness policy helpers under apps/api/internal/domain/evidence, jobs status, failed-worker fallback result, and claim matching invariants under apps/api/internal/domain/jobs, built-in model catalog document shape, compact audit state projection, benchmark case run job document shape, model_run parsing, model_run identity/hash checks, benchmark_run evidence-ref parsing, benchmark case readiness, parameter-set status invariants, and promotion gate policy under apps/api/internal/domain/models, simulation execution profile, simulation check job document assembly, and process graph projection helpers under apps/api/internal/domain/simulation, and worker lifecycle under apps/api/internal/domain/workers.",
         "Large file thresholds are advisory: non-test files >800 lines and test files >1500 lines."
     )
@@ -561,7 +672,8 @@ Write-Host "Store embedded interfaces: $($storeEmbeddedInterfaces.Count)"
 Write-Host "Domain groups: $($domainSummaries.Count)"
 Write-Host "Service constructors audited: $($serviceConstructorBoundaries.Count)"
 Write-Host "Internal Go package dirs: $($internalPackageDirs.Count)"
-if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassified.Count -gt 0 -or $missingExpectedStoreEmbeds.Count -gt 0 -or $serviceConstructorViolations.Count -gt 0 -or $missingExpectedPackageDirs.Count -gt 0) {
+Write-Host "Import boundary violations: $($importBoundaryViolations.Count)"
+if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassified.Count -gt 0 -or $missingExpectedStoreEmbeds.Count -gt 0 -or $serviceConstructorViolations.Count -gt 0 -or $missingExpectedPackageDirs.Count -gt 0 -or $importBoundaryViolations.Count -gt 0) {
     if ($missingMemory.Count -gt 0) {
         Write-Host "Missing MemoryStore methods: $($missingMemory -join ', ')"
     }
@@ -580,6 +692,12 @@ if ($missingMemory.Count -gt 0 -or $missingPostgres.Count -gt 0 -or $unclassifie
     }
     if ($missingExpectedPackageDirs.Count -gt 0) {
         Write-Host "Missing expected internal Go package dirs: $($missingExpectedPackageDirs -join ', ')"
+    }
+    if ($importBoundaryViolations.Count -gt 0) {
+        Write-Host "Import boundary violations:"
+        foreach ($violation in $importBoundaryViolations) {
+            Write-Host "- [$($violation["rule"])] $($violation["file"]):$($violation["line"]) imports $($violation["import"])"
+        }
     }
     exit 1
 }

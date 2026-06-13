@@ -43,7 +43,7 @@ Current draft confirmation delta: `domain/agent` also projects optional `site_id
 
 `apps/api/internal/domain/workers` owns worker register / claim / heartbeat request normalization and response assembly behind a minimal worker store interface. `apps/api/internal/compute` adapts the existing `WorkerStore` and job state projection into that package so HTTP routes and storage behavior stay unchanged.
 
-`apps/api/internal/compute` may call these domain/platform packages, and domain packages may call platform helpers when they do not carry domain state. `internal/domain/*` must not import compute compatibility types, and `internal/platform/*` must not import either compute or domain packages. The boundary audit records internal Go package dirs and currently expects:
+`apps/api/internal/compute` may call these domain/platform packages, and domain packages may call platform helpers when they do not carry domain state. `internal/domain/*` must not import compute compatibility types, and `internal/platform/*` must not import either compute or domain packages. The boundary audit records internal Go package dirs and now fails on those reverse-import violations; it currently expects:
 
 | Package Dir | Role |
 |---|---|
@@ -63,7 +63,7 @@ Current draft confirmation delta: `domain/agent` also projects optional `site_id
 | `platform/metrics` | Metrics snapshot shape, read-only collector, and Prometheus renderer |
 
 This is still an early domain package movement step, following the low-coupling platform auth, config, contracts, HTTP, and metrics helper movement. Remaining package movement includes full jobs lifecycle plus full artifact lifecycle, full model governance, full evidence governance, full simulation input/process graph metadata service movement, full agent draft workflow movement, and full result explanation workflow movement.
-`scripts/check-deps.ps1` enforces reverse-dependency rules so `apps/api/internal/domain` cannot import `apps/api/internal/compute`, and `apps/api/internal/platform` cannot import either `apps/api/internal/compute` or `apps/api/internal/domain`.
+`scripts/check-deps.ps1` also enforces reverse-dependency rules so `apps/api/internal/domain` cannot import `apps/api/internal/compute`, and `apps/api/internal/platform` cannot import either `apps/api/internal/compute` or `apps/api/internal/domain`. The duplicated guard is intentional: `check-deps` protects the whole repository dependency graph, while the Compute API boundary audit keeps the compute/domain/platform package freeze visible in its own evidence JSON.
 
 Selected files from the latest audit:
 
