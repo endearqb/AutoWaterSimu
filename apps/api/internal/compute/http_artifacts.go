@@ -8,13 +8,12 @@ import (
 )
 
 func (server *Server) artifactByID(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodGet) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "artifact:read")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	artifactID := strings.TrimPrefix(r.URL.Path, "/api/v1/artifacts/")
@@ -38,13 +37,12 @@ func (server *Server) artifactByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) artifactRetentionSweep(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "artifact:admin")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	request, err := readArtifactRetentionSweepRequest(r)

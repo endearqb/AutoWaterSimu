@@ -75,13 +75,12 @@ func handleBenchmarkRuns(server *Server, w http.ResponseWriter, r *http.Request,
 }
 
 func (server *Server) benchmarkRunByID(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodGet) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:read")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	benchmarkRunID := strings.TrimPrefix(r.URL.Path, "/api/v1/benchmark-runs/")

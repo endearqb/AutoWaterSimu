@@ -7,12 +7,11 @@ import (
 )
 
 func (server *Server) validateContract(w http.ResponseWriter, r *http.Request) {
-	if _, err := server.auth.Principal(r, "job:create"); err != nil {
-		WriteError(w, err)
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
 		return
 	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if _, err := server.auth.Principal(r, "job:create"); err != nil {
+		WriteError(w, err)
 		return
 	}
 	bytes, err := io.ReadAll(r.Body)
@@ -29,13 +28,12 @@ func (server *Server) validateContract(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) confirmDraft(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:create")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	bytes, err := io.ReadAll(r.Body)
@@ -65,6 +63,9 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	confirmationID := parts[0]
+	if rejectDraftConfirmationRouteMethod(w, r.Method, parts) {
+		return
+	}
 	if len(parts) == 1 && r.Method == http.MethodGet {
 		principal, err := server.auth.Principal(r, "job:read")
 		if err != nil {
@@ -131,4 +132,17 @@ func (server *Server) draftConfirmationByID(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
+}
+
+func rejectDraftConfirmationRouteMethod(w http.ResponseWriter, method string, parts []string) bool {
+	switch {
+	case len(parts) == 1:
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodGet)
+	case len(parts) == 2 && parts[1] == "constraint-application-plan":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodGet)
+	case len(parts) == 2 && parts[1] == "promote-simulation-check":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodPost)
+	default:
+		return false
+	}
 }

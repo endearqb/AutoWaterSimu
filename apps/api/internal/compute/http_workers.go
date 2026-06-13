@@ -7,13 +7,12 @@ import (
 )
 
 func (server *Server) registerWorker(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "worker:register")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	var request map[string]any

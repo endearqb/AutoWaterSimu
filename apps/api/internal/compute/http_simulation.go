@@ -8,13 +8,12 @@ import (
 )
 
 func (server *Server) simulationInputs(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:create")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	bytes, err := io.ReadAll(r.Body)
@@ -32,13 +31,12 @@ func (server *Server) simulationInputs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) simulationInputByID(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodGet) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:read")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	simulationInputID := strings.TrimPrefix(r.URL.Path, "/api/v1/simulation-inputs/")
@@ -59,13 +57,12 @@ func (server *Server) simulationInputByID(w http.ResponseWriter, r *http.Request
 }
 
 func (server *Server) processGraphs(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:create")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	bytes, err := io.ReadAll(r.Body)
@@ -83,13 +80,12 @@ func (server *Server) processGraphs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) processGraphByID(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodGet) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:read")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	processGraphID := strings.TrimPrefix(r.URL.Path, "/api/v1/process-graphs/")
@@ -115,13 +111,12 @@ func (server *Server) processGraphByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) simulationChecks(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:create")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	bytes, err := io.ReadAll(r.Body)

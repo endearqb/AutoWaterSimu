@@ -53,6 +53,9 @@ func (server *Server) modelCatalog(w http.ResponseWriter, r *http.Request) {
 func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) {
 	rest := strings.TrimPrefix(r.URL.Path, "/api/v1/model-catalog/")
 	parts := strings.Split(strings.Trim(rest, "/"), "/")
+	if rejectModelCatalogRouteMethod(w, r.Method, parts) {
+		return
+	}
 	if len(parts) == 1 && parts[0] == "snapshots" && r.Method == http.MethodGet {
 		handleModelCatalogSnapshots(server, w, r)
 		return
@@ -82,6 +85,27 @@ func (server *Server) modelCatalogByKey(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
+}
+
+func rejectModelCatalogRouteMethod(w http.ResponseWriter, method string, parts []string) bool {
+	switch {
+	case len(parts) == 1 && parts[0] == "snapshots":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodGet)
+	case len(parts) == 1:
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodGet)
+	case len(parts) == 5 && parts[1] == "versions" && parts[3] == "default-parameter-set" && parts[4] == "status":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodPost)
+	case len(parts) == 5 && parts[1] == "versions" && parts[3] == "default-parameter-set" && parts[4] == "promotion-plan":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodGet)
+	case len(parts) == 5 && parts[1] == "versions" && parts[3] == "default-parameter-set" && parts[4] == "promote-approved":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodPost)
+	case len(parts) == 6 && parts[1] == "versions" && parts[3] == "benchmark-cases" && parts[5] == "schedule-run":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodPost)
+	case len(parts) == 4 && parts[1] == "versions" && parts[3] == "benchmark-runs":
+		return rejectUndeclaredHTTPMethod(w, method, http.MethodGet, http.MethodPost)
+	default:
+		return false
+	}
 }
 
 func handleModelCatalogSnapshots(server *Server, w http.ResponseWriter, r *http.Request) {

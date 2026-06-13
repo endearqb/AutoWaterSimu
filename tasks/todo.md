@@ -1,3 +1,32 @@
+# 2026-06-13 AutoWaterSimu Next API-wide method guard TODO
+
+- [x] Continue after the contracts service-test split by switching back to a P2 security/correctness closeout slice.
+- [x] Re-read README First context for `apps/api/internal/compute`, `scripts/ci`, Certainty/Elegance PRD/Plan, current task history, and existing method guard tests.
+- [x] Confirm concrete gap: several non-job/non-worker HTTP handlers still authenticate or route-fallthrough before rejecting undeclared HTTP methods.
+- [x] Add a shared declared-method helper and apply it to single-route contract, simulation registry/check, artifact, worker registration, model run, benchmark run, draft confirmation, and model catalog route groups.
+- [x] Add regression coverage proving method mismatches on declared routes return 405 before auth/service calls.
+- [x] Include the regression in `scripts/ci/security-smoke.ps1` and update long-lived security/architecture context.
+- [x] Run focused method tests, security smoke, full apps/api Go tests, boundary checks, pr-fast, and diff checks.
+
+## Plan
+
+- Treat this as an HTTP contract/security hardening slice, not a schema/OpenAPI/client change.
+- Preserve all declared GET/POST behavior, auth scopes, tenant/project/site data-scope checks, audit envelopes, store interfaces, migrations, and generated clients.
+- Return 405 for method mismatches on recognized non-job/non-worker routes before auth/service calls.
+- Keep unknown subroutes as 404.
+- Leave the existing untracked `docs/rebuild` items untouched.
+
+## Review
+
+- Added `http_methods.go` with a shared declared-method guard helper.
+- Moved method checks before auth/service calls for contract validation/confirm-draft, simulation registry/check, artifact download/retention sweep, worker registration, benchmark_run read, and model_run read/list handlers.
+- Added path-aware 405 behavior for known draft confirmation subroutes and model catalog subroutes while keeping unknown subroutes as 404.
+- Added `TestHTTPDeclaredMethodGuardsRunBeforeAuth`, proving wrong methods on recognized routes return 405 without Authorization and do not write mutation audit events.
+- Included the new regression in `scripts/ci/security-smoke.ps1` and added the `api_declared_method_guard` evidence field.
+- Updated API, Compute API, security-smoke, architecture, and Certainty/Elegance context to record the API-wide declared-method guard boundary.
+- Validation passed: focused method tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, and `pr-fast`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next contracts scope service test split TODO
 
 - [x] Continue the attached P0 service-test closeout by handling the next natural security/correctness aggregate after the named residual files were already split.

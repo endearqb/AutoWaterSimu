@@ -129,16 +129,17 @@ Selected files from the latest audit:
 | `postgres.go` | 85 | PostgreSQL store entrypoint, open/close, and migration apply/check helpers |
 | `postgres_metrics.go` | 58 | PostgreSQL metrics snapshot query |
 | `postgres_sql_helpers.go` | 12 | shared PostgreSQL row scanner interface and nullable-string helper |
-| `http_model_catalog.go` | 144 | model catalog root, scoped snapshot list, model lookup, and model-catalog subroute dispatch |
-| `http_benchmark_runs.go` | 113 | benchmark run register/read/list HTTP handlers/helpers and job-scoped read authorization |
+| `http_model_catalog.go` | 177 | model catalog root, scoped snapshot list, model lookup, and model-catalog subroute dispatch with declared-method guard |
+| `http_benchmark_runs.go` | 118 | benchmark run register/read/list HTTP handlers/helpers and job-scoped read authorization |
 | `http_model_parameters.go` | 74 | default parameter set status, promotion plan, and promote-approved HTTP handlers/helpers |
-| `http_model_runs.go` | 66 | model run read/list HTTP handlers/helpers |
+| `http_model_runs.go` | 95 | model run read/list HTTP handlers/helpers |
 | `http_model_benchmark_cases.go` | 42 | benchmark case schedule-run HTTP handler/helper |
-| `http_jobs.go` | 258 | compute job HTTP handlers, job subroutes, list filter, and job data-scope helper |
-| `http_simulation.go` | 148 | simulation input, process graph, and simulation-check HTTP handlers/helpers |
-| `http_workers.go` | 124 | worker register/claim/heartbeat/artifact/completion HTTP handlers/helpers |
-| `http_contracts.go` | 129 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
-| `http_artifacts.go` | 86 | artifact download and retention sweep HTTP handlers/helpers |
+| `http_jobs.go` | 291 | compute job HTTP handlers, job subroutes, list filter, and job data-scope helper |
+| `http_simulation.go` | 146 | simulation input, process graph, and simulation-check HTTP handlers/helpers |
+| `http_workers.go` | 159 | worker register/claim/heartbeat/artifact/completion HTTP handlers/helpers |
+| `http_contracts.go` | 148 | contract validation, draft confirmation, constraint plan, and promotion HTTP handlers |
+| `http_artifacts.go` | 85 | artifact download and retention sweep HTTP handlers/helpers |
+| `http_methods.go` | 13 | shared declared-method guard helper used before auth/service calls |
 | `http.go` | 63 | server entrypoint, route registration, health/ready routes, and panic recovery |
 | `http_metrics.go` | 20 | Prometheus metrics HTTP handler |
 | `memory_model_runs.go` | 101 | in-memory model run insert/read/list/job-scoped lookup metadata store implementation |
@@ -173,6 +174,7 @@ Selected files from the latest audit:
 | `service_model_catalog_promotion_scope_test.go` | 151 | model catalog promotion plan/promote-approved job-scoped tenant/project/site coverage |
 | `service_job_scope_test.go` | 84 | job list/get tenant/project/site read-scope coverage |
 | `service_job_method_test.go` | 59 | job route declared-method guard coverage for get/events/result/evidence/readiness/ref/cancel/result-explanations |
+| `service_http_method_test.go` | 62 | API-wide declared-method guard coverage for non-job/non-worker routes before auth/service calls |
 | `service_job_cancel_scope_test.go` | 95 | job cancel mutation tenant/project/site scope, no-write denial, and audit coverage |
 | `service_job_create_scope_test.go` | 55 | job create mutation tenant/project/site scope and denied no-write coverage |
 | `service_worker_registration_audit_test.go` | 61 | worker registration compact mutation audit coverage |

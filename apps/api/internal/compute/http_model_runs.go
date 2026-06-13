@@ -9,13 +9,12 @@ import (
 )
 
 func (server *Server) modelRuns(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodGet) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:read")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	filter, err := modelRunListFilter(r)
@@ -42,13 +41,12 @@ func (server *Server) modelRuns(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) modelRunByID(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodGet) {
+		return
+	}
 	principal, err := server.auth.Principal(r, "job:read")
 	if err != nil {
 		WriteError(w, err)
-		return
-	}
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	modelRunID := strings.TrimPrefix(r.URL.Path, "/api/v1/model-runs/")
