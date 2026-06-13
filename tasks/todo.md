@@ -1,3 +1,30 @@
+# 2026-06-13 AutoWaterSimu Next benchmark case promotion evidence domain helper TODO
+
+- [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.
+- [x] Confirm this stage is real package-boundary movement, not another evidence wrapper, hosted workflow entry, or same-package file split.
+- [x] Move stable single benchmark case promotion evidence/result projection into `apps/api/internal/domain/models`.
+- [x] Keep compute responsible for benchmark_run query orchestration, job-scoped evidence filtering, model_run store lookup, plan DTO mapping, HTTP mapping, schema/OpenAPI/client/migration surfaces, and public service signatures.
+- [x] Add direct domain tests for missing benchmark evidence, missing model_run, invalid model_run payload, identity/hash mismatch, and ready promotion evidence.
+- [x] Update API/domain/compute/architecture/Certainty-Elegance context and README First change log.
+- [x] Run focused tests, full API tests, boundary/dependency checks, stale-text scan, trailing-whitespace scan, and diff-check.
+- [x] Commit and push this benchmark case promotion evidence domain helper stage.
+
+## Plan
+
+- Treat this as a narrow `domain/models` helper extraction, not a full model governance package migration.
+- Preserve default parameter set promotion plan and promote-approved HTTP behavior, scoped job evidence filtering, selected mutation audit envelopes, persistence implementations, response DTOs, HTTP/OpenAPI/schema/migration/generated client surfaces, and public service signatures.
+- Adapt the neutral domain result back to the existing compute `BenchmarkCasePromotionResult`.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Added `BenchmarkCasePromotionBenchmarkRun`, `BenchmarkCasePromotionEvidenceInput`, `BenchmarkCasePromotionEvidence`, and `EvaluateBenchmarkCasePromotionEvidence` under `apps/api/internal/domain/models`.
+- `ModelGovernanceService.benchmarkCasePromotionResult` now keeps benchmark_run query orchestration and model_run lookup in compute, calls the domain helper for latest evidence fields / identity hash blockers / readiness, and adapts the neutral result back to `BenchmarkCasePromotionResult`.
+- Kept promotion plan/promote-approved HTTP behavior, scoped job evidence filtering, selected mutation audit envelopes, persistence implementations, OpenAPI/schema/migration/generated client surfaces, and public service signatures unchanged.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, architecture/compute-api, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: direct domain helper tests, focused promotion endpoint regression, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, stale-text scan, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next default parameter set transition document helper TODO
 
 - [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.

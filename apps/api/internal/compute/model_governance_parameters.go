@@ -258,13 +258,6 @@ func (svc *ModelGovernanceService) PromoteDefaultParameterSetToApprovedForScope(
 }
 
 func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Context, benchmarkCase ModelBenchmarkCase, modelKey, modelVersion string, parameterSet ModelParameterSet, evidenceFilter BenchmarkRunFilter) (BenchmarkCasePromotionResult, error) {
-	result := BenchmarkCasePromotionResult{
-		BenchmarkCaseID:      benchmarkCase.BenchmarkCaseID,
-		CaseStatus:           benchmarkCase.Status,
-		BlockingReasons:      []string{},
-		ParameterHashMatches: false,
-		Ready:                false,
-	}
 	filter := evidenceFilter
 	filter.Limit = 1
 	filter.Cursor = ""
@@ -277,57 +270,62 @@ func (svc *ModelGovernanceService) benchmarkCasePromotionResult(ctx context.Cont
 		return BenchmarkCasePromotionResult{}, err
 	}
 	if len(records) == 0 {
-		result.BlockingReasons = append(result.BlockingReasons, domainmodels.PromotionBlockBenchmarkRunMissingForParameterSet)
-		return result, nil
+		return benchmarkCasePromotionResultFromDomain(domainmodels.EvaluateBenchmarkCasePromotionEvidence(domainmodels.BenchmarkCasePromotionEvidenceInput{
+			BenchmarkCaseID: benchmarkCase.BenchmarkCaseID,
+			CaseStatus:      benchmarkCase.Status,
+		})), nil
 	}
 	record := records[0]
-	result.LatestBenchmarkRunID = record.BenchmarkRunID
-	result.LatestBenchmarkRunStatus = record.Status
-	result.ModelRunID = record.ModelRunID
-	result.JobID = record.JobID
-	result.ExecutedAt = record.ExecutedAt.Format(time.RFC3339Nano)
-	result.EvidenceRefCount = len(domainmodels.BenchmarkRunEvidenceRefsFromRaw(record.Payload))
 	modelRun, err := svc.modelRuns.FindModelRun(ctx, record.ModelRunID)
 	if err != nil {
 		if appErr := ToAppError(err); appErr.ErrorCode == CodeModelRunNotFound {
-			result.BlockingReasons = append(result.BlockingReasons, domainmodels.PromotionBlockModelRunNotFound)
-			readiness := domainmodels.EvaluateBenchmarkCasePromotionReadiness(domainmodels.BenchmarkCasePromotionReadinessInput{
-				BenchmarkRunStatus:   record.Status,
-				ParameterHashMatches: true,
-				BlockingReasons:      result.BlockingReasons,
-			})
-			result.BlockingReasons = readiness.BlockingReasons
-			result.Ready = readiness.Ready
-			return result, nil
+			return benchmarkCasePromotionResultFromDomain(domainmodels.EvaluateBenchmarkCasePromotionEvidence(domainmodels.BenchmarkCasePromotionEvidenceInput{
+				BenchmarkCaseID: benchmarkCase.BenchmarkCaseID,
+				CaseStatus:      benchmarkCase.Status,
+				BenchmarkRun:    benchmarkCasePromotionBenchmarkRunInput(record),
+				ModelRunFound:   false,
+			})), nil
 		}
 		return BenchmarkCasePromotionResult{}, err
 	}
-	runIdentity, err := domainmodels.RunIdentityFromRaw(modelRun)
-	if err != nil {
-		result.BlockingReasons = append(result.BlockingReasons, domainmodels.PromotionBlockModelRunPayloadInvalid)
-		readiness := domainmodels.EvaluateBenchmarkCasePromotionReadiness(domainmodels.BenchmarkCasePromotionReadinessInput{
-			BenchmarkRunStatus:   record.Status,
-			ParameterHashMatches: true,
-			BlockingReasons:      result.BlockingReasons,
-		})
-		result.BlockingReasons = readiness.BlockingReasons
-		result.Ready = readiness.Ready
-		return result, nil
+	return benchmarkCasePromotionResultFromDomain(domainmodels.EvaluateBenchmarkCasePromotionEvidence(domainmodels.BenchmarkCasePromotionEvidenceInput{
+		BenchmarkCaseID:       benchmarkCase.BenchmarkCaseID,
+		CaseStatus:            benchmarkCase.Status,
+		BenchmarkRun:          benchmarkCasePromotionBenchmarkRunInput(record),
+		ModelRunFound:         true,
+		ModelRun:              modelRun,
+		ExpectedJobID:         record.JobID,
+		ExpectedModelKey:      modelKey,
+		ExpectedModelVersion:  modelVersion,
+		ExpectedParameterHash: parameterSet.ParameterHash,
+	})), nil
+}
+
+func benchmarkCasePromotionBenchmarkRunInput(record BenchmarkRunRecord) domainmodels.BenchmarkCasePromotionBenchmarkRun {
+	return domainmodels.BenchmarkCasePromotionBenchmarkRun{
+		Found:          true,
+		BenchmarkRunID: record.BenchmarkRunID,
+		Status:         record.Status,
+		ModelRunID:     record.ModelRunID,
+		JobID:          record.JobID,
+		ExecutedAt:     record.ExecutedAt.Format(time.RFC3339Nano),
+		Payload:        record.Payload,
 	}
-	identityCheck := domainmodels.CheckRunIdentity(runIdentity, domainmodels.RunIdentityExpectation{
-		JobID:         record.JobID,
-		ModelKey:      modelKey,
-		ModelVersion:  modelVersion,
-		ParameterHash: parameterSet.ParameterHash,
-	})
-	result.ParameterHash = runIdentity.ParameterHash
-	result.ParameterHashMatches = identityCheck.ParameterHashMatches
-	readiness := domainmodels.EvaluateBenchmarkCasePromotionReadiness(domainmodels.BenchmarkCasePromotionReadinessInput{
-		BenchmarkRunStatus:   record.Status,
-		ParameterHashMatches: result.ParameterHashMatches,
-		BlockingReasons:      append(result.BlockingReasons, identityCheck.BlockingReasons...),
-	})
-	result.BlockingReasons = readiness.BlockingReasons
-	result.Ready = readiness.Ready
-	return result, nil
+}
+
+func benchmarkCasePromotionResultFromDomain(result domainmodels.BenchmarkCasePromotionEvidence) BenchmarkCasePromotionResult {
+	return BenchmarkCasePromotionResult{
+		BenchmarkCaseID:          result.BenchmarkCaseID,
+		CaseStatus:               result.CaseStatus,
+		LatestBenchmarkRunID:     result.LatestBenchmarkRunID,
+		LatestBenchmarkRunStatus: result.LatestBenchmarkRunStatus,
+		ModelRunID:               result.ModelRunID,
+		JobID:                    result.JobID,
+		ExecutedAt:               result.ExecutedAt,
+		ParameterHash:            result.ParameterHash,
+		ParameterHashMatches:     result.ParameterHashMatches,
+		EvidenceRefCount:         result.EvidenceRefCount,
+		BlockingReasons:          result.BlockingReasons,
+		Ready:                    result.Ready,
+	}
 }
