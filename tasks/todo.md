@@ -1,3 +1,32 @@
+# 2026-06-13 AutoWaterSimu Next worker audit service test split TODO
+
+- [x] Continue the attached P0 closeout priority after the job scope split by handling `service_worker_audit_test.go`.
+- [x] Re-read README First context for `apps/api/internal/compute`, worker lifecycle audit coverage, current architecture evidence, and security-smoke test-name usage.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Split worker registration compact mutation audit coverage from worker job mutation audit coverage.
+- [x] Preserve `TestHTTPWorkerRegistrationMutationAuditEvents` and `TestHTTPWorkerJobMutationAuditEvents` names so security-smoke keeps selecting both tests.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, and assertion semantics.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused worker audit tests, security-smoke equivalent data-scope regex, and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Move `TestHTTPWorkerRegistrationMutationAuditEvents` into `service_worker_registration_audit_test.go`.
+- Leave `TestHTTPWorkerJobMutationAuditEvents` in `service_worker_audit_test.go` as the focused worker job claim/heartbeat/artifact/completion audit test.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, or CI scripts.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_worker_audit_test.go` from 197 lines to 145 lines focused on worker claim, heartbeat, artifact upload, and completion job-scoped audit coverage.
+- Added `service_worker_registration_audit_test.go` with 61 lines focused on worker registration compact mutation audit payload/envelope coverage.
+- Preserved the original test names and assertions; both remain covered by the existing security smoke data-scope regex without changing `scripts/ci/security-smoke.ps1`.
+- Updated `docs/architecture/compute-api.md` because it did not yet list the worker audit split evidence rows.
+- Validation passed: focused worker audit tests, security-smoke equivalent data-scope Go regex, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check.
+- Remaining large service test files include `service_artifact_retention_http_test.go`, `service_model_catalog_scope_test.go`, and `service_result_explanation_audit_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next job scope service test split TODO
 
 - [x] Read the attached elegance closeout priority note and confirm P0 now prioritizes finishing Compute service test split before broader package movement.

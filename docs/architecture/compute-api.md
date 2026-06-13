@@ -169,6 +169,8 @@ Selected files from the latest audit:
 | `service_job_scope_test.go` | 84 | job list/get tenant/project/site read-scope coverage |
 | `service_job_cancel_scope_test.go` | 95 | job cancel mutation tenant/project/site scope, no-write denial, and audit coverage |
 | `service_job_create_scope_test.go` | 55 | job create mutation tenant/project/site scope and denied no-write coverage |
+| `service_worker_registration_audit_test.go` | 61 | worker registration compact mutation audit coverage |
+| `service_worker_audit_test.go` | 145 | worker claim, heartbeat, artifact upload, and completion job-scoped audit coverage |
 | `service_evidence_references_test.go` | 63 | NewSystem result summary, evidence-ref, and production-readiness integration assertions |
 | `service_evidence_references_helpers_test.go` | 165 | shared NewSystem process-graph simulation-check completion fixture and evidence-ref helpers |
 | `service_evidence_references_explanation_test.go` | 24 | NewSystem result explanation submission with resolved evidence refs |
