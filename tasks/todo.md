@@ -1,3 +1,28 @@
+# 2026-06-13 AutoWaterSimu Next worker failure audit coverage TODO
+
+- [x] Read the attached elegance closeout note and verify the named P0 service-test split files are already structurally split in the current worktree.
+- [x] Switch from additional same-package test organization to the attached P2 audit/data-scope closeout priority.
+- [x] Confirm concrete gap: worker job mutation audit had HTTP coverage for claim/heartbeat/artifact/succeed completion but no focused fail completion audit regression.
+- [x] Add a focused `job.failed` HTTP audit regression without changing production behavior, endpoint shape, schema, OpenAPI, migrations, generated clients, auth scopes, or persistence.
+- [x] Include the regression in `scripts/ci/security-smoke.ps1` and update long-lived security/architecture context.
+- [x] Run focused worker audit tests, security smoke, full apps/api Go tests, boundary checks, pr-fast, and diff checks.
+- [x] Commit and push this closeout slice.
+
+## Plan
+
+- Keep this as selected mutation-audit coverage hardening, not a package movement or API redesign.
+- Preserve existing worker `fail` behavior and audit envelope shape; add only the missing regression around `job.failed`.
+- Keep `service_worker_audit_test.go` focused on claim/heartbeat/artifact/succeed and put fail completion in its own small test file.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `service_worker_failure_audit_test.go` with `TestHTTPWorkerJobFailureMutationAuditEvents`, covering worker `/fail` through HTTP, persisted failed job status/error fields, `job.failed` payload, and compact audit envelope before/after states.
+- Included the regression in `scripts/ci/security-smoke.ps1` and updated security evidence summaries to distinguish succeed and fail worker completion coverage.
+- Updated Compute API, security-smoke, architecture current-state, and Certainty/Elegance development-plan context for the new selected mutation-audit slice.
+- Validation passed: focused worker audit tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, `pr-fast`, trailing-whitespace scan, and scoped diff-check.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next API-wide method guard TODO
 
 - [x] Continue after the contracts service-test split by switching back to a P2 security/correctness closeout slice.
