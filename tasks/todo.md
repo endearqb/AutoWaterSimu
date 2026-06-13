@@ -1,3 +1,31 @@
+# 2026-06-13 AutoWaterSimu Next contracts service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, service test organization, current architecture evidence, and recent service test split history.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Measure remaining `service*_test.go` files and identify `service_contracts_test.go` as the largest residual service test aggregation point.
+- [x] Split contract validation, draft confirmation, constraint application plan, and draft promotion assertions into focused tests.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, test assertions, and fixture payloads.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused contracts tests and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Extract only shared HTTP/fixture test helpers that remove repeated endpoint setup without changing semantics.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, or auth scopes.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Confirmed `service_test.go` remains absent; this stage continues the user-requested service test maintainability work by splitting the largest residual service test file.
+- Reduced `service_contracts_test.go` from a 325-line single integration test to focused contract validation endpoint coverage.
+- Added `service_contracts_confirmations_test.go`, `service_contracts_constraints_test.go`, `service_contracts_promotion_test.go`, and `service_contracts_http_helpers_test.go`.
+- Preserved existing endpoint behavior and assertions for contract validation, draft confirmation persistence/read/idempotency, constraint application plans, draft promotion idempotency, and selected promotion audit envelopes.
+- Updated `docs/architecture/compute-api.md` because it hard-coded the stale `service_contracts_test.go` line count.
+- Validation passed: focused contracts service tests and full `go test ./...` in `apps/api`.
+- Remaining largest service test files are now `service_simulation_registry_test.go`, `service_model_catalog_test.go`, `service_artifact_retention_test.go`, and `service_model_parameters_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next benchmark case promotion evidence domain helper TODO
 
 - [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.

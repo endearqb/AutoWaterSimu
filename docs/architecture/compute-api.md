@@ -153,7 +153,11 @@ Selected files from the latest audit:
 | `memory_simulation.go` | 69 | in-memory process graph and simulation input metadata store implementation |
 | `memory_metrics.go` | 43 | in-memory metrics snapshot query |
 | `memory_store.go` | 40 | MemoryStore struct and constructor |
-| `service_contracts_test.go` | 324 | contract validation endpoint coverage |
+| `service_contracts_test.go` | 93 | contract validation endpoint coverage |
+| `service_contracts_confirmations_test.go` | 76 | draft confirmation persistence/read/idempotency coverage |
+| `service_contracts_constraints_test.go` | 58 | constraint draft confirmation and advisory constraint application plan coverage |
+| `service_contracts_promotion_test.go` | 59 | approved Agent draft promotion and promotion audit coverage |
+| `service_contracts_http_helpers_test.go` | 39 | shared contracts endpoint HTTP and fixture helpers |
 | `service_simulation_registry_test.go` | 300 | simulation registry read/mutation/audit coverage |
 | `service_model_catalog_test.go` | 277 | model catalog endpoint coverage |
 | `service_artifact_retention_test.go` | 252 | artifact retention service dry-run/delete/archive coverage |
