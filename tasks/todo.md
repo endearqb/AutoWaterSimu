@@ -8,7 +8,7 @@
 - [x] Update Compute API, architecture, and Certainty/Elegance context.
 - [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
 - [x] Record README First change log.
-- [ ] Commit and push this evidence governance data-scope stage.
+- [x] Commit and push this evidence governance data-scope stage.
 
 ## Plan
 
