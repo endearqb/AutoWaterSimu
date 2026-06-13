@@ -1,6 +1,7 @@
 package compute
 
 import (
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 	"context"
 	"strings"
 	"time"
@@ -14,14 +15,14 @@ const (
 )
 
 func (svc *ModelGovernanceService) modelCatalogRegisteredAudit(ctx context.Context, record ModelCatalogRecord) *MutationAuditRecord {
-	after := map[string]any{
-		"catalog_id":     record.CatalogID,
-		"schema_version": record.SchemaVersion,
-		"payload_hash":   record.PayloadHash,
-		"tenant_id":      record.TenantID,
-		"project_id":     record.ProjectID,
-		"site_id":        record.SiteID,
-	}
+	after := domainmodels.ModelCatalogAuditState(domainmodels.ModelCatalogAuditStateInput{
+		CatalogID:     record.CatalogID,
+		SchemaVersion: record.SchemaVersion,
+		PayloadHash:   record.PayloadHash,
+		TenantID:      record.TenantID,
+		ProjectID:     record.ProjectID,
+		SiteID:        record.SiteID,
+	})
 	return svc.modelGovernanceMutationAudit(
 		ctx,
 		record.CreatedAt,
@@ -35,70 +36,51 @@ func (svc *ModelGovernanceService) modelCatalogRegisteredAudit(ctx context.Conte
 		"",
 		record.RequestedBy,
 		"service:model_catalog.register",
-		map[string]any{
-			"catalog_id":     record.CatalogID,
-			"schema_version": record.SchemaVersion,
-			"payload_hash":   record.PayloadHash,
-			"tenant_id":      record.TenantID,
-			"project_id":     record.ProjectID,
-			"site_id":        record.SiteID,
-		},
+		copyStringAnyMap(after),
 	)
 }
 
 func (svc *ModelGovernanceService) parameterSetTransitionAudit(ctx context.Context, eventType, action, modelKey, modelVersion, parameterSetID, fromStatus, toStatus, beforeCatalogHash, afterCatalogHash, reason, requestedBy string, createdAt time.Time, createdSnapshot bool) *MutationAuditRecord {
-	before := map[string]any{
-		"model_key":            modelKey,
-		"model_version":        modelVersion,
-		"parameter_set_id":     parameterSetID,
-		"status":               fromStatus,
-		"catalog_payload_hash": beforeCatalogHash,
-	}
-	after := map[string]any{
-		"model_key":            modelKey,
-		"model_version":        modelVersion,
-		"parameter_set_id":     parameterSetID,
-		"status":               toStatus,
-		"catalog_payload_hash": afterCatalogHash,
-		"created_snapshot":     createdSnapshot,
-	}
+	projection := domainmodels.ParameterSetTransitionAuditState(domainmodels.ParameterSetTransitionAuditStateInput{
+		ModelKey:          modelKey,
+		ModelVersion:      modelVersion,
+		ParameterSetID:    parameterSetID,
+		FromStatus:        fromStatus,
+		ToStatus:          toStatus,
+		BeforeCatalogHash: beforeCatalogHash,
+		AfterCatalogHash:  afterCatalogHash,
+		CreatedSnapshot:   createdSnapshot,
+	})
 	return svc.modelGovernanceMutationAudit(
 		ctx,
 		createdAt,
 		eventType,
 		"ModelParameterSet",
-		parameterSetTargetID(modelKey, modelVersion, parameterSetID),
+		projection.TargetID,
 		action,
-		before,
-		after,
+		projection.Before,
+		projection.After,
 		reason,
 		"",
 		requestedBy,
 		"service:model_parameter_set.transition",
-		map[string]any{
-			"model_key":        modelKey,
-			"model_version":    modelVersion,
-			"parameter_set_id": parameterSetID,
-			"from_status":      fromStatus,
-			"to_status":        toStatus,
-			"created_snapshot": createdSnapshot,
-		},
+		projection.Payload,
 	)
 }
 
 func (svc *ModelGovernanceService) benchmarkRunRegisteredAudit(ctx context.Context, record BenchmarkRunRecord, evidenceRefCount int) *MutationAuditRecord {
-	after := map[string]any{
-		"benchmark_run_id":   record.BenchmarkRunID,
-		"model_key":          record.ModelKey,
-		"model_version":      record.ModelVersion,
-		"benchmark_case_id":  record.BenchmarkCaseID,
-		"parameter_set_id":   record.ParameterSetID,
-		"model_run_id":       record.ModelRunID,
-		"job_id":             record.JobID,
-		"status":             record.Status,
-		"payload_hash":       record.PayloadHash,
-		"evidence_ref_count": evidenceRefCount,
-	}
+	after := domainmodels.BenchmarkRunAuditState(domainmodels.BenchmarkRunAuditStateInput{
+		BenchmarkRunID:   record.BenchmarkRunID,
+		ModelKey:         record.ModelKey,
+		ModelVersion:     record.ModelVersion,
+		BenchmarkCaseID:  record.BenchmarkCaseID,
+		ParameterSetID:   record.ParameterSetID,
+		ModelRunID:       record.ModelRunID,
+		JobID:            record.JobID,
+		Status:           record.Status,
+		PayloadHash:      record.PayloadHash,
+		EvidenceRefCount: evidenceRefCount,
+	})
 	return svc.modelGovernanceMutationAudit(
 		ctx,
 		record.CreatedAt,
@@ -136,8 +118,4 @@ func (svc *ModelGovernanceService) modelGovernanceMutationAudit(ctx context.Cont
 		EventJSON:    eventJSONWithAudit(payload, audit),
 		CreatedAt:    createdAt,
 	}
-}
-
-func parameterSetTargetID(modelKey, modelVersion, parameterSetID string) string {
-	return strings.TrimSpace(modelKey) + ":" + strings.TrimSpace(modelVersion) + ":" + strings.TrimSpace(parameterSetID)
 }

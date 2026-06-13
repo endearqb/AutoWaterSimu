@@ -14,6 +14,7 @@
 - built-in `model_catalog.v1` document shape 组装，用于 compute fallback catalog。
 - persisted model catalog snapshot 的中立 record data projection，包括 catalog_id / payload hash / metadata scope / source/requested_by 默认值。
 - `benchmark_run.v1` 的中立 record data projection，包括 payload hash、metadata scope、source/requested_by 默认值与 executed_at 解析。
+- model governance compact audit state projection，包括 model catalog registration、default parameter set transition 和 benchmark_run registration 的 before/after/payload maps。
 - benchmark case schedule-run `compute_job.v1` document shape 组装，用于已校验 benchmark case 入队。
 - benchmark case scheduling gate 与 benchmark run admission 的稳定前置判定。
 - default parameter set status 常量、合法性判断、允许迁移不变量，以及 `default_parameter_set.status` catalog document mutation projection。
@@ -21,7 +22,7 @@
 
 本目录不负责：
 
-- model catalog 持久化、snapshot mutation workflow orchestration、typed DTO conversion 或 status update workflow。
+- model catalog 持久化、snapshot mutation workflow orchestration、typed DTO conversion、selected audit envelope/call site/persistence decision 或 status update workflow。
 - benchmark run 创建、审批、simulation input resolution、compute job persistence 或完整 promotion workflow orchestration。
 - HTTP route、OpenAPI、PostgreSQL implementation。
 
@@ -34,12 +35,13 @@
 | `benchmark_run_record_data.go` | DTO-neutral benchmark run record data projection |
 | `default_parameter_set_transition.go` | DTO-neutral default parameter set status transition document mutation projection |
 | `benchmark_case_promotion.go` | DTO-neutral single benchmark case promotion evidence/result projection |
+| `audit_state.go` | DTO-neutral compact model governance audit state projection |
 | `models_test.go` | Direct models domain tests |
 
 ## 3. 维护约定
 
 1. 本 package 不得 import `apps/api/internal/compute`。
-2. 只放稳定 model/model_run 领域解析/比对规则、built-in model catalog document shape、model catalog snapshot record data projection、benchmark run record data projection、benchmark case run job document shape、compute result model_run extraction/precheck、benchmark workflow gate、参数集状态不变量、default parameter set status transition document mutation projection、单个 benchmark case promotion evidence/result 判定、纯 promotion gate 判定和 production governance gate 判定；治理 workflow、catalog mutation orchestration、benchmark validation、simulation input resolution、compute job persistence、typed DTO conversion 暂留 compute compatibility package，直到边界可安全迁移。
+2. 只放稳定 model/model_run 领域解析/比对规则、built-in model catalog document shape、model catalog snapshot record data projection、benchmark run record data projection、compact audit state projection、benchmark case run job document shape、compute result model_run extraction/precheck、benchmark workflow gate、参数集状态不变量、default parameter set status transition document mutation projection、单个 benchmark case promotion evidence/result 判定、纯 promotion gate 判定和 production governance gate 判定；治理 workflow、catalog mutation orchestration、benchmark validation、simulation input resolution、compute job persistence、typed DTO conversion、selected audit envelope/call site/persistence decision 暂留 compute compatibility package，直到边界可安全迁移。
 3. 新增 `model_run.v1` 或 `benchmark_run.v1` 字段解析时需同步检查 contracts fixtures、evidence package、model governance 和 storage callers。
 4. 新增或改变参数集状态时需同步检查 model catalog schema、status endpoint、promotion plan、benchmark queueing 和 evidence governance。
 
@@ -95,6 +97,14 @@
 - `BenchmarkRunRecordDataInput`
 - `BenchmarkRunRecordData`
 - `BenchmarkRunRecordDataFromDocument`
+- `ModelCatalogAuditStateInput`
+- `ModelCatalogAuditState`
+- `ParameterSetTransitionAuditStateInput`
+- `ParameterSetTransitionAuditProjection`
+- `ParameterSetTransitionAuditState`
+- `BenchmarkRunAuditStateInput`
+- `BenchmarkRunAuditState`
+- `ParameterSetTargetID`
 
 ## 5. 依赖边界
 
@@ -110,4 +120,4 @@ cd apps\api; go test ./internal/domain/models ./internal/compute
 
 ## 7. AI 操作提示
 
-如果要迁移完整 model governance，请先补 store/DTO adapter，避免把 compute `ModelCatalogResponse`、benchmark DTO 或 HTTP response 类型直接搬入本 package。Built-in catalog helper 只返回通用文档 shape；material-balance default parameter hash、typed DTO conversion、schema validation、catalog snapshot fallback/store behavior 仍由 compute 负责。Catalog snapshot record data helper 只投影 payload hash、metadata scope、source/requested_by 默认值和 record 字段；catalog registration/status/promote mutation workflow、store writes、audit envelope 和 HTTP mapping 仍由 compute 负责。Benchmark run record data helper 只投影 schema version、payload hash、metadata scope、source/requested_by 默认值、executed_at 和 record 字段；benchmark run schema validation、catalog lookup、model_run/evidence validation、store writes、audit envelope 和 HTTP mapping 仍由 compute 负责。Default parameter set transition helper 只投影已校验 catalog document 中 `default_parameter_set.status`、parameter/catalog transition metadata 和 `generated_at` 的文档变更；schema validation、typed DTO conversion、catalog selection/scope gate、snapshot persistence、audit envelope 和 HTTP error mapping 仍由 compute 负责。Benchmark case run job document helper 只组装已校验 benchmark case 入队所需的 `compute_job.v1` map 与 idempotency key；catalog lookup、gate/error mapping、execution profile lookup、simulation input resolution、JSON marshaling、createJob 和 store writes 仍由 compute 负责。Benchmark case promotion evidence helper 只在 compute 已取到 latest benchmark_run 和 model_run raw 后，投影 per-case evidence fields、model_run identity/hash blockers 与 readiness；benchmark 查询、job-scoped evidence filter、model_run store lookup、plan DTO mapping 和 HTTP error mapping 仍由 compute 负责。Compute result model_run extraction helper 只做稳定 JSON 定位和 job_id 预检，schema validation、raw persistence adapter 和 job lifecycle error mapping 仍由 compute 负责。Benchmark workflow gate、参数集状态、benchmark case promotion evidence/readiness、promotion gate 与 production governance gate helper 只能表达稳定不变量，catalog snapshot 写入、benchmark 查询编排、evidence package assembly 和 HTTP 错误映射仍由 compute compatibility package 负责。
+如果要迁移完整 model governance，请先补 store/DTO adapter，避免把 compute `ModelCatalogResponse`、benchmark DTO 或 HTTP response 类型直接搬入本 package。Built-in catalog helper 只返回通用文档 shape；material-balance default parameter hash、typed DTO conversion、schema validation、catalog snapshot fallback/store behavior 仍由 compute 负责。Catalog snapshot record data helper 只投影 payload hash、metadata scope、source/requested_by 默认值和 record 字段；catalog registration/status/promote mutation workflow、store writes、audit envelope 和 HTTP mapping 仍由 compute 负责。Benchmark run record data helper 只投影 schema version、payload hash、metadata scope、source/requested_by 默认值、executed_at 和 record 字段；benchmark run schema validation、catalog lookup、model_run/evidence validation、store writes、audit envelope 和 HTTP mapping 仍由 compute 负责。Default parameter set transition helper 只投影已校验 catalog document 中 `default_parameter_set.status`、parameter/catalog transition metadata 和 `generated_at` 的文档变更；schema validation、typed DTO conversion、catalog selection/scope gate、snapshot persistence、audit envelope 和 HTTP error mapping 仍由 compute 负责。Benchmark case run job document helper 只组装已校验 benchmark case 入队所需的 `compute_job.v1` map 与 idempotency key；catalog lookup、gate/error mapping、execution profile lookup、simulation input resolution、JSON marshaling、createJob 和 store writes 仍由 compute 负责。Benchmark case promotion evidence helper 只在 compute 已取到 latest benchmark_run 和 model_run raw 后，投影 per-case evidence fields、model_run identity/hash blockers 与 readiness；benchmark 查询、job-scoped evidence filter、model_run store lookup、plan DTO mapping 和 HTTP error mapping 仍由 compute 负责。Compute result model_run extraction helper 只做稳定 JSON 定位和 job_id 预检，schema validation、raw persistence adapter 和 job lifecycle error mapping 仍由 compute 负责。Benchmark workflow gate、参数集状态、benchmark case promotion evidence/readiness、promotion gate 与 production governance gate helper 只能表达稳定不变量，catalog snapshot 写入、benchmark 查询编排、evidence package assembly 和 HTTP 错误映射仍由 compute compatibility package 负责。Audit state helper 只投影 compact before/after/payload maps 和 parameter set target id；event type/action/reason/where、selected mutation audit envelope、store/audit persistence 和 HTTP mapping 仍由 compute 负责。

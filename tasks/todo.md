@@ -1,3 +1,29 @@
+# 2026-06-14 AutoWaterSimu Next model governance audit state domain split TODO
+
+- [x] Re-read README First context, Certainty/Elegance PRD/Plan, current TODO, latest change log, and compute/domain models README before continuing.
+- [x] Confirm this is a narrow P1/P2-supporting boundary slice: compact model governance audit state projection can move to `domain/models`, while selected audit envelope, event type/action/reason/where, call sites, persistence decisions, catalog/benchmark workflows, schema checks, HTTP mapping, and store implementations stay in compute.
+- [x] Add DTO-neutral model governance audit state inputs and projection helpers to `apps/api/internal/domain/models`.
+- [x] Adapt existing compute model governance audit helper to call the domain projection helpers without changing audit key shape.
+- [x] Add focused domain tests for model catalog, parameter-set transition, and benchmark_run compact audit state projection.
+- [x] Update README / architecture / development-plan / boundary-audit notes for the new package boundary.
+- [x] Run focused domain/compute tests, security smoke, full apps/api Go tests, dependency/boundary checks, pr-fast, whitespace scan, and scoped diff-check.
+- [x] Commit and push this boundary slice.
+
+## Plan
+
+- Keep this as pure projection movement under `domain/models`.
+- Preserve production behavior, HTTP routes, auth scopes, contracts, schemas, OpenAPI, migrations, generated clients, store interfaces, model catalog/status/promote/benchmark_run workflows, and selected mutation audit envelope shape.
+- Keep compute as the compatibility adapter that supplies current records/arguments, assembles selected audit events, and writes `mutation_audit_events`.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added compact `ModelCatalogAuditState`, `ParameterSetTransitionAuditState`, and `BenchmarkRunAuditState` domain helpers with focused projection tests.
+- Adapted compute model governance audit helper to call `domain/models` while keeping existing selected audit key shape, event types, actions, reasons, and persistence surfaces.
+- Updated README / architecture current-state / Compute API architecture / development-plan / boundary-audit notes to freeze this boundary: domain owns pure projection; compute owns selected audit envelope, call sites, persistence decisions, model governance workflows, schema/catalog/scope gates, HTTP mapping, and store orchestration.
+- Validation passed: focused domain/compute tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, `pr-fast`, trailing-whitespace scan, and scoped diff-check.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-14 AutoWaterSimu Next result explanation audit state domain split TODO
 
 - [x] Re-read README First context, Certainty/Elegance PRD/Plan, current TODO, latest change log, and compute/domain evidence README before continuing.
