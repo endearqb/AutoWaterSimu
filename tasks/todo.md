@@ -1,3 +1,32 @@
+# 2026-06-13 AutoWaterSimu Next job route method guard TODO
+
+- [x] Read the attached elegance closeout priority note and verify current repository state against its P0 service-test split recommendation.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` remains absent and the attached P0 residual service test files have already been split.
+- [x] Confirm P1 compute/platform/domain boundary freeze is already represented by the latest dependency guard commit.
+- [x] Switch to the next blocking P2 security/correctness slice rather than continuing generic same-package test organization.
+- [x] Confirm concrete gap: recognized `/api/v1/compute/jobs/{job_id}` read/mutation/explanation subroutes did not uniformly reject undeclared HTTP methods before auth/service calls.
+- [x] Add a declared-method guard for job get/events/result/evidence/production-readiness/evidence-ref/cancel/result-explanations routes.
+- [x] Add focused regression coverage proving method mismatches return 405 and do not mutate queued job state or append events.
+- [x] Include the regression in `scripts/ci/security-smoke.ps1` and update long-lived security/architecture context.
+- [x] Run focused job method tests, security smoke, full apps/api Go tests, boundary checks, and diff checks.
+
+## Plan
+
+- Treat this as an HTTP contract/security hardening slice, not an OpenAPI/schema/client change.
+- Preserve existing declared GET/POST behavior, auth scopes, tenant/project/site data-scope checks, audit envelopes, store interfaces, migrations, and generated clients.
+- Return 405 for method mismatches on recognized job routes before route-specific auth/service calls.
+- Leave the existing untracked `docs/rebuild` items untouched.
+
+## Review
+
+- Added `rejectJobRouteMethod` in `http_jobs.go` so known job routes reject undeclared methods before auth/service calls.
+- Added `service_job_method_test.go` covering job get/events/result/evidence/production-readiness/evidence-ref/cancel/result-explanations method mismatches plus no job-state/event side effects.
+- Included `TestHTTPJobRoutesRequireDeclaredMethods` in `scripts/ci/security-smoke.ps1` and added a `job_route_http_method_guard` evidence field.
+- Updated API, Compute API, security-smoke, architecture, and Certainty/Elegance context to record the declared-method job route boundary.
+- Validation passed: focused job method tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, `pr-fast`, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Remaining scope: full object-level data-scope, remaining mutation data-scope, complete all-mutation audit, OIDC/JWKS, RBAC/ABAC, hosted green evidence, release artifact hosted round trip, legacy authenticated session, and complete golden scenarios remain future work.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next worker mutation method guard TODO
 
 - [x] Continue P2 security closeout after compute-boundary-freeze instead of adding another evidence wrapper.

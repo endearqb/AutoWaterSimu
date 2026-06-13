@@ -54,11 +54,6 @@ func (server *Server) jobs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
-	principal, err := server.auth.Principal(r, "job:read")
-	if err != nil {
-		WriteError(w, err)
-		return
-	}
 	rest := strings.TrimPrefix(r.URL.Path, "/api/v1/compute/jobs/")
 	parts := strings.Split(strings.Trim(rest, "/"), "/")
 	if len(parts) == 0 || parts[0] == "" {
@@ -66,7 +61,15 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jobID := parts[0]
-	if len(parts) == 1 && r.Method == http.MethodGet {
+	if rejectJobRouteMethod(w, r.Method, parts) {
+		return
+	}
+	principal, err := server.auth.Principal(r, "job:read")
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if len(parts) == 1 {
 		snapshot, err := server.service.GetJob(r.Context(), jobID)
 		if err != nil {
 			WriteError(w, err)
@@ -220,6 +223,30 @@ func (server *Server) jobByID(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
+}
+
+func rejectJobRouteMethod(w http.ResponseWriter, method string, parts []string) bool {
+	expectedMethod := ""
+	switch {
+	case len(parts) == 1:
+		expectedMethod = http.MethodGet
+	case len(parts) == 2:
+		switch parts[1] {
+		case "events", "result", "evidence", "production-readiness", "evidence-ref":
+			expectedMethod = http.MethodGet
+		case "cancel", "result-explanations":
+			expectedMethod = http.MethodPost
+		}
+	case len(parts) == 3 && parts[1] == "result-explanations":
+		expectedMethod = http.MethodGet
+	case len(parts) == 4 && parts[1] == "result-explanations" && (parts[3] == "review" || parts[3] == "publish"):
+		expectedMethod = http.MethodPost
+	}
+	if expectedMethod == "" || method == expectedMethod {
+		return false
+	}
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	return true
 }
 
 func (server *Server) authorizeJobRouteDataScope(ctx context.Context, principal Principal, jobID string) error {

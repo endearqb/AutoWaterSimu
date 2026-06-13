@@ -170,10 +170,11 @@ Selected files from the latest audit:
 | `service_model_catalog_mutation_scope_test.go` | 91 | model catalog registration/status mutation tenant/project/site data-scope coverage |
 | `service_model_catalog_promotion_scope_test.go` | 151 | model catalog promotion plan/promote-approved job-scoped tenant/project/site coverage |
 | `service_job_scope_test.go` | 84 | job list/get tenant/project/site read-scope coverage |
+| `service_job_method_test.go` | 59 | job route declared-method guard coverage for get/events/result/evidence/readiness/ref/cancel/result-explanations |
 | `service_job_cancel_scope_test.go` | 95 | job cancel mutation tenant/project/site scope, no-write denial, and audit coverage |
 | `service_job_create_scope_test.go` | 55 | job create mutation tenant/project/site scope and denied no-write coverage |
 | `service_worker_registration_audit_test.go` | 61 | worker registration compact mutation audit coverage |
-| `service_worker_method_test.go` | 62 | worker mutation route non-POST no-write method guard coverage |
+| `service_worker_method_test.go` | 113 | worker mutation route non-POST no-write method guard coverage |
 | `service_worker_audit_test.go` | 145 | worker claim, heartbeat, artifact upload, and completion job-scoped audit coverage |
 | `service_evidence_references_test.go` | 63 | NewSystem result summary, evidence-ref, and production-readiness integration assertions |
 | `service_evidence_references_helpers_test.go` | 165 | shared NewSystem process-graph simulation-check completion fixture and evidence-ref helpers |
