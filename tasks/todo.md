@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next artifact upload metadata domain helper TODO
+
+- [x] Re-read README First context for Compute API, domain/artifacts, architecture, and Certainty/Elegance plan.
+- [x] Confirm this stage is real package-boundary movement, not an evidence wrapper, hosted workflow entry, or same-package file split.
+- [x] Move stable artifact upload metadata record projection into `apps/api/internal/domain/artifacts`.
+- [x] Keep compute responsible for file read, checksum verification, object key/storage provider selection, object-store write, metadata persistence, selected audit event assembly, HTTP mapping, and public `Service` signatures.
+- [x] Add direct domain tests for upload metadata projection and default content type.
+- [x] Update API/domain/compute/architecture/Certainty-Elegance context and README First change log.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Commit and push this artifact upload metadata domain helper stage.
+
+## Plan
+
+- Treat this as a narrow artifacts domain package movement slice, not a full artifact lifecycle migration, object-store rewrite, public API redesign, schema change, migration, generated client update, all-mutation audit completion, full object-level data-scope, hosted evidence run, release round trip, or complete golden scenarios.
+- Preserve worker artifact upload behavior: job state/worker checks, metadata decode, checksum comparison, server-generated object key, object-store write, `artifact.recorded` audit event, and durable metadata insert remain in compute.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added `DefaultArtifactContentType`, `ArtifactRecordInput`, `ArtifactRecord`, and `NewArtifactRecord` to `apps/api/internal/domain/artifacts`.
+- `ArtifactLifecycleService.UploadArtifact` now collects worker metadata, checksum, object key, and timestamp in compute, then uses the domain helper and adapts the neutral record back to existing `ArtifactRecord`.
+- Preserved worker artifact upload behavior, selected `artifact.recorded` audit event assembly, metadata persistence, object storage, HTTP/OpenAPI/schema/migration/generated client surfaces, and public `Service` signatures.
+- Updated API/internal/domain/artifacts/compute READMEs, architecture/current-state, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused upload/domain tests, security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, stale-text scan, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next artifact archive metadata domain helper TODO
 
 - [x] Re-read README First context for Compute API, domain/artifacts, architecture, ADR 0010, and Certainty/Elegance plan.

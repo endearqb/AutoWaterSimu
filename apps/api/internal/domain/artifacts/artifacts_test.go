@@ -112,6 +112,54 @@ func TestEvaluateRetentionActionUnsupportedPolicy(t *testing.T) {
 	}
 }
 
+func TestNewArtifactRecordProjectsUploadMetadata(t *testing.T) {
+	createdAt := time.Date(2026, 6, 13, 11, 30, 0, 0, time.UTC)
+	retainUntil := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	metadata := map[string]any{"source": "worker"}
+	record := NewArtifactRecord(ArtifactRecordInput{
+		ArtifactID:      "art_1",
+		JobID:           "job_1",
+		SchemaVersion:   "artifact.v1",
+		ArtifactType:    "time_series_json",
+		StorageProvider: "local_fs",
+		ObjectKey:       "jobs/job_1/art_1.json",
+		SizeBytes:       123,
+		Checksum:        "sha256:abc",
+		Retention:       Retention{Policy: PolicyTTL, RetainUntil: &retainUntil},
+		Metadata:        metadata,
+		CreatedAt:       createdAt,
+	})
+
+	if record.ArtifactID != "art_1" ||
+		record.JobID != "job_1" ||
+		record.SchemaVersion != "artifact.v1" ||
+		record.ArtifactType != "time_series_json" ||
+		record.StorageProvider != "local_fs" ||
+		record.ObjectKey != "jobs/job_1/art_1.json" ||
+		record.ContentType != DefaultArtifactContentType ||
+		record.SizeBytes != 123 ||
+		record.Checksum != "sha256:abc" ||
+		record.RetentionPolicy != PolicyTTL ||
+		record.RetainUntil == nil ||
+		!record.RetainUntil.Equal(retainUntil) ||
+		!record.CreatedAt.Equal(createdAt) {
+		t.Fatalf("unexpected artifact record projection: %#v", record)
+	}
+	if got := record.Metadata.(map[string]any)["source"]; got != "worker" {
+		t.Fatalf("expected metadata to be preserved, got %#v", record.Metadata)
+	}
+}
+
+func TestNewArtifactRecordKeepsExplicitContentType(t *testing.T) {
+	record := NewArtifactRecord(ArtifactRecordInput{
+		ContentType: "application/x-ndjson",
+		Retention:   Retention{Policy: PolicyRetainForever},
+	})
+	if record.ContentType != "application/x-ndjson" {
+		t.Fatalf("expected explicit content type, got %q", record.ContentType)
+	}
+}
+
 func TestNewArchiveRecordProjectsArchivedMetadata(t *testing.T) {
 	archivedAt := time.Date(2026, 6, 13, 10, 0, 0, 0, time.UTC)
 	record := NewArchiveRecord(ArchiveRecordInput{

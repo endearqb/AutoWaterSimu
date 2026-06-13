@@ -12,6 +12,8 @@ const (
 	PolicyArchiveCandidate = "archive_candidate"
 )
 
+const DefaultArtifactContentType = "application/json"
+
 const (
 	RetentionActionSkipped      = "skipped"
 	RetentionActionWouldArchive = "would_archive"
@@ -29,6 +31,37 @@ const (
 type Retention struct {
 	Policy      string
 	RetainUntil *time.Time
+}
+
+type ArtifactRecordInput struct {
+	ArtifactID      string
+	JobID           string
+	SchemaVersion   string
+	ArtifactType    string
+	StorageProvider string
+	ObjectKey       string
+	ContentType     string
+	SizeBytes       int64
+	Checksum        string
+	Retention       Retention
+	Metadata        any
+	CreatedAt       time.Time
+}
+
+type ArtifactRecord struct {
+	ArtifactID      string
+	JobID           string
+	SchemaVersion   string
+	ArtifactType    string
+	StorageProvider string
+	ObjectKey       string
+	ContentType     string
+	SizeBytes       int64
+	Checksum        string
+	RetentionPolicy string
+	RetainUntil     *time.Time
+	Metadata        any
+	CreatedAt       time.Time
 }
 
 type RetentionActionInput struct {
@@ -142,6 +175,24 @@ func EvaluateRetentionAction(input RetentionActionInput) RetentionActionPlan {
 	}
 }
 
+func NewArtifactRecord(input ArtifactRecordInput) ArtifactRecord {
+	return ArtifactRecord{
+		ArtifactID:      input.ArtifactID,
+		JobID:           input.JobID,
+		SchemaVersion:   input.SchemaVersion,
+		ArtifactType:    input.ArtifactType,
+		StorageProvider: input.StorageProvider,
+		ObjectKey:       input.ObjectKey,
+		ContentType:     defaultString(input.ContentType, DefaultArtifactContentType),
+		SizeBytes:       input.SizeBytes,
+		Checksum:        input.Checksum,
+		RetentionPolicy: input.Retention.Policy,
+		RetainUntil:     input.Retention.RetainUntil,
+		Metadata:        input.Metadata,
+		CreatedAt:       input.CreatedAt,
+	}
+}
+
 func NewArchiveRecord(input ArchiveRecordInput) ArchiveRecord {
 	return ArchiveRecord{
 		ArtifactID:              input.ArtifactID,
@@ -156,6 +207,13 @@ func NewArchiveRecord(input ArchiveRecordInput) ArchiveRecord {
 		Metadata:                map[string]any{"retention_policy": input.RetentionPolicy},
 		ArchivedAt:              input.ArchivedAt,
 	}
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
 }
 
 func stringValue(value map[string]any, key string) string {

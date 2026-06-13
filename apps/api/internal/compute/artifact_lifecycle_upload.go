@@ -41,24 +41,41 @@ func (svc *ArtifactLifecycleService) UploadArtifact(ctx context.Context, workerI
 		return ArtifactRecord{}, err
 	}
 	now := svc.now()
-	artifact := ArtifactRecord{
+	artifact := artifactRecordFromDomain(domainartifacts.NewArtifactRecord(domainartifacts.ArtifactRecordInput{
 		ArtifactID:      artifactID,
 		JobID:           jobID,
 		SchemaVersion:   stringValue(metadata, "schema_version"),
 		ArtifactType:    stringValue(metadata, "artifact_type"),
 		StorageProvider: "local_fs",
 		ObjectKey:       objectKey,
-		ContentType:     defaultString(stringValue(metadata, "content_type"), "application/json"),
+		ContentType:     stringValue(metadata, "content_type"),
 		SizeBytes:       int64(len(bytes)),
 		Checksum:        checksum,
-		RetentionPolicy: retention.Policy,
-		RetainUntil:     retention.RetainUntil,
-		Metadata:        mustJSON(metadata["metadata"]),
+		Retention:       retention,
+		Metadata:        metadata["metadata"],
 		CreatedAt:       now,
-	}
+	}))
 	event := EventRecord{JobID: jobID, EventType: "artifact.recorded", EventJSON: artifactRecordedEventJSON(ctx, now, *job, artifact), CreatedAt: now}
 	if err := svc.metadata.InsertArtifact(ctx, artifact, event); err != nil {
 		return ArtifactRecord{}, err
 	}
 	return artifact, nil
+}
+
+func artifactRecordFromDomain(record domainartifacts.ArtifactRecord) ArtifactRecord {
+	return ArtifactRecord{
+		ArtifactID:      record.ArtifactID,
+		JobID:           record.JobID,
+		SchemaVersion:   record.SchemaVersion,
+		ArtifactType:    record.ArtifactType,
+		StorageProvider: record.StorageProvider,
+		ObjectKey:       record.ObjectKey,
+		ContentType:     record.ContentType,
+		SizeBytes:       record.SizeBytes,
+		Checksum:        record.Checksum,
+		RetentionPolicy: record.RetentionPolicy,
+		RetainUntil:     record.RetainUntil,
+		Metadata:        mustJSON(record.Metadata),
+		CreatedAt:       record.CreatedAt,
+	}
 }
