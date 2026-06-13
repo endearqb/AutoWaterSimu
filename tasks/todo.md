@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next jobs worker claim mutation plan split TODO
+
+- [x] Re-read README First context for Compute API, domain/jobs, architecture, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: avoid more evidence wrappers and same-package file splits; continue real jobs package movement with a bounded worker claim mutation plan.
+- [x] Move worker claim candidate ordering and running mutation planning into `apps/api/internal/domain/jobs`.
+- [x] Keep compute responsible for queue scanning, tenant/project/site scope filtering, SQL/locks, audit envelope assembly, concrete MemoryStore/PostgresStore persistence, HTTP behavior, and concrete `JobRecord` / `EventRecord` mapping.
+- [x] Add direct domain tests for claim candidate ordering and running mutation projection.
+- [x] Update Compute API, domain/jobs, architecture, and Certainty/Elegance package movement context.
+- [x] Run domain/compute focused tests, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this jobs worker claim mutation plan split stage.
+
+## Plan
+
+- Treat this as a narrow jobs domain package movement slice, not a full jobs lifecycle migration, public API redesign, schema change, store migration, OpenAPI/generated client update, all-mutation audit completion, full object-level data-scope, OIDC/RBAC, hosted evidence, release round trip, or complete golden scenarios.
+- Preserve worker claim HTTP request/response shape, queue scanning and locking behavior, tenant/project/site data-scope, selected audit envelope shape, store interfaces, migrations, OpenAPI, and generated clients.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added `ClaimRecord`, `ClaimMutation`, `PreferClaimRecord`, and `NewClaimMutation` to `apps/api/internal/domain/jobs/claim_lifecycle.go`.
+- `MemoryStore.ClaimNext` now delegates candidate ordering and running mutation projection to `domain/jobs`, then applies the mutation to concrete `JobRecord` persistence and existing selected audit event JSON.
+- `PostgresStore.ClaimNext` now uses the same domain running mutation projection for update fields and `job.running` event type while preserving SQL row locking, queue scan order, data-scope filtering, and final `FindJobByID` return.
+- Updated API/domain/jobs/compute/architecture/Certainty-Elegance context to distinguish DTO-neutral worker claim mutation planning from compute-owned queue scanning, locks, concrete persistence, audit envelope assembly, HTTP behavior, and store interfaces.
+- Validation passed: focused domain/compute worker claim tests, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next jobs create idempotency decision split TODO
 
 - [x] Re-read README First context for Compute API, domain/jobs, architecture, and Certainty/Elegance plan.

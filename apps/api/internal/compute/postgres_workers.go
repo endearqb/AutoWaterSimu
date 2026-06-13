@@ -100,11 +100,14 @@ func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, 
 		return nil, nil
 	}
 	now := time.Now().UTC()
-	attempt := selected.Attempt + 1
-	if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET status='running', worker_id=$2, attempt=attempt+1, claimed_at=$3, started_at=$3, lease_expires_at=$4 WHERE id=$1", selected.JobID, worker.WorkerID, now, leaseExpiresAt); err != nil {
+	mutation := domainjobs.NewClaimMutation(domainjobs.ClaimRecord{
+		JobID:   selected.JobID,
+		Attempt: selected.Attempt,
+	}, worker.WorkerID, now, leaseExpiresAt)
+	if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET status=$2, worker_id=$3, attempt=$4, claimed_at=$5, started_at=$6, lease_expires_at=$7 WHERE id=$1", selected.JobID, mutation.Status, mutation.WorkerID, mutation.Attempt, mutation.ClaimedAt, mutation.StartedAt, mutation.LeaseExpiresAt); err != nil {
 		return nil, err
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.running',$2,$3)", selected.JobID, workerClaimEventJSON(ctx, now, *selected, worker.WorkerID, attempt), now); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", selected.JobID, mutation.EventType, workerClaimEventJSON(ctx, mutation.ClaimedAt, *selected, mutation.WorkerID, mutation.Attempt), mutation.ClaimedAt); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {

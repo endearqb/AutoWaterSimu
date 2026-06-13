@@ -33,6 +33,7 @@ func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, le
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var selected *JobRecord
+	var selectedClaim *domainjobs.ClaimRecord
 	for _, job := range store.jobs {
 		if job.Status != StatusQueued || job.CancelRequested {
 			continue
@@ -52,29 +53,42 @@ func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, le
 		) {
 			continue
 		}
-		if selected == nil || job.CreatedAt.Before(selected.CreatedAt) || (job.CreatedAt.Equal(selected.CreatedAt) && job.JobID < selected.JobID) {
+		claimRecord := domainjobs.ClaimRecord{
+			JobID:         job.JobID,
+			SchemaVersion: job.SchemaVersion,
+			InputJSON:     job.InputJSON,
+			Attempt:       job.Attempt,
+			CreatedAt:     job.CreatedAt,
+		}
+		if domainjobs.PreferClaimRecord(selectedClaim, claimRecord) {
 			copy := job
 			selected = &copy
+			selectedClaim = &claimRecord
 		}
 	}
 	if selected == nil {
 		return nil, nil
 	}
 	now := time.Now().UTC()
-	selected.Status = StatusRunning
-	selected.WorkerID = worker.WorkerID
-	selected.Attempt++
-	selected.ClaimedAt = &now
-	selected.StartedAt = &now
-	selected.LeaseExpiresAt = &leaseExpiresAt
+	mutation := domainjobs.NewClaimMutation(*selectedClaim, worker.WorkerID, now, leaseExpiresAt)
+	applyClaimMutationToJobRecord(selected, mutation)
 	store.jobs[selected.JobID] = *selected
 	store.appendEventLocked(EventRecord{
 		JobID:     selected.JobID,
-		EventType: "job.running",
-		EventJSON: workerClaimEventJSON(ctx, now, *selected, worker.WorkerID, selected.Attempt),
-		CreatedAt: now,
+		EventType: mutation.EventType,
+		EventJSON: workerClaimEventJSON(ctx, mutation.ClaimedAt, *selected, mutation.WorkerID, mutation.Attempt),
+		CreatedAt: mutation.ClaimedAt,
 	})
 	return selected, nil
+}
+
+func applyClaimMutationToJobRecord(job *JobRecord, mutation domainjobs.ClaimMutation) {
+	job.Status = mutation.Status
+	job.WorkerID = mutation.WorkerID
+	job.Attempt = mutation.Attempt
+	job.ClaimedAt = &mutation.ClaimedAt
+	job.StartedAt = &mutation.StartedAt
+	job.LeaseExpiresAt = &mutation.LeaseExpiresAt
 }
 
 func (store *MemoryStore) Heartbeat(ctx context.Context, workerID, jobID string, leaseExpiresAt time.Time) (*JobRecord, error) {
