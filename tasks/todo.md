@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next service helper test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute` and current `service_test.go` split history.
+- [x] Confirm `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Treat the latest request as continuing service test maintainability work across remaining oversized `service_*_test.go` files.
+- [x] Identify `service_test_helpers_test.go` as the largest residual mixed service test helper file.
+- [x] Split service test helpers by responsibility into service construction, job fixtures, worker fixtures, simulation fixtures, draft confirmation fixtures, model catalog fixtures, audit helpers, artifact upload helpers, and payload assertions.
+- [x] Preserve helper names, test names, assertions, production code, schema, OpenAPI, generated client, migration, and route behavior.
+- [x] Run compute package tests, full apps/api Go tests, trailing-whitespace scan, and diff-check.
+- [x] Record README First change log.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Move complete helper function blocks into same-package `_test.go` files, preserving all call sites and package-private helper names.
+- Do not modify production code, assertions, public API, OpenAPI, schemas, migrations, generated clients, auth scopes, or HTTP routes.
+- Do not touch or stage the existing untracked docs/rebuild files.
+
+## Review
+
+- Confirmed `service_test.go` remains absent; this stage continues the same maintainability thread by splitting the residual mixed helper file.
+- Reduced `service_test_helpers_test.go` from 392 lines to 88 lines focused on service constructors, JSON helpers, string helper, and repo-root lookup.
+- Added focused helper files for artifact upload helpers, audit helpers, draft confirmation fixtures, job fixtures, model catalog fixtures, payload assertions, simulation fixtures, and worker fixtures.
+- Preserved helper names and all existing tests; no production behavior changed.
+- Validation passed: `go test ./internal/compute -count=1`, `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped `git diff --check`; diff-check only reported the existing LF/CRLF workspace hint.
+
 # 2026-06-13 AutoWaterSimu Next artifact upload metadata domain helper TODO
 
 - [x] Re-read README First context for Compute API, domain/artifacts, architecture, and Certainty/Elegance plan.
