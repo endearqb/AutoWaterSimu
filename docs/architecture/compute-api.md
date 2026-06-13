@@ -175,6 +175,8 @@ Selected files from the latest audit:
 | `service_evidence_references_helpers_test.go` | 165 | shared NewSystem process-graph simulation-check completion fixture and evidence-ref helpers |
 | `service_evidence_references_explanation_test.go` | 24 | NewSystem result explanation submission with resolved evidence refs |
 | `service_artifact_retention_archive_test.go` | 155 | artifact retention archive candidate skip/archive service coverage |
+| `service_artifact_retention_http_test.go` | 113 | artifact retention HTTP admin scope, safe dry-run default, deletion report, and audit envelope coverage |
+| `service_artifact_retention_http_scope_test.go` | 89 | artifact retention HTTP tenant/project/site data-scope coverage |
 | `service_simulation_reference_test.go` | 145 | registered simulation input reference coverage for material-balance and ASM/UDM simulation-check jobs |
 | `service_benchmark_runs_test.go` | 120 | benchmark run tenant/project/site read-scope coverage |
 | `service_model_runs_helpers_test.go` | 119 | shared completed model-run integration scenario fixture |
