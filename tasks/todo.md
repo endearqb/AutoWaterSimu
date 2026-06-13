@@ -1,3 +1,25 @@
+# 2026-06-13 AutoWaterSimu Next worker claim service test split TODO
+
+- [x] Re-read attached elegance closeout priority and current README First context before continuing P0 service-test split work.
+- [x] Confirm current `service*_test.go` files are already below the old monolith scale, but `service_workers_test.go` still mixes worker lifecycle, claim eligibility filters, and fail persistence.
+- [x] Move worker claim capability/contract-version filter regressions into a focused test file without changing test names or assertions.
+- [x] Run focused worker tests, security smoke, full apps/api Go tests, boundary checks, pr-fast, and diff checks.
+- [x] Commit and push this P0 split slice.
+
+## Plan
+
+- Keep this as test organization only.
+- Preserve worker claim behavior, claim ordering, HTTP behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, persistence, and audit envelopes.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `service_worker_claim_filters_test.go` for worker claim capability and contract-version mismatch filter regressions.
+- Reduced `service_workers_test.go` to worker lifecycle artifact/succeed/download and validated fail persistence coverage.
+- Updated architecture evidence table for the new worker claim filter test file.
+- Validation passed: focused worker tests, `scripts/ci/security-smoke.ps1`, full `go test ./...` in `apps/api`, dependency boundary check, Compute API boundary audit, and `pr-fast`.
+- Did not change production behavior, HTTP/API shape, schemas, OpenAPI, migrations, generated clients, auth scopes, persistence, or audit envelopes.
+
 # 2026-06-13 AutoWaterSimu Next artifact archive audit smoke coverage TODO
 
 - [x] Continue P2 selected mutation-audit closeout after worker fail audit coverage.
