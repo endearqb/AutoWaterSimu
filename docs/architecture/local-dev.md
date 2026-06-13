@@ -69,7 +69,7 @@ cd frontend; npx tsc --noEmit
 | `just dev-frontend` | Runs the legacy Web/Vite frontend |
 | `just check` | Runs dependency boundary check, contract tests, Go tests, and frontend typecheck |
 | `just check-full` | Runs the Next merge gate without `-SkipLong` |
-| `just pr-fast` | Runs the PR fast lane and writes `tmp/ci-evidence/pr-fast.json` |
+| `just pr-fast` | Runs the PR fast lane, including Compute API boundary audit, and writes `tmp/ci-evidence/pr-fast.json` plus `tmp/ci-evidence/compute-boundary/compute-api-boundary.json` |
 | `just integration-smoke` | Starts an isolated Compose API stack, runs local Python worker API once, and writes `tmp/ci-evidence/integration-smoke.json` |
 | `just check-security` | Runs token guard, scope denial, revocation, admin-scope, selected mutation audit, draft confirmation, model governance, and simulation registry audit checks and writes `tmp/ci-evidence/security-smoke.json` |
 | `just browser-smoke` | Runs mock-backed Playwright Compute Jobs/current-flow/result/evidence, contract validation, Model governance, and lifecycle smokes and writes `tmp/ci-evidence/browser-smoke.json` |

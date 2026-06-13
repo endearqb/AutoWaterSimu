@@ -19,7 +19,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `next-pr-fast.yml` | 运行 AutoWaterSimu Next PR fast lane，上传 `tmp/ci-evidence/pr-fast.json` |
+| `next-pr-fast.yml` | 运行 AutoWaterSimu Next PR fast lane，上传 `tmp/ci-evidence/pr-fast.json` 与 Compute API boundary audit evidence |
 | `next-integration-smoke.yml` | 手动或 `workflow_call` 运行 AutoWaterSimu Next integration smoke，上传 `tmp/ci-evidence/integration-smoke.json` |
 | `next-browser-smoke.yml` | 手动或 `workflow_call` 运行 mock-backed Playwright browser smoke，上传 `tmp/ci-evidence/browser-smoke.json` |
 | `next-live-backend-browser-smoke.yml` | 手动或 `workflow_call` 运行 live backend browser smoke，上传 `tmp/ci-evidence/live-backend-browser-smoke.json` |

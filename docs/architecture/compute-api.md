@@ -216,7 +216,7 @@ Selected files from the latest audit:
 | `service_model_runs_http_test.go` | 28 | model run read/list endpoint coverage |
 | `service_simulation_missing_refs_test.go` | 26 | missing simulation input/process graph/model run reference coverage |
 
-These numbers are audit signals, not hard failure thresholds.
+These numbers are audit signals, not hard failure thresholds. The P0 Compute service-test split is structurally closed for the current large-file/security list: future splits should be driven by mixed responsibility or regression-triage risk, not by line count alone. Acceptable future split triggers are tests that still combine security/data-scope with happy path behavior, combine future performance hot paths such as job list/claim/worker heartbeat, risk dropping security-smoke coverage, or make a failure ambiguous across scope, audit, HTTP method, persistence, and DTO mapping concerns.
 
 ## Store Shape
 

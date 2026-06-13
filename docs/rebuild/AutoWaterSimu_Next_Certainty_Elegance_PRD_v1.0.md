@@ -311,7 +311,7 @@ User / Service Account
 
 | Lane | 触发 | 覆盖 |
 |---|---|---|
-| `pr-fast` | PR 默认 | contracts、Go tests、frontend typecheck、desktop typecheck、generated drift、README path check |
+| `pr-fast` | PR 默认 | dependency boundary、Compute API boundary audit、contracts、Go tests、frontend typecheck、desktop typecheck、generated drift、README path check |
 | `integration` | main / opt-in | PostgreSQL migration、MinIO archive、Go API + worker loop、artifact smoke |
 | `browser` | nightly / opt-in | Compute Jobs、Lifecycle、Model Governance、Contract validation smoke |
 | `release-evidence` | manual release | sidecar build、installer build、silent install、installed smoke、artifact download verify |

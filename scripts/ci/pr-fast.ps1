@@ -212,6 +212,8 @@ $script:Failed = $false
 $npm = Resolve-NativeCommand -Name "npm"
 $npx = Resolve-NativeCommand -Name "npx"
 $powershell = if (Test-IsWindows) { "powershell" } else { "pwsh" }
+$computeBoundaryEvidenceDir = Join-Path $EvidenceDir "compute-boundary"
+$computeBoundaryEvidencePath = Join-Path $computeBoundaryEvidenceDir "compute-api-boundary.json"
 
 $commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
 $branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
@@ -221,6 +223,7 @@ $trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
 $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 
 Invoke-Step -Name "dependency boundary check" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-deps.ps1")
+Invoke-Step -Name "compute boundary audit" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\audit-compute-api-boundary.ps1", "-RepoRoot", $Root, "-EvidenceDir", $computeBoundaryEvidenceDir)
 Invoke-InternalStep -Name "README path check" -Body { Test-ReadmePaths -Root $Root }
 Invoke-Step -Name "ontology registry check" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-ontology.ps1")
 Invoke-Step -Name "contracts registry and drift gate" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-contracts.ps1")
@@ -242,6 +245,7 @@ $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
 $statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
 $trackedStatusAfter = @(Get-TrackedStatusLines -StatusLines $statusAfterLines)
 $untrackedStatusAfter = @(Get-UntrackedStatusLines -StatusLines $statusAfterLines)
+$computeBoundaryAuditStep = @($script:Steps | Where-Object { $_["name"] -eq "compute boundary audit" } | Select-Object -First 1)
 $report = [ordered]@{
     schema_version = "autowatersimu_next_pr_fast_evidence.v1"
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
@@ -268,6 +272,12 @@ $report = [ordered]@{
         github_ref = $env:GITHUB_REF
         github_workflow = $env:GITHUB_WORKFLOW
         local_status = if ([string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) { "local_run_not_github_status" } else { "github_actions_run" }
+    }
+    compute_boundary_audit = [ordered]@{
+        included_in_default_gate = $true
+        status = if ($computeBoundaryAuditStep.Count -gt 0) { $computeBoundaryAuditStep[0]["status"] } else { "not_run" }
+        evidence_path = $computeBoundaryEvidencePath
+        step_name = "compute boundary audit"
     }
     steps = $script:Steps
 }

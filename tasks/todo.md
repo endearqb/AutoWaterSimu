@@ -1,3 +1,31 @@
+# 2026-06-14 AutoWaterSimu Next pr-fast boundary gate TODO
+
+- [x] Read the new attached priority reassessment and confirm it changes the next slice from generic service-test split/package movement to P0 closeout note plus P1 default gate hardening.
+- [x] Re-read README First context for scripts, scripts/ci, docs, docs/architecture, docs/rebuild, pr-fast, current-state, and workflow context.
+- [x] Add `scripts/audit-compute-api-boundary.ps1` to the default `scripts/ci/pr-fast.ps1` lane.
+- [x] Add a `compute_boundary_audit` summary to `tmp/ci-evidence/pr-fast.json` and write boundary audit evidence under `tmp/ci-evidence/compute-boundary/`.
+- [x] Record P0 service-test split closeout and exception criteria in architecture docs.
+- [x] Update PRD/Plan/README context for the expanded `pr-fast` coverage and next P2/P3 priority.
+- [x] Run boundary audit, dependency check, pr-fast, docs/rebuild consistency scan, whitespace scan, and diff-check.
+- [x] Commit and push this P0/P1 closeout gate slice.
+
+## Plan
+
+- Keep this as CI gate/documentation hardening only.
+- Preserve production behavior, public service signatures, HTTP routes, auth scopes, schemas, OpenAPI, migrations, generated clients, store interfaces, and audit event shapes.
+- Treat P0 service-test split as structurally closed; future test splits require mixed responsibility or regression-triage risk.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `compute boundary audit` to the default `scripts/ci/pr-fast.ps1` lane.
+- Added `compute_boundary_audit` top-level evidence in `pr-fast.json`; `pr-fast` writes boundary audit detail to `tmp/ci-evidence/compute-boundary/compute-api-boundary.json`.
+- Recorded P0 service-test split closeout and future exception criteria in `docs/architecture/current-state.md` and `docs/architecture/compute-api.md`.
+- Updated Certainty/Elegance PRD/Plan, scripts README, CI README, workflow README, and local-dev docs for the expanded `pr-fast` coverage and next P2/P3 priority.
+- Validation passed: standalone Compute API boundary audit, dependency boundary check, `pr-fast`, rebuild doc consistency scan, changed-file trailing-whitespace scan, and `git diff --check -- .`.
+- `pr-fast` evidence status was `passed`; `compute_boundary_audit.status` was `passed`; the generated boundary evidence file existed; total step count was 8.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-14 AutoWaterSimu Next compute boundary import guard TODO
 
 - [x] Read the attached priority note and confirm P0 service-test split status before continuing.

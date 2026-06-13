@@ -342,6 +342,7 @@ artifact/model_run references preserved
 
 ```text
 pr-fast
+compute boundary audit
 integration
 browser
 release-evidence
@@ -480,7 +481,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 
 ### Testing / CI
 
-- [x] `pr-fast`
+- [x] `pr-fast`（含 dependency boundary、Compute API boundary audit、README path、ontology、contracts、Go、frontend、Desktop checks）
 - [ ] `integration`
 - [x] `browser`（mock-backed opt-in、live Compute backend read opt-in、current-flow live opt-in 以及三者 hosted/manual workflow entry 已落地；完整 legacy authenticated browser session 与 hosted green evidence 尚未完成）
 - [ ] `release-evidence`
@@ -579,6 +580,8 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] First worker domain package split (`apps/api/internal/domain/workers`)
 - [x] Domain package reverse-dependency guard in `check-deps`
 - [x] Compute API boundary audit reverse-import guard for domain/platform packages
+- [x] Compute API boundary audit included in default `pr-fast` gate
+- [x] Compute service-test split closeout recorded; future splits must be responsibility/risk-driven, not line-count-driven
 - [x] Go API domain package split（file-level Store/MemoryStore、HTTP route group、PostgreSQL persistence split、public Service delegate split、job lifecycle / artifact lifecycle / simulation input-process graph / draft / result explanation / model governance / evidence governance workflow split complete；后续随 domain workflow 迁出继续瘦身）
 
 ---
@@ -595,9 +598,16 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 
 ## 9. Immediate Next Step
 
-近期 `.ai/changes` 已显示 evidence wrapper / hosted workflow entry 与同 package 文件拆分存在边际收益下降风险。除非下一步能实际触发 GitHub Actions 并拿到绿色 run，否则下一次实际执行应优先推进真实 package movement 或明确的 all-mutation audit / object data-scope 切片，而不是继续新增 evidence summary、workflow wrapper 或同 package 文件整理。
+近期 `.ai/changes` 已显示 evidence wrapper / hosted workflow entry、同 package 文件拆分和普通 service-test split 的边际收益下降。当前 P0 service-test split 已结构性收口，P1 Compute API boundary audit 已进入默认 `pr-fast` gate。下一次实际执行应优先产出 P2 mutation/data-scope gap matrix，随后进入 P3 simulation_core / worker / legacy backend boundary audit；只有能产出真实 hosted green evidence 时才补 hosted workflow 证据。
 
-下一次实际执行建议继续收敛 Phase 1 结构性重构，并只在可产出真实 evidence 时补 Phase 0/2 evidence：
+下一次实际执行优先级：
+
+1. 生成 P2 mutation/data-scope gap matrix，逐 route 记录 method guard、auth scope、tenant/project/site mutation scope、no-write denial、audit envelope、security-smoke selection 和 focused test 覆盖。
+2. 只修 gap matrix 中的红项，避免继续零散新增 audit helper 或把全部慢测试塞进 security-smoke。
+3. 启动 P3 `simulation-core-packaging-audit`：确认 `simulation_core` packaging、worker `_ensure_repo_import_paths()` / sys.path fallback、backend/core 双实现漂移、core-only import smoke、legacy backend oracle 依赖和 tests collect 边界。
+4. 在 P3 audit 后落最小 `simulation_core/python` pyproject / editable dependency / core-only smoke，作为性能 Phase 0 前置；暂不做 UDM RHS 去循环、dense/sparse 重写、keyset cursor 或 claim LIMIT 热路径优化。
+
+以下事项保留为并行或后续 evidence/package movement 清单，不再作为下一次执行主线：
 
 1. 在 clean HEAD 上运行 `just pr-fast` 或 `scripts\ci\pr-fast.ps1`，保留 `tmp/ci-evidence/pr-fast.json`。
 2. 触发或接入 `.github/workflows/next-integration-smoke.yml` 的真实 GitHub Actions run，并把 hosted green run 作为 integration evidence 记录。
