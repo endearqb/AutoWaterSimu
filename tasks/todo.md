@@ -1,3 +1,30 @@
+# 2026-06-13 AutoWaterSimu Next artifact archive metadata domain helper TODO
+
+- [x] Re-read README First context for Compute API, domain/artifacts, architecture, ADR 0010, and Certainty/Elegance plan.
+- [x] Confirm this stage is real package-boundary movement, not an evidence wrapper, hosted workflow entry, or same-package file split.
+- [x] Move stable artifact archive metadata record projection into `apps/api/internal/domain/artifacts`.
+- [x] Keep compute responsible for object/archive store execution, checksum verification, metadata persistence, audit envelope assembly, hot object deletion, download fallback, HTTP mapping, and public `Service` signatures.
+- [x] Add direct domain tests for archived metadata projection.
+- [x] Fix README drift for scoped model catalog promotion plan/promote-approved job-scoped evidence filtering.
+- [x] Update domain/compute/architecture/Certainty-Elegance context and README First change log.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Commit and push this artifact archive metadata domain helper stage.
+
+## Plan
+
+- Treat this as a narrow artifacts domain package movement slice, not a full artifact lifecycle migration, object-store rewrite, public API redesign, schema change, migration, generated client update, all-mutation audit completion, full object-level data-scope, hosted evidence run, release round trip, or complete golden scenarios.
+- Preserve ADR 0010 archive safety sequence: copy, checksum verify, durable archive metadata, audit event, then hot object delete.
+- Preserve artifact retention sweep response shape, archive download fallback, event audit shape, and `NewService` / `NewServiceWithArchive` public signatures.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added `ArchiveRecordInput`, `ArchiveRecord`, `ArchiveStatusArchived`, and `NewArchiveRecord` to `apps/api/internal/domain/artifacts`.
+- `ArtifactLifecycleService.archiveArtifact` now uses the domain projection after copy and checksum verification, then adapts the neutral archive record back to the existing compute `ArtifactArchiveRecord`.
+- Preserved ADR 0010 archive ordering: write archive copy, verify checksum, persist archive metadata with audit event, then delete hot object.
+- Fixed stale `apps/api/README.md` model governance text so scoped promotion plan/promote-approved now matches the implemented authorized `job_id` evidence filter.
+- Validation passed: focused artifact/domain tests, security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, stale-text scan, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next evidence object-scope domain helper TODO
 
 - [x] Re-read README First context for Compute API, domain/evidence, architecture, and Certainty/Elegance plan.

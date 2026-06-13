@@ -3,6 +3,8 @@ package compute
 import (
 	"context"
 	"time"
+
+	domainartifacts "autowatersimu/apps/api/internal/domain/artifacts"
 )
 
 func (svc *ArtifactLifecycleService) archiveArtifact(ctx context.Context, artifact ArtifactRecord, now time.Time) (ArtifactArchiveRecord, error) {
@@ -32,7 +34,7 @@ func (svc *ArtifactLifecycleService) archiveArtifact(ctx context.Context, artifa
 	if "sha256:"+SHA256Hex(archivedBytes) != artifact.Checksum {
 		return ArtifactArchiveRecord{}, NewAppError(500, CodeInternal, "artifact archive checksum verification failed", true, nil)
 	}
-	archive := ArtifactArchiveRecord{
+	archive := artifactArchiveRecordFromDomain(domainartifacts.NewArchiveRecord(domainartifacts.ArchiveRecordInput{
 		ArtifactID:              artifact.ArtifactID,
 		JobID:                   artifact.JobID,
 		OriginalStorageProvider: artifact.StorageProvider,
@@ -41,10 +43,9 @@ func (svc *ArtifactLifecycleService) archiveArtifact(ctx context.Context, artifa
 		ArchiveObjectKey:        archiveObjectKey,
 		Checksum:                artifact.Checksum,
 		SizeBytes:               int64(len(archivedBytes)),
-		Status:                  "archived",
-		Metadata:                mustJSON(map[string]any{"retention_policy": artifact.RetentionPolicy}),
+		RetentionPolicy:         artifact.RetentionPolicy,
 		ArchivedAt:              now,
-	}
+	}))
 	event := EventRecord{
 		JobID:     artifact.JobID,
 		EventType: "artifact.archived",
@@ -83,6 +84,22 @@ func (svc *ArtifactLifecycleService) archiveArtifact(ctx context.Context, artifa
 		return ArtifactArchiveRecord{}, err
 	}
 	return archive, nil
+}
+
+func artifactArchiveRecordFromDomain(record domainartifacts.ArchiveRecord) ArtifactArchiveRecord {
+	return ArtifactArchiveRecord{
+		ArtifactID:              record.ArtifactID,
+		JobID:                   record.JobID,
+		OriginalStorageProvider: record.OriginalStorageProvider,
+		OriginalObjectKey:       record.OriginalObjectKey,
+		ArchiveProvider:         record.ArchiveProvider,
+		ArchiveObjectKey:        record.ArchiveObjectKey,
+		Checksum:                record.Checksum,
+		SizeBytes:               record.SizeBytes,
+		Status:                  record.Status,
+		Metadata:                mustJSON(record.Metadata),
+		ArchivedAt:              record.ArchivedAt,
+	}
 }
 
 func artifactArchiveAuditState(archive ArtifactArchiveRecord) map[string]any {

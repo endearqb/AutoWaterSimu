@@ -111,3 +111,35 @@ func TestEvaluateRetentionActionUnsupportedPolicy(t *testing.T) {
 		}
 	}
 }
+
+func TestNewArchiveRecordProjectsArchivedMetadata(t *testing.T) {
+	archivedAt := time.Date(2026, 6, 13, 10, 0, 0, 0, time.UTC)
+	record := NewArchiveRecord(ArchiveRecordInput{
+		ArtifactID:              "art_1",
+		JobID:                   "job_1",
+		OriginalStorageProvider: "local_fs",
+		OriginalObjectKey:       "jobs/job_1/art_1.json",
+		ArchiveProvider:         "local_fs_archive",
+		ArchiveObjectKey:        "archive/jobs/job_1/art_1.json",
+		Checksum:                "sha256:abc",
+		SizeBytes:               123,
+		RetentionPolicy:         PolicyArchiveCandidate,
+		ArchivedAt:              archivedAt,
+	})
+
+	if record.ArtifactID != "art_1" ||
+		record.JobID != "job_1" ||
+		record.OriginalStorageProvider != "local_fs" ||
+		record.OriginalObjectKey != "jobs/job_1/art_1.json" ||
+		record.ArchiveProvider != "local_fs_archive" ||
+		record.ArchiveObjectKey != "archive/jobs/job_1/art_1.json" ||
+		record.Checksum != "sha256:abc" ||
+		record.SizeBytes != 123 ||
+		record.Status != ArchiveStatusArchived ||
+		!record.ArchivedAt.Equal(archivedAt) {
+		t.Fatalf("unexpected archive record projection: %#v", record)
+	}
+	if record.Metadata["retention_policy"] != PolicyArchiveCandidate {
+		t.Fatalf("expected retention metadata, got %#v", record.Metadata)
+	}
+}

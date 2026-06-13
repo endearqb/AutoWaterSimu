@@ -45,6 +45,35 @@ type RetentionActionPlan struct {
 	ShouldDelete  bool
 }
 
+const ArchiveStatusArchived = "archived"
+
+type ArchiveRecordInput struct {
+	ArtifactID              string
+	JobID                   string
+	OriginalStorageProvider string
+	OriginalObjectKey       string
+	ArchiveProvider         string
+	ArchiveObjectKey        string
+	Checksum                string
+	SizeBytes               int64
+	RetentionPolicy         string
+	ArchivedAt              time.Time
+}
+
+type ArchiveRecord struct {
+	ArtifactID              string
+	JobID                   string
+	OriginalStorageProvider string
+	OriginalObjectKey       string
+	ArchiveProvider         string
+	ArchiveObjectKey        string
+	Checksum                string
+	SizeBytes               int64
+	Status                  string
+	Metadata                map[string]any
+	ArchivedAt              time.Time
+}
+
 func RetentionFromMetadata(metadata map[string]any) (Retention, error) {
 	policy := stringValue(metadata, "retention_policy")
 	if policy == "" {
@@ -110,6 +139,22 @@ func EvaluateRetentionAction(input RetentionActionInput) RetentionActionPlan {
 			Action: RetentionActionSkipped,
 			Reason: RetentionReasonUnsupportedPolicy,
 		}
+	}
+}
+
+func NewArchiveRecord(input ArchiveRecordInput) ArchiveRecord {
+	return ArchiveRecord{
+		ArtifactID:              input.ArtifactID,
+		JobID:                   input.JobID,
+		OriginalStorageProvider: input.OriginalStorageProvider,
+		OriginalObjectKey:       input.OriginalObjectKey,
+		ArchiveProvider:         input.ArchiveProvider,
+		ArchiveObjectKey:        input.ArchiveObjectKey,
+		Checksum:                input.Checksum,
+		SizeBytes:               input.SizeBytes,
+		Status:                  ArchiveStatusArchived,
+		Metadata:                map[string]any{"retention_policy": input.RetentionPolicy},
+		ArchivedAt:              input.ArchivedAt,
 	}
 }
 

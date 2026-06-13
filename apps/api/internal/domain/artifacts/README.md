@@ -10,6 +10,7 @@
 - artifact metadata 中 `retention_policy` / `retain_until` 的解析。
 - retention sweep 候选 policy 判断。
 - retention sweep action planning，包括 skip / would_archive / archived / would_delete / deleted 的纯判定。
+- archive metadata record projection，包括 archived status 与 retention policy metadata。
 
 本目录不负责：
 
@@ -21,7 +22,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `artifacts.go` | Artifact retention policy and action planning helpers |
+| `artifacts.go` | Artifact retention policy, action planning, and archive metadata projection helpers |
 | `artifacts_test.go` | Direct artifacts domain tests |
 
 ## 3. 维护约定
@@ -46,12 +47,16 @@
 - `RetentionReasonReferencedByModelRun`
 - `RetentionReasonArchiveExecutorMissing`
 - `RetentionReasonUnsupportedPolicy`
+- `ArchiveStatusArchived`
 - `Retention`
 - `RetentionActionInput`
 - `RetentionActionPlan`
+- `ArchiveRecordInput`
+- `ArchiveRecord`
 - `RetentionFromMetadata`
 - `IsRetentionCandidate`
 - `EvaluateRetentionAction`
+- `NewArchiveRecord`
 
 ## 5. 依赖边界
 
