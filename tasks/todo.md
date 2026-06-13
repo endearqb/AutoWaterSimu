@@ -1,3 +1,28 @@
+# 2026-06-14 AutoWaterSimu Next P2 mutation scope gap matrix TODO
+
+- [x] Read the new attached priority reassessment and confirm the next slice is P2 mutation/data-scope gap matrix, not another service-test split, wrapper, or hosted workflow entry.
+- [x] Re-read README First context for docs, docs/architecture, docs/rebuild, apps/api, internal compute, scripts/ci, current-state, security-smoke, and focused tests.
+- [x] Inventory current mutation routes against method guard, auth scope, tenant/project/site mutation scope, no-write denial, selected audit envelope, security-smoke selection, and focused test names.
+- [x] Add `docs/architecture/compute-mutation-scope-matrix.md` as the P2 route/mutation evidence matrix with red/yellow next items.
+- [x] Update architecture README/current-state and Certainty/Elegance Development Plan for the matrix closeout and next P2/P3 priority.
+- [x] Run validation and record exact results.
+- [x] Commit and push this P2 matrix slice.
+
+## Plan
+
+- Keep this as documentation and task-state consolidation only.
+- Preserve production Go behavior, HTTP routes, auth scopes, schemas, OpenAPI, migrations, generated clients, store interfaces, tests, and audit event shapes.
+- Do not treat selected mutation audit as full all-mutation audit or full object-level data-scope completion.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `docs/architecture/compute-mutation-scope-matrix.md` with a route-level matrix for method guard, static-token auth scope, tenant/project/site mutation scope, no-write denial, audit envelope, security-smoke selection, focused test evidence, and red/yellow follow-ups.
+- Updated `docs/architecture/README.md`, `docs/architecture/current-state.md`, and the Certainty/Elegance Development Plan so P2 matrix generation is closed and the next priority is fixing only matrix red/yellow rows before P3 simulation_core / worker / legacy backend boundary audit.
+- Validation passed: `scripts\ci\security-smoke.ps1` (`status=passed`, 3 steps), `scripts\check-deps.ps1`, `scripts\audit-compute-api-boundary.ps1` (0 import boundary violations), docs/rebuild P0/P1/P2/schema scan, `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), changed-file trailing-whitespace scan, and `git diff --check -- .`.
+- Remaining P2 red/yellow rows: align `security-smoke` coverage wording/test selection with route-specific audit proof, add collection-route method proof if required, and add artifact archive cross-scope no-write proof if archive becomes a required P2 assertion.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-14 AutoWaterSimu Next pr-fast boundary gate TODO
 
 - [x] Read the new attached priority reassessment and confirm it changes the next slice from generic service-test split/package movement to P0 closeout note plus P1 default gate hardening.

@@ -25,6 +25,7 @@
 | `dependency-graph.md` | 允许与禁止的依赖方向 |
 | `contracts.md` | Contracts source-of-truth、codegen policy 与 drift gate 摘要 |
 | `compute-api.md` | Go Compute API Store/domain 边界审计与拆分顺序 |
+| `compute-mutation-scope-matrix.md` | Compute API selected mutation method/scope/no-write/audit evidence matrix and P2 red/yellow items |
 | `desktop-runtime.md` | Desktop runtime package/support bundle、sidecar、backup/restore 与 release artifact 边界 |
 | `ontology-model.md` | Water Ontology 首批 registry、验证 gate、policy/enforcement 边界 |
 | `local-dev.md` | 根级任务入口和本地开发命令 |

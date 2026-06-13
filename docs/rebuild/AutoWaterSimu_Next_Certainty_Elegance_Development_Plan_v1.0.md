@@ -489,6 +489,7 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 - [x] Postgres + MinIO + Worker integration smoke
 - [x] Release artifact download verification（fixture-backed verifier smoke 和本地真实 unsigned artifact bundle verifier 已落地并接入 release evidence；真实 hosted unsigned artifact round trip 尚未完成）
 - [ ] Security scope/audit scenario（token guard / file-mounted token config source / scope denial / revocation / worker mutation POST-only method guard / job route declared-method guard / API-wide declared-method guard / selected mutation audit smoke（job create/cancel/timeout、worker registration/claim/heartbeat/artifact/result completion、draft confirmation、draft promotion、benchmark schedule-run、artifact retention、result explanation、model governance、simulation registry）/ job-process_graph-simulation_input-draft_confirmation-model_catalog-model_run-benchmark_run-artifact tenant/project/site read-scope / evidence package 与 production-readiness job-scoped model catalog selection / process_graph evidence-ref source-job object scope / direct job create、direct job cancel、artifact retention sweep candidate filtering、worker claim/heartbeat/artifact/completion、confirm-draft record persistence、result explanation submit/review/publish、direct simulation-check create、draft promotion job create、benchmark schedule-run job create、model catalog registration-status-promote、promotion plan/promote-approved job-scoped evidence filtering、benchmark_run registration 与显式 process_graph/simulation_input registry POST mutation data-scope 与 hosted/manual workflow 已落地；全对象 data scope、剩余 mutation data-scope 与 all-mutation audit 尚未完成）
+- [x] P2 mutation/data-scope gap matrix（`docs/architecture/compute-mutation-scope-matrix.md` 已逐 route 记录 method guard、auth scope、tenant/project/site mutation scope、no-write denial、audit envelope、security-smoke selection 与 focused test evidence；后续只修 red/yellow rows，不继续泛化新增 audit helper）
 - [x] Desktop package export/import smoke（local opt-in；packaged worker / NSIS installer / release gate with real artifacts 已有本地 evidence；hosted evidence 尚未完成）
 - [ ] 8 golden scenarios（已有 `scripts/ci/golden-scenarios.ps1` 本地 evidence 汇总、`-RefreshLocalEvidence` 非 Docker 本地 lane 刷新入口、`just golden-scenarios-refresh-integration` Docker integration 刷新入口、`just golden-scenarios-refresh-live` live backend browser read 刷新入口、`just golden-scenarios-refresh-current-flow-live` current-flow live submit 刷新入口，以及 `just golden-scenarios-refresh-desktop-release` 本地真实 unsigned Desktop release artifact 刷新入口；仍未完成 hosted/legacy auth 等自动或半自动完整场景证明）
 
@@ -598,12 +599,12 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 
 ## 9. Immediate Next Step
 
-近期 `.ai/changes` 已显示 evidence wrapper / hosted workflow entry、同 package 文件拆分和普通 service-test split 的边际收益下降。当前 P0 service-test split 已结构性收口，P1 Compute API boundary audit 已进入默认 `pr-fast` gate。下一次实际执行应优先产出 P2 mutation/data-scope gap matrix，随后进入 P3 simulation_core / worker / legacy backend boundary audit；只有能产出真实 hosted green evidence 时才补 hosted workflow 证据。
+近期 `.ai/changes` 已显示 evidence wrapper / hosted workflow entry、同 package 文件拆分和普通 service-test split 的边际收益下降。当前 P0 service-test split 已结构性收口，P1 Compute API boundary audit 已进入默认 `pr-fast` gate，P2 mutation/data-scope gap matrix 已落到 `docs/architecture/compute-mutation-scope-matrix.md`。下一次实际执行应优先修矩阵中的 red/yellow rows，随后进入 P3 simulation_core / worker / legacy backend boundary audit；只有能产出真实 hosted green evidence 时才补 hosted workflow 证据。
 
 下一次实际执行优先级：
 
-1. 生成 P2 mutation/data-scope gap matrix，逐 route 记录 method guard、auth scope、tenant/project/site mutation scope、no-write denial、audit envelope、security-smoke selection 和 focused test 覆盖。
-2. 只修 gap matrix 中的红项，避免继续零散新增 audit helper 或把全部慢测试塞进 security-smoke。
+1. 修 P2 mutation/data-scope gap matrix 中的 red/yellow rows：route-specific audit smoke alignment、collection-route method proof，以及必要时 artifact archive cross-scope no-write proof。
+2. 同步收窄 `security-smoke` coverage wording 或 test selection，避免 selected mutation audit 摘要比实际 smoke regex 更宽。
 3. 启动 P3 `simulation-core-packaging-audit`：确认 `simulation_core` packaging、worker `_ensure_repo_import_paths()` / sys.path fallback、backend/core 双实现漂移、core-only import smoke、legacy backend oracle 依赖和 tests collect 边界。
 4. 在 P3 audit 后落最小 `simulation_core/python` pyproject / editable dependency / core-only smoke，作为性能 Phase 0 前置；暂不做 UDM RHS 去循环、dense/sparse 重写、keyset cursor 或 claim LIMIT 热路径优化。
 
