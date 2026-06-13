@@ -1,3 +1,31 @@
+# 2026-06-13 AutoWaterSimu Next model run service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, architecture test evidence, and current `service_test.go` split history.
+- [x] Confirm `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Treat the latest request as continuing service test maintainability work across remaining oversized `service_*_test.go` files.
+- [x] Measure current service test files and identify `service_model_runs_test.go` as the largest residual single-test service integration file.
+- [x] Split `TestValidatedCompletePersistsModelRun` into focused tests for core model-run persistence/result view, model-run HTTP read/list, evidence/readiness, benchmark-run recording, and result-explanation model_run evidence refs.
+- [x] Preserve production code, schema, OpenAPI, generated client, migrations, auth scopes, route behavior, test names where retained, and assertion semantics.
+- [x] Run focused tests, full apps/api Go tests, trailing-whitespace scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this service test split stage.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Reuse a same-package completed model-run scenario helper so each focused test has independent setup and failure localization.
+- Update `docs/architecture/compute-api.md` only where its test-file evidence table hard-codes stale line counts.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Confirmed `service_test.go` remains absent; this stage continues the same maintainability thread by splitting the residual long `service_model_runs_test.go`.
+- Reduced `service_model_runs_test.go` from 379 lines to 52 lines focused on model run persistence/list/result view coverage.
+- Added `service_model_runs_helpers_test.go`, `service_model_runs_http_test.go`, `service_model_runs_evidence_test.go`, `service_benchmark_runs_model_run_test.go`, and `service_result_explanation_model_run_test.go`.
+- Preserved production code, schema, OpenAPI, generated client, migrations, auth scopes, route behavior, and assertion semantics.
+- Updated `docs/architecture/compute-api.md` test-file evidence table because it still hard-coded stale helper/model-run test line counts.
+- Validation passed: focused split tests, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next model catalog snapshot record data projection TODO
 
 - [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.

@@ -153,15 +153,24 @@ Selected files from the latest audit:
 | `memory_simulation.go` | 69 | in-memory process graph and simulation input metadata store implementation |
 | `memory_metrics.go` | 43 | in-memory metrics snapshot query |
 | `memory_store.go` | 40 | MemoryStore struct and constructor |
-| `service_test_helpers_test.go` | 392 | shared service test helpers and fixture builders |
-| `service_model_runs_test.go` | 379 | model run persistence, evidence, readiness, benchmark run, and result explanation integration coverage |
 | `service_contracts_test.go` | 324 | contract validation endpoint coverage |
 | `service_simulation_registry_test.go` | 300 | simulation registry read/mutation/audit coverage |
+| `service_model_catalog_test.go` | 277 | model catalog endpoint coverage |
+| `service_artifact_retention_test.go` | 252 | artifact retention service dry-run/delete/archive coverage |
+| `service_model_parameters_test.go` | 247 | default parameter set status/promotion-plan/promote-approved coverage |
+| `service_benchmark_runs_test.go` | 227 | benchmark run tenant/project/site scope coverage |
+| `service_evidence_references_test.go` | 223 | NewSystem evidence reference integration coverage |
 | `service_simulation_reference_test.go` | 145 | registered simulation input reference coverage for material-balance and ASM/UDM simulation-check jobs |
+| `service_model_runs_helpers_test.go` | 119 | shared completed model-run integration scenario fixture |
+| `service_model_runs_evidence_test.go` | 100 | model run evidence package/readiness endpoint coverage |
+| `service_result_explanation_model_run_test.go` | 77 | result explanation workflow coverage with model_run evidence refs |
 | `service_simulation_process_graph_test.go` | 69 | process graph registration and simulation-check projection coverage |
 | `service_simulation_test.go` | 62 | embedded simulation input create/idempotency/auth simulation-check coverage |
 | `service_simulation_model_run_test.go` | 59 | model-run replay simulation-check coverage |
+| `service_benchmark_runs_model_run_test.go` | 55 | benchmark run registration coverage backed by a completed model_run |
+| `service_model_runs_test.go` | 52 | model run persistence, list filters, and result view coverage |
 | `service_simulation_helpers_test.go` | 44 | simulation-check HTTP fixture helpers |
+| `service_model_runs_http_test.go` | 28 | model run read/list endpoint coverage |
 | `service_simulation_missing_refs_test.go` | 26 | missing simulation input/process graph/model run reference coverage |
 
 These numbers are audit signals, not hard failure thresholds.
