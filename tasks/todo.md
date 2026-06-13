@@ -1,3 +1,30 @@
+# 2026-06-13 AutoWaterSimu Next simulation registry service test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, service test organization, and current architecture evidence.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Measure remaining `service*_test.go` files and identify `service_simulation_registry_test.go` as the largest residual service test aggregation point.
+- [x] Split simulation registry read-scope, mutation-scope, and compact mutation audit assertions into focused tests.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, test assertions, and fixture payloads.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused simulation registry tests and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Extract a small same-package registry HTTP helper to remove repeated server/request setup.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, or auth scopes.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_simulation_registry_test.go` from a 301-line mixed registry file to focused tenant/project/site read-scope coverage.
+- Added `service_simulation_registry_mutation_scope_test.go`, `service_simulation_registry_audit_test.go`, and `service_simulation_registry_http_helpers_test.go`.
+- Preserved existing assertions for process graph and simulation input read-scope, scoped mutation denial/no-write behavior, compact mutation audit records, idempotent duplicate registry calls, and simulation-check generated input audit attribution.
+- Updated `docs/architecture/compute-api.md` because it hard-coded the stale `service_simulation_registry_test.go` line count.
+- Validation passed: focused simulation registry tests and full `go test ./...` in `apps/api`.
+- Remaining largest service test files are now `service_model_catalog_test.go`, `service_artifact_retention_test.go`, `service_model_parameters_test.go`, and `service_benchmark_runs_test.go`.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next contracts service test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute`, service test organization, current architecture evidence, and recent service test split history.

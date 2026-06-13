@@ -158,7 +158,10 @@ Selected files from the latest audit:
 | `service_contracts_constraints_test.go` | 58 | constraint draft confirmation and advisory constraint application plan coverage |
 | `service_contracts_promotion_test.go` | 59 | approved Agent draft promotion and promotion audit coverage |
 | `service_contracts_http_helpers_test.go` | 39 | shared contracts endpoint HTTP and fixture helpers |
-| `service_simulation_registry_test.go` | 300 | simulation registry read/mutation/audit coverage |
+| `service_simulation_registry_test.go` | 61 | simulation registry tenant/project/site read-scope coverage |
+| `service_simulation_registry_mutation_scope_test.go` | 61 | simulation registry mutation tenant/project/site scope coverage |
+| `service_simulation_registry_audit_test.go` | 135 | simulation registry compact mutation audit coverage |
+| `service_simulation_registry_http_helpers_test.go` | 37 | shared simulation registry HTTP helpers |
 | `service_model_catalog_test.go` | 277 | model catalog endpoint coverage |
 | `service_artifact_retention_test.go` | 252 | artifact retention service dry-run/delete/archive coverage |
 | `service_model_parameters_test.go` | 247 | default parameter set status/promotion-plan/promote-approved coverage |
