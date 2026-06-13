@@ -166,6 +166,9 @@ Selected files from the latest audit:
 | `service_model_catalog_registration_test.go` | 65 | persisted model catalog registration/read/idempotency coverage |
 | `service_model_catalog_status_test.go` | 115 | default parameter set status transition, snapshot pagination, and audit coverage |
 | `service_model_catalog_http_helpers_test.go` | 39 | shared model catalog HTTP and fixture helpers |
+| `service_model_catalog_scope_test.go` | 102 | model catalog persisted root/snapshot/model tenant/project/site read-scope coverage |
+| `service_model_catalog_mutation_scope_test.go` | 91 | model catalog registration/status mutation tenant/project/site data-scope coverage |
+| `service_model_catalog_promotion_scope_test.go` | 151 | model catalog promotion plan/promote-approved job-scoped tenant/project/site coverage |
 | `service_job_scope_test.go` | 84 | job list/get tenant/project/site read-scope coverage |
 | `service_job_cancel_scope_test.go` | 95 | job cancel mutation tenant/project/site scope, no-write denial, and audit coverage |
 | `service_job_create_scope_test.go` | 55 | job create mutation tenant/project/site scope and denied no-write coverage |

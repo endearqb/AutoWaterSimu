@@ -1,3 +1,32 @@
+# 2026-06-13 AutoWaterSimu Next model catalog scope service test split TODO
+
+- [x] Continue the attached P0 closeout priority by handling `service_model_catalog_scope_test.go` after the artifact retention HTTP split.
+- [x] Re-read README First context for `apps/api/internal/compute`, Certainty/Elegance PRD/Plan, model catalog data-scope coverage, current architecture evidence, and security-smoke test-name usage.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Split model catalog read-scope coverage from mutation-scope coverage.
+- [x] Preserve `TestHTTPModelCatalogTenantProjectSiteScope` and `TestHTTPModelCatalogMutationTenantProjectSiteScope` names so security-smoke keeps selecting both tests.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, and assertion semantics.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused model catalog scope tests, security-smoke equivalent data-scope regex, and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Leave `TestHTTPModelCatalogTenantProjectSiteScope` in `service_model_catalog_scope_test.go` because it covers scoped persisted catalog root/snapshot/model reads and promotion-plan no-job denial.
+- Move `TestHTTPModelCatalogMutationTenantProjectSiteScope` into `service_model_catalog_mutation_scope_test.go` without changing its name, setup, or assertions.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, auth scopes, or CI scripts.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Reduced `service_model_catalog_scope_test.go` from 185 lines to 102 lines focused on persisted model catalog root/snapshot/model read-scope behavior and promotion-plan no-job denial.
+- Added `service_model_catalog_mutation_scope_test.go` with 91 lines focused on model catalog registration/status mutation data-scope behavior and promote-approved no-job denial.
+- Preserved the original test names and assertions; both remain covered by the existing security smoke data-scope regex without changing `scripts/ci/security-smoke.ps1`.
+- Updated `docs/architecture/compute-api.md` because it did not yet list the model catalog scope split evidence rows.
+- Validation passed: focused model catalog scope tests, security-smoke equivalent data-scope Go regex, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check.
+- Remaining large security/correctness service test file from the attached P0 closeout list is `service_result_explanation_audit_test.go`; other non-P0 service coverage files remain above 150 lines but are not part of this data-scope/audit split.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next artifact retention HTTP service test split TODO
 
 - [x] Continue the attached P0 closeout priority by handling `service_artifact_retention_http_test.go` after the worker audit split.
