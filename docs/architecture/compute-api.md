@@ -188,6 +188,9 @@ Selected files from the latest audit:
 | `service_artifact_retention_test.go` | 104 | artifact retention TTL deletion, reference protection, and deletion audit coverage |
 | `service_model_runs_evidence_test.go` | 100 | model run evidence package/readiness endpoint coverage |
 | `service_model_parameters_helpers_test.go` | 87 | shared default parameter set promotion-plan/promote-approved fixtures |
+| `service_result_explanation_scope_test.go` | 145 | result explanation submit/review/publish tenant/project/site mutation-scope coverage |
+| `service_result_explanation_audit_helpers_test.go` | 102 | shared result explanation completed model-run audit scenario and envelope assertions |
+| `service_result_explanation_audit_test.go` | 94 | result explanation submit idempotency audit and review/publish audit coverage |
 | `service_result_explanation_model_run_test.go` | 77 | result explanation workflow coverage with model_run evidence refs |
 | `service_model_parameters_test.go` | 45 | default parameter set advisory promotion-plan coverage |
 | `service_simulation_process_graph_test.go` | 69 | process graph registration and simulation-check projection coverage |

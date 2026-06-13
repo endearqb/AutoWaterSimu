@@ -1,3 +1,35 @@
+# 2026-06-13 AutoWaterSimu Next result explanation audit service test split TODO
+
+- [x] Continue the attached P0 closeout priority by handling `service_result_explanation_audit_test.go` after the model catalog scope split.
+- [x] Re-read README First context for `apps/api/internal/compute`, Certainty/Elegance PRD/Plan, result explanation audit coverage, current architecture evidence, and security-smoke test-name usage.
+- [x] Confirm literal `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Split result explanation submit audit coverage from review/publish audit coverage.
+- [x] Extract a shared completed model-run audit scenario and envelope assertion helper.
+- [x] Preserve `TestHTTPResultExplanationAuditEvents` for submit audit coverage and add `TestHTTPResultExplanationReviewPublishAuditEvents` for review/publish audit coverage.
+- [x] Update `scripts/ci/security-smoke.ps1` so the newly split review/publish audit test remains in the security smoke selection.
+- [x] Preserve production code, HTTP behavior, fixtures, auth scopes, OpenAPI, schemas, migrations, generated clients, and assertion semantics.
+- [x] Update architecture test-file evidence table and README First change log.
+- [x] Run focused result explanation audit tests, security-smoke equivalent data-scope regex, and full apps/api Go tests.
+
+## Plan
+
+- Keep this as a test organization change plus a CI test-selection preservation edit.
+- Retain `TestHTTPResultExplanationAuditEvents` for submit + duplicate-submit idempotent audit coverage because security smoke already references that test name.
+- Move review/publish + duplicate-publish audit assertions into `TestHTTPResultExplanationReviewPublishAuditEvents`.
+- Extract only shared scenario setup and audit envelope assertions; do not move production logic or change endpoint behavior.
+- Do not modify production code, public service signatures, route behavior, schemas, OpenAPI, migrations, generated clients, or auth scopes.
+- Do not touch or stage the existing untracked `docs/rebuild` files.
+
+## Review
+
+- Reduced `service_result_explanation_audit_test.go` from 183 lines to 94 lines focused on submit idempotency audit and review/publish audit behavior in separate tests.
+- Added `service_result_explanation_audit_helpers_test.go` with 102 lines of shared completed model-run scenario setup, result explanation request helpers, event collection, and audit envelope assertions.
+- Updated `scripts/ci/security-smoke.ps1` so `TestHTTPResultExplanationReviewPublishAuditEvents` remains part of the audit/data-scope smoke selection after the split.
+- Updated `docs/architecture/compute-api.md` because it did not yet list the result explanation audit split evidence rows.
+- Validation passed: focused result explanation audit tests, security-smoke equivalent data-scope Go regex, full `go test ./...` in `apps/api`, trailing-whitespace scan, and scoped diff-check.
+- The attached P0 service-test closeout list is now structurally split; remaining service files above 150 lines are broader coverage/helper files and need separate justification before further same-package test organization work.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next model catalog scope service test split TODO
 
 - [x] Continue the attached P0 closeout priority by handling `service_model_catalog_scope_test.go` after the artifact retention HTTP split.
