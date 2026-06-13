@@ -153,7 +153,16 @@ Selected files from the latest audit:
 | `memory_simulation.go` | 69 | in-memory process graph and simulation input metadata store implementation |
 | `memory_metrics.go` | 43 | in-memory metrics snapshot query |
 | `memory_store.go` | 40 | MemoryStore struct and constructor |
-| `service_test.go` | 4051 | broad lifecycle, security scope, and governance tests |
+| `service_test_helpers_test.go` | 392 | shared service test helpers and fixture builders |
+| `service_model_runs_test.go` | 379 | model run persistence, evidence, readiness, benchmark run, and result explanation integration coverage |
+| `service_contracts_test.go` | 324 | contract validation endpoint coverage |
+| `service_simulation_registry_test.go` | 300 | simulation registry read/mutation/audit coverage |
+| `service_simulation_reference_test.go` | 145 | registered simulation input reference coverage for material-balance and ASM/UDM simulation-check jobs |
+| `service_simulation_process_graph_test.go` | 69 | process graph registration and simulation-check projection coverage |
+| `service_simulation_test.go` | 62 | embedded simulation input create/idempotency/auth simulation-check coverage |
+| `service_simulation_model_run_test.go` | 59 | model-run replay simulation-check coverage |
+| `service_simulation_helpers_test.go` | 44 | simulation-check HTTP fixture helpers |
+| `service_simulation_missing_refs_test.go` | 26 | missing simulation input/process graph/model run reference coverage |
 
 These numbers are audit signals, not hard failure thresholds.
 

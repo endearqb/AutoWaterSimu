@@ -1,3 +1,32 @@
+# 2026-06-13 AutoWaterSimu Next service simulation test split TODO
+
+- [x] Re-read README First context for `apps/api/internal/compute`, architecture docs, and current service test split history.
+- [x] Confirm `apps/api/internal/compute/service_test.go` is already absent in the current worktree.
+- [x] Treat the latest request as continuing service test maintainability work across remaining oversized `service_*_test.go` files.
+- [x] Measure remaining service test files and identify `service_simulation_test.go` as the largest residual single-function service test.
+- [x] Split the long simulation-check endpoint test into focused same-package `_test.go` files by embedded input, missing refs, process graph, model-run replay, registered input, and model-family reference scenarios.
+- [x] Preserve existing HTTP behavior, fixture contracts, test assertions, and `TestSimulationCheckEndpointCreatesComputeJob` focused-test entrypoint.
+- [x] Update stale architecture test-file evidence that still referenced deleted `service_test.go`.
+- [x] Run focused tests, full API tests, boundary audit, dependency check, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this service test split stage.
+
+## Plan
+
+- Keep this as a test organization change only.
+- Split only test code and shared test helpers; do not modify production code, schemas, OpenAPI, generated clients, migrations, auth scopes, HTTP routes, or assertions.
+- Do not touch or stage the existing untracked user document under `docs/rebuild/`.
+- Do not stage the unrelated in-progress evidence/domain work that was already present before this latest request.
+
+## Review
+
+- Confirmed `service_test.go` remains absent; this stage continues the same maintainability thread by splitting the residual long `service_simulation_test.go`.
+- Reduced `service_simulation_test.go` from 400 lines / one long test to 62 lines focused on embedded simulation input create/idempotency plus auth rejection.
+- Added `service_simulation_helpers_test.go`, `service_simulation_missing_refs_test.go`, `service_simulation_process_graph_test.go`, `service_simulation_model_run_test.go`, and `service_simulation_reference_test.go`.
+- Preserved test names where external focused commands rely on them, especially `TestSimulationCheckEndpointCreatesComputeJob`.
+- Updated `docs/architecture/compute-api.md` to replace the stale deleted `service_test.go` audit row with the current split test files.
+- Validation passed: focused simulation-check tests, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, trailing-whitespace scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next evidence-ref process graph object-scope TODO
 
 - [x] Re-read README First context for Compute API, evidence governance, architecture, and Certainty/Elegance plan.
