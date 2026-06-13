@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next jobs create idempotency decision split TODO
+
+- [x] Re-read README First context for Compute API, domain/jobs, architecture, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: avoid more evidence wrappers and same-package file splits; continue real jobs package movement with a bounded DTO-neutral rule.
+- [x] Move create-job idempotency duplicate/conflict decision into `apps/api/internal/domain/jobs`.
+- [x] Keep compute responsible for schema validation, payload hash, idempotency store lookup, tenant/project/site data-scope, conflict error mapping, reused snapshot response, audit envelope assembly, store writes, snapshots, HTTP behavior, and concrete `JobRecord` / `EventRecord` mapping.
+- [x] Add direct domain tests for new-job, same-hash reuse, and different-hash conflict decisions.
+- [x] Update Compute API, domain/jobs, architecture, and Certainty/Elegance package movement context.
+- [x] Run domain/compute focused tests, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this jobs create idempotency decision split stage.
+
+## Plan
+
+- Treat this as a narrow jobs domain package movement slice, not a full jobs lifecycle migration, public API redesign, schema change, store migration, OpenAPI/generated client update, all-mutation audit completion, full object-level data-scope, OIDC/RBAC, hosted evidence, release round trip, or complete golden scenarios.
+- Preserve create-job HTTP request/response shape, idempotency semantics, tenant/project/site data-scope, selected audit envelope shape, store interfaces, migrations, OpenAPI, and generated clients.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added `CreateIdempotencyRecord`, `CreateIdempotencyDecision`, and `DecideCreateIdempotency` to `apps/api/internal/domain/jobs/create_lifecycle.go`.
+- `job_lifecycle_create.go` now adapts the domain decision back to the existing conflict/reused snapshot behavior while retaining schema validation, payload hash, data-scope, store lookup/writes, audit envelope assembly, HTTP behavior, and public response shape in compute.
+- Updated API/domain/jobs/compute/architecture/Certainty-Elegance context to distinguish the domain idempotency decision from compute-owned payload hashing, store lookup/write, conflict error mapping, snapshot assembly, HTTP behavior, and audit envelope assembly.
+- Validation passed: focused domain/compute create tests, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+- This stage is committed and pushed after validation.
+
 # 2026-06-12 AutoWaterSimu Next jobs create projection split TODO
 
 - [x] Re-read README First context for Compute API, domain/jobs, architecture current-state, and Certainty/Elegance plan.

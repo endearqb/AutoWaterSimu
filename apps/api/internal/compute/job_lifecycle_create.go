@@ -35,11 +35,12 @@ func (svc *JobLifecycleService) CreateJobForScope(ctx context.Context, bytes []b
 	if err != nil {
 		return JobSnapshot{}, 0, err
 	}
-	if existing != nil {
-		if existing.PayloadHash != payloadHash {
-			return JobSnapshot{}, 0, Conflict(CodeIdempotencyConflict, "idempotency key was reused with a different payload")
-		}
-		snapshot, err := svc.snapshot(ctx, existing.JobID)
+	idempotencyDecision := domainjobs.DecideCreateIdempotency(createIdempotencyRecordFromJobRecord(existing), payloadHash)
+	if idempotencyDecision.Conflict {
+		return JobSnapshot{}, 0, Conflict(CodeIdempotencyConflict, "idempotency key was reused with a different payload")
+	}
+	if idempotencyDecision.ReusedJobID != "" {
+		snapshot, err := svc.snapshot(ctx, idempotencyDecision.ReusedJobID)
 		return snapshot, 200, err
 	}
 	now := svc.now()
@@ -111,4 +112,14 @@ func jobCreateEventsFromDomainPlans(ctx context.Context, job domainjobs.QueuedJo
 		})
 	}
 	return events
+}
+
+func createIdempotencyRecordFromJobRecord(job *JobRecord) *domainjobs.CreateIdempotencyRecord {
+	if job == nil {
+		return nil
+	}
+	return &domainjobs.CreateIdempotencyRecord{
+		JobID:       job.JobID,
+		PayloadHash: job.PayloadHash,
+	}
 }

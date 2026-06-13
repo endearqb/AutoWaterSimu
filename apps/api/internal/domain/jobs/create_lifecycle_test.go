@@ -73,3 +73,32 @@ func TestCreateEventPlans(t *testing.T) {
 		t.Fatalf("create event plans must return a fresh slice")
 	}
 }
+
+func TestDecideCreateIdempotency(t *testing.T) {
+	t.Run("no existing record accepts new job", func(t *testing.T) {
+		decision := DecideCreateIdempotency(nil, "sha256:new")
+		if decision.Conflict || decision.ReusedJobID != "" {
+			t.Fatalf("expected new-job decision, got %#v", decision)
+		}
+	})
+
+	t.Run("same payload reuses existing job", func(t *testing.T) {
+		decision := DecideCreateIdempotency(&CreateIdempotencyRecord{
+			JobID:       "job_existing",
+			PayloadHash: "sha256:same",
+		}, "sha256:same")
+		if decision.Conflict || decision.ReusedJobID != "job_existing" {
+			t.Fatalf("expected reuse decision, got %#v", decision)
+		}
+	})
+
+	t.Run("different payload conflicts", func(t *testing.T) {
+		decision := DecideCreateIdempotency(&CreateIdempotencyRecord{
+			JobID:       "job_existing",
+			PayloadHash: "sha256:old",
+		}, "sha256:new")
+		if !decision.Conflict || decision.ReusedJobID != "" {
+			t.Fatalf("expected conflict decision, got %#v", decision)
+		}
+	})
+}

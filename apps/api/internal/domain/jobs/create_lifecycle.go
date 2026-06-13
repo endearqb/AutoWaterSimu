@@ -61,6 +61,26 @@ type CreateEventPlan struct {
 	Reason    string
 }
 
+type CreateIdempotencyRecord struct {
+	JobID       string
+	PayloadHash string
+}
+
+type CreateIdempotencyDecision struct {
+	ReusedJobID string
+	Conflict    bool
+}
+
+func DecideCreateIdempotency(existing *CreateIdempotencyRecord, payloadHash string) CreateIdempotencyDecision {
+	if existing == nil {
+		return CreateIdempotencyDecision{}
+	}
+	if existing.PayloadHash != payloadHash {
+		return CreateIdempotencyDecision{Conflict: true}
+	}
+	return CreateIdempotencyDecision{ReusedJobID: existing.JobID}
+}
+
 func NewQueuedJob(input CreateInput) QueuedJob {
 	return QueuedJob{
 		JobID:          input.JobID,
