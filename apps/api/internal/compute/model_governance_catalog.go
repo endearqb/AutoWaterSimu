@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	domainmodels "autowatersimu/apps/api/internal/domain/models"
 )
 
 func (svc *ModelGovernanceService) RegisterModelCatalog(ctx context.Context, bytes []byte, defaultSourceSystem, defaultRequestedBy string) (ModelCatalogRecord, int, error) {
@@ -172,38 +174,28 @@ func (svc *ModelGovernanceService) modelCatalogRecord(catalog map[string]any, de
 			return ModelCatalogRecord{}, err
 		}
 	}
-	schemaVersion := stringValue(catalog, "schema_version")
-	if schemaVersion == "" {
-		return ModelCatalogRecord{}, ValidationError("model_catalog.schema_version is required")
-	}
-	if schemaVersion != "model_catalog.v1" {
-		return ModelCatalogRecord{}, ValidationError("model_catalog.schema_version must be model_catalog.v1")
-	}
-	generatedAt := stringValue(catalog, "generated_at")
-	if generatedAt == "" {
-		return ModelCatalogRecord{}, ValidationError("model_catalog.generated_at is required")
-	}
-	payloadHash, err := ResultHash(catalog)
+	recordData, err := domainmodels.ModelCatalogSnapshotRecordDataFromDocument(domainmodels.ModelCatalogSnapshotRecordDataInput{
+		Catalog:             catalog,
+		DefaultSourceSystem: defaultSourceSystem,
+		DefaultRequestedBy:  defaultRequestedBy,
+		CreatedAt:           svc.now(),
+	})
 	if err != nil {
-		return ModelCatalogRecord{}, err
+		return ModelCatalogRecord{}, ValidationError(err.Error())
 	}
-	metadata := mapValue(catalog, "metadata")
-	catalogID := defaultString(stringValue(metadata, "catalog_id"), "default")
-	sourceSystem := defaultString(stringValue(metadata, "source_system"), defaultString(defaultSourceSystem, "compute-api"))
-	requestedBy := defaultString(stringValue(metadata, "requested_by"), defaultString(defaultRequestedBy, "compute-api"))
 	return ModelCatalogRecord{
-		CatalogID:     catalogID,
-		SchemaVersion: schemaVersion,
-		GeneratedAt:   generatedAt,
-		PayloadHash:   payloadHash,
-		Payload:       mustJSON(catalog),
-		SourceSystem:  sourceSystem,
-		RequestedBy:   requestedBy,
-		TenantID:      stringValue(metadata, "tenant_id"),
-		ProjectID:     stringValue(metadata, "project_id"),
-		SiteID:        stringValue(metadata, "site_id"),
-		Metadata:      mustJSON(metadata),
-		CreatedAt:     svc.now(),
+		CatalogID:     recordData.CatalogID,
+		SchemaVersion: recordData.SchemaVersion,
+		GeneratedAt:   recordData.GeneratedAt,
+		PayloadHash:   recordData.PayloadHash,
+		Payload:       copyJSON(recordData.Payload),
+		SourceSystem:  recordData.SourceSystem,
+		RequestedBy:   recordData.RequestedBy,
+		TenantID:      recordData.TenantID,
+		ProjectID:     recordData.ProjectID,
+		SiteID:        recordData.SiteID,
+		Metadata:      copyJSON(recordData.Metadata),
+		CreatedAt:     recordData.CreatedAt,
 	}, nil
 }
 

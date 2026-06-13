@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestBuiltInModelCatalogDocument(t *testing.T) {
@@ -113,6 +114,125 @@ func TestBuiltInModelCatalogDocument(t *testing.T) {
 		if len(evidenceRefs) != 1 || evidenceRefs[0] != "model_run:"+expected.modelRunID {
 			t.Fatalf("unexpected %s evidence refs: %#v", modelKey, evidenceRefs)
 		}
+	}
+}
+
+func TestModelCatalogSnapshotRecordDataFromDocument(t *testing.T) {
+	createdAt := time.Date(2026, 6, 13, 10, 30, 0, 0, time.UTC)
+	catalog := map[string]any{
+		"schema_version": " model_catalog.v1 ",
+		"generated_at":   " 2026-06-13T10:30:00Z ",
+		"metadata": map[string]any{
+			"catalog_id":    " tenant_catalog ",
+			"source_system": " governance-admin ",
+			"requested_by":  " reviewer ",
+			"tenant_id":     " tenant_a ",
+			"project_id":    " project_1 ",
+			"site_id":       " site_north ",
+		},
+		"models": []any{},
+	}
+	record, err := ModelCatalogSnapshotRecordDataFromDocument(ModelCatalogSnapshotRecordDataInput{
+		Catalog:             catalog,
+		DefaultSourceSystem: "fallback-source",
+		DefaultRequestedBy:  "fallback-user",
+		CreatedAt:           createdAt,
+	})
+	if err != nil {
+		t.Fatalf("unexpected record data error: %v", err)
+	}
+	payload, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("unexpected marshal error: %v", err)
+	}
+	if record.CatalogID != "tenant_catalog" ||
+		record.SchemaVersion != "model_catalog.v1" ||
+		record.GeneratedAt != "2026-06-13T10:30:00Z" ||
+		record.PayloadHash != "sha256:"+sha256Hex(payload) ||
+		record.SourceSystem != "governance-admin" ||
+		record.RequestedBy != "reviewer" ||
+		record.TenantID != "tenant_a" ||
+		record.ProjectID != "project_1" ||
+		record.SiteID != "site_north" ||
+		!record.CreatedAt.Equal(createdAt) {
+		t.Fatalf("unexpected record data: %#v", record)
+	}
+	var recordPayload map[string]any
+	if err := json.Unmarshal(record.Payload, &recordPayload); err != nil {
+		t.Fatalf("record payload should be JSON: %v", err)
+	}
+	if recordPayload["schema_version"] != " model_catalog.v1 " {
+		t.Fatalf("record payload should preserve source document: %#v", recordPayload)
+	}
+	var metadata map[string]any
+	if err := json.Unmarshal(record.Metadata, &metadata); err != nil {
+		t.Fatalf("record metadata should be JSON: %v", err)
+	}
+	if metadata["catalog_id"] != " tenant_catalog " || metadata["tenant_id"] != " tenant_a " {
+		t.Fatalf("record metadata should preserve source metadata: %#v", metadata)
+	}
+}
+
+func TestModelCatalogSnapshotRecordDataFromDocumentDefaultsMetadata(t *testing.T) {
+	createdAt := time.Date(2026, 6, 13, 10, 45, 0, 0, time.UTC)
+	record, err := ModelCatalogSnapshotRecordDataFromDocument(ModelCatalogSnapshotRecordDataInput{
+		Catalog: map[string]any{
+			"schema_version": "model_catalog.v1",
+			"generated_at":   "2026-06-13T10:45:00Z",
+			"models":         []any{},
+		},
+		DefaultSourceSystem: "system-source",
+		DefaultRequestedBy:  "system-user",
+		CreatedAt:           createdAt,
+	})
+	if err != nil {
+		t.Fatalf("unexpected record data error: %v", err)
+	}
+	if record.CatalogID != "default" ||
+		record.SourceSystem != "system-source" ||
+		record.RequestedBy != "system-user" ||
+		record.TenantID != "" ||
+		record.ProjectID != "" ||
+		record.SiteID != "" ||
+		string(record.Metadata) != "null" ||
+		!record.CreatedAt.Equal(createdAt) {
+		t.Fatalf("unexpected default record data: %#v", record)
+	}
+
+	record, err = ModelCatalogSnapshotRecordDataFromDocument(ModelCatalogSnapshotRecordDataInput{
+		Catalog: map[string]any{
+			"schema_version": "model_catalog.v1",
+			"generated_at":   "2026-06-13T10:45:00Z",
+			"metadata":       map[string]any{},
+			"models":         []any{},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected record data error: %v", err)
+	}
+	if record.CatalogID != "default" || record.SourceSystem != "compute-api" || record.RequestedBy != "compute-api" || string(record.Metadata) != "{}" {
+		t.Fatalf("unexpected empty metadata defaults: %#v", record)
+	}
+}
+
+func TestModelCatalogSnapshotRecordDataFromDocumentRequiresSchemaFields(t *testing.T) {
+	_, err := ModelCatalogSnapshotRecordDataFromDocument(ModelCatalogSnapshotRecordDataInput{
+		Catalog: map[string]any{"generated_at": "2026-06-13T10:45:00Z"},
+	})
+	if err == nil || err.Error() != "model_catalog.schema_version is required" {
+		t.Fatalf("unexpected missing schema error: %v", err)
+	}
+	_, err = ModelCatalogSnapshotRecordDataFromDocument(ModelCatalogSnapshotRecordDataInput{
+		Catalog: map[string]any{"schema_version": "unknown", "generated_at": "2026-06-13T10:45:00Z"},
+	})
+	if err == nil || err.Error() != "model_catalog.schema_version must be model_catalog.v1" {
+		t.Fatalf("unexpected invalid schema error: %v", err)
+	}
+	_, err = ModelCatalogSnapshotRecordDataFromDocument(ModelCatalogSnapshotRecordDataInput{
+		Catalog: map[string]any{"schema_version": "model_catalog.v1"},
+	})
+	if err == nil || err.Error() != "model_catalog.generated_at is required" {
+		t.Fatalf("unexpected missing generated_at error: %v", err)
 	}
 }
 

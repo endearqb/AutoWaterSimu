@@ -1,3 +1,31 @@
+# 2026-06-13 AutoWaterSimu Next model catalog snapshot record data projection TODO
+
+- [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.
+- [x] Confirm this stage is real package-boundary movement, not another evidence wrapper, hosted workflow entry, or same-package file split.
+- [x] Move persisted model catalog snapshot record data projection into `apps/api/internal/domain/models`.
+- [x] Keep compute responsible for schema validation, typed DTO conversion, catalog registration/status/promote workflow orchestration, store writes, audit envelopes, HTTP mapping, OpenAPI, contracts, migrations, generated clients, and public service signatures.
+- [x] Add direct domain tests for record projection, metadata/defaults, and existing required-field error semantics.
+- [x] Update API/domain/compute/architecture/Certainty-Elegance context and README First change log.
+- [x] Run focused tests, full API tests, boundary/dependency checks, stale-text scan, trailing-whitespace scan, and diff-check.
+- [x] Commit and push this model catalog snapshot record data projection stage.
+
+## Plan
+
+- Treat this as a narrow `domain/models` helper extraction, not a full model governance package migration.
+- Preserve existing catalog registration idempotency, payload hash behavior, tenant/project/site scoped mutation checks, selected mutation audit events, persistence implementations, response DTOs, HTTP routes, OpenAPI, contracts, migrations, generated clients, and auth scopes.
+- Adapt the neutral domain record data back to the existing compute `ModelCatalogRecord`.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Added `ModelCatalogSnapshotRecordDataInput`, `ModelCatalogSnapshotRecordData`, and `ModelCatalogSnapshotRecordDataFromDocument` under `apps/api/internal/domain/models`.
+- `ModelGovernanceService.modelCatalogRecord` now validates the schema in compute, calls the domain projection helper, and adapts the neutral record data back to the existing compute `ModelCatalogRecord`.
+- Kept catalog registration/status/promote workflow orchestration, tenant/project/site mutation checks, store writes, selected mutation audit envelopes, typed DTO conversion, HTTP/OpenAPI/schema/migration/generated client surfaces, and public service signatures unchanged.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, architecture/compute-api, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: focused compute catalog/status/promotion tests, direct domain helper tests, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, stale-text scan, trailing-whitespace scan, and scoped diff-check.
+- The first focused regex did not match the new domain helper tests; `go test ./internal/domain/models -run TestModelCatalogSnapshotRecordData -count=1` was run afterward and passed.
+- Did not touch or stage untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` or untracked `docs/rebuild/simulation_core/`.
+
 # 2026-06-13 AutoWaterSimu Next service helper test split TODO
 
 - [x] Re-read README First context for `apps/api/internal/compute` and current `service_test.go` split history.
