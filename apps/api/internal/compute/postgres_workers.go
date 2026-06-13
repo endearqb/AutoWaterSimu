@@ -133,13 +133,18 @@ func (store *PostgresStore) Heartbeat(ctx context.Context, workerID, jobID strin
 	if _, err := tx.Exec(ctx, "UPDATE workers SET heartbeat_at=$2, current_job_id=$3 WHERE worker_id=$1", workerID, now, jobID); err != nil {
 		return nil, err
 	}
-	if job.Status == StatusRunning && job.WorkerID == workerID {
+	mutation, ok := domainjobs.NewHeartbeatMutation(domainjobs.HeartbeatRecord{
+		JobID:    job.JobID,
+		Status:   job.Status,
+		WorkerID: job.WorkerID,
+	}, workerID, now, leaseExpiresAt)
+	if ok {
 		after := *job
-		after.LeaseExpiresAt = &leaseExpiresAt
-		if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET lease_expires_at=$3 WHERE id=$1 AND worker_id=$2 AND status='running'", jobID, workerID, leaseExpiresAt); err != nil {
+		applyHeartbeatMutationToJobRecord(&after, mutation)
+		if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET lease_expires_at=$3 WHERE id=$1 AND worker_id=$2 AND status=$4", mutation.JobID, mutation.WorkerID, mutation.LeaseExpiresAt, mutation.Status); err != nil {
 			return nil, err
 		}
-		if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,'job.heartbeat',$2,$3)", jobID, workerHeartbeatEventJSON(ctx, now, *job, after, workerID), now); err != nil {
+		if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", mutation.JobID, mutation.EventType, workerHeartbeatEventJSON(ctx, mutation.HeartbeatAt, *job, after, mutation.WorkerID), mutation.HeartbeatAt); err != nil {
 			return nil, err
 		}
 	}

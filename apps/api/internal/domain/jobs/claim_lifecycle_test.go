@@ -46,3 +46,46 @@ func TestNewClaimMutationProjectsRunningState(t *testing.T) {
 		t.Fatalf("unexpected claim mutation: %#v", mutation)
 	}
 }
+
+func TestNewHeartbeatMutationProjectsLeaseRefresh(t *testing.T) {
+	heartbeatAt := time.Date(2026, 6, 13, 10, 1, 0, 0, time.UTC)
+	leaseExpiresAt := heartbeatAt.Add(90 * time.Second)
+
+	mutation, ok := NewHeartbeatMutation(HeartbeatRecord{
+		JobID:    "job_heartbeat",
+		Status:   StatusRunning,
+		WorkerID: "worker_heartbeat",
+	}, "worker_heartbeat", heartbeatAt, leaseExpiresAt)
+
+	if !ok {
+		t.Fatalf("running job assigned to worker should refresh heartbeat")
+	}
+	if mutation.JobID != "job_heartbeat" ||
+		mutation.Status != StatusRunning ||
+		mutation.WorkerID != "worker_heartbeat" ||
+		!mutation.HeartbeatAt.Equal(heartbeatAt) ||
+		!mutation.LeaseExpiresAt.Equal(leaseExpiresAt) ||
+		mutation.EventType != EventJobHeartbeat {
+		t.Fatalf("unexpected heartbeat mutation: %#v", mutation)
+	}
+}
+
+func TestNewHeartbeatMutationSkipsNonRunningOrMismatchedWorker(t *testing.T) {
+	heartbeatAt := time.Date(2026, 6, 13, 10, 2, 0, 0, time.UTC)
+	leaseExpiresAt := heartbeatAt.Add(90 * time.Second)
+
+	if _, ok := NewHeartbeatMutation(HeartbeatRecord{
+		JobID:    "job_done",
+		Status:   StatusSucceeded,
+		WorkerID: "worker_a",
+	}, "worker_a", heartbeatAt, leaseExpiresAt); ok {
+		t.Fatalf("terminal job should not refresh heartbeat lease")
+	}
+	if _, ok := NewHeartbeatMutation(HeartbeatRecord{
+		JobID:    "job_other",
+		Status:   StatusRunning,
+		WorkerID: "worker_a",
+	}, "worker_b", heartbeatAt, leaseExpiresAt); ok {
+		t.Fatalf("job assigned to another worker should not refresh heartbeat lease")
+	}
+}

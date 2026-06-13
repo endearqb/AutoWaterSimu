@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next jobs worker heartbeat mutation plan split TODO
+
+- [x] Re-read README First context for Compute API, domain/jobs, domain/workers, architecture, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: continue real jobs package movement without adding evidence wrappers or same-package-only file splits.
+- [x] Move worker heartbeat lease refresh mutation planning into `apps/api/internal/domain/jobs`.
+- [x] Keep compute responsible for worker table heartbeat/current_job_id updates, row locking, SQL, tenant/project/site scope checks, audit envelope assembly, concrete MemoryStore/PostgresStore persistence, HTTP behavior, and concrete `JobRecord` / `EventRecord` mapping.
+- [x] Add direct domain tests for heartbeat lease refresh and skip conditions.
+- [x] Update Compute API, domain/jobs, architecture, and Certainty/Elegance package movement context.
+- [x] Run domain/compute focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this jobs worker heartbeat mutation plan split stage.
+
+## Plan
+
+- Treat this as a narrow jobs domain package movement slice, not a full jobs lifecycle migration, public API redesign, schema change, store migration, OpenAPI/generated client update, all-mutation audit completion, full object-level data-scope, OIDC/RBAC, hosted evidence, release round trip, or complete golden scenarios.
+- Preserve worker heartbeat HTTP request/response shape, worker table update behavior, job lease refresh semantics, tenant/project/site data-scope, selected audit envelope shape, store interfaces, migrations, OpenAPI, and generated clients.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- Added `EventJobHeartbeat`, `HeartbeatRecord`, `HeartbeatMutation`, and `NewHeartbeatMutation` to `apps/api/internal/domain/jobs/claim_lifecycle.go`.
+- `MemoryStore.Heartbeat` now delegates running-job / assigned-worker lease refresh planning to `domain/jobs`, then applies the mutation to concrete `JobRecord` persistence and existing selected audit event JSON.
+- `PostgresStore.Heartbeat` now uses the same domain heartbeat mutation projection for lease update fields and `job.heartbeat` event type while preserving row locking, worker table updates, and final `FindJobByID` return.
+- Updated API/domain/jobs/compute/architecture/Certainty-Elegance context to distinguish DTO-neutral worker heartbeat mutation planning from compute-owned worker table updates, locks, concrete persistence, audit envelope assembly, HTTP behavior, and store interfaces.
+- Validation passed: focused domain/compute worker heartbeat tests, security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next jobs worker claim mutation plan split TODO
 
 - [x] Re-read README First context for Compute API, domain/jobs, architecture, and Certainty/Elegance plan.

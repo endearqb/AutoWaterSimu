@@ -5,7 +5,10 @@ import (
 	"time"
 )
 
-const EventJobRunning = "job.running"
+const (
+	EventJobRunning   = "job.running"
+	EventJobHeartbeat = "job.heartbeat"
+)
 
 type ClaimRecord struct {
 	JobID         string
@@ -22,6 +25,21 @@ type ClaimMutation struct {
 	Attempt        int
 	ClaimedAt      time.Time
 	StartedAt      time.Time
+	LeaseExpiresAt time.Time
+	EventType      string
+}
+
+type HeartbeatRecord struct {
+	JobID    string
+	Status   string
+	WorkerID string
+}
+
+type HeartbeatMutation struct {
+	JobID          string
+	Status         string
+	WorkerID       string
+	HeartbeatAt    time.Time
 	LeaseExpiresAt time.Time
 	EventType      string
 }
@@ -47,4 +65,18 @@ func NewClaimMutation(record ClaimRecord, workerID string, claimedAt, leaseExpir
 		LeaseExpiresAt: leaseExpiresAt,
 		EventType:      EventJobRunning,
 	}
+}
+
+func NewHeartbeatMutation(record HeartbeatRecord, workerID string, heartbeatAt, leaseExpiresAt time.Time) (HeartbeatMutation, bool) {
+	if record.Status != StatusRunning || record.WorkerID != workerID {
+		return HeartbeatMutation{}, false
+	}
+	return HeartbeatMutation{
+		JobID:          record.JobID,
+		Status:         record.Status,
+		WorkerID:       workerID,
+		HeartbeatAt:    heartbeatAt,
+		LeaseExpiresAt: leaseExpiresAt,
+		EventType:      EventJobHeartbeat,
+	}, true
 }

@@ -104,16 +104,25 @@ func (store *MemoryStore) Heartbeat(ctx context.Context, workerID, jobID string,
 	worker.CurrentJobID = jobID
 	worker.HeartbeatAt = &now
 	store.workers[workerID] = worker
-	if job.Status == StatusRunning && job.WorkerID == workerID {
+	mutation, ok := domainjobs.NewHeartbeatMutation(domainjobs.HeartbeatRecord{
+		JobID:    job.JobID,
+		Status:   job.Status,
+		WorkerID: job.WorkerID,
+	}, workerID, now, leaseExpiresAt)
+	if ok {
 		before := job
-		job.LeaseExpiresAt = &leaseExpiresAt
+		applyHeartbeatMutationToJobRecord(&job, mutation)
 		store.jobs[jobID] = job
 		store.appendEventLocked(EventRecord{
 			JobID:     jobID,
-			EventType: "job.heartbeat",
-			EventJSON: workerHeartbeatEventJSON(ctx, now, before, job, workerID),
-			CreatedAt: now,
+			EventType: mutation.EventType,
+			EventJSON: workerHeartbeatEventJSON(ctx, mutation.HeartbeatAt, before, job, mutation.WorkerID),
+			CreatedAt: mutation.HeartbeatAt,
 		})
 	}
 	return &job, nil
+}
+
+func applyHeartbeatMutationToJobRecord(job *JobRecord, mutation domainjobs.HeartbeatMutation) {
+	job.LeaseExpiresAt = &mutation.LeaseExpiresAt
 }
