@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next default parameter set transition document helper TODO
+
+- [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.
+- [x] Confirm this stage is real package-boundary movement, not another evidence wrapper, hosted workflow entry, or same-package file split.
+- [x] Move stable default parameter set status transition catalog document mutation projection into `apps/api/internal/domain/models`.
+- [x] Keep compute responsible for catalog selection, tenant/project/site mutation scope gate, status workflow orchestration, schema validation, typed DTO conversion, store writes, audit envelopes, HTTP mapping, OpenAPI, contracts, migrations, generated clients, and public service signatures.
+- [x] Add direct domain tests for transition projection, metadata/defaults, input immutability, and reason-coded error cases.
+- [x] Update API/domain/compute/architecture/Certainty-Elegance context and README First change log.
+- [x] Run full API tests, boundary/dependency checks, stale-text scan, trailing-whitespace scan, and diff-check.
+- [x] Commit and push this default parameter set transition document helper stage.
+
+## Plan
+
+- Treat this as a narrow `domain/models` helper extraction, not a full model governance package migration.
+- Preserve existing model catalog status/promote HTTP behavior, selected mutation audit envelopes, scoped mutation data-scope, persistence implementations, response DTOs, OpenAPI, contracts, migrations, generated clients, and auth scopes.
+- Adapt the neutral domain transition document back to the existing compute `ModelCatalogResponse` and `ModelCatalogRecord` path.
+- Do not touch or stage the existing untracked `docs/rebuild/` files.
+
+## Review
+
+- Added `DefaultParameterSetStatusTransitionInput`, `DefaultParameterSetStatusTransition`, `ParameterSetTransitionError`, and `ApplyDefaultParameterSetStatusTransition` under `apps/api/internal/domain/models`.
+- `ModelGovernanceService.updateDefaultParameterSetStatus` now keeps catalog lookup/scope/error mapping in compute, delegates the actual `default_parameter_set.status` document mutation and transition metadata projection to the domain helper, then revalidates/adapts the updated catalog through the existing snapshot record, audit, and store write path.
+- Kept model catalog status/promotion behavior, scoped mutation data-scope, selected mutation audit envelopes, persistence implementations, HTTP/OpenAPI/schema/migration/generated client surfaces, and public service signatures unchanged.
+- Updated API/internal/domain/models/compute READMEs, architecture/current-state, architecture/compute-api, Certainty/Elegance checklist, and `.ai/changes`.
+- Validation passed: direct domain helper tests, focused model catalog status/promotion regressions, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, stale-text scan, trailing-whitespace scan, and scoped diff-check.
+
 # 2026-06-13 AutoWaterSimu Next benchmark run record data projection TODO
 
 - [x] Re-read README First context for Compute API, domain/models, architecture, and Certainty/Elegance plan.

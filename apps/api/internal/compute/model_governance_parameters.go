@@ -2,6 +2,7 @@ package compute
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -65,38 +66,41 @@ func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.C
 	if !domainmodels.CanTransitionParameterSetStatus(fromStatus, toStatus) {
 		return ModelParameterSetTransitionResponse{}, 0, Conflict(CodeParameterSetTransitionFailed, "parameter set status transition is not allowed")
 	}
-	parameterSet.Status = toStatus
-	parameterSet.Metadata = copyStringAnyMap(parameterSet.Metadata)
-	parameterSet.Metadata["last_status_transition"] = map[string]any{
-		"from_status": fromStatus,
-		"to_status":   toStatus,
-		"reason":      strings.TrimSpace(request.Reason),
-		"metadata":    request.Metadata,
-		"changed_by":  defaultString(defaultRequestedBy, "compute-api"),
-		"changed_at":  svc.now().Format(time.RFC3339Nano),
+	transition, err := domainmodels.ApplyDefaultParameterSetStatusTransition(domainmodels.DefaultParameterSetStatusTransitionInput{
+		Catalog:                    modelCatalogResponseToMap(catalog),
+		ModelKey:                   modelKey,
+		ModelVersion:               modelVersion,
+		ParameterSetID:             request.ParameterSetID,
+		FromStatus:                 request.FromStatus,
+		ToStatus:                   toStatus,
+		Reason:                     request.Reason,
+		Metadata:                   request.Metadata,
+		ChangedBy:                  defaultString(defaultRequestedBy, "compute-api"),
+		ParameterSetChangedAt:      svc.now().Format(time.RFC3339Nano),
+		CatalogGeneratedAt:         svc.now().Format(time.RFC3339Nano),
+		CatalogTransitionChangedAt: svc.now().Format(time.RFC3339Nano),
+	})
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, parameterSetTransitionAppError(err)
 	}
-	catalog.Models[modelIndex].Versions[versionIndex].DefaultParameterSet = parameterSet
-	catalog.GeneratedAt = svc.now().Format(time.RFC3339Nano)
-	catalog.Metadata = copyStringAnyMap(catalog.Metadata)
-	catalog.Metadata["last_parameter_set_transition"] = map[string]any{
-		"model_key":        modelKey,
-		"model_version":    modelVersion,
-		"parameter_set_id": parameterSet.ParameterSetID,
-		"from_status":      fromStatus,
-		"to_status":        toStatus,
-		"reason":           strings.TrimSpace(request.Reason),
-		"metadata":         request.Metadata,
-		"changed_by":       defaultString(defaultRequestedBy, "compute-api"),
-		"changed_at":       svc.now().Format(time.RFC3339Nano),
+	updatedCatalogBytes, err := json.Marshal(transition.Catalog)
+	if err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
 	}
-	record, err := svc.modelCatalogRecord(modelCatalogResponseToMap(catalog), defaultSourceSystem, defaultRequestedBy)
+	if err := json.Unmarshal(updatedCatalogBytes, &catalog); err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	if err := svc.validateModelCatalog(catalog); err != nil {
+		return ModelParameterSetTransitionResponse{}, 0, err
+	}
+	record, err := svc.modelCatalogRecord(transition.Catalog, defaultSourceSystem, defaultRequestedBy)
 	if err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
 	}
 	if err := authorizeModelCatalogRecordFilterScope(filter, record); err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
 	}
-	audit := svc.parameterSetTransitionAudit(ctx, auditEventType, auditAction, modelKey, modelVersion, parameterSet.ParameterSetID, fromStatus, toStatus, beforeCatalogHash, record.PayloadHash, strings.TrimSpace(request.Reason), defaultString(defaultRequestedBy, "compute-api"), record.CreatedAt, true)
+	audit := svc.parameterSetTransitionAudit(ctx, auditEventType, auditAction, modelKey, modelVersion, transition.ParameterSetID, fromStatus, toStatus, beforeCatalogHash, record.PayloadHash, strings.TrimSpace(request.Reason), defaultString(defaultRequestedBy, "compute-api"), record.CreatedAt, true)
 	stored, created, err := svc.catalogs.UpsertModelCatalog(ctx, record, audit)
 	if err != nil {
 		return ModelParameterSetTransitionResponse{}, 0, err
@@ -108,7 +112,7 @@ func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.C
 	response := ModelParameterSetTransitionResponse{
 		ModelKey:           modelKey,
 		ModelVersion:       modelVersion,
-		ParameterSetID:     parameterSet.ParameterSetID,
+		ParameterSetID:     transition.ParameterSetID,
 		FromStatus:         fromStatus,
 		ToStatus:           toStatus,
 		CatalogPayloadHash: stored.PayloadHash,
@@ -116,6 +120,25 @@ func (svc *ModelGovernanceService) updateDefaultParameterSetStatus(ctx context.C
 		Catalog:            catalog,
 	}
 	return response, status, nil
+}
+
+func parameterSetTransitionAppError(err error) error {
+	transitionErr, ok := err.(domainmodels.ParameterSetTransitionError)
+	if !ok {
+		return err
+	}
+	switch transitionErr.Reason {
+	case domainmodels.ParameterSetTransitionErrorModelVersionNotFound:
+		return NotFound("MODEL_NOT_FOUND", "model version not found")
+	case domainmodels.ParameterSetTransitionErrorDefaultParameterSetNotFound, domainmodels.ParameterSetTransitionErrorParameterSetIDMismatch:
+		return NotFound(CodeParameterSetNotFound, "parameter set not found")
+	case domainmodels.ParameterSetTransitionErrorFromStatusMismatch:
+		return Conflict(CodeParameterSetTransitionFailed, "parameter set current status does not match from_status")
+	case domainmodels.ParameterSetTransitionErrorStatusTransitionNotAllowed:
+		return Conflict(CodeParameterSetTransitionFailed, "parameter set status transition is not allowed")
+	default:
+		return ValidationError(transitionErr.Reason)
+	}
 }
 
 func (svc *ModelGovernanceService) DefaultParameterSetPromotionPlan(ctx context.Context, modelKey, modelVersion string) (ModelParameterSetPromotionPlan, error) {
