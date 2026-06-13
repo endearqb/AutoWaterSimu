@@ -2,7 +2,6 @@ package compute
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	domainevidence "autowatersimu/apps/api/internal/domain/evidence"
@@ -50,7 +49,8 @@ func (svc *EvidenceGovernanceService) ResolveEvidenceReference(ctx context.Conte
 			}, nil
 		}
 	case "simulation_input":
-		if payload := domainevidence.SimulationInputPayload(snapshot.Job.InputJSON, refID); payload != nil {
+		if payload := domainevidence.SimulationInputPayload(snapshot.Job.InputJSON, refID); payload != nil &&
+			evidencePayloadMatchesJobScope(snapshot.Job, payload) {
 			return EvidenceReferenceResolution{
 				JobID:       snapshot.Job.JobID,
 				EvidenceRef: evidenceRef,
@@ -61,7 +61,7 @@ func (svc *EvidenceGovernanceService) ResolveEvidenceReference(ctx context.Conte
 			}, nil
 		}
 	case "process_graph":
-		if resolution, ok := svc.resolveProcessGraphEvidenceRef(ctx, snapshot.Job.JobID, evidenceRef, refID, snapshot.Job.InputJSON); ok {
+		if resolution, ok := svc.resolveProcessGraphEvidenceRef(ctx, snapshot.Job, evidenceRef, refID); ok {
 			return resolution, nil
 		}
 	case "evidence_package":
@@ -117,8 +117,8 @@ func (svc *EvidenceGovernanceService) resolveArtifactEvidenceRef(ctx context.Con
 	}, true
 }
 
-func (svc *EvidenceGovernanceService) resolveProcessGraphEvidenceRef(ctx context.Context, jobID, evidenceRef, processGraphID string, input json.RawMessage) (EvidenceReferenceResolution, bool) {
-	processGraphRef := domainevidence.InputRefs(input).ProcessGraphRef
+func (svc *EvidenceGovernanceService) resolveProcessGraphEvidenceRef(ctx context.Context, job JobRecord, evidenceRef, processGraphID string) (EvidenceReferenceResolution, bool) {
+	processGraphRef := domainevidence.InputRefs(job.InputJSON).ProcessGraphRef
 	if stringValue(processGraphRef, "process_graph_id") != processGraphID {
 		return EvidenceReferenceResolution{}, false
 	}
@@ -130,12 +130,38 @@ func (svc *EvidenceGovernanceService) resolveProcessGraphEvidenceRef(ctx context
 	if err != nil {
 		return EvidenceReferenceResolution{}, false
 	}
+	if !evidenceObjectMatchesJobScope(job, record.TenantID, record.ProjectID, record.SiteID) {
+		return EvidenceReferenceResolution{}, false
+	}
 	return EvidenceReferenceResolution{
-		JobID:       jobID,
+		JobID:       job.JobID,
 		EvidenceRef: evidenceRef,
 		RefType:     "process_graph",
 		RefID:       processGraphID,
 		Resolved:    true,
 		Payload:     record,
 	}, true
+}
+
+func evidencePayloadMatchesJobScope(job JobRecord, payload map[string]any) bool {
+	metadata := mapValue(payload, "metadata")
+	return evidenceObjectMatchesJobScope(
+		job,
+		stringValue(metadata, "tenant_id"),
+		stringValue(metadata, "project_id"),
+		stringValue(metadata, "site_id"),
+	)
+}
+
+func evidenceObjectMatchesJobScope(job JobRecord, tenantID, projectID, siteID string) bool {
+	if tenantID != "" && strings.TrimSpace(job.TenantID) != tenantID {
+		return false
+	}
+	if projectID != "" && strings.TrimSpace(job.ProjectID) != projectID {
+		return false
+	}
+	if siteID != "" && strings.TrimSpace(job.SiteID) != siteID {
+		return false
+	}
+	return true
 }

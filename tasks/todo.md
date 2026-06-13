@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next evidence-ref process graph object-scope TODO
+
+- [x] Re-read README First context for Compute API, evidence governance, architecture, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: keep moving from generic evidence wrappers to a concrete object data-scope slice.
+- [x] Make `process_graph:<id>` evidence-ref dereference reject stored process graph records whose tenant/project/site conflicts with the source job.
+- [x] Keep legacy/global empty-scope process graphs compatible and preserve public HTTP paths, auth scopes, OpenAPI, schemas, migrations, generated clients, and public `Service` signatures.
+- [x] Add regression coverage proving both scoped and global tokens get 404 when a tenant A job references a tenant B stored process graph, while a same-scope process graph still resolves.
+- [x] Add the regression to security smoke coverage and update Compute API / architecture / Certainty-Elegance context.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [x] Commit and push this evidence-ref object-scope stage.
+
+## Plan
+
+- Treat this as a narrow evidence-ref object data-scope slice, not a full OIDC/RBAC implementation, public API redesign, schema change, migration, generated client update, complete all-mutation audit, hosted evidence run, release round trip, or complete golden scenarios.
+- Preserve evidence-ref response shape and return not found for cross-scope process graph refs so object existence is not exposed through the evidence path.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- `EvidenceGovernanceService` now treats stored process graph evidence refs as source-job scoped evidence; a tenant/project/site mismatch returns the existing evidence-ref 404 instead of exposing the stored object.
+- Embedded `simulation_input:<id>` evidence refs with explicit metadata scope also require the metadata to match the source job, while empty metadata remains legacy/global compatible.
+- Added `TestProcessGraphEvidenceReferenceHonorsJobObjectScope`, proving both scoped and global tokens cannot use a tenant A job to dereference a tenant B process graph, and same-scope process graphs still resolve.
+- Added the regression to `scripts/ci/security-smoke.ps1` and updated API/compute/architecture/Certainty-Elegance context to distinguish this covered slice from remaining full object-level data-scope work.
+- Validation passed: focused evidence-ref/NewSystem tests, updated security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next evidence governance job-scoped catalog TODO
 
 - [x] Re-read README First context for Compute API, evidence governance, model governance, architecture, and Certainty/Elegance plan.
