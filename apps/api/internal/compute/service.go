@@ -55,8 +55,9 @@ func NewServiceWithArchive(store Store, artifacts ArtifactStore, archiveArtifact
 	}, func(ctx context.Context, jobID, evidenceRef string) (EvidenceReferenceResolution, error) {
 		return svc.ResolveEvidenceReference(ctx, jobID, evidenceRef)
 	})
-	svc.evidenceGovernance = NewEvidenceGovernanceService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context) (ModelCatalogResponse, error) {
-		return svc.modelGovernance.ModelCatalog(ctx)
+	svc.evidenceGovernance = NewEvidenceGovernanceService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, filter ModelCatalogSnapshotFilter) (ModelCatalogResponse, error) {
+		catalog, _, err := svc.modelGovernance.ModelCatalogForRead(ctx, filter)
+		return catalog, err
 	}, func(ctx context.Context, jobID string) ([]ArtifactRecord, error) {
 		return svc.artifactLifecycle.ListJobArtifacts(ctx, jobID)
 	}, func(ctx context.Context, artifactID string) (ArtifactRecord, error) {

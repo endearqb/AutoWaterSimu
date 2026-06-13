@@ -1,3 +1,29 @@
+# 2026-06-13 AutoWaterSimu Next evidence governance job-scoped catalog TODO
+
+- [x] Re-read README First context for Compute API, evidence governance, model governance, architecture, and Certainty/Elegance plan.
+- [x] Confirm next aligned gap: avoid more wrapper/hosted loops and implement a concrete object data-scope slice in evidence governance.
+- [x] Make evidence package / production-readiness governance select the persisted model catalog using the source job tenant/project/site scope before fallback.
+- [x] Keep public HTTP routes, OpenAPI, auth scopes, database schema, model catalog persistence, evidence package DTOs, and public `Service` method signatures unchanged.
+- [x] Add regression coverage proving a scoped job does not use another scope's latest model catalog for production governance.
+- [x] Update Compute API, architecture, and Certainty/Elegance context.
+- [x] Run focused tests, security smoke, full API tests, boundary/dependency checks, docs scan, and diff-check.
+- [x] Record README First change log.
+- [ ] Commit and push this evidence governance data-scope stage.
+
+## Plan
+
+- Treat this as a narrow evidence governance object data-scope slice, not a full OIDC/RBAC implementation, public API redesign, schema change, migration, generated client update, complete all-mutation audit, hosted evidence run, release round trip, or complete golden scenarios.
+- Preserve evidence package / production-readiness response shapes and keep `EvidenceGovernanceService` read-only.
+- Do not touch the existing untracked user document under `docs/rebuild/`.
+
+## Review
+
+- `EvidenceGovernanceService` model catalog resolver now accepts `ModelCatalogSnapshotFilter`, and `EvidencePackage` builds that filter from the source `JobRecord` tenant/project/site before evaluating production governance.
+- Added `TestEvidenceGovernanceUsesJobScopedModelCatalog`, which would fail if a tenant A job used the latest tenant B catalog snapshot for evidence/readiness governance.
+- Added the regression to `scripts/ci/security-smoke.ps1` and its evidence summary.
+- Updated API/compute/architecture/Certainty-Elegance context to distinguish this covered job-scoped evidence governance slice from remaining full object-level data-scope, remaining mutation data-scope, OIDC/RBAC, hosted evidence, release artifact round trip, and complete all-mutation audit work.
+- Validation passed: focused evidence tests, updated security smoke, full `go test ./...` in `apps/api`, Compute API boundary audit, dependency check, rebuild docs scan, and scoped diff-check; diff-check only reported existing LF/CRLF workspace hints.
+
 # 2026-06-13 AutoWaterSimu Next jobs worker heartbeat mutation plan split TODO
 
 - [x] Re-read README First context for Compute API, domain/jobs, domain/workers, architecture, and Certainty/Elegance plan.

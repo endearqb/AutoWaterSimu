@@ -45,7 +45,7 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 	if snapshot.Job.ErrorMessage != "" {
 		warnings = append(warnings, snapshot.Job.ErrorMessage)
 	}
-	governance, err := svc.evidenceGovernance(ctx, modelRuns)
+	governance, err := svc.evidenceGovernance(ctx, modelRuns, modelCatalogFilterForEvidenceJob(snapshot.Job))
 	if err != nil {
 		return nil, "", err
 	}
@@ -91,11 +91,11 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 	return evidence, checksum, nil
 }
 
-func (svc *EvidenceGovernanceService) evidenceGovernance(ctx context.Context, modelRuns []json.RawMessage) (map[string]any, error) {
+func (svc *EvidenceGovernanceService) evidenceGovernance(ctx context.Context, modelRuns []json.RawMessage, filter ModelCatalogSnapshotFilter) (map[string]any, error) {
 	if svc.modelCatalog == nil {
 		return nil, NewAppError(500, CodeInternal, "model catalog resolver is not configured", true, nil)
 	}
-	catalog, err := svc.modelCatalog(ctx)
+	catalog, err := svc.modelCatalog(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -174,4 +174,13 @@ func modelGovernance(catalog ModelCatalogResponse, modelKey, modelVersion, param
 		}
 	}
 	return "unknown", "", "unknown", false
+}
+
+func modelCatalogFilterForEvidenceJob(job JobRecord) ModelCatalogSnapshotFilter {
+	return ModelCatalogSnapshotFilter{
+		CatalogID: "default",
+		TenantID:  job.TenantID,
+		ProjectID: job.ProjectID,
+		SiteID:    job.SiteID,
+	}
 }

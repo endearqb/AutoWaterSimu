@@ -11,7 +11,7 @@ type EvidenceGovernanceService struct {
 	processGraphs    ProcessGraphStore
 	validator        *ContractValidator
 	now              func() time.Time
-	modelCatalog     func(context.Context) (ModelCatalogResponse, error)
+	modelCatalog     func(context.Context, ModelCatalogSnapshotFilter) (ModelCatalogResponse, error)
 	listArtifacts    func(context.Context, string) ([]ArtifactRecord, error)
 	artifactMetadata func(context.Context, string) (ArtifactRecord, error)
 }
@@ -26,7 +26,7 @@ func NewEvidenceGovernanceService(
 	stores EvidenceGovernanceStores,
 	validator *ContractValidator,
 	now func() time.Time,
-	modelCatalog func(context.Context) (ModelCatalogResponse, error),
+	modelCatalog func(context.Context, ModelCatalogSnapshotFilter) (ModelCatalogResponse, error),
 	listArtifacts func(context.Context, string) ([]ArtifactRecord, error),
 	artifactMetadata func(context.Context, string) (ArtifactRecord, error),
 ) *EvidenceGovernanceService {
