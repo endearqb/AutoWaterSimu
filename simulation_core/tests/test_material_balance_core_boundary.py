@@ -602,6 +602,29 @@ def test_generate_segment_timestamps_constructs_sampling_grid_on_cpu(
     assert arange_devices == ["cpu"]
 
 
+def test_run_calculation_reuses_precomputed_parameter_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = simulation_input_to_material_balance_input(_minimal_simulation_input())
+    tensors = calculator._convert_to_tensors(input_data)
+    assert tensors["parameter_names"]
+
+    def fail_resolve_parameter_names(*_: Any, **__: Any) -> list[str]:
+        raise AssertionError("_run_calculation should reuse tensor parameter_names")
+
+    monkeypatch.setattr(
+        calculator,
+        "_resolve_parameter_names",
+        fail_resolve_parameter_names,
+    )
+
+    result = calculator._run_calculation(tensors, input_data.parameters, input_data)
+
+    assert result["result_tensor"].shape[0] == len(result["timestamps"])
+    assert result["timestamps"]
+
+
 def test_core_adapter_wraps_invalid_parameters_as_contract_style_error() -> None:
     simulation_input = _minimal_simulation_input()
     simulation_input["parameters"]["tolerance"] = 0.1

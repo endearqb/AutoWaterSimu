@@ -262,6 +262,7 @@ class MaterialBalanceCalculator:
                 "asm3_mask": asm3_mask, "asm3_params": asm3_params,
                 "udm_mask": udm_mask, "udm_runtime_payload": udm_runtime_payload,
                 "udm_active_node_indices": udm_active_node_indices,
+                "parameter_names": global_component_names,
                 "sparse_bundle": sparse_bundle
             }
 
@@ -325,6 +326,7 @@ class MaterialBalanceCalculator:
             "udm_mask": udm_mask,
             "udm_runtime_payload": udm_runtime_payload,
             "udm_active_node_indices": udm_active_node_indices,
+            "parameter_names": global_component_names,
             "sparse_bundle": sparse_bundle,
         }
 
@@ -353,10 +355,12 @@ class MaterialBalanceCalculator:
 
             base_state = self._merge_tensors(V_liq, x0).unsqueeze(0)
             segments = self._prepare_segments(input_data, params.hours)
-            parameter_names = self._resolve_parameter_names(
-                input_data=input_data,
-                n_components=x0.shape[1],
-            )
+            parameter_names = tensors.get("parameter_names")
+            if parameter_names is None:
+                parameter_names = self._resolve_parameter_names(
+                    input_data=input_data,
+                    n_components=x0.shape[1],
+                )
 
             segment_results: List[torch.Tensor] = []
             combined_timestamps: List[float] = []

@@ -1,3 +1,26 @@
+# 2026-06-14 simulation_core PR-33 parameter names reuse TODO
+
+- [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-33 plan.
+- [x] Confirm this slice is only precomputed `parameter_names` reuse, not full dense lazy, output-grid decoupling, schema/API change, worker strict default switch, or fallback deletion.
+- [x] Store resolved `parameter_names` in `_convert_to_tensors()` output payload.
+- [x] Reuse tensor payload `parameter_names` in `_run_calculation()` and keep fallback parsing for incomplete payloads.
+- [x] Add a focused core-only test proving `_run_calculation()` does not call `_resolve_parameter_names()` when precomputed names are present.
+- [x] Update README/current-state/planning docs and README First records.
+- [x] Run validation matrix before phase commit/push.
+
+## Plan
+
+- Keep result field names and adapter behavior unchanged.
+- Preserve fallback behavior if a caller provides an older tensor payload without `parameter_names`.
+- Leave full dense lazy, solver/output-grid changes, schema/API, worker strict mode, and fallback behavior unchanged.
+
+## Review
+
+- `_convert_to_tensors()` now carries resolved `parameter_names` in the tensor payload.
+- `_run_calculation()` reuses precomputed names and keeps a fallback for older/incomplete payloads.
+- Focused monkeypatch test guards against duplicate `_resolve_parameter_names()` calls when precomputed names exist.
+- Full dense lazy, output-grid decoupling, solver defaults, schema/API, worker strict mode, fallback deletion, and Go API optimization remain future slices.
+
 # 2026-06-14 simulation_core PR-33 timestamp CPU TODO
 
 - [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-33 plan.
