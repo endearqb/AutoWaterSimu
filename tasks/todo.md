@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core default solver policy evaluation TODO
+
+- [x] Re-read PR-36 solver matrix/default requirements, current solver policy, and Phase 0 baseline/golden evidence.
+- [x] Confirm this slice is a default-solver evaluation and decision record, not a runtime default change, solver whitelist expansion, `dopri5` enablement, tolerance change, schema/API change, worker strict default switch, or fallback deletion.
+- [x] Compare current `scipy_solver`, `rk4`, and `adaptive_heun` evidence across small material balance, medium ASM1, single UDM, and mixed ASM/UDM fixtures.
+- [x] Record the conservative decision to keep `scipy_solver` as the default and require a future flag/ADR/evidence refresh for any default switch.
+- [x] Update ADR 0016, current-state, v1.4 checklist/status, docs/rebuild README, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Treat Phase 0 golden as the primary correctness/default-change evidence and Phase 0 baseline as worker timing context only.
+- Close the checklist item only if the evaluation produces an explicit decision; do not imply that `rk4` or `adaptive_heun` became the default.
+- Keep `dopri5`, real solver limit enforcement, and tolerance policy changes out of this slice.
+
+## Review
+
+- ADR 0016 now records that `scipy_solver` remains the default solver for v1.4.
+- `rk4` and `adaptive_heun` remain acceptance/performance matrix solvers; `dopri5` remains outside the public `CalculationParameters` whitelist.
+- The no-switch decision is based on current evidence: 12 full-run goldens pass, but core-only timings do not show a consistent default-switch benefit and solver outputs are not bit-identical.
+- Future default solver changes require a behavior-changing PR with rollout/flag strategy, golden/evidence refresh, compatibility notes, and ADR update.
+
 # 2026-06-15 simulation_core UDM solver bucket hotpath evidence TODO
 
 - [x] Re-read v1.4 PR-7/8, KPI-001, KPI-003, P-08 hotpath evidence requirements and current profiling report shape.

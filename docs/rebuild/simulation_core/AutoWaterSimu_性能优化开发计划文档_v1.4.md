@@ -150,7 +150,7 @@ PR-17~19。
 ### PR-36:求解器矩阵/白名单/默认值对齐【Phase 4(矩阵部分前移 Phase 0)】
 dopri5 入白名单+测(或文档矩阵改 adaptive_heun);benchmark 矩阵加 scipy_solver;评估默认值改 rk4/adaptive_heun(flag+存量影响);统一 tolerance 校验;`max_iterations`/`max_memory_mb` 实现或标 deprecated。
 
-**当前实现状态（2026-06-15）**：矩阵/白名单决策的低风险部分已收口为“文档矩阵使用 adaptive_heun，不放开 dopri5”。P-01/P-02/P-03 evidence 默认覆盖 `scipy_solver`（真实默认）、`rk4` 与 `adaptive_heun`；core boundary test 冻结 `CalculationParameters` 默认 `solver_method="scipy_solver"`、接受 `adaptive_heun`、拒绝 `dopri5`。`max_iterations` / `max_memory_mb` 已标记为 deprecated compatibility fields，因为当前 simulation_core solver 不读取或强制执行它们。默认求解器改为 `rk4`/`adaptive_heun` 与真实 step/memory enforcement 均属于行为变更，仍需 flag、存量影响评估和单独 PR。
+**当前实现状态（2026-06-15）**：矩阵/白名单决策的低风险部分已收口为“文档矩阵使用 adaptive_heun，不放开 dopri5”。P-01/P-02/P-03 evidence 默认覆盖 `scipy_solver`（真实默认）、`rk4` 与 `adaptive_heun`；core boundary test 冻结 `CalculationParameters` 默认 `solver_method="scipy_solver"`、接受 `adaptive_heun`、拒绝 `dopri5`。`max_iterations` / `max_memory_mb` 已标记为 deprecated compatibility fields，因为当前 simulation_core solver 不读取或强制执行它们。默认求解器切换评估已由 ADR 0016 收口：当前不切换，继续保持 `scipy_solver` 默认；依据是 12 个 full-run goldens 均通过但 core-only timings 没有稳定默认切换收益，且不同 solver 输出不是 bit-identical。未来若切默认值，必须作为行为变更单独 PR，包含 flag/rollout、golden/evidence refresh、兼容说明和 ADR 更新。
 
 ### PR-37:测试 parity→golden 改造【Phase 0/1,薄壳化前置】
 6 个 `test_core_calculator_matches_backend_*` 改为对照 f64 golden;补覆盖:segment 边覆盖、并行边、`_balance_param` 非方/退化聚合、混合 asm+udm、组分错配、ASM 氧清零 compute_mask、default 分支现状、退化图、scipy_solver/adaptive_heun。v1.4 继承补充:把 core-only golden/adapter/boundary 测试与 backend-dependent adapter parity 测试物理拆开;core-only 测试文件模块顶层不得导入 `app.*`,不得把 `backend/` 加入 `sys.path`;依赖 `backend/app/services/simulation_input_adapter.py` 的迁移对照测试移入 backend 侧或单独 backend-dependent lane。Day 0 先提交现状 repro 与目标 golden:default clamp 现状、并行边当前错误 repro、表达式 fail-late repro必须可独立复现。否则 PR-29 的安装烟雾和 PR-37 的独立 golden suite 均视为未完成。
@@ -284,7 +284,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] 输出网格解耦(KPI-005)。
 - [x] 真实守恒指标接入 L3。
 - [x] adaptive_heun 入验收矩阵,并明确 dopri5 当前不进白名单。
-- [ ] 默认求解器切换评估完成。
+- [x] 默认求解器切换评估完成（ADR 0016：当前不切换，保持 `scipy_solver` 默认）。
 - [x] `max_iterations` / `max_memory_mb` 实现或标 deprecated（当前选择 deprecated compatibility fields）。
 - [x] 表达式缓存(KPI-017) N=100 build-time evidence + 校验器白名单化 + deterministic fuzz-style corpus。
 - [x] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
