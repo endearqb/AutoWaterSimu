@@ -42,7 +42,9 @@ from autowatersimu_simulation_core.material_balance.udm_engine import (  # noqa:
     build_udm_runtime_payload,
 )
 from autowatersimu_simulation_core.material_balance.udm_expression import (  # noqa: E402
+    UnsafeExpressionError,
     compile_expression,
+    validate_udm_definition,
 )
 from autowatersimu_simulation_core.material_balance.udm_ode import udm_ode_balance  # noqa: E402
 
@@ -419,6 +421,65 @@ def test_udm_expression_compile_uses_lru_cache_for_repeated_expressions() -> Non
     assert first is second
     assert first is not other
     assert first({"k": 0.05, "S": torch.tensor(10.0)}).item() == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize(
+    ("expression", "node_name"),
+    [
+        ("k * (x := 5.0)", "NamedExpr"),
+        ("f'{k}'", "JoinedStr"),
+        ("max(*values)", "Starred"),
+        ("S[0:1]", "Subscript"),
+        ("S[0:1]", "Slice"),
+    ],
+)
+def test_udm_expression_validation_rejects_fail_late_ast_nodes(
+    expression: str,
+    node_name: str,
+) -> None:
+    compile_expression.cache_clear()
+
+    with pytest.raises(UnsafeExpressionError, match=node_name):
+        compile_expression(expression)
+
+    result = validate_udm_definition(
+        components=["S"],
+        processes=[
+            {
+                "name": "bad_expr",
+                "rate_expr": expression,
+                "stoich": {"S": -1.0},
+            }
+        ],
+        declared_parameters=["k", "values"],
+    )
+
+    assert result.ok is False
+    assert any(
+        issue.code == "DISALLOWED_SYNTAX" and node_name in issue.message
+        for issue in result.errors
+    )
+
+
+def test_udm_expression_validation_rejects_keyword_arguments() -> None:
+    compile_expression.cache_clear()
+
+    with pytest.raises(UnsafeExpressionError, match="Keyword arguments"):
+        compile_expression("max(S, limit=1.0)")
+
+    result = validate_udm_definition(
+        components=["S"],
+        processes=[
+            {
+                "name": "bad_call",
+                "rate_expr": "max(S, limit=1.0)",
+                "stoich": {"S": -1.0},
+            }
+        ],
+    )
+
+    assert result.ok is False
+    assert any(issue.code == "DISALLOWED_CALL" for issue in result.errors)
 
 
 def test_udm_runtime_precomputes_indices_and_fixed_component_metadata() -> None:

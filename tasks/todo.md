@@ -1,3 +1,29 @@
+# 2026-06-15 simulation_core PR-13a expression validator whitelist TODO
+
+- [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-13a plan.
+- [x] Confirm this slice is expression validator whitelist/fail-early consistency, not solver default changes, full unified RHS, output projection, schema/API changes, worker strict default switch, fallback deletion, or an RCE fix.
+- [x] Convert `_validate_ast()` from denylist/fallthrough behavior to default-deny whitelist behavior.
+- [x] Reject allowlisted function keyword arguments during validation instead of relying on runtime evaluator behavior.
+- [x] Add focused core-only tests for fail-late AST nodes and keyword call arguments.
+- [x] Update README/current-state/planning docs and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep the existing legal arithmetic/function expression surface unchanged.
+- Treat unknown AST nodes as `DISALLOWED_SYNTAX` so validation and `_evaluate_ast()` fail in the same phase.
+- Preserve existing runtime numerics, solver/output-grid behavior, schema/API, worker strict mode, fallback behavior, and Go API behavior.
+- Keep KPI-017 build-time evidence and fuzz-style expansion open because this slice only closes the fail-late validator gap.
+
+## Review
+
+- `_validate_ast()` now keeps known-safe expression nodes and operator markers on an allowlist, and default-denies every other AST node as `DISALLOWED_SYNTAX`.
+- Allowlisted simple function calls now reject keyword arguments in validation, before the runtime evaluator can ignore or fail on them later.
+- Focused boundary tests cover `NamedExpr`, `JoinedStr`, `Starred`, `Subscript`/`Slice`, and keyword arguments through both `compile_expression()` and `validate_udm_definition()`.
+- README/current-state/planning docs were updated to mark PR-13a landed and to replace the stale "commented clamp" wording with the current default no-clamp baseline wording.
+- KPI-017 N=100 build-time evidence and broader fuzz/property-style validation remain open; this slice only closes the fail-late validator consistency gap.
+- Verification passed for focused boundary tests, full simulation_core tests, docs/rebuild tests, correctness/boundary/input-contract audits, Phase 0 golden/hotpath prereview evidence, `pr-fast`, and `git diff --check`.
+
 # 2026-06-14 simulation_core PR-34 output grid decoupling TODO
 
 - [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-34 plan.

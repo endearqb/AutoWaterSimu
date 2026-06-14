@@ -112,9 +112,9 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
     allowed_unary = (ast.UAdd, ast.USub)
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.Expression):
+        if isinstance(node, (ast.Expression, ast.Load)):
             continue
-        if isinstance(node, ast.Load):
+        if isinstance(node, allowed_binops + allowed_unary):
             continue
         if isinstance(node, ast.BinOp):
             if not isinstance(node.op, allowed_binops):
@@ -154,6 +154,16 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
                         process=process_name,
                     )
                 )
+            if node.keywords:
+                issues.append(
+                    ValidationIssue(
+                        code="DISALLOWED_CALL",
+                        message="Keyword arguments are not permitted",
+                        process=process_name,
+                    )
+                )
+            continue
+        if isinstance(node, ast.keyword):
             continue
         if isinstance(node, ast.Name):
             continue
@@ -169,39 +179,13 @@ def _validate_ast(tree: ast.AST, process_name: str) -> List[ValidationIssue]:
             )
             continue
 
-        # Explicitly block potentially dangerous constructs.
-        if isinstance(
-            node,
-            (
-                ast.Attribute,
-                ast.Subscript,
-                ast.Dict,
-                ast.List,
-                ast.Tuple,
-                ast.Lambda,
-                ast.Compare,
-                ast.IfExp,
-                ast.BoolOp,
-                ast.Assign,
-                ast.AugAssign,
-                ast.Import,
-                ast.ImportFrom,
-                ast.For,
-                ast.While,
-                ast.With,
-                ast.Try,
-                ast.FunctionDef,
-                ast.ClassDef,
-            ),
-        ):
-            issues.append(
-                ValidationIssue(
-                    code="DISALLOWED_SYNTAX",
-                    message=f"Disallowed syntax construct: {type(node).__name__}",
-                    process=process_name,
-                )
+        issues.append(
+            ValidationIssue(
+                code="DISALLOWED_SYNTAX",
+                message=f"Disallowed syntax construct: {type(node).__name__}",
+                process=process_name,
             )
-            continue
+        )
 
     return issues
 
