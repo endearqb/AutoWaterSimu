@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next simulation core input contract audit TODO
+
+- [x] Re-read README First context for docs/rebuild, docs/architecture, scripts, simulation_core, simulation_core/python, simulation_core adapters, and current P3 plan state.
+- [x] Confirm the next slice is `simulation-core-input-contract-audit`, not backend thin-shell migration or hot-path performance optimization.
+- [x] Add a read-only input contract audit for `simulation_input.v1`, runtime model `extra` policy, and adapter unknown-field behavior.
+- [x] Add a Justfile entry for the new audit.
+- [x] Update README/current-state/development-plan context.
+- [x] Run validation and record exact results.
+- [x] Commit and push this input contract audit slice.
+
+## Plan
+
+- Keep this as an audit/evidence slice; do not change `simulation_input.v1`, runtime Pydantic model behavior, adapter behavior, worker behavior, schemas, OpenAPI, generated clients, or Desktop scope.
+- Treat current compatibility behavior as explicit evidence: top-level unknown fields are schema-closed, node/edge items are open, runtime `NodeData`/`EdgeData` allow extra, and the adapter currently accepts then drops unknown node/edge fields without warning.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `scripts/audit-simulation-core-input-contract.ps1`, a read-only audit that writes `tmp/architecture-evidence/simulation-core-input-contract.json`.
+- Added `just audit-simulation-core-input-contract` and documented the PowerShell fallback.
+- The audit checks `simulation_input.v1` top-level closure, node/edge item openness, `NodeData` / `EdgeData` `extra="allow"`, and runtime adapter behavior for unknown fields.
+- Current audit evidence is `partial` with 0 hard violations and 3 open gaps: `simulation-input-node-edge-items-open-schema`, `simulation-core-runtime-models-extra-allow`, and `simulation-core-adapter-unknown-field-strategy-missing`.
+- Runtime probe confirmed the adapter accepts unknown fields, does not expose warnings, and silently drops unknown node/edge fields; direct runtime `NodeData` / `EdgeData` still preserve unknown fields via Pydantic `model_extra`.
+- Updated root README, local-dev architecture doc, scripts README, simulation_core READMEs, current-state, and Certainty/Elegance Development Plan.
+- Validation passed: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1` (`partial`, 0 hard violations, 3 open gaps), `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` (`11 passed`), `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), docs/rebuild scan, and `git diff --check -- .`.
+- `just audit-simulation-core-input-contract` could not run because `just` is not installed in this environment; the underlying PowerShell script passed as the authoritative fallback.
+- `git diff --check -- .` only emitted Windows LF-to-CRLF notices, not whitespace errors.
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next P3 backend core drift guard TODO
 
 - [x] Re-read README First context for docs/rebuild, docs/architecture, simulation_core, simulation_core/tests, backend/app/material_balance, scripts, and current P3 audit state.

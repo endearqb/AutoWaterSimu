@@ -31,6 +31,7 @@
 3. input/output 缺失 volume 默认 `1.0`；普通 reactor 缺失 volume 返回 validation error。
 4. 可选模型字段必须区分“字段缺失”和“显式空数组/空对象”，不得用 truthy fallback 丢弃输入。
 5. 本 adapter 与 `backend/app/services/simulation_input_adapter.py` 的字段保留语义必须保持一致。
+6. 未知字段策略属于 adapter 输入契约职责；切换 warn/strict 或改变静默丢弃行为前，先更新 `scripts/audit-simulation-core-input-contract.ps1` 的 evidence 和 core-only tests。
 
 ## 4. 对外接口
 
@@ -57,6 +58,7 @@
 
 ```powershell
 backend\.venv\Scripts\python -m pytest simulation_core\tests -q
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1
 ```
 
 ## 7. AI 操作提示

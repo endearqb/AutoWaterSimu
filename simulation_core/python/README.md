@@ -29,6 +29,7 @@
 1. 不导入 `backend/app`、FastAPI、SQLModel、数据库会话或用户上下文。
 2. 新模型运行时先在本包建立纯 Python adapter，再由 worker 调用；迁移期 ASM/UDM 节点绑定字段必须和 backend adapter 保持一致。
 3. 数值行为变更必须补 parity 测试或说明 tolerance。
+4. 收紧 `simulation_input.v1` / runtime model 输入字段策略前，先运行 `scripts/audit-simulation-core-input-contract.ps1`，并先补未知字段 warn/strict 语义测试。
 
 ## 4. 对外接口
 
@@ -55,6 +56,7 @@
 backend\.venv\Scripts\python -m pytest simulation_core\tests -q
 backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
 backend\.venv\Scripts\python -m pip install -e simulation_core\python --no-deps
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1
 ```
 
 ## 7. AI 操作提示

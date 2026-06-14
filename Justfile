@@ -97,6 +97,9 @@ check-ontology:
 audit-compute-api:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
 
+audit-simulation-core-input-contract:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1
+
 gen:
     cd frontend; npm run generate-compute-client
 
