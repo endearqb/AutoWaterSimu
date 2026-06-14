@@ -25,6 +25,7 @@
 | `services/` | service and adapter tests |
 | `*_test.py` | material balance、UDM、time segment targeted tests |
 | `material_balance_exceptions_thin_shell_test.py` | backend/core material balance exception class identity guard |
+| `material_balance_result_thin_shell_test.py` | backend calculator result model class identity guard |
 | `utils/` | test helper |
 
 ## 3. 维护约定
@@ -32,7 +33,7 @@
 1. 新 bugfix 优先补最小 targeted regression test。
 2. 计算迁移要保留 legacy baseline 对照。
 3. 需要数据库或 auth 的测试应复用现有 fixtures，不复制 setup。
-4. backend material_balance thin-shell leaf migration 应优先补 class identity 或 parity guard，避免仅靠 import 成功判断迁移完成。
+4. backend material_balance thin-shell leaf migration 应优先补 class identity 或 parity guard，避免仅靠 import 成功判断迁移完成；exception leaf 与 result model leaf 均需由 focused tests 固定。
 
 ## 4. 对外接口
 

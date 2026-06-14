@@ -13,7 +13,7 @@ from app.models import (
 )
 from app.services.data_conversion_service import DataConversionService
 from app.material_balance.core import MaterialBalanceCalculator
-from app.material_balance.models import MaterialBalanceResult
+from autowatersimu_simulation_core.material_balance.models import MaterialBalanceResult
 
 logger = logging.getLogger(__name__)
 

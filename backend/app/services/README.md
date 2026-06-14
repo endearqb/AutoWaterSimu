@@ -30,6 +30,7 @@
 2. 密集计算或大 payload 处理不得用 `print` 输出完整数据。
 3. Next adapter 失败应返回可映射为 `contract_error.v1` 的结构化错误。
 4. `simulation_input_adapter.py` 与 `simulation_core/python/.../adapters/material_balance.py` 的字段保留和 job type 语义必须保持一致，尤其是 ASM/UDM 可选字段。
+5. ASM/UDM calculation service 返回类型注解应使用 `autowatersimu_simulation_core.material_balance.models.MaterialBalanceResult`，与 backend calculator result leaf thin-shell 保持一致；legacy `app.models.MaterialBalanceInput` 输入契约暂不在本目录迁移。
 
 ## 4. 对外接口
 
@@ -43,6 +44,7 @@
 
 - `app.models`
 - `app.material_balance`
+- `autowatersimu_simulation_core.material_balance.models` 的 result model public surface
 - `contracts/python` 的稳定转换输出 shape
 
 不应该依赖：

@@ -1,3 +1,33 @@
+# 2026-06-14 AutoWaterSimu Next backend material balance result thin-shell leaf TODO
+
+- [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend/app/services, backend tests, simulation_core material_balance, scripts, architecture current-state, and Certainty/Elegance Development Plan.
+- [x] Confirm this slice is the result model thin-shell leaf, not whole `models.py` migration, calculator delegation, dead helper deletion, worker default strictness, or hot-path performance optimization.
+- [x] Change backend calculator runtime construction to use `autowatersimu_simulation_core.material_balance.models.MaterialBalanceResult`.
+- [x] Change ASM1/ASM3/UDM service return annotations away from legacy `app.material_balance.models.MaterialBalanceResult`.
+- [x] Add a focused backend/core result class identity test.
+- [x] Extend the simulation_core boundary audit to guard the result model leaf without misclassifying it as full calculator thin-shell.
+- [x] Update README/current-state/development-plan context and change records.
+- [x] Run full validation and record exact results.
+- [x] Commit and push this backend result thin-shell leaf.
+
+## Plan
+
+- Keep legacy `app.material_balance.models` input DTO behavior stable.
+- Keep `app.material_balance.__init__` exports stable until a dedicated model/API compatibility slice.
+- Preserve calculator numerical behavior, route schemas, OpenAPI/generated clients, worker default validation mode, and Desktop scope.
+- Make the audit distinguish `MaterialBalanceResult` leaf migration from full backend calculator delegation to simulation_core.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- `backend/app/material_balance/core.py` now constructs `autowatersimu_simulation_core.material_balance.models.MaterialBalanceResult` while legacy input DTO imports stay local.
+- ASM1/ASM3/UDM services now annotate `_run_calculation_sync` with the core result model instead of `app.material_balance.models.MaterialBalanceResult`.
+- Added `backend/app/tests/material_balance_result_thin_shell_test.py` to prove backend calculator result class identity.
+- `scripts/audit-simulation-core-boundary.ps1` now records `backend material_balance result model thin shell`, verifies service annotations no longer import the legacy result model, and distinguishes result leaf migration from full calculator thin-shell delegation.
+- Updated backend material_balance/services/tests READMEs, scripts README, architecture current-state, and Certainty/Elegance Development Plan.
+- Validation passed: backend targeted material_balance tests (`19 passed`, existing `python_multipart` warning only), full `simulation_core\tests` (`21 passed`), `uv lock --project backend --check`, `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-input-contract.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-correctness-freeze.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\ci\pr-fast.ps1` (`status=passed`, 9 steps, `compute_boundary_audit.status=passed`, `simulation_core_correctness_freeze_audit.status=passed`), and `git diff --check -- .` (only LF-to-CRLF notices, no whitespace errors).
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next backend material balance exception thin-shell leaf TODO
 
 - [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend tests, simulation_core material_balance, scripts, architecture current-state, and Certainty/Elegance Development Plan.

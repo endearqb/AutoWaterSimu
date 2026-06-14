@@ -7,9 +7,9 @@ from typing import Any, Dict, Optional
 from sqlmodel import Session, select
 
 from app.material_balance.core import MaterialBalanceCalculator
-from app.material_balance.models import MaterialBalanceResult
 from app.models import MaterialBalanceInput, MaterialBalanceJobStatus, UDMJob
 from app.services.data_conversion_service import DataConversionService
+from autowatersimu_simulation_core.material_balance.models import MaterialBalanceResult
 
 logger = logging.getLogger(__name__)
 
