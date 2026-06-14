@@ -702,38 +702,27 @@ def test_worker_code_does_not_import_legacy_backend_app() -> None:
 def test_worker_dependency_imports_prefer_installed_packages(monkeypatch: pytest.MonkeyPatch) -> None:
     original_sys_path = list(sys.path)
     monkeypatch.setattr(worker_runner, "_missing_worker_dependency_modules", lambda: [])
-    monkeypatch.setattr(
-        worker_runner,
-        "_ensure_deprecated_repo_import_paths",
-        lambda: pytest.fail("repo path fallback should not run when packages are importable"),
-    )
 
     assert worker_runner._ensure_worker_dependency_imports() is False
     assert sys.path == original_sys_path
 
 
-def test_worker_dependency_imports_use_deprecated_repo_fallback(
+def test_worker_dependency_imports_reject_missing_packages_without_repo_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    missing_states = [["autowatersimu_simulation_core"], []]
-    fallback_calls: list[str] = []
+    original_sys_path = list(sys.path)
     monkeypatch.setattr(
         worker_runner,
         "_missing_worker_dependency_modules",
-        lambda: missing_states.pop(0),
-    )
-    monkeypatch.setattr(
-        worker_runner,
-        "_ensure_deprecated_repo_import_paths",
-        lambda: fallback_calls.append("fallback"),
+        lambda: ["autowatersimu_simulation_core"],
     )
 
-    assert worker_runner._ensure_worker_dependency_imports() is True
-    assert fallback_calls == ["fallback"]
-    assert missing_states == []
+    with pytest.raises(worker_runner.WorkerRunError, match="missing worker Python dependencies"):
+        worker_runner._ensure_worker_dependency_imports()
+    assert sys.path == original_sys_path
 
 
-def test_worker_dependency_imports_report_missing_after_fallback(
+def test_worker_dependency_status_reports_no_repo_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
@@ -741,34 +730,11 @@ def test_worker_dependency_imports_report_missing_after_fallback(
         "_missing_worker_dependency_modules",
         lambda: ["autowatersimu_simulation_core"],
     )
-    monkeypatch.setattr(worker_runner, "_ensure_deprecated_repo_import_paths", lambda: None)
-
-    with pytest.raises(worker_runner.WorkerRunError, match="missing worker Python dependencies"):
-        worker_runner._ensure_worker_dependency_imports()
-
-
-def test_worker_dependency_status_reports_deprecated_fallback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    missing_states = [["autowatersimu_simulation_core"], []]
-    monkeypatch.setattr(
-        worker_runner,
-        "_missing_worker_dependency_modules",
-        lambda: missing_states.pop(0),
-    )
-    monkeypatch.setattr(worker_runner, "_ensure_deprecated_repo_import_paths", lambda: None)
-    monkeypatch.setattr(
-        worker_runner,
-        "_worker_dependency_module_locations",
-        lambda: {
-            "autowatersimu_simulation_core": {"file": "core", "version": "test"},
-            "autowatersimu_contracts": {"file": "contracts", "version": "test"},
-        },
-    )
 
     status = worker_runner._worker_dependency_import_status()
 
-    assert status["ok"] is True
-    assert status["deprecated_repo_path_fallback_used"] is True
+    assert status["ok"] is False
+    assert status["deprecated_repo_path_fallback_used"] is False
     assert status["missing_before_fallback"] == ["autowatersimu_simulation_core"]
-    assert status["missing_after_fallback"] == []
+    assert status["missing_after_fallback"] == ["autowatersimu_simulation_core"]
+    assert "missing worker Python dependencies" in status["error"]

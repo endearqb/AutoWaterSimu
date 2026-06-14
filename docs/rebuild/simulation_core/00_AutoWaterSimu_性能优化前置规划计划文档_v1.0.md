@@ -25,7 +25,7 @@
 | input contract closure | `simulation_input.v1` node/edge unknown fields 已关闭；runtime `NodeData`/`EdgeData` 为 `extra=forbid` | ADR 0012、ADR 0013 |
 | correctness freeze | `_run_hours` mixed combined dispatcher、single-model fallback、clamp policy、ASM 氧清零 active compute mask 范围与 `compute_mask` derivative masking 已冻结为当前基线 | ADR 0014/0015、`scripts/audit-simulation-core-correctness-freeze.ps1` |
 | backend calculator thin-shell | `backend/app/material_balance/core.py` 已成为 simulation_core calculator compatibility re-export | `.ai/changes/2026-06-14.md` |
-| worker source-mode dependency gate | source-mode worker 已证明优先使用 installed/editable helper packages，不依赖 deprecated repo-path fallback | `.ai/changes/2026-06-14.md` |
+| worker source-mode dependency gate | source-mode worker 已证明使用 installed/editable helper packages；runtime repo-path fallback 已删除 | `.ai/changes/2026-06-14.md`、`.ai/changes/2026-06-15.md` |
 | Phase 0 timings baseline | P-01 mixed fixture 已补齐；baseline 当前为 `passed` | `scripts/ci/performance-baseline-phase0.ps1` |
 | Phase 0 profiling artifacts | P-02 profiling evidence 已生成；当前为 `passed` | `scripts/ci/performance-profiling-phase0.ps1` |
 | Phase 0 f64 golden generator | P-03 CPU/f64/fixed-seed golden evidence 已生成；当前为 `passed` | `scripts/ci/performance-golden-phase0.ps1` |
@@ -33,14 +33,14 @@
 | Phase 0 Go API latency smoke | P-06 本地内存 Compute API claim/list/get latency smoke 已生成；当前为 `passed` | `scripts/ci/performance-go-api-latency-phase0.ps1` |
 | Worker adapter strict rollout | P-05 opt-in CLI/env/JSON-RPC 接入口与 strict smoke 已生成；当前为 `passed`，默认仍为 `compat` | `scripts/ci/worker-adapter-strict-smoke.ps1` |
 | Backend compatibility models cleanup | P-04 已把 backend-local material_balance input models 固定为 compatibility-only import path，并由 focused pytest 与 boundary audit 防止生产 runtime 误用 | `backend/app/tests/material_balance_compat_models_boundary_test.py`、`scripts/audit-simulation-core-boundary.ps1` |
-| Worker packaged sidecar no-fallback evidence | P-07 PyInstaller one-folder sidecar smoke 已生成；当前为 `passed`，`deprecated_repo_path_fallback_used=false`；fallback 仍未删除 | `scripts/ci/worker-packaged-no-fallback-smoke.ps1` |
+| Worker packaged sidecar no-fallback evidence | P-07 PyInstaller one-folder sidecar smoke 已生成；当前为 `passed`，`deprecated_repo_path_fallback_used=false`；runtime fallback 删除后继续作为回归 gate | `scripts/ci/worker-packaged-no-fallback-smoke.ps1` |
 | 第一批 transport precompute | P-08 第一候选已落地；default/no-override segment 复用预计算 runtime edge tensors | `simulation_core/python/autowatersimu_simulation_core/material_balance/core.py` |
 | 第二批 UDM cache/device-sync | P-08 第二候选已落地；表达式编译 LRU 缓存，UDM RHS/evaluate_reaction 使用构建期预计算索引与 fixed metadata | `udm_expression.py`、`udm_engine.py`、`udm_ode.py` |
 
 当前主要缺口：
 
 1. 第一批 transport tensor precompute、第二批 UDM cache/device-sync、PR-38 mixed-model dispatch、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、segment timestamp CPU construction、`parameter_names` reuse 与 PR-34 输出网格解耦已落地；后续需继续用 P-03/P-08 evidence 防止把 solver 默认值/矩阵或 mixed-model 语义继续混入无关性能 PR。
-2. backend-local material_balance input models 已被标注并审计为 compatibility-only；packaged sidecar no-fallback evidence 已通过；ASM/UDM helper 迁移、worker fallback 删除仍是收尾项；worker strict default 仍未切换，但已有 opt-in strict smoke 与切换条件。
+2. backend-local material_balance input models 已被标注并审计为 compatibility-only；packaged sidecar no-fallback evidence 已通过且 worker runtime fallback 删除已完成；ASM/UDM helper 迁移仍是收尾项；worker strict default 仍未切换，但已有 opt-in strict smoke 与切换条件。
 3. Go claim/list latency 已有本地内存 API smoke baseline；`claim_scanned_rows` 仍只是预留字段，后续 metrics/index/keyset/claim LIMIT 需另开 PR 基于该 evidence 判断收益。
 
 ---
@@ -51,14 +51,14 @@
 
 1. 把 Phase 0 baseline 从 `partial` 推进到可用于后续对比的完成态。
 2. 在任何 UDM RHS、求解器默认值/矩阵或 Go keyset/claim 优化前，先建立 profiling 与 golden 保护网。
-3. 将 backend compatibility cleanup、worker strict rollout、fallback 删除和 Go API latency baseline 从“混在主线里的不确定项”拆成独立切片。
+3. 将 backend compatibility cleanup、worker strict rollout、worker no-fallback gate 和 Go API latency baseline 从“混在主线里的不确定项”拆成独立切片。
 4. 明确哪些工作现在不应继续做，防止又回到低收益 wrapper、普通 service-test split 或无证据的热路径改动。
 
 非目标：
 
 - 不修改 runtime 代码。
 - 不改变 `simulation_input.v1` schema、OpenAPI、generated client、数据库 schema 或 worker 默认 adapter validation mode。
-- 不删除 deprecated repo-path fallback。
+- 不恢复 deprecated repo-path fallback。
 - 不决定 mixed ASM/UDM 的最终业务语义。
 - 不把 ADR 0014 中旧 `_run_hours` 互斥分支行为表述为最终设计；当前 mixed-model 执行语义以 ADR 0015 supported dispatch 为准。
 
@@ -208,20 +208,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-ap
 
 ### P-07：`worker-packaged-sidecar-no-fallback-evidence`
 
-**目的**：删除 deprecated repo-path fallback 前，先证明 packaged sidecar 不需要 fallback。
+**目的**：删除 deprecated repo-path fallback 前，先证明 packaged sidecar 不需要 fallback；删除完成后，该 lane 继续作为 no-fallback 回归 gate。
 
 范围：
 
 - 使用 packaged / sidecar-like 资源布局运行 worker self-check 与最小 job。
 - 证明 `deprecated_repo_path_fallback_used=false`。
-- 不删除 fallback，不改 Desktop release 行为。
+- 不改 Desktop release 行为，不构建 NSIS installer。
 
 DoD：
 
 - source-mode gate 与 packaged-sidecar gate 分开记录。
-- fallback 删除必须等该 evidence 通过后另开 PR。
+- fallback 删除后必须继续保持该 evidence 通过。
 
-**当前状态（2026-06-14）**：已实现。新增 `scripts/ci/worker-packaged-no-fallback-smoke.ps1`，默认构建真实 PyInstaller one-folder sidecar，也可复用 `-SidecarPath` / `AUTOWATERSIMU_PACKAGED_SIDECAR`；脚本复用 `apps/desktop/scripts/smoke-packaged-sidecar.ps1` 跑 `--self-check` 和 minimal material balance job，并要求 packaged self-check 中 `worker_dependency_imports.deprecated_repo_path_fallback_used=false`。当前本地 evidence 为 `passed`，0 hard violations，`deprecated_repo_path_fallback_used=false`。本状态只证明 packaged sidecar 不需要 fallback，不删除 fallback，不构建 NSIS installer，不改变 Desktop release 行为。
+**当前状态（2026-06-15）**：已实现并进入回归维护。新增 `scripts/ci/worker-packaged-no-fallback-smoke.ps1`，默认构建真实 PyInstaller one-folder sidecar，也可复用 `-SidecarPath` / `AUTOWATERSIMU_PACKAGED_SIDECAR`；脚本复用 `apps/desktop/scripts/smoke-packaged-sidecar.ps1` 跑 `--self-check` 和 minimal material balance job，并要求 packaged self-check 中 `worker_dependency_imports.deprecated_repo_path_fallback_used=false`。当前本地 evidence 为 `passed`，0 hard violations，`deprecated_repo_path_fallback_used=false`。worker runtime repo-path fallback 已在后续切片删除；该 lane 继续证明 packaged sidecar 不需要 fallback，不构建 NSIS installer，不改变 Desktop release 行为。
 
 ### P-08：`udm-rhs-hotpath-prereview`
 

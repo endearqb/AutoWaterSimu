@@ -79,7 +79,7 @@
 
 本目录对 `Justfile` 暴露 `worker-adapter-strict-smoke` opt-in 入口；它通过 `--adapter-validation-mode strict` 和 `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE=strict` 证明 worker 可在 strict adapter mode 下运行现有 valid compute_job fixtures，并记录 pass rate、失败原因和 warn→strict 默认切换条件。该脚本不改变 worker 默认 `compat` 行为，不进入默认 `pr-fast`。
 
-本目录对 `Justfile` 暴露 `worker-packaged-no-fallback-smoke` opt-in 入口；它默认构建真实 PyInstaller one-folder sidecar，也可用 `-SidecarPath` 或 `AUTOWATERSIMU_PACKAGED_SIDECAR` 复用已有 sidecar，然后复用 Desktop packaged sidecar smoke 并额外记录 packaged self-check 的 `deprecated_repo_path_fallback_used=false`。该脚本只建立 P-07 evidence，不删除 fallback、不构建 installer、不进入默认 `pr-fast`。
+本目录对 `Justfile` 暴露 `worker-packaged-no-fallback-smoke` opt-in 入口；它默认构建真实 PyInstaller one-folder sidecar，也可用 `-SidecarPath` 或 `AUTOWATERSIMU_PACKAGED_SIDECAR` 复用已有 sidecar，然后复用 Desktop packaged sidecar smoke 并额外记录 packaged self-check 的 `deprecated_repo_path_fallback_used=false`。该脚本只建立 P-07 no-fallback evidence，不构建 installer、不进入默认 `pr-fast`。
 
 本目录对 `Justfile` 暴露 `performance-baseline-phase0` opt-in 入口；它只建立性能 Phase 0 baseline evidence，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM fixtures 与 `scipy_solver` / `rk4` / `adaptive_heun` solver matrix，记录 worker wall time、`runtime_audit.timings_ms` 分段、artifact serialization size/cost、环境硬件指纹、torch 线程配置，以及 `KPI-007` / `KPI-008` / `KPI-015` 绝对阈值只在 nightly 固定 runner 判定的策略。该脚本不做热路径优化、不修改 worker strict mode、不替代 hosted evidence，也不进入默认 `pr-fast`。
 

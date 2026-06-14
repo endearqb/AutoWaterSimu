@@ -399,61 +399,42 @@ def _missing_worker_dependency_modules() -> list[str]:
 
 def _ensure_worker_dependency_imports() -> bool:
     missing = _missing_worker_dependency_modules()
-    if not missing:
-        return False
-
-    _ensure_deprecated_repo_import_paths()
-    missing_after_fallback = _missing_worker_dependency_modules()
-    if missing_after_fallback:
+    if missing:
         raise WorkerRunError(
             "missing worker Python dependencies: "
-            + ", ".join(missing_after_fallback)
+            + ", ".join(missing)
         )
-    return True
+    return False
 
 
 def _worker_dependency_import_status() -> dict[str, Any]:
-    fallback_used = False
     missing_before_fallback: list[str] = []
     missing_after_fallback: list[str] = []
     try:
         missing_before_fallback = _missing_worker_dependency_modules()
         if missing_before_fallback:
-            _ensure_deprecated_repo_import_paths()
-            fallback_used = True
-        missing_after_fallback = _missing_worker_dependency_modules()
-        if missing_after_fallback:
             raise WorkerRunError(
                 "missing worker Python dependencies: "
-                + ", ".join(missing_after_fallback)
+                + ", ".join(missing_before_fallback)
             )
         return {
             "ok": True,
             "required_modules": list(WORKER_DEPENDENCY_MODULES),
             "missing_before_fallback": missing_before_fallback,
             "missing_after_fallback": missing_after_fallback,
-            "deprecated_repo_path_fallback_used": fallback_used,
+            "deprecated_repo_path_fallback_used": False,
             "module_locations": _worker_dependency_module_locations(),
         }
     except Exception as exc:
+        missing_after_fallback = list(missing_before_fallback)
         return {
             "ok": False,
             "required_modules": list(WORKER_DEPENDENCY_MODULES),
             "missing_before_fallback": missing_before_fallback,
             "missing_after_fallback": missing_after_fallback,
-            "deprecated_repo_path_fallback_used": fallback_used,
+            "deprecated_repo_path_fallback_used": False,
             "error": _safe_error_message(exc),
         }
-
-
-def _ensure_deprecated_repo_import_paths() -> None:
-    # Compatibility fallback for source-mode and packaged sidecar layouts not yet
-    # installing the Python helper packages.
-    root = _repo_root()
-    for path in (root / "simulation_core" / "python", root / "contracts" / "python"):
-        path_text = str(path)
-        if path_text not in sys.path:
-            sys.path.insert(0, path_text)
 
 
 def _worker_dependency_module_locations() -> dict[str, Any]:

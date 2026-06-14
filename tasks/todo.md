@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core worker repo-path fallback deletion TODO
+
+- [x] Re-read PR-29 installability requirement, worker runner dependency import path, worker/scripts READMEs, boundary/dependency audits, and v1.4 current checklist.
+- [x] Confirm this slice deletes worker runtime repo-path fallback only, not backend thin-shell cleanup, ASM/UDM helper migration, schema/API changes, worker strict default, solver changes, PR-11 unified RHS, or packaged installer changes.
+- [x] Remove `_ensure_deprecated_repo_import_paths()` and stop mutating `sys.path` from worker dependency imports.
+- [x] Keep self-check compatibility fields while making `deprecated_repo_path_fallback_used=false`.
+- [x] Update worker/scripts/rebuild README, current-state, v1.4 status/checklist, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Let missing helper packages fail clearly instead of falling back to repo paths.
+- Preserve existing evidence JSON field names so audits and packaged no-fallback smoke remain compatible.
+- Use boundary and dependency audits as the primary regression checks.
+
+## Review
+
+- Worker runtime no longer mutates `sys.path` or calls a repo-path fallback when helper packages are missing.
+- Self-check keeps legacy evidence fields but reports `deprecated_repo_path_fallback_used=false`; missing helper packages now fail fast.
+- Worker tests were updated from fallback-success expectations to no-fallback fail-fast/report expectations.
+- Validation passed for worker tests, dependency audit, boundary audit, packaged no-fallback smoke, docs/rebuild tests, `pr-fast`, stale-text searches, and `git diff --check`.
+
 # 2026-06-15 simulation_core absolute-threshold baseline policy TODO
 
 - [x] Re-read v1.4 KPI threshold requirement, current Phase 0 baseline script, worker self-check shape, and relevant worker/scripts/rebuild README context.

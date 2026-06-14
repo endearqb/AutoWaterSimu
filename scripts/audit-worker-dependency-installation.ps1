@@ -199,7 +199,7 @@ $report = [ordered]@{
     hard_violations = @($hardViolations)
     checks = @($checks)
     next_recommended_slice = @(
-        "Keep this fallback-unused source-mode gate in default CI before deciding when to remove the deprecated repo-path fallback; packaged sidecar fallback removal remains a separate non-Desktop-excluded evidence item."
+        "Keep this installed-package source-mode gate in default CI; packaged sidecar no-fallback evidence remains the release-path companion gate."
     )
 }
 

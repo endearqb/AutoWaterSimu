@@ -19,7 +19,7 @@
 
 - `simulation_input.v1` node/edge unknown-field schema closure 与 runtime `NodeData` / `EdgeData extra=forbid` 已由 ADR 0012/0013 接受。
 - `_run_hours` 旧互斥 mixed branch baseline 已由 ADR 0015 的 supported mixed dispatch 取代；single-model fallback 顺序、default clamp policy、ASM oxygen active compute mask 范围与 `compute_mask` derivative masking 仍由 correctness-freeze audit 冻结。
-- `simulation_core/python` 与 `contracts/python` 已有 packaging metadata;source-mode worker 已证明优先使用 installed/editable helper packages。
+- `simulation_core/python` 与 `contracts/python` 已有 packaging metadata;source-mode worker 已改为只使用 installed/editable helper packages, runtime repo-path `sys.path` fallback 已删除。
 - `backend/app/material_balance/core.py` 已成为 simulation_core calculator compatibility re-export;calculator thin-shell 与 dependency/source-mode gates 已由 audit 维护。
 - `scripts/ci/performance-baseline-phase0.ps1` 已建立 Phase 0 timings baseline;`mixed_asm_udm` fixture 已补齐后当前 12-run baseline 为 `passed`,并已记录硬件指纹、torch 线程配置与绝对阈值 KPI 仅 nightly 固定 runner 判定策略。
 - `scripts/ci/performance-profiling-phase0.ps1` 已建立 Phase 0 profiling evidence;当前 small / medium / single UDM / mixed × 3 solver profile matrix 为 `passed`。
@@ -28,7 +28,7 @@
 - `scripts/ci/performance-go-api-latency-phase0.ps1` 已建立 P-06 本地内存 Compute API latency smoke;当前 job list/get/worker claim wall-time evidence 为 `passed`,`claim_scanned_rows` 仅预留字段。
 - `scripts/ci/worker-adapter-strict-smoke.ps1` 已建立 P-05 worker adapter strict opt-in smoke;当前 8/8 valid compute_job fixtures strict mode 通过,默认仍为 `compat`。
 - P-04 backend compatibility cleanup 已完成旧本地 material_balance input models compatibility boundary:生产 runtime 不再可静默 import backend-local `MaterialBalanceInput` / `NodeData` / `EdgeData` / `CalculationParameters`,旧手工脚本已标注为非 pytest/非 runtime 证据。
-- `scripts/ci/worker-packaged-no-fallback-smoke.ps1` 已建立 P-07 packaged sidecar no-fallback evidence;当前真实 PyInstaller one-folder sidecar self-check / minimal job 为 `passed`,且 `deprecated_repo_path_fallback_used=false`;fallback 删除仍需另开 PR。
+- `scripts/ci/worker-packaged-no-fallback-smoke.ps1` 已建立 P-07 packaged sidecar no-fallback evidence;当前真实 PyInstaller one-folder sidecar self-check / minimal job 为 `passed`,且 `deprecated_repo_path_fallback_used=false`;worker runtime fallback 删除已完成,该 smoke 继续作为回归证据。
 - `transport-runtime-tensor-precompute-no-semantics` 已落地:无 `edge_overrides` 的 segment 复用 `_convert_to_tensors` 预计算 runtime edge tensors;有 override 的 segment 继续 clone/rebuild。
 - `udm-expression-cache-and-device-sync-reduction` 已落地:`compile_expression()` 使用 LRU 缓存,UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices,UDM RHS/evaluate_reaction 热路径不再用逐步 `.item()` 判断 mask 或映射。
 - `asm-stable-reaction-runtime-precompute` 已落地:ASM1Slim/ASM1/ASM3 在 `_convert_to_tensors()` 阶段预计算 active compute node indices 与 filtered parameter rows, single-model 与 combined RHS 复用该 runtime,避免每步布尔 mask 参数 gather。
@@ -43,7 +43,7 @@
 3. P-03 `perf-phase0-golden-generator` 已完成,后续若改变 correctness-freeze 行为、fixture、solver matrix 或文档化 golden/repro 测试,必须重新生成 golden evidence。
 4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver 默认值/矩阵或完整统一 RHS 等更高风险切片。
 5. PR-38 supported mixed-model dispatch 与 PR-39 当前 ASM 氧清零 active compute mask 约束已落地；后续完整 PR-39 组分契约、PR-11 全统一 RHS、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
-6. P-04 backend compatibility cleanup、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke 与 P-07 packaged sidecar no-fallback evidence 已完成;后续删除 fallback、ASM/UDM helper 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
+6. P-04 backend compatibility cleanup、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke、P-07 packaged sidecar no-fallback evidence 与 worker runtime fallback 删除已完成;后续 ASM/UDM helper 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
 
 与旧 PR 编号的映射:
 
@@ -55,7 +55,7 @@
 | P-04 backend cleanup | PR-30 / PR-31 收尾 | 已完成旧本地 input models compatibility boundary；ASM/UDM helper 迁移和真正删除 compatibility import path 需另开 PR |
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
-| P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；删除 fallback 仍需另开 PR |
+| P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；worker runtime fallback 删除已完成，该 evidence 继续作回归 gate |
 | P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化；继续禁止混入 solver 默认值/schema/fallback 改动 |
 | PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；单模型 fallback 与 default no-clamp baseline 继续冻结 |
 | PR-39 oxygen mask first step | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点；完整组分契约仍需后续 PR |
@@ -65,7 +65,7 @@
 - 不在缺少最新 P-03/P-08 evidence 复核时启动输出网格、solver 默认值或统一 RHS 改造。
 - 不把 ADR 0014 中旧冻结的 mixed ASM/UDM 互斥行为写成最终业务语义；当前最终执行语义以 ADR 0015 supported mixed dispatch 为准。
 - 不把 worker 默认 adapter validation mode 切到 `strict`。
-- 不删除 deprecated repo-path fallback。
+- 不恢复 deprecated repo-path fallback。
 - 不把 Go keyset cursor、claim LIMIT、索引 migration 混入 P-06 latency smoke；这些需在 baseline 可复跑后另开 PR。
 
 ---
@@ -119,7 +119,9 @@ PR-17~19。
 **当前实现状态（2026-06-15）**：第一步已落地到 simulation_core：`compile_expression()` 已加 LRU 缓存；`UDMNodeRuntime` 已保存 local-to-global Python int 索引、component/index pairs、fixed component indices 与 `has_fixed_components`；`_convert_to_tensors()` 已保存 `udm_active_node_indices`；`udm_ode_balance()` 使用预计算 active set 与 fixed indices，`evaluate_reaction()` 使用预计算 component/index pairs，热路径不再对 `udm_mask`、`fixed_mask.any()` 或 local-to-global 映射调用 `.item()`。KPI-017 已由 `performance-golden-phase0` 的 N=100 expression cache build-time micro evidence 覆盖，当前本地 evidence 超过 70% 降低阈值；`performance-hotpath-prereview-phase0` 已把 `udm_single` / `mixed_asm_udm` 的 `expression`、`item_device_sync`、`core_compute` 与 `ode_framework` buckets 按 `scipy_solver`、`rk4`、`adaptive_heun` 汇总，当前 UDM 相关 evidence 中 `item_device_sync_ms=0.0`，`expression_plus_item_sync_share_of_compute` 分别为 `adaptive_heun=0.0268`、`rk4=0.0499`、`scipy_solver=0.0454`。剩余工作是决定是否进入 PR-9/10/25 的表达式引擎替换，真实 post-change 端到端收益仍需后续按目标场景复测。
 
 ### PR-29:simulation_core 可安装化【Phase 0,薄壳化前置】
-落 `pyproject.toml`(hatchling/setuptools,声明 torch/torchdiffeq/pydantic/numpy 区间);worker `runner.py` 删 `_ensure_repo_import_paths`/sys.path hack,改 wheel/editable 依赖;CI 增 `pip install -e` 烟雾。v1.4 继承补充:烟雾必须包含不把 `backend/` 放入 `PYTHONPATH` 的 core-only import 与 pytest collect/run 子集,证明安装后的包和独立测试不依赖 FastAPI/SQLModel/backend。回滚:保留 sys.path hack 作 fallback 一个版本。
+落 `pyproject.toml`(hatchling/setuptools,声明 torch/torchdiffeq/pydantic/numpy 区间);worker `runner.py` 删 `_ensure_repo_import_paths`/sys.path hack,改 wheel/editable 依赖;CI 增 `pip install -e` 烟雾。v1.4 继承补充:烟雾必须包含不把 `backend/` 放入 `PYTHONPATH` 的 core-only import 与 pytest collect/run 子集,证明安装后的包和独立测试不依赖 FastAPI/SQLModel/backend。回滚:若必须恢复 repo-path fallback,只能通过显式 revert 并重新通过 dependency/boundary audit,不得新增无审计 `sys.path` 注入。
+
+**当前实现状态（2026-06-15）**：`simulation_core/python` 与 `contracts/python` 已有 packaging metadata,backend Python environment 通过 editable dependency 引用 `autowatersimu-simulation-core` / `autowatersimu-contracts`;worker runtime 已删除 repo-path `sys.path` fallback,`self_check().worker_dependency_imports.deprecated_repo_path_fallback_used` 仅作为兼容 evidence 字段保留并固定为 `false`。source-mode dependency audit、simulation_core boundary audit 与 packaged sidecar no-fallback smoke 继续作为回归门。
 
 ### PR-30:输入模型契约统一与死代码清理【Phase 1,薄壳化前置】
 删 backend `material_balance/models.py` 死输入模型与 `utils.py`(无调用方);删 simulation_core `utils.py`;`asm1/asm3/udm_service` 的 `MaterialBalanceResult` 导入改指 simulation_core;`calculate()` 入参显式标注 simulation_core `MaterialBalanceInput`(或 Protocol),服务层对 `app.models`(SQLModel)对象做一次显式校验/转换。v1.4 补充:worker 当前通过真实 adapter 入核,风险低于 legacy backend 老路径,但 `NodeData`/`EdgeData extra="allow"` 必须决策为 `forbid` 或 `ignore + structured warning/log + 迁移审计`,防止错拼字段静默吞掉。测试:app.models 对象入核走完整校验的回归;未知/错拼字段按策略报错或可观测。
@@ -271,7 +273,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 
 ## 9. 上线检查清单
 - [ ] 单一来源决策+守卫;backend 仅 re-export(KPI-013)。
-- [ ] simulation_core 可安装,sys.path hack 已删。
+- [x] simulation_core 可安装,sys.path hack 已删。
 - [x] core-only pytest collect/run 在无 backend/SQLModel 环境通过;backend-dependent parity 测试已物理拆分。
 - [ ] 输入模型契约统一,死代码清理,app.models 入核走校验。
 - [x] `NodeData`/`EdgeData extra` 策略已收紧或可观测,错拼字段不再静默吞掉。
