@@ -39,6 +39,7 @@
 5. `_run_calculation` 在 segment 没有 `edge_overrides` 时复用 `_convert_to_tensors` 已构建的 `Q_out` / `prop_a` / `prop_b` / `sparse_bundle`；有 override 时必须 clone edge tensors 并重新构建 runtime tensors，不得污染预计算 bundle。该 fast path 只是 transport tensor 准备优化，不等同于 dense/sparse 并行边语义修复。
 6. UDM runtime 在构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices；`udm_ode_balance()` / `UDMNodeRuntime.evaluate_reaction()` 热路径不得重新用 `.item()` 判断 `udm_mask`、`fixed_component_mask.any()` 或 local-to-global 映射。`compile_expression()` 使用无状态 LRU 缓存，表达式 evaluator 可跨同文本节点共享。
 7. dense transport tensors 遇到重复 `(src,dst)` 并行边时必须与 sparse 语义一致：`Q_out` 累加流量，`prop_a` / `prop_b` 使用 `a_eff=Σq_i a_i/Σq_i`、`b_eff=Σq_i b_i/Σq_i` 的流量加权合并。`_balance_param` 只接受 square `Q_out` 计算节点 delta，非方输入必须显式报错。
+8. `_generate_segment_timestamps()` 必须直接在 CPU 构造采样时间戳，避免每个 segment 为输出时间轴从 GPU 同步回 CPU；这不改变 solver/output grid 语义。
 
 ## 4. 对外接口
 

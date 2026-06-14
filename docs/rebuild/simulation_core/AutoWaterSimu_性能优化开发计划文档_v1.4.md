@@ -133,7 +133,7 @@ PR-17~19。
 ### PR-33:dense lazy 化、段间复用与 `_balance_param` 维度回归【Phase 2】
 `_convert_to_tensors` 不再无条件物化 prop_a/prop_b(仅 dense fallback 时构建);`_build_runtime_edge_tensors` 无 override 段复用上段张量;`_balance_param` `repeat`→`expand`、删 `Q_out.clone()`;`_resolve_parameter_names` 去重复计算;`_generate_segment_timestamps` 直接 CPU 构造免设备同步。v1.4 将 `_balance_param` 聚合维度 bug 升格为 L2 正确性回归:修 `sum_m_out = m_out.sum(dim=1).view(n,r)`→按源维 `view(m,r)`,修 `sum_m_in = m_out.sum(dim=0).view(m,r)`→按目的维 `view(n,r)`,并用命名变量/shape 断言避免方阵 `m==n` 掩盖问题。L2/L3 等价;新增非方/退化图单元测试。
 
-**当前实现状态（2026-06-14）**：已完成 `_balance_param` 维度回归前半：`repeat` 改为 `expand`、删除 `Q_out.clone()`、`sum_m_out` / `sum_m_in` 改用源/目的维命名变量与 shape guard，非方 dense 输入显式 `ValueError`，零流量退化图继续有 L2 golden。完整 dense lazy 化、`_resolve_parameter_names` 去重和 `_generate_segment_timestamps` CPU 构造仍需后续切片。
+**当前实现状态（2026-06-14）**：已完成 `_balance_param` 维度回归前半：`repeat` 改为 `expand`、删除 `Q_out.clone()`、`sum_m_out` / `sum_m_in` 改用源/目的维命名变量与 shape guard，非方 dense 输入显式 `ValueError`，零流量退化图继续有 L2 golden；`_generate_segment_timestamps` 已改为 CPU 直接构造采样时间戳，避免每段输出时间轴 GPU→CPU 同步。完整 dense lazy 化和 `_resolve_parameter_names` 去重仍需后续切片。
 
 ### PR-34:求解输出网格解耦【Phase 2/3】
 自适应方法 `t0` 直接构造采样网格;rk4 分块积分块间留末状态+采样点。KPI-005 内存峰值 ↓≥30%。L3 等价(采样点比较)。

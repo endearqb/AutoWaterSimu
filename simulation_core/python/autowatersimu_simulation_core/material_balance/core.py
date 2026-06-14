@@ -758,18 +758,19 @@ class MaterialBalanceCalculator:
         sampling_interval_hours: Optional[float],
     ) -> List[float]:
         total_steps = int(hours * steps_per_hour) + 1
-        full_timestamps = torch.linspace(0, hours, total_steps, device=self.device)
+        cpu_device = torch.device("cpu")
+        full_timestamps = torch.linspace(0, hours, total_steps, device=cpu_device)
         if sampling_interval_hours is not None and sampling_interval_hours > 0:
             sampling_interval = int(sampling_interval_hours * steps_per_hour)
             if sampling_interval > 1:
                 sample_indices = torch.arange(
-                    0, total_steps, sampling_interval, device=self.device
+                    0, total_steps, sampling_interval, device=cpu_device
                 )
                 if sample_indices[-1] != total_steps - 1:
                     sample_indices = torch.cat(
                         [
                             sample_indices,
-                            torch.tensor([total_steps - 1], device=self.device),
+                            torch.tensor([total_steps - 1], device=cpu_device),
                         ]
                     )
                 return full_timestamps[sample_indices].cpu().numpy().tolist()

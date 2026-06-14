@@ -570,6 +570,38 @@ def test_balance_param_rejects_non_square_dense_matrix_explicitly() -> None:
         calculator._balance_param(concentrations, q_out, prop_a, prop_b)
 
 
+def test_generate_segment_timestamps_constructs_sampling_grid_on_cpu(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calculator = MaterialBalanceCalculator()
+    calculator.device = torch.device("cuda")
+    linspace_devices: list[str] = []
+    arange_devices: list[str] = []
+    original_linspace = torch.linspace
+    original_arange = torch.arange
+
+    def linspace_spy(*args: Any, **kwargs: Any) -> torch.Tensor:
+        linspace_devices.append(str(kwargs.get("device")))
+        return original_linspace(*args, **kwargs)
+
+    def arange_spy(*args: Any, **kwargs: Any) -> torch.Tensor:
+        arange_devices.append(str(kwargs.get("device")))
+        return original_arange(*args, **kwargs)
+
+    monkeypatch.setattr(core_module.torch, "linspace", linspace_spy)
+    monkeypatch.setattr(core_module.torch, "arange", arange_spy)
+
+    timestamps = calculator._generate_segment_timestamps(
+        hours=1.0,
+        steps_per_hour=4,
+        sampling_interval_hours=0.5,
+    )
+
+    assert timestamps == pytest.approx([0.0, 0.5, 1.0])
+    assert linspace_devices == ["cpu"]
+    assert arange_devices == ["cpu"]
+
+
 def test_core_adapter_wraps_invalid_parameters_as_contract_style_error() -> None:
     simulation_input = _minimal_simulation_input()
     simulation_input["parameters"]["tolerance"] = 0.1

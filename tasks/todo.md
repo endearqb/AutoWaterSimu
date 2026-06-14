@@ -1,3 +1,25 @@
+# 2026-06-14 simulation_core PR-33 timestamp CPU TODO
+
+- [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-33 plan.
+- [x] Confirm this slice is only `_generate_segment_timestamps` CPU construction, not solver/output-grid decoupling, full dense lazy, `_resolve_parameter_names` rewrite, schema/API change, worker strict default switch, or fallback deletion.
+- [x] Move segment timestamp `linspace` and sampling-index construction to CPU.
+- [x] Add a focused core-only test proving the timestamp helper does not use `self.device` for `linspace` / `arange`.
+- [x] Update README/current-state/planning docs and README First records.
+- [x] Run validation matrix before phase commit/push.
+
+## Plan
+
+- Preserve returned timestamp values and sampling interval behavior.
+- Avoid touching `_sample_solver_output` and branch-specific solver output sampling; those remain PR-34/PR-12 territory.
+- Keep solver defaults, step grid, output projection, schema/API, worker strict mode, and fallback behavior unchanged.
+
+## Review
+
+- `_generate_segment_timestamps()` now constructs timestamp and sampling-index tensors directly on CPU.
+- Focused monkeypatch test guards against accidentally using `self.device` for timestamp construction again.
+- Full core/docs/audit/performance evidence remains passed.
+- Output sampling inside solver branch result tensors remains future PR-34/PR-12 work.
+
 # 2026-06-14 simulation_core PR-32/33 dense transport TODO
 
 - [x] Re-read README First context for simulation_core, material_balance runtime, tests, docs/rebuild simulation_core, Phase 0 golden evidence, and v1.4 performance plan.
