@@ -11,9 +11,9 @@
 - 计算结果可视化支持
 
 核心类：
-- MaterialBalanceCalculator: 物料平衡计算器
+- MaterialBalanceCalculator: 兼容导入路径，实际委托 simulation_core 物料平衡计算器
 - MaterialBalanceInput / NodeData / EdgeData / CalculationParameters: 旧导入路径兼容模型，不是新的 runtime input contract
-- MaterialBalanceResult: 旧导入路径兼容结果模型；calculator runtime result 已迁向 simulation_core
+- MaterialBalanceResult: 旧导入路径兼容结果模型；calculator runtime 已迁向 simulation_core
 
 新 backend/core 迁移代码应显式使用
 autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput

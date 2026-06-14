@@ -348,6 +348,7 @@ $backendApiRoutesPath = Join-Path $Root "backend\app\api\routes"
 $backendSimulationInputAdapterPath = Join-Path $backendServicesPath "simulation_input_adapter.py"
 $backendCoreDriftGuardPath = Join-Path $coreTests "test_material_balance_core.py"
 $backendCalculatorDelegationPreflightPath = Join-Path $Root "backend\app\tests\material_balance_calculator_delegation_preflight_test.py"
+$backendCalculatorThinShellTestPath = Join-Path $Root "backend\app\tests\material_balance_calculator_thin_shell_test.py"
 $requiredBackendCoreDriftGuardCases = @(
     "material_balance_minimal",
     "asm1slim_model_bound",
@@ -370,6 +371,33 @@ if (Test-Path -LiteralPath $backendCorePath) {
         $backendCoreText -match '(?s)from\s+autowatersimu_simulation_core\.material_balance\.models\s+import\s+\(.*MaterialBalanceResult'
     )
 }
+$backendResultModelThinShellSatisfied = $backendResultModelThinShellDetected -or $backendCoreCalculatorThinShellDetected
+$backendCalculatorThinShellTestText = if (Test-Path -LiteralPath $backendCalculatorThinShellTestPath) { Get-Content -LiteralPath $backendCalculatorThinShellTestPath -Raw } else { "" }
+$backendCalculatorThinShellIdentityTestDetected = (
+    (Test-Path -LiteralPath $backendCalculatorThinShellTestPath) -and
+    $backendCalculatorThinShellTestText -match 'BackendMaterialBalanceCalculator' -and
+    $backendCalculatorThinShellTestText -match 'CoreMaterialBalanceCalculator' -and
+    $backendCalculatorThinShellTestText -match 'BackendMaterialBalanceCalculator\s+is\s+CoreMaterialBalanceCalculator'
+)
+$backendCalculatorThinShellDetails = [ordered]@{
+    backend_core = if (Test-Path -LiteralPath $backendCorePath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCorePath } else { $null }
+    core_calculator = if (Test-Path -LiteralPath $coreCorePath) { ConvertTo-RepoRelativePath -Root $Root -Path $coreCorePath } else { $null }
+    backend_dependency_declared = $backendDeclaresSimulationCoreDependency
+    calculator_thin_shell_detected = $backendCoreCalculatorThinShellDetected
+    identity_test_detected = $backendCalculatorThinShellIdentityTestDetected
+    identity_test_path = if (Test-Path -LiteralPath $backendCalculatorThinShellTestPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCalculatorThinShellTestPath } else { $null }
+}
+if ($backendDeclaresSimulationCoreDependency -and $backendCoreCalculatorThinShellDetected -and $backendCalculatorThinShellIdentityTestDetected) {
+    Add-Check -Checks $checks -Name "backend material_balance calculator thin shell" -Status "passed" -Summary "Legacy backend material_balance calculator import path is a compatibility re-export of the simulation_core calculator and is guarded by a focused identity test." -Details $backendCalculatorThinShellDetails
+}
+else {
+    Add-Check -Checks $checks -Name "backend material_balance calculator thin shell" -Status "failed" -Summary "Legacy backend material_balance calculator is not a guarded thin shell over simulation_core." -Details $backendCalculatorThinShellDetails
+    $hardViolations.Add([ordered]@{
+        rule = "backend-material-balance-calculator-thin-shell"
+        summary = "Keep app.material_balance.core.MaterialBalanceCalculator delegated to simulation_core and guarded by a focused identity test."
+        details = $backendCalculatorThinShellDetails
+    }) | Out-Null
+}
 $backendServiceFiles = Get-PythonFiles -Path $backendServicesPath
 $backendResultLegacyServiceImports = @(Find-PatternHits -Root $Root -Files $backendServiceFiles -Pattern '^\s*from\s+app\.material_balance\.models\s+import\s+MaterialBalanceResult\b' -Rule "backend-services-must-not-import-legacy-material-balance-result")
 $backendResultThinShellDetails = [ordered]@{
@@ -377,11 +405,13 @@ $backendResultThinShellDetails = [ordered]@{
     backend_services = if (Test-Path -LiteralPath $backendServicesPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendServicesPath } else { $null }
     core_model = if (Test-Path -LiteralPath $coreModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $coreModelsPath } else { $null }
     backend_dependency_declared = $backendDeclaresSimulationCoreDependency
+    calculator_thin_shell_detected = $backendCoreCalculatorThinShellDetected
     result_model_thin_shell_detected = $backendResultModelThinShellDetected
+    result_model_contract_satisfied = $backendResultModelThinShellSatisfied
     legacy_service_import_hits = $backendResultLegacyServiceImports
 }
-if ($backendDeclaresSimulationCoreDependency -and $backendResultModelThinShellDetected -and $backendResultLegacyServiceImports.Count -eq 0) {
-    Add-Check -Checks $checks -Name "backend material_balance result model thin shell" -Status "passed" -Summary "Legacy backend calculator returns the simulation_core MaterialBalanceResult model, and ASM/UDM services annotate against that core result model." -Details $backendResultThinShellDetails
+if ($backendDeclaresSimulationCoreDependency -and $backendResultModelThinShellSatisfied -and $backendResultLegacyServiceImports.Count -eq 0) {
+    Add-Check -Checks $checks -Name "backend material_balance result model thin shell" -Status "passed" -Summary "Legacy backend calculator result contract is satisfied by the simulation_core calculator thin shell, and ASM/UDM services do not annotate against the legacy result model." -Details $backendResultThinShellDetails
 }
 else {
     Add-Check -Checks $checks -Name "backend material_balance result model thin shell" -Status "gap" -Summary "Legacy backend calculator and ASM/UDM services have not fully moved the result model leaf to simulation_core." -Details $backendResultThinShellDetails
@@ -424,6 +454,7 @@ else {
 $backendSimulationInputAdapterText = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { Get-Content -LiteralPath $backendSimulationInputAdapterPath -Raw } else { "" }
 $backendCoreInputModelDetected = $backendCoreText -match '(?s)from\s+autowatersimu_simulation_core\.material_balance\.models\s+import\s+\(.*MaterialBalanceInput'
 $backendCoreLegacyInputModelImportDetected = $backendCoreText -match '(?s)from\s+\.models\s+import\s+\(.*MaterialBalanceInput'
+$backendCoreUsesCoreInputContract = $backendCoreInputModelDetected -or $backendCoreCalculatorThinShellDetected
 $backendCoreSimulationInputAdapterDetected = (
     $backendSimulationInputAdapterText -match 'simulation_input_to_core_material_balance_input' -and
     $backendSimulationInputAdapterText -match 'autowatersimu_simulation_core\.adapters' -and
@@ -487,6 +518,8 @@ $backendInputBoundaryDetails = [ordered]@{
     backend_core = if (Test-Path -LiteralPath $backendCorePath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCorePath } else { $null }
     backend_simulation_input_adapter = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendSimulationInputAdapterPath } else { $null }
     backend_core_uses_core_input_model = $backendCoreInputModelDetected
+    backend_core_is_core_calculator_thin_shell = $backendCoreCalculatorThinShellDetected
+    backend_core_uses_core_input_contract = $backendCoreUsesCoreInputContract
     backend_core_imports_legacy_local_input_model = $backendCoreLegacyInputModelImportDetected
     core_runtime_adapter_detected = $backendCoreSimulationInputAdapterDetected
     legacy_adapter_compatibility_marked = $legacySimulationInputAdapterCompatibilityMarked
@@ -500,7 +533,7 @@ $backendInputBoundaryDetails = [ordered]@{
 }
 $backendInputBoundaryPassed = (
     $backendDeclaresSimulationCoreDependency -and
-    $backendCoreInputModelDetected -and
+    $backendCoreUsesCoreInputContract -and
     (-not $backendCoreLegacyInputModelImportDetected) -and
     $backendCoreSimulationInputAdapterDetected -and
     $legacySimulationInputAdapterCompatibilityMarked -and
@@ -602,7 +635,8 @@ $backendCoreDuplicateDetected = (Test-Path -LiteralPath $backendCorePath) -and (
 if ($backendCoreDuplicateDetected -and (-not $backendCoreCalculatorThinShellDetected) -and (-not $backendCoreDriftGuardDetected)) {
     $details = [ordered]@{
         backend_core_calculator_thin_shell_detected = $backendCoreCalculatorThinShellDetected
-        backend_result_model_thin_shell_detected = $backendResultModelThinShellDetected
+        backend_result_model_thin_shell_detected = $backendResultModelThinShellSatisfied
+        calculator_identity_test_detected = $backendCalculatorThinShellIdentityTestDetected
         mirrored_files = $driftPairs
         drift_guard = $backendCoreDriftGuardDetails
     }
@@ -610,13 +644,14 @@ if ($backendCoreDuplicateDetected -and (-not $backendCoreCalculatorThinShellDete
     Add-OpenGap -Gaps $openGaps -Id "backend-core-dual-implementation-drift-risk" -Severity "high" -Summary "Before performance work, define golden/parity strategy and then make backend a thin shell or keep explicit drift guards." -Evidence $details
 }
 else {
-    $backendCoreDriftSummary = "Backend material balance calculator is thin-shell-like or no duplicate core implementation was detected."
+    $backendCoreDriftSummary = "Backend material balance calculator is a thin shell over simulation_core, or no duplicate core implementation was detected."
     if ($backendCoreDuplicateDetected -and (-not $backendCoreCalculatorThinShellDetected) -and $backendCoreDriftGuardDetected) {
         $backendCoreDriftSummary = "Legacy backend and simulation_core still duplicate material balance implementations, but explicit backend/core parity drift guard coverage is present."
     }
     Add-Check -Checks $checks -Name "backend/core dual implementation drift risk" -Status "passed" -Summary $backendCoreDriftSummary -Details ([ordered]@{
         backend_core_calculator_thin_shell_detected = $backendCoreCalculatorThinShellDetected
-        backend_result_model_thin_shell_detected = $backendResultModelThinShellDetected
+        backend_result_model_thin_shell_detected = $backendResultModelThinShellSatisfied
+        calculator_identity_test_detected = $backendCalculatorThinShellIdentityTestDetected
         mirrored_files = $driftPairs
         drift_guard = $backendCoreDriftGuardDetails
     })
@@ -718,7 +753,7 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Use the explicit backend/core parity drift guard and backend calculator delegation preflight as the baseline for the next guarded backend calculator thin-shell delegation slice; do not start worker default strictness or hot-path optimization before that slice is green."
+        "Use the completed backend calculator thin shell, explicit adapter boundary, delegation preflight, and correctness-freeze evidence as the baseline for worker dependency installation gate and old compatibility model/helper cleanup; do not start worker default strictness or hot-path optimization before those gates are green."
     )
 }
 

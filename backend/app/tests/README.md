@@ -27,7 +27,8 @@
 | `material_balance_exceptions_thin_shell_test.py` | backend/core material balance exception class identity guard |
 | `material_balance_result_thin_shell_test.py` | backend calculator result model class identity guard |
 | `material_balance_utils_thin_shell_test.py` | backend/core material balance utility helper object identity guard |
-| `material_balance_calculator_delegation_preflight_test.py` | backend-side shadow/parity guard for future calculator delegation across material_balance, ASM1Slim, ASM1, ASM3, and UDM fixtures |
+| `material_balance_calculator_thin_shell_test.py` | backend/core material balance calculator class identity guard |
+| `material_balance_calculator_delegation_preflight_test.py` | backend-side legacy-input compatibility/parity guard across material_balance, ASM1Slim, ASM1, ASM3, and UDM fixtures |
 | `services/simulation_input_adapter_boundary_test.py` | explicit backend-to-simulation_core runtime input boundary guard for `simulation_input.v1` |
 | `utils/` | test helper |
 
@@ -36,9 +37,9 @@
 1. 新 bugfix 优先补最小 targeted regression test。
 2. 计算迁移要保留 legacy baseline 对照。
 3. 需要数据库或 auth 的测试应复用现有 fixtures，不复制 setup。
-4. backend material_balance thin-shell leaf migration 应优先补 class identity、object identity 或 parity guard，避免仅靠 import 成功判断迁移完成；exception、result model 与 utils leaf 均需由 focused tests 固定。
+4. backend material_balance thin-shell migration 应优先补 class identity、object identity 或 parity guard，避免仅靠 import 成功判断迁移完成；calculator、exception、result model 与 utils leaf 均需由 focused tests 固定。
 5. backend material_balance input/adapter boundary 变更必须证明 `simulation_input.v1` 既能保留 legacy `app.models.MaterialBalanceInput` compatibility path，也能显式构造 simulation_core runtime `MaterialBalanceInput`。
-6. backend calculator thin-shell 主迁移前必须保持 delegation preflight 通过；该 preflight 必须覆盖 material_balance minimal、ASM1Slim model-bound、独立 ASM1Slim/ASM1/ASM3/UDM fixtures，并显式记录 allowed migration differences。
+6. backend calculator thin-shell 迁移后仍必须保持 delegation preflight 通过；该 preflight 必须覆盖 material_balance minimal、ASM1Slim model-bound、独立 ASM1Slim/ASM1/ASM3/UDM fixtures，并显式记录 allowed migration differences。
 
 ## 4. 对外接口
 

@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next backend calculator thin-shell delegation TODO
+
+- [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend tests, scripts, architecture current-state, Certainty/Elegance PRD, and Development Plan.
+- [x] Confirm this slice is guarded backend calculator thin-shell delegation, not whole `models.py` re-export, old input model cleanup, worker default strictness, worker fallback removal, or hot-path performance optimization.
+- [x] Map production callers of `app.material_balance.core.MaterialBalanceCalculator.calculate()` and confirm external use is the public calculator entrypoint.
+- [x] Replace `backend/app/material_balance/core.py` with a compatibility re-export of `autowatersimu_simulation_core.material_balance.core.MaterialBalanceCalculator`.
+- [x] Add a focused backend/core calculator class identity test.
+- [x] Extend the simulation_core boundary audit to require and report the calculator thin-shell completion state while preserving input/adapter boundary and delegation preflight checks.
+- [x] Update README/current-state/development-plan context and change records.
+- [x] Run full validation and record exact results.
+- [x] Commit and push this backend calculator thin-shell delegation slice.
+
+## Plan
+
+- Keep `backend/app/material_balance/core.py` as a file-level compatibility entrypoint so legacy import paths remain stable.
+- Do not re-export or delete `backend/app/material_balance/models.py`; legacy route schemas still use `app.models.MaterialBalanceInput`, and backend-local material_balance models remain compatibility-only.
+- Keep the existing backend delegation preflight as a legacy-input compatibility guard even after backend and core calculators share the same class.
+- Leave worker deprecated fallback, worker default validation mode, Desktop scope, and performance hot paths untouched.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- `backend/app/material_balance/core.py` now keeps the legacy import path as a compatibility re-export of `autowatersimu_simulation_core.material_balance.core.MaterialBalanceCalculator`.
+- Added `backend/app/tests/material_balance_calculator_thin_shell_test.py` to prove backend/core calculator class identity.
+- `scripts/audit-simulation-core-boundary.ps1` now records `backend material_balance calculator thin shell`, treats the core calculator thin shell as satisfying the result/input runtime contract checks, and updates the next recommended slice to worker dependency installation gate plus compatibility cleanup rather than another calculator wrapper.
+- README/current-state/Development Plan now mark calculator thin-shell complete while keeping `models.py`, ASM helpers, UDM helpers, worker strict mode, worker fallback removal, and hot-path optimization as future work.
+- Validation passed: focused backend pytest 30 passed, simulation_core tests 21 passed, boundary/input/correctness audits passed with 0 hard violations and 0 open gaps, `uv lock --project backend --check` passed, `git diff --check -- .` passed with line-ending notices only, and `scripts/ci/pr-fast.ps1` passed with 9 steps.
+- Full `cd backend; .venv\Scripts\python -m pytest app\tests -q` was attempted and failed because the legacy auth/user/item tests require a database connection in this environment (`DATABASE_CONNECTION_FAILED`, login 503, `db` fixture `None`): 112 passed, 1 skipped, 17 failed, 37 errors. No material_balance targeted failure was observed.
+
 # 2026-06-14 AutoWaterSimu Next backend calculator delegation preflight TODO
 
 - [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend/app/services, backend tests, simulation_core tests, scripts, architecture current-state, Certainty/Elegance PRD, and Development Plan.
