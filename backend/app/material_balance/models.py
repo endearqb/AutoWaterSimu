@@ -1,8 +1,14 @@
-"""物料平衡数据模型
+"""Compatibility-only material balance data models.
 
-物料平衡计算的数据结构定义。
+These legacy backend-local models are kept only for old import paths and
+historical self-tests during the thin-shell migration. The active legacy
+FastAPI routes use ``app.models.MaterialBalanceInput`` as their API schema,
+and the target runtime contract for new backend/core migration work is
+``autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput``.
 
-该模块定义了物料平衡计算所需的所有数据模型：
+Do not use this module as the true runtime input contract for new code.
+
+该模块定义了旧物料平衡计算数据模型：
 - 节点数据模型（NodeData）
 - 边数据模型（EdgeData）
 - 计算参数模型（CalculationParameters）

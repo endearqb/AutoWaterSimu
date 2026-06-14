@@ -17,13 +17,12 @@ from typing import Tuple, Dict, List, Any, Optional
 import uuid
 import time
 
-from autowatersimu_simulation_core.material_balance.models import MaterialBalanceResult
-
-from .models import (
-    MaterialBalanceInput,
-    NodeData,
+from autowatersimu_simulation_core.material_balance.models import (
+    CalculationParameters,
     EdgeData,
-    CalculationParameters
+    MaterialBalanceInput,
+    MaterialBalanceResult,
+    NodeData,
 )
 from .exceptions import (
     MaterialBalanceError,

@@ -4,6 +4,13 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from autowatersimu_simulation_core.adapters import (
+    AdapterValidationMode,
+    simulation_input_to_material_balance_input as _core_simulation_input_to_material_balance_input,
+)
+from autowatersimu_simulation_core.material_balance.models import (
+    MaterialBalanceInput as CoreMaterialBalanceInput,
+)
 from app.models import (
     CalculationParameters,
     EdgeData,
@@ -39,9 +46,34 @@ class SimulationInputAdapterError(ValueError):
         }
 
 
+def simulation_input_to_core_material_balance_input(
+    simulation_input: dict[str, Any],
+    *,
+    validation_mode: AdapterValidationMode = "compat",
+) -> CoreMaterialBalanceInput:
+    """Adapt ``simulation_input.v1`` to the simulation_core runtime model.
+
+    This is the explicit backend -> simulation_core input boundary used before
+    calculator delegation. It intentionally does not change legacy route schemas
+    or the compatibility adapter below.
+    """
+
+    return _core_simulation_input_to_material_balance_input(
+        simulation_input,
+        validation_mode=validation_mode,
+    )
+
+
 def simulation_input_to_material_balance_input(
     simulation_input: dict[str, Any],
 ) -> MaterialBalanceInput:
+    """Compatibility-only adapter to legacy ``app.models.MaterialBalanceInput``.
+
+    New backend/core migration work should use
+    ``simulation_input_to_core_material_balance_input`` to enter the
+    simulation_core runtime contract explicitly.
+    """
+
     if simulation_input.get("schema_version") != "simulation_input.v1":
         raise SimulationInputAdapterError(
             "simulation_input schema_version must be simulation_input.v1",

@@ -1,3 +1,33 @@
+# 2026-06-14 AutoWaterSimu Next backend material balance input adapter boundary TODO
+
+- [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend/app/services, backend tests, scripts, architecture current-state, Certainty/Elegance Development Plan, and latest priority instruction.
+- [x] Confirm this slice is backend material_balance input/adapter boundary preflight, not calculator delegation, whole `models.py` re-export, worker default strictness, or hot-path performance optimization.
+- [x] Point backend calculator input annotations at simulation_core runtime `MaterialBalanceInput` without changing the calculator implementation or route schemas.
+- [x] Add an explicit `simulation_input_to_core_material_balance_input()` backend adapter path that delegates to simulation_core and keep the legacy adapter compatibility-only.
+- [x] Mark backend-local material_balance models as compatibility-only.
+- [x] Extend the simulation_core boundary audit to list backend calculate entrypoints and hard-fail hidden backend-local input model dependencies.
+- [x] Update README/current-state/development-plan context and change records.
+- [x] Run full validation and record exact results.
+- [x] Commit and push this backend input/adapter boundary slice.
+
+## Plan
+
+- Keep legacy FastAPI route schemas on `app.models.MaterialBalanceInput`.
+- Keep backend calculator implementation and numerical behavior unchanged.
+- Keep `backend/app/material_balance/models.py` exports for old import compatibility only.
+- Make `simulation_input.v1 -> simulation_core.MaterialBalanceInput` an explicit, tracked-test-backed backend adapter capability before calculator delegation.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- `backend/app/material_balance/core.py` now annotates calculator input with simulation_core runtime models while preserving the duplicated legacy implementation.
+- `backend/app/services/simulation_input_adapter.py` now exposes `simulation_input_to_core_material_balance_input()` for explicit backend-to-core runtime adaptation and marks the old legacy adapter compatibility-only.
+- `backend/app/material_balance/models.py` and `backend/app/material_balance/__init__.py` now describe local input models as compatibility-only.
+- `backend/app/tests/services/simulation_input_adapter_boundary_test.py` proves the new adapter constructs the core runtime model while legacy adapter tests continue to pass.
+- `scripts/audit-simulation-core-boundary.ps1` now records `backend material_balance input adapter boundary`, expected production calculate entrypoints, legacy route input hits, and hard-fails unexpected local material_balance input model imports.
+- Validation passed: focused backend pytest 22 passed, simulation_core tests 21 passed, boundary/input/correctness audits passed with 0 hard violations and 0 open gaps, `uv lock --project backend --check` passed, `git diff --check -- .` passed, and `scripts/ci/pr-fast.ps1` passed with 9 steps.
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next backend material balance utils thin-shell leaf TODO
 
 - [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend tests, scripts, architecture current-state, Certainty/Elegance Development Plan, and latest priority reassessment.

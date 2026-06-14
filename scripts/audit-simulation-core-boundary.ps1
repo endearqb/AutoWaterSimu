@@ -204,6 +204,7 @@ $corePackage = Join-Path $simulationCorePython "autowatersimu_simulation_core"
 $workerRuntime = Join-Path $Root "services\simulation-worker\simulation_worker"
 $coreTests = Join-Path $Root "simulation_core\tests"
 $workerTests = Join-Path $Root "services\simulation-worker\tests"
+$backendAppPath = Join-Path $Root "backend\app"
 $backendMaterialBalance = Join-Path $Root "backend\app\material_balance"
 $backendPyproject = Join-Path $Root "backend\pyproject.toml"
 
@@ -343,6 +344,8 @@ $coreModelsPath = Join-Path $corePackage "material_balance\models.py"
 $backendUtilsPath = Join-Path $backendMaterialBalance "utils.py"
 $coreUtilsPath = Join-Path $corePackage "material_balance\utils.py"
 $backendServicesPath = Join-Path $Root "backend\app\services"
+$backendApiRoutesPath = Join-Path $Root "backend\app\api\routes"
+$backendSimulationInputAdapterPath = Join-Path $backendServicesPath "simulation_input_adapter.py"
 $backendCoreDriftGuardPath = Join-Path $coreTests "test_material_balance_core.py"
 $requiredBackendCoreDriftGuardCases = @(
     "material_balance_minimal",
@@ -362,7 +365,7 @@ if (Test-Path -LiteralPath $backendCorePath) {
         $backendCoreText -notmatch 'class\s+MaterialBalanceCalculator'
     )
     $backendResultModelThinShellDetected = (
-        $backendCoreText -match 'from\s+autowatersimu_simulation_core\.material_balance\.models\s+import\s+MaterialBalanceResult'
+        $backendCoreText -match '(?s)from\s+autowatersimu_simulation_core\.material_balance\.models\s+import\s+\(.*MaterialBalanceResult'
     )
 }
 $backendServiceFiles = Get-PythonFiles -Path $backendServicesPath
@@ -414,6 +417,106 @@ if ($backendDeclaresSimulationCoreDependency -and $backendUtilsThinShellDetected
 else {
     Add-Check -Checks $checks -Name "backend material_balance utils thin shell" -Status "gap" -Summary "Legacy backend material_balance utility helpers have not been migrated to simulation_core re-exports." -Details $backendUtilsThinShellDetails
     Add-OpenGap -Gaps $openGaps -Id "backend-material-balance-utils-thin-shell-missing" -Severity "medium" -Summary "Move dead-code-candidate backend material_balance utility helpers to simulation_core re-exports before broader model/helper cleanup." -Evidence $backendUtilsThinShellDetails
+}
+
+$backendSimulationInputAdapterText = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { Get-Content -LiteralPath $backendSimulationInputAdapterPath -Raw } else { "" }
+$backendCoreInputModelDetected = $backendCoreText -match '(?s)from\s+autowatersimu_simulation_core\.material_balance\.models\s+import\s+\(.*MaterialBalanceInput'
+$backendCoreLegacyInputModelImportDetected = $backendCoreText -match '(?s)from\s+\.models\s+import\s+\(.*MaterialBalanceInput'
+$backendCoreSimulationInputAdapterDetected = (
+    $backendSimulationInputAdapterText -match 'simulation_input_to_core_material_balance_input' -and
+    $backendSimulationInputAdapterText -match 'autowatersimu_simulation_core\.adapters' -and
+    $backendSimulationInputAdapterText -match 'CoreMaterialBalanceInput'
+)
+$legacySimulationInputAdapterCompatibilityMarked = $backendSimulationInputAdapterText -match 'Compatibility-only adapter to legacy'
+$backendLocalModelsText = if (Test-Path -LiteralPath $backendModelsPath) { Get-Content -LiteralPath $backendModelsPath -Raw } else { "" }
+$backendLocalModelsCompatibilityMarked = $backendLocalModelsText -match 'Compatibility-only material balance data models'
+
+$backendAppFiles = Get-PythonFiles -Path $backendAppPath
+$backendProductionFiles = @()
+foreach ($file in @($backendAppFiles)) {
+    $relativePath = ConvertTo-RepoRelativePath -Root $Root -Path $file.FullName
+    if ($relativePath -match '^backend/app/tests/') {
+        continue
+    }
+    if ($relativePath -match '^backend/app/material_balance/(simple_test|test_module)\.py$') {
+        continue
+    }
+    $backendProductionFiles += $file
+}
+$legacyLocalInputImportPattern = '^\s*from\s+(app\.material_balance\.models|material_balance\.models|\.models)\s+import\s+.*\b(MaterialBalanceInput|NodeData|EdgeData|CalculationParameters)\b'
+$legacyLocalInputImportHitsAll = @(Find-PatternHits -Root $Root -Files $backendProductionFiles -Pattern $legacyLocalInputImportPattern -Rule "backend-production-must-not-import-local-material-balance-input-models")
+$legacyLocalInputImportAllowedFiles = @(
+    "backend/app/material_balance/__init__.py",
+    "backend/app/material_balance/models.py"
+)
+$legacyLocalInputImportHits = @(
+    $legacyLocalInputImportHitsAll |
+        Where-Object { $legacyLocalInputImportAllowedFiles -notcontains $_.file }
+)
+
+$calculateEntryHits = @(Find-PatternHitsWithPythonFunction -Root $Root -Files $backendProductionFiles -Pattern '\bcalculator\.calculate\(' -Rule "backend-material-balance-calculator-entrypoint")
+$expectedCalculateEntryPoints = @(
+    "backend/app/services/material_balance_service.py::_run_calculation_sync",
+    "backend/app/services/asm1slim_service.py::_run_calculation_sync",
+    "backend/app/services/asm1_service.py::_run_calculation_sync",
+    "backend/app/services/asm3_service.py::_run_calculation_sync",
+    "backend/app/services/udm_service.py::_run_calculation_sync"
+)
+$actualCalculateEntryPoints = @(
+    $calculateEntryHits |
+        ForEach-Object { "$($_.file)::$($_.function)" } |
+        Sort-Object -Unique
+)
+$unexpectedCalculateEntryPoints = @(
+    $actualCalculateEntryPoints |
+        Where-Object { $expectedCalculateEntryPoints -notcontains $_ }
+)
+$missingCalculateEntryPoints = @(
+    $expectedCalculateEntryPoints |
+        Where-Object { $actualCalculateEntryPoints -notcontains $_ }
+)
+$backendRouteInputHits = @(
+    Find-PatternHits -Root $Root -Files (Get-PythonFiles -Path $backendApiRoutesPath) -Pattern 'calculation_input:\s+MaterialBalanceInput' -Rule "legacy-fastapi-route-app-model-input"
+)
+$backendInputBoundaryDetails = [ordered]@{
+    calculator_runtime_input_contract = "autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput"
+    legacy_fastapi_api_input_contract = "app.models.MaterialBalanceInput"
+    compatibility_only_local_input_models = if (Test-Path -LiteralPath $backendModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendModelsPath } else { $null }
+    backend_core = if (Test-Path -LiteralPath $backendCorePath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCorePath } else { $null }
+    backend_simulation_input_adapter = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendSimulationInputAdapterPath } else { $null }
+    backend_core_uses_core_input_model = $backendCoreInputModelDetected
+    backend_core_imports_legacy_local_input_model = $backendCoreLegacyInputModelImportDetected
+    core_runtime_adapter_detected = $backendCoreSimulationInputAdapterDetected
+    legacy_adapter_compatibility_marked = $legacySimulationInputAdapterCompatibilityMarked
+    local_models_compatibility_marked = $backendLocalModelsCompatibilityMarked
+    legacy_local_input_model_import_hits = $legacyLocalInputImportHits
+    calculate_entrypoints = $actualCalculateEntryPoints
+    expected_calculate_entrypoints = $expectedCalculateEntryPoints
+    unexpected_calculate_entrypoints = $unexpectedCalculateEntryPoints
+    missing_calculate_entrypoints = $missingCalculateEntryPoints
+    legacy_route_input_hits = $backendRouteInputHits
+}
+$backendInputBoundaryPassed = (
+    $backendDeclaresSimulationCoreDependency -and
+    $backendCoreInputModelDetected -and
+    (-not $backendCoreLegacyInputModelImportDetected) -and
+    $backendCoreSimulationInputAdapterDetected -and
+    $legacySimulationInputAdapterCompatibilityMarked -and
+    $backendLocalModelsCompatibilityMarked -and
+    $legacyLocalInputImportHits.Count -eq 0 -and
+    $unexpectedCalculateEntryPoints.Count -eq 0 -and
+    $missingCalculateEntryPoints.Count -eq 0
+)
+if ($backendInputBoundaryPassed) {
+    Add-Check -Checks $checks -Name "backend material_balance input adapter boundary" -Status "passed" -Summary "Backend material_balance calculate entrypoints are explicit and simulation_input can enter the simulation_core runtime model through a dedicated adapter while legacy API models remain compatibility-only." -Details $backendInputBoundaryDetails
+}
+else {
+    Add-Check -Checks $checks -Name "backend material_balance input adapter boundary" -Status "failed" -Summary "Backend material_balance input/adapter boundary is not explicit enough for calculator delegation preflight." -Details $backendInputBoundaryDetails
+    $hardViolations.Add([ordered]@{
+        rule = "backend-material-balance-input-adapter-boundary"
+        summary = "New backend material_balance code must not depend on backend-local input models as the true runtime contract; use the explicit simulation_core adapter/runtime model boundary."
+        details = $backendInputBoundaryDetails
+    }) | Out-Null
 }
 $driftPairs = @(
     [ordered]@{

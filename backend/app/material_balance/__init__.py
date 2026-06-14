@@ -12,11 +12,12 @@
 
 核心类：
 - MaterialBalanceCalculator: 物料平衡计算器
-- MaterialBalanceInput: 输入数据模型
-- MaterialBalanceResult: 计算结果模型
-- NodeData: 节点数据模型
-- EdgeData: 边数据模型
-- CalculationParameters: 计算参数模型
+- MaterialBalanceInput / NodeData / EdgeData / CalculationParameters: 旧导入路径兼容模型，不是新的 runtime input contract
+- MaterialBalanceResult: 旧导入路径兼容结果模型；calculator runtime result 已迁向 simulation_core
+
+新 backend/core 迁移代码应显式使用
+autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput
+作为 runtime input contract。
 """
 
 from .core import MaterialBalanceCalculator
