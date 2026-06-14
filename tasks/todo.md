@@ -1,3 +1,35 @@
+# 2026-06-14 AutoWaterSimu Next simulation input node-edge schema closure TODO
+
+- [x] Read the new priority reassessment and confirm P0 service-test closeout, P1 `pr-fast` boundary gate, and P2 selected mutation matrix are already landed in current HEAD.
+- [x] Re-read README First context for contracts, invalid examples, simulation_core adapter/readmes, scripts, docs/architecture, docs/rebuild, `.ai/decisions`, and `.ai/changes`.
+- [x] Confirm the next slice is `simulation_input.v1` node/edge item schema closure, not runtime `NodeData` / `EdgeData` `extra` removal, worker default strictness, backend thin-shell migration, or hot-path performance optimization.
+- [x] Make `simulation_input.v1` node/edge item fields explicit canonical snake_case fields.
+- [x] Add invalid fixture coverage for unknown node/edge fields and register it.
+- [x] Record the long-term node/edge schema closure decision.
+- [x] Update README/current-state/development-plan context.
+- [x] Run validation and record exact results.
+- [x] Commit and push this input-contract schema slice.
+
+## Plan
+
+- Close only `simulation-input-node-edge-items-open-schema`; leave `simulation-core-runtime-models-extra-allow` as the remaining input-contract audit gap.
+- Do not add node/edge item `required` fields in this slice.
+- Keep component/model internals dynamic inside explicit fields, including component concentration maps, concentration transform maps, UDM process rows, and model snapshots.
+- Treat camelCase model fields as direct adapter migration compatibility only, not canonical `simulation_input.v1` fields.
+- Preserve worker default `compat` adapter behavior, legacy backend behavior, Go API/OpenAPI/generated clients, Desktop scope, backend thin-shell status, and hot-path performance behavior.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- `simulation_input.v1` now declares explicit node and edge item properties and closes item-level unknown fields with `additionalProperties=false`.
+- Added `unknown_node_edge_field.simulation_input.v1.json` as a registered invalid fixture so contract tests prove unknown node/edge fields are rejected.
+- Added ADR `0012-simulation-input-node-edge-schema-closure.md` to record canonical snake_case node/edge fields, dynamic internal component/model maps, and adapter-only camelCase compatibility.
+- Updated contracts, simulation_core, architecture current-state/contracts, Certainty/Elegance Development Plan, input-contract audit recommendation, and README First records.
+- Input-contract audit now reports `partial` with 0 hard violations and 1 open gap: `simulation-core-runtime-models-extra-allow`.
+- Validation passed: `scripts\audit-simulation-core-input-contract.ps1`, `scripts\check-contracts.ps1` (`101 passed`), `backend\.venv\Scripts\python -m pytest simulation_core\tests -q` (`14 passed`), worker `--run-job` material-balance fixture (`succeeded`), `scripts\audit-simulation-core-boundary.ps1` (`passed`), `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), and `git diff --check -- .`.
+- `git diff --check -- .` only emitted Windows LF-to-CRLF notices, not whitespace errors.
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next simulation core adapter unknown-field mode TODO
 
 - [x] Re-read README First context for simulation_core, adapter, material_balance runtime models, scripts, docs/architecture, docs/rebuild, and `.ai/changes`.

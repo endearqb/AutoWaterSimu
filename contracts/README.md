@@ -60,8 +60,9 @@
 15. `production_readiness.v1` 汇总 job 成功、evidence package、governance.production_allowed 与 risk_findings 阻断状态，只表达“可提交外部审批”的只读政策判断；`external_approval_required=true` 且 `auto_publish_allowed=false` 是合同约束。
 16. `simulation_request.v1.input_ref` 可表达 `process_graph_id`、`simulation_input_id`、`model_run_id` 或内嵌 `simulation_input`；Go Compute API 当前可把内嵌 `simulation_input.v1`、已登记的 `simulation_input_id`，或可回溯到源 job 的已持久化 `model_run_id` 转为对应 job type 的 `compute_job.v1`。`simulation_request.v1.metadata.site_id` 或 `external_refs.site_id` 可进入生成后的 `compute_job.v1.context.site_id`，用于 API read-scope 过滤。`process_graph_id` / `process_graph_version` 自动转换当前只支持 material-balance job，ASM/UDM ProcessGraph-to-SimulationInput 语义需要单独设计。
 17. `compute_job.v1`、`simulation_input.v1`、`compute_result.v1` 和 `simulation_request.v1` 当前支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；新增 job type 进入 `simulation_request.v1` 时必须同步 Go API、OpenAPI 和 generated compute client。
-18. `desktop_project_package.v1` 是 Desktop 新导出的长期项目包合同，覆盖 project metadata、job snapshots、CanvasGraphs、artifact/support bundle refs 和 checksum-verified hex file records；Desktop 可继续导入 legacy `desktop_project_export.v1` 文件作为兼容路径，但新导出应使用 `desktop_project_package.v1`。
-19. `desktop_support_bundle.v1` 是 Desktop 诊断包合同，只包含 job/event/artifact metadata/model_run refs 和版本信息；`redaction.artifact_contents_included=false` 是合同约束，artifact 文件内容应通过 project package 的 checksum file records 或 runtime artifacts 恢复。
+18. `simulation_input.v1` 的 `nodes[]` / `edges[]` item 字段是 worker 可执行合同的一部分，使用显式 canonical snake_case 字段并关闭 item 级 unknown fields；组件浓度、concentration transform、UDM process 和 model snapshot 等内部 map 仍保持动态结构。adapter 对 camelCase 模型字段的支持只是迁移兼容路径，不应扩展为合同字段。
+19. `desktop_project_package.v1` 是 Desktop 新导出的长期项目包合同，覆盖 project metadata、job snapshots、CanvasGraphs、artifact/support bundle refs 和 checksum-verified hex file records；Desktop 可继续导入 legacy `desktop_project_export.v1` 文件作为兼容路径，但新导出应使用 `desktop_project_package.v1`。
+20. `desktop_support_bundle.v1` 是 Desktop 诊断包合同，只包含 job/event/artifact metadata/model_run refs 和版本信息；`redaction.artifact_contents_included=false` 是合同约束，artifact 文件内容应通过 project package 的 checksum file records 或 runtime artifacts 恢复。
 
 ## 4. 对外接口
 

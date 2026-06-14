@@ -406,7 +406,7 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Decide whether simulation_input.v1 node/edge items stay extensible or move to explicit typed fields.",
+        "Keep simulation_input.v1 node/edge explicit field schema green when adding worker-executable fields.",
         "Record or replace NodeData/EdgeData runtime extra=allow policy before strict input-contract mode.",
         "Keep backend/core parity drift guard green before changing runtime model extra policy."
     )

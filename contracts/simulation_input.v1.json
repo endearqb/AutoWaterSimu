@@ -3,6 +3,44 @@
   "$id": "simulation_input.v1.json",
   "title": "simulation_input.v1",
   "type": "object",
+  "$defs": {
+    "componentValueMap": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "numberArray": {
+      "type": "array",
+      "items": { "type": "number" }
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "concentrationTransformFactor": {
+      "type": "object",
+      "properties": {
+        "a": { "type": "number" },
+        "b": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "concentrationTransform": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/concentrationTransformFactor" }
+    },
+    "udmProcess": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "udmVariableBinding": {
+      "type": "object",
+      "properties": {
+        "local_var": { "type": "string", "minLength": 1 },
+        "canonical_var": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
   "required": [
     "schema_version",
     "simulation_input_id",
@@ -25,8 +63,60 @@
       "enum": ["simulation.material_balance.v1", "simulation.asm1slim.v1", "simulation.asm1.v1", "simulation.asm3.v1", "simulation.udm.v1"]
     },
     "component_schema": { "type": "object" },
-    "nodes": { "type": "array", "minItems": 2, "items": { "type": "object" } },
-    "edges": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+    "nodes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "properties": {
+          "node_id": { "type": "string", "minLength": 1 },
+          "node_type": { "type": "string", "minLength": 1 },
+          "initial_volume": { "type": "number" },
+          "initial_concentrations": { "$ref": "#/$defs/componentValueMap" },
+          "is_inlet": { "type": "boolean" },
+          "is_outlet": { "type": "boolean" },
+          "asm1slim_parameters": { "$ref": "#/$defs/numberArray" },
+          "asm1_parameters": { "$ref": "#/$defs/numberArray" },
+          "asm3_parameters": { "$ref": "#/$defs/numberArray" },
+          "udm_model_id": { "type": "string", "minLength": 1 },
+          "udm_model_version": { "type": "integer", "minimum": 1 },
+          "udm_model_hash": { "type": "string", "minLength": 1 },
+          "udm_component_names": { "$ref": "#/$defs/stringArray" },
+          "udm_processes": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/udmProcess" }
+          },
+          "udm_parameter_values": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          },
+          "udm_variable_bindings": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/udmVariableBinding" }
+          },
+          "udm_model_snapshot": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "edge_id": { "type": "string", "minLength": 1 },
+          "source_node_id": { "type": "string", "minLength": 1 },
+          "target_node_id": { "type": "string", "minLength": 1 },
+          "flow_rate": { "type": "number" },
+          "concentration_transform": { "$ref": "#/$defs/concentrationTransform" }
+        },
+        "additionalProperties": false
+      }
+    },
     "time_segments": { "type": "array", "items": { "type": "object" } },
     "parameters": {
       "type": "object",

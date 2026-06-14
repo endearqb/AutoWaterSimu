@@ -1,6 +1,6 @@
 {
   "schema_version": "contracts_registry.v1",
-  "updated_on": "2026-06-01",
+  "updated_on": "2026-06-14",
   "description": "Registry for AutoWaterSimu Next JSON Schema contracts, examples, consumers, and compatibility policy.",
   "current_drift_gates": [
     "backend/.venv/Scripts/python -m pytest contracts/tests -q",
@@ -322,8 +322,10 @@
         "examples/valid/material_balance_minimal.simulation_input.v1.json",
         "examples/valid/udm_independent.simulation_input.v1.json"
       ],
-      "invalid_examples": [],
-      "compatibility_notes": "SimulationInput is worker-executable input; job type additions require parity fixtures and worker/core/backend coverage.",
+      "invalid_examples": [
+        "examples/invalid/unknown_node_edge_field.simulation_input.v1.json"
+      ],
+      "compatibility_notes": "SimulationInput is worker-executable input; node and edge item fields are explicit canonical snake_case fields while component/model maps remain dynamic; job type additions require parity fixtures and worker/core/backend coverage.",
       "breaking_change_policy": "p0_additive_only_v1"
     },
     {

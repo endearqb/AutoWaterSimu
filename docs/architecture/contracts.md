@@ -1,6 +1,6 @@
 # AutoWaterSimu Next Contracts Architecture
 
-> Snapshot date: 2026-05-31.
+> Snapshot date: 2026-06-14.
 
 This document summarizes the current contract ownership model. It complements `contracts/README.md`, `contracts/registry.json`, and `contracts/codegen/manifest.json`; it does not replace schema files, OpenAPI, generated clients, or tests.
 
@@ -19,6 +19,8 @@ This document summarizes the current contract ownership model. It complements `c
 No generated Go, Python, or Rust contract types are committed yet.
 
 Desktop project package and support bundle wire shapes are now represented by `desktop_project_package.v1` and `desktop_support_bundle.v1`. The Desktop runtime emits the new project package schema for new exports while keeping legacy `desktop_project_export.v1` import compatibility.
+
+`simulation_input.v1` is the worker-executable input contract. Its top-level fields and node/edge item fields are closed to explicit canonical snake_case fields, while component-indexed concentration maps, concentration transform maps, UDM process rows, and UDM model snapshots remain dynamic model data. Compatibility adapters may still accept legacy camelCase model fields when called directly, but those names are not part of the canonical contract.
 
 ## Drift Gates
 
