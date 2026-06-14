@@ -121,8 +121,20 @@ class CalculationParameters(BaseModel):
     steps_per_hour: int = Field(default=60, gt=0, le=1000)
     solver_method: str = "scipy_solver"
     tolerance: float = Field(default=1e-6, gt=0, le=1e-3)
-    max_iterations: int = Field(default=1000, gt=0, le=100000)
-    max_memory_mb: int = Field(default=1000, gt=0, le=10000)
+    max_iterations: int = Field(
+        default=1000,
+        gt=0,
+        le=100000,
+        description="Deprecated compatibility field; accepted but not enforced by simulation_core solvers.",
+        json_schema_extra={"deprecated": True},
+    )
+    max_memory_mb: int = Field(
+        default=1000,
+        gt=0,
+        le=10000,
+        description="Deprecated compatibility field; accepted but not enforced by simulation_core solvers.",
+        json_schema_extra={"deprecated": True},
+    )
     sampling_interval_hours: float | None = None
 
     @field_validator("solver_method")

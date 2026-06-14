@@ -1075,6 +1075,15 @@ def test_calculation_parameters_freeze_solver_matrix_policy() -> None:
         CalculationParameters(solver_method="dopri5")
 
 
+@pytest.mark.parametrize("field_name", ["max_iterations", "max_memory_mb"])
+def test_calculation_parameters_mark_unused_solver_limits_deprecated(field_name: str) -> None:
+    field = CalculationParameters.model_fields[field_name]
+
+    assert field.json_schema_extra == {"deprecated": True}
+    assert field.description is not None
+    assert "not enforced by simulation_core solvers" in field.description
+
+
 def test_run_hours_uses_combined_dispatch_for_mixed_models(monkeypatch: pytest.MonkeyPatch) -> None:
     calculator = MaterialBalanceCalculator()
     selected_branches = _install_odeint_branch_spy(monkeypatch)

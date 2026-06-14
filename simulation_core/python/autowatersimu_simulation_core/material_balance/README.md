@@ -43,6 +43,7 @@
 9. `_run_hours()` 的 solver/output grid 与 sampling grid 已解耦：有 `sampling_interval_hours` 且采样间隔大于一个 solver step 时，`scipy_solver` / `adaptive_heun` / `dopri5` 只向 solver 传入输出采样时刻；`rk4` 按采样区间分块积分，块间只保留末状态和输出采样点；其他 fixed-step 方法（例如 `euler`）继续 full-grid 求解后采样。该策略不得改变单模型 fallback 顺序、反应分支 output clamp 或 default 分支 no-clamp baseline。
 10. `_convert_to_tensors()` 解析出的 `parameter_names` 必须随 tensor payload 传入 `_run_calculation()` 复用，避免每次运行再解析 flowchart metadata；缺失该字段时才走兼容 fallback。
 11. `summary["final_mass_balance_error"]` 是计算控制体（非 inlet/outlet 节点）的真实守恒残差标量：按输出时间轴逐区间积分边界 `入流 - 出流 - Δ累积`，再取逐组分 signed residual 的最大绝对值；逐组分 signed residual 以 `summary["mass_balance_component_errors"]` 暴露，顺序与全局组分顺序一致。分段 `edge_overrides` 的 flow / factor a,b 必须用区间级实际生效值参与积分。
+12. `CalculationParameters.max_iterations` 与 `max_memory_mb` 是 deprecated compatibility fields；当前 simulation_core solver 不读取或强制执行它们。新增真实 solver step/memory enforcement 前必须另开 PR，补数值/错误语义测试并更新 contracts/worker/backend 说明。
 
 ## 4. 对外接口
 

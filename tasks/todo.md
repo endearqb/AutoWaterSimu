@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core PR-36 deprecated solver limits TODO
+
+- [x] Re-read material_balance runtime model context and PR-36 max_iterations/max_memory_mb requirement.
+- [x] Confirm this slice marks fields deprecated, not implementing real solver step/memory enforcement.
+- [x] Mark `CalculationParameters.max_iterations` and `max_memory_mb` as deprecated compatibility fields.
+- [x] Add focused boundary test freezing the deprecation metadata.
+- [x] Update material_balance/tests README, current-state, v1.4 PR-36 status, checklist, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Preserve field validation and accepted payload shape for compatibility.
+- Add machine-readable deprecation metadata plus human-readable field descriptions.
+- Keep actual solver limit enforcement as a future behavior-change PR with dedicated tests and contract/worker/backend docs.
+
+## Review
+
+- `CalculationParameters.max_iterations` and `max_memory_mb` now remain accepted/validated payload fields but expose `deprecated: true` schema metadata and descriptions stating they are not enforced by simulation_core solvers.
+- Added focused boundary coverage so future changes cannot silently remove that deprecation contract.
+- v1.4 PR-36 now records this as the selected low-risk path; real solver step/memory enforcement remains a separate behavior-changing PR.
+- Verification passed for focused/full simulation_core tests, docs/rebuild tests, correctness-freeze audit, Phase 0 golden/hotpath prereview, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core PR-36 solver matrix policy TODO
 
 - [x] Re-read solver matrix requirements and current `CalculationParameters` policy.
