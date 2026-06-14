@@ -16,7 +16,7 @@
 - opt-in Desktop unsigned release artifacts smoke 验证。
 - 8 条金标场景的现有 lane evidence 汇总，以及显式本地 evidence refresh 编排。
 - 输出机器可读 evidence 到 `tmp/ci-evidence/`。
-- 编排跨 dependency boundary、Compute API boundary audit、README path、registry-backed contracts、Go API、frontend 和 desktop 的快速检查。
+- 编排跨 dependency boundary、Compute API boundary audit、simulation_core correctness freeze audit、README path、registry-backed contracts、Go API、frontend 和 desktop 的快速检查。
 - 编排 Water Ontology registry 一致性检查，防止对象、动作、关系和策略 drift。
 - 编排需要 Docker 的 PostgreSQL + MinIO + Compute API + worker HTTP 桥接 smoke。
 
@@ -31,7 +31,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `pr-fast.ps1` | 运行 Next PR fast checks（含 dependency boundary、Compute API boundary audit、README path、ontology registry、contracts drift、Go/frontend/desktop checks）并写出 `tmp/ci-evidence/pr-fast.json` 与 `tmp/ci-evidence/compute-boundary/compute-api-boundary.json` |
+| `pr-fast.ps1` | 运行 Next PR fast checks（含 dependency boundary、Compute API boundary audit、simulation_core correctness freeze audit、README path、ontology registry、contracts drift、Go/frontend/desktop checks）并写出 `tmp/ci-evidence/pr-fast.json`、`tmp/ci-evidence/compute-boundary/compute-api-boundary.json` 与 `tmp/ci-evidence/simulation-core-correctness-freeze/simulation-core-correctness-freeze.json` |
 | `integration-smoke.ps1` | 启动隔离 Compose API 栈，运行本地 Python worker API once，验证 job/result/model_run/artifact/evidence/retention dry-run/metrics，并写出 `tmp/ci-evidence/integration-smoke.json` |
 | `security-smoke.ps1` | 聚合 production token guard、file-mounted token config source、static token revocation、scope denial、artifact admin scope、worker mutation POST-only method guard、job collection/job route 与 API-wide declared-method guard、tenant/project/site read-scope（job、process_graph、simulation_input、draft_confirmation、model_catalog、model_run、benchmark_run、artifact）、direct job create/cancel、artifact retention sweep delete/archive candidate filtering 与 archive cross-scope no-write、worker claim/heartbeat/artifact/succeed/fail completion、confirm-draft record persistence、result explanation submit/review/publish、direct simulation-check create、draft promotion job create、benchmark schedule-run job create、model catalog registration/status/promote、benchmark_run registration 与显式 process_graph/simulation_input registry POST mutation data-scope，以及 selected mutation audit envelope（job create/cancel/timeout、worker registration/claim/heartbeat/artifact/succeed/fail completion、artifact retention delete/archive、result explanation、draft_confirmation、draft promotion、direct simulation-check、model governance、simulation registry）的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
@@ -78,6 +78,7 @@
 
 - `scripts/check-deps.ps1`
 - `scripts/audit-compute-api-boundary.ps1`
+- `scripts/audit-simulation-core-correctness-freeze.ps1`
 - `scripts/check-ontology.ps1`
 - `scripts/check-contracts.ps1`
 - `backend/.venv` Python 或 PATH Python

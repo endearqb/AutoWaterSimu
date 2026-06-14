@@ -170,6 +170,7 @@ just pr-fast
 just integration-smoke
 just check-security
 just audit-simulation-core-input-contract
+just audit-simulation-core-correctness-freeze
 just browser-smoke
 just live-backend-browser-smoke
 just current-flow-live-smoke
@@ -192,6 +193,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1

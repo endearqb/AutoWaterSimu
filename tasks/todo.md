@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next simulation core correctness freeze TODO
+
+- [x] Re-read README First context for docs/rebuild, docs/architecture, simulation_core, simulation_core/tests, material_balance runtime, scripts, scripts/ci, and recent ADR/change history.
+- [x] Confirm this slice is mixed-model correctness freeze, not backend thin-shell migration, worker default strict mode, or hot-path performance optimization.
+- [x] Add core-only tests freezing current `_run_hours` branch precedence, branch clamp policy, and `compute_mask` derivative masking.
+- [x] Add a read-only correctness-freeze audit with machine-readable evidence.
+- [x] Add the correctness-freeze audit to `pr-fast` evidence.
+- [x] Update README/current-state/development-plan context and ADR records.
+- [x] Run full validation and record exact results.
+- [x] Commit and push this correctness-freeze slice.
+
+## Plan
+
+- Freeze current behavior as a pre-performance baseline, not as the desired final mixed ASM/UDM semantics.
+- Preserve runtime behavior, contracts, worker invocation, legacy backend implementation, OpenAPI/generated clients, Desktop scope, and Go Compute API behavior.
+- Keep tests core-only for branch/clamp/mask behavior; backend parity remains in `test_material_balance_core.py`.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added core-only tests for `_run_hours` current mutually exclusive branch order: `asm1slim`, `asm1`, `asm3`, `udm`, then default.
+- Added clamp policy coverage proving ASM/UDM branches clamp negative solver output while the default branch currently preserves negative solver output.
+- Added `_ode_balance` `compute_mask` derivative masking coverage.
+- Added `scripts/audit-simulation-core-correctness-freeze.ps1`, `just audit-simulation-core-correctness-freeze`, and `pr-fast` default gate integration.
+- Added ADR `0014-simulation-core-correctness-freeze-before-perf.md`.
+- Updated root/scripts/scripts-ci/simulation_core READMEs, architecture current-state, and Certainty/Elegance Development Plan to mark correctness-freeze evidence as a P3 baseline before performance optimization.
+- Validation passed: focused boundary tests (`14 passed`), full `simulation_core\tests` (`21 passed`), `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-input-contract.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-correctness-freeze.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\ci\pr-fast.ps1` (`status=passed`, 9 steps, `compute_boundary_audit.status=passed`, `simulation_core_correctness_freeze_audit.status=passed`), and `git diff --check -- .` (only LF-to-CRLF notices, no whitespace errors).
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next simulation core runtime extra policy TODO
 
 - [x] Read the latest priority reassessment and confirm it redirects away from low-value service-test split/wrapper work toward boundary gates, P2 evidence, and P3 simulation_core stability.

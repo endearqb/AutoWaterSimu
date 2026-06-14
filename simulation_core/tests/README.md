@@ -8,6 +8,7 @@
 
 - core import boundary 测试。
 - core adapter 行为测试。
+- `_run_hours` branch precedence、clamp policy 和 `compute_mask` derivative masking 的 correctness-freeze 测试。
 - 与 legacy backend 的 material balance、ASM1Slim model-bound、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 和 `simulation.udm.v1` 数值 parity 测试。
 
 本目录不负责：
@@ -20,7 +21,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
-| `test_material_balance_core_boundary.py` | core-only import boundary 和 adapter 行为测试，不导入 legacy backend |
+| `test_material_balance_core_boundary.py` | core-only import boundary、adapter 行为和 `_run_hours` correctness-freeze 测试，不导入 legacy backend |
 | `test_material_balance_core.py` | legacy backend parity/oracle 测试，并通过 `BACKEND_CORE_DRIFT_GUARD_CASES` 显式声明 backend/core 双实现漂移保护用例 |
 
 ## 3. 维护约定
@@ -30,6 +31,7 @@
 3. tolerance 默认使用 `rtol=1e-6`、`atol=1e-9`。
 4. ASM/UDM 迁移期测试应先覆盖 runtime binding 字段保留和 legacy backend parity，再新增独立 job type 测试；当前 `simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 已有独立 job type parity。
 5. backend/core 双实现尚未 thin-shell 化前，`BACKEND_CORE_DRIFT_GUARD_CASES` 必须覆盖 material balance minimal、ASM1Slim model-bound、独立 ASM1Slim/ASM1/ASM3/UDM job type，并断言状态、步数、时间戳、节点字段和数值序列 parity；`scripts/audit-simulation-core-boundary.ps1` 会审计该 guard 是否存在。
+6. `_run_hours` mixed-model 行为改变前，必须同步更新 `test_run_hours_*` correctness-freeze tests、`scripts/audit-simulation-core-correctness-freeze.ps1` 和相关 ADR；默认分支是否 clamp 是显式当前状态，不应在性能 PR 中隐式改变。
 
 ## 4. 对外接口
 
@@ -51,6 +53,7 @@
 
 ```powershell
 backend\.venv\Scripts\python -m pytest simulation_core\tests -q
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
 ```
 
 ## 7. AI 操作提示

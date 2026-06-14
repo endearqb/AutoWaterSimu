@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import torch
 from pydantic import ValidationError
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -31,6 +32,10 @@ from autowatersimu_simulation_core.material_balance.models import (  # noqa: E40
     EdgeData,
     NodeData,
 )
+from autowatersimu_simulation_core.material_balance import (  # noqa: E402
+    MaterialBalanceCalculator,
+)
+from autowatersimu_simulation_core.material_balance import core as core_module  # noqa: E402
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -47,6 +52,62 @@ def _simulation_input_with_unknown_fields() -> dict[str, Any]:
     simulation_input["nodes"][0]["unknown_node_field_for_test"] = "node-extra"
     simulation_input["edges"][0]["unknown_edge_field_for_test"] = "edge-extra"
     return simulation_input
+
+
+def _run_hours_base_kwargs(calculator: MaterialBalanceCalculator) -> dict[str, Any]:
+    device = calculator.device
+    dtype = calculator.dtype
+    return {
+        "hours": 1.0,
+        "x0": torch.tensor([[[1.0, 2.0]]], dtype=dtype, device=device),
+        "Q_out": torch.zeros(1, 1, dtype=dtype, device=device),
+        "m": 1,
+        "steps": 1,
+        "prop_a": torch.ones(1, 1, 1, dtype=dtype, device=device),
+        "prop_b": torch.zeros(1, 1, 1, dtype=dtype, device=device),
+        "method": "rk4",
+        "tolerance": 1e-3,
+        "compute_mask": torch.tensor([True], dtype=torch.bool, device=device),
+    }
+
+
+def _run_hours_model_kwargs(
+    calculator: MaterialBalanceCalculator,
+    enabled_branches: list[str],
+) -> dict[str, Any]:
+    device = calculator.device
+    dtype = calculator.dtype
+    kwargs: dict[str, Any] = {}
+    if "asm1slim" in enabled_branches:
+        kwargs["asm1slim_params"] = torch.ones(1, 7, dtype=dtype, device=device)
+        kwargs["asm1slim_mask"] = torch.tensor([True], dtype=torch.bool, device=device)
+    if "asm1" in enabled_branches:
+        kwargs["asm1_params"] = torch.ones(1, 19, dtype=dtype, device=device)
+        kwargs["asm1_mask"] = torch.tensor([True], dtype=torch.bool, device=device)
+    if "asm3" in enabled_branches:
+        kwargs["asm3_params"] = torch.ones(1, 37, dtype=dtype, device=device)
+        kwargs["asm3_mask"] = torch.tensor([True], dtype=torch.bool, device=device)
+    if "udm" in enabled_branches:
+        kwargs["udm_mask"] = torch.tensor([True], dtype=torch.bool, device=device)
+        kwargs["udm_runtime_payload"] = [object()]
+    return kwargs
+
+
+def _install_odeint_branch_spy(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    selected_branches: list[str] = []
+
+    def fake_odeint(ode_func: Any, x0: torch.Tensor, t0: torch.Tensor, **_: Any) -> torch.Tensor:
+        target = getattr(ode_func, "func", ode_func)
+        selected_branches.append(getattr(target, "__name__", repr(target)))
+        return torch.full(
+            (len(t0),) + tuple(x0.shape),
+            -1.0,
+            dtype=x0.dtype,
+            device=x0.device,
+        )
+
+    monkeypatch.setattr(core_module, "odeint", fake_odeint)
+    return selected_branches
 
 
 def test_simulation_core_import_boundary_uses_core_python_only() -> None:
@@ -212,3 +273,82 @@ def test_core_adapter_strict_rejects_unknown_fields() -> None:
         "$.nodes[0].unknown_node_field_for_test",
         "$.edges[0].unknown_edge_field_for_test",
     }
+
+
+def test_run_hours_uses_first_available_model_branch_order(monkeypatch: pytest.MonkeyPatch) -> None:
+    calculator = MaterialBalanceCalculator()
+    selected_branches = _install_odeint_branch_spy(monkeypatch)
+    kwargs = _run_hours_base_kwargs(calculator)
+    kwargs.update(_run_hours_model_kwargs(calculator, ["asm1slim", "asm1", "asm3", "udm"]))
+
+    result = calculator._run_hours(**kwargs)
+
+    assert selected_branches == ["_asm1slim_ode_balance"]
+    assert torch.all(result == 0)
+
+
+@pytest.mark.parametrize(
+    ("enabled_branches", "expected_branch", "should_clamp"),
+    [
+        (["asm1", "asm3", "udm"], "_asm1_ode_balance", True),
+        (["asm3", "udm"], "_asm3_ode_balance", True),
+        (["udm"], "udm_ode_balance", True),
+        ([], "_ode_balance", False),
+    ],
+)
+def test_run_hours_current_branch_precedence_and_clamp_policy(
+    monkeypatch: pytest.MonkeyPatch,
+    enabled_branches: list[str],
+    expected_branch: str,
+    should_clamp: bool,
+) -> None:
+    calculator = MaterialBalanceCalculator()
+    selected_branches = _install_odeint_branch_spy(monkeypatch)
+    kwargs = _run_hours_base_kwargs(calculator)
+    kwargs.update(_run_hours_model_kwargs(calculator, enabled_branches))
+
+    result = calculator._run_hours(**kwargs)
+
+    assert selected_branches == [expected_branch]
+    if should_clamp:
+        assert torch.all(result == 0)
+    else:
+        assert torch.all(result == -1)
+
+
+def test_ode_balance_respects_compute_mask_for_state_and_volume_derivatives() -> None:
+    calculator = MaterialBalanceCalculator()
+    dtype = calculator.dtype
+    device = calculator.device
+    y_extended = torch.tensor(
+        [
+            [10.0, 1.0],
+            [0.0, 1.0],
+        ],
+        dtype=dtype,
+        device=device,
+    )
+    q_out = torch.tensor(
+        [
+            [0.0, 1.0],
+            [0.0, 0.0],
+        ],
+        dtype=dtype,
+        device=device,
+    )
+    prop_a = torch.ones(2, 2, 1, dtype=dtype, device=device)
+    prop_b = torch.zeros(2, 2, 1, dtype=dtype, device=device)
+    compute_mask = torch.tensor([False, True], dtype=torch.bool, device=device)
+
+    derivative = calculator._ode_balance(
+        0.0,
+        y_extended,
+        2,
+        prop_a,
+        prop_b,
+        q_out,
+        compute_mask,
+    )
+
+    assert torch.all(derivative[0] == 0)
+    assert derivative[1, -1].item() == pytest.approx(1.0)

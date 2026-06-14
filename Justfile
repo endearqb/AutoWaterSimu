@@ -100,6 +100,9 @@ audit-compute-api:
 audit-simulation-core-input-contract:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1
 
+audit-simulation-core-correctness-freeze:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
+
 gen:
     cd frontend; npm run generate-compute-client
 

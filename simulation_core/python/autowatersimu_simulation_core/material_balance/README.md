@@ -35,6 +35,7 @@
 1. runtime models 保持与计算器实际读取字段一致，并拒绝未知字段；payload 兼容性只能放在 adapter 层。
 2. 新增 runtime 字段先补 adapter、合同字段/兼容说明和 parity 测试。
 3. 不在本目录直接引用 `app.models` 或 `app.services`。
+4. `_run_hours` 当前按 `asm1slim`、`asm1`、`asm3`、`udm`、default 的互斥顺序选择 ODE branch；ASM/UDM branches 会 clamp solver output，default branch 当前不启用 clamp。该行为由 core-only correctness-freeze tests 和 `scripts/audit-simulation-core-correctness-freeze.ps1` 保护，性能优化不得隐式改变。
 
 ## 4. 对外接口
 
@@ -59,6 +60,7 @@
 
 ```powershell
 backend\.venv\Scripts\python -m pytest simulation_core\tests -q
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
 ```
 
 ## 7. AI 操作提示
