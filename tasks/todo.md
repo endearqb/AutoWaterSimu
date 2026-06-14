@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next backend calculator delegation preflight TODO
+
+- [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend/app/services, backend tests, simulation_core tests, scripts, architecture current-state, Certainty/Elegance PRD, and Development Plan.
+- [x] Confirm this slice is calculator delegation preflight, not backend calculator thin-shell delegation itself, whole `models.py` re-export, worker default strictness, or hot-path performance optimization.
+- [x] Map existing backend/core drift guards and identify the missing backend-side proof through the explicit core-runtime adapter.
+- [x] Add a backend-side shadow/parity preflight over material_balance minimal, ASM1Slim model-bound, independent ASM1Slim, ASM1, ASM3, and UDM fixtures.
+- [x] Require an explicit empty allowed migration differences policy for this preflight.
+- [x] Extend the simulation_core boundary audit to hard-fail if the backend delegation preflight is missing or incomplete.
+- [x] Update README/current-state/development-plan context and change records.
+- [x] Run full validation and record exact results.
+- [x] Commit and push this backend calculator delegation preflight slice.
+
+## Plan
+
+- Keep legacy `backend/app/material_balance/core.py` implementation intact.
+- Compare the legacy backend calculator against `autowatersimu_simulation_core.material_balance.MaterialBalanceCalculator`.
+- Use `simulation_input_to_material_balance_input()` only for the legacy `app.models` path and `simulation_input_to_core_material_balance_input()` for the candidate core runtime path.
+- Treat `ALLOWED_CALCULATOR_MIGRATION_DIFFERENCES` as the explicit place to document future legacy bugfix or migration differences; it is empty in this preflight slice.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `backend/app/tests/material_balance_calculator_delegation_preflight_test.py` with a six-case manifest for material_balance minimal, ASM1Slim model-bound, independent ASM1Slim, ASM1, ASM3, and UDM.
+- The test compares legacy backend calculator output against simulation_core calculator output through the backend legacy adapter and explicit backend core-runtime adapter.
+- `ALLOWED_CALCULATOR_MIGRATION_DIFFERENCES` is explicit and empty for this preflight.
+- `scripts/audit-simulation-core-boundary.ps1` now records `backend calculator delegation preflight` and hard-fails if the preflight is missing or incomplete.
+- README/current-state/Development Plan now mark preflight complete and point the next P3 slice at guarded backend calculator thin-shell delegation.
+- Validation passed: focused backend pytest 29 passed, simulation_core tests 21 passed, boundary/input/correctness audits passed with 0 hard violations and 0 open gaps, `uv lock --project backend --check` passed, `git diff --check -- .` passed, and `scripts/ci/pr-fast.ps1` passed with 9 steps.
+
 # 2026-06-14 AutoWaterSimu Next backend material balance input adapter boundary TODO
 
 - [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend/app/services, backend tests, scripts, architecture current-state, Certainty/Elegance Development Plan, and latest priority instruction.

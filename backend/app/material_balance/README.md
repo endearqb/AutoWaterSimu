@@ -60,7 +60,7 @@
 
 ```powershell
 cd backend; .venv\Scripts\python -m pytest app\tests\material_balance_exceptions_thin_shell_test.py app\tests\material_balance_result_thin_shell_test.py app\tests\material_balance_utils_thin_shell_test.py -q
-cd backend; .venv\Scripts\python -m pytest app\tests\services\test_simulation_input_adapter.py -q
+cd backend; .venv\Scripts\python -m pytest app\tests\services\simulation_input_adapter_boundary_test.py app\tests\material_balance_calculator_delegation_preflight_test.py -q
 cd backend; .venv\Scripts\python -m pytest app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-boundary.ps1
 ```

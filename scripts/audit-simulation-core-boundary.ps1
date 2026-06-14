@@ -347,6 +347,7 @@ $backendServicesPath = Join-Path $Root "backend\app\services"
 $backendApiRoutesPath = Join-Path $Root "backend\app\api\routes"
 $backendSimulationInputAdapterPath = Join-Path $backendServicesPath "simulation_input_adapter.py"
 $backendCoreDriftGuardPath = Join-Path $coreTests "test_material_balance_core.py"
+$backendCalculatorDelegationPreflightPath = Join-Path $Root "backend\app\tests\material_balance_calculator_delegation_preflight_test.py"
 $requiredBackendCoreDriftGuardCases = @(
     "material_balance_minimal",
     "asm1slim_model_bound",
@@ -355,6 +356,7 @@ $requiredBackendCoreDriftGuardCases = @(
     "asm3_independent",
     "udm_independent"
 )
+$requiredBackendCalculatorDelegationPreflightCases = $requiredBackendCoreDriftGuardCases
 $backendCoreText = ""
 $backendCoreCalculatorThinShellDetected = $false
 $backendResultModelThinShellDetected = $false
@@ -518,6 +520,49 @@ else {
         details = $backendInputBoundaryDetails
     }) | Out-Null
 }
+
+$backendCalculatorDelegationPreflightText = if (Test-Path -LiteralPath $backendCalculatorDelegationPreflightPath) { Get-Content -LiteralPath $backendCalculatorDelegationPreflightPath -Raw } else { "" }
+$missingBackendCalculatorDelegationPreflightCases = @()
+foreach ($caseId in $requiredBackendCalculatorDelegationPreflightCases) {
+    if ($backendCalculatorDelegationPreflightText -notmatch [regex]::Escape($caseId)) {
+        $missingBackendCalculatorDelegationPreflightCases += $caseId
+    }
+}
+$backendCalculatorDelegationPreflightDetected = (
+    (Test-Path -LiteralPath $backendCalculatorDelegationPreflightPath) -and
+    $backendCalculatorDelegationPreflightText -match 'DELEGATION_PREFLIGHT_CASES' -and
+    $backendCalculatorDelegationPreflightText -match 'REQUIRED_DELEGATION_PREFLIGHT_CASES' -and
+    $backendCalculatorDelegationPreflightText -match 'ALLOWED_CALCULATOR_MIGRATION_DIFFERENCES:\s*dict\[str,\s*str\]\s*=\s*\{\}' -and
+    $backendCalculatorDelegationPreflightText -match 'simulation_input_to_core_material_balance_input' -and
+    $backendCalculatorDelegationPreflightText -match 'simulation_input_to_material_balance_input' -and
+    $backendCalculatorDelegationPreflightText -match 'CoreMaterialBalanceCalculator' -and
+    $backendCalculatorDelegationPreflightText -match 'BackendMaterialBalanceCalculator' -and
+    $backendCalculatorDelegationPreflightText -match 'test_backend_calculator_delegation_preflight_matches_core' -and
+    $backendCalculatorDelegationPreflightText -match '_assert_result_match' -and
+    $missingBackendCalculatorDelegationPreflightCases.Count -eq 0
+)
+$backendCalculatorDelegationPreflightDetails = [ordered]@{
+    detected = $backendCalculatorDelegationPreflightDetected
+    path = if (Test-Path -LiteralPath $backendCalculatorDelegationPreflightPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCalculatorDelegationPreflightPath } else { $null }
+    required_cases = $requiredBackendCalculatorDelegationPreflightCases
+    missing_cases = $missingBackendCalculatorDelegationPreflightCases
+    requires_backend_core_runtime_adapter = $backendCalculatorDelegationPreflightText -match 'simulation_input_to_core_material_balance_input'
+    requires_legacy_adapter = $backendCalculatorDelegationPreflightText -match 'simulation_input_to_material_balance_input'
+    requires_core_calculator = $backendCalculatorDelegationPreflightText -match 'CoreMaterialBalanceCalculator'
+    requires_backend_calculator = $backendCalculatorDelegationPreflightText -match 'BackendMaterialBalanceCalculator'
+    allowed_migration_differences_empty = $backendCalculatorDelegationPreflightText -match 'ALLOWED_CALCULATOR_MIGRATION_DIFFERENCES:\s*dict\[str,\s*str\]\s*=\s*\{\}'
+}
+if ($backendCalculatorDelegationPreflightDetected) {
+    Add-Check -Checks $checks -Name "backend calculator delegation preflight" -Status "passed" -Summary "Backend-side delegation preflight compares legacy backend calculator and simulation_core calculator through the explicit backend core-runtime adapter across material_balance, ASM1Slim, ASM1, ASM3, and UDM fixtures with no declared migration differences." -Details $backendCalculatorDelegationPreflightDetails
+}
+else {
+    Add-Check -Checks $checks -Name "backend calculator delegation preflight" -Status "failed" -Summary "Backend calculator delegation preflight is missing or does not cover all required backend/core parity fixtures before thin-shell migration." -Details $backendCalculatorDelegationPreflightDetails
+    $hardViolations.Add([ordered]@{
+        rule = "backend-calculator-delegation-preflight"
+        summary = "Before making backend MaterialBalanceCalculator a thin shell, keep a backend-side shadow/parity preflight over material_balance, ASM1Slim, ASM1, ASM3, and UDM fixtures with explicit allowed-difference policy."
+        details = $backendCalculatorDelegationPreflightDetails
+    }) | Out-Null
+}
 $driftPairs = @(
     [ordered]@{
         role = "calculator"
@@ -673,7 +718,7 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Use the explicit backend/core parity drift guard as the baseline before backend thin-shell migration, input-contract tightening, or hot-path optimization."
+        "Use the explicit backend/core parity drift guard and backend calculator delegation preflight as the baseline for the next guarded backend calculator thin-shell delegation slice; do not start worker default strictness or hot-path optimization before that slice is green."
     )
 }
 
