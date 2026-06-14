@@ -23,7 +23,7 @@
 | service-test split | 当前 P0 已完成，后续只按具体风险维护 | `tasks/todo.md`、`.ai/changes/2026-06-14.md` |
 | simulation_core packaging | 已有 `autowatersimu-simulation-core` packaging metadata | `.ai/changes/2026-06-14.md` |
 | input contract closure | `simulation_input.v1` node/edge unknown fields 已关闭；runtime `NodeData`/`EdgeData` 为 `extra=forbid` | ADR 0012、ADR 0013 |
-| correctness freeze | `_run_hours` 当前互斥分支顺序、clamp policy、`compute_mask` derivative masking 已冻结为性能前基线 | ADR 0014、`scripts/audit-simulation-core-correctness-freeze.ps1` |
+| correctness freeze | `_run_hours` mixed combined dispatcher、single-model fallback、clamp policy、ASM 氧清零 active compute mask 范围与 `compute_mask` derivative masking 已冻结为当前基线 | ADR 0014/0015、`scripts/audit-simulation-core-correctness-freeze.ps1` |
 | backend calculator thin-shell | `backend/app/material_balance/core.py` 已成为 simulation_core calculator compatibility re-export | `.ai/changes/2026-06-14.md` |
 | worker source-mode dependency gate | source-mode worker 已证明优先使用 installed/editable helper packages，不依赖 deprecated repo-path fallback | `.ai/changes/2026-06-14.md` |
 | Phase 0 timings baseline | P-01 mixed fixture 已补齐；baseline 当前为 `passed` | `scripts/ci/performance-baseline-phase0.ps1` |
@@ -60,7 +60,7 @@
 - 不改变 `simulation_input.v1` schema、OpenAPI、generated client、数据库 schema 或 worker 默认 adapter validation mode。
 - 不删除 deprecated repo-path fallback。
 - 不决定 mixed ASM/UDM 的最终业务语义。
-- 不把当前 `_run_hours` 互斥分支行为表述为最终设计。
+- 不把 ADR 0014 中旧 `_run_hours` 互斥分支行为表述为最终设计；当前 mixed-model 执行语义以 ADR 0015 supported dispatch 为准。
 
 ---
 
@@ -82,7 +82,7 @@
 DoD：
 
 - `performance-baseline-phase0.ps1` 不再因为 `mixed_asm_udm-baseline-fixture-missing` 返回 `partial`。
-- baseline evidence 明确写出这是 current-state baseline，不是对当前互斥分支语义的 endorsement。
+- baseline evidence 明确写出哪些是 current-state baseline；mixed-model 最终语义以 ADR 0015 supported dispatch 为准。
 - `scripts/audit-simulation-core-correctness-freeze.ps1` 仍为 passed。
 
 建议验证：
@@ -115,7 +115,7 @@ DoD：
 
 **目的**：为 Phase 2/4 的正确性变更建立独立 golden 保护网。
 
-**当前状态（2026-06-14）**：已实现。`scripts/ci/performance-golden-phase0.ps1` 直接调用 `autowatersimu_simulation_core`，启动时移除 legacy backend 项目路径，不使用 legacy backend oracle；默认生成 12 个 CPU/f64/fixed-seed L3 full-run goldens（small material balance、medium ASM1、single UDM、mixed ASM/UDM × `scipy_solver` / `rk4` / `adaptive_heun`）和 6 个 L1/L2 micro goldens（UDM expression、parallel edge sparse、parallel edge dense current-state repro、single-edge dense/sparse、`_balance_param` zero-flow degenerate、`_balance_param` non-square current-state repro）。当前 evidence status 为 `passed`，0 hard violations、0 open gaps；`docs/rebuild/simulation_core/test_*.py` 的 7 个测试均已归档为 current-state positive/golden/repro 或 target golden/unsupported-error golden。
+**当前状态（2026-06-14）**：已实现。`scripts/ci/performance-golden-phase0.ps1` 直接调用 `autowatersimu_simulation_core`，启动时移除 legacy backend 项目路径，不使用 legacy backend oracle；默认生成 12 个 CPU/f64/fixed-seed L3 full-run goldens（small material balance、medium ASM1、single UDM、mixed ASM/UDM × `scipy_solver` / `rk4` / `adaptive_heun`）和 6 个 L1/L2 micro goldens（UDM expression、parallel edge sparse、parallel edge dense current-state repro、single-edge dense/sparse、`_balance_param` zero-flow degenerate、`_balance_param` non-square current-state repro）。当前 evidence status 为 `passed`，0 hard violations、0 open gaps；`docs/rebuild/simulation_core/test_*.py` 已归档为 current-state positive/golden/repro、active mixed-model target golden 或 historical unsupported-error alternative。
 
 范围：
 
@@ -302,6 +302,6 @@ backend\.venv\Scripts\python -m pytest docs\rebuild\simulation_core -q
 ## 7. 维护规则
 
 1. 本文只记录进入性能主计划前的前置证据链，不记录每个 PR 的流水账。
-2. 当前 `_run_hours` mixed branch freeze 是性能前 baseline，不是最终 mixed-model 业务语义。
+2. ADR 0015 已将 mixed branch 最终业务语义定为 supported combined dispatch；single-model fallback 与 default clamp 仍是当前 freeze baseline。
 3. 若本文与 `AutoWaterSimu_性能优化开发计划文档_v1.4.md` 冲突，以“当前已完成事实 + ADR + audit evidence”为准，并同步更新两份文档或记录冲突。
 4. 后续若 P-03 已完成，应在本文顶部追加完成状态或新建 v1.1，而不是把已完成前置项伪装成仍未开始。

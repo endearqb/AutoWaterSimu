@@ -29,7 +29,9 @@ from autowatersimu_simulation_core.adapters import (  # noqa: E402
     simulation_input_to_material_balance_input,
 )
 from autowatersimu_simulation_core.material_balance.models import (  # noqa: E402
+    CalculationParameters,
     EdgeData,
+    MaterialBalanceInput,
     NodeData,
 )
 from autowatersimu_simulation_core.material_balance import (  # noqa: E402
@@ -98,6 +100,135 @@ def _run_hours_model_kwargs(
         kwargs["udm_mask"] = torch.tensor([True], dtype=torch.bool, device=device)
         kwargs["udm_runtime_payload"] = [object()]
     return kwargs
+
+
+ASM1_COMPONENTS = [
+    "X_BH",
+    "X_BA",
+    "X_S",
+    "X_i",
+    "X_ND",
+    "S_O",
+    "S_S",
+    "S_NO",
+    "S_NH",
+    "S_ND",
+    "S_ALK",
+]
+
+ASM1_PARAMS_19 = [
+    4.0,
+    10.0,
+    0.2,
+    0.5,
+    0.8,
+    0.3,
+    0.5,
+    1.0,
+    0.4,
+    0.05,
+    0.67,
+    0.24,
+    0.08,
+    0.06,
+    0.08,
+    0.4,
+    0.05,
+    3.0,
+    0.03,
+]
+
+
+def _component_vector(**named: float) -> list[float]:
+    vector = [0.0] * len(ASM1_COMPONENTS)
+    for name, value in named.items():
+        vector[ASM1_COMPONENTS.index(name)] = float(value)
+    return vector
+
+
+def _flowchart_meta() -> dict[str, Any]:
+    return {"customParameters": [{"name": name} for name in ASM1_COMPONENTS]}
+
+
+def _mixed_asm_udm_input() -> MaterialBalanceInput:
+    return MaterialBalanceInput(
+        nodes=[
+            NodeData(
+                node_id="in",
+                node_type="input",
+                is_inlet=True,
+                initial_volume=1.0,
+                initial_concentrations=_component_vector(
+                    S_S=50.0,
+                    S_NH=10.0,
+                    X_BH=100.0,
+                    S_O=2.0,
+                    S_ALK=5.0,
+                ),
+            ),
+            NodeData(
+                node_id="udm1",
+                node_type="udm",
+                initial_volume=1000.0,
+                initial_concentrations=_component_vector(S_S=50.0, S_NH=10.0),
+                udm_component_names=["S_S", "S_NH"],
+                udm_processes=[
+                    {
+                        "name": "decay",
+                        "rate_expr": "k * S_S",
+                        "stoich": {"S_S": -1.0},
+                    }
+                ],
+                udm_parameter_values={"k": 0.5},
+            ),
+            NodeData(
+                node_id="asm1",
+                node_type="asm1",
+                initial_volume=1000.0,
+                initial_concentrations=_component_vector(
+                    X_BH=100.0,
+                    S_S=50.0,
+                    S_O=2.0,
+                    S_NH=10.0,
+                    S_ALK=5.0,
+                ),
+                asm1_parameters=ASM1_PARAMS_19,
+            ),
+            NodeData(
+                node_id="out",
+                node_type="output",
+                is_outlet=True,
+                initial_volume=1.0,
+                initial_concentrations=_component_vector(),
+            ),
+        ],
+        edges=[
+            EdgeData(edge_id="e1", source_node_id="in", target_node_id="udm1", flow_rate=100.0),
+            EdgeData(edge_id="e2", source_node_id="in", target_node_id="asm1", flow_rate=100.0),
+            EdgeData(edge_id="e3", source_node_id="udm1", target_node_id="out", flow_rate=100.0),
+            EdgeData(edge_id="e4", source_node_id="asm1", target_node_id="out", flow_rate=100.0),
+        ],
+        parameters=CalculationParameters(
+            hours=2.0,
+            steps_per_hour=10,
+            solver_method="rk4",
+            tolerance=1e-6,
+        ),
+        original_flowchart_data=_flowchart_meta(),
+    )
+
+
+def _solo_udm_input() -> MaterialBalanceInput:
+    data = _mixed_asm_udm_input()
+    return MaterialBalanceInput(
+        nodes=[data.nodes[0], data.nodes[1], data.nodes[3]],
+        edges=[
+            EdgeData(edge_id="e1", source_node_id="in", target_node_id="udm1", flow_rate=100.0),
+            EdgeData(edge_id="e3", source_node_id="udm1", target_node_id="out", flow_rate=100.0),
+        ],
+        parameters=data.parameters,
+        original_flowchart_data=data.original_flowchart_data,
+    )
 
 
 def _install_odeint_branch_spy(monkeypatch: pytest.MonkeyPatch) -> list[str]:
@@ -489,7 +620,7 @@ def test_core_adapter_strict_rejects_unknown_fields() -> None:
     }
 
 
-def test_run_hours_uses_first_available_model_branch_order(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_run_hours_uses_combined_dispatch_for_mixed_models(monkeypatch: pytest.MonkeyPatch) -> None:
     calculator = MaterialBalanceCalculator()
     selected_branches = _install_odeint_branch_spy(monkeypatch)
     kwargs = _run_hours_base_kwargs(calculator)
@@ -497,20 +628,21 @@ def test_run_hours_uses_first_available_model_branch_order(monkeypatch: pytest.M
 
     result = calculator._run_hours(**kwargs)
 
-    assert selected_branches == ["_asm1slim_ode_balance"]
+    assert selected_branches == ["_combined_reaction_ode_balance"]
     assert torch.all(result == 0)
 
 
 @pytest.mark.parametrize(
     ("enabled_branches", "expected_branch", "should_clamp"),
     [
-        (["asm1", "asm3", "udm"], "_asm1_ode_balance", True),
-        (["asm3", "udm"], "_asm3_ode_balance", True),
+        (["asm1slim"], "_asm1slim_ode_balance", True),
+        (["asm1"], "_asm1_ode_balance", True),
+        (["asm3"], "_asm3_ode_balance", True),
         (["udm"], "udm_ode_balance", True),
         ([], "_ode_balance", False),
     ],
 )
-def test_run_hours_current_branch_precedence_and_clamp_policy(
+def test_run_hours_single_model_branch_and_clamp_policy(
     monkeypatch: pytest.MonkeyPatch,
     enabled_branches: list[str],
     expected_branch: str,
@@ -528,6 +660,55 @@ def test_run_hours_current_branch_precedence_and_clamp_policy(
         assert torch.all(result == 0)
     else:
         assert torch.all(result == -1)
+
+
+def test_mixed_asm_udm_applies_udm_reaction() -> None:
+    calculator = MaterialBalanceCalculator()
+    calculator.device = torch.device("cpu")
+    calculator.dtype = torch.float64
+
+    mixed = calculator.calculate(_mixed_asm_udm_input())
+    solo = calculator.calculate(_solo_udm_input())
+
+    mixed_s_s = mixed.node_data["udm1"]["S_S"][-1]
+    solo_s_s = solo.node_data["udm1"]["S_S"][-1]
+    assert solo_s_s < solo.node_data["udm1"]["S_S"][0] - 1.0
+    assert mixed_s_s == pytest.approx(solo_s_s, rel=1e-4, abs=1e-8)
+
+
+def test_asm_oxygen_zeroing_is_limited_to_active_compute_model_nodes() -> None:
+    calculator = MaterialBalanceCalculator()
+    dtype = calculator.dtype
+    device = calculator.device
+    y = torch.zeros(2, len(ASM1_COMPONENTS), dtype=dtype, device=device)
+    y[0, ASM1_COMPONENTS.index("S_O")] = 2.0
+    y[1, ASM1_COMPONENTS.index("S_O")] = 10.0
+    y_extended = torch.cat(
+        [y, torch.ones(2, 1, dtype=dtype, device=device)],
+        dim=1,
+    )
+    q_out = torch.tensor([[0.0, 1.0], [0.0, 0.0]], dtype=dtype, device=device)
+    prop_a = torch.ones(2, 2, len(ASM1_COMPONENTS), dtype=dtype, device=device)
+    prop_b = torch.zeros(2, 2, len(ASM1_COMPONENTS), dtype=dtype, device=device)
+    compute_mask = torch.tensor([True, True], dtype=torch.bool, device=device)
+    asm1_mask = torch.tensor([True, False], dtype=torch.bool, device=device)
+    asm1_params = torch.zeros(2, 19, dtype=dtype, device=device)
+
+    derivative = calculator._asm1_ode_balance(
+        0.0,
+        y_extended,
+        2,
+        prop_a,
+        prop_b,
+        q_out,
+        compute_mask,
+        asm1_params,
+        asm1_mask,
+    )
+
+    oxygen_idx = ASM1_COMPONENTS.index("S_O")
+    assert derivative[0, oxygen_idx].item() == pytest.approx(0.0)
+    assert derivative[1, oxygen_idx].item() == pytest.approx(-8.0)
 
 
 def test_ode_balance_respects_compute_mask_for_state_and_volume_derivatives() -> None:

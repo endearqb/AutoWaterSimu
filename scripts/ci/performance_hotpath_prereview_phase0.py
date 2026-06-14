@@ -288,7 +288,7 @@ def build_candidates(
             "forbidden_changes": [
                 "Do not fix dense parallel-edge semantics in this PR; keep PR-32 as separate correctness work.",
                 "Do not change default branch output clamp policy.",
-                "Do not change mixed ASM/UDM branch semantics.",
+                "Do not change supported mixed ASM/UDM dispatch semantics.",
                 "Do not change solver defaults, step grid, output sampling, schemas, or generated clients.",
             ],
             "benefit_measurement": (
@@ -329,7 +329,7 @@ def build_candidates(
             "required_before_work": [
                 "Explicit solver-grid design and release note.",
                 "L3 f64 golden comparison for every affected solver and case.",
-                "Decision on default branch output clamp and mixed-model semantics if touched.",
+                "ADR update for default branch output clamp or supported mixed-model dispatch if touched.",
             ],
             "forbidden_changes": [
                 "Do not bundle solver default changes with transport or expression micro-optimizations.",
@@ -369,7 +369,7 @@ def build_dod_answers(first_batch: list[dict[str, Any]], profiling_summary: dict
 
 def global_forbidden_changes() -> list[str]:
     return [
-        "No mixed ASM/UDM final semantics change.",
+        "No supported mixed ASM/UDM dispatch semantics change.",
         "No dense parallel-edge semantic repair in the transport-only optimization PR.",
         "No default output clamp policy change.",
         "No solver default, output grid, tolerance default, schema, OpenAPI, generated client, worker strict-mode, or fallback deletion change.",

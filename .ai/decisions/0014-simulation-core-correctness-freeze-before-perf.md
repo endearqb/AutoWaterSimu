@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted.
+Accepted, partially superseded by ADR 0015 for mixed-model dispatch.
 
 ## Context
 
@@ -25,6 +25,7 @@ The most sensitive current behavior is inside `_run_hours`: ASM/UDM model handli
 - Performance optimization can start from a known and machine-audited behavior baseline.
 - Changing mixed ASM/UDM semantics, branch precedence, default clamp behavior, or `compute_mask` derivative masking requires an intentional test, audit, and ADR update.
 - This decision does not claim the current mutually exclusive branch behavior is the desired final mixed-model design.
+- ADR 0015 intentionally supersedes the mutually exclusive mixed-model baseline: multi-model graphs now dispatch through a combined reaction RHS, while single-model fallback order and default clamp behavior remain frozen by the updated audit.
 - Backend thin-shell migration remains future work and still depends on the backend/core parity drift guard until the legacy implementation becomes a wrapper.
 
 ## Alternatives Considered

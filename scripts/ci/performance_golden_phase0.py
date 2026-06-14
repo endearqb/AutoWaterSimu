@@ -44,7 +44,7 @@ FULL_RUN_CASES: list[dict[str, Any]] = [
     {
         "id": "mixed_asm_udm",
         "fixture": "contracts/examples/valid/mixed_asm_udm.compute_job.v1.json",
-        "purpose": "mixed ASM/UDM current-state branch-freeze L3 golden",
+        "purpose": "mixed ASM/UDM supported dispatch L3 golden",
         "priority_tags": ["mixed_asm_udm", "solver_matrix"],
     },
 ]
@@ -75,19 +75,19 @@ DOCS_TEST_CLASSIFICATIONS = {
         "reason": "Solo UDM reaction proves the UDM kernel still applies when no competing model branch exists.",
     },
     "test_mixed_model_golden.py::test_mixed_udm_reaction_applies": {
-        "classification": "current-state repro",
-        "status": "xfail",
-        "reason": "Records PR-38 mixed ASM/UDM branch exclusion before final semantics are chosen.",
+        "classification": "mixed-model regression guard",
+        "status": "active",
+        "reason": "PR-38 selects supported mixed-model semantics; UDM reactions must apply in mixed ASM/UDM graphs.",
     },
     "test_mixed_model_golden.py::test_mixed_asm_udm_l3_golden": {
-        "classification": "target golden",
-        "status": "skip",
-        "reason": "To be enabled only if PR-38 chooses supported mixed-model semantics.",
+        "classification": "mixed-model target golden",
+        "status": "active",
+        "reason": "Supported mixed ASM/UDM semantics compare the mixed UDM trajectory against the solo UDM reference.",
     },
     "test_mixed_model_golden.py::test_mixed_models_rejected_at_build": {
-        "classification": "target unsupported-error golden",
+        "classification": "historical unsupported-error alternative",
         "status": "skip",
-        "reason": "To be enabled only if PR-38 chooses build-time rejection for mixed models.",
+        "reason": "PR-38 selected supported mixed-model semantics, so the unsupported-error path is not active.",
     },
     "test_parallel_edge_golden.py::test_sparse_parallel_edge_is_golden": {
         "classification": "current-state golden",

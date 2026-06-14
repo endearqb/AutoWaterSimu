@@ -82,19 +82,25 @@ if (-not (Test-Path -LiteralPath $testPath)) {
 $coreText = if (Test-Path -LiteralPath $corePath) { Get-Content -LiteralPath $corePath -Raw } else { "" }
 $testText = if (Test-Path -LiteralPath $testPath) { Get-Content -LiteralPath $testPath -Raw } else { "" }
 
-$branchOrderPattern = 'if\s+asm1slim_params\s+is\s+not\s+None\s+and\s+asm1slim_mask\.any\(\):[\s\S]*?elif\s+asm1_params\s+is\s+not\s+None\s+and\s+asm1_mask\.any\(\):[\s\S]*?elif\s+asm3_params\s+is\s+not\s+None\s+and\s+asm3_mask\.any\(\):[\s\S]*?elif\s+udm_mask\s+is\s+not\s+None\s+and\s+udm_mask\.any\(\)\s+and\s+udm_runtime_payload:[\s\S]*?else:'
-$hasExpectedBranchOrder = $coreText -match $branchOrderPattern
+$singleBranchOrderPattern = 'if\s+asm1slim_params\s+is\s+not\s+None\s+and\s+asm1slim_mask\.any\(\):[\s\S]*?elif\s+asm1_params\s+is\s+not\s+None\s+and\s+asm1_mask\.any\(\):[\s\S]*?elif\s+asm3_params\s+is\s+not\s+None\s+and\s+asm3_mask\.any\(\):[\s\S]*?elif\s+udm_mask\s+is\s+not\s+None\s+and\s+udm_mask\.any\(\)\s+and\s+udm_runtime_payload:[\s\S]*?else:'
+$hasExpectedSingleBranchOrder = $coreText -match $singleBranchOrderPattern
+$hasMixedDispatcher = (
+    $coreText -match 'def\s+_combined_reaction_ode_balance\(' -and
+    $coreText -match 'if\s+active_model_count\s*>\s*1:' -and
+    $coreText -match '_combined_reaction_ode_balance'
+)
 $branchOrderDetails = [ordered]@{
     file = ConvertTo-RepoRelativePath -Root $Root -Path $corePath
-    expected_order = @("asm1slim", "asm1", "asm3", "udm", "default")
-    mutual_exclusive_order_detected = $hasExpectedBranchOrder
+    mixed_dispatcher_detected = $hasMixedDispatcher
+    single_model_fallback_order = @("asm1slim", "asm1", "asm3", "udm", "default")
+    single_model_order_detected = $hasExpectedSingleBranchOrder
 }
-if ($hasExpectedBranchOrder) {
-    Add-Check -Checks $checks -Name "run_hours branch precedence source shape" -Status "passed" -Summary "_run_hours keeps the current mutually exclusive model branch order." -Details $branchOrderDetails
+if ($hasMixedDispatcher -and $hasExpectedSingleBranchOrder) {
+    Add-Check -Checks $checks -Name "run_hours mixed dispatcher and single branch source shape" -Status "passed" -Summary "_run_hours dispatches mixed reaction models through the combined RHS and keeps the single-model fallback order." -Details $branchOrderDetails
 }
 else {
-    Add-Check -Checks $checks -Name "run_hours branch precedence source shape" -Status "gap" -Summary "_run_hours branch order is not recognized by the correctness freeze audit." -Details $branchOrderDetails
-    Add-OpenGap -Gaps $openGaps -Id "simulation-core-run-hours-branch-order-unfrozen" -Severity "high" -Summary "Freeze or intentionally update _run_hours mixed-model branch precedence before performance work." -Evidence $branchOrderDetails
+    Add-Check -Checks $checks -Name "run_hours mixed dispatcher and single branch source shape" -Status "gap" -Summary "_run_hours mixed dispatcher or single-model fallback order is not recognized by the correctness freeze audit." -Details $branchOrderDetails
+    Add-OpenGap -Gaps $openGaps -Id "simulation-core-run-hours-mixed-dispatch-unfrozen" -Severity "high" -Summary "Keep the mixed-model dispatcher and single-model fallback behavior explicitly tested before performance work." -Evidence $branchOrderDetails
 }
 
 $activeClampMatches = [regex]::Matches($coreText, '(?m)^\s*x\s*=\s*torch\.clamp\(x,\s*min=0\)')
@@ -113,8 +119,10 @@ else {
 }
 
 $requiredTests = @(
-    "test_run_hours_uses_first_available_model_branch_order",
-    "test_run_hours_current_branch_precedence_and_clamp_policy",
+    "test_run_hours_uses_combined_dispatch_for_mixed_models",
+    "test_run_hours_single_model_branch_and_clamp_policy",
+    "test_mixed_asm_udm_applies_udm_reaction",
+    "test_asm_oxygen_zeroing_is_limited_to_active_compute_model_nodes",
     "test_ode_balance_respects_compute_mask_for_state_and_volume_derivatives"
 )
 $missingTests = @($requiredTests | Where-Object { $testText -notmatch [regex]::Escape($_) })
@@ -124,7 +132,7 @@ $testDetails = [ordered]@{
     missing_tests = $missingTests
 }
 if ($missingTests.Count -eq 0) {
-    Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "passed" -Summary "Core-only tests freeze branch precedence, clamp policy, and compute_mask behavior." -Details $testDetails
+    Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "passed" -Summary "Core-only tests freeze mixed dispatch, single-model fallback, clamp policy, oxygen mask scope, and compute_mask behavior." -Details $testDetails
 }
 else {
     Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "gap" -Summary "Required correctness freeze tests are missing." -Details $testDetails
@@ -154,8 +162,8 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Keep the current _run_hours branch precedence and clamp freeze green before hot-path optimization.",
-        "Use an explicit correctness decision before changing mixed ASM/UDM branch semantics.",
+        "Keep the current _run_hours mixed dispatcher, single-model fallback, and clamp freeze green before hot-path optimization.",
+        "Do not change mixed ASM/UDM support, oxygen mask scope, or default clamp policy without an ADR and golden update.",
         "Keep backend/core parity drift guard green until backend thin-shell migration."
     )
 }

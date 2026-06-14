@@ -26,14 +26,14 @@
 | `AutoWaterSimu_simulation_core_专项审查报告.md` | 方案 A、正确性缺口和性能机会专项审查 |
 | `__init__.py` | 让本目录作为 pytest package 被收集，支持测试文件使用相对导入共享 fixtures |
 | `conftest.py` | 文档化 golden/repro 测试的 shared fixtures、分层容差和输入构造器 |
-| `test_mixed_model_golden.py` | mixed ASM/UDM 调度问题的现状 repro 与目标 golden 骨架 |
+| `test_mixed_model_golden.py` | mixed ASM/UDM 支持语义的 active golden / regression tests，并保留 unsupported-error 历史备选骨架 |
 | `test_parallel_edge_golden.py` | parallel edge dense/sparse 语义问题的现状 repro 与目标 golden 骨架 |
 
 ## 3. 维护约定
 
 1. 先读 `00_AutoWaterSimu_性能优化前置规划计划文档_v1.0.md`，再读 v1.4 需求与开发计划；开发计划中的 `2026-06-14 执行校准` 优先于旧阶段排期文本。
-2. 不把当前 correctness freeze 写成最终 mixed-model 语义；它只是性能优化前的可审计基线。
-3. 新增性能优化计划前，先确认是否已有 baseline、profiling、golden、hot-path prereview、Go API latency smoke、worker strict smoke、packaged no-fallback smoke 和 audit 证据；截至 2026-06-14，P-01 mixed baseline fixture、P-02 profiling artifacts、P-03 CPU/f64 golden generator、P-04 backend compatibility models boundary、P-05 worker adapter strict opt-in smoke、P-06 Go API latency smoke、P-07 worker packaged no-fallback evidence、P-08 hot-path prereview、第一批 `transport-runtime-tensor-precompute-no-semantics` 与第二批 `udm-expression-cache-and-device-sync-reduction` 已完成。
+2. 不把旧 correctness freeze 中的互斥 mixed branch 当作最终语义；ADR 0015 已选择支持 mixed reaction model dispatch，单模型 fallback 与 default clamp 仍是需保护的 baseline。
+3. 新增性能优化计划前，先确认是否已有 baseline、profiling、golden、hot-path prereview、Go API latency smoke、worker strict smoke、packaged no-fallback smoke 和 audit 证据；截至 2026-06-14，P-01 mixed baseline fixture、P-02 profiling artifacts、P-03 CPU/f64 golden generator、P-04 backend compatibility models boundary、P-05 worker adapter strict opt-in smoke、P-06 Go API latency smoke、P-07 worker packaged no-fallback evidence、P-08 hot-path prereview、第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction` 与 PR-38 supported mixed-model dispatch 已完成。
 4. 文档化测试可以记录现状 repro、xfail 或目标 golden，但必须说明它们属于当前行为还是目标行为。
 5. 若实现状态已经超过 v1.4 文档，优先用 `.ai/changes/`、ADR、audit evidence 和 `docs/architecture/current-state.md` 校准当前状态。
 
@@ -46,7 +46,7 @@
 - `docs/rebuild/README.md`
 - `docs/architecture/current-state.md`
 - `.ai/changes/YYYY-MM-DD.md`
-- 相关 ADR，尤其是 `0012`、`0013`、`0014`
+- 相关 ADR，尤其是 `0012`、`0013`、`0014`、`0015`
 
 ## 5. 依赖边界
 
@@ -116,4 +116,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-ap
 1. 按 README First 顺序读取本 README 与上级 README。
 2. 先区分“当前冻结行为”“目标正确行为”和“性能优化行为”，再修改计划。
 3. 热路径实现必须贴合 P-08 evidence 的候选顺序与禁止混入项；baseline、profiling 或 golden evidence 更新后也必须重新审视 P-08，而不是直接扩大改动。
-4. 完成后按 `AGENTS.md` 记录 `.ai/changes/`。
+4. 修改 mixed-model dispatch 时必须同步更新 ADR 0015、`simulation_core/tests` correctness-freeze tests、`scripts/audit-simulation-core-correctness-freeze.ps1` 和 P-03 golden evidence 分类。
+5. 完成后按 `AGENTS.md` 记录 `.ai/changes/`。

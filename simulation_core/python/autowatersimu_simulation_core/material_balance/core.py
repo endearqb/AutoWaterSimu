@@ -963,7 +963,9 @@ class MaterialBalanceCalculator:
         dy_extended[:, :-1] = torch.where(mask_expanded, concentration_change, torch.zeros_like(concentration_change))
 
         # 杩欓噷涓嶈€冭檻婧惰В姘х殑鍙樺寲锛屾墍浠ヨ涓?
-        dy_extended[:, 0] = torch.zeros_like(dy_extended[:, 0])
+        oxygen_mask = asm1slim_mask & compute_mask
+        if oxygen_mask.any() and concentration_change.shape[1] > 0:
+            dy_extended[oxygen_mask, 0] = 0.0
 
 
         # Volume changes: only for internal nodes
@@ -1038,7 +1040,9 @@ class MaterialBalanceCalculator:
         dy_extended[:, :-1] = torch.where(mask_expanded, concentration_change, torch.zeros_like(concentration_change))
 
         # 杩欓噷涓嶈€冭檻婧惰В姘х殑鍙樺寲锛屾墍浠ヨ涓?
-        dy_extended[:, 5] = torch.zeros_like(dy_extended[:, 5])
+        oxygen_mask = asm1_mask & compute_mask
+        if oxygen_mask.any() and concentration_change.shape[1] > 5:
+            dy_extended[oxygen_mask, 5] = 0.0
 
 
         # Volume changes: only for internal nodes
@@ -1113,13 +1117,132 @@ class MaterialBalanceCalculator:
         dy_extended[:, :-1] = torch.where(mask_expanded, concentration_change, torch.zeros_like(concentration_change))
 
         # 杩欓噷涓嶈€冭檻婧惰В姘х殑鍙樺寲锛屾墍浠ヨ涓?
-        dy_extended[:, 6] = torch.zeros_like(dy_extended[:, 6])
+        oxygen_mask = asm3_mask & compute_mask
+        if oxygen_mask.any() and concentration_change.shape[1] > 6:
+            dy_extended[oxygen_mask, 6] = 0.0
 
 
         # Volume changes: only for internal nodes
         dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
 
         return dy_extended
+
+    def _combined_reaction_ode_balance(
+        self,
+        t: float,
+        y_extended: torch.Tensor,
+        m: int,
+        prop_a: torch.Tensor,
+        prop_b: torch.Tensor,
+        Q_out: torch.Tensor,
+        compute_mask: torch.Tensor,
+        asm1slim_params: torch.Tensor | None = None,
+        asm1slim_mask: torch.Tensor | None = None,
+        asm1_params: torch.Tensor | None = None,
+        asm1_mask: torch.Tensor | None = None,
+        asm3_params: torch.Tensor | None = None,
+        asm3_mask: torch.Tensor | None = None,
+        udm_runtime_payload: List[UDMNodeRuntime] | None = None,
+        udm_active_node_indices: set[int] | None = None,
+        sparse_bundle: dict | None = None,
+    ) -> torch.Tensor:
+        _ = t
+        _ = m
+        y = y_extended[:, :-1]
+        V_liq = y_extended[:, -1]
+
+        y = torch.clamp(y, min=0)
+        V_liq = torch.clamp(V_liq, min=1e-6)
+
+        if sparse_bundle is not None:
+            delta_m, delta_Q = self._balance_param_sparse(y, sparse_bundle)
+        else:
+            delta_m, delta_Q = self._balance_param(y, Q_out, prop_a, prop_b)[:2]
+
+        dilution_term = -y * delta_Q.unsqueeze(-1) / V_liq.unsqueeze(-1)
+        concentration_change = delta_m / V_liq.unsqueeze(-1) + dilution_term
+
+        if asm1slim_params is not None and asm1slim_mask is not None:
+            rates = asm1slim_reaction(asm1slim_params[asm1slim_mask], y[asm1slim_mask])
+            concentration_change[asm1slim_mask] = concentration_change[asm1slim_mask] + rates
+            if concentration_change.shape[1] > 0:
+                concentration_change[asm1slim_mask, 0] = 0.0
+
+        if asm1_params is not None and asm1_mask is not None:
+            rates = asm1_reaction(asm1_params[asm1_mask], y[asm1_mask])
+            concentration_change[asm1_mask] = concentration_change[asm1_mask] + rates
+            if concentration_change.shape[1] > 5:
+                concentration_change[asm1_mask, 5] = 0.0
+
+        if asm3_params is not None and asm3_mask is not None:
+            rates = asm3_reaction(asm3_params[asm3_mask], y[asm3_mask])
+            concentration_change[asm3_mask] = concentration_change[asm3_mask] + rates
+            if concentration_change.shape[1] > 6:
+                concentration_change[asm3_mask, 6] = 0.0
+
+        if udm_runtime_payload:
+            for runtime in udm_runtime_payload:
+                node_idx = runtime.node_index
+                if node_idx < 0 or node_idx >= y.shape[0]:
+                    continue
+                if (
+                    udm_active_node_indices is not None
+                    and node_idx not in udm_active_node_indices
+                ):
+                    continue
+                reaction = runtime.evaluate_reaction(y[node_idx])
+                concentration_change[node_idx, :] = (
+                    concentration_change[node_idx, :] + reaction
+                )
+
+            for runtime in udm_runtime_payload:
+                node_idx = runtime.node_index
+                if node_idx < 0 or node_idx >= concentration_change.shape[0]:
+                    continue
+                if (
+                    udm_active_node_indices is not None
+                    and node_idx not in udm_active_node_indices
+                ):
+                    continue
+                if runtime.has_fixed_components:
+                    concentration_change[node_idx, runtime.fixed_component_indices] = 0.0
+
+        dy_extended = torch.zeros_like(y_extended)
+        mask_expanded = compute_mask.unsqueeze(-1).expand_as(concentration_change)
+        dy_extended[:, :-1] = torch.where(
+            mask_expanded,
+            concentration_change,
+            torch.zeros_like(concentration_change),
+        )
+        dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
+        return dy_extended
+
+    def _active_reaction_mask(
+        self,
+        model_mask: torch.Tensor | None,
+        compute_mask: torch.Tensor,
+    ) -> torch.Tensor | None:
+        if model_mask is None:
+            return None
+        active_mask = model_mask & compute_mask
+        if not bool(active_mask.any()):
+            return None
+        return active_mask
+
+    def _sample_solver_output(
+        self,
+        x: torch.Tensor,
+        steps: int,
+        sampling_interval_hours: float | None,
+    ) -> torch.Tensor:
+        if sampling_interval_hours is not None and sampling_interval_hours > 0:
+            sampling_interval = int(sampling_interval_hours * steps)
+            if sampling_interval > 1:
+                sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
+                if sample_indices[-1] != x.shape[0] - 1:
+                    sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
+                x = x[sample_indices]
+        return x
 
     def _run_hours(self, hours: float, x0: torch.Tensor, Q_out: torch.Tensor,
                   m: int, steps: int, prop_a: torch.Tensor, prop_b: torch.Tensor,
@@ -1166,6 +1289,69 @@ class MaterialBalanceCalculator:
 
         x0 = x0[-1, :]
         t0 = torch.linspace(0, hours, int(hours * steps) + 1, device=self.device)
+
+        active_asm1slim_mask = (
+            self._active_reaction_mask(asm1slim_mask, compute_mask)
+            if asm1slim_params is not None
+            else None
+        )
+        active_asm1_mask = (
+            self._active_reaction_mask(asm1_mask, compute_mask)
+            if asm1_params is not None
+            else None
+        )
+        active_asm3_mask = (
+            self._active_reaction_mask(asm3_mask, compute_mask)
+            if asm3_params is not None
+            else None
+        )
+        active_udm_node_indices: set[int] = set()
+        if udm_mask is not None and udm_runtime_payload:
+            active_udm_mask = udm_mask & compute_mask
+            active_udm_node_indices = {
+                int(index)
+                for index in torch.nonzero(active_udm_mask, as_tuple=False)
+                .flatten()
+                .detach()
+                .cpu()
+                .tolist()
+            }
+            if udm_active_node_indices is not None:
+                active_udm_node_indices &= set(udm_active_node_indices)
+
+        active_model_count = sum(
+            [
+                active_asm1slim_mask is not None,
+                active_asm1_mask is not None,
+                active_asm3_mask is not None,
+                bool(active_udm_node_indices),
+            ]
+        )
+
+        if active_model_count > 1:
+            ode_modified = functools.partial(
+                self._combined_reaction_ode_balance,
+                Q_out=Q_out,
+                m=m,
+                prop_a=prop_a,
+                prop_b=prop_b,
+                compute_mask=compute_mask,
+                asm1slim_params=asm1slim_params,
+                asm1slim_mask=active_asm1slim_mask,
+                asm1_params=asm1_params,
+                asm1_mask=active_asm1_mask,
+                asm3_params=asm3_params,
+                asm3_mask=active_asm3_mask,
+                udm_runtime_payload=udm_runtime_payload,
+                udm_active_node_indices=active_udm_node_indices,
+                sparse_bundle=sparse_bundle,
+            )
+            try:
+                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
+                x = torch.clamp(x, min=0)
+                return self._sample_solver_output(x, steps, sampling_interval_hours)
+            except Exception as e:
+                raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
         if asm1slim_params is not None and asm1slim_mask.any():
 

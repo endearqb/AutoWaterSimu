@@ -1,3 +1,29 @@
+# 2026-06-14 simulation_core PR-38 mixed dispatch TODO
+
+- [x] Re-read README First context for simulation_core, material_balance runtime, tests, docs/rebuild simulation_core, correctness-freeze audit, and ADR 0014.
+- [x] Confirm this slice is PR-38 supported mixed-model dispatch plus the first PR-39 ASM oxygen active compute mask guard, not full PR-11 unified RHS, solver/output-grid change, dense/sparse repair, full component contract, schema/API change, worker strict default switch, or fallback deletion.
+- [x] Add core-only tests for mixed-model combined dispatch, mixed ASM/UDM UDM reaction application, and ASM oxygen clearing limited to active compute model nodes.
+- [x] Implement combined reaction RHS for active multi-model graphs while preserving single-model fallback order and default no-clamp behavior.
+- [x] Update docs/rebuild mixed golden sample from xfail/skip to supported active golden/regression tests.
+- [x] Update correctness-freeze audit, ADR, README/current-state/planning docs, golden evidence classification, and README First records.
+- [x] Run full validation matrix before the phase commit/push.
+
+## Plan
+
+- Choose supported mixed-model semantics because `mixed_asm_udm` is already a valid contract fixture and part of Phase 0 evidence.
+- Keep the code change localized to `_run_hours` and RHS construction.
+- Use combined RHS only when more than one reaction model is active; leave single-model branch paths in place.
+- Limit ASM oxygen derivative clearing to the active compute subset for the relevant ASM model.
+- Keep dense/sparse behavior, solver defaults, sampling grid, default output clamp, schema/API, worker strict mode, and packaged fallback unchanged.
+
+## Review
+
+- `_run_hours` now dispatches multi-model graphs to `_combined_reaction_ode_balance`.
+- The combined RHS computes transport once and adds ASM1Slim/ASM1/ASM3/UDM reactions to active compute subsets.
+- Mixed ASM/UDM UDM reaction regression and docs golden tests are active.
+- ADR 0015 records supported mixed-model dispatch; ADR 0014 is partially superseded only for mixed dispatch.
+- Full PR-39 component contract, full PR-11 unified RHS, PR-12 output projection, PR-36 solver matrix, dense/sparse PR-32, and worker/API changes remain future slices.
+
 # 2026-06-14 simulation_core P-07 worker packaged no-fallback TODO
 
 - [x] Re-read README First context for simulation_core plans, worker, Desktop packaging/scripts, scripts/ci, and existing worker dependency audit.
@@ -220,7 +246,7 @@
 - Keep profiling as opt-in evidence only; do not add it to default `pr-fast`.
 - Profile worker `run_job_file()` in a subprocess so the path is close to real worker execution while reducing CLI startup noise.
 - Use bucketed cProfile self-time plus worker `runtime_audit.timings_ms` to separate adapter conversion, artifact serialization, expression, `.item()`/device sync markers, ODE framework, schema validation, and transport/dense-sparse work.
-- Include single UDM in addition to the required small/medium/mixed cases because current mixed fixture is a current-state branch-freeze baseline and does not by itself prove UDM expression hotspot behavior.
+- Include single UDM in addition to the required small/medium/mixed cases because mixed fixture coverage alone does not isolate UDM expression hotspot behavior.
 - Leave P-03 f64 golden and P-08 hot-path prereview as required gates before any hot-path implementation.
 
 ## Review
@@ -245,7 +271,7 @@
 ## Plan
 
 - Keep the fixture explicitly scoped to current-state Phase 0 baseline evidence.
-- Do not change `_run_hours` branch behavior, final mixed ASM/UDM semantics, worker adapter validation defaults, deprecated repo-path fallback, OpenAPI/generated clients, Go API behavior, or performance hot paths.
+- For this historical P-01 fixture slice, do not change `_run_hours` behavior, worker adapter validation defaults, deprecated repo-path fallback, OpenAPI/generated clients, Go API behavior, or performance hot paths.
 - Treat P-02 profiling artifacts and P-03 f64 golden generator as the next blockers before P-08 hot-path prereview.
 - Leave unrelated untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` untouched.
 
@@ -524,14 +550,14 @@
 
 ## Plan
 
-- Freeze current behavior as a pre-performance baseline, not as the desired final mixed ASM/UDM semantics.
+- Freeze the then-current behavior as a pre-performance baseline; ADR 0015 later supersedes the mixed-dispatch portion with supported semantics.
 - Preserve runtime behavior, contracts, worker invocation, legacy backend implementation, OpenAPI/generated clients, Desktop scope, and Go Compute API behavior.
 - Keep tests core-only for branch/clamp/mask behavior; backend parity remains in `test_material_balance_core.py`.
 - Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
 
 ## Review
 
-- Added core-only tests for `_run_hours` current mutually exclusive branch order: `asm1slim`, `asm1`, `asm3`, `udm`, then default.
+- Added original core-only tests for `_run_hours` mutually exclusive branch order; ADR 0015 later replaced the mixed portion with supported combined dispatch while preserving single-model fallback coverage.
 - Added clamp policy coverage proving ASM/UDM branches clamp negative solver output while the default branch currently preserves negative solver output.
 - Added `_ode_balance` `compute_mask` derivative masking coverage.
 - Added `scripts/audit-simulation-core-correctness-freeze.ps1`, `just audit-simulation-core-correctness-freeze`, and `pr-fast` default gate integration.

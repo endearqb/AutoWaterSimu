@@ -35,7 +35,7 @@
 1. runtime models 保持与计算器实际读取字段一致，并拒绝未知字段；payload 兼容性只能放在 adapter 层。
 2. 新增 runtime 字段先补 adapter、合同字段/兼容说明和 parity 测试。
 3. 不在本目录直接引用 `app.models` 或 `app.services`。
-4. `_run_hours` 当前按 `asm1slim`、`asm1`、`asm3`、`udm`、default 的互斥顺序选择 ODE branch；ASM/UDM branches 会 clamp solver output，default branch 当前不启用 clamp。该行为由 core-only correctness-freeze tests 和 `scripts/audit-simulation-core-correctness-freeze.ps1` 保护，性能优化不得隐式改变。
+4. `_run_hours` 在多反应模型同时存在时走 combined reaction RHS，先计算一次 transport，再按 active `compute_mask` 子集叠加 ASM1Slim / ASM1 / ASM3 / UDM 反应项；单模型仍按 `asm1slim`、`asm1`、`asm3`、`udm`、default 的 fallback 顺序选择 ODE branch。ASM/UDM branches 会 clamp solver output，default branch 当前不启用 clamp。该行为由 core-only correctness-freeze tests、ADR 0015 和 `scripts/audit-simulation-core-correctness-freeze.ps1` 保护，性能优化不得隐式改变。
 5. `_run_calculation` 在 segment 没有 `edge_overrides` 时复用 `_convert_to_tensors` 已构建的 `Q_out` / `prop_a` / `prop_b` / `sparse_bundle`；有 override 时必须 clone edge tensors 并重新构建 runtime tensors，不得污染预计算 bundle。该 fast path 只是 transport tensor 准备优化，不等同于 dense/sparse 并行边语义修复。
 6. UDM runtime 在构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices；`udm_ode_balance()` / `UDMNodeRuntime.evaluate_reaction()` 热路径不得重新用 `.item()` 判断 `udm_mask`、`fixed_component_mask.any()` 或 local-to-global 映射。`compile_expression()` 使用无状态 LRU 缓存，表达式 evaluator 可跨同文本节点共享。
 
@@ -72,3 +72,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-cor
 1. 若复制 legacy backend 代码，必须检查 `app.*` import 并改为 core-local import。
 2. 不要把 backend SQLModel 复制为 runtime model。
 3. 数值相关变更必须和 backend baseline 对照。
+4. 改 mixed-model dispatch、ASM 氧清零范围或 default clamp policy 时，必须同步更新 ADR、correctness-freeze tests、docs/rebuild golden 样本和 audit。
