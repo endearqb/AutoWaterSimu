@@ -1065,6 +1065,16 @@ def test_core_adapter_strict_rejects_unknown_fields() -> None:
     }
 
 
+def test_calculation_parameters_freeze_solver_matrix_policy() -> None:
+    default_parameters = CalculationParameters()
+    assert default_parameters.solver_method == "scipy_solver"
+
+    assert CalculationParameters(solver_method="adaptive_heun").solver_method == "adaptive_heun"
+
+    with pytest.raises(ValidationError, match="solver_method"):
+        CalculationParameters(solver_method="dopri5")
+
+
 def test_run_hours_uses_combined_dispatch_for_mixed_models(monkeypatch: pytest.MonkeyPatch) -> None:
     calculator = MaterialBalanceCalculator()
     selected_branches = _install_odeint_branch_spy(monkeypatch)

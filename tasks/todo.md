@@ -1,3 +1,24 @@
+# 2026-06-15 simulation_core PR-36 solver matrix policy TODO
+
+- [x] Re-read solver matrix requirements and current `CalculationParameters` policy.
+- [x] Confirm this slice freezes the current matrix decision, not a default solver change, dopri5 enablement, tolerance contract change, or max-iteration/memory implementation.
+- [x] Add focused core boundary test for default `scipy_solver`, accepted `adaptive_heun`, and rejected `dopri5`.
+- [x] Update tests README, current-state, v1.4 PR-36 status, checklist, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Treat `adaptive_heun` as the accepted adaptive solver in the current validation/performance matrix.
+- Keep `dopri5` outside the public `CalculationParameters` whitelist until a dedicated behavior-compatible enablement PR exists.
+- Keep default `scipy_solver` unchanged; default solver switching remains a separate high-risk behavior decision.
+
+## Review
+
+- `CalculationParameters` solver policy is now explicitly frozen in core-only boundary tests: default remains `scipy_solver`, `adaptive_heun` is accepted, and `dopri5` is rejected.
+- v1.4 PR-36 now records the low-risk decision to use `adaptive_heun` in the current matrix rather than enabling `dopri5`.
+- The checklist is split so matrix alignment is complete while default-solver switching and `max_iterations` / `max_memory_mb` implementation/deprecation remain open.
+- Verification passed for focused boundary tests, full simulation_core tests, docs/rebuild tests, correctness-freeze audit, Phase 0 golden/hotpath prereview, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core PR-13a expression validator corpus TODO
 
 - [x] Re-read current PR-13a tests and v1.4 fuzz/property-style requirement.
