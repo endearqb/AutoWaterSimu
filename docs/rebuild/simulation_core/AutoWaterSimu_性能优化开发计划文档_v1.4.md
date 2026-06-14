@@ -31,6 +31,7 @@
 - `scripts/ci/worker-packaged-no-fallback-smoke.ps1` 已建立 P-07 packaged sidecar no-fallback evidence;当前真实 PyInstaller one-folder sidecar self-check / minimal job 为 `passed`,且 `deprecated_repo_path_fallback_used=false`;fallback 删除仍需另开 PR。
 - `transport-runtime-tensor-precompute-no-semantics` 已落地:无 `edge_overrides` 的 segment 复用 `_convert_to_tensors` 预计算 runtime edge tensors;有 override 的 segment 继续 clone/rebuild。
 - `udm-expression-cache-and-device-sync-reduction` 已落地:`compile_expression()` 使用 LRU 缓存,UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices,UDM RHS/evaluate_reaction 热路径不再用逐步 `.item()` 判断 mask 或映射。
+- `asm-stable-reaction-runtime-precompute` 已落地:ASM1Slim/ASM1/ASM3 在 `_convert_to_tensors()` 阶段预计算 active compute node indices 与 filtered parameter rows, single-model 与 combined RHS 复用该 runtime,避免每步布尔 mask 参数 gather。
 - PR-38 supported mixed-model dispatch 已落地并由 ADR 0015 接受:`_run_hours` 在多个反应模型同时 active 时走 combined RHS,只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应项；单模型 fallback 顺序与 default no-clamp baseline 继续由 correctness-freeze audit 保护。
 - PR-39 氧清零 compute_mask 约束已完成当前 ASM 分支的第一步:ASM1Slim/ASM1/ASM3 氧导数清零仅作用于对应 ASM model 的 active compute 节点,不再依赖全列写入。
 - PR-13a 表达式校验器白名单化已落地:`_validate_ast` 现在默认拒绝未知 AST 节点,`NamedExpr`/`JoinedStr`/`Starred`/`Subscript`/`Slice` 与 keyword call arguments 会在校验期失败,不再等到运行时 evaluator 才 fail-late。
@@ -40,7 +41,7 @@
 1. P-01 `perf-phase0-mixed-asm-udm-fixture` 已完成,继续保持 Phase 0 baseline 覆盖 small / medium / UDM / mixed 三类以上图并保持 correctness-freeze audit 通过。
 2. P-02 `perf-phase0-profiling-artifacts` 已完成,后续若改变 fixture、solver matrix 或 runtime timings,必须重新生成 profiling evidence。
 3. P-03 `perf-phase0-golden-generator` 已完成,后续若改变 correctness-freeze 行为、fixture、solver matrix 或文档化 golden/repro 测试,必须重新生成 golden evidence。
-4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver 默认值/矩阵或完整统一 RHS 等更高风险切片。
+4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver 默认值/矩阵或完整统一 RHS 等更高风险切片。
 5. PR-38 supported mixed-model dispatch 与 PR-39 当前 ASM 氧清零 active compute mask 约束已落地；后续完整 PR-39 组分契约、PR-11 全统一 RHS、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
 6. P-04 backend compatibility cleanup、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke 与 P-07 packaged sidecar no-fallback evidence 已完成;后续删除 fallback、ASM/UDM helper 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
 
@@ -55,7 +56,7 @@
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；删除 fallback 仍需另开 PR |
-| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化；继续禁止混入 solver 默认值/schema/fallback 改动 |
+| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化；继续禁止混入 solver 默认值/schema/fallback 改动 |
 | PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；单模型 fallback 与 default no-clamp baseline 继续冻结 |
 | PR-39 oxygen mask first step | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点；完整组分契约仍需后续 PR |
 
@@ -165,7 +166,7 @@ golden:混合 asm+udm(支持)或报错用例(不支持)。KPI-018。
 ### PR-39:反应组分契约【Phase 1】
 为每个反应模型定义组分契约(数量/必需组分/顺序或具名映射);构建期校验全局组分映射满足契约;硬编码氧索引(0/5/6)与反应输入列序提升为 `component_schema→模型组分` 映射。v1.4 补充:当前氧清零是 `torch.where(mask,...)` 后再全列 `dy[:,k]=0`,抽取后必须改为仅对 `compute_mask` 子集清零,不得依赖前序 mask 投影顺序。KPI-019。
 
-**当前实现状态（2026-06-14）**：已完成氧清零范围的第一步防护:ASM1Slim/ASM1/ASM3 现有分支与 mixed combined RHS 只对对应 ASM model 的 active compute 节点清零氧导数,不再对全列无条件写入。完整组分契约、错配报错与具名映射仍需后续 PR。
+**当前实现状态（2026-06-15）**：已完成氧清零范围的第一步防护:ASM1Slim/ASM1/ASM3 现有分支与 mixed combined RHS 只对对应 ASM model 的 active compute 节点清零氧导数,不再对全列无条件写入。ASM stable mask gather 的低风险部分也已落地:`_convert_to_tensors()` 预计算 ASM1Slim/ASM1/ASM3 active compute node indices 与 filtered parameter rows,single-model 与 combined RHS 复用该 runtime,每步仍只对变化的 `y` 做 index gather。完整组分契约、错配报错与具名映射仍需后续 PR；这也不代表 PR-11 全统一 RHS 已完成。
 
 ### PR-11:统一 RHS 抽取【Phase 4,v1.4 继承并强化】
 五个 RHS 分支当前重复状态拆分、clamp、传输 balance、dilution、mask 投影与 volume 导数,抽取收益明确。但 PR-11 不得只做机械去重:必须以 PR-38 的混合调度决策为前置,支持方案下在单次 RHS 内对 ASM1Slim/ASM1/ASM3/UDM 各 mask 子集叠加反应项;不支持方案下则在构建期报错并有存量审计。抽取时必须显式保留或决策各模型特殊行为:ASM 氧列硬编码清零迁移到 PR-39 组分契约且限定 compute_mask,UDM fixed component mask 继续生效,default 纯传输分支的输出 clamp 现状由 PR-12 golden 固定。v1.4 补充:ASM `params[mask]` / `y[mask]` 等稳定布尔 gather 应与 UDM 节点索引一起预解析,否则统一 RHS 只解决可维护性而漏掉热路径成本。
@@ -287,7 +288,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] `max_iterations` / `max_memory_mb` 实现或标 deprecated（当前选择 deprecated compatibility fields）。
 - [x] 表达式缓存(KPI-017) N=100 build-time evidence + 校验器白名单化 + deterministic fuzz-style corpus。
 - [ ] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
-- [ ] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
+- [x] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
 - [ ] f64 golden 生成器已有 Phase 0 evidence;parity 测试改造与最终覆盖补齐仍需随 PR-37/PR-38 决策推进。
 - [ ] default 纯传输分支 clamp 现状已有 golden;统一投影语义变更走 flag。
 - [ ] 统一 RHS 抽取已保留 ASM 氧列、UDM fixed mask、default clamp 现状或显式变更记录。

@@ -134,6 +134,55 @@ class MaterialBalanceCalculator:
         """Safe divide to avoid division by zero."""
         return num / den.clamp_min(eps)
 
+    def _build_active_reaction_runtime(
+        self,
+        model_mask: torch.Tensor | None,
+        compute_mask: torch.Tensor,
+        params: torch.Tensor | None,
+    ) -> Dict[str, torch.Tensor] | None:
+        if model_mask is None or params is None:
+            return None
+
+        active_mask = model_mask & compute_mask
+        active_indices = torch.nonzero(active_mask, as_tuple=False).flatten()
+        if active_indices.numel() == 0:
+            return None
+
+        return {
+            "mask": active_mask,
+            "indices": active_indices,
+            "params": params.index_select(0, active_indices),
+        }
+
+    def _resolve_active_reaction_runtime(
+        self,
+        runtime: Dict[str, torch.Tensor] | None,
+        model_mask: torch.Tensor | None,
+        compute_mask: torch.Tensor,
+        params: torch.Tensor | None,
+    ) -> Dict[str, torch.Tensor] | None:
+        if runtime is not None:
+            return runtime
+        return self._build_active_reaction_runtime(model_mask, compute_mask, params)
+
+    def _apply_asm_reaction_runtime(
+        self,
+        concentration_change: torch.Tensor,
+        y: torch.Tensor,
+        runtime: Dict[str, torch.Tensor] | None,
+        reaction_fn: Any,
+        oxygen_index: int,
+    ) -> None:
+        if runtime is None:
+            return
+
+        indices = runtime["indices"]
+        params = runtime["params"]
+        rates = reaction_fn(params, y.index_select(0, indices))
+        concentration_change.index_add_(0, indices, rates)
+        if concentration_change.shape[1] > oxygen_index:
+            concentration_change[indices, oxygen_index] = 0.0
+
 
     def _convert_to_tensors(self, input_data: MaterialBalanceInput) -> Dict[str, Any]:
         """Convert validated input data into tensor structures."""
@@ -235,6 +284,21 @@ class MaterialBalanceCalculator:
             for node_index, node in enumerate(nodes)
             if node.node_type == 'udm'
         }
+        asm1slim_reaction_runtime = self._build_active_reaction_runtime(
+            asm1slim_mask,
+            compute_mask,
+            asm1slim_params,
+        )
+        asm1_reaction_runtime = self._build_active_reaction_runtime(
+            asm1_mask,
+            compute_mask,
+            asm1_params,
+        )
+        asm3_reaction_runtime = self._build_active_reaction_runtime(
+            asm3_mask,
+            compute_mask,
+            asm3_params,
+        )
 
 
         # 2) 鑺傜偣鏄犲皠
@@ -260,6 +324,9 @@ class MaterialBalanceCalculator:
                 "asm3_mask": asm3_mask, "asm3_params": asm3_params,
                 "udm_mask": udm_mask, "udm_runtime_payload": udm_runtime_payload,
                 "udm_active_node_indices": udm_active_node_indices,
+                "asm1slim_reaction_runtime": asm1slim_reaction_runtime,
+                "asm1_reaction_runtime": asm1_reaction_runtime,
+                "asm3_reaction_runtime": asm3_reaction_runtime,
                 "parameter_names": global_component_names,
                 "n_components": n_components,
                 "sparse_bundle": sparse_bundle
@@ -318,6 +385,9 @@ class MaterialBalanceCalculator:
             "udm_mask": udm_mask,
             "udm_runtime_payload": udm_runtime_payload,
             "udm_active_node_indices": udm_active_node_indices,
+            "asm1slim_reaction_runtime": asm1slim_reaction_runtime,
+            "asm1_reaction_runtime": asm1_reaction_runtime,
+            "asm3_reaction_runtime": asm3_reaction_runtime,
             "parameter_names": global_component_names,
             "n_components": n_components,
             "sparse_bundle": sparse_bundle,
@@ -345,6 +415,9 @@ class MaterialBalanceCalculator:
             udm_mask = tensors.get("udm_mask", None)
             udm_runtime_payload = tensors.get("udm_runtime_payload", None)
             udm_active_node_indices = tensors.get("udm_active_node_indices", None)
+            asm1slim_reaction_runtime = tensors.get("asm1slim_reaction_runtime", None)
+            asm1_reaction_runtime = tensors.get("asm1_reaction_runtime", None)
+            asm3_reaction_runtime = tensors.get("asm3_reaction_runtime", None)
 
             base_state = self._merge_tensors(V_liq, x0).unsqueeze(0)
             segments = self._prepare_segments(input_data, params.hours)
@@ -436,6 +509,9 @@ class MaterialBalanceCalculator:
                     udm_mask=udm_mask,
                     udm_runtime_payload=udm_runtime_payload,
                     udm_active_node_indices=udm_active_node_indices,
+                    asm1slim_reaction_runtime=asm1slim_reaction_runtime,
+                    asm1_reaction_runtime=asm1_reaction_runtime,
+                    asm3_reaction_runtime=asm3_reaction_runtime,
                     sparse_bundle=runtime_sparse_bundle,
                     sampling_interval_hours=getattr(
                         params, "sampling_interval_hours", None
@@ -518,6 +594,9 @@ class MaterialBalanceCalculator:
                     udm_mask=udm_mask,
                     udm_runtime_payload=udm_runtime_payload,
                     udm_active_node_indices=udm_active_node_indices,
+                    asm1slim_reaction_runtime=asm1slim_reaction_runtime,
+                    asm1_reaction_runtime=asm1_reaction_runtime,
+                    asm3_reaction_runtime=asm3_reaction_runtime,
                     sparse_bundle=sparse_bundle,
                     sampling_interval_hours=getattr(
                         params, "sampling_interval_hours", None
@@ -1021,7 +1100,8 @@ class MaterialBalanceCalculator:
 
     def _asm1slim_ode_balance(self, t: float, y_extended: torch.Tensor, m: int, prop_a: torch.Tensor, prop_b: torch.Tensor,
 
-                    Q_out: torch.Tensor, compute_mask: torch.Tensor, asm1slim_params: torch.Tensor, asm1slim_mask: torch.Tensor, sparse_bundle: dict = None ) -> torch.Tensor:
+                    Q_out: torch.Tensor, compute_mask: torch.Tensor, asm1slim_params: torch.Tensor, asm1slim_mask: torch.Tensor, sparse_bundle: dict = None,
+                    asm1slim_reaction_runtime: Dict[str, torch.Tensor] | None = None ) -> torch.Tensor:
 
 
         """鐗╂枡鍜屼綋绉钩琛＄殑ODE鍑芥暟銆?
@@ -1062,34 +1142,24 @@ class MaterialBalanceCalculator:
         dilution_term = -y * delta_Q.unsqueeze(-1) / V_liq.unsqueeze(-1)
         concentration_change = delta_m / V_liq.unsqueeze(-1) + dilution_term
 
-        # Add ASM1 Slim reaction terms for ASM1 Slim nodes
-        if asm1slim_params is not None and asm1slim_mask.any():
-            # Get ASM1 Slim nodes concentrations
-            asm1slim_concentrations = y[asm1slim_mask]  # [n_asm1slim_nodes, n_components]
-
-            # Get ASM1 Slim parameters for only ASM1 Slim nodes
-            asm1slim_params_filtered = asm1slim_params[asm1slim_mask]  # [n_asm1slim_nodes, 7]
-
-            # Calculate ASM1 Slim reaction rates
-            asm_reaction_rates = asm1slim_reaction(asm1slim_params_filtered, asm1slim_concentrations)  # [n_asm1slim_nodes, n_components]
-
-            # Add reaction terms to concentration changes for ASM1 Slim nodes
-            asm1slim_mask_expanded = asm1slim_mask.unsqueeze(-1).expand_as(concentration_change)
-            asm_reaction_change = torch.zeros_like(concentration_change)
-            asm_reaction_change[asm1slim_mask] = asm_reaction_rates
-
-            concentration_change = concentration_change + asm_reaction_change
+        reaction_runtime = self._resolve_active_reaction_runtime(
+            asm1slim_reaction_runtime,
+            asm1slim_mask,
+            compute_mask,
+            asm1slim_params,
+        )
+        self._apply_asm_reaction_runtime(
+            concentration_change,
+            y,
+            reaction_runtime,
+            asm1slim_reaction,
+            oxygen_index=0,
+        )
 
 
         # Apply mask: only update internal nodes
         mask_expanded = compute_mask.unsqueeze(-1).expand_as(concentration_change)
         dy_extended[:, :-1] = torch.where(mask_expanded, concentration_change, torch.zeros_like(concentration_change))
-
-        # 杩欓噷涓嶈€冭檻婧惰В姘х殑鍙樺寲锛屾墍浠ヨ涓?
-        oxygen_mask = asm1slim_mask & compute_mask
-        if oxygen_mask.any() and concentration_change.shape[1] > 0:
-            dy_extended[oxygen_mask, 0] = 0.0
-
 
         # Volume changes: only for internal nodes
         dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
@@ -1098,7 +1168,8 @@ class MaterialBalanceCalculator:
 
     def _asm1_ode_balance(self, t: float, y_extended: torch.Tensor, m: int, prop_a: torch.Tensor, prop_b: torch.Tensor,
 
-                    Q_out: torch.Tensor, compute_mask: torch.Tensor, asm1_params: torch.Tensor, asm1_mask: torch.Tensor, sparse_bundle: dict = None ) -> torch.Tensor:
+                    Q_out: torch.Tensor, compute_mask: torch.Tensor, asm1_params: torch.Tensor, asm1_mask: torch.Tensor, sparse_bundle: dict = None,
+                    asm1_reaction_runtime: Dict[str, torch.Tensor] | None = None ) -> torch.Tensor:
 
 
         """鐗╂枡鍜屼綋绉钩琛＄殑ODE鍑芥暟銆?
@@ -1139,34 +1210,24 @@ class MaterialBalanceCalculator:
         dilution_term = -y * delta_Q.unsqueeze(-1) / V_liq.unsqueeze(-1)
         concentration_change = delta_m / V_liq.unsqueeze(-1) + dilution_term
 
-        # Add ASM1 reaction terms for ASM1 nodes
-        if asm1_params is not None and asm1_mask.any():
-            # Get ASM1 nodes concentrations
-            asm1_concentrations = y[asm1_mask]  # [n_asm1_nodes, n_components]
-
-            # Get ASM1 parameters for only ASM1 nodes
-            asm1_params_filtered = asm1_params[asm1_mask]  # [n_asm1_nodes, 19]
-
-            # Calculate ASM1 reaction rates
-            asm_reaction_rates = asm1_reaction(asm1_params_filtered, asm1_concentrations)  # [n_asm1_nodes, n_components]
-
-            # Add reaction terms to concentration changes for ASM1 nodes
-            asm1_mask_expanded = asm1_mask.unsqueeze(-1).expand_as(concentration_change)
-            asm_reaction_change = torch.zeros_like(concentration_change)
-            asm_reaction_change[asm1_mask] = asm_reaction_rates
-
-            concentration_change = concentration_change + asm_reaction_change
+        reaction_runtime = self._resolve_active_reaction_runtime(
+            asm1_reaction_runtime,
+            asm1_mask,
+            compute_mask,
+            asm1_params,
+        )
+        self._apply_asm_reaction_runtime(
+            concentration_change,
+            y,
+            reaction_runtime,
+            asm1_reaction,
+            oxygen_index=5,
+        )
 
 
         # Apply mask: only update internal nodes
         mask_expanded = compute_mask.unsqueeze(-1).expand_as(concentration_change)
         dy_extended[:, :-1] = torch.where(mask_expanded, concentration_change, torch.zeros_like(concentration_change))
-
-        # 杩欓噷涓嶈€冭檻婧惰В姘х殑鍙樺寲锛屾墍浠ヨ涓?
-        oxygen_mask = asm1_mask & compute_mask
-        if oxygen_mask.any() and concentration_change.shape[1] > 5:
-            dy_extended[oxygen_mask, 5] = 0.0
-
 
         # Volume changes: only for internal nodes
         dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
@@ -1175,7 +1236,8 @@ class MaterialBalanceCalculator:
 
     def _asm3_ode_balance(self, t: float, y_extended: torch.Tensor, m: int, prop_a: torch.Tensor, prop_b: torch.Tensor,
 
-                    Q_out: torch.Tensor, compute_mask: torch.Tensor, asm3_params: torch.Tensor, asm3_mask: torch.Tensor, sparse_bundle: dict = None ) -> torch.Tensor:
+                    Q_out: torch.Tensor, compute_mask: torch.Tensor, asm3_params: torch.Tensor, asm3_mask: torch.Tensor, sparse_bundle: dict = None,
+                    asm3_reaction_runtime: Dict[str, torch.Tensor] | None = None ) -> torch.Tensor:
 
 
         """鐗╂枡鍜屼綋绉钩琛＄殑ODE鍑芥暟銆?
@@ -1216,34 +1278,24 @@ class MaterialBalanceCalculator:
         dilution_term = -y * delta_Q.unsqueeze(-1) / V_liq.unsqueeze(-1)
         concentration_change = delta_m / V_liq.unsqueeze(-1) + dilution_term
 
-        # Add ASM3 reaction terms for ASM3 nodes
-        if asm3_params is not None and asm3_mask.any():
-            # Get ASM3 nodes concentrations
-            asm3_concentrations = y[asm3_mask]  # [n_asm3_nodes, n_components]
-
-            # Get ASM3 parameters for only ASM3 nodes
-            asm3_params_filtered = asm3_params[asm3_mask]  # [n_asm3_nodes, 37]
-
-            # Calculate ASM3 reaction rates
-            asm_reaction_rates = asm3_reaction(asm3_params_filtered, asm3_concentrations)  # [n_asm3_nodes, n_components]
-
-            # Add reaction terms to concentration changes for ASM3 nodes
-            asm3_mask_expanded = asm3_mask.unsqueeze(-1).expand_as(concentration_change)
-            asm_reaction_change = torch.zeros_like(concentration_change)
-            asm_reaction_change[asm3_mask] = asm_reaction_rates
-
-            concentration_change = concentration_change + asm_reaction_change
+        reaction_runtime = self._resolve_active_reaction_runtime(
+            asm3_reaction_runtime,
+            asm3_mask,
+            compute_mask,
+            asm3_params,
+        )
+        self._apply_asm_reaction_runtime(
+            concentration_change,
+            y,
+            reaction_runtime,
+            asm3_reaction,
+            oxygen_index=6,
+        )
 
 
         # Apply mask: only update internal nodes
         mask_expanded = compute_mask.unsqueeze(-1).expand_as(concentration_change)
         dy_extended[:, :-1] = torch.where(mask_expanded, concentration_change, torch.zeros_like(concentration_change))
-
-        # 杩欓噷涓嶈€冭檻婧惰В姘х殑鍙樺寲锛屾墍浠ヨ涓?
-        oxygen_mask = asm3_mask & compute_mask
-        if oxygen_mask.any() and concentration_change.shape[1] > 6:
-            dy_extended[oxygen_mask, 6] = 0.0
-
 
         # Volume changes: only for internal nodes
         dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
@@ -1265,6 +1317,9 @@ class MaterialBalanceCalculator:
         asm1_mask: torch.Tensor | None = None,
         asm3_params: torch.Tensor | None = None,
         asm3_mask: torch.Tensor | None = None,
+        asm1slim_reaction_runtime: Dict[str, torch.Tensor] | None = None,
+        asm1_reaction_runtime: Dict[str, torch.Tensor] | None = None,
+        asm3_reaction_runtime: Dict[str, torch.Tensor] | None = None,
         udm_runtime_payload: List[UDMNodeRuntime] | None = None,
         udm_active_node_indices: set[int] | None = None,
         sparse_bundle: dict | None = None,
@@ -1285,23 +1340,42 @@ class MaterialBalanceCalculator:
         dilution_term = -y * delta_Q.unsqueeze(-1) / V_liq.unsqueeze(-1)
         concentration_change = delta_m / V_liq.unsqueeze(-1) + dilution_term
 
-        if asm1slim_params is not None and asm1slim_mask is not None:
-            rates = asm1slim_reaction(asm1slim_params[asm1slim_mask], y[asm1slim_mask])
-            concentration_change[asm1slim_mask] = concentration_change[asm1slim_mask] + rates
-            if concentration_change.shape[1] > 0:
-                concentration_change[asm1slim_mask, 0] = 0.0
-
-        if asm1_params is not None and asm1_mask is not None:
-            rates = asm1_reaction(asm1_params[asm1_mask], y[asm1_mask])
-            concentration_change[asm1_mask] = concentration_change[asm1_mask] + rates
-            if concentration_change.shape[1] > 5:
-                concentration_change[asm1_mask, 5] = 0.0
-
-        if asm3_params is not None and asm3_mask is not None:
-            rates = asm3_reaction(asm3_params[asm3_mask], y[asm3_mask])
-            concentration_change[asm3_mask] = concentration_change[asm3_mask] + rates
-            if concentration_change.shape[1] > 6:
-                concentration_change[asm3_mask, 6] = 0.0
+        self._apply_asm_reaction_runtime(
+            concentration_change,
+            y,
+            self._resolve_active_reaction_runtime(
+                asm1slim_reaction_runtime,
+                asm1slim_mask,
+                compute_mask,
+                asm1slim_params,
+            ),
+            asm1slim_reaction,
+            oxygen_index=0,
+        )
+        self._apply_asm_reaction_runtime(
+            concentration_change,
+            y,
+            self._resolve_active_reaction_runtime(
+                asm1_reaction_runtime,
+                asm1_mask,
+                compute_mask,
+                asm1_params,
+            ),
+            asm1_reaction,
+            oxygen_index=5,
+        )
+        self._apply_asm_reaction_runtime(
+            concentration_change,
+            y,
+            self._resolve_active_reaction_runtime(
+                asm3_reaction_runtime,
+                asm3_mask,
+                compute_mask,
+                asm3_params,
+            ),
+            asm3_reaction,
+            oxygen_index=6,
+        )
 
         if udm_runtime_payload:
             for runtime in udm_runtime_payload:
@@ -1339,18 +1413,6 @@ class MaterialBalanceCalculator:
         )
         dy_extended[:, -1] = torch.where(compute_mask, delta_Q, torch.zeros_like(delta_Q))
         return dy_extended
-
-    def _active_reaction_mask(
-        self,
-        model_mask: torch.Tensor | None,
-        compute_mask: torch.Tensor,
-    ) -> torch.Tensor | None:
-        if model_mask is None:
-            return None
-        active_mask = model_mask & compute_mask
-        if not bool(active_mask.any()):
-            return None
-        return active_mask
 
     def _sample_solver_output(
         self,
@@ -1515,6 +1577,9 @@ class MaterialBalanceCalculator:
                   udm_mask: torch.Tensor = None,
                   udm_runtime_payload: List[UDMNodeRuntime] = None,
                   udm_active_node_indices: set[int] = None,
+                  asm1slim_reaction_runtime: Dict[str, torch.Tensor] | None = None,
+                  asm1_reaction_runtime: Dict[str, torch.Tensor] | None = None,
+                  asm3_reaction_runtime: Dict[str, torch.Tensor] | None = None,
                   sampling_interval_hours: float = None) -> torch.Tensor:
 
         """杩愯鎸囧畾灏忔椂鏁扮殑妯℃嫙銆?
@@ -1550,20 +1615,23 @@ class MaterialBalanceCalculator:
 
         x0 = x0[-1, :]
 
-        active_asm1slim_mask = (
-            self._active_reaction_mask(asm1slim_mask, compute_mask)
-            if asm1slim_params is not None
-            else None
+        active_asm1slim_runtime = self._resolve_active_reaction_runtime(
+            asm1slim_reaction_runtime,
+            asm1slim_mask,
+            compute_mask,
+            asm1slim_params,
         )
-        active_asm1_mask = (
-            self._active_reaction_mask(asm1_mask, compute_mask)
-            if asm1_params is not None
-            else None
+        active_asm1_runtime = self._resolve_active_reaction_runtime(
+            asm1_reaction_runtime,
+            asm1_mask,
+            compute_mask,
+            asm1_params,
         )
-        active_asm3_mask = (
-            self._active_reaction_mask(asm3_mask, compute_mask)
-            if asm3_params is not None
-            else None
+        active_asm3_runtime = self._resolve_active_reaction_runtime(
+            asm3_reaction_runtime,
+            asm3_mask,
+            compute_mask,
+            asm3_params,
         )
         active_udm_node_indices: set[int] = set()
         if udm_mask is not None and udm_runtime_payload:
@@ -1581,9 +1649,9 @@ class MaterialBalanceCalculator:
 
         active_model_count = sum(
             [
-                active_asm1slim_mask is not None,
-                active_asm1_mask is not None,
-                active_asm3_mask is not None,
+                active_asm1slim_runtime is not None,
+                active_asm1_runtime is not None,
+                active_asm3_runtime is not None,
                 bool(active_udm_node_indices),
             ]
         )
@@ -1597,11 +1665,26 @@ class MaterialBalanceCalculator:
                 prop_b=prop_b,
                 compute_mask=compute_mask,
                 asm1slim_params=asm1slim_params,
-                asm1slim_mask=active_asm1slim_mask,
+                asm1slim_mask=(
+                    active_asm1slim_runtime["mask"]
+                    if active_asm1slim_runtime is not None
+                    else None
+                ),
+                asm1slim_reaction_runtime=active_asm1slim_runtime,
                 asm1_params=asm1_params,
-                asm1_mask=active_asm1_mask,
+                asm1_mask=(
+                    active_asm1_runtime["mask"]
+                    if active_asm1_runtime is not None
+                    else None
+                ),
+                asm1_reaction_runtime=active_asm1_runtime,
                 asm3_params=asm3_params,
-                asm3_mask=active_asm3_mask,
+                asm3_mask=(
+                    active_asm3_runtime["mask"]
+                    if active_asm3_runtime is not None
+                    else None
+                ),
+                asm3_reaction_runtime=active_asm3_runtime,
                 udm_runtime_payload=udm_runtime_payload,
                 udm_active_node_indices=active_udm_node_indices,
                 sparse_bundle=sparse_bundle,
@@ -1628,6 +1711,7 @@ class MaterialBalanceCalculator:
                 compute_mask=compute_mask,
                 asm1slim_params=asm1slim_params,
                 asm1slim_mask=asm1slim_mask,
+                asm1slim_reaction_runtime=active_asm1slim_runtime,
                 sparse_bundle=sparse_bundle
             )
             try:
@@ -1651,6 +1735,7 @@ class MaterialBalanceCalculator:
                 compute_mask=compute_mask,
                 asm1_params=asm1_params,
                 asm1_mask=asm1_mask,
+                asm1_reaction_runtime=active_asm1_runtime,
                 sparse_bundle=sparse_bundle
             )
             try:
@@ -1674,6 +1759,7 @@ class MaterialBalanceCalculator:
                 compute_mask=compute_mask,
                 asm3_params=asm3_params,
                 asm3_mask=asm3_mask,
+                asm3_reaction_runtime=active_asm3_runtime,
                 sparse_bundle=sparse_bundle
             )
             try:

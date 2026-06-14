@@ -645,6 +645,21 @@ def test_udm_ode_balance_uses_precomputed_active_indices_and_fixed_components() 
     assert torch.all(inactive_derivative == 0)
 
 
+def test_convert_to_tensors_precomputes_active_asm_runtime_indices_and_params() -> None:
+    calculator = MaterialBalanceCalculator()
+
+    tensors = calculator._convert_to_tensors(_mixed_asm_udm_input())
+    asm1_runtime = tensors["asm1_reaction_runtime"]
+
+    assert tensors["asm1slim_reaction_runtime"] is None
+    assert asm1_runtime is not None
+    assert tensors["asm3_reaction_runtime"] is None
+    assert asm1_runtime["indices"].tolist() == [2]
+    assert asm1_runtime["mask"].tolist() == [False, False, True, False]
+    assert asm1_runtime["params"].shape == (1, 19)
+    assert asm1_runtime["params"][0].tolist() == pytest.approx(ASM1_PARAMS_19)
+
+
 def test_default_segment_reuses_precomputed_runtime_edge_tensors() -> None:
     calculator = MaterialBalanceCalculator()
     input_data = simulation_input_to_material_balance_input(_minimal_simulation_input())

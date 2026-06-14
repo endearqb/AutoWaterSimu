@@ -1,3 +1,26 @@
+# 2026-06-15 simulation_core ASM stable reaction runtime TODO
+
+- [x] Re-read v1.4 ASM mask gather requirement and current ASM/UDM RHS code.
+- [x] Confirm this slice precomputes stable ASM reaction runtime, not implementing full PR-11 unified RHS, solver/default changes, schema changes, worker strict default, or fallback deletion.
+- [x] Precompute ASM1Slim/ASM1/ASM3 active compute node indices and filtered parameter rows in `_convert_to_tensors()`.
+- [x] Reuse the precomputed runtime in single-model and combined RHS paths while preserving branch selection and oxygen-zeroing scope.
+- [x] Add focused boundary coverage for the runtime payload.
+- [x] Update P-08 prereview script/docs, material_balance/tests README, current-state, v1.4 checklist, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep all solver defaults, output-grid behavior, mixed-dispatch semantics, default clamp policy, schema/API, worker strict mode, and fallback behavior unchanged.
+- Treat this as a low-risk RHS preparation optimization: stable params/indices are precomputed, while the changing state `y` is still gathered per RHS call.
+- Use existing correctness-freeze, Phase 0 golden, hotpath prereview, and `pr-fast` gates to catch semantic drift.
+
+## Review
+
+- `_convert_to_tensors()` now precomputes ASM1Slim/ASM1/ASM3 active compute node indices and filtered parameter rows.
+- Single-model and combined RHS paths reuse the runtime and avoid per-step boolean-mask parameter gathers for stable ASM params; the changing state `y` is still gathered by stable indices.
+- Branch selection, mixed-dispatch semantics, oxygen-zeroing active compute scope, solver defaults, output grid, schema/API, worker strict mode, and fallback behavior remain unchanged.
+- Verification passed for focused/full simulation_core tests, docs/rebuild tests, correctness-freeze audit, Phase 0 baseline/profiling/golden/hotpath prereview, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core PR-36 deprecated solver limits TODO
 
 - [x] Re-read material_balance runtime model context and PR-36 max_iterations/max_memory_mb requirement.

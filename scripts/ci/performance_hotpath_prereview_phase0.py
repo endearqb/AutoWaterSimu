@@ -318,6 +318,28 @@ def build_candidates(
             ],
         },
         {
+            "id": "asm-stable-reaction-runtime-precompute",
+            "decision": "completed",
+            "why_completed": (
+                "ASM active compute masks now produce stable node indices and filtered parameter rows "
+                "before solver RHS execution, keeping the per-step RHS off boolean-mask parameter gathers."
+            ),
+            "implementation_scope": [
+                "Precompute active ASM1Slim/ASM1/ASM3 node indices and filtered parameter rows during tensor conversion.",
+                "Reuse the runtime payload in single-model and combined ASM/UDM RHS paths.",
+                "Keep solver defaults, mixed dispatch semantics, oxygen zeroing scope, schemas, and worker behavior unchanged.",
+            ],
+            "profiler_segment": "ode_framework / ASM mask gather",
+            "current_profile_self_time_ms": round(ode_ms, 3),
+            "worker_segment": "compute",
+            "tolerance_layers": ["L3 full-run f64 goldens", "correctness-freeze audit"],
+            "forbidden_changes": [
+                "Do not change supported mixed ASM/UDM dispatch semantics.",
+                "Do not change ASM oxygen zeroing active compute scope.",
+                "Do not change solver defaults, output grid, schema, worker strict mode, or fallback behavior.",
+            ],
+        },
+        {
             "id": "solver-framework-or-output-grid-change",
             "decision": "defer",
             "why_deferred": (
