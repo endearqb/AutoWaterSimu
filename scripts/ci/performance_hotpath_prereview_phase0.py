@@ -14,6 +14,13 @@ EVIDENCE_FILES = {
     "profiling": "performance-profiling-phase0.json",
     "golden": "performance-golden-phase0.json",
 }
+UDM_PROFILE_CASES = {"udm_single", "mixed_asm_udm"}
+UDM_PROFILE_BUCKETS = (
+    "expression",
+    "item_device_sync",
+    "core_compute",
+    "ode_framework",
+)
 
 
 def main() -> int:
@@ -201,7 +208,100 @@ def build_profiling_summary(source: dict[str, Any]) -> dict[str, Any]:
         "requested_bucket_coverage_ms": requested,
         "requested_bucket_rank": requested_rank,
         "profile_category_totals_ms": category_totals,
+        "udm_solver_bucket_breakdown": build_udm_solver_bucket_breakdown(runs),
         "runs": len(runs),
+    }
+
+
+def build_udm_solver_bucket_breakdown(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    totals_by_solver: dict[str, dict[str, float]] = {}
+
+    for run in runs:
+        case_id = str(run.get("case_id") or "")
+        if case_id not in UDM_PROFILE_CASES:
+            continue
+
+        solver = str(run.get("solver_method") or "")
+        categories = {
+            str(item.get("category")): float(item.get("self_time_ms") or 0.0)
+            for item in run.get("profile_summary", {}).get("categories", [])
+        }
+        runtime_timings = run.get("runtime_timings_ms") or {}
+        compute_ms = float(runtime_timings.get("compute") or 0.0)
+        bucket_values = {
+            bucket: round(float(categories.get(bucket) or 0.0), 3)
+            for bucket in UDM_PROFILE_BUCKETS
+        }
+        expression_plus_sync = round(
+            bucket_values["expression"] + bucket_values["item_device_sync"],
+            3,
+        )
+        row = {
+            "case_id": case_id,
+            "solver_method": solver,
+            "compute_ms": round(compute_ms, 3),
+            "wall_ms": round(float(run.get("wall_ms") or 0.0), 3),
+            **{f"{bucket}_ms": value for bucket, value in bucket_values.items()},
+            "expression_plus_item_sync_ms": expression_plus_sync,
+            "expression_plus_item_sync_share_of_compute": round(
+                expression_plus_sync / compute_ms,
+                4,
+            )
+            if compute_ms > 0
+            else 0.0,
+        }
+        rows.append(row)
+
+        solver_totals = totals_by_solver.setdefault(
+            solver,
+            {
+                "runs": 0.0,
+                "compute_ms": 0.0,
+                "wall_ms": 0.0,
+                **{f"{bucket}_ms": 0.0 for bucket in UDM_PROFILE_BUCKETS},
+                "expression_plus_item_sync_ms": 0.0,
+            },
+        )
+        solver_totals["runs"] += 1
+        solver_totals["compute_ms"] += compute_ms
+        solver_totals["wall_ms"] += float(run.get("wall_ms") or 0.0)
+        solver_totals["expression_plus_item_sync_ms"] += expression_plus_sync
+        for bucket, value in bucket_values.items():
+            solver_totals[f"{bucket}_ms"] += value
+
+    totals = []
+    for solver, values in sorted(totals_by_solver.items()):
+        compute_ms = values["compute_ms"]
+        totals.append(
+            {
+                "solver_method": solver,
+                "runs": int(values["runs"]),
+                "compute_ms": round(compute_ms, 3),
+                "wall_ms": round(values["wall_ms"], 3),
+                **{
+                    f"{bucket}_ms": round(values[f"{bucket}_ms"], 3)
+                    for bucket in UDM_PROFILE_BUCKETS
+                },
+                "expression_plus_item_sync_ms": round(
+                    values["expression_plus_item_sync_ms"],
+                    3,
+                ),
+                "expression_plus_item_sync_share_of_compute": round(
+                    values["expression_plus_item_sync_ms"] / compute_ms,
+                    4,
+                )
+                if compute_ms > 0
+                else 0.0,
+            }
+        )
+
+    return {
+        "scope": "UDM-related profiling rows grouped by solver for KPI-001/KPI-003 evidence.",
+        "cases": sorted(UDM_PROFILE_CASES),
+        "buckets": list(UDM_PROFILE_BUCKETS),
+        "rows": sorted(rows, key=lambda item: (item["case_id"], item["solver_method"])),
+        "totals_by_solver": totals,
     }
 
 
@@ -455,6 +555,30 @@ def render_markdown(report: dict[str, Any]) -> str:
     for item in report["profiling_summary"].get("requested_bucket_rank", []):
         lines.append(
             f"| `{item['bucket']}` | {item['self_time_ms']} | {item['share_of_requested']} |"
+        )
+
+    udm_breakdown = report["profiling_summary"].get("udm_solver_bucket_breakdown", {})
+    lines.extend(
+        [
+            "",
+            "## UDM Solver Bucket Breakdown",
+            "",
+            "| Solver | Runs | Compute ms | Expression ms | Item Sync ms | Core Compute ms | ODE Framework ms | Expr+Sync Share |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for item in udm_breakdown.get("totals_by_solver", []):
+        lines.append(
+            "| `{solver}` | {runs} | {compute} | {expression} | {item_sync} | {core} | {ode} | {share} |".format(
+                solver=item["solver_method"],
+                runs=item["runs"],
+                compute=item["compute_ms"],
+                expression=item["expression_ms"],
+                item_sync=item["item_device_sync_ms"],
+                core=item["core_compute_ms"],
+                ode=item["ode_framework_ms"],
+                share=item["expression_plus_item_sync_share_of_compute"],
+            )
         )
 
     lines.extend(

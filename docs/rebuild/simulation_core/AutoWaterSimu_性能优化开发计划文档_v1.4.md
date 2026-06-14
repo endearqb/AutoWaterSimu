@@ -24,7 +24,7 @@
 - `scripts/ci/performance-baseline-phase0.ps1` 已建立 Phase 0 timings baseline;`mixed_asm_udm` fixture 已补齐后当前 12-run baseline 为 `passed`。
 - `scripts/ci/performance-profiling-phase0.ps1` 已建立 Phase 0 profiling evidence;当前 small / medium / single UDM / mixed × 3 solver profile matrix 为 `passed`。
 - `scripts/ci/performance-golden-phase0.ps1` 已建立 CPU/f64/fixed-seed golden evidence;当前 full-run 12 goldens + 7 个 L1/L2 micro goldens（含 KPI-017 N=100 expression cache build-time evidence）为 `passed`。
-- `scripts/ci/performance-hotpath-prereview-phase0.ps1` 已建立 P-08 hot-path prereview evidence;当前第一批候选为 `transport-runtime-tensor-precompute-no-semantics`。
+- `scripts/ci/performance-hotpath-prereview-phase0.ps1` 已建立 P-08 hot-path prereview evidence;当前第一批候选为 `transport-runtime-tensor-precompute-no-semantics`,并已输出 UDM solver bucket breakdown 作为 KPI-001 / KPI-003 求解器维度证据。
 - `scripts/ci/performance-go-api-latency-phase0.ps1` 已建立 P-06 本地内存 Compute API latency smoke;当前 job list/get/worker claim wall-time evidence 为 `passed`,`claim_scanned_rows` 仅预留字段。
 - `scripts/ci/worker-adapter-strict-smoke.ps1` 已建立 P-05 worker adapter strict opt-in smoke;当前 8/8 valid compute_job fixtures strict mode 通过,默认仍为 `compat`。
 - P-04 backend compatibility cleanup 已完成旧本地 material_balance input models compatibility boundary:生产 runtime 不再可静默 import backend-local `MaterialBalanceInput` / `NodeData` / `EdgeData` / `CalculationParameters`,旧手工脚本已标注为非 pytest/非 runtime 证据。
@@ -41,7 +41,7 @@
 1. P-01 `perf-phase0-mixed-asm-udm-fixture` 已完成,继续保持 Phase 0 baseline 覆盖 small / medium / UDM / mixed 三类以上图并保持 correctness-freeze audit 通过。
 2. P-02 `perf-phase0-profiling-artifacts` 已完成,后续若改变 fixture、solver matrix 或 runtime timings,必须重新生成 profiling evidence。
 3. P-03 `perf-phase0-golden-generator` 已完成,后续若改变 correctness-freeze 行为、fixture、solver matrix 或文档化 golden/repro 测试,必须重新生成 golden evidence。
-4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver 默认值/矩阵或完整统一 RHS 等更高风险切片。
+4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver 默认值/矩阵或完整统一 RHS 等更高风险切片。
 5. PR-38 supported mixed-model dispatch 与 PR-39 当前 ASM 氧清零 active compute mask 约束已落地；后续完整 PR-39 组分契约、PR-11 全统一 RHS、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
 6. P-04 backend compatibility cleanup、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke 与 P-07 packaged sidecar no-fallback evidence 已完成;后续删除 fallback、ASM/UDM helper 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
 
@@ -56,7 +56,7 @@
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；删除 fallback 仍需另开 PR |
-| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化；继续禁止混入 solver 默认值/schema/fallback 改动 |
+| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化；继续禁止混入 solver 默认值/schema/fallback 改动 |
 | PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；单模型 fallback 与 default no-clamp baseline 继续冻结 |
 | PR-39 oxygen mask first step | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点；完整组分契约仍需后续 PR |
 
@@ -116,7 +116,7 @@ PR-17~19。
 ### PR-7/8:UDM RHS 热路径去循环与去 `.item()`【Phase 2,v1.4 继承并强化】
 落点为 `simulation_core/python/autowatersimu_simulation_core/material_balance/udm_ode.py`、`udm_engine.py` 与必要的 `core.py` 张量构建阶段。把 UDM 节点索引、local→global 索引、fixed component mask 是否存在、可执行节点集合等在 `_convert_to_tensors` / runtime payload 构建期预计算;RHS 内不得再用 `bool(tensor.item())` 判断 `udm_mask` 或 `fixed_mask.any()`。`evaluate_reaction` 至少消除 local component 映射 `.item()` 与重复 env 构建的可预计算部分;表达式 AST 递归若无法在本 PR 完全替换,需用 profiler 单独报告剩余占比并留给 PR-9/10/25。验收:L2 RHS 等价;GPU/CPU profiler 证明 UDM RHS 内无逐节点设备同步点;按 `scipy_solver` 与 torch 原生求解器分别报告收益。
 
-**当前实现状态（2026-06-15）**：第一步已落地到 simulation_core：`compile_expression()` 已加 LRU 缓存；`UDMNodeRuntime` 已保存 local-to-global Python int 索引、component/index pairs、fixed component indices 与 `has_fixed_components`；`_convert_to_tensors()` 已保存 `udm_active_node_indices`；`udm_ode_balance()` 使用预计算 active set 与 fixed indices，`evaluate_reaction()` 使用预计算 component/index pairs，热路径不再对 `udm_mask`、`fixed_mask.any()` 或 local-to-global 映射调用 `.item()`。KPI-017 已由 `performance-golden-phase0` 的 N=100 expression cache build-time micro evidence 覆盖，当前本地 evidence 超过 70% 降低阈值；剩余工作是按 `scipy_solver` 与 torch 原生求解器拆分 KPI-001 / RHS 收益，并决定是否进入 PR-9/10/25 的表达式引擎替换。
+**当前实现状态（2026-06-15）**：第一步已落地到 simulation_core：`compile_expression()` 已加 LRU 缓存；`UDMNodeRuntime` 已保存 local-to-global Python int 索引、component/index pairs、fixed component indices 与 `has_fixed_components`；`_convert_to_tensors()` 已保存 `udm_active_node_indices`；`udm_ode_balance()` 使用预计算 active set 与 fixed indices，`evaluate_reaction()` 使用预计算 component/index pairs，热路径不再对 `udm_mask`、`fixed_mask.any()` 或 local-to-global 映射调用 `.item()`。KPI-017 已由 `performance-golden-phase0` 的 N=100 expression cache build-time micro evidence 覆盖，当前本地 evidence 超过 70% 降低阈值；`performance-hotpath-prereview-phase0` 已把 `udm_single` / `mixed_asm_udm` 的 `expression`、`item_device_sync`、`core_compute` 与 `ode_framework` buckets 按 `scipy_solver`、`rk4`、`adaptive_heun` 汇总，当前 UDM 相关 evidence 中 `item_device_sync_ms=0.0`，`expression_plus_item_sync_share_of_compute` 分别为 `adaptive_heun=0.0268`、`rk4=0.0499`、`scipy_solver=0.0454`。剩余工作是决定是否进入 PR-9/10/25 的表达式引擎替换，真实 post-change 端到端收益仍需后续按目标场景复测。
 
 ### PR-29:simulation_core 可安装化【Phase 0,薄壳化前置】
 落 `pyproject.toml`(hatchling/setuptools,声明 torch/torchdiffeq/pydantic/numpy 区间);worker `runner.py` 删 `_ensure_repo_import_paths`/sys.path hack,改 wheel/editable 依赖;CI 增 `pip install -e` 烟雾。v1.4 继承补充:烟雾必须包含不把 `backend/` 放入 `PYTHONPATH` 的 core-only import 与 pytest collect/run 子集,证明安装后的包和独立测试不依赖 FastAPI/SQLModel/backend。回滚:保留 sys.path hack 作 fallback 一个版本。
@@ -287,14 +287,14 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [ ] 默认求解器切换评估完成。
 - [x] `max_iterations` / `max_memory_mb` 实现或标 deprecated（当前选择 deprecated compatibility fields）。
 - [x] 表达式缓存(KPI-017) N=100 build-time evidence + 校验器白名单化 + deterministic fuzz-style corpus。
-- [ ] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
+- [x] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
 - [x] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
 - [ ] f64 golden 生成器已有 Phase 0 evidence;parity 测试改造与最终覆盖补齐仍需随 PR-37/PR-38 决策推进。
 - [x] default 纯传输分支 clamp 现状已有 golden;统一投影语义变更仍需单独 flag PR。
 - [ ] 统一 RHS 抽取已保留 ASM 氧列、UDM fixed mask、default clamp 现状或显式变更记录。
 - [ ] 索引冲突不污染;映射 guard 写侧修复。
 - [x] P-06 Go latency baseline 已有;keyset 深分页(KPI-014)、claim 有界扫描+对抗(KPI-015)、worker 端到端基线仍需后续 PR。
-- [ ] 火焰图占比表;KPI-003 收益分解(按求解器)。
+- [x] 火焰图占比表;KPI-003 收益分解(按求解器)。
 - [x] P-05 strict opt-in smoke / 灰度策略已有；worker 默认 strict 切换、存量失败归因扩展和前端文案同步仍需后续 PR。
 - [ ] flag 组合矩阵测试;每 flag 有退场条件。
 - [ ] 绝对阈值 KPI 仅 nightly 固定 runner,基线含硬件指纹。

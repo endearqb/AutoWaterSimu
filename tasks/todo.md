@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core UDM solver bucket hotpath evidence TODO
+
+- [x] Re-read v1.4 PR-7/8, KPI-001, KPI-003, P-08 hotpath evidence requirements and current profiling report shape.
+- [x] Confirm this slice is report/evidence split only, not a new runtime optimization, solver default change, schema/API change, worker strict default switch, fallback deletion, PR-11 unified RHS, or full PR-39 component contract.
+- [x] Add UDM-related solver bucket breakdown to `performance-hotpath-prereview-phase0` JSON/Markdown evidence for `udm_single` and `mixed_asm_udm`.
+- [x] Include `expression`, `item_device_sync`, `core_compute`, `ode_framework`, and `expression_plus_item_sync_share_of_compute` grouped by `scipy_solver`, `rk4`, and `adaptive_heun`.
+- [x] Update scripts/ci README, current-state, v1.4 status/checklist, rebuild README, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Treat `scipy_solver` separately and treat `rk4` / `adaptive_heun` as the current torch-native solver buckets.
+- Keep the report tied to existing Phase 0 profiling runs; do not invent KPI deltas that are not measured by the current evidence.
+- Use `item_device_sync_ms=0.0` plus expression/core/ODE framework shares as the current KPI-001/KPI-003 split evidence, while leaving future expression-engine replacement to PR-9/10/25.
+
+## Review
+
+- `performance_hotpath_prereview_phase0.py` now emits `profiling_summary.udm_solver_bucket_breakdown` with per-row and per-solver totals for UDM-related profiling cases.
+- The generated Markdown report now includes a UDM solver bucket table. Latest local evidence reports `item_device_sync_ms=0.0` for all three solver buckets, with expression+sync share of compute at 0.0268 for `adaptive_heun`, 0.0499 for `rk4`, and 0.0454 for `scipy_solver`.
+- This closes the v1.4 evidence requirement to prove UDM RHS/evaluate_reaction hot-path device-sync removal and split KPI-001/KPI-003 evidence by solver, without claiming a new runtime speedup in this slice.
+- Solver defaults, output grid, schema/API, worker strict mode, fallback behavior, PR-11 unified RHS, PR-9/10/25 expression-engine replacement, and full PR-39 component contracts remain future work.
+
 # 2026-06-15 simulation_core PR-39 UDM component mismatch guard TODO
 
 - [x] Re-read PR-39 component contract status and current UDM runtime mapping code.
