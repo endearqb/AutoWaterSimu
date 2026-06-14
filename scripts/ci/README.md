@@ -16,7 +16,7 @@
 - opt-in worker packaged sidecar no-fallback smoke 验证。
 - opt-in performance/timings Phase 0 baseline 证据。
 - opt-in performance profiling Phase 0 evidence，生成 JSON/Markdown 汇总和 raw `.prof` 文件。
-- opt-in performance golden Phase 0 evidence，生成 CPU/f64/fixed-seed L3 全仿真 goldens 与 L1/L2 micro goldens。
+- opt-in performance golden Phase 0 evidence，生成 CPU/f64/fixed-seed L3 全仿真 goldens、L1/L2 micro goldens 与 KPI-017 N=100 expression cache build-time evidence。
 - opt-in performance hot-path prereview Phase 0 evidence，汇总 baseline/profiling/golden 并选择第一批可实施优化点。
 - opt-in Go API latency Phase 0 evidence，启动本地内存 Compute API 并测 job list/get/worker claim wall time。
 - opt-in Desktop project package/support bundle smoke 验证。
@@ -48,7 +48,7 @@
 | `worker-packaged-no-fallback-smoke.ps1` | 构建或复用 PyInstaller one-folder worker sidecar，运行 packaged sidecar self-check / minimal job，并要求 `deprecated_repo_path_fallback_used=false`，输出 `tmp/ci-evidence/worker-packaged-no-fallback-smoke.json` / `.md` |
 | `performance-baseline-phase0.ps1` | 运行 worker solver matrix baseline，记录 `runtime_audit.timings_ms` 分段、artifact size、worker wall time 和未覆盖 baseline 维度，写出 `tmp/ci-evidence/performance-baseline-phase0.json` |
 | `performance-profiling-phase0.ps1` | 运行 worker solver matrix cProfile evidence，覆盖 small material balance、medium ASM1、single UDM 和 mixed ASM/UDM，输出 `tmp/ci-evidence/performance-profiling-phase0.json` / `.md` 与 `tmp/performance-profiling-phase0/profiles/*.prof` |
-| `performance-golden-phase0.ps1` | 运行 CPU/f64/fixed-seed golden generator，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 三求解器矩阵与 L1/L2 micro goldens，输出 `tmp/ci-evidence/performance-golden-phase0.json` / `.md` 和 `tmp/performance-golden-phase0/goldens/*.golden.json` |
+| `performance-golden-phase0.ps1` | 运行 CPU/f64/fixed-seed golden generator，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 三求解器矩阵、L1/L2 micro goldens 与 KPI-017 N=100 expression cache build-time evidence，输出 `tmp/ci-evidence/performance-golden-phase0.json` / `.md` 和 `tmp/performance-golden-phase0/goldens/*.golden.json` |
 | `performance-hotpath-prereview-phase0.ps1` | 汇总 P-01/P-02/P-03 evidence，选择第一批 hot-path 候选、容差层级、收益度量和禁止混入项，输出 `tmp/ci-evidence/performance-hotpath-prereview-phase0.json` / `.md` |
 | `performance-go-api-latency-phase0.ps1` | 启动本地 `go run ./cmd/compute-api` 内存实例，批量创建 jobs，测 `GET /api/v1/compute/jobs`、`GET /api/v1/compute/jobs/{id}` 与 worker claim POST wall time，输出 `tmp/ci-evidence/performance-go-api-latency-phase0.json` / `.md` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
@@ -85,7 +85,7 @@
 
 本目录对 `Justfile` 暴露 `performance-profiling-phase0` opt-in 入口；它用 `cProfile` 包裹 worker `run_job_file()` 真实执行路径，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 与三求解器矩阵，输出 JSON/Markdown profiling evidence 和 raw `.prof` 文件。它只用于 P-02 热点证据，不修改 runtime、不替代 P-03 f64 golden、不进入默认 `pr-fast`。`item_device_sync` bucket 若有静态 marker 但 measured self-time 为 0，表示当前本地 run 未测到设备同步热点，应作为 zero-self-time note 记录而不是 open gap；其他 requested bucket 为 0 仍是 open gap。
 
-本目录对 `Justfile` 暴露 `performance-golden-phase0` opt-in 入口；它直接调用 `autowatersimu_simulation_core`，启动时移除 legacy backend 项目路径，不使用 legacy backend oracle，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 在 `scipy_solver` / `rk4` / `adaptive_heun` 下的 CPU/f64/fixed-seed L3 golden，并生成 UDM expression L1、parallel edge sparse L2、parallel edge dense/sparse target L2、`_balance_param` 非方显式拒绝与退化零流量 micro golden。它只用于 P-03 保护网，不修改 runtime、不替代 P-08 hot-path prereview、不进入默认 `pr-fast`。
+本目录对 `Justfile` 暴露 `performance-golden-phase0` opt-in 入口；它直接调用 `autowatersimu_simulation_core`，启动时移除 legacy backend 项目路径，不使用 legacy backend oracle，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 在 `scipy_solver` / `rk4` / `adaptive_heun` 下的 CPU/f64/fixed-seed L3 golden，并生成 UDM expression L1、KPI-017 N=100 expression cache build-time、parallel edge sparse L2、parallel edge dense/sparse target L2、`_balance_param` 非方显式拒绝与退化零流量 micro golden。它只用于 P-03 保护网，不修改 runtime、不替代 P-08 hot-path prereview、不进入默认 `pr-fast`。
 
 本目录对 `Justfile` 暴露 `performance-hotpath-prereview-phase0` opt-in 入口；它读取 Phase 0 baseline、profiling 和 golden evidence，当前选择 `transport-runtime-tensor-precompute-no-semantics` 作为第一批 hot-path 候选，要求收益回流到 `transport_dense_sparse` profile bucket 与 worker `runtime_audit.timings_ms.compute`，并明确禁止混入 mixed ASM/UDM 语义、PR-32 dense parallel-edge weighted-merge 语义变更、default clamp、solver/output grid、schema/OpenAPI/generated client、worker strict-mode 或 fallback 删除。它是 P-08 证据，不替代具体优化实现、不进入默认 `pr-fast`。
 

@@ -1,3 +1,28 @@
+# 2026-06-15 simulation_core KPI-017 expression cache evidence TODO
+
+- [x] Re-read README First context for scripts/ci performance evidence, simulation_core material_balance runtime, and v1.4 KPI-017 requirements.
+- [x] Confirm this slice is evidence coverage for existing expression cache, not a new expression engine, runtime semantic change, solver/default change, schema/API change, worker strict default switch, or fallback deletion.
+- [x] Add N=100 same-expression build-time evidence to `performance-golden-phase0`.
+- [x] Keep raw timing values out of micro-golden stable hashes while preserving them in JSON/Markdown evidence.
+- [x] Update scripts/ci README, current-state, simulation_core rebuild docs, and v1.4 checklist.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Measure a local cold/no-cache baseline by clearing the expression cache before each of 100 same-expression compiles.
+- Measure the cached path by compiling the same expression 100 times after one cache clear.
+- Treat the evidence as covered only when reduction is at least 70%, evaluator identity is shared, and L1 numeric equivalence still passes.
+- Keep fuzz/property-style expression validation as a separate open item.
+
+## Review
+
+- `performance_golden_phase0.py` now emits `udm_expression_cache_build_l1` as a seventh micro golden and adds `udm_expression_cache_build_time` to priority coverage.
+- The evidence compares 100 no-cache same-expression compiles against 100 cached same-expression compiles, requiring at least 70% reduction, shared evaluator identity, and L1 numeric equivalence.
+- Latest local evidence is `passed`: cold/no-cache 5.542 ms, cached repeated 0.065 ms, observed reduction 98.82%, shared evaluator identity true.
+- Timing fields remain in JSON/Markdown evidence but are excluded from micro-golden stable hashes.
+- v1.4 now marks KPI-017 N=100 build-time evidence and PR-13a whitelist as complete while keeping fuzz/property-style expression validation open.
+- Verification passed for `performance-golden-phase0`, `performance-hotpath-prereview-phase0`, docs/rebuild tests, full simulation_core tests, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core PR-13a expression validator whitelist TODO
 
 - [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-13a plan.

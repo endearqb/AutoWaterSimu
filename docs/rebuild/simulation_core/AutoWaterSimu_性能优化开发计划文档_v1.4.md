@@ -23,7 +23,7 @@
 - `backend/app/material_balance/core.py` 已成为 simulation_core calculator compatibility re-export;calculator thin-shell 与 dependency/source-mode gates 已由 audit 维护。
 - `scripts/ci/performance-baseline-phase0.ps1` 已建立 Phase 0 timings baseline;`mixed_asm_udm` fixture 已补齐后当前 12-run baseline 为 `passed`。
 - `scripts/ci/performance-profiling-phase0.ps1` 已建立 Phase 0 profiling evidence;当前 small / medium / single UDM / mixed × 3 solver profile matrix 为 `passed`。
-- `scripts/ci/performance-golden-phase0.ps1` 已建立 CPU/f64/fixed-seed golden evidence;当前 full-run 12 goldens + L1/L2 micro goldens 为 `passed`。
+- `scripts/ci/performance-golden-phase0.ps1` 已建立 CPU/f64/fixed-seed golden evidence;当前 full-run 12 goldens + 7 个 L1/L2 micro goldens（含 KPI-017 N=100 expression cache build-time evidence）为 `passed`。
 - `scripts/ci/performance-hotpath-prereview-phase0.ps1` 已建立 P-08 hot-path prereview evidence;当前第一批候选为 `transport-runtime-tensor-precompute-no-semantics`。
 - `scripts/ci/performance-go-api-latency-phase0.ps1` 已建立 P-06 本地内存 Compute API latency smoke;当前 job list/get/worker claim wall-time evidence 为 `passed`,`claim_scanned_rows` 仅预留字段。
 - `scripts/ci/worker-adapter-strict-smoke.ps1` 已建立 P-05 worker adapter strict opt-in smoke;当前 8/8 valid compute_job fixtures strict mode 通过,默认仍为 `compat`。
@@ -115,7 +115,7 @@ PR-17~19。
 ### PR-7/8:UDM RHS 热路径去循环与去 `.item()`【Phase 2,v1.4 继承并强化】
 落点为 `simulation_core/python/autowatersimu_simulation_core/material_balance/udm_ode.py`、`udm_engine.py` 与必要的 `core.py` 张量构建阶段。把 UDM 节点索引、local→global 索引、fixed component mask 是否存在、可执行节点集合等在 `_convert_to_tensors` / runtime payload 构建期预计算;RHS 内不得再用 `bool(tensor.item())` 判断 `udm_mask` 或 `fixed_mask.any()`。`evaluate_reaction` 至少消除 local component 映射 `.item()` 与重复 env 构建的可预计算部分;表达式 AST 递归若无法在本 PR 完全替换,需用 profiler 单独报告剩余占比并留给 PR-9/10/25。验收:L2 RHS 等价;GPU/CPU profiler 证明 UDM RHS 内无逐节点设备同步点;按 `scipy_solver` 与 torch 原生求解器分别报告收益。
 
-**当前实现状态（2026-06-14）**：第一步已落地到 simulation_core：`compile_expression()` 已加 LRU 缓存；`UDMNodeRuntime` 已保存 local-to-global Python int 索引、component/index pairs、fixed component indices 与 `has_fixed_components`；`_convert_to_tensors()` 已保存 `udm_active_node_indices`；`udm_ode_balance()` 使用预计算 active set 与 fixed indices，`evaluate_reaction()` 使用预计算 component/index pairs，热路径不再对 `udm_mask`、`fixed_mask.any()` 或 local-to-global 映射调用 `.item()`。剩余工作是按 `scipy_solver` 与 torch 原生求解器拆分收益、确认 KPI-001/017 是否达标，以及决定是否进入 PR-9/10/25 的表达式引擎替换。
+**当前实现状态（2026-06-15）**：第一步已落地到 simulation_core：`compile_expression()` 已加 LRU 缓存；`UDMNodeRuntime` 已保存 local-to-global Python int 索引、component/index pairs、fixed component indices 与 `has_fixed_components`；`_convert_to_tensors()` 已保存 `udm_active_node_indices`；`udm_ode_balance()` 使用预计算 active set 与 fixed indices，`evaluate_reaction()` 使用预计算 component/index pairs，热路径不再对 `udm_mask`、`fixed_mask.any()` 或 local-to-global 映射调用 `.item()`。KPI-017 已由 `performance-golden-phase0` 的 N=100 expression cache build-time micro evidence 覆盖，当前本地 evidence 超过 70% 降低阈值；剩余工作是按 `scipy_solver` 与 torch 原生求解器拆分 KPI-001 / RHS 收益，并决定是否进入 PR-9/10/25 的表达式引擎替换。
 
 ### PR-29:simulation_core 可安装化【Phase 0,薄壳化前置】
 落 `pyproject.toml`(hatchling/setuptools,声明 torch/torchdiffeq/pydantic/numpy 区间);worker `runner.py` 删 `_ensure_repo_import_paths`/sys.path hack,改 wheel/editable 依赖;CI 增 `pip install -e` 烟雾。v1.4 继承补充:烟雾必须包含不把 `backend/` 放入 `PYTHONPATH` 的 core-only import 与 pytest collect/run 子集,证明安装后的包和独立测试不依赖 FastAPI/SQLModel/backend。回滚:保留 sys.path hack 作 fallback 一个版本。
@@ -174,7 +174,7 @@ golden:混合 asm+udm(支持)或报错用例(不支持)。KPI-018。
 ### PR-13a:表达式校验器白名单化【Phase 4】
 `_validate_ast` 从 denylist-fallthrough 改为白名单(未列节点一律 DISALLOWED),与运行时 `_evaluate_ast` 对齐;补 fuzz/边界用例(Starred/NamedExpr/JoinedStr/Slice 等)。复审性质定性:这是校验通过、仿真时 `NamedExpr`/`JoinedStr` 才 raise 的 fail-late 一致性问题,不是 RCE;PR 文案与安全评审中不要夸大为运行时代码执行漏洞。
 
-**当前实现状态（2026-06-15）**：已完成白名单化主体。`_validate_ast` 对未显式允许的 AST 节点默认返回 `DISALLOWED_SYNTAX`，并显式拒绝 allowlisted function 的 keyword arguments；core-only boundary tests 覆盖 `NamedExpr`、`JoinedStr`、`Starred`、`Subscript`/`Slice` 和 keyword arguments 的 fail-early 行为。该切片不改变表达式 evaluator 的合法语法集合、不改变 UDM runtime 数值语义，也不声明 KPI-017 收益已达标；N=100 build-time / fuzz-style evidence 仍是上线清单开放项。
+**当前实现状态（2026-06-15）**：已完成白名单化主体。`_validate_ast` 对未显式允许的 AST 节点默认返回 `DISALLOWED_SYNTAX`，并显式拒绝 allowlisted function 的 keyword arguments；core-only boundary tests 覆盖 `NamedExpr`、`JoinedStr`、`Starred`、`Subscript`/`Slice` 和 keyword arguments 的 fail-early 行为。该切片不改变表达式 evaluator 的合法语法集合、不改变 UDM runtime 数值语义；KPI-017 build-time evidence 已由 P-03 golden micro evidence 覆盖，fuzz/property-style 扩展仍是上线清单开放项。
 
 ---
 
@@ -281,7 +281,8 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] 输出网格解耦(KPI-005)。
 - [x] 真实守恒指标接入 L3。
 - [ ] dopri5/adaptive_heun 入验收矩阵,默认求解器评估完成。
-- [ ] 表达式缓存(KPI-017)+校验器白名单化+fuzz。
+- [x] 表达式缓存(KPI-017) N=100 build-time evidence + 校验器白名单化。
+- [ ] 更系统的表达式校验 fuzz/property-style 覆盖。
 - [ ] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
 - [ ] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
 - [ ] f64 golden 生成器已有 Phase 0 evidence;parity 测试改造与最终覆盖补齐仍需随 PR-37/PR-38 决策推进。

@@ -475,7 +475,12 @@ def build_micro_goldens(*, golden_dir: Path, modules: dict[str, Any]) -> list[di
     records: list[dict[str, Any]] = []
 
     def add_record(record: dict[str, Any]) -> None:
-        stable = json_safe({key: value for key, value in record.items() if key != "generated_at"})
+        unstable_keys = {
+            "generated_at",
+            "observed_reduction_percent",
+            "timing_ms",
+        }
+        stable = json_safe({key: value for key, value in record.items() if key not in unstable_keys})
         stable_hash = sha256_json(stable)
         payload = {
             "schema_version": "autowatersimu_phase0_f64_micro_golden.v1",
@@ -517,6 +522,70 @@ def build_micro_goldens(*, golden_dir: Path, modules: dict[str, Any]) -> list[di
         )
     except Exception as exc:
         records.append(failed_micro("udm_expression_l1", exc))
+
+    try:
+        expression = "k_decay * S + max(P, 1.0) + sqrt(S) - log(P + 1.0) + pow(S, 2.0) * 0.001"
+        sample_size = 100
+        required_reduction_percent = 70.0
+        variables = {
+            "k_decay": torch.tensor(0.05, dtype=torch.float64),
+            "S": torch.tensor([8.0, 10.0], dtype=torch.float64),
+            "P": torch.tensor([1.5, 0.5], dtype=torch.float64),
+        }
+
+        compile_expression.cache_clear()
+        cold_start = time.perf_counter()
+        for _ in range(sample_size):
+            compile_expression.cache_clear()
+            compile_expression(expression)
+        cold_no_cache_ms = (time.perf_counter() - cold_start) * 1000
+
+        compile_expression.cache_clear()
+        warm_start = time.perf_counter()
+        warm_executors = [compile_expression(expression) for _ in range(sample_size)]
+        cached_repeated_ms = (time.perf_counter() - warm_start) * 1000
+
+        actual = warm_executors[-1](variables)
+        expected = (
+            variables["k_decay"] * variables["S"]
+            + torch.maximum(variables["P"], torch.tensor(1.0, dtype=torch.float64))
+            + torch.sqrt(variables["S"])
+            - torch.log(variables["P"] + torch.tensor(1.0, dtype=torch.float64))
+            + torch.pow(variables["S"], torch.tensor(2.0, dtype=torch.float64)) * 0.001
+        )
+        max_abs = max_abs_diff(actual, expected)
+        observed_reduction_percent = (
+            ((cold_no_cache_ms - cached_repeated_ms) / cold_no_cache_ms) * 100.0
+            if cold_no_cache_ms > 0
+            else 0.0
+        )
+        same_evaluator_identity = len({id(executor) for executor in warm_executors}) == 1
+        passed = (
+            max_abs <= TOLERANCE_LAYERS["L1"]["f64_max_abs"]
+            and same_evaluator_identity
+            and observed_reduction_percent >= required_reduction_percent
+        )
+        add_record(
+            {
+                "id": "udm_expression_cache_build_l1",
+                "status": "passed" if passed else "failed",
+                "hard_violation": not passed,
+                "classification": "L1 KPI-017 expression cache N=100 build-time evidence",
+                "sample_size": sample_size,
+                "required_reduction_percent": required_reduction_percent,
+                "observed_reduction_percent": round(observed_reduction_percent, 3),
+                "same_evaluator_identity": same_evaluator_identity,
+                "max_abs": max_abs,
+                "timing_ms": {
+                    "cold_no_cache": round(cold_no_cache_ms, 3),
+                    "cached_repeated": round(cached_repeated_ms, 3),
+                },
+                "device": "cpu",
+                "dtype": "torch.float64",
+            }
+        )
+    except Exception as exc:
+        records.append(failed_micro("udm_expression_cache_build_l1", exc))
 
     try:
         bundle = parallel_edge_bundle()
@@ -824,6 +893,26 @@ def build_priority_coverage(
                 "L2": "parallel_edge_sparse_l2" if "parallel_edge_sparse_l2" in micro_ids else None,
                 "L3_full_runs": len(passed_runs),
             },
+        },
+        "udm_expression_cache_build_time": {
+            "id": "golden-udm-expression-cache-build-time-missing",
+            "summary": "KPI-017 UDM expression cache N=100 build-time evidence is missing.",
+            "status": "covered" if "udm_expression_cache_build_l1" in micro_ids else "missing",
+            "evidence": next(
+                (
+                    {
+                        "id": micro["id"],
+                        "sample_size": micro.get("sample_size"),
+                        "required_reduction_percent": micro.get("required_reduction_percent"),
+                        "observed_reduction_percent": micro.get("observed_reduction_percent"),
+                        "same_evaluator_identity": micro.get("same_evaluator_identity"),
+                        "timing_ms": micro.get("timing_ms"),
+                    }
+                    for micro in micro_goldens
+                    if micro.get("id") == "udm_expression_cache_build_l1"
+                ),
+                None,
+            ),
         },
     }
     return coverage
