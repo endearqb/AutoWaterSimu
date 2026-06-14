@@ -237,6 +237,17 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 
 组合矩阵:默认 / 目标(bytecode+unified_rhs+clamp 决策+solver) / 5 个一阶翻转受测,其余不支持。每 flag 定 sunset。
 
+**当前 flag matrix evidence（2026-06-15）**：`scripts/ci/performance-flag-matrix-phase0.ps1` 已建立 opt-in evidence,输出 `performance-flag-matrix-phase0.json` / `.md`。该 evidence 覆盖 6 个 v1.4 性能 flags 与 supporting rollout flag `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE`,验证每个 flag 都有默认值、目标值、runtime 状态、矩阵 case 与退场条件。当前 `UDM_EXPR_CACHE` 是已实现 always-on 但无 runtime toggle；`SOLVER_DEFAULT` 已由 ADR 0016 决定不切换；`USE_UNIFIED_RHS`、`UDM_EXPRESSION_ENGINE`、`CLAMP_STATE_IN_RHS` 与 `SHADOW_RHS_COMPARE` 仍是 planned/blocked flags,尚未声称 runtime 组合已执行。退场条件如下:
+
+| 开关 | 当前/默认 | 目标/候选 | 退场条件 |
+|---|---|---|---|
+| `UDM_EXPR_CACHE` | true(always-on) | true | KPI-017 Phase 0 golden 持续通过则保持 always-on；除非回归需要 rollback PR,不新增 runtime toggle。 |
+| `USE_UNIFIED_RHS` | false(planned) | true | PR-11 L3 goldens、correctness-freeze audit 与 shadow comparison（若启用）通过后,再移除 false path。 |
+| `UDM_EXPRESSION_ENGINE` | ast(planned optional) | bytecode / model_codegen | L1/L3 golden 与 expression bucket 收益均通过后保留；收益不足则移除实验引擎。 |
+| `CLAMP_STATE_IN_RHS` | decision_pending | PR-12 决策值 | PR-12 固定 default branch golden、记录输出投影决策与兼容说明后退场。 |
+| `SOLVER_DEFAULT` | scipy_solver | scipy_solver | 当前无切换；未来必须新 ADR + refreshed goldens + rollout flag 后才能引入。 |
+| `SHADOW_RHS_COMPARE` | false(planned optional) | false | unified RHS 默认启用并完成 soak 期无 L3/correctness 回归后移除 shadow。 |
+
 回滚要点:PR-31 revert 恢复副本(过渡 tag);PR-26 过渡期可 revert,过渡后需恢复旧 cursor 编码;PR-27 第一步直接 revert、第二步 migration down;PR-38/39 行为变更走 flag 灰度。
 
 ---
@@ -298,5 +309,5 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] P-06 Go latency baseline 已有;keyset 深分页(KPI-014)、claim 有界扫描+对抗(KPI-015)、worker 端到端基线仍需后续 PR。
 - [x] 火焰图占比表;KPI-003 收益分解(按求解器)。
 - [x] P-05 strict opt-in smoke / 灰度策略已有；worker 默认 strict 切换、存量失败归因扩展和前端文案同步仍需后续 PR。
-- [ ] flag 组合矩阵测试;每 flag 有退场条件。
+- [x] flag 组合矩阵测试;每 flag 有退场条件。
 - [x] 绝对阈值 KPI 仅 nightly 固定 runner,基线含硬件指纹。

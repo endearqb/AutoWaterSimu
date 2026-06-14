@@ -19,6 +19,7 @@
 - opt-in performance golden Phase 0 evidence，生成 CPU/f64/fixed-seed L3 全仿真 goldens、L1/L2 micro goldens 与 KPI-017 N=100 expression cache build-time evidence。
 - opt-in performance hot-path prereview Phase 0 evidence，汇总 baseline/profiling/golden 并选择第一批可实施优化点。
 - opt-in Go API latency Phase 0 evidence，启动本地内存 Compute API 并测 job list/get/worker claim wall time。
+- opt-in performance flag matrix Phase 0 evidence，记录 v1.4 性能 flags 的默认/目标值、组合矩阵和退场条件。
 - opt-in Desktop project package/support bundle smoke 验证。
 - opt-in Desktop unsigned release artifacts smoke 验证。
 - 8 条金标场景的现有 lane evidence 汇总，以及显式本地 evidence refresh 编排。
@@ -51,6 +52,7 @@
 | `performance-golden-phase0.ps1` | 运行 CPU/f64/fixed-seed golden generator，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 三求解器矩阵、L1/L2 micro goldens 与 KPI-017 N=100 expression cache build-time evidence，输出 `tmp/ci-evidence/performance-golden-phase0.json` / `.md` 和 `tmp/performance-golden-phase0/goldens/*.golden.json` |
 | `performance-hotpath-prereview-phase0.ps1` | 汇总 P-01/P-02/P-03 evidence，选择 hot-path 候选、记录已完成候选、容差层级、收益度量、UDM solver bucket breakdown 和禁止混入项，输出 `tmp/ci-evidence/performance-hotpath-prereview-phase0.json` / `.md` |
 | `performance-go-api-latency-phase0.ps1` | 启动本地 `go run ./cmd/compute-api` 内存实例，批量创建 jobs，测 `GET /api/v1/compute/jobs`、`GET /api/v1/compute/jobs/{id}` 与 worker claim POST wall time，输出 `tmp/ci-evidence/performance-go-api-latency-phase0.json` / `.md` |
+| `performance-flag-matrix-phase0.ps1` | 验证 v1.4 性能 flags 和 supporting rollout flag 均有默认值、目标值、runtime 状态、组合矩阵位置和退场条件，输出 `tmp/ci-evidence/performance-flag-matrix-phase0.json` / `.md` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
 | `desktop-release-artifacts-smoke.ps1` | 构建真实 PyInstaller sidecar 和 NSIS installer，运行 packaged worker runtime smoke、release gate `Mode=release` 与本地 unsigned artifact bundle verifier，并写出 `tmp/ci-evidence/desktop-release-artifacts-smoke.json` |
 | `golden-scenarios.ps1` | 读取现有 CI/release evidence，汇总 8 条金标场景的 `partial` / `missing` / `blocked` 状态；可用 `-RefreshLocalEvidence` 先刷新非 Docker 本地 evidence lanes，并写出 `tmp/ci-evidence/golden-scenarios.json` |
@@ -90,6 +92,8 @@
 本目录对 `Justfile` 暴露 `performance-hotpath-prereview-phase0` opt-in 入口；它读取 Phase 0 baseline、profiling 和 golden evidence，当前选择 `transport-runtime-tensor-precompute-no-semantics` 作为第一批 hot-path 候选，并记录已完成的 `udm-expression-cache-and-device-sync-reduction` 与 `asm-stable-reaction-runtime-precompute` 候选；报告会把 `udm_single` / `mixed_asm_udm` 的 `expression`、`item_device_sync`、`core_compute` 和 `ode_framework` profile buckets 按 `scipy_solver`、`rk4`、`adaptive_heun` 汇总，用作 KPI-001 / KPI-003 的求解器维度 evidence。收益应回流到对应 profile bucket 与 worker `runtime_audit.timings_ms.compute`，并明确禁止混入 mixed ASM/UDM 语义、PR-32 dense parallel-edge weighted-merge 语义变更、ASM oxygen active compute scope、default clamp、solver/output grid、schema/OpenAPI/generated client、worker strict-mode 或 fallback 删除。它是 P-08 证据，不替代具体优化实现、不进入默认 `pr-fast`。
 
 本目录对 `Justfile` 暴露 `performance-go-api-latency-phase0` opt-in 入口；它启动本地内存 Compute API，使用默认 development token 批量创建 material balance jobs，测 job list/get 与 worker claim POST wall time，写出 p50/p95/p99，并预留 `claim_scanned_rows` 字段为后续 metrics PR 使用。它只建立 P-06 baseline，不修改 keyset cursor、claim LIMIT、索引、migration、OpenAPI 或默认 `pr-fast`。
+
+本目录对 `Justfile` 暴露 `performance-flag-matrix-phase0` opt-in 入口；它记录 v1.4 性能 flags（`UDM_EXPR_CACHE`、`USE_UNIFIED_RHS`、`UDM_EXPRESSION_ENGINE`、`CLAMP_STATE_IN_RHS`、`SOLVER_DEFAULT`、`SHADOW_RHS_COMPARE`）和 supporting rollout flag（`AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE`）的默认/目标值、runtime 状态、矩阵 case 和退场条件。当前多数性能 flags 仍是 planned/blocked 状态，因此该脚本验证计划与 evidence metadata，不声称尚未实现的 runtime 组合已被执行。
 
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
 
@@ -144,6 +148,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-profi
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-golden-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-hotpath-prereview-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-api-latency-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-flag-matrix-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1

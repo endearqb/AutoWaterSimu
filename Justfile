@@ -72,6 +72,9 @@ performance-hotpath-prereview-phase0:
 performance-go-api-latency-phase0:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-api-latency-phase0.ps1
 
+performance-flag-matrix-phase0:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-flag-matrix-phase0.ps1
+
 desktop-package-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 

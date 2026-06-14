@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core performance flag matrix TODO
+
+- [x] Re-read v1.4 flag section, current runtime/env flag usage, scripts/ci README, Justfile, and current-state context.
+- [x] Confirm this slice records and validates flag matrix metadata only, not implementing planned runtime toggles, unified RHS, expression bytecode, clamp projection, solver default switching, worker strict default, schema/API changes, or Go API performance work.
+- [x] Add opt-in `performance-flag-matrix-phase0.ps1` evidence script.
+- [x] Cover v1.4 flags plus supporting worker adapter validation rollout flag with default/target/runtime status, matrix cases, and exit conditions.
+- [x] Update Justfile, scripts READMEs, v1.4 flag table/checklist, docs/rebuild README, current-state, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Treat current/default matrix as covered by existing baseline/golden/prereview/correctness evidence.
+- Mark future runtime combinations as blocked until their flags are implemented by their owning PRs.
+- Make missing exit conditions or missing matrix coverage a hard violation in the evidence script.
+
+## Review
+
+- `performance-flag-matrix-phase0.ps1` now emits JSON/Markdown evidence with 7 flags, 8 matrix cases, and 0 hard violations.
+- The matrix covers v1.4 performance flags plus the supporting worker adapter validation rollout flag.
+- Planned runtime combinations are explicitly marked blocked until their owning PRs implement the toggles; this avoids overclaiming runtime combo execution.
+- Validation passed for the flag matrix script, docs/rebuild tests, `pr-fast`, evidence-field checks, and `git diff --check`.
+
 # 2026-06-15 simulation_core worker repo-path fallback deletion TODO
 
 - [x] Re-read PR-29 installability requirement, worker runner dependency import path, worker/scripts READMEs, boundary/dependency audits, and v1.4 current checklist.
