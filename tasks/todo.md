@@ -1,3 +1,31 @@
+# 2026-06-14 AutoWaterSimu Next P3 simulation core boundary audit TODO
+
+- [x] Read the attached priority reassessment and confirm P0 service-test split, P1 boundary gate, and P2 mutation matrix closeout are already landed in current HEAD.
+- [x] Re-read README First context for docs/rebuild, docs/architecture, simulation_core, simulation_core/python, simulation_core/tests, services/simulation-worker, backend/app/material_balance, scripts, and scripts/ci.
+- [x] Confirm the next slice is P3 `simulation-core-packaging-audit`, not another wrapper, hosted evidence entry, generic service-test split, or hot-path performance optimization.
+- [x] Add a read-only simulation_core / worker / legacy backend boundary audit script that writes machine-readable evidence.
+- [x] Separate hard runtime violations from open packaging/test/oracle gaps so the current audit can pass with `partial` evidence while still supporting `-FailOnOpenGaps` later.
+- [x] Update scripts/current-state/development-plan context for the new P3 audit baseline and next pyproject/core-only-test priorities.
+- [x] Run validation and record exact results.
+- [x] Commit and push this P3 audit slice.
+
+## Plan
+
+- Keep this as audit and documentation only.
+- Preserve runtime behavior, worker import behavior, backend material-balance implementation, Python package contents, tests, schemas, OpenAPI, generated clients, CI default gates, and Desktop scope.
+- Treat the existing packaging/sys.path/backend-oracle findings as open gaps, not hard failures, until the next pyproject/core-only test slice closes them.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `scripts/audit-simulation-core-boundary.ps1`, a read-only P3 audit that writes `tmp/architecture-evidence/simulation-core-boundary.json`.
+- The audit checks packaging metadata for `simulation_core/python` and `contracts/python`, worker repo-path fallback, runtime legacy `app.*` imports, backend/core dual implementation drift, test backend-oracle dependencies, and a core-only import smoke.
+- Current audit evidence is `partial`: 0 hard violations, 6 open gaps, `simulation_core` version `0.1.0-phase2b`, and core-only import smoke passed.
+- Open gaps are missing `simulation_core/python` packaging metadata, missing `contracts/python` packaging metadata, worker `_ensure_repo_import_paths()` / `sys.path` fallback, backend/core dual implementation drift risk, simulation_core tests collecting through backend oracle imports, and worker tests using backend oracle imports.
+- Updated `scripts/README.md`, `docs/architecture/current-state.md`, and the Certainty/Elegance Development Plan so the next slice is minimal pyproject/editable dependency plus core-only test split, not hot-path performance optimization.
+- Validation passed: `scripts\audit-simulation-core-boundary.ps1`, `scripts\check-deps.ps1`, `git diff --check -- .`, and `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`).
+- `pr-fast` evidence recorded tracked changes because this slice was still in the working tree during local validation; the only unrelated untracked files remain `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/`.
+
 # 2026-06-14 AutoWaterSimu Next P2 matrix red/yellow closeout TODO
 
 - [x] Re-read README First context for docs, docs/rebuild, docs/architecture, apps/api, internal compute, scripts, scripts/ci, security-smoke, and current P2 matrix.

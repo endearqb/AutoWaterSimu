@@ -599,13 +599,14 @@ git diff --check -- docs contracts apps frontend services .ai tasks
 
 ## 9. Immediate Next Step
 
-近期 `.ai/changes` 已显示 evidence wrapper / hosted workflow entry、同 package 文件拆分和普通 service-test split 的边际收益下降。当前 P0 service-test split 已结构性收口，P1 Compute API boundary audit 已进入默认 `pr-fast` gate，P2 mutation/data-scope gap matrix 已落到 `docs/architecture/compute-mutation-scope-matrix.md`，且 red/yellow rows 已由 focused tests 与 `security-smoke` 选集闭合。下一次实际执行应进入 P3 simulation_core / worker / legacy backend boundary audit；只有能产出真实 hosted green evidence 时才补 hosted workflow 证据。
+近期 `.ai/changes` 已显示 evidence wrapper / hosted workflow entry、同 package 文件拆分和普通 service-test split 的边际收益下降。当前 P0 service-test split 已结构性收口，P1 Compute API boundary audit 已进入默认 `pr-fast` gate，P2 mutation/data-scope gap matrix 已落到 `docs/architecture/compute-mutation-scope-matrix.md`，且 red/yellow rows 已由 focused tests 与 `security-smoke` 选集闭合。P3 已启动 `simulation-core-packaging-audit`：`scripts/audit-simulation-core-boundary.ps1` 会检查 `simulation_core` / worker / legacy backend packaging 与边界，输出 `tmp/architecture-evidence/simulation-core-boundary.json`，并把 runtime hard violation 与开放缺口分开。当前审计基线为 `partial`：core-only import smoke 通过，worker/core runtime 没有 legacy `app.*` 反向 import 硬违规，但仍缺 `simulation_core/python` 与 `contracts/python` packaging metadata，worker 仍有 repo-path fallback，backend/core 仍有双实现漂移风险，测试仍混有 backend oracle 依赖。只有能产出真实 hosted green evidence 时才补 hosted workflow 证据。
 
 下一次实际执行优先级：
 
-1. 启动 P3 `simulation-core-packaging-audit`：确认 `simulation_core` packaging、worker `_ensure_repo_import_paths()` / sys.path fallback、backend/core 双实现漂移、core-only import smoke、legacy backend oracle 依赖和 tests collect 边界。
-2. 在 P3 audit 后落最小 `simulation_core/python` pyproject / editable dependency / core-only smoke，作为性能 Phase 0 前置；暂不做 UDM RHS 去循环、dense/sparse 重写、keyset cursor 或 claim LIMIT 热路径优化。
-3. 继续保持 `compute-mutation-scope-matrix.md` 与 `security-smoke` 同步：未来新增 mutation route 时，同一变更必须补 method/scope/no-write/audit evidence，避免 P2 matrix 回退。
+1. 落最小 `simulation_core/python` pyproject / editable dependency / package version smoke，并同步处理或明确保留 `contracts/python` worker fallback 兼容策略，作为性能 Phase 0 前置。
+2. 拆分 core-only boundary/golden tests 与 backend parity/oracle tests，使 `simulation_core` 的 import/collect 证明不再依赖 `backend/` 被加入 `PYTHONPATH`。
+3. 在 packaging 与测试边界稳定后，逐步移除或标记废弃 worker `_ensure_repo_import_paths()` / `sys.path` fallback；暂不做 UDM RHS 去循环、dense/sparse 重写、keyset cursor 或 claim LIMIT 热路径优化。
+4. 继续保持 `compute-mutation-scope-matrix.md` 与 `security-smoke` 同步：未来新增 mutation route 时，同一变更必须补 method/scope/no-write/audit evidence，避免 P2 matrix 回退。
 
 以下事项保留为并行或后续 evidence/package movement 清单，不再作为下一次执行主线：
 
