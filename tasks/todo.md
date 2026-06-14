@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next backend material balance exception thin-shell leaf TODO
+
+- [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend tests, simulation_core material_balance, scripts, architecture current-state, and Certainty/Elegance Development Plan.
+- [x] Confirm this slice is a low-risk backend thin-shell leaf, not the broader backend material_balance thin-shell main PR.
+- [x] Add an explicit backend local dependency on `autowatersimu-simulation-core`.
+- [x] Re-export backend material_balance exception classes from simulation_core while preserving the backend import path.
+- [x] Add a focused backend/core exception class identity test.
+- [x] Extend the simulation_core boundary audit to guard the exception thin-shell leaf and dependency declaration.
+- [x] Update README/current-state/development-plan context and change records.
+- [x] Run full validation and record exact results.
+- [x] Commit and push this backend exception thin-shell leaf.
+
+## Plan
+
+- Keep the public backend import path `app.material_balance.exceptions` stable.
+- Preserve legacy backend `core.py`, `models.py`, `utils.py`, ASM/UDM helpers, routes, schemas, OpenAPI, generated clients, worker default validation mode, and numerical behavior.
+- Treat this as the first dependency-backed thin-shell leaf only; do not mark PR-31 backend thin-shell main migration complete.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Backend now declares `autowatersimu-simulation-core` as an editable local dependency in `backend/pyproject.toml`, with `backend/uv.lock` updated by `uv lock --project backend`.
+- `backend/app/material_balance/exceptions.py` now compatibility re-exports the six material balance exception classes from `autowatersimu_simulation_core.material_balance.exceptions`.
+- Added `backend/app/tests/material_balance_exceptions_thin_shell_test.py` to prove backend/core class identity.
+- `scripts/audit-simulation-core-boundary.ps1` now records `backend material_balance exceptions thin shell` and requires both the re-export and backend dependency declaration to keep the leaf green.
+- Updated backend/material_balance/tests/scripts READMEs, architecture current-state, and Certainty/Elegance Development Plan.
+- Validation passed: backend targeted material_balance tests (`18 passed`, existing `python_multipart` warning only), full `simulation_core\tests` (`21 passed`), `uv lock --project backend --check`, `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-input-contract.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-correctness-freeze.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\ci\pr-fast.ps1` (`status=passed`, 9 steps, `compute_boundary_audit.status=passed`, `simulation_core_correctness_freeze_audit.status=passed`), docs/rebuild scan, and `git diff --check -- .` (only LF-to-CRLF notices, no whitespace errors).
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next simulation core correctness freeze TODO
 
 - [x] Re-read README First context for docs/rebuild, docs/architecture, simulation_core, simulation_core/tests, material_balance runtime, scripts, scripts/ci, and recent ADR/change history.

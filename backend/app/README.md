@@ -45,6 +45,7 @@
 
 - FastAPI、SQLModel、Pydantic、PostgreSQL 相关库。
 - `contracts/python` 的稳定合同 helper。
+- `simulation_core/python` 的稳定 public import surface，用于 material_balance 薄壳化迁移叶子；新增这类依赖时必须同步 `backend/pyproject.toml` 与 `backend/uv.lock`。
 
 不应该依赖：
 

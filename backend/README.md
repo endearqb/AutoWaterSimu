@@ -12,6 +12,7 @@ Key constraints:
 - Use structured `logging`; avoid `print`, especially for full flowcharts, payloads, tokens, or large results.
 - API/schema changes require frontend OpenAPI client regeneration.
 - Dense compute changes should keep old-vs-new numerical comparison fixtures.
+- During the material-balance thin-shell migration, backend may depend on the local `autowatersimu-simulation-core` package. Keep `backend/pyproject.toml` and `backend/uv.lock` in sync for any backend re-export that imports that package.
 
 ## Requirements
 

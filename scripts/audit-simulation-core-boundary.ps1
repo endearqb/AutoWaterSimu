@@ -205,6 +205,7 @@ $workerRuntime = Join-Path $Root "services\simulation-worker\simulation_worker"
 $coreTests = Join-Path $Root "simulation_core\tests"
 $workerTests = Join-Path $Root "services\simulation-worker\tests"
 $backendMaterialBalance = Join-Path $Root "backend\app\material_balance"
+$backendPyproject = Join-Path $Root "backend\pyproject.toml"
 
 $corePyproject = Join-Path $simulationCorePython "pyproject.toml"
 $coreSetup = Join-Path $simulationCorePython "setup.py"
@@ -297,6 +298,42 @@ elseif ($deprecatedFallbackHits.Count -gt 0) {
 }
 else {
     Add-Check -Checks $checks -Name "worker repo path fallback" -Status "passed" -Summary "Worker runtime does not mutate sys.path." -Details @()
+}
+
+$backendExceptionsPath = Join-Path $backendMaterialBalance "exceptions.py"
+$coreExceptionsPath = Join-Path $corePackage "material_balance\exceptions.py"
+$requiredExceptionExports = @(
+    "MaterialBalanceError",
+    "InvalidInputError",
+    "CalculationError",
+    "ConvergenceError",
+    "DimensionMismatchError",
+    "NegativeVolumeError"
+)
+$backendPyprojectText = if (Test-Path -LiteralPath $backendPyproject) { Get-Content -LiteralPath $backendPyproject -Raw } else { "" }
+$backendDeclaresSimulationCoreDependency = $backendPyprojectText -match 'autowatersimu-simulation-core'
+$backendExceptionsText = if (Test-Path -LiteralPath $backendExceptionsPath) { Get-Content -LiteralPath $backendExceptionsPath -Raw } else { "" }
+$backendExceptionsThinShellDetected = $backendExceptionsText -match 'autowatersimu_simulation_core\.material_balance\.exceptions'
+$missingExceptionExports = @()
+foreach ($exceptionName in $requiredExceptionExports) {
+    if ($backendExceptionsText -notmatch [regex]::Escape($exceptionName)) {
+        $missingExceptionExports += $exceptionName
+    }
+}
+$backendExceptionThinShellDetails = [ordered]@{
+    backend = if (Test-Path -LiteralPath $backendExceptionsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendExceptionsPath } else { $null }
+    core = if (Test-Path -LiteralPath $coreExceptionsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $coreExceptionsPath } else { $null }
+    backend_dependency_declared = $backendDeclaresSimulationCoreDependency
+    thin_shell_detected = $backendExceptionsThinShellDetected
+    required_exports = $requiredExceptionExports
+    missing_exports = $missingExceptionExports
+}
+if ($backendDeclaresSimulationCoreDependency -and $backendExceptionsThinShellDetected -and $missingExceptionExports.Count -eq 0) {
+    Add-Check -Checks $checks -Name "backend material_balance exceptions thin shell" -Status "passed" -Summary "Legacy backend material_balance exceptions are a compatibility re-export of simulation_core exceptions." -Details $backendExceptionThinShellDetails
+}
+else {
+    Add-Check -Checks $checks -Name "backend material_balance exceptions thin shell" -Status "gap" -Summary "Legacy backend material_balance exceptions have not been migrated to a dependency-backed simulation_core re-export." -Details $backendExceptionThinShellDetails
+    Add-OpenGap -Gaps $openGaps -Id "backend-material-balance-exceptions-thin-shell-missing" -Severity "medium" -Summary "Keep backend exception class identity aligned with simulation_core before the broader backend material_balance thin-shell migration." -Evidence $backendExceptionThinShellDetails
 }
 
 $backendCorePath = Join-Path $backendMaterialBalance "core.py"

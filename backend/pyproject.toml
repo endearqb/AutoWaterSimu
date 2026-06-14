@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 requires-python = ">=3.10,<4.0"
 dependencies = [
+    "autowatersimu-simulation-core",
     "fastapi[standard]<1.0.0,>=0.114.2",
     "python-multipart<1.0.0,>=0.0.7",
     "email-validator<3.0.0.0,>=2.1.0.post1",
@@ -41,6 +42,9 @@ dev-dependencies = [
     "coverage<8.0.0,>=7.4.3",
     "jsonschema>=4,<5",
 ]
+
+[tool.uv.sources]
+"autowatersimu-simulation-core" = { path = "../simulation_core/python", editable = true }
 
 [build-system]
 requires = ["hatchling"]
