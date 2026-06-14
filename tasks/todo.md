@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core UDM index-conflict guard TODO
+
+- [x] Re-read REQ-P0-004, current UDM runtime mapping code, and focused boundary tests.
+- [x] Confirm this slice covers UDM local→global uniqueness and write-side scatter pollution prevention only, not complete ASM component contracts, hard-coded oxygen index removal, PR-11 unified RHS, solver/default changes, schema/API changes, worker strict default, or fallback deletion.
+- [x] Reject explicit UDM local component mappings where two local components resolve to the same global component.
+- [x] Add focused runtime payload and `_convert_to_tensors()` tests for the conflict guard.
+- [x] Update material_balance/tests README, current-state, v1.4 status/checklist, docs/rebuild README, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep valid one-to-one local→global bindings unchanged.
+- Fail before `UDMNodeRuntime.evaluate_reaction()` can call write-side `index_add_` with duplicate global indices.
+- Leave full ASM named component contracts and PR-11 unified RHS for later dedicated slices.
+
+## Review
+
+- `_resolve_local_to_global_indices()` now rejects duplicate global targets with an `InvalidInputError` naming both local components and the target global component.
+- The same validated index list is still used for read-side env construction, fixed-mask construction, and write-side `index_add_`, so a conflict cannot silently add two local reactions into one global component.
+- Focused tests cover both direct runtime payload construction and `_convert_to_tensors()` propagation.
+- Complete ASM component-schema mapping, hard-coded oxygen-index removal, PR-11, solver defaults, schema/API, worker strict default, and fallback deletion remain future work.
+
 # 2026-06-15 simulation_core default solver policy evaluation TODO
 
 - [x] Re-read PR-36 solver matrix/default requirements, current solver policy, and Phase 0 baseline/golden evidence.

@@ -8,7 +8,7 @@
 
 - core import boundary 测试。
 - core adapter 行为测试。
-- `_run_hours` mixed-model dispatch、single-model fallback、clamp policy、ASM oxygen mask scope、`compute_mask` derivative masking、solver matrix policy、deprecated solver limit fields、ASM active reaction runtime precompute、sparse path dense-props lazy behavior、dense/sparse parallel-edge equivalence、`_balance_param` shape guard、segment timestamp CPU construction、precomputed `parameter_names` reuse、UDM component mapping / stoich mismatch guard 和 UDM expression AST whitelist/corpus 的 correctness-freeze 测试。
+- `_run_hours` mixed-model dispatch、single-model fallback、clamp policy、ASM oxygen mask scope、`compute_mask` derivative masking、solver matrix policy、deprecated solver limit fields、ASM active reaction runtime precompute、sparse path dense-props lazy behavior、dense/sparse parallel-edge equivalence、`_balance_param` shape guard、segment timestamp CPU construction、precomputed `parameter_names` reuse、UDM component mapping / conflict / stoich mismatch guard 和 UDM expression AST whitelist/corpus 的 correctness-freeze 测试。
 - 与 legacy backend 的 material balance、ASM1Slim model-bound、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 和 `simulation.udm.v1` 数值 parity 测试。
 
 本目录不负责：
@@ -21,7 +21,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
-| `test_material_balance_core_boundary.py` | core-only import boundary、adapter 行为、solver matrix policy、deprecated solver limit fields、ASM active reaction runtime precompute、`_run_hours` correctness-freeze、sparse path dense-props lazy behavior、dense/sparse transport、`_balance_param` shape guard、timestamp CPU construction、`parameter_names` reuse、UDM component mapping / stoich mismatch guard 和 UDM expression AST whitelist/corpus 测试，不导入 legacy backend |
+| `test_material_balance_core_boundary.py` | core-only import boundary、adapter 行为、solver matrix policy、deprecated solver limit fields、ASM active reaction runtime precompute、`_run_hours` correctness-freeze、sparse path dense-props lazy behavior、dense/sparse transport、`_balance_param` shape guard、timestamp CPU construction、`parameter_names` reuse、UDM component mapping / conflict / stoich mismatch guard 和 UDM expression AST whitelist/corpus 测试，不导入 legacy backend |
 | `test_material_balance_core.py` | legacy backend parity/oracle 测试，并通过 `BACKEND_CORE_DRIFT_GUARD_CASES` 显式声明 backend/core 双实现漂移保护用例 |
 
 ## 3. 维护约定

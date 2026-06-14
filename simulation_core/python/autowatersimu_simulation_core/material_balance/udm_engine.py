@@ -166,6 +166,7 @@ def _resolve_local_to_global_indices(
     device: torch.device,
 ) -> Tuple[torch.Tensor, List[int]]:
     indices: List[int] = []
+    local_name_by_global_index: Dict[int, str] = {}
     for local_name in local_component_names:
         canonical_name = variable_binding_map.get(local_name, local_name)
         index = global_index_by_name.get(canonical_name)
@@ -175,7 +176,16 @@ def _resolve_local_to_global_indices(
                 f"local component '{local_name}' maps to unknown global component "
                 f"'{canonical_name}'"
             )
-        indices.append(int(index))
+        index_value = int(index)
+        previous_local_name = local_name_by_global_index.get(index_value)
+        if previous_local_name is not None:
+            raise InvalidInputError(
+                "UDM component mapping conflict: "
+                f"local components '{previous_local_name}' and '{local_name}' "
+                f"both map to global component '{canonical_name}'"
+            )
+        local_name_by_global_index[index_value] = local_name
+        indices.append(index_value)
     return torch.tensor(indices, dtype=torch.long, device=device), indices
 
 

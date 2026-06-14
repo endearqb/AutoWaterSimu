@@ -602,6 +602,30 @@ def test_udm_runtime_rejects_unmapped_local_components() -> None:
         )
 
 
+def test_udm_runtime_rejects_conflicting_local_component_bindings() -> None:
+    node = _udm_binding_node().model_copy(
+        update={
+            "udm_variable_bindings": [
+                {"local_var": "S", "canonical_var": "A"},
+                {"local_var": "P", "canonical_var": "A"},
+            ]
+        }
+    )
+
+    with pytest.raises(
+        InvalidInputError,
+        match=(
+            "local components 'S' and 'P' both map to global component 'A'"
+        ),
+    ):
+        build_udm_runtime_payload(
+            nodes=[node],
+            global_component_names=["A", "B"],
+            device=torch.device("cpu"),
+            dtype=torch.float32,
+        )
+
+
 def test_udm_runtime_keeps_global_fallback_when_local_components_absent() -> None:
     node = _udm_binding_node().model_copy(
         update={
@@ -679,6 +703,37 @@ def test_convert_to_tensors_rejects_udm_component_mapping_mismatch() -> None:
     )
 
     with pytest.raises(InvalidInputError, match="UDM component mapping failed"):
+        MaterialBalanceCalculator()._convert_to_tensors(input_data)
+
+
+def test_convert_to_tensors_rejects_udm_component_mapping_conflict() -> None:
+    node = _udm_binding_node().model_copy(
+        update={
+            "udm_variable_bindings": [
+                {"local_var": "S", "canonical_var": "A"},
+                {"local_var": "P", "canonical_var": "A"},
+            ]
+        }
+    )
+    input_data = MaterialBalanceInput(
+        nodes=[
+            NodeData(
+                node_id="in",
+                node_type="input",
+                initial_volume=1.0,
+                initial_concentrations=[0.0, 0.0],
+                is_inlet=True,
+            ),
+            node,
+        ],
+        edges=[],
+        parameters=CalculationParameters(hours=1.0, steps_per_hour=1),
+        original_flowchart_data={
+            "customParameters": [{"name": "A"}, {"name": "B"}],
+        },
+    )
+
+    with pytest.raises(InvalidInputError, match="UDM component mapping conflict"):
         MaterialBalanceCalculator()._convert_to_tensors(input_data)
 
 

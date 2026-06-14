@@ -33,7 +33,7 @@
 - `udm-expression-cache-and-device-sync-reduction` 已落地:`compile_expression()` 使用 LRU 缓存,UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices,UDM RHS/evaluate_reaction 热路径不再用逐步 `.item()` 判断 mask 或映射。
 - `asm-stable-reaction-runtime-precompute` 已落地:ASM1Slim/ASM1/ASM3 在 `_convert_to_tensors()` 阶段预计算 active compute node indices 与 filtered parameter rows, single-model 与 combined RHS 复用该 runtime,避免每步布尔 mask 参数 gather。
 - PR-38 supported mixed-model dispatch 已落地并由 ADR 0015 接受:`_run_hours` 在多个反应模型同时 active 时走 combined RHS,只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应项；单模型 fallback 顺序与 default no-clamp baseline 继续由 correctness-freeze audit 保护。
-- PR-39 氧清零 compute_mask 约束已完成当前 ASM 分支的第一步:ASM1Slim/ASM1/ASM3 氧导数清零仅作用于对应 ASM model 的 active compute 节点,不再依赖全列写入。UDM runtime 组分错配 guard 也已完成第一步:显式 UDM 局部组分必须同名或经 `udm_variable_bindings` 映射到全局组分,未知 `stoich` / `stoich_expr` 目标组分在 runtime payload 构建期报错。
+- PR-39 氧清零 compute_mask 约束已完成当前 ASM 分支的第一步:ASM1Slim/ASM1/ASM3 氧导数清零仅作用于对应 ASM model 的 active compute 节点,不再依赖全列写入。UDM runtime 组分错配与 PR-4 index-conflict guard 也已完成当前 UDM 部分:显式 UDM 局部组分必须同名或经 `udm_variable_bindings` 映射到全局组分,同一节点 local→global 映射必须唯一,未知 `stoich` / `stoich_expr` 目标组分在 runtime payload 构建期报错。
 - PR-13a 表达式校验器白名单化已落地:`_validate_ast` 现在默认拒绝未知 AST 节点,`NamedExpr`/`JoinedStr`/`Starred`/`Subscript`/`Slice` 与 keyword call arguments 会在校验期失败,不再等到运行时 evaluator 才 fail-late。
 
 当前下一步执行顺序:
@@ -166,7 +166,7 @@ golden:混合 asm+udm(支持)或报错用例(不支持)。KPI-018。
 ### PR-39:反应组分契约【Phase 1】
 为每个反应模型定义组分契约(数量/必需组分/顺序或具名映射);构建期校验全局组分映射满足契约;硬编码氧索引(0/5/6)与反应输入列序提升为 `component_schema→模型组分` 映射。v1.4 补充:当前氧清零是 `torch.where(mask,...)` 后再全列 `dy[:,k]=0`,抽取后必须改为仅对 `compute_mask` 子集清零,不得依赖前序 mask 投影顺序。KPI-019。
 
-**当前实现状态（2026-06-15）**：已完成氧清零范围的第一步防护:ASM1Slim/ASM1/ASM3 现有分支与 mixed combined RHS 只对对应 ASM model 的 active compute 节点清零氧导数,不再对全列无条件写入。ASM stable mask gather 的低风险部分也已落地:`_convert_to_tensors()` 预计算 ASM1Slim/ASM1/ASM3 active compute node indices 与 filtered parameter rows,single-model 与 combined RHS 复用该 runtime,每步仍只对变化的 `y` 做 index gather。UDM runtime 已补组分错配前置 guard:显式声明的局部组分必须能通过同名或 `udm_variable_bindings` 映射到全局组分,`stoich` / `stoich_expr` 不能引用未知局部组分,否则构建 runtime payload 时抛出 `InvalidInputError`。完整 ASM 组分契约、硬编码氧索引迁移到 `component_schema→模型组分` 映射、PR-4 写侧/索引冲突清理仍需后续 PR；这也不代表 PR-11 全统一 RHS 已完成。
+**当前实现状态（2026-06-15）**：已完成氧清零范围的第一步防护:ASM1Slim/ASM1/ASM3 现有分支与 mixed combined RHS 只对对应 ASM model 的 active compute 节点清零氧导数,不再对全列无条件写入。ASM stable mask gather 的低风险部分也已落地:`_convert_to_tensors()` 预计算 ASM1Slim/ASM1/ASM3 active compute node indices 与 filtered parameter rows,single-model 与 combined RHS 复用该 runtime,每步仍只对变化的 `y` 做 index gather。UDM runtime 已补组分错配与 PR-4 写侧索引冲突前置 guard:显式声明的局部组分必须能通过同名或 `udm_variable_bindings` 映射到全局组分,同一节点内不能有两个 local 组分解析到同一个 global 组分,`stoich` / `stoich_expr` 不能引用未知局部组分,否则构建 runtime payload 时抛出 `InvalidInputError`;读侧 env、写侧 `index_add_` 与 fixed-mask 共用这份校验索引。完整 ASM 组分契约、硬编码氧索引迁移到 `component_schema→模型组分` 映射仍需后续 PR；这也不代表 PR-11 全统一 RHS 已完成。
 
 ### PR-11:统一 RHS 抽取【Phase 4,v1.4 继承并强化】
 五个 RHS 分支当前重复状态拆分、clamp、传输 balance、dilution、mask 投影与 volume 导数,抽取收益明确。但 PR-11 不得只做机械去重:必须以 PR-38 的混合调度决策为前置,支持方案下在单次 RHS 内对 ASM1Slim/ASM1/ASM3/UDM 各 mask 子集叠加反应项;不支持方案下则在构建期报错并有存量审计。抽取时必须显式保留或决策各模型特殊行为:ASM 氧列硬编码清零迁移到 PR-39 组分契约且限定 compute_mask,UDM fixed component mask 继续生效,default 纯传输分支的输出 clamp 现状由 PR-12 golden 固定。v1.4 补充:ASM `params[mask]` / `y[mask]` 等稳定布尔 gather 应与 UDM 节点索引一起预解析,否则统一 RHS 只解决可维护性而漏掉热路径成本。
@@ -292,7 +292,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [ ] f64 golden 生成器已有 Phase 0 evidence;parity 测试改造与最终覆盖补齐仍需随 PR-37/PR-38 决策推进。
 - [x] default 纯传输分支 clamp 现状已有 golden;统一投影语义变更仍需单独 flag PR。
 - [ ] 统一 RHS 抽取已保留 ASM 氧列、UDM fixed mask、default clamp 现状或显式变更记录。
-- [ ] 索引冲突不污染;映射 guard 写侧修复。
+- [x] 索引冲突不污染;映射 guard 写侧修复。
 - [x] P-06 Go latency baseline 已有;keyset 深分页(KPI-014)、claim 有界扫描+对抗(KPI-015)、worker 端到端基线仍需后续 PR。
 - [x] 火焰图占比表;KPI-003 收益分解(按求解器)。
 - [x] P-05 strict opt-in smoke / 灰度策略已有；worker 默认 strict 切换、存量失败归因扩展和前端文案同步仍需后续 PR。
