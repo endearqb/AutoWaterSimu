@@ -95,14 +95,14 @@ DOCS_TEST_CLASSIFICATIONS = {
         "reason": "Sparse parallel edge aggregation is the physical reference behavior.",
     },
     "test_parallel_edge_golden.py::test_dense_matches_sparse_parallel_edge": {
-        "classification": "current-state repro",
-        "status": "xfail",
-        "reason": "Records PR-32 dense parallel-edge overwrite behavior before dense/sparse unification.",
+        "classification": "target golden",
+        "status": "active",
+        "reason": "PR-32 dense weighted merge must stay L2-equivalent to sparse parallel-edge aggregation.",
     },
     "test_parallel_edge_golden.py::test_dense_matches_sparse_single_edge": {
         "classification": "current-state regression guard",
         "status": "active",
-        "reason": "Single-edge dense/sparse equivalence must keep passing while PR-32 is pending.",
+        "reason": "Single-edge dense/sparse equivalence must keep passing after PR-32.",
     },
 }
 
@@ -552,12 +552,11 @@ def build_micro_goldens(*, golden_dir: Path, modules: dict[str, Any]) -> list[di
         max_abs = max_abs_diff(delta_m_dense, delta_m_sparse)
         add_record(
             {
-                "id": "parallel_edge_dense_current_repro_l2",
-                "status": "current_state_repro",
-                "hard_violation": False,
-                "classification": "L2 dense/sparse divergence repro pending PR-32",
+                "id": "parallel_edge_dense_sparse_l2",
+                "status": "passed" if max_abs <= TOLERANCE_LAYERS["L2"]["f64_max_abs"] else "failed",
+                "hard_violation": max_abs > TOLERANCE_LAYERS["L2"]["f64_max_abs"],
+                "classification": "L2 dense/sparse parallel-edge target golden",
                 "max_abs_dense_vs_sparse": max_abs,
-                "expected_current_state": "dense and sparse differ for repeated src/dst edges because dense factors overwrite.",
                 "dense_delta_m": delta_m_dense,
                 "sparse_delta_m": delta_m_sparse,
                 "device": "cpu",
@@ -565,7 +564,7 @@ def build_micro_goldens(*, golden_dir: Path, modules: dict[str, Any]) -> list[di
             }
         )
     except Exception as exc:
-        records.append(failed_micro("parallel_edge_dense_current_repro_l2", exc))
+        records.append(failed_micro("parallel_edge_dense_sparse_l2", exc))
 
     try:
         bundle = {
@@ -632,30 +631,34 @@ def build_micro_goldens(*, golden_dir: Path, modules: dict[str, Any]) -> list[di
         calculator._balance_param(concentrations, q_out, prop_a, prop_b)
         add_record(
             {
-                "id": "balance_param_non_square_current_repro_l2",
+                "id": "balance_param_non_square_explicit_reject_l2",
                 "status": "failed",
                 "hard_violation": True,
-                "classification": "L2 non-square _balance_param current-state repro",
-                "expected_current_state": "non-square dense balance currently raises instead of producing a rectangular delta.",
+                "classification": "L2 non-square _balance_param explicit rejection",
+                "expected": "non-square dense balance must raise ValueError with an explicit square-Q_out message.",
                 "error": "Expected non-square dense balance to raise, but it returned successfully.",
                 "device": "cpu",
                 "dtype": "torch.float64",
             }
         )
-    except Exception as exc:
+    except ValueError as exc:
+        expected_message = "requires square Q_out"
+        passed = expected_message in str(exc)
         add_record(
             {
-                "id": "balance_param_non_square_current_repro_l2",
-                "status": "current_state_repro",
-                "hard_violation": False,
-                "classification": "L2 non-square _balance_param current-state repro",
-                "expected_current_state": "non-square dense balance currently raises; future shape policy must replace this repro with a target golden.",
+                "id": "balance_param_non_square_explicit_reject_l2",
+                "status": "passed" if passed else "failed",
+                "hard_violation": not passed,
+                "classification": "L2 non-square _balance_param explicit rejection",
+                "expected": expected_message,
                 "error_type": type(exc).__name__,
                 "error": str(exc),
                 "device": "cpu",
                 "dtype": "torch.float64",
             }
         )
+    except Exception as exc:
+        records.append(failed_micro("balance_param_non_square_explicit_reject_l2", exc))
 
     return records
 
@@ -686,8 +689,24 @@ def dense_like_core(bundle: dict[str, Any], n: int, r: int, dtype: torch.dtype) 
     q_out.index_put_((bundle["src"], bundle["dst"]), bundle["q"], accumulate=True)
     prop_a = torch.ones(n, n, r, dtype=dtype)
     prop_b = torch.zeros(n, n, r, dtype=dtype)
-    prop_a[bundle["src"], bundle["dst"], :] = bundle["a"]
-    prop_b[bundle["src"], bundle["dst"], :] = bundle["b"]
+    weighted_a_sum = torch.zeros_like(prop_a)
+    weighted_b_sum = torch.zeros_like(prop_b)
+    q_edge = bundle["q"].unsqueeze(1)
+    weighted_a_sum.index_put_(
+        (bundle["src"], bundle["dst"]),
+        q_edge * bundle["a"],
+        accumulate=True,
+    )
+    weighted_b_sum.index_put_(
+        (bundle["src"], bundle["dst"]),
+        q_edge * bundle["b"],
+        accumulate=True,
+    )
+    active_pairs = q_out != 0
+    if active_pairs.any():
+        q_pair = q_out[active_pairs].unsqueeze(-1)
+        prop_a[active_pairs] = weighted_a_sum[active_pairs] / q_pair
+        prop_b[active_pairs] = weighted_b_sum[active_pairs] / q_pair
     return q_out, prop_a, prop_b
 
 
@@ -761,9 +780,9 @@ def build_priority_coverage(
         },
         "parallel_edge": {
             "id": "golden-parallel-edge-missing",
-            "summary": "parallel-edge sparse golden and dense divergence repro are missing.",
+            "summary": "parallel-edge sparse golden and dense/sparse target equivalence are missing.",
             "status": "covered"
-            if {"parallel_edge_sparse_l2", "parallel_edge_dense_current_repro_l2"}.issubset(micro_ids)
+            if {"parallel_edge_sparse_l2", "parallel_edge_dense_sparse_l2"}.issubset(micro_ids)
             else "missing",
             "evidence": sorted(micro_id for micro_id in micro_ids if micro_id.startswith("parallel_edge_")),
         },
@@ -775,9 +794,9 @@ def build_priority_coverage(
         },
         "balance_param_non_square_degenerate": {
             "id": "golden-balance-param-shape-cases-missing",
-            "summary": "_balance_param non-square repro or degenerate zero-flow golden is missing.",
+            "summary": "_balance_param non-square explicit rejection or degenerate zero-flow golden is missing.",
             "status": "covered"
-            if {"balance_param_zero_flow_degenerate_l2", "balance_param_non_square_current_repro_l2"}.issubset(micro_ids)
+            if {"balance_param_zero_flow_degenerate_l2", "balance_param_non_square_explicit_reject_l2"}.issubset(micro_ids)
             else "missing",
             "evidence": sorted(micro_id for micro_id in micro_ids if micro_id.startswith("balance_param_")),
         },

@@ -291,14 +291,15 @@ class MaterialBalanceCalculator:
         a_edge = torch.tensor([_norm_a(e) for e in edges], dtype=dtype, device=device)  # [E, r]
         b_edge = torch.tensor([_norm_b(e) for e in edges], dtype=dtype, device=device)  # [E, r]
 
-        # 5) 绋犲瘑寮犻噺涓€娆℃€у啓鍏ワ紙濡傚瓨鍦ㄩ噸澶?(src,dst)锛孮_out 绱姞鏇寸ǔ濡ワ級
-        Q_out = torch.zeros(n_nodes, n_nodes, dtype=dtype, device=device)
-        Q_out.index_put_((src, dst), q_vals, accumulate=True)
-
-        prop_a = torch.ones(n_nodes, n_nodes, n_components, dtype=dtype, device=device)
-        prop_b = torch.zeros(n_nodes, n_nodes, n_components, dtype=dtype, device=device)
-        prop_a[src, dst, :] = a_edge
-        prop_b[src, dst, :] = b_edge
+        Q_out, prop_a, prop_b = self._build_dense_transport_tensors(
+            src=src,
+            dst=dst,
+            q_vals=q_vals,
+            a_edge=a_edge,
+            b_edge=b_edge,
+            shape=(n_nodes, n_nodes),
+            n_components=n_components,
+        )
 
         # 6) 绋€鐤忓寘锛堜緵绋€鐤?ODE 璺緞浣跨敤锛岄伩鍏嶅悗缁?nonzero 鎵弿锛?
         sparse_bundle = {
@@ -664,26 +665,34 @@ class MaterialBalanceCalculator:
         ):
             return tensors["Q_out"], tensors["prop_a"], tensors["prop_b"], sparse_bundle
 
-        Q_out = torch.zeros_like(tensors["Q_out"])
-        prop_a = torch.ones_like(tensors["prop_a"])
-        prop_b = torch.zeros_like(tensors["prop_b"])
+        base_shape = tuple(tensors["Q_out"].shape)
+        n_components = int(tensors["prop_a"].shape[-1])
 
         if sparse_bundle is None or q_vals.numel() == 0:
+            Q_out = torch.zeros_like(tensors["Q_out"])
+            prop_a = torch.ones_like(tensors["prop_a"])
+            prop_b = torch.zeros_like(tensors["prop_b"])
             runtime_sparse_bundle = {
                 "src": torch.empty(0, dtype=torch.long, device=self.device),
                 "dst": torch.empty(0, dtype=torch.long, device=self.device),
                 "q": torch.empty(0, dtype=self.dtype, device=self.device),
                 "a": a_edge,
                 "b": b_edge,
-                "shape": tuple(Q_out.shape),
+                "shape": base_shape,
             }
             return Q_out, prop_a, prop_b, runtime_sparse_bundle
 
         src = sparse_bundle["src"]
         dst = sparse_bundle["dst"]
-        Q_out.index_put_((src, dst), q_vals, accumulate=True)
-        prop_a[src, dst, :] = a_edge
-        prop_b[src, dst, :] = b_edge
+        Q_out, prop_a, prop_b = self._build_dense_transport_tensors(
+            src=src,
+            dst=dst,
+            q_vals=q_vals,
+            a_edge=a_edge,
+            b_edge=b_edge,
+            shape=base_shape,
+            n_components=n_components,
+        )
 
         runtime_sparse_bundle = {
             "src": src,
@@ -694,6 +703,53 @@ class MaterialBalanceCalculator:
             "shape": sparse_bundle["shape"],
         }
         return Q_out, prop_a, prop_b, runtime_sparse_bundle
+
+    def _build_dense_transport_tensors(
+        self,
+        *,
+        src: torch.Tensor,
+        dst: torch.Tensor,
+        q_vals: torch.Tensor,
+        a_edge: torch.Tensor,
+        b_edge: torch.Tensor,
+        shape: Tuple[int, int],
+        n_components: int,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        source_count, target_count = shape
+        Q_out = torch.zeros(source_count, target_count, dtype=self.dtype, device=self.device)
+        prop_a = torch.ones(
+            source_count,
+            target_count,
+            n_components,
+            dtype=self.dtype,
+            device=self.device,
+        )
+        prop_b = torch.zeros(
+            source_count,
+            target_count,
+            n_components,
+            dtype=self.dtype,
+            device=self.device,
+        )
+
+        if q_vals.numel() == 0:
+            return Q_out, prop_a, prop_b
+
+        Q_out.index_put_((src, dst), q_vals, accumulate=True)
+
+        q_edge = q_vals.unsqueeze(1)
+        weighted_a_sum = torch.zeros_like(prop_a)
+        weighted_b_sum = torch.zeros_like(prop_b)
+        weighted_a_sum.index_put_((src, dst), q_edge * a_edge, accumulate=True)
+        weighted_b_sum.index_put_((src, dst), q_edge * b_edge, accumulate=True)
+
+        active_pairs = Q_out != 0
+        if active_pairs.any():
+            q_pair = Q_out[active_pairs].unsqueeze(-1)
+            prop_a[active_pairs] = weighted_a_sum[active_pairs] / q_pair
+            prop_b[active_pairs] = weighted_b_sum[active_pairs] / q_pair
+
+        return Q_out, prop_a, prop_b
 
     def _generate_segment_timestamps(
         self,
@@ -832,16 +888,38 @@ class MaterialBalanceCalculator:
         Returns:
             鐗╂枡骞宠　鍙傛暟鐨勫厓缁?
         """
-        m, n = Q_out.shape
-        r = C.shape[1]
+        source_count, target_count = Q_out.shape
+        component_count = C.shape[1]
 
-        C_init = C.unsqueeze(1).repeat(1, n, 1)
+        if C.shape[0] != source_count:
+            raise ValueError(
+                "_balance_param expected C rows to match Q_out source dimension "
+                f"({C.shape[0]} != {source_count})"
+            )
+        expected_factor_shape = (source_count, target_count, component_count)
+        if tuple(C_out_prop.shape) != expected_factor_shape:
+            raise ValueError(
+                "_balance_param expected C_out_prop shape "
+                f"{expected_factor_shape}, got {tuple(C_out_prop.shape)}"
+            )
+        if tuple(prop_b.shape) != expected_factor_shape:
+            raise ValueError(
+                "_balance_param expected prop_b shape "
+                f"{expected_factor_shape}, got {tuple(prop_b.shape)}"
+            )
+
+        C_init = C.unsqueeze(1).expand(source_count, target_count, component_count)
         C_out = C_init * C_out_prop + prop_b
-        q_out = Q_out.clone().unsqueeze(-1)
+        q_out = Q_out.unsqueeze(-1)
 
         m_out = q_out * C_out
-        sum_m_out = m_out.sum(dim=1).view(n, r)
-        sum_m_in = m_out.sum(dim=0).view(m, r)
+        sum_m_out = m_out.sum(dim=1).reshape(source_count, component_count)
+        sum_m_in = m_out.sum(dim=0).reshape(target_count, component_count)
+        if source_count != target_count:
+            raise ValueError(
+                "_balance_param requires square Q_out to compute node deltas "
+                f"(sources={source_count}, targets={target_count})"
+            )
         delta_m = sum_m_in - sum_m_out
         delta_Q = Q_out.sum(dim=0) - Q_out.sum(dim=1)
 

@@ -1,6 +1,6 @@
 """并行边 dense/sparse 语义统一 golden（REQ-P2-003 / PR-32 / KPI-006）。
 
-现状（已复现的存量 bug）：
+历史现状（已复现的存量 bug）：
     ``_convert_to_tensors`` 用 ``prop_a[src,dst,:] = a_edge`` **赋值**，重复 (src,dst)
     下后写的边覆盖先写的；而 ``Q_out.index_put_(..., accumulate=True)`` 是**累加**。
     于是一组并行边在 dense 路径下“流量累加、因子只剩末边”，结果既 ≠ sparse
@@ -8,9 +8,9 @@
 
 本文件分两层：
     1. test_sparse_parallel_edge_is_golden —— 锁定 sparse 的物理正确语义为 golden，
-       现在就应通过；任何对 sparse 路径的改动都不得破坏它。
+       任何对 sparse 路径的改动都不得破坏它。
     2. test_dense_matches_sparse_parallel_edge —— dense ↔ sparse L2 等价。
-       **PR-32 落地前 xfail（记录分歧），落地后摘掉 xfail 即成常绿等价门。**
+       PR-32 选择 dense 加权合并并行边，语义与 sparse 保持等价。
 
 数值 golden 推导（两条 0→1 边，C0=10，q=1，a=[2,4]，b=0）：
     每条边出流质量 = q * (C_src * a) = 1*(10*2)=20 与 1*(10*4)=40，合计 60。
@@ -19,7 +19,6 @@
 
 from __future__ import annotations
 
-import pytest
 import torch
 
 from .conftest import assert_l2
@@ -43,13 +42,29 @@ def _concentrations(dtype: torch.dtype = torch.float64) -> torch.Tensor:
 
 
 def _build_dense_like_core(bundle: dict, n: int, r: int, dtype: torch.dtype):
-    """完全复刻 _convert_to_tensors 的 dense 构造方式（含覆盖式赋值）。"""
+    """复刻 PR-32 后 _convert_to_tensors 的 dense 加权合并方式。"""
     Q_out = torch.zeros(n, n, dtype=dtype)
     Q_out.index_put_((bundle["src"], bundle["dst"]), bundle["q"], accumulate=True)
     prop_a = torch.ones(n, n, r, dtype=dtype)
     prop_b = torch.zeros(n, n, r, dtype=dtype)
-    prop_a[bundle["src"], bundle["dst"], :] = bundle["a"]  # 末边覆盖：bug 源
-    prop_b[bundle["src"], bundle["dst"], :] = bundle["b"]
+    weighted_a_sum = torch.zeros_like(prop_a)
+    weighted_b_sum = torch.zeros_like(prop_b)
+    q_edge = bundle["q"].unsqueeze(1)
+    weighted_a_sum.index_put_(
+        (bundle["src"], bundle["dst"]),
+        q_edge * bundle["a"],
+        accumulate=True,
+    )
+    weighted_b_sum.index_put_(
+        (bundle["src"], bundle["dst"]),
+        q_edge * bundle["b"],
+        accumulate=True,
+    )
+    active_pairs = Q_out != 0
+    if active_pairs.any():
+        q_pair = Q_out[active_pairs].unsqueeze(-1)
+        prop_a[active_pairs] = weighted_a_sum[active_pairs] / q_pair
+        prop_b[active_pairs] = weighted_b_sum[active_pairs] / q_pair
     return Q_out, prop_a, prop_b
 
 
@@ -70,13 +85,8 @@ def test_sparse_parallel_edge_is_golden(deterministic_calculator):
 
 
 # --------------------------------------------------------------------------- #
-# (2) dense ↔ sparse 等价（PR-32 前 xfail）
+# (2) dense ↔ sparse 等价（PR-32 目标语义）
 # --------------------------------------------------------------------------- #
-@pytest.mark.xfail(
-    reason="PR-32 未落地：dense 覆盖式赋值导致并行边因子被末边覆盖，与 sparse 不等价。"
-    " 修复（dense 报错 或 a_eff=Σqᵢaᵢ/Σqᵢ 合并）后摘除本标记。",
-    strict=True,
-)
 def test_dense_matches_sparse_parallel_edge(deterministic_calculator):
     calc = deterministic_calculator
     bundle = _parallel_edge_bundle()

@@ -269,7 +269,7 @@ def build_candidates(
             ),
             "implementation_scope": [
                 "Precompute or cache stable edge/node/component tensors used by transport and balance kernels.",
-                "Keep current dense/sparse behavior byte-for-byte unless a separate correctness PR changes it.",
+                "Preserve PR-32 dense/sparse weighted-merge semantics for parallel edges.",
                 "Keep worker API, schema, artifact format, solver defaults, and sampling grid unchanged.",
             ],
             "profiler_segment": "transport_dense_sparse",
@@ -286,7 +286,7 @@ def build_candidates(
                 "scripts\\ci\\performance-profiling-phase0.ps1",
             ],
             "forbidden_changes": [
-                "Do not fix dense parallel-edge semantics in this PR; keep PR-32 as separate correctness work.",
+                "Do not change PR-32 dense parallel-edge weighted-merge semantics.",
                 "Do not change default branch output clamp policy.",
                 "Do not change supported mixed ASM/UDM dispatch semantics.",
                 "Do not change solver defaults, step grid, output sampling, schemas, or generated clients.",
@@ -370,7 +370,7 @@ def build_dod_answers(first_batch: list[dict[str, Any]], profiling_summary: dict
 def global_forbidden_changes() -> list[str]:
     return [
         "No supported mixed ASM/UDM dispatch semantics change.",
-        "No dense parallel-edge semantic repair in the transport-only optimization PR.",
+        "No PR-32 dense parallel-edge weighted-merge semantic change.",
         "No default output clamp policy change.",
         "No solver default, output grid, tolerance default, schema, OpenAPI, generated client, worker strict-mode, or fallback deletion change.",
         "No benchmark target rewrite to make the numbers look better.",

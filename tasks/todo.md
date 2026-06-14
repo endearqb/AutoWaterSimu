@@ -1,3 +1,27 @@
+# 2026-06-14 simulation_core PR-32/33 dense transport TODO
+
+- [x] Re-read README First context for simulation_core, material_balance runtime, tests, docs/rebuild simulation_core, Phase 0 golden evidence, and v1.4 performance plan.
+- [x] Confirm this slice is PR-32 dense/sparse parallel-edge unification plus the PR-33 `_balance_param` shape-guard subset, not full dense lazy, solver/output-grid change, PR-35 conservation metrics, schema/API change, worker strict default switch, or fallback deletion.
+- [x] Implement dense parallel-edge weighted merge so dense transport matches sparse physical aggregation.
+- [x] Add core-only tests for dense/sparse parallel-edge L2 equivalence and explicit non-square `_balance_param` rejection.
+- [x] Convert docs/rebuild parallel-edge golden from xfail repro to active target golden.
+- [x] Update Phase 0 golden classifications and current-state/planning README records.
+- [x] Run full validation matrix before the phase commit/push.
+
+## Plan
+
+- Use sparse aggregation as the semantic reference.
+- For duplicate `(src,dst)` dense factors, keep `Q_out=sum(q)` and set `prop_a` / `prop_b` to flow-weighted effective factors.
+- Keep runtime graph tensors square for node delta calculation; non-square dense input is rejected explicitly rather than interpreted.
+- Leave full dense lazy, output-grid decoupling, solver defaults, schema/API, worker strict mode, and fallback behavior unchanged.
+
+## Review
+
+- Dense transport now flow-weights duplicate `(src,dst)` edge factors, so dense `_balance_param` matches sparse physical aggregation for parallel edges.
+- `_balance_param` now uses source/target dimension names, `expand`, no `Q_out.clone()`, and an explicit non-square `Q_out` rejection.
+- Docs parallel-edge golden and Phase 0 golden coverage now treat dense/sparse equivalence as an active target, not a current-state repro.
+- Full dense lazy, output-grid decoupling, solver defaults, schema/API, worker strict mode, fallback deletion, and Go API optimization remain future slices.
+
 # 2026-06-14 simulation_core PR-38 mixed dispatch TODO
 
 - [x] Re-read README First context for simulation_core, material_balance runtime, tests, docs/rebuild simulation_core, correctness-freeze audit, and ADR 0014.
@@ -22,7 +46,7 @@
 - The combined RHS computes transport once and adds ASM1Slim/ASM1/ASM3/UDM reactions to active compute subsets.
 - Mixed ASM/UDM UDM reaction regression and docs golden tests are active.
 - ADR 0015 records supported mixed-model dispatch; ADR 0014 is partially superseded only for mixed dispatch.
-- Full PR-39 component contract, full PR-11 unified RHS, PR-12 output projection, PR-36 solver matrix, dense/sparse PR-32, and worker/API changes remain future slices.
+- Full PR-39 component contract, full PR-11 unified RHS, PR-12 output projection, PR-36 solver matrix, full PR-33 dense lazy/output-grid-adjacent work, and worker/API changes remain future slices.
 
 # 2026-06-14 simulation_core P-07 worker packaged no-fallback TODO
 
@@ -206,7 +230,7 @@
 - [x] Confirm this slice is P-03 `perf-phase0-golden-generator`, not UDM RHS optimization, dense/sparse semantic repair, solver default changes, worker strict rollout, fallback deletion, Go latency optimization, or P-08 hot-path prereview.
 - [x] Add an opt-in `scripts/ci/performance-golden-phase0.ps1` entry and Python helper that generate CPU/f64/fixed-seed golden JSON/Markdown evidence.
 - [x] Cover small material balance, medium ASM1, single UDM, and mixed ASM/UDM across `scipy_solver`, `rk4`, and `adaptive_heun`.
-- [x] Generate L1/L2 micro goldens for UDM expression, parallel edge sparse, dense parallel-edge current-state repro, single-edge dense/sparse, `_balance_param` zero-flow degenerate, and `_balance_param` non-square current-state repro.
+- [x] Generate L1/L2 micro goldens for UDM expression, parallel edge sparse, dense/sparse target equivalence, single-edge dense/sparse, `_balance_param` zero-flow degenerate, and `_balance_param` non-square explicit rejection.
 - [x] Record torch version, platform, BLAS/Torch config, commit, solver method, tolerance, sampling grid, golden hashes, core-only checks, and docs test classification.
 - [x] Wire `just performance-golden-phase0` and update README/current-state/simulation_core planning docs.
 - [x] Run golden evidence, docs/core tests, baseline/profiling, audits, contract gate, `pr-fast`, and whitespace checks.
@@ -217,7 +241,7 @@
 - Keep golden generation opt-in and out of default `pr-fast`.
 - Generate stable result hashes without runtime timing fields so f64 golden payloads are reproducible.
 - Remove legacy backend project paths from `sys.path` inside the generator and verify no `app.*` modules are imported.
-- Treat current dense parallel-edge divergence and non-square `_balance_param` behavior as current-state repro goldens, not as final target semantics.
+- Treat old dense parallel-edge divergence and non-square `_balance_param` behavior as superseded current-state repros after PR-32/33; keep P-03 evidence aligned to active target goldens.
 - Leave P-08 as the gate that decides first hot-path implementation scope after P-01/P-02/P-03 evidence is available.
 
 ## Review

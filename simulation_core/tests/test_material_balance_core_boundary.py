@@ -509,6 +509,67 @@ def test_segment_override_clones_edge_tensors_without_mutating_precomputed_bundl
     assert runtime_sparse_bundle is not tensors["sparse_bundle"]
 
 
+def test_dense_transport_merges_parallel_edges_with_sparse_semantics() -> None:
+    calculator = MaterialBalanceCalculator()
+    calculator.device = torch.device("cpu")
+    calculator.dtype = torch.float64
+    device = calculator.device
+    dtype = calculator.dtype
+    src = torch.tensor([0, 0], dtype=torch.long, device=device)
+    dst = torch.tensor([1, 1], dtype=torch.long, device=device)
+    q_vals = torch.tensor([1.0, 3.0], dtype=dtype, device=device)
+    a_edge = torch.tensor([[2.0], [4.0]], dtype=dtype, device=device)
+    b_edge = torch.tensor([[1.0], [2.0]], dtype=dtype, device=device)
+    concentrations = torch.tensor([[10.0], [0.0]], dtype=dtype, device=device)
+    sparse_bundle = {
+        "src": src,
+        "dst": dst,
+        "q": q_vals,
+        "a": a_edge,
+        "b": b_edge,
+        "shape": (2, 2),
+    }
+
+    q_out, prop_a, prop_b = calculator._build_dense_transport_tensors(
+        src=src,
+        dst=dst,
+        q_vals=q_vals,
+        a_edge=a_edge,
+        b_edge=b_edge,
+        shape=(2, 2),
+        n_components=1,
+    )
+    dense_delta_m, dense_delta_q, *_ = calculator._balance_param(
+        concentrations,
+        q_out,
+        prop_a,
+        prop_b,
+    )
+    sparse_delta_m, sparse_delta_q = calculator._balance_param_sparse(
+        concentrations,
+        sparse_bundle,
+    )
+
+    assert q_out[0, 1].item() == pytest.approx(4.0)
+    assert prop_a[0, 1, 0].item() == pytest.approx(3.5)
+    assert prop_b[0, 1, 0].item() == pytest.approx(1.75)
+    assert torch.allclose(dense_delta_m, sparse_delta_m, atol=1e-12, rtol=0)
+    assert torch.allclose(dense_delta_q, sparse_delta_q, atol=1e-12, rtol=0)
+
+
+def test_balance_param_rejects_non_square_dense_matrix_explicitly() -> None:
+    calculator = MaterialBalanceCalculator()
+    calculator.device = torch.device("cpu")
+    calculator.dtype = torch.float64
+    concentrations = torch.tensor([[1.0], [2.0]], dtype=torch.float64)
+    q_out = torch.zeros((2, 3), dtype=torch.float64)
+    prop_a = torch.ones((2, 3, 1), dtype=torch.float64)
+    prop_b = torch.zeros((2, 3, 1), dtype=torch.float64)
+
+    with pytest.raises(ValueError, match="requires square Q_out"):
+        calculator._balance_param(concentrations, q_out, prop_a, prop_b)
+
+
 def test_core_adapter_wraps_invalid_parameters_as_contract_style_error() -> None:
     simulation_input = _minimal_simulation_input()
     simulation_input["parameters"]["tolerance"] = 0.1
