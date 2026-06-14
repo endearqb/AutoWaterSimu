@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core absolute-threshold baseline policy TODO
+
+- [x] Re-read v1.4 KPI threshold requirement, current Phase 0 baseline script, worker self-check shape, and relevant worker/scripts/rebuild README context.
+- [x] Confirm this slice records hardware fingerprint and absolute-threshold policy only, not a hosted nightly workflow, new threshold value, runtime optimization, worker strict default switch, fallback deletion, solver default change, schema/API change, or PR-11 unified RHS.
+- [x] Add worker `self_check().torch_runtime` metadata for torch version, thread count, interop thread count, and CUDA availability.
+- [x] Add Phase 0 baseline `environment.hardware_fingerprint` and `absolute_threshold_policy` fields.
+- [x] Update worker/scripts/rebuild README, current-state, v1.4 checklist/status, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Treat local Phase 0 baseline as smoke/evidence only.
+- Bind baseline evidence to OS/runtime/CPU/thread metadata through a hashable hardware fingerprint.
+- Keep `KPI-007`, `KPI-008`, and `KPI-015` absolute thresholds reserved for a future fixed/self-hosted nightly lane.
+
+## Review
+
+- Worker `self_check()` now exposes additive `torch_runtime` metadata without changing job execution.
+- Phase 0 baseline evidence now includes `environment.hardware_fingerprint`, a matching `fingerprint_sha256`, worker `torch_runtime`, and `absolute_threshold_policy`.
+- Local baseline remains smoke/evidence only; absolute KPI enforcement is still reserved for future fixed-runner nightly infrastructure.
+- Validation passed for worker tests, docs/rebuild tests, Phase 0 baseline, `pr-fast`, evidence-field checks, and `git diff --check`.
+
 # 2026-06-15 simulation_core UDM index-conflict guard TODO
 
 - [x] Re-read REQ-P0-004, current UDM runtime mapping code, and focused boundary tests.

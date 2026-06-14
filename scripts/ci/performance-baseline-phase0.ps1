@@ -97,6 +97,69 @@ function ConvertTo-JsonObject {
     return $Text | ConvertFrom-Json
 }
 
+function Get-OptionalProperty {
+    param(
+        [object]$Object,
+        [string]$Name
+    )
+    if ($null -eq $Object) {
+        return $null
+    }
+    $property = $Object.PSObject.Properties[$Name]
+    if ($null -eq $property) {
+        return $null
+    }
+    return $property.Value
+}
+
+function ConvertTo-Sha256Hex {
+    param([string]$Text)
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
+        $hash = $sha256.ComputeHash($bytes)
+        return "sha256:" + ([System.BitConverter]::ToString($hash).Replace("-", "").ToLowerInvariant())
+    }
+    finally {
+        $sha256.Dispose()
+    }
+}
+
+function Get-HardwareFingerprint {
+    param([object]$WorkerSelfCheck)
+
+    $processorNames = @()
+    try {
+        $processorNames = @(Get-CimInstance -ClassName Win32_Processor | ForEach-Object { [string]$_.Name })
+    }
+    catch {
+        $processorNames = @()
+    }
+    if ($processorNames.Count -eq 0 -and -not [string]::IsNullOrWhiteSpace($env:PROCESSOR_IDENTIFIER)) {
+        $processorNames = @([string]$env:PROCESSOR_IDENTIFIER)
+    }
+
+    $torchRuntime = Get-OptionalProperty -Object $WorkerSelfCheck -Name "torch_runtime"
+    $payload = [ordered]@{
+        os_description = [System.Runtime.InteropServices.RuntimeInformation]::OSDescription
+        os_architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+        process_architecture = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString()
+        framework_description = [System.Runtime.InteropServices.RuntimeInformation]::FrameworkDescription
+        processor_architecture = [string]$env:PROCESSOR_ARCHITECTURE
+        processor_names = $processorNames
+        logical_cpu_count = [int][System.Environment]::ProcessorCount
+        is_64_bit_os = [bool][System.Environment]::Is64BitOperatingSystem
+        is_64_bit_process = [bool][System.Environment]::Is64BitProcess
+        torch_version = Get-OptionalProperty -Object $torchRuntime -Name "version"
+        torch_num_threads = Get-OptionalProperty -Object $torchRuntime -Name "num_threads"
+        torch_num_interop_threads = Get-OptionalProperty -Object $torchRuntime -Name "num_interop_threads"
+        torch_cuda_available = Get-OptionalProperty -Object $torchRuntime -Name "cuda_available"
+    }
+    $canonical = $payload | ConvertTo-Json -Depth 50 -Compress
+    $payload["fingerprint_sha256"] = ConvertTo-Sha256Hex -Text $canonical
+    return $payload
+}
+
 function Add-HardViolation {
     param(
         [System.Collections.Generic.List[object]]$Violations,
@@ -200,6 +263,7 @@ catch {
 if ($selfCheckInvocation["exit_code"] -ne 0) {
     Add-HardViolation -Violations $hardViolations -Rule "worker-self-check-exit-code" -Summary "Worker self-check failed before performance baseline runs." -Details $selfCheckInvocation
 }
+$hardwareFingerprint = Get-HardwareFingerprint -WorkerSelfCheck $workerSelfCheck
 
 foreach ($case in $cases) {
     $fixturePath = Join-Path $Root $case["fixture"]
@@ -362,11 +426,22 @@ $report = [ordered]@{
         list_latency_ms = "Compute API list/read endpoint wall time from request start to response body parsed"
         future_source = "integration-smoke or a dedicated Compute API HTTP benchmark lane"
     }
+    absolute_threshold_policy = [ordered]@{
+        status = "policy_recorded"
+        absolute_threshold_kpis = @("KPI-007", "KPI-008", "KPI-015")
+        merge_gate = "smoke_only_no_absolute_thresholds"
+        nightly_fixed_runner_required = $true
+        fixed_runner_hardware_fingerprint_required = $true
+        local_phase0_baseline_enforces_absolute_thresholds = $false
+        baseline_hardware_fingerprint_sha256 = $hardwareFingerprint["fingerprint_sha256"]
+        comparison_source = "nightly fixed/self-hosted runner baseline only"
+    }
     environment = [ordered]@{
         git_sha = $gitSha
         git_branch = $gitBranch
         git_status_short = $gitStatus
         python = $python
+        hardware_fingerprint = $hardwareFingerprint
         worker_self_check = $workerSelfCheck
     }
     matrix = $cases

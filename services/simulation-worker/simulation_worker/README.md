@@ -40,7 +40,7 @@
 5. 成功运行需输出 `model_run.v1` 到 `compute_result.runtime_audit.model_runs`，并用 artifact id 填写 `evidence_refs`。
 6. `model_run.model_key` 对独立模型 job type 优先来自 `payload.job_type`；对 `simulation.material_balance.v1` 包装下的模型节点，优先来自 `payload.runtime_options.model_family`，再其次来自 ASM/UDM 节点类型；默认回落到 `material_balance`。
 7. `model_run.parameter_hash` 对纯 material balance 保持求解参数 hash；对 ASM/UDM model job type 必须纳入节点模型参数、UDM snapshot 和 variable bindings，避免不同模型输入共享同一个 hash。
-8. `self_check()` 应报告 `worker_dependency_imports.required_modules`、`module_locations`、`missing_before_fallback`、`missing_after_fallback` 和 `deprecated_repo_path_fallback_used`，用于证明 installed package import 是否成功以及 deprecated repo-path fallback 是否被触发；默认 source-mode gate 与 P-07 packaged sidecar gate 都必须要求 fallback 未使用。
+8. `self_check()` 应报告 `worker_dependency_imports.required_modules`、`module_locations`、`missing_before_fallback`、`missing_after_fallback`、`deprecated_repo_path_fallback_used` 和 `torch_runtime`，用于证明 installed package import 是否成功、deprecated repo-path fallback 是否被触发，以及性能 baseline 绑定的 torch 线程配置；默认 source-mode gate 与 P-07 packaged sidecar gate 都必须要求 fallback 未使用。
 9. 成功 job 的 `compute_result.runtime_audit.timings_ms` 应保留 `schema_validate`、`dependency_import`、`adapter_convert`、`compute`、`artifact_serialize`、`result_envelope` 与 `total` 分段，供 Phase 0 baseline 读取；新增或删除分段时必须同步 worker tests 和 baseline 脚本。
 10. Worker adapter validation mode 默认是 `compat`；只能通过 CLI `--adapter-validation-mode`、JSON-RPC `params.adapter_validation_mode` 或 env `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE` 显式 opt in 到 `warn` / `strict`。默认切到 `strict` 前必须保持 `worker-adapter-strict-smoke` 通过，并另行更新迁移统计和前端文案。
 

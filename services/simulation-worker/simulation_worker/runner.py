@@ -83,6 +83,7 @@ def self_check() -> dict[str, Any]:
         "adapter_validation_mode": _adapter_validation_mode_status(),
         "worker_dependency_imports": worker_dependency_imports,
         "dependency_imports": dependency_imports,
+        "torch_runtime": _torch_runtime_status(),
         "artifact_temp_writable": artifact_temp_writable,
         "minimal_job_status": minimal_job_status,
     }
@@ -614,6 +615,24 @@ def _dependency_status(module_name: str) -> dict[str, Any]:
             except importlib.metadata.PackageNotFoundError:
                 version = None
         return {"ok": True, "version": version}
+    except Exception as exc:
+        return {"ok": False, "error": _safe_error_message(exc)}
+
+
+def _torch_runtime_status() -> dict[str, Any]:
+    try:
+        torch = importlib.import_module("torch")
+        cuda = getattr(torch, "cuda", None)
+        cuda_available = False
+        if cuda is not None and hasattr(cuda, "is_available"):
+            cuda_available = bool(cuda.is_available())
+        return {
+            "ok": True,
+            "version": getattr(torch, "__version__", None),
+            "num_threads": int(torch.get_num_threads()),
+            "num_interop_threads": int(torch.get_num_interop_threads()),
+            "cuda_available": cuda_available,
+        }
     except Exception as exc:
         return {"ok": False, "error": _safe_error_message(exc)}
 

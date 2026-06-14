@@ -14,7 +14,7 @@
 - opt-in current-flow live smoke 验证。
 - opt-in worker adapter strict-mode smoke 验证。
 - opt-in worker packaged sidecar no-fallback smoke 验证。
-- opt-in performance/timings Phase 0 baseline 证据。
+- opt-in performance/timings Phase 0 baseline 证据，含硬件指纹、torch 线程配置和绝对阈值 KPI nightly 固定 runner 策略。
 - opt-in performance profiling Phase 0 evidence，生成 JSON/Markdown 汇总和 raw `.prof` 文件。
 - opt-in performance golden Phase 0 evidence，生成 CPU/f64/fixed-seed L3 全仿真 goldens、L1/L2 micro goldens 与 KPI-017 N=100 expression cache build-time evidence。
 - opt-in performance hot-path prereview Phase 0 evidence，汇总 baseline/profiling/golden 并选择第一批可实施优化点。
@@ -46,7 +46,7 @@
 | `current-flow-live-smoke.ps1` | 启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再运行 Playwright 从 UI 提交 current flow、等待真实 worker 完成、下载 evidence package 并解析 evidence ref，写出 `tmp/ci-evidence/current-flow-live-smoke.json` |
 | `worker-adapter-strict-smoke.ps1` | 使用 strict adapter validation mode 跑 valid compute_job fixtures，统计通过率、失败原因和 warn→strict 切换条件，输出 `tmp/ci-evidence/worker-adapter-strict-smoke.json` / `.md` |
 | `worker-packaged-no-fallback-smoke.ps1` | 构建或复用 PyInstaller one-folder worker sidecar，运行 packaged sidecar self-check / minimal job，并要求 `deprecated_repo_path_fallback_used=false`，输出 `tmp/ci-evidence/worker-packaged-no-fallback-smoke.json` / `.md` |
-| `performance-baseline-phase0.ps1` | 运行 worker solver matrix baseline，记录 `runtime_audit.timings_ms` 分段、artifact size、worker wall time 和未覆盖 baseline 维度，写出 `tmp/ci-evidence/performance-baseline-phase0.json` |
+| `performance-baseline-phase0.ps1` | 运行 worker solver matrix baseline，记录 `runtime_audit.timings_ms` 分段、artifact size、worker wall time、硬件指纹、torch 线程配置、绝对阈值 KPI nightly 策略和未覆盖 baseline 维度，写出 `tmp/ci-evidence/performance-baseline-phase0.json` |
 | `performance-profiling-phase0.ps1` | 运行 worker solver matrix cProfile evidence，覆盖 small material balance、medium ASM1、single UDM 和 mixed ASM/UDM，输出 `tmp/ci-evidence/performance-profiling-phase0.json` / `.md` 与 `tmp/performance-profiling-phase0/profiles/*.prof` |
 | `performance-golden-phase0.ps1` | 运行 CPU/f64/fixed-seed golden generator，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 三求解器矩阵、L1/L2 micro goldens 与 KPI-017 N=100 expression cache build-time evidence，输出 `tmp/ci-evidence/performance-golden-phase0.json` / `.md` 和 `tmp/performance-golden-phase0/goldens/*.golden.json` |
 | `performance-hotpath-prereview-phase0.ps1` | 汇总 P-01/P-02/P-03 evidence，选择 hot-path 候选、记录已完成候选、容差层级、收益度量、UDM solver bucket breakdown 和禁止混入项，输出 `tmp/ci-evidence/performance-hotpath-prereview-phase0.json` / `.md` |
@@ -81,7 +81,7 @@
 
 本目录对 `Justfile` 暴露 `worker-packaged-no-fallback-smoke` opt-in 入口；它默认构建真实 PyInstaller one-folder sidecar，也可用 `-SidecarPath` 或 `AUTOWATERSIMU_PACKAGED_SIDECAR` 复用已有 sidecar，然后复用 Desktop packaged sidecar smoke 并额外记录 packaged self-check 的 `deprecated_repo_path_fallback_used=false`。该脚本只建立 P-07 evidence，不删除 fallback、不构建 installer、不进入默认 `pr-fast`。
 
-本目录对 `Justfile` 暴露 `performance-baseline-phase0` opt-in 入口；它只建立性能 Phase 0 baseline evidence，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM fixtures 与 `scipy_solver` / `rk4` / `adaptive_heun` solver matrix，记录 worker wall time、`runtime_audit.timings_ms` 分段和 artifact serialization size/cost。该脚本不做热路径优化、不修改 worker strict mode、不替代 hosted evidence，也不进入默认 `pr-fast`。
+本目录对 `Justfile` 暴露 `performance-baseline-phase0` opt-in 入口；它只建立性能 Phase 0 baseline evidence，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM fixtures 与 `scipy_solver` / `rk4` / `adaptive_heun` solver matrix，记录 worker wall time、`runtime_audit.timings_ms` 分段、artifact serialization size/cost、环境硬件指纹、torch 线程配置，以及 `KPI-007` / `KPI-008` / `KPI-015` 绝对阈值只在 nightly 固定 runner 判定的策略。该脚本不做热路径优化、不修改 worker strict mode、不替代 hosted evidence，也不进入默认 `pr-fast`。
 
 本目录对 `Justfile` 暴露 `performance-profiling-phase0` opt-in 入口；它用 `cProfile` 包裹 worker `run_job_file()` 真实执行路径，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 与三求解器矩阵，输出 JSON/Markdown profiling evidence 和 raw `.prof` 文件。它只用于 P-02 热点证据，不修改 runtime、不替代 P-03 f64 golden、不进入默认 `pr-fast`。`item_device_sync` bucket 若有静态 marker 但 measured self-time 为 0，表示当前本地 run 未测到设备同步热点，应作为 zero-self-time note 记录而不是 open gap；其他 requested bucket 为 0 仍是 open gap。
 

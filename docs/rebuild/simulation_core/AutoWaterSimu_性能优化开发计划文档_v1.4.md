@@ -21,7 +21,7 @@
 - `_run_hours` 旧互斥 mixed branch baseline 已由 ADR 0015 的 supported mixed dispatch 取代；single-model fallback 顺序、default clamp policy、ASM oxygen active compute mask 范围与 `compute_mask` derivative masking 仍由 correctness-freeze audit 冻结。
 - `simulation_core/python` 与 `contracts/python` 已有 packaging metadata;source-mode worker 已证明优先使用 installed/editable helper packages。
 - `backend/app/material_balance/core.py` 已成为 simulation_core calculator compatibility re-export;calculator thin-shell 与 dependency/source-mode gates 已由 audit 维护。
-- `scripts/ci/performance-baseline-phase0.ps1` 已建立 Phase 0 timings baseline;`mixed_asm_udm` fixture 已补齐后当前 12-run baseline 为 `passed`。
+- `scripts/ci/performance-baseline-phase0.ps1` 已建立 Phase 0 timings baseline;`mixed_asm_udm` fixture 已补齐后当前 12-run baseline 为 `passed`,并已记录硬件指纹、torch 线程配置与绝对阈值 KPI 仅 nightly 固定 runner 判定策略。
 - `scripts/ci/performance-profiling-phase0.ps1` 已建立 Phase 0 profiling evidence;当前 small / medium / single UDM / mixed × 3 solver profile matrix 为 `passed`。
 - `scripts/ci/performance-golden-phase0.ps1` 已建立 CPU/f64/fixed-seed golden evidence;当前 full-run 12 goldens + 7 个 L1/L2 micro goldens（含 KPI-017 N=100 expression cache build-time evidence）为 `passed`。
 - `scripts/ci/performance-hotpath-prereview-phase0.ps1` 已建立 P-08 hot-path prereview evidence;当前第一批候选为 `transport-runtime-tensor-precompute-no-semantics`,并已输出 UDM solver bucket breakdown 作为 KPI-001 / KPI-003 求解器维度证据。
@@ -297,4 +297,4 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] 火焰图占比表;KPI-003 收益分解(按求解器)。
 - [x] P-05 strict opt-in smoke / 灰度策略已有；worker 默认 strict 切换、存量失败归因扩展和前端文案同步仍需后续 PR。
 - [ ] flag 组合矩阵测试;每 flag 有退场条件。
-- [ ] 绝对阈值 KPI 仅 nightly 固定 runner,基线含硬件指纹。
+- [x] 绝对阈值 KPI 仅 nightly 固定 runner,基线含硬件指纹。
