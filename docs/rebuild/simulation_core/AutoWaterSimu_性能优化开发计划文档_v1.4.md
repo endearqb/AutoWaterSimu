@@ -174,7 +174,7 @@ golden:混合 asm+udm(支持)或报错用例(不支持)。KPI-018。
 ### PR-13a:表达式校验器白名单化【Phase 4】
 `_validate_ast` 从 denylist-fallthrough 改为白名单(未列节点一律 DISALLOWED),与运行时 `_evaluate_ast` 对齐;补 fuzz/边界用例(Starred/NamedExpr/JoinedStr/Slice 等)。复审性质定性:这是校验通过、仿真时 `NamedExpr`/`JoinedStr` 才 raise 的 fail-late 一致性问题,不是 RCE;PR 文案与安全评审中不要夸大为运行时代码执行漏洞。
 
-**当前实现状态（2026-06-15）**：已完成白名单化主体。`_validate_ast` 对未显式允许的 AST 节点默认返回 `DISALLOWED_SYNTAX`，并显式拒绝 allowlisted function 的 keyword arguments；core-only boundary tests 覆盖 `NamedExpr`、`JoinedStr`、`Starred`、`Subscript`/`Slice` 和 keyword arguments 的 fail-early 行为。该切片不改变表达式 evaluator 的合法语法集合、不改变 UDM runtime 数值语义；KPI-017 build-time evidence 已由 P-03 golden micro evidence 覆盖，fuzz/property-style 扩展仍是上线清单开放项。
+**当前实现状态（2026-06-15）**：已完成白名单化主体。`_validate_ast` 对未显式允许的 AST 节点默认返回 `DISALLOWED_SYNTAX`，并显式拒绝 allowlisted function 的 keyword arguments；core-only boundary tests 覆盖 `NamedExpr`、`JoinedStr`、`Starred`、`Subscript`/`Slice`、keyword arguments，以及确定性 allowlisted/disallowed AST corpus。该切片不改变表达式 evaluator 的合法语法集合、不改变 UDM runtime 数值语义；KPI-017 build-time evidence 已由 P-03 golden micro evidence 覆盖。
 
 ---
 
@@ -281,8 +281,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] 输出网格解耦(KPI-005)。
 - [x] 真实守恒指标接入 L3。
 - [ ] dopri5/adaptive_heun 入验收矩阵,默认求解器评估完成。
-- [x] 表达式缓存(KPI-017) N=100 build-time evidence + 校验器白名单化。
-- [ ] 更系统的表达式校验 fuzz/property-style 覆盖。
+- [x] 表达式缓存(KPI-017) N=100 build-time evidence + 校验器白名单化 + deterministic fuzz-style corpus。
 - [ ] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
 - [ ] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
 - [ ] f64 golden 生成器已有 Phase 0 evidence;parity 测试改造与最终覆盖补齐仍需随 PR-37/PR-38 决策推进。

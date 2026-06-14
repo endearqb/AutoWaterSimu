@@ -482,6 +482,87 @@ def test_udm_expression_validation_rejects_keyword_arguments() -> None:
     assert any(issue.code == "DISALLOWED_CALL" for issue in result.errors)
 
 
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "S",
+        "-S + k_decay",
+        "k_decay * S + max(P, 1.0) - log(P + 1.0)",
+        "sqrt(S) + pow(P, 2.0) + abs(-k_decay)",
+        "clip(S, 0.0, 10.0) + min(max(P, 1.0), 10.0)",
+    ],
+)
+def test_udm_expression_validation_accepts_allowlisted_ast_corpus(expression: str) -> None:
+    compile_expression.cache_clear()
+
+    result = validate_udm_definition(
+        components=["S"],
+        processes=[
+            {
+                "name": "valid_expr",
+                "rate_expr": expression,
+                "stoich": {"S": -1.0},
+            }
+        ],
+        declared_parameters=["k_decay", "P"],
+    )
+
+    assert result.ok is True, result.errors
+    executor = compile_expression(expression)
+    executor(
+        {
+            "S": torch.tensor(4.0),
+            "P": torch.tensor(2.0),
+            "k_decay": torch.tensor(0.05),
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("expression", "node_name"),
+    [
+        ("[S]", "List"),
+        ("(S, k)", "Tuple"),
+        ("{'S': S}", "Dict"),
+        ("S if k else 0.0", "IfExp"),
+        ("S > 0.0", "Compare"),
+        ("S and k", "BoolOp"),
+        ("lambda x: x", "Lambda"),
+        ("S.real", "Attribute"),
+        ("S[0]", "Subscript"),
+        ("max(*(S, k))", "Starred"),
+        ("(x := 1.0)", "NamedExpr"),
+        ("f'{S}'", "JoinedStr"),
+    ],
+)
+def test_udm_expression_validation_rejects_disallowed_ast_corpus(
+    expression: str,
+    node_name: str,
+) -> None:
+    compile_expression.cache_clear()
+
+    with pytest.raises(UnsafeExpressionError, match=node_name):
+        compile_expression(expression)
+
+    result = validate_udm_definition(
+        components=["S"],
+        processes=[
+            {
+                "name": "invalid_expr",
+                "rate_expr": expression,
+                "stoich": {"S": -1.0},
+            }
+        ],
+        declared_parameters=["k", "x"],
+    )
+
+    assert result.ok is False
+    assert any(
+        issue.code == "DISALLOWED_SYNTAX" and node_name in issue.message
+        for issue in result.errors
+    )
+
+
 def test_udm_runtime_precomputes_indices_and_fixed_component_metadata() -> None:
     runtimes = build_udm_runtime_payload(
         nodes=[_udm_binding_node()],

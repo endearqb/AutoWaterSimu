@@ -1,3 +1,26 @@
+# 2026-06-15 simulation_core PR-13a expression validator corpus TODO
+
+- [x] Re-read current PR-13a tests and v1.4 fuzz/property-style requirement.
+- [x] Confirm this slice is deterministic corpus coverage only, not runtime syntax expansion, Hypothesis adoption, schema/API change, solver change, worker strict default switch, or fallback deletion.
+- [x] Add allowlisted expression corpus coverage so the whitelist does not reject supported arithmetic/function syntax.
+- [x] Add disallowed AST corpus coverage so unknown nodes fail early with `DISALLOWED_SYNTAX`.
+- [x] Update tests README, current-state, v1.4 checklist, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Use a deterministic corpus instead of adding a new fuzzing dependency.
+- Cover both sides of the whitelist contract: accepted AST nodes and rejected unknown/disallowed nodes.
+- Preserve existing expression evaluator semantics and UDM runtime numeric behavior.
+
+## Review
+
+- Added allowlisted corpus coverage for supported arithmetic, unary operators, simple calls, nested allowed functions, and `clip`/`min`/`max` combinations.
+- Added disallowed corpus coverage for `List`, `Tuple`, `Dict`, `IfExp`, `Compare`, `BoolOp`, `Lambda`, `Attribute`, `Subscript`, `Starred`, `NamedExpr`, and `JoinedStr`.
+- Each disallowed corpus case now asserts both `compile_expression()` and `validate_udm_definition()` fail early with `DISALLOWED_SYNTAX`.
+- v1.4 checklist now marks expression cache KPI-017 + validator whitelist + deterministic fuzz-style corpus complete.
+- Verification passed for focused boundary tests, full simulation_core tests, docs/rebuild tests, correctness-freeze audit, Phase 0 golden/hotpath prereview, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core KPI-017 expression cache evidence TODO
 
 - [x] Re-read README First context for scripts/ci performance evidence, simulation_core material_balance runtime, and v1.4 KPI-017 requirements.
