@@ -303,6 +303,15 @@ $backendCorePath = Join-Path $backendMaterialBalance "core.py"
 $coreCorePath = Join-Path $corePackage "material_balance\core.py"
 $backendModelsPath = Join-Path $backendMaterialBalance "models.py"
 $coreModelsPath = Join-Path $corePackage "material_balance\models.py"
+$backendCoreDriftGuardPath = Join-Path $coreTests "test_material_balance_core.py"
+$requiredBackendCoreDriftGuardCases = @(
+    "material_balance_minimal",
+    "asm1slim_model_bound",
+    "asm1slim_independent",
+    "asm1_independent",
+    "asm3_independent",
+    "udm_independent"
+)
 $backendThinShellDetected = $false
 if (Test-Path -LiteralPath $backendCorePath) {
     $backendCoreText = Get-Content -LiteralPath $backendCorePath -Raw
@@ -320,18 +329,48 @@ $driftPairs = @(
         core = if (Test-Path -LiteralPath $coreModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $coreModelsPath } else { $null }
     }
 )
-if ((Test-Path -LiteralPath $backendCorePath) -and (Test-Path -LiteralPath $coreCorePath) -and (-not $backendThinShellDetected)) {
+$backendCoreDriftGuardDetected = $false
+$missingBackendCoreDriftGuardCases = @()
+if (Test-Path -LiteralPath $backendCoreDriftGuardPath) {
+    $backendCoreDriftGuardText = Get-Content -LiteralPath $backendCoreDriftGuardPath -Raw
+    foreach ($caseId in $requiredBackendCoreDriftGuardCases) {
+        if ($backendCoreDriftGuardText -notmatch [regex]::Escape($caseId)) {
+            $missingBackendCoreDriftGuardCases += $caseId
+        }
+    }
+    $backendCoreDriftGuardDetected = (
+        $backendCoreDriftGuardText -match 'BACKEND_CORE_DRIFT_GUARD_CASES' -and
+        $backendCoreDriftGuardText -match 'REQUIRED_BACKEND_CORE_DRIFT_GUARD_CASES' -and
+        $backendCoreDriftGuardText -match 'test_backend_core_drift_guard_manifest_is_complete' -and
+        $backendCoreDriftGuardText -match '_assert_backend_core_result_match' -and
+        $missingBackendCoreDriftGuardCases.Count -eq 0
+    )
+}
+$backendCoreDriftGuardDetails = [ordered]@{
+    detected = $backendCoreDriftGuardDetected
+    path = if (Test-Path -LiteralPath $backendCoreDriftGuardPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCoreDriftGuardPath } else { $null }
+    required_cases = $requiredBackendCoreDriftGuardCases
+    missing_cases = $missingBackendCoreDriftGuardCases
+}
+$backendCoreDuplicateDetected = (Test-Path -LiteralPath $backendCorePath) -and (Test-Path -LiteralPath $coreCorePath)
+if ($backendCoreDuplicateDetected -and (-not $backendThinShellDetected) -and (-not $backendCoreDriftGuardDetected)) {
     $details = [ordered]@{
         backend_thin_shell_detected = $backendThinShellDetected
         mirrored_files = $driftPairs
+        drift_guard = $backendCoreDriftGuardDetails
     }
     Add-Check -Checks $checks -Name "backend/core dual implementation drift risk" -Status "gap" -Summary "Legacy backend and simulation_core both keep material balance implementations; backend is not yet a thin shell over simulation_core." -Details $details
     Add-OpenGap -Gaps $openGaps -Id "backend-core-dual-implementation-drift-risk" -Severity "high" -Summary "Before performance work, define golden/parity strategy and then make backend a thin shell or keep explicit drift guards." -Evidence $details
 }
 else {
-    Add-Check -Checks $checks -Name "backend/core dual implementation drift risk" -Status "passed" -Summary "Backend material balance is thin-shell-like or no duplicate core implementation was detected." -Details ([ordered]@{
+    $backendCoreDriftSummary = "Backend material balance is thin-shell-like or no duplicate core implementation was detected."
+    if ($backendCoreDuplicateDetected -and (-not $backendThinShellDetected) -and $backendCoreDriftGuardDetected) {
+        $backendCoreDriftSummary = "Legacy backend and simulation_core still duplicate material balance implementations, but explicit backend/core parity drift guard coverage is present."
+    }
+    Add-Check -Checks $checks -Name "backend/core dual implementation drift risk" -Status "passed" -Summary $backendCoreDriftSummary -Details ([ordered]@{
         backend_thin_shell_detected = $backendThinShellDetected
         mirrored_files = $driftPairs
+        drift_guard = $backendCoreDriftGuardDetails
     })
 }
 
@@ -431,7 +470,7 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Freeze golden/parity strategy before backend thin-shell migration or hot-path optimization."
+        "Use the explicit backend/core parity drift guard as the baseline before backend thin-shell migration, input-contract tightening, or hot-path optimization."
     )
 }
 

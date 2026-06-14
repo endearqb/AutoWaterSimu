@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next P3 backend core drift guard TODO
+
+- [x] Re-read README First context for docs/rebuild, docs/architecture, simulation_core, simulation_core/tests, backend/app/material_balance, scripts, and current P3 audit state.
+- [x] Confirm the next slice is explicit backend/core drift guard, not backend thin-shell migration or hot-path performance optimization.
+- [x] Strengthen `simulation_core/tests/test_material_balance_core.py` with a machine-auditable backend/core drift guard manifest.
+- [x] Extend backend/core parity assertions across status, total steps, timestamps, node fields, and numeric series.
+- [x] Update the P3 audit so duplicate backend/core material-balance implementations pass only with thin-shell behavior or explicit drift guard coverage.
+- [x] Update README/current-state/development-plan context.
+- [x] Run validation and record exact results.
+- [x] Commit and push this P3 drift guard slice.
+
+## Plan
+
+- Preserve backend and simulation_core runtime behavior; this slice changes tests, audit, and documentation only.
+- Keep duplicate backend/core material-balance implementations explicit; do not claim backend thin-shell migration is done.
+- Treat the drift guard as the minimum safe baseline before input-contract tightening, backend thin-shell migration, or performance hot-path work.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `BACKEND_CORE_DRIFT_GUARD_CASES` to `simulation_core/tests/test_material_balance_core.py` for material-balance minimal, ASM1Slim model-bound, independent ASM1Slim/ASM1/ASM3, and UDM backend/core parity coverage.
+- Strengthened backend/core parity assertions from a single final component probe to status, total steps, timestamps, node fields, and numeric series comparisons with the existing tolerance.
+- Updated `scripts/audit-simulation-core-boundary.ps1` so duplicate backend/core material-balance implementations pass only when backend is thin-shell-like or the explicit drift guard manifest/tests are present.
+- P3 audit now reports `passed` with 0 hard violations and 0 open gaps.
+- Updated simulation_core/script README context, architecture current-state, and Certainty/Elegance Development Plan to record that P3 is green under an explicit drift guard, while backend thin-shell migration remains future work.
+- Validation passed: focused backend/core parity tests (`7 passed`), full `simulation_core\tests` (`11 passed`), `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), and `git diff --check -- .`.
+- `git diff --check -- .` only emitted Windows LF-to-CRLF notices, not whitespace errors.
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next P3 worker backend oracle test split TODO
 
 - [x] Re-read README First context for services/simulation-worker tests, scripts, docs/architecture, docs/rebuild, and current P3 audit state.
