@@ -52,6 +52,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },
+    { name = "autowatersimu-contracts" },
     { name = "autowatersimu-simulation-core" },
     { name = "bcrypt" },
     { name = "email-validator" },
@@ -91,6 +92,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.12.1,<2.0.0" },
+    { name = "autowatersimu-contracts", editable = "../contracts/python" },
     { name = "autowatersimu-simulation-core", editable = "../simulation_core/python" },
     { name = "bcrypt", specifier = "==4.3.0" },
     { name = "email-validator", specifier = ">=2.1.0.post1,<3.0.0.0" },
@@ -134,6 +136,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c0314
 wheels = [
     { url = "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl", hash = "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309", size = 67548, upload-time = "2026-03-19T14:22:23.645Z" },
 ]
+
+[[package]]
+name = "autowatersimu-contracts"
+version = "0.1.0+phase2b"
+source = { editable = "../contracts/python" }
 
 [[package]]
 name = "autowatersimu-simulation-core"

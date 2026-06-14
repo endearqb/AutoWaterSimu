@@ -280,7 +280,10 @@ $deprecatedFallbackCallHits = @(Find-PatternHitsWithPythonFunction -Root $Root -
 $unsafePathMutationHits = @($workerPathMutationHits | Where-Object { $_["function"] -ne "_ensure_deprecated_repo_import_paths" })
 $unsafeDeprecatedFallbackCallHits = @(
     $deprecatedFallbackCallHits |
-        Where-Object { $_["function"] -ne "_ensure_worker_dependency_imports" -and $_["text"] -notmatch '^\s*def\s+' }
+        Where-Object {
+            $_["function"] -notin @("_ensure_worker_dependency_imports", "_worker_dependency_import_status") -and
+            $_["text"] -notmatch '^\s*def\s+'
+        }
 )
 $deprecatedFallbackHits = @($workerPathMutationHits | Where-Object { $_["function"] -eq "_ensure_deprecated_repo_import_paths" })
 $workerFallbackDetails = [ordered]@{

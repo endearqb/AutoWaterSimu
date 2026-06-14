@@ -7,6 +7,7 @@
 本目录负责：
 
 - Worker CLI self-check 测试。
+- Worker dependency installation gate、installed package import preference 与 deprecated repo-path fallback report 测试。
 - `--run-job` 合同 fixture 执行、artifact checksum、独立 `simulation.asm1slim.v1` / `simulation.asm1.v1` / `simulation.asm3.v1` / `simulation.udm.v1` job type、model_run 审计和模型参数 hash 测试。
 - worker artifact 与 legacy backend 的 old-vs-worker 数值基线矩阵，包括 material balance、ASM1Slim/ASM1/ASM3、单 reactor UDM、UDM Hybrid 多模型映射和 Petersen 教程默认流程；该类测试必须隔离在 dedicated backend-oracle 文件中。
 - stdio JSON-RPC、one-shot Go Compute API bridge 和 bounded API loop 回归测试。
@@ -29,7 +30,8 @@
 1. stdout 断言必须保持 JSON 可解析。
 2. 新增 worker fixture 时同步检查 `contracts/examples/valid/` 与 schema tests。
 3. 新增模型能力时先验证 self-check capabilities，再验证 `model_run.v1`。
-4. 当前根 `.gitignore` 会忽略未跟踪的 `test_*.py`，新增本目录测试文件时需确认文件已被 Git 跟踪。
+4. 默认 source-mode self-check 应证明 `autowatersimu-contracts` 与 `autowatersimu-simulation-core` 来自已安装依赖；deprecated repo-path fallback 只能由专门测试覆盖，不应成为默认 gate 的成功路径。
+5. 当前根 `.gitignore` 会忽略未跟踪的 `test_*.py`，新增本目录测试文件时需确认文件已被 Git 跟踪。
 
 ## 4. 对外接口
 
@@ -53,9 +55,11 @@
 
 ```powershell
 backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-dependency-installation.ps1
 ```
 
 ## 7. AI 操作提示
 
 1. 先读根 `AGENTS.md`、根 `README.md`、`services/simulation-worker/README.md` 和本 README。
 2. 修改 worker stdout/stderr 或 artifact shape 后必须运行本目录测试。
+3. 修改 worker dependency import/fallback 逻辑后必须同时运行 worker dependency installation audit。

@@ -100,7 +100,14 @@ def test_worker_self_check_outputs_json() -> None:
     assert payload["git_sha"]
     assert payload["packaging_mode"] in {"source", "frozen"}
     assert payload["worker_dependency_imports"]["ok"] is True
-    assert payload["worker_dependency_imports"]["deprecated_repo_path_fallback_used"] in {False, True}
+    assert payload["worker_dependency_imports"]["required_modules"] == [
+        "autowatersimu_simulation_core",
+        "autowatersimu_contracts",
+    ]
+    assert payload["worker_dependency_imports"]["missing_after_fallback"] == []
+    assert payload["worker_dependency_imports"]["deprecated_repo_path_fallback_used"] is False
+    assert payload["worker_dependency_imports"]["module_locations"]["autowatersimu_simulation_core"]["file"]
+    assert payload["worker_dependency_imports"]["module_locations"]["autowatersimu_contracts"]["file"]
     assert payload["dependency_imports"]["numpy"]["ok"] is True
     assert payload["dependency_imports"]["scipy"]["ok"] is True
     assert payload["dependency_imports"]["torch"]["ok"] is True
@@ -677,3 +684,30 @@ def test_worker_dependency_imports_report_missing_after_fallback(
 
     with pytest.raises(worker_runner.WorkerRunError, match="missing worker Python dependencies"):
         worker_runner._ensure_worker_dependency_imports()
+
+
+def test_worker_dependency_status_reports_deprecated_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    missing_states = [["autowatersimu_simulation_core"], []]
+    monkeypatch.setattr(
+        worker_runner,
+        "_missing_worker_dependency_modules",
+        lambda: missing_states.pop(0),
+    )
+    monkeypatch.setattr(worker_runner, "_ensure_deprecated_repo_import_paths", lambda: None)
+    monkeypatch.setattr(
+        worker_runner,
+        "_worker_dependency_module_locations",
+        lambda: {
+            "autowatersimu_simulation_core": {"file": "core", "version": "test"},
+            "autowatersimu_contracts": {"file": "contracts", "version": "test"},
+        },
+    )
+
+    status = worker_runner._worker_dependency_import_status()
+
+    assert status["ok"] is True
+    assert status["deprecated_repo_path_fallback_used"] is True
+    assert status["missing_before_fallback"] == ["autowatersimu_simulation_core"]
+    assert status["missing_after_fallback"] == []

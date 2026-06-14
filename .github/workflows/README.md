@@ -19,7 +19,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `next-pr-fast.yml` | 运行 AutoWaterSimu Next PR fast lane，上传 `tmp/ci-evidence/pr-fast.json` 与 Compute API boundary audit evidence |
+| `next-pr-fast.yml` | 运行 AutoWaterSimu Next PR fast lane，上传 `tmp/ci-evidence/pr-fast.json`、Compute API boundary audit evidence、simulation_core correctness-freeze evidence 与 worker dependency installation evidence |
 | `next-integration-smoke.yml` | 手动或 `workflow_call` 运行 AutoWaterSimu Next integration smoke，上传 `tmp/ci-evidence/integration-smoke.json` |
 | `next-browser-smoke.yml` | 手动或 `workflow_call` 运行 mock-backed Playwright browser smoke，上传 `tmp/ci-evidence/browser-smoke.json` |
 | `next-live-backend-browser-smoke.yml` | 手动或 `workflow_call` 运行 live backend browser smoke，上传 `tmp/ci-evidence/live-backend-browser-smoke.json` |
@@ -42,7 +42,7 @@
 5. Next gate 的 worker pytest matrix、mock-backed Playwright Compute Jobs/current-flow + Compute lifecycle smokes 和 PostgreSQL migration up/down smoke 通过 `workflow_dispatch` inputs 显式开启，不作为默认 PR gate。
 6. PostgreSQL migration smoke 使用 workflow 临时 `postgres:16-alpine` service database；不得改为生产或共享数据库。
 7. Manual dispatch 可显式设置 `skip_long=true` 做较快验证；默认 PR gate 不传 `-SkipLong`。
-8. `next-pr-fast.yml` 是默认 PR fast lane；复杂逻辑应留在 `scripts/ci/pr-fast.ps1`，workflow 只负责安装依赖、调用脚本和上传 evidence。
+8. `next-pr-fast.yml` 是默认 PR fast lane；复杂逻辑应留在 `scripts/ci/pr-fast.ps1`，workflow 只负责安装依赖、调用脚本和上传 evidence。该 lane 默认要求 source-mode worker dependency self-check 不使用 deprecated repo-path fallback。
 9. `next-integration-smoke.yml` 是 opt-in/manual integration lane；它在 Ubuntu runner 上安装 backend Python dependencies，使用 Docker Compose 启动 PostgreSQL + MinIO + Compute API，并调用 `scripts/ci/integration-smoke.ps1 -StartCompose`。它不属于默认 PR fast lane。
 10. `next-desktop-package-smoke.yml` 是 opt-in/manual Desktop package lane；它在 Windows runner 上安装 backend Python dependencies、Rust 和 Desktop Node dependencies，并调用 `scripts/ci/desktop-package-smoke.ps1`。它不构建 packaged worker 或 NSIS installer，不属于 release-evidence lane。
 11. `next-security-smoke.yml` 是 opt-in/manual security lane；它不声明完整 RBAC/data-scope/all-mutation coverage。

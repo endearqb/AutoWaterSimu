@@ -17,6 +17,8 @@ just pr-fast
 just integration-smoke
 just check-security
 just audit-simulation-core-input-contract
+just audit-simulation-core-correctness-freeze
+just audit-worker-dependency-installation
 just browser-smoke
 just live-backend-browser-smoke
 just current-flow-live-smoke
@@ -36,6 +38,8 @@ If `just` is not installed, run the underlying PowerShell scripts directly:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\doctor.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-dependency-installation.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1
@@ -71,10 +75,11 @@ cd frontend; npx tsc --noEmit
 | `just dev-frontend` | Runs the legacy Web/Vite frontend |
 | `just check` | Runs dependency boundary check, contract tests, Go tests, and frontend typecheck |
 | `just check-full` | Runs the Next merge gate without `-SkipLong` |
-| `just pr-fast` | Runs the PR fast lane, including Compute API boundary audit, and writes `tmp/ci-evidence/pr-fast.json` plus `tmp/ci-evidence/compute-boundary/compute-api-boundary.json` |
+| `just pr-fast` | Runs the PR fast lane, including Compute API boundary audit, simulation_core correctness-freeze audit, worker dependency installation audit, and writes `tmp/ci-evidence/pr-fast.json` plus audit evidence under `tmp/ci-evidence/` |
 | `just integration-smoke` | Starts an isolated Compose API stack, runs local Python worker API once, and writes `tmp/ci-evidence/integration-smoke.json` |
 | `just check-security` | Runs token guard, scope denial, revocation, admin-scope, selected mutation audit, draft confirmation, model governance, and simulation registry audit checks and writes `tmp/ci-evidence/security-smoke.json` |
 | `just audit-simulation-core-input-contract` | Runs the simulation_core input contract audit and writes `tmp/architecture-evidence/simulation-core-input-contract.json` |
+| `just audit-worker-dependency-installation` | Runs the source-mode worker dependency installation audit and requires installed helper packages without deprecated repo-path fallback |
 | `just browser-smoke` | Runs mock-backed Playwright Compute Jobs/current-flow/result/evidence, contract validation, Model governance, and lifecycle smokes and writes `tmp/ci-evidence/browser-smoke.json` |
 | `just live-backend-browser-smoke` | Starts a real integration-backed Compute API job, runs Playwright against the live API without Compute route mocks, and writes `tmp/ci-evidence/live-backend-browser-smoke.json` |
 | `just current-flow-live-smoke` | Starts a live Compute stack plus worker loop, submits current flow through the browser, verifies worker completion/evidence/ref, and writes `tmp/ci-evidence/current-flow-live-smoke.json` |

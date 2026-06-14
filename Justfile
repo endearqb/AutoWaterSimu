@@ -103,6 +103,9 @@ audit-simulation-core-input-contract:
 audit-simulation-core-correctness-freeze:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
 
+audit-worker-dependency-installation:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-dependency-installation.ps1
+
 gen:
     cd frontend; npm run generate-compute-client
 

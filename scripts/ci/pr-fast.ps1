@@ -216,6 +216,8 @@ $computeBoundaryEvidenceDir = Join-Path $EvidenceDir "compute-boundary"
 $computeBoundaryEvidencePath = Join-Path $computeBoundaryEvidenceDir "compute-api-boundary.json"
 $simulationCoreCorrectnessEvidenceDir = Join-Path $EvidenceDir "simulation-core-correctness-freeze"
 $simulationCoreCorrectnessEvidencePath = Join-Path $simulationCoreCorrectnessEvidenceDir "simulation-core-correctness-freeze.json"
+$workerDependencyEvidenceDir = Join-Path $EvidenceDir "worker-dependency-installation"
+$workerDependencyEvidencePath = Join-Path $workerDependencyEvidenceDir "worker-dependency-installation.json"
 
 $commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
 $branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
@@ -227,6 +229,7 @@ $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLi
 Invoke-Step -Name "dependency boundary check" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-deps.ps1")
 Invoke-Step -Name "compute boundary audit" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\audit-compute-api-boundary.ps1", "-RepoRoot", $Root, "-EvidenceDir", $computeBoundaryEvidenceDir)
 Invoke-Step -Name "simulation core correctness freeze audit" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\audit-simulation-core-correctness-freeze.ps1", "-RepoRoot", $Root, "-EvidenceDir", $simulationCoreCorrectnessEvidenceDir)
+Invoke-Step -Name "worker dependency installation audit" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\audit-worker-dependency-installation.ps1", "-RepoRoot", $Root, "-EvidenceDir", $workerDependencyEvidenceDir)
 Invoke-InternalStep -Name "README path check" -Body { Test-ReadmePaths -Root $Root }
 Invoke-Step -Name "ontology registry check" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-ontology.ps1")
 Invoke-Step -Name "contracts registry and drift gate" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-contracts.ps1")
@@ -250,6 +253,7 @@ $trackedStatusAfter = @(Get-TrackedStatusLines -StatusLines $statusAfterLines)
 $untrackedStatusAfter = @(Get-UntrackedStatusLines -StatusLines $statusAfterLines)
 $computeBoundaryAuditStep = @($script:Steps | Where-Object { $_["name"] -eq "compute boundary audit" } | Select-Object -First 1)
 $simulationCoreCorrectnessAuditStep = @($script:Steps | Where-Object { $_["name"] -eq "simulation core correctness freeze audit" } | Select-Object -First 1)
+$workerDependencyAuditStep = @($script:Steps | Where-Object { $_["name"] -eq "worker dependency installation audit" } | Select-Object -First 1)
 $report = [ordered]@{
     schema_version = "autowatersimu_next_pr_fast_evidence.v1"
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
@@ -288,6 +292,13 @@ $report = [ordered]@{
         status = if ($simulationCoreCorrectnessAuditStep.Count -gt 0) { $simulationCoreCorrectnessAuditStep[0]["status"] } else { "not_run" }
         evidence_path = $simulationCoreCorrectnessEvidencePath
         step_name = "simulation core correctness freeze audit"
+    }
+    worker_dependency_installation_audit = [ordered]@{
+        included_in_default_gate = $true
+        requires_deprecated_repo_path_fallback_unused = $true
+        status = if ($workerDependencyAuditStep.Count -gt 0) { $workerDependencyAuditStep[0]["status"] } else { "not_run" }
+        evidence_path = $workerDependencyEvidencePath
+        step_name = "worker dependency installation audit"
     }
     steps = $script:Steps
 }

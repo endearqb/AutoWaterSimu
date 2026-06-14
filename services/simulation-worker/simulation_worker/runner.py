@@ -326,14 +326,37 @@ def _ensure_worker_dependency_imports() -> bool:
 
 
 def _worker_dependency_import_status() -> dict[str, Any]:
+    fallback_used = False
+    missing_before_fallback: list[str] = []
+    missing_after_fallback: list[str] = []
     try:
-        fallback_used = _ensure_worker_dependency_imports()
+        missing_before_fallback = _missing_worker_dependency_modules()
+        if missing_before_fallback:
+            _ensure_deprecated_repo_import_paths()
+            fallback_used = True
+        missing_after_fallback = _missing_worker_dependency_modules()
+        if missing_after_fallback:
+            raise WorkerRunError(
+                "missing worker Python dependencies: "
+                + ", ".join(missing_after_fallback)
+            )
         return {
             "ok": True,
+            "required_modules": list(WORKER_DEPENDENCY_MODULES),
+            "missing_before_fallback": missing_before_fallback,
+            "missing_after_fallback": missing_after_fallback,
             "deprecated_repo_path_fallback_used": fallback_used,
+            "module_locations": _worker_dependency_module_locations(),
         }
     except Exception as exc:
-        return {"ok": False, "error": _safe_error_message(exc)}
+        return {
+            "ok": False,
+            "required_modules": list(WORKER_DEPENDENCY_MODULES),
+            "missing_before_fallback": missing_before_fallback,
+            "missing_after_fallback": missing_after_fallback,
+            "deprecated_repo_path_fallback_used": fallback_used,
+            "error": _safe_error_message(exc),
+        }
 
 
 def _ensure_deprecated_repo_import_paths() -> None:
@@ -344,6 +367,22 @@ def _ensure_deprecated_repo_import_paths() -> None:
         path_text = str(path)
         if path_text not in sys.path:
             sys.path.insert(0, path_text)
+
+
+def _worker_dependency_module_locations() -> dict[str, Any]:
+    locations: dict[str, Any] = {}
+    for module_name in WORKER_DEPENDENCY_MODULES:
+        module = importlib.import_module(module_name)
+        package_name = module_name.replace("_", "-")
+        try:
+            version = importlib.metadata.version(package_name)
+        except importlib.metadata.PackageNotFoundError:
+            version = getattr(module, "__version__", None)
+        locations[module_name] = {
+            "file": str(getattr(module, "__file__", "") or ""),
+            "version": version,
+        }
+    return locations
 
 
 def _repo_root() -> Path:

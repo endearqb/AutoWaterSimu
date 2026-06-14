@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next worker dependency installation gate TODO
+
+- [x] Re-read README First context for root, architecture current-state, Certainty/Elegance PRD/Development Plan, worker runtime/tests, scripts, CI workflow, and local-dev docs.
+- [x] Confirm this slice is source-mode worker dependency installation gate, not worker fallback deletion, Desktop packaged sidecar verification, worker default strict mode, or hot-path performance optimization.
+- [x] Declare `autowatersimu-contracts` alongside `autowatersimu-simulation-core` as a backend editable dependency for source-mode worker runs.
+- [x] Extend worker self-check dependency status with required modules, module locations, missing-before/after-fallback, missing-after-fallback, and deprecated fallback state.
+- [x] Add a default audit gate that requires source-mode worker self-check to avoid deprecated repo-path fallback, while preserving explicit fallback test coverage.
+- [x] Wire the worker dependency installation audit into `pr-fast`.
+- [x] Run lock, focused worker tests/audits, and full `pr-fast`.
+- [x] Update README/current-state/development-plan context and change records with exact validation results.
+- [ ] Commit and push this worker dependency installation gate slice.
+
+## Plan
+
+- Keep deprecated repo-path fallback in worker runtime for compatibility.
+- Make the default source-mode lane prove installed helper packages are available before fallback is needed.
+- Treat packaged sidecar fallback removal/first-start evidence as future work because the active goal excludes Desktop version development and optimization.
+- Do not change worker default adapter validation mode, route schemas, OpenAPI/generated clients, calculator behavior, or performance hot paths.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- `backend/pyproject.toml` and `backend/uv.lock` now declare editable `autowatersimu-contracts` alongside `autowatersimu-simulation-core`.
+- `worker_dependency_imports` self-check output now includes required modules, missing-before/after-fallback, module locations, and deprecated fallback state.
+- `scripts/audit-worker-dependency-installation.ps1` writes worker dependency installation evidence and hard-fails by default if source-mode self-check uses deprecated repo-path fallback.
+- `scripts/ci/pr-fast.ps1` now runs the worker dependency installation audit as a default step and records its status/evidence path in `tmp/ci-evidence/pr-fast.json`.
+- README/current-state/Development Plan now mark only the source-mode dependency gate complete; deprecated fallback deletion and packaged sidecar evidence remain future work.
+- Validation passed: `uv lock --project backend`, worker `--self-check` with `deprecated_repo_path_fallback_used=false`, `scripts\audit-worker-dependency-installation.ps1` passed with 0 hard violations, worker tests passed (`26 passed`), `uv lock --project backend --check`, `scripts\audit-simulation-core-boundary.ps1` passed with 0 hard violations and 0 open gaps, `git diff --check -- .` passed with line-ending notices only, and `scripts\ci\pr-fast.ps1` passed with 10 steps and worker dependency audit status `passed`.
+
 # 2026-06-14 AutoWaterSimu Next backend calculator thin-shell delegation TODO
 
 - [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend tests, scripts, architecture current-state, Certainty/Elegance PRD, and Development Plan.
