@@ -39,7 +39,7 @@
 1. P-01 `perf-phase0-mixed-asm-udm-fixture` 已完成,继续保持 Phase 0 baseline 覆盖 small / medium / UDM / mixed 三类以上图并保持 correctness-freeze audit 通过。
 2. P-02 `perf-phase0-profiling-artifacts` 已完成,后续若改变 fixture、solver matrix 或 runtime timings,必须重新生成 profiling evidence。
 3. P-03 `perf-phase0-golden-generator` 已完成,后续若改变 correctness-freeze 行为、fixture、solver matrix 或文档化 golden/repro 测试,必须重新生成 golden evidence。
-4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification 与 PR-33 `_balance_param` shape guard 已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入完整 dense lazy、solver/output grid 或完整统一 RHS 等更高风险切片。
+4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification 与 PR-33 dense lazy / `_balance_param` shape guard 已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver/output grid 或完整统一 RHS 等更高风险切片。
 5. PR-38 supported mixed-model dispatch 与 PR-39 当前 ASM 氧清零 active compute mask 约束已落地；后续完整 PR-39 组分契约、PR-11 全统一 RHS、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
 6. P-04 backend compatibility cleanup、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke 与 P-07 packaged sidecar no-fallback evidence 已完成;后续删除 fallback、ASM/UDM helper 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
 
@@ -54,13 +54,13 @@
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；删除 fallback 仍需另开 PR |
-| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification 与 PR-33 `_balance_param` shape guard；继续禁止混入 solver/schema/fallback 改动 |
+| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification 与 PR-33 dense lazy / `_balance_param` shape guard；继续禁止混入 solver/schema/fallback 改动 |
 | PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；单模型 fallback 与 default no-clamp baseline 继续冻结 |
 | PR-39 oxygen mask first step | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点；完整组分契约仍需后续 PR |
 
 当前禁止并入的工作:
 
-- 不在缺少最新 P-03/P-08 evidence 复核时启动完整 dense lazy、输出网格、solver 默认值或统一 RHS 改造。
+- 不在缺少最新 P-03/P-08 evidence 复核时启动输出网格、solver 默认值或统一 RHS 改造。
 - 不把 ADR 0014 中旧冻结的 mixed ASM/UDM 互斥行为写成最终业务语义；当前最终执行语义以 ADR 0015 supported mixed dispatch 为准。
 - 不把 worker 默认 adapter validation mode 切到 `strict`。
 - 不删除 deprecated repo-path fallback。
@@ -133,7 +133,7 @@ PR-17~19。
 ### PR-33:dense lazy 化、段间复用与 `_balance_param` 维度回归【Phase 2】
 `_convert_to_tensors` 不再无条件物化 prop_a/prop_b(仅 dense fallback 时构建);`_build_runtime_edge_tensors` 无 override 段复用上段张量;`_balance_param` `repeat`→`expand`、删 `Q_out.clone()`;`_resolve_parameter_names` 去重复计算;`_generate_segment_timestamps` 直接 CPU 构造免设备同步。v1.4 将 `_balance_param` 聚合维度 bug 升格为 L2 正确性回归:修 `sum_m_out = m_out.sum(dim=1).view(n,r)`→按源维 `view(m,r)`,修 `sum_m_in = m_out.sum(dim=0).view(m,r)`→按目的维 `view(n,r)`,并用命名变量/shape 断言避免方阵 `m==n` 掩盖问题。L2/L3 等价;新增非方/退化图单元测试。
 
-**当前实现状态（2026-06-14）**：已完成 `_balance_param` 维度回归前半：`repeat` 改为 `expand`、删除 `Q_out.clone()`、`sum_m_out` / `sum_m_in` 改用源/目的维命名变量与 shape guard，非方 dense 输入显式 `ValueError`，零流量退化图继续有 L2 golden；`_generate_segment_timestamps` 已改为 CPU 直接构造采样时间戳，避免每段输出时间轴 GPU→CPU 同步；`_convert_to_tensors` 已把 `parameter_names` 写入 tensor payload，`_run_calculation` 复用该值，缺失时才 fallback 解析。完整 dense lazy 化仍需后续切片。
+**当前实现状态（2026-06-14）**：已完成 PR-33 主体：sparse runtime path 下 `_convert_to_tensors` 不再物化 `[n,n,r]` 的 `prop_a` / `prop_b`，override segment 只重建 runtime sparse bundle；`_balance_param` 维度回归已完成，`repeat` 改为 `expand`、删除 `Q_out.clone()`、`sum_m_out` / `sum_m_in` 改用源/目的维命名变量与 shape guard，非方 dense 输入显式 `ValueError`，零流量退化图继续有 L2 golden；`_generate_segment_timestamps` 已改为 CPU 直接构造采样时间戳，避免每段输出时间轴 GPU→CPU 同步；`_convert_to_tensors` 已把 `parameter_names` 写入 tensor payload，`_run_calculation` 复用该值，缺失时才 fallback 解析。输出网格解耦仍属于 PR-34 后续切片。
 
 ### PR-34:求解输出网格解耦【Phase 2/3】
 自适应方法 `t0` 直接构造采样网格;rk4 分块积分块间留末状态+采样点。KPI-005 内存峰值 ↓≥30%。L3 等价(采样点比较)。
@@ -270,7 +270,8 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] ASM 氧清零限定在 active compute model 节点内,不改写非计算节点。
 - [x] 并行边 dense/sparse 语义统一(KPI-006)。
 - [x] `_balance_param` out/in 聚合维度回归通过(KPI-020)。
-- [ ] dense lazy 化、输出网格解耦(KPI-005)。
+- [x] dense lazy 化。
+- [ ] 输出网格解耦(KPI-005)。
 - [ ] 真实守恒指标接入 L3。
 - [ ] dopri5/adaptive_heun 入验收矩阵,默认求解器评估完成。
 - [ ] 表达式缓存(KPI-017)+校验器白名单化+fuzz。

@@ -39,7 +39,7 @@
 
 当前主要缺口：
 
-1. 第一批 transport tensor precompute、第二批 UDM cache/device-sync、PR-38 mixed-model dispatch、PR-32 dense/sparse parallel-edge unification、PR-33 `_balance_param` shape guard、segment timestamp CPU construction 与 `parameter_names` reuse 已落地；后续需继续用 P-03/P-08 evidence 防止把 solver/output grid、完整 dense lazy 或 mixed-model 语义继续混入无关性能 PR。
+1. 第一批 transport tensor precompute、第二批 UDM cache/device-sync、PR-38 mixed-model dispatch、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、segment timestamp CPU construction 与 `parameter_names` reuse 已落地；后续需继续用 P-03/P-08 evidence 防止把 solver/output grid 或 mixed-model 语义继续混入无关性能 PR。
 2. backend-local material_balance input models 已被标注并审计为 compatibility-only；packaged sidecar no-fallback evidence 已通过；ASM/UDM helper 迁移、worker fallback 删除仍是收尾项；worker strict default 仍未切换，但已有 opt-in strict smoke 与切换条件。
 3. Go claim/list latency 已有本地内存 API smoke baseline；`claim_scanned_rows` 仍只是预留字段，后续 metrics/index/keyset/claim LIMIT 需另开 PR 基于该 evidence 判断收益。
 
@@ -50,7 +50,7 @@
 本文定义的前置目标是：
 
 1. 把 Phase 0 baseline 从 `partial` 推进到可用于后续对比的完成态。
-2. 在任何 UDM RHS、完整 dense lazy、输出网格、求解器默认值或 Go keyset/claim 优化前，先建立 profiling 与 golden 保护网。
+2. 在任何 UDM RHS、输出网格、求解器默认值或 Go keyset/claim 优化前，先建立 profiling 与 golden 保护网。
 3. 将 backend compatibility cleanup、worker strict rollout、fallback 删除和 Go API latency baseline 从“混在主线里的不确定项”拆成独立切片。
 4. 明确哪些工作现在不应继续做，防止又回到低收益 wrapper、普通 service-test split 或无证据的热路径改动。
 
@@ -227,7 +227,7 @@ DoD：
 
 **目的**：在真正改 UDM RHS / `.item()` / dense-sparse / solver grid 前做最后一次证据审查。
 
-**当前状态（2026-06-14）**：已实现。`scripts/ci/performance-hotpath-prereview-phase0.ps1` 汇总 `performance-baseline-phase0.json`、`performance-profiling-phase0.json` 与 `performance-golden-phase0.json`，当前 evidence status 为 `passed`，0 hard violations、0 open gaps。第一批候选 `transport-runtime-tensor-precompute-no-semantics` 已落地：default/no-override segment 复用 `_convert_to_tensors` 已构建的 `Q_out`、`prop_a`、`prop_b` 与 `sparse_bundle`；有 `edge_overrides` 时仍 clone 并重建 runtime edge tensors。第二批候选 `udm-expression-cache-and-device-sync-reduction` 已落地：`compile_expression()` 使用 LRU 缓存，UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs、fixed component indices 与 `has_fixed_components`，`udm_ode_balance()` / `evaluate_reaction()` 不再在每步热路径用 `.item()` 判断 UDM mask、fixed mask 或 local-to-global 映射。PR-32 已选择 dense 加权合并并行边并与 sparse 物理语义对齐，PR-33 已完成 `_balance_param` 非方显式拒绝、`expand`/no-clone shape guard、segment timestamp CPU construction 与 `parameter_names` reuse；完整 dense lazy、solver 默认值、输出网格、schema/OpenAPI/generated client、worker strict-mode 或 fallback 仍未改变。`solver-framework-or-output-grid-change` 因语义风险明确 defer。
+**当前状态（2026-06-14）**：已实现。`scripts/ci/performance-hotpath-prereview-phase0.ps1` 汇总 `performance-baseline-phase0.json`、`performance-profiling-phase0.json` 与 `performance-golden-phase0.json`，当前 evidence status 为 `passed`，0 hard violations、0 open gaps。第一批候选 `transport-runtime-tensor-precompute-no-semantics` 已落地：default/no-override segment 复用 `_convert_to_tensors` 已构建的 `Q_out` 与 `sparse_bundle`；有 `edge_overrides` 时仍 clone edge sparse tensors 并构建 runtime sparse bundle。第二批候选 `udm-expression-cache-and-device-sync-reduction` 已落地：`compile_expression()` 使用 LRU 缓存，UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs、fixed component indices 与 `has_fixed_components`，`udm_ode_balance()` / `evaluate_reaction()` 不再在每步热路径用 `.item()` 判断 UDM mask、fixed mask 或 local-to-global 映射。PR-32 已选择 dense 加权合并并行边并与 sparse 物理语义对齐，PR-33 已完成 sparse path dense props lazy、`_balance_param` 非方显式拒绝、`expand`/no-clone shape guard、segment timestamp CPU construction 与 `parameter_names` reuse；solver 默认值、输出网格、schema/OpenAPI/generated client、worker strict-mode 或 fallback 仍未改变。`solver-framework-or-output-grid-change` 因语义风险明确 defer。
 
 范围：
 

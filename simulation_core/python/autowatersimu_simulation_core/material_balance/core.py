@@ -243,8 +243,6 @@ class MaterialBalanceCalculator:
         # 3) 鑻ユ棤杈癸紝浠嶈繑鍥炰竴鑷寸粨鏋?
         if not edges:
             Q_out = torch.zeros(n_nodes, n_nodes, dtype=dtype, device=device)
-            prop_a = torch.ones(n_nodes, n_nodes, n_components, dtype=dtype, device=device)
-            prop_b = torch.zeros(n_nodes, n_nodes, n_components, dtype=dtype, device=device)
             sparse_bundle = {
                 "src": torch.empty(0, dtype=torch.long, device=device),
                 "dst": torch.empty(0, dtype=torch.long, device=device),
@@ -255,7 +253,7 @@ class MaterialBalanceCalculator:
             }
             return {
                 "V_liq": V_liq, "x0": x0,
-                "Q_out": Q_out, "prop_a": prop_a, "prop_b": prop_b,
+                "Q_out": Q_out, "prop_a": None, "prop_b": None,
                 "node_map": node_map, "compute_mask": compute_mask,
                 "asm1slim_mask": asm1slim_mask, "asm1slim_params": asm1slim_params,
                 "asm1_mask": asm1_mask, "asm1_params": asm1_params,
@@ -263,6 +261,7 @@ class MaterialBalanceCalculator:
                 "udm_mask": udm_mask, "udm_runtime_payload": udm_runtime_payload,
                 "udm_active_node_indices": udm_active_node_indices,
                 "parameter_names": global_component_names,
+                "n_components": n_components,
                 "sparse_bundle": sparse_bundle
             }
 
@@ -292,15 +291,8 @@ class MaterialBalanceCalculator:
         a_edge = torch.tensor([_norm_a(e) for e in edges], dtype=dtype, device=device)  # [E, r]
         b_edge = torch.tensor([_norm_b(e) for e in edges], dtype=dtype, device=device)  # [E, r]
 
-        Q_out, prop_a, prop_b = self._build_dense_transport_tensors(
-            src=src,
-            dst=dst,
-            q_vals=q_vals,
-            a_edge=a_edge,
-            b_edge=b_edge,
-            shape=(n_nodes, n_nodes),
-            n_components=n_components,
-        )
+        Q_out = torch.zeros(n_nodes, n_nodes, dtype=dtype, device=device)
+        Q_out.index_put_((src, dst), q_vals, accumulate=True)
 
         # 6) 绋€鐤忓寘锛堜緵绋€鐤?ODE 璺緞浣跨敤锛岄伩鍏嶅悗缁?nonzero 鎵弿锛?
         sparse_bundle = {
@@ -313,8 +305,8 @@ class MaterialBalanceCalculator:
             "V_liq": V_liq,
             "x0": x0,
             "Q_out": Q_out,
-            "prop_a": prop_a,
-            "prop_b": prop_b,
+            "prop_a": None,
+            "prop_b": None,
             "node_map": node_map,
             "compute_mask": compute_mask,
             "asm1slim_mask": asm1slim_mask,
@@ -327,6 +319,7 @@ class MaterialBalanceCalculator:
             "udm_runtime_payload": udm_runtime_payload,
             "udm_active_node_indices": udm_active_node_indices,
             "parameter_names": global_component_names,
+            "n_components": n_components,
             "sparse_bundle": sparse_bundle,
         }
 
@@ -658,8 +651,10 @@ class MaterialBalanceCalculator:
         q_vals: torch.Tensor,
         a_edge: torch.Tensor,
         b_edge: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, Any]]:
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor], Dict[str, Any]]:
         sparse_bundle = tensors.get("sparse_bundle", None)
+        base_shape = tuple(tensors["Q_out"].shape)
+        n_components = int(tensors.get("n_components", a_edge.shape[1] if a_edge.ndim == 2 else 0))
         if (
             sparse_bundle is not None
             and q_vals.numel() != 0
@@ -669,25 +664,22 @@ class MaterialBalanceCalculator:
         ):
             return tensors["Q_out"], tensors["prop_a"], tensors["prop_b"], sparse_bundle
 
-        base_shape = tuple(tensors["Q_out"].shape)
-        n_components = int(tensors["prop_a"].shape[-1])
-
-        if sparse_bundle is None or q_vals.numel() == 0:
-            Q_out = torch.zeros_like(tensors["Q_out"])
-            prop_a = torch.ones_like(tensors["prop_a"])
-            prop_b = torch.zeros_like(tensors["prop_b"])
+        if sparse_bundle is not None:
             runtime_sparse_bundle = {
-                "src": torch.empty(0, dtype=torch.long, device=self.device),
-                "dst": torch.empty(0, dtype=torch.long, device=self.device),
-                "q": torch.empty(0, dtype=self.dtype, device=self.device),
+                "src": sparse_bundle["src"],
+                "dst": sparse_bundle["dst"],
+                "q": q_vals,
                 "a": a_edge,
                 "b": b_edge,
-                "shape": base_shape,
+                "shape": sparse_bundle["shape"],
             }
-            return Q_out, prop_a, prop_b, runtime_sparse_bundle
+            return tensors["Q_out"], tensors["prop_a"], tensors["prop_b"], runtime_sparse_bundle
 
-        src = sparse_bundle["src"]
-        dst = sparse_bundle["dst"]
+        if q_vals.numel() != 0:
+            raise ValueError("Cannot rebuild dense edge tensors without sparse src/dst metadata")
+
+        src = torch.empty(0, dtype=torch.long, device=self.device)
+        dst = torch.empty(0, dtype=torch.long, device=self.device)
         Q_out, prop_a, prop_b = self._build_dense_transport_tensors(
             src=src,
             dst=dst,
@@ -704,7 +696,7 @@ class MaterialBalanceCalculator:
             "q": q_vals,
             "a": a_edge,
             "b": b_edge,
-            "shape": sparse_bundle["shape"],
+            "shape": base_shape,
         }
         return Q_out, prop_a, prop_b, runtime_sparse_bundle
 

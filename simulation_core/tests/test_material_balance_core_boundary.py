@@ -455,7 +455,21 @@ def test_default_segment_reuses_precomputed_runtime_edge_tensors() -> None:
     assert q_out is tensors["Q_out"]
     assert prop_a is tensors["prop_a"]
     assert prop_b is tensors["prop_b"]
+    assert prop_a is None
+    assert prop_b is None
     assert runtime_sparse_bundle is tensors["sparse_bundle"]
+
+
+def test_convert_to_tensors_keeps_dense_props_lazy_for_sparse_runtime() -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = simulation_input_to_material_balance_input(_minimal_simulation_input())
+    tensors = calculator._convert_to_tensors(input_data)
+
+    assert tensors["sparse_bundle"] is not None
+    assert tensors["prop_a"] is None
+    assert tensors["prop_b"] is None
+    assert tensors["n_components"] == len(input_data.nodes[0].initial_concentrations)
+    assert tuple(tensors["Q_out"].shape) == (len(input_data.nodes), len(input_data.nodes))
 
 
 def test_segment_override_clones_edge_tensors_without_mutating_precomputed_bundle() -> None:
@@ -503,10 +517,13 @@ def test_segment_override_clones_edge_tensors_without_mutating_precomputed_bundl
     assert torch.equal(tensors["sparse_bundle"]["q"], base_q)
     assert torch.equal(tensors["sparse_bundle"]["a"], base_a)
     assert torch.equal(tensors["sparse_bundle"]["b"], base_b)
-    assert q_out is not tensors["Q_out"]
-    assert prop_a is not tensors["prop_a"]
-    assert prop_b is not tensors["prop_b"]
+    assert q_out is tensors["Q_out"]
+    assert prop_a is None
+    assert prop_b is None
     assert runtime_sparse_bundle is not tensors["sparse_bundle"]
+    assert runtime_sparse_bundle["q"] is q_vals
+    assert runtime_sparse_bundle["a"] is a_edge
+    assert runtime_sparse_bundle["b"] is b_edge
 
 
 def test_dense_transport_merges_parallel_edges_with_sparse_semantics() -> None:

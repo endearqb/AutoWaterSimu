@@ -1,3 +1,27 @@
+# 2026-06-14 simulation_core PR-33 dense props lazy TODO
+
+- [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-33 plan.
+- [x] Confirm this slice is sparse-path dense `prop_a` / `prop_b` lazy construction, not output-grid decoupling, solver default change, schema/API change, worker strict default switch, or fallback deletion.
+- [x] Stop materializing `[n,n,r]` `prop_a` / `prop_b` in `_convert_to_tensors()` for sparse runtime payloads.
+- [x] Make segment override rebuilding update runtime sparse bundles without materializing dense props.
+- [x] Keep dense fallback construction through `_build_dense_transport_tensors()` for direct dense `_balance_param` usage and docs golden tests.
+- [x] Add focused core-only tests for sparse-path lazy props and override behavior.
+- [x] Update README/current-state/planning docs and README First records.
+- [x] Run validation matrix before phase commit/push.
+
+## Plan
+
+- Preserve `Q_out` as a square flow placeholder and keep `sparse_bundle` as the actual runtime transport input.
+- Treat `prop_a` / `prop_b` as `None` whenever `sparse_bundle` is available.
+- Leave solver/output-grid semantics, schema/API, worker strict mode, fallback behavior, and Go API untouched.
+
+## Review
+
+- Sparse runtime path now keeps `prop_a` / `prop_b` lazy as `None`.
+- Override segments clone edge sparse tensors and construct runtime sparse bundles without dense prop rebuilds.
+- Direct dense fallback remains available through `_build_dense_transport_tensors()` for `_balance_param` and docs golden checks.
+- Full core/docs/audit/performance evidence remains passed; PR-34 output-grid and PR-35 conservation remain future slices.
+
 # 2026-06-14 simulation_core PR-33 parameter names reuse TODO
 
 - [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-33 plan.
