@@ -230,6 +230,11 @@ class MaterialBalanceCalculator:
             device=device,
             dtype=dtype,
         )
+        udm_active_node_indices = {
+            node_index
+            for node_index, node in enumerate(nodes)
+            if node.node_type == 'udm'
+        }
 
 
         # 2) 鑺傜偣鏄犲皠
@@ -256,6 +261,7 @@ class MaterialBalanceCalculator:
                 "asm1_mask": asm1_mask, "asm1_params": asm1_params,
                 "asm3_mask": asm3_mask, "asm3_params": asm3_params,
                 "udm_mask": udm_mask, "udm_runtime_payload": udm_runtime_payload,
+                "udm_active_node_indices": udm_active_node_indices,
                 "sparse_bundle": sparse_bundle
             }
 
@@ -317,6 +323,7 @@ class MaterialBalanceCalculator:
             "asm3_params": asm3_params,
             "udm_mask": udm_mask,
             "udm_runtime_payload": udm_runtime_payload,
+            "udm_active_node_indices": udm_active_node_indices,
             "sparse_bundle": sparse_bundle,
         }
 
@@ -341,6 +348,7 @@ class MaterialBalanceCalculator:
             asm3_mask = tensors.get("asm3_mask", None)
             udm_mask = tensors.get("udm_mask", None)
             udm_runtime_payload = tensors.get("udm_runtime_payload", None)
+            udm_active_node_indices = tensors.get("udm_active_node_indices", None)
 
             base_state = self._merge_tensors(V_liq, x0).unsqueeze(0)
             segments = self._prepare_segments(input_data, params.hours)
@@ -420,6 +428,7 @@ class MaterialBalanceCalculator:
                     asm3_mask=asm3_mask,
                     udm_mask=udm_mask,
                     udm_runtime_payload=udm_runtime_payload,
+                    udm_active_node_indices=udm_active_node_indices,
                     sparse_bundle=runtime_sparse_bundle,
                     sampling_interval_hours=getattr(
                         params, "sampling_interval_hours", None
@@ -479,6 +488,7 @@ class MaterialBalanceCalculator:
                     asm3_mask=asm3_mask,
                     udm_mask=udm_mask,
                     udm_runtime_payload=udm_runtime_payload,
+                    udm_active_node_indices=udm_active_node_indices,
                     sparse_bundle=sparse_bundle,
                     sampling_interval_hours=getattr(
                         params, "sampling_interval_hours", None
@@ -592,9 +602,12 @@ class MaterialBalanceCalculator:
         q_vals = sparse_bundle["q"].clone()
         a_edge = sparse_bundle["a"].clone()
         b_edge = sparse_bundle["b"].clone()
-        parameter_index_map = {name: idx for idx, name in enumerate(parameter_names)}
 
         edge_overrides = segment.get("edge_overrides", {}) or {}
+        if not edge_overrides:
+            return sparse_bundle["q"], sparse_bundle["a"], sparse_bundle["b"]
+
+        parameter_index_map = {name: idx for idx, name in enumerate(parameter_names)}
         for edge_index, edge in enumerate(input_data.edges):
             raw_override = edge_overrides.get(edge.edge_id)
             if raw_override is None:
@@ -641,11 +654,20 @@ class MaterialBalanceCalculator:
         a_edge: torch.Tensor,
         b_edge: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, Any]]:
+        sparse_bundle = tensors.get("sparse_bundle", None)
+        if (
+            sparse_bundle is not None
+            and q_vals.numel() != 0
+            and q_vals is sparse_bundle.get("q")
+            and a_edge is sparse_bundle.get("a")
+            and b_edge is sparse_bundle.get("b")
+        ):
+            return tensors["Q_out"], tensors["prop_a"], tensors["prop_b"], sparse_bundle
+
         Q_out = torch.zeros_like(tensors["Q_out"])
         prop_a = torch.ones_like(tensors["prop_a"])
         prop_b = torch.zeros_like(tensors["prop_b"])
 
-        sparse_bundle = tensors.get("sparse_bundle", None)
         if sparse_bundle is None or q_vals.numel() == 0:
             runtime_sparse_bundle = {
                 "src": torch.empty(0, dtype=torch.long, device=self.device),
@@ -1108,6 +1130,7 @@ class MaterialBalanceCalculator:
                   asm3_params: torch.Tensor = None, asm3_mask: torch.Tensor = None,
                   udm_mask: torch.Tensor = None,
                   udm_runtime_payload: List[UDMNodeRuntime] = None,
+                  udm_active_node_indices: set[int] = None,
                   sampling_interval_hours: float = None) -> torch.Tensor:
 
         """杩愯鎸囧畾灏忔椂鏁扮殑妯℃嫙銆?
@@ -1245,6 +1268,7 @@ class MaterialBalanceCalculator:
                 compute_mask=compute_mask,
                 udm_mask=udm_mask,
                 udm_runtime_payload=udm_runtime_payload,
+                udm_active_node_indices=udm_active_node_indices,
                 sparse_bundle=sparse_bundle,
                 balance_param=self._balance_param,
                 balance_param_sparse=self._balance_param_sparse,

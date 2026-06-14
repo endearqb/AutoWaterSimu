@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List
+from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 import torch
 
@@ -14,10 +14,14 @@ class UDMNodeRuntime:
     global_component_names: List[str]
     local_component_names: List[str]
     local_to_global_indices: torch.Tensor  # [L], long
+    local_to_global_index_values: List[int]
+    component_index_pairs: List[Tuple[str, int]]
     parameter_values: Dict[str, float]
     rate_evaluators: List[Callable[[Dict[str, Any]], Any]]
     stoich_matrix: torch.Tensor  # [P, L]
     fixed_component_mask: torch.Tensor  # [M], bool (global component space)
+    fixed_component_indices: torch.Tensor  # [F], long
+    has_fixed_components: bool
 
     def evaluate_reaction(self, concentrations: torch.Tensor) -> torch.Tensor:
         """
@@ -28,14 +32,11 @@ class UDMNodeRuntime:
         Returns:
             torch.Tensor: reaction term vector in canonical space [M]
         """
-        env: Dict[str, Any] = {}
-        for local_idx, component_name in enumerate(self.local_component_names):
-            canonical_idx = int(self.local_to_global_indices[local_idx].item())
+        env: Dict[str, Any] = dict(self.parameter_values)
+        for component_name, canonical_idx in self.component_index_pairs:
             if canonical_idx < 0 or canonical_idx >= concentrations.shape[0]:
                 continue
             env[component_name] = concentrations[canonical_idx]
-        for parameter_name, parameter_value in self.parameter_values.items():
-            env[parameter_name] = parameter_value
 
         rates: List[torch.Tensor] = []
         for evaluator in self.rate_evaluators:
@@ -162,7 +163,7 @@ def _resolve_local_to_global_indices(
     global_index_by_name: Dict[str, int],
     variable_binding_map: Dict[str, str],
     device: torch.device,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, List[int]]:
     indices: List[int] = []
     global_count = len(global_index_by_name)
     for local_idx, local_name in enumerate(local_component_names):
@@ -176,26 +177,33 @@ def _resolve_local_to_global_indices(
             else:
                 index = min(local_idx, max(global_count - 1, 0))
         indices.append(int(index))
-    return torch.tensor(indices, dtype=torch.long, device=device)
+    return torch.tensor(indices, dtype=torch.long, device=device), indices
 
 
 def _build_fixed_component_mask(
     *,
     local_component_names: List[str],
-    local_to_global_indices: torch.Tensor,
+    local_to_global_index_values: List[int],
     fixed_component_names: set[str],
     global_component_count: int,
     device: torch.device,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, torch.Tensor]:
     mask = torch.zeros(global_component_count, dtype=torch.bool, device=device)
+    fixed_indices: List[int] = []
     for local_idx, local_name in enumerate(local_component_names):
         if local_name not in fixed_component_names:
             continue
-        canonical_idx = int(local_to_global_indices[local_idx].item())
+        canonical_idx = local_to_global_index_values[local_idx]
         if canonical_idx < 0 or canonical_idx >= global_component_count:
             continue
         mask[canonical_idx] = True
-    return mask
+        fixed_indices.append(canonical_idx)
+    fixed_component_indices = torch.tensor(
+        fixed_indices,
+        dtype=torch.long,
+        device=device,
+    )
+    return mask, fixed_component_indices
 
 
 def build_udm_runtime_payload(
@@ -227,19 +235,25 @@ def build_udm_runtime_payload(
             getattr(node, "udm_parameter_values", None) or {}
         )
         variable_binding_map = _normalize_variable_binding_map(node)
-        local_to_global_indices = _resolve_local_to_global_indices(
+        (
+            local_to_global_indices,
+            local_to_global_index_values,
+        ) = _resolve_local_to_global_indices(
             local_component_names=local_component_names,
             global_index_by_name=global_index_by_name,
             variable_binding_map=variable_binding_map,
             device=device,
         )
         fixed_component_names = _extract_fixed_component_names(node)
-        fixed_component_mask = _build_fixed_component_mask(
+        fixed_component_mask, fixed_component_indices = _build_fixed_component_mask(
             local_component_names=local_component_names,
-            local_to_global_indices=local_to_global_indices,
+            local_to_global_index_values=local_to_global_index_values,
             fixed_component_names=fixed_component_names,
             global_component_count=len(normalized_global_names),
             device=device,
+        )
+        component_index_pairs = list(
+            zip(local_component_names, local_to_global_index_values)
         )
 
         if len(process_rows) == 0:
@@ -305,10 +319,14 @@ def build_udm_runtime_payload(
                 global_component_names=normalized_global_names,
                 local_component_names=local_component_names,
                 local_to_global_indices=local_to_global_indices,
+                local_to_global_index_values=local_to_global_index_values,
+                component_index_pairs=component_index_pairs,
                 parameter_values=parameter_values,
                 rate_evaluators=rate_evaluators,
                 stoich_matrix=stoich_matrix,
                 fixed_component_mask=fixed_component_mask,
+                fixed_component_indices=fixed_component_indices,
+                has_fixed_components=bool(fixed_component_indices.numel() > 0),
             )
         )
 

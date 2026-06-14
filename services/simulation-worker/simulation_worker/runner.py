@@ -37,6 +37,8 @@ SUPPORTED_CONTRACT_VERSIONS = [
     "artifact.v1",
 ]
 SUPPORTED_CAPABILITIES = ["material_balance", "asm1slim", "asm1", "asm3", "udm", "ode"]
+ADAPTER_VALIDATION_MODE_ENV = "AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE"
+ADAPTER_VALIDATION_MODES = {"compat", "warn", "strict"}
 MODEL_PARAMETER_FIELD_PAIRS = [
     ("asm1slim_parameters", "asm1slimParameters"),
     ("asm1_parameters", "asm1Parameters"),
@@ -78,6 +80,7 @@ def self_check() -> dict[str, Any]:
         "capabilities": SUPPORTED_CAPABILITIES,
         "git_sha": _git_sha(),
         "packaging_mode": _packaging_mode(),
+        "adapter_validation_mode": _adapter_validation_mode_status(),
         "worker_dependency_imports": worker_dependency_imports,
         "dependency_imports": dependency_imports,
         "artifact_temp_writable": artifact_temp_writable,
@@ -85,7 +88,12 @@ def self_check() -> dict[str, Any]:
     }
 
 
-def run_job_file(job_path: str | Path, artifact_dir: str | Path) -> dict[str, Any]:
+def run_job_file(
+    job_path: str | Path,
+    artifact_dir: str | Path,
+    *,
+    adapter_validation_mode: str | None = None,
+) -> dict[str, Any]:
     try:
         job = _load_json(Path(job_path))
     except Exception as exc:
@@ -95,14 +103,20 @@ def run_job_file(job_path: str | Path, artifact_dir: str | Path) -> dict[str, An
             message=_safe_error_message(exc),
             started_at=time.perf_counter(),
         )
-    return run_job(job, artifact_dir)
+    return run_job(job, artifact_dir, adapter_validation_mode=adapter_validation_mode)
 
 
-def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
+def run_job(
+    job: dict[str, Any],
+    artifact_dir: str | Path,
+    *,
+    adapter_validation_mode: str | None = None,
+) -> dict[str, Any]:
     started_at = time.perf_counter()
     timings_ms: dict[str, int] = {}
     job_id = "unknown_job"
     job_type = MATERIAL_BALANCE_JOB_TYPE
+    adapter_validation_mode_for_audit = _adapter_validation_mode_label(adapter_validation_mode)
 
     try:
         if not isinstance(job, dict):
@@ -116,6 +130,7 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
         _validate_against_schema("compute_job.v1.json", job)
         if raw_job_type not in SUPPORTED_JOB_TYPES:
             raise WorkerRunError(f"unsupported job_type: {raw_job_type}")
+        adapter_validation_mode_for_audit = _resolve_adapter_validation_mode(adapter_validation_mode)
 
         payload = job.get("payload")
         if not isinstance(payload, dict):
@@ -134,7 +149,10 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
 
         phase_started_at = time.perf_counter()
         try:
-            material_balance_input = simulation_input_to_material_balance_input(payload)
+            material_balance_input = simulation_input_to_material_balance_input(
+                payload,
+                validation_mode=adapter_validation_mode_for_audit,
+            )
         except SimulationCoreAdapterError as exc:
             raise WorkerRunError(str(exc)) from exc
         timings_ms["adapter_convert"] = _elapsed_ms(phase_started_at)
@@ -177,6 +195,7 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
                 "timings_ms": timings_ms,
                 "fallback_used": False,
                 "fallback_reason": "",
+                "adapter_validation_mode": adapter_validation_mode_for_audit,
                 "worker_version": WORKER_VERSION,
                 "python_version": platform.python_version(),
                 "package_versions": {},
@@ -188,6 +207,7 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
             job_type=job_type,
             message=_safe_error_message(exc),
             started_at=started_at,
+            adapter_validation_mode=adapter_validation_mode_for_audit,
         )
 
 
@@ -281,6 +301,7 @@ def _failed_result(
     job_type: str,
     message: str,
     started_at: float,
+    adapter_validation_mode: str | None = None,
 ) -> dict[str, Any]:
     return {
         "schema_version": "compute_result.v1",
@@ -299,11 +320,56 @@ def _failed_result(
             "timings_ms": {"total": int((time.perf_counter() - started_at) * 1000)},
             "fallback_used": False,
             "fallback_reason": "",
+            **({"adapter_validation_mode": adapter_validation_mode} if adapter_validation_mode else {}),
             "worker_version": WORKER_VERSION,
             "python_version": platform.python_version(),
             "package_versions": {},
         },
     }
+
+
+def _resolve_adapter_validation_mode(explicit_mode: str | None = None) -> str:
+    raw_mode = explicit_mode
+    if raw_mode is None or str(raw_mode).strip() == "":
+        raw_mode = os.getenv(ADAPTER_VALIDATION_MODE_ENV, "compat")
+    mode = str(raw_mode).strip().lower() or "compat"
+    if mode in ADAPTER_VALIDATION_MODES:
+        return mode
+    raise WorkerRunError(
+        f"unsupported adapter validation mode: {raw_mode}; expected compat, warn, or strict"
+    )
+
+
+def _adapter_validation_mode_label(explicit_mode: str | None = None) -> str:
+    if explicit_mode is not None and str(explicit_mode).strip() != "":
+        return str(explicit_mode).strip().lower()
+    env_mode = os.getenv(ADAPTER_VALIDATION_MODE_ENV)
+    if env_mode is not None and env_mode.strip() != "":
+        return env_mode.strip().lower()
+    return "compat"
+
+
+def _adapter_validation_mode_status() -> dict[str, Any]:
+    env_mode = os.getenv(ADAPTER_VALIDATION_MODE_ENV)
+    source = "env" if env_mode else "default"
+    try:
+        mode = _resolve_adapter_validation_mode()
+        return {
+            "ok": True,
+            "mode": mode,
+            "source": source,
+            "env_var": ADAPTER_VALIDATION_MODE_ENV,
+            "supported_modes": sorted(ADAPTER_VALIDATION_MODES),
+        }
+    except WorkerRunError as exc:
+        return {
+            "ok": False,
+            "mode": _adapter_validation_mode_label(),
+            "source": source,
+            "env_var": ADAPTER_VALIDATION_MODE_ENV,
+            "supported_modes": sorted(ADAPTER_VALIDATION_MODES),
+            "error": str(exc),
+        }
 
 
 def _validate_against_schema(schema_name: str, payload: dict[str, Any]) -> None:

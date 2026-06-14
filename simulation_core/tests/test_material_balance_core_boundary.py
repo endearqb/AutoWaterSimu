@@ -36,6 +36,13 @@ from autowatersimu_simulation_core.material_balance import (  # noqa: E402
     MaterialBalanceCalculator,
 )
 from autowatersimu_simulation_core.material_balance import core as core_module  # noqa: E402
+from autowatersimu_simulation_core.material_balance.udm_engine import (  # noqa: E402
+    build_udm_runtime_payload,
+)
+from autowatersimu_simulation_core.material_balance.udm_expression import (  # noqa: E402
+    compile_expression,
+)
+from autowatersimu_simulation_core.material_balance.udm_ode import udm_ode_balance  # noqa: E402
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -110,6 +117,36 @@ def _install_odeint_branch_spy(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return selected_branches
 
 
+def _udm_binding_node() -> NodeData:
+    return NodeData(
+        node_id="node_1",
+        node_type="udm",
+        initial_volume=1.0,
+        initial_concentrations=[10.0, 2.0],
+        is_inlet=False,
+        is_outlet=False,
+        udm_component_names=["S", "P"],
+        udm_processes=[
+            {
+                "name": "growth",
+                "rate_expr": "k * S",
+                "stoich": {"S": -1.0, "P": 1.0},
+            }
+        ],
+        udm_parameter_values={"k": 0.05},
+        udm_variable_bindings=[
+            {"local_var": "S", "canonical_var": "A"},
+            {"local_var": "P", "canonical_var": "B"},
+        ],
+        udm_model_snapshot={
+            "components": [
+                {"name": "S", "is_fixed": False},
+                {"name": "P", "is_fixed": True},
+            ]
+        },
+    )
+
+
 def test_simulation_core_import_boundary_uses_core_python_only() -> None:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SIMULATION_CORE_PYTHON)
@@ -162,6 +199,183 @@ def test_core_adapter_preserves_component_order_defaults_and_time_segments() -> 
     assert [segment.id for segment in adapted.time_segments] == ["seg_1", "seg_2"]
     assert adapted.time_segments[0].edge_overrides["e_in_tank"].flow == 80.0
     assert adapted.time_segments[0].edge_overrides["e_in_tank"].factors["COD"].a == 0.8
+
+
+def test_udm_expression_compile_uses_lru_cache_for_repeated_expressions() -> None:
+    compile_expression.cache_clear()
+
+    first = compile_expression("k * S")
+    second = compile_expression("k * S")
+    other = compile_expression("k + S")
+
+    assert first is second
+    assert first is not other
+    assert first({"k": 0.05, "S": torch.tensor(10.0)}).item() == pytest.approx(0.5)
+
+
+def test_udm_runtime_precomputes_indices_and_fixed_component_metadata() -> None:
+    runtimes = build_udm_runtime_payload(
+        nodes=[_udm_binding_node()],
+        global_component_names=["A", "B"],
+        device=torch.device("cpu"),
+        dtype=torch.float32,
+    )
+
+    assert len(runtimes) == 1
+    runtime = runtimes[0]
+    assert runtime.local_to_global_index_values == [0, 1]
+    assert runtime.component_index_pairs == [("S", 0), ("P", 1)]
+    assert runtime.has_fixed_components is True
+    assert runtime.fixed_component_indices.tolist() == [1]
+
+    reaction = runtime.evaluate_reaction(torch.tensor([10.0, 2.0], dtype=torch.float32))
+    assert reaction.tolist() == pytest.approx([-0.5, 0.5])
+
+
+def test_udm_ode_balance_uses_precomputed_active_indices_and_fixed_components() -> None:
+    runtime = build_udm_runtime_payload(
+        nodes=[_udm_binding_node()],
+        global_component_names=["A", "B"],
+        device=torch.device("cpu"),
+        dtype=torch.float32,
+    )[0]
+    y_extended = torch.tensor([[10.0, 2.0, 1.0]], dtype=torch.float32)
+    q_out = torch.zeros(1, 1, dtype=torch.float32)
+    prop_a = torch.ones(1, 1, 2, dtype=torch.float32)
+    prop_b = torch.zeros(1, 1, 2, dtype=torch.float32)
+    compute_mask = torch.tensor([True], dtype=torch.bool)
+    udm_mask = torch.tensor([True], dtype=torch.bool)
+
+    def zero_balance(
+        y: torch.Tensor,
+        _q_out: torch.Tensor,
+        _prop_a: torch.Tensor,
+        _prop_b: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        return torch.zeros_like(y), torch.zeros(y.shape[0], dtype=y.dtype, device=y.device)
+
+    derivative = udm_ode_balance(
+        0.0,
+        y_extended,
+        1,
+        prop_a,
+        prop_b,
+        q_out,
+        compute_mask,
+        udm_mask,
+        [runtime],
+        udm_active_node_indices={0},
+        balance_param=zero_balance,
+        balance_param_sparse=lambda y, _sparse: (
+            torch.zeros_like(y),
+            torch.zeros(y.shape[0], dtype=y.dtype, device=y.device),
+        ),
+    )
+    inactive_derivative = udm_ode_balance(
+        0.0,
+        y_extended,
+        1,
+        prop_a,
+        prop_b,
+        q_out,
+        compute_mask,
+        udm_mask,
+        [runtime],
+        udm_active_node_indices=set(),
+        balance_param=zero_balance,
+        balance_param_sparse=lambda y, _sparse: (
+            torch.zeros_like(y),
+            torch.zeros(y.shape[0], dtype=y.dtype, device=y.device),
+        ),
+    )
+
+    assert derivative[0, 0].item() == pytest.approx(-0.5)
+    assert derivative[0, 1].item() == pytest.approx(0.0)
+    assert derivative[0, 2].item() == pytest.approx(0.0)
+    assert torch.all(inactive_derivative == 0)
+
+
+def test_default_segment_reuses_precomputed_runtime_edge_tensors() -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = simulation_input_to_material_balance_input(_minimal_simulation_input())
+    tensors = calculator._convert_to_tensors(input_data)
+    segment = calculator._prepare_segments(input_data, input_data.parameters.hours)[0]
+    parameter_names = calculator._resolve_parameter_names(
+        input_data,
+        len(input_data.nodes[0].initial_concentrations),
+    )
+
+    q_vals, a_edge, b_edge = calculator._resolve_segment_edge_values(
+        input_data,
+        segment,
+        tensors["sparse_bundle"],
+        parameter_names,
+    )
+    q_out, prop_a, prop_b, runtime_sparse_bundle = calculator._build_runtime_edge_tensors(
+        tensors=tensors,
+        q_vals=q_vals,
+        a_edge=a_edge,
+        b_edge=b_edge,
+    )
+
+    assert q_vals is tensors["sparse_bundle"]["q"]
+    assert a_edge is tensors["sparse_bundle"]["a"]
+    assert b_edge is tensors["sparse_bundle"]["b"]
+    assert q_out is tensors["Q_out"]
+    assert prop_a is tensors["prop_a"]
+    assert prop_b is tensors["prop_b"]
+    assert runtime_sparse_bundle is tensors["sparse_bundle"]
+
+
+def test_segment_override_clones_edge_tensors_without_mutating_precomputed_bundle() -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = simulation_input_to_material_balance_input(_minimal_simulation_input())
+    tensors = calculator._convert_to_tensors(input_data)
+    segment = {
+        "id": "override",
+        "start_hour": 0.0,
+        "end_hour": input_data.parameters.hours,
+        "edge_overrides": {
+            input_data.edges[0].edge_id: {
+                "flow": 80.0,
+                "factors": {"COD": {"a": 0.8, "b": 0.1}},
+            }
+        },
+    }
+    parameter_names = calculator._resolve_parameter_names(
+        input_data,
+        len(input_data.nodes[0].initial_concentrations),
+    )
+    base_q = tensors["sparse_bundle"]["q"].clone()
+    base_a = tensors["sparse_bundle"]["a"].clone()
+    base_b = tensors["sparse_bundle"]["b"].clone()
+
+    q_vals, a_edge, b_edge = calculator._resolve_segment_edge_values(
+        input_data,
+        segment,
+        tensors["sparse_bundle"],
+        parameter_names,
+    )
+    q_out, prop_a, prop_b, runtime_sparse_bundle = calculator._build_runtime_edge_tensors(
+        tensors=tensors,
+        q_vals=q_vals,
+        a_edge=a_edge,
+        b_edge=b_edge,
+    )
+
+    assert q_vals is not tensors["sparse_bundle"]["q"]
+    assert a_edge is not tensors["sparse_bundle"]["a"]
+    assert b_edge is not tensors["sparse_bundle"]["b"]
+    assert q_vals[0].item() == pytest.approx(80.0)
+    assert a_edge[0, 0].item() == pytest.approx(0.8)
+    assert b_edge[0, 0].item() == pytest.approx(0.1)
+    assert torch.equal(tensors["sparse_bundle"]["q"], base_q)
+    assert torch.equal(tensors["sparse_bundle"]["a"], base_a)
+    assert torch.equal(tensors["sparse_bundle"]["b"], base_b)
+    assert q_out is not tensors["Q_out"]
+    assert prop_a is not tensors["prop_a"]
+    assert prop_b is not tensors["prop_b"]
+    assert runtime_sparse_bundle is not tensors["sparse_bundle"]
 
 
 def test_core_adapter_wraps_invalid_parameters_as_contract_style_error() -> None:

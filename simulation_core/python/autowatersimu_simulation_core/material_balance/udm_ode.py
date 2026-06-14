@@ -16,12 +16,23 @@ def udm_ode_balance(
     udm_mask: torch.Tensor,
     udm_runtime_payload: List[UDMNodeRuntime],
     sparse_bundle: dict | None = None,
+    udm_active_node_indices: set[int] | None = None,
     *,
     balance_param: Callable[[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor], Any],
     balance_param_sparse: Callable[[torch.Tensor, dict], Any],
 ) -> torch.Tensor:
     _ = t
     _ = m
+    active_node_indices = udm_active_node_indices
+    if active_node_indices is None and udm_mask is not None:
+        active_node_indices = {
+            int(index)
+            for index in torch.nonzero(udm_mask, as_tuple=False)
+            .flatten()
+            .detach()
+            .cpu()
+            .tolist()
+        }
 
     y = y_extended[:, :-1]
     V_liq = y_extended[:, -1]
@@ -44,7 +55,10 @@ def udm_ode_balance(
         node_idx = runtime.node_index
         if node_idx < 0 or node_idx >= y.shape[0]:
             continue
-        if udm_mask is not None and not bool(udm_mask[node_idx].item()):
+        if (
+            active_node_indices is not None
+            and node_idx not in active_node_indices
+        ):
             continue
         reaction = runtime.evaluate_reaction(y[node_idx])
         udm_reaction_change[node_idx, :] = reaction
@@ -56,13 +70,13 @@ def udm_ode_balance(
         node_idx = runtime.node_index
         if node_idx < 0 or node_idx >= concentration_change.shape[0]:
             continue
-        if udm_mask is not None and not bool(udm_mask[node_idx].item()):
+        if (
+            active_node_indices is not None
+            and node_idx not in active_node_indices
+        ):
             continue
-        fixed_mask = runtime.fixed_component_mask
-        if fixed_mask is None or fixed_mask.numel() == 0:
-            continue
-        if bool(fixed_mask.any().item()):
-            concentration_change[node_idx, fixed_mask] = 0.0
+        if runtime.has_fixed_components:
+            concentration_change[node_idx, runtime.fixed_component_indices] = 0.0
 
     mask_expanded = compute_mask.unsqueeze(-1).expand_as(concentration_change)
     dy_extended[:, :-1] = torch.where(

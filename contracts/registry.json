@@ -92,6 +92,7 @@
         "examples/valid/asm3_independent.compute_job.v1.json",
         "examples/valid/material_balance_minimal.compute_job.v1.json",
         "examples/valid/material_balance_site_scoped.compute_job.v1.json",
+        "examples/valid/mixed_asm_udm.compute_job.v1.json",
         "examples/valid/udm_independent.compute_job.v1.json"
       ],
       "invalid_examples": [],

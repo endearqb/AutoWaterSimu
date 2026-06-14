@@ -60,6 +60,18 @@ current-flow-live-smoke:
 performance-baseline-phase0:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-baseline-phase0.ps1
 
+performance-profiling-phase0:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-profiling-phase0.ps1
+
+performance-golden-phase0:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-golden-phase0.ps1
+
+performance-hotpath-prereview-phase0:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-hotpath-prereview-phase0.ps1
+
+performance-go-api-latency-phase0:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-api-latency-phase0.ps1
+
 desktop-package-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 
@@ -108,6 +120,12 @@ audit-simulation-core-correctness-freeze:
 
 audit-worker-dependency-installation:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-dependency-installation.ps1
+
+worker-adapter-strict-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-adapter-strict-smoke.ps1
+
+worker-packaged-no-fallback-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-packaged-no-fallback-smoke.ps1
 
 gen:
     cd frontend; npm run generate-compute-client

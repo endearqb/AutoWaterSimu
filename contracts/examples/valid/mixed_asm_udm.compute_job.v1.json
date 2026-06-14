@@ -1,0 +1,228 @@
+{
+  "schema_version": "compute_job.v1",
+  "job_id": "job_mixed_asm_udm",
+  "job_type": "simulation.udm.v1",
+  "queue": "simulation",
+  "request_id": "req_mixed_asm_udm",
+  "idempotency_key": "idem_mixed_asm_udm",
+  "payload": {
+    "schema_version": "simulation_input.v1",
+    "simulation_input_id": "si_mixed_asm_udm",
+    "process_graph_id": "pg_mixed_asm_udm",
+    "process_graph_version": 1,
+    "job_type": "simulation.udm.v1",
+    "component_schema": {
+      "component_schema_id": "mixed_asm1_udm_components.v1",
+      "components": ["X_BH", "X_BA", "X_S", "X_i", "X_ND", "S_O", "S_S", "S_NO", "S_NH", "S_ND", "S_ALK"],
+      "unit": "mg/L"
+    },
+    "nodes": [
+      {
+        "node_id": "n_in",
+        "node_type": "input",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "X_BH": 100.0,
+          "X_BA": 0.0,
+          "X_S": 0.0,
+          "X_i": 0.0,
+          "X_ND": 0.0,
+          "S_O": 2.0,
+          "S_S": 50.0,
+          "S_NO": 0.0,
+          "S_NH": 10.0,
+          "S_ND": 0.0,
+          "S_ALK": 5.0
+        },
+        "is_inlet": true,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_udm",
+        "node_type": "udm",
+        "initial_volume": 1000.0,
+        "initial_concentrations": {
+          "X_BH": 0.0,
+          "X_BA": 0.0,
+          "X_S": 0.0,
+          "X_i": 0.0,
+          "X_ND": 0.0,
+          "S_O": 0.0,
+          "S_S": 50.0,
+          "S_NO": 0.0,
+          "S_NH": 10.0,
+          "S_ND": 0.0,
+          "S_ALK": 0.0
+        },
+        "udm_model_id": "udm_ss_decay",
+        "udm_model_version": 1,
+        "udm_model_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "udm_component_names": ["S", "N"],
+        "udm_processes": [
+          {
+            "name": "decay_s_to_n",
+            "rate_expr": "k_decay * S",
+            "stoich": {
+              "S": -1.0,
+              "N": 0.2
+            }
+          }
+        ],
+        "udm_parameter_values": {
+          "k_decay": 0.5
+        },
+        "udm_variable_bindings": [
+          {
+            "local_var": "S",
+            "canonical_var": "S_S"
+          },
+          {
+            "local_var": "N",
+            "canonical_var": "S_NH"
+          }
+        ],
+        "udm_model_snapshot": {
+          "id": "udm_ss_decay",
+          "name": "UDM soluble substrate decay",
+          "version": 1,
+          "hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "components": [
+            {
+              "name": "S",
+              "label": "Soluble substrate",
+              "unit": "mg/L",
+              "default_value": 50.0,
+              "is_fixed": false
+            },
+            {
+              "name": "N",
+              "label": "Ammonia nitrogen",
+              "unit": "mg/L",
+              "default_value": 10.0,
+              "is_fixed": false
+            }
+          ],
+          "parameters": [
+            {
+              "name": "k_decay",
+              "label": "Decay coefficient",
+              "default_value": 0.5
+            }
+          ],
+          "processes": [
+            {
+              "name": "decay_s_to_n",
+              "rate_expr": "k_decay * S",
+              "stoich": {
+                "S": -1.0,
+                "N": 0.2
+              }
+            }
+          ],
+          "meta": {
+            "source": "contract_fixture",
+            "purpose": "mixed ASM1 plus UDM current-state performance baseline"
+          }
+        },
+        "is_inlet": false,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_asm1",
+        "node_type": "asm1",
+        "initial_volume": 1000.0,
+        "initial_concentrations": {
+          "X_BH": 100.0,
+          "X_BA": 0.0,
+          "X_S": 0.0,
+          "X_i": 0.0,
+          "X_ND": 0.0,
+          "S_O": 2.0,
+          "S_S": 50.0,
+          "S_NO": 0.0,
+          "S_NH": 10.0,
+          "S_ND": 0.0,
+          "S_ALK": 5.0
+        },
+        "asm1_parameters": [4.0, 10.0, 0.2, 0.5, 0.8, 0.3, 0.5, 1.0, 0.4, 0.05, 0.67, 0.24, 0.08, 0.06, 0.08, 0.4, 0.05, 3.0, 0.03],
+        "is_inlet": false,
+        "is_outlet": false
+      },
+      {
+        "node_id": "n_out",
+        "node_type": "output",
+        "initial_volume": 1.0,
+        "initial_concentrations": {
+          "X_BH": 0.0,
+          "X_BA": 0.0,
+          "X_S": 0.0,
+          "X_i": 0.0,
+          "X_ND": 0.0,
+          "S_O": 0.0,
+          "S_S": 0.0,
+          "S_NO": 0.0,
+          "S_NH": 0.0,
+          "S_ND": 0.0,
+          "S_ALK": 0.0
+        },
+        "is_inlet": false,
+        "is_outlet": true
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "e_in_udm",
+        "source_node_id": "n_in",
+        "target_node_id": "n_udm",
+        "flow_rate": 100.0
+      },
+      {
+        "edge_id": "e_in_asm1",
+        "source_node_id": "n_in",
+        "target_node_id": "n_asm1",
+        "flow_rate": 100.0
+      },
+      {
+        "edge_id": "e_udm_out",
+        "source_node_id": "n_udm",
+        "target_node_id": "n_out",
+        "flow_rate": 100.0
+      },
+      {
+        "edge_id": "e_asm1_out",
+        "source_node_id": "n_asm1",
+        "target_node_id": "n_out",
+        "flow_rate": 100.0
+      }
+    ],
+    "parameters": {
+      "hours": 0.5,
+      "steps_per_hour": 20,
+      "solver_method": "scipy_solver",
+      "tolerance": 0.000001
+    },
+    "runtime_options": {
+      "model_family": "mixed_asm_udm",
+      "baseline_semantics": "current_state_correctness_freeze"
+    },
+    "metadata": {
+      "purpose": "Phase 0 mixed ASM/UDM current-state performance baseline fixture",
+      "correctness_note": "This fixture records current _run_hours mutually exclusive branch behavior before PR-38; it is not an endorsement of final mixed-model semantics."
+    }
+  },
+  "context": {
+    "source_system": "autowatersimu",
+    "requested_by": "user:test",
+    "trace_id": "trace_mixed_asm_udm"
+  },
+  "execution": {
+    "time_limit_sec": 600,
+    "priority": "normal",
+    "required_capabilities": ["asm1", "udm", "ode"]
+  },
+  "metadata": {
+    "purpose": "Phase 0 mixed ASM/UDM current-state performance baseline fixture",
+    "correctness_note": "Current baseline only; final mixed ASM/UDM semantics remain governed by ADR 0014 and PR-38."
+  },
+  "created_at": "2026-06-14T00:00:00Z"
+}

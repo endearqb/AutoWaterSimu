@@ -1,3 +1,287 @@
+# 2026-06-14 simulation_core P-07 worker packaged no-fallback TODO
+
+- [x] Re-read README First context for simulation_core plans, worker, Desktop packaging/scripts, scripts/ci, and existing worker dependency audit.
+- [x] Confirm this slice is P-07 `worker-packaged-sidecar-no-fallback-evidence`, not fallback deletion, NSIS installer/release publication, Desktop release behavior changes, worker strict default switch, schema/API changes, or simulation_core runtime optimization.
+- [x] Add an opt-in `scripts/ci/worker-packaged-no-fallback-smoke.ps1` entry that builds or reuses a PyInstaller one-folder worker sidecar.
+- [x] Reuse packaged sidecar smoke for self-check and minimal material balance job.
+- [x] Hard-fail packaged sidecar smoke if `worker_dependency_imports.deprecated_repo_path_fallback_used=true`.
+- [x] Wire `just worker-packaged-no-fallback-smoke` and update worker/Desktop/scripts/simulation_core/current-state docs.
+- [x] Run real PyInstaller sidecar build/no-fallback smoke, focused validation, `pr-fast`, and whitespace checks.
+
+## Plan
+
+- Keep source-mode and packaged-sidecar fallback-unused evidence separate.
+- Let the P-07 script build a real one-folder sidecar by default, with `-SidecarPath` / `AUTOWATERSIMU_PACKAGED_SIDECAR` for reuse.
+- Reuse Desktop packaged sidecar smoke rather than hand-rolling a second executable protocol check.
+- Keep deprecated fallback code present; only prove packaged sidecar does not need it.
+
+## Review
+
+- Added `scripts/ci/worker-packaged-no-fallback-smoke.ps1`.
+- `apps/desktop/scripts/smoke-packaged-sidecar.ps1` now includes a packaged self-check fallback-unused gate.
+- Local P-07 evidence passed using a real PyInstaller one-folder sidecar, with 0 hard violations and `deprecated_repo_path_fallback_used=false`.
+- Fallback deletion, NSIS/release artifact publication, worker default strict switch, and broader Desktop release behavior remain future work.
+
+# 2026-06-14 simulation_core P-04 backend compatibility models cleanup TODO
+
+- [x] Re-read README First context for backend material_balance, backend tests, scripts, simulation_core planning docs, and existing boundary audit.
+- [x] Confirm this slice is P-04 `backend-material-balance-compat-model-cleanup`, not legacy route schema migration, OpenAPI/generated client work, calculator thin-shell redo, ASM/UDM helper migration, worker strict default switch, fallback deletion, or runtime hot-path optimization.
+- [x] Add a focused static pytest guard for backend-local material_balance input model compatibility markers and production import boundaries.
+- [x] Extend `scripts/audit-simulation-core-boundary.ps1` with a hard `backend material_balance compatibility models boundary` check.
+- [x] Mark legacy `simple_test.py` / `test_module.py` as compatibility-only manual scripts, not pytest/runtime/performance evidence.
+- [x] Update backend/scripts/simulation_core/current-state docs and README First records.
+- [x] Run focused backend tests, simulation_core boundary audit, `pr-fast`, and whitespace checks.
+
+## Plan
+
+- Keep legacy FastAPI route schema (`app.models.MaterialBalanceInput`) unchanged.
+- Fence `backend/app/material_balance/models.py` as an old import compatibility path rather than deleting it in this slice.
+- Use static AST/audit checks so the guard does not import FastAPI, DB, or runtime services.
+- Leave ASM/UDM helper migration and true deletion of compatibility import paths to later PRs with separate compatibility policy.
+
+## Review
+
+- Added `backend/app/tests/material_balance_compat_models_boundary_test.py`.
+- `scripts/audit-simulation-core-boundary.ps1` now detects multiline legacy local model imports and hard-fails if production runtime code imports backend-local `MaterialBalanceInput`, `NodeData`, `EdgeData`, or `CalculationParameters` outside the legacy compatibility package entrypoints.
+- `backend/app/material_balance/simple_test.py` and `test_module.py` are now explicitly legacy manual scripts only.
+- P-04 is complete for old local input model compatibility boundary; ASM/UDM helper migration, compatibility import-path deletion, worker default strict, and packaged no-fallback evidence remain future work.
+
+# 2026-06-14 simulation_core P-05 worker adapter strict rollout TODO
+
+- [x] Re-read README First context for services, simulation-worker, simulation_worker, simulation_core adapter, scripts/ci, and simulation_core planning docs.
+- [x] Confirm this slice is P-05 `worker-adapter-strict-mode-rollout-plan`, not changing worker default strict mode, schema/OpenAPI/generated clients, simulation_core runtime behavior, worker fallback removal, packaged sidecar evidence, or performance hot paths.
+- [x] Add worker opt-in adapter validation mode through CLI, JSON-RPC, API once/loop, and `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE`.
+- [x] Keep default worker adapter mode as `compat` and expose the resolved mode in self-check / runtime audit.
+- [x] Add focused worker CLI tests for default mode reporting and strict opt-in execution.
+- [x] Add opt-in `scripts/ci/worker-adapter-strict-smoke.ps1` evidence lane with pass rate, failure reasons, and warn-to-strict switch conditions.
+- [x] Wire `just worker-adapter-strict-smoke` and update README/current-state/simulation_core planning docs.
+- [x] Run focused worker tests, strict smoke, `pr-fast`, and whitespace checks.
+
+## Plan
+
+- Thread adapter validation mode through existing worker boundaries without changing default behavior.
+- Treat strict smoke as fixture-pass evidence and rollout planning, not as a default-mode switch.
+- Keep adapter unknown-field semantics in simulation_core adapter tests/audit; worker path still validates `simulation_input.v1` schema before adapter conversion.
+- Make strict default switching a later PR gated by input-contract audit, strict smoke, stored-flow failure attribution, and frontend copy.
+
+## Review
+
+- Worker now accepts `--adapter-validation-mode compat|warn|strict`, JSON-RPC `params.adapter_validation_mode`, and env `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE`.
+- `self_check()` reports adapter validation mode, and successful/failed compute results include `runtime_audit.adapter_validation_mode` when available.
+- `worker-adapter-strict-smoke` ran 8 valid compute_job fixtures under strict mode and passed with 8/8, 0 hard violations, and 0 open gaps.
+- Default mode remains `compat`; worker default strict mode, expanded stored-flow attribution, and frontend copy remain follow-up work.
+
+# 2026-06-14 simulation_core P-06 Go API latency smoke TODO
+
+- [x] Re-read README First context for root, scripts, scripts/ci, docs/rebuild/simulation_core, apps/api/compute-api, and current Go API worker/job routes.
+- [x] Confirm this slice is P-06 `perf-phase0-go-api-latency-smoke`, not keyset cursor, claim LIMIT, index migration, real `claim_scanned_rows` metrics, OpenAPI/schema changes, worker strict rollout, fallback deletion, or simulation_core runtime optimization.
+- [x] Add an opt-in `scripts/ci/performance-go-api-latency-phase0.ps1` entry and Python helper.
+- [x] Start a local in-memory `go run ./cmd/compute-api` instance, create material balance jobs, register workers, and measure job list/get/worker claim POST wall time.
+- [x] Write p50/p95/p99 evidence and reserve `claim_scanned_rows` fields as unavailable until a later metrics PR exposes them.
+- [x] Wire `just performance-go-api-latency-phase0` and update README/current-state/simulation_core planning docs.
+- [x] Run focused smoke, default P-06 evidence, `pr-fast`, and whitespace checks.
+
+## Plan
+
+- Keep the smoke opt-in and out of default `pr-fast`.
+- Use the existing `material_balance_minimal.compute_job.v1.json` fixture and default dev tokens against an isolated in-memory API process.
+- Clear database/archive/token env vars for the spawned API so the smoke does not mutate local Postgres/MinIO or depend on user token config.
+- Treat measured values as local baseline evidence only; absolute thresholds remain a later fixed-runner/nightly concern.
+
+## Review
+
+- Added `scripts/ci/performance-go-api-latency-phase0.ps1` and `scripts/ci/performance_go_api_latency_phase0.py`.
+- The smoke writes `tmp/ci-evidence/performance-go-api-latency-phase0.json` and `.md`.
+- The evidence includes setup create-job timings plus `GET /api/v1/compute/jobs`, `GET /api/v1/compute/jobs/{id}`, and `POST /api/v1/workers/{worker_id}/claim` p50/p95/p99.
+- `claim_scanned_rows` is present but marked unavailable because the current Compute API does not expose scanned-row counts.
+- P-06 is complete as baseline instrumentation; keyset cursor, claim LIMIT, index migration, and real scanned-row metrics remain follow-up Go API performance work.
+
+# 2026-06-14 simulation_core UDM cache/device-sync TODO
+
+- [x] Re-read target `material_balance` README and inspect `udm_expression.py`, `udm_engine.py`, `udm_ode.py`, `_convert_to_tensors`, and UDM-related core/backend parity tests.
+- [x] Confirm this slice is the P-08 second-batch `udm-expression-cache-and-device-sync-reduction` implementation, not dense/sparse semantic repair, mixed ASM/UDM semantic change, solver/output grid change, schema/API change, worker strict rollout, fallback deletion, or Go latency optimization.
+- [x] Add expression compile caching for repeated UDM expression texts.
+- [x] Precompute local-to-global Python int indices, component/index pairs, fixed component indices, `has_fixed_components`, and active UDM node indices at runtime build/tensor conversion time.
+- [x] Remove per-step UDM RHS/evaluate_reaction `.item()` checks for UDM mask, fixed mask, and local-to-global mapping decisions.
+- [x] Add focused core tests for expression cache reuse, UDM runtime precomputed metadata, and RHS active-index/fixed-component behavior.
+- [x] Update material_balance README, current-state, simulation_core planning docs, tasks, and `.ai/changes`.
+- [x] Run refreshed golden, baseline, profiling, prereview, audits, `pr-fast`, and whitespace checks after documentation updates.
+
+## Plan
+
+- Keep the change core-local and internal to `simulation_core/python/autowatersimu_simulation_core/material_balance`.
+- Preserve current UDM expression semantics and fail-late behavior; cache only stateless evaluator construction by expression text.
+- Preserve current `_run_hours` model branch precedence, dense/sparse behavior, solver defaults, sampling grid, default clamp policy, schema/API, worker strict mode, and fallback behavior.
+- Treat performance numbers as local evidence only until the Phase 0 profiling harness is refreshed.
+
+## Review
+
+- `compile_expression()` now uses an LRU cache for repeated expression texts.
+- `UDMNodeRuntime` now stores local-to-global Python int indices, component/index pairs, fixed component indices, and `has_fixed_components`; `evaluate_reaction()` uses the precomputed pairs and no longer calls `.item()` for local-to-global mapping.
+- `_convert_to_tensors()` now stores `udm_active_node_indices`, and `udm_ode_balance()` uses that set plus precomputed fixed indices instead of per-step `bool(tensor.item())` mask checks.
+- Focused core boundary tests cover cache reuse, precomputed metadata, fixed component behavior, and inactive active-set behavior; full `simulation_core/tests` passed with 26 tests.
+- Refreshed profiling passed and reported `expression=9.13 ms`, `item_device_sync=0.075 ms`, and `transport_dense_sparse=64.728 ms` in the current local run; P-08 prereview remains passed.
+
+# 2026-06-14 simulation_core transport tensor precompute TODO
+
+- [x] Re-read target `material_balance` README and inspect `_convert_to_tensors`, `_resolve_segment_edge_values`, `_build_runtime_edge_tensors`, and `_run_calculation`.
+- [x] Confirm this slice is the P-08 first-batch `transport-runtime-tensor-precompute-no-semantics` implementation, not dense/sparse semantic repair, mixed ASM/UDM semantic change, default clamp change, solver/output grid change, schema/API change, worker strict rollout, or fallback deletion.
+- [x] Reuse precomputed `Q_out`, `prop_a`, `prop_b`, and `sparse_bundle` when a segment has no `edge_overrides`.
+- [x] Preserve clone/rebuild behavior for segments with `edge_overrides` and prove overrides do not mutate the precomputed bundle.
+- [x] Add focused core tests for the no-override fast path and override isolation path.
+- [x] Update material_balance README, current-state, simulation_core planning docs, tasks, and `.ai/changes`.
+- [x] Run focused/full core tests, docs golden/repro tests, golden, baseline, profiling, prereview, audits, `pr-fast`, and whitespace checks.
+
+## Plan
+
+- Move the fast-path check before runtime tensor allocation so no-override segments skip `zeros_like` / `ones_like` / `index_put_`.
+- Use object identity to distinguish base sparse-bundle tensors from override clones.
+- Keep all current dense/sparse, branch, clamp, solver, sampling, and artifact semantics unchanged.
+- Treat refreshed profiling as local evidence only; do not claim stable benchmark improvement from one run.
+
+## Review
+
+- `_resolve_segment_edge_values` now returns base sparse-bundle tensors directly when `edge_overrides` is empty.
+- `_build_runtime_edge_tensors` now returns precomputed `Q_out`, `prop_a`, `prop_b`, and `sparse_bundle` before allocation when it receives those base tensors.
+- Override segments still clone edge tensors, apply overrides, and rebuild runtime tensors without mutating the precomputed sparse bundle.
+- Focused core boundary tests now cover both paths; full `simulation_core/tests` passed with 23 tests.
+- Refreshed profiling passed and reported `transport_dense_sparse=67.39 ms` in the current local run; P-08 prereview remains passed.
+
+# 2026-06-14 simulation_core P-08 hot-path prereview TODO
+
+- [x] Re-read P-08 requirements from `docs/rebuild/simulation_core/00_AutoWaterSimu_性能优化前置规划计划文档_v1.0.md`.
+- [x] Confirm this slice is prereview/evidence only, not runtime hot-path implementation, dense/sparse semantic repair, solver/output grid change, mixed ASM/UDM semantic decision, worker strict rollout, fallback deletion, or Go latency optimization.
+- [x] Add an opt-in `scripts/ci/performance-hotpath-prereview-phase0.ps1` entry and Python helper that read P-01/P-02/P-03 evidence.
+- [x] Validate baseline, profiling, and golden evidence are all `passed`.
+- [x] Rank requested profiling buckets and identify the first implementation candidate, required tolerance layers, validation commands, and forbidden behavior changes.
+- [x] Wire `just performance-hotpath-prereview-phase0` and update README/current-state/simulation_core planning docs.
+- [x] Run prereview evidence and final validation checks.
+- [x] Record `.ai/changes` validation results.
+
+## Plan
+
+- Treat ODE framework time as high-signal but high-risk; do not select solver/output-grid work as first implementation.
+- Select the largest non-solver requested bucket only if P-03 golden priority coverage is complete.
+- Keep dense parallel-edge semantic repair, default clamp, mixed ASM/UDM semantics, solver defaults, schema/OpenAPI/generated clients, worker strict mode, and fallback deletion out of the first hot-path PR.
+- Require benefit measurement to return to both the profiling bucket and worker `runtime_audit.timings_ms.compute`.
+
+## Review
+
+- Added `scripts/ci/performance-hotpath-prereview-phase0.ps1` and `scripts/ci/performance_hotpath_prereview_phase0.py`.
+- The prereview evidence writes `tmp/ci-evidence/performance-hotpath-prereview-phase0.json` and `.md`.
+- Current P-08 evidence passed with baseline/profiling/golden sources all `passed`, 0 hard violations, and 0 open gaps.
+- Requested bucket rank is led by `ode_framework` (1521.592 ms), then `transport_dense_sparse` (133.9 ms); solver/output-grid work is deferred because of semantic risk.
+- First-batch candidate is `transport-runtime-tensor-precompute-no-semantics`; second batch is UDM expression cache/device-sync reduction.
+- P-08 is complete as a prereview/evidence slice; the next actual performance implementation must stay within the selected transport precompute scope.
+
+# 2026-06-14 simulation_core P-03 f64 golden generator TODO
+
+- [x] Re-read README First context for root, docs/rebuild/simulation_core, scripts, scripts/ci, simulation_core material balance, docs golden tests, and current-state.
+- [x] Confirm this slice is P-03 `perf-phase0-golden-generator`, not UDM RHS optimization, dense/sparse semantic repair, solver default changes, worker strict rollout, fallback deletion, Go latency optimization, or P-08 hot-path prereview.
+- [x] Add an opt-in `scripts/ci/performance-golden-phase0.ps1` entry and Python helper that generate CPU/f64/fixed-seed golden JSON/Markdown evidence.
+- [x] Cover small material balance, medium ASM1, single UDM, and mixed ASM/UDM across `scipy_solver`, `rk4`, and `adaptive_heun`.
+- [x] Generate L1/L2 micro goldens for UDM expression, parallel edge sparse, dense parallel-edge current-state repro, single-edge dense/sparse, `_balance_param` zero-flow degenerate, and `_balance_param` non-square current-state repro.
+- [x] Record torch version, platform, BLAS/Torch config, commit, solver method, tolerance, sampling grid, golden hashes, core-only checks, and docs test classification.
+- [x] Wire `just performance-golden-phase0` and update README/current-state/simulation_core planning docs.
+- [x] Run golden evidence, docs/core tests, baseline/profiling, audits, contract gate, `pr-fast`, and whitespace checks.
+- [x] Record `.ai/changes` validation results.
+
+## Plan
+
+- Keep golden generation opt-in and out of default `pr-fast`.
+- Generate stable result hashes without runtime timing fields so f64 golden payloads are reproducible.
+- Remove legacy backend project paths from `sys.path` inside the generator and verify no `app.*` modules are imported.
+- Treat current dense parallel-edge divergence and non-square `_balance_param` behavior as current-state repro goldens, not as final target semantics.
+- Leave P-08 as the gate that decides first hot-path implementation scope after P-01/P-02/P-03 evidence is available.
+
+## Review
+
+- Added `scripts/ci/performance-golden-phase0.ps1` and `scripts/ci/performance_golden_phase0.py`.
+- The golden evidence writes `tmp/ci-evidence/performance-golden-phase0.json`, `tmp/ci-evidence/performance-golden-phase0.md`, and 18 `.golden.json` files under `tmp/performance-golden-phase0/goldens/`.
+- Default golden matrix passed with 12 full-run L3 goldens, 6 L1/L2 micro goldens, 0 hard violations, and 0 open gaps.
+- Priority coverage is complete for mixed ASM/UDM, parallel edge, default branch current-state clamp policy, `_balance_param` non-square/degenerate cases, solver matrix, and L1/L2/L3 layers.
+- Core-only checks report 0 backend project paths in `sys.path`, 0 imported `app.*` modules, and 0 unclassified `docs/rebuild/simulation_core/test_*.py` tests.
+- P-03 is complete as an evidence/harness slice; remaining performance blockers are P-08 hot-path prereview and the specific implementation slices it selects.
+
+# 2026-06-14 simulation_core P-02 profiling artifacts TODO
+
+- [x] Re-read README First context for root, docs/rebuild/simulation_core, scripts, scripts/ci, worker CLI, and current-state.
+- [x] Use the complexity-optimizer skill and run a first-pass static complexity scan on `simulation_core/python`.
+- [x] Confirm this slice is P-02 `perf-phase0-profiling-artifacts`, not UDM RHS optimization, dense/sparse changes, solver default changes, f64 golden generation, worker strict rollout, fallback deletion, or Go latency optimization.
+- [x] Add an opt-in `scripts/ci/performance-profiling-phase0.ps1` entry and Python helper that generate profiling JSON/Markdown evidence and raw `.prof` files.
+- [x] Cover small material balance, medium ASM1, single UDM, and mixed ASM/UDM across `scipy_solver`, `rk4`, and `adaptive_heun`.
+- [x] Record environment, Torch thread counts, solver/case metadata, runtime timings, cProfile buckets, static hot-path markers, raw profile paths, hard violations, and open gaps.
+- [x] Wire `just performance-profiling-phase0` and update README/current-state/simulation_core planning docs.
+- [x] Run profiling evidence, baseline, audits, contract gate, `pr-fast`, and whitespace checks.
+- [x] Record `.ai/changes` validation results.
+
+## Plan
+
+- Keep profiling as opt-in evidence only; do not add it to default `pr-fast`.
+- Profile worker `run_job_file()` in a subprocess so the path is close to real worker execution while reducing CLI startup noise.
+- Use bucketed cProfile self-time plus worker `runtime_audit.timings_ms` to separate adapter conversion, artifact serialization, expression, `.item()`/device sync markers, ODE framework, schema validation, and transport/dense-sparse work.
+- Include single UDM in addition to the required small/medium/mixed cases because current mixed fixture is a current-state branch-freeze baseline and does not by itself prove UDM expression hotspot behavior.
+- Leave P-03 f64 golden and P-08 hot-path prereview as required gates before any hot-path implementation.
+
+## Review
+
+- Added `scripts/ci/performance-profiling-phase0.ps1` and `scripts/ci/performance_profiling_phase0.py`.
+- The profiling evidence writes `tmp/ci-evidence/performance-profiling-phase0.json`, `tmp/ci-evidence/performance-profiling-phase0.md`, and 12 raw profiles under `tmp/performance-profiling-phase0/profiles/`.
+- Default profiling matrix passed with 12 runs, 0 hard violations, and 0 open gaps.
+- Current aggregate requested bucket coverage was recorded for adapter conversion, artifact serialization, expression, `.item()`/device sync, ODE framework, schema validation, and transport/dense-sparse.
+- P-02 is complete as an evidence/harness slice; remaining performance blockers are P-03 f64 golden generator and P-08 hot-path prereview.
+
+# 2026-06-14 simulation_core P-01 mixed ASM/UDM baseline fixture TODO
+
+- [x] Re-read README First context for root, docs/rebuild/simulation_core, contracts examples/tests, architecture current-state, ADR 0012/0013/0014, and the Phase 0 baseline script.
+- [x] Confirm this slice is P-01 `perf-phase0-mixed-asm-udm-fixture`, not profiling, f64 golden generation, worker strict rollout, fallback deletion, Go latency optimization, or UDM/RHS hot-path optimization.
+- [x] Add a tracked `contracts/examples/valid/mixed_asm_udm.compute_job.v1.json` current-state baseline fixture.
+- [x] Register the fixture in `contracts/registry.json` and document it in `contracts/examples` READMEs.
+- [x] Add a tracked contract test so every valid `*.compute_job.v1.json` also validates its embedded `simulation_input.v1` payload.
+- [x] Update simulation_core performance planning/current-state docs from missing mixed fixture to P-01 complete.
+- [x] Run contract tests, contract gate, worker CLI mixed fixture smoke, Phase 0 baseline, correctness-freeze audit, and default `pr-fast`.
+- [x] Record `.ai/changes` validation results.
+
+## Plan
+
+- Keep the fixture explicitly scoped to current-state Phase 0 baseline evidence.
+- Do not change `_run_hours` branch behavior, final mixed ASM/UDM semantics, worker adapter validation defaults, deprecated repo-path fallback, OpenAPI/generated clients, Go API behavior, or performance hot paths.
+- Treat P-02 profiling artifacts and P-03 f64 golden generator as the next blockers before P-08 hot-path prereview.
+- Leave unrelated untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` untouched.
+
+## Review
+
+- Added the mixed ASM1 + UDM compute job fixture and registry/docs coverage.
+- Added a `.gitignore` exception for `contracts/tests/test_compute_job_payload_validation.py` so this focused contract test is both collected by pytest and visible to git.
+- Phase 0 baseline now passes with 12 runs, 0 hard violations, and 0 open gaps; mixed `scipy_solver`, `rk4`, and `adaptive_heun` runs all succeeded.
+- Contract validation passed with 110 tests; `scripts\check-contracts.ps1` passed and did not leave generated client drift.
+- Worker mixed fixture smoke succeeded with `status=succeeded`, `fallback_used=false`, timing segments present, and one local time-series artifact.
+- Correctness-freeze audit passed with 0 hard violations and 0 open gaps; default `pr-fast` passed with 10 steps.
+- Remaining performance blockers are P-02 profiling artifacts, P-03 f64 golden generator, and P-08 hot-path prereview; no hot-path optimization was started in this slice.
+
+# 2026-06-14 simulation_core prerequisite planning docs TODO
+
+- [x] Re-read README First context for root, docs, docs/rebuild, existing simulation_core docs, latest `.ai/changes`, ADRs 0012-0014, and the pasted reassessment.
+- [x] Add a prerequisite planning document that must be read before the existing simulation_core performance development plan.
+- [x] Add `docs/rebuild/simulation_core/README.md` because the directory is a key planning/evidence folder without a local README.
+- [x] Add a current execution calibration section to the v1.4 performance development plan so old PR numbering maps to the new P-01~P-08 prerequisite slices.
+- [x] Update the upper `docs/rebuild/README.md` index and README First change record.
+- [x] Run document validation and record the result.
+
+## Plan
+
+- Keep this as a documentation/planning slice only; do not change runtime code, fixtures, tests, contracts, worker defaults, fallback behavior, or performance hot paths.
+- Base the prerequisite plan on the current state: calculator thin-shell and source-mode worker dependency gate are complete, Phase 0 timings baseline is partial due to missing `mixed_asm_udm`, and hot-path optimization should wait for mixed fixture, profiling, and golden evidence.
+- Preserve the existing v1.4 requirement and development plan documents; add a new `00_...` prerequisite document so it is read before the main plan.
+- Keep the v1.4 PR list as the long-term plan, but make the 2026-06-14 execution order explicit: P-01 mixed fixture, P-02 profiling, P-03 golden, then P-08 hot-path prereview before any Phase 2/4 implementation.
+
+## Review
+
+- Added `docs/rebuild/simulation_core/00_AutoWaterSimu_性能优化前置规划计划文档_v1.0.md` to define the mixed fixture, profiling, golden, worker strict rollout, fallback evidence, Go latency smoke, and hot-path prereview prerequisites.
+- Added `docs/rebuild/simulation_core/README.md` and updated the upper `docs/rebuild/README.md` index/maintenance rule.
+- Added a front-matter note and `2026-06-14 执行校准` section in `AutoWaterSimu_性能优化开发计划文档_v1.4.md`, mapping P-01~P-08 to the old PR plan and explicitly blocking hot-path, worker strict-default, fallback deletion, and Go keyset/claim work until the required evidence exists.
+- Validation is recorded in `.ai/changes/2026-06-14.md`; no runtime tests were run because this slice only changes documentation and planning files.
+
 # 2026-06-14 AutoWaterSimu Next performance baseline Phase 0 TODO
 
 - [x] Re-read README First context for root, architecture current-state, Certainty/Elegance Development Plan, worker runtime, scripts, and CI docs.

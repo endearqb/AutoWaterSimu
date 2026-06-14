@@ -23,6 +23,7 @@
 | `asm3_independent.compute_job.v1.json` | `simulation.asm3.v1` worker fixture |
 | `asm3_independent.simulation_input.v1.json` | `simulation.asm3.v1` core/backend adapter fixture |
 | `asm3_independent.simulation_request.v1.json` | `simulation.asm3.v1` reference-only simulation check request fixture |
+| `mixed_asm_udm.compute_job.v1.json` | mixed ASM1 + UDM current-state Phase 0 baseline fixture; records correctness-freeze behavior, not final mixed-model semantics |
 | `udm_independent.compute_job.v1.json` | `simulation.udm.v1` worker fixture |
 | `udm_independent.simulation_input.v1.json` | `simulation.udm.v1` core/backend adapter fixture |
 | `udm_independent.simulation_request.v1.json` | `simulation.udm.v1` reference-only simulation check request fixture |
@@ -31,7 +32,7 @@
 
 ## 3. 维护约定
 
-valid 示例必须可被 schema test 和最小 smoke test 直接读取。
+valid 示例必须可被 schema test 和最小 smoke test 直接读取。新增 compute job 示例时必须同时确保其内嵌 `payload` 也通过 `simulation_input.v1` 校验；mixed ASM/UDM 示例只能作为 current-state baseline，不能暗示 PR-38 最终语义已确定。
 
 ## 4. 对外接口
 

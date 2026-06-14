@@ -122,6 +122,18 @@ if (-not ($selfCheckProperties -contains "worker_version")) {
 if (($selfCheckProperties -contains "minimal_job_status") -and $selfCheckJson.minimal_job_status.ok -ne $true) {
     Write-EvidenceAndExit -Status "failed" -Reason "Sidecar self-check minimal job did not pass." -Steps $steps -ExitCode 1
 }
+$fallbackUsed = $false
+if (($selfCheckProperties -contains "worker_dependency_imports") -and $null -ne $selfCheckJson.worker_dependency_imports) {
+    $fallbackUsed = [bool]$selfCheckJson.worker_dependency_imports.deprecated_repo_path_fallback_used
+}
+$steps += [ordered]@{
+    name = "sidecar fallback unused gate"
+    deprecated_repo_path_fallback_used = $fallbackUsed
+    worker_dependency_imports = if ($selfCheckProperties -contains "worker_dependency_imports") { $selfCheckJson.worker_dependency_imports } else { $null }
+}
+if ($fallbackUsed) {
+    Write-EvidenceAndExit -Status "failed" -Reason "Sidecar self-check used deprecated repo-path fallback." -Steps $steps -ExitCode 1
+}
 
 $runJob = Invoke-CapturedProcess -Executable $script:ResolvedSidecarPath -Arguments @("--run-job", $fixture, "--artifact-dir", $script:ResolvedArtifactDir)
 $steps += [ordered]@{

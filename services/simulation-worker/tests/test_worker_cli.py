@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import http.server
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -55,11 +56,20 @@ for import_path in (WORKER_PACKAGE_PATH,):
 import simulation_worker.runner as worker_runner
 
 
-def _run_worker(args: list[str], *, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
+def _run_worker(
+    args: list[str],
+    *,
+    input_text: str | None = None,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    process_env = os.environ.copy()
+    if env:
+        process_env.update(env)
     return subprocess.run(
         [sys.executable, str(CLI_PATH), *args],
         cwd=REPO_ROOT,
         input=input_text,
+        env=process_env,
         capture_output=True,
         text=True,
         check=False,
@@ -99,6 +109,13 @@ def test_worker_self_check_outputs_json() -> None:
     assert "asm1slim" in payload["capabilities"]
     assert payload["git_sha"]
     assert payload["packaging_mode"] in {"source", "frozen"}
+    assert payload["adapter_validation_mode"] == {
+        "env_var": "AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE",
+        "mode": "compat",
+        "ok": True,
+        "source": "default",
+        "supported_modes": ["compat", "strict", "warn"],
+    }
     assert payload["worker_dependency_imports"]["ok"] is True
     assert payload["worker_dependency_imports"]["required_modules"] == [
         "autowatersimu_simulation_core",
@@ -159,6 +176,39 @@ def test_worker_run_job_writes_artifact_with_checksum(tmp_path: Path) -> None:
     assert time_series["schema_version"] == "material_balance_time_series_artifact.v1"
     assert time_series["node_data"]
     assert time_series["edge_data"]
+
+
+def test_worker_adapter_validation_mode_cli_strict_runs_schema_valid_job(tmp_path: Path) -> None:
+    completed = _run_worker([
+        "--run-job",
+        str(VALID_JOB),
+        "--artifact-dir",
+        str(tmp_path / "artifacts"),
+        "--adapter-validation-mode",
+        "strict",
+    ])
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    assert result["status"] == "succeeded"
+    assert result["runtime_audit"]["adapter_validation_mode"] == "strict"
+
+
+def test_worker_adapter_validation_mode_env_strict_runs_schema_valid_job(tmp_path: Path) -> None:
+    completed = _run_worker(
+        [
+            "--run-job",
+            str(VALID_JOB),
+            "--artifact-dir",
+            str(tmp_path / "artifacts"),
+        ],
+        env={"AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE": "strict"},
+    )
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    assert result["status"] == "succeeded"
+    assert result["runtime_audit"]["adapter_validation_mode"] == "strict"
 
 
 def test_worker_run_asm1slim_job_preserves_model_run_binding(tmp_path: Path) -> None:

@@ -29,7 +29,7 @@
 ## 3. 维护约定
 
 1. P0 Desktop packaged sidecar 目标文件名为 `simulation-worker-x86_64-pc-windows-msvc.exe`；该命名保留 Tauri v2 `externalBin` target triple 兼容性，但当前 one-folder release path 使用 resources 保持依赖目录相邻。
-2. Packaged sidecar 必须通过 `apps/desktop/scripts/smoke-packaged-sidecar.ps1`，覆盖 `--self-check` 和 minimal material balance job。
+2. Packaged sidecar 必须通过 `apps/desktop/scripts/smoke-packaged-sidecar.ps1`，覆盖 `--self-check`、`deprecated_repo_path_fallback_used=false` 和 minimal material balance job。
 3. NSIS installer 必须通过 `apps/desktop/scripts/smoke-nsis-installer.ps1`，覆盖 silent install、installed executable presence 和 best-effort silent uninstall。
 4. P0 明确不包含 code signing、auto update、Microsoft Store 分发或自动 GitHub Release publication；该边界见 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 5. release evidence 写入 `tmp/release-evidence/`，不得提交安装包、sidecar 二进制或 evidence 产物。

@@ -12,7 +12,13 @@
 - opt-in mock-backed browser smoke 验证。
 - opt-in live backend browser smoke 验证。
 - opt-in current-flow live smoke 验证。
+- opt-in worker adapter strict-mode smoke 验证。
+- opt-in worker packaged sidecar no-fallback smoke 验证。
 - opt-in performance/timings Phase 0 baseline 证据。
+- opt-in performance profiling Phase 0 evidence，生成 JSON/Markdown 汇总和 raw `.prof` 文件。
+- opt-in performance golden Phase 0 evidence，生成 CPU/f64/fixed-seed L3 全仿真 goldens 与 L1/L2 micro goldens。
+- opt-in performance hot-path prereview Phase 0 evidence，汇总 baseline/profiling/golden 并选择第一批可实施优化点。
+- opt-in Go API latency Phase 0 evidence，启动本地内存 Compute API 并测 job list/get/worker claim wall time。
 - opt-in Desktop project package/support bundle smoke 验证。
 - opt-in Desktop unsigned release artifacts smoke 验证。
 - 8 条金标场景的现有 lane evidence 汇总，以及显式本地 evidence refresh 编排。
@@ -38,7 +44,13 @@
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
 | `live-backend-browser-smoke.ps1` | 启动 integration-backed Compute API/PostgreSQL/MinIO/worker job，再运行 Playwright 读取真实 job/result/evidence/ref，并写出 `tmp/ci-evidence/live-backend-browser-smoke.json` |
 | `current-flow-live-smoke.ps1` | 启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再运行 Playwright 从 UI 提交 current flow、等待真实 worker 完成、下载 evidence package 并解析 evidence ref，写出 `tmp/ci-evidence/current-flow-live-smoke.json` |
+| `worker-adapter-strict-smoke.ps1` | 使用 strict adapter validation mode 跑 valid compute_job fixtures，统计通过率、失败原因和 warn→strict 切换条件，输出 `tmp/ci-evidence/worker-adapter-strict-smoke.json` / `.md` |
+| `worker-packaged-no-fallback-smoke.ps1` | 构建或复用 PyInstaller one-folder worker sidecar，运行 packaged sidecar self-check / minimal job，并要求 `deprecated_repo_path_fallback_used=false`，输出 `tmp/ci-evidence/worker-packaged-no-fallback-smoke.json` / `.md` |
 | `performance-baseline-phase0.ps1` | 运行 worker solver matrix baseline，记录 `runtime_audit.timings_ms` 分段、artifact size、worker wall time 和未覆盖 baseline 维度，写出 `tmp/ci-evidence/performance-baseline-phase0.json` |
+| `performance-profiling-phase0.ps1` | 运行 worker solver matrix cProfile evidence，覆盖 small material balance、medium ASM1、single UDM 和 mixed ASM/UDM，输出 `tmp/ci-evidence/performance-profiling-phase0.json` / `.md` 与 `tmp/performance-profiling-phase0/profiles/*.prof` |
+| `performance-golden-phase0.ps1` | 运行 CPU/f64/fixed-seed golden generator，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 三求解器矩阵与 L1/L2 micro goldens，输出 `tmp/ci-evidence/performance-golden-phase0.json` / `.md` 和 `tmp/performance-golden-phase0/goldens/*.golden.json` |
+| `performance-hotpath-prereview-phase0.ps1` | 汇总 P-01/P-02/P-03 evidence，选择第一批 hot-path 候选、容差层级、收益度量和禁止混入项，输出 `tmp/ci-evidence/performance-hotpath-prereview-phase0.json` / `.md` |
+| `performance-go-api-latency-phase0.ps1` | 启动本地 `go run ./cmd/compute-api` 内存实例，批量创建 jobs，测 `GET /api/v1/compute/jobs`、`GET /api/v1/compute/jobs/{id}` 与 worker claim POST wall time，输出 `tmp/ci-evidence/performance-go-api-latency-phase0.json` / `.md` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
 | `desktop-release-artifacts-smoke.ps1` | 构建真实 PyInstaller sidecar 和 NSIS installer，运行 packaged worker runtime smoke、release gate `Mode=release` 与本地 unsigned artifact bundle verifier，并写出 `tmp/ci-evidence/desktop-release-artifacts-smoke.json` |
 | `golden-scenarios.ps1` | 读取现有 CI/release evidence，汇总 8 条金标场景的 `partial` / `missing` / `blocked` 状态；可用 `-RefreshLocalEvidence` 先刷新非 Docker 本地 evidence lanes，并写出 `tmp/ci-evidence/golden-scenarios.json` |
@@ -65,7 +77,19 @@
 
 本目录对 `Justfile` 和 `.github/workflows/next-current-flow-live-smoke.yml` 暴露 `current-flow-live-smoke` opt-in 入口；它启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再用 Playwright 从 Compute Jobs route 提交 current flow，等待真实 worker 完成，并验证 UI evidence package 下载和 evidence ref 解析。它只 mock legacy `/api/v1/users/me`，不覆盖完整 legacy authenticated backend session；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
-本目录对 `Justfile` 暴露 `performance-baseline-phase0` opt-in 入口；它只建立性能 Phase 0 baseline evidence，覆盖 small material balance、medium ASM1、single UDM fixtures 与 `scipy_solver` / `rk4` / `adaptive_heun` solver matrix，记录 worker wall time、`runtime_audit.timings_ms` 分段和 artifact serialization size/cost。当前未跟踪 `mixed_asm_udm` fixture 时脚本会以 `partial` 状态记录 open gap，不会把该维度伪装成已完成。该脚本不做热路径优化、不修改 worker strict mode、不替代 hosted evidence，也不进入默认 `pr-fast`。
+本目录对 `Justfile` 暴露 `worker-adapter-strict-smoke` opt-in 入口；它通过 `--adapter-validation-mode strict` 和 `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE=strict` 证明 worker 可在 strict adapter mode 下运行现有 valid compute_job fixtures，并记录 pass rate、失败原因和 warn→strict 默认切换条件。该脚本不改变 worker 默认 `compat` 行为，不进入默认 `pr-fast`。
+
+本目录对 `Justfile` 暴露 `worker-packaged-no-fallback-smoke` opt-in 入口；它默认构建真实 PyInstaller one-folder sidecar，也可用 `-SidecarPath` 或 `AUTOWATERSIMU_PACKAGED_SIDECAR` 复用已有 sidecar，然后复用 Desktop packaged sidecar smoke 并额外记录 packaged self-check 的 `deprecated_repo_path_fallback_used=false`。该脚本只建立 P-07 evidence，不删除 fallback、不构建 installer、不进入默认 `pr-fast`。
+
+本目录对 `Justfile` 暴露 `performance-baseline-phase0` opt-in 入口；它只建立性能 Phase 0 baseline evidence，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM fixtures 与 `scipy_solver` / `rk4` / `adaptive_heun` solver matrix，记录 worker wall time、`runtime_audit.timings_ms` 分段和 artifact serialization size/cost。该脚本不做热路径优化、不修改 worker strict mode、不替代 hosted evidence，也不进入默认 `pr-fast`。
+
+本目录对 `Justfile` 暴露 `performance-profiling-phase0` opt-in 入口；它用 `cProfile` 包裹 worker `run_job_file()` 真实执行路径，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 与三求解器矩阵，输出 JSON/Markdown profiling evidence 和 raw `.prof` 文件。它只用于 P-02 热点证据，不修改 runtime、不替代 P-03 f64 golden、不进入默认 `pr-fast`。
+
+本目录对 `Justfile` 暴露 `performance-golden-phase0` opt-in 入口；它直接调用 `autowatersimu_simulation_core`，启动时移除 legacy backend 项目路径，不使用 legacy backend oracle，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 在 `scipy_solver` / `rk4` / `adaptive_heun` 下的 CPU/f64/fixed-seed L3 golden，并生成 UDM expression L1、parallel edge L2、dense/sparse current-state repro、`_balance_param` 非方 current-state repro 与退化零流量 micro golden。它只用于 P-03 保护网，不修改 runtime、不替代 P-08 hot-path prereview、不进入默认 `pr-fast`。
+
+本目录对 `Justfile` 暴露 `performance-hotpath-prereview-phase0` opt-in 入口；它读取 Phase 0 baseline、profiling 和 golden evidence，当前选择 `transport-runtime-tensor-precompute-no-semantics` 作为第一批 hot-path 候选，要求收益回流到 `transport_dense_sparse` profile bucket 与 worker `runtime_audit.timings_ms.compute`，并明确禁止混入 mixed ASM/UDM 语义、dense parallel-edge 语义修复、default clamp、solver/output grid、schema/OpenAPI/generated client、worker strict-mode 或 fallback 删除。它是 P-08 证据，不替代具体优化实现、不进入默认 `pr-fast`。
+
+本目录对 `Justfile` 暴露 `performance-go-api-latency-phase0` opt-in 入口；它启动本地内存 Compute API，使用默认 development token 批量创建 material balance jobs，测 job list/get 与 worker claim POST wall time，写出 p50/p95/p99，并预留 `claim_scanned_rows` 字段为后续 metrics PR 使用。它只建立 P-06 baseline，不修改 keyset cursor、claim LIMIT、索引、migration、OpenAPI 或默认 `pr-fast`。
 
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
 
@@ -84,6 +108,7 @@
 - `scripts/audit-compute-api-boundary.ps1`
 - `scripts/audit-simulation-core-correctness-freeze.ps1`
 - `scripts/audit-worker-dependency-installation.ps1`
+- `apps/desktop/packaging/build-packaged-sidecar.ps1` 和 `apps/desktop/scripts/smoke-packaged-sidecar.ps1`，仅用于显式 P-07 packaged no-fallback evidence
 - `scripts/check-ontology.ps1`
 - `scripts/check-contracts.ps1`
 - `backend/.venv` Python 或 PATH Python
@@ -91,7 +116,7 @@
 - `npm` / `npx`
 - `git diff`
 
-不应该调用 release-only packaged sidecar 或 installer smoke。
+不应该调用 release-only installer smoke；packaged sidecar build/smoke 只能用于显式 P-07 或 release artifacts evidence，不得混入默认 `pr-fast`。
 
 Integration smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO 和本地 `backend/.venv` Python worker CLI；它不应替代 release gate、browser smoke 或 packaged worker/desktop smoke。
 
@@ -112,7 +137,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-adapter-strict-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-packaged-no-fallback-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-baseline-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-profiling-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-golden-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-hotpath-prereview-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-api-latency-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1

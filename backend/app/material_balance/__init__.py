@@ -14,6 +14,7 @@
 - MaterialBalanceCalculator: 兼容导入路径，实际委托 simulation_core 物料平衡计算器
 - MaterialBalanceInput / NodeData / EdgeData / CalculationParameters: 旧导入路径兼容模型，不是新的 runtime input contract
 - MaterialBalanceResult: 旧导入路径兼容结果模型；calculator runtime 已迁向 simulation_core
+- Local input models: compatibility-only local input models, not the active runtime input contract.
 
 新 backend/core 迁移代码应显式使用
 autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput

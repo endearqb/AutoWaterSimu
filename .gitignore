@@ -198,6 +198,7 @@ Thumbs.db
 
 # Test files and uploads
 test_*.py
+!contracts/tests/test_compute_job_payload_validation.py
 test_*.csv
 uploads/
 temp/uploads/

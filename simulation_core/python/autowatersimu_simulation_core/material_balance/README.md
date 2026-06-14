@@ -36,6 +36,8 @@
 2. 新增 runtime 字段先补 adapter、合同字段/兼容说明和 parity 测试。
 3. 不在本目录直接引用 `app.models` 或 `app.services`。
 4. `_run_hours` 当前按 `asm1slim`、`asm1`、`asm3`、`udm`、default 的互斥顺序选择 ODE branch；ASM/UDM branches 会 clamp solver output，default branch 当前不启用 clamp。该行为由 core-only correctness-freeze tests 和 `scripts/audit-simulation-core-correctness-freeze.ps1` 保护，性能优化不得隐式改变。
+5. `_run_calculation` 在 segment 没有 `edge_overrides` 时复用 `_convert_to_tensors` 已构建的 `Q_out` / `prop_a` / `prop_b` / `sparse_bundle`；有 override 时必须 clone edge tensors 并重新构建 runtime tensors，不得污染预计算 bundle。该 fast path 只是 transport tensor 准备优化，不等同于 dense/sparse 并行边语义修复。
+6. UDM runtime 在构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices；`udm_ode_balance()` / `UDMNodeRuntime.evaluate_reaction()` 热路径不得重新用 `.item()` 判断 `udm_mask`、`fixed_component_mask.any()` 或 local-to-global 映射。`compile_expression()` 使用无状态 LRU 缓存，表达式 evaluator 可跨同文本节点共享。
 
 ## 4. 对外接口
 
@@ -60,6 +62,8 @@
 
 ```powershell
 backend\.venv\Scripts\python -m pytest simulation_core\tests -q
+backend\.venv\Scripts\python -m pytest docs\rebuild\simulation_core -q
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-golden-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
 ```
 

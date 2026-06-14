@@ -113,6 +113,49 @@ function Find-PatternHitsWithPythonFunction {
     return @($hits)
 }
 
+function Find-PythonFromImportNameHits {
+    param(
+        [string]$Root,
+        [object[]]$Files,
+        [string[]]$Modules,
+        [string[]]$Names,
+        [string]$Rule
+    )
+    $hits = [System.Collections.Generic.List[object]]::new()
+    if ($Modules.Count -eq 0 -or $Names.Count -eq 0) {
+        return @($hits)
+    }
+    $modulePattern = "(?:" + (($Modules | ForEach-Object { [regex]::Escape($_) }) -join "|") + ")"
+    $namePattern = "\b(?:" + (($Names | ForEach-Object { [regex]::Escape($_) }) -join "|") + ")\b"
+    foreach ($file in @($Files)) {
+        $lines = [System.IO.File]::ReadAllLines($file.FullName)
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = [string]$lines[$i]
+            if ($line -notmatch "^\s*from\s+($modulePattern)\s+import\s+(.+)$") {
+                continue
+            }
+            $importText = [string]$Matches[2]
+            if ($importText -match '\(' -and $importText -notmatch '\)') {
+                for ($j = $i + 1; $j -lt $lines.Count; $j++) {
+                    $importText += "`n" + [string]$lines[$j]
+                    if ([string]$lines[$j] -match '\)') {
+                        break
+                    }
+                }
+            }
+            if ($importText -match $namePattern) {
+                $hits.Add([ordered]@{
+                    rule = $Rule
+                    file = ConvertTo-RepoRelativePath -Root $Root -Path $file.FullName
+                    line = $i + 1
+                    text = $line.Trim()
+                }) | Out-Null
+            }
+        }
+    }
+    return @($hits)
+}
+
 function Add-OpenGap {
     param(
         [System.Collections.Generic.List[object]]$Gaps,
@@ -466,6 +509,12 @@ $backendCoreSimulationInputAdapterDetected = (
 $legacySimulationInputAdapterCompatibilityMarked = $backendSimulationInputAdapterText -match 'Compatibility-only adapter to legacy'
 $backendLocalModelsText = if (Test-Path -LiteralPath $backendModelsPath) { Get-Content -LiteralPath $backendModelsPath -Raw } else { "" }
 $backendLocalModelsCompatibilityMarked = $backendLocalModelsText -match 'Compatibility-only material balance data models'
+$backendMaterialBalanceInitPath = Join-Path $backendMaterialBalance "__init__.py"
+$backendMaterialBalanceInitText = if (Test-Path -LiteralPath $backendMaterialBalanceInitPath) { Get-Content -LiteralPath $backendMaterialBalanceInitPath -Raw } else { "" }
+$backendMaterialBalanceInitCompatibilityMarked = (
+    $backendMaterialBalanceInitText -match 'compatibility-only local input models' -and
+    $backendMaterialBalanceInitText -match 'not the active runtime input contract'
+)
 
 $backendAppFiles = Get-PythonFiles -Path $backendAppPath
 $backendProductionFiles = @()
@@ -479,8 +528,16 @@ foreach ($file in @($backendAppFiles)) {
     }
     $backendProductionFiles += $file
 }
-$legacyLocalInputImportPattern = '^\s*from\s+(app\.material_balance\.models|material_balance\.models|\.models)\s+import\s+.*\b(MaterialBalanceInput|NodeData|EdgeData|CalculationParameters)\b'
-$legacyLocalInputImportHitsAll = @(Find-PatternHits -Root $Root -Files $backendProductionFiles -Pattern $legacyLocalInputImportPattern -Rule "backend-production-must-not-import-local-material-balance-input-models")
+$legacyLocalInputImportModules = @("app.material_balance.models", "material_balance.models", ".models")
+$legacyLocalInputImportNames = @("MaterialBalanceInput", "NodeData", "EdgeData", "CalculationParameters")
+$legacyLocalInputImportHitsAll = @(
+    Find-PythonFromImportNameHits `
+        -Root $Root `
+        -Files $backendProductionFiles `
+        -Modules $legacyLocalInputImportModules `
+        -Names $legacyLocalInputImportNames `
+        -Rule "backend-production-must-not-import-local-material-balance-input-models"
+)
 $legacyLocalInputImportAllowedFiles = @(
     "backend/app/material_balance/__init__.py",
     "backend/app/material_balance/models.py"
@@ -489,6 +546,31 @@ $legacyLocalInputImportHits = @(
     $legacyLocalInputImportHitsAll |
         Where-Object { $legacyLocalInputImportAllowedFiles -notcontains $_.file }
 )
+
+$backendCompatibilityModelsDetails = [ordered]@{
+    compatibility_only_local_input_models = if (Test-Path -LiteralPath $backendModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendModelsPath } else { $null }
+    material_balance_init = if (Test-Path -LiteralPath $backendMaterialBalanceInitPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendMaterialBalanceInitPath } else { $null }
+    local_models_compatibility_marked = $backendLocalModelsCompatibilityMarked
+    init_compatibility_marked = $backendMaterialBalanceInitCompatibilityMarked
+    allowed_compatibility_import_files = $legacyLocalInputImportAllowedFiles
+    forbidden_production_import_hits = $legacyLocalInputImportHits
+}
+$backendCompatibilityModelsBoundaryPassed = (
+    $backendLocalModelsCompatibilityMarked -and
+    $backendMaterialBalanceInitCompatibilityMarked -and
+    $legacyLocalInputImportHits.Count -eq 0
+)
+if ($backendCompatibilityModelsBoundaryPassed) {
+    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "passed" -Summary "Backend-local material_balance input models are marked compatibility-only and are not imported by production code outside the legacy compatibility package entrypoints." -Details $backendCompatibilityModelsDetails
+}
+else {
+    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "failed" -Summary "Backend-local material_balance input models are not safely fenced as compatibility-only." -Details $backendCompatibilityModelsDetails
+    $hardViolations.Add([ordered]@{
+        rule = "backend-material-balance-compatibility-models-boundary"
+        summary = "Do not use backend/app/material_balance/models.py local input models as the runtime contract for new backend/core migration or performance work."
+        details = $backendCompatibilityModelsDetails
+    }) | Out-Null
+}
 
 $calculateEntryHits = @(Find-PatternHitsWithPythonFunction -Root $Root -Files $backendProductionFiles -Pattern '\bcalculator\.calculate\(' -Rule "backend-material-balance-calculator-entrypoint")
 $expectedCalculateEntryPoints = @(

@@ -1,7 +1,7 @@
 import ast
 import math
 from dataclasses import dataclass
-from functools import reduce
+from functools import lru_cache, reduce
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set
 
 import torch
@@ -520,6 +520,7 @@ def _evaluate_ast(node: ast.AST, variables: Dict[str, Any], _depth: int = 0) -> 
     raise UnsafeExpressionError(f"Unsupported AST node: {type(node).__name__}")
 
 
+@lru_cache(maxsize=4096)
 def compile_expression(expression: str) -> Callable[[Dict[str, Any]], Any]:
     parsed = ast.parse(expression, mode="eval")
 

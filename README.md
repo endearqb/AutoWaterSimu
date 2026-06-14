@@ -172,10 +172,16 @@ just check-security
 just audit-simulation-core-input-contract
 just audit-simulation-core-correctness-freeze
 just audit-worker-dependency-installation
+just worker-adapter-strict-smoke
+just worker-packaged-no-fallback-smoke
 just browser-smoke
 just live-backend-browser-smoke
 just current-flow-live-smoke
 just performance-baseline-phase0
+just performance-profiling-phase0
+just performance-golden-phase0
+just performance-hotpath-prereview-phase0
+just performance-go-api-latency-phase0
 just desktop-package-smoke
 just desktop-release-artifacts-smoke
 just golden-scenarios
@@ -197,6 +203,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-input-contract.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-dependency-installation.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-adapter-strict-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
@@ -204,6 +211,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-baseline-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-profiling-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-golden-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-hotpath-prereview-phase0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-api-latency-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1

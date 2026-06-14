@@ -31,7 +31,7 @@
 3. input/output 缺失 volume 默认 `1.0`；普通 reactor 缺失 volume 返回 validation error。
 4. 可选模型字段必须区分“字段缺失”和“显式空数组/空对象”，不得用 truthy fallback 丢弃输入。
 5. 本 adapter 是 backend `simulation_input_to_core_material_balance_input()` 的 runtime model source；backend legacy compatibility adapter 若继续存在，字段保留语义必须与本 adapter 保持一致。
-6. 未知字段策略属于 adapter 输入契约职责；`simulation_input_to_material_balance_input(..., validation_mode="compat")` 是默认兼容路径，静默忽略 adapter 不消费的未知字段；`validation_mode="warn"` 接受 payload 并把未知字段写入 `MaterialBalanceInput.contract_warnings`；`validation_mode="strict"` 在计算前返回 `SimulationCoreAdapterError`。`simulation_input.v1` 的合同字段使用 canonical snake_case，camelCase 模型字段只作为直接调用 adapter 时的迁移兼容路径。worker 当前仍使用默认 `compat`，切换 worker 调用模式前必须同步更新 audit evidence 和 core-only tests。
+6. 未知字段策略属于 adapter 输入契约职责；`simulation_input_to_material_balance_input(..., validation_mode="compat")` 是默认兼容路径，静默忽略 adapter 不消费的未知字段；`validation_mode="warn"` 接受 payload 并把未知字段写入 `MaterialBalanceInput.contract_warnings`；`validation_mode="strict"` 在计算前返回 `SimulationCoreAdapterError`。`simulation_input.v1` 的合同字段使用 canonical snake_case，camelCase 模型字段只作为直接调用 adapter 时的迁移兼容路径。worker 默认仍使用 `compat`，但可通过 CLI/env/JSON-RPC 显式 opt in 到 `warn` / `strict`；切换 worker 默认调用模式前必须同步更新 strict smoke evidence、audit evidence 和 core-only tests。
 
 ## 4. 对外接口
 

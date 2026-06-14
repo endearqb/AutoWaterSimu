@@ -20,7 +20,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `smoke-packaged-sidecar.ps1` | 运行 packaged worker `--self-check` 和 minimal job |
+| `smoke-packaged-sidecar.ps1` | 运行 packaged worker `--self-check`、fallback-unused gate 和 minimal job |
 | `smoke-nsis-installer.ps1` | 运行 NSIS silent install、installed app exe、installed sidecar smoke 和 best-effort uninstall，并记录 evidence |
 
 ## 3. 维护约定
@@ -28,7 +28,7 @@
 1. smoke 脚本必须显式接收 artifact 路径，不能猜测未验证的本地构建产物。
 2. 缺少 artifact 默认失败；`-AllowMissing` 只用于 dry run，不表示 release 通过。
 3. evidence 写入 `tmp/release-evidence/`，不要提交生成结果。
-4. Installer smoke 必须验证安装目录中存在 resource-bundled packaged sidecar，并复用 sidecar smoke 覆盖 `--self-check` 和 minimal job。
+4. Installer smoke 必须验证安装目录中存在 resource-bundled packaged sidecar，并复用 sidecar smoke 覆盖 `--self-check`、fallback-unused gate 和 minimal job。
 
 ## 4. 对外接口
 

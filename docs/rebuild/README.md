@@ -29,6 +29,7 @@
 | `AutoWaterSimu_Next_Legacy_Phase0_Drift_Audit_2026-05-31.md` | Phase 0 legacy print/schema/client drift 精确审计 |
 | `AutoWaterSimu_Next_COSS_Source_Manifest_2026-05-31.md` | COSS-compatible UI source copy/license manifest |
 | `AutoWaterSimu_Next_Legacy_Migration_Guide_2026-05-31.md` | legacy FastAPI/React baseline 到 Next worker/API/Desktop 的迁移指南 |
+| `simulation_core/` | simulation_core 性能优化需求、开发计划、前置证据规划和 golden/repro 文档化测试 |
 | `AutoWaterSimu_Final_State_Driven_Plan_v1.2.md` | 原始终态架构输入 |
 | `windows app.md` | Windows Desktop 路线输入 |
 
@@ -39,6 +40,7 @@
 3. 文档修改应同步记录到 `.ai/changes/`。
 4. 重大架构决策同步写入 `.ai/decisions/`。
 5. Certainty/Elegance 补充文档只定义质量目标和后续路线，不直接改变现有 PRD/Spec/Plan 的 P0/P1/P2 承诺。
+6. 修改 `simulation_core/` 前先读该目录 README，并区分当前 correctness freeze、目标正确性和性能优化行为。
 
 ## 4. 对外接口
 

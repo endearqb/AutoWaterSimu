@@ -127,6 +127,7 @@ def run_api_once(
     token: str = DEFAULT_API_TOKEN,
     worker_id: str | None = None,
     artifact_dir: str | Path = "artifacts",
+    adapter_validation_mode: str | None = None,
 ) -> dict[str, Any]:
     worker_id = worker_id or default_worker_id()
     client = ComputeAPIClient(base_url=base_url, token=token)
@@ -135,6 +136,7 @@ def run_api_once(
         client=client,
         worker_id=worker_id,
         artifact_dir_path=Path(artifact_dir),
+        adapter_validation_mode=adapter_validation_mode,
     )
 
 
@@ -147,6 +149,7 @@ def run_api_loop(
     max_jobs: int | None = None,
     max_idle_polls: int | None = None,
     idle_sleep_seconds: float = DEFAULT_IDLE_SLEEP_SECONDS,
+    adapter_validation_mode: str | None = None,
 ) -> dict[str, Any]:
     worker_id = worker_id or default_worker_id()
     client = ComputeAPIClient(base_url=base_url, token=token)
@@ -162,6 +165,7 @@ def run_api_loop(
             worker_id=worker_id,
             artifact_dir_path=artifact_dir_path,
             include_compute_result=False,
+            adapter_validation_mode=adapter_validation_mode,
         )
         if result.get("status") == "idle":
             idle_polls += 1
@@ -200,6 +204,7 @@ def _claim_and_run_once(
     worker_id: str,
     artifact_dir_path: Path,
     include_compute_result: bool = True,
+    adapter_validation_mode: str | None = None,
 ) -> dict[str, Any]:
     claim = client.post_json(f"/api/v1/workers/{_quote(worker_id)}/claim", {})
     job = claim.get("job")
@@ -225,7 +230,11 @@ def _claim_and_run_once(
             "heartbeat": heartbeat,
         }
 
-    compute_result = run_job(job, artifact_dir_path)
+    compute_result = run_job(
+        job,
+        artifact_dir_path,
+        adapter_validation_mode=adapter_validation_mode,
+    )
     status = str(compute_result.get("status") or "failed")
     if status == "succeeded":
         uploaded_artifacts = [

@@ -2,6 +2,10 @@
 """
 物料平衡模块功能验证的简单测试脚本。
 
+Compatibility-only manual script for legacy backend-local material balance
+models. It is not a pytest target, production runtime path, or source of the
+current backend/core simulation input contract.
+
 该脚本创建一个简单的4节点系统来测试物料平衡计算的核心功能，
 验证模块是否能正确处理基本的物料流动和浓度变化计算。
 """
