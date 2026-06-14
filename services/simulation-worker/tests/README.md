@@ -8,7 +8,7 @@
 
 - Worker CLI self-check 测试。
 - `--run-job` 合同 fixture 执行、artifact checksum、独立 `simulation.asm1slim.v1` / `simulation.asm1.v1` / `simulation.asm3.v1` / `simulation.udm.v1` job type、model_run 审计和模型参数 hash 测试。
-- worker artifact 与 legacy backend 的 old-vs-worker 数值基线矩阵，包括 material balance、ASM1Slim/ASM1/ASM3、单 reactor UDM、UDM Hybrid 多模型映射和 Petersen 教程默认流程。
+- worker artifact 与 legacy backend 的 old-vs-worker 数值基线矩阵，包括 material balance、ASM1Slim/ASM1/ASM3、单 reactor UDM、UDM Hybrid 多模型映射和 Petersen 教程默认流程；该类测试必须隔离在 dedicated backend-oracle 文件中。
 - stdio JSON-RPC、one-shot Go Compute API bridge 和 bounded API loop 回归测试。
 
 本目录不负责：
@@ -21,7 +21,8 @@
 
 | 文件 | 作用 |
 |---|---|
-| `test_worker_cli.py` | worker CLI、JSON-RPC、HTTP bridge、artifact 和 model_run 回归 |
+| `test_worker_cli.py` | worker CLI、JSON-RPC、HTTP bridge、artifact、model_run 和 runtime boundary 回归；不得静态导入 legacy `backend/app` |
+| `test_worker_backend_oracle.py` | old-vs-worker backend oracle 数值基线矩阵；这是本目录唯一允许静态加入 `backend/app` 的测试文件 |
 
 ## 3. 维护约定
 
@@ -41,7 +42,7 @@
 - `services/simulation-worker/simulation_worker`
 - `contracts/`
 - `simulation_core/python`
-- `backend/app` 仅限 old-vs-worker 数值基线测试，worker runtime 代码不得依赖 legacy backend
+- `backend/app` 仅限 `test_worker_backend_oracle.py` old-vs-worker 数值基线测试，worker runtime 代码和 worker CLI/API bridge tests 不得依赖 legacy backend
 
 不应该依赖：
 

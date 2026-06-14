@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next P3 worker backend oracle test split TODO
+
+- [x] Re-read README First context for services/simulation-worker tests, scripts, docs/architecture, docs/rebuild, and current P3 audit state.
+- [x] Confirm the next slice is worker CLI/API bridge test isolation from backend parity/oracle tests, not backend thin-shell migration or hot-path performance optimization.
+- [x] Split old-vs-backend oracle helpers/tests from `test_worker_cli.py` into `test_worker_backend_oracle.py`.
+- [x] Keep `test_worker_cli.py` focused on runtime/CLI/JSON-RPC/API bridge and worker boundary tests without static backend imports.
+- [x] Update the P3 audit so backend oracle imports are allowed only in the dedicated worker oracle test file.
+- [x] Update README/current-state/development-plan context.
+- [x] Run validation and record exact results.
+- [x] Commit and push this P3 worker oracle split slice.
+
+## Plan
+
+- Preserve worker runtime behavior, CLI/JSON-RPC/API outputs, fixture assertions, schemas, OpenAPI, generated clients, backend material-balance implementation, and Desktop scope.
+- Move existing oracle assertions without changing their numerical comparison semantics.
+- Keep backend/core dual implementation drift as the only expected P3 open gap after this slice.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Split `services/simulation-worker/tests/test_worker_cli.py` into runtime/CLI/JSON-RPC/API bridge coverage only, removing top-level `backend/app` path injection and legacy `app.*` imports from that collect unit.
+- Added dedicated `services/simulation-worker/tests/test_worker_backend_oracle.py` for old-vs-worker numerical baselines against legacy backend material-balance behavior.
+- Updated `scripts/audit-simulation-core-boundary.ps1` so worker backend oracle imports pass only when isolated to `test_worker_backend_oracle.py`; runtime/CLI/API test files with backend hits remain an open gap.
+- P3 audit now reports `partial` with 0 hard violations and 1 open gap: `backend-core-dual-implementation-drift-risk`.
+- Updated worker tests README, worker top-level README, scripts README, architecture current-state, and Certainty/Elegance Development Plan to record the new test boundary and next P3 priority.
+- Validation passed: focused `test_worker_cli.py` (`16 passed`), focused `test_worker_backend_oracle.py` (`9 passed`), full worker tests (`25 passed`), `scripts\audit-simulation-core-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), and `git diff --check -- .`.
+- `git diff --check -- .` only emitted Windows LF-to-CRLF notices, not whitespace errors.
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next P3 worker installed-package import TODO
 
 - [x] Read the attached priority reassessment and confirm P0 service-test split, P1 boundary gate, and P2 mutation matrix closeout are already landed in current HEAD.

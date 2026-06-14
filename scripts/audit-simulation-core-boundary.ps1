@@ -367,9 +367,34 @@ else {
         core_only_test_files = $coreOnlyTestFiles
     })
 }
-if ($workerTestBackendHits.Count -gt 0) {
-    Add-Check -Checks $checks -Name "worker tests backend oracle dependency" -Status "gap" -Summary "Worker tests still use legacy backend as oracle/baseline." -Details $workerTestBackendHits
-    Add-OpenGap -Gaps $openGaps -Id "worker-tests-backend-oracle-dependency" -Severity "medium" -Summary "Keep backend oracle tests isolated from worker runtime boundary tests before packaging gate promotion." -Evidence $workerTestBackendHits
+$workerRuntimeTestBackendHits = @()
+$workerBackendOracleTestFiles = @()
+$workerRuntimeBoundaryTestFiles = @()
+foreach ($file in @($workerTestFiles)) {
+    $relativePath = ConvertTo-RepoRelativePath -Root $Root -Path $file.FullName
+    $fileHits = @(Find-PatternHits -Root $Root -Files @($file) -Pattern $testBackendPattern -Rule "worker-tests-backend-oracle-dependency")
+    if ($fileHits.Count -eq 0) {
+        $workerRuntimeBoundaryTestFiles += $relativePath
+        continue
+    }
+    if ($relativePath -match '(^|/)test_worker_backend_oracle\.py$') {
+        $workerBackendOracleTestFiles += $relativePath
+        continue
+    }
+    $workerRuntimeTestBackendHits += $fileHits
+}
+$workerTestBoundaryDetails = [ordered]@{
+    backend_oracle_hits = $workerTestBackendHits
+    backend_oracle_test_files = @($workerBackendOracleTestFiles | Sort-Object -Unique)
+    runtime_boundary_test_files = @($workerRuntimeBoundaryTestFiles | Sort-Object -Unique)
+    runtime_boundary_backend_hits = $workerRuntimeTestBackendHits
+}
+if ($workerRuntimeTestBackendHits.Count -gt 0) {
+    Add-Check -Checks $checks -Name "worker tests backend oracle dependency" -Status "gap" -Summary "Worker runtime/CLI/API tests still collect with legacy backend oracle dependencies." -Details $workerTestBoundaryDetails
+    Add-OpenGap -Gaps $openGaps -Id "worker-tests-backend-oracle-dependency" -Severity "medium" -Summary "Keep backend oracle tests isolated from worker runtime boundary tests before packaging gate promotion." -Evidence $workerTestBoundaryDetails
+}
+elseif ($workerBackendOracleTestFiles.Count -gt 0) {
+    Add-Check -Checks $checks -Name "worker tests backend oracle dependency" -Status "passed" -Summary "Worker backend oracle tests are isolated from runtime/CLI/API boundary tests." -Details $workerTestBoundaryDetails
 }
 else {
     Add-Check -Checks $checks -Name "worker tests backend oracle dependency" -Status "passed" -Summary "Worker tests do not statically add/import backend oracle dependencies." -Details @()
@@ -406,7 +431,6 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Split worker CLI/API bridge tests from backend parity/oracle tests.",
         "Freeze golden/parity strategy before backend thin-shell migration or hot-path optimization."
     )
 }

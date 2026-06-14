@@ -26,7 +26,7 @@
 |---|---|
 | `README.md` | 本目录上下文契约 |
 | `simulation_worker/` | Python CLI、job runner、self-check 和 JSON-RPC protocol |
-| `tests/` | Worker CLI contract tests |
+| `tests/` | Worker CLI/API/runtime boundary tests plus isolated old-vs-backend oracle tests |
 
 Phase 2B 后 worker 通过 installable `autowatersimu-simulation-core` / `autowatersimu-contracts` Python packages 调用 material balance runtime，不再直接依赖 `backend/app`。`simulation_core/python` 与 `contracts/python` repo path fallback 仅作为 source-mode / packaged sidecar compatibility fallback 保留，并且只能在 installed package import 失败后触发。当前 worker 接受 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1`；ASM1Slim/ASM1/ASM3/UDM 仍通过既有 material balance runtime 的节点模型分支执行。self-check 声明 `material_balance`、`asm1slim`、`asm1`、`asm3`、`udm`、`ode` capabilities。`--run-api-once` 是 Phase 4/5 的本地/CI HTTP worker bridge，用于 register -> claim -> heartbeat -> run -> upload artifact -> succeed/fail 的单次闭环；`--run-api-loop` 在同一 HTTP contract 上复用一次注册并重复 claim，支持 `--max-jobs` / `--max-idle-polls` / `--idle-sleep-seconds` 做 bounded loop。生产部署编排、异步求解中断和复杂 cancel acknowledgement 仍是后续工作。
 
