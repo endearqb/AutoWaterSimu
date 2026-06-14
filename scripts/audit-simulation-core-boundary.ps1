@@ -78,6 +78,41 @@ function Find-PatternHits {
     return @($hits)
 }
 
+function Find-PatternHitsWithPythonFunction {
+    param(
+        [string]$Root,
+        [object[]]$Files,
+        [string]$Pattern,
+        [string]$Rule
+    )
+    $hits = [System.Collections.Generic.List[object]]::new()
+    foreach ($file in @($Files)) {
+        $lines = [System.IO.File]::ReadAllLines($file.FullName)
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = [string]$lines[$i]
+            if ($line -notmatch $Pattern) {
+                continue
+            }
+            $functionName = ""
+            for ($j = $i; $j -ge 0; $j--) {
+                $candidate = [string]$lines[$j]
+                if ($candidate -match '^\s*def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(') {
+                    $functionName = $Matches[1]
+                    break
+                }
+            }
+            $hits.Add([ordered]@{
+                rule = $Rule
+                file = ConvertTo-RepoRelativePath -Root $Root -Path $file.FullName
+                line = $i + 1
+                function = $functionName
+                text = $line.Trim()
+            }) | Out-Null
+        }
+    }
+    return @($hits)
+}
+
 function Add-OpenGap {
     param(
         [System.Collections.Generic.List[object]]$Gaps,
@@ -237,10 +272,28 @@ Add-Check -Checks $checks -Name "runtime legacy backend imports" -Status $(if ((
     worker_runtime_hits = $workerLegacyImportHits
 })
 
-$workerPathFallbackHits = @(Find-PatternHits -Root $Root -Files $workerFiles -Pattern 'sys\.path\.(insert|append)|_ensure_repo_import_paths' -Rule "worker-runtime-repo-path-fallback")
-if ($workerPathFallbackHits.Count -gt 0) {
-    Add-Check -Checks $checks -Name "worker repo path fallback" -Status "gap" -Summary "Worker runtime still mutates sys.path for repo-local simulation_core/contracts imports." -Details $workerPathFallbackHits
-    Add-OpenGap -Gaps $openGaps -Id "worker-runtime-repo-path-fallback-present" -Severity "high" -Summary "Remove or deprecate worker _ensure_repo_import_paths after simulation_core/contracts Python helpers are installable." -Evidence $workerPathFallbackHits
+$workerLegacyFallbackHits = @(Find-PatternHits -Root $Root -Files $workerFiles -Pattern '(?<![A-Za-z0-9_])_ensure_repo_import_paths(?![A-Za-z0-9_])' -Rule "worker-runtime-legacy-repo-path-fallback")
+$workerPathMutationHits = @(Find-PatternHitsWithPythonFunction -Root $Root -Files $workerFiles -Pattern 'sys\.path\.(insert|append)' -Rule "worker-runtime-repo-path-fallback")
+$deprecatedFallbackCallHits = @(Find-PatternHitsWithPythonFunction -Root $Root -Files $workerFiles -Pattern '_ensure_deprecated_repo_import_paths\s*\(' -Rule "worker-runtime-deprecated-repo-path-fallback-call")
+$unsafePathMutationHits = @($workerPathMutationHits | Where-Object { $_["function"] -ne "_ensure_deprecated_repo_import_paths" })
+$unsafeDeprecatedFallbackCallHits = @(
+    $deprecatedFallbackCallHits |
+        Where-Object { $_["function"] -ne "_ensure_worker_dependency_imports" -and $_["text"] -notmatch '^\s*def\s+' }
+)
+$deprecatedFallbackHits = @($workerPathMutationHits | Where-Object { $_["function"] -eq "_ensure_deprecated_repo_import_paths" })
+$workerFallbackDetails = [ordered]@{
+    legacy_fallback_hits = $workerLegacyFallbackHits
+    unsafe_path_mutation_hits = $unsafePathMutationHits
+    unsafe_deprecated_fallback_call_hits = $unsafeDeprecatedFallbackCallHits
+    deprecated_fallback_hits = $deprecatedFallbackHits
+    deprecated_fallback_call_hits = $deprecatedFallbackCallHits
+}
+if (($workerLegacyFallbackHits.Count + $unsafePathMutationHits.Count + $unsafeDeprecatedFallbackCallHits.Count) -gt 0) {
+    Add-Check -Checks $checks -Name "worker repo path fallback" -Status "gap" -Summary "Worker runtime still has unsafe repo-path fallback or sys.path mutation outside the dependency-import gate." -Details $workerFallbackDetails
+    Add-OpenGap -Gaps $openGaps -Id "worker-runtime-repo-path-fallback-present" -Severity "high" -Summary "Keep worker repo-path fallback only as a deprecated compatibility path gated behind missing installed package imports." -Evidence $workerFallbackDetails
+}
+elseif ($deprecatedFallbackHits.Count -gt 0) {
+    Add-Check -Checks $checks -Name "worker repo path fallback" -Status "passed" -Summary "Worker runtime prefers installed packages and keeps repo-path mutation only as a deprecated compatibility fallback behind the dependency-import gate." -Details $workerFallbackDetails
 }
 else {
     Add-Check -Checks $checks -Name "worker repo path fallback" -Status "passed" -Summary "Worker runtime does not mutate sys.path." -Details @()
@@ -353,9 +406,7 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Add minimal simulation_core/python packaging metadata and editable install smoke.",
-        "Package contracts/python or replace worker runtime path injection with a documented compatibility fallback.",
-        "Split core-only simulation_core tests from backend parity/oracle tests.",
+        "Split worker CLI/API bridge tests from backend parity/oracle tests.",
         "Freeze golden/parity strategy before backend thin-shell migration or hot-path optimization."
     )
 }

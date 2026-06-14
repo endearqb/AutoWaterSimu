@@ -50,6 +50,10 @@ MODEL_PARAMETER_FIELD_PAIRS = [
     ("udm_model_snapshot", "udmModelSnapshot"),
     ("udm_variable_bindings", "udmVariableBindings"),
 ]
+WORKER_DEPENDENCY_MODULES = (
+    "autowatersimu_simulation_core",
+    "autowatersimu_contracts",
+)
 
 
 class WorkerRunError(RuntimeError):
@@ -57,7 +61,7 @@ class WorkerRunError(RuntimeError):
 
 
 def self_check() -> dict[str, Any]:
-    _ensure_repo_import_paths()
+    worker_dependency_imports = _worker_dependency_import_status()
     dependency_imports = {
         name: _dependency_status(name)
         for name in ("numpy", "scipy", "torch", "torchdiffeq")
@@ -74,6 +78,7 @@ def self_check() -> dict[str, Any]:
         "capabilities": SUPPORTED_CAPABILITIES,
         "git_sha": _git_sha(),
         "packaging_mode": _packaging_mode(),
+        "worker_dependency_imports": worker_dependency_imports,
         "dependency_imports": dependency_imports,
         "artifact_temp_writable": artifact_temp_writable,
         "minimal_job_status": minimal_job_status,
@@ -115,7 +120,7 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
             raise WorkerRunError("compute_job payload must be an object")
         _validate_against_schema("simulation_input.v1.json", payload)
 
-        _ensure_repo_import_paths()
+        _ensure_worker_dependency_imports()
         from autowatersimu_simulation_core.adapters import (
             SimulationCoreAdapterError,
             simulation_input_to_material_balance_input,
@@ -295,7 +300,45 @@ def _validate_against_schema(schema_name: str, payload: dict[str, Any]) -> None:
         raise WorkerRunError(f"{schema_name} validation failed at {path}: {first.message}")
 
 
-def _ensure_repo_import_paths() -> None:
+def _missing_worker_dependency_modules() -> list[str]:
+    missing: list[str] = []
+    for module_name in WORKER_DEPENDENCY_MODULES:
+        try:
+            importlib.import_module(module_name)
+        except ImportError:
+            missing.append(module_name)
+    return missing
+
+
+def _ensure_worker_dependency_imports() -> bool:
+    missing = _missing_worker_dependency_modules()
+    if not missing:
+        return False
+
+    _ensure_deprecated_repo_import_paths()
+    missing_after_fallback = _missing_worker_dependency_modules()
+    if missing_after_fallback:
+        raise WorkerRunError(
+            "missing worker Python dependencies: "
+            + ", ".join(missing_after_fallback)
+        )
+    return True
+
+
+def _worker_dependency_import_status() -> dict[str, Any]:
+    try:
+        fallback_used = _ensure_worker_dependency_imports()
+        return {
+            "ok": True,
+            "deprecated_repo_path_fallback_used": fallback_used,
+        }
+    except Exception as exc:
+        return {"ok": False, "error": _safe_error_message(exc)}
+
+
+def _ensure_deprecated_repo_import_paths() -> None:
+    # Compatibility fallback for source-mode and packaged sidecar layouts not yet
+    # installing the Python helper packages.
     root = _repo_root()
     for path in (root / "simulation_core" / "python", root / "contracts" / "python"):
         path_text = str(path)

@@ -39,6 +39,7 @@
 5. 成功运行需输出 `model_run.v1` 到 `compute_result.runtime_audit.model_runs`，并用 artifact id 填写 `evidence_refs`。
 6. `model_run.model_key` 对独立模型 job type 优先来自 `payload.job_type`；对 `simulation.material_balance.v1` 包装下的模型节点，优先来自 `payload.runtime_options.model_family`，再其次来自 ASM/UDM 节点类型；默认回落到 `material_balance`。
 7. `model_run.parameter_hash` 对纯 material balance 保持求解参数 hash；对 ASM/UDM model job type 必须纳入节点模型参数、UDM snapshot 和 variable bindings，避免不同模型输入共享同一个 hash。
+8. `self_check()` 应报告 `worker_dependency_imports`，用于证明 installed package import 是否成功以及 deprecated repo-path fallback 是否被触发。
 
 ## 4. 对外接口
 
@@ -74,8 +75,9 @@ backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py
 可以依赖：
 
 - `contracts/`
-- `contracts/python`
-- `simulation_core/python`
+- Installed `autowatersimu-contracts` package。
+- Installed `autowatersimu-simulation-core` package。
+- `contracts/python` / `simulation_core/python` 仅作为 deprecated repo-path fallback，且必须由 dependency import gate 触发。
 
 不应该依赖：
 
@@ -103,3 +105,4 @@ backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py
 2. 任何 stdout 改动都要验证 JSON parser 可以直接解析。
 3. worker 只编排 job、schema、artifact 和 JSON-RPC，不实现核心算法。
 4. packaged mode 必须能从 PyInstaller bundle resource root 读取 `contracts/` schema 和 fixture。
+5. worker runtime 应优先 import 已安装 Python helper packages；不得在 job 执行入口无条件修改 `sys.path`。

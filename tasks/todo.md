@@ -1,3 +1,33 @@
+# 2026-06-14 AutoWaterSimu Next P3 worker installed-package import TODO
+
+- [x] Read the attached priority reassessment and confirm P0 service-test split, P1 boundary gate, and P2 mutation matrix closeout are already landed in current HEAD.
+- [x] Re-read README First context for docs/rebuild, docs/architecture, scripts, services/simulation-worker, and simulation_worker runtime/tests.
+- [x] Confirm the next slice is worker installed-package preference plus deprecated repo-path fallback audit, not backend thin-shell migration, worker oracle test split, or hot-path performance optimization.
+- [x] Make worker runtime prefer installed `autowatersimu-simulation-core` / `autowatersimu-contracts` imports before repo path fallback.
+- [x] Add focused worker tests for installed-package preference, deprecated fallback, and missing dependency failure.
+- [x] Update the P3 audit so deprecated, gated fallback is accepted while unsafe fallback remains an open gap.
+- [x] Update README/current-state/development-plan context.
+- [x] Run validation and record exact results.
+- [x] Commit and push this P3 worker import slice.
+
+## Plan
+
+- Keep worker CLI/JSON-RPC/API behavior, schemas, OpenAPI, generated clients, backend material-balance implementation, and Desktop scope unchanged.
+- Keep the deprecated repo-path fallback for source-mode/packaged compatibility, but gate it behind missing installed package imports.
+- Leave backend/core dual implementation drift and worker backend-oracle test isolation as explicit P3 follow-ups.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Changed worker runtime dependency loading so installed `autowatersimu-simulation-core` / `autowatersimu-contracts` imports are tried first; repo path mutation is kept only in `_ensure_deprecated_repo_import_paths()` behind `_ensure_worker_dependency_imports()`, and self-check reports the dependency import status as structured JSON.
+- Added focused worker dependency import tests for installed-package preference, deprecated fallback use, and missing dependency failure after fallback.
+- Updated `scripts/audit-simulation-core-boundary.ps1` so unsafe `_ensure_repo_import_paths()` / direct `sys.path` mutation remains an open gap, while the gated deprecated fallback is accepted and reported.
+- P3 audit now reports `partial` with 0 hard violations and 2 open gaps: `backend-core-dual-implementation-drift-risk` and `worker-tests-backend-oracle-dependency`.
+- Updated worker/script README files, architecture current-state, and Certainty/Elegance Development Plan to record the installed-package-first rule and next P3 priorities.
+- Validation passed: focused dependency tests (`3 passed, 22 deselected`), full worker tests (`25 passed`), worker `--self-check`, worker `--run-job` material-balance fixture, `scripts\audit-simulation-core-boundary.ps1`, `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), and `git diff --check -- .`.
+- `git diff --check -- .` only emitted Windows LF-to-CRLF notices, not whitespace errors.
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next P3 simulation core pyproject TODO
 
 - [x] Re-read README First context for docs/rebuild, docs/architecture, contracts/python, simulation_core/python, simulation_core/tests, services/simulation-worker/tests, and backend/app/material_balance.
