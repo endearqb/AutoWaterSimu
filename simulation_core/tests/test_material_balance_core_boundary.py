@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SIMULATION_CORE_PYTHON = REPO_ROOT / "simulation_core" / "python"
@@ -25,6 +26,10 @@ sys.path.insert(0, str(SIMULATION_CORE_PYTHON))
 from autowatersimu_simulation_core.adapters import (  # noqa: E402
     SimulationCoreAdapterError,
     simulation_input_to_material_balance_input,
+)
+from autowatersimu_simulation_core.material_balance.models import (  # noqa: E402
+    EdgeData,
+    NodeData,
 )
 
 
@@ -144,8 +149,32 @@ def test_core_adapter_default_compat_silently_ignores_unknown_fields() -> None:
     adapted = simulation_input_to_material_balance_input(simulation_input)
 
     assert adapted.contract_warnings == []
-    assert getattr(adapted.nodes[0], "model_extra", None) == {}
-    assert getattr(adapted.edges[0], "model_extra", None) == {}
+    assert (getattr(adapted.nodes[0], "model_extra", None) or {}) == {}
+    assert (getattr(adapted.edges[0], "model_extra", None) or {}) == {}
+
+
+def test_core_runtime_models_reject_direct_unknown_fields() -> None:
+    with pytest.raises(ValidationError) as node_exc:
+        NodeData(
+            node_id="n_probe",
+            node_type="input",
+            is_inlet=True,
+            initial_volume=1.0,
+            initial_concentrations=[1.0],
+            unknown_runtime_node_field_for_test="node-extra",
+        )
+
+    with pytest.raises(ValidationError) as edge_exc:
+        EdgeData(
+            edge_id="e_probe",
+            source_node_id="n_probe",
+            target_node_id="n_target",
+            flow_rate=1.0,
+            unknown_runtime_edge_field_for_test="edge-extra",
+        )
+
+    assert any(error["loc"] == ("unknown_runtime_node_field_for_test",) for error in node_exc.value.errors())
+    assert any(error["loc"] == ("unknown_runtime_edge_field_for_test",) for error in edge_exc.value.errors())
 
 
 def test_core_adapter_warns_for_unknown_fields_without_rejecting_payload() -> None:

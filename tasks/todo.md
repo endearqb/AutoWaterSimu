@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next simulation core runtime extra policy TODO
+
+- [x] Read the latest priority reassessment and confirm it redirects away from low-value service-test split/wrapper work toward boundary gates, P2 evidence, and P3 simulation_core stability.
+- [x] Re-read README First context for simulation_core runtime models, material_balance README, input-contract audit, architecture current-state, Certainty/Elegance Development Plan, and ADR history.
+- [x] Confirm this slice closes only `simulation-core-runtime-models-extra-allow`, not worker default strict mode, legacy backend model changes, backend thin-shell migration, mixed-model correctness, or hot-path performance optimization.
+- [x] Change `NodeData` / `EdgeData` runtime models to reject unknown direct-construction fields.
+- [x] Add focused tests proving adapter default compatibility still drops unknown payload fields and direct runtime models reject unknown fields.
+- [x] Strengthen input-contract audit so runtime extra policy requires runtime probe rejection, not only absence of `extra="allow"`.
+- [x] Update README/current-state/development-plan context and ADR records.
+- [x] Run validation and record exact results.
+- [x] Commit and push this runtime extra policy slice.
+
+## Plan
+
+- Keep adapter `compat` / `warn` / `strict` behavior unchanged; only runtime DTO direct construction becomes strict.
+- Preserve worker default invocation, worker fixtures, legacy backend behavior, schema requiredness, OpenAPI/generated clients, Desktop scope, and Go Compute API behavior.
+- Treat `position` as a runtime-only field, not a canonical `simulation_input.v1` field.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- `NodeData` and `EdgeData` now use `extra=forbid`.
+- `simulation_core/tests/test_material_balance_core_boundary.py` now proves direct runtime unknown fields raise `ValidationError` while adapter default `compat` still drops unknown payload fields before runtime model construction.
+- `scripts/audit-simulation-core-input-contract.ps1` now records direct runtime rejection in its probe and only passes runtime extra policy when both node and edge runtime models reject unknown fields.
+- Added ADR `0013-simulation-core-runtime-extra-policy.md` and linked it from ADR `0012-simulation-input-node-edge-schema-closure.md`.
+- Updated simulation_core READMEs, architecture current-state, and Certainty/Elegance Development Plan to mark input-contract audit as passed baseline while leaving worker default strict mode, backend thin-shell, mixed-model correctness, and hot-path performance as future work.
+- Validation passed: focused boundary tests (`8 passed`), full `simulation_core\tests` (`15 passed`), full worker tests (`25 passed`), worker minimal `--run-job` (`status=succeeded`), `scripts\audit-simulation-core-input-contract.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\check-contracts.ps1` (`101 passed`, contract gate passed), `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), and `git diff --check -- .` (only LF-to-CRLF notices, no whitespace errors).
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next simulation input node-edge schema closure TODO
 
 - [x] Read the new priority reassessment and confirm P0 service-test closeout, P1 `pr-fast` boundary gate, and P2 selected mutation matrix are already landed in current HEAD.

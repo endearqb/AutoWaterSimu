@@ -33,3 +33,7 @@ The simulation core adapter now has explicit `compat`, `warn`, and `strict` unkn
 - Add camelCase aliases to the schema: rejected because P0 contracts use snake_case and the alias set would make migration compatibility look canonical.
 - Add node/edge item required fields now: rejected because it is a broader compatibility change than needed to close unknown-field drift.
 - Close every nested UDM/process/model object: rejected because component/model internals are intentionally dynamic and need separate model-specific contracts before being narrowed.
+
+## Follow-up
+
+Runtime model unknown-field policy was closed by `0013-simulation-core-runtime-extra-policy.md`; `NodeData` and `EdgeData` now use `extra=forbid` while adapter default compatibility remains unchanged.

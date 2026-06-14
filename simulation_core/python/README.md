@@ -29,7 +29,7 @@
 1. 不导入 `backend/app`、FastAPI、SQLModel、数据库会话或用户上下文。
 2. 新模型运行时先在本包建立纯 Python adapter，再由 worker 调用；迁移期 ASM/UDM 节点绑定字段必须和 backend adapter 保持一致。
 3. 数值行为变更必须补 parity 测试或说明 tolerance。
-4. 收紧 `simulation_input.v1` / runtime model 输入字段策略前，先运行 `scripts/audit-simulation-core-input-contract.ps1`；当前 adapter 已有默认 `compat` 与 opt-in `warn` / `strict` 未知字段语义测试，`simulation_input.v1` node/edge item schema 已关闭 unknown fields，后续重点是 runtime model `extra` 策略。
+4. 收紧 `simulation_input.v1` / runtime model 输入字段策略前，先运行 `scripts/audit-simulation-core-input-contract.ps1`；当前 adapter 已有默认 `compat` 与 opt-in `warn` / `strict` 未知字段语义测试，`simulation_input.v1` node/edge item schema 已关闭 unknown fields，`NodeData` / `EdgeData` direct runtime construction rejects unknown fields with `extra=forbid`。后续若改变 worker 默认 validation mode，必须同步更新 audit、worker tests 和兼容说明。
 
 ## 4. 对外接口
 

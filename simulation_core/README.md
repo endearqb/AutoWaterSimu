@@ -33,7 +33,7 @@
 2. 所有输入必须来自合同化 payload 或显式适配层。
 3. 数值变更必须有 baseline fixture 和 tolerance 说明；backend thin-shell 迁移完成前，material balance runtime 变更还必须保持 `simulation_core/tests/test_material_balance_core.py` 中的 backend/core drift guard 通过。
 4. ASM/UDM 节点字段在迁移期先作为 material balance runtime 的模型绑定字段传递；新增独立 job type 前必须先更新 contracts、worker 和旧后端对照测试。当前 `simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 已完成最小闭环。
-5. 输入契约收紧前先运行 `scripts/audit-simulation-core-input-contract.ps1`；adapter 默认 `compat` 保持兼容性静默忽略未知字段，`warn` 会把未知字段写入 `MaterialBalanceInput.contract_warnings`，`strict` 会在计算前拒绝未知字段。`simulation_input.v1` node/edge item 已使用显式 canonical snake_case 字段并关闭 unknown fields；runtime model `extra` 策略仍需单独收口。
+5. 输入契约收紧前先运行 `scripts/audit-simulation-core-input-contract.ps1`；adapter 默认 `compat` 保持兼容性静默忽略未知字段，`warn` 会把未知字段写入 `MaterialBalanceInput.contract_warnings`，`strict` 会在计算前拒绝未知字段。`simulation_input.v1` node/edge item 已使用显式 canonical snake_case 字段并关闭 unknown fields；`NodeData` / `EdgeData` runtime models 使用 `extra=forbid` 拒绝直接构造时的未知字段。worker 默认 adapter 兼容模式仍未改变，切换默认 strict 前必须同步更新 audit 和 worker tests。
 
 ## 4. 对外接口
 

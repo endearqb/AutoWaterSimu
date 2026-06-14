@@ -31,6 +31,7 @@
 2. adapter 必须返回 core 包内的模型，不能返回 backend SQLModel。
 3. 与 legacy backend 的数值差异必须通过测试显式说明。
 4. 新增或改名模型绑定字段时，同步检查 core adapter、backend adapter、worker fixture 和 parity 测试。
+5. runtime model 不吞未知字段；payload 级兼容、告警或拒绝策略由 adapter 的 `compat` / `warn` / `strict` 模式承担。
 
 ## 4. 对外接口
 

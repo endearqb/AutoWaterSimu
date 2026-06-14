@@ -133,6 +133,20 @@ def adapt(payload, mode):
     return adapted, adapter_error
 
 
+def construct_runtime_model(model_cls, **kwargs):
+    model = None
+    model_error = None
+    try:
+        model = model_cls(**kwargs)
+    except Exception as exc:  # pragma: no cover - returned to PowerShell audit
+        model_error = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "errors": getattr(exc, "errors", lambda: [])(),
+        }
+    return model, model_error
+
+
 payload = json.loads(
     (root / "contracts" / "examples" / "valid" / "material_balance_minimal.simulation_input.v1.json").read_text(
         encoding="utf-8"
@@ -146,7 +160,8 @@ compat_adapted, compat_error = adapt(payload, "compat")
 warn_adapted, warn_error = adapt(payload, "warn")
 strict_adapted, strict_error = adapt(payload, "strict")
 
-direct_node = NodeData(
+direct_node, direct_node_error = construct_runtime_model(
+    NodeData,
     node_id="n_probe",
     node_type="input",
     is_inlet=True,
@@ -154,7 +169,8 @@ direct_node = NodeData(
     initial_concentrations=[1.0],
     unknown_runtime_node_field_for_audit="node-extra",
 )
-direct_edge = EdgeData(
+direct_edge, direct_edge_error = construct_runtime_model(
+    EdgeData,
     edge_id="e_probe",
     source_node_id="n_probe",
     target_node_id="n_target",
@@ -197,8 +213,18 @@ report = {
     "strict_rejects_unknown_fields": strict_error is not None and strict_adapted is None,
     "strict_error": strict_error,
     "strict_error_paths": [item.get("path") for item in strict_error_details],
-    "direct_runtime_node_unknown_preserved": model_extra(direct_node).get("unknown_runtime_node_field_for_audit") == "node-extra",
-    "direct_runtime_edge_unknown_preserved": model_extra(direct_edge).get("unknown_runtime_edge_field_for_audit") == "edge-extra",
+    "direct_runtime_node_unknown_preserved": (
+        direct_node is not None
+        and model_extra(direct_node).get("unknown_runtime_node_field_for_audit") == "node-extra"
+    ),
+    "direct_runtime_edge_unknown_preserved": (
+        direct_edge is not None
+        and model_extra(direct_edge).get("unknown_runtime_edge_field_for_audit") == "edge-extra"
+    ),
+    "direct_runtime_node_unknown_rejected": direct_node_error is not None and direct_node is None,
+    "direct_runtime_edge_unknown_rejected": direct_edge_error is not None and direct_edge is None,
+    "direct_runtime_node_error": direct_node_error,
+    "direct_runtime_edge_error": direct_edge_error,
 }
 print(json.dumps(report, sort_keys=True))
 '@
@@ -322,13 +348,6 @@ $runtimeExtraDetails = [ordered]@{
     node_extra_allow = $nodeExtraAllow
     edge_extra_allow = $edgeExtraAllow
 }
-if ($nodeExtraAllow -or $edgeExtraAllow) {
-    Add-Check -Checks $checks -Name "simulation_core runtime model extra policy" -Status "gap" -Summary "NodeData or EdgeData still allow unknown runtime fields." -Details $runtimeExtraDetails
-    Add-OpenGap -Gaps $openGaps -Id "simulation-core-runtime-models-extra-allow" -Severity "medium" -Summary "Record or replace runtime extra=allow before strict input-contract mode." -Evidence $runtimeExtraDetails
-}
-else {
-    Add-Check -Checks $checks -Name "simulation_core runtime model extra policy" -Status "passed" -Summary "NodeData and EdgeData no longer allow unknown runtime fields." -Details $runtimeExtraDetails
-}
 
 $adapterText = Get-Content -LiteralPath $adapterPath -Raw
 $adapterHasValidationMode = (
@@ -353,6 +372,27 @@ else {
 }
 
 $probe = $unknownFieldProbe["parsed"]
+$directRuntimeNodeUnknownRejected = $false
+$directRuntimeEdgeUnknownRejected = $false
+if ($null -ne $probe) {
+    $directRuntimeNodeUnknownRejected = [bool](Get-JsonProperty -Object $probe -Name "direct_runtime_node_unknown_rejected")
+    $directRuntimeEdgeUnknownRejected = [bool](Get-JsonProperty -Object $probe -Name "direct_runtime_edge_unknown_rejected")
+}
+$runtimeExtraDetails["direct_runtime_node_unknown_rejected"] = $directRuntimeNodeUnknownRejected
+$runtimeExtraDetails["direct_runtime_edge_unknown_rejected"] = $directRuntimeEdgeUnknownRejected
+$runtimeExtraPolicyPassed = (
+    -not ($nodeExtraAllow -or $edgeExtraAllow) -and
+    $directRuntimeNodeUnknownRejected -and
+    $directRuntimeEdgeUnknownRejected
+)
+if (-not $runtimeExtraPolicyPassed) {
+    Add-Check -Checks $checks -Name "simulation_core runtime model extra policy" -Status "gap" -Summary "NodeData or EdgeData still accept unknown runtime fields." -Details $runtimeExtraDetails
+    Add-OpenGap -Gaps $openGaps -Id "simulation-core-runtime-models-extra-allow" -Severity "medium" -Summary "Forbid direct runtime NodeData/EdgeData unknown fields before strict input-contract mode." -Evidence $runtimeExtraDetails
+}
+else {
+    Add-Check -Checks $checks -Name "simulation_core runtime model extra policy" -Status "passed" -Summary "NodeData and EdgeData reject direct unknown runtime fields." -Details $runtimeExtraDetails
+}
+
 $unknownFieldStrategyDetails = [ordered]@{
     adapter = ConvertTo-RepoRelativePath -Root $Root -Path $adapterPath
     has_static_warn_strict_terms = $adapterHasValidationMode
@@ -406,9 +446,9 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Keep simulation_input.v1 node/edge explicit field schema green when adding worker-executable fields.",
-        "Record or replace NodeData/EdgeData runtime extra=allow policy before strict input-contract mode.",
-        "Keep backend/core parity drift guard green before changing runtime model extra policy."
+        "Keep simulation_input.v1 node/edge explicit field schema and runtime NodeData/EdgeData extra=forbid green when adding worker-executable fields.",
+        "Keep adapter compat/warn/strict evidence green before changing worker default validation mode.",
+        "Keep backend/core parity drift guard green before backend thin-shell or hot-path performance changes."
     )
 }
 

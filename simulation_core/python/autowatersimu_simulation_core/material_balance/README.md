@@ -32,8 +32,8 @@
 
 ## 3. 维护约定
 
-1. runtime models 保持与计算器实际读取字段一致。
-2. 新增字段先补 adapter 和 parity 测试。
+1. runtime models 保持与计算器实际读取字段一致，并拒绝未知字段；payload 兼容性只能放在 adapter 层。
+2. 新增 runtime 字段先补 adapter、合同字段/兼容说明和 parity 测试。
 3. 不在本目录直接引用 `app.models` 或 `app.services`。
 
 ## 4. 对外接口

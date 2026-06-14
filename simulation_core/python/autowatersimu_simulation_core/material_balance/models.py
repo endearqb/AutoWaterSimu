@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 class NodeData(BaseModel):
     """Runtime node data for material balance calculations."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     node_id: str
     node_type: str = "default"
@@ -83,7 +83,7 @@ class NodeData(BaseModel):
 class EdgeData(BaseModel):
     """Runtime edge data for material balance calculations."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     edge_id: str
     source_node_id: str
