@@ -31,12 +31,13 @@
 3. input/output 缺失 volume 默认 `1.0`；普通 reactor 缺失 volume 返回 validation error。
 4. 可选模型字段必须区分“字段缺失”和“显式空数组/空对象”，不得用 truthy fallback 丢弃输入。
 5. 本 adapter 与 `backend/app/services/simulation_input_adapter.py` 的字段保留语义必须保持一致。
-6. 未知字段策略属于 adapter 输入契约职责；切换 warn/strict 或改变静默丢弃行为前，先更新 `scripts/audit-simulation-core-input-contract.ps1` 的 evidence 和 core-only tests。
+6. 未知字段策略属于 adapter 输入契约职责；`simulation_input_to_material_balance_input(..., validation_mode="compat")` 是默认兼容路径，静默忽略 adapter 不消费的未知字段；`validation_mode="warn"` 接受 payload 并把未知字段写入 `MaterialBalanceInput.contract_warnings`；`validation_mode="strict"` 在计算前返回 `SimulationCoreAdapterError`。worker 当前仍使用默认 `compat`，切换 worker 调用模式前必须同步更新 audit evidence 和 core-only tests。
 
 ## 4. 对外接口
 
 本目录对外暴露：
 
+- `AdapterValidationMode`
 - `simulation_input_to_material_balance_input`
 - `SimulationCoreAdapterError`
 

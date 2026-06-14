@@ -115,6 +115,24 @@ def model_extra(model):
     return getattr(model, "model_extra", None) or {}
 
 
+def contract_warnings(model):
+    return getattr(model, "contract_warnings", None) or []
+
+
+def adapt(payload, mode):
+    adapter_error = None
+    adapted = None
+    try:
+        adapted = simulation_input_to_material_balance_input(copy.deepcopy(payload), validation_mode=mode)
+    except Exception as exc:  # pragma: no cover - returned to PowerShell audit
+        adapter_error = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "details": getattr(exc, "details", []),
+        }
+    return adapted, adapter_error
+
+
 payload = json.loads(
     (root / "contracts" / "examples" / "valid" / "material_balance_minimal.simulation_input.v1.json").read_text(
         encoding="utf-8"
@@ -124,12 +142,9 @@ payload["unknown_top_level_for_audit"] = {"accepted": True}
 payload["nodes"][0]["unknown_node_field_for_audit"] = "node-extra"
 payload["edges"][0]["unknown_edge_field_for_audit"] = "edge-extra"
 
-adapter_error = None
-adapted = None
-try:
-    adapted = simulation_input_to_material_balance_input(copy.deepcopy(payload))
-except Exception as exc:  # pragma: no cover - returned to PowerShell audit
-    adapter_error = {"type": type(exc).__name__, "message": str(exc)}
+compat_adapted, compat_error = adapt(payload, "compat")
+warn_adapted, warn_error = adapt(payload, "warn")
+strict_adapted, strict_error = adapt(payload, "strict")
 
 direct_node = NodeData(
     node_id="n_probe",
@@ -147,26 +162,41 @@ direct_edge = EdgeData(
     unknown_runtime_edge_field_for_audit="edge-extra",
 )
 
-adapter_node_extra = {}
-adapter_edge_extra = {}
-adapter_has_warnings = False
-if adapted is not None:
-    adapter_node_extra = model_extra(adapted.nodes[0])
-    adapter_edge_extra = model_extra(adapted.edges[0])
-    adapter_has_warnings = hasattr(adapted, "warnings")
+compat_node_extra = {}
+compat_edge_extra = {}
+compat_warnings = []
+if compat_adapted is not None:
+    compat_node_extra = model_extra(compat_adapted.nodes[0])
+    compat_edge_extra = model_extra(compat_adapted.edges[0])
+    compat_warnings = contract_warnings(compat_adapted)
+
+warn_warnings = []
+if warn_adapted is not None:
+    warn_warnings = contract_warnings(warn_adapted)
+
+strict_error_details = []
+if strict_error is not None:
+    strict_error_details = strict_error.get("details", [])
 
 report = {
-    "adapter_accepts_unknown_fields": adapter_error is None,
-    "adapter_error": adapter_error,
-    "adapter_has_warnings": adapter_has_warnings,
-    "adapter_node_unknown_preserved": "unknown_node_field_for_audit" in adapter_node_extra,
-    "adapter_edge_unknown_preserved": "unknown_edge_field_for_audit" in adapter_edge_extra,
-    "adapter_unknown_fields_dropped_without_warning": (
-        adapter_error is None
-        and not adapter_has_warnings
-        and "unknown_node_field_for_audit" not in adapter_node_extra
-        and "unknown_edge_field_for_audit" not in adapter_edge_extra
+    "compat_accepts_unknown_fields": compat_error is None,
+    "compat_error": compat_error,
+    "compat_contract_warnings_count": len(compat_warnings),
+    "compat_node_unknown_preserved": "unknown_node_field_for_audit" in compat_node_extra,
+    "compat_edge_unknown_preserved": "unknown_edge_field_for_audit" in compat_edge_extra,
+    "compat_unknown_fields_dropped_without_warning": (
+        compat_error is None
+        and len(compat_warnings) == 0
+        and "unknown_node_field_for_audit" not in compat_node_extra
+        and "unknown_edge_field_for_audit" not in compat_edge_extra
     ),
+    "warn_accepts_unknown_fields": warn_error is None,
+    "warn_error": warn_error,
+    "warn_contract_warnings_count": len(warn_warnings),
+    "warn_contract_warning_paths": [item.get("path") for item in warn_warnings],
+    "strict_rejects_unknown_fields": strict_error is not None and strict_adapted is None,
+    "strict_error": strict_error,
+    "strict_error_paths": [item.get("path") for item in strict_error_details],
     "direct_runtime_node_unknown_preserved": model_extra(direct_node).get("unknown_runtime_node_field_for_audit") == "node-extra",
     "direct_runtime_edge_unknown_preserved": model_extra(direct_edge).get("unknown_runtime_edge_field_for_audit") == "edge-extra",
 }
@@ -301,7 +331,13 @@ else {
 }
 
 $adapterText = Get-Content -LiteralPath $adapterPath -Raw
-$adapterHasValidationMode = $adapterText -match 'validation_mode|strict|warn|warning|warnings|unknown'
+$adapterHasValidationMode = (
+    $adapterText -match 'validation_mode' -and
+    $adapterText -match 'strict' -and
+    $adapterText -match 'warn' -and
+    $adapterText -match 'contract_warnings' -and
+    $adapterText -match 'unknown'
+)
 $python = Resolve-Python -Root $Root
 $unknownFieldProbe = Invoke-UnknownFieldProbe -Root $Root -Python $python
 if ($unknownFieldProbe["status"] -ne "passed") {
@@ -319,19 +355,32 @@ else {
 $probe = $unknownFieldProbe["parsed"]
 $unknownFieldStrategyDetails = [ordered]@{
     adapter = ConvertTo-RepoRelativePath -Root $Root -Path $adapterPath
-    has_static_warning_or_strict_terms = $adapterHasValidationMode
+    has_static_warn_strict_terms = $adapterHasValidationMode
     probe = $probe
 }
-$dropsWithoutWarning = $false
+$warnAcceptsUnknownFields = $false
+$warnContractWarningsCount = 0
+$strictRejectsUnknownFields = $false
 if ($null -ne $probe) {
-    $dropsWithoutWarning = [bool]$probe.adapter_unknown_fields_dropped_without_warning
+    $warnAcceptsUnknownFields = [bool](Get-JsonProperty -Object $probe -Name "warn_accepts_unknown_fields")
+    $warnWarningsValue = Get-JsonProperty -Object $probe -Name "warn_contract_warnings_count"
+    if ($null -ne $warnWarningsValue) {
+        $warnContractWarningsCount = [int]$warnWarningsValue
+    }
+    $strictRejectsUnknownFields = [bool](Get-JsonProperty -Object $probe -Name "strict_rejects_unknown_fields")
 }
-if ((-not $adapterHasValidationMode) -or $dropsWithoutWarning) {
-    Add-Check -Checks $checks -Name "simulation_core adapter unknown-field strategy" -Status "gap" -Summary "Adapter currently has no explicit warn/strict unknown-field strategy for accepted extra fields." -Details $unknownFieldStrategyDetails
-    Add-OpenGap -Gaps $openGaps -Id "simulation-core-adapter-unknown-field-strategy-missing" -Severity "high" -Summary "Add structured warning or strict mode design before input-contract tightening." -Evidence $unknownFieldStrategyDetails
+$adapterUnknownFieldStrategyPassed = (
+    $adapterHasValidationMode -and
+    $warnAcceptsUnknownFields -and
+    $warnContractWarningsCount -ge 3 -and
+    $strictRejectsUnknownFields
+)
+if (-not $adapterUnknownFieldStrategyPassed) {
+    Add-Check -Checks $checks -Name "simulation_core adapter unknown-field strategy" -Status "gap" -Summary "Adapter warn/strict unknown-field strategy is not fully proven by the runtime probe." -Details $unknownFieldStrategyDetails
+    Add-OpenGap -Gaps $openGaps -Id "simulation-core-adapter-unknown-field-strategy-missing" -Severity "high" -Summary "Add and prove structured warn/strict unknown-field mode before input-contract tightening." -Evidence $unknownFieldStrategyDetails
 }
 else {
-    Add-Check -Checks $checks -Name "simulation_core adapter unknown-field strategy" -Status "passed" -Summary "Adapter exposes an explicit unknown-field warning or strict strategy." -Details $unknownFieldStrategyDetails
+    Add-Check -Checks $checks -Name "simulation_core adapter unknown-field strategy" -Status "passed" -Summary "Adapter keeps default compatibility while proving opt-in warn and strict unknown-field modes." -Details $unknownFieldStrategyDetails
 }
 
 $status = "passed"
@@ -357,8 +406,8 @@ $report = [ordered]@{
     open_gaps = @($openGaps)
     checks = @($checks)
     next_recommended_slice = @(
-        "Design simulation_core adapter warn/strict unknown-field mode.",
         "Decide whether simulation_input.v1 node/edge items stay extensible or move to explicit typed fields.",
+        "Record or replace NodeData/EdgeData runtime extra=allow policy before strict input-contract mode.",
         "Keep backend/core parity drift guard green before changing runtime model extra policy."
     )
 }

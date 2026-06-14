@@ -36,6 +36,14 @@ def _minimal_simulation_input() -> dict[str, Any]:
     return _load_json(VALID_SIMULATION_INPUT)
 
 
+def _simulation_input_with_unknown_fields() -> dict[str, Any]:
+    simulation_input = deepcopy(_minimal_simulation_input())
+    simulation_input["unknown_top_level_for_test"] = {"ignored": True}
+    simulation_input["nodes"][0]["unknown_node_field_for_test"] = "node-extra"
+    simulation_input["edges"][0]["unknown_edge_field_for_test"] = "edge-extra"
+    return simulation_input
+
+
 def test_simulation_core_import_boundary_uses_core_python_only() -> None:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SIMULATION_CORE_PYTHON)
@@ -128,3 +136,50 @@ def test_core_adapter_preserves_model_runtime_bindings() -> None:
     assert adapted_node.udm_parameter_values == {"k": 0.1}
     assert adapted_node.udm_model_snapshot == {"id": "udm_model_a", "version": 2}
     assert adapted_node.udm_variable_bindings == [{"local_var": "A_local", "canonical_var": "A"}]
+
+
+def test_core_adapter_default_compat_silently_ignores_unknown_fields() -> None:
+    simulation_input = _simulation_input_with_unknown_fields()
+
+    adapted = simulation_input_to_material_balance_input(simulation_input)
+
+    assert adapted.contract_warnings == []
+    assert getattr(adapted.nodes[0], "model_extra", None) == {}
+    assert getattr(adapted.edges[0], "model_extra", None) == {}
+
+
+def test_core_adapter_warns_for_unknown_fields_without_rejecting_payload() -> None:
+    simulation_input = _simulation_input_with_unknown_fields()
+
+    adapted = simulation_input_to_material_balance_input(
+        simulation_input,
+        validation_mode="warn",
+    )
+
+    warning_paths = {item["path"] for item in adapted.contract_warnings}
+    assert warning_paths == {
+        "$.unknown_top_level_for_test",
+        "$.nodes[0].unknown_node_field_for_test",
+        "$.edges[0].unknown_edge_field_for_test",
+    }
+    assert adapted.contract_warnings[0]["source_id"] == "si_material_balance_minimal"
+    assert adapted.nodes[0].node_id == "n_in"
+    assert adapted.edges[0].edge_id == "e_in_tank"
+
+
+def test_core_adapter_strict_rejects_unknown_fields() -> None:
+    simulation_input = _simulation_input_with_unknown_fields()
+
+    with pytest.raises(SimulationCoreAdapterError) as exc_info:
+        simulation_input_to_material_balance_input(
+            simulation_input,
+            validation_mode="strict",
+        )
+
+    assert str(exc_info.value) == "simulation_input contains unknown fields"
+    detail_paths = {item["path"] for item in exc_info.value.details}
+    assert detail_paths == {
+        "$.unknown_top_level_for_test",
+        "$.nodes[0].unknown_node_field_for_test",
+        "$.edges[0].unknown_edge_field_for_test",
+    }

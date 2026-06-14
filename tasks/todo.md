@@ -1,3 +1,32 @@
+# 2026-06-14 AutoWaterSimu Next simulation core adapter unknown-field mode TODO
+
+- [x] Re-read README First context for simulation_core, adapter, material_balance runtime models, scripts, docs/architecture, docs/rebuild, and `.ai/changes`.
+- [x] Confirm the next slice is adapter unknown-field `warn` / `strict` mode, not node/edge schema closure, runtime `extra` removal, worker default strictness, backend thin-shell migration, or hot-path performance optimization.
+- [x] Add default-compatible adapter `validation_mode` plus opt-in `warn` and `strict` handling.
+- [x] Add structured `contract_warnings` to `MaterialBalanceInput`.
+- [x] Add focused core-only tests for default compat, warn, and strict unknown-field behavior.
+- [x] Update `audit-simulation-core-input-contract.ps1` so adapter strategy closes only when warn and strict are proven.
+- [x] Update README/current-state/development-plan context.
+- [x] Run validation and record exact results.
+- [x] Commit and push this adapter unknown-field slice.
+
+## Plan
+
+- Preserve default worker/backward-compatible behavior: `simulation_input_to_material_balance_input(payload)` still accepts unknown fields and exposes no warnings.
+- Keep `warn` / `strict` opt-in and scoped to the pure simulation_core adapter; do not change `contracts/simulation_input.v1.json`, `NodeData` / `EdgeData` `extra="allow"`, worker invocation mode, backend adapter behavior, OpenAPI, generated clients, Go API, or Desktop scope.
+- Treat the remaining input-contract audit state as expected `partial`: node/edge item schema openness and runtime model extra policy remain future decisions.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added `AdapterValidationMode` with `compat` / `warn` / `strict` to the simulation_core material-balance adapter.
+- Added `MaterialBalanceInput.contract_warnings` for structured adapter warning details.
+- Default `compat` keeps previous silent-ignore behavior for unknown top-level/node/edge fields; `warn` accepts the same payload and returns warning details; `strict` raises `SimulationCoreAdapterError` before calculation.
+- Updated the input-contract audit runtime probe to sample compat/warn/strict and close `simulation-core-adapter-unknown-field-strategy-missing` only when warn warnings and strict rejection are both proven.
+- Current audit evidence is `partial` with 0 hard violations and 2 open gaps: `simulation-input-node-edge-items-open-schema` and `simulation-core-runtime-models-extra-allow`.
+- Validation passed: focused adapter boundary tests (`7 passed`), full `simulation_core\tests` (`14 passed`), `scripts\audit-simulation-core-input-contract.ps1` (`partial`, 0 hard violations, 2 open gaps), `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\check-deps.ps1`, `scripts\ci\pr-fast.ps1` (`status=passed`, 8 steps, `compute_boundary_audit.status=passed`), and `git diff --check -- .`.
+- `git diff --check -- .` only emitted Windows LF-to-CRLF notices, not whitespace errors.
+
 # 2026-06-14 AutoWaterSimu Next simulation core input contract audit TODO
 
 - [x] Re-read README First context for docs/rebuild, docs/architecture, scripts, simulation_core, simulation_core/python, simulation_core adapters, and current P3 plan state.

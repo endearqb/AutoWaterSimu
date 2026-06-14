@@ -141,6 +141,7 @@ class MaterialBalanceInput(BaseModel):
     time_segments: list[TimeSegment] = Field(default_factory=list)
     hybrid_config: dict[str, Any] | None = None
     original_flowchart_data: dict[str, Any] | None = None
+    contract_warnings: list[dict[str, Any]] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_graph(self) -> "MaterialBalanceInput":

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import ValidationError
 
@@ -21,10 +21,68 @@ SUPPORTED_JOB_TYPES = {
     "simulation.udm.v1",
 }
 
+AdapterValidationMode = Literal["compat", "warn", "strict"]
+
+_VALIDATION_MODES = {"compat", "warn", "strict"}
+_TOP_LEVEL_FIELDS = {
+    "schema_version",
+    "simulation_input_id",
+    "process_graph_id",
+    "process_graph_version",
+    "job_type",
+    "component_schema",
+    "nodes",
+    "edges",
+    "time_segments",
+    "parameters",
+    "runtime_options",
+    "metadata",
+}
+_NODE_FIELDS = {
+    "node_id",
+    "node_type",
+    "is_inlet",
+    "is_outlet",
+    "initial_volume",
+    "initial_concentrations",
+    "asm1slim_parameters",
+    "asm1slimParameters",
+    "asm1_parameters",
+    "asm1Parameters",
+    "asm3_parameters",
+    "asm3Parameters",
+    "udm_model_id",
+    "udmModelId",
+    "udm_model_version",
+    "udmModelVersion",
+    "udm_model_hash",
+    "udmModelHash",
+    "udm_component_names",
+    "udmComponentNames",
+    "udm_processes",
+    "udmProcesses",
+    "udm_parameter_values",
+    "udmParameterValues",
+    "udm_model_snapshot",
+    "udmModelSnapshot",
+    "udm_variable_bindings",
+    "udmVariableBindings",
+}
+_EDGE_FIELDS = {
+    "edge_id",
+    "source_node_id",
+    "target_node_id",
+    "flow_rate",
+    "concentration_transform",
+}
+
 
 def simulation_input_to_material_balance_input(
     simulation_input: dict[str, Any],
+    *,
+    validation_mode: AdapterValidationMode = "compat",
 ) -> MaterialBalanceInput:
+    _validate_mode(validation_mode)
     if simulation_input.get("schema_version") != "simulation_input.v1":
         raise SimulationCoreAdapterError(
             "simulation_input schema_version must be simulation_input.v1",
@@ -43,6 +101,10 @@ def simulation_input_to_material_balance_input(
         )
 
     try:
+        contract_warnings = _handle_unknown_fields(
+            _collect_unknown_field_details(simulation_input),
+            validation_mode,
+        )
         components = _components(simulation_input)
         nodes = [
             _adapt_node(node, components, index)
@@ -60,6 +122,7 @@ def simulation_input_to_material_balance_input(
             edges=edges,
             parameters=parameters,
             time_segments=time_segments,
+            contract_warnings=contract_warnings,
             original_flowchart_data={
                 "schema_version": "simulation_input.v1",
                 "customParameters": [
@@ -75,6 +138,84 @@ def simulation_input_to_material_balance_input(
             "simulation_input adapter validation failed",
             _validation_error_details(exc),
         ) from exc
+
+
+def _validate_mode(validation_mode: str) -> None:
+    if validation_mode in _VALIDATION_MODES:
+        return
+    raise SimulationCoreAdapterError(
+        "unsupported simulation_input adapter validation_mode",
+        [
+            _detail(
+                "$.validation_mode",
+                "validation_mode must be one of compat, warn, or strict",
+                validation_mode,
+            )
+        ],
+    )
+
+
+def _collect_unknown_field_details(simulation_input: dict[str, Any]) -> list[dict[str, Any]]:
+    details = _unknown_field_details(
+        simulation_input,
+        _TOP_LEVEL_FIELDS,
+        "$",
+        simulation_input.get("simulation_input_id"),
+    )
+    for index, node in enumerate(_as_list(simulation_input.get("nodes"))):
+        if not isinstance(node, dict):
+            continue
+        details.extend(
+            _unknown_field_details(
+                node,
+                _NODE_FIELDS,
+                f"$.nodes[{index}]",
+                node.get("node_id"),
+            )
+        )
+    for index, edge in enumerate(_as_list(simulation_input.get("edges"))):
+        if not isinstance(edge, dict):
+            continue
+        details.extend(
+            _unknown_field_details(
+                edge,
+                _EDGE_FIELDS,
+                f"$.edges[{index}]",
+                edge.get("edge_id"),
+            )
+        )
+    return details
+
+
+def _unknown_field_details(
+    value: dict[str, Any],
+    allowed_fields: set[str],
+    path: str,
+    source_id: Any,
+) -> list[dict[str, Any]]:
+    return [
+        _detail(
+            f"{path}.{field}",
+            "unknown field is ignored by compatibility adapter",
+            source_id,
+        )
+        for field in sorted(value)
+        if field not in allowed_fields
+    ]
+
+
+def _handle_unknown_fields(
+    details: list[dict[str, Any]],
+    validation_mode: AdapterValidationMode,
+) -> list[dict[str, Any]]:
+    if not details or validation_mode == "compat":
+        return []
+    if validation_mode == "warn":
+        return details
+    raise SimulationCoreAdapterError(
+        "simulation_input contains unknown fields",
+        details,
+    )
 
 
 def _adapt_node(node: dict[str, Any], components: list[str], index: int) -> NodeData:
