@@ -1,3 +1,34 @@
+# 2026-06-14 AutoWaterSimu Next P3 simulation core pyproject TODO
+
+- [x] Re-read README First context for docs/rebuild, docs/architecture, contracts/python, simulation_core/python, simulation_core/tests, services/simulation-worker/tests, and backend/app/material_balance.
+- [x] Confirm the next slice is minimal simulation_core/contracts Python packaging plus core-only simulation_core test split, not worker fallback removal or hot-path performance optimization.
+- [x] Add `simulation_core/python/pyproject.toml` for `autowatersimu-simulation-core`.
+- [x] Add `contracts/python/pyproject.toml` for `autowatersimu-contracts` so the worker fallback has an installable replacement path.
+- [x] Normalize the simulation core package version to PEP 440-compatible `0.1.0+phase2b`.
+- [x] Split simulation_core core-only boundary/adapter tests into a tracked dedicated file separate from backend parity/oracle tests.
+- [x] Update the P3 audit script so backend parity/oracle tests are allowed when core-only tests are separately collectable.
+- [x] Update README/current-state/development-plan context for the packaging and core-only test split.
+- [x] Run validation and record exact results.
+- [x] Commit and push this P3 pyproject slice.
+
+## Plan
+
+- Keep worker runtime behavior and `_ensure_repo_import_paths()` unchanged in this slice.
+- Preserve backend material-balance implementation and parity assertions.
+- Use editable install smoke via `uv pip install --python backend\.venv\Scripts\python.exe -e ... --no-deps` because the backend venv does not expose `python -m pip`.
+- Leave remaining P3 gaps explicit: worker repo-path fallback, backend/core dual implementation drift, and worker tests backend oracle dependency.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Added installable packaging metadata for `autowatersimu-simulation-core` and `autowatersimu-contracts`.
+- Changed `autowatersimu_simulation_core.__version__` from the non-PEP-440 `0.1.0-phase2b` to `0.1.0+phase2b`, matching editable install metadata.
+- Split core-only import boundary and adapter tests into `simulation_core/tests/test_material_balance_core_boundary.py`; backend parity/oracle tests remain in `test_material_balance_core.py`.
+- Updated `scripts/audit-simulation-core-boundary.ps1` so simulation_core backend parity tests are accepted when at least one core-only test file is separated.
+- P3 audit now reports `partial` with 0 hard violations and 3 open gaps: worker repo-path fallback, backend/core dual implementation drift, and worker tests backend oracle dependency.
+- Validation passed: editable install smoke for both packages through `uv pip install --python backend\.venv\Scripts\python.exe -e ... --no-deps`, installed package version import smoke, `simulation_core\tests` (`10 passed`), `services\simulation-worker\tests` (`22 passed`), `contracts\tests` (`100 passed`), `scripts\audit-simulation-core-boundary.ps1`, `scripts\check-deps.ps1`, docs/rebuild scan, `scripts\ci\pr-fast.ps1`, and `git diff --check -- .`.
+- `pr-fast` evidence recorded tracked changes because this slice was still in the working tree during local validation; unrelated untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next P3 simulation core boundary audit TODO
 
 - [x] Read the attached priority reassessment and confirm P0 service-test split, P1 boundary gate, and P2 mutation matrix closeout are already landed in current HEAD.

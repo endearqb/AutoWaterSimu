@@ -21,6 +21,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
+| `pyproject.toml` | `autowatersimu-simulation-core` package metadata and editable/wheel build entry |
 | `autowatersimu_simulation_core/` | Phase 2B core package |
 
 ## 3. 维护约定
@@ -31,7 +32,7 @@
 
 ## 4. 对外接口
 
-本目录对外暴露 Python package import surface，当前由 `services/simulation-worker` 使用。
+本目录对外暴露 Python package import surface，当前由 `services/simulation-worker` 使用。Package name 为 `autowatersimu-simulation-core`，import root 为 `autowatersimu_simulation_core`，版本来自 `autowatersimu_simulation_core.__version__`。
 
 ## 5. 依赖边界
 
@@ -53,6 +54,7 @@
 ```powershell
 backend\.venv\Scripts\python -m pytest simulation_core\tests -q
 backend\.venv\Scripts\python -m pytest services\simulation-worker\tests -q
+backend\.venv\Scripts\python -m pip install -e simulation_core\python --no-deps
 ```
 
 ## 7. AI 操作提示

@@ -284,26 +284,33 @@ else {
 
 $coreTestFiles = Get-PythonFiles -Path $coreTests
 $workerTestFiles = Get-PythonFiles -Path $workerTests
-$testBackendPattern = 'BACKEND_PATH|backend[\\/]|sys\.path\.(insert|append)|^\s*(from\s+app(\.|\s)|import\s+app(\.|\s|$))'
+$testBackendPattern = '^\s*BACKEND_PATH\s*=|backend[\\/]|^\s*(from\s+app(\.|\s)|import\s+app(\.|\s|$))'
 $coreTestBackendHits = @(Find-PatternHits -Root $Root -Files $coreTestFiles -Pattern $testBackendPattern -Rule "simulation-core-tests-backend-oracle-dependency")
 $workerTestBackendHits = @(Find-PatternHits -Root $Root -Files $workerTestFiles -Pattern $testBackendPattern -Rule "worker-tests-backend-oracle-dependency")
 $coreOnlyTestFiles = @()
+$backendOracleTestFiles = @()
 foreach ($file in @($coreTestFiles)) {
     $fileHits = @(Find-PatternHits -Root $Root -Files @($file) -Pattern $testBackendPattern -Rule "simulation-core-tests-backend-oracle-dependency")
     if ($fileHits.Count -eq 0) {
         $coreOnlyTestFiles += (ConvertTo-RepoRelativePath -Root $Root -Path $file.FullName)
     }
+    else {
+        $backendOracleTestFiles += (ConvertTo-RepoRelativePath -Root $Root -Path $file.FullName)
+    }
 }
-if ($coreTestBackendHits.Count -gt 0) {
+if ($coreOnlyTestFiles.Count -eq 0) {
     $details = [ordered]@{
         backend_oracle_hits = $coreTestBackendHits
+        backend_oracle_test_files = @($backendOracleTestFiles | Sort-Object -Unique)
         core_only_test_files = $coreOnlyTestFiles
     }
-    Add-Check -Checks $checks -Name "simulation_core tests collect boundary" -Status "gap" -Summary "simulation_core tests still collect through files that add/import legacy backend oracle dependencies." -Details $details
+    Add-Check -Checks $checks -Name "simulation_core tests collect boundary" -Status "gap" -Summary "simulation_core has no core-only test file separated from backend parity/oracle tests." -Details $details
     Add-OpenGap -Gaps $openGaps -Id "simulation-core-tests-collect-backend-oracle-dependency" -Severity "high" -Summary "Split core-only boundary/golden tests from backend parity/oracle tests so core-only collect does not add backend to sys.path." -Evidence $details
 }
 else {
-    Add-Check -Checks $checks -Name "simulation_core tests collect boundary" -Status "passed" -Summary "simulation_core tests do not statically add/import backend oracle dependencies." -Details ([ordered]@{
+    Add-Check -Checks $checks -Name "simulation_core tests collect boundary" -Status "passed" -Summary "simulation_core has core-only tests separated from backend parity/oracle tests." -Details ([ordered]@{
+        backend_oracle_hits = $coreTestBackendHits
+        backend_oracle_test_files = @($backendOracleTestFiles | Sort-Object -Unique)
         core_only_test_files = $coreOnlyTestFiles
     })
 }

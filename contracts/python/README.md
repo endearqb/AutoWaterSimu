@@ -20,6 +20,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
+| `pyproject.toml` | `autowatersimu-contracts` package metadata and editable/wheel build entry |
 | `autowatersimu_contracts/` | Python transform package |
 
 ## 3. 维护约定
@@ -30,7 +31,7 @@
 
 ## 4. 对外接口
 
-本目录对外暴露 `autowatersimu_contracts` package。
+本目录对外暴露 `autowatersimu_contracts` package。Package name 为 `autowatersimu-contracts`，import root 为 `autowatersimu_contracts`。
 
 修改这些接口时需同步检查 contract tests、worker 和 frontend transform prototype。
 
@@ -51,6 +52,7 @@
 
 ```powershell
 backend\.venv\Scripts\python -m pytest contracts\tests -q
+backend\.venv\Scripts\python -m pip install -e contracts\python --no-deps
 ```
 
 ## 7. AI 操作提示

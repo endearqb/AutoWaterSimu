@@ -20,7 +20,8 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
-| `test_material_balance_core.py` | Phase 2B core boundary、adapter 和 parity 测试 |
+| `test_material_balance_core_boundary.py` | core-only import boundary 和 adapter 行为测试，不导入 legacy backend |
+| `test_material_balance_core.py` | legacy backend parity/oracle 测试 |
 
 ## 3. 维护约定
 
