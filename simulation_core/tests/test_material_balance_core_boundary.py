@@ -278,6 +278,60 @@ def _udm_binding_node() -> NodeData:
     )
 
 
+def _single_component_boundary_input(
+    *,
+    hours: float = 1.0,
+    steps_per_hour: int = 1,
+    time_segments: list[dict[str, Any]] | None = None,
+) -> MaterialBalanceInput:
+    return MaterialBalanceInput(
+        nodes=[
+            NodeData(
+                node_id="in",
+                node_type="input",
+                is_inlet=True,
+                initial_volume=1.0,
+                initial_concentrations=[10.0],
+            ),
+            NodeData(
+                node_id="tank",
+                node_type="default",
+                initial_volume=1.0,
+                initial_concentrations=[0.0],
+            ),
+            NodeData(
+                node_id="out",
+                node_type="output",
+                is_outlet=True,
+                initial_volume=1.0,
+                initial_concentrations=[0.0],
+            ),
+        ],
+        edges=[
+            EdgeData(
+                edge_id="e_in",
+                source_node_id="in",
+                target_node_id="tank",
+                flow_rate=1.0,
+            ),
+            EdgeData(
+                edge_id="e_out",
+                source_node_id="tank",
+                target_node_id="out",
+                flow_rate=0.0,
+            ),
+        ],
+        parameters=CalculationParameters(
+            hours=hours,
+            steps_per_hour=steps_per_hour,
+            solver_method="rk4",
+            tolerance=1e-6,
+        ),
+        time_segments=time_segments or [],
+        original_flowchart_data={"customParameters": [{"name": "S"}]},
+    )
+
+
 def test_simulation_core_import_boundary_uses_core_python_only() -> None:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SIMULATION_CORE_PYTHON)
@@ -524,6 +578,99 @@ def test_segment_override_clones_edge_tensors_without_mutating_precomputed_bundl
     assert runtime_sparse_bundle["q"] is q_vals
     assert runtime_sparse_bundle["a"] is a_edge
     assert runtime_sparse_bundle["b"] is b_edge
+
+
+def test_mass_balance_metric_uses_boundary_flux_minus_accumulation() -> None:
+    calculator = MaterialBalanceCalculator()
+    calculator.device = torch.device("cpu")
+    calculator.dtype = torch.float64
+    input_data = _single_component_boundary_input()
+    result_tensor = torch.tensor(
+        [
+            [[10.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
+            [[10.0, 1.0], [10.0, 1.0], [0.0, 1.0]],
+        ],
+        dtype=torch.float64,
+    )
+
+    component_errors = calculator._calculate_mass_balance_component_errors(
+        result_tensor,
+        input_data,
+        timestamps=[0.0, 1.0],
+        edge_flow_interval_series={"e_in": [1.0], "e_out": [0.0]},
+    )
+    assert component_errors == pytest.approx([0.0], abs=1e-12)
+
+    result_tensor[1, 1, 0] = 9.0
+    error = calculator._calculate_mass_balance_error(
+        result_tensor,
+        input_data,
+        timestamps=[0.0, 1.0],
+        edge_flow_interval_series={"e_in": [1.0], "e_out": [0.0]},
+    )
+    assert error == pytest.approx(1.0, abs=1e-12)
+
+
+def test_mass_balance_metric_uses_interval_factor_overrides() -> None:
+    calculator = MaterialBalanceCalculator()
+    calculator.device = torch.device("cpu")
+    calculator.dtype = torch.float64
+    input_data = _single_component_boundary_input()
+    result_tensor = torch.tensor(
+        [
+            [[99.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
+            [[99.0, 1.0], [10.0, 1.0], [0.0, 1.0]],
+        ],
+        dtype=torch.float64,
+    )
+
+    component_errors = calculator._calculate_mass_balance_component_errors(
+        result_tensor,
+        input_data,
+        timestamps=[0.0, 1.0],
+        edge_flow_interval_series={"e_in": [2.0], "e_out": [0.0]},
+        edge_factor_a_interval_series={"e_in": [[0.0]], "e_out": [[1.0]]},
+        edge_factor_b_interval_series={"e_in": [[5.0]], "e_out": [[0.0]]},
+    )
+
+    assert component_errors == pytest.approx([0.0], abs=1e-12)
+
+
+def test_run_calculation_records_edge_interval_series_for_segment_overrides() -> None:
+    calculator = MaterialBalanceCalculator()
+    calculator.device = torch.device("cpu")
+    calculator.dtype = torch.float64
+    input_data = _single_component_boundary_input(
+        hours=2.0,
+        steps_per_hour=1,
+        time_segments=[
+            {
+                "id": "seg_1",
+                "start_hour": 0.0,
+                "end_hour": 1.0,
+                "edge_overrides": {
+                    "e_in": {
+                        "flow": 2.0,
+                        "factors": {"S": {"a": 0.0, "b": 5.0}},
+                    }
+                },
+            },
+            {
+                "id": "seg_2",
+                "start_hour": 1.0,
+                "end_hour": 2.0,
+                "edge_overrides": {},
+            },
+        ],
+    )
+    tensors = calculator._convert_to_tensors(input_data)
+
+    result = calculator._run_calculation(tensors, input_data.parameters, input_data)
+
+    assert len(result["edge_flow_interval_series"]["e_in"]) == len(result["timestamps"]) - 1
+    assert result["edge_flow_interval_series"]["e_in"] == pytest.approx([2.0, 1.0])
+    assert result["edge_factor_a_interval_series"]["e_in"] == [[0.0], [1.0]]
+    assert result["edge_factor_b_interval_series"]["e_in"] == [[5.0], [0.0]]
 
 
 def test_dense_transport_merges_parallel_edges_with_sparse_semantics() -> None:

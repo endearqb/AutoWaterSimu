@@ -83,7 +83,7 @@
 
 本目录对 `Justfile` 暴露 `performance-baseline-phase0` opt-in 入口；它只建立性能 Phase 0 baseline evidence，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM fixtures 与 `scipy_solver` / `rk4` / `adaptive_heun` solver matrix，记录 worker wall time、`runtime_audit.timings_ms` 分段和 artifact serialization size/cost。该脚本不做热路径优化、不修改 worker strict mode、不替代 hosted evidence，也不进入默认 `pr-fast`。
 
-本目录对 `Justfile` 暴露 `performance-profiling-phase0` opt-in 入口；它用 `cProfile` 包裹 worker `run_job_file()` 真实执行路径，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 与三求解器矩阵，输出 JSON/Markdown profiling evidence 和 raw `.prof` 文件。它只用于 P-02 热点证据，不修改 runtime、不替代 P-03 f64 golden、不进入默认 `pr-fast`。
+本目录对 `Justfile` 暴露 `performance-profiling-phase0` opt-in 入口；它用 `cProfile` 包裹 worker `run_job_file()` 真实执行路径，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 与三求解器矩阵，输出 JSON/Markdown profiling evidence 和 raw `.prof` 文件。它只用于 P-02 热点证据，不修改 runtime、不替代 P-03 f64 golden、不进入默认 `pr-fast`。`item_device_sync` bucket 若有静态 marker 但 measured self-time 为 0，表示当前本地 run 未测到设备同步热点，应作为 zero-self-time note 记录而不是 open gap；其他 requested bucket 为 0 仍是 open gap。
 
 本目录对 `Justfile` 暴露 `performance-golden-phase0` opt-in 入口；它直接调用 `autowatersimu_simulation_core`，启动时移除 legacy backend 项目路径，不使用 legacy backend oracle，覆盖 small material balance、medium ASM1、single UDM、mixed ASM/UDM 在 `scipy_solver` / `rk4` / `adaptive_heun` 下的 CPU/f64/fixed-seed L3 golden，并生成 UDM expression L1、parallel edge sparse L2、parallel edge dense/sparse target L2、`_balance_param` 非方显式拒绝与退化零流量 micro golden。它只用于 P-03 保护网，不修改 runtime、不替代 P-08 hot-path prereview、不进入默认 `pr-fast`。
 

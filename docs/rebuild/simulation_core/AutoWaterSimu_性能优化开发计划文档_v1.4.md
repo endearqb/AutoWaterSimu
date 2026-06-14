@@ -39,7 +39,7 @@
 1. P-01 `perf-phase0-mixed-asm-udm-fixture` 已完成,继续保持 Phase 0 baseline 覆盖 small / medium / UDM / mixed 三类以上图并保持 correctness-freeze audit 通过。
 2. P-02 `perf-phase0-profiling-artifacts` 已完成,后续若改变 fixture、solver matrix 或 runtime timings,必须重新生成 profiling evidence。
 3. P-03 `perf-phase0-golden-generator` 已完成,后续若改变 correctness-freeze 行为、fixture、solver matrix 或文档化 golden/repro 测试,必须重新生成 golden evidence。
-4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification 与 PR-33 dense lazy / `_balance_param` shape guard 已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver/output grid 或完整统一 RHS 等更高风险切片。
+4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard 与 PR-35 真实质量守恒指标已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver/output grid 或完整统一 RHS 等更高风险切片。
 5. PR-38 supported mixed-model dispatch 与 PR-39 当前 ASM 氧清零 active compute mask 约束已落地；后续完整 PR-39 组分契约、PR-11 全统一 RHS、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
 6. P-04 backend compatibility cleanup、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke 与 P-07 packaged sidecar no-fallback evidence 已完成;后续删除 fallback、ASM/UDM helper 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
 
@@ -54,7 +54,7 @@
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；删除 fallback 仍需另开 PR |
-| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification 与 PR-33 dense lazy / `_balance_param` shape guard；继续禁止混入 solver/schema/fallback 改动 |
+| P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard 与 PR-35 真实质量守恒指标；继续禁止混入 solver/schema/fallback 改动 |
 | PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；单模型 fallback 与 default no-clamp baseline 继续冻结 |
 | PR-39 oxygen mask first step | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点；完整组分契约仍需后续 PR |
 
@@ -140,6 +140,8 @@ PR-17~19。
 
 ### PR-35:真实质量守恒指标【Phase 2】
 `_calculate_mass_balance_error` 实现 ∫入流−∫出流−Δ累积(逐组分),或改名/移除占位字段;L3 守恒判据接入真实指标。
+
+**当前实现状态（2026-06-14）**：已保留 `summary["final_mass_balance_error"]` 字段名并替换旧占位公式。当前指标以非 inlet/outlet 节点为计算控制体,对每个输出区间按实际生效的 edge flow 与 factor a/b 积分边界通量,计算 `∫入流−∫出流−Δ累积` 的逐组分 signed residual；`final_mass_balance_error` 为这些残差的最大绝对值,`summary["mass_balance_component_errors"]` 暴露逐组分 residual。输出时间轴仍使用当前结果采样点,求解输出网格解耦仍属于 PR-34。
 
 ### PR-36:求解器矩阵/白名单/默认值对齐【Phase 4(矩阵部分前移 Phase 0)】
 dopri5 入白名单+测(或文档矩阵改 adaptive_heun);benchmark 矩阵加 scipy_solver;评估默认值改 rk4/adaptive_heun(flag+存量影响);统一 tolerance 校验;`max_iterations`/`max_memory_mb` 实现或标 deprecated。
@@ -272,7 +274,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] `_balance_param` out/in 聚合维度回归通过(KPI-020)。
 - [x] dense lazy 化。
 - [ ] 输出网格解耦(KPI-005)。
-- [ ] 真实守恒指标接入 L3。
+- [x] 真实守恒指标接入 L3。
 - [ ] dopri5/adaptive_heun 入验收矩阵,默认求解器评估完成。
 - [ ] 表达式缓存(KPI-017)+校验器白名单化+fuzz。
 - [ ] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。

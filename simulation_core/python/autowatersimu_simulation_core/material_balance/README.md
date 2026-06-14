@@ -41,6 +41,7 @@
 7. sparse runtime path 不应物化 `[n,n,r]` 的 `prop_a` / `prop_b`，`_convert_to_tensors()` 返回的 `prop_a` / `prop_b` 为 `None`；只有显式 dense fallback 才调用 `_build_dense_transport_tensors()`。dense transport tensors 遇到重复 `(src,dst)` 并行边时必须与 sparse 语义一致：`Q_out` 累加流量，`prop_a` / `prop_b` 使用 `a_eff=Σq_i a_i/Σq_i`、`b_eff=Σq_i b_i/Σq_i` 的流量加权合并。`_balance_param` 只接受 square `Q_out` 计算节点 delta，非方输入必须显式报错。
 8. `_generate_segment_timestamps()` 必须直接在 CPU 构造采样时间戳，避免每个 segment 为输出时间轴从 GPU 同步回 CPU；这不改变 solver/output grid 语义。
 9. `_convert_to_tensors()` 解析出的 `parameter_names` 必须随 tensor payload 传入 `_run_calculation()` 复用，避免每次运行再解析 flowchart metadata；缺失该字段时才走兼容 fallback。
+10. `summary["final_mass_balance_error"]` 是计算控制体（非 inlet/outlet 节点）的真实守恒残差标量：按输出时间轴逐区间积分边界 `入流 - 出流 - Δ累积`，再取逐组分 signed residual 的最大绝对值；逐组分 signed residual 以 `summary["mass_balance_component_errors"]` 暴露，顺序与全局组分顺序一致。分段 `edge_overrides` 的 flow / factor a,b 必须用区间级实际生效值参与积分。
 
 ## 4. 对外接口
 

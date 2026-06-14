@@ -1,3 +1,29 @@
+# 2026-06-14 simulation_core PR-35 conservation metric TODO
+
+- [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-35 plan.
+- [x] Confirm this slice is the true mass-conservation metric, not output-grid decoupling, solver default changes, schema/API changes, worker strict default switch, fallback deletion, or full unified RHS.
+- [x] Replace the placeholder `final_mass_balance_error` formula with a real computed-control-volume residual.
+- [x] Track interval-level edge flow and factor a/b values so time-segment overrides participate in conservation integration.
+- [x] Expose per-component signed residuals in summary while preserving the existing scalar field name.
+- [x] Add focused core-only tests for zero residual, nonzero residual, factor override integration, and segment interval-series recording.
+- [x] Update README/current-state/planning docs and README First records.
+- [x] Run validation matrix before the phase commit/push.
+
+## Plan
+
+- Treat non inlet/outlet nodes as the computed control volume, matching current `compute_mask` semantics.
+- Compute signed component residuals as `boundary inflow - boundary outflow - accumulation_delta`; keep `final_mass_balance_error` as the max absolute component residual for compatibility.
+- Preserve solver/output-grid behavior, schema/API, worker strict mode, fallback behavior, and Go API behavior.
+
+## Review
+
+- `final_mass_balance_error` now reports max absolute signed component residual for the computed control volume instead of the old placeholder `max(total_mass) * 1e-8`.
+- `_run_calculation()` records interval-level edge flow and factor a/b values so time-segment overrides are integrated with the correct piecewise-constant values.
+- `summary["mass_balance_component_errors"]` exposes the per-component signed residual list while preserving the existing scalar summary field name.
+- Focused boundary tests cover zero residual, nonzero residual, factor override integration, and segment interval-series recording.
+- Profiling evidence needed a script classification fix: `item_device_sync=0.0` with a static marker is now recorded as a zero-self-time note, not an open gap; other requested buckets at zero remain open gaps.
+- Verification passed for core tests, docs golden tests, audits, Phase 0 baseline/golden/profiling/hotpath evidence, worker dependency audit, `pr-fast`, and `git diff --check`. Direct `py_compile` was not counted because the PowerShell sandbox failed to start that subprocess, while pytest already imported/executed the changed files.
+
 # 2026-06-14 simulation_core PR-33 dense props lazy TODO
 
 - [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-33 plan.

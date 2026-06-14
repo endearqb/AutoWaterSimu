@@ -360,6 +360,15 @@ class MaterialBalanceCalculator:
             edge_flow_series: Dict[str, List[float]] = {
                 edge.edge_id: [] for edge in input_data.edges
             }
+            edge_flow_interval_series: Dict[str, List[float]] = {
+                edge.edge_id: [] for edge in input_data.edges
+            }
+            edge_factor_a_interval_series: Dict[str, List[List[float]]] = {
+                edge.edge_id: [] for edge in input_data.edges
+            }
+            edge_factor_b_interval_series: Dict[str, List[List[float]]] = {
+                edge.edge_id: [] for edge in input_data.edges
+            }
             segment_markers: List[float] = []
             parameter_change_events: List[Dict[str, Any]] = []
 
@@ -452,11 +461,33 @@ class MaterialBalanceCalculator:
                 if segment_result.shape[0] > 0:
                     segment_results.append(segment_result)
                     combined_timestamps.extend(segment_absolute_timestamps)
+                    interval_count = len(segment_absolute_timestamps)
+                    if segment_index == 0:
+                        interval_count = max(0, interval_count - 1)
+                    q_values = [float(value) for value in q_vals.detach().cpu().tolist()]
+                    a_values = [
+                        [float(component) for component in edge_values]
+                        for edge_values in a_edge.detach().cpu().tolist()
+                    ]
+                    b_values = [
+                        [float(component) for component in edge_values]
+                        for edge_values in b_edge.detach().cpu().tolist()
+                    ]
                     for edge_index, edge in enumerate(input_data.edges):
-                        edge_flow_value = float(q_vals[edge_index].item())
+                        edge_flow_value = q_values[edge_index]
                         edge_flow_series[edge.edge_id].extend(
                             [edge_flow_value] * len(segment_absolute_timestamps)
                         )
+                        if interval_count:
+                            edge_flow_interval_series[edge.edge_id].extend(
+                                [edge_flow_value] * interval_count
+                            )
+                            edge_factor_a_interval_series[edge.edge_id].extend(
+                                [a_values[edge_index]] * interval_count
+                            )
+                            edge_factor_b_interval_series[edge.edge_id].extend(
+                                [b_values[edge_index]] * interval_count
+                            )
                     current_state = segment_result[-1:].clone()
 
                 prev_q_vals = q_vals
@@ -503,11 +534,28 @@ class MaterialBalanceCalculator:
                     edge_flow_series[edge.edge_id] = [
                         edge.flow_rate
                     ] * len(combined_timestamps)
+                    a_defaults, b_defaults = self._normalise_edge_factors(
+                        edge,
+                        int(tensors.get("n_components", x0.shape[1])),
+                    )
+                    interval_count = max(0, len(combined_timestamps) - 1)
+                    edge_flow_interval_series[edge.edge_id] = [
+                        float(edge.flow_rate)
+                    ] * interval_count
+                    edge_factor_a_interval_series[edge.edge_id] = [
+                        a_defaults
+                    ] * interval_count
+                    edge_factor_b_interval_series[edge.edge_id] = [
+                        b_defaults
+                    ] * interval_count
 
             return {
                 "result_tensor": result_tensor,
                 "timestamps": combined_timestamps,
                 "edge_flow_series": edge_flow_series,
+                "edge_flow_interval_series": edge_flow_interval_series,
+                "edge_factor_a_interval_series": edge_factor_a_interval_series,
+                "edge_factor_b_interval_series": edge_factor_b_interval_series,
                 "segment_markers": segment_markers,
                 "parameter_change_events": parameter_change_events,
             }
@@ -1729,7 +1777,19 @@ class MaterialBalanceCalculator:
         calculation_time = time.time() - start_time
         final_volumes = volumes_np[-1, :]
 
-        mass_balance_error = self._calculate_mass_balance_error(result_tensor, input_data)
+        mass_balance_component_errors = self._calculate_mass_balance_component_errors(
+            result_tensor,
+            input_data,
+            timestamps=timestamps,
+            edge_flow_series=edge_flow_series,
+            edge_flow_interval_series=calculation_output.get("edge_flow_interval_series"),
+            edge_factor_a_interval_series=calculation_output.get("edge_factor_a_interval_series"),
+            edge_factor_b_interval_series=calculation_output.get("edge_factor_b_interval_series"),
+        )
+        mass_balance_error = max(
+            (abs(value) for value in mass_balance_component_errors),
+            default=0.0,
+        )
 
         summary = {
             "total_time": input_data.parameters.hours,
@@ -1737,6 +1797,7 @@ class MaterialBalanceCalculator:
             "calculation_time_seconds": calculation_time,
             "convergence_status": "converged",
             "final_mass_balance_error": mass_balance_error,
+            "mass_balance_component_errors": mass_balance_component_errors,
             "final_total_volume": float(final_volumes.sum()),
             "solver_method": input_data.parameters.solver_method,
             "segment_count": len(getattr(input_data, "time_segments", [])) or 1,
@@ -1792,36 +1853,204 @@ class MaterialBalanceCalculator:
 
         return node_labels
 
-    def _calculate_mass_balance_error(self, result_tensor: torch.Tensor,
-                                    input_data: MaterialBalanceInput) -> float:
-        """璁＄畻鏈€缁堢殑璐ㄩ噺骞宠　璇樊銆?
+    def _normalise_edge_factors(
+        self,
+        edge: EdgeData,
+        n_components: int,
+    ) -> Tuple[List[float], List[float]]:
+        factor_a = getattr(edge, "concentration_factor_a", None)
+        factor_b = getattr(edge, "concentration_factor_b", None)
+        a_values = (
+            [float(value) for value in factor_a]
+            if factor_a and len(factor_a) == n_components
+            else [1.0] * n_components
+        )
+        b_values = (
+            [float(value) for value in factor_b]
+            if factor_b and len(factor_b) == n_components
+            else [0.0] * n_components
+        )
+        return a_values, b_values
 
-        璇勪及璁＄畻缁撴灉鐨勮川閲忓钩琛＄簿搴︼紝鐢ㄤ簬楠岃瘉璁＄畻鐨勫噯纭€с€?
+    def _calculate_mass_balance_component_errors(
+        self,
+        result_tensor: torch.Tensor,
+        input_data: MaterialBalanceInput,
+        *,
+        timestamps: Optional[List[float]] = None,
+        edge_flow_series: Optional[Dict[str, List[float]]] = None,
+        edge_flow_interval_series: Optional[Dict[str, List[float]]] = None,
+        edge_factor_a_interval_series: Optional[Dict[str, List[List[float]]]] = None,
+        edge_factor_b_interval_series: Optional[Dict[str, List[List[float]]]] = None,
+    ) -> List[float]:
+        """Return signed component residuals: inflow - outflow - accumulation."""
+        series_tensor = result_tensor.unsqueeze(0) if result_tensor.ndim == 2 else result_tensor
+        if series_tensor.ndim != 3:
+            raise ValueError("result_tensor must have shape [time, node, feature]")
 
-        Args:
-            result_tensor: 璁＄畻缁撴灉寮犻噺
-            input_data: 杈撳叆鏁版嵁
+        concentrations, volumes = self._split_tensors(series_tensor)
+        n_steps = int(series_tensor.shape[0])
+        n_nodes = len(input_data.nodes)
+        if n_steps == 0:
+            return []
+        if concentrations.shape[1] != n_nodes:
+            raise ValueError(
+                "result_tensor node dimension does not match input nodes "
+                f"({concentrations.shape[1]} != {n_nodes})"
+            )
 
-        Returns:
-            璐ㄩ噺骞宠　璇樊鍊?
-        """
-        try:
-            # Simple mass balance check - can be enhanced
-            final_state = result_tensor[-1, :]
-            concentrations, volumes = self._split_tensors(final_state.unsqueeze(0))
+        device = concentrations.device
+        dtype = concentrations.dtype
+        n_components = int(concentrations.shape[-1])
+        if not isinstance(timestamps, list) or len(timestamps) != n_steps:
+            time_values = np.linspace(
+                0.0,
+                float(input_data.parameters.hours),
+                n_steps,
+            ).tolist()
+        else:
+            time_values = [float(value) for value in timestamps]
 
-            # Calculate total mass for each component
-            if len(concentrations.shape) > 2:
-                total_masses = (concentrations[0] * volumes[0].unsqueeze(1)).sum(dim=0)
+        compute_nodes = [not (node.is_inlet or node.is_outlet) for node in input_data.nodes]
+        compute_indices = [idx for idx, included in enumerate(compute_nodes) if included]
+        if compute_indices:
+            compute_index_tensor = torch.tensor(
+                compute_indices,
+                dtype=torch.long,
+                device=device,
+            )
+            control_concentrations = concentrations.index_select(1, compute_index_tensor)
+            control_volumes = volumes.index_select(1, compute_index_tensor)
+            control_mass = (
+                control_concentrations * control_volumes.unsqueeze(-1)
+            ).sum(dim=1)
+            accumulation_delta = control_mass[-1] - control_mass[0]
+        else:
+            accumulation_delta = torch.zeros(n_components, dtype=dtype, device=device)
+
+        interval_count = n_steps - 1
+        if interval_count <= 0:
+            return [
+                float(value)
+                for value in (-accumulation_delta).detach().cpu().tolist()
+            ]
+
+        dt_values = []
+        for index in range(interval_count):
+            dt_value = float(time_values[index + 1] - time_values[index])
+            if dt_value < -1e-12:
+                raise ValueError("timestamps must be nondecreasing")
+            dt_values.append(max(0.0, dt_value))
+        dt = torch.tensor(dt_values, dtype=dtype, device=device)
+
+        def interval_flow(edge_id: str, default_value: float) -> torch.Tensor:
+            raw_interval = (
+                edge_flow_interval_series.get(edge_id)
+                if isinstance(edge_flow_interval_series, dict)
+                else None
+            )
+            if isinstance(raw_interval, list) and len(raw_interval) == interval_count:
+                values = [float(value) for value in raw_interval]
             else:
-                total_masses = (concentrations[0] * volumes[0]).sum()
+                raw_points = (
+                    edge_flow_series.get(edge_id)
+                    if isinstance(edge_flow_series, dict)
+                    else None
+                )
+                if isinstance(raw_points, list) and len(raw_points) == n_steps:
+                    values = [
+                        0.5 * (float(raw_points[idx]) + float(raw_points[idx + 1]))
+                        for idx in range(interval_count)
+                    ]
+                else:
+                    values = [float(default_value)] * interval_count
+            return torch.tensor(values, dtype=dtype, device=device)
 
-            # For now, return a placeholder error calculation
-            # In a real implementation, this would compare input vs output masses
-            if torch.is_tensor(total_masses):
-                return float(torch.abs(total_masses).max().item() * 1e-8)
-            else:
-                return float(abs(total_masses) * 1e-8)
+        def interval_factors(
+            series_map: Optional[Dict[str, List[List[float]]]],
+            edge_id: str,
+            defaults: List[float],
+        ) -> torch.Tensor:
+            raw_interval = series_map.get(edge_id) if isinstance(series_map, dict) else None
+            if isinstance(raw_interval, list) and len(raw_interval) == interval_count:
+                rows: List[List[float]] = []
+                for row in raw_interval:
+                    if not isinstance(row, list) or len(row) != n_components:
+                        rows = []
+                        break
+                    rows.append([float(value) for value in row])
+                if len(rows) == interval_count:
+                    return torch.tensor(rows, dtype=dtype, device=device)
 
-        except Exception:
-            return 0.0  # Return 0 if error calculation fails
+            return torch.tensor(
+                [defaults] * interval_count,
+                dtype=dtype,
+                device=device,
+            )
+
+        node_index = {node.node_id: idx for idx, node in enumerate(input_data.nodes)}
+        input_integral = torch.zeros(n_components, dtype=dtype, device=device)
+        output_integral = torch.zeros(n_components, dtype=dtype, device=device)
+
+        for edge in input_data.edges:
+            source_index = node_index[edge.source_node_id]
+            target_index = node_index[edge.target_node_id]
+            source_in_control = compute_nodes[source_index]
+            target_in_control = compute_nodes[target_index]
+            if source_in_control == target_in_control:
+                continue
+
+            a_defaults, b_defaults = self._normalise_edge_factors(edge, n_components)
+            q_interval = interval_flow(edge.edge_id, edge.flow_rate)
+            a_interval = interval_factors(
+                edge_factor_a_interval_series,
+                edge.edge_id,
+                a_defaults,
+            )
+            b_interval = interval_factors(
+                edge_factor_b_interval_series,
+                edge.edge_id,
+                b_defaults,
+            )
+            source_start = concentrations[:-1, source_index, :] * a_interval + b_interval
+            source_end = concentrations[1:, source_index, :] * a_interval + b_interval
+            flux_integral = (
+                0.5
+                * (source_start + source_end)
+                * q_interval.unsqueeze(-1)
+                * dt.unsqueeze(-1)
+            ).sum(dim=0)
+
+            if target_in_control and not source_in_control:
+                input_integral = input_integral + flux_integral
+            elif source_in_control and not target_in_control:
+                output_integral = output_integral + flux_integral
+
+        residual = input_integral - output_integral - accumulation_delta
+        return [
+            float(value)
+            for value in residual.detach().cpu().tolist()
+        ]
+
+    def _calculate_mass_balance_error(
+        self,
+        result_tensor: torch.Tensor,
+        input_data: MaterialBalanceInput,
+        *,
+        timestamps: Optional[List[float]] = None,
+        edge_flow_series: Optional[Dict[str, List[float]]] = None,
+        edge_flow_interval_series: Optional[Dict[str, List[float]]] = None,
+        edge_factor_a_interval_series: Optional[Dict[str, List[List[float]]]] = None,
+        edge_factor_b_interval_series: Optional[Dict[str, List[List[float]]]] = None,
+    ) -> float:
+        """Return max absolute component residual for the computed control volume."""
+        component_errors = self._calculate_mass_balance_component_errors(
+            result_tensor,
+            input_data,
+            timestamps=timestamps,
+            edge_flow_series=edge_flow_series,
+            edge_flow_interval_series=edge_flow_interval_series,
+            edge_factor_a_interval_series=edge_factor_a_interval_series,
+            edge_factor_b_interval_series=edge_factor_b_interval_series,
+        )
+        return max((abs(value) for value in component_errors), default=0.0)
