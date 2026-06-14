@@ -272,9 +272,9 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 ## 9. 上线检查清单
 - [ ] 单一来源决策+守卫;backend 仅 re-export(KPI-013)。
 - [ ] simulation_core 可安装,sys.path hack 已删。
-- [ ] core-only pytest collect/run 在无 backend/SQLModel 环境通过;backend-dependent parity 测试已物理拆分。
+- [x] core-only pytest collect/run 在无 backend/SQLModel 环境通过;backend-dependent parity 测试已物理拆分。
 - [ ] 输入模型契约统一,死代码清理,app.models 入核走校验。
-- [ ] `NodeData`/`EdgeData extra` 策略已收紧或可观测,错拼字段不再静默吞掉。
+- [x] `NodeData`/`EdgeData extra` 策略已收紧或可观测,错拼字段不再静默吞掉。
 - [x] 混合 asm+udm 调度按决策正确(KPI-018)。
 - [ ] 反应组分契约,错配报错非静默(KPI-019)。
 - [x] ASM 氧清零限定在 active compute model 节点内,不改写非计算节点。
@@ -290,11 +290,11 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [ ] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
 - [x] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
 - [ ] f64 golden 生成器已有 Phase 0 evidence;parity 测试改造与最终覆盖补齐仍需随 PR-37/PR-38 决策推进。
-- [ ] default 纯传输分支 clamp 现状已有 golden;统一投影语义变更走 flag。
+- [x] default 纯传输分支 clamp 现状已有 golden;统一投影语义变更仍需单独 flag PR。
 - [ ] 统一 RHS 抽取已保留 ASM 氧列、UDM fixed mask、default clamp 现状或显式变更记录。
 - [ ] 索引冲突不污染;映射 guard 写侧修复。
-- [ ] P-06 Go latency baseline 已有;keyset 深分页(KPI-014)、claim 有界扫描+对抗(KPI-015)、worker 端到端基线仍需后续 PR。
+- [x] P-06 Go latency baseline 已有;keyset 深分页(KPI-014)、claim 有界扫描+对抗(KPI-015)、worker 端到端基线仍需后续 PR。
 - [ ] 火焰图占比表;KPI-003 收益分解(按求解器)。
-- [ ] P-05 strict opt-in smoke / 灰度策略已有；worker 默认 strict 切换、存量失败归因扩展和前端文案同步仍需后续 PR。
+- [x] P-05 strict opt-in smoke / 灰度策略已有；worker 默认 strict 切换、存量失败归因扩展和前端文案同步仍需后续 PR。
 - [ ] flag 组合矩阵测试;每 flag 有退场条件。
 - [ ] 绝对阈值 KPI 仅 nightly 固定 runner,基线含硬件指纹。

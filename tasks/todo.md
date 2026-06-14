@@ -1,3 +1,24 @@
+# 2026-06-15 simulation_core v1.4 checklist evidence calibration TODO
+
+- [x] Re-scan v1.4 checklist and current-state evidence for completed-but-unchecked items.
+- [x] Mark only evidence-backed items complete: core-only/backend-dependent test split, Node/Edge extra strategy, default clamp golden, P-06 latency baseline, and P-05 strict opt-in smoke.
+- [x] Keep backend full re-export, input model contract cleanup, PR-39 component contract, solver default switch, PR-11/PR-12, UDM KPI split, Go follow-up optimizations, flag matrix, and nightly fixed-runner items open.
+- [x] Run evidence validation for calibrated checklist items.
+- [x] Record README First change log and phase-slice review.
+
+## Plan
+
+- Treat this as documentation/status calibration only.
+- Do not modify runtime, scripts, public contracts, worker defaults, Go API, solver defaults, or fallback behavior.
+- Validate against boundary/input-contract/correctness audits, docs tests, P-05 strict smoke, P-06 Go latency smoke, and `pr-fast`.
+
+## Review
+
+- v1.4 checklist now marks the evidence-backed items complete: core-only/backend-dependent test split, Node/Edge extra strategy, default clamp golden, P-06 latency baseline, and P-05 strict opt-in smoke.
+- Explicitly left high-risk or incomplete work open: backend full re-export/input cleanup, PR-39 component contract, solver default switch, UDM KPI split, PR-11/PR-12, Go follow-up optimizations, flag matrix, and nightly fixed-runner policy.
+- No runtime, script, contract, worker default, Go API, solver, fallback, or README contract behavior changed in this slice.
+- Validation passed for docs/rebuild tests, simulation_core boundary/input-contract/correctness audits, P-05 strict smoke, P-06 Go latency smoke, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core ASM stable reaction runtime TODO
 
 - [x] Re-read v1.4 ASM mask gather requirement and current ASM/UDM RHS code.
