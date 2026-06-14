@@ -25,7 +25,7 @@
 | `models.py` | legacy calculation input models and compatibility output model；`MaterialBalanceResult` runtime construction is migrating leaf-by-leaf to simulation_core |
 | `asm/` | ASM runtime helper |
 | `udm_engine.py`、`udm_ode.py` | UDM runtime and ODE support |
-| `utils.py` | legacy helper functions；部分 flowchart 转换逻辑仍可能是薄壳化前的死代码候选 |
+| `utils.py` | compatibility re-export of `autowatersimu_simulation_core.material_balance.utils` |
 | `exceptions.py` | compatibility re-export of `autowatersimu_simulation_core.material_balance.exceptions` |
 
 ## 3. 维护约定
@@ -34,8 +34,8 @@
 2. 大时间序列不应写入主表 JSON；route/service 层应只入库 summary 或 artifact reference。
 3. 数值相关改动必须补充 targeted tests，避免只通过 API smoke 判断。
 4. 与 `simulation_core/python/.../material_balance` 出现差异时，应明确记录是 legacy bugfix 还是 core migration 差异。
-5. `exceptions.py` 与 calculator result model 已是第一批 thin-shell leaf；保持 backend/core exception class identity 和 calculator 返回值 class identity，不要重新定义本地异常类或本地构造结果模型。
-6. `models.py` 的旧输入模型仍未迁移，不得把 result model leaf 误读为整文件 re-export 或 PR-31 backend thin-shell 主迁移完成。
+5. `exceptions.py`、calculator result model 与 `utils.py` 已是第一批 thin-shell leaf；保持 backend/core exception class identity、calculator 返回值 class identity 和 utility helper object identity，不要重新定义本地异常类、本地构造结果模型或本地复制 utility helper。
+6. `models.py` 的旧输入模型、legacy calculator implementation、ASM/UDM helpers 仍未迁移，不得把这些 leaf 误读为整文件 re-export 或 PR-31 backend thin-shell 主迁移完成。
 
 ## 4. 对外接口
 
@@ -58,7 +58,7 @@
 ## 6. 测试与验证
 
 ```powershell
-cd backend; .venv\Scripts\python -m pytest app\tests\material_balance_exceptions_thin_shell_test.py app\tests\material_balance_result_thin_shell_test.py -q
+cd backend; .venv\Scripts\python -m pytest app\tests\material_balance_exceptions_thin_shell_test.py app\tests\material_balance_result_thin_shell_test.py app\tests\material_balance_utils_thin_shell_test.py -q
 cd backend; .venv\Scripts\python -m pytest app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q
 ```
 

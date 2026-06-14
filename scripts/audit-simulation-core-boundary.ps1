@@ -340,6 +340,8 @@ $backendCorePath = Join-Path $backendMaterialBalance "core.py"
 $coreCorePath = Join-Path $corePackage "material_balance\core.py"
 $backendModelsPath = Join-Path $backendMaterialBalance "models.py"
 $coreModelsPath = Join-Path $corePackage "material_balance\models.py"
+$backendUtilsPath = Join-Path $backendMaterialBalance "utils.py"
+$coreUtilsPath = Join-Path $corePackage "material_balance\utils.py"
 $backendServicesPath = Join-Path $Root "backend\app\services"
 $backendCoreDriftGuardPath = Join-Path $coreTests "test_material_balance_core.py"
 $requiredBackendCoreDriftGuardCases = @(
@@ -379,6 +381,39 @@ if ($backendDeclaresSimulationCoreDependency -and $backendResultModelThinShellDe
 else {
     Add-Check -Checks $checks -Name "backend material_balance result model thin shell" -Status "gap" -Summary "Legacy backend calculator and ASM/UDM services have not fully moved the result model leaf to simulation_core." -Details $backendResultThinShellDetails
     Add-OpenGap -Gaps $openGaps -Id "backend-material-balance-result-model-thin-shell-missing" -Severity "medium" -Summary "Move the calculator result model leaf to simulation_core before deleting legacy backend material_balance models or broader thin-shell migration." -Evidence $backendResultThinShellDetails
+}
+
+$requiredUtilityExports = @(
+    "validate_tensor_dimensions",
+    "convert_flowchart_json_to_input",
+    "convert_result_to_json",
+    "paginate_timeseries_data",
+    "validate_calculation_parameters",
+    "estimate_memory_usage",
+    "create_example_input"
+)
+$backendUtilsText = if (Test-Path -LiteralPath $backendUtilsPath) { Get-Content -LiteralPath $backendUtilsPath -Raw } else { "" }
+$backendUtilsThinShellDetected = $backendUtilsText -match 'autowatersimu_simulation_core\.material_balance\.utils'
+$missingUtilityExports = @()
+foreach ($utilityName in $requiredUtilityExports) {
+    if ($backendUtilsText -notmatch [regex]::Escape($utilityName)) {
+        $missingUtilityExports += $utilityName
+    }
+}
+$backendUtilsThinShellDetails = [ordered]@{
+    backend = if (Test-Path -LiteralPath $backendUtilsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendUtilsPath } else { $null }
+    core = if (Test-Path -LiteralPath $coreUtilsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $coreUtilsPath } else { $null }
+    backend_dependency_declared = $backendDeclaresSimulationCoreDependency
+    thin_shell_detected = $backendUtilsThinShellDetected
+    required_exports = $requiredUtilityExports
+    missing_exports = $missingUtilityExports
+}
+if ($backendDeclaresSimulationCoreDependency -and $backendUtilsThinShellDetected -and $missingUtilityExports.Count -eq 0) {
+    Add-Check -Checks $checks -Name "backend material_balance utils thin shell" -Status "passed" -Summary "Legacy backend material_balance utility helpers are compatibility re-exports of simulation_core utility helpers." -Details $backendUtilsThinShellDetails
+}
+else {
+    Add-Check -Checks $checks -Name "backend material_balance utils thin shell" -Status "gap" -Summary "Legacy backend material_balance utility helpers have not been migrated to simulation_core re-exports." -Details $backendUtilsThinShellDetails
+    Add-OpenGap -Gaps $openGaps -Id "backend-material-balance-utils-thin-shell-missing" -Severity "medium" -Summary "Move dead-code-candidate backend material_balance utility helpers to simulation_core re-exports before broader model/helper cleanup." -Evidence $backendUtilsThinShellDetails
 }
 $driftPairs = @(
     [ordered]@{

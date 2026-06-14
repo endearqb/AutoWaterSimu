@@ -1,3 +1,30 @@
+# 2026-06-14 AutoWaterSimu Next backend material balance utils thin-shell leaf TODO
+
+- [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend tests, scripts, architecture current-state, Certainty/Elegance Development Plan, and latest priority reassessment.
+- [x] Confirm this slice is the utility helper thin-shell leaf, not old input model migration, calculator delegation, worker default strictness, or hot-path performance optimization.
+- [x] Replace backend material_balance utility helper implementations with compatibility re-exports from `autowatersimu_simulation_core.material_balance.utils`.
+- [x] Add a focused backend/core utility helper object identity test.
+- [x] Extend the simulation_core boundary audit to guard the utils thin-shell leaf.
+- [x] Update README/current-state/development-plan context and change records.
+- [x] Run full validation and record exact results.
+- [x] Commit and push this backend utils thin-shell leaf.
+
+## Plan
+
+- Keep the public backend import path `app.material_balance.utils` stable.
+- Preserve legacy backend input DTOs, calculator implementation, ASM/UDM helpers, route schemas, OpenAPI/generated clients, worker default validation mode, Desktop scope, and numerical behavior.
+- Treat `utils.py` as a leaf re-export only; do not mark PR-31 backend thin-shell main migration complete.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- `backend/app/material_balance/utils.py` now re-exports utility helpers from `autowatersimu_simulation_core.material_balance.utils`.
+- Added `backend/app/tests/material_balance_utils_thin_shell_test.py` to prove backend/core helper object identity.
+- `scripts/audit-simulation-core-boundary.ps1` now records `backend material_balance utils thin shell` and requires the re-export plus backend dependency declaration to keep the leaf green.
+- Updated backend material_balance/tests READMEs, scripts README, architecture current-state, and Certainty/Elegance Development Plan.
+- Validation passed: backend targeted material_balance tests (`20 passed`, existing `python_multipart` warning only), full `simulation_core\tests` (`21 passed`), `uv lock --project backend --check`, `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-input-contract.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\audit-simulation-core-correctness-freeze.ps1` (`passed`, 0 hard violations, 0 open gaps), `scripts\ci\pr-fast.ps1` (`status=passed`, 9 steps, `compute_boundary_audit.status=passed`, `simulation_core_correctness_freeze_audit.status=passed`), and `git diff --check -- .` (only LF-to-CRLF notices, no whitespace errors).
+- Existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` were not touched.
+
 # 2026-06-14 AutoWaterSimu Next backend material balance result thin-shell leaf TODO
 
 - [x] Re-read README First context for backend, backend/app, backend/app/material_balance, backend/app/services, backend tests, simulation_core material_balance, scripts, architecture current-state, and Certainty/Elegance Development Plan.
