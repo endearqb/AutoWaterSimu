@@ -8,7 +8,7 @@
 - [x] Wire the worker dependency installation audit into `pr-fast`.
 - [x] Run lock, focused worker tests/audits, and full `pr-fast`.
 - [x] Update README/current-state/development-plan context and change records with exact validation results.
-- [ ] Commit and push this worker dependency installation gate slice.
+- [x] Commit and push this worker dependency installation gate slice.
 
 ## Plan
 
