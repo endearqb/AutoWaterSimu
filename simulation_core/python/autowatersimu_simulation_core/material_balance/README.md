@@ -39,9 +39,10 @@
 5. `_run_calculation` 在 segment 没有 `edge_overrides` 时复用 `_convert_to_tensors` 已构建的 `Q_out` / `sparse_bundle`；有 override 时必须 clone edge sparse tensors 并构建新的 runtime sparse bundle，不得污染预计算 bundle。该 fast path 只是 transport tensor 准备优化，不等同于 dense/sparse 并行边语义修复。
 6. UDM runtime 在构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices；`udm_ode_balance()` / `UDMNodeRuntime.evaluate_reaction()` 热路径不得重新用 `.item()` 判断 `udm_mask`、`fixed_component_mask.any()` 或 local-to-global 映射。`compile_expression()` 使用无状态 LRU 缓存，表达式 evaluator 可跨同文本节点共享。
 7. sparse runtime path 不应物化 `[n,n,r]` 的 `prop_a` / `prop_b`，`_convert_to_tensors()` 返回的 `prop_a` / `prop_b` 为 `None`；只有显式 dense fallback 才调用 `_build_dense_transport_tensors()`。dense transport tensors 遇到重复 `(src,dst)` 并行边时必须与 sparse 语义一致：`Q_out` 累加流量，`prop_a` / `prop_b` 使用 `a_eff=Σq_i a_i/Σq_i`、`b_eff=Σq_i b_i/Σq_i` 的流量加权合并。`_balance_param` 只接受 square `Q_out` 计算节点 delta，非方输入必须显式报错。
-8. `_generate_segment_timestamps()` 必须直接在 CPU 构造采样时间戳，避免每个 segment 为输出时间轴从 GPU 同步回 CPU；这不改变 solver/output grid 语义。
-9. `_convert_to_tensors()` 解析出的 `parameter_names` 必须随 tensor payload 传入 `_run_calculation()` 复用，避免每次运行再解析 flowchart metadata；缺失该字段时才走兼容 fallback。
-10. `summary["final_mass_balance_error"]` 是计算控制体（非 inlet/outlet 节点）的真实守恒残差标量：按输出时间轴逐区间积分边界 `入流 - 出流 - Δ累积`，再取逐组分 signed residual 的最大绝对值；逐组分 signed residual 以 `summary["mass_balance_component_errors"]` 暴露，顺序与全局组分顺序一致。分段 `edge_overrides` 的 flow / factor a,b 必须用区间级实际生效值参与积分。
+8. `_generate_segment_timestamps()` 必须直接在 CPU 构造采样时间戳，避免每个 segment 为输出时间轴从 GPU 同步回 CPU。
+9. `_run_hours()` 的 solver/output grid 与 sampling grid 已解耦：有 `sampling_interval_hours` 且采样间隔大于一个 solver step 时，`scipy_solver` / `adaptive_heun` / `dopri5` 只向 solver 传入输出采样时刻；`rk4` 按采样区间分块积分，块间只保留末状态和输出采样点；其他 fixed-step 方法（例如 `euler`）继续 full-grid 求解后采样。该策略不得改变单模型 fallback 顺序、反应分支 output clamp 或 default 分支 no-clamp baseline。
+10. `_convert_to_tensors()` 解析出的 `parameter_names` 必须随 tensor payload 传入 `_run_calculation()` 复用，避免每次运行再解析 flowchart metadata；缺失该字段时才走兼容 fallback。
+11. `summary["final_mass_balance_error"]` 是计算控制体（非 inlet/outlet 节点）的真实守恒残差标量：按输出时间轴逐区间积分边界 `入流 - 出流 - Δ累积`，再取逐组分 signed residual 的最大绝对值；逐组分 signed residual 以 `summary["mass_balance_component_errors"]` 暴露，顺序与全局组分顺序一致。分段 `edge_overrides` 的 flow / factor a,b 必须用区间级实际生效值参与积分。
 
 ## 4. 对外接口
 

@@ -1,3 +1,31 @@
+# 2026-06-14 simulation_core PR-34 output grid decoupling TODO
+
+- [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-34 plan.
+- [x] Confirm this slice is output-grid decoupling, not solver default/whitelist changes, schema/API changes, worker strict default switch, fallback deletion, PR-12 output projection, or full unified RHS.
+- [x] Make adaptive methods use the sampled output grid directly when `sampling_interval_hours` is coarser than one solver step.
+- [x] Make `rk4` solve per sampled interval and retain only the initial state plus block-end sampled states.
+- [x] Keep `euler` and other fixed-step methods on the legacy full-grid-then-sample path.
+- [x] Preserve branch dispatch, reaction-branch output clamp, and default-branch no-clamp semantics.
+- [x] Add focused core-only tests for adaptive direct sampling, `rk4` chunked output, and non-`rk4` fixed-step fallback.
+- [x] Update README/current-state/planning docs and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Reuse the existing full-grid index semantics (`int(hours * steps) + 1`) so sampled timestamps match the old full-grid-then-sample output points.
+- Only pass sampled `t0` directly for adaptive methods (`scipy_solver`, `adaptive_heun`, `dopri5`).
+- For `rk4`, split the solve into sample-to-sample chunks using the same internal step count per interval, passing raw chunk-end state to the next chunk and applying output clamp only to retained sampled outputs.
+- Leave solver defaults, solver whitelist, model dispatch, output projection policy, runtime schema, worker mode, fallback, and Go API untouched.
+
+## Review
+
+- `_run_hours()` now routes solver execution through a shared output-grid helper instead of duplicating per-branch sampling logic.
+- Adaptive methods with coarse output sampling receive only sampled `t0` values.
+- `rk4` no longer materializes the full output trajectory when output sampling is coarser than the solver step; it retains the initial state and sampled block-end states.
+- Existing branch-selection and clamp semantics are preserved by focused tests.
+- KPI-005 still needs long-run memory evidence to quantify the peak-memory reduction.
+- Verification passed for focused boundary tests, full simulation_core tests, docs/rebuild tests, correctness/boundary/input-contract audits, Phase 0 golden/baseline/profiling/hotpath prereview evidence, `pr-fast`, and `git diff --check`.
+
 # 2026-06-14 simulation_core PR-35 conservation metric TODO
 
 - [x] Re-read README First context for simulation_core material_balance runtime, tests, docs/rebuild simulation_core, and v1.4 PR-35 plan.

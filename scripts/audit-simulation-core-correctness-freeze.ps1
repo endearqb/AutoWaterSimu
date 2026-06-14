@@ -103,15 +103,21 @@ else {
     Add-OpenGap -Gaps $openGaps -Id "simulation-core-run-hours-mixed-dispatch-unfrozen" -Severity "high" -Summary "Keep the mixed-model dispatcher and single-model fallback behavior explicitly tested before performance work." -Evidence $branchOrderDetails
 }
 
-$activeClampMatches = [regex]::Matches($coreText, '(?m)^\s*x\s*=\s*torch\.clamp\(x,\s*min=0\)')
-$defaultCommentedClamp = $coreText -match '(?m)^\s*#\s*x\s*=\s*torch\.clamp\(x,\s*min=0\)'
+$reactionClampOutputMatches = [regex]::Matches($coreText, 'clamp_output\s*=\s*True')
+$defaultClampOutputFalse = $coreText -match 'clamp_output\s*=\s*False'
+$sharedClampHelper = (
+    $coreText -match 'def\s+_solve_ode_output\(' -and
+    $coreText -match 'torch\.clamp\(x,\s*min=0\)' -and
+    $coreText -match 'torch\.clamp\(current_state,\s*min=0\)'
+)
 $clampDetails = [ordered]@{
     file = ConvertTo-RepoRelativePath -Root $Root -Path $corePath
-    active_run_hours_clamp_count = $activeClampMatches.Count
-    default_branch_commented_clamp_detected = $defaultCommentedClamp
+    shared_clamp_helper_detected = $sharedClampHelper
+    reaction_branch_clamp_output_true_count = $reactionClampOutputMatches.Count
+    default_branch_clamp_output_false_detected = $defaultClampOutputFalse
 }
-if ($activeClampMatches.Count -ge 4 -and $defaultCommentedClamp) {
-    Add-Check -Checks $checks -Name "run_hours clamp policy source shape" -Status "passed" -Summary "ASM/UDM branches clamp solver output while the default branch keeps the current commented clamp state." -Details $clampDetails
+if ($sharedClampHelper -and $reactionClampOutputMatches.Count -ge 5 -and $defaultClampOutputFalse) {
+    Add-Check -Checks $checks -Name "run_hours clamp policy source shape" -Status "passed" -Summary "ASM/UDM branches request output clamp through the shared solver helper while the default branch keeps no-clamp behavior." -Details $clampDetails
 }
 else {
     Add-Check -Checks $checks -Name "run_hours clamp policy source shape" -Status "gap" -Summary "_run_hours clamp policy source shape is not fully frozen by audit." -Details $clampDetails

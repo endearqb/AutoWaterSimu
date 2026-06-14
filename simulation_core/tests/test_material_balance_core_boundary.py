@@ -248,6 +248,29 @@ def _install_odeint_branch_spy(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return selected_branches
 
 
+def _install_odeint_time_grid_spy(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
+    calls: list[dict[str, Any]] = []
+
+    def fake_odeint(ode_func: Any, x0: torch.Tensor, t0: torch.Tensor, **kwargs: Any) -> torch.Tensor:
+        target = getattr(ode_func, "func", ode_func)
+        calls.append(
+            {
+                "branch": getattr(target, "__name__", repr(target)),
+                "method": kwargs.get("method"),
+                "t0": t0.detach().cpu().tolist(),
+            }
+        )
+        return torch.full(
+            (len(t0),) + tuple(x0.shape),
+            -1.0,
+            dtype=x0.dtype,
+            device=x0.device,
+        )
+
+    monkeypatch.setattr(core_module, "odeint", fake_odeint)
+    return calls
+
+
 def _udm_binding_node() -> NodeData:
     return NodeData(
         node_id="node_1",
@@ -940,6 +963,84 @@ def test_run_hours_single_model_branch_and_clamp_policy(
         assert torch.all(result == 0)
     else:
         assert torch.all(result == -1)
+
+
+@pytest.mark.parametrize("method", ["scipy_solver", "adaptive_heun"])
+def test_run_hours_adaptive_methods_use_sample_grid_directly(
+    monkeypatch: pytest.MonkeyPatch,
+    method: str,
+) -> None:
+    calculator = MaterialBalanceCalculator()
+    calls = _install_odeint_time_grid_spy(monkeypatch)
+    kwargs = _run_hours_base_kwargs(calculator)
+    kwargs.update(
+        {
+            "hours": 4.0,
+            "steps": 10,
+            "method": method,
+            "sampling_interval_hours": 1.0,
+        }
+    )
+
+    result = calculator._run_hours(**kwargs)
+
+    assert len(calls) == 1
+    assert calls[0]["branch"] == "_ode_balance"
+    assert calls[0]["method"] == method
+    assert calls[0]["t0"] == pytest.approx([0.0, 1.0, 2.0, 3.0, 4.0])
+    assert result.shape[0] == 5
+    assert torch.all(result == -1)
+
+
+def test_run_hours_rk4_sampling_uses_chunked_output_grid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calculator = MaterialBalanceCalculator()
+    calls = _install_odeint_time_grid_spy(monkeypatch)
+    kwargs = _run_hours_base_kwargs(calculator)
+    kwargs.update(
+        {
+            "hours": 4.0,
+            "steps": 10,
+            "method": "rk4",
+            "sampling_interval_hours": 1.0,
+        }
+    )
+
+    result = calculator._run_hours(**kwargs)
+
+    assert len(calls) == 4
+    assert [len(call["t0"]) for call in calls] == [11, 11, 11, 11]
+    assert [(call["t0"][0], call["t0"][-1]) for call in calls] == pytest.approx(
+        [(0.0, 1.0), (1.0, 2.0), (2.0, 3.0), (3.0, 4.0)]
+    )
+    assert result.shape[0] == 5
+    assert torch.all(result[0] == kwargs["x0"][-1])
+    assert torch.all(result[1:] == -1)
+
+
+def test_run_hours_non_rk4_fixed_method_keeps_full_grid_then_samples(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calculator = MaterialBalanceCalculator()
+    calls = _install_odeint_time_grid_spy(monkeypatch)
+    kwargs = _run_hours_base_kwargs(calculator)
+    kwargs.update(
+        {
+            "hours": 4.0,
+            "steps": 10,
+            "method": "euler",
+            "sampling_interval_hours": 1.0,
+        }
+    )
+
+    result = calculator._run_hours(**kwargs)
+
+    assert len(calls) == 1
+    assert len(calls[0]["t0"]) == 41
+    assert calls[0]["t0"][0] == pytest.approx(0.0)
+    assert calls[0]["t0"][-1] == pytest.approx(4.0)
+    assert result.shape[0] == 5
 
 
 def test_mixed_asm_udm_applies_udm_reaction() -> None:

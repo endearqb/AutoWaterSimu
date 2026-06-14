@@ -1361,11 +1361,149 @@ class MaterialBalanceCalculator:
         if sampling_interval_hours is not None and sampling_interval_hours > 0:
             sampling_interval = int(sampling_interval_hours * steps)
             if sampling_interval > 1:
-                sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
+                sample_indices = list(range(0, x.shape[0], sampling_interval))
                 if sample_indices[-1] != x.shape[0] - 1:
-                    sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
-                x = x[sample_indices]
+                    sample_indices.append(x.shape[0] - 1)
+                sample_index_tensor = torch.tensor(
+                    sample_indices,
+                    dtype=torch.long,
+                    device=x.device,
+                )
+                x = x.index_select(0, sample_index_tensor)
         return x
+
+    def _output_sample_indices(
+        self,
+        hours: float,
+        steps: int,
+        sampling_interval_hours: float | None,
+    ) -> List[int] | None:
+        if sampling_interval_hours is None or sampling_interval_hours <= 0:
+            return None
+
+        sampling_interval = int(sampling_interval_hours * steps)
+        if sampling_interval <= 1:
+            return None
+
+        total_points = int(hours * steps) + 1
+        sample_indices = list(range(0, total_points, sampling_interval))
+        if sample_indices[-1] != total_points - 1:
+            sample_indices.append(total_points - 1)
+        return sample_indices
+
+    def _time_values_from_sample_indices(
+        self,
+        hours: float,
+        steps: int,
+        sample_indices: List[int],
+    ) -> List[float]:
+        total_intervals = int(hours * steps)
+        if total_intervals <= 0:
+            return [0.0]
+
+        values = [
+            float(hours) * sample_index / total_intervals
+            for sample_index in sample_indices
+        ]
+        values[-1] = float(hours)
+        return values
+
+    def _time_grid_from_values(self, values: List[float]) -> torch.Tensor:
+        return torch.tensor(values, device=self.device)
+
+    def _full_solver_time_grid(self, hours: float, steps: int) -> torch.Tensor:
+        return torch.linspace(0, hours, int(hours * steps) + 1, device=self.device)
+
+    def _solve_sampled_rk4_output(
+        self,
+        ode_modified: Any,
+        x0: torch.Tensor,
+        hours: float,
+        steps: int,
+        sample_indices: List[int],
+        tolerance: float,
+        clamp_output: bool,
+    ) -> torch.Tensor:
+        sample_times = self._time_values_from_sample_indices(hours, steps, sample_indices)
+        current_state = x0
+        outputs = [torch.clamp(x0, min=0) if clamp_output else x0]
+        previous_index = sample_indices[0]
+        previous_time = sample_times[0]
+
+        for sample_index, sample_time in zip(sample_indices[1:], sample_times[1:]):
+            interval_steps = sample_index - previous_index
+            if interval_steps <= 0:
+                continue
+
+            t0 = torch.linspace(
+                previous_time,
+                sample_time,
+                interval_steps + 1,
+                device=self.device,
+            )
+            chunk = odeint(
+                ode_modified,
+                current_state,
+                t0,
+                method="rk4",
+                rtol=tolerance,
+                atol=tolerance,
+            )
+            current_state = chunk[-1]
+            outputs.append(
+                torch.clamp(current_state, min=0) if clamp_output else current_state
+            )
+            previous_index = sample_index
+            previous_time = sample_time
+
+        return torch.stack(outputs, dim=0)
+
+    def _solve_ode_output(
+        self,
+        ode_modified: Any,
+        x0: torch.Tensor,
+        hours: float,
+        steps: int,
+        method: str,
+        tolerance: float,
+        sampling_interval_hours: float | None,
+        clamp_output: bool,
+    ) -> torch.Tensor:
+        sample_indices = self._output_sample_indices(
+            hours,
+            steps,
+            sampling_interval_hours,
+        )
+        if sample_indices is not None and method in {
+            "scipy_solver",
+            "adaptive_heun",
+            "dopri5",
+        }:
+            sample_times = self._time_values_from_sample_indices(
+                hours,
+                steps,
+                sample_indices,
+            )
+            t0 = self._time_grid_from_values(sample_times)
+            x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
+            return torch.clamp(x, min=0) if clamp_output else x
+
+        if sample_indices is not None and method == "rk4":
+            return self._solve_sampled_rk4_output(
+                ode_modified=ode_modified,
+                x0=x0,
+                hours=hours,
+                steps=steps,
+                sample_indices=sample_indices,
+                tolerance=tolerance,
+                clamp_output=clamp_output,
+            )
+
+        t0 = self._full_solver_time_grid(hours, steps)
+        x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
+        if clamp_output:
+            x = torch.clamp(x, min=0)
+        return self._sample_solver_output(x, steps, sampling_interval_hours)
 
     def _run_hours(self, hours: float, x0: torch.Tensor, Q_out: torch.Tensor,
                   m: int, steps: int, prop_a: torch.Tensor, prop_b: torch.Tensor,
@@ -1411,7 +1549,6 @@ class MaterialBalanceCalculator:
             raise ValueError("compute_mask is required and cannot be None")
 
         x0 = x0[-1, :]
-        t0 = torch.linspace(0, hours, int(hours * steps) + 1, device=self.device)
 
         active_asm1slim_mask = (
             self._active_reaction_mask(asm1slim_mask, compute_mask)
@@ -1470,9 +1607,16 @@ class MaterialBalanceCalculator:
                 sparse_bundle=sparse_bundle,
             )
             try:
-                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
-                x = torch.clamp(x, min=0)
-                return self._sample_solver_output(x, steps, sampling_interval_hours)
+                return self._solve_ode_output(
+                    ode_modified=ode_modified,
+                    x0=x0,
+                    hours=hours,
+                    steps=steps,
+                    method=method,
+                    tolerance=tolerance,
+                    sampling_interval_hours=sampling_interval_hours,
+                    clamp_output=True,
+                )
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
@@ -1487,23 +1631,16 @@ class MaterialBalanceCalculator:
                 sparse_bundle=sparse_bundle
             )
             try:
-                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
-                # 鎶妜涓皬浜?鐨勫厓绱犻兘鏀规垚0
-                x = torch.clamp(x, min=0)
-
-                # 搴旂敤閲囨牱閫昏緫
-                if sampling_interval_hours is not None and sampling_interval_hours > 0:
-                    sampling_interval = int(sampling_interval_hours * steps)
-                    if sampling_interval > 1:
-                        # 鐢熸垚閲囨牱绱㈠紩
-                        sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
-                        # 纭繚鍖呭惈鏈€鍚庝竴涓椂闂寸偣
-                        if sample_indices[-1] != x.shape[0] - 1:
-                            sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
-                        # 瀵瑰紶閲忚繘琛岄噰鏍?
-                        x = x[sample_indices]
-
-                return x
+                return self._solve_ode_output(
+                    ode_modified=ode_modified,
+                    x0=x0,
+                    hours=hours,
+                    steps=steps,
+                    method=method,
+                    tolerance=tolerance,
+                    sampling_interval_hours=sampling_interval_hours,
+                    clamp_output=True,
+                )
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
@@ -1517,23 +1654,16 @@ class MaterialBalanceCalculator:
                 sparse_bundle=sparse_bundle
             )
             try:
-                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
-                # 鎶妜涓皬浜?鐨勫厓绱犻兘鏀规垚0
-                x = torch.clamp(x, min=0)
-
-                # 搴旂敤閲囨牱閫昏緫
-                if sampling_interval_hours is not None and sampling_interval_hours > 0:
-                    sampling_interval = int(sampling_interval_hours * steps)
-                    if sampling_interval > 1:
-                        # 鐢熸垚閲囨牱绱㈠紩
-                        sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
-                        # 纭繚鍖呭惈鏈€鍚庝竴涓椂闂寸偣
-                        if sample_indices[-1] != x.shape[0] - 1:
-                            sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
-                        # 瀵瑰紶閲忚繘琛岄噰鏍?
-                        x = x[sample_indices]
-
-                return x
+                return self._solve_ode_output(
+                    ode_modified=ode_modified,
+                    x0=x0,
+                    hours=hours,
+                    steps=steps,
+                    method=method,
+                    tolerance=tolerance,
+                    sampling_interval_hours=sampling_interval_hours,
+                    clamp_output=True,
+                )
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
@@ -1547,23 +1677,16 @@ class MaterialBalanceCalculator:
                 sparse_bundle=sparse_bundle
             )
             try:
-                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
-                # 鎶妜涓皬浜?鐨勫厓绱犻兘鏀规垚0
-                x = torch.clamp(x, min=0)
-
-                # 搴旂敤閲囨牱閫昏緫
-                if sampling_interval_hours is not None and sampling_interval_hours > 0:
-                    sampling_interval = int(sampling_interval_hours * steps)
-                    if sampling_interval > 1:
-                        # 鐢熸垚閲囨牱绱㈠紩
-                        sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
-                        # 纭繚鍖呭惈鏈€鍚庝竴涓椂闂寸偣
-                        if sample_indices[-1] != x.shape[0] - 1:
-                            sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
-                        # 瀵瑰紶閲忚繘琛岄噰鏍?
-                        x = x[sample_indices]
-
-                return x
+                return self._solve_ode_output(
+                    ode_modified=ode_modified,
+                    x0=x0,
+                    hours=hours,
+                    steps=steps,
+                    method=method,
+                    tolerance=tolerance,
+                    sampling_interval_hours=sampling_interval_hours,
+                    clamp_output=True,
+                )
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
@@ -1583,18 +1706,16 @@ class MaterialBalanceCalculator:
                 balance_param_sparse=self._balance_param_sparse,
             )
             try:
-                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
-                x = torch.clamp(x, min=0)
-
-                if sampling_interval_hours is not None and sampling_interval_hours > 0:
-                    sampling_interval = int(sampling_interval_hours * steps)
-                    if sampling_interval > 1:
-                        sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
-                        if sample_indices[-1] != x.shape[0] - 1:
-                            sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
-                        x = x[sample_indices]
-
-                return x
+                return self._solve_ode_output(
+                    ode_modified=ode_modified,
+                    x0=x0,
+                    hours=hours,
+                    steps=steps,
+                    method=method,
+                    tolerance=tolerance,
+                    sampling_interval_hours=sampling_interval_hours,
+                    clamp_output=True,
+                )
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
@@ -1608,23 +1729,16 @@ class MaterialBalanceCalculator:
             )
 
             try:
-                x = odeint(ode_modified, x0, t0, method=method, rtol=tolerance, atol=tolerance)
-                # 鎶妜涓皬浜?鐨勫厓绱犻兘鏀规垚0
-                # x = torch.clamp(x, min=0)
-
-                # 搴旂敤閲囨牱閫昏緫
-                if sampling_interval_hours is not None and sampling_interval_hours > 0:
-                    sampling_interval = int(sampling_interval_hours * steps)
-                    if sampling_interval > 1:
-                        # 鐢熸垚閲囨牱绱㈠紩
-                        sample_indices = torch.arange(0, x.shape[0], sampling_interval, device=self.device)
-                        # 纭繚鍖呭惈鏈€鍚庝竴涓椂闂寸偣
-                        if sample_indices[-1] != x.shape[0] - 1:
-                            sample_indices = torch.cat([sample_indices, torch.tensor([x.shape[0] - 1], device=self.device)])
-                        # 瀵瑰紶閲忚繘琛岄噰鏍?
-                        x = x[sample_indices]
-
-                return x
+                return self._solve_ode_output(
+                    ode_modified=ode_modified,
+                    x0=x0,
+                    hours=hours,
+                    steps=steps,
+                    method=method,
+                    tolerance=tolerance,
+                    sampling_interval_hours=sampling_interval_hours,
+                    clamp_output=False,
+                )
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
