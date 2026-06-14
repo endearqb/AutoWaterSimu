@@ -1,3 +1,27 @@
+# 2026-06-15 simulation_core PR-39 UDM component mismatch guard TODO
+
+- [x] Re-read PR-39 component contract status and current UDM runtime mapping code.
+- [x] Confirm this slice covers UDM mapping/stoich mismatch guard only, not full ASM component-schema mapping, hard-coded oxygen index removal, PR-11 unified RHS, solver/default changes, schema/API changes, worker strict default, or fallback deletion.
+- [x] Make explicitly declared UDM local components fail fast when they cannot map to global component names by same name or `udm_variable_bindings`.
+- [x] Make unknown `stoich` / `stoich_expr` target components fail fast during UDM runtime payload construction.
+- [x] Add focused core boundary tests for valid binding preservation, global fallback compatibility, unmapped local components, unknown stoich targets, and `_convert_to_tensors()` guard propagation.
+- [x] Update material_balance/tests README, current-state, v1.4 PR-39 status, docs/rebuild README, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Preserve compatibility for UDM nodes without explicit `udm_component_names` by continuing to use global component names as the local fallback.
+- Treat explicit UDM component names and stoichiometry targets as a contract: invalid names should fail before RHS execution instead of falling back by index or being ignored.
+- Keep complete ASM component contracts and hard-coded oxygen-index removal as a later PR-39 slice.
+
+## Review
+
+- UDM runtime payload construction now rejects explicit local components that cannot map to global component names by same name or `udm_variable_bindings`.
+- UDM `stoich` / `stoich_expr` targets now fail fast when they reference unknown local components instead of being ignored as zero.
+- Compatibility is preserved and tested for UDM nodes without explicit `udm_component_names`, which still use the global component-name fallback.
+- Complete ASM component-schema mapping, hard-coded oxygen-index removal, PR-4 write-side/index-conflict cleanup, PR-11, solver defaults, schema/API, worker strict default, and fallback deletion remain future work.
+- Verification passed for focused/full simulation_core tests, docs/rebuild tests, boundary/input-contract/correctness audits, Phase 0 golden/hotpath prereview, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core v1.4 checklist evidence calibration TODO
 
 - [x] Re-scan v1.4 checklist and current-state evidence for completed-but-unchecked items.

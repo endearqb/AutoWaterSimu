@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 import torch
 
+from .exceptions import InvalidInputError
 from .udm_expression import compile_expression
 
 
@@ -165,19 +166,48 @@ def _resolve_local_to_global_indices(
     device: torch.device,
 ) -> Tuple[torch.Tensor, List[int]]:
     indices: List[int] = []
-    global_count = len(global_index_by_name)
-    for local_idx, local_name in enumerate(local_component_names):
+    for local_name in local_component_names:
         canonical_name = variable_binding_map.get(local_name, local_name)
         index = global_index_by_name.get(canonical_name)
         if index is None:
-            # Fallback strategy keeps backward compatibility when names are absent.
-            fallback_name = local_name if local_name in global_index_by_name else None
-            if fallback_name is not None:
-                index = global_index_by_name[fallback_name]
-            else:
-                index = min(local_idx, max(global_count - 1, 0))
+            raise InvalidInputError(
+                "UDM component mapping failed: "
+                f"local component '{local_name}' maps to unknown global component "
+                f"'{canonical_name}'"
+            )
         indices.append(int(index))
     return torch.tensor(indices, dtype=torch.long, device=device), indices
+
+
+def _validate_process_component_targets(
+    *,
+    process: Dict[str, Any],
+    local_component_names: List[str],
+    node_index: int,
+) -> None:
+    local_component_set = set(local_component_names)
+
+    for field_name, fallback_name in (("stoich", None), ("stoich_expr", "stoichExpr")):
+        raw_map = process.get(field_name)
+        if raw_map is None and fallback_name is not None:
+            raw_map = process.get(fallback_name)
+        if raw_map is None:
+            continue
+        if not isinstance(raw_map, dict):
+            raise InvalidInputError(
+                "UDM process stoichiometry must be a component mapping "
+                f"for node index {node_index}"
+            )
+        unknown_components = [
+            str(component_name)
+            for component_name in raw_map
+            if str(component_name) not in local_component_set
+        ]
+        if unknown_components:
+            raise InvalidInputError(
+                "UDM stoichiometry references unknown local component(s) "
+                f"for node index {node_index}: {', '.join(unknown_components)}"
+            )
 
 
 def _build_fixed_component_mask(
@@ -265,6 +295,11 @@ def build_udm_runtime_payload(
         for process in process_rows:
             if not isinstance(process, dict):
                 continue
+            _validate_process_component_targets(
+                process=process,
+                local_component_names=local_component_names,
+                node_index=node_index,
+            )
             rate_expr = process.get("rate_expr")
             if rate_expr is None:
                 rate_expr = process.get("rateExpr")

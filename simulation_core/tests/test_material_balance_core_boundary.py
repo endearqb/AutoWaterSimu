@@ -38,6 +38,9 @@ from autowatersimu_simulation_core.material_balance import (  # noqa: E402
     MaterialBalanceCalculator,
 )
 from autowatersimu_simulation_core.material_balance import core as core_module  # noqa: E402
+from autowatersimu_simulation_core.material_balance.exceptions import (  # noqa: E402
+    InvalidInputError,
+)
 from autowatersimu_simulation_core.material_balance.udm_engine import (  # noqa: E402
     build_udm_runtime_payload,
 )
@@ -580,6 +583,103 @@ def test_udm_runtime_precomputes_indices_and_fixed_component_metadata() -> None:
 
     reaction = runtime.evaluate_reaction(torch.tensor([10.0, 2.0], dtype=torch.float32))
     assert reaction.tolist() == pytest.approx([-0.5, 0.5])
+
+
+def test_udm_runtime_rejects_unmapped_local_components() -> None:
+    node = _udm_binding_node().model_copy(
+        update={"udm_variable_bindings": [{"local_var": "S", "canonical_var": "A"}]}
+    )
+
+    with pytest.raises(
+        InvalidInputError,
+        match="local component 'P' maps to unknown global component 'P'",
+    ):
+        build_udm_runtime_payload(
+            nodes=[node],
+            global_component_names=["A", "B"],
+            device=torch.device("cpu"),
+            dtype=torch.float32,
+        )
+
+
+def test_udm_runtime_keeps_global_fallback_when_local_components_absent() -> None:
+    node = _udm_binding_node().model_copy(
+        update={
+            "udm_component_names": None,
+            "udm_variable_bindings": None,
+            "udm_processes": [
+                {
+                    "name": "decay",
+                    "rate_expr": "k * A",
+                    "stoich": {"A": -1.0},
+                }
+            ],
+        }
+    )
+
+    runtimes = build_udm_runtime_payload(
+        nodes=[node],
+        global_component_names=["A", "B"],
+        device=torch.device("cpu"),
+        dtype=torch.float32,
+    )
+
+    runtime = runtimes[0]
+    assert runtime.local_component_names == ["A", "B"]
+    assert runtime.local_to_global_index_values == [0, 1]
+    reaction = runtime.evaluate_reaction(torch.tensor([10.0, 2.0], dtype=torch.float32))
+    assert reaction.tolist() == pytest.approx([-0.5, 0.0])
+
+
+def test_udm_runtime_rejects_stoich_component_mismatch() -> None:
+    node = _udm_binding_node().model_copy(
+        update={
+            "udm_processes": [
+                {
+                    "name": "growth",
+                    "rate_expr": "k * S",
+                    "stoich": {"S": -1.0, "Ghost": 1.0},
+                }
+            ],
+        }
+    )
+
+    with pytest.raises(
+        InvalidInputError,
+        match="unknown local component\\(s\\).*Ghost",
+    ):
+        build_udm_runtime_payload(
+            nodes=[node],
+            global_component_names=["A", "B"],
+            device=torch.device("cpu"),
+            dtype=torch.float32,
+        )
+
+
+def test_convert_to_tensors_rejects_udm_component_mapping_mismatch() -> None:
+    node = _udm_binding_node().model_copy(
+        update={"udm_variable_bindings": [{"local_var": "S", "canonical_var": "A"}]}
+    )
+    input_data = MaterialBalanceInput(
+        nodes=[
+            NodeData(
+                node_id="in",
+                node_type="input",
+                initial_volume=1.0,
+                initial_concentrations=[0.0, 0.0],
+                is_inlet=True,
+            ),
+            node,
+        ],
+        edges=[],
+        parameters=CalculationParameters(hours=1.0, steps_per_hour=1),
+        original_flowchart_data={
+            "customParameters": [{"name": "A"}, {"name": "B"}],
+        },
+    )
+
+    with pytest.raises(InvalidInputError, match="UDM component mapping failed"):
+        MaterialBalanceCalculator()._convert_to_tensors(input_data)
 
 
 def test_udm_ode_balance_uses_precomputed_active_indices_and_fixed_components() -> None:
