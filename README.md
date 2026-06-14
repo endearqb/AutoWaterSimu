@@ -175,6 +175,7 @@ just audit-worker-dependency-installation
 just browser-smoke
 just live-backend-browser-smoke
 just current-flow-live-smoke
+just performance-baseline-phase0
 just desktop-package-smoke
 just desktop-release-artifacts-smoke
 just golden-scenarios
@@ -202,6 +203,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-baseline-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1

@@ -28,7 +28,7 @@
 | `check-deps.ps1` | 最小依赖边界检查，覆盖 contracts/runtime、legacy/Next、frontend generated client、frontend route-to-feature-query boundary、API platform-to-domain/compute 与 domain-to-compute reverse import 等规则，供 `just check-deps` / `just check` 调用 |
 | `check-ontology.ps1` | Water Ontology objects/actions/links/policies registry 一致性检查，供 `just check-ontology` / `just check` / `pr-fast` 调用 |
 | `check-contracts.ps1` | Contracts registry、codegen manifest、schema tests、Compute TS client drift gate，供 `just check-contracts` / `pr-fast` 调用 |
-| `ci/` | AutoWaterSimu Next PR fast（含 Compute API boundary audit）、opt-in integration smoke、opt-in security smoke、mock-backed browser smoke、live backend browser smoke、current-flow live smoke、Desktop package smoke、Desktop unsigned release artifacts smoke 与 golden scenario evidence 汇总/刷新脚本 |
+| `ci/` | AutoWaterSimu Next PR fast（含 Compute API boundary audit）、opt-in integration smoke、opt-in security smoke、mock-backed browser smoke、live backend browser smoke、current-flow live smoke、performance/timings Phase 0 baseline、Desktop package smoke、Desktop unsigned release artifacts smoke 与 golden scenario evidence 汇总/刷新脚本 |
 | `release/` | AutoWaterSimu Next merge/release gate、release artifact download verifier smoke 脚本 |
 
 ## 3. 维护约定

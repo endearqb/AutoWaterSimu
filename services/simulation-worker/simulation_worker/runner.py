@@ -100,6 +100,7 @@ def run_job_file(job_path: str | Path, artifact_dir: str | Path) -> dict[str, An
 
 def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
     started_at = time.perf_counter()
+    timings_ms: dict[str, int] = {}
     job_id = "unknown_job"
     job_type = MATERIAL_BALANCE_JOB_TYPE
 
@@ -111,6 +112,7 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
         raw_job_type = _string_value(job.get("job_type")) or job_type
         job_type = raw_job_type if raw_job_type in SUPPORTED_JOB_TYPES else MATERIAL_BALANCE_JOB_TYPE
 
+        phase_started_at = time.perf_counter()
         _validate_against_schema("compute_job.v1.json", job)
         if raw_job_type not in SUPPORTED_JOB_TYPES:
             raise WorkerRunError(f"unsupported job_type: {raw_job_type}")
@@ -119,33 +121,47 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
         if not isinstance(payload, dict):
             raise WorkerRunError("compute_job payload must be an object")
         _validate_against_schema("simulation_input.v1.json", payload)
+        timings_ms["schema_validate"] = _elapsed_ms(phase_started_at)
 
+        phase_started_at = time.perf_counter()
         _ensure_worker_dependency_imports()
         from autowatersimu_simulation_core.adapters import (
             SimulationCoreAdapterError,
             simulation_input_to_material_balance_input,
         )
         from autowatersimu_simulation_core.material_balance import MaterialBalanceCalculator
+        timings_ms["dependency_import"] = _elapsed_ms(phase_started_at)
 
+        phase_started_at = time.perf_counter()
         try:
             material_balance_input = simulation_input_to_material_balance_input(payload)
         except SimulationCoreAdapterError as exc:
             raise WorkerRunError(str(exc)) from exc
+        timings_ms["adapter_convert"] = _elapsed_ms(phase_started_at)
 
+        phase_started_at = time.perf_counter()
         result = MaterialBalanceCalculator().calculate(material_balance_input)
         summary = _json_safe(result.summary)
+        timings_ms["compute"] = _elapsed_ms(phase_started_at)
+
+        phase_started_at = time.perf_counter()
         artifact = _write_time_series_artifact(
             result=result,
             job_id=job_id,
             job_type=job_type,
             artifact_dir=Path(artifact_dir),
         )
+        timings_ms["artifact_serialize"] = _elapsed_ms(phase_started_at)
+
+        phase_started_at = time.perf_counter()
         model_run = _model_run_record(
             job_id=job_id,
             payload=payload,
             summary=summary,
             artifact=artifact,
         )
+        timings_ms["result_envelope"] = _elapsed_ms(phase_started_at)
+        timings_ms["total"] = _elapsed_ms(started_at)
 
         return {
             "schema_version": "compute_result.v1",
@@ -158,7 +174,7 @@ def run_job(job: dict[str, Any], artifact_dir: str | Path) -> dict[str, Any]:
             "artifacts": [artifact],
             "runtime_audit": {
                 "model_runs": [model_run],
-                "timings_ms": {"total": int((time.perf_counter() - started_at) * 1000)},
+                "timings_ms": timings_ms,
                 "fallback_used": False,
                 "fallback_reason": "",
                 "worker_version": WORKER_VERSION,
@@ -253,6 +269,10 @@ def _model_run_record(
             "solver_method": summary_record.get("solver_method"),
         },
     }
+
+
+def _elapsed_ms(started_at: float) -> int:
+    return max(0, int((time.perf_counter() - started_at) * 1000))
 
 
 def _failed_result(

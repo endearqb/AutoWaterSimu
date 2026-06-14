@@ -40,6 +40,7 @@
 6. `model_run.model_key` 对独立模型 job type 优先来自 `payload.job_type`；对 `simulation.material_balance.v1` 包装下的模型节点，优先来自 `payload.runtime_options.model_family`，再其次来自 ASM/UDM 节点类型；默认回落到 `material_balance`。
 7. `model_run.parameter_hash` 对纯 material balance 保持求解参数 hash；对 ASM/UDM model job type 必须纳入节点模型参数、UDM snapshot 和 variable bindings，避免不同模型输入共享同一个 hash。
 8. `self_check()` 应报告 `worker_dependency_imports.required_modules`、`module_locations`、`missing_before_fallback`、`missing_after_fallback` 和 `deprecated_repo_path_fallback_used`，用于证明 installed package import 是否成功以及 deprecated repo-path fallback 是否被触发；默认 source-mode gate 必须要求 fallback 未使用。
+9. 成功 job 的 `compute_result.runtime_audit.timings_ms` 应保留 `schema_validate`、`dependency_import`、`adapter_convert`、`compute`、`artifact_serialize`、`result_envelope` 与 `total` 分段，供 Phase 0 baseline 读取；新增或删除分段时必须同步 worker tests 和 baseline 脚本。
 
 ## 4. 对外接口
 
@@ -98,6 +99,7 @@ backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm1_independent.compute_job.v1.json --artifact-dir tmp\worker-asm1-artifacts
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\asm3_independent.compute_job.v1.json --artifact-dir tmp\worker-asm3-artifacts
 backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-job contracts\examples\valid\udm_independent.compute_job.v1.json --artifact-dir tmp\worker-udm-artifacts
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-baseline-phase0.ps1
 ```
 
 ## 7. AI 操作提示

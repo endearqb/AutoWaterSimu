@@ -12,6 +12,7 @@
 - opt-in mock-backed browser smoke 验证。
 - opt-in live backend browser smoke 验证。
 - opt-in current-flow live smoke 验证。
+- opt-in performance/timings Phase 0 baseline 证据。
 - opt-in Desktop project package/support bundle smoke 验证。
 - opt-in Desktop unsigned release artifacts smoke 验证。
 - 8 条金标场景的现有 lane evidence 汇总，以及显式本地 evidence refresh 编排。
@@ -37,6 +38,7 @@
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
 | `live-backend-browser-smoke.ps1` | 启动 integration-backed Compute API/PostgreSQL/MinIO/worker job，再运行 Playwright 读取真实 job/result/evidence/ref，并写出 `tmp/ci-evidence/live-backend-browser-smoke.json` |
 | `current-flow-live-smoke.ps1` | 启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再运行 Playwright 从 UI 提交 current flow、等待真实 worker 完成、下载 evidence package 并解析 evidence ref，写出 `tmp/ci-evidence/current-flow-live-smoke.json` |
+| `performance-baseline-phase0.ps1` | 运行 worker solver matrix baseline，记录 `runtime_audit.timings_ms` 分段、artifact size、worker wall time 和未覆盖 baseline 维度，写出 `tmp/ci-evidence/performance-baseline-phase0.json` |
 | `desktop-package-smoke.ps1` | 聚合 Desktop project package/support bundle contract fixtures、Rust clean-runtime round-trip、support bundle redaction 和 Desktop typecheck，并写出 `tmp/ci-evidence/desktop-package-smoke.json` |
 | `desktop-release-artifacts-smoke.ps1` | 构建真实 PyInstaller sidecar 和 NSIS installer，运行 packaged worker runtime smoke、release gate `Mode=release` 与本地 unsigned artifact bundle verifier，并写出 `tmp/ci-evidence/desktop-release-artifacts-smoke.json` |
 | `golden-scenarios.ps1` | 读取现有 CI/release evidence，汇总 8 条金标场景的 `partial` / `missing` / `blocked` 状态；可用 `-RefreshLocalEvidence` 先刷新非 Docker 本地 evidence lanes，并写出 `tmp/ci-evidence/golden-scenarios.json` |
@@ -62,6 +64,8 @@
 本目录对 `Justfile` 和 `.github/workflows/next-live-backend-browser-smoke.yml` 暴露 `live-backend-browser-smoke` opt-in 入口；它通过 `integration-smoke.ps1 -StartCompose -KeepCompose` 准备一个真实 PostgreSQL/MinIO/worker-backed succeeded job，再运行 Playwright 验证 Compute Jobs route 不 mock Compute API 时能读取 job/result/evidence package/evidence ref。它只 mock legacy `/api/v1/users/me`，不覆盖完整 legacy authenticated backend session，也不覆盖 UI current-flow submit 到 live worker 的单场景闭环；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
 本目录对 `Justfile` 和 `.github/workflows/next-current-flow-live-smoke.yml` 暴露 `current-flow-live-smoke` opt-in 入口；它启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再用 Playwright 从 Compute Jobs route 提交 current flow，等待真实 worker 完成，并验证 UI evidence package 下载和 evidence ref 解析。它只 mock legacy `/api/v1/users/me`，不覆盖完整 legacy authenticated backend session；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
+
+本目录对 `Justfile` 暴露 `performance-baseline-phase0` opt-in 入口；它只建立性能 Phase 0 baseline evidence，覆盖 small material balance、medium ASM1、single UDM fixtures 与 `scipy_solver` / `rk4` / `adaptive_heun` solver matrix，记录 worker wall time、`runtime_audit.timings_ms` 分段和 artifact serialization size/cost。当前未跟踪 `mixed_asm_udm` fixture 时脚本会以 `partial` 状态记录 open gap，不会把该维度伪装成已完成。该脚本不做热路径优化、不修改 worker strict mode、不替代 hosted evidence，也不进入默认 `pr-fast`。
 
 本目录对 `Justfile` 和 `.github/workflows/next-desktop-package-smoke.yml` 暴露 `desktop-package-smoke` opt-in 入口；当前 Desktop package smoke 覆盖合同 fixture、source-mode runtime clean import/export 和 support bundle redaction，不覆盖 packaged worker exe、NSIS installer 或 release artifact。
 
@@ -108,6 +112,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-baseline-phase0.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-release-artifacts-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1

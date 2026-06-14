@@ -1,3 +1,29 @@
+# 2026-06-14 AutoWaterSimu Next performance baseline Phase 0 TODO
+
+- [x] Re-read README First context for root, architecture current-state, Certainty/Elegance Development Plan, worker runtime, scripts, and CI docs.
+- [x] Confirm priority 1/2/3 from the latest triage are already landed: backend material_balance input/adapter boundary, calculator delegation preflight/thin shell, and source-mode worker dependency installation gate.
+- [x] Keep this slice limited to benchmark/timings Phase 0 baseline instrumentation, not worker strict mode, fallback deletion, hosted evidence, Desktop packaged sidecar work, or hot-path optimization.
+- [x] Add successful worker `compute_result.runtime_audit.timings_ms` segments for schema validation, dependency import, adapter conversion, compute, artifact serialization, result envelope, and total wall time.
+- [x] Add an opt-in `scripts/ci/performance-baseline-phase0.ps1` runner for the small/medium/UDM worker fixture solver matrix and future Go claim/list latency metric design.
+- [x] Wire a `just performance-baseline-phase0` entry and update README/current-state/worker/script docs.
+- [x] Run focused worker tests, Phase 0 baseline script, existing worker dependency/boundary audits, `pr-fast`, and whitespace checks.
+- [x] Record `.ai/changes` validation results, then commit and push this Phase 0 slice.
+
+## Plan
+
+- Use existing tracked worker fixtures only: material balance minimal, ASM1 independent, and UDM independent.
+- Treat missing tracked `mixed_asm_udm` fixture as a `partial` open gap, not a hard failure and not completed evidence.
+- Keep the baseline opt-in and out of default `pr-fast`.
+- Do not optimize UDM RHS, dense/sparse layout, solver output grids, keyset cursors, or claim LIMIT behavior in this slice.
+- Leave existing untracked `docs/rebuild/AutoWaterSimu_95分优雅度完整计划.md` and `docs/rebuild/simulation_core/` untouched.
+
+## Review
+
+- Worker successful results now include timing segments consumed by the Phase 0 harness.
+- `scripts/ci/performance-baseline-phase0.ps1` writes `tmp/ci-evidence/performance-baseline-phase0.json`, hard-fails failed/unparseable/missing-timing runs, and reports the missing mixed ASM/UDM fixture as an open gap.
+- Root/script/worker/current-state/Development Plan docs now describe the opt-in baseline and explicitly separate it from hot-path optimization, strict-mode changes, fallback deletion, and hosted evidence.
+- Validation passed: worker tests (`26 passed`), `scripts\ci\performance-baseline-phase0.ps1` (`partial`, 9 runs, 0 hard violations, 1 open gap for missing `mixed_asm_udm` fixture), `scripts\audit-worker-dependency-installation.ps1` (`passed`, fallback unused), `scripts\audit-simulation-core-boundary.ps1` (`passed`, 0 hard violations, 0 open gaps), `git diff --check -- .` (line-ending notices only), and `scripts\ci\pr-fast.ps1` (`passed`, 10 steps).
+
 # 2026-06-14 AutoWaterSimu Next worker dependency installation gate TODO
 
 - [x] Re-read README First context for root, architecture current-state, Certainty/Elegance PRD/Development Plan, worker runtime/tests, scripts, CI workflow, and local-dev docs.

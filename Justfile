@@ -57,6 +57,9 @@ live-backend-browser-smoke:
 current-flow-live-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\current-flow-live-smoke.ps1
 
+performance-baseline-phase0:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-baseline-phase0.ps1
+
 desktop-package-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\desktop-package-smoke.ps1
 

@@ -130,6 +130,17 @@ def test_worker_run_job_writes_artifact_with_checksum(tmp_path: Path) -> None:
     assert result["status"] == "succeeded"
     assert result["summary"]["total_steps"] >= 240
     assert result["summary"]["total_time"] == 4.0
+    timings_ms = result["runtime_audit"]["timings_ms"]
+    assert set(timings_ms) >= {
+        "schema_validate",
+        "dependency_import",
+        "adapter_convert",
+        "compute",
+        "artifact_serialize",
+        "result_envelope",
+        "total",
+    }
+    assert all(isinstance(value, int) and value >= 0 for value in timings_ms.values())
 
     artifact = result["artifacts"][0]
     _validate("artifact.v1.json", artifact)
