@@ -1427,14 +1427,14 @@ def test_run_hours_uses_combined_dispatch_for_mixed_models(monkeypatch: pytest.M
 @pytest.mark.parametrize(
     ("enabled_branches", "expected_branch", "should_clamp"),
     [
-        (["asm1slim"], "_asm1slim_ode_balance", True),
-        (["asm1"], "_asm1_ode_balance", True),
-        (["asm3"], "_asm3_ode_balance", True),
-        (["udm"], "udm_ode_balance", True),
+        (["asm1slim"], "_combined_reaction_ode_balance", True),
+        (["asm1"], "_combined_reaction_ode_balance", True),
+        (["asm3"], "_combined_reaction_ode_balance", True),
+        (["udm"], "_combined_reaction_ode_balance", True),
         ([], "_ode_balance", False),
     ],
 )
-def test_run_hours_single_model_branch_and_clamp_policy(
+def test_run_hours_reaction_models_use_unified_rhs_and_clamp_policy(
     monkeypatch: pytest.MonkeyPatch,
     enabled_branches: list[str],
     expected_branch: str,

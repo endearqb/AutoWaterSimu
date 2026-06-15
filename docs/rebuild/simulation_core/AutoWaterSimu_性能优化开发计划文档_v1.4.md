@@ -18,7 +18,7 @@
 截至 2026-06-14,以下事项已经完成或进入维护态,不应在性能优化计划中重复立项:
 
 - `simulation_input.v1` node/edge unknown-field schema closure 与 runtime `NodeData` / `EdgeData extra=forbid` 已由 ADR 0012/0013 接受。
-- `_run_hours` 旧互斥 mixed branch baseline 已由 ADR 0015 的 supported mixed dispatch 取代；single-model fallback 顺序、default clamp policy、ASM oxygen active compute mask 范围与 `compute_mask` derivative masking 仍由 correctness-freeze audit 冻结。
+- `_run_hours` 旧互斥 mixed branch baseline 已由 ADR 0015 的 supported mixed dispatch 取代；当前所有 active ASM/UDM reaction model 都走 unified combined RHS，default no-reaction branch 的 no-clamp policy、ASM oxygen active compute mask 范围与 `compute_mask` derivative masking 仍由 correctness-freeze audit 冻结。
 - `simulation_core/python` 与 `contracts/python` 已有 packaging metadata;source-mode worker 已改为只使用 installed/editable helper packages, runtime repo-path `sys.path` fallback 已删除。
 - `backend/app/material_balance/core.py` 已成为 simulation_core calculator compatibility re-export;calculator thin-shell 与 dependency/source-mode gates 已由 audit 维护。
 - `scripts/ci/performance-baseline-phase0.ps1` 已建立 Phase 0 timings baseline;`mixed_asm_udm` fixture 已补齐后当前 12-run baseline 为 `passed`,并已记录硬件指纹、torch 线程配置与绝对阈值 KPI 仅 nightly 固定 runner 判定策略。
@@ -34,7 +34,7 @@
 - `transport-runtime-tensor-precompute-no-semantics` 已落地:无 `edge_overrides` 的 segment 复用 `_convert_to_tensors` 预计算 runtime edge tensors;有 override 的 segment 继续 clone/rebuild。
 - `udm-expression-cache-and-device-sync-reduction` 已落地:`compile_expression()` 使用 LRU 缓存,UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices,UDM RHS/evaluate_reaction 热路径不再用逐步 `.item()` 判断 mask 或映射。
 - `asm-stable-reaction-runtime-precompute` 已落地:ASM1Slim/ASM1/ASM3 在 `_convert_to_tensors()` 阶段预计算 active compute node indices 与 filtered parameter rows, single-model 与 combined RHS 复用该 runtime,避免每步布尔 mask 参数 gather。
-- PR-38 supported mixed-model dispatch 已落地并由 ADR 0015 接受:`_run_hours` 在多个反应模型同时 active 时走 combined RHS,只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应项；单模型 fallback 顺序与 default no-clamp baseline 继续由 correctness-freeze audit 保护。
+- PR-38 supported mixed-model dispatch 已落地并由 ADR 0015 接受，PR-11 unified reaction RHS 也已完成当前 core dispatch 收口:`_run_hours` 在一个或多个反应模型 active 时走同一个 combined RHS,只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应项；default no-reaction branch 与 default no-clamp baseline 继续由 correctness-freeze audit 保护。
 - PR-39 氧清零 compute_mask 约束与 ASM schema-driven component guard 已完成当前 core runtime:ASM1Slim/ASM1/ASM3 氧导数清零仅作用于对应 ASM model 的 active compute 节点,不再依赖全列写入；`_convert_to_tensors()` 在 `customParameters` metadata 存在时按组件名预计算模型局部列索引，ASM 反应核输入 gather 到固定模型列序，反应结果 scatter 回全局组分列，缺失或重复必需组件 fail-fast；metadata 缺失的 legacy 输入至少做组件数量 fail-fast 并保留前缀列行为。UDM runtime 组分错配与 PR-4 index-conflict guard 也已完成当前 UDM 部分:显式 UDM 局部组分必须同名或经 `udm_variable_bindings` 映射到全局组分,同一节点 local→global 映射必须唯一,未知 `stoich` / `stoich_expr` 目标组分在 runtime payload 构建期报错。
 - PR-13a 表达式校验器白名单化已落地:`_validate_ast` 现在默认拒绝未知 AST 节点,`NamedExpr`/`JoinedStr`/`Starred`/`Subscript`/`Slice` 与 keyword call arguments 会在校验期失败,不再等到运行时 evaluator 才 fail-late。
 - PR-37 parity→golden 第一阶段已落地:`simulation_core/tests/test_material_balance_core.py` 不再导入 `app.*` 或把 `backend/` 加入 `sys.path`,原 6 个 backend parity 用例已迁为 CPU/f64 committed golden hash guard；backend 对照迁移前置由 `backend/app/tests/material_balance_calculator_delegation_preflight_test.py` 维护。
@@ -45,7 +45,7 @@
 2. P-02 `perf-phase0-profiling-artifacts` 已完成,后续若改变 fixture、solver matrix 或 runtime timings,必须重新生成 profiling evidence。
 3. P-03 `perf-phase0-golden-generator` 已完成,后续若改变 correctness-freeze 行为、fixture、solver matrix 或文档化 golden/repro 测试,必须重新生成 golden evidence。
 4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver 默认值/矩阵或完整统一 RHS 等更高风险切片。
-5. PR-38 supported mixed-model dispatch 与 PR-39 当前 ASM 氧清零 active compute mask 约束已落地；后续完整 PR-39 组分契约、PR-11 全统一 RHS、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
+5. PR-38 supported mixed-model dispatch、PR-39 当前 ASM 氧清零 active compute mask / schema-driven component mapping 约束与 PR-11 unified reaction RHS 已落地；后续 legacy route schema metadata、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
 6. P-04 backend compatibility cleanup、backend app.models runtime validation、backend ASM/UDM/model thin-shell、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke、P-07 packaged sidecar no-fallback evidence 与 worker runtime fallback 删除已完成;后续 legacy `app.models` route schema 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
 
 与旧 PR 编号的映射:
@@ -60,7 +60,7 @@
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；worker runtime fallback 删除已完成，该 evidence 继续作回归 gate |
 | P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化；继续禁止混入 solver 默认值/schema/fallback 改动 |
-| PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；单模型 fallback 与 default no-clamp baseline 继续冻结 |
+| PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；当前 PR-11 已把单模型 reaction 也统一到 combined RHS，default no-clamp baseline 继续冻结 |
 | PR-39 ASM component guard | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点，`customParameters` 存在时已按组件名做 schema-driven gather/scatter；legacy route schema metadata 迁移仍待 |
 
 当前禁止并入的工作:
@@ -172,7 +172,7 @@ dopri5 入白名单+测(或文档矩阵改 adaptive_heun);benchmark 矩阵加 sc
 - 不支持:构建期检测多反应模型共存→报错,并入 PR-23 存量审计。
 golden:混合 asm+udm(支持)或报错用例(不支持)。KPI-018。
 
-**当前实现状态（2026-06-14）**：已选择支持方案并由 ADR 0015 接受。`_run_hours` 当多个反应模型同时 active 时走 `_combined_reaction_ode_balance`,combined RHS 只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应；docs mixed golden 与 core boundary regression 已转为 active。单模型 fallback 顺序、反应分支 output clamp 与 default no-clamp baseline 继续由 correctness-freeze audit 保护。完整 PR-11 统一 RHS 抽取仍未开始。
+**当前实现状态（2026-06-15）**：已选择支持方案并由 ADR 0015 接受，且 PR-11 当前 core dispatch 收口已完成。`_run_hours` 当一个或多个反应模型 active 时走 `_combined_reaction_ode_balance`,combined RHS 只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应；docs mixed golden 与 core boundary regression 已转为 active。反应分支 output clamp 与 default no-clamp baseline 继续由 correctness-freeze audit 保护，default no-reaction branch 仍单独走 `_ode_balance`。
 
 ### PR-39:反应组分契约【Phase 1】
 为每个反应模型定义组分契约(数量/必需组分/顺序或具名映射);构建期校验全局组分映射满足契约;硬编码氧索引(0/5/6)与反应输入列序提升为 `component_schema→模型组分` 映射。v1.4 补充:当前氧清零是 `torch.where(mask,...)` 后再全列 `dy[:,k]=0`,抽取后必须改为仅对 `compute_mask` 子集清零,不得依赖前序 mask 投影顺序。KPI-019。
@@ -181,6 +181,8 @@ golden:混合 asm+udm(支持)或报错用例(不支持)。KPI-018。
 
 ### PR-11:统一 RHS 抽取【Phase 4,v1.4 继承并强化】
 五个 RHS 分支当前重复状态拆分、clamp、传输 balance、dilution、mask 投影与 volume 导数,抽取收益明确。但 PR-11 不得只做机械去重:必须以 PR-38 的混合调度决策为前置,支持方案下在单次 RHS 内对 ASM1Slim/ASM1/ASM3/UDM 各 mask 子集叠加反应项;不支持方案下则在构建期报错并有存量审计。抽取时必须显式保留或决策各模型特殊行为:ASM 氧列硬编码清零迁移到 PR-39 组分契约且限定 compute_mask,UDM fixed component mask 继续生效,default 纯传输分支的输出 clamp 现状由 PR-12 golden 固定。v1.4 补充:ASM `params[mask]` / `y[mask]` 等稳定布尔 gather 应与 UDM 节点索引一起预解析,否则统一 RHS 只解决可维护性而漏掉热路径成本。
+
+**当前实现状态（2026-06-15）**：当前 core dispatch 的 PR-11 统一 reaction RHS 已完成。`_run_hours` 对一个或多个 active ASM/UDM reaction models 均走 `_combined_reaction_ode_balance`，单模型 ASM1Slim/ASM1/ASM3/UDM 不再分派到各自独立 RHS；default no-reaction branch 仍走 `_ode_balance`，并继续以 `clamp_output=False` 保留 default no-clamp baseline。ASM oxygen index / component gather-scatter 来自 PR-39 runtime，UDM fixed mask 仍由 UDM runtime payload 应用；Phase 0 golden 与 correctness-freeze audit 继续保护行为不变。
 
 ### PR-12:输出投影一致化【Phase 4,v1.4 继承并强化】
 现状四个反应分支在 `odeint` 后执行 `x = torch.clamp(x, min=0)`,而 default 纯传输分支同一行被注释。PR-12 必须先把 default 分支现状固化为 golden,再决策统一输出投影语义。若开启 `CLAMP_STATE_IN_RHS` 或统一输出 clamp,需区分浓度列与体积列,不得把当前体积 `min=1e-6` 的 RHS 保护和输出端全状态 `min=0` 混为同一规则。任何语义变更需走 flag、L3 golden 与 release note。
@@ -313,7 +315,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
 - [x] f64 golden 生成器已有 Phase 0 evidence;历史 backend parity 用例已迁为 core-only committed f64 golden,backend-dependent 对照保留在 backend lane。
 - [x] default 纯传输分支 clamp 现状已有 golden;统一投影语义变更仍需单独 flag PR。
-- [ ] 统一 RHS 抽取已保留 ASM 氧列、UDM fixed mask、default clamp 现状或显式变更记录。
+- [x] 统一 RHS 抽取已保留 ASM 氧列、UDM fixed mask、default clamp 现状或显式变更记录。
 - [x] 索引冲突不污染;映射 guard 写侧修复。
 - [x] P-06 Go latency baseline 已有;keyset 深分页(KPI-014)、claim 有界扫描+对抗(KPI-015)、worker 端到端基线仍需后续 PR。
 - [x] 火焰图占比表;KPI-003 收益分解(按求解器)。

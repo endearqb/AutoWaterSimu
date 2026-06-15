@@ -1834,7 +1834,7 @@ class MaterialBalanceCalculator:
             ]
         )
 
-        if active_model_count > 1:
+        if active_model_count > 0:
             ode_modified = functools.partial(
                 self._combined_reaction_ode_balance,
                 Q_out=Q_out,
@@ -1881,130 +1881,26 @@ class MaterialBalanceCalculator:
             except Exception as e:
                 raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
-        if asm1slim_params is not None and asm1slim_mask.any():
+        ode_modified = functools.partial(
+            self._ode_balance,
+            Q_out=Q_out, m=m, prop_a=prop_a, prop_b=prop_b,
+            compute_mask=compute_mask,
+            sparse_bundle=sparse_bundle
+        )
 
-            ode_modified = functools.partial(
-                self._asm1slim_ode_balance,
-                Q_out=Q_out, m=m, prop_a=prop_a, prop_b=prop_b,
-                compute_mask=compute_mask,
-                asm1slim_params=asm1slim_params,
-                asm1slim_mask=asm1slim_mask,
-                asm1slim_reaction_runtime=active_asm1slim_runtime,
-                sparse_bundle=sparse_bundle
+        try:
+            return self._solve_ode_output(
+                ode_modified=ode_modified,
+                x0=x0,
+                hours=hours,
+                steps=steps,
+                method=method,
+                tolerance=tolerance,
+                sampling_interval_hours=sampling_interval_hours,
+                clamp_output=False,
             )
-            try:
-                return self._solve_ode_output(
-                    ode_modified=ode_modified,
-                    x0=x0,
-                    hours=hours,
-                    steps=steps,
-                    method=method,
-                    tolerance=tolerance,
-                    sampling_interval_hours=sampling_interval_hours,
-                    clamp_output=True,
-                )
-            except Exception as e:
-                raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
-
-        elif asm1_params is not None and asm1_mask.any():
-            ode_modified = functools.partial(
-                self._asm1_ode_balance,
-                Q_out=Q_out, m=m, prop_a=prop_a, prop_b=prop_b,
-                compute_mask=compute_mask,
-                asm1_params=asm1_params,
-                asm1_mask=asm1_mask,
-                asm1_reaction_runtime=active_asm1_runtime,
-                sparse_bundle=sparse_bundle
-            )
-            try:
-                return self._solve_ode_output(
-                    ode_modified=ode_modified,
-                    x0=x0,
-                    hours=hours,
-                    steps=steps,
-                    method=method,
-                    tolerance=tolerance,
-                    sampling_interval_hours=sampling_interval_hours,
-                    clamp_output=True,
-                )
-            except Exception as e:
-                raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
-
-        elif asm3_params is not None and asm3_mask.any():
-            ode_modified = functools.partial(
-                self._asm3_ode_balance,
-                Q_out=Q_out, m=m, prop_a=prop_a, prop_b=prop_b,
-                compute_mask=compute_mask,
-                asm3_params=asm3_params,
-                asm3_mask=asm3_mask,
-                asm3_reaction_runtime=active_asm3_runtime,
-                sparse_bundle=sparse_bundle
-            )
-            try:
-                return self._solve_ode_output(
-                    ode_modified=ode_modified,
-                    x0=x0,
-                    hours=hours,
-                    steps=steps,
-                    method=method,
-                    tolerance=tolerance,
-                    sampling_interval_hours=sampling_interval_hours,
-                    clamp_output=True,
-                )
-            except Exception as e:
-                raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
-
-        elif udm_mask is not None and udm_mask.any() and udm_runtime_payload:
-            ode_modified = functools.partial(
-                udm_ode_balance,
-                Q_out=Q_out,
-                m=m,
-                prop_a=prop_a,
-                prop_b=prop_b,
-                compute_mask=compute_mask,
-                udm_mask=udm_mask,
-                udm_runtime_payload=udm_runtime_payload,
-                udm_active_node_indices=udm_active_node_indices,
-                sparse_bundle=sparse_bundle,
-                balance_param=self._balance_param,
-                balance_param_sparse=self._balance_param_sparse,
-            )
-            try:
-                return self._solve_ode_output(
-                    ode_modified=ode_modified,
-                    x0=x0,
-                    hours=hours,
-                    steps=steps,
-                    method=method,
-                    tolerance=tolerance,
-                    sampling_interval_hours=sampling_interval_hours,
-                    clamp_output=True,
-                )
-            except Exception as e:
-                raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
-
-        else:
-
-            ode_modified = functools.partial(
-                self._ode_balance,
-                Q_out=Q_out, m=m, prop_a=prop_a, prop_b=prop_b,
-                compute_mask=compute_mask,
-                sparse_bundle=sparse_bundle
-            )
-
-            try:
-                return self._solve_ode_output(
-                    ode_modified=ode_modified,
-                    x0=x0,
-                    hours=hours,
-                    steps=steps,
-                    method=method,
-                    tolerance=tolerance,
-                    sampling_interval_hours=sampling_interval_hours,
-                    clamp_output=False,
-                )
-            except Exception as e:
-                raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
+        except Exception as e:
+            raise ConvergenceError(f"ODE solver failed to converge: {str(e)}") from e
 
     def _merge_tensors(self, V_liq: torch.Tensor, x0: torch.Tensor) -> torch.Tensor:
         """鍚堝苟浣撶Н鍜屾祿搴﹀紶閲忋€?

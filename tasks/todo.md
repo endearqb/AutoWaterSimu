@@ -1,3 +1,26 @@
+# 2026-06-15 simulation_core PR-11 unified reaction RHS TODO
+
+- [x] Re-read `_run_hours`, combined/single RHS branches, correctness-freeze tests/audit, and v1.4 PR-11 requirements.
+- [x] Confirm this slice unifies ASM/UDM reaction RHS dispatch only, preserving default no-clamp, ASM oxygen mapping, UDM fixed mask, solver behavior, output projection policy, route schemas, worker strict defaults, and Go API behavior.
+- [x] Route all active ASM/UDM reaction simulations through `_combined_reaction_ode_balance` and remove single-model reaction branch dispatch from `_run_hours`.
+- [x] Update correctness-freeze tests/audit to freeze unified reaction RHS plus default no-clamp policy.
+- [x] Update docs/README First records and v1.4 PR-11 checklist status.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Treat `_combined_reaction_ode_balance` as the unified reaction RHS for one or more active reaction models.
+- Keep `_ode_balance` as the default no-reaction transport branch with `clamp_output=False`.
+- Leave the older per-model RHS helper functions in place only as internal compatibility helpers until a later dead-code cleanup decision; `_run_hours` will no longer dispatch to them.
+
+## Review
+
+- `_run_hours` now routes any active ASM/UDM reaction model through `_combined_reaction_ode_balance`; no active reaction model still uses `_ode_balance` with `clamp_output=False`.
+- Correctness-freeze tests/audit now freeze unified reaction dispatch, default no-reaction branch, and clamp policy.
+- Older per-model RHS helper functions remain in the module for now; deletion is a separate dead-code cleanup decision after route/schema work.
+- Validation passed: focused boundary suite (75 passed), correctness-freeze audit (passed, 0 hard violations/open gaps), `simulation_core\tests` (82 passed), `docs\rebuild\simulation_core` (6 passed, 1 skipped), Phase 0 golden (passed, 12 full runs, 7 micro goldens, 0 hard violations/open gaps), `pr-fast` (status passed), and `git diff --check -- .` (only LF-to-CRLF notices).
+- Legacy route schema migration, PR-12 output projection decision, worker strict default, and Go API performance items remain open.
+
 # 2026-06-15 simulation_core ASM schema-driven component reorder TODO
 
 - [x] Re-read simulation_core material_balance runtime, ASM kernels, PR-39 status, and component-contract boundary tests.

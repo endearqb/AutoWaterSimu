@@ -82,25 +82,33 @@ if (-not (Test-Path -LiteralPath $testPath)) {
 $coreText = if (Test-Path -LiteralPath $corePath) { Get-Content -LiteralPath $corePath -Raw } else { "" }
 $testText = if (Test-Path -LiteralPath $testPath) { Get-Content -LiteralPath $testPath -Raw } else { "" }
 
-$singleBranchOrderPattern = 'if\s+asm1slim_params\s+is\s+not\s+None\s+and\s+asm1slim_mask\.any\(\):[\s\S]*?elif\s+asm1_params\s+is\s+not\s+None\s+and\s+asm1_mask\.any\(\):[\s\S]*?elif\s+asm3_params\s+is\s+not\s+None\s+and\s+asm3_mask\.any\(\):[\s\S]*?elif\s+udm_mask\s+is\s+not\s+None\s+and\s+udm_mask\.any\(\)\s+and\s+udm_runtime_payload:[\s\S]*?else:'
-$hasExpectedSingleBranchOrder = $coreText -match $singleBranchOrderPattern
-$hasMixedDispatcher = (
+$runHoursMatch = [regex]::Match($coreText, '(?s)def\s+_run_hours\([\s\S]*?\n    def\s+_merge_tensors')
+$runHoursText = if ($runHoursMatch.Success) { $runHoursMatch.Value } else { "" }
+$legacySingleReactionDispatchDetected = (
+    $runHoursText -match '_asm1slim_ode_balance' -or
+    $runHoursText -match '_asm1_ode_balance' -or
+    $runHoursText -match '_asm3_ode_balance' -or
+    $runHoursText -match 'udm_ode_balance'
+)
+$hasUnifiedReactionDispatcher = (
     $coreText -match 'def\s+_combined_reaction_ode_balance\(' -and
-    $coreText -match 'if\s+active_model_count\s*>\s*1:' -and
-    $coreText -match '_combined_reaction_ode_balance'
+    $runHoursText -match 'if\s+active_model_count\s*>\s*0:' -and
+    $runHoursText -match '_combined_reaction_ode_balance' -and
+    (-not $legacySingleReactionDispatchDetected)
 )
 $branchOrderDetails = [ordered]@{
     file = ConvertTo-RepoRelativePath -Root $Root -Path $corePath
-    mixed_dispatcher_detected = $hasMixedDispatcher
-    single_model_fallback_order = @("asm1slim", "asm1", "asm3", "udm", "default")
-    single_model_order_detected = $hasExpectedSingleBranchOrder
+    unified_reaction_dispatcher_detected = $hasUnifiedReactionDispatcher
+    legacy_single_reaction_dispatch_detected = $legacySingleReactionDispatchDetected
+    reaction_dispatch = "ASM/UDM active_model_count > 0 uses _combined_reaction_ode_balance"
+    default_dispatch = "no active reaction model uses _ode_balance"
 }
-if ($hasMixedDispatcher -and $hasExpectedSingleBranchOrder) {
-    Add-Check -Checks $checks -Name "run_hours mixed dispatcher and single branch source shape" -Status "passed" -Summary "_run_hours dispatches mixed reaction models through the combined RHS and keeps the single-model fallback order." -Details $branchOrderDetails
+if ($hasUnifiedReactionDispatcher) {
+    Add-Check -Checks $checks -Name "run_hours unified reaction dispatcher source shape" -Status "passed" -Summary "_run_hours dispatches all active ASM/UDM reaction models through the combined RHS and keeps the default no-reaction branch separate." -Details $branchOrderDetails
 }
 else {
-    Add-Check -Checks $checks -Name "run_hours mixed dispatcher and single branch source shape" -Status "gap" -Summary "_run_hours mixed dispatcher or single-model fallback order is not recognized by the correctness freeze audit." -Details $branchOrderDetails
-    Add-OpenGap -Gaps $openGaps -Id "simulation-core-run-hours-mixed-dispatch-unfrozen" -Severity "high" -Summary "Keep the mixed-model dispatcher and single-model fallback behavior explicitly tested before performance work." -Evidence $branchOrderDetails
+    Add-Check -Checks $checks -Name "run_hours unified reaction dispatcher source shape" -Status "gap" -Summary "_run_hours unified reaction dispatcher is not recognized by the correctness freeze audit." -Details $branchOrderDetails
+    Add-OpenGap -Gaps $openGaps -Id "simulation-core-run-hours-unified-reaction-dispatch-unfrozen" -Severity "high" -Summary "Keep the unified reaction dispatcher and default no-reaction branch explicitly tested before performance work." -Evidence $branchOrderDetails
 }
 
 $reactionClampOutputMatches = [regex]::Matches($coreText, 'clamp_output\s*=\s*True')
@@ -116,8 +124,8 @@ $clampDetails = [ordered]@{
     reaction_branch_clamp_output_true_count = $reactionClampOutputMatches.Count
     default_branch_clamp_output_false_detected = $defaultClampOutputFalse
 }
-if ($sharedClampHelper -and $reactionClampOutputMatches.Count -ge 5 -and $defaultClampOutputFalse) {
-    Add-Check -Checks $checks -Name "run_hours clamp policy source shape" -Status "passed" -Summary "ASM/UDM branches request output clamp through the shared solver helper while the default branch keeps no-clamp behavior." -Details $clampDetails
+if ($sharedClampHelper -and $reactionClampOutputMatches.Count -ge 1 -and $defaultClampOutputFalse) {
+    Add-Check -Checks $checks -Name "run_hours clamp policy source shape" -Status "passed" -Summary "Unified ASM/UDM reaction branch requests output clamp through the shared solver helper while the default branch keeps no-clamp behavior." -Details $clampDetails
 }
 else {
     Add-Check -Checks $checks -Name "run_hours clamp policy source shape" -Status "gap" -Summary "_run_hours clamp policy source shape is not fully frozen by audit." -Details $clampDetails
@@ -126,7 +134,7 @@ else {
 
 $requiredTests = @(
     "test_run_hours_uses_combined_dispatch_for_mixed_models",
-    "test_run_hours_single_model_branch_and_clamp_policy",
+    "test_run_hours_reaction_models_use_unified_rhs_and_clamp_policy",
     "test_mixed_asm_udm_applies_udm_reaction",
     "test_asm_component_contract_accepts_contract_fixtures",
     "test_asm_component_contract_maps_named_order_mismatch",
@@ -144,7 +152,7 @@ $testDetails = [ordered]@{
     missing_tests = $missingTests
 }
 if ($missingTests.Count -eq 0) {
-    Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "passed" -Summary "Core-only tests freeze mixed dispatch, single-model fallback, clamp policy, ASM component contracts, oxygen mask scope, and compute_mask behavior." -Details $testDetails
+    Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "passed" -Summary "Core-only tests freeze unified reaction dispatch, default no-reaction branch, clamp policy, ASM component contracts, oxygen mask scope, and compute_mask behavior." -Details $testDetails
 }
 else {
     Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "gap" -Summary "Required correctness freeze tests are missing." -Details $testDetails
