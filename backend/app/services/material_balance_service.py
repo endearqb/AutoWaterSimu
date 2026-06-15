@@ -12,6 +12,9 @@ from app.models import (
     MaterialBalanceJobStatus,
 )
 from app.services.data_conversion_service import DataConversionService
+from app.services.material_balance_runtime_input import (
+    material_balance_input_to_core_runtime,
+)
 from app.material_balance.core import MaterialBalanceCalculator
 
 logger = logging.getLogger(__name__)
@@ -150,8 +153,8 @@ class MaterialBalanceService:
         """
         同步执行计算（在线程池中运行）
         """
-        # Run calculation with MaterialBalanceInput object
-        result = self.calculator.calculate(input_data)
+        core_input = material_balance_input_to_core_runtime(input_data)
+        result = self.calculator.calculate(core_input)
         
         return result
     

@@ -9,6 +9,9 @@ from sqlmodel import Session, select
 from app.material_balance.core import MaterialBalanceCalculator
 from app.models import MaterialBalanceInput, MaterialBalanceJobStatus, UDMJob
 from app.services.data_conversion_service import DataConversionService
+from app.services.material_balance_runtime_input import (
+    material_balance_input_to_core_runtime,
+)
 from autowatersimu_simulation_core.material_balance.models import MaterialBalanceResult
 
 logger = logging.getLogger(__name__)
@@ -124,7 +127,8 @@ class UDMService:
             session.commit()
 
     def _run_calculation_sync(self, input_data: MaterialBalanceInput) -> MaterialBalanceResult:
-        return self.calculator.calculate(input_data)
+        core_input = material_balance_input_to_core_runtime(input_data)
+        return self.calculator.calculate(core_input)
 
     def get_calculation_progress(self, job_id: str, session: Session) -> Optional[Dict[str, Any]]:
         statement = select(UDMJob).where(UDMJob.job_id == job_id)

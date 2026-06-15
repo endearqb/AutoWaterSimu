@@ -12,6 +12,9 @@ from app.models import (
     MaterialBalanceJobStatus,
 )
 from app.services.data_conversion_service import DataConversionService
+from app.services.material_balance_runtime_input import (
+    material_balance_input_to_core_runtime,
+)
 from app.material_balance.core import MaterialBalanceCalculator
 from autowatersimu_simulation_core.material_balance.models import MaterialBalanceResult
 
@@ -148,9 +151,8 @@ class ASM1Service:
         """
         同步执行ASM1计算（在线程池中运行）
         """
-        # Run calculation with MaterialBalanceInput object
-        # The MaterialBalanceCalculator already supports ASM1 calculations
-        result = self.calculator.calculate(input_data)
+        core_input = material_balance_input_to_core_runtime(input_data)
+        result = self.calculator.calculate(core_input)
         
         return result
     

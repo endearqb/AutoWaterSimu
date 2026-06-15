@@ -1,3 +1,27 @@
+# 2026-06-15 backend app.models runtime input validation TODO
+
+- [x] Re-read backend API/routes/services README context, legacy service calculation entrypoints, simulation_core runtime models, and existing adapter/preflight tests.
+- [x] Confirm this slice makes legacy service inputs re-enter simulation_core validation, not deleting legacy route schemas, deleting `app.models.MaterialBalanceInput`, changing OpenAPI/generated clients, changing numerical behavior, or completing full backend-only re-export.
+- [x] Add `material_balance_input_to_core_runtime()` service helper.
+- [x] Wire material balance, ASM1Slim, ASM1, ASM3, and UDM services to call the helper before calculator execution.
+- [x] Add focused service boundary tests for legacy object conversion, unknown runtime field rejection, and core input passthrough.
+- [x] Extend `audit-simulation-core-boundary.ps1` to verify service runtime input revalidation.
+- [x] Update services/tests/scripts/rebuild/current-state docs and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep legacy FastAPI request schema stable for this slice.
+- Treat `app.models.MaterialBalanceInput` as API/compatibility input only.
+- Make calculator execution receive a core runtime `MaterialBalanceInput` from service entrypoints.
+
+## Review
+
+- Legacy calculation services now convert legacy `app.models.MaterialBalanceInput` to simulation_core runtime `MaterialBalanceInput` immediately before calculator execution.
+- Focused tests prove legacy object conversion, core input passthrough, and unknown runtime-field rejection through core `extra="forbid"`.
+- The boundary audit now checks the helper file, focused test, and all five service entrypoints.
+- Validation passed for backend services, backend material-balance focused regression, boundary audit, docs/rebuild tests, simulation_core tests, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 backend ASM/UDM runtime helper thin-shell TODO
 
 - [x] Re-read backend material_balance, ASM, tests, scripts, rebuild, and current-state README context.

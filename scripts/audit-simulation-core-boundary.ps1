@@ -398,6 +398,8 @@ $coreAsmPath = Join-Path $corePackage "material_balance\asm"
 $backendServicesPath = Join-Path $Root "backend\app\services"
 $backendApiRoutesPath = Join-Path $Root "backend\app\api\routes"
 $backendSimulationInputAdapterPath = Join-Path $backendServicesPath "simulation_input_adapter.py"
+$backendRuntimeInputPath = Join-Path $backendServicesPath "material_balance_runtime_input.py"
+$backendRuntimeInputBoundaryTestPath = Join-Path $Root "backend\app\tests\services\material_balance_runtime_input_boundary_test.py"
 $backendCoreDriftGuardPath = Join-Path $coreTests "test_material_balance_core.py"
 $backendCalculatorDelegationPreflightPath = Join-Path $Root "backend\app\tests\material_balance_calculator_delegation_preflight_test.py"
 $backendCalculatorThinShellTestPath = Join-Path $Root "backend\app\tests\material_balance_calculator_thin_shell_test.py"
@@ -601,6 +603,8 @@ else {
 }
 
 $backendSimulationInputAdapterText = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { Get-Content -LiteralPath $backendSimulationInputAdapterPath -Raw } else { "" }
+$backendRuntimeInputText = if (Test-Path -LiteralPath $backendRuntimeInputPath) { Get-Content -LiteralPath $backendRuntimeInputPath -Raw } else { "" }
+$backendRuntimeInputBoundaryTestText = if (Test-Path -LiteralPath $backendRuntimeInputBoundaryTestPath) { Get-Content -LiteralPath $backendRuntimeInputBoundaryTestPath -Raw } else { "" }
 $backendCoreInputModelDetected = $backendCoreText -match '(?s)from\s+autowatersimu_simulation_core\.material_balance\.models\s+import\s+\(.*MaterialBalanceInput'
 $backendCoreLegacyInputModelImportDetected = $backendCoreText -match '(?s)from\s+\.models\s+import\s+\(.*MaterialBalanceInput'
 $backendCoreUsesCoreInputContract = $backendCoreInputModelDetected -or $backendCoreCalculatorThinShellDetected
@@ -608,6 +612,19 @@ $backendCoreSimulationInputAdapterDetected = (
     $backendSimulationInputAdapterText -match 'simulation_input_to_core_material_balance_input' -and
     $backendSimulationInputAdapterText -match 'autowatersimu_simulation_core\.adapters' -and
     $backendSimulationInputAdapterText -match 'CoreMaterialBalanceInput'
+)
+$backendRuntimeInputHelperDetected = (
+    (Test-Path -LiteralPath $backendRuntimeInputPath) -and
+    $backendRuntimeInputText -match 'def\s+material_balance_input_to_core_runtime' -and
+    $backendRuntimeInputText -match 'CoreMaterialBalanceInput\.model_validate' -and
+    $backendRuntimeInputText -match 'model_dump\(mode="json"\)' -and
+    $backendRuntimeInputText -match 'LegacyMaterialBalanceInput'
+)
+$backendRuntimeInputBoundaryTestDetected = (
+    (Test-Path -LiteralPath $backendRuntimeInputBoundaryTestPath) -and
+    $backendRuntimeInputBoundaryTestText -match 'material_balance_input_to_core_runtime' -and
+    $backendRuntimeInputBoundaryTestText -match 'unexpected_legacy_field' -and
+    $backendRuntimeInputBoundaryTestText -match 'CoreMaterialBalanceInput'
 )
 $legacySimulationInputAdapterCompatibilityMarked = $backendSimulationInputAdapterText -match 'Compatibility-only adapter to legacy'
 $backendLocalModelsText = if (Test-Path -LiteralPath $backendModelsPath) { Get-Content -LiteralPath $backendModelsPath -Raw } else { "" }
@@ -699,17 +716,50 @@ $missingCalculateEntryPoints = @(
 $backendRouteInputHits = @(
     Find-PatternHits -Root $Root -Files (Get-PythonFiles -Path $backendApiRoutesPath) -Pattern 'calculation_input:\s+MaterialBalanceInput' -Rule "legacy-fastapi-route-app-model-input"
 )
+$runtimeInputServiceFiles = @(
+    "material_balance_service.py",
+    "asm1slim_service.py",
+    "asm1_service.py",
+    "asm3_service.py",
+    "udm_service.py"
+)
+$runtimeInputServiceDetails = [System.Collections.Generic.List[object]]::new()
+$runtimeInputServiceGaps = [System.Collections.Generic.List[object]]::new()
+foreach ($serviceFile in @($runtimeInputServiceFiles)) {
+    $servicePath = Join-Path $backendServicesPath $serviceFile
+    $serviceText = if (Test-Path -LiteralPath $servicePath) { Get-Content -LiteralPath $servicePath -Raw } else { "" }
+    $detail = [ordered]@{
+        file = if (Test-Path -LiteralPath $servicePath) { ConvertTo-RepoRelativePath -Root $Root -Path $servicePath } else { $serviceFile }
+        imports_runtime_input_helper = $serviceText -match 'material_balance_runtime_input'
+        calls_runtime_input_helper = $serviceText -match 'core_input\s*=\s*material_balance_input_to_core_runtime\(input_data\)'
+        calculator_uses_core_input = $serviceText -match 'calculator\.calculate\(core_input\)'
+    }
+    $runtimeInputServiceDetails.Add($detail) | Out-Null
+    if (
+        (-not $detail["imports_runtime_input_helper"]) -or
+        (-not $detail["calls_runtime_input_helper"]) -or
+        (-not $detail["calculator_uses_core_input"])
+    ) {
+        $runtimeInputServiceGaps.Add($detail) | Out-Null
+    }
+}
 $backendInputBoundaryDetails = [ordered]@{
     calculator_runtime_input_contract = "autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput"
     legacy_fastapi_api_input_contract = "app.models.MaterialBalanceInput"
     compatibility_only_local_input_models = if (Test-Path -LiteralPath $backendModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendModelsPath } else { $null }
     backend_core = if (Test-Path -LiteralPath $backendCorePath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCorePath } else { $null }
     backend_simulation_input_adapter = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendSimulationInputAdapterPath } else { $null }
+    backend_runtime_input_helper = if (Test-Path -LiteralPath $backendRuntimeInputPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendRuntimeInputPath } else { $null }
+    backend_runtime_input_boundary_test = if (Test-Path -LiteralPath $backendRuntimeInputBoundaryTestPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendRuntimeInputBoundaryTestPath } else { $null }
     backend_core_uses_core_input_model = $backendCoreInputModelDetected
     backend_core_is_core_calculator_thin_shell = $backendCoreCalculatorThinShellDetected
     backend_core_uses_core_input_contract = $backendCoreUsesCoreInputContract
     backend_core_imports_legacy_local_input_model = $backendCoreLegacyInputModelImportDetected
     core_runtime_adapter_detected = $backendCoreSimulationInputAdapterDetected
+    runtime_input_helper_detected = $backendRuntimeInputHelperDetected
+    runtime_input_boundary_test_detected = $backendRuntimeInputBoundaryTestDetected
+    runtime_input_service_details = @($runtimeInputServiceDetails)
+    runtime_input_service_gaps = @($runtimeInputServiceGaps)
     legacy_adapter_compatibility_marked = $legacySimulationInputAdapterCompatibilityMarked
     local_models_compatibility_marked = $backendLocalModelsCompatibilityMarked
     legacy_local_input_model_import_hits = $legacyLocalInputImportHits
@@ -724,6 +774,9 @@ $backendInputBoundaryPassed = (
     $backendCoreUsesCoreInputContract -and
     (-not $backendCoreLegacyInputModelImportDetected) -and
     $backendCoreSimulationInputAdapterDetected -and
+    $backendRuntimeInputHelperDetected -and
+    $backendRuntimeInputBoundaryTestDetected -and
+    $runtimeInputServiceGaps.Count -eq 0 -and
     $legacySimulationInputAdapterCompatibilityMarked -and
     $backendLocalModelsCompatibilityMarked -and
     $legacyLocalInputImportHits.Count -eq 0 -and
