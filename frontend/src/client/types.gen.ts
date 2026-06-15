@@ -676,6 +676,18 @@ export type MaterialBalanceInput = {
      */
     hybrid_config?: (HybridUDMConfig_Input | null);
     /**
+     * legacy route component metadata; folded into original_flowchart_data before simulation_core runtime validation
+     */
+    customParameters?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * component schema metadata for legacy direct calculation requests
+     */
+    component_schema?: ({
+    [key: string]: unknown;
+} | null);
+    /**
      * 原始流程图数据，用于保留原始参数名称
      */
     original_flowchart_data?: ({

@@ -21,7 +21,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `simulation_input_adapter.py` | `simulation_input.v1` adapter；`simulation_input_to_material_balance_input()` 保留 legacy `app.models.MaterialBalanceInput` compatibility path，`simulation_input_to_core_material_balance_input()` 显式进入 simulation_core runtime model；支持 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` |
-| `material_balance_runtime_input.py` | legacy `app.models.MaterialBalanceInput` / dict 到 simulation_core runtime `MaterialBalanceInput` 的 service-layer validation boundary |
+| `material_balance_runtime_input.py` | legacy `app.models.MaterialBalanceInput` / dict 到 simulation_core runtime `MaterialBalanceInput` 的 service-layer validation boundary；将 legacy route `customParameters` / `component_schema` metadata 折叠进 `original_flowchart_data` |
 | `time_segment_validation.py` | legacy flowchart time segment normalize / validate / convert helpers |
 | `data_conversion_service.py` | legacy flowchart 到后端计算输入的转换服务 |
 
@@ -32,8 +32,8 @@
 3. Next adapter 失败应返回可映射为 `contract_error.v1` 的结构化错误。
 4. `simulation_input_adapter.py` 的 core-runtime adapter 应委托 `simulation_core/python/.../adapters/material_balance.py`，字段保留、未知字段模式和 job type 语义必须保持一致，尤其是 ASM/UDM 可选字段。
 5. `simulation_input_to_material_balance_input()` 是 legacy `app.models.MaterialBalanceInput` compatibility-only path；新 backend/core migration work 不应把它当作真实 runtime contract。
-6. legacy calculation service 在调用 `MaterialBalanceCalculator.calculate()` 前必须先用 `material_balance_input_to_core_runtime()` 将 `app.models.MaterialBalanceInput` 重新校验为 simulation_core runtime `MaterialBalanceInput`。
-7. ASM/UDM calculation service 返回类型注解应使用 `autowatersimu_simulation_core.material_balance.models.MaterialBalanceResult`，与 backend calculator result leaf thin-shell 保持一致；legacy route input schema 暂仍来自 `app.models.MaterialBalanceInput`。
+6. legacy calculation service 在调用 `MaterialBalanceCalculator.calculate()` 前必须先用 `material_balance_input_to_core_runtime()` 将 `app.models.MaterialBalanceInput` 重新校验为 simulation_core runtime `MaterialBalanceInput`；direct route metadata 只允许在这里折叠进 `original_flowchart_data`。
+7. ASM/UDM calculation service 返回类型注解应使用 `autowatersimu_simulation_core.material_balance.models.MaterialBalanceResult`，与 backend calculator result leaf thin-shell 保持一致；legacy route input schema 仍来自 `app.models.MaterialBalanceInput`，但其组件 metadata 字段必须可进入 core metadata contract。
 
 ## 4. 对外接口
 

@@ -10407,3 +10407,39 @@
 - Remaining scope:
 - Most `Service` behavior still depends on the aggregate `Store`; continue with simulation input/process graph or draft confirmation/result explanation constructor narrowing.
 - Go package movement remains follow-up work.
+
+# 2026-06-15 Legacy Route Schema Metadata Bridge TODO
+
+- [x] Re-read README First context for backend app, routes, services, tests, scripts, frontend client generation, and simulation_core v1.4 plan
+- [x] Add optional legacy route component metadata fields to `app.models.MaterialBalanceInput`
+- [x] Bridge legacy direct route metadata into core `original_flowchart_data` before runtime validation
+- [x] Add focused service boundary and OpenAPI schema guards
+- [x] Update boundary audit, README context, v1.4 checklist, and change log
+- [x] Regenerate legacy frontend client and run validation
+
+## Plan
+
+- Keep `app.models.MaterialBalanceInput` as the legacy FastAPI route/OpenAPI compatibility schema.
+- Do not delete or replace the public route schema in this slice.
+- Treat `customParameters` / `component_schema` as optional compatibility metadata only.
+- Keep simulation_core runtime validation as the true calculation contract.
+
+## Review
+
+- Added optional `customParameters` and `component_schema` fields to legacy `app.models.MaterialBalanceInput`.
+- `material_balance_input_to_core_runtime()` now folds direct route metadata into `original_flowchart_data` before validating with the simulation_core runtime model.
+- `component_schema.components` is converted to core-compatible `customParameters` when no explicit `customParameters` list is provided.
+- Added service boundary tests for explicit metadata, component schema derivation, and original flowchart precedence.
+- Added an OpenAPI schema guard for legacy direct material balance route metadata fields.
+- `scripts/audit-simulation-core-boundary.ps1` now treats route metadata schema, bridge, and tests as hard boundary evidence.
+- Regenerated `frontend/src/client` from updated FastAPI OpenAPI schema.
+- Verification:
+- Focused backend tests passed: 7 passed for runtime/schema bridge, 11 passed for compatibility/delegation preflight.
+- OpenAPI export and `npm run generate-client` completed.
+- `cd frontend; npx tsc --noEmit` passed.
+- Boundary audit, correctness-freeze audit, docs tests, Phase 0 golden, and `pr-fast` passed.
+- `git diff --check -- .` reported only LF/CRLF notices.
+- Full `backend/app/tests` was attempted but DB-dependent tests failed with `DATABASE_CONNECTION_FAILED` / `db` fixture `None`; non-DB focused tests for this slice passed.
+- Remaining scope:
+- Deleting legacy `app.models.MaterialBalanceInput` or replacing the public route schema remains a separate high-risk API/schema migration.
+- PR-12 output projection and future performance-risk slices remain independent follow-up work.

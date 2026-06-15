@@ -385,6 +385,7 @@ else {
 
 $backendCorePath = Join-Path $backendMaterialBalance "core.py"
 $coreCorePath = Join-Path $corePackage "material_balance\core.py"
+$backendAppModelsPath = Join-Path $backendAppPath "models.py"
 $backendModelsPath = Join-Path $backendMaterialBalance "models.py"
 $coreModelsPath = Join-Path $corePackage "material_balance\models.py"
 $backendUtilsPath = Join-Path $backendMaterialBalance "utils.py"
@@ -400,6 +401,7 @@ $backendApiRoutesPath = Join-Path $Root "backend\app\api\routes"
 $backendSimulationInputAdapterPath = Join-Path $backendServicesPath "simulation_input_adapter.py"
 $backendRuntimeInputPath = Join-Path $backendServicesPath "material_balance_runtime_input.py"
 $backendRuntimeInputBoundaryTestPath = Join-Path $Root "backend\app\tests\services\material_balance_runtime_input_boundary_test.py"
+$backendRouteSchemaTestPath = Join-Path $Root "backend\app\tests\api\routes\legacy_material_balance_route_schema_test.py"
 $backendCoreDriftGuardPath = Join-Path $coreTests "test_material_balance_core.py"
 $backendCalculatorDelegationPreflightPath = Join-Path $Root "backend\app\tests\material_balance_calculator_delegation_preflight_test.py"
 $backendCalculatorThinShellTestPath = Join-Path $Root "backend\app\tests\material_balance_calculator_thin_shell_test.py"
@@ -605,6 +607,8 @@ else {
 $backendSimulationInputAdapterText = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { Get-Content -LiteralPath $backendSimulationInputAdapterPath -Raw } else { "" }
 $backendRuntimeInputText = if (Test-Path -LiteralPath $backendRuntimeInputPath) { Get-Content -LiteralPath $backendRuntimeInputPath -Raw } else { "" }
 $backendRuntimeInputBoundaryTestText = if (Test-Path -LiteralPath $backendRuntimeInputBoundaryTestPath) { Get-Content -LiteralPath $backendRuntimeInputBoundaryTestPath -Raw } else { "" }
+$backendAppModelsText = if (Test-Path -LiteralPath $backendAppModelsPath) { Get-Content -LiteralPath $backendAppModelsPath -Raw } else { "" }
+$backendRouteSchemaTestText = if (Test-Path -LiteralPath $backendRouteSchemaTestPath) { Get-Content -LiteralPath $backendRouteSchemaTestPath -Raw } else { "" }
 $backendCoreInputModelDetected = $backendCoreText -match '(?s)from\s+autowatersimu_simulation_core\.material_balance\.models\s+import\s+\(.*MaterialBalanceInput'
 $backendCoreLegacyInputModelImportDetected = $backendCoreText -match '(?s)from\s+\.models\s+import\s+\(.*MaterialBalanceInput'
 $backendCoreUsesCoreInputContract = $backendCoreInputModelDetected -or $backendCoreCalculatorThinShellDetected
@@ -625,6 +629,22 @@ $backendRuntimeInputBoundaryTestDetected = (
     $backendRuntimeInputBoundaryTestText -match 'material_balance_input_to_core_runtime' -and
     $backendRuntimeInputBoundaryTestText -match 'unexpected_legacy_field' -and
     $backendRuntimeInputBoundaryTestText -match 'CoreMaterialBalanceInput'
+)
+$legacyRouteMetadataSchemaDetected = (
+    $backendAppModelsText -match 'customParameters:\s*List\[Dict\[str,\s*Any\]\]' -and
+    $backendAppModelsText -match 'component_schema:\s*Optional\[Dict\[str,\s*Any\]\]'
+)
+$legacyRouteMetadataBridgeDetected = (
+    $backendRuntimeInputText -match '_merge_legacy_route_metadata' -and
+    $backendRuntimeInputText -match 'original_flowchart_data' -and
+    $backendRuntimeInputText -match 'customParameters' -and
+    $backendRuntimeInputText -match 'component_schema'
+)
+$legacyRouteMetadataBoundaryTestDetected = (
+    $backendRuntimeInputBoundaryTestText -match 'test_legacy_route_custom_parameters_are_preserved_for_core_runtime' -and
+    $backendRuntimeInputBoundaryTestText -match 'test_legacy_route_component_schema_derives_core_custom_parameters' -and
+    $backendRuntimeInputBoundaryTestText -match 'test_existing_original_flowchart_data_wins_over_route_metadata' -and
+    $backendRouteSchemaTestText -match 'test_material_balance_input_schema_exposes_legacy_component_metadata'
 )
 $legacySimulationInputAdapterCompatibilityMarked = $backendSimulationInputAdapterText -match 'Compatibility-only adapter to legacy'
 $backendLocalModelsText = if (Test-Path -LiteralPath $backendModelsPath) { Get-Content -LiteralPath $backendModelsPath -Raw } else { "" }
@@ -755,9 +775,11 @@ $backendInputBoundaryDetails = [ordered]@{
     legacy_fastapi_api_input_contract = "app.models.MaterialBalanceInput"
     compatibility_only_local_input_models = if (Test-Path -LiteralPath $backendModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendModelsPath } else { $null }
     backend_core = if (Test-Path -LiteralPath $backendCorePath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendCorePath } else { $null }
+    backend_app_models = if (Test-Path -LiteralPath $backendAppModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendAppModelsPath } else { $null }
     backend_simulation_input_adapter = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendSimulationInputAdapterPath } else { $null }
     backend_runtime_input_helper = if (Test-Path -LiteralPath $backendRuntimeInputPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendRuntimeInputPath } else { $null }
     backend_runtime_input_boundary_test = if (Test-Path -LiteralPath $backendRuntimeInputBoundaryTestPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendRuntimeInputBoundaryTestPath } else { $null }
+    backend_route_schema_test = if (Test-Path -LiteralPath $backendRouteSchemaTestPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendRouteSchemaTestPath } else { $null }
     backend_core_uses_core_input_model = $backendCoreInputModelDetected
     backend_core_is_core_calculator_thin_shell = $backendCoreCalculatorThinShellDetected
     backend_core_uses_core_input_contract = $backendCoreUsesCoreInputContract
@@ -765,6 +787,9 @@ $backendInputBoundaryDetails = [ordered]@{
     core_runtime_adapter_detected = $backendCoreSimulationInputAdapterDetected
     runtime_input_helper_detected = $backendRuntimeInputHelperDetected
     runtime_input_boundary_test_detected = $backendRuntimeInputBoundaryTestDetected
+    legacy_route_metadata_schema_detected = $legacyRouteMetadataSchemaDetected
+    legacy_route_metadata_bridge_detected = $legacyRouteMetadataBridgeDetected
+    legacy_route_metadata_boundary_test_detected = $legacyRouteMetadataBoundaryTestDetected
     runtime_input_service_details = @($runtimeInputServiceDetails)
     runtime_input_service_gaps = @($runtimeInputServiceGaps)
     legacy_adapter_compatibility_marked = $legacySimulationInputAdapterCompatibilityMarked
@@ -783,6 +808,9 @@ $backendInputBoundaryPassed = (
     $backendCoreSimulationInputAdapterDetected -and
     $backendRuntimeInputHelperDetected -and
     $backendRuntimeInputBoundaryTestDetected -and
+    $legacyRouteMetadataSchemaDetected -and
+    $legacyRouteMetadataBridgeDetected -and
+    $legacyRouteMetadataBoundaryTestDetected -and
     $runtimeInputServiceGaps.Count -eq 0 -and
     $legacySimulationInputAdapterCompatibilityMarked -and
     $backendLocalModelsCoreReexportDetected -and

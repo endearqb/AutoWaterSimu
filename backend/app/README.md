@@ -23,7 +23,7 @@
 | `main.py` | FastAPI app 创建、CORS、exception handlers、router 注册 |
 | `api/` | HTTP route 聚合与各业务 route |
 | `core/` | 配置、数据库、安全、日志、错误处理、WebSocket manager |
-| `models.py` | legacy SQLModel 数据表和 API model |
+| `models.py` | legacy SQLModel 数据表和 API model；legacy material balance route input schema 可携带 `customParameters` / `component_schema` 元数据 |
 | `material_balance/` | legacy material balance compatibility import paths；calculator、errors、ASM/UDM helpers、exceptions 和 utils 由 simulation_core re-export，runtime models 仅通过 `app.material_balance.models` 显式兼容路径暴露 |
 | `services/` | route 之外的业务服务与迁移 adapter |
 | `tests/` | backend pytest |
@@ -34,6 +34,7 @@
 2. 后端接口或 schema 变化后必须同步更新前端 generated client。
 3. 密集计算、payload 转换和 route 调试使用 `logging`，不要 `print` 完整流程图、水质 payload、token 或大结果。
 4. legacy 行为是 Next 迁移基线，迁移前先补 old-vs-new 或 targeted regression tests。
+5. legacy material balance `app.models.MaterialBalanceInput` 只承担 OpenAPI/route compatibility；`customParameters` / `component_schema` 必须在 service 入核边界折叠进 `original_flowchart_data` 后再交给 simulation_core runtime model。
 
 ## 4. 对外接口
 

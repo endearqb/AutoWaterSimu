@@ -34,6 +34,7 @@
 3. validate route 的 response shape 应保持各模型一致，避免前端分支膨胀。
 4. 不要在 route 中 `print` 完整 flow data、token、水质数据或 time series。
 5. `LEGACY_COMPUTE_READ_ONLY=true` 时，legacy material balance / ASM / UDM 的 `/calculate`、`/calculate-from-flowchart` 和 `DELETE /jobs/{job_id}` 必须被 `ensure_legacy_compute_writable` 拦截；validate、status、result 和 input-data 读取路径保持可用，用于只读对照。
+6. legacy direct `/calculate` request schema 仍来自 `app.models.MaterialBalanceInput`，但必须暴露 `customParameters` / `component_schema` 组件元数据；这些字段只作为 compatibility metadata，真实 runtime contract 仍在 service 层进入 simulation_core model。
 
 ## 4. 对外接口
 

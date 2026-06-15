@@ -401,6 +401,14 @@ class MaterialBalanceInput(SQLModel):
     hybrid_config: Optional[HybridUDMConfig] = Field(
         default=None, description="Hybrid UDM 配置（可选）"
     )
+    customParameters: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="legacy route component metadata; folded into original_flowchart_data before simulation_core runtime validation",
+    )
+    component_schema: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="component schema metadata for legacy direct calculation requests",
+    )
     original_flowchart_data: Optional[Dict[str, Any]] = Field(default=None, description="原始流程图数据，用于保留原始参数名称")
     
     @field_validator('nodes')
