@@ -1,3 +1,26 @@
+# 2026-06-15 simulation_core ASM component contract guard TODO
+
+- [x] Re-read simulation_core material_balance README, core model/calculator, ASM reaction kernels, core boundary tests, contract fixtures, and v1.4 PR-39 status.
+- [x] Confirm this slice adds fail-fast ASM component-name/order guards without changing route schemas, contract JSON, RHS math, solver defaults, output clamp, or unified RHS structure.
+- [x] Add simulation_core ASM component contract metadata and `_convert_to_tensors()` validation.
+- [x] Add focused core tests for ASM component order/name mismatch and existing ASM fixture compatibility.
+- [x] Update simulation_core/current-state/rebuild docs, boundary audit expectations, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep existing ASM reaction kernels and tensor order unchanged.
+- Validate active ASM1Slim/ASM1/ASM3 nodes against known component order when `customParameters` / `component_schema` metadata is present.
+- For metadata-less legacy inputs, only fail fast on too few concentration components and record the remaining route-schema uncertainty.
+
+## Review
+
+- Core ASM1Slim/ASM1/ASM3 runtime now declares expected component order and oxygen index in `ASM_COMPONENT_CONTRACTS`.
+- `_convert_to_tensors()` fails fast on too few ASM concentration components for metadata-less legacy input and validates named component prefix order when `customParameters` metadata is present.
+- Contract fixtures for ASM1Slim/ASM1/ASM3 still convert successfully; named order mismatch and too-few metadata-less ASM components now raise `InvalidInputError`.
+- Validation passed: `simulation_core\tests` (79 passed), `docs\rebuild\simulation_core` (6 passed, 1 skipped), correctness-freeze audit (passed, 0 hard violations/open gaps), Phase 0 golden (passed, 12 full runs, 7 micro goldens, 0 hard violations/open gaps), `pr-fast` (status passed), and `git diff --check -- .` (only LF-to-CRLF notices).
+- Legacy route schema metadata migration and true schema-driven ASM reordering remain open for later PR-39/PR-30 slices.
+
 # 2026-06-15 backend material_balance model re-export TODO
 
 - [x] Re-read backend material_balance model compatibility file, package init, model boundary tests, boundary audit, and rebuild status docs.

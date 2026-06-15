@@ -21,6 +21,7 @@ VALID_SIMULATION_INPUT = (
     / "valid"
     / "material_balance_minimal.simulation_input.v1.json"
 )
+VALID_EXAMPLES = REPO_ROOT / "contracts" / "examples" / "valid"
 
 sys.path.insert(0, str(SIMULATION_CORE_PYTHON))
 
@@ -813,6 +814,76 @@ def test_convert_to_tensors_precomputes_active_asm_runtime_indices_and_params() 
     assert asm1_runtime["mask"].tolist() == [False, False, True, False]
     assert asm1_runtime["params"].shape == (1, 19)
     assert asm1_runtime["params"][0].tolist() == pytest.approx(ASM1_PARAMS_19)
+
+
+@pytest.mark.parametrize(
+    ("fixture_name", "runtime_key"),
+    [
+        ("asm1slim_minimal.simulation_input.v1.json", "asm1slim_reaction_runtime"),
+        ("asm1_independent.simulation_input.v1.json", "asm1_reaction_runtime"),
+        ("asm3_independent.simulation_input.v1.json", "asm3_reaction_runtime"),
+    ],
+)
+def test_asm_component_contract_accepts_contract_fixtures(
+    fixture_name: str,
+    runtime_key: str,
+) -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = simulation_input_to_material_balance_input(
+        _load_json(VALID_EXAMPLES / fixture_name)
+    )
+
+    tensors = calculator._convert_to_tensors(input_data)
+
+    assert tensors[runtime_key] is not None
+
+
+def test_asm_component_contract_rejects_named_order_mismatch() -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = _mixed_asm_udm_input()
+    custom_parameters = input_data.original_flowchart_data["customParameters"]
+    input_data.original_flowchart_data["customParameters"] = [
+        custom_parameters[1],
+        custom_parameters[0],
+        *custom_parameters[2:],
+    ]
+
+    with pytest.raises(InvalidInputError, match="ASM component contract mismatch"):
+        calculator._convert_to_tensors(input_data)
+
+
+def test_asm_component_contract_rejects_too_few_metadata_less_components() -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = MaterialBalanceInput(
+        nodes=[
+            NodeData(
+                node_id="in",
+                node_type="input",
+                is_inlet=True,
+                initial_volume=1.0,
+                initial_concentrations=[0.0] * 10,
+            ),
+            NodeData(
+                node_id="asm1",
+                node_type="asm1",
+                initial_volume=1000.0,
+                initial_concentrations=[0.0] * 10,
+                asm1_parameters=ASM1_PARAMS_19,
+            ),
+        ],
+        edges=[
+            EdgeData(
+                edge_id="e1",
+                source_node_id="in",
+                target_node_id="asm1",
+                flow_rate=1.0,
+            )
+        ],
+        parameters=CalculationParameters(hours=1.0, steps_per_hour=1),
+    )
+
+    with pytest.raises(InvalidInputError, match="requires at least 11 components"):
+        calculator._convert_to_tensors(input_data)
 
 
 def test_default_segment_reuses_precomputed_runtime_edge_tensors() -> None:

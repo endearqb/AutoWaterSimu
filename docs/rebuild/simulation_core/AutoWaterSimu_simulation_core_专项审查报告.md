@@ -37,7 +37,7 @@
 
 **建议**:在薄壳化 PR 之前,把 parity 测试改造为基于 PR-22 golden 生成器的独立 golden 测试;同时补齐明显缺口:time_segment 边覆盖数值用例(backend 有 `material_balance_segment_overrides_test.py`,simulation_core 完全没有)、并行边用例(见 B1)、`scipy_solver`/`adaptive_heun` 路径用例、采样逻辑用例、零边/退化图用例(代码有专门分支但无测试)。
 
-**2026-06-15 状态校准**:A3 的第一阶段已完成。`simulation_core/tests/test_material_balance_core.py` 已从 backend parity/oracle 测试改为 core-only CPU/f64 committed golden guard,不再导入 `app.*` 或把 `backend/` 加入 `sys.path`;六个历史 parity fixture 继续覆盖 material-balance minimal、ASM1Slim model-bound、独立 ASM1Slim/ASM1/ASM3/UDM。backend 对照保留在 `backend/app/tests/material_balance_calculator_delegation_preflight_test.py`。并行边、`_balance_param` 非方/退化、mixed ASM/UDM、UDM mapping/stoich mismatch、ASM 氧清零 compute_mask、default no-clamp 与 solver matrix 已由 docs golden、boundary/correctness tests 和 Phase 0 golden evidence 接续维护。
+**2026-06-15 状态校准**:A3 的第一阶段已完成。`simulation_core/tests/test_material_balance_core.py` 已从 backend parity/oracle 测试改为 core-only CPU/f64 committed golden guard,不再导入 `app.*` 或把 `backend/` 加入 `sys.path`;六个历史 parity fixture 继续覆盖 material-balance minimal、ASM1Slim model-bound、独立 ASM1Slim/ASM1/ASM3/UDM。backend 对照保留在 `backend/app/tests/material_balance_calculator_delegation_preflight_test.py`。并行边、`_balance_param` 非方/退化、mixed ASM/UDM、UDM mapping/stoich mismatch、ASM 氧清零 compute_mask、core ASM named component guard、default no-clamp 与 solver matrix 已由 docs golden、boundary/correctness tests 和 Phase 0 golden evidence 接续维护。
 
 ### A4.(Medium)hybrid/canonical 职责边界未声明,adapter 不传 hybrid_config
 

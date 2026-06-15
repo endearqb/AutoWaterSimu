@@ -42,6 +42,47 @@ from .asm import (
 from .udm_engine import UDMNodeRuntime, build_udm_runtime_payload
 from .udm_ode import udm_ode_balance
 
+ASM_COMPONENT_CONTRACTS: Dict[str, Dict[str, Any]] = {
+    "asm1slim": {
+        "components": ("S_O", "S_S", "S_NO", "S_NH", "S_ALK"),
+        "oxygen_index": 0,
+    },
+    "asm1": {
+        "components": (
+            "X_BH",
+            "X_BA",
+            "X_S",
+            "X_i",
+            "X_ND",
+            "S_O",
+            "S_S",
+            "S_NO",
+            "S_NH",
+            "S_ND",
+            "S_ALK",
+        ),
+        "oxygen_index": 5,
+    },
+    "asm3": {
+        "components": (
+            "X_H",
+            "X_A",
+            "X_S",
+            "X_I",
+            "X_ND",
+            "X_STO",
+            "S_O",
+            "S_S",
+            "S_NO",
+            "S_NH",
+            "S_ND",
+            "S_ALK",
+            "S_I",
+        ),
+        "oxygen_index": 6,
+    },
+}
+
 
 class MaterialBalanceCalculator:
     """鐗╂枡骞宠　璁＄畻鍣紝鍏锋湁鏀硅繘鐨勯敊璇鐞嗗拰楠岃瘉鍔熻兘銆?
@@ -165,6 +206,42 @@ class MaterialBalanceCalculator:
             return runtime
         return self._build_active_reaction_runtime(model_mask, compute_mask, params)
 
+    def _validate_asm_component_contracts(
+        self,
+        nodes: List[NodeData],
+        parameter_names: List[str],
+        declared_parameter_names: List[str],
+    ) -> None:
+        has_named_schema = bool(declared_parameter_names)
+
+        for node in nodes:
+            contract = ASM_COMPONENT_CONTRACTS.get(node.node_type)
+            if contract is None:
+                continue
+
+            expected_components = tuple(contract["components"])
+            actual_count = len(node.initial_concentrations)
+            expected_count = len(expected_components)
+            if actual_count < expected_count:
+                raise InvalidInputError(
+                    "ASM component contract mismatch for node "
+                    f"{node.node_id}: node_type '{node.node_type}' requires at least "
+                    f"{expected_count} components ({', '.join(expected_components)}), "
+                    f"got {actual_count}"
+                )
+
+            if not has_named_schema:
+                continue
+
+            actual_prefix = tuple(parameter_names[:expected_count])
+            if actual_prefix != expected_components:
+                raise InvalidInputError(
+                    "ASM component contract mismatch for node "
+                    f"{node.node_id}: node_type '{node.node_type}' expects component "
+                    f"order [{', '.join(expected_components)}], got "
+                    f"[{', '.join(actual_prefix)}]"
+                )
+
     def _apply_asm_reaction_runtime(
         self,
         concentration_change: torch.Tensor,
@@ -197,6 +274,12 @@ class MaterialBalanceCalculator:
         global_component_names = self._resolve_parameter_names(
             input_data=input_data,
             n_components=n_components,
+        )
+        declared_component_names = self._get_original_parameter_names(input_data)
+        self._validate_asm_component_contracts(
+            nodes=nodes,
+            parameter_names=global_component_names,
+            declared_parameter_names=declared_component_names,
         )
 
         # 1) 鑺傜偣寮犻噺锛氫竴娆℃€у垪琛ㄦ帹瀵?-> 寮犻噺
@@ -1153,7 +1236,7 @@ class MaterialBalanceCalculator:
             y,
             reaction_runtime,
             asm1slim_reaction,
-            oxygen_index=0,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm1slim"]["oxygen_index"],
         )
 
 
@@ -1221,7 +1304,7 @@ class MaterialBalanceCalculator:
             y,
             reaction_runtime,
             asm1_reaction,
-            oxygen_index=5,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm1"]["oxygen_index"],
         )
 
 
@@ -1289,7 +1372,7 @@ class MaterialBalanceCalculator:
             y,
             reaction_runtime,
             asm3_reaction,
-            oxygen_index=6,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm3"]["oxygen_index"],
         )
 
 
@@ -1350,7 +1433,7 @@ class MaterialBalanceCalculator:
                 asm1slim_params,
             ),
             asm1slim_reaction,
-            oxygen_index=0,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm1slim"]["oxygen_index"],
         )
         self._apply_asm_reaction_runtime(
             concentration_change,
@@ -1362,7 +1445,7 @@ class MaterialBalanceCalculator:
                 asm1_params,
             ),
             asm1_reaction,
-            oxygen_index=5,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm1"]["oxygen_index"],
         )
         self._apply_asm_reaction_runtime(
             concentration_change,
@@ -1374,7 +1457,7 @@ class MaterialBalanceCalculator:
                 asm3_params,
             ),
             asm3_reaction,
-            oxygen_index=6,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm3"]["oxygen_index"],
         )
 
         if udm_runtime_payload:

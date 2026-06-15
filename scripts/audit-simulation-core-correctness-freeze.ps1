@@ -128,6 +128,9 @@ $requiredTests = @(
     "test_run_hours_uses_combined_dispatch_for_mixed_models",
     "test_run_hours_single_model_branch_and_clamp_policy",
     "test_mixed_asm_udm_applies_udm_reaction",
+    "test_asm_component_contract_accepts_contract_fixtures",
+    "test_asm_component_contract_rejects_named_order_mismatch",
+    "test_asm_component_contract_rejects_too_few_metadata_less_components",
     "test_asm_oxygen_zeroing_is_limited_to_active_compute_model_nodes",
     "test_ode_balance_respects_compute_mask_for_state_and_volume_derivatives"
 )
@@ -138,7 +141,7 @@ $testDetails = [ordered]@{
     missing_tests = $missingTests
 }
 if ($missingTests.Count -eq 0) {
-    Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "passed" -Summary "Core-only tests freeze mixed dispatch, single-model fallback, clamp policy, oxygen mask scope, and compute_mask behavior." -Details $testDetails
+    Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "passed" -Summary "Core-only tests freeze mixed dispatch, single-model fallback, clamp policy, ASM component contracts, oxygen mask scope, and compute_mask behavior." -Details $testDetails
 }
 else {
     Add-Check -Checks $checks -Name "simulation_core correctness freeze tests" -Status "gap" -Summary "Required correctness freeze tests are missing." -Details $testDetails
