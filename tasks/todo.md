@@ -1,3 +1,25 @@
+# 2026-06-15 simulation_core PR-37 core-only f64 golden TODO
+
+- [x] Re-read v1.4 PR-37 requirements, simulation_core/tests README, boundary audit, backend delegation preflight, and current Phase 0 golden evidence context.
+- [x] Confirm this slice converts the six historical backend parity tests to committed core-only f64 golden guards, not backend full re-export, input model cleanup, ASM component contracts, or PR-11 unified RHS.
+- [x] Replace `simulation_core/tests/test_material_balance_core.py` backend imports with `CORE_F64_GOLDEN_CASES` and CPU/f64 stable result hash assertions.
+- [x] Update `scripts/audit-simulation-core-boundary.ps1` to recognize the core-only f64 golden guard while keeping backend-dependent delegation preflight as the backend comparison lane.
+- [x] Update v1.4 checklist/status, scripts and simulation_core test READMEs, current-state, tasks, and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Preserve the same six fixture cases: material-balance minimal, ASM1Slim model-bound, independent ASM1Slim, ASM1, ASM3, and UDM.
+- Treat committed CPU/f64 stable hashes as the `simulation_core` oracle; do not import `app.*` or add `backend/` to `sys.path` from `simulation_core/tests`.
+- Keep backend legacy-input compatibility parity in `backend/app/tests/material_balance_calculator_delegation_preflight_test.py`.
+
+## Review
+
+- `simulation_core/tests/test_material_balance_core.py` is now core-only and asserts job type, node type, parameter field/count, timestamp count, total steps, and stable result hash for all six historical parity fixtures.
+- The boundary audit now accepts backend/core drift control through calculator thin-shell state or backend-side delegation preflight plus core-only f64 golden guard.
+- v1.4 PR-37 and checklist now mark the parity→golden migration complete for the current stage; fixture or correctness-freeze behavior changes must refresh both committed hashes and Phase 0 golden evidence.
+- Remaining high-risk items are backend full re-export/helper cleanup, input model dead-code cleanup, complete ASM component contracts, and PR-11 unified RHS.
+
 # 2026-06-15 simulation_core performance flag matrix TODO
 
 - [x] Re-read v1.4 flag section, current runtime/env flag usage, scripts/ci README, Justfile, and current-state context.

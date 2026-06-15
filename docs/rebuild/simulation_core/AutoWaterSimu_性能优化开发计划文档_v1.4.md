@@ -35,6 +35,7 @@
 - PR-38 supported mixed-model dispatch 已落地并由 ADR 0015 接受:`_run_hours` 在多个反应模型同时 active 时走 combined RHS,只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应项；单模型 fallback 顺序与 default no-clamp baseline 继续由 correctness-freeze audit 保护。
 - PR-39 氧清零 compute_mask 约束已完成当前 ASM 分支的第一步:ASM1Slim/ASM1/ASM3 氧导数清零仅作用于对应 ASM model 的 active compute 节点,不再依赖全列写入。UDM runtime 组分错配与 PR-4 index-conflict guard 也已完成当前 UDM 部分:显式 UDM 局部组分必须同名或经 `udm_variable_bindings` 映射到全局组分,同一节点 local→global 映射必须唯一,未知 `stoich` / `stoich_expr` 目标组分在 runtime payload 构建期报错。
 - PR-13a 表达式校验器白名单化已落地:`_validate_ast` 现在默认拒绝未知 AST 节点,`NamedExpr`/`JoinedStr`/`Starred`/`Subscript`/`Slice` 与 keyword call arguments 会在校验期失败,不再等到运行时 evaluator 才 fail-late。
+- PR-37 parity→golden 第一阶段已落地:`simulation_core/tests/test_material_balance_core.py` 不再导入 `app.*` 或把 `backend/` 加入 `sys.path`,原 6 个 backend parity 用例已迁为 CPU/f64 committed golden hash guard；backend 对照迁移前置由 `backend/app/tests/material_balance_calculator_delegation_preflight_test.py` 维护。
 
 当前下一步执行顺序:
 
@@ -51,7 +52,7 @@
 |---|---|---|
 | P-01 mixed fixture | PR-1~3 baseline harness | 已补齐 current-state mixed baseline；后续保持 12-run baseline 通过 |
 | P-02 profiling artifacts | PR-21 profiling | 已输出 profiler evidence;P-08 前必须复核热点占比 |
-| P-03 golden generator | PR-22 / PR-37 | 已输出 CPU/f64/fixed-seed full-run 与 L1/L2 micro golden evidence；后续保持 core-only/backend oracle 独立 |
+| P-03 golden generator | PR-22 / PR-37 | 已输出 CPU/f64/fixed-seed full-run 与 L1/L2 micro golden evidence，且 6 个历史 backend parity 用例已迁为 core-only committed f64 golden；后续保持 core-only/backend oracle 独立 |
 | P-04 backend cleanup | PR-30 / PR-31 收尾 | 已完成旧本地 input models compatibility boundary；ASM/UDM helper 迁移和真正删除 compatibility import path 需另开 PR |
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
@@ -156,6 +157,8 @@ dopri5 入白名单+测(或文档矩阵改 adaptive_heun);benchmark 矩阵加 sc
 
 ### PR-37:测试 parity→golden 改造【Phase 0/1,薄壳化前置】
 6 个 `test_core_calculator_matches_backend_*` 改为对照 f64 golden;补覆盖:segment 边覆盖、并行边、`_balance_param` 非方/退化聚合、混合 asm+udm、组分错配、ASM 氧清零 compute_mask、default 分支现状、退化图、scipy_solver/adaptive_heun。v1.4 继承补充:把 core-only golden/adapter/boundary 测试与 backend-dependent adapter parity 测试物理拆开;core-only 测试文件模块顶层不得导入 `app.*`,不得把 `backend/` 加入 `sys.path`;依赖 `backend/app/services/simulation_input_adapter.py` 的迁移对照测试移入 backend 侧或单独 backend-dependent lane。Day 0 先提交现状 repro 与目标 golden:default clamp 现状、并行边当前错误 repro、表达式 fail-late repro必须可独立复现。否则 PR-29 的安装烟雾和 PR-37 的独立 golden suite 均视为未完成。
+
+**当前实现状态（2026-06-15）**：PR-37 测试物理拆分与第一阶段 golden 改造已完成。`simulation_core/tests/test_material_balance_core.py` 现在只依赖 `simulation_core/python`,不再导入 legacy backend `app.*` 或插入 `backend/` 路径；`CORE_F64_GOLDEN_CASES` 覆盖 material-balance minimal、ASM1Slim model-bound、独立 ASM1Slim/ASM1/ASM3/UDM 六个历史 parity fixture,逐案断言 job type、runtime node type、参数字段/数量、timestamp count、total steps 与 CPU/f64 稳定结果 hash。backend-dependent adapter/calculator 对照保留在 `backend/app/tests/material_balance_calculator_delegation_preflight_test.py`;`scripts/audit-simulation-core-boundary.ps1` 已切换为识别 core-only committed f64 golden guard 与 backend-side delegation preflight。segment override、并行边、`_balance_param` 非方/退化、mixed ASM/UDM、UDM mapping/stoich mismatch、ASM 氧清零 compute_mask、default no-clamp 与 solver matrix 继续由 docs golden、boundary/correctness tests 和 Phase 0 golden evidence 维护；若这些 fixture 或 correctness-freeze 行为改变,必须刷新 committed hashes 与 P-03 evidence。
 
 ### PR-38:多模型混合节点调度修复【Phase 1,Critical】
 决策支持/不支持混合反应模型:
@@ -302,7 +305,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [x] 表达式缓存(KPI-017) N=100 build-time evidence + 校验器白名单化 + deterministic fuzz-style corpus。
 - [x] UDM RHS/evaluate_reaction 热路径无逐步 `.item()` 同步点,收益按 `scipy_solver` 与 torch 原生求解器拆分。
 - [x] ASM 稳定 mask gather 已预解析或有 profiler 证据说明剩余成本。
-- [ ] f64 golden 生成器已有 Phase 0 evidence;parity 测试改造与最终覆盖补齐仍需随 PR-37/PR-38 决策推进。
+- [x] f64 golden 生成器已有 Phase 0 evidence;历史 backend parity 用例已迁为 core-only committed f64 golden,backend-dependent 对照保留在 backend lane。
 - [x] default 纯传输分支 clamp 现状已有 golden;统一投影语义变更仍需单独 flag PR。
 - [ ] 统一 RHS 抽取已保留 ASM 氧列、UDM fixed mask、default clamp 现状或显式变更记录。
 - [x] 索引冲突不污染;映射 guard 写侧修复。

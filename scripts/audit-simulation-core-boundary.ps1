@@ -703,10 +703,12 @@ if (Test-Path -LiteralPath $backendCoreDriftGuardPath) {
         }
     }
     $backendCoreDriftGuardDetected = (
-        $backendCoreDriftGuardText -match 'BACKEND_CORE_DRIFT_GUARD_CASES' -and
-        $backendCoreDriftGuardText -match 'REQUIRED_BACKEND_CORE_DRIFT_GUARD_CASES' -and
-        $backendCoreDriftGuardText -match 'test_backend_core_drift_guard_manifest_is_complete' -and
-        $backendCoreDriftGuardText -match '_assert_backend_core_result_match' -and
+        $backendCoreDriftGuardText -match 'CORE_F64_GOLDEN_CASES' -and
+        $backendCoreDriftGuardText -match 'REQUIRED_CORE_F64_GOLDEN_CASES' -and
+        $backendCoreDriftGuardText -match 'test_core_f64_golden_manifest_is_complete' -and
+        $backendCoreDriftGuardText -match 'test_core_calculator_matches_committed_f64_golden' -and
+        $backendCoreDriftGuardText -match '_stable_material_balance_result' -and
+        $backendCoreDriftGuardText -match '_sha256_json' -and
         $missingBackendCoreDriftGuardCases.Count -eq 0
     )
 }
@@ -731,7 +733,7 @@ if ($backendCoreDuplicateDetected -and (-not $backendCoreCalculatorThinShellDete
 else {
     $backendCoreDriftSummary = "Backend material balance calculator is a thin shell over simulation_core, or no duplicate core implementation was detected."
     if ($backendCoreDuplicateDetected -and (-not $backendCoreCalculatorThinShellDetected) -and $backendCoreDriftGuardDetected) {
-        $backendCoreDriftSummary = "Legacy backend and simulation_core still duplicate material balance implementations, but explicit backend/core parity drift guard coverage is present."
+        $backendCoreDriftSummary = "Legacy backend and simulation_core still duplicate material balance implementations, but backend-side delegation preflight and core-only f64 golden coverage are present."
     }
     Add-Check -Checks $checks -Name "backend/core dual implementation drift risk" -Status "passed" -Summary $backendCoreDriftSummary -Details ([ordered]@{
         backend_core_calculator_thin_shell_detected = $backendCoreCalculatorThinShellDetected
