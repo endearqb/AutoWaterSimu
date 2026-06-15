@@ -1,3 +1,25 @@
+# 2026-06-15 backend material_balance model re-export TODO
+
+- [x] Re-read backend material_balance model compatibility file, package init, model boundary tests, boundary audit, and rebuild status docs.
+- [x] Confirm this slice replaces `app.material_balance.models` local model copies with core model re-exports, not migrating legacy `app.models` route schemas, changing OpenAPI/generated clients, deleting top-level compatibility imports, changing numerical behavior, or completing PR-11/ASM contracts.
+- [x] Replace `backend/app/material_balance/models.py` with simulation_core runtime model re-exports.
+- [x] Update package docs/tests to assert model object identity with simulation_core.
+- [x] Extend boundary audit to require the legacy model import path to be a core re-export.
+- [x] Update material_balance/tests/scripts/rebuild/current-state docs and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep the old `app.material_balance.models` import path available.
+- Remove backend-local model definitions from that path by re-exporting core models.
+- Keep legacy FastAPI route schemas on `app.models` until a separate OpenAPI/client-aware migration slice.
+
+## Review
+
+- Replaced the legacy `app.material_balance.models` local model definitions with simulation_core runtime model re-exports while preserving the old import path.
+- Added/updated backend tests and boundary audit checks so `app.material_balance.models` must remain an object-identical core re-export and production code cannot reintroduce local model imports.
+- Updated material_balance/tests/scripts/rebuild/current-state docs and README First records to distinguish this completed model cleanup from the still-open `app.models` route schema/OpenAPI migration.
+
 # 2026-06-15 backend app.models runtime input validation TODO
 
 - [x] Re-read backend API/routes/services README context, legacy service calculation entrypoints, simulation_core runtime models, and existing adapter/preflight tests.

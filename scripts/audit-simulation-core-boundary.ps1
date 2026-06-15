@@ -628,12 +628,18 @@ $backendRuntimeInputBoundaryTestDetected = (
 )
 $legacySimulationInputAdapterCompatibilityMarked = $backendSimulationInputAdapterText -match 'Compatibility-only adapter to legacy'
 $backendLocalModelsText = if (Test-Path -LiteralPath $backendModelsPath) { Get-Content -LiteralPath $backendModelsPath -Raw } else { "" }
-$backendLocalModelsCompatibilityMarked = $backendLocalModelsText -match 'Compatibility-only material balance data models'
+$backendLocalModelsCoreReexportDetected = (
+    (Test-Path -LiteralPath $backendModelsPath) -and
+    $backendLocalModelsText -match 'Compatibility re-export for material balance runtime models' -and
+    $backendLocalModelsText -match 'autowatersimu_simulation_core\.material_balance\.models' -and
+    $backendLocalModelsText -match 'MaterialBalanceInput' -and
+    $backendLocalModelsText -match 'MaterialBalanceResult'
+)
 $backendMaterialBalanceInitPath = Join-Path $backendMaterialBalance "__init__.py"
 $backendMaterialBalanceInitText = if (Test-Path -LiteralPath $backendMaterialBalanceInitPath) { Get-Content -LiteralPath $backendMaterialBalanceInitPath -Raw } else { "" }
 $backendMaterialBalanceInitCompatibilityMarked = (
-    $backendMaterialBalanceInitText -match 'compatibility-only local input models' -and
-    $backendMaterialBalanceInitText -match 'not the active runtime input contract'
+    $backendMaterialBalanceInitText -match 'Local input models: removed from this package' -and
+    $backendMaterialBalanceInitText -match 'legacy route schema still lives in app\.models'
 )
 
 $backendAppFiles = Get-PythonFiles -Path $backendAppPath
@@ -668,26 +674,26 @@ $legacyLocalInputImportHits = @(
 )
 
 $backendCompatibilityModelsDetails = [ordered]@{
-    compatibility_only_local_input_models = if (Test-Path -LiteralPath $backendModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendModelsPath } else { $null }
+    compatibility_model_reexports = if (Test-Path -LiteralPath $backendModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendModelsPath } else { $null }
     material_balance_init = if (Test-Path -LiteralPath $backendMaterialBalanceInitPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendMaterialBalanceInitPath } else { $null }
-    local_models_compatibility_marked = $backendLocalModelsCompatibilityMarked
+    local_models_core_reexport_detected = $backendLocalModelsCoreReexportDetected
     init_compatibility_marked = $backendMaterialBalanceInitCompatibilityMarked
     allowed_compatibility_import_files = $legacyLocalInputImportAllowedFiles
     forbidden_production_import_hits = $legacyLocalInputImportHits
 }
 $backendCompatibilityModelsBoundaryPassed = (
-    $backendLocalModelsCompatibilityMarked -and
+    $backendLocalModelsCoreReexportDetected -and
     $backendMaterialBalanceInitCompatibilityMarked -and
     $legacyLocalInputImportHits.Count -eq 0
 )
 if ($backendCompatibilityModelsBoundaryPassed) {
-    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "passed" -Summary "Backend-local material_balance input models are marked compatibility-only and are not imported by production code outside the legacy compatibility package entrypoints." -Details $backendCompatibilityModelsDetails
+    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "passed" -Summary "Legacy app.material_balance.models import path re-exports simulation_core runtime models, and production code does not import it outside compatibility package entrypoints." -Details $backendCompatibilityModelsDetails
 }
 else {
-    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "failed" -Summary "Backend-local material_balance input models are not safely fenced as compatibility-only." -Details $backendCompatibilityModelsDetails
+    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "failed" -Summary "Legacy app.material_balance.models import path is not a safe simulation_core model re-export." -Details $backendCompatibilityModelsDetails
     $hardViolations.Add([ordered]@{
         rule = "backend-material-balance-compatibility-models-boundary"
-        summary = "Do not use backend/app/material_balance/models.py local input models as the runtime contract for new backend/core migration or performance work."
+        summary = "Do not reintroduce backend/app/material_balance/models.py local input model copies; keep the legacy import path as a simulation_core model re-export."
         details = $backendCompatibilityModelsDetails
     }) | Out-Null
 }
@@ -761,7 +767,7 @@ $backendInputBoundaryDetails = [ordered]@{
     runtime_input_service_details = @($runtimeInputServiceDetails)
     runtime_input_service_gaps = @($runtimeInputServiceGaps)
     legacy_adapter_compatibility_marked = $legacySimulationInputAdapterCompatibilityMarked
-    local_models_compatibility_marked = $backendLocalModelsCompatibilityMarked
+    local_models_core_reexport_detected = $backendLocalModelsCoreReexportDetected
     legacy_local_input_model_import_hits = $legacyLocalInputImportHits
     calculate_entrypoints = $actualCalculateEntryPoints
     expected_calculate_entrypoints = $expectedCalculateEntryPoints
@@ -778,7 +784,7 @@ $backendInputBoundaryPassed = (
     $backendRuntimeInputBoundaryTestDetected -and
     $runtimeInputServiceGaps.Count -eq 0 -and
     $legacySimulationInputAdapterCompatibilityMarked -and
-    $backendLocalModelsCompatibilityMarked -and
+    $backendLocalModelsCoreReexportDetected -and
     $legacyLocalInputImportHits.Count -eq 0 -and
     $unexpectedCalculateEntryPoints.Count -eq 0 -and
     $missingCalculateEntryPoints.Count -eq 0

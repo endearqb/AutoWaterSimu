@@ -21,10 +21,10 @@
 
 代码核对结论:
 
-1. `backend/app/material_balance/models.py` 定义的 `EdgeData` 是**旧字段名**(`from_node`/`to_node`/`concentration_factors_a`);
+1. `backend/app/material_balance/models.py` 曾定义旧字段名 `EdgeData`(`from_node`/`to_node`/`concentration_factors_a`)，当前已改为 re-export `simulation_core` runtime models;
 2. 但 `backend/app/material_balance/core.py` 实际消费的是**新字段名**(`edge.source_node_id`、`concentration_factor_a`,L127/264/278);
 3. 它能运行是因为生产路径上计算器吃的根本不是本包的模型——`data_conversion_service.py` 与 `simulation_input_adapter.py` 都从顶层 `app/models.py`(SQLModel,新字段名)构造 `EdgeData`/`MaterialBalanceInput` 传入,`core.calculate()` 是鸭子类型;
-4. 因此 `backend/app/material_balance/models.py` 的输入模型与 `utils.py` 的 `create_input_from_flowchart`(构造旧字段、传入 core 必然 AttributeError,且**无任何调用方**)是死代码;唯一仍被引用的是 `MaterialBalanceResult`(asm1/asm3/udm service 导入);
+4. 因此 `backend/app/material_balance/models.py` 的旧输入模型副本已清理为 core re-export；`utils.py` 也已薄壳化为 core helper re-export。legacy route schema 仍来自 `app.models.MaterialBalanceInput`，service 层在调用 calculator 前重新校验为 core runtime input。
 5. `simulation_core/material_balance/models.py` 是清理后的新版(字段名与 app.models 对齐,校验更完整)。
 
 **含义**:薄壳化 PR 必须同时完成——删除 backend 死模型与死 utils;`asm1_service`/`asm3_service`/`udm_service` 的 `MaterialBalanceResult` 导入改指 simulation_core;把 `calculate()` 的输入契约从鸭子类型显式化为 simulation_core 的 `MaterialBalanceInput`(或定义 Protocol),并确认 `app.models`(SQLModel)对象能通过其 pydantic 校验或在服务层做一次显式转换。否则薄壳化后会出现"app.models 对象绕过 simulation_core 校验直接进核心"的隐性契约。

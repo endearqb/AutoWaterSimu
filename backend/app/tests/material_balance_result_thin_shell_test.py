@@ -1,5 +1,5 @@
 from app.material_balance.core import MaterialBalanceCalculator
-from app.material_balance.models import MaterialBalanceResult as LegacyMaterialBalanceResult
+from app.material_balance.models import MaterialBalanceResult as BackendMaterialBalanceResult
 from app.models import CalculationParameters, EdgeData, MaterialBalanceInput, NodeData
 from autowatersimu_simulation_core.material_balance.models import (
     MaterialBalanceResult as CoreMaterialBalanceResult,
@@ -45,4 +45,4 @@ def test_backend_calculator_returns_core_material_balance_result() -> None:
 
     assert type(result) is CoreMaterialBalanceResult
     assert isinstance(result, CoreMaterialBalanceResult)
-    assert type(result) is not LegacyMaterialBalanceResult
+    assert BackendMaterialBalanceResult is CoreMaterialBalanceResult

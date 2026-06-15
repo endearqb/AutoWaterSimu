@@ -70,10 +70,18 @@ def test_local_material_balance_models_are_marked_compatibility_only() -> None:
     models_text = (BACKEND_APP / "material_balance" / "models.py").read_text(encoding="utf-8-sig")
     init_text = (BACKEND_APP / "material_balance" / "__init__.py").read_text(encoding="utf-8-sig")
 
-    assert "Compatibility-only material balance data models" in models_text
-    assert "Do not use this module as the true runtime input contract" in models_text
-    assert "compatibility-only local input models" in init_text
-    assert "not the active runtime input contract" in init_text
+    assert "Compatibility re-export for material balance runtime models" in models_text
+    assert "autowatersimu_simulation_core.material_balance.models" in models_text
+    assert "Local input models: removed from this package" in init_text
+    assert "legacy route schema still lives in app.models" in init_text
+
+
+def test_material_balance_models_are_core_reexports() -> None:
+    from app.material_balance import models as backend_models
+    from autowatersimu_simulation_core.material_balance import models as core_models
+
+    for name in LEGACY_LOCAL_INPUT_NAMES | {"MaterialBalanceResult"}:
+        assert getattr(backend_models, name) is getattr(core_models, name)
 
 
 def test_production_code_does_not_import_local_material_balance_input_models() -> None:

@@ -32,7 +32,7 @@
 | Phase 0 hot-path prereview | P-08 已汇总 P-01/P-02/P-03 并选择第一批候选；当前为 `passed` | `scripts/ci/performance-hotpath-prereview-phase0.ps1` |
 | Phase 0 Go API latency smoke | P-06 本地内存 Compute API claim/list/get latency smoke 已生成；当前为 `passed` | `scripts/ci/performance-go-api-latency-phase0.ps1` |
 | Worker adapter strict rollout | P-05 opt-in CLI/env/JSON-RPC 接入口与 strict smoke 已生成；当前为 `passed`，默认仍为 `compat` | `scripts/ci/worker-adapter-strict-smoke.ps1` |
-| Backend compatibility models cleanup | P-04 已把 backend-local material_balance input models 固定为 compatibility-only import path，并由 focused pytest 与 boundary audit 防止生产 runtime 误用 | `backend/app/tests/material_balance_compat_models_boundary_test.py`、`scripts/audit-simulation-core-boundary.ps1` |
+| Backend compatibility models cleanup | P-04 已把 `app.material_balance.models` 旧导入路径改为 simulation_core runtime model re-export，并由 focused pytest 与 boundary audit 防止本地副本回归 | `backend/app/tests/material_balance_compat_models_boundary_test.py`、`scripts/audit-simulation-core-boundary.ps1` |
 | Backend app.models runtime validation | legacy calculation services 已在调用 calculator 前把 `app.models.MaterialBalanceInput` 重新校验为 simulation_core runtime `MaterialBalanceInput` | `backend/app/tests/services/material_balance_runtime_input_boundary_test.py`、`scripts/audit-simulation-core-boundary.ps1` |
 | Backend ASM/UDM helper thin-shell | backend ASM/UDM runtime helper import paths 已改为 simulation_core compatibility re-export，并由 focused pytest 与 boundary audit 防止重新复制 | `backend/app/tests/material_balance_runtime_helpers_thin_shell_test.py`、`scripts/audit-simulation-core-boundary.ps1` |
 | Worker packaged sidecar no-fallback evidence | P-07 PyInstaller one-folder sidecar smoke 已生成；当前为 `passed`，`deprecated_repo_path_fallback_used=false`；runtime fallback 删除后继续作为回归 gate | `scripts/ci/worker-packaged-no-fallback-smoke.ps1` |
@@ -42,7 +42,7 @@
 当前主要缺口：
 
 1. 第一批 transport tensor precompute、第二批 UDM cache/device-sync、PR-38 mixed-model dispatch、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、segment timestamp CPU construction、`parameter_names` reuse 与 PR-34 输出网格解耦已落地；后续需继续用 P-03/P-08 evidence 防止把 solver 默认值/矩阵或 mixed-model 语义继续混入无关性能 PR。
-2. backend-local material_balance input models 已被标注并审计为 compatibility-only；legacy service 入口已在计算前重新校验为 simulation_core runtime input；backend ASM/UDM runtime helper 叶子已薄壳化；packaged sidecar no-fallback evidence 已通过且 worker runtime fallback 删除已完成；worker strict default 仍未切换，但已有 opt-in strict smoke 与切换条件。legacy input model 删除、route schema 迁移和完整 backend-only re-export 仍是后续 PR-30/PR-31 收尾项。
+2. `app.material_balance.models` 已改为 simulation_core runtime model re-export；legacy service 入口已在计算前重新校验为 simulation_core runtime input；backend ASM/UDM runtime helper 叶子已薄壳化；packaged sidecar no-fallback evidence 已通过且 worker runtime fallback 删除已完成；worker strict default 仍未切换，但已有 opt-in strict smoke 与切换条件。`app.models` route schema 迁移和完整 backend-only re-export 仍是后续 PR-30/PR-31 收尾项。
 3. Go claim/list latency 已有本地内存 API smoke baseline；`claim_scanned_rows` 仍只是预留字段，后续 metrics/index/keyset/claim LIMIT 需另开 PR 基于该 evidence 判断收益。
 
 ---
@@ -146,7 +146,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-golde
 
 范围：
 
-- 明确 `backend/app/material_balance/models.py` 哪些类仍只是 import compatibility。
+- 明确 `backend/app/material_balance/models.py` 旧导入路径只 re-export simulation_core runtime model。
 - 删除或标注确定无调用方的 dead helper。
 - 增加 audit，禁止新 runtime path 引入 backend-local `MaterialBalanceInput`。
 - 不改 legacy FastAPI route schema，不删除 `app.models.MaterialBalanceInput`，不改 OpenAPI/generated client。
@@ -156,7 +156,7 @@ DoD：
 - 旧模型不会被新的 runtime 入口当作 canonical contract 使用。
 - backend targeted material_balance tests 与 simulation_core boundary audit 通过。
 
-**当前状态（2026-06-15）**：已实现旧本地 input models compatibility boundary。`backend/app/material_balance/models.py` 与 `__init__.py` 明确标注为 compatibility-only / not active runtime input contract；`simple_test.py` 与 `test_module.py` 标为 legacy manual scripts，不作为 pytest、生产 runtime 或性能前置证据；新增 `backend/app/tests/material_balance_compat_models_boundary_test.py` 用 AST 扫描生产代码，禁止除 `backend/app/material_balance/__init__.py` 与 `models.py` 之外的 runtime 文件 import backend-local `MaterialBalanceInput` / `NodeData` / `EdgeData` / `CalculationParameters`；legacy calculation services 已通过 `material_balance_input_to_core_runtime()` 在 calculator 前把 `app.models.MaterialBalanceInput` 重新校验为 simulation_core runtime `MaterialBalanceInput`，并由 `backend/app/tests/services/material_balance_runtime_input_boundary_test.py` 保护；backend ASM/UDM helper 叶子已改为 simulation_core compatibility re-export，并由 `backend/app/tests/material_balance_runtime_helpers_thin_shell_test.py` 与 boundary audit 保护；`scripts/audit-simulation-core-boundary.ps1` 当前为 `passed`，0 hard violations、0 open gaps。本状态仍不表示整包 re-export、legacy route schema 变更或 input model 删除完成。
+**当前状态（2026-06-15）**：已实现旧 `app.material_balance.models` compatibility boundary。`backend/app/material_balance/models.py` 与 `__init__.py` 现在 re-export simulation_core runtime models，不再保留 backend-local input model 副本；`simple_test.py` 与 `test_module.py` 标为 legacy manual scripts，不作为 pytest、生产 runtime 或性能前置证据；新增 `backend/app/tests/material_balance_compat_models_boundary_test.py` 用 AST 扫描生产代码，禁止除 `backend/app/material_balance/__init__.py` 与 `models.py` 之外的 runtime 文件 import legacy `app.material_balance.models` input names，并断言它们与 core model object identity 一致；legacy calculation services 已通过 `material_balance_input_to_core_runtime()` 在 calculator 前把 `app.models.MaterialBalanceInput` 重新校验为 simulation_core runtime `MaterialBalanceInput`，并由 `backend/app/tests/services/material_balance_runtime_input_boundary_test.py` 保护；backend ASM/UDM helper 叶子已改为 simulation_core compatibility re-export，并由 `backend/app/tests/material_balance_runtime_helpers_thin_shell_test.py` 与 boundary audit 保护；`scripts/audit-simulation-core-boundary.ps1` 当前为 `passed`，0 hard violations、0 open gaps。本状态仍不表示整包 re-export 或 legacy `app.models` route schema 变更完成。
 
 ### P-05：`worker-adapter-strict-mode-rollout-plan`
 
@@ -255,7 +255,7 @@ DoD：
 | 做 Go keyset cursor / claim LIMIT / index migration | P-06 通过，并另开 PR 基于 P-06 evidence 设定收益判断 |
 | 做 backend material_balance 旧模型删除 | P-04 的 compatibility boundary 已证明旧输入模型未被生产 runtime 依赖；真正删除仍需另开 PR 证明 legacy import path 兼容策略 |
 
-P-04、backend app.models runtime validation、backend ASM/UDM helper thin-shell、P-05、P-06、P-07 与 fallback 删除已作为独立前置切片完成；后续 backend input model 删除、route schema 迁移或更高风险性能工作仍不得借前置证据扩大成大规模重构。
+P-04、backend app.models runtime validation、backend ASM/UDM/model thin-shell、P-05、P-06、P-07 与 fallback 删除已作为独立前置切片完成；后续 `app.models` route schema 迁移或更高风险性能工作仍不得借前置证据扩大成大规模重构。
 
 ---
 
