@@ -38,6 +38,9 @@ from autowatersimu_simulation_core.material_balance.models import (  # noqa: E40
 from autowatersimu_simulation_core.material_balance import (  # noqa: E402
     MaterialBalanceCalculator,
 )
+from autowatersimu_simulation_core.material_balance.asm import (  # noqa: E402
+    asm1slim_reaction,
+)
 from autowatersimu_simulation_core.material_balance import core as core_module  # noqa: E402
 from autowatersimu_simulation_core.material_balance.exceptions import (  # noqa: E402
     InvalidInputError,
@@ -838,7 +841,7 @@ def test_asm_component_contract_accepts_contract_fixtures(
     assert tensors[runtime_key] is not None
 
 
-def test_asm_component_contract_rejects_named_order_mismatch() -> None:
+def test_asm_component_contract_maps_named_order_mismatch() -> None:
     calculator = MaterialBalanceCalculator()
     input_data = _mixed_asm_udm_input()
     custom_parameters = input_data.original_flowchart_data["customParameters"]
@@ -848,8 +851,92 @@ def test_asm_component_contract_rejects_named_order_mismatch() -> None:
         *custom_parameters[2:],
     ]
 
-    with pytest.raises(InvalidInputError, match="ASM component contract mismatch"):
+    tensors = calculator._convert_to_tensors(input_data)
+
+    assert tensors["asm1_reaction_runtime"]["component_indices"].tolist() == [
+        1,
+        0,
+        *range(2, len(ASM1_COMPONENTS)),
+    ]
+    assert tensors["asm1_reaction_runtime"]["oxygen_index"] == ASM1_COMPONENTS.index("S_O")
+
+
+def test_asm_component_contract_rejects_missing_required_component() -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = _mixed_asm_udm_input()
+    custom_parameters = deepcopy(input_data.original_flowchart_data["customParameters"])
+    custom_parameters[0] = {"name": "not_X_BH"}
+    input_data.original_flowchart_data["customParameters"] = custom_parameters
+
+    with pytest.raises(InvalidInputError, match="missing required component"):
         calculator._convert_to_tensors(input_data)
+
+
+def test_asm_component_contract_rejects_duplicate_required_component() -> None:
+    calculator = MaterialBalanceCalculator()
+    input_data = _mixed_asm_udm_input()
+    custom_parameters = deepcopy(input_data.original_flowchart_data["customParameters"])
+    custom_parameters[1] = {"name": custom_parameters[0]["name"]}
+    input_data.original_flowchart_data["customParameters"] = custom_parameters
+
+    with pytest.raises(InvalidInputError, match="duplicate component"):
+        calculator._convert_to_tensors(input_data)
+
+
+def test_asm_component_contract_scatters_rates_to_named_global_columns() -> None:
+    calculator = MaterialBalanceCalculator()
+    component_names = ["EXTRA", "S_S", "S_O", "S_NO", "S_NH", "S_ALK"]
+    component_index = {name: index for index, name in enumerate(component_names)}
+    concentrations = [0.0] * len(component_names)
+    for name, value in {
+        "EXTRA": 999.0,
+        "S_O": 2.0,
+        "S_S": 50.0,
+        "S_NO": 1.0,
+        "S_NH": 10.0,
+        "S_ALK": 5.0,
+    }.items():
+        concentrations[component_index[name]] = value
+    input_data = MaterialBalanceInput(
+        nodes=[
+            NodeData(
+                node_id="in",
+                node_type="input",
+                is_inlet=True,
+                initial_volume=1.0,
+                initial_concentrations=concentrations,
+            ),
+            NodeData(
+                node_id="asm1slim",
+                node_type="asm1slim",
+                initial_volume=1000.0,
+                initial_concentrations=concentrations,
+                asm1slim_parameters=[0.12, 0.08, 2.5, 10.0, 0.5, 0.8, 0.4],
+            )
+        ],
+        edges=[],
+        parameters=CalculationParameters(hours=1.0, steps_per_hour=1),
+        original_flowchart_data={
+            "customParameters": [{"name": name} for name in component_names]
+        },
+    )
+
+    tensors = calculator._convert_to_tensors(input_data)
+    runtime = tensors["asm1slim_reaction_runtime"]
+    concentration_change = torch.zeros_like(tensors["x0"])
+    calculator._apply_asm_reaction_runtime(
+        concentration_change,
+        tensors["x0"],
+        runtime,
+        asm1slim_reaction,
+        oxygen_index=0,
+    )
+
+    assert runtime["component_indices"].tolist() == [2, 1, 3, 4, 5]
+    assert runtime["oxygen_index"] == 2
+    assert concentration_change[1, component_index["EXTRA"]] == 0.0
+    assert concentration_change[1, component_index["S_O"]] == 0.0
+    assert torch.count_nonzero(concentration_change[1, [1, 3, 4, 5]]).item() > 0
 
 
 def test_asm_component_contract_rejects_too_few_metadata_less_components() -> None:

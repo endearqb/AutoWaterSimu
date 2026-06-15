@@ -35,7 +35,7 @@
 - `udm-expression-cache-and-device-sync-reduction` 已落地:`compile_expression()` 使用 LRU 缓存,UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices,UDM RHS/evaluate_reaction 热路径不再用逐步 `.item()` 判断 mask 或映射。
 - `asm-stable-reaction-runtime-precompute` 已落地:ASM1Slim/ASM1/ASM3 在 `_convert_to_tensors()` 阶段预计算 active compute node indices 与 filtered parameter rows, single-model 与 combined RHS 复用该 runtime,避免每步布尔 mask 参数 gather。
 - PR-38 supported mixed-model dispatch 已落地并由 ADR 0015 接受:`_run_hours` 在多个反应模型同时 active 时走 combined RHS,只计算一次 transport,再按 active `compute_mask` 子集叠加 ASM1Slim/ASM1/ASM3/UDM 反应项；单模型 fallback 顺序与 default no-clamp baseline 继续由 correctness-freeze audit 保护。
-- PR-39 氧清零 compute_mask 约束与 ASM 具名组分 guard 已完成当前 core runtime 的第一步:ASM1Slim/ASM1/ASM3 氧导数清零仅作用于对应 ASM model 的 active compute 节点,不再依赖全列写入；`_convert_to_tensors()` 在 `customParameters` metadata 存在时校验 ASM1Slim/ASM1/ASM3 的组件前缀顺序，metadata 缺失的 legacy 输入至少做组件数量 fail-fast。UDM runtime 组分错配与 PR-4 index-conflict guard 也已完成当前 UDM 部分:显式 UDM 局部组分必须同名或经 `udm_variable_bindings` 映射到全局组分,同一节点 local→global 映射必须唯一,未知 `stoich` / `stoich_expr` 目标组分在 runtime payload 构建期报错。
+- PR-39 氧清零 compute_mask 约束与 ASM schema-driven component guard 已完成当前 core runtime:ASM1Slim/ASM1/ASM3 氧导数清零仅作用于对应 ASM model 的 active compute 节点,不再依赖全列写入；`_convert_to_tensors()` 在 `customParameters` metadata 存在时按组件名预计算模型局部列索引，ASM 反应核输入 gather 到固定模型列序，反应结果 scatter 回全局组分列，缺失或重复必需组件 fail-fast；metadata 缺失的 legacy 输入至少做组件数量 fail-fast 并保留前缀列行为。UDM runtime 组分错配与 PR-4 index-conflict guard 也已完成当前 UDM 部分:显式 UDM 局部组分必须同名或经 `udm_variable_bindings` 映射到全局组分,同一节点 local→global 映射必须唯一,未知 `stoich` / `stoich_expr` 目标组分在 runtime payload 构建期报错。
 - PR-13a 表达式校验器白名单化已落地:`_validate_ast` 现在默认拒绝未知 AST 节点,`NamedExpr`/`JoinedStr`/`Starred`/`Subscript`/`Slice` 与 keyword call arguments 会在校验期失败,不再等到运行时 evaluator 才 fail-late。
 - PR-37 parity→golden 第一阶段已落地:`simulation_core/tests/test_material_balance_core.py` 不再导入 `app.*` 或把 `backend/` 加入 `sys.path`,原 6 个 backend parity 用例已迁为 CPU/f64 committed golden hash guard；backend 对照迁移前置由 `backend/app/tests/material_balance_calculator_delegation_preflight_test.py` 维护。
 
@@ -61,7 +61,7 @@
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；worker runtime fallback 删除已完成，该 evidence 继续作回归 gate |
 | P-08 hotpath prereview | PR-7/8/24/32/33/34/35/11/12/36/13a 前置 | 已选择并落地 `transport-runtime-tensor-precompute-no-semantics`、`udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化；继续禁止混入 solver 默认值/schema/fallback 改动 |
 | PR-38 mixed dispatch | PR-38 / PR-11 前置 | 已选择支持 mixed reaction model 语义并落地 combined RHS；单模型 fallback 与 default no-clamp baseline 继续冻结 |
-| PR-39 ASM component guard | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点，`customParameters` 存在时已校验 ASM 组件前缀顺序；legacy 无 metadata 路径和真正 schema-driven 重排仍待 |
+| PR-39 ASM component guard | PR-39 / PR-11 前置 | 当前 ASM 分支氧清零已限定到对应 ASM model 的 active compute 节点，`customParameters` 存在时已按组件名做 schema-driven gather/scatter；legacy route schema metadata 迁移仍待 |
 
 当前禁止并入的工作:
 
@@ -177,7 +177,7 @@ golden:混合 asm+udm(支持)或报错用例(不支持)。KPI-018。
 ### PR-39:反应组分契约【Phase 1】
 为每个反应模型定义组分契约(数量/必需组分/顺序或具名映射);构建期校验全局组分映射满足契约;硬编码氧索引(0/5/6)与反应输入列序提升为 `component_schema→模型组分` 映射。v1.4 补充:当前氧清零是 `torch.where(mask,...)` 后再全列 `dy[:,k]=0`,抽取后必须改为仅对 `compute_mask` 子集清零,不得依赖前序 mask 投影顺序。KPI-019。
 
-**当前实现状态（2026-06-15）**：已完成氧清零范围的第一步防护:ASM1Slim/ASM1/ASM3 现有分支与 mixed combined RHS 只对对应 ASM model 的 active compute 节点清零氧导数,不再对全列无条件写入。ASM stable mask gather 的低风险部分也已落地:`_convert_to_tensors()` 预计算 ASM1Slim/ASM1/ASM3 active compute node indices 与 filtered parameter rows,single-model 与 combined RHS 复用该 runtime,每步仍只对变化的 `y` 做 index gather。ASM named component guard 也已落地:`ASM_COMPONENT_CONTRACTS` 集中声明 ASM1Slim/ASM1/ASM3 当前反应核固定列序与氧索引；`_convert_to_tensors()` 在 `customParameters` metadata 存在时校验全局组件前缀顺序, metadata 缺失的 legacy 输入至少按所需组件数 fail-fast。UDM runtime 已补组分错配与 PR-4 写侧索引冲突前置 guard:显式声明的局部组分必须能通过同名或 `udm_variable_bindings` 映射到全局组分,同一节点内不能有两个 local 组分解析到同一个 global 组分,`stoich` / `stoich_expr` 不能引用未知局部组分,否则构建 runtime payload 时抛出 `InvalidInputError`;读侧 env、写侧 `index_add_` 与 fixed-mask 共用这份校验索引。legacy route schema 无 metadata 路径仍需后续迁移,真正的 schema-driven ASM 重排也未做；这也不代表 PR-11 全统一 RHS 已完成。
+**当前实现状态（2026-06-15）**：已完成氧清零范围的第一步防护:ASM1Slim/ASM1/ASM3 现有分支与 mixed combined RHS 只对对应 ASM model 的 active compute 节点清零氧导数,不再对全列无条件写入。ASM stable mask gather 的低风险部分也已落地:`_convert_to_tensors()` 预计算 ASM1Slim/ASM1/ASM3 active compute node indices 与 filtered parameter rows,single-model 与 combined RHS 复用该 runtime,每步仍只对变化的 `y` 做 index gather。ASM schema-driven component guard 也已落地:`ASM_COMPONENT_CONTRACTS` 集中声明 ASM1Slim/ASM1/ASM3 当前反应核固定列序与氧索引；`_convert_to_tensors()` 在 `customParameters` metadata 存在时按组件名解析模型局部列索引,缺失或重复必需组件抛出 `InvalidInputError`,ASM 反应输入 gather 到模型固定列序,输出 scatter 回全局列且额外全局组件不被反应项污染；metadata 缺失的 legacy 输入至少按所需组件数 fail-fast 并保留前缀列行为。UDM runtime 已补组分错配与 PR-4 写侧索引冲突前置 guard:显式声明的局部组分必须能通过同名或 `udm_variable_bindings` 映射到全局组分,同一节点内不能有两个 local 组分解析到同一个 global 组分,`stoich` / `stoich_expr` 不能引用未知局部组分,否则构建 runtime payload 时抛出 `InvalidInputError`;读侧 env、写侧 `index_add_` 与 fixed-mask 共用这份校验索引。legacy route schema 无 metadata 路径仍需后续迁移；这也不代表 PR-11 全统一 RHS 已完成。
 
 ### PR-11:统一 RHS 抽取【Phase 4,v1.4 继承并强化】
 五个 RHS 分支当前重复状态拆分、clamp、传输 balance、dilution、mask 投影与 volume 导数,抽取收益明确。但 PR-11 不得只做机械去重:必须以 PR-38 的混合调度决策为前置,支持方案下在单次 RHS 内对 ASM1Slim/ASM1/ASM3/UDM 各 mask 子集叠加反应项;不支持方案下则在构建期报错并有存量审计。抽取时必须显式保留或决策各模型特殊行为:ASM 氧列硬编码清零迁移到 PR-39 组分契约且限定 compute_mask,UDM fixed component mask 继续生效,default 纯传输分支的输出 clamp 现状由 PR-12 golden 固定。v1.4 补充:ASM `params[mask]` / `y[mask]` 等稳定布尔 gather 应与 UDM 节点索引一起预解析,否则统一 RHS 只解决可维护性而漏掉热路径成本。
@@ -298,7 +298,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 - [ ] 输入模型契约统一,死代码清理,app.models 入核走校验（service 入核校验与 `app.material_balance.models` re-export 已完成；legacy `app.models` route schema 迁移仍待）。
 - [x] `NodeData`/`EdgeData extra` 策略已收紧或可观测,错拼字段不再静默吞掉。
 - [x] 混合 asm+udm 调度按决策正确(KPI-018)。
-- [ ] 反应组分契约,错配报错非静默(KPI-019；UDM runtime mapping/stoich mismatch guard 与 core ASM named component guard 已完成第一步，legacy route schema metadata 与真正 schema-driven ASM 重排仍待)。
+- [ ] 反应组分契约,错配报错非静默(KPI-019；UDM runtime mapping/stoich mismatch guard 与 core ASM schema-driven gather/scatter 已完成，legacy route schema metadata 迁移仍待)。
 - [x] ASM 氧清零限定在 active compute model 节点内,不改写非计算节点。
 - [x] 并行边 dense/sparse 语义统一(KPI-006)。
 - [x] `_balance_param` out/in 聚合维度回归通过(KPI-020)。

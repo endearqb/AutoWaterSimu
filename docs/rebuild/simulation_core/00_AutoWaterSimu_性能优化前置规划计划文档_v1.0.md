@@ -23,7 +23,7 @@
 | service-test split | 当前 P0 已完成，后续只按具体风险维护 | `tasks/todo.md`、`.ai/changes/2026-06-14.md` |
 | simulation_core packaging | 已有 `autowatersimu-simulation-core` packaging metadata | `.ai/changes/2026-06-14.md` |
 | input contract closure | `simulation_input.v1` node/edge unknown fields 已关闭；runtime `NodeData`/`EdgeData` 为 `extra=forbid` | ADR 0012、ADR 0013 |
-| correctness freeze | `_run_hours` mixed combined dispatcher、single-model fallback、clamp policy、ASM 组分契约 guard、ASM 氧清零 active compute mask 范围与 `compute_mask` derivative masking 已冻结为当前基线 | ADR 0014/0015、`scripts/audit-simulation-core-correctness-freeze.ps1` |
+| correctness freeze | `_run_hours` mixed combined dispatcher、single-model fallback、clamp policy、ASM 组分契约/schema-driven gather-scatter guard、ASM 氧清零 active compute mask 范围与 `compute_mask` derivative masking 已冻结为当前基线 | ADR 0014/0015、`scripts/audit-simulation-core-correctness-freeze.ps1` |
 | backend calculator thin-shell | `backend/app/material_balance/core.py` 已成为 simulation_core calculator compatibility re-export | `.ai/changes/2026-06-14.md` |
 | worker source-mode dependency gate | source-mode worker 已证明使用 installed/editable helper packages；runtime repo-path fallback 已删除 | `.ai/changes/2026-06-14.md`、`.ai/changes/2026-06-15.md` |
 | Phase 0 timings baseline | P-01 mixed fixture 已补齐；baseline 当前为 `passed` | `scripts/ci/performance-baseline-phase0.ps1` |

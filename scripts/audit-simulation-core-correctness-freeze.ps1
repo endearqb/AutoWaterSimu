@@ -129,7 +129,10 @@ $requiredTests = @(
     "test_run_hours_single_model_branch_and_clamp_policy",
     "test_mixed_asm_udm_applies_udm_reaction",
     "test_asm_component_contract_accepts_contract_fixtures",
-    "test_asm_component_contract_rejects_named_order_mismatch",
+    "test_asm_component_contract_maps_named_order_mismatch",
+    "test_asm_component_contract_rejects_missing_required_component",
+    "test_asm_component_contract_rejects_duplicate_required_component",
+    "test_asm_component_contract_scatters_rates_to_named_global_columns",
     "test_asm_component_contract_rejects_too_few_metadata_less_components",
     "test_asm_oxygen_zeroing_is_limited_to_active_compute_model_nodes",
     "test_ode_balance_respects_compute_mask_for_state_and_volume_derivatives"

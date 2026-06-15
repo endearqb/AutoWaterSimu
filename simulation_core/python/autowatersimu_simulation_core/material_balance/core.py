@@ -180,6 +180,8 @@ class MaterialBalanceCalculator:
         model_mask: torch.Tensor | None,
         compute_mask: torch.Tensor,
         params: torch.Tensor | None,
+        component_indices: torch.Tensor | None = None,
+        oxygen_index: int | None = None,
     ) -> Dict[str, torch.Tensor] | None:
         if model_mask is None or params is None:
             return None
@@ -189,11 +191,16 @@ class MaterialBalanceCalculator:
         if active_indices.numel() == 0:
             return None
 
-        return {
+        runtime = {
             "mask": active_mask,
             "indices": active_indices,
             "params": params.index_select(0, active_indices),
         }
+        if component_indices is not None:
+            runtime["component_indices"] = component_indices
+            if oxygen_index is not None:
+                runtime["oxygen_index"] = int(component_indices[oxygen_index].item())
+        return runtime
 
     def _resolve_active_reaction_runtime(
         self,
@@ -206,6 +213,54 @@ class MaterialBalanceCalculator:
             return runtime
         return self._build_active_reaction_runtime(model_mask, compute_mask, params)
 
+    def _resolve_asm_component_indices(
+        self,
+        node_type: str,
+        parameter_names: List[str],
+        has_named_schema: bool,
+    ) -> List[int]:
+        contract = ASM_COMPONENT_CONTRACTS[node_type]
+        expected_components = tuple(contract["components"])
+        expected_count = len(expected_components)
+
+        if len(parameter_names) < expected_count:
+            raise InvalidInputError(
+                "ASM component contract mismatch for node_type "
+                f"'{node_type}': requires at least {expected_count} components "
+                f"({', '.join(expected_components)}), got {len(parameter_names)}"
+            )
+
+        if not has_named_schema:
+            return list(range(expected_count))
+
+        positions: Dict[str, int] = {}
+        duplicates: List[str] = []
+        expected_set = set(expected_components)
+        for index, name in enumerate(parameter_names):
+            if name not in expected_set:
+                continue
+            if name in positions:
+                duplicates.append(name)
+                continue
+            positions[name] = index
+
+        if duplicates:
+            duplicate_names = ", ".join(sorted(set(duplicates)))
+            raise InvalidInputError(
+                "ASM component contract mismatch for node_type "
+                f"'{node_type}': duplicate component name(s) in schema: {duplicate_names}"
+            )
+
+        missing = [name for name in expected_components if name not in positions]
+        if missing:
+            raise InvalidInputError(
+                "ASM component contract mismatch for node_type "
+                f"'{node_type}': missing required component(s) "
+                f"[{', '.join(missing)}]"
+            )
+
+        return [positions[name] for name in expected_components]
+
     def _validate_asm_component_contracts(
         self,
         nodes: List[NodeData],
@@ -213,6 +268,7 @@ class MaterialBalanceCalculator:
         declared_parameter_names: List[str],
     ) -> None:
         has_named_schema = bool(declared_parameter_names)
+        validated_node_types: set[str] = set()
 
         for node in nodes:
             contract = ASM_COMPONENT_CONTRACTS.get(node.node_type)
@@ -233,14 +289,14 @@ class MaterialBalanceCalculator:
             if not has_named_schema:
                 continue
 
-            actual_prefix = tuple(parameter_names[:expected_count])
-            if actual_prefix != expected_components:
-                raise InvalidInputError(
-                    "ASM component contract mismatch for node "
-                    f"{node.node_id}: node_type '{node.node_type}' expects component "
-                    f"order [{', '.join(expected_components)}], got "
-                    f"[{', '.join(actual_prefix)}]"
-                )
+            if node.node_type in validated_node_types:
+                continue
+            self._resolve_asm_component_indices(
+                node_type=node.node_type,
+                parameter_names=parameter_names,
+                has_named_schema=True,
+            )
+            validated_node_types.add(node.node_type)
 
     def _apply_asm_reaction_runtime(
         self,
@@ -255,10 +311,25 @@ class MaterialBalanceCalculator:
 
         indices = runtime["indices"]
         params = runtime["params"]
-        rates = reaction_fn(params, y.index_select(0, indices))
-        concentration_change.index_add_(0, indices, rates)
-        if concentration_change.shape[1] > oxygen_index:
-            concentration_change[indices, oxygen_index] = 0.0
+        component_indices = runtime.get("component_indices")
+        if component_indices is None:
+            rates = reaction_fn(params, y.index_select(0, indices))
+            concentration_change.index_add_(0, indices, rates)
+            oxygen_global_index = oxygen_index
+        else:
+            local_y = y.index_select(0, indices).index_select(1, component_indices)
+            rates = reaction_fn(params, local_y)
+            expanded_rates = torch.zeros(
+                (indices.numel(), concentration_change.shape[1]),
+                dtype=concentration_change.dtype,
+                device=concentration_change.device,
+            )
+            expanded_rates.index_copy_(1, component_indices, rates)
+            concentration_change.index_add_(0, indices, expanded_rates)
+            oxygen_global_index = runtime.get("oxygen_index", oxygen_index)
+
+        if concentration_change.shape[1] > oxygen_global_index:
+            concentration_change[indices, oxygen_global_index] = 0.0
 
 
     def _convert_to_tensors(self, input_data: MaterialBalanceInput) -> Dict[str, Any]:
@@ -281,6 +352,24 @@ class MaterialBalanceCalculator:
             parameter_names=global_component_names,
             declared_parameter_names=declared_component_names,
         )
+        has_named_component_schema = bool(declared_component_names)
+
+        def _component_indices_for(node_type: str) -> torch.Tensor | None:
+            if not any(node.node_type == node_type for node in nodes):
+                return None
+            return torch.tensor(
+                self._resolve_asm_component_indices(
+                    node_type,
+                    global_component_names,
+                    has_named_component_schema,
+                ),
+                dtype=torch.long,
+                device=device,
+            )
+
+        asm1slim_component_indices = _component_indices_for("asm1slim")
+        asm1_component_indices = _component_indices_for("asm1")
+        asm3_component_indices = _component_indices_for("asm3")
 
         # 1) 鑺傜偣寮犻噺锛氫竴娆℃€у垪琛ㄦ帹瀵?-> 寮犻噺
         V_liq = torch.tensor(
@@ -371,16 +460,22 @@ class MaterialBalanceCalculator:
             asm1slim_mask,
             compute_mask,
             asm1slim_params,
+            component_indices=asm1slim_component_indices,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm1slim"]["oxygen_index"],
         )
         asm1_reaction_runtime = self._build_active_reaction_runtime(
             asm1_mask,
             compute_mask,
             asm1_params,
+            component_indices=asm1_component_indices,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm1"]["oxygen_index"],
         )
         asm3_reaction_runtime = self._build_active_reaction_runtime(
             asm3_mask,
             compute_mask,
             asm3_params,
+            component_indices=asm3_component_indices,
+            oxygen_index=ASM_COMPONENT_CONTRACTS["asm3"]["oxygen_index"],
         )
 
 

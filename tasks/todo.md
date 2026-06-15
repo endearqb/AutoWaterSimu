@@ -1,3 +1,27 @@
+# 2026-06-15 simulation_core ASM schema-driven component reorder TODO
+
+- [x] Re-read simulation_core material_balance runtime, ASM kernels, PR-39 status, and component-contract boundary tests.
+- [x] Confirm this slice completes core ASM schema-driven gather/scatter, not legacy route schema migration, PR-11 unified RHS, solver/output clamp changes, worker strict default, or Go API work.
+- [x] Precompute ASM component index tensors from named metadata and scatter reaction rates back to global component columns.
+- [x] Replace named-order rejection with missing/duplicate required component guards and focused schema-driven reorder tests.
+- [x] Update correctness audit/docs/README First records and v1.4 PR-39 status.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep existing ASM reaction kernels and model-local column order unchanged.
+- When `customParameters` metadata exists, map each ASM model's required component names to global tensor columns regardless of order.
+- When metadata is absent, preserve legacy prefix behavior with a minimum component count guard.
+- Scatter ASM reaction rates only into mapped global columns; extra global components remain untouched.
+
+## Review
+
+- ASM reaction runtime now carries model-local `component_indices` and a global `oxygen_index`; `_apply_asm_reaction_runtime()` gathers `y` into model-local order and scatters rates back to global columns.
+- Named schema order no longer has to be a model prefix; missing or duplicate required ASM components fail in `_convert_to_tensors()`.
+- Extra global components are not written by ASM reactions, and metadata-less legacy inputs retain prefix behavior with minimum component count guard.
+- Validation passed: focused boundary suite (75 passed), `simulation_core\tests` (82 passed), `docs\rebuild\simulation_core` (6 passed, 1 skipped), correctness-freeze audit (passed, 0 hard violations/open gaps), Phase 0 golden (passed, 12 full runs, 7 micro goldens, 0 hard violations/open gaps), `pr-fast` (status passed), and `git diff --check -- .` (only LF-to-CRLF notices).
+- Legacy route schema metadata migration and PR-11 unified RHS remain open.
+
 # 2026-06-15 backend material_balance top-level model export cleanup TODO
 
 - [x] Re-read backend/material_balance/services/routes/tests README and current v1.4 PR-30/PR-31 checklist status.
@@ -42,7 +66,7 @@
 - `_convert_to_tensors()` fails fast on too few ASM concentration components for metadata-less legacy input and validates named component prefix order when `customParameters` metadata is present.
 - Contract fixtures for ASM1Slim/ASM1/ASM3 still convert successfully; named order mismatch and too-few metadata-less ASM components now raise `InvalidInputError`.
 - Validation passed: `simulation_core\tests` (79 passed), `docs\rebuild\simulation_core` (6 passed, 1 skipped), correctness-freeze audit (passed, 0 hard violations/open gaps), Phase 0 golden (passed, 12 full runs, 7 micro goldens, 0 hard violations/open gaps), `pr-fast` (status passed), and `git diff --check -- .` (only LF-to-CRLF notices).
-- Legacy route schema metadata migration and true schema-driven ASM reordering remain open for later PR-39/PR-30 slices.
+- Legacy route schema metadata migration remains open for later PR-30/PR-39 slices; core ASM schema-driven reordering is handled by the later 22:22 slice.
 
 # 2026-06-15 backend material_balance model re-export TODO
 
