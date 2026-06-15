@@ -1,3 +1,26 @@
+# 2026-06-15 backend ASM/UDM runtime helper thin-shell TODO
+
+- [x] Re-read backend material_balance, ASM, tests, scripts, rebuild, and current-state README context.
+- [x] Confirm this slice migrates backend ASM/UDM helper leaves to simulation_core re-exports, not completing full backend-only re-export, deleting legacy local input models, changing route schemas, changing simulation_core numerics, or implementing PR-11 unified RHS.
+- [x] Replace backend ASM helper modules, `udm_engine.py`, and `udm_ode.py` with dependency-backed compatibility re-exports.
+- [x] Add focused backend identity tests for ASM/UDM helper re-exports.
+- [x] Extend `audit-simulation-core-boundary.ps1` to guard runtime helper thin-shell state.
+- [x] Update backend/scripts/rebuild/current-state docs and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep backend import paths stable for legacy callers while making simulation_core the single runtime implementation for ASM/UDM helpers.
+- Treat private UDM helper re-exports as compatibility shims only; new behavior changes belong in simulation_core.
+- Leave `backend/app/material_balance/models.py`, legacy route schemas, and full PR-31 import-path deletion for later PR-30/PR-31 cleanup.
+
+## Review
+
+- Backend ASM/UDM helper import paths now re-export simulation_core implementations while preserving legacy module names.
+- Focused backend tests guard UDM and ASM helper object identity.
+- The simulation_core boundary audit now verifies runtime helper thin-shell state and still reports 0 hard violations / 0 open gaps.
+- Full validation passed for backend focused tests, boundary audit, docs/rebuild tests, simulation_core tests, `pr-fast`, and `git diff --check`.
+
 # 2026-06-15 simulation_core PR-37 core-only f64 golden TODO
 
 - [x] Re-read v1.4 PR-37 requirements, simulation_core/tests README, boundary audit, backend delegation preflight, and current Phase 0 golden evidence context.

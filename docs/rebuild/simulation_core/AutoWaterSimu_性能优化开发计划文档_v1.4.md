@@ -28,6 +28,7 @@
 - `scripts/ci/performance-go-api-latency-phase0.ps1` 已建立 P-06 本地内存 Compute API latency smoke;当前 job list/get/worker claim wall-time evidence 为 `passed`,`claim_scanned_rows` 仅预留字段。
 - `scripts/ci/worker-adapter-strict-smoke.ps1` 已建立 P-05 worker adapter strict opt-in smoke;当前 8/8 valid compute_job fixtures strict mode 通过,默认仍为 `compat`。
 - P-04 backend compatibility cleanup 已完成旧本地 material_balance input models compatibility boundary:生产 runtime 不再可静默 import backend-local `MaterialBalanceInput` / `NodeData` / `EdgeData` / `CalculationParameters`,旧手工脚本已标注为非 pytest/非 runtime 证据。
+- backend ASM/UDM runtime helper 叶子已薄壳化:`backend/app/material_balance/asm/*`、`udm_engine.py` 与 `udm_ode.py` 现在 re-export `autowatersimu_simulation_core.material_balance` 对应实现,并由 boundary audit 与 backend object-identity tests 保护；这只是 PR-31 的 helper 迁移切片,不代表 backend 仅 re-export 或 PR-30 input models cleanup 已完成。
 - `scripts/ci/worker-packaged-no-fallback-smoke.ps1` 已建立 P-07 packaged sidecar no-fallback evidence;当前真实 PyInstaller one-folder sidecar self-check / minimal job 为 `passed`,且 `deprecated_repo_path_fallback_used=false`;worker runtime fallback 删除已完成,该 smoke 继续作为回归证据。
 - `transport-runtime-tensor-precompute-no-semantics` 已落地:无 `edge_overrides` 的 segment 复用 `_convert_to_tensors` 预计算 runtime edge tensors;有 override 的 segment 继续 clone/rebuild。
 - `udm-expression-cache-and-device-sync-reduction` 已落地:`compile_expression()` 使用 LRU 缓存,UDM runtime 构建期预计算 active node index set、local-to-global Python int 索引、component/index pairs 与 fixed component indices,UDM RHS/evaluate_reaction 热路径不再用逐步 `.item()` 判断 mask 或映射。
@@ -44,7 +45,7 @@
 3. P-03 `perf-phase0-golden-generator` 已完成,后续若改变 correctness-freeze 行为、fixture、solver matrix 或文档化 golden/repro 测试,必须重新生成 golden evidence。
 4. P-08 `udm-rhs-hotpath-prereview` 已完成,且第一批 `transport-runtime-tensor-precompute-no-semantics`、第二批 `udm-expression-cache-and-device-sync-reduction`、`asm-stable-reaction-runtime-precompute`、UDM solver bucket breakdown、PR-32 dense/sparse parallel-edge unification、PR-33 dense lazy / `_balance_param` shape guard、PR-34 输出网格解耦、PR-35 真实质量守恒指标与 PR-13a 表达式校验器白名单化已落地；后续热路径实现需先复核最新 baseline/profiling/golden/prereview evidence,再进入 solver 默认值/矩阵或完整统一 RHS 等更高风险切片。
 5. PR-38 supported mixed-model dispatch 与 PR-39 当前 ASM 氧清零 active compute mask 约束已落地；后续完整 PR-39 组分契约、PR-11 全统一 RHS、PR-12 输出投影、PR-36 solver 矩阵仍需独立切片。
-6. P-04 backend compatibility cleanup、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke、P-07 packaged sidecar no-fallback evidence 与 worker runtime fallback 删除已完成;后续 ASM/UDM helper 迁移或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
+6. P-04 backend compatibility cleanup、backend ASM/UDM runtime helper thin-shell、P-05 worker strict rollout opt-in evidence、P-06 Go API latency smoke、P-07 packaged sidecar no-fallback evidence 与 worker runtime fallback 删除已完成;后续 backend input model cleanup 或高风险性能 PR 不得替代 P-01/P-02/P-03/P-08 的证据链。
 
 与旧 PR 编号的映射:
 
@@ -53,7 +54,7 @@
 | P-01 mixed fixture | PR-1~3 baseline harness | 已补齐 current-state mixed baseline；后续保持 12-run baseline 通过 |
 | P-02 profiling artifacts | PR-21 profiling | 已输出 profiler evidence;P-08 前必须复核热点占比 |
 | P-03 golden generator | PR-22 / PR-37 | 已输出 CPU/f64/fixed-seed full-run 与 L1/L2 micro golden evidence，且 6 个历史 backend parity 用例已迁为 core-only committed f64 golden；后续保持 core-only/backend oracle 独立 |
-| P-04 backend cleanup | PR-30 / PR-31 收尾 | 已完成旧本地 input models compatibility boundary；ASM/UDM helper 迁移和真正删除 compatibility import path 需另开 PR |
+| P-04 backend cleanup | PR-30 / PR-31 收尾 | 已完成旧本地 input models compatibility boundary 与 ASM/UDM helper thin-shell；真正删除 compatibility import path、input models cleanup 和 legacy route schema 迁移需另开 PR |
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；worker runtime fallback 删除已完成，该 evidence 继续作回归 gate |
@@ -129,6 +130,8 @@ PR-17~19。
 
 ### PR-31:backend material_balance 薄壳化【Phase 1 末,关键路径终点】
 `backend/app/material_balance/__init__.py` 改为从 `autowatersimu_simulation_core.material_balance` re-export(`MaterialBalanceCalculator`/模型/异常);删除 backend 的 core.py/udm_*.py/asm/ 副本;漂移守卫切换为"backend 仅含 re-export"断言。统一去 BOM/行尾。v1.4 补充:mojibake 属 GBK-over-UTF8,开工前先批量无损还原并归档原中文注释(例如 `乱码.encode('gbk').decode('utf-8')`),再决定英文重写,避免丢失 ASM/UDM 物理含义说明。回滚:revert 恢复副本(过渡期保留 tag)。
+
+**当前实现状态（2026-06-15）**：PR-31 helper 叶子迁移已完成一段：backend `asm` package、`udm_engine.py` 与 `udm_ode.py` 现在是 dependency-backed compatibility re-export，真实实现来自 `autowatersimu_simulation_core.material_balance`；`backend/app/tests/material_balance_runtime_helpers_thin_shell_test.py` 与 `scripts/audit-simulation-core-boundary.ps1` 已守住 object identity 与边界。该状态仍不等于完整 PR-31 完成：legacy `backend/app/material_balance/models.py` local input models、legacy FastAPI route schema 与顶层 compatibility import path 仍需 PR-30/PR-31 后续切片处理。
 
 ### PR-32:并行边 dense/sparse 语义统一【Phase 2】
 决策以 sparse 为准;`_convert_to_tensors`/`_build_runtime_edge_tensors` 检测并行边:dense fallback 报错,或 dense 合并等效 `a_eff=Σq_i a_i/Σq_i`、`b_eff` 加权。新增并行边 golden(L2 dense/sparse 等价)。
@@ -286,7 +289,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 ---
 
 ## 9. 上线检查清单
-- [ ] 单一来源决策+守卫;backend 仅 re-export(KPI-013)。
+- [ ] 单一来源决策+守卫;backend 仅 re-export(KPI-013；calculator/exceptions/utils/ASM/UDM helper leaves 已薄壳化，legacy input models/import path 与 FastAPI route schema 仍待)。
 - [x] simulation_core 可安装,sys.path hack 已删。
 - [x] core-only pytest collect/run 在无 backend/SQLModel 环境通过;backend-dependent parity 测试已物理拆分。
 - [ ] 输入模型契约统一,死代码清理,app.models 入核走校验。

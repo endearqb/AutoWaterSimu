@@ -389,6 +389,12 @@ $backendModelsPath = Join-Path $backendMaterialBalance "models.py"
 $coreModelsPath = Join-Path $corePackage "material_balance\models.py"
 $backendUtilsPath = Join-Path $backendMaterialBalance "utils.py"
 $coreUtilsPath = Join-Path $corePackage "material_balance\utils.py"
+$backendUdmEnginePath = Join-Path $backendMaterialBalance "udm_engine.py"
+$coreUdmEnginePath = Join-Path $corePackage "material_balance\udm_engine.py"
+$backendUdmOdePath = Join-Path $backendMaterialBalance "udm_ode.py"
+$coreUdmOdePath = Join-Path $corePackage "material_balance\udm_ode.py"
+$backendAsmPath = Join-Path $backendMaterialBalance "asm"
+$coreAsmPath = Join-Path $corePackage "material_balance\asm"
 $backendServicesPath = Join-Path $Root "backend\app\services"
 $backendApiRoutesPath = Join-Path $Root "backend\app\api\routes"
 $backendSimulationInputAdapterPath = Join-Path $backendServicesPath "simulation_input_adapter.py"
@@ -495,6 +501,103 @@ if ($backendDeclaresSimulationCoreDependency -and $backendUtilsThinShellDetected
 else {
     Add-Check -Checks $checks -Name "backend material_balance utils thin shell" -Status "gap" -Summary "Legacy backend material_balance utility helpers have not been migrated to simulation_core re-exports." -Details $backendUtilsThinShellDetails
     Add-OpenGap -Gaps $openGaps -Id "backend-material-balance-utils-thin-shell-missing" -Severity "medium" -Summary "Move dead-code-candidate backend material_balance utility helpers to simulation_core re-exports before broader model/helper cleanup." -Evidence $backendUtilsThinShellDetails
+}
+
+$runtimeHelperReexports = @(
+    [ordered]@{
+        role = "udm_engine"
+        backend = $backendUdmEnginePath
+        core = $coreUdmEnginePath
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.udm_engine'
+        required_exports = @("UDMNodeRuntime", "build_udm_runtime_payload")
+    },
+    [ordered]@{
+        role = "udm_ode"
+        backend = $backendUdmOdePath
+        core = $coreUdmOdePath
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.udm_ode'
+        required_exports = @("UDMNodeRuntime", "udm_ode_balance")
+    },
+    [ordered]@{
+        role = "asm_common"
+        backend = Join-Path $backendAsmPath "common.py"
+        core = Join-Path $coreAsmPath "common.py"
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.asm\.common'
+        required_exports = @("safe_div", "monod", "inhibition")
+    },
+    [ordered]@{
+        role = "asm1slim"
+        backend = Join-Path $backendAsmPath "asm1slim.py"
+        core = Join-Path $coreAsmPath "asm1slim.py"
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.asm\.asm1slim'
+        required_exports = @("reaction")
+    },
+    [ordered]@{
+        role = "asm1"
+        backend = Join-Path $backendAsmPath "asm1.py"
+        core = Join-Path $coreAsmPath "asm1.py"
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.asm\.asm1'
+        required_exports = @("reaction")
+    },
+    [ordered]@{
+        role = "asm2d"
+        backend = Join-Path $backendAsmPath "asm2d.py"
+        core = Join-Path $coreAsmPath "asm2d.py"
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.asm\.asm2d'
+        required_exports = @("rates", "dC_dt")
+    },
+    [ordered]@{
+        role = "asm3"
+        backend = Join-Path $backendAsmPath "asm3.py"
+        core = Join-Path $coreAsmPath "asm3.py"
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.asm\.asm3'
+        required_exports = @("reaction")
+    },
+    [ordered]@{
+        role = "asm_package"
+        backend = Join-Path $backendAsmPath "__init__.py"
+        core = Join-Path $coreAsmPath "__init__.py"
+        module_pattern = 'autowatersimu_simulation_core\.material_balance\.asm'
+        required_exports = @("safe_div", "asm1slim_reaction", "asm1_reaction", "asm2d_rates", "asm2d_dC_dt", "asm3_reaction")
+    }
+)
+$runtimeHelperReexportDetails = [System.Collections.Generic.List[object]]::new()
+$runtimeHelperReexportGaps = [System.Collections.Generic.List[object]]::new()
+foreach ($item in @($runtimeHelperReexports)) {
+    $backendPath = [string]$item["backend"]
+    $corePath = [string]$item["core"]
+    $text = if (Test-Path -LiteralPath $backendPath) { Get-Content -LiteralPath $backendPath -Raw } else { "" }
+    $missingExports = @()
+    foreach ($exportName in @($item["required_exports"])) {
+        if ($text -notmatch [regex]::Escape($exportName)) {
+            $missingExports += $exportName
+        }
+    }
+    $detected = (
+        (Test-Path -LiteralPath $backendPath) -and
+        (Test-Path -LiteralPath $corePath) -and
+        ($text -match [string]$item["module_pattern"]) -and
+        $missingExports.Count -eq 0
+    )
+    $detail = [ordered]@{
+        role = $item["role"]
+        backend = if (Test-Path -LiteralPath $backendPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendPath } else { $null }
+        core = if (Test-Path -LiteralPath $corePath) { ConvertTo-RepoRelativePath -Root $Root -Path $corePath } else { $null }
+        thin_shell_detected = $detected
+        required_exports = $item["required_exports"]
+        missing_exports = $missingExports
+    }
+    $runtimeHelperReexportDetails.Add($detail) | Out-Null
+    if (-not $detected) {
+        $runtimeHelperReexportGaps.Add($detail) | Out-Null
+    }
+}
+if ($backendDeclaresSimulationCoreDependency -and $runtimeHelperReexportGaps.Count -eq 0) {
+    Add-Check -Checks $checks -Name "backend material_balance runtime helper thin shells" -Status "passed" -Summary "Legacy backend ASM/UDM helper import paths are compatibility re-exports of simulation_core helper modules." -Details @($runtimeHelperReexportDetails)
+}
+else {
+    Add-Check -Checks $checks -Name "backend material_balance runtime helper thin shells" -Status "gap" -Summary "Legacy backend ASM/UDM helper import paths are not fully migrated to simulation_core re-exports." -Details @($runtimeHelperReexportDetails)
+    Add-OpenGap -Gaps $openGaps -Id "backend-material-balance-runtime-helper-thin-shells-missing" -Severity "medium" -Summary "Move backend ASM/UDM helper leaves to simulation_core compatibility re-exports before claiming backend material_balance only re-exports core runtime helpers." -Evidence @($runtimeHelperReexportDetails)
 }
 
 $backendSimulationInputAdapterText = if (Test-Path -LiteralPath $backendSimulationInputAdapterPath) { Get-Content -LiteralPath $backendSimulationInputAdapterPath -Raw } else { "" }

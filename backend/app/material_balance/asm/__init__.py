@@ -1,8 +1,13 @@
-from .common import safe_div
-from .asm1slim import reaction as asm1slim_reaction
-from .asm1 import reaction as asm1_reaction
-from .asm3 import reaction as asm3_reaction
-from .asm2d import rates as asm2d_rates, dC_dt as asm2d_dC_dt
+"""Compatibility re-export package for ASM runtime helpers."""
+
+from autowatersimu_simulation_core.material_balance.asm import (
+    asm1_reaction,
+    asm1slim_reaction,
+    asm2d_dC_dt,
+    asm2d_rates,
+    asm3_reaction,
+    safe_div,
+)
 
 __all__ = [
     "safe_div",

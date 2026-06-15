@@ -8,7 +8,7 @@
 
 - FastAPI app entrypoint、router 注册和异常处理接入。
 - SQLModel 数据模型、CRUD、数据库初始化和 Alembic migration。
-- legacy 计算 API、服务层、物料衡算/ASM/UDM runtime 和后端测试。
+- legacy 计算 API、服务层、物料衡算兼容入口和后端测试。
 
 本目录不负责：
 
@@ -24,7 +24,7 @@
 | `api/` | HTTP route 聚合与各业务 route |
 | `core/` | 配置、数据库、安全、日志、错误处理、WebSocket manager |
 | `models.py` | legacy SQLModel 数据表和 API model |
-| `material_balance/` | legacy material balance / ASM / UDM runtime |
+| `material_balance/` | legacy material balance compatibility import paths；calculator、ASM/UDM helpers、exceptions 和 utils 由 simulation_core re-export |
 | `services/` | route 之外的业务服务与迁移 adapter |
 | `tests/` | backend pytest |
 

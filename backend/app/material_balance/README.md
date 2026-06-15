@@ -2,14 +2,14 @@
 
 ## 1. 目录职责
 
-本目录保存 legacy backend 的物料衡算、ASM 和 UDM runtime。
+本目录保存 legacy backend 的物料衡算兼容导入路径。
 
 本目录负责：
 
 - legacy `MaterialBalanceCalculator` import path compatibility；实际 calculator 委托 `simulation_core` runtime。
 - compatibility-only legacy Pydantic/SQLModel input/result import paths。
-- ASM1/ASM1Slim/ASM2d/ASM3 runtime helper。
-- UDM ODE、表达式绑定和节点 runtime。
+- ASM1/ASM1Slim/ASM2d/ASM3 runtime helper compatibility import paths；实际实现 re-export `simulation_core`。
+- UDM ODE、表达式绑定和节点 runtime compatibility import paths；实际实现 re-export `simulation_core`。
 
 本目录不负责：
 
@@ -24,8 +24,8 @@
 | `core.py` | compatibility entrypoint that re-exports `autowatersimu_simulation_core.material_balance.core.MaterialBalanceCalculator` |
 | `models.py` | compatibility-only legacy local input/result import path；not the active runtime input contract for new backend/core migration work |
 | `simple_test.py`、`test_module.py` | legacy compatibility-only manual scripts；not pytest targets, production runtime paths, or current input-contract evidence |
-| `asm/` | ASM runtime helper |
-| `udm_engine.py`、`udm_ode.py` | UDM runtime and ODE support |
+| `asm/` | compatibility re-export package for `autowatersimu_simulation_core.material_balance.asm` |
+| `udm_engine.py`、`udm_ode.py` | compatibility re-export of `autowatersimu_simulation_core.material_balance` UDM runtime / ODE helpers |
 | `utils.py` | compatibility re-export of `autowatersimu_simulation_core.material_balance.utils` |
 | `exceptions.py` | compatibility re-export of `autowatersimu_simulation_core.material_balance.exceptions` |
 
@@ -35,14 +35,14 @@
 2. 大时间序列不应写入主表 JSON；route/service 层应只入库 summary 或 artifact reference。
 3. 数值相关改动必须补充 targeted tests，避免只通过 API smoke 判断。
 4. 与 `simulation_core/python/.../material_balance` 出现差异时，应明确记录是 legacy bugfix 还是 core migration 差异。
-5. `core.py`、`exceptions.py`、calculator result model 与 `utils.py` 已 thin-shell 化；保持 backend/core calculator class identity、exception class identity、calculator 返回值 class identity 和 utility helper object identity，不要重新定义本地 calculator、异常类、本地构造结果模型或本地复制 utility helper。
+5. `core.py`、`exceptions.py`、calculator result model、`utils.py`、ASM helpers 与 UDM helpers 已 thin-shell 化；保持 backend/core calculator class identity、exception class identity、calculator 返回值 class identity、utility helper object identity 和 ASM/UDM helper object identity，不要重新定义本地 calculator、异常类、本地构造结果模型或本地复制 helper。
 6. `models.py` 的旧输入模型只保留 compatibility-only import path；legacy FastAPI route schema 仍来自 `app.models.MaterialBalanceInput`，新 backend/core migration work 的 runtime input contract 应显式使用 `autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput`。
 7. `simple_test.py` 与 `test_module.py` 只是旧本地模型的手工兼容脚本，不作为生产入口、pytest baseline 或性能前置证据；新增代码不得依赖它们证明 runtime 合同。
-8. `models.py` 的旧本地输入模型、ASM/UDM helpers 仍未迁移，不得把 calculator thin shell 误读为整文件 re-export、legacy route schema 变更、worker strict mode 变更或热路径性能优化完成。
+8. `models.py` 的旧本地输入模型仍未迁移，不得把 runtime helper thin shell 误读为整文件 re-export、legacy route schema 变更、worker strict mode 变更或热路径性能优化完成。
 
 ## 4. 对外接口
 
-本目录对 routes、services、backend tests 和 migration adapter 暴露 calculator compatibility path、legacy compatibility models、ASM/UDM helpers。
+本目录对 routes、services、backend tests 和 migration adapter 暴露 calculator compatibility path、legacy compatibility models、ASM/UDM helper compatibility paths。
 
 ## 5. 依赖边界
 
@@ -62,6 +62,7 @@
 
 ```powershell
 cd backend; .venv\Scripts\python -m pytest app\tests\material_balance_exceptions_thin_shell_test.py app\tests\material_balance_result_thin_shell_test.py app\tests\material_balance_utils_thin_shell_test.py -q
+cd backend; .venv\Scripts\python -m pytest app\tests\material_balance_runtime_helpers_thin_shell_test.py app\tests\udm_engine_variable_binding_test.py -q
 cd backend; .venv\Scripts\python -m pytest app\tests\material_balance_calculator_thin_shell_test.py app\tests\material_balance_compat_models_boundary_test.py app\tests\services\simulation_input_adapter_boundary_test.py app\tests\material_balance_calculator_delegation_preflight_test.py -q
 cd backend; .venv\Scripts\python -m pytest app\tests\time_segment_validation_test.py app\tests\material_balance_segment_overrides_test.py app\tests\hybrid_udm_validation_test.py app\tests\udm_engine_variable_binding_test.py -q
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-boundary.ps1
