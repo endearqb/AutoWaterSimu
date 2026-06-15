@@ -18,7 +18,6 @@ LEGACY_LOCAL_INPUT_NAMES = {
     "NodeData",
 }
 ALLOWED_COMPATIBILITY_IMPORT_FILES = {
-    "backend/app/material_balance/__init__.py",
     "backend/app/material_balance/models.py",
 }
 EXCLUDED_PRODUCTION_FILES = {
@@ -72,6 +71,7 @@ def test_local_material_balance_models_are_marked_compatibility_only() -> None:
 
     assert "Compatibility re-export for material balance runtime models" in models_text
     assert "autowatersimu_simulation_core.material_balance.models" in models_text
+    assert "package root no longer re-exports runtime input/result models" in init_text
     assert "Local input models: removed from this package" in init_text
     assert "legacy route schema still lives in app.models" in init_text
 
@@ -82,6 +82,13 @@ def test_material_balance_models_are_core_reexports() -> None:
 
     for name in LEGACY_LOCAL_INPUT_NAMES | {"MaterialBalanceResult"}:
         assert getattr(backend_models, name) is getattr(core_models, name)
+
+
+def test_material_balance_package_root_does_not_export_runtime_models() -> None:
+    import app.material_balance as backend_material_balance
+
+    for name in LEGACY_LOCAL_INPUT_NAMES | {"MaterialBalanceResult"}:
+        assert not hasattr(backend_material_balance, name)
 
 
 def test_production_code_does_not_import_local_material_balance_input_models() -> None:

@@ -639,7 +639,9 @@ $backendMaterialBalanceInitPath = Join-Path $backendMaterialBalance "__init__.py
 $backendMaterialBalanceInitText = if (Test-Path -LiteralPath $backendMaterialBalanceInitPath) { Get-Content -LiteralPath $backendMaterialBalanceInitPath -Raw } else { "" }
 $backendMaterialBalanceInitCompatibilityMarked = (
     $backendMaterialBalanceInitText -match 'Local input models: removed from this package' -and
-    $backendMaterialBalanceInitText -match 'legacy route schema still lives in app\.models'
+    $backendMaterialBalanceInitText -match 'legacy route schema still lives in app\.models' -and
+    $backendMaterialBalanceInitText -match 'package root no longer re-exports runtime input/result models' -and
+    $backendMaterialBalanceInitText -notmatch 'from\s+\.models\s+import'
 )
 
 $backendAppFiles = Get-PythonFiles -Path $backendAppPath
@@ -665,7 +667,6 @@ $legacyLocalInputImportHitsAll = @(
         -Rule "backend-production-must-not-import-local-material-balance-input-models"
 )
 $legacyLocalInputImportAllowedFiles = @(
-    "backend/app/material_balance/__init__.py",
     "backend/app/material_balance/models.py"
 )
 $legacyLocalInputImportHits = @(
@@ -677,7 +678,7 @@ $backendCompatibilityModelsDetails = [ordered]@{
     compatibility_model_reexports = if (Test-Path -LiteralPath $backendModelsPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendModelsPath } else { $null }
     material_balance_init = if (Test-Path -LiteralPath $backendMaterialBalanceInitPath) { ConvertTo-RepoRelativePath -Root $Root -Path $backendMaterialBalanceInitPath } else { $null }
     local_models_core_reexport_detected = $backendLocalModelsCoreReexportDetected
-    init_compatibility_marked = $backendMaterialBalanceInitCompatibilityMarked
+    package_root_model_exports_removed = $backendMaterialBalanceInitCompatibilityMarked
     allowed_compatibility_import_files = $legacyLocalInputImportAllowedFiles
     forbidden_production_import_hits = $legacyLocalInputImportHits
 }
@@ -687,13 +688,13 @@ $backendCompatibilityModelsBoundaryPassed = (
     $legacyLocalInputImportHits.Count -eq 0
 )
 if ($backendCompatibilityModelsBoundaryPassed) {
-    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "passed" -Summary "Legacy app.material_balance.models import path re-exports simulation_core runtime models, and production code does not import it outside compatibility package entrypoints." -Details $backendCompatibilityModelsDetails
+    Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "passed" -Summary "Legacy app.material_balance.models import path re-exports simulation_core runtime models, package root model exports are removed, and production code does not import local material_balance input models outside the explicit models compatibility module." -Details $backendCompatibilityModelsDetails
 }
 else {
     Add-Check -Checks $checks -Name "backend material_balance compatibility models boundary" -Status "failed" -Summary "Legacy app.material_balance.models import path is not a safe simulation_core model re-export." -Details $backendCompatibilityModelsDetails
     $hardViolations.Add([ordered]@{
         rule = "backend-material-balance-compatibility-models-boundary"
-        summary = "Do not reintroduce backend/app/material_balance/models.py local input model copies; keep the legacy import path as a simulation_core model re-export."
+        summary = "Do not reintroduce backend/app/material_balance/models.py local input model copies or package-root runtime model exports; keep the explicit models import path as a simulation_core model re-export."
         details = $backendCompatibilityModelsDetails
     }) | Out-Null
 }

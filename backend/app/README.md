@@ -24,7 +24,7 @@
 | `api/` | HTTP route 聚合与各业务 route |
 | `core/` | 配置、数据库、安全、日志、错误处理、WebSocket manager |
 | `models.py` | legacy SQLModel 数据表和 API model |
-| `material_balance/` | legacy material balance compatibility import paths；calculator、ASM/UDM helpers、exceptions 和 utils 由 simulation_core re-export |
+| `material_balance/` | legacy material balance compatibility import paths；calculator、errors、ASM/UDM helpers、exceptions 和 utils 由 simulation_core re-export，runtime models 仅通过 `app.material_balance.models` 显式兼容路径暴露 |
 | `services/` | route 之外的业务服务与迁移 adapter |
 | `tests/` | backend pytest |
 

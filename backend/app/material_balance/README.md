@@ -7,7 +7,7 @@
 本目录负责：
 
 - legacy `MaterialBalanceCalculator` import path compatibility；实际 calculator 委托 `simulation_core` runtime。
-- compatibility-only runtime model import paths；实际模型 re-export `simulation_core`。
+- compatibility-only runtime model import path `models.py`；实际模型 re-export `simulation_core`。
 - ASM1/ASM1Slim/ASM2d/ASM3 runtime helper compatibility import paths；实际实现 re-export `simulation_core`。
 - UDM ODE、表达式绑定和节点 runtime compatibility import paths；实际实现 re-export `simulation_core`。
 
@@ -36,9 +36,9 @@
 3. 数值相关改动必须补充 targeted tests，避免只通过 API smoke 判断。
 4. 与 `simulation_core/python/.../material_balance` 出现差异时，应明确记录是 legacy bugfix 还是 core migration 差异。
 5. `core.py`、`exceptions.py`、calculator result model、`utils.py`、ASM helpers 与 UDM helpers 已 thin-shell 化；保持 backend/core calculator class identity、exception class identity、calculator 返回值 class identity、utility helper object identity 和 ASM/UDM helper object identity，不要重新定义本地 calculator、异常类、本地构造结果模型或本地复制 helper。
-6. `models.py` 只保留 compatibility re-export；legacy FastAPI route schema 仍来自 `app.models.MaterialBalanceInput`，service 入口必须在调用 calculator 前把它重新校验为 `autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput`。
+6. `models.py` 只保留 compatibility re-export；包根 `app.material_balance` 不再 re-export runtime input/result models。legacy FastAPI route schema 仍来自 `app.models.MaterialBalanceInput`，service 入口必须在调用 calculator 前把它重新校验为 `autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput`。
 7. `simple_test.py` 与 `test_module.py` 只是旧本地模型的手工兼容脚本，不作为生产入口、pytest baseline 或性能前置证据；新增代码不得依赖它们证明 runtime 合同。
-8. `models.py` 兼容路径已 thin-shell 化，不得把它误读为 legacy route schema 变更、`app.models` 删除、worker strict mode 变更或热路径性能优化完成。
+8. `models.py` 兼容路径已 thin-shell 化且是唯一 legacy material_balance runtime model 兼容路径；不得把它误读为 legacy route schema 变更、`app.models` 删除、worker strict mode 变更或热路径性能优化完成。
 
 ## 4. 对外接口
 

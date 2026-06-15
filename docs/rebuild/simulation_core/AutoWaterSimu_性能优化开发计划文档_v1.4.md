@@ -27,7 +27,7 @@
 - `scripts/ci/performance-hotpath-prereview-phase0.ps1` 已建立 P-08 hot-path prereview evidence;当前第一批候选为 `transport-runtime-tensor-precompute-no-semantics`,并已输出 UDM solver bucket breakdown 作为 KPI-001 / KPI-003 求解器维度证据。
 - `scripts/ci/performance-go-api-latency-phase0.ps1` 已建立 P-06 本地内存 Compute API latency smoke;当前 job list/get/worker claim wall-time evidence 为 `passed`,`claim_scanned_rows` 仅预留字段。
 - `scripts/ci/worker-adapter-strict-smoke.ps1` 已建立 P-05 worker adapter strict opt-in smoke;当前 8/8 valid compute_job fixtures strict mode 通过,默认仍为 `compat`。
-- P-04 backend compatibility cleanup 已完成 `app.material_balance.models` 旧导入路径薄壳化:该模块现在 re-export simulation_core runtime input/result models，生产 runtime 不再可静默 import backend-local `MaterialBalanceInput` / `NodeData` / `EdgeData` / `CalculationParameters` 副本，旧手工脚本已标注为非 pytest/非 runtime 证据。
+- P-04 backend compatibility cleanup 已完成 `app.material_balance.models` 旧导入路径薄壳化:该模块现在 re-export simulation_core runtime input/result models，`app.material_balance` 包根 model re-export 已移除，生产 runtime 不再可静默 import backend-local `MaterialBalanceInput` / `NodeData` / `EdgeData` / `CalculationParameters` 副本，旧手工脚本已标注为非 pytest/非 runtime 证据。
 - legacy backend calculation services 已在 calculator 调用前通过 `material_balance_input_to_core_runtime()` 将 `app.models.MaterialBalanceInput` 重新校验为 simulation_core runtime `MaterialBalanceInput`；未知 runtime 字段由 core `extra="forbid"` 拦截。legacy FastAPI route schema 与本地 input model 删除仍待后续。
 - backend ASM/UDM runtime helper 叶子已薄壳化:`backend/app/material_balance/asm/*`、`udm_engine.py` 与 `udm_ode.py` 现在 re-export `autowatersimu_simulation_core.material_balance` 对应实现,并由 boundary audit 与 backend object-identity tests 保护；这只是 PR-31 的 helper 迁移切片,不代表 backend 仅 re-export 或 PR-30 input models cleanup 已完成。
 - `scripts/ci/worker-packaged-no-fallback-smoke.ps1` 已建立 P-07 packaged sidecar no-fallback evidence;当前真实 PyInstaller one-folder sidecar self-check / minimal job 为 `passed`,且 `deprecated_repo_path_fallback_used=false`;worker runtime fallback 删除已完成,该 smoke 继续作为回归证据。
@@ -55,7 +55,7 @@
 | P-01 mixed fixture | PR-1~3 baseline harness | 已补齐 current-state mixed baseline；后续保持 12-run baseline 通过 |
 | P-02 profiling artifacts | PR-21 profiling | 已输出 profiler evidence;P-08 前必须复核热点占比 |
 | P-03 golden generator | PR-22 / PR-37 | 已输出 CPU/f64/fixed-seed full-run 与 L1/L2 micro golden evidence，且 6 个历史 backend parity 用例已迁为 core-only committed f64 golden；后续保持 core-only/backend oracle 独立 |
-| P-04 backend cleanup | PR-30 / PR-31 收尾 | 已完成 `app.material_balance.models` core re-export、app.models service-layer runtime revalidation 与 ASM/UDM helper thin-shell；legacy `app.models` route schema 迁移需另开 PR |
+| P-04 backend cleanup | PR-30 / PR-31 收尾 | 已完成 `app.material_balance.models` core re-export、`app.material_balance` package-root model export removal、app.models service-layer runtime revalidation 与 ASM/UDM helper thin-shell；legacy `app.models` route schema 迁移需另开 PR |
 | P-05 worker strict rollout | PR-23 | 已完成 opt-in/统计/迁移策略；默认 strict 切换仍需另开 PR |
 | P-06 Go latency smoke | PR-13/14/15/26/27 前置 | 已有 claim/list/claim POST 实测 baseline；后续 keyset、LIMIT、索引需另开 PR 基于该 evidence 判断收益 |
 | P-07 no-fallback evidence | PR-29 后续 | 已证明 packaged sidecar 不需要 fallback；worker runtime fallback 删除已完成，该 evidence 继续作回归 gate |
@@ -129,12 +129,12 @@ PR-17~19。
 ### PR-30:输入模型契约统一与死代码清理【Phase 1,薄壳化前置】
 删 backend `material_balance/models.py` 死输入模型与 `utils.py`(无调用方);删 simulation_core `utils.py`;`asm1/asm3/udm_service` 的 `MaterialBalanceResult` 导入改指 simulation_core;`calculate()` 入参显式标注 simulation_core `MaterialBalanceInput`(或 Protocol),服务层对 `app.models`(SQLModel)对象做一次显式校验/转换。v1.4 补充:worker 当前通过真实 adapter 入核,风险低于 legacy backend 老路径,但 `NodeData`/`EdgeData extra="allow"` 必须决策为 `forbid` 或 `ignore + structured warning/log + 迁移审计`,防止错拼字段静默吞掉。测试:app.models 对象入核走完整校验的回归;未知/错拼字段按策略报错或可观测。
 
-**当前实现状态（2026-06-15）**：service-layer 入核校验已完成。`backend/app/services/material_balance_runtime_input.py` 将 legacy `app.models.MaterialBalanceInput` / dict 通过 `CoreMaterialBalanceInput.model_validate()` 重新校验为 simulation_core runtime model；material balance、ASM1Slim、ASM1、ASM3、UDM 五个 legacy calculation service 在调用 calculator 前都走该 helper；focused test 覆盖 legacy object 转 core input、未知 node 字段被 core `extra="forbid"` 拒绝和 core input passthrough。`backend/app/material_balance/models.py` 也已改为 simulation_core model re-export，不再保留本地 input/result 副本。该状态仍不删除 legacy route schema 或 `app.models.MaterialBalanceInput`。
+**当前实现状态（2026-06-15）**：service-layer 入核校验已完成。`backend/app/services/material_balance_runtime_input.py` 将 legacy `app.models.MaterialBalanceInput` / dict 通过 `CoreMaterialBalanceInput.model_validate()` 重新校验为 simulation_core runtime model；material balance、ASM1Slim、ASM1、ASM3、UDM 五个 legacy calculation service 在调用 calculator 前都走该 helper；focused test 覆盖 legacy object 转 core input、未知 node 字段被 core `extra="forbid"` 拒绝和 core input passthrough。`backend/app/material_balance/models.py` 也已改为 simulation_core model re-export，不再保留本地 input/result 副本，且 `app.material_balance` 包根不再导出 runtime models。该状态仍不删除 legacy route schema 或 `app.models.MaterialBalanceInput`。
 
 ### PR-31:backend material_balance 薄壳化【Phase 1 末,关键路径终点】
 `backend/app/material_balance/__init__.py` 改为从 `autowatersimu_simulation_core.material_balance` re-export(`MaterialBalanceCalculator`/模型/异常);删除 backend 的 core.py/udm_*.py/asm/ 副本;漂移守卫切换为"backend 仅含 re-export"断言。统一去 BOM/行尾。v1.4 补充:mojibake 属 GBK-over-UTF8,开工前先批量无损还原并归档原中文注释(例如 `乱码.encode('gbk').decode('utf-8')`),再决定英文重写,避免丢失 ASM/UDM 物理含义说明。回滚:revert 恢复副本(过渡期保留 tag)。
 
-**当前实现状态（2026-06-15）**：PR-31 helper/model 叶子迁移已完成一段：backend `asm` package、`udm_engine.py`、`udm_ode.py` 与 `app.material_balance.models` 现在是 dependency-backed compatibility re-export，真实实现来自 `autowatersimu_simulation_core.material_balance`；`backend/app/tests/material_balance_runtime_helpers_thin_shell_test.py`、`backend/app/tests/material_balance_compat_models_boundary_test.py` 与 `scripts/audit-simulation-core-boundary.ps1` 已守住 object identity 与边界。该状态仍不等于完整 PR-31 完成：legacy FastAPI route schema 与顶层 compatibility import path 仍需 PR-30/PR-31 后续切片处理。
+**当前实现状态（2026-06-15）**：PR-31 helper/model 叶子迁移已完成一段：backend `asm` package、`udm_engine.py`、`udm_ode.py` 与 `app.material_balance.models` 现在是 dependency-backed compatibility re-export，真实实现来自 `autowatersimu_simulation_core.material_balance`；`app.material_balance` 包根 model re-export 已移除，只保留 calculator/error 等非模型兼容入口；`backend/app/tests/material_balance_runtime_helpers_thin_shell_test.py`、`backend/app/tests/material_balance_compat_models_boundary_test.py` 与 `scripts/audit-simulation-core-boundary.ps1` 已守住 object identity 与边界。该状态仍不等于完整 PR-31 完成：legacy FastAPI route schema 仍需 PR-30/PR-31 后续切片处理。
 
 ### PR-32:并行边 dense/sparse 语义统一【Phase 2】
 决策以 sparse 为准;`_convert_to_tensors`/`_build_runtime_edge_tensors` 检测并行边:dense fallback 报错,或 dense 合并等效 `a_eff=Σq_i a_i/Σq_i`、`b_eff` 加权。新增并行边 golden(L2 dense/sparse 等价)。
@@ -292,7 +292,7 @@ Phase5 Go: PR-13 metrics → PR-14 索引对账 → PR-26 keyset → PR-27第一
 ---
 
 ## 9. 上线检查清单
-- [ ] 单一来源决策+守卫;backend 仅 re-export(KPI-013；calculator/exceptions/utils/models/ASM/UDM helper leaves 已薄壳化，service app.models 入核校验已完成，legacy FastAPI route schema 与顶层 compatibility import path 删除仍待)。
+- [ ] 单一来源决策+守卫;backend 仅 re-export(KPI-013；calculator/exceptions/utils/models/ASM/UDM helper leaves 已薄壳化，`app.material_balance` 顶层 model export 已移除，service app.models 入核校验已完成，legacy FastAPI route schema 仍待)。
 - [x] simulation_core 可安装,sys.path hack 已删。
 - [x] core-only pytest collect/run 在无 backend/SQLModel 环境通过;backend-dependent parity 测试已物理拆分。
 - [ ] 输入模型契约统一,死代码清理,app.models 入核走校验（service 入核校验与 `app.material_balance.models` re-export 已完成；legacy `app.models` route schema 迁移仍待）。

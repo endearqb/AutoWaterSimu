@@ -12,8 +12,8 @@
 
 核心类：
 - MaterialBalanceCalculator: 兼容导入路径，实际委托 simulation_core 物料平衡计算器
-- MaterialBalanceInput / NodeData / EdgeData / CalculationParameters: 旧导入路径兼容 re-export，实际来自 simulation_core runtime model
-- MaterialBalanceResult: 旧导入路径兼容结果模型，实际来自 simulation_core
+- MaterialBalanceError / InvalidInputError / CalculationError: 兼容导入路径，实际来自 simulation_core
+- Runtime model compatibility path: use app.material_balance.models explicitly; package root no longer re-exports runtime input/result models.
 - Local input models: removed from this package; legacy route schema still lives in app.models.
 
 新 backend/core 迁移代码应继续显式使用
@@ -22,13 +22,6 @@ autowatersimu_simulation_core.material_balance.models.MaterialBalanceInput
 """
 
 from .core import MaterialBalanceCalculator
-from .models import (
-    MaterialBalanceInput,
-    MaterialBalanceResult,
-    NodeData,
-    EdgeData,
-    CalculationParameters
-)
 from .exceptions import (
     MaterialBalanceError,
     InvalidInputError,
@@ -37,11 +30,6 @@ from .exceptions import (
 
 __all__ = [
     "MaterialBalanceCalculator",
-    "MaterialBalanceInput",
-    "MaterialBalanceResult", 
-    "NodeData",
-    "EdgeData",
-    "CalculationParameters",
     "MaterialBalanceError",
     "InvalidInputError",
     "CalculationError"

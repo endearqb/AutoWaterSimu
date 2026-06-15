@@ -1,3 +1,26 @@
+# 2026-06-15 backend material_balance top-level model export cleanup TODO
+
+- [x] Re-read backend/material_balance/services/routes/tests README and current v1.4 PR-30/PR-31 checklist status.
+- [x] Confirm this slice removes only `app.material_balance` top-level model exports, not `app.material_balance.models`, legacy FastAPI route schemas, OpenAPI clients, calculator behavior, worker strict defaults, or PR-11.
+- [x] Remove top-level runtime input/result model re-exports from `backend/app/material_balance/__init__.py`.
+- [x] Tighten backend boundary tests/audit so top-level package model re-export cannot return.
+- [x] Update backend/rebuild/current-state docs and README First records.
+- [x] Run validation matrix before phase-slice commit/push.
+
+## Plan
+
+- Keep `app.material_balance.models` as the explicit compatibility re-export for core runtime models.
+- Make `app.material_balance` expose calculator/errors only, so production code cannot treat the package root as a hidden input-model source.
+- Leave public HTTP request schemas on `app.models.MaterialBalanceInput`; route-schema migration remains a separate higher-risk slice.
+
+## Review
+
+- `app.material_balance` now exposes calculator/errors only; runtime model compatibility remains available through `app.material_balance.models`.
+- `material_balance_compat_models_boundary_test.py` now asserts package-root runtime model exports stay removed and AST scans only allow runtime model imports from `backend/app/material_balance/models.py`.
+- `scripts/audit-simulation-core-boundary.ps1` now treats package-root runtime model export as a hard boundary violation.
+- Validation passed: focused backend material_balance tests (6 passed, 1 warning), boundary audit (passed, 0 hard violations/open gaps), docs/rebuild simulation_core tests (6 passed, 1 skipped), `pr-fast` (status passed), and `git diff --check -- .` (only LF-to-CRLF notices). Initial root-cwd backend pytest attempt failed on missing Settings env vars before rerun from `backend/`.
+- Legacy `app.models` route schema migration remains open and was intentionally not changed.
+
 # 2026-06-15 simulation_core ASM component contract guard TODO
 
 - [x] Re-read simulation_core material_balance README, core model/calculator, ASM reaction kernels, core boundary tests, contract fixtures, and v1.4 PR-39 status.
