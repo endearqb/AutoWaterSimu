@@ -15,6 +15,9 @@ type MemoryStore struct {
 	benchmarkRuns     map[string]BenchmarkRunRecord
 	modelCatalogs     map[string][]ModelCatalogRecord
 	mutationAudits    []MutationAuditRecord
+	scenarios         map[string]ScenarioRecord
+	canvasGraphs      map[string][]CanvasGraphRecord
+	contextSnapshots  map[string]ContextSnapshotRecord
 	processGraphs     map[string]ProcessGraphRecord
 	inputs            map[string]SimulationInputRecord
 	confirmations     map[string]DraftConfirmationRecord
@@ -34,6 +37,9 @@ func NewMemoryStore() *MemoryStore {
 		benchmarkRuns:  map[string]BenchmarkRunRecord{},
 		modelCatalogs:  map[string][]ModelCatalogRecord{},
 		mutationAudits: []MutationAuditRecord{},
+		scenarios:      map[string]ScenarioRecord{},
+		canvasGraphs:   map[string][]CanvasGraphRecord{},
+		contextSnapshots: map[string]ContextSnapshotRecord{},
 		processGraphs:  map[string]ProcessGraphRecord{},
 		inputs:         map[string]SimulationInputRecord{},
 		confirmations:  map[string]DraftConfirmationRecord{},

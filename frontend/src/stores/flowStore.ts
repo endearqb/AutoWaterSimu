@@ -11,6 +11,9 @@ import {
   applyNodeChanges,
 } from "@xyflow/react"
 import { create } from "zustand"
+import { legacyFlowExportToCanvasGraph } from "@/contracts"
+import { computeWorkspaceApi } from "@/features/workspace/api"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import { FlowchartsService } from "../client/sdk.gen"
 import type {
   FlowChartCreate,
@@ -134,6 +137,56 @@ type RFState = {
 }
 
 const getDefaultFlowchartName = () => t("flow.menu.untitledFlowchart")
+
+const standaloneScenarioIdForGraph = (graphId: string) => `scenario_${graphId}`
+
+const canvasRecordPayloadToLegacyFlowData = (payload: any) => ({
+  ...payload,
+  customParameters:
+    payload?.customParameters ?? payload?.metadata?.customParameters ?? [],
+  calculationParameters:
+    payload?.calculationParameters ?? payload?.metadata?.calculationParameters,
+  timeSegments: payload?.timeSegments ?? payload?.metadata?.timeSegments ?? [],
+})
+
+const flowChartFromCanvasRecord = (record: any): FlowChartPublic =>
+  ({
+    id: record.graph_id,
+    name: record.name,
+    description: record.metadata?.description ?? "",
+    owner_id: record.requested_by || "standalone:developer",
+    created_at: record.created_at,
+    updated_at: record.created_at,
+    flow_data: canvasRecordPayloadToLegacyFlowData(record.payload),
+  }) as FlowChartPublic
+
+const ensureStandaloneScenario = async (
+  graphId: string,
+  name: string,
+  canvasGraphVersion = 1,
+) => {
+  const scenarioId = standaloneScenarioIdForGraph(graphId)
+  try {
+    await computeWorkspaceApi.createScenario({
+      scenario_id: scenarioId,
+      name,
+      model_family: "material_balance",
+      current_canvas_graph_id: graphId,
+      current_canvas_graph_version: canvasGraphVersion,
+    })
+  } catch {
+    try {
+      await computeWorkspaceApi.updateScenario(scenarioId, {
+        name,
+        current_canvas_graph_id: graphId,
+        current_canvas_graph_version: canvasGraphVersion,
+      })
+    } catch {
+      // Best-effort Scenario linkage keeps the legacy menu usable offline.
+    }
+  }
+  return scenarioId
+}
 
 const useFlowStore = create<RFState>((set, get) => ({
   nodes: [],
@@ -828,6 +881,51 @@ const useFlowStore = create<RFState>((set, get) => ({
   // 保存流程图到后端
   saveFlowChart: async (name: string, description?: string) => {
     try {
+      if (isStandaloneRuntime()) {
+        const flowExport = {
+          ...get().exportFlowData(),
+          name,
+        }
+        const graphId = String(flowExport.graph_id || get().currentFlowChartId)
+        const scenarioId = await ensureStandaloneScenario(graphId, name)
+        const canvasGraph = legacyFlowExportToCanvasGraph(
+          flowExport,
+          graphId,
+          name,
+        )
+        const metadata = { description: description || "" }
+        const response = get().currentFlowChartId
+          ? await computeWorkspaceApi.updateCanvasGraph({
+              graphId,
+              name,
+              scenarioId,
+              canvasGraph,
+              metadata,
+            })
+          : await computeWorkspaceApi.saveCanvasGraph({
+              graphId,
+              name,
+              scenarioId,
+              canvasGraph,
+              metadata,
+            })
+
+        await ensureStandaloneScenario(
+          response.graph_id,
+          response.name,
+          response.version,
+        )
+        set({
+          currentFlowChartId: response.graph_id,
+          currentFlowChartName: response.name,
+        })
+        return {
+          success: true,
+          message: t("flow.store.flowchart.saveSuccess"),
+          data: flowChartFromCanvasRecord(response),
+        }
+      }
+
       const { nodes, edges, customParameters, edgeParameterConfigs } = get()
 
       // 处理边数据，将自定义参数的a和b配置移动到边的data中
@@ -899,6 +997,31 @@ const useFlowStore = create<RFState>((set, get) => ({
   // 从后端加载流程图
   loadFlowChart: async (id: string) => {
     try {
+      if (isStandaloneRuntime()) {
+        const response = await computeWorkspaceApi.getCanvasGraph(id)
+        const importResult = get().importFlowData(
+          canvasRecordPayloadToLegacyFlowData(response.payload),
+          { restoreCalculationParams: true },
+        )
+
+        if (!importResult.success) {
+          return importResult
+        }
+
+        set({
+          currentFlowChartId: response.graph_id,
+          currentFlowChartName: response.name,
+          importedFileName: response.name,
+        })
+
+        useMaterialBalanceStore.getState().reset()
+
+        return {
+          success: true,
+          message: t("flow.store.flowchart.loadSuccess"),
+        }
+      }
+
       const response = await FlowchartsService.readFlowchart({ id })
 
       if (response?.flow_data) {
@@ -1015,6 +1138,36 @@ const useFlowStore = create<RFState>((set, get) => ({
   // 获取所有流程图列表
   getFlowCharts: async () => {
     try {
+      if (isStandaloneRuntime()) {
+        const response = await computeWorkspaceApi.listCanvasGraphs({
+          limit: 100,
+        })
+        const latestByGraphId = new Map<string, any>()
+
+        response.items.forEach((record) => {
+          if (record.archived_at) {
+            return
+          }
+
+          const existing = latestByGraphId.get(record.graph_id)
+          if (!existing || record.version > existing.version) {
+            latestByGraphId.set(record.graph_id, record)
+          }
+        })
+
+        const data = Array.from(latestByGraphId.values())
+          .sort((left, right) =>
+            right.created_at.localeCompare(left.created_at),
+          )
+          .map(flowChartFromCanvasRecord)
+
+        return {
+          success: true,
+          message: t("flow.store.flowchart.listSuccess"),
+          data,
+        }
+      }
+
       const response = await FlowchartsService.readFlowcharts({})
 
       if (response?.data) {
@@ -1043,6 +1196,44 @@ const useFlowStore = create<RFState>((set, get) => ({
   // 更新流程图
   updateFlowChart: async (id: string, name?: string, description?: string) => {
     try {
+      if (isStandaloneRuntime()) {
+        const flowExport = {
+          ...get().exportFlowData(),
+          graph_id: id,
+          name: name || get().currentFlowChartName || getDefaultFlowchartName(),
+        }
+        const resolvedName = String(flowExport.name)
+        const scenarioId = await ensureStandaloneScenario(id, resolvedName)
+        const canvasGraph = legacyFlowExportToCanvasGraph(
+          flowExport,
+          id,
+          resolvedName,
+        )
+        const response = await computeWorkspaceApi.updateCanvasGraph({
+          graphId: id,
+          name: resolvedName,
+          scenarioId,
+          canvasGraph,
+          metadata: { description: description || "" },
+        })
+
+        await ensureStandaloneScenario(
+          response.graph_id,
+          response.name,
+          response.version,
+        )
+        set({
+          currentFlowChartId: response.graph_id,
+          currentFlowChartName: response.name,
+        })
+
+        return {
+          success: true,
+          message: t("flow.store.flowchart.updateSuccess"),
+          data: flowChartFromCanvasRecord(response),
+        }
+      }
+
       const { nodes, edges, customParameters, edgeParameterConfigs } = get()
 
       // 处理边数据，将自定义参数的a和b配置移动到边的data中
@@ -1110,6 +1301,20 @@ const useFlowStore = create<RFState>((set, get) => ({
   // 删除流程图
   deleteFlowChart: async (id: string) => {
     try {
+      if (isStandaloneRuntime()) {
+        await computeWorkspaceApi.archiveCanvasGraph(id)
+
+        const { currentFlowChartId } = get()
+        if (currentFlowChartId === id) {
+          set({ currentFlowChartId: null })
+        }
+
+        return {
+          success: true,
+          message: t("flow.store.flowchart.deleteSuccess"),
+        }
+      }
+
       await FlowchartsService.deleteFlowchart({ id })
 
       // 如果删除的是当前流程图，清空当前ID

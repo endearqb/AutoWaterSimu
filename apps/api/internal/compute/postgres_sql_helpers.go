@@ -10,3 +10,10 @@ func nullString(value string) any {
 	}
 	return value
 }
+
+func nullInt(value int) any {
+	if value == 0 {
+		return nil
+	}
+	return value
+}

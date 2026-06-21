@@ -49,6 +49,17 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 	if err != nil {
 		return nil, "", err
 	}
+	metadata := map[string]any{
+		"source_system": snapshot.Job.SourceSystem,
+		"requested_by":  snapshot.Job.RequestedBy,
+		"trace_id":      snapshot.Job.TraceID,
+		"tenant_id":     snapshot.Job.TenantID,
+		"project_id":    snapshot.Job.ProjectID,
+		"site_id":       snapshot.Job.SiteID,
+	}
+	if contextSnapshotRef := contextSnapshotRefFromJobInput(snapshot.Job.InputJSON); contextSnapshotRef != "" {
+		metadata["context_snapshot_ref"] = contextSnapshotRef
+	}
 	evidence := map[string]any{
 		"schema_version":       "evidence_package.v1",
 		"evidence_package_id":  "evidence_" + safeIDPart(snapshot.Job.JobID),
@@ -70,14 +81,7 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 		"governance":   governance,
 		"warnings":     warnings,
 		"generated_at": svc.now().Format(time.RFC3339Nano),
-		"metadata": map[string]any{
-			"source_system": snapshot.Job.SourceSystem,
-			"requested_by":  snapshot.Job.RequestedBy,
-			"trace_id":      snapshot.Job.TraceID,
-			"tenant_id":     snapshot.Job.TenantID,
-			"project_id":    snapshot.Job.ProjectID,
-			"site_id":       snapshot.Job.SiteID,
-		},
+		"metadata":     metadata,
 	}
 	if svc.validator != nil {
 		if err := svc.validator.Validate("evidence_package.v1.json", evidence); err != nil {
@@ -89,6 +93,28 @@ func (svc *EvidenceGovernanceService) EvidencePackage(ctx context.Context, jobID
 		return nil, "", err
 	}
 	return evidence, checksum, nil
+}
+
+func contextSnapshotRefFromJobInput(input json.RawMessage) string {
+	var job map[string]any
+	if err := json.Unmarshal(input, &job); err != nil {
+		return ""
+	}
+	if ref := stringValue(mapValue(job, "context"), "context_snapshot_ref"); ref != "" {
+		return ref
+	}
+	if ref := stringValue(mapValue(job, "metadata"), "context_snapshot_ref"); ref != "" {
+		return ref
+	}
+	externalRefs := mapValue(mapValue(job, "context"), "external_refs")
+	if snapshotID := stringValue(externalRefs, "context_snapshot_id"); snapshotID != "" {
+		return "context_snapshot:" + snapshotID
+	}
+	externalRefs = mapValue(mapValue(job, "metadata"), "external_refs")
+	if snapshotID := stringValue(externalRefs, "context_snapshot_id"); snapshotID != "" {
+		return "context_snapshot:" + snapshotID
+	}
+	return ""
 }
 
 func (svc *EvidenceGovernanceService) evidenceGovernance(ctx context.Context, modelRuns []json.RawMessage, filter ModelCatalogSnapshotFilter) (map[string]any, error) {

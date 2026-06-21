@@ -9,6 +9,7 @@
 - Flow canvas state、model-specific flow stores and model config stores。
 - Material balance、ASM、UDM、tutorial progress and theme palette state。
 - Import/export legacy flow data and CanvasGraph-compatible metadata for Next bridge paths。
+- In standalone runtime, material balance `flowStore` save/load/list/update/delete is backed by Go Compute API Scenario/CanvasGraph workspace wrappers。
 
 本目录不负责：
 
@@ -32,6 +33,7 @@
 2. Shared factory 改动会影响 material balance、ASM 和 UDM，多模型验证必需。
 3. Legacy imported flow compatibility 不要静默删除；需要迁移时补 normalize/backfill。
 4. `flowStore.exportFlowData()` 仍需保留 legacy `nodes` / `edges` / `customParameters` / `calculationParameters` 字段，同时可携带 `canvas_graph.v1` 元数据供 Next Compute bridge 使用。
+5. `flowStore` 的 standalone persistence branch must keep legacy import/export compatibility by converting through `frontend/src/contracts` before calling `features/workspace/api.ts`; non-standalone mode must continue to use legacy `FlowchartsService`。
 
 ## 4. 对外接口
 

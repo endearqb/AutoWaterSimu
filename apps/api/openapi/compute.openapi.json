@@ -131,6 +131,235 @@
         }
       }
     },
+    "/api/v1/scenarios": {
+      "get": {
+        "operationId": "listScenarios",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Scenarios", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListScenariosResponse" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "post": {
+        "operationId": "createScenario",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioUpsertRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created scenario", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenario_id}": {
+      "get": {
+        "operationId": "getScenario",
+        "parameters": [{ "name": "scenario_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Scenario", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "patch": {
+        "operationId": "updateScenario",
+        "parameters": [{ "name": "scenario_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioUpsertRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Updated scenario", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "delete": {
+        "operationId": "archiveScenarioByDelete",
+        "parameters": [{ "name": "scenario_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Archived scenario", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenario_id}/clone": {
+      "post": {
+        "operationId": "cloneScenario",
+        "parameters": [{ "name": "scenario_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioCloneRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Cloned scenario", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenario_id}/archive": {
+      "post": {
+        "operationId": "archiveScenario",
+        "parameters": [{ "name": "scenario_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Archived scenario", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenario_id}/simulation-checks": {
+      "post": {
+        "operationId": "runScenarioSimulationCheck",
+        "parameters": [{ "name": "scenario_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScenarioRunRequest" } } }
+        },
+        "responses": {
+          "202": { "description": "Queued scenario simulation check", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "200": { "description": "Duplicate scenario simulation check", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JobSnapshot" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/canvas-graphs": {
+      "get": {
+        "operationId": "listCanvasGraphs",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "scenario_id", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Canvas graphs", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListCanvasGraphsResponse" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "post": {
+        "operationId": "saveCanvasGraph",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanvasGraphSaveRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Saved canvas graph version", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanvasGraphRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/canvas-graphs/{graph_id}": {
+      "get": {
+        "operationId": "getCanvasGraph",
+        "parameters": [
+          { "name": "graph_id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "version", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "responses": {
+          "200": { "description": "Canvas graph", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanvasGraphRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "patch": {
+        "operationId": "updateCanvasGraph",
+        "parameters": [{ "name": "graph_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanvasGraphSaveRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Saved new canvas graph version", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanvasGraphRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "delete": {
+        "operationId": "archiveCanvasGraphByDelete",
+        "parameters": [{ "name": "graph_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Archived canvas graph", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/canvas-graphs/{graph_id}/publish": {
+      "post": {
+        "operationId": "publishCanvasGraph",
+        "parameters": [
+          { "name": "graph_id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "version", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanvasGraphPublishRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Published process graph", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CanvasGraphPublishResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/context-snapshots": {
+      "get": {
+        "operationId": "listContextSnapshots",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "scenario_id", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Context snapshots", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListContextSnapshotsResponse" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "post": {
+        "operationId": "createContextSnapshot",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContextSnapshotCreateRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created context snapshot", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContextSnapshotRecord" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "409": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/context-snapshots/{context_snapshot_id}": {
+      "get": {
+        "operationId": "getContextSnapshot",
+        "parameters": [{ "name": "context_snapshot_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Context snapshot", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContextSnapshotRecord" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/compute/jobs/{job_id}": {
       "get": {
         "operationId": "getComputeJob",
@@ -689,6 +918,189 @@
           "metadata": { "type": "object", "additionalProperties": true },
           "created_at": { "type": "string", "format": "date-time" }
         }
+      },
+      "ScenarioRecord": {
+        "type": "object",
+        "required": ["scenario_id", "name", "model_family", "status", "version", "source_system", "requested_by", "created_at", "updated_at"],
+        "properties": {
+          "scenario_id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "model_family": { "type": "string" },
+          "status": { "type": "string" },
+          "version": { "type": "integer" },
+          "current_canvas_graph_id": { "type": "string" },
+          "current_canvas_graph_version": { "type": "integer" },
+          "published_process_graph_id": { "type": "string" },
+          "published_process_graph_version": { "type": "integer" },
+          "current_simulation_input_id": { "type": "string" },
+          "context_snapshot_id": { "type": "string" },
+          "source_scenario_id": { "type": "string" },
+          "last_job_id": { "type": "string" },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "site_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "archived_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ListScenariosResponse": {
+        "type": "object",
+        "required": ["items", "total_estimate"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ScenarioRecord" } },
+          "next_cursor": { "type": "string" },
+          "total_estimate": { "type": "integer" }
+        }
+      },
+      "ScenarioUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "scenario_id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "model_family": { "type": "string" },
+          "status": { "type": "string" },
+          "current_canvas_graph_id": { "type": "string" },
+          "current_canvas_graph_version": { "type": "integer" },
+          "published_process_graph_id": { "type": "string" },
+          "published_process_graph_version": { "type": "integer" },
+          "current_simulation_input_id": { "type": "string" },
+          "context_snapshot_id": { "type": "string" },
+          "last_job_id": { "type": "string" },
+          "source_system": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
+      },
+      "ScenarioCloneRequest": {
+        "type": "object",
+        "properties": {
+          "scenario_id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
+      },
+      "ScenarioRunRequest": {
+        "type": "object",
+        "properties": {
+          "request_id": { "type": "string" },
+          "job_type": { "type": "string" },
+          "idempotency_key": { "type": "string" },
+          "trace_id": { "type": "string" },
+          "simulation_input_id": { "type": "string" },
+          "parameters": { "type": "object", "additionalProperties": true },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
+      },
+      "CanvasGraph": { "type": "object", "additionalProperties": true },
+      "CanvasGraphRecord": {
+        "type": "object",
+        "required": ["graph_id", "schema_version", "name", "version", "payload_hash", "payload", "source_system", "requested_by", "created_at"],
+        "properties": {
+          "graph_id": { "type": "string" },
+          "scenario_id": { "type": "string" },
+          "schema_version": { "type": "string", "enum": ["canvas_graph.v1"] },
+          "name": { "type": "string" },
+          "version": { "type": "integer" },
+          "payload_hash": { "type": "string" },
+          "payload": { "$ref": "#/components/schemas/CanvasGraph" },
+          "source_system": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "site_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "archived_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ListCanvasGraphsResponse": {
+        "type": "object",
+        "required": ["items", "total_estimate"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/CanvasGraphRecord" } },
+          "next_cursor": { "type": "string" },
+          "total_estimate": { "type": "integer" }
+        }
+      },
+      "CanvasGraphSaveRequest": {
+        "type": "object",
+        "required": ["canvas_graph"],
+        "properties": {
+          "scenario_id": { "type": "string" },
+          "graph_id": { "type": "string" },
+          "name": { "type": "string" },
+          "canvas_graph": { "$ref": "#/components/schemas/CanvasGraph" },
+          "source_system": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
+      },
+      "CanvasGraphPublishRequest": {
+        "type": "object",
+        "properties": {
+          "process_graph": { "$ref": "#/components/schemas/ProcessGraph" },
+          "parameters": { "type": "object", "additionalProperties": true },
+          "simulation_input_id": { "type": "string" },
+          "register_simulation_input": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      },
+      "CanvasGraphPublishResponse": {
+        "type": "object",
+        "required": ["canvas_graph", "process_graph"],
+        "properties": {
+          "canvas_graph": { "$ref": "#/components/schemas/CanvasGraphRecord" },
+          "process_graph": { "$ref": "#/components/schemas/ProcessGraphRecord" },
+          "simulation_input": { "$ref": "#/components/schemas/SimulationInputRecord" },
+          "validation": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ContextSnapshotRecord": {
+        "type": "object",
+        "required": ["context_snapshot_id", "schema_version", "source_system", "captured_at", "payload_hash", "payload", "created_at"],
+        "properties": {
+          "context_snapshot_id": { "type": "string" },
+          "scenario_id": { "type": "string" },
+          "schema_version": { "type": "string", "enum": ["context_snapshot.v1"] },
+          "source_system": { "type": "string" },
+          "captured_at": { "type": "string", "format": "date-time" },
+          "payload_hash": { "type": "string" },
+          "payload": { "type": "object", "additionalProperties": true },
+          "tenant_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "site_id": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ListContextSnapshotsResponse": {
+        "type": "object",
+        "required": ["items", "total_estimate"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ContextSnapshotRecord" } },
+          "next_cursor": { "type": "string" },
+          "total_estimate": { "type": "integer" }
+        }
+      },
+      "ContextSnapshotCreateRequest": {
+        "type": "object",
+        "properties": {
+          "context_snapshot_id": { "type": "string" },
+          "scenario_id": { "type": "string" },
+          "source_system": { "type": "string" },
+          "context": { "type": "object", "additionalProperties": true },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
       },
       "ContractError": {
         "type": "object",

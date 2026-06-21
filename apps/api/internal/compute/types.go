@@ -105,6 +105,148 @@ type MutationAuditFilter struct {
 	TargetID     string
 }
 
+type ScenarioRecord struct {
+	ScenarioID                   string          `json:"scenario_id"`
+	Name                         string          `json:"name"`
+	Description                  string          `json:"description,omitempty"`
+	ModelFamily                  string          `json:"model_family"`
+	Status                       string          `json:"status"`
+	Version                      int             `json:"version"`
+	CurrentCanvasGraphID         string          `json:"current_canvas_graph_id,omitempty"`
+	CurrentCanvasGraphVersion    int             `json:"current_canvas_graph_version,omitempty"`
+	PublishedProcessGraphID      string          `json:"published_process_graph_id,omitempty"`
+	PublishedProcessGraphVersion int             `json:"published_process_graph_version,omitempty"`
+	CurrentSimulationInputID     string          `json:"current_simulation_input_id,omitempty"`
+	ContextSnapshotID            string          `json:"context_snapshot_id,omitempty"`
+	SourceScenarioID             string          `json:"source_scenario_id,omitempty"`
+	LastJobID                    string          `json:"last_job_id,omitempty"`
+	SourceSystem                 string          `json:"source_system"`
+	RequestedBy                  string          `json:"requested_by"`
+	TenantID                     string          `json:"tenant_id,omitempty"`
+	ProjectID                    string          `json:"project_id,omitempty"`
+	SiteID                       string          `json:"site_id,omitempty"`
+	Metadata                     json.RawMessage `json:"metadata,omitempty"`
+	CreatedAt                    time.Time       `json:"created_at"`
+	UpdatedAt                    time.Time       `json:"updated_at"`
+	ArchivedAt                   *time.Time      `json:"archived_at,omitempty"`
+}
+
+type ListScenariosResponse struct {
+	Items         []ScenarioRecord `json:"items"`
+	NextCursor    string           `json:"next_cursor,omitempty"`
+	TotalEstimate int              `json:"total_estimate"`
+}
+
+type ScenarioUpsertRequest struct {
+	ScenarioID                   string         `json:"scenario_id,omitempty"`
+	Name                         string         `json:"name,omitempty"`
+	Description                  string         `json:"description,omitempty"`
+	ModelFamily                  string         `json:"model_family,omitempty"`
+	Status                       string         `json:"status,omitempty"`
+	CurrentCanvasGraphID         string         `json:"current_canvas_graph_id,omitempty"`
+	CurrentCanvasGraphVersion    int            `json:"current_canvas_graph_version,omitempty"`
+	PublishedProcessGraphID      string         `json:"published_process_graph_id,omitempty"`
+	PublishedProcessGraphVersion int            `json:"published_process_graph_version,omitempty"`
+	CurrentSimulationInputID     string         `json:"current_simulation_input_id,omitempty"`
+	ContextSnapshotID            string         `json:"context_snapshot_id,omitempty"`
+	LastJobID                    string         `json:"last_job_id,omitempty"`
+	SourceSystem                 string         `json:"source_system,omitempty"`
+	Metadata                     map[string]any `json:"metadata,omitempty"`
+}
+
+type ScenarioCloneRequest struct {
+	ScenarioID  string         `json:"scenario_id,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+}
+
+type ScenarioRunRequest struct {
+	RequestID         string         `json:"request_id,omitempty"`
+	JobType           string         `json:"job_type,omitempty"`
+	IdempotencyKey    string         `json:"idempotency_key,omitempty"`
+	TraceID           string         `json:"trace_id,omitempty"`
+	SimulationInputID string         `json:"simulation_input_id,omitempty"`
+	Parameters        map[string]any `json:"parameters,omitempty"`
+	Metadata          map[string]any `json:"metadata,omitempty"`
+}
+
+type CanvasGraphRecord struct {
+	GraphID       string          `json:"graph_id"`
+	ScenarioID    string          `json:"scenario_id,omitempty"`
+	SchemaVersion string          `json:"schema_version"`
+	Name          string          `json:"name"`
+	Version       int             `json:"version"`
+	PayloadHash   string          `json:"payload_hash"`
+	Payload       json.RawMessage `json:"payload"`
+	SourceSystem  string          `json:"source_system"`
+	RequestedBy   string          `json:"requested_by"`
+	TenantID      string          `json:"tenant_id,omitempty"`
+	ProjectID     string          `json:"project_id,omitempty"`
+	SiteID        string          `json:"site_id,omitempty"`
+	Metadata      json.RawMessage `json:"metadata,omitempty"`
+	CreatedAt     time.Time       `json:"created_at"`
+	ArchivedAt    *time.Time      `json:"archived_at,omitempty"`
+}
+
+type ListCanvasGraphsResponse struct {
+	Items         []CanvasGraphRecord `json:"items"`
+	NextCursor    string              `json:"next_cursor,omitempty"`
+	TotalEstimate int                 `json:"total_estimate"`
+}
+
+type CanvasGraphSaveRequest struct {
+	ScenarioID   string         `json:"scenario_id,omitempty"`
+	GraphID      string         `json:"graph_id,omitempty"`
+	Name         string         `json:"name,omitempty"`
+	CanvasGraph  map[string]any `json:"canvas_graph,omitempty"`
+	SourceSystem string         `json:"source_system,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+}
+
+type CanvasGraphPublishRequest struct {
+	ProcessGraph            map[string]any `json:"process_graph,omitempty"`
+	Parameters              map[string]any `json:"parameters,omitempty"`
+	SimulationInputID       string         `json:"simulation_input_id,omitempty"`
+	RegisterSimulationInput bool           `json:"register_simulation_input,omitempty"`
+}
+
+type CanvasGraphPublishResponse struct {
+	CanvasGraph     CanvasGraphRecord      `json:"canvas_graph"`
+	ProcessGraph    ProcessGraphRecord     `json:"process_graph"`
+	SimulationInput *SimulationInputRecord `json:"simulation_input,omitempty"`
+	Validation      map[string]any         `json:"validation,omitempty"`
+}
+
+type ContextSnapshotRecord struct {
+	ContextSnapshotID string          `json:"context_snapshot_id"`
+	ScenarioID        string          `json:"scenario_id,omitempty"`
+	SchemaVersion     string          `json:"schema_version"`
+	SourceSystem      string          `json:"source_system"`
+	CapturedAt        time.Time       `json:"captured_at"`
+	PayloadHash       string          `json:"payload_hash"`
+	Payload           json.RawMessage `json:"payload"`
+	TenantID          string          `json:"tenant_id,omitempty"`
+	ProjectID         string          `json:"project_id,omitempty"`
+	SiteID            string          `json:"site_id,omitempty"`
+	Metadata          json.RawMessage `json:"metadata,omitempty"`
+	CreatedAt         time.Time       `json:"created_at"`
+}
+
+type ListContextSnapshotsResponse struct {
+	Items         []ContextSnapshotRecord `json:"items"`
+	NextCursor    string                  `json:"next_cursor,omitempty"`
+	TotalEstimate int                     `json:"total_estimate"`
+}
+
+type ContextSnapshotCreateRequest struct {
+	ContextSnapshotID string         `json:"context_snapshot_id,omitempty"`
+	ScenarioID        string         `json:"scenario_id,omitempty"`
+	SourceSystem      string         `json:"source_system,omitempty"`
+	Context           map[string]any `json:"context,omitempty"`
+	Metadata          map[string]any `json:"metadata,omitempty"`
+}
+
 type ArtifactRecord struct {
 	ArtifactID      string          `json:"artifact_id"`
 	JobID           string          `json:"job_id"`

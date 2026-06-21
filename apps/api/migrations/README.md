@@ -9,6 +9,7 @@
 - Versioned SQL up/down migrations for compute metadata。
 - Job、worker、artifact、event、model run 等平台 metadata 表结构。
 - Model catalog、process graph、simulation input、draft confirmation、result explanation 等合同 payload metadata 表结构。
+- Scenario、CanvasGraph、ContextSnapshot 等 standalone workspace metadata 表结构。
 
 本目录不负责：
 
@@ -35,6 +36,7 @@
 | `0012_simulation_registry_site_scope.*.sql` | optional `process_graphs.site_id` and `simulation_inputs.site_id` metadata for registry read-scope checks |
 | `0013_draft_confirmation_site_scope.*.sql` | optional `draft_confirmations.site_id` metadata for confirmation read-scope checks |
 | `0014_model_catalog_site_scope.*.sql` | optional `model_catalogs.site_id` metadata and scope index for catalog snapshot read-scope checks |
+| `0015_workspace_objects.*.sql` | standalone `simulation_scenarios`、`canvas_graphs` 和 `context_snapshots` metadata tables |
 
 ## 3. 维护约定
 
@@ -47,6 +49,7 @@
 7. Result explanation records are audit metadata only; publish status must not be treated as production approval or control publication.
 8. Benchmark run records are execution history only; they must not automatically change parameter set lifecycle state or production approval.
 9. `mutation_audit_events` stores compact audit envelopes for non-job-scoped selected mutations; do not store full model catalog, benchmark run, artifact, result, or time-series payloads in audit event JSON.
+10. `canvas_graphs` stores versioned `canvas_graph.v1` payload metadata and hashes; publish derived `process_graph.v1` records rather than storing executable simulation inputs in the canvas table.
 
 ## 4. 对外接口
 

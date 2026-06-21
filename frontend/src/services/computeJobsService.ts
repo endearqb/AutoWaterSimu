@@ -3,6 +3,7 @@ import { computeJobApi } from "@/features/compute-jobs/api"
 import { computeSimulationRegistryApi } from "@/features/compute-jobs/processGraphApi"
 import { computeArtifactsApi } from "@/features/lifecycle/api"
 import { computeModelGovernanceApi } from "@/features/model-governance/api"
+import { computeWorkspaceApi } from "@/features/workspace/api"
 
 export {
   buildComputeJobFromFlowExport,
@@ -40,4 +41,5 @@ export const computeJobsService = {
   ...computeModelGovernanceApi,
   ...computeContractsApi,
   ...computeSimulationRegistryApi,
+  ...computeWorkspaceApi,
 }

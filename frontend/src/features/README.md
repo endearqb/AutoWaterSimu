@@ -23,6 +23,7 @@
 | `lifecycle/` | Artifact retention/download 和 evidence package download wrapper |
 | `model-governance/` | Model catalog、model run、benchmark run 和 parameter set governance wrapper |
 | `contracts/` | Contract validation、draft confirmation 和 result explanation workflow wrapper |
+| `workspace/` | Scenario、CanvasGraph 和 ContextSnapshot workspace wrapper |
 | `evidence/` | 预留 evidence-specific feature 边界；当前 evidence ref/download 仍随 job/lifecycle wrapper 暴露 |
 
 ## 3. 维护约定

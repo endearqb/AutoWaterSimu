@@ -12,6 +12,7 @@
 - model catalog snapshot registration/read/list query with tenant/project/site scoped reads for persisted snapshots, scoped registration/status mutation checks, default parameter set status transition document projection, default parameter set promotion planning, evidence-backed default parameter set approval promotion, benchmark case job scheduling, and model run persistence/list/search/read query。
 - benchmark case metadata and queueing for model governance smoke。
 - benchmark run execution history metadata。
+- standalone scenario, canvas graph, and context snapshot workspace metadata for Scenario/Graph persistence。
 - process graph registry and ProcessGraph-to-SimulationInput resolution for simulation checks。
 - simulation input registry for reference-based simulation checks。
 - evidence package export。
@@ -24,6 +25,7 @@
 - persistent draft confirmation audit records with tenant/project/site mutation/read-scope, while still preventing confirm-draft from creating jobs or production actions。
 - read-only advisory constraint application plans for approved constraint draft confirmations。
 - evidence-backed result explanation submit/review/publish audit records。
+- standalone workspace Scenario/CanvasGraph/ContextSnapshot CRUD, CanvasGraph publish-to-ProcessGraph, and Scenario simulation-check run paths。
 - explicit approved Agent draft promotion to simulation-check jobs when the embedded proposed request is already schema-valid。
 - admin-scoped artifact retention sweep API for manual dry-run/delete operations with tenant/project/site scoped candidate filtering。
 - optional disabled-by-default artifact retention scheduler。

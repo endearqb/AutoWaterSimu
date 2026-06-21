@@ -8,6 +8,7 @@
 
 - 加载 `contracts/*.v1.json` JSON Schema。
 - 根据 `schema_version` 解析 schema 文件名。
+- 支持 `canvas_graph.v1` 等 Compute API workspace/input 合同的 schema lookup。
 - 提供 domain-free validator，供 compute compatibility package 和后续 domain package 复用。
 - 提供 domain-free contract document validation response 基底。
 
@@ -29,8 +30,9 @@
 
 1. 本 package 不得 import `apps/api/internal/compute`。
 2. 新增合同 schema 时同步检查 `contracts/registry.json`、`contracts/codegen/manifest.json`、本 package 的 schema list，以及 `scripts/check-contracts.ps1`。
-3. Validator errors 使用 platform error，由 compute 映射为 `contract_error.v1`。
-4. `DocumentValidationResponse` 不包含 compute metadata record；需要附加 draft confirmation record 时由 compute wrapper 负责。
+3. `canvas_graph.v1` 用于 standalone CanvasGraph 持久化和 publish-to-ProcessGraph 校验；不要在 validator 中放入 workspace 业务逻辑。
+4. Validator errors 使用 platform error，由 compute 映射为 `contract_error.v1`。
+5. `DocumentValidationResponse` 不包含 compute metadata record；需要附加 draft confirmation record 时由 compute wrapper 负责。
 
 ## 4. 对外接口
 

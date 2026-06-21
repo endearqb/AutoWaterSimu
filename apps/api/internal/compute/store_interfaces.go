@@ -16,6 +16,9 @@ type Store interface {
 	BenchmarkRunStore
 	ModelCatalogStore
 	MutationAuditStore
+	ScenarioStore
+	CanvasGraphStore
+	ContextSnapshotStore
 	ProcessGraphStore
 	SimulationInputStore
 	DraftConfirmationStore
@@ -78,6 +81,27 @@ type MutationAuditStore interface {
 	ListMutationAuditEvents(ctx context.Context, filter MutationAuditFilter) ([]MutationAuditRecord, string, int, error)
 }
 
+type ScenarioStore interface {
+	InsertScenario(ctx context.Context, record ScenarioRecord) error
+	UpdateScenario(ctx context.Context, record ScenarioRecord) error
+	FindScenario(ctx context.Context, scenarioID string) (*ScenarioRecord, error)
+	ListScenarios(ctx context.Context, filter ScenarioFilter) ([]ScenarioRecord, string, int, error)
+}
+
+type CanvasGraphStore interface {
+	InsertCanvasGraph(ctx context.Context, record CanvasGraphRecord) error
+	FindCanvasGraph(ctx context.Context, graphID string, version int) (*CanvasGraphRecord, error)
+	LatestCanvasGraph(ctx context.Context, graphID string) (*CanvasGraphRecord, error)
+	ListCanvasGraphs(ctx context.Context, filter CanvasGraphFilter) ([]CanvasGraphRecord, string, int, error)
+	ArchiveCanvasGraph(ctx context.Context, graphID string, archivedAt time.Time) error
+}
+
+type ContextSnapshotStore interface {
+	InsertContextSnapshot(ctx context.Context, record ContextSnapshotRecord) error
+	FindContextSnapshot(ctx context.Context, snapshotID string) (*ContextSnapshotRecord, error)
+	ListContextSnapshots(ctx context.Context, filter ContextSnapshotFilter) ([]ContextSnapshotRecord, string, int, error)
+}
+
 type ProcessGraphStore interface {
 	UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord, audit *MutationAuditRecord) (bool, error)
 	FindProcessGraph(ctx context.Context, processGraphID string, version int) (*ProcessGraphRecord, error)
@@ -114,6 +138,33 @@ type ListFilter struct {
 	SiteID        string
 	CreatedAfter  *time.Time
 	CreatedBefore *time.Time
+}
+
+type ScenarioFilter struct {
+	Limit     int
+	Cursor    string
+	Status    string
+	TenantID  string
+	ProjectID string
+	SiteID    string
+}
+
+type CanvasGraphFilter struct {
+	Limit      int
+	Cursor     string
+	ScenarioID string
+	TenantID   string
+	ProjectID  string
+	SiteID     string
+}
+
+type ContextSnapshotFilter struct {
+	Limit      int
+	Cursor     string
+	ScenarioID string
+	TenantID   string
+	ProjectID  string
+	SiteID     string
 }
 
 type ModelRunFilter struct {

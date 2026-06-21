@@ -126,6 +126,61 @@ export type BenchmarkRunRecord = {
     created_at: string;
 };
 
+export type CanvasGraph = {
+    [key: string]: unknown;
+};
+
+export type CanvasGraphPublishRequest = {
+    process_graph?: ProcessGraph;
+    parameters?: {
+        [key: string]: unknown;
+    };
+    simulation_input_id?: string;
+    register_simulation_input?: boolean;
+};
+
+export type CanvasGraphPublishResponse = {
+    canvas_graph: CanvasGraphRecord;
+    process_graph: ProcessGraphRecord;
+    simulation_input?: SimulationInputRecord;
+    validation?: {
+        [key: string]: unknown;
+    };
+};
+
+export type CanvasGraphRecord = {
+    graph_id: string;
+    scenario_id?: string;
+    schema_version: 'canvas_graph.v1';
+    name: string;
+    version: number;
+    payload_hash: string;
+    payload: CanvasGraph;
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    site_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    created_at: string;
+    archived_at?: string;
+};
+
+export type schema_version3 = 'canvas_graph.v1';
+
+export type CanvasGraphSaveRequest = {
+    scenario_id?: string;
+    graph_id?: string;
+    name?: string;
+    canvas_graph: CanvasGraph;
+    source_system?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
 export type ClaimResponse = {
     [key: string]: unknown;
 };
@@ -153,9 +208,42 @@ export type ConstraintApplicationPlan = {
     warnings: Array<(string)>;
 };
 
-export type schema_version3 = 'constraint_application_plan.v1';
+export type schema_version4 = 'constraint_application_plan.v1';
 
 export type application_mode = 'advisory_only';
+
+export type ContextSnapshotCreateRequest = {
+    context_snapshot_id?: string;
+    scenario_id?: string;
+    source_system?: string;
+    context?: {
+        [key: string]: unknown;
+    };
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type ContextSnapshotRecord = {
+    context_snapshot_id: string;
+    scenario_id?: string;
+    schema_version: 'context_snapshot.v1';
+    source_system: string;
+    captured_at: string;
+    payload_hash: string;
+    payload: {
+        [key: string]: unknown;
+    };
+    tenant_id?: string;
+    project_id?: string;
+    site_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    created_at: string;
+};
+
+export type schema_version5 = 'context_snapshot.v1';
 
 export type ContractError = {
     schema_version: 'contract_error.v1';
@@ -167,7 +255,7 @@ export type ContractError = {
     };
 };
 
-export type schema_version4 = 'contract_error.v1';
+export type schema_version6 = 'contract_error.v1';
 
 export type ContractValidationIssue = {
     path: string;
@@ -184,7 +272,7 @@ export type ContractValidationResponse = {
     confirmation_record?: DraftConfirmationRecord;
 };
 
-export type schema_version5 = 'contract_validation.v1';
+export type schema_version7 = 'contract_validation.v1';
 
 export type DraftConfirmationRecord = {
     confirmation_id: string;
@@ -210,7 +298,7 @@ export type DraftConfirmationRecord = {
     created_at: string;
 };
 
-export type schema_version6 = 'draft_confirmation.v1';
+export type schema_version8 = 'draft_confirmation.v1';
 
 export type decision = 'approved' | 'rejected' | 'changes_requested';
 
@@ -265,6 +353,18 @@ export type ListBenchmarkRunsResponse = {
     total_estimate: number;
 };
 
+export type ListCanvasGraphsResponse = {
+    items: Array<CanvasGraphRecord>;
+    next_cursor?: string;
+    total_estimate: number;
+};
+
+export type ListContextSnapshotsResponse = {
+    items: Array<ContextSnapshotRecord>;
+    next_cursor?: string;
+    total_estimate: number;
+};
+
 export type ListJobsResponse = {
     items: Array<JobSnapshot>;
     next_cursor?: string;
@@ -279,6 +379,12 @@ export type ListModelCatalogSnapshotsResponse = {
 
 export type ListModelRunsResponse = {
     items: Array<ModelRun>;
+    next_cursor?: string;
+    total_estimate: number;
+};
+
+export type ListScenariosResponse = {
+    items: Array<ScenarioRecord>;
     next_cursor?: string;
     total_estimate: number;
 };
@@ -316,7 +422,7 @@ export type ModelCatalog = {
     };
 };
 
-export type schema_version7 = 'model_catalog.v1';
+export type schema_version9 = 'model_catalog.v1';
 
 export type ModelCatalogModel = {
     model_key: string;
@@ -392,7 +498,7 @@ export type ModelParameterSetPromotionPlan = {
     case_results: Array<BenchmarkCasePromotionResult>;
 };
 
-export type schema_version8 = 'parameter_set_promotion_plan.v1';
+export type schema_version10 = 'parameter_set_promotion_plan.v1';
 
 export type ModelParameterSetTransitionResponse = {
     model_key: string;
@@ -491,7 +597,7 @@ export type ProcessGraphRecord = {
     created_at: string;
 };
 
-export type schema_version9 = 'process_graph.v1';
+export type schema_version11 = 'process_graph.v1';
 
 export type ProductionReadinessCheck = {
     check_id: string;
@@ -521,7 +627,7 @@ export type ProductionReadinessReport = {
     };
 };
 
-export type schema_version10 = 'production_readiness.v1';
+export type schema_version12 = 'production_readiness.v1';
 
 export type readiness_status = 'ready_for_external_approval' | 'blocked';
 
@@ -567,7 +673,7 @@ export type ResultExplanationRecord = {
     updated_at: string;
 };
 
-export type schema_version11 = 'result_explanation_record.v1';
+export type schema_version13 = 'result_explanation_record.v1';
 
 export type explanation_schema_version = 'result_explanation.v1';
 
@@ -581,6 +687,76 @@ export type ResultExplanationReviewRequest = {
 };
 
 export type decision2 = 'approved' | 'rejected';
+
+export type ScenarioCloneRequest = {
+    scenario_id?: string;
+    name?: string;
+    description?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type ScenarioRecord = {
+    scenario_id: string;
+    name: string;
+    description?: string;
+    model_family: string;
+    status: string;
+    version: number;
+    current_canvas_graph_id?: string;
+    current_canvas_graph_version?: number;
+    published_process_graph_id?: string;
+    published_process_graph_version?: number;
+    current_simulation_input_id?: string;
+    context_snapshot_id?: string;
+    source_scenario_id?: string;
+    last_job_id?: string;
+    source_system: string;
+    requested_by: string;
+    tenant_id?: string;
+    project_id?: string;
+    site_id?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+    created_at: string;
+    updated_at: string;
+    archived_at?: string;
+};
+
+export type ScenarioRunRequest = {
+    request_id?: string;
+    job_type?: string;
+    idempotency_key?: string;
+    trace_id?: string;
+    simulation_input_id?: string;
+    parameters?: {
+        [key: string]: unknown;
+    };
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type ScenarioUpsertRequest = {
+    scenario_id?: string;
+    name?: string;
+    description?: string;
+    model_family?: string;
+    status?: string;
+    current_canvas_graph_id?: string;
+    current_canvas_graph_version?: number;
+    published_process_graph_id?: string;
+    published_process_graph_version?: number;
+    current_simulation_input_id?: string;
+    context_snapshot_id?: string;
+    last_job_id?: string;
+    source_system?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
 
 export type SimulationInput = {
     [key: string]: unknown;
@@ -605,7 +781,7 @@ export type SimulationInputRecord = {
     created_at: string;
 };
 
-export type schema_version12 = 'simulation_input.v1';
+export type schema_version14 = 'simulation_input.v1';
 
 export type SimulationRequest = {
     schema_version: 'simulation_request.v1';
@@ -632,7 +808,7 @@ export type SimulationRequest = {
     [key: string]: unknown | string;
 };
 
-export type schema_version13 = 'simulation_request.v1';
+export type schema_version15 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1' | 'simulation.asm1slim.v1' | 'simulation.asm1.v1' | 'simulation.asm3.v1' | 'simulation.udm.v1';
 
@@ -701,6 +877,123 @@ export type GetSimulationInputData = {
 };
 
 export type GetSimulationInputResponse = (SimulationInputRecord);
+
+export type ListScenariosData = {
+    cursor?: string;
+    limit?: number;
+    status?: string;
+};
+
+export type ListScenariosResponse2 = (ListScenariosResponse);
+
+export type CreateScenarioData = {
+    requestBody: ScenarioUpsertRequest;
+};
+
+export type CreateScenarioResponse = (ScenarioRecord);
+
+export type GetScenarioData = {
+    scenarioId: string;
+};
+
+export type GetScenarioResponse = (ScenarioRecord);
+
+export type UpdateScenarioData = {
+    requestBody: ScenarioUpsertRequest;
+    scenarioId: string;
+};
+
+export type UpdateScenarioResponse = (ScenarioRecord);
+
+export type ArchiveScenarioByDeleteData = {
+    scenarioId: string;
+};
+
+export type ArchiveScenarioByDeleteResponse = (ScenarioRecord);
+
+export type CloneScenarioData = {
+    requestBody?: ScenarioCloneRequest;
+    scenarioId: string;
+};
+
+export type CloneScenarioResponse = (ScenarioRecord);
+
+export type ArchiveScenarioData = {
+    scenarioId: string;
+};
+
+export type ArchiveScenarioResponse = (ScenarioRecord);
+
+export type RunScenarioSimulationCheckData = {
+    requestBody?: ScenarioRunRequest;
+    scenarioId: string;
+};
+
+export type RunScenarioSimulationCheckResponse = (JobSnapshot);
+
+export type ListCanvasGraphsData = {
+    cursor?: string;
+    limit?: number;
+    scenarioId?: string;
+};
+
+export type ListCanvasGraphsResponse2 = (ListCanvasGraphsResponse);
+
+export type SaveCanvasGraphData = {
+    requestBody: CanvasGraphSaveRequest;
+};
+
+export type SaveCanvasGraphResponse = (CanvasGraphRecord);
+
+export type GetCanvasGraphData = {
+    graphId: string;
+    version?: number;
+};
+
+export type GetCanvasGraphResponse = (CanvasGraphRecord);
+
+export type UpdateCanvasGraphData = {
+    graphId: string;
+    requestBody: CanvasGraphSaveRequest;
+};
+
+export type UpdateCanvasGraphResponse = (CanvasGraphRecord);
+
+export type ArchiveCanvasGraphByDeleteData = {
+    graphId: string;
+};
+
+export type ArchiveCanvasGraphByDeleteResponse = ({
+    [key: string]: unknown;
+});
+
+export type PublishCanvasGraphData = {
+    graphId: string;
+    requestBody?: CanvasGraphPublishRequest;
+    version?: number;
+};
+
+export type PublishCanvasGraphResponse = (CanvasGraphPublishResponse);
+
+export type ListContextSnapshotsData = {
+    cursor?: string;
+    limit?: number;
+    scenarioId?: string;
+};
+
+export type ListContextSnapshotsResponse2 = (ListContextSnapshotsResponse);
+
+export type CreateContextSnapshotData = {
+    requestBody: ContextSnapshotCreateRequest;
+};
+
+export type CreateContextSnapshotResponse = (ContextSnapshotRecord);
+
+export type GetContextSnapshotData = {
+    contextSnapshotId: string;
+};
+
+export type GetContextSnapshotResponse = (ContextSnapshotRecord);
 
 export type GetComputeJobData = {
     jobId: string;

@@ -10521,3 +10521,38 @@
 - Remaining scope:
 - Full standalone route-tree split and zero runtime import audit remain later phases after Scenario/Graph/UDM CRUD migration.
 - `live-backend-browser-smoke.ps1` script changes were typechecked but not executed in this phase; current-flow live is the Phase 2 browser-live gate.
+
+# 2026-06-21 AutoWaterSimu Next Phase 3 workspace persistence TODO
+
+- [x] Re-read standalone requirement/implementation docs and Go API/frontend workspace README context.
+- [x] Add Scenario、CanvasGraph、ContextSnapshot Go API DTO/store/service/HTTP/OpenAPI/migration wiring.
+- [x] Add CanvasGraph publish-to-ProcessGraph and Scenario simulation-check run path with context snapshot evidence refs.
+- [x] Add in-memory/PostgreSQL workspace persistence and regression tests.
+- [x] Generate frontend Compute client and add workspace wrapper.
+- [x] Route standalone `flowStore` persistence through Go workspace wrappers while preserving legacy FastAPI mode.
+- [x] Update README and change records for Phase 3.
+- [x] Run final Phase 3 full validation before commit.
+
+## Plan
+
+- Keep `canvas_graph.v1` as the persisted frontend graph contract.
+- Publish CanvasGraph into immutable `process_graph.v1` versions before running Scenario simulation checks.
+- Preserve legacy FastAPI flowchart persistence outside standalone runtime.
+- Do not implement ASM/UDM builders or route-tree zero-import audit in this phase.
+
+## Review
+
+- Added workspace stores and endpoints for `/api/v1/scenarios`、`/api/v1/canvas-graphs` and `/api/v1/context-snapshots`.
+- Material Balance CanvasGraph publish derives versioned ProcessGraph records and optional SimulationInput records.
+- Scenario runs use the latest published ProcessGraph and carry scenario/context snapshot refs into job/evidence metadata.
+- Frontend standalone flowchart save/load/list/update/delete now uses `features/workspace/api.ts`; legacy mode still calls `FlowchartsService`.
+- Verification so far:
+- `cd apps/api; go test ./internal/compute` passed.
+- `cd frontend; npx tsc --noEmit` passed.
+- Final validation:
+- `cd apps/api; go test ./...` passed.
+- `cd frontend; npx tsc --noEmit` passed.
+- `docker compose -f docker-compose.dev.yml config --services` passed.
+- `docker compose -f docker-compose.standalone.yml config --services` passed.
+- `apps/api/openapi/compute.openapi.json` parsed successfully.
+- `git diff --check` for Phase 3 files passed with LF/CRLF warnings only.

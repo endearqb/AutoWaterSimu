@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, GetComputeJobProductionReadinessData, GetComputeJobProductionReadinessResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, GetDefaultParameterSetPromotionPlanData, GetDefaultParameterSetPromotionPlanResponse, PromoteDefaultParameterSetToApprovedData, PromoteDefaultParameterSetToApprovedResponse, ScheduleBenchmarkCaseRunData, ScheduleBenchmarkCaseRunResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, ListScenariosData, ListScenariosResponse2, CreateScenarioData, CreateScenarioResponse, GetScenarioData, GetScenarioResponse, UpdateScenarioData, UpdateScenarioResponse, ArchiveScenarioByDeleteData, ArchiveScenarioByDeleteResponse, CloneScenarioData, CloneScenarioResponse, ArchiveScenarioData, ArchiveScenarioResponse, RunScenarioSimulationCheckData, RunScenarioSimulationCheckResponse, ListCanvasGraphsData, ListCanvasGraphsResponse2, SaveCanvasGraphData, SaveCanvasGraphResponse, GetCanvasGraphData, GetCanvasGraphResponse, UpdateCanvasGraphData, UpdateCanvasGraphResponse, ArchiveCanvasGraphByDeleteData, ArchiveCanvasGraphByDeleteResponse, PublishCanvasGraphData, PublishCanvasGraphResponse, ListContextSnapshotsData, ListContextSnapshotsResponse2, CreateContextSnapshotData, CreateContextSnapshotResponse, GetContextSnapshotData, GetContextSnapshotResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, GetComputeJobProductionReadinessData, GetComputeJobProductionReadinessResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, GetDefaultParameterSetPromotionPlanData, GetDefaultParameterSetPromotionPlanResponse, PromoteDefaultParameterSetToApprovedData, PromoteDefaultParameterSetToApprovedResponse, ScheduleBenchmarkCaseRunData, ScheduleBenchmarkCaseRunResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -188,6 +188,387 @@ export class DefaultService {
             url: '/api/v1/simulation-inputs/{simulation_input_id}',
             path: {
                 simulation_input_id: data.simulationInputId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.limit
+     * @param data.cursor
+     * @param data.status
+     * @returns ListScenariosResponse Scenarios
+     * @throws ApiError
+     */
+    public static listScenarios(data: ListScenariosData = {}): CancelablePromise<ListScenariosResponse2> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/scenarios',
+            query: {
+                limit: data.limit,
+                cursor: data.cursor,
+                status: data.status
+            },
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ScenarioRecord Created scenario
+     * @throws ApiError
+     */
+    public static createScenario(data: CreateScenarioData): CancelablePromise<CreateScenarioResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/scenarios',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.scenarioId
+     * @returns ScenarioRecord Scenario
+     * @throws ApiError
+     */
+    public static getScenario(data: GetScenarioData): CancelablePromise<GetScenarioResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/scenarios/{scenario_id}',
+            path: {
+                scenario_id: data.scenarioId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.scenarioId
+     * @param data.requestBody
+     * @returns ScenarioRecord Updated scenario
+     * @throws ApiError
+     */
+    public static updateScenario(data: UpdateScenarioData): CancelablePromise<UpdateScenarioResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/scenarios/{scenario_id}',
+            path: {
+                scenario_id: data.scenarioId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.scenarioId
+     * @returns ScenarioRecord Archived scenario
+     * @throws ApiError
+     */
+    public static archiveScenarioByDelete(data: ArchiveScenarioByDeleteData): CancelablePromise<ArchiveScenarioByDeleteResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/scenarios/{scenario_id}',
+            path: {
+                scenario_id: data.scenarioId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.scenarioId
+     * @param data.requestBody
+     * @returns ScenarioRecord Cloned scenario
+     * @throws ApiError
+     */
+    public static cloneScenario(data: CloneScenarioData): CancelablePromise<CloneScenarioResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/scenarios/{scenario_id}/clone',
+            path: {
+                scenario_id: data.scenarioId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.scenarioId
+     * @returns ScenarioRecord Archived scenario
+     * @throws ApiError
+     */
+    public static archiveScenario(data: ArchiveScenarioData): CancelablePromise<ArchiveScenarioResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/scenarios/{scenario_id}/archive',
+            path: {
+                scenario_id: data.scenarioId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.scenarioId
+     * @param data.requestBody
+     * @returns JobSnapshot Duplicate scenario simulation check
+     * @returns JobSnapshot Queued scenario simulation check
+     * @throws ApiError
+     */
+    public static runScenarioSimulationCheck(data: RunScenarioSimulationCheckData): CancelablePromise<RunScenarioSimulationCheckResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/scenarios/{scenario_id}/simulation-checks',
+            path: {
+                scenario_id: data.scenarioId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.limit
+     * @param data.cursor
+     * @param data.scenarioId
+     * @returns ListCanvasGraphsResponse Canvas graphs
+     * @throws ApiError
+     */
+    public static listCanvasGraphs(data: ListCanvasGraphsData = {}): CancelablePromise<ListCanvasGraphsResponse2> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/canvas-graphs',
+            query: {
+                limit: data.limit,
+                cursor: data.cursor,
+                scenario_id: data.scenarioId
+            },
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns CanvasGraphRecord Saved canvas graph version
+     * @throws ApiError
+     */
+    public static saveCanvasGraph(data: SaveCanvasGraphData): CancelablePromise<SaveCanvasGraphResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/canvas-graphs',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.graphId
+     * @param data.version
+     * @returns CanvasGraphRecord Canvas graph
+     * @throws ApiError
+     */
+    public static getCanvasGraph(data: GetCanvasGraphData): CancelablePromise<GetCanvasGraphResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/canvas-graphs/{graph_id}',
+            path: {
+                graph_id: data.graphId
+            },
+            query: {
+                version: data.version
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.graphId
+     * @param data.requestBody
+     * @returns CanvasGraphRecord Saved new canvas graph version
+     * @throws ApiError
+     */
+    public static updateCanvasGraph(data: UpdateCanvasGraphData): CancelablePromise<UpdateCanvasGraphResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/canvas-graphs/{graph_id}',
+            path: {
+                graph_id: data.graphId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.graphId
+     * @returns unknown Archived canvas graph
+     * @throws ApiError
+     */
+    public static archiveCanvasGraphByDelete(data: ArchiveCanvasGraphByDeleteData): CancelablePromise<ArchiveCanvasGraphByDeleteResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/canvas-graphs/{graph_id}',
+            path: {
+                graph_id: data.graphId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.graphId
+     * @param data.version
+     * @param data.requestBody
+     * @returns CanvasGraphPublishResponse Published process graph
+     * @throws ApiError
+     */
+    public static publishCanvasGraph(data: PublishCanvasGraphData): CancelablePromise<PublishCanvasGraphResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/canvas-graphs/{graph_id}/publish',
+            path: {
+                graph_id: data.graphId
+            },
+            query: {
+                version: data.version
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.limit
+     * @param data.cursor
+     * @param data.scenarioId
+     * @returns ListContextSnapshotsResponse Context snapshots
+     * @throws ApiError
+     */
+    public static listContextSnapshots(data: ListContextSnapshotsData = {}): CancelablePromise<ListContextSnapshotsResponse2> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/context-snapshots',
+            query: {
+                limit: data.limit,
+                cursor: data.cursor,
+                scenario_id: data.scenarioId
+            },
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ContextSnapshotRecord Created context snapshot
+     * @throws ApiError
+     */
+    public static createContextSnapshot(data: CreateContextSnapshotData): CancelablePromise<CreateContextSnapshotResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/context-snapshots',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                409: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.contextSnapshotId
+     * @returns ContextSnapshotRecord Context snapshot
+     * @throws ApiError
+     */
+    public static getContextSnapshot(data: GetContextSnapshotData): CancelablePromise<GetContextSnapshotResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/context-snapshots/{context_snapshot_id}',
+            path: {
+                context_snapshot_id: data.contextSnapshotId
             },
             errors: {
                 403: 'Contract error',

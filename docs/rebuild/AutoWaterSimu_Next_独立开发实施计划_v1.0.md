@@ -235,6 +235,15 @@ not present:
 - 发布后的 ProcessGraph 不可变。
 - Material Balance 从 Scenario 运行成功。
 - 上下文快照可在结果/evidence 中读取。
+
+### 2026-06-21 实施记录
+
+- 已落地 Go Compute API Scenario、CanvasGraph、ContextSnapshot workspace HTTP/service/store/OpenAPI/migration 链路。
+- CanvasGraph 保存为 versioned `canvas_graph.v1` metadata，publish 路径派生不可变 `process_graph.v1` 版本，并可注册对应 `simulation_input.v1`。
+- Scenario simulation-check 路径使用最新 published ProcessGraph 运行 Material Balance，并把 scenario/context snapshot refs 写入 job context 与 evidence metadata。
+- 前端新增 `features/workspace/api.ts` wrapper，standalone runtime 下 `flowStore` 的保存、加载、列表、更新和归档改走 Go workspace API；legacy runtime 继续走原 FastAPI `FlowchartsService`。
+- 已验证 `go test ./...`、`cd frontend; npx tsc --noEmit`、dev/standalone compose config、OpenAPI JSON parse 和 Phase 3 diff-check。
+- 未纳入本阶段：ASM/UDM 显式 builders、Context UI、完整 route-tree zero legacy import audit、SQLite/Desktop 本地 store。
 ## Phase 4：UDM 模型库与 Hybrid 配置（2–3 周）
 
 ### 工作内容
