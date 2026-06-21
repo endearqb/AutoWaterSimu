@@ -10739,6 +10739,7 @@
 - [x] Make golden scenario summary capable of returning `passed` when every scenario source has current passed evidence.
 - [x] Refresh live golden lanes once; observed `golden-scenarios.json` status `passed` with 8/8 scenarios.
 - [x] Replace slow release image rebuild step with standalone worker image content/self-check smoke.
+- [x] Make PostgreSQL golden scenario rely on current integration evidence while standalone full gate owns migration rollback verification.
 - [ ] Commit and push boundary/golden/full-RC support changes.
 - [ ] Refresh live golden lanes on the new commit.
 - [ ] Rerun full standalone release gate on the new commit.
