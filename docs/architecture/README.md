@@ -29,6 +29,7 @@
 | `desktop-runtime.md` | Desktop runtime package/support bundle、sidecar、backup/restore 与 release artifact 边界 |
 | `ontology-model.md` | Water Ontology 首批 registry、验证 gate、policy/enforcement 边界 |
 | `local-dev.md` | 根级任务入口和本地开发命令 |
+| `next-startup.md` | Go Compute API、Web 前端和 Python worker 的本地启动说明 |
 | `current-state.md` | 当前 Next 工程状态摘要 |
 
 ## 3. 维护约定

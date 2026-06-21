@@ -46,6 +46,27 @@
 - Added `docker-compose.standalone.yml`, `standalone-*` Justfile entries, and `scripts/ci/standalone-smoke.ps1`.
 - Added `services/simulation-worker/Dockerfile`; build verification timed out locally while installing large Python wheels, so image build remains a follow-up verification gap.
 - Validation passed: targeted Go package tests, worker API token tests, standalone compose API+Postgres smoke, standalone compose config, Justfile listing, and `security-smoke`.
+
+# 2026-06-16 Next local startup guide TODO
+
+- [x] Re-read README First context for docs, Go Compute API, frontend, worker, local-dev, Justfile, and dev compose.
+- [x] Confirm this slice is documentation-only for local startup instructions, not changing runtime code, ports, tokens, compose services, or scripts.
+- [x] Add a unified Markdown guide for Go backend, frontend, and Python worker startup.
+- [x] Update architecture README index and README First change log.
+- [x] Run documentation diff check.
+
+## Plan
+
+- Keep `just` recipes as the preferred local entrypoint.
+- Document both one-command Docker Compose startup and separate terminal source-mode startup.
+- Record local dev defaults only: Compute API `http://localhost:8088`, frontend `http://localhost:5173`, and dev tokens from current config.
+
+## Review
+
+- Added `docs/architecture/next-startup.md` as the unified local startup guide.
+- Updated `docs/architecture/README.md` so future maintainers can find the startup guide from the architecture index.
+- Validation covered tracked-file diff whitespace with `git diff --check -- docs\architecture tasks\todo.md .ai\changes\2026-06-16.md` and all touched Markdown trailing whitespace with `rg -n "[ \t]+$" ...`.
+
 # 2026-06-15 simulation_core PR-11 unified reaction RHS TODO
 
 - [x] Re-read `_run_hours`, combined/single RHS branches, correctness-freeze tests/audit, and v1.4 PR-11 requirements.
