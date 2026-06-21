@@ -8,6 +8,7 @@
 
 - 跨 feature 的手写 API 配置、共享类型和轻量工具。
 - 不绑定单一路由的稳定前端边界。
+- frontend runtime mode/auth/context config。
 
 本目录不负责：
 
@@ -20,12 +21,14 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `api/` | 跨 feature API 配置与共享 API 类型 |
+| `runtimeConfig.ts` | 统一读取 `VITE_APP_MODE`、`VITE_AUTH_MODE`、`VITE_CONTEXT_MODE` |
 
 ## 3. 维护约定
 
 1. 共享能力必须有两个以上合理消费者，或承担 Web bootstrap / generated client 隔离边界。
 2. 不要把 feature 私有业务规则上提到 shared。
 3. `shared/api` 可以配置 generated Compute client，但 UI components 和 routes 不应直接 import generated client。
+4. standalone shell 判断统一通过 `runtimeConfig.ts`，不要在 route/component 中散落 `import.meta.env` 判断。
 
 ## 4. 对外接口
 

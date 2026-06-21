@@ -3,10 +3,15 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 
 import Sidebar from "@/components/Common/Sidebar"
 import { isLoggedIn } from "@/hooks/useAuth"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
   beforeLoad: async () => {
+    if (isStandaloneRuntime()) {
+      return
+    }
+
     if (!isLoggedIn()) {
       throw redirect({
         to: "/login",

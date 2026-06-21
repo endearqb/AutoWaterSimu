@@ -2,13 +2,6 @@ import { expect, test } from "@playwright/test"
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
-const corsHeaders = {
-  "Access-Control-Allow-Headers": "authorization,content-type",
-  "Access-Control-Allow-Methods": "GET,OPTIONS",
-  "Access-Control-Allow-Origin": "*",
-  "Content-Type": "application/json",
-}
-
 const jobId = process.env.AUTOWATERSIMU_LIVE_COMPUTE_JOB_ID || ""
 const modelRunId = process.env.AUTOWATERSIMU_LIVE_COMPUTE_MODEL_RUN_ID || ""
 const artifactId = process.env.AUTOWATERSIMU_LIVE_COMPUTE_ARTIFACT_ID || ""
@@ -16,46 +9,32 @@ const apiBaseUrl =
   process.env.AUTOWATERSIMU_LIVE_COMPUTE_API_BASE_URL ||
   process.env.VITE_COMPUTE_API_URL ||
   "http://localhost:8088"
-const computeToken =
-  process.env.AUTOWATERSIMU_LIVE_COMPUTE_API_TOKEN || "dev-public-token"
 
 test.skip(
   !jobId || !modelRunId || !artifactId,
   "live backend smoke requires AUTOWATERSIMU_LIVE_COMPUTE_* environment",
 )
 
-const json = (body: unknown, status = 200) => ({
-  body: JSON.stringify(body),
-  headers: corsHeaders,
-  status,
-})
-
 test("reads job result and evidence from live Compute API", async ({
   page,
 }) => {
   const computeRequests: string[] = []
+  const legacyAuthRequests: string[] = []
 
-  await page.addInitScript((token) => {
-    localStorage.setItem("access_token", "playwright-user-token")
-    localStorage.setItem("compute_access_token", token)
-  }, computeToken)
-
-  await page.route("**/api/v1/users/me", async (route) => {
-    await route.fulfill(
-      json({
-        email: "playwright@example.com",
-        full_name: "Playwright User",
-        id: "user_playwright",
-        is_active: true,
-        is_superuser: true,
-        user_type: "ultra",
-      }),
-    )
-  })
+  await page.addInitScript(() => localStorage.clear())
 
   page.on("request", (request) => {
+    const url = new URL(request.url())
     if (request.url().startsWith(apiBaseUrl)) {
-      computeRequests.push(`${request.method()} ${new URL(request.url()).pathname}`)
+      computeRequests.push(`${request.method()} ${url.pathname}`)
+    }
+    if (
+      url.pathname === "/login" ||
+      url.pathname.startsWith("/api/v1/login") ||
+      url.pathname === "/api/v1/users" ||
+      url.pathname.startsWith("/api/v1/users/")
+    ) {
+      legacyAuthRequests.push(`${request.method()} ${url.pathname}`)
     }
   })
 
@@ -97,4 +76,5 @@ test("reads job result and evidence from live Compute API", async ({
       `GET /api/v1/compute/jobs/${jobId}/evidence-ref`,
     ]),
   )
+  expect(legacyAuthRequests).toEqual([])
 })

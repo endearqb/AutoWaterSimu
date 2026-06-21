@@ -10491,3 +10491,33 @@
 - Remaining scope:
 - Deleting legacy `app.models.MaterialBalanceInput` or replacing the public route schema remains a separate high-risk API/schema migration.
 - PR-12 output projection and future performance-risk slices remain independent follow-up work.
+
+# 2026-06-21 AutoWaterSimu Next Phase 2 frontend no-auth shell TODO
+
+- [x] Re-read standalone requirement/implementation docs and frontend route/shared README context.
+- [x] Add a shared frontend runtime config for `VITE_APP_MODE`, `VITE_AUTH_MODE`, and `VITE_CONTEXT_MODE`.
+- [x] Let standalone shell skip legacy login redirect and `/users/me` session lookup.
+- [x] Hide standalone user/admin menu affordances while keeping P0 model routes reachable.
+- [x] Remove `/users/me` mocks from live browser current-flow/read smoke specs.
+- [x] Validate frontend typecheck, no-auth current-flow live smoke, and standalone API no-auth smoke.
+
+## Plan
+
+- Keep legacy auth/login routes available for non-standalone mode.
+- Do not delete generated FastAPI client or legacy admin/settings pages in this phase.
+- Treat `auth_mode=disabled` as "do not send Compute bearer token"; treat `app/context standalone` as "do not require legacy user session".
+
+## Review
+
+- Added `frontend/src/shared/runtimeConfig.ts` and routed main/layout/useAuth/sidebar/ASM3 checks through it.
+- Standalone runtime now returns a fixed local developer actor without calling `/users/me`.
+- Standalone sidebar hides user/admin/items controls while still exposing ASM3 via a local `ultra` navigation actor.
+- `current-flow-live-smoke` now starts Compute API in disabled no-auth mode, runs worker without `--api-token`, and Playwright asserts no `/login` or `/api/v1/users*` requests.
+- `live-backend-browser-smoke` keeps Compute static-token for prepared integration jobs but runs the frontend shell in standalone mode without `/users/me` mock.
+- Verification:
+- `cd frontend; npx tsc --noEmit` passed.
+- `scripts\ci\current-flow-live-smoke.ps1` passed with real no-auth API, worker loop, evidence download, and evidence ref resolution.
+- `docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml up -d compute-api`; `scripts\ci\standalone-smoke.ps1`; `docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml down -v` passed.
+- Remaining scope:
+- Full standalone route-tree split and zero runtime import audit remain later phases after Scenario/Graph/UDM CRUD migration.
+- `live-backend-browser-smoke.ps1` script changes were typechecked but not executed in this phase; current-flow live is the Phase 2 browser-live gate.

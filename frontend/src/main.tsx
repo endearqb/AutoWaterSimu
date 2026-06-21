@@ -19,6 +19,7 @@ import { ApiError, OpenAPI } from "./client"
 import { CustomProvider } from "./components/ui/provider"
 import { I18nProvider } from "./i18n"
 import { configureComputeApiClient } from "./shared/api/computeApiClient"
+import { isStandaloneRuntime } from "./shared/runtimeConfig"
 
 OpenAPI.BASE = import.meta.env.VITE_API_URL
 OpenAPI.TOKEN = async () => {
@@ -29,6 +30,9 @@ configureComputeApiClient()
 
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {
+    if (isStandaloneRuntime()) {
+      return
+    }
     localStorage.removeItem("access_token")
     window.location.href = "/login"
   }

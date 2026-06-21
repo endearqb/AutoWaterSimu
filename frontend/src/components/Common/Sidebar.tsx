@@ -18,6 +18,7 @@ import { FiChevronLeft, FiChevronRight, FiLogOut, FiUser } from "react-icons/fi"
 import type { UserPublic } from "@/client"
 import useAuth from "@/hooks/useAuth"
 import { useI18n, useLocale } from "@/i18n"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import {
   DrawerBackdrop,
   DrawerBody,
@@ -32,6 +33,7 @@ import SidebarItems from "./SidebarItems"
 const Sidebar = () => {
   const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const displayUser = isStandaloneRuntime() ? undefined : currentUser
   const { user, logout } = useAuth()
   const { t } = useI18n()
   const { language, setLanguage } = useLocale()
@@ -141,7 +143,7 @@ const Sidebar = () => {
                     {t("language.en")}
                   </Text>
                 </HStack>
-                {currentUser && (
+                {displayUser && (
                   <Flex direction="column" gap={2}>
                     <Flex alignItems="center" gap={3} px={4} py={2}>
                       <FaUserAstronaut fontSize="18" />
@@ -150,7 +152,7 @@ const Sidebar = () => {
                           {user?.full_name || t("userMenu.userFallback")}
                         </Text>
                         <Text fontSize="xs" color="gray.500" truncate>
-                          {currentUser.email}
+                          {displayUser.email}
                         </Text>
                       </Box>
                     </Flex>
@@ -319,7 +321,7 @@ const Sidebar = () => {
 
           {/* 用户信息区域 - 底部 */}
           <Box p={2}>
-            {currentUser && (
+            {displayUser && (
               <MenuRoot>
                 <MenuTrigger asChild>
                   <Button
@@ -338,7 +340,7 @@ const Sidebar = () => {
                             {user?.full_name || t("userMenu.userFallback")}
                           </Text>
                           <Text fontSize="xs" color="gray.500" truncate>
-                            {currentUser.email}
+                            {displayUser.email}
                           </Text>
                         </Box>
                       )}

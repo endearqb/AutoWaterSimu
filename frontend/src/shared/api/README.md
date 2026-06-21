@@ -9,6 +9,7 @@
 - Go Compute API generated client 的 Web bootstrap 配置。
 - Compute API base URL、token resolution 和 path helper。
 - UI-facing Compute wrapper 共享类型和 generated type re-export。
+- disabled auth mode 下省略 Compute API bearer token。
 
 本目录不负责：
 
@@ -28,6 +29,7 @@
 1. `computeApiClient.ts` 是 app bootstrap 配置 Compute generated client 的唯一手写入口。
 2. `computeTypes.ts` 只放跨 feature 共享类型或 UI-facing generated re-export；feature 私有类型留在 feature 内。
 3. 不在本目录拼装业务 workflow；endpoint wrapper 放入对应 `frontend/src/features/*/api.ts`。
+4. 修改 token/base URL 行为时同步检查 `frontend/src/shared/runtimeConfig.ts`、standalone smoke 和 `frontend/README.md`。
 
 ## 4. 对外接口
 

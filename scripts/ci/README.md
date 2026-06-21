@@ -79,9 +79,9 @@
 
 本目录对 `Justfile` 和 `.github/workflows/next-browser-smoke.yml` 暴露 `browser-smoke` opt-in 入口；当前 browser smoke 使用 Playwright request mocking 验证 Web 编排，不覆盖真实 Postgres/MinIO/worker backend 或 live authenticated legacy session。
 
-本目录对 `Justfile` 和 `.github/workflows/next-live-backend-browser-smoke.yml` 暴露 `live-backend-browser-smoke` opt-in 入口；它通过 `integration-smoke.ps1 -StartCompose -KeepCompose` 准备一个真实 PostgreSQL/MinIO/worker-backed succeeded job，再运行 Playwright 验证 Compute Jobs route 不 mock Compute API 时能读取 job/result/evidence package/evidence ref。它只 mock legacy `/api/v1/users/me`，不覆盖完整 legacy authenticated backend session，也不覆盖 UI current-flow submit 到 live worker 的单场景闭环；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
+本目录对 `Justfile` 和 `.github/workflows/next-live-backend-browser-smoke.yml` 暴露 `live-backend-browser-smoke` opt-in 入口；它通过 `integration-smoke.ps1 -StartCompose -KeepCompose` 准备一个真实 PostgreSQL/MinIO/worker-backed succeeded job，再运行 Playwright 验证 Compute Jobs route 不 mock Compute API 时能读取 job/result/evidence package/evidence ref。浏览器以 standalone shell 运行并断言无 `/login`、`/users`、`/users/me` 请求；该 smoke 不覆盖 UI current-flow submit 到 live worker 的单场景闭环；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
-本目录对 `Justfile` 和 `.github/workflows/next-current-flow-live-smoke.yml` 暴露 `current-flow-live-smoke` opt-in 入口；它启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再用 Playwright 从 Compute Jobs route 提交 current flow，等待真实 worker 完成，并验证 UI evidence package 下载和 evidence ref 解析。它只 mock legacy `/api/v1/users/me`，不覆盖完整 legacy authenticated backend session；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
+本目录对 `Justfile` 和 `.github/workflows/next-current-flow-live-smoke.yml` 暴露 `current-flow-live-smoke` opt-in 入口；它启动 no-auth Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，再用 Playwright 从 Compute Jobs route 提交 current flow，等待真实 worker 完成，并验证 UI evidence package 下载和 evidence ref 解析。浏览器清空 localStorage 后运行，且断言无 `/login`、`/users`、`/users/me` 请求；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
 本目录对 `Justfile` 暴露 `worker-adapter-strict-smoke` opt-in 入口；它通过 `--adapter-validation-mode strict` 和 `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE=strict` 证明 worker 可在 strict adapter mode 下运行现有 valid compute_job fixtures，并记录 pass rate、失败原因和 warn→strict 默认切换条件。该脚本不改变 worker 默认 `compat` 行为，不进入默认 `pr-fast`。
 

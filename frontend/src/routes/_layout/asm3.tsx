@@ -3,8 +3,8 @@ import { ReactFlowProvider } from "@xyflow/react"
 import { useEffect, useMemo } from "react"
 import "@xyflow/react/dist/style.css"
 
-import { UsersService } from "@/client"
 import { isLoggedIn } from "@/hooks/useAuth"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import type { NodeTypes } from "@xyflow/react"
 import FlowCanvas from "../../components/Flow/FlowCanvas"
 import type { DefaultNodeDataFactory } from "../../components/Flow/FlowCanvas"
@@ -27,6 +27,10 @@ import { useThemePaletteStore } from "../../stores/themePaletteStore"
 export const Route = createFileRoute("/_layout/asm3")({
   component: ASM3Page,
   beforeLoad: async () => {
+    if (isStandaloneRuntime()) {
+      return
+    }
+
     if (!isLoggedIn()) {
       throw redirect({
         to: "/login",
@@ -35,6 +39,7 @@ export const Route = createFileRoute("/_layout/asm3")({
 
     // 检查用户权限：只允许ultra用户和超级管理员访问
     try {
+      const { UsersService } = await import("@/client")
       const user = await UsersService.readUserMe()
       const hasAccess = user.is_superuser || user.user_type === "ultra"
 

@@ -2,17 +2,31 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 
-import {
-  type Body_login_login_access_token as AccessToken,
-  type ApiError,
-  LoginService,
-  type UserPublic,
-  type UserRegister,
-  UsersService,
+import type {
+  Body_login_login_access_token as AccessToken,
+  ApiError,
+  UserPublic,
+  UserRegister,
 } from "@/client"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import { handleError } from "@/utils"
 
+const STANDALONE_USER: UserPublic = {
+  created_at: "2026-06-21T00:00:00.000Z",
+  email: "standalone@local",
+  full_name: "Standalone Developer",
+  id: "standalone:developer",
+  is_active: true,
+  is_superuser: false,
+  updated_at: "2026-06-21T00:00:00.000Z",
+  user_type: "ultra",
+}
+
 const isLoggedIn = () => {
+  if (isStandaloneRuntime()) {
+    return true
+  }
+
   return localStorage.getItem("access_token") !== null
 }
 
@@ -22,13 +36,26 @@ const useAuth = () => {
   const queryClient = useQueryClient()
   const { data: user } = useQuery<UserPublic | null, Error>({
     queryKey: ["currentUser"],
-    queryFn: UsersService.readUserMe,
+    queryFn: async () => {
+      if (isStandaloneRuntime()) {
+        return STANDALONE_USER
+      }
+
+      const { UsersService } = await import("@/client")
+      return UsersService.readUserMe()
+    },
     enabled: isLoggedIn(),
   })
 
   const signUpMutation = useMutation({
-    mutationFn: (data: UserRegister) =>
-      UsersService.registerUser({ requestBody: data }),
+    mutationFn: async (data: UserRegister) => {
+      if (isStandaloneRuntime()) {
+        return STANDALONE_USER
+      }
+
+      const { UsersService } = await import("@/client")
+      return UsersService.registerUser({ requestBody: data })
+    },
 
     onSuccess: () => {
       navigate({ to: "/login" })
@@ -42,6 +69,11 @@ const useAuth = () => {
   })
 
   const login = async (data: AccessToken) => {
+    if (isStandaloneRuntime()) {
+      return
+    }
+
+    const { LoginService } = await import("@/client")
     const response = await LoginService.loginAccessToken({
       formData: data,
     })
@@ -60,7 +92,8 @@ const useAuth = () => {
 
   const logout = () => {
     localStorage.removeItem("access_token")
-    navigate({ to: "/login" })
+    localStorage.removeItem("compute_access_token")
+    navigate({ to: isStandaloneRuntime() ? "/dashboard" : "/login" })
   }
 
   return {

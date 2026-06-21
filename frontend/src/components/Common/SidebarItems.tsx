@@ -22,9 +22,12 @@ import type { IconType } from "react-icons/lib"
 
 import type { UserPublic } from "@/client"
 import { useI18n } from "@/i18n"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
+
+type NavUser = Pick<UserPublic, "is_superuser" | "user_type">
 
 const getFlowingFlowItems = (
-  currentUser: UserPublic | undefined,
+  currentUser: NavUser | undefined,
   t: (key: string) => string,
 ) => {
   const baseChildren = [
@@ -51,7 +54,7 @@ const getFlowingFlowItems = (
 }
 
 const getItems = (
-  currentUser: UserPublic | undefined,
+  currentUser: NavUser | undefined,
   t: (key: string) => string,
 ) => [
   { icon: FiHome, title: t("nav.home"), path: "/dashboard" },
@@ -105,11 +108,14 @@ interface SubItem {
 // 在现有的SidebarItems组件中添加流程图页面的链接
 const SidebarItems = ({ onClose, collapsed = false }: SidebarItemsProps) => {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const standaloneRuntime = isStandaloneRuntime()
+  const currentUser: NavUser | undefined = standaloneRuntime
+    ? { is_superuser: false, user_type: "ultra" }
+    : queryClient.getQueryData<UserPublic>(["currentUser"])
   const { t } = useI18n()
 
   const baseItems = getItems(currentUser, t)
-  const finalItems: Item[] = currentUser?.is_superuser
+  const finalItems: Item[] = !standaloneRuntime && currentUser?.is_superuser
     ? [
         ...baseItems,
 

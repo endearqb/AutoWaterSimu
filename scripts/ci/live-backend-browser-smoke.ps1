@@ -200,8 +200,11 @@ $statusBeforeLines = @(ConvertTo-GitStatusLines -StatusText $statusBefore)
 $trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
 $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 $originalEnv = @{
+    VITE_APP_MODE = $env:VITE_APP_MODE
+    VITE_AUTH_MODE = $env:VITE_AUTH_MODE
     VITE_COMPUTE_API_URL = $env:VITE_COMPUTE_API_URL
     VITE_COMPUTE_API_TOKEN = $env:VITE_COMPUTE_API_TOKEN
+    VITE_CONTEXT_MODE = $env:VITE_CONTEXT_MODE
     AUTOWATERSIMU_LIVE_COMPUTE_API_BASE_URL = $env:AUTOWATERSIMU_LIVE_COMPUTE_API_BASE_URL
     AUTOWATERSIMU_LIVE_COMPUTE_API_TOKEN = $env:AUTOWATERSIMU_LIVE_COMPUTE_API_TOKEN
     AUTOWATERSIMU_LIVE_COMPUTE_JOB_ID = $env:AUTOWATERSIMU_LIVE_COMPUTE_JOB_ID
@@ -249,8 +252,11 @@ try {
     $summary.model_run_id = $modelRunID
     $summary.artifact_id = $artifactID
 
+    Set-EnvVar -Name "VITE_APP_MODE" -Value "standalone"
+    Set-EnvVar -Name "VITE_AUTH_MODE" -Value "static_token"
     Set-EnvVar -Name "VITE_COMPUTE_API_URL" -Value $ApiBaseUrl
     Set-EnvVar -Name "VITE_COMPUTE_API_TOKEN" -Value $PublicToken
+    Set-EnvVar -Name "VITE_CONTEXT_MODE" -Value "standalone"
     Set-EnvVar -Name "AUTOWATERSIMU_LIVE_COMPUTE_API_BASE_URL" -Value $ApiBaseUrl
     Set-EnvVar -Name "AUTOWATERSIMU_LIVE_COMPUTE_API_TOKEN" -Value $PublicToken
     Set-EnvVar -Name "AUTOWATERSIMU_LIVE_COMPUTE_JOB_ID" -Value $jobID
@@ -316,7 +322,7 @@ finally {
         coverage_summary = [ordered]@{
             live_postgres_minio_worker_backend = "covered_by_integration_smoke_prepared_job"
             frontend_live_job_result_evidence_read = "covered_by_playwright_without_compute_api_route_mocks"
-            legacy_authenticated_backend_session = "mocked_users_me_only"
+            legacy_authenticated_backend_session = "not_used_asserted_no_login_or_users_requests"
             current_flow_submit_to_live_worker = "not_covered"
             hosted_workflow_run = if ([string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) { "not_covered" } else { "github_actions_run" }
         }

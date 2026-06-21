@@ -63,8 +63,11 @@ services:
     depends_on:
       - compute-api
     environment:
+      VITE_APP_MODE: standalone
+      VITE_AUTH_MODE: disabled
       VITE_COMPUTE_API_URL: http://localhost:8088
       VITE_COMPUTE_API_TOKEN: ""
+      VITE_CONTEXT_MODE: standalone
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     volumes:

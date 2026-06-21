@@ -9,6 +9,7 @@
 - React app entrypoint、TanStack Router、TanStack Query、Chakra UI provider 和 i18n provider。
 - legacy flow editor、UDM 教程、模型配置、routes、stores、services、utils 和 generated clients 使用。
 - 前端侧 AutoWaterSimu Next contract prototype 和 compute client 集成边界。
+- standalone/legacy runtime mode、auth mode 与 context mode 的前端统一判断入口。
 
 本目录不负责：
 
@@ -38,7 +39,8 @@
 2. Chakra UI v3 改动前先读本地 `llms-*.txt` 文档。
 3. generated client 不手改，按 `frontend/README.md` 的命令重新生成。
 4. `frontend/src/client/compute` 只允许 `frontend/src/shared/api/` 和 `frontend/src/features/` 下的手写 API wrapper 直接使用；`main.tsx` 只调用 shared 配置入口，routes、components 和 compatibility service facade 不直接 import generated Compute client。
-5. 前端改动完成后运行 `cd frontend; npx tsc --noEmit`。
+5. standalone/no-auth 判断统一走 `frontend/src/shared/runtimeConfig.ts`；route/component 不直接读取 `VITE_AUTH_MODE`。
+6. 前端改动完成后运行 `cd frontend; npx tsc --noEmit`。
 
 ## 4. 对外接口
 

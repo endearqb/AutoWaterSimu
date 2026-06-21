@@ -54,7 +54,7 @@ dev-frontend:
     cd frontend; npm run dev
 
 dev-frontend-standalone:
-    cd frontend; $env:VITE_COMPUTE_API_TOKEN=''; npm run dev
+    cd frontend; $env:VITE_APP_MODE='standalone'; $env:VITE_AUTH_MODE='disabled'; $env:VITE_CONTEXT_MODE='standalone'; $env:VITE_COMPUTE_API_TOKEN=''; npm run dev
 
 check:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1

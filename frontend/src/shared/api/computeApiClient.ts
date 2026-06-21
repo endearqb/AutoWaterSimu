@@ -1,5 +1,6 @@
 import { OpenAPI as ComputeOpenAPI } from "@/client/compute"
 import type { ApiRequestOptions } from "@/client/compute/core/ApiRequestOptions"
+import { isAuthDisabled } from "@/shared/runtimeConfig"
 
 const DEFAULT_COMPUTE_API_URL = "http://localhost:8088"
 const DEFAULT_COMPUTE_API_TOKEN = "dev-public-token"
@@ -14,6 +15,10 @@ const localComputeToken = (): string => {
 export const resolveComputeApiToken = async (
   _options?: ApiRequestOptions<string>,
 ): Promise<string> => {
+  if (isAuthDisabled()) {
+    return ""
+  }
+
   return (
     localComputeToken() ||
     import.meta.env.VITE_COMPUTE_API_TOKEN ||

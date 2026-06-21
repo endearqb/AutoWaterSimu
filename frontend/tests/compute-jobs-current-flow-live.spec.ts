@@ -3,29 +3,18 @@ import { expect, test } from "@playwright/test"
 test.use({ storageState: { cookies: [], origins: [] } })
 test.setTimeout(150_000)
 
-const corsHeaders = {
-  "Access-Control-Allow-Headers": "authorization,content-type",
-  "Access-Control-Allow-Methods": "GET,OPTIONS",
-  "Access-Control-Allow-Origin": "*",
-  "Content-Type": "application/json",
-}
-
 const apiBaseUrl =
   process.env.AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_BASE_URL ||
   process.env.VITE_COMPUTE_API_URL ||
   "http://localhost:8088"
 const computeToken =
-  process.env.AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_TOKEN || "dev-public-token"
+  process.env.AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_TOKEN ??
+  process.env.VITE_COMPUTE_API_TOKEN ??
+  ""
 
-const json = (body: unknown, status = 200) => ({
-  body: JSON.stringify(body),
-  headers: corsHeaders,
-  status,
-})
-
-const authHeaders = {
-  Authorization: `Bearer ${computeToken}`,
-}
+const authHeaders: Record<string, string> | undefined = computeToken
+  ? { Authorization: `Bearer ${computeToken}` }
+  : undefined
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
@@ -35,29 +24,22 @@ test("submits current flow to live worker and reads evidence", async ({
   request,
 }) => {
   const computeRequests: string[] = []
+  const legacyAuthRequests: string[] = []
 
-  await page.addInitScript((token) => {
-    localStorage.setItem("access_token", "playwright-user-token")
-    localStorage.setItem("compute_access_token", token)
-  }, computeToken)
-
-  await page.route("**/api/v1/users/me", async (route) => {
-    await route.fulfill(
-      json({
-        email: "playwright@example.com",
-        full_name: "Playwright User",
-        id: "user_playwright",
-        is_active: true,
-        is_superuser: true,
-        user_type: "ultra",
-      }),
-    )
-  })
+  await page.addInitScript(() => localStorage.clear())
 
   page.on("request", (liveRequest) => {
+    const url = new URL(liveRequest.url())
     if (liveRequest.url().startsWith(apiBaseUrl)) {
-      const url = new URL(liveRequest.url())
       computeRequests.push(`${liveRequest.method()} ${url.pathname}`)
+    }
+    if (
+      url.pathname === "/login" ||
+      url.pathname.startsWith("/api/v1/login") ||
+      url.pathname === "/api/v1/users" ||
+      url.pathname.startsWith("/api/v1/users/")
+    ) {
+      legacyAuthRequests.push(`${liveRequest.method()} ${url.pathname}`)
     }
   })
 
@@ -254,4 +236,5 @@ test("submits current flow to live worker and reads evidence", async ({
       `GET /api/v1/compute/jobs/${jobId}/evidence-ref`,
     ]),
   )
+  expect(legacyAuthRequests).toEqual([])
 })

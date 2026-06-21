@@ -51,7 +51,9 @@ services:
         condition: service_completed_successfully
     environment:
       COMPUTE_API_PORT: "8088"
-      COMPUTE_API_AUTH_MODE: static_token
+      COMPUTE_API_AUTH_MODE: ${COMPUTE_API_AUTH_MODE:-static_token}
+      COMPUTE_API_BIND_ADDR: ${COMPUTE_API_BIND_ADDR:-0.0.0.0}
+      COMPUTE_API_ALLOW_REMOTE_NO_AUTH: ${COMPUTE_API_ALLOW_REMOTE_NO_AUTH:-false}
       COMPUTE_API_DATABASE_URL: postgres://autowatersimu:autowatersimu@compute-postgres:5432/autowatersimu_compute?sslmode=disable
       COMPUTE_API_ARTIFACT_DIR: /workspace/tmp/compute-api-artifacts
       COMPUTE_API_ARCHIVE_S3_ENDPOINT: http://minio:9000
@@ -102,8 +104,11 @@ services:
     depends_on:
       - compute-api
     environment:
+      VITE_APP_MODE: legacy
+      VITE_AUTH_MODE: static_token
       VITE_COMPUTE_API_URL: http://localhost:8088
       VITE_COMPUTE_API_TOKEN: dev-public-token
+      VITE_CONTEXT_MODE: legacy
     ports:
       - "5173:5173"
     volumes:

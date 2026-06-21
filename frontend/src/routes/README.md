@@ -21,7 +21,7 @@
 | 文件/子目录 | 作用 |
 |---|---|
 | `__root.tsx` | root route and devtools |
-| `_layout.tsx` | authenticated app layout |
+| `_layout.tsx` | app layout；standalone runtime skips legacy login redirect |
 | `_layout/` | dashboard、Compute Jobs、materialbalance、ASM、UDM、admin/settings pages |
 | `updates/` | update article routes |
 | `calculators/` | calculators route |
@@ -37,6 +37,7 @@
 7. Contract validation UI 只显示后端校验结果和已持久化的 draft confirmation audit record；`Confirm draft` 仍不得自动创建 job、执行审批或发布生产动作。
 8. Compute Jobs 中的 artifact retention 操作必须依赖后端 `artifact:admin` scope；UI retention apply 入口需先有 dry-run report 才能启用。
 9. Compute lifecycle admin page 可展示 `/metrics` 解析结果和 retention sweep 报告；前端只能按后端返回的 `would_delete` / `would_archive` 启用操作，不得把 `archive_executor_not_configured` blocker 解释为可处理。
+10. standalone runtime 的 route guard 通过 `frontend/src/shared/runtimeConfig.ts` 判断；不要在单个 route 中重复读取 `VITE_AUTH_MODE`。
 
 ## 4. 对外接口
 

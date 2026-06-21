@@ -5,6 +5,7 @@ import { FiLogOut, FiUser } from "react-icons/fi"
 
 import useAuth from "@/hooks/useAuth"
 import { useI18n, useLocale } from "@/i18n"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import {
   MenuContent,
   MenuItem,
@@ -19,6 +20,10 @@ const UserMenu = () => {
   const { user, logout } = useAuth()
   const { t } = useI18n()
   const { language, setLanguage } = useLocale()
+
+  if (isStandaloneRuntime()) {
+    return null
+  }
 
   const handleLogout = async () => {
     logout()

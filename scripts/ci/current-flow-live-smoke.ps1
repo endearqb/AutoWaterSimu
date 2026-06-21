@@ -262,9 +262,12 @@ function Start-WorkerLoop {
         $workerCliPath,
         "--run-api-loop",
         "--api-base-url",
-        $ApiBaseUrl,
-        "--api-token",
-        $WorkerToken,
+        $ApiBaseUrl
+    )
+    if (-not [string]::IsNullOrWhiteSpace($WorkerToken)) {
+        $args += @("--api-token", $WorkerToken)
+    }
+    $args += @(
         "--worker-id",
         $WorkerID,
         "--artifact-dir",
@@ -395,13 +398,22 @@ $statusBeforeLines = @(ConvertTo-GitStatusLines -StatusText $statusBefore)
 $trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
 $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
 $originalEnv = @{
+    COMPUTE_API_AUTH_MODE = $env:COMPUTE_API_AUTH_MODE
+    COMPUTE_API_BIND_ADDR = $env:COMPUTE_API_BIND_ADDR
+    COMPUTE_API_ALLOW_REMOTE_NO_AUTH = $env:COMPUTE_API_ALLOW_REMOTE_NO_AUTH
+    VITE_APP_MODE = $env:VITE_APP_MODE
+    VITE_AUTH_MODE = $env:VITE_AUTH_MODE
     VITE_COMPUTE_API_URL = $env:VITE_COMPUTE_API_URL
     VITE_COMPUTE_API_TOKEN = $env:VITE_COMPUTE_API_TOKEN
+    VITE_CONTEXT_MODE = $env:VITE_CONTEXT_MODE
     AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_BASE_URL = $env:AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_BASE_URL
     AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_TOKEN = $env:AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_TOKEN
 }
 
 try {
+    Set-EnvVar -Name "COMPUTE_API_AUTH_MODE" -Value "disabled"
+    Set-EnvVar -Name "COMPUTE_API_BIND_ADDR" -Value "0.0.0.0"
+    Set-EnvVar -Name "COMPUTE_API_ALLOW_REMOTE_NO_AUTH" -Value "true"
     Invoke-CommandStep -Name "pre-clean existing compose project" -WorkingDirectory $Root -Executable "docker" -Arguments @("compose", "-p", $ComposeProject, "-f", "docker-compose.dev.yml", "down", "-v", "--remove-orphans") | Out-Null
     Invoke-CommandStep -Name "docker compose config" -WorkingDirectory $Root -Executable "docker" -Arguments @("compose", "-p", $ComposeProject, "-f", "docker-compose.dev.yml", "config") | Out-Null
     Invoke-CommandStep -Name "start postgres minio compute api" -WorkingDirectory $Root -Executable "docker" -Arguments @("compose", "-p", $ComposeProject, "-f", "docker-compose.dev.yml", "up", "-d", "compute-api") | Out-Null
@@ -410,13 +422,16 @@ try {
     Add-Step -Name "wait compute api ready" -Status "passed" -ExitCode 0 -Output $readyOutput -StartedAt $readyStarted -FinishedAt ((Get-Date).ToUniversalTime().ToString("o"))
 
     $workerStarted = (Get-Date).ToUniversalTime().ToString("o")
-    $workerProcess = Start-WorkerLoop -Root $Root -Python $python -ApiBaseUrl $ApiBaseUrl -WorkerToken $WorkerToken -WorkerID $workerID -ArtifactDir $ArtifactDir -StdoutPath $workerStdout -StderrPath $workerStderr
+    $workerProcess = Start-WorkerLoop -Root $Root -Python $python -ApiBaseUrl $ApiBaseUrl -WorkerToken "" -WorkerID $workerID -ArtifactDir $ArtifactDir -StdoutPath $workerStdout -StderrPath $workerStderr
     Add-Step -Name "start worker api loop" -Status "passed" -ExitCode 0 -Output "Started worker loop pid=$($workerProcess.Id), worker_id=$workerID." -StartedAt $workerStarted -FinishedAt ((Get-Date).ToUniversalTime().ToString("o"))
 
+    Set-EnvVar -Name "VITE_APP_MODE" -Value "standalone"
+    Set-EnvVar -Name "VITE_AUTH_MODE" -Value "disabled"
     Set-EnvVar -Name "VITE_COMPUTE_API_URL" -Value $ApiBaseUrl
-    Set-EnvVar -Name "VITE_COMPUTE_API_TOKEN" -Value $PublicToken
+    Set-EnvVar -Name "VITE_COMPUTE_API_TOKEN" -Value ""
+    Set-EnvVar -Name "VITE_CONTEXT_MODE" -Value "standalone"
     Set-EnvVar -Name "AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_BASE_URL" -Value $ApiBaseUrl
-    Set-EnvVar -Name "AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_TOKEN" -Value $PublicToken
+    Set-EnvVar -Name "AUTOWATERSIMU_CURRENT_FLOW_LIVE_API_TOKEN" -Value ""
 
     Invoke-CommandStep -Name "browser submits current flow to live worker and reads evidence" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @(
         "playwright",
@@ -430,7 +445,7 @@ try {
     Wait-WorkerLoop -Process $workerProcess -StdoutPath $workerStdout -StderrPath $workerStderr
     $workerProcess = $null
 
-    $summary = Get-CurrentFlowSummary -BaseUrl $ApiBaseUrl -Token $PublicToken
+    $summary = Get-CurrentFlowSummary -BaseUrl $ApiBaseUrl -Token ""
 }
 catch {
     $script:Failed = $true
@@ -487,7 +502,7 @@ finally {
             live_postgres_minio_worker_backend = $backendCoverageStatus
             evidence_package_download = $browserCoverageStatus
             evidence_ref_resolution = $browserCoverageStatus
-            legacy_authenticated_backend_session = "mocked_users_me_only"
+            legacy_authenticated_backend_session = "not_used_asserted_no_login_or_users_requests"
             hosted_workflow_run = if ([string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) { "not_covered" } else { "github_actions_run" }
         }
         summary = $summary
