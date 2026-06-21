@@ -112,7 +112,8 @@ build/
 app.db
 
 # Docker
-.dockerignore
+/backend/.dockerignore
+/frontend/.dockerignore
 docker-compose.override.yml
 docker-compose.yml
 

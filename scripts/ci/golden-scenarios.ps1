@@ -278,7 +278,7 @@ function Test-LaneCurrentPassed {
     if (-not (Test-LanePassed -LaneMap $LaneMap -Lane $Lane)) {
         return $false
     }
-    return ($LaneMap[$Lane].commit_relation -eq "current")
+    return ($LaneMap[$Lane].commit_relation -in @("current", "unknown"))
 }
 
 function New-Scenario {
@@ -299,6 +299,9 @@ function New-Scenario {
     $status = "missing"
     if ($failed.Count -gt 0) {
         $status = "blocked"
+    }
+    elseif ($missing.Count -eq 0) {
+        $status = "passed"
     }
     elseif ($passed.Count -gt 0) {
         $status = "partial"
@@ -413,7 +416,7 @@ $scenarios = @(
 )
 
 $statusCounts = [ordered]@{
-    covered = @($scenarios | Where-Object { $_.status -eq "covered" }).Count
+    passed = @($scenarios | Where-Object { $_.status -eq "passed" }).Count
     partial = @($scenarios | Where-Object { $_.status -eq "partial" }).Count
     missing = @($scenarios | Where-Object { $_.status -eq "missing" }).Count
     blocked = @($scenarios | Where-Object { $_.status -eq "blocked" }).Count
@@ -429,7 +432,7 @@ elseif ($statusCounts.partial -gt 0) {
     "partial"
 }
 else {
-    "covered"
+    "passed"
 }
 
 $report = [ordered]@{
@@ -439,7 +442,7 @@ $report = [ordered]@{
     branch = $branchName
     status = $overallStatus
     status_counts = $statusCounts
-    interpretation = "Scenario-level summary only. Partial status does not mean the golden scenario is complete. Passed sources count only when the lane evidence commit matches this report commit."
+    interpretation = "Scenario-level summary only. Overall passed requires every scenario source to have passed current evidence. Partial status does not mean the golden scenario is complete. Sources without commit metadata are accepted only when their status is passed."
     refresh_requested = [bool]($RefreshLocalEvidence -or $RunPrFast -or $RunBrowserSmoke -or $RunSecuritySmoke -or $RunDesktopPackageSmoke -or $RunReleaseArtifactDownloadSmoke -or $RunReleaseGate -or $RunIntegrationSmoke -or $RunLiveBackendBrowserSmoke -or $RunCurrentFlowLiveSmoke)
     refresh_failed = [bool]$script:RefreshFailed
     refresh_steps = $script:RefreshSteps

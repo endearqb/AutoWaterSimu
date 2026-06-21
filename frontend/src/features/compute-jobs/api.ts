@@ -19,6 +19,12 @@ import {
   buildMaterialBalanceDemoJob,
 } from "./builders"
 
+export type {
+  ComputeJob,
+  GetComputeJobResultResponse,
+  JobSnapshot,
+} from "@/client/compute"
+
 export const computeJobApi = {
   getBaseUrl(): string {
     return computeApiBaseUrl()

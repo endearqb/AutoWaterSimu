@@ -36,7 +36,7 @@
 
 ## 4. 对外接口
 
-对 Compute routes 暴露 query/mutation options；对 `frontend/src/services/computeJobsService.ts` 和 standalone service adapters 暴露 `computeJobApi`、`computeSimulationRegistryApi` 和 builder exports。
+对 Compute routes 暴露 query/mutation options；对 `frontend/src/services/computeJobsService.ts` 和 standalone service adapters 暴露 `computeJobApi`、`computeSimulationRegistryApi`、builder exports 和必要的 Compute job/result snapshot type re-exports。
 
 ## 5. 依赖边界
 

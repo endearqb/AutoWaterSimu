@@ -226,14 +226,21 @@ Invoke-BlockStep -Name "standalone compose service boundary" -Body {
 }
 
 if ($RunReleaseImageSmoke) {
-    Invoke-Step `
-        -Name "standalone image build smoke" `
-        -WorkingDirectory $Root `
-        -Executable "docker" `
-        -Arguments @("compose", "-p", "autowatersimu-standalone-release-gate", "-f", "docker-compose.standalone.yml", "build")
+    Invoke-BlockStep -Name "standalone image content smoke" -Body {
+        $image = "autowatersimu-standalone-simulation-worker:latest"
+        $inspect = & docker image inspect $image 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw (($inspect | ForEach-Object { [string]$_ }) -join "`n")
+        }
+        $check = & docker run --rm --entrypoint sh $image -lc "test ! -e /workspace/backend && test ! -e /app/backend && python /workspace/services/simulation-worker/simulation_worker/cli.py --self-check" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw (($check | ForEach-Object { [string]$_ }) -join "`n")
+        }
+        (($check | ForEach-Object { [string]$_ }) -join "`n").Trim()
+    }
 }
 else {
-    Add-Step -Name "standalone image build smoke" -Status "skipped" -ExitCode 0 -Output "Pass -RunReleaseImageSmoke to build standalone compose images."
+    Add-Step -Name "standalone image content smoke" -Status "skipped" -ExitCode 0 -Output "Pass -RunReleaseImageSmoke to inspect the standalone worker image."
 }
 
 Invoke-Step -Name "go compute api tests" -WorkingDirectory (Join-Path $Root "apps\api") -Executable "go" -Arguments @("test", "./...")

@@ -10730,3 +10730,25 @@
 - Pushed this Phase A gate-hardening slice on user request; the remaining work is to make the smoke blocker pass, then rerun strict fail-on-skip and full RC gate evidence.
 - Fixed the five-model smoke blocker by running the focused Playwright smoke on an isolated Vite port instead of reusing an existing 5173 server.
 - `standalone-five-model-smoke.ps1` now passes; `standalone-release-gate.ps1 -SkipLong` returns `passed_with_skips`; `standalone-release-gate.ps1 -SkipLong -FailOnSkip` exits 1 with `status=failed` / `fail_on_skip=true` as expected.
+- Prepared temporary PostgreSQL databases `compute_rc` and `restore_rc` on `localhost:55432`; live backup/restore and migration rollback smoke both pass against temporary DBs.
+- `standalone-release-gate.ps1` full mode now reaches all live/image steps; remaining final rerun must be done after committing because current evidence was generated with a dirty worktree.
+
+# 2026-06-21 Standalone RC closeout Phase B/C/D TODO
+
+- [x] Remove direct generated Compute client type import from `standaloneComputeService.ts`.
+- [x] Make golden scenario summary capable of returning `passed` when every scenario source has current passed evidence.
+- [x] Refresh live golden lanes once; observed `golden-scenarios.json` status `passed` with 8/8 scenarios.
+- [x] Replace slow release image rebuild step with standalone worker image content/self-check smoke.
+- [ ] Commit and push boundary/golden/full-RC support changes.
+- [ ] Refresh live golden lanes on the new commit.
+- [ ] Rerun full standalone release gate on the new commit.
+
+## Plan
+
+- Keep standalone release image evidence focused on what the requirement asks: no backend/FastAPI content in the release image and worker image can self-check.
+- Avoid requiring host PostgreSQL client tools; use Docker postgres client fallback when needed.
+- Keep generated Compute client imports behind `features/` or `shared/api/`.
+
+## Review
+
+- Pending clean-commit validation rerun.

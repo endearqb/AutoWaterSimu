@@ -1,0 +1,8 @@
+*
+!contracts/
+!contracts/**
+!simulation_core/
+!simulation_core/**
+!services/
+!services/simulation-worker/
+!services/simulation-worker/**

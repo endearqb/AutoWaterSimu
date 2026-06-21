@@ -123,6 +123,20 @@ function Test-CommandAvailable {
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function Convert-DatabaseUrlForDockerHost {
+    param([string]$Url)
+    try {
+        $builder = [System.UriBuilder]::new($Url)
+        if ($builder.Host -in @("localhost", "127.0.0.1", "::1")) {
+            $builder.Host = "host.docker.internal"
+        }
+        return $builder.Uri.AbsoluteUri
+    }
+    catch {
+        return $Url
+    }
+}
+
 function Get-ArtifactManifest {
     param([string]$RootPath)
     $resolved = (Resolve-Path $RootPath).Path
@@ -204,27 +218,45 @@ if (-not $RunLive) {
 elseif ([string]::IsNullOrWhiteSpace($DatabaseUrl)) {
     Add-Step -Name "live postgres dump/list/restore" -Status "skipped" -ExitCode 0 -Output "COMPUTE_API_DATABASE_URL is not set."
 }
-elseif (-not (Test-CommandAvailable -Name "pg_dump")) {
-    Add-Step -Name "live postgres dump/list/restore" -Status "failed" -ExitCode 1 -Output "pg_dump is not available on PATH."
-}
-elseif (-not (Test-CommandAvailable -Name "pg_restore")) {
-    Add-Step -Name "live postgres dump/list/restore" -Status "failed" -ExitCode 1 -Output "pg_restore is not available on PATH."
-}
 else {
     $dumpPath = Join-Path $workRoot "metadata.dump"
-    Invoke-Step -Name "live postgres pg_dump" -WorkingDirectory $Root -Executable "pg_dump" -Arguments @("--format=custom", "--file", $dumpPath, $DatabaseUrl)
-    if (-not $script:Failed) {
-        Invoke-Step -Name "live postgres pg_restore list" -WorkingDirectory $Root -Executable "pg_restore" -Arguments @("--list", $dumpPath)
+    if ((Test-CommandAvailable -Name "pg_dump") -and (Test-CommandAvailable -Name "pg_restore")) {
+        Invoke-Step -Name "live postgres pg_dump" -WorkingDirectory $Root -Executable "pg_dump" -Arguments @("--format=custom", "--file", $dumpPath, $DatabaseUrl)
+        if (-not $script:Failed) {
+            Invoke-Step -Name "live postgres pg_restore list" -WorkingDirectory $Root -Executable "pg_restore" -Arguments @("--list", $dumpPath)
+        }
+        if ([string]::IsNullOrWhiteSpace($RestoreDatabaseUrl)) {
+            Add-Step -Name "live postgres restore into temporary database" -Status "skipped" -ExitCode 0 -Output "AUTOWATERSIMU_RESTORE_DATABASE_URL is not set; not restoring into any database."
+        }
+        elseif (-not $script:Failed) {
+            Invoke-Step `
+                -Name "live postgres restore into temporary database" `
+                -WorkingDirectory $Root `
+                -Executable "pg_restore" `
+                -Arguments @("--clean", "--if-exists", "--no-owner", "--dbname", $RestoreDatabaseUrl, $dumpPath)
+        }
     }
-    if ([string]::IsNullOrWhiteSpace($RestoreDatabaseUrl)) {
-        Add-Step -Name "live postgres restore into temporary database" -Status "skipped" -ExitCode 0 -Output "AUTOWATERSIMU_RESTORE_DATABASE_URL is not set; not restoring into any database."
+    elseif (Test-CommandAvailable -Name "docker") {
+        $dockerWorkRoot = (Resolve-Path $workRoot).Path
+        $dockerDatabaseUrl = Convert-DatabaseUrlForDockerHost -Url $DatabaseUrl
+        $dockerRestoreDatabaseUrl = Convert-DatabaseUrlForDockerHost -Url $RestoreDatabaseUrl
+        Invoke-Step -Name "live postgres pg_dump" -WorkingDirectory $Root -Executable "docker" -Arguments @("run", "--rm", "-v", "${dockerWorkRoot}:/backup", "postgres:17", "pg_dump", "--format=custom", "--file", "/backup/metadata.dump", $dockerDatabaseUrl)
+        if (-not $script:Failed) {
+            Invoke-Step -Name "live postgres pg_restore list" -WorkingDirectory $Root -Executable "docker" -Arguments @("run", "--rm", "-v", "${dockerWorkRoot}:/backup", "postgres:17", "pg_restore", "--list", "/backup/metadata.dump")
+        }
+        if ([string]::IsNullOrWhiteSpace($RestoreDatabaseUrl)) {
+            Add-Step -Name "live postgres restore into temporary database" -Status "skipped" -ExitCode 0 -Output "AUTOWATERSIMU_RESTORE_DATABASE_URL is not set; not restoring into any database."
+        }
+        elseif (-not $script:Failed) {
+            Invoke-Step `
+                -Name "live postgres restore into temporary database" `
+                -WorkingDirectory $Root `
+                -Executable "docker" `
+                -Arguments @("run", "--rm", "-v", "${dockerWorkRoot}:/backup", "postgres:17", "pg_restore", "--clean", "--if-exists", "--no-owner", "--dbname", $dockerRestoreDatabaseUrl, "/backup/metadata.dump")
+        }
     }
-    elseif (-not $script:Failed) {
-        Invoke-Step `
-            -Name "live postgres restore into temporary database" `
-            -WorkingDirectory $Root `
-            -Executable "pg_restore" `
-            -Arguments @("--clean", "--if-exists", "--no-owner", "--dbname", $RestoreDatabaseUrl, $dumpPath)
+    else {
+        Add-Step -Name "live postgres dump/list/restore" -Status "failed" -ExitCode 1 -Output "pg_dump/pg_restore are not available on PATH and docker is not available for postgres client fallback."
     }
 }
 

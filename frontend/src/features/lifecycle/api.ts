@@ -11,6 +11,8 @@ import {
 } from "@/shared/api/computeApiClient"
 import type { EvidenceDownloadResult } from "@/shared/api/computeTypes"
 
+export type { ArtifactRecord } from "@/client/compute"
+
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")

@@ -34,7 +34,7 @@
 
 ## 4. 对外接口
 
-对 Compute routes 暴露 lifecycle query/mutation options；对 `frontend/src/services/computeJobsService.ts` 和 standalone result adapters 暴露 `computeArtifactsApi` 以维持兼容 facade。
+对 Compute routes 暴露 lifecycle query/mutation options；对 `frontend/src/services/computeJobsService.ts` 和 standalone result adapters 暴露 `computeArtifactsApi` 以及必要的 artifact type re-export 以维持兼容 facade。
 
 ## 5. 依赖边界
 

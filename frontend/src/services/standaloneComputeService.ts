@@ -1,15 +1,15 @@
-import type {
-  ArtifactRecord,
-  ComputeJob,
-  GetComputeJobResultResponse,
-  JobSnapshot,
-} from "@/client/compute"
 import {
   ASM1_CONFIG,
   ASM1_SLIM_CONFIG,
   ASM3_CONFIG,
 } from "@/config/modelConfigs"
+import type {
+  ComputeJob,
+  GetComputeJobResultResponse,
+  JobSnapshot,
+} from "@/features/compute-jobs/api"
 import { computeJobApi } from "@/features/compute-jobs/api"
+import type { ArtifactRecord } from "@/features/lifecycle/api"
 import { computeArtifactsApi } from "@/features/lifecycle/api"
 
 import type {
