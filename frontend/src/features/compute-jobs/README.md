@@ -7,6 +7,7 @@
 本目录负责：
 
 - Compute health、metrics、job create/list/read/result/events/cancel endpoint wrapper。
+- Generic schema-valid `compute_job.v1` create wrapper and job-type list filters for service adapters。
 - Current-flow 和 demo `compute_job.v1` document builder。
 - ProcessGraph registry wrapper。
 
@@ -31,10 +32,11 @@
 1. Job document builders 必须输出 schema-valid `compute_job.v1` payload。
 2. Wrapper 只调用 backend generated endpoints，不在前端伪造 job/result/evidence 状态。
 3. API shape 变更时保持 `queries.ts` 和 `services/computeJobsService.ts` facade 兼容，除非明确迁移对应调用方。
+4. `createJob()` is the generic handoff point for adapters that already built a schema-valid `compute_job.v1`; keep model-specific payload construction outside this feature unless it is a reusable UI builder.
 
 ## 4. 对外接口
 
-对 Compute routes 暴露 query/mutation options；对 `frontend/src/services/computeJobsService.ts` 暴露 `computeJobApi`、`computeSimulationRegistryApi` 和 builder exports。
+对 Compute routes 暴露 query/mutation options；对 `frontend/src/services/computeJobsService.ts` 和 standalone service adapters 暴露 `computeJobApi`、`computeSimulationRegistryApi` 和 builder exports。
 
 ## 5. 依赖边界
 

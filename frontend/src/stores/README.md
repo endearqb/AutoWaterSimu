@@ -10,6 +10,7 @@
 - Material balance、ASM、UDM、tutorial progress and theme palette state。
 - Import/export legacy flow data and CanvasGraph-compatible metadata for Next bridge paths。
 - In standalone runtime, material balance `flowStore` save/load/list/update/delete is backed by Go Compute API Scenario/CanvasGraph workspace wrappers。
+- In standalone runtime, material balance calculation job actions are backed by the five-model Go Compute API adapter rather than legacy FastAPI calculation endpoints。
 
 本目录不负责：
 
@@ -34,6 +35,7 @@
 3. Legacy imported flow compatibility 不要静默删除；需要迁移时补 normalize/backfill。
 4. `flowStore.exportFlowData()` 仍需保留 legacy `nodes` / `edges` / `customParameters` / `calculationParameters` 字段，同时可携带 `canvas_graph.v1` 元数据供 Next Compute bridge 使用。
 5. `flowStore` 的 standalone persistence branch must keep legacy import/export compatibility by converting through `frontend/src/contracts` before calling `features/workspace/api.ts`; non-standalone mode must continue to use legacy `FlowchartsService`。
+6. `materialBalanceStore` standalone calculation methods should use `services/standaloneComputeService.ts` for submit/status/result/timeseries/input-data/delete and keep legacy FastAPI calls available outside standalone runtime。
 
 ## 4. 对外接口
 

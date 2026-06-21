@@ -27,12 +27,12 @@ import {
   FiSliders,
   FiUpload,
 } from "react-icons/fi"
-import { MaterialBalanceService } from "../../../client/sdk.gen"
 import { useI18n } from "../../../i18n"
 import { asm1Service } from "../../../services/asm1Service"
 import { asm1SlimService } from "../../../services/asm1slimService"
 import { asm3Service } from "../../../services/asm3Service"
 import useFlowStore from "../../../stores/flowStore"
+import { useMaterialBalanceStore } from "../../../stores/materialBalanceStore"
 import { useThemePaletteStore } from "../../../stores/themePaletteStore"
 import { confirmDebug } from "../../../utils/confirmDebug"
 import ASM1Analyzer from "../legacy-analysis/ASM1Analyzer"
@@ -382,9 +382,9 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
         jobDataResponse = await asm3Service.getJobInputData(jobId)
         break
       default:
-        jobDataResponse = await MaterialBalanceService.getJobInputData({
-          jobId,
-        })
+        jobDataResponse =
+          (await modelState?.getJobInputData?.(jobId)) ??
+          (await useMaterialBalanceStore.getState().getJobInputData(jobId))
         break
     }
 

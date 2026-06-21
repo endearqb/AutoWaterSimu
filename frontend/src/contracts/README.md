@@ -9,6 +9,7 @@
 - TypeScript 版 CanvasGraph、ProcessGraph、SimulationInput 最小转换。
 - 与 Python `contracts/python` 的转换语义对齐。
 - Compute Jobs UI 中 current-flow submission 的 opt-in 转换路径。
+- Standalone runtime bridge paths that need Go Compute API contract shapes while preserving legacy import/export data。
 
 本目录不负责：
 
@@ -25,13 +26,13 @@
 
 ## 3. 维护约定
 
-1. 本目录只提供 opt-in 转换，不替换 legacy `/calculate` 主路径。
+1. 本目录只提供 opt-in 转换，不替换 non-standalone legacy `/calculate` 主路径；standalone runtime may use these contract shapes or equivalent adapters when submitting to Go Compute API。
 2. Python/TypeScript 对组件顺序、edge `{a,b}`、time segments 的处理必须一致。
 3. Go Compute API client 后续应放在 `frontend/src/client/compute`，不要混入本目录。
 
 ## 4. 对外接口
 
-本目录对 Compute Jobs UI 和未来新核心页面暴露 TypeScript transform helpers。
+本目录对 Compute Jobs UI、standalone store/service bridge paths 和未来新核心页面暴露 TypeScript transform helpers。
 
 修改这些接口时需同步检查 `contracts/python`、contract fixtures 和 `npx tsc --noEmit`。
 

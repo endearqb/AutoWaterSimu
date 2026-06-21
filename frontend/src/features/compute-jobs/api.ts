@@ -40,6 +40,7 @@ export const computeJobApi = {
   listJobs(params: ListComputeJobsParams = {}): Promise<ListJobsResponse> {
     return DefaultService.listComputeJobs({
       cursor: params.cursor,
+      jobType: params.jobType,
       limit: params.limit ?? 20,
       status: params.status || undefined,
     })
@@ -73,6 +74,13 @@ export const computeJobApi = {
 
   createDemoJob(): Promise<JobSnapshot> {
     const { job, idempotencyKey } = buildMaterialBalanceDemoJob()
+    return DefaultService.createComputeJob({
+      idempotencyKey,
+      requestBody: job,
+    })
+  },
+
+  createJob(job: Record<string, unknown>, idempotencyKey?: string) {
     return DefaultService.createComputeJob({
       idempotencyKey,
       requestBody: job,

@@ -7,6 +7,7 @@ export interface ComputeHealthStatus {
 }
 
 export interface ListComputeJobsParams {
+  jobType?: string
   status?: string
   cursor?: string
   limit?: number

@@ -10593,3 +10593,35 @@
 - `docker compose -f docker-compose.standalone.yml config --services` passed.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
 - `git diff --check` for Phase 4 files passed with LF/CRLF warnings only.
+
+# 2026-06-21 AutoWaterSimu Next Phase 5 five-model compute/result cutover TODO
+
+- [x] Re-read standalone requirement/implementation docs and frontend compute/services/stores/tests README context.
+- [x] Add a standalone frontend compute adapter for Material Balance、ASM1Slim、ASM1、ASM3 and UDM `compute_job.v1` submission.
+- [x] Route standalone calculation submit/status/result/timeseries/final-values/input-data/delete through Go Compute API wrappers while preserving legacy FastAPI runtime branches.
+- [x] Remove static runtime imports of legacy FastAPI calculation SDK classes from five-model service paths.
+- [x] Add artifact JSON reads and job type list/create wrappers needed by the adapter.
+- [x] Add a frontend standalone compute boundary audit and five-model mock-backed Playwright smoke.
+- [x] Update README context for services, stores, contracts, compute-jobs, lifecycle, scripts, and tests.
+- [x] Run final Phase 5 validation.
+- [x] Commit and push `codex/autowatersimu-next-rebuild` for Phase 5.
+
+## Plan
+
+- Keep Phase 5 focused on standalone calculation and result read paths; legacy runtime keeps the FastAPI generated client through dynamic imports.
+- Submit all five models as schema-versioned `compute_job.v1` with embedded `simulation_input.v1`.
+- Verify the frontend boundary with both static audit and mock-backed browser smoke, and verify worker compatibility with committed standalone fixtures.
+
+## Review
+
+- Added `frontend/src/services/standaloneComputeService.ts` as the shared standalone adapter for five model families.
+- `materialBalanceStore` and ASM/UDM services now branch to Go Compute API only in standalone runtime; non-standalone branches still use legacy FastAPI services.
+- Result summary, time series, final values, job input data, list status, and delete/cancel compatibility now adapt Go Compute job/result/artifact responses back to legacy service shapes.
+- The new boundary audit checks for static legacy calculation SDK imports, direct runtime class calls, runtime WebSocket imports, and all five standalone job types.
+- `standalone-five-model-compute.spec.ts` verifies five job submissions, schema versions, model-specific parameter array sizes, UDM model metadata/bindings, and absence of legacy calculate endpoint calls.
+- Final validation:
+- `cd frontend; npx tsc --noEmit` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-frontend-standalone-compute-boundary.ps1` passed.
+- `cd apps/api; go test ./...` passed.
+- Worker CLI `--run-job` fixtures passed for Material Balance、ASM1Slim、ASM1、ASM3 and UDM.
+- `cd frontend; npx playwright test tests/standalone-five-model-compute.spec.ts --project=chromium --no-deps --reporter=line` passed.

@@ -48,6 +48,24 @@ export const computeArtifactsApi = {
     downloadBlob(blob, objectName)
   },
 
+  async readArtifactJson<T = unknown>(artifact: ArtifactRecord): Promise<T> {
+    const token = await resolveComputeApiToken({ method: "GET", url: "" })
+    const response = await fetch(
+      computeApiPath(`/api/v1/artifacts/${encodeURIComponent(artifact.artifact_id)}`),
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      },
+    )
+    if (!response.ok) {
+      const body = await readErrorBody(response)
+      throw Object.assign(new Error("Artifact read failed"), {
+        body,
+        status: response.status,
+      })
+    }
+    return (await response.json()) as T
+  },
+
   async downloadEvidencePackage(
     jobId: string,
   ): Promise<EvidenceDownloadResult> {

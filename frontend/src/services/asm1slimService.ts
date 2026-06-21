@@ -1,5 +1,5 @@
 import { t } from "@/utils/i18n"
-import { Asm1SlimFlowchartsService, Asm1SlimService } from "../client/sdk.gen"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import type {
   ASM1SlimFlowChartCreate,
   ASM1SlimFlowChartPublic,
@@ -15,6 +15,12 @@ import type {
 } from "../client/types.gen"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
+import { standaloneComputeService } from "./standaloneComputeService"
+
+const legacyAsm1SlimService = async () =>
+  (await import("../client/sdk.gen")).Asm1SlimService
+const legacyAsm1SlimFlowchartsService = async () =>
+  (await import("../client/sdk.gen")).Asm1SlimFlowchartsService
 
 /**
  * ASM1Slim模型服务实现
@@ -44,8 +50,12 @@ class ASM1SlimServiceImpl
   async createCalculationJob(
     input: MaterialBalanceInput,
   ): Promise<ASM1SlimJobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.createCalculationJob("asm1slim", input)
+    }
     try {
-      return await Asm1SlimService.createCalculationJob({ requestBody: input })
+      const service = await legacyAsm1SlimService()
+      return await service.createCalculationJob({ requestBody: input })
     } catch (error) {
       throw handleApiError(
         error,
@@ -62,8 +72,15 @@ class ASM1SlimServiceImpl
   async createCalculationJobFromFlowchart(
     flowchartData: any,
   ): Promise<ASM1SlimJobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.createCalculationJobFromFlowchart(
+        "asm1slim",
+        flowchartData,
+      )
+    }
     try {
-      return await Asm1SlimService.createCalculationJobFromFlowchart({
+      const service = await legacyAsm1SlimService()
+      return await service.createCalculationJobFromFlowchart({
         requestBody: flowchartData,
       })
     } catch (error) {
@@ -82,8 +99,12 @@ class ASM1SlimServiceImpl
    * @returns 任务状态
    */
   async getCalculationStatus(jobId: string): Promise<ASM1SlimJobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationStatus(jobId)
+    }
     try {
-      return await Asm1SlimService.getCalculationStatus({ jobId })
+      const service = await legacyAsm1SlimService()
+      return await service.getCalculationStatus({ jobId })
     } catch (error) {
       throw handleApiError(
         error,
@@ -100,8 +121,12 @@ class ASM1SlimServiceImpl
   async getCalculationResultSummary(
     jobId: string,
   ): Promise<MaterialBalanceResultSummary> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationResultSummary(jobId)
+    }
     try {
-      return await Asm1SlimService.getCalculationResultSummary({ jobId })
+      const service = await legacyAsm1SlimService()
+      return await service.getCalculationResultSummary({ jobId })
     } catch (error) {
       throw handleApiError(
         error,
@@ -124,8 +149,12 @@ class ASM1SlimServiceImpl
     nodeIds?: string[]
     edgeIds?: string[]
   }): Promise<MaterialBalanceTimeSeriesResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationTimeseries(params)
+    }
     try {
-      return await Asm1SlimService.getCalculationTimeseries({
+      const service = await legacyAsm1SlimService()
+      return await service.getCalculationTimeseries({
         jobId: params.jobId,
         startTime: params.startTime,
         endTime: params.endTime,
@@ -148,8 +177,12 @@ class ASM1SlimServiceImpl
    * @returns 最终值数据
    */
   async getCalculationFinalValues(jobId: string): Promise<any> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationFinalValues(jobId)
+    }
     try {
-      return await Asm1SlimService.getCalculationFinalValues({ jobId })
+      const service = await legacyAsm1SlimService()
+      return await service.getCalculationFinalValues({ jobId })
     } catch (error) {
       throw handleApiError(
         error,
@@ -166,8 +199,15 @@ class ASM1SlimServiceImpl
   async validateCalculationInput(
     input: MaterialBalanceInput,
   ): Promise<MaterialBalanceValidationResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.validateCalculationInput(
+        "asm1slim",
+        input,
+      )
+    }
     try {
-      return await Asm1SlimService.validateCalculationInput({
+      const service = await legacyAsm1SlimService()
+      return await service.validateCalculationInput({
         requestBody: { input_data: input },
       })
     } catch (error) {
@@ -188,8 +228,16 @@ class ASM1SlimServiceImpl
     skip?: number,
     limit?: number,
   ): Promise<ASM1SlimJobsPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getUserCalculationJobs(
+        "asm1slim",
+        skip,
+        limit,
+      )
+    }
     try {
-      return await Asm1SlimService.getUserCalculationJobs({
+      const service = await legacyAsm1SlimService()
+      return await service.getUserCalculationJobs({
         skip: skip || 0,
         limit: limit || 50,
       })
@@ -207,8 +255,12 @@ class ASM1SlimServiceImpl
    * @returns 删除结果
    */
   async deleteCalculationJob(jobId: string): Promise<any> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.deleteCalculationJob(jobId)
+    }
     try {
-      return await Asm1SlimService.deleteCalculationJob({ jobId })
+      const service = await legacyAsm1SlimService()
+      return await service.deleteCalculationJob({ jobId })
     } catch (error) {
       throw handleApiError(
         error,
@@ -223,8 +275,12 @@ class ASM1SlimServiceImpl
    * @returns 任务输入数据
    */
   async getJobInputData(jobId: string): Promise<ASM1SlimJobInputDataResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getJobInputData(jobId)
+    }
     try {
-      return await Asm1SlimService.getJobInputData({ jobId })
+      const service = await legacyAsm1SlimService()
+      return await service.getJobInputData({ jobId })
     } catch (error) {
       throw handleApiError(
         error,
@@ -246,7 +302,8 @@ class ASM1SlimServiceImpl
     limit?: number,
   ): Promise<ASM1SlimFlowChartsPublic> {
     try {
-      return await Asm1SlimFlowchartsService.readAsm1SlimFlowcharts({
+      const service = await legacyAsm1SlimFlowchartsService()
+      return await service.readAsm1SlimFlowcharts({
         skip: skip || 0,
         limit: limit || 50,
       })
@@ -267,7 +324,8 @@ class ASM1SlimServiceImpl
     flowchart: ASM1SlimFlowChartCreate,
   ): Promise<ASM1SlimFlowChartPublic> {
     try {
-      return await Asm1SlimFlowchartsService.createAsm1SlimFlowchart({
+      const service = await legacyAsm1SlimFlowchartsService()
+      return await service.createAsm1SlimFlowchart({
         requestBody: flowchart,
       })
     } catch (error) {
@@ -285,7 +343,8 @@ class ASM1SlimServiceImpl
    */
   async getFlowchart(id: string): Promise<ASM1SlimFlowChartPublic> {
     try {
-      return await Asm1SlimFlowchartsService.readAsm1SlimFlowchart({ id })
+      const service = await legacyAsm1SlimFlowchartsService()
+      return await service.readAsm1SlimFlowchart({ id })
     } catch (error) {
       throw handleApiError(
         error,
@@ -305,7 +364,8 @@ class ASM1SlimServiceImpl
     flowchart: ASM1SlimFlowChartUpdate,
   ): Promise<ASM1SlimFlowChartPublic> {
     try {
-      return await Asm1SlimFlowchartsService.updateAsm1SlimFlowchart({
+      const service = await legacyAsm1SlimFlowchartsService()
+      return await service.updateAsm1SlimFlowchart({
         id,
         requestBody: flowchart,
       })
@@ -323,7 +383,8 @@ class ASM1SlimServiceImpl
    */
   async deleteFlowchart(id: string): Promise<any> {
     try {
-      return await Asm1SlimFlowchartsService.deleteAsm1SlimFlowchart({ id })
+      const service = await legacyAsm1SlimFlowchartsService()
+      return await service.deleteAsm1SlimFlowchart({ id })
     } catch (error) {
       throw handleApiError(
         error,

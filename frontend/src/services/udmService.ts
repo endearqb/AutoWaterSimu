@@ -1,13 +1,6 @@
 import { t } from "@/utils/i18n"
 import { computeUdmApi } from "@/features/udm/api"
 import { isStandaloneRuntime } from "@/shared/runtimeConfig"
-import { OpenAPI } from "../client/core/OpenAPI"
-import { request as clientRequest } from "../client/core/request"
-import {
-  UdmFlowchartsService,
-  UdmModelsService,
-  UdmService,
-} from "../client/sdk.gen"
 import type {
   HybridUDMValidationResponse,
   MaterialBalanceInput,
@@ -35,6 +28,20 @@ import type {
 import type { HybridUDMConfig } from "../types/hybridUdm"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
+import { standaloneComputeService } from "./standaloneComputeService"
+
+const legacyUdmService = async () => (await import("../client/sdk.gen")).UdmService
+const legacyUdmFlowchartsService = async () =>
+  (await import("../client/sdk.gen")).UdmFlowchartsService
+const legacyUdmModelsService = async () =>
+  (await import("../client/sdk.gen")).UdmModelsService
+const legacyClientRequest = async () => {
+  const [{ OpenAPI }, { request: clientRequest }] = await Promise.all([
+    import("../client/core/OpenAPI"),
+    import("../client/core/request"),
+  ])
+  return { OpenAPI, clientRequest }
+}
 
 /**
  * UDM模型服务实现
@@ -99,8 +106,12 @@ class UDMServiceImpl
   async createCalculationJob(
     inputData: MaterialBalanceInput,
   ): Promise<UDMJobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.createCalculationJob("udm", inputData)
+    }
     try {
-      const response = await UdmService.createCalculationJob({
+      const service = await legacyUdmService()
+      const response = await service.createCalculationJob({
         requestBody: inputData,
       })
       return response
@@ -118,8 +129,15 @@ class UDMServiceImpl
   async createCalculationJobFromFlowchart(
     flowchartData: Record<string, unknown>,
   ): Promise<UDMJobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.createCalculationJobFromFlowchart(
+        "udm",
+        flowchartData,
+      )
+    }
     try {
-      return await UdmService.createCalculationJobFromFlowchart({
+      const service = await legacyUdmService()
+      return await service.createCalculationJobFromFlowchart({
         requestBody: flowchartData,
       })
     } catch (error) {
@@ -135,8 +153,20 @@ class UDMServiceImpl
   async validateHybridFlowchart(
     flowchartData: Record<string, unknown>,
   ): Promise<HybridUDMValidationResponse> {
+    if (isStandaloneRuntime()) {
+      return {
+        is_valid: true,
+        errors: [],
+        warnings: [],
+        details: { validation_mode: "standalone_local" },
+        normalized_hybrid_config:
+          (flowchartData.hybrid_config as Record<string, unknown> | null) ||
+          null,
+      }
+    }
     try {
-      return await UdmService.validateHybridUdmFlowchart({
+      const service = await legacyUdmService()
+      return await service.validateHybridUdmFlowchart({
         requestBody: flowchartData,
       })
     } catch (error) {
@@ -148,8 +178,12 @@ class UDMServiceImpl
    * 获取任务状态
    */
   async getCalculationStatus(jobId: string): Promise<UDMJobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationStatus(jobId)
+    }
     try {
-      const response = await UdmService.getCalculationStatus({
+      const service = await legacyUdmService()
+      const response = await service.getCalculationStatus({
         jobId,
       })
       return response
@@ -167,8 +201,12 @@ class UDMServiceImpl
   async getCalculationResultSummary(
     jobId: string,
   ): Promise<MaterialBalanceResultSummary> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationResultSummary(jobId)
+    }
     try {
-      const response = await UdmService.getCalculationResultSummary({
+      const service = await legacyUdmService()
+      const response = await service.getCalculationResultSummary({
         jobId,
       })
       return response
@@ -192,8 +230,12 @@ class UDMServiceImpl
     nodeIds?: string[]
     edgeIds?: string[]
   }): Promise<MaterialBalanceTimeSeriesResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationTimeseries(params)
+    }
     try {
-      const response = await UdmService.getCalculationTimeseries({
+      const service = await legacyUdmService()
+      const response = await service.getCalculationTimeseries({
         jobId: params.jobId,
         startTime: params.startTime,
         endTime: params.endTime,
@@ -217,8 +259,12 @@ class UDMServiceImpl
   async getCalculationFinalValues(
     jobId: string,
   ): Promise<Record<string, unknown>> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationFinalValues(jobId)
+    }
     try {
-      const response = await UdmService.getCalculationFinalValues({
+      const service = await legacyUdmService()
+      const response = await service.getCalculationFinalValues({
         jobId,
       })
       return response
@@ -236,8 +282,12 @@ class UDMServiceImpl
   async validateCalculationInput(
     inputData: MaterialBalanceInput,
   ): Promise<MaterialBalanceValidationResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.validateCalculationInput("udm", inputData)
+    }
     try {
-      const response = await UdmService.validateCalculationInput({
+      const service = await legacyUdmService()
+      const response = await service.validateCalculationInput({
         requestBody: { input_data: inputData },
       })
       return response
@@ -253,8 +303,16 @@ class UDMServiceImpl
    * 获取用户的所有任务
    */
   async getUserCalculationJobs(skip = 0, limit = 100): Promise<UDMJobsPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getUserCalculationJobs(
+        "udm",
+        skip,
+        limit,
+      )
+    }
     try {
-      const response = await UdmService.getUserCalculationJobs({
+      const service = await legacyUdmService()
+      const response = await service.getUserCalculationJobs({
         skip,
         limit,
       })
@@ -271,8 +329,12 @@ class UDMServiceImpl
    * 删除任务
    */
   async deleteCalculationJob(jobId: string): Promise<{ message: string }> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.deleteCalculationJob(jobId)
+    }
     try {
-      const response = await UdmService.deleteCalculationJob({
+      const service = await legacyUdmService()
+      const response = await service.deleteCalculationJob({
         jobId,
       })
       return response
@@ -288,8 +350,12 @@ class UDMServiceImpl
    * 获取任务输入数据
    */
   async getJobInputData(jobId: string): Promise<UDMJobInputDataResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getJobInputData(jobId)
+    }
     try {
-      const response = await UdmService.getJobInputData({
+      const service = await legacyUdmService()
+      const response = await service.getJobInputData({
         jobId,
       })
       return response
@@ -310,7 +376,8 @@ class UDMServiceImpl
     flowchartData: UDMFlowChartCreate,
   ): Promise<UDMFlowChartPublic> {
     try {
-      const response = await UdmFlowchartsService.createUdmFlowchart({
+      const service = await legacyUdmFlowchartsService()
+      const response = await service.createUdmFlowchart({
         requestBody: flowchartData,
       })
       return response
@@ -330,7 +397,8 @@ class UDMServiceImpl
     limit?: number,
   ): Promise<UDMFlowChartsPublic> {
     try {
-      const response = await UdmFlowchartsService.readUdmFlowcharts({
+      const service = await legacyUdmFlowchartsService()
+      const response = await service.readUdmFlowcharts({
         skip,
         limit,
       })
@@ -348,7 +416,8 @@ class UDMServiceImpl
    */
   async getFlowchart(id: string): Promise<UDMFlowChartPublic> {
     try {
-      const response = await UdmFlowchartsService.readUdmFlowchart({
+      const service = await legacyUdmFlowchartsService()
+      const response = await service.readUdmFlowchart({
         id,
       })
       return response
@@ -368,7 +437,8 @@ class UDMServiceImpl
     flowchartData: UDMFlowChartUpdate,
   ): Promise<UDMFlowChartPublic> {
     try {
-      const response = await UdmFlowchartsService.updateUdmFlowchart({
+      const service = await legacyUdmFlowchartsService()
+      const response = await service.updateUdmFlowchart({
         id,
         requestBody: flowchartData,
       })
@@ -386,7 +456,8 @@ class UDMServiceImpl
    */
   async deleteFlowchart(id: string): Promise<{ message: string }> {
     try {
-      const response = await UdmFlowchartsService.deleteUdmFlowchart({
+      const service = await legacyUdmFlowchartsService()
+      const response = await service.deleteUdmFlowchart({
         id,
       })
       return response
@@ -415,6 +486,7 @@ class UDMServiceImpl
       }
     }
     try {
+      const { OpenAPI, clientRequest } = await legacyClientRequest()
       return await clientRequest(OpenAPI, {
         method: "GET",
         url: "/api/v1/udm-hybrid-configs/",
@@ -439,6 +511,7 @@ class UDMServiceImpl
       }
     }
     try {
+      const { OpenAPI, clientRequest } = await legacyClientRequest()
       return await clientRequest(OpenAPI, {
         method: "GET",
         url: "/api/v1/udm-hybrid-configs/{id}",
@@ -464,6 +537,7 @@ class UDMServiceImpl
       }
     }
     try {
+      const { OpenAPI, clientRequest } = await legacyClientRequest()
       return await clientRequest(OpenAPI, {
         method: "POST",
         url: "/api/v1/udm-hybrid-configs/",
@@ -490,6 +564,7 @@ class UDMServiceImpl
       }
     }
     try {
+      const { OpenAPI, clientRequest } = await legacyClientRequest()
       return await clientRequest(OpenAPI, {
         method: "PUT",
         url: "/api/v1/udm-hybrid-configs/{id}",
@@ -514,6 +589,7 @@ class UDMServiceImpl
       }
     }
     try {
+      const { OpenAPI, clientRequest } = await legacyClientRequest()
       return await clientRequest(OpenAPI, {
         method: "DELETE",
         url: "/api/v1/udm-hybrid-configs/{id}",
@@ -568,7 +644,8 @@ class UDMServiceImpl
       }
     }
     try {
-      const response = await UdmModelsService.getUdmTemplates()
+      const service = await legacyUdmModelsService()
+      const response = await service.getUdmTemplates()
       return (response || []).map((item) => this.normalizeTemplate(item))
     } catch (error) {
       throw handleApiError(error, "Failed to fetch UDM templates")
@@ -590,7 +667,8 @@ class UDMServiceImpl
       }
     }
     try {
-      return await UdmModelsService.validateUdmModelDefinition({
+      const service = await legacyUdmModelsService()
+      return await service.validateUdmModelDefinition({
         requestBody: draft,
         validationMode,
       })
@@ -608,7 +686,8 @@ class UDMServiceImpl
       }
     }
     try {
-      return await UdmModelsService.createUdmModel({
+      const service = await legacyUdmModelsService()
+      return await service.createUdmModel({
         requestBody: model,
       })
     } catch (error) {
@@ -629,7 +708,8 @@ class UDMServiceImpl
       }
     }
     try {
-      return await UdmModelsService.createUdmModelFromTemplate({
+      const service = await legacyUdmModelsService()
+      return await service.createUdmModelFromTemplate({
         requestBody: payload,
       })
     } catch (error) {
@@ -650,7 +730,8 @@ class UDMServiceImpl
       }
     }
     try {
-      return await UdmModelsService.readUdmModels(params)
+      const service = await legacyUdmModelsService()
+      return await service.readUdmModels(params)
     } catch (error) {
       throw handleApiError(error, "Failed to fetch UDM model list")
     }
@@ -665,7 +746,8 @@ class UDMServiceImpl
       }
     }
     try {
-      return await UdmModelsService.readUdmModel({ modelId })
+      const service = await legacyUdmModelsService()
+      return await service.readUdmModel({ modelId })
     } catch (error) {
       throw handleApiError(error, "Failed to fetch UDM model detail")
     }
@@ -686,7 +768,8 @@ class UDMServiceImpl
       }
     }
     try {
-      return await UdmModelsService.updateUdmModel({
+      const service = await legacyUdmModelsService()
+      return await service.updateUdmModel({
         modelId,
         requestBody: model,
       })
@@ -705,7 +788,8 @@ class UDMServiceImpl
       }
     }
     try {
-      return await UdmModelsService.deleteUdmModel({ modelId })
+      const service = await legacyUdmModelsService()
+      return await service.deleteUdmModel({ modelId })
     } catch (error) {
       throw handleApiError(error, "Failed to delete UDM model")
     }

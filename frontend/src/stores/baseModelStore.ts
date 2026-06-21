@@ -133,6 +133,18 @@ export interface BaseModelState<
   deleteJob: (jobId: string) => Promise<void>
 
   /**
+   * 获取任务输入数据
+   * @param jobId 任务ID
+   * @returns 任务输入和结果数据
+   */
+  getJobInputData: (jobId: string) => Promise<{
+    job_id: string
+    input_data: Record<string, unknown>
+    result_data: Record<string, unknown>
+    status: string
+  }>
+
+  /**
    * 轮询任务状态
    * @param jobId 任务ID
    * @param interval 轮询间隔（毫秒）

@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import { devtools } from "zustand/middleware"
-import { FlowchartsService, MaterialBalanceService } from "../client/sdk.gen"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import type {
   FlowChartCreate,
   FlowChartPublic,
@@ -11,9 +11,14 @@ import type {
   MaterialBalanceJobStatus,
 } from "../client/types.gen"
 import { t } from "../i18n"
+import { standaloneComputeService } from "../services/standaloneComputeService"
 import type { BaseModelState } from "./baseModelStore"
 
 const MODEL_NAME = "Material Balance"
+const legacyMaterialBalanceService = async () =>
+  (await import("../client/sdk.gen")).MaterialBalanceService
+const legacyFlowchartsService = async () =>
+  (await import("../client/sdk.gen")).FlowchartsService
 
 interface MaterialBalanceState
   extends BaseModelState<
@@ -46,9 +51,16 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       createCalculationJob: async (input: MaterialBalanceInput) => {
         set({ isLoading: true, error: null })
         try {
-          const job = await MaterialBalanceService.createCalculationJob({
-            requestBody: input,
-          })
+          const job = isStandaloneRuntime()
+            ? await standaloneComputeService.createCalculationJob(
+                "materialBalance",
+                input,
+              )
+            : await (
+                await legacyMaterialBalanceService()
+              ).createCalculationJob({
+                requestBody: input,
+              })
           set({ currentJob: job, isLoading: false })
           return job
         } catch (error) {
@@ -73,10 +85,16 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           finalValues: null,
         })
         try {
-          const job =
-            await MaterialBalanceService.createCalculationJobFromFlowchart({
-              requestBody: flowchartData,
-            })
+          const job = isStandaloneRuntime()
+            ? await standaloneComputeService.createCalculationJobFromFlowchart(
+                "materialBalance",
+                flowchartData,
+              )
+            : await (
+                await legacyMaterialBalanceService()
+              ).createCalculationJobFromFlowchart({
+                requestBody: flowchartData,
+              })
           set({ currentJob: job, isLoading: false })
           return job
         } catch (error) {
@@ -97,9 +115,11 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       getCalculationStatus: async (jobId: string) => {
         set({ isLoading: true, error: null })
         try {
-          const job = await MaterialBalanceService.getCalculationStatus({
-            jobId,
-          })
+          const job = isStandaloneRuntime()
+            ? await standaloneComputeService.getCalculationStatus(jobId)
+            : await (await legacyMaterialBalanceService()).getCalculationStatus({
+                jobId,
+              })
           set({ currentJob: job, isLoading: false })
           return job
         } catch (error) {
@@ -115,8 +135,11 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       getResultSummary: async (jobId: string) => {
         set({ isLoading: true, error: null })
         try {
-          const summary =
-            await MaterialBalanceService.getCalculationResultSummary({ jobId })
+          const summary = isStandaloneRuntime()
+            ? await standaloneComputeService.getCalculationResultSummary(jobId)
+            : await (
+                await legacyMaterialBalanceService()
+              ).getCalculationResultSummary({ jobId })
           set({ resultSummary: summary, isLoading: false })
           return summary
         } catch (error) {
@@ -132,8 +155,11 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       getTimeSeriesData: async (params) => {
         set({ isLoading: true, error: null })
         try {
-          const data =
-            await MaterialBalanceService.getCalculationTimeseries(params)
+          const data = isStandaloneRuntime()
+            ? await standaloneComputeService.getCalculationTimeseries(params)
+            : await (
+                await legacyMaterialBalanceService()
+              ).getCalculationTimeseries(params)
           set({ timeSeriesData: data, isLoading: false })
           return data
         } catch (error) {
@@ -151,9 +177,13 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       getFinalValues: async (jobId: string) => {
         set({ isLoading: true, error: null })
         try {
-          const data = await MaterialBalanceService.getCalculationFinalValues({
-            jobId,
-          })
+          const data = isStandaloneRuntime()
+            ? await standaloneComputeService.getCalculationFinalValues(jobId)
+            : await (
+                await legacyMaterialBalanceService()
+              ).getCalculationFinalValues({
+                jobId,
+              })
           set({ finalValues: data, isLoading: false })
           return data
         } catch (error) {
@@ -171,9 +201,16 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       validateInput: async (input: MaterialBalanceInput) => {
         set({ isLoading: true, error: null })
         try {
-          const result = await MaterialBalanceService.validateCalculationInput({
-            requestBody: { input_data: input },
-          })
+          const result = isStandaloneRuntime()
+            ? await standaloneComputeService.validateCalculationInput(
+                "materialBalance",
+                input,
+              )
+            : await (
+                await legacyMaterialBalanceService()
+              ).validateCalculationInput({
+                requestBody: { input_data: input },
+              })
           set({ validationResult: result, isLoading: false })
           return result
         } catch (error) {
@@ -191,10 +228,18 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       getUserJobs: async (skip = 0, limit = 50) => {
         set({ isLoading: true, error: null })
         try {
-          const response = await MaterialBalanceService.getUserCalculationJobs({
-            skip,
-            limit,
-          })
+          const response = isStandaloneRuntime()
+            ? await standaloneComputeService.getUserCalculationJobs(
+                "materialBalance",
+                skip,
+                limit,
+              )
+            : await (
+                await legacyMaterialBalanceService()
+              ).getUserCalculationJobs({
+                skip,
+                limit,
+              })
           const jobs = response.data
           const count = response.count
           set({ userJobs: jobs, isLoading: false })
@@ -214,7 +259,13 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       deleteJob: async (jobId: string) => {
         set({ isLoading: true, error: null })
         try {
-          await MaterialBalanceService.deleteCalculationJob({ jobId })
+          if (isStandaloneRuntime()) {
+            await standaloneComputeService.deleteCalculationJob(jobId)
+          } else {
+            await (
+              await legacyMaterialBalanceService()
+            ).deleteCalculationJob({ jobId })
+          }
           const { userJobs } = get()
           set({
             userJobs: userJobs.filter((job) => job.job_id !== jobId),
@@ -225,6 +276,26 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
             error instanceof Error
               ? error.message
               : t("flow.store.model.deleteJobFailed", { model: MODEL_NAME })
+          set({ error: errorMessage, isLoading: false })
+          throw error
+        }
+      },
+
+      getJobInputData: async (jobId: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const data = isStandaloneRuntime()
+            ? await standaloneComputeService.getJobInputData(jobId)
+            : await (await legacyMaterialBalanceService()).getJobInputData({
+                jobId,
+              })
+          set({ isLoading: false })
+          return data
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : t("flow.store.model.getJobInputFailed", { model: MODEL_NAME })
           set({ error: errorMessage, isLoading: false })
           throw error
         }
@@ -329,7 +400,7 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       getFlowcharts: async (skip = 0, limit = 50) => {
         try {
           set({ isLoading: true, error: null })
-          const response = await FlowchartsService.readFlowcharts({
+          const response = await (await legacyFlowchartsService()).readFlowcharts({
             skip,
             limit,
           })
@@ -350,7 +421,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       createFlowchart: async (flowchart: FlowChartCreate) => {
         try {
           set({ isLoading: true, error: null })
-          const response = await FlowchartsService.createFlowchart({
+          const response = await (
+            await legacyFlowchartsService()
+          ).createFlowchart({
             requestBody: flowchart,
           })
           // 重新获取flowcharts列表
@@ -372,7 +445,9 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       getFlowchart: async (id: string) => {
         try {
           set({ isLoading: true, error: null })
-          const response = await FlowchartsService.readFlowchart({ id })
+          const response = await (await legacyFlowchartsService()).readFlowchart({
+            id,
+          })
           set({ currentFlowchart: response, isLoading: false })
           return response
         } catch (error) {
@@ -390,7 +465,7 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       updateFlowchart: async (id: string, flowchart: FlowChartUpdate) => {
         try {
           set({ isLoading: true, error: null })
-          const response = await FlowchartsService.updateFlowchart({
+          const response = await (await legacyFlowchartsService()).updateFlowchart({
             id,
             requestBody: flowchart,
           })
@@ -413,7 +488,7 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       deleteFlowchart: async (id: string) => {
         try {
           set({ isLoading: true, error: null })
-          await FlowchartsService.deleteFlowchart({ id })
+          await (await legacyFlowchartsService()).deleteFlowchart({ id })
           // 重新获取flowcharts列表
           await get().getFlowcharts()
           set({ isLoading: false })

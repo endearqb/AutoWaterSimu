@@ -10,6 +10,7 @@
 - WebSocket service。
 - 对 generated client 或 backend response 的轻量适配。
 - 保留 Compute compatibility service facade，供旧调用面或过渡期集成使用。
+- Standalone runtime 下五类计算模型到 Go Compute API `compute_job.v1` 的兼容适配。
 
 本目录不负责：
 
@@ -25,6 +26,7 @@
 | `baseModelService.ts` | shared model service behavior |
 | `asm1Service.ts`、`asm1slimService.ts`、`asm3Service.ts` | ASM service wrappers |
 | `udmService.ts` | UDM service wrapper |
+| `standaloneComputeService.ts` | Standalone runtime five-model compute adapter for Material Balance、ASM1Slim、ASM1、ASM3、UDM |
 | `websocketService.ts` | WebSocket helper |
 | `computeJobsService.ts` | Compatibility facade that composes `features/*` Compute API wrappers |
 
@@ -39,11 +41,12 @@
 7. Contract validation and Agent workflow wrappers live in `features/contracts/api.ts` and only call `POST /api/v1/contracts/validate`、`POST /api/v1/contracts/confirm-draft`、只读 confirmation record 查询、只读 `constraint-application-plan` endpoint、后端 result explanation submit/review/publish endpoints，或显式 `promote-simulation-check` endpoint；不得在前端自行把 valid Agent / simulation / constraint draft / draft confirmation / result explanation 自动转换为 compute job、审批或解释发布动作。
 8. `computeJobsService.ts` 只保留兼容 facade，不继续堆新 endpoint 逻辑；新增 Compute API wrapper 应先放入对应 `features/*/api.ts`，route 数据调用应通过 `features/*/queries.ts`。
 9. Scenario、CanvasGraph 和 ContextSnapshot workspace calls live in `features/workspace/api.ts`; stores or legacy compatibility callers may import that wrapper, but should not call the generated Compute client directly。
-10. UDM model library and hybrid config standalone calls live in `features/udm/api.ts`; `udmService.ts` may runtime-switch those library/config methods to Go Compute API while legacy runtime keeps the FastAPI client. UDM calculation job methods remain legacy until the standalone simulation engine phase provides equivalent endpoints.
+10. UDM model library and hybrid config standalone calls live in `features/udm/api.ts`; `udmService.ts` may runtime-switch those library/config methods to Go Compute API while legacy runtime keeps the FastAPI client。
+11. Standalone calculation submit/status/result/timeseries/input-data/delete for Material Balance、ASM1Slim、ASM1、ASM3 and UDM should go through `standaloneComputeService.ts`, which emits schema-versioned `compute_job.v1` / `simulation_input.v1` payloads via `features/compute-jobs/api.ts` and reads result artifacts via `features/lifecycle/api.ts`. Legacy runtime may still dynamically load the FastAPI generated client.
 
 ## 4. 对外接口
 
-本目录向 stores、routes、components 暴露 legacy typed service functions；Compute compatibility facade 保留给旧调用面和过渡期集成，新 Compute route 数据调用应走 `features/*/queries.ts`。
+本目录向 stores、routes、components 暴露 legacy typed service functions；standalone runtime 下这些 service methods 可切到 Go Compute API adapter。Compute compatibility facade 保留给旧调用面和过渡期集成，新 Compute route 数据调用应走 `features/*/queries.ts`。
 
 ## 5. 依赖边界
 
@@ -55,6 +58,8 @@
 
 ```powershell
 cd frontend; npx tsc --noEmit
+cd frontend; npx playwright test tests/standalone-five-model-compute.spec.ts --project=chromium --no-deps --reporter=line
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\audit-frontend-standalone-compute-boundary.ps1
 ```
 
 ## 7. AI 操作提示

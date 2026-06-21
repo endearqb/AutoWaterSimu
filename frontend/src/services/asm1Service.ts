@@ -1,5 +1,5 @@
 import { t } from "@/utils/i18n"
-import { Asm1FlowchartsService, Asm1Service } from "../client/sdk.gen"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import type {
   ASM1FlowChartCreate,
   ASM1FlowChartPublic,
@@ -15,6 +15,12 @@ import type {
 } from "../client/types.gen"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
+import { standaloneComputeService } from "./standaloneComputeService"
+
+const legacyAsm1Service = async () =>
+  (await import("../client/sdk.gen")).Asm1Service
+const legacyAsm1FlowchartsService = async () =>
+  (await import("../client/sdk.gen")).Asm1FlowchartsService
 
 /**
  * ASM1模型服务实现
@@ -42,8 +48,12 @@ class ASM1ServiceImpl
   async createCalculationJob(
     inputData: MaterialBalanceInput,
   ): Promise<ASM1JobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.createCalculationJob("asm1", inputData)
+    }
     try {
-      const response = await Asm1Service.createCalculationJob({
+      const service = await legacyAsm1Service()
+      const response = await service.createCalculationJob({
         requestBody: inputData,
       })
       return response
@@ -61,8 +71,15 @@ class ASM1ServiceImpl
   async createCalculationJobFromFlowchart(
     flowchartData: any,
   ): Promise<ASM1JobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.createCalculationJobFromFlowchart(
+        "asm1",
+        flowchartData,
+      )
+    }
     try {
-      return await Asm1Service.createCalculationJobFromFlowchart({
+      const service = await legacyAsm1Service()
+      return await service.createCalculationJobFromFlowchart({
         requestBody: flowchartData,
       })
     } catch (error) {
@@ -79,8 +96,12 @@ class ASM1ServiceImpl
    * 获取任务状态
    */
   async getCalculationStatus(jobId: string): Promise<ASM1JobPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationStatus(jobId)
+    }
     try {
-      const response = await Asm1Service.getCalculationStatus({
+      const service = await legacyAsm1Service()
+      const response = await service.getCalculationStatus({
         jobId,
       })
       return response
@@ -98,8 +119,12 @@ class ASM1ServiceImpl
   async getCalculationResultSummary(
     jobId: string,
   ): Promise<MaterialBalanceResultSummary> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationResultSummary(jobId)
+    }
     try {
-      const response = await Asm1Service.getCalculationResultSummary({
+      const service = await legacyAsm1Service()
+      const response = await service.getCalculationResultSummary({
         jobId,
       })
       return response
@@ -123,8 +148,12 @@ class ASM1ServiceImpl
     nodeIds?: string[]
     edgeIds?: string[]
   }): Promise<MaterialBalanceTimeSeriesResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationTimeseries(params)
+    }
     try {
-      const response = await Asm1Service.getCalculationTimeseries({
+      const service = await legacyAsm1Service()
+      const response = await service.getCalculationTimeseries({
         jobId: params.jobId,
         startTime: params.startTime,
         endTime: params.endTime,
@@ -146,8 +175,12 @@ class ASM1ServiceImpl
    * 获取最终值
    */
   async getCalculationFinalValues(jobId: string): Promise<any> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getCalculationFinalValues(jobId)
+    }
     try {
-      const response = await Asm1Service.getCalculationFinalValues({
+      const service = await legacyAsm1Service()
+      const response = await service.getCalculationFinalValues({
         jobId,
       })
       return response
@@ -165,8 +198,12 @@ class ASM1ServiceImpl
   async validateCalculationInput(
     inputData: MaterialBalanceInput,
   ): Promise<MaterialBalanceValidationResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.validateCalculationInput("asm1", inputData)
+    }
     try {
-      const response = await Asm1Service.validateCalculationInput({
+      const service = await legacyAsm1Service()
+      const response = await service.validateCalculationInput({
         requestBody: { input_data: inputData },
       })
       return response
@@ -182,8 +219,16 @@ class ASM1ServiceImpl
    * 获取用户的所有任务
    */
   async getUserCalculationJobs(skip = 0, limit = 100): Promise<ASM1JobsPublic> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getUserCalculationJobs(
+        "asm1",
+        skip,
+        limit,
+      )
+    }
     try {
-      const response = await Asm1Service.getUserCalculationJobs({
+      const service = await legacyAsm1Service()
+      const response = await service.getUserCalculationJobs({
         skip,
         limit,
       })
@@ -200,8 +245,12 @@ class ASM1ServiceImpl
    * 删除任务
    */
   async deleteCalculationJob(jobId: string): Promise<{ message: string }> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.deleteCalculationJob(jobId)
+    }
     try {
-      const response = await Asm1Service.deleteCalculationJob({
+      const service = await legacyAsm1Service()
+      const response = await service.deleteCalculationJob({
         jobId,
       })
       return response
@@ -217,8 +266,12 @@ class ASM1ServiceImpl
    * 获取任务输入数据
    */
   async getJobInputData(jobId: string): Promise<ASM1JobInputDataResponse> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getJobInputData(jobId)
+    }
     try {
-      const response = await Asm1Service.getJobInputData({
+      const service = await legacyAsm1Service()
+      const response = await service.getJobInputData({
         jobId,
       })
       return response
@@ -239,7 +292,8 @@ class ASM1ServiceImpl
     flowchartData: ASM1FlowChartCreate,
   ): Promise<ASM1FlowChartPublic> {
     try {
-      const response = await Asm1FlowchartsService.createAsm1Flowchart({
+      const service = await legacyAsm1FlowchartsService()
+      const response = await service.createAsm1Flowchart({
         requestBody: flowchartData,
       })
       return response
@@ -259,7 +313,8 @@ class ASM1ServiceImpl
     limit?: number,
   ): Promise<ASM1FlowChartsPublic> {
     try {
-      const response = await Asm1FlowchartsService.readAsm1Flowcharts({
+      const service = await legacyAsm1FlowchartsService()
+      const response = await service.readAsm1Flowcharts({
         skip,
         limit,
       })
@@ -277,7 +332,8 @@ class ASM1ServiceImpl
    */
   async getFlowchart(id: string): Promise<ASM1FlowChartPublic> {
     try {
-      const response = await Asm1FlowchartsService.readAsm1Flowchart({
+      const service = await legacyAsm1FlowchartsService()
+      const response = await service.readAsm1Flowchart({
         id,
       })
       return response
@@ -297,7 +353,8 @@ class ASM1ServiceImpl
     flowchartData: ASM1FlowChartUpdate,
   ): Promise<ASM1FlowChartPublic> {
     try {
-      const response = await Asm1FlowchartsService.updateAsm1Flowchart({
+      const service = await legacyAsm1FlowchartsService()
+      const response = await service.updateAsm1Flowchart({
         id,
         requestBody: flowchartData,
       })
@@ -315,7 +372,8 @@ class ASM1ServiceImpl
    */
   async deleteFlowchart(id: string): Promise<{ message: string }> {
     try {
-      const response = await Asm1FlowchartsService.deleteAsm1Flowchart({
+      const service = await legacyAsm1FlowchartsService()
+      const response = await service.deleteAsm1Flowchart({
         id,
       })
       return response

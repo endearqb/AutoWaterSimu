@@ -20,7 +20,6 @@ import {
   DialogTitle,
 } from "../../ui/dialog"
 
-import { MaterialBalanceService } from "../../../client/sdk.gen"
 import type {
   MaterialBalanceInput,
   MaterialBalanceJobPublic,
@@ -60,6 +59,7 @@ const LoadCalculationDataDialog: React.FC<LoadCalculationDataDialogProps> = ({
     getResultSummary,
     getFinalValues,
     getCalculationStatus,
+    getJobInputData,
   } = useMaterialBalanceStore()
   const {
     setNodes,
@@ -159,10 +159,7 @@ const LoadCalculationDataDialog: React.FC<LoadCalculationDataDialogProps> = ({
     try {
       // 获取计算结果摘要
       if (job.status === "success") {
-        const summary =
-          await MaterialBalanceService.getCalculationResultSummary({
-            jobId: job.job_id,
-          })
+        const summary = await getResultSummary(job.job_id)
         setResultSummary(summary)
       }
     } catch (error) {
@@ -179,9 +176,7 @@ const LoadCalculationDataDialog: React.FC<LoadCalculationDataDialogProps> = ({
     setIsLoadingData(true)
     try {
       // 获取输入数据和结果数据
-      const jobDataResponse = await MaterialBalanceService.getJobInputData({
-        jobId: selectedJob.job_id,
-      })
+      const jobDataResponse = await getJobInputData(selectedJob.job_id)
 
       const rawInputData = jobDataResponse.input_data as any
       if (!rawInputData) {

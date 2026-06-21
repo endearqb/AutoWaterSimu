@@ -1,6 +1,5 @@
 import { HStack, Text, VStack } from "@chakra-ui/react"
 import type React from "react"
-import { MaterialBalanceService } from "../../../client/sdk.gen"
 import type { MaterialBalanceJobPublic } from "../../../client/types.gen"
 import { useI18n } from "../../../i18n"
 import useFlowStore from "../../../stores/flowStore"
@@ -39,9 +38,9 @@ const MaterialBalanceBubbleMenu: React.FC<MaterialBalanceBubbleMenuProps> = ({
     const jobName = job.job_name
 
     // 获取输入数据和结果数据
-    const jobDataResponse = await MaterialBalanceService.getJobInputData({
-      jobId: jobId,
-    })
+    const jobDataResponse =
+      (await modelStore?.getJobInputData?.(jobId)) ??
+      (await useMaterialBalanceStore.getState().getJobInputData(jobId))
 
     // 现在input_data直接是原始flowchart数据
     const flowchartData = jobDataResponse.input_data as any

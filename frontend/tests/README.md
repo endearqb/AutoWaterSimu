@@ -27,6 +27,7 @@
 | `compute-jobs-current-flow.spec.ts` | Mock-backed Compute Jobs current-flow submission, result/readiness, evidence package download, and evidence ref lookup smoke |
 | `compute-jobs-live-backend.spec.ts` | Live Compute API browser read smoke for an integration-prepared job/result/evidence/ref |
 | `compute-jobs-current-flow-live.spec.ts` | Live Compute API current-flow submit smoke with a real worker completion, evidence package download, and evidence ref lookup |
+| `standalone-five-model-compute.spec.ts` | Standalone-env mock-backed service-layer smoke that verifies Material Balance、ASM1Slim、ASM1、ASM3、UDM all submit `compute_job.v1` payloads through the Go Compute API boundary |
 | `contract-validation.spec.ts` | Mock-backed Compute Jobs contract validation panel smoke |
 | `model-governance.spec.ts` | Mock-backed Model governance catalog snapshot history smoke |
 | `compute-lifecycle.spec.ts` | Mock-backed Compute lifecycle metrics and retention sweep smoke |
@@ -55,6 +56,7 @@
 ```powershell
 cd frontend; npx playwright test
 cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps
+cd frontend; npx playwright test tests/standalone-five-model-compute.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/contract-validation.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/model-governance.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line
