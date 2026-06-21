@@ -40,6 +40,7 @@
 4. Mock-backed Compute Jobs smokes may override `storageState` and use `--no-deps` for local focused runs when they do not require `auth.setup.ts` or a live backend.
 5. Live Compute API browser smoke uses `AUTOWATERSIMU_LIVE_COMPUTE_*` environment variables and should be run through `scripts/ci/live-backend-browser-smoke.ps1`, which prepares the backend job and cleanup.
 6. Current-flow live smoke uses `AUTOWATERSIMU_CURRENT_FLOW_LIVE_*` environment variables and should be run through `scripts/ci/current-flow-live-smoke.ps1`, which prepares the live Compute stack, worker loop, and cleanup.
+7. Focused smokes may set `PLAYWRIGHT_*` environment overrides to use an isolated Vite port instead of reusing an existing local server.
 
 ## 4. 对外接口
 

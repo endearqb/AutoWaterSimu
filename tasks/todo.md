@@ -10714,7 +10714,7 @@
 - [x] Make full RC mode fail when any release-gate step is skipped.
 - [x] Document that only full standalone RC gate without skips satisfies the specs.
 - [x] Run focused fast release-gate validation and record current smoke blocker.
-- [ ] Run strict fail-on-skip validation once the five-model smoke blocker is fixed.
+- [x] Run strict fail-on-skip validation once the five-model smoke blocker is fixed.
 - [x] Commit and push Phase A gate tightening.
 
 ## Plan
@@ -10728,3 +10728,5 @@
 - Fast gate validation was attempted with `standalone-release-gate.ps1 -SkipLong`; it still fails because the existing standalone five-model Playwright submit step returns a generic `AxiosError`.
 - Worker fixture coverage and golden summary reached the gate, but full passed evidence is still blocked until the frontend smoke submit issue is fixed.
 - Pushed this Phase A gate-hardening slice on user request; the remaining work is to make the smoke blocker pass, then rerun strict fail-on-skip and full RC gate evidence.
+- Fixed the five-model smoke blocker by running the focused Playwright smoke on an isolated Vite port instead of reusing an existing 5173 server.
+- `standalone-five-model-smoke.ps1` now passes; `standalone-release-gate.ps1 -SkipLong` returns `passed_with_skips`; `standalone-release-gate.ps1 -SkipLong -FailOnSkip` exits 1 with `status=failed` / `fail_on_skip=true` as expected.

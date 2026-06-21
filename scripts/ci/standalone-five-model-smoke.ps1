@@ -187,6 +187,10 @@ Invoke-WithEnv -EnvVars @{
     VITE_CONTEXT_MODE = "standalone"
     VITE_COMPUTE_API_URL = "http://localhost:8088"
     VITE_COMPUTE_API_TOKEN = ""
+    PLAYWRIGHT_PORT = "5174"
+    PLAYWRIGHT_BASE_URL = "http://127.0.0.1:5174"
+    PLAYWRIGHT_DEV_SERVER_COMMAND = "npm run dev -- --host 127.0.0.1 --port 5174 --strictPort"
+    PLAYWRIGHT_REUSE_EXISTING_SERVER = "0"
 } -Body {
     Invoke-Step `
         -Name "frontend standalone five-model playwright smoke" `
