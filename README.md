@@ -237,6 +237,12 @@ cd apps\api; go test ./...
 cd frontend; npx tsc --noEmit
 ```
 
+Standalone RC is only complete when the full gate runs without skips:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke
+```
+
 The long-term architecture entry for Next lives under [docs/architecture](./docs/architecture/README.md).
 The source-mounted Next local stack candidate is [docker-compose.dev.yml](./docker-compose.dev.yml).
 The standalone no-login stack entry is [docker-compose.standalone.yml](./docker-compose.standalone.yml), exposed through `just standalone-up`, `just standalone-status`, `just standalone-smoke`, and `just standalone-reset`.

@@ -5,7 +5,8 @@ param(
     [switch]$RunComposeSmoke,
     [switch]$RunBackupRestoreLive,
     [switch]$RunPostgresMigrationSmoke,
-    [switch]$RunReleaseImageSmoke
+    [switch]$RunReleaseImageSmoke,
+    [switch]$FailOnSkip
 )
 
 $ErrorActionPreference = "Stop"
@@ -188,6 +189,8 @@ New-Item -ItemType Directory -Force -Path $ciEvidenceDir | Out-Null
 $script:Steps = [System.Collections.Generic.List[object]]::new()
 $script:Failed = $false
 $script:Skipped = $false
+$fullRc = [bool]($RunComposeSmoke -and $RunBackupRestoreLive -and $RunPostgresMigrationSmoke -and $RunReleaseImageSmoke -and -not $SkipLong)
+$failOnAnySkip = [bool]($FailOnSkip -or $fullRc)
 $npx = Resolve-NativeCommand -Name "npx"
 $commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
 $branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
@@ -308,7 +311,9 @@ $report = [ordered]@{
     repo_root = $Root
     commit_sha = $commitSha
     branch = $branchName
-    status = if ($script:Failed) { "failed" } elseif ($script:Skipped) { "passed_with_skips" } else { "passed" }
+    status = if ($script:Failed -or ($failOnAnySkip -and $script:Skipped)) { "failed" } elseif ($script:Skipped) { "passed_with_skips" } else { "passed" }
+    full_rc = $fullRc
+    fail_on_skip = $failOnAnySkip
     skip_long = [bool]$SkipLong
     run_compose_smoke = [bool]$RunComposeSmoke
     run_backup_restore_live = [bool]$RunBackupRestoreLive
@@ -332,6 +337,6 @@ $evidencePath = Join-Path $EvidenceDir "standalone-release-gate.json"
 $report | ConvertTo-Json -Depth 8 | Set-Content -Path $evidencePath -Encoding UTF8
 Write-Host "Standalone release gate evidence: $evidencePath"
 
-if ($script:Failed) {
+if ($script:Failed -or ($failOnAnySkip -and $script:Skipped)) {
     exit 1
 }

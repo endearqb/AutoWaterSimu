@@ -10707,3 +10707,24 @@
 - `just --list` passed and shows the new standalone targets.
 - `git diff --check -- README.md Justfile scripts docs\rebuild tasks\todo.md .ai\changes\2026-06-21.md` passed with LF/CRLF warnings only.
 - Commit/push completed for Phase 7.
+
+# 2026-06-21 Standalone RC closeout Phase A TODO
+
+- [x] Re-read README First context for standalone release gate scripts and docs.
+- [x] Make full RC mode fail when any release-gate step is skipped.
+- [x] Document that only full standalone RC gate without skips satisfies the specs.
+- [x] Run focused fast release-gate validation and record current smoke blocker.
+- [ ] Run strict fail-on-skip validation once the five-model smoke blocker is fixed.
+- [x] Commit and push Phase A gate tightening.
+
+## Plan
+
+- Keep fast local mode unchanged: `-SkipLong` may still produce `passed_with_skips`.
+- Infer full RC mode from all four live flags without `-SkipLong`; no separate command shape required.
+- Add `-FailOnSkip` only as a cheap explicit test/operator knob.
+
+## Review
+
+- Fast gate validation was attempted with `standalone-release-gate.ps1 -SkipLong`; it still fails because the existing standalone five-model Playwright submit step returns a generic `AxiosError`.
+- Worker fixture coverage and golden summary reached the gate, but full passed evidence is still blocked until the frontend smoke submit issue is fixed.
+- Pushed this Phase A gate-hardening slice on user request; the remaining work is to make the smoke blocker pass, then rerun strict fail-on-skip and full RC gate evidence.

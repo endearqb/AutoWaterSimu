@@ -21,10 +21,20 @@ test("model services submit five standalone compute job types", async ({
 
   await page.route(`${apiBaseUrl}/api/v1/compute/jobs`, async (route) => {
     const request = route.request()
+    const headers = {
+      "access-control-allow-headers": "content-type",
+      "access-control-allow-methods": "POST, OPTIONS",
+      "access-control-allow-origin": "*",
+    }
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ headers, status: 204 })
+      return
+    }
     const job = request.postDataJSON() as Record<string, unknown>
     submittedJobs.push(job)
     await route.fulfill({
       contentType: "application/json",
+      headers,
       status: 202,
       body: JSON.stringify({
         job: {

@@ -43,12 +43,12 @@
 10. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
 11. `smoke-release-artifact-download.ps1` 只使用 `tmp/` 下的 fixture 文件验证校验器逻辑，不代表真实 GitHub artifact round trip 已通过。
 12. `next-release-gates.ps1` evidence 必须记录 commit SHA、branch、dirty-state、tracked/untracked changes 和每步结果；PostgreSQL migration 只在 `postgres migration up/down smoke` step 实际存在且通过时才可作为 migration evidence。
-13. `standalone-release-gate.ps1` 默认可在缺少外部 DSN、未启动 compose 或未构建镜像时以 `passed_with_skips` 记录本地可验证结果；只有显式运行 live compose、live backup/restore、migration rollback 和 image build 且无 skip 时，才能解释为完整 standalone RC gate 通过。
+13. `standalone-release-gate.ps1` 默认可在缺少外部 DSN、未启动 compose 或未构建镜像时以 `passed_with_skips` 记录本地可验证结果；完整 standalone RC gate 会在同时传入 `-RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke` 且未传 `-SkipLong` 时自动启用 fail-on-skip，任何 skip 都会让 gate 失败。
 
 ## 4. 对外接口
 
 本目录对本地 PowerShell 和 `.github/workflows/next-release-gates.yml` 暴露 release gate 入口。
-`standalone-release-gate.ps1` 是 standalone Web RC gate 入口；默认 `-SkipLong` 适合作为本地快速 RC evidence，`-RunComposeSmoke`、`-RunBackupRestoreLive`、`-RunPostgresMigrationSmoke` 与 `-RunReleaseImageSmoke` 用于显式补齐外部环境验证。
+`standalone-release-gate.ps1` 是 standalone Web RC gate 入口；默认 `-SkipLong` 适合作为本地快速 RC evidence，完整 RC 必须同时传入 `-RunComposeSmoke`、`-RunBackupRestoreLive`、`-RunPostgresMigrationSmoke` 与 `-RunReleaseImageSmoke`，此时任何 skip 都会失败。
 `verify-release-artifact-download.ps1` 也作为 workflow 下载 artifact 后的内容校验入口。
 `scripts/ci/desktop-release-artifacts-smoke.ps1` 会先构建真实 unsigned Desktop sidecar/installer artifact，再调用本目录 release gate 和下载校验器生成本地 release evidence。
 
