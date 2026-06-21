@@ -8,11 +8,18 @@ import (
 )
 
 type Authenticator = platformauth.Authenticator
+type PrincipalProvider = platformauth.PrincipalProvider
+type DisabledProvider = platformauth.DisabledProvider
 type TokenConfig = platformauth.TokenConfig
 type TokenRecord = platformauth.TokenRecord
 type Principal = platformauth.Principal
 
+const AuthModeDisabled = platformauth.AuthModeDisabled
+const AuthModeStaticToken = platformauth.AuthModeStaticToken
+
 var NewAuthenticator = platformauth.NewAuthenticator
+var NewDisabledProvider = platformauth.NewDisabledProvider
+var NewAuthProvider = platformauth.NewProvider
 
 func filterForPrincipalDataScope(filter ListFilter, principal Principal) ListFilter {
 	filter.TenantID = strings.TrimSpace(principal.TenantID)

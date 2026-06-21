@@ -205,6 +205,7 @@ def start_compute_api(repo_root: Path, work_dir: Path, port: int) -> subprocess.
         env.pop(key, None)
     env["APP_ENV"] = "development"
     env["COMPUTE_API_PORT"] = str(port)
+    env["COMPUTE_API_AUTH_MODE"] = "static_token"
     env["COMPUTE_API_ARTIFACT_DIR"] = str(work_dir / "artifacts")
     flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
     stdout = stdout_path.open("w", encoding="utf-8")

@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"autowatersimu/apps/api/internal/compute"
+	platformauth "autowatersimu/apps/api/internal/platform/auth"
 	platformconfig "autowatersimu/apps/api/internal/platform/config"
 )
 
 func TestOpenStoreUsesMemoryStoreWhenDatabaseURLMissing(t *testing.T) {
-	store, closeStore, err := openStore(context.Background(), platformconfig.Config{}, t.TempDir())
+	store, closeStore, err := openStore(context.Background(), platformconfig.Config{})
 	if err != nil {
 		t.Fatalf("openStore returned error: %v", err)
 	}
@@ -29,8 +30,15 @@ func TestValidateProductionAuthConfigAllowsNonProductionDefaults(t *testing.T) {
 	}
 }
 
-func TestValidateProductionAuthConfigRejectsEmptyTokens(t *testing.T) {
-	err := validateProductionAuthConfig(platformconfig.Config{Environment: "production"})
+func TestValidateProductionAuthConfigRejectsDisabledAuthMode(t *testing.T) {
+	err := validateProductionAuthConfig(platformconfig.Config{Environment: "production", AuthMode: platformauth.AuthModeDisabled})
+	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_AUTH_MODE=disabled") {
+		t.Fatalf("expected production disabled auth mode to be rejected, got %v", err)
+	}
+}
+
+func TestValidateProductionAuthConfigRejectsEmptyStaticTokens(t *testing.T) {
+	err := validateProductionAuthConfig(platformconfig.Config{Environment: "production", AuthMode: platformauth.AuthModeStaticToken})
 	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_TOKENS_JSON or COMPUTE_API_TOKENS_FILE is required") {
 		t.Fatalf("expected production empty token config to be rejected, got %v", err)
 	}
@@ -47,7 +55,7 @@ func TestValidateProductionAuthConfigRejectsDefaultDevTokens(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateProductionAuthConfig(platformconfig.Config{Environment: "production", TokensJSON: tt.tokensJSON})
+			err := validateProductionAuthConfig(platformconfig.Config{Environment: "production", AuthMode: platformauth.AuthModeStaticToken, TokensJSON: tt.tokensJSON})
 			if err == nil || !strings.Contains(err.Error(), "default development token") {
 				t.Fatalf("expected default development token to be rejected, got %v", err)
 			}
@@ -58,6 +66,7 @@ func TestValidateProductionAuthConfigRejectsDefaultDevTokens(t *testing.T) {
 func TestValidateProductionAuthConfigAllowsExplicitTokens(t *testing.T) {
 	config := platformconfig.Config{
 		Environment: "production",
+		AuthMode:    platformauth.AuthModeStaticToken,
 		TokensJSON:  `{"tokens":[{"name":"platform","token":"prod-token-from-secret-manager","scopes":["job:read"]}]}`,
 	}
 	tokensJSON, err := loadAuthTokensJSON(config)
@@ -79,6 +88,7 @@ func TestLoadAuthTokensJSONReadsTokenFile(t *testing.T) {
 	}
 	config := platformconfig.Config{
 		Environment: "production",
+		AuthMode:    platformauth.AuthModeStaticToken,
 		TokensFile:  tokensPath,
 	}
 	tokensJSON, err := loadAuthTokensJSON(config)
@@ -116,6 +126,57 @@ func TestLoadAuthTokensJSONRejectsEmptyTokenFile(t *testing.T) {
 	_, err := loadAuthTokensJSON(platformconfig.Config{TokensFile: tokensPath})
 	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_TOKENS_FILE must not be empty") {
 		t.Fatalf("expected empty token file error, got %v", err)
+	}
+}
+
+func TestValidateNoAuthBindRejectsRemoteBindByDefault(t *testing.T) {
+	err := validateNoAuthBind(platformconfig.Config{
+		AuthMode: platformauth.AuthModeDisabled,
+		BindAddr: "0.0.0.0",
+	})
+	if err == nil || !strings.Contains(err.Error(), "COMPUTE_API_AUTH_MODE=disabled requires loopback") {
+		t.Fatalf("expected remote no-auth bind to be rejected, got %v", err)
+	}
+}
+
+func TestValidateNoAuthBindAllowsLoopbackDefault(t *testing.T) {
+	config := platformconfig.Config{AuthMode: platformauth.AuthModeDisabled, Port: "8088"}
+	if err := validateNoAuthBind(config); err != nil {
+		t.Fatalf("expected default disabled auth bind to be loopback-safe: %v", err)
+	}
+	if got := httpListenAddress(config); got != "127.0.0.1:8088" {
+		t.Fatalf("unexpected default listen address before port resolution: %q", got)
+	}
+}
+
+func TestValidateNoAuthBindAllowsExplicitRemoteOverride(t *testing.T) {
+	err := validateNoAuthBind(platformconfig.Config{
+		AuthMode:          platformauth.AuthModeDisabled,
+		BindAddr:          "0.0.0.0",
+		AllowRemoteNoAuth: true,
+	})
+	if err != nil {
+		t.Fatalf("expected explicit remote no-auth override to pass: %v", err)
+	}
+}
+
+func TestResolveRuntimePathsUsesExplicitContractAndMigrationDirs(t *testing.T) {
+	config := platformconfig.Config{
+		DatabaseURL:   "postgres://example",
+		ContractsDir:  filepath.Join(t.TempDir(), "contracts"),
+		MigrationsDir: filepath.Join(t.TempDir(), "migrations"),
+	}
+	if err := resolveRuntimePaths(&config); err != nil {
+		t.Fatalf("resolveRuntimePaths returned error: %v", err)
+	}
+	if config.RepoRoot != "" {
+		t.Fatalf("expected explicit runtime dirs to avoid repo root discovery, got %q", config.RepoRoot)
+	}
+	if config.Port != "8088" {
+		t.Fatalf("expected default port, got %q", config.Port)
+	}
+	if config.ArtifactDir == "" {
+		t.Fatalf("expected artifact dir default")
 	}
 }
 

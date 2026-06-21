@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,14 +26,13 @@ func main() {
 }
 
 func run() error {
-	repoRoot, err := findRepoRoot()
-	if err != nil {
-		return err
-	}
 	config := platformconfig.Config{
 		Environment:            getenv("APP_ENV", os.Getenv("ENVIRONMENT")),
+		AuthMode:               getenv("COMPUTE_API_AUTH_MODE", platformauth.AuthModeDisabled),
+		BindAddr:               os.Getenv("COMPUTE_API_BIND_ADDR"),
+		AllowRemoteNoAuth:      boolEnv("COMPUTE_API_ALLOW_REMOTE_NO_AUTH", false),
 		DatabaseURL:            os.Getenv("COMPUTE_API_DATABASE_URL"),
-		ArtifactDir:            getenv("COMPUTE_API_ARTIFACT_DIR", filepath.Join(repoRoot, "tmp", "compute-api-artifacts")),
+		ArtifactDir:            os.Getenv("COMPUTE_API_ARTIFACT_DIR"),
 		ArchiveDir:             os.Getenv("COMPUTE_API_ARCHIVE_DIR"),
 		ArchiveS3Endpoint:      os.Getenv("COMPUTE_API_ARCHIVE_S3_ENDPOINT"),
 		ArchiveS3Bucket:        os.Getenv("COMPUTE_API_ARCHIVE_S3_BUCKET"),
@@ -43,22 +43,27 @@ func run() error {
 		TokensJSON:             os.Getenv("COMPUTE_API_TOKENS_JSON"),
 		TokensFile:             os.Getenv("COMPUTE_API_TOKENS_FILE"),
 		Port:                   getenv("COMPUTE_API_PORT", "8088"),
-		RepoRoot:               repoRoot,
+		RepoRoot:               os.Getenv("COMPUTE_API_REPO_ROOT"),
+		ContractsDir:           os.Getenv("COMPUTE_API_CONTRACTS_DIR"),
+		MigrationsDir:          os.Getenv("COMPUTE_API_MIGRATIONS_DIR"),
 		RetentionSweepInterval: durationEnv("COMPUTE_API_RETENTION_SWEEP_INTERVAL", 0),
 		RetentionSweepDryRun:   boolEnv("COMPUTE_API_RETENTION_SWEEP_DRY_RUN", true),
 		RetentionSweepLimit:    intEnv("COMPUTE_API_RETENTION_SWEEP_LIMIT", 100),
 	}
-	tokensJSON, err := loadAuthTokensJSON(config)
-	if err != nil {
+	config.AuthMode = normalizeAuthMode(config.AuthMode)
+	if err := resolveRuntimePaths(&config); err != nil {
 		return err
 	}
-	config.TokensJSON = tokensJSON
-	if err := validateProductionAuthConfig(config); err != nil {
+	if err := validateNoAuthBind(config); err != nil {
+		return err
+	}
+	auth, err := openAuthProvider(&config)
+	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	store, closeStore, err := openStore(ctx, config, filepath.Join(repoRoot, "apps", "api", "migrations"))
+	store, closeStore, err := openStore(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -79,11 +84,7 @@ func run() error {
 		}
 		slog.Info("artifact archive backend enabled", "provider", provider)
 	}
-	validator, err := compute.NewContractValidator(config.RepoRoot)
-	if err != nil {
-		return err
-	}
-	auth, err := platformauth.NewAuthenticator(tokensJSON)
+	validator, err := compute.NewContractValidatorFromDir(config.ContractsDir)
 	if err != nil {
 		return err
 	}
@@ -111,8 +112,9 @@ func run() error {
 		}
 	}
 	server := compute.NewServer(service, auth, slog.Default())
-	slog.Info("starting compute api", "port", config.Port)
-	return http.ListenAndServe(":"+config.Port, server.Routes())
+	listenAddress := httpListenAddress(config)
+	slog.Info("starting compute api", "address", listenAddress, "auth_mode", config.AuthMode)
+	return http.ListenAndServe(listenAddress, server.Routes())
 }
 
 func loadAuthTokensJSON(config platformconfig.Config) (string, error) {
@@ -134,9 +136,30 @@ func loadAuthTokensJSON(config platformconfig.Config) (string, error) {
 	return string(tokensBytes), nil
 }
 
+func openAuthProvider(config *platformconfig.Config) (platformauth.PrincipalProvider, error) {
+	if normalizeAuthMode(config.AuthMode) != platformauth.AuthModeStaticToken {
+		if err := validateProductionAuthConfig(*config); err != nil {
+			return nil, err
+		}
+		return platformauth.NewProvider(config.AuthMode, "")
+	}
+	tokensJSON, err := loadAuthTokensJSON(*config)
+	if err != nil {
+		return nil, err
+	}
+	config.TokensJSON = tokensJSON
+	if err := validateProductionAuthConfig(*config); err != nil {
+		return nil, err
+	}
+	return platformauth.NewProvider(config.AuthMode, tokensJSON)
+}
+
 func validateProductionAuthConfig(config platformconfig.Config) error {
 	if !isProductionEnv(config.Environment) {
 		return nil
+	}
+	if normalizeAuthMode(config.AuthMode) == platformauth.AuthModeDisabled {
+		return fmt.Errorf("COMPUTE_API_AUTH_MODE=disabled is not allowed when APP_ENV or ENVIRONMENT is production")
 	}
 	if strings.TrimSpace(config.TokensJSON) == "" {
 		return fmt.Errorf("COMPUTE_API_TOKENS_JSON or COMPUTE_API_TOKENS_FILE is required when APP_ENV or ENVIRONMENT is production")
@@ -156,6 +179,38 @@ func validateProductionAuthConfig(config platformconfig.Config) error {
 	return nil
 }
 
+func normalizeAuthMode(mode string) string {
+	if strings.TrimSpace(mode) == "" {
+		return platformauth.AuthModeDisabled
+	}
+	return strings.TrimSpace(mode)
+}
+
+func resolveRuntimePaths(config *platformconfig.Config) error {
+	if strings.TrimSpace(config.Port) == "" {
+		config.Port = "8088"
+	}
+	if strings.TrimSpace(config.ArtifactDir) == "" {
+		config.ArtifactDir = filepath.Join("tmp", "compute-api-artifacts")
+	}
+	needsRepoRoot := strings.TrimSpace(config.ContractsDir) == "" ||
+		(strings.TrimSpace(config.DatabaseURL) != "" && strings.TrimSpace(config.MigrationsDir) == "")
+	if strings.TrimSpace(config.RepoRoot) == "" && needsRepoRoot {
+		repoRoot, err := findRepoRoot()
+		if err != nil {
+			return fmt.Errorf("resolve repo root for compute API runtime paths: %w", err)
+		}
+		config.RepoRoot = repoRoot
+	}
+	if strings.TrimSpace(config.ContractsDir) == "" {
+		config.ContractsDir = filepath.Join(config.RepoRoot, "contracts")
+	}
+	if strings.TrimSpace(config.DatabaseURL) != "" && strings.TrimSpace(config.MigrationsDir) == "" {
+		config.MigrationsDir = filepath.Join(config.RepoRoot, "apps", "api", "migrations")
+	}
+	return nil
+}
+
 func isProductionEnv(environment string) bool {
 	return strings.EqualFold(strings.TrimSpace(environment), "production")
 }
@@ -169,7 +224,39 @@ func isDefaultDevelopmentToken(token string) bool {
 	}
 }
 
-func openStore(ctx context.Context, config platformconfig.Config, migrationsDir string) (compute.Store, func(), error) {
+func validateNoAuthBind(config platformconfig.Config) error {
+	if normalizeAuthMode(config.AuthMode) != platformauth.AuthModeDisabled || config.AllowRemoteNoAuth {
+		return nil
+	}
+	bindAddr := httpBindAddress(config)
+	if isLoopbackBind(bindAddr) {
+		return nil
+	}
+	return fmt.Errorf("COMPUTE_API_AUTH_MODE=disabled requires loopback COMPUTE_API_BIND_ADDR or COMPUTE_API_ALLOW_REMOTE_NO_AUTH=true")
+}
+
+func httpListenAddress(config platformconfig.Config) string {
+	return net.JoinHostPort(httpBindAddress(config), config.Port)
+}
+
+func httpBindAddress(config platformconfig.Config) string {
+	bindAddr := strings.TrimSpace(config.BindAddr)
+	if bindAddr == "" && normalizeAuthMode(config.AuthMode) == platformauth.AuthModeDisabled {
+		return "127.0.0.1"
+	}
+	return bindAddr
+}
+
+func isLoopbackBind(bindAddr string) bool {
+	host := strings.Trim(strings.TrimSpace(bindAddr), "[]")
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+func openStore(ctx context.Context, config platformconfig.Config) (compute.Store, func(), error) {
 	if config.DatabaseURL == "" {
 		slog.Warn("COMPUTE_API_DATABASE_URL not set; using in-memory compute metadata store")
 		return compute.NewMemoryStore(), func() {}, nil
@@ -178,7 +265,11 @@ func openStore(ctx context.Context, config platformconfig.Config, migrationsDir 
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := store.ApplyMigrations(ctx, migrationsDir); err != nil {
+	if strings.TrimSpace(config.MigrationsDir) == "" {
+		store.Close()
+		return nil, nil, fmt.Errorf("COMPUTE_API_MIGRATIONS_DIR is required when COMPUTE_API_DATABASE_URL is set")
+	}
+	if err := store.ApplyMigrations(ctx, config.MigrationsDir); err != nil {
 		store.Close()
 		return nil, nil, err
 	}

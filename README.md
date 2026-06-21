@@ -163,6 +163,8 @@ For Next monorepo work, the root `Justfile` is the preferred task entry:
 ```powershell
 just doctor
 just dev-detached
+just standalone-up
+just standalone-smoke
 just check-deps
 just check-ontology
 just check
@@ -204,6 +206,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-cor
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-correctness-freeze.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-dependency-installation.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-adapter-strict-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
@@ -230,6 +233,7 @@ cd frontend; npx tsc --noEmit
 
 The long-term architecture entry for Next lives under [docs/architecture](./docs/architecture/README.md).
 The source-mounted Next local stack candidate is [docker-compose.dev.yml](./docker-compose.dev.yml).
+The standalone no-login stack entry is [docker-compose.standalone.yml](./docker-compose.standalone.yml), exposed through `just standalone-up`, `just standalone-status`, `just standalone-smoke`, and `just standalone-reset`.
 
 ### 1. Environment Setup
 

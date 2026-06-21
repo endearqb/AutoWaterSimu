@@ -7,6 +7,9 @@ import (
 )
 
 const (
+	AuthModeDisabled    = "disabled"
+	AuthModeStaticToken = "static_token"
+
 	CodeValidationFailed = "VALIDATION_FAILED"
 	CodeUnauthorized     = "UNAUTHORIZED"
 	CodeForbidden        = "FORBIDDEN"
@@ -47,8 +50,36 @@ type Principal struct {
 	SiteID    string
 }
 
+type PrincipalProvider interface {
+	Principal(r *http.Request, requiredScope string) (*Principal, error)
+}
+
+type DisabledProvider struct{}
+
 type Authenticator struct {
 	tokens map[string]Principal
+}
+
+func NewProvider(mode string, tokensJSON string) (PrincipalProvider, error) {
+	switch strings.TrimSpace(mode) {
+	case "", AuthModeDisabled:
+		return NewDisabledProvider(), nil
+	case AuthModeStaticToken:
+		return NewAuthenticator(tokensJSON)
+	default:
+		return nil, validationError("COMPUTE_API_AUTH_MODE must be disabled or static_token")
+	}
+}
+
+func NewDisabledProvider() *DisabledProvider {
+	return &DisabledProvider{}
+}
+
+func (provider *DisabledProvider) Principal(_ *http.Request, _ string) (*Principal, error) {
+	return &Principal{
+		Name:   "standalone:developer",
+		Scopes: map[string]bool{"*": true},
+	}, nil
 }
 
 func NewAuthenticator(tokensJSON string) (*Authenticator, error) {

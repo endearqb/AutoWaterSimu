@@ -11,7 +11,8 @@
 - Starting HTTP server.
 - Wiring optional artifact retention scheduler configuration.
 - Wiring optional local filesystem or S3-compatible artifact archive store configuration.
-- Enforcing production startup guardrails for static token configuration, including file-mounted token JSON secrets.
+- Wiring `disabled` and `static_token` auth provider modes.
+- Enforcing production startup guardrails for disabled auth and static token configuration, including file-mounted token JSON secrets.
 
 本目录不负责：
 
@@ -33,16 +34,23 @@
 4. Missing `COMPUTE_API_DATABASE_URL` intentionally starts a non-persistent memory store for local Web UI smoke tests only; PostgreSQL remains required for durable platform runs。
 5. Artifact retention scheduler is disabled unless `COMPUTE_API_RETENTION_SWEEP_INTERVAL` is set; `COMPUTE_API_RETENTION_SWEEP_DRY_RUN` defaults to `true` and must be explicitly set to `false` to delete.
 6. Artifact archive handling is disabled unless one archive backend is explicitly configured. `COMPUTE_API_ARCHIVE_DIR` enables a separate non-overlapping `local_fs_archive` store; `COMPUTE_API_ARCHIVE_S3_ENDPOINT` plus S3 bucket/access key env vars enables path-style `s3_archive`. Set only one backend. Business behavior remains in `internal/compute`.
-7. `APP_ENV=production` or `ENVIRONMENT=production` rejects empty token config and the default development token values (`dev-public-token`、`dev-worker-token`、`dev-admin-token`). Token config may come from `COMPUTE_API_TOKENS_JSON` or `COMPUTE_API_TOKENS_FILE`; setting both is invalid. This is a P0 production guard for static token auth, not full OIDC/RBAC.
+7. `COMPUTE_API_AUTH_MODE` defaults to `disabled` for standalone local use. In disabled mode the server binds to `127.0.0.1` unless `COMPUTE_API_BIND_ADDR` is set; non-loopback disabled auth requires explicit `COMPUTE_API_ALLOW_REMOTE_NO_AUTH=true` and should only be used behind a trusted local compose boundary.
+8. `COMPUTE_API_AUTH_MODE=static_token` preserves bearer-token scope behavior. `APP_ENV=production` or `ENVIRONMENT=production` rejects disabled auth, empty static token config, and the default development token values (`dev-public-token`、`dev-worker-token`、`dev-admin-token`). Token config may come from `COMPUTE_API_TOKENS_JSON` or `COMPUTE_API_TOKENS_FILE`; setting both is invalid. This is a production guard for static token auth, not full OIDC/RBAC.
+9. Standalone packaging may set `COMPUTE_API_CONTRACTS_DIR` and `COMPUTE_API_MIGRATIONS_DIR` directly so the binary does not need to discover the repository root.
 
-Production auth guard env vars:
+Runtime/auth env vars:
 
 | Variable | Required | Meaning |
 |---|---|---|
 | `APP_ENV` | no | Preferred Compute API environment flag; `production` enables production auth startup checks |
 | `ENVIRONMENT` | no | Fallback environment flag when `APP_ENV` is empty |
-| `COMPUTE_API_TOKENS_JSON` | yes in production unless `COMPUTE_API_TOKENS_FILE` is set | Inline static token config JSON; must not be empty or contain default dev token values in production |
-| `COMPUTE_API_TOKENS_FILE` | yes in production unless `COMPUTE_API_TOKENS_JSON` is set | Path to a mounted static token config JSON secret; file must not be empty and must not contain default dev token values in production |
+| `COMPUTE_API_AUTH_MODE` | no | `disabled` by default; set `static_token` for bearer-token scope checks |
+| `COMPUTE_API_BIND_ADDR` | no | HTTP bind host; disabled auth defaults to `127.0.0.1` |
+| `COMPUTE_API_ALLOW_REMOTE_NO_AUTH` | no | Explicit opt-in for disabled auth on non-loopback bind addresses |
+| `COMPUTE_API_CONTRACTS_DIR` | yes unless repo root can be discovered | Directory containing JSON Schema contracts |
+| `COMPUTE_API_MIGRATIONS_DIR` | yes when PostgreSQL is enabled unless repo root can be discovered | Directory containing PostgreSQL migrations |
+| `COMPUTE_API_TOKENS_JSON` | yes in production static-token mode unless `COMPUTE_API_TOKENS_FILE` is set | Inline static token config JSON; must not be empty or contain default dev token values in production |
+| `COMPUTE_API_TOKENS_FILE` | yes in production static-token mode unless `COMPUTE_API_TOKENS_JSON` is set | Path to a mounted static token config JSON secret; file must not be empty and must not contain default dev token values in production |
 
 S3-compatible archive env vars:
 

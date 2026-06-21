@@ -20,14 +20,41 @@ dev-detached:
 dev-down:
     docker compose -f docker-compose.dev.yml down
 
+standalone-up:
+    docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml up -d --build
+
+standalone-db:
+    docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml up -d compute-postgres
+
+standalone-down:
+    docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml down
+
+standalone-reset:
+    docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml down -v
+
+standalone-status:
+    docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml ps
+
+standalone-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
+
 dev-api:
     cd apps\api; go run ./cmd/compute-api
+
+dev-api-noauth:
+    $env:COMPUTE_API_AUTH_MODE='disabled'; $env:COMPUTE_API_BIND_ADDR='127.0.0.1'; cd apps\api; go run ./cmd/compute-api
 
 dev-worker-loop:
     backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-loop --api-base-url http://localhost:8088 --api-token dev-worker-token --artifact-dir tmp\worker-api-artifacts --max-jobs 5 --max-idle-polls 20
 
+dev-worker-noauth:
+    backend\.venv\Scripts\python services\simulation-worker\simulation_worker\cli.py --run-api-loop --api-base-url http://localhost:8088 --artifact-dir tmp\worker-api-artifacts --max-jobs 5 --max-idle-polls 20
+
 dev-frontend:
     cd frontend; npm run dev
+
+dev-frontend-standalone:
+    cd frontend; $env:VITE_COMPUTE_API_TOKEN=''; npm run dev
 
 check:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
@@ -44,6 +71,9 @@ pr-fast:
 
 integration-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
+
+standalone-integration-smoke:
+    just standalone-smoke
 
 check-security:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1

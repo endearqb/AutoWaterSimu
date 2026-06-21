@@ -9,6 +9,7 @@ import (
 type ContractValidator = platformcontracts.Validator
 
 var NewContractValidator = platformcontracts.NewValidator
+var NewContractValidatorFromDir = platformcontracts.NewValidatorFromDir
 
 func ContractSchemaName(schemaVersion string) (string, bool) {
 	return platformcontracts.SchemaName(schemaVersion)

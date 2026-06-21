@@ -26,7 +26,7 @@ except ImportError:
 
 
 DEFAULT_API_BASE_URL = "http://localhost:8088"
-DEFAULT_API_TOKEN = "dev-worker-token"
+DEFAULT_API_TOKEN = os.getenv("SIMULATION_WORKER_API_TOKEN", "")
 DEFAULT_IDLE_SLEEP_SECONDS = 5.0
 
 
@@ -46,11 +46,10 @@ class ComputeAPIClient:
             self._url(path),
             data=body,
             method="POST",
-            headers={
-                "Authorization": f"Bearer {self.token}",
+            headers=self._headers({
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-            },
+            }),
         )
         return self._send_json(req)
 
@@ -83,11 +82,10 @@ class ComputeAPIClient:
             ),
             data=body,
             method="POST",
-            headers={
-                "Authorization": f"Bearer {self.token}",
+            headers=self._headers({
                 "Content-Type": f"multipart/form-data; boundary={boundary}",
                 "Accept": "application/json",
-            },
+            }),
         )
         return self._send_json(req)
 
@@ -119,6 +117,13 @@ class ComputeAPIClient:
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
+
+    def _headers(self, headers: dict[str, str]) -> dict[str, str]:
+        result = dict(headers)
+        token = self.token.strip()
+        if token:
+            result["Authorization"] = f"Bearer {token}"
+        return result
 
 
 def run_api_once(

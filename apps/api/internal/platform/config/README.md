@@ -6,13 +6,13 @@
 
 本目录负责：
 
-- 描述 `cmd/compute-api` 从环境变量组装出的 runtime 配置结构，包括 inline token JSON 与 file-mounted token JSON secret 路径。
+- 描述 `cmd/compute-api` 从环境变量组装出的 runtime 配置结构，包括 auth mode、bind address、runtime schema/migration paths、inline token JSON 与 file-mounted token JSON secret 路径。
 - 为 command entry、store/archive wiring、scheduler wiring 提供 domain-free config type。
 
 本目录不负责：
 
 - 读取环境变量或 secret 文件内容。
-- 校验 production auth token 规则。
+- 校验 production auth、remote no-auth bind 或 token 规则。
 - compute job、artifact、model governance 或 evidence 业务逻辑。
 
 ## 2. 核心文件
@@ -26,6 +26,7 @@
 1. 本 package 不 import `internal/compute`。
 2. 字段应对应 runtime/deployment wiring，不应承载 compute domain payload 或 store records。
 3. 新增字段时同步检查 `cmd/compute-api/main.go` 的环境变量读取和 README 中的运行配置说明。
+4. `AuthMode` / `BindAddr` / `AllowRemoteNoAuth` 属于启动边界，不应被 compute handler 直接读取。
 
 ## 4. 对外接口
 
@@ -46,4 +47,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 
 ## 7. AI 操作提示
 
-配置字段变更通常影响启动和部署行为；修改时同步检查 production guard、auth token source wiring、archive backend wiring 和 scheduler wiring。
+配置字段变更通常影响启动和部署行为；修改时同步检查 production guard、disabled-auth bind guard、auth token source wiring、runtime path wiring、archive backend wiring 和 scheduler wiring。

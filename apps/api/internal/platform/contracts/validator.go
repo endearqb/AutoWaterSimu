@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
@@ -98,7 +99,13 @@ type Validator struct {
 }
 
 func NewValidator(repoRoot string) (*Validator, error) {
-	contractsDir := filepath.Join(repoRoot, "contracts")
+	return NewValidatorFromDir(filepath.Join(repoRoot, "contracts"))
+}
+
+func NewValidatorFromDir(contractsDir string) (*Validator, error) {
+	if strings.TrimSpace(contractsDir) == "" {
+		return nil, fmt.Errorf("contracts dir is required")
+	}
 	compiler := jsonschema.NewCompiler()
 	compiler.DefaultDraft(jsonschema.Draft2020)
 	schemas := map[string]*jsonschema.Schema{}

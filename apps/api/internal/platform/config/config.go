@@ -4,6 +4,9 @@ import "time"
 
 type Config struct {
 	Environment            string
+	AuthMode               string
+	BindAddr               string
+	AllowRemoteNoAuth      bool
 	DatabaseURL            string
 	ArtifactDir            string
 	ArchiveDir             string
@@ -17,6 +20,8 @@ type Config struct {
 	TokensFile             string
 	Port                   string
 	RepoRoot               string
+	ContractsDir           string
+	MigrationsDir          string
 	RetentionSweepInterval time.Duration
 	RetentionSweepDryRun   bool
 	RetentionSweepLimit    int

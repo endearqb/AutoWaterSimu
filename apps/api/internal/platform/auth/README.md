@@ -2,12 +2,14 @@
 
 ## 1. 目录职责
 
-本目录保存 Go Compute API 的静态 bearer token 平台认证 helper。
+本目录保存 Go Compute API 的平台认证 provider helper。
 
 本目录负责：
 
+- `disabled` / `static_token` auth mode provider selection。
 - Static token config JSON 解析；`cmd/compute-api` 可先从 `COMPUTE_API_TOKENS_JSON` 或 `COMPUTE_API_TOKENS_FILE` 取得同一 JSON shape。
 - 静态 bearer token principal 解析。
+- Standalone disabled principal 生成。
 - scope、revoked token、tenant/project/site principal metadata。
 - 返回不依赖 compute domain 的平台 auth error。
 
@@ -21,21 +23,26 @@
 
 | 文件 | 作用 |
 |---|---|
-| `auth.go` | Authenticator、TokenConfig、Principal 和 auth error |
-| `auth_test.go` | 静态 token、scope、revocation 和 validation 测试 |
+| `auth.go` | PrincipalProvider、DisabledProvider、Authenticator、TokenConfig、Principal 和 auth error |
+| `auth_test.go` | disabled provider、静态 token、scope、revocation 和 validation 测试 |
 
 ## 3. 维护约定
 
 1. 本 package 不 import `internal/compute`。
 2. token JSON shape 必须保持与 `COMPUTE_API_TOKENS_JSON` / `COMPUTE_API_TOKENS_FILE` 兼容。
-3. 新增生产认证能力前先确认是否属于 static-token P0，还是 OIDC/JWKS/RBAC 后续范围。
+3. `disabled` provider 只返回固定 standalone principal；远程暴露 guard 由 `cmd/compute-api` 负责，handler 中不应散落跳过鉴权分支。
+4. 新增生产认证能力前先确认是否属于 static-token P0，还是 OIDC/JWKS/RBAC 后续范围。
 
 ## 4. 对外接口
 
 本 package 对 `apps/api/internal/*` 和 `cmd/compute-api` 暴露：
 
 - `Authenticator`
+- `DisabledProvider`
+- `PrincipalProvider`
+- `NewProvider`
 - `NewAuthenticator`
+- `NewDisabledProvider`
 - `TokenConfig`
 - `TokenRecord`
 - `Principal`

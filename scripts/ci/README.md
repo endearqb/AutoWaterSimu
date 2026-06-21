@@ -7,6 +7,7 @@
 本目录负责：
 
 - `pr-fast` 本地/CI 等效验证。
+- standalone no-auth compose/API smoke 验证。
 - opt-in integration smoke 验证。
 - opt-in security smoke 验证。
 - opt-in mock-backed browser smoke 验证。
@@ -40,6 +41,7 @@
 | 文件 | 作用 |
 |---|---|
 | `pr-fast.ps1` | 运行 Next PR fast checks（含 dependency boundary、Compute API boundary audit、simulation_core correctness freeze audit、worker dependency installation audit、README path、ontology registry、contracts drift、Go/frontend/desktop checks）并写出 `tmp/ci-evidence/pr-fast.json`、`tmp/ci-evidence/compute-boundary/compute-api-boundary.json`、`tmp/ci-evidence/simulation-core-correctness-freeze/simulation-core-correctness-freeze.json` 与 `tmp/ci-evidence/worker-dependency-installation/worker-dependency-installation.json` |
+| `standalone-smoke.ps1` | 验证 `docker-compose.standalone.yml` 默认服务不包含 legacy backend，并对已运行 standalone API 执行无 Authorization job create/read，写出 `tmp/ci-evidence/standalone-smoke.json` |
 | `integration-smoke.ps1` | 启动隔离 Compose API 栈，运行本地 Python worker API once，验证 job/result/model_run/artifact/evidence/retention dry-run/metrics，并写出 `tmp/ci-evidence/integration-smoke.json` |
 | `security-smoke.ps1` | 聚合 production token guard、file-mounted token config source、static token revocation、scope denial、artifact admin scope、worker mutation POST-only method guard、job collection/job route 与 API-wide declared-method guard、tenant/project/site read-scope（job、process_graph、simulation_input、draft_confirmation、model_catalog、model_run、benchmark_run、artifact）、direct job create/cancel、artifact retention sweep delete/archive candidate filtering 与 archive cross-scope no-write、worker claim/heartbeat/artifact/succeed/fail completion、confirm-draft record persistence、result explanation submit/review/publish、direct simulation-check create、draft promotion job create、benchmark schedule-run job create、model catalog registration/status/promote、benchmark_run registration 与显式 process_graph/simulation_input registry POST mutation data-scope，以及 selected mutation audit envelope（job create/cancel/timeout、worker registration/claim/heartbeat/artifact/succeed/fail completion、artifact retention delete/archive、result explanation、draft_confirmation、draft promotion、direct simulation-check、model governance、simulation registry）的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
@@ -68,6 +70,8 @@
 ## 4. 对外接口
 
 本目录对 `Justfile` 和 `.github/workflows/next-pr-fast.yml` 暴露 `pr-fast` 入口。
+
+本目录对 `Justfile` 暴露 `standalone-smoke` 入口；该脚本不启动或清理 compose，只验证 standalone compose 配置和当前 `ApiBaseUrl` 的 no-auth create/read。运行前通常先执行 `just standalone-up`。
 
 本目录对 `Justfile` 和 `.github/workflows/next-integration-smoke.yml` 暴露 `integration-smoke` opt-in 入口；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
@@ -124,6 +128,8 @@
 
 Integration smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO 和本地 `backend/.venv` Python worker CLI；它不应替代 release gate、browser smoke 或 packaged worker/desktop smoke。
 
+Standalone smoke 可以调用 `docker compose config` 和已运行的 standalone Compute API；它不应启动 legacy backend，也不替代完整 browser/live/release evidence。
+
 Live backend browser smoke 可以调用 `docker compose`、`integration-smoke.ps1`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker API once；它不应替代完整 legacy authenticated session、UI current-flow submit 到 live worker 或 release artifact evidence。
 
 Current-flow live smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker loop；它不应替代完整 legacy authenticated session 或 release artifact evidence。
@@ -136,6 +142,7 @@ Desktop release artifacts smoke 可以调用 Desktop packaging scripts、PyInsta
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1

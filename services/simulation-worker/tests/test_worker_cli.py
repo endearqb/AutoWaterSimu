@@ -548,6 +548,76 @@ def test_worker_run_api_once_claims_runs_uploads_and_succeeds(tmp_path: Path) ->
     ]
 
 
+def test_worker_run_api_once_allows_empty_api_token(tmp_path: Path) -> None:
+    records: list[dict[str, Any]] = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            content_length = int(self.headers.get("Content-Length", "0"))
+            body = self.rfile.read(content_length)
+            path = urlparse(self.path).path
+            records.append(
+                {
+                    "path": path,
+                    "authorization": self.headers.get("Authorization"),
+                    "body": body,
+                }
+            )
+
+            if self.headers.get("Authorization") is not None:
+                self.send_error(400)
+                return
+            if path == "/api/v1/workers/register":
+                self._write_json({"worker_id": "worker_noauth"})
+                return
+            if path == "/api/v1/workers/worker_noauth/claim":
+                self._write_json({"job": None})
+                return
+            self.send_error(404)
+
+        def log_message(self, format: str, *args: Any) -> None:
+            return
+
+        def _write_json(self, payload: dict[str, Any]) -> None:
+            data = json.dumps(payload).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        completed = _run_worker(
+            [
+                "--run-api-once",
+                "--api-base-url",
+                f"http://127.0.0.1:{server.server_port}",
+                "--api-token",
+                "",
+                "--worker-id",
+                "worker_noauth",
+                "--artifact-dir",
+                str(tmp_path),
+            ]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "idle"
+    assert [record["path"] for record in records] == [
+        "/api/v1/workers/register",
+        "/api/v1/workers/worker_noauth/claim",
+    ]
+    assert all(record["authorization"] is None for record in records)
+
+
 def test_worker_run_api_loop_processes_multiple_claimed_jobs(tmp_path: Path) -> None:
     records: list[dict[str, Any]] = []
     completed_jobs: list[str] = []

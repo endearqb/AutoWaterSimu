@@ -1,6 +1,7 @@
 package compute
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -46,6 +47,28 @@ func TestHTTPAuthScopeAndMetrics(t *testing.T) {
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("expected scope denial, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestHTTPNoAuthCreateAndReadJob(t *testing.T) {
+	svc := testService(t)
+	server := NewServer(svc, NewDisabledProvider(), nil).Routes()
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/compute/jobs", bytes.NewReader(fixtureJobBytes(t)))
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted && rec.Code != http.StatusOK {
+		t.Fatalf("expected no-auth job create to pass, got %d %s", rec.Code, rec.Body.String())
+	}
+
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/compute/jobs/job_material_balance_minimal", nil)
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected no-auth job read to pass, got %d %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "job_material_balance_minimal") {
+		t.Fatalf("expected job response, got %s", rec.Body.String())
 	}
 }
 

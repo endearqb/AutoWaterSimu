@@ -21,6 +21,31 @@
 - Updated `docs/rebuild/README.md` to index the two standalone baseline docs and the migration matrix.
 - Validation passed: `git diff --check -- docs\rebuild .ai\decisions .ai\changes tasks` (LF/CRLF warnings only), Phase 0 rg scans, `pr-fast`, `integration-smoke`, and `current-flow-live-smoke`.
 - `golden-scenarios` completed with `status=partial`, `6 partial`, `2 missing`, which is expected for Phase 0 because phases 1-7 remain open.
+
+# 2026-06-21 AutoWaterSimu Next standalone Phase 1 TODO
+
+- [x] Re-read README First context for Go Compute API auth/config/contracts, worker, scripts, compose, and target standalone docs.
+- [x] Add Compute API `COMPUTE_API_AUTH_MODE` and `PrincipalProvider` wiring with disabled/static-token modes.
+- [x] Keep static-token dev/security path explicit in existing dev compose and performance latency smoke.
+- [x] Make worker API token optional without sending an empty Authorization header.
+- [x] Add standalone compose, Justfile targets, and standalone no-auth smoke.
+- [x] Add tests for disabled provider, no-auth HTTP create/read, remote no-auth guard, runtime path config, and worker no-token calls.
+- [x] Update stable README context and README First change log.
+- [ ] Re-run worker Docker image build when local PyPI/large wheel downloads are stable.
+
+## Plan
+
+- Keep Phase 1 limited to runtime/auth/compose foundations; frontend no-login route work remains Phase 2.
+- Preserve the existing static-token security path by setting `COMPUTE_API_AUTH_MODE=static_token` where old smokes depend on tokens.
+- Use a fixed standalone compose project name in Justfile targets to avoid touching legacy compose containers.
+
+## Review
+
+- Added disabled/static provider abstraction and loopback/remote no-auth startup guard.
+- Added explicit contracts/migrations runtime paths for packaged or compose runtime.
+- Added `docker-compose.standalone.yml`, `standalone-*` Justfile entries, and `scripts/ci/standalone-smoke.ps1`.
+- Added `services/simulation-worker/Dockerfile`; build verification timed out locally while installing large Python wheels, so image build remains a follow-up verification gap.
+- Validation passed: targeted Go package tests, worker API token tests, standalone compose API+Postgres smoke, standalone compose config, Justfile listing, and `security-smoke`.
 # 2026-06-15 simulation_core PR-11 unified reaction RHS TODO
 
 - [x] Re-read `_run_hours`, combined/single RHS branches, correctness-freeze tests/audit, and v1.4 PR-11 requirements.

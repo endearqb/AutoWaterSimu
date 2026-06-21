@@ -1,0 +1,106 @@
+services:
+  compute-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: autowatersimu_compute
+      POSTGRES_USER: autowatersimu
+      POSTGRES_PASSWORD: autowatersimu
+    volumes:
+      - standalone-compute-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autowatersimu -d autowatersimu_compute"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  compute-api:
+    image: golang:1.26
+    working_dir: /workspace
+    restart: unless-stopped
+    depends_on:
+      compute-postgres:
+        condition: service_healthy
+    environment:
+      COMPUTE_API_PORT: "8088"
+      COMPUTE_API_AUTH_MODE: disabled
+      COMPUTE_API_BIND_ADDR: 0.0.0.0
+      COMPUTE_API_ALLOW_REMOTE_NO_AUTH: "true"
+      COMPUTE_API_DATABASE_URL: postgres://autowatersimu:autowatersimu@compute-postgres:5432/autowatersimu_compute?sslmode=disable
+      COMPUTE_API_CONTRACTS_DIR: /workspace/contracts
+      COMPUTE_API_MIGRATIONS_DIR: /workspace/apps/api/migrations
+      COMPUTE_API_ARTIFACT_DIR: /workspace/tmp/standalone-artifacts
+    ports:
+      - "127.0.0.1:${COMPUTE_API_PORT:-8088}:8088"
+    volumes:
+      - ./apps/api:/workspace/apps/api:ro
+      - ./contracts:/workspace/contracts:ro
+      - ./tmp:/workspace/tmp
+      - standalone-go-mod-cache:/go/pkg/mod
+      - standalone-go-build-cache:/root/.cache/go-build
+    command: sh -c "cd apps/api && go run ./cmd/compute-api"
+
+  simulation-worker:
+    build:
+      context: .
+      dockerfile: services/simulation-worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - compute-api
+    volumes:
+      - ./tmp:/workspace/tmp
+    entrypoint: /bin/sh
+    command: >
+      -lc "
+      until python -c \"import urllib.request; urllib.request.urlopen('http://compute-api:8088/readyz', timeout=2).read()\"; do sleep 2; done;
+      exec python /workspace/services/simulation-worker/simulation_worker/cli.py --run-api-loop --api-base-url http://compute-api:8088 --artifact-dir /workspace/tmp/worker-api-artifacts --max-idle-polls 120 --idle-sleep-seconds 2
+      "
+
+  frontend:
+    image: node:20
+    working_dir: /workspace/frontend
+    restart: unless-stopped
+    depends_on:
+      - compute-api
+    environment:
+      VITE_COMPUTE_API_URL: http://localhost:8088
+      VITE_COMPUTE_API_TOKEN: ""
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/workspace/frontend
+      - standalone-frontend-node-modules:/workspace/frontend/node_modules
+    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0"
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    profiles: ["full"]
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - standalone-minio-data:/data
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    profiles: ["full"]
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done;
+      /usr/bin/mc mb -p local/autowatersimu-archive || true;
+      /usr/bin/mc anonymous set none local/autowatersimu-archive;
+      "
+
+volumes:
+  standalone-compute-postgres-data:
+  standalone-go-mod-cache:
+  standalone-go-build-cache:
+  standalone-frontend-node-modules:
+  standalone-minio-data:

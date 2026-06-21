@@ -24,6 +24,19 @@ func TestDefaultAuthenticatorAcceptsPublicToken(t *testing.T) {
 	}
 }
 
+func TestDisabledProviderAcceptsRequestWithoutBearerToken(t *testing.T) {
+	provider := NewDisabledProvider()
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/compute/jobs", nil)
+
+	principal, err := provider.Principal(request, "job:create")
+	if err != nil {
+		t.Fatalf("Principal returned error: %v", err)
+	}
+	if principal.Name != "standalone:developer" {
+		t.Fatalf("expected standalone:developer principal, got %q", principal.Name)
+	}
+}
+
 func TestAuthenticatorRejectsMissingScope(t *testing.T) {
 	authenticator, err := NewAuthenticator("")
 	if err != nil {

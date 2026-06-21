@@ -196,6 +196,13 @@ not present:
 - worker 无 token 完成一次 job。
 - compose 中无 backend，断网重启成功。
 - static token security smoke 仍通过。
+
+### 2026-06-21 实施记录
+
+- 已落地 auth provider interface、disabled/static mode、loopback/remote no-auth guard、显式 contracts/migrations runtime path、worker token optional、standalone compose、standalone Justfile targets、standalone no-auth smoke 和 worker Dockerfile。
+- 已验证无 Authorization 的 job create/read、worker 空 token 请求、standalone compose 默认无 backend、static-token security smoke。
+- 未纳入本阶段：前端 route tree 去登录、`/users/me` 移除、ContextProvider、migration CLI、release/offline full image gate。
+- 剩余验证缺口：本地 worker image build 在 Python wheel 安装阶段超时；后续 release/offline gate 需重新构建并验证完整 worker image。
 ## Phase 2：前端无登录与最小独立闭环（2 周）
 
 ### 工作内容

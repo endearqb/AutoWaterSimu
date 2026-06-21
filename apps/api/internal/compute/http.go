@@ -8,11 +8,11 @@ import (
 
 type Server struct {
 	service *Service
-	auth    *Authenticator
+	auth    PrincipalProvider
 	logger  *slog.Logger
 }
 
-func NewServer(service *Service, auth *Authenticator, logger *slog.Logger) *Server {
+func NewServer(service *Service, auth PrincipalProvider, logger *slog.Logger) *Server {
 	return &Server{service: service, auth: auth, logger: logger}
 }
 

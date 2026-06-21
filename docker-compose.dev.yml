@@ -51,6 +51,7 @@ services:
         condition: service_completed_successfully
     environment:
       COMPUTE_API_PORT: "8088"
+      COMPUTE_API_AUTH_MODE: static_token
       COMPUTE_API_DATABASE_URL: postgres://autowatersimu:autowatersimu@compute-postgres:5432/autowatersimu_compute?sslmode=disable
       COMPUTE_API_ARTIFACT_DIR: /workspace/tmp/compute-api-artifacts
       COMPUTE_API_ARCHIVE_S3_ENDPOINT: http://minio:9000
