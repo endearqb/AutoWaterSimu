@@ -1,3 +1,26 @@
+# 2026-06-21 AutoWaterSimu Next standalone Phase 0 TODO
+
+- [x] Re-read README First context for docs/rebuild, .ai, tasks, Go API, frontend, worker, scripts, and target standalone docs.
+- [x] Confirm this slice is Phase 0 baseline/matrix/ADR only, not implementing runtime code for phases 1-7.
+- [x] Add standalone route/caller/data migration matrix.
+- [x] Add standalone boundary/provider-mode ADR.
+- [x] Update docs/rebuild index and README First change log.
+- [x] Run Phase 0 validation and baseline gate attempts.
+- [x] Commit and push Phase 0 to `codex/autowatersimu-next-rebuild`.
+
+## Plan
+
+- Treat the two standalone v1.0 docs as the new execution baseline.
+- Record the current static-token and frontend legacy-auth conflict explicitly.
+- Keep later runtime code changes out of the Phase 0 commit.
+
+## Review
+
+- Added `docs/rebuild/AutoWaterSimu_Next_Standalone_Migration_Matrix_v1.0.md` with route/caller/data ownership and phase targets.
+- Added ADR `0017-standalone-boundary-and-provider-modes.md`, explicitly superseding static-token-only P0 for standalone mode while preserving static-token regression/security mode.
+- Updated `docs/rebuild/README.md` to index the two standalone baseline docs and the migration matrix.
+- Validation passed: `git diff --check -- docs\rebuild .ai\decisions .ai\changes tasks` (LF/CRLF warnings only), Phase 0 rg scans, `pr-fast`, `integration-smoke`, and `current-flow-live-smoke`.
+- `golden-scenarios` completed with `status=partial`, `6 partial`, `2 missing`, which is expected for Phase 0 because phases 1-7 remain open.
 # 2026-06-15 simulation_core PR-11 unified reaction RHS TODO
 
 - [x] Re-read `_run_hours`, combined/single RHS branches, correctness-freeze tests/audit, and v1.4 PR-11 requirements.

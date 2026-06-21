@@ -24,11 +24,14 @@
 | `AutoWaterSimu_Next_PRD_v1.0.md` | 产品需求和范围控制 |
 | `AutoWaterSimu_Next_Technical_Spec_v1.0.md` | 技术接口、状态机、存储和治理规格 |
 | `AutoWaterSimu_Next_Development_Plan_v1.0.md` | 分阶段开发计划和验收 |
+| `AutoWaterSimu_Next_独立运行需求规格说明书_v1.0.md` | 无 FastAPI、无登录、可独立运行的 Standalone 需求规格 |
+| `AutoWaterSimu_Next_独立开发实施计划_v1.0.md` | Standalone 0-7 阶段实施路线和验收 |
 | `AutoWaterSimu_Next_Certainty_Elegance_PRD_v1.0.md` | Next 确定性与优雅性补充 PRD，定义 95 分质量目标 |
 | `AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md` | Next 确定性与优雅性补充开发计划，定义分阶段质量提升路线 |
 | `AutoWaterSimu_Next_Legacy_Phase0_Drift_Audit_2026-05-31.md` | Phase 0 legacy print/schema/client drift 精确审计 |
 | `AutoWaterSimu_Next_COSS_Source_Manifest_2026-05-31.md` | COSS-compatible UI source copy/license manifest |
 | `AutoWaterSimu_Next_Legacy_Migration_Guide_2026-05-31.md` | legacy FastAPI/React baseline 到 Next worker/API/Desktop 的迁移指南 |
+| `AutoWaterSimu_Next_Standalone_Migration_Matrix_v1.0.md` | Standalone Phase 0 route/caller/data 迁移矩阵 |
 | `simulation_core/` | simulation_core 性能优化需求、开发计划、前置证据规划和 golden/repro 文档化测试 |
 | `AutoWaterSimu_Final_State_Driven_Plan_v1.2.md` | 原始终态架构输入 |
 | `windows app.md` | Windows Desktop 路线输入 |
