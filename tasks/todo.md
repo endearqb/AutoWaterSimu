@@ -10753,3 +10753,29 @@
 ## Review
 
 - Pending clean-commit validation rerun.
+
+# 2026-06-22 Standalone RC route-tree audit TODO
+
+- [x] Re-read README First context for frontend route/runtime and scripts audit boundaries.
+- [x] Prove the existing audit did not cover standalone route-tree reachability.
+- [x] Add a standalone-only route tree excluding login/signup/reset/users/items/admin/settings.
+- [x] Stop statically importing the legacy FastAPI client from standalone bootstrap and flowStore reachable code.
+- [x] Tighten frontend standalone audit to walk the standalone static import graph.
+- [x] Re-run focused frontend typecheck and standalone runtime audit.
+- [ ] Commit and push the route-tree audit closeout.
+- [ ] Refresh golden scenarios on the new commit.
+- [ ] Rerun full standalone release gate on the new commit.
+
+## Plan
+
+- Keep legacy routes and generated `routeTree.gen.ts` intact for legacy runtime.
+- Make standalone runtime choose `standaloneRouteTree.tsx` at bootstrap.
+- Let the audit fail if legacy auth/user/item/admin/settings pages or static FastAPI client imports become standalone-reachable again.
+
+## Review
+
+- `main.tsx` now dynamically loads `standaloneRouteTree.tsx` only for standalone runtime and `routeTree.gen.ts` for legacy runtime.
+- `legacyApiClient.ts` configures the legacy OpenAPI client only in legacy runtime.
+- `flowStore.ts` keeps standalone workspace persistence on Go wrappers and lazy-loads `FlowchartsService` only in non-standalone branches.
+- `audit-frontend-standalone-compute-boundary.ps1` now records reachable standalone files and fails on legacy route/useAuth/static FastAPI client reachability.
+- Verification so far: frontend standalone audit passed; `cd frontend; npx tsc --noEmit` passed; standalone compose service config excludes backend.

@@ -13,23 +13,17 @@ import {
 import { RouterProvider, createRouter } from "@tanstack/react-router"
 import { StrictMode } from "react"
 import ReactDOM from "react-dom/client"
-import { routeTree } from "./routeTree.gen"
 
-import { ApiError, OpenAPI } from "./client"
 import { CustomProvider } from "./components/ui/provider"
 import { I18nProvider } from "./i18n"
 import { configureComputeApiClient } from "./shared/api/computeApiClient"
 import { isStandaloneRuntime } from "./shared/runtimeConfig"
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL
-OpenAPI.TOKEN = async () => {
-  return localStorage.getItem("access_token") || ""
-}
-
 configureComputeApiClient()
 
 const handleApiError = (error: Error) => {
-  if (error instanceof ApiError && [401, 403].includes(error.status)) {
+  const status = (error as { status?: unknown }).status
+  if (typeof status === "number" && [401, 403].includes(status)) {
     if (isStandaloneRuntime()) {
       return
     }
@@ -46,21 +40,39 @@ const queryClient = new QueryClient({
   }),
 })
 
-const router = createRouter({ routeTree })
+type AppRouter = ReturnType<typeof createRouter>
+
 declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router
+    router: AppRouter
   }
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <I18nProvider>
-      <CustomProvider>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
-      </CustomProvider>
-    </I18nProvider>
-  </StrictMode>,
-)
+const loadRouteTree = async () => {
+  if (isStandaloneRuntime()) {
+    return (await import("./standaloneRouteTree")).routeTree
+  }
+  return (await import("./routeTree.gen")).routeTree
+}
+
+const configureLegacyRuntime = async () => {
+  if (!isStandaloneRuntime()) {
+    await (await import("./legacyApiClient")).configureLegacyApiClient()
+  }
+}
+
+Promise.all([configureLegacyRuntime(), loadRouteTree()]).then(([, routeTree]) => {
+  const router = createRouter({ routeTree })
+
+  ReactDOM.createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <I18nProvider>
+        <CustomProvider>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>
+        </CustomProvider>
+      </I18nProvider>
+    </StrictMode>,
+  )
+})

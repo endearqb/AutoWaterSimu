@@ -22,6 +22,7 @@ $files = Get-ChildItem -Path $FrontendSrc -Recurse -Include *.ts,*.tsx |
 $staticImportViolations = @()
 $directCallViolations = @()
 $websocketRuntimeImports = @()
+$standaloneRuntimeViolations = @()
 
 foreach ($file in $files) {
   $relativePath = Resolve-Path -Path $file.FullName -Relative
@@ -67,6 +68,139 @@ foreach ($file in $files) {
   }
 }
 
+$repoRootResolved = (Resolve-Path -Path $RepoRoot).Path
+function Get-RepoRelativePath {
+  param([string]$Path)
+  $resolved = (Resolve-Path -Path $Path).Path
+  return $resolved.Substring($repoRootResolved.Length + 1)
+}
+
+function Resolve-FrontendImport {
+  param(
+    [string]$FromFile,
+    [string]$Specifier
+  )
+
+  $basePath = $null
+  if ($Specifier.StartsWith("@/")) {
+    $basePath = Join-Path $FrontendSrc $Specifier.Substring(2)
+  } elseif ($Specifier.StartsWith(".")) {
+    $basePath = Join-Path (Split-Path -Path $FromFile -Parent) $Specifier
+  } else {
+    return $null
+  }
+
+  $candidates = @(
+    $basePath,
+    "$basePath.ts",
+    "$basePath.tsx",
+    "$basePath\index.ts",
+    "$basePath\index.tsx"
+  )
+  foreach ($candidate in $candidates) {
+    if (Test-Path -Path $candidate -PathType Leaf) {
+      return (Resolve-Path -Path $candidate).Path
+    }
+  }
+  return $null
+}
+
+function Get-StaticImportSpecifiers {
+  param([string]$Path)
+
+  $text = Get-Content -Path $Path -Raw
+  $matches = [regex]::Matches(
+    $text,
+    "(?m)^\s*import\s+(?!type\b)(?:[^'\""]+?\s+from\s+)?['\""]([^'\""]+)['\""]"
+  )
+  foreach ($match in $matches) {
+    $match.Groups[1].Value
+  }
+}
+
+$standaloneEntryFiles = @(
+  (Join-Path $FrontendSrc "main.tsx"),
+  (Join-Path $FrontendSrc "standaloneRouteTree.tsx")
+)
+$standaloneReachableFiles = New-Object 'System.Collections.Generic.HashSet[string]'
+$standaloneQueue = New-Object 'System.Collections.Generic.Queue[string]'
+foreach ($entryFile in $standaloneEntryFiles) {
+  if (Test-Path -Path $entryFile -PathType Leaf) {
+    $standaloneQueue.Enqueue((Resolve-Path -Path $entryFile).Path)
+  } else {
+    $standaloneRuntimeViolations += [pscustomobject]@{
+      file = Get-RepoRelativePath -Path $FrontendSrc
+      line = 0
+      issue = "missing_entry"
+      text = $entryFile
+    }
+  }
+}
+
+while ($standaloneQueue.Count -gt 0) {
+  $currentFile = $standaloneQueue.Dequeue()
+  if (-not $standaloneReachableFiles.Add($currentFile)) {
+    continue
+  }
+
+  foreach ($specifier in Get-StaticImportSpecifiers -Path $currentFile) {
+    $resolved = Resolve-FrontendImport -FromFile $currentFile -Specifier $specifier
+    if ($null -eq $resolved) {
+      continue
+    }
+
+    $relativePath = Get-RepoRelativePath -Path $resolved
+    if ($relativePath -match "^frontend\\src\\client\\(?!compute\\)") {
+      $standaloneRuntimeViolations += [pscustomobject]@{
+        file = Get-RepoRelativePath -Path $currentFile
+        line = 0
+        issue = "legacy_client_static_import"
+        text = $specifier
+      }
+      continue
+    }
+
+    $standaloneQueue.Enqueue($resolved)
+  }
+}
+
+$forbiddenStandaloneRuntimePaths = @(
+  "frontend\src\hooks\useAuth.ts",
+  "frontend\src\routes\login.tsx",
+  "frontend\src\routes\signup.tsx",
+  "frontend\src\routes\recover-password.tsx",
+  "frontend\src\routes\reset-password.tsx",
+  "frontend\src\routes\_layout\admin.tsx",
+  "frontend\src\routes\_layout\items.tsx",
+  "frontend\src\routes\_layout\settings.tsx",
+  "frontend\src\routeTree.gen.ts"
+)
+
+foreach ($reachable in $standaloneReachableFiles) {
+  $relativePath = Get-RepoRelativePath -Path $reachable
+  if ($forbiddenStandaloneRuntimePaths -contains $relativePath) {
+    $standaloneRuntimeViolations += [pscustomobject]@{
+      file = $relativePath
+      line = 0
+      issue = "forbidden_standalone_reachable_file"
+      text = $relativePath
+    }
+  }
+
+  $lines = Get-Content -Path $reachable
+  for ($i = 0; $i -lt $lines.Count; $i++) {
+    $line = $lines[$i]
+    if ($line -cmatch "LoginService|UsersService|/users/me|/login/access-token") {
+      $standaloneRuntimeViolations += [pscustomobject]@{
+        file = $relativePath
+        line = $i + 1
+        issue = "legacy_auth_marker"
+        text = $line.Trim()
+      }
+    }
+  }
+}
+
 $standaloneAdapterPath = Join-Path $FrontendSrc "services\standaloneComputeService.ts"
 $standaloneAdapterText = Get-Content -Path $standaloneAdapterPath -Raw
 $requiredJobTypes = @(
@@ -88,6 +222,7 @@ $status = if (
   $staticImportViolations.Count -eq 0 -and
   $directCallViolations.Count -eq 0 -and
   $websocketRuntimeImports.Count -eq 0 -and
+  $standaloneRuntimeViolations.Count -eq 0 -and
   $missingJobTypes.Count -eq 0
 ) {
   "passed"
@@ -104,6 +239,10 @@ $report = [pscustomobject]@{
   static_legacy_compute_imports = $staticImportViolations
   direct_legacy_compute_calls = $directCallViolations
   websocket_runtime_imports = $websocketRuntimeImports
+  standalone_runtime_reachable_files = @(
+    $standaloneReachableFiles | ForEach-Object { Get-RepoRelativePath -Path $_ } | Sort-Object
+  )
+  standalone_runtime_legacy_violations = $standaloneRuntimeViolations
   required_job_types = $requiredJobTypes
   missing_job_types = $missingJobTypes
 }

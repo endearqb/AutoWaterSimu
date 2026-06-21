@@ -14,7 +14,6 @@ import { create } from "zustand"
 import { legacyFlowExportToCanvasGraph } from "@/contracts"
 import { computeWorkspaceApi } from "@/features/workspace/api"
 import { isStandaloneRuntime } from "@/shared/runtimeConfig"
-import { FlowchartsService } from "../client/sdk.gen"
 import type {
   FlowChartCreate,
   FlowChartPublic,
@@ -137,6 +136,9 @@ type RFState = {
 }
 
 const getDefaultFlowchartName = () => t("flow.menu.untitledFlowchart")
+
+const getLegacyFlowchartsService = async () =>
+  (await import("../client/sdk.gen")).FlowchartsService
 
 const standaloneScenarioIdForGraph = (graphId: string) => `scenario_${graphId}`
 
@@ -963,6 +965,7 @@ const useFlowStore = create<RFState>((set, get) => ({
         flow_data: flowData,
       }
 
+      const FlowchartsService = await getLegacyFlowchartsService()
       const response = await FlowchartsService.createFlowchart({
         requestBody: createData,
       })
@@ -1022,6 +1025,7 @@ const useFlowStore = create<RFState>((set, get) => ({
         }
       }
 
+      const FlowchartsService = await getLegacyFlowchartsService()
       const response = await FlowchartsService.readFlowchart({ id })
 
       if (response?.flow_data) {
@@ -1168,6 +1172,7 @@ const useFlowStore = create<RFState>((set, get) => ({
         }
       }
 
+      const FlowchartsService = await getLegacyFlowchartsService()
       const response = await FlowchartsService.readFlowcharts({})
 
       if (response?.data) {
@@ -1270,6 +1275,7 @@ const useFlowStore = create<RFState>((set, get) => ({
       if (description !== undefined) updateData.description = description
       updateData.flow_data = flowData
 
+      const FlowchartsService = await getLegacyFlowchartsService()
       const response = await FlowchartsService.updateFlowchart({
         id,
         requestBody: updateData,
@@ -1315,6 +1321,7 @@ const useFlowStore = create<RFState>((set, get) => ({
         }
       }
 
+      const FlowchartsService = await getLegacyFlowchartsService()
       await FlowchartsService.deleteFlowchart({ id })
 
       // 如果删除的是当前流程图，清空当前ID

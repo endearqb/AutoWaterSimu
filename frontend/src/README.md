@@ -23,6 +23,7 @@
 |---|---|
 | `main.tsx` | React app bootstrap |
 | `routeTree.gen.ts` | TanStack Router generated route tree |
+| `standaloneRouteTree.tsx` | Standalone runtime route tree that excludes legacy auth/user/item/admin pages |
 | `components/` | UI components and domain panels |
 | `routes/` | route files |
 | `stores/` | Zustand stores |
@@ -40,7 +41,8 @@
 3. generated client 不手改，按 `frontend/README.md` 的命令重新生成。
 4. `frontend/src/client/compute` 只允许 `frontend/src/shared/api/` 和 `frontend/src/features/` 下的手写 API wrapper 直接使用；`main.tsx` 只调用 shared 配置入口，routes、components 和 compatibility service facade 不直接 import generated Compute client。
 5. standalone/no-auth 判断统一走 `frontend/src/shared/runtimeConfig.ts`；route/component 不直接读取 `VITE_AUTH_MODE`。
-6. 前端改动完成后运行 `cd frontend; npx tsc --noEmit`。
+6. standalone runtime 只加载 `standaloneRouteTree.tsx` 中列出的 route files；不得把 login/signup/reset/users/items/admin/settings route 或 legacy FastAPI client 放回该树。
+7. 前端改动完成后运行 `cd frontend; npx tsc --noEmit`。
 
 ## 4. 对外接口
 
