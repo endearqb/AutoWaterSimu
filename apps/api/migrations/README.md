@@ -39,6 +39,7 @@
 | `0014_model_catalog_site_scope.*.sql` | optional `model_catalogs.site_id` metadata and scope index for catalog snapshot read-scope checks |
 | `0015_workspace_objects.*.sql` | standalone `simulation_scenarios`、`canvas_graphs` 和 `context_snapshots` metadata tables |
 | `0016_udm_workspace.*.sql` | standalone `udm_models`、`udm_model_versions` 和 `udm_hybrid_configs` metadata tables |
+| `0017_imported_legacy_history.*.sql` | read-only imported legacy job/history records for data that cannot safely become canonical Compute jobs |
 
 ## 3. 维护约定
 
@@ -53,6 +54,7 @@
 9. `mutation_audit_events` stores compact audit envelopes for non-job-scoped selected mutations; do not store full model catalog, benchmark run, artifact, result, or time-series payloads in audit event JSON.
 10. `canvas_graphs` stores versioned `canvas_graph.v1` payload metadata and hashes; publish derived `process_graph.v1` records rather than storing executable simulation inputs in the canvas table.
 11. UDM model versions store definition metadata and hashes only; large simulation outputs/time-series still belong in artifacts, not UDM metadata tables.
+12. `imported_legacy_history` is append-only migration evidence for legacy records that cannot be safely represented as canonical standalone objects; do not replay these records as live jobs.
 
 ## 4. 对外接口
 

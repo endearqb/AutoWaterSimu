@@ -38,6 +38,9 @@ standalone-status:
 standalone-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
 
+standalone-migration-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-migration-smoke.ps1
+
 dev-api:
     cd apps\api; go run ./cmd/compute-api
 

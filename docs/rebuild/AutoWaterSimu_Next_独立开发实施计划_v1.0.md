@@ -284,6 +284,14 @@ not present:
 - 五模型从 UI 到 worker 端到端全绿。
 - 前端 legacy compute services runtime imports 为零。
 - 结果/时序/artifact 在重启后可读取。
+
+### 2026-06-21 实施记录
+
+- 已新增 standalone five-model compute adapter，Material Balance、ASM1Slim、ASM1、ASM3、UDM 在 standalone runtime 下生成 `compute_job.v1` / `simulation_input.v1` 并通过 Go Compute API 提交。
+- standalone calculation submit/status/result/timeseries/final-values/input-data/delete 已切到 Go API wrappers；legacy runtime 继续动态加载 FastAPI generated client。
+- 新增 `audit-frontend-standalone-compute-boundary.ps1` 与 `standalone-five-model-compute.spec.ts`，覆盖五类 job type、参数数组、UDM metadata/bindings 和无 legacy endpoint 调用。
+- 已验证 `cd frontend; npx tsc --noEmit`、前端 standalone compute boundary audit、`cd apps/api; go test ./...`、五类 worker fixture `--run-job` 和 mock-backed Playwright five-model smoke。
+- 未纳入本阶段：完整真实浏览器五模型 live stack、UDM hybrid validation parity、服务端 time-series 分页 endpoint；这些归入后续 hardening/release gate。
 ## Phase 6：遗留数据迁移与 FastAPI 只读（2 周）
 
 ### 工作内容
@@ -299,6 +307,15 @@ not present:
 - 迁移可重复执行且无重复数据。
 - verify report 无 P0/P1 conflict。
 - 旧库无写入。
+
+### 2026-06-21 实施记录
+
+- 新增 `apps/api/cmd/migrate-legacy` 双 DSN CLI，支持 `--dry-run`、`--resume`、`--verify-only`、`--only`、`--batch-size` 和 JSON report。
+- 新增 `apps/api/internal/legacyimport` 映射包，legacy DB 通过 read-only transaction 查询，目标对象保存 `legacy_source` table/id/hash，目标已存在且 hash 不同报告 conflict。
+- 新增 `imported_legacy_history` migration，用于保存不可安全转换为 canonical standalone object 的 legacy job history。
+- 当前迁移覆盖 flowcharts → Scenario/CanvasGraph、UDM models/versions/hybrid configs → standalone UDM metadata、canonical terminal `compute_job.v1` history → `compute_jobs`；非 canonical job history 进入 `imported_legacy_history`。
+- 新增 `scripts/ci/standalone-migration-smoke.ps1` 与 `just standalone-migration-smoke`；无 DSN 时执行 Go package/command tests 并跳过 live DB dry-run。
+- 未纳入本阶段：实际生产 legacy DB 权限切 read-only、全量 old-vs-new golden comparison 和真实 fixture DB 双演练；这些需要外部 DSN/备份窗口并在 Phase 7 release gate 中执行。
 ## Phase 7：Hardening、Standalone RC 与 FastAPI Runtime 退出（2 周）
 
 ### 工作内容

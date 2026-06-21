@@ -29,7 +29,7 @@
 | `check-deps.ps1` | 最小依赖边界检查，覆盖 contracts/runtime、legacy/Next、frontend generated client、frontend route-to-feature-query boundary、API platform-to-domain/compute 与 domain-to-compute reverse import 等规则，供 `just check-deps` / `just check` 调用 |
 | `check-ontology.ps1` | Water Ontology objects/actions/links/policies registry 一致性检查，供 `just check-ontology` / `just check` / `pr-fast` 调用 |
 | `check-contracts.ps1` | Contracts registry、codegen manifest、schema tests、Compute TS client drift gate，供 `just check-contracts` / `pr-fast` 调用 |
-| `ci/` | AutoWaterSimu Next PR fast（含 Compute API boundary audit）、standalone no-auth compose/API smoke、opt-in integration smoke、opt-in security smoke、mock-backed browser smoke、live backend browser smoke、current-flow live smoke、worker adapter strict-mode opt-in smoke、worker packaged sidecar no-fallback smoke、performance/timings Phase 0 baseline、performance profiling Phase 0 evidence、performance golden Phase 0 evidence、performance hot-path prereview Phase 0 evidence、Go API latency Phase 0 evidence、performance flag matrix Phase 0 evidence、Desktop package smoke、Desktop unsigned release artifacts smoke 与 golden scenario evidence 汇总/刷新脚本 |
+| `ci/` | AutoWaterSimu Next PR fast（含 Compute API boundary audit）、standalone no-auth compose/API smoke、standalone migration smoke、opt-in integration smoke、opt-in security smoke、mock-backed browser smoke、live backend browser smoke、current-flow live smoke、worker adapter strict-mode opt-in smoke、worker packaged sidecar no-fallback smoke、performance/timings Phase 0 baseline、performance profiling Phase 0 evidence、performance golden Phase 0 evidence、performance hot-path prereview Phase 0 evidence、Go API latency Phase 0 evidence、performance flag matrix Phase 0 evidence、Desktop package smoke、Desktop unsigned release artifacts smoke 与 golden scenario evidence 汇总/刷新脚本 |
 | `release/` | AutoWaterSimu Next merge/release gate、release artifact download verifier smoke 脚本 |
 
 ## 3. 维护约定
@@ -68,6 +68,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-depende
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-adapter-strict-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-packaged-no-fallback-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-migration-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1

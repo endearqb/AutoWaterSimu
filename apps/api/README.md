@@ -37,6 +37,7 @@
 - declared-method guard for job get/events/result/evidence/production-readiness/evidence-ref/cancel/result-explanations routes plus contract, simulation registry/check, artifact, worker registration, model catalog, model run, benchmark run, UDM model, and UDM hybrid config routes so method mismatches return 405 before auth/service calls。
 - token-scoped tenant/project/site read filtering for job list/get, process_graph get, simulation_input get, draft confirmation get / constraint plan / promotion, persisted model catalog root/model/snapshot reads, model_run get / job-filtered list, benchmark_run get / job-filtered list, artifact download, evidence governance model catalog selection, and evidence-ref process_graph object dereference for scoped jobs; plus direct job create, direct job cancel, artifact retention sweep candidate filtering, confirm-draft record persistence, result explanation submit/review/publish, direct simulation-check create, draft promotion job create, benchmark schedule-run job create, model catalog registration/status, benchmark_run registration, and explicit process_graph/simulation_input registry POST mutation data-scope checks。
 - OpenAPI for platform and generated client。
+- Legacy FastAPI data migration CLI entrypoint for audited standalone cutover dry-run/import/verify reports。
 
 本目录不负责：
 
@@ -50,6 +51,7 @@
 |---|---|
 | `README.md` | 本目录上下文契约 |
 | `cmd/compute-api/` | Go Compute API 入口 |
+| `cmd/migrate-legacy/` | legacy FastAPI PostgreSQL migration CLI |
 | `internal/compute/` | job lifecycle、worker lifecycle、auth、store、artifact、HTTP handlers、selected mutation audit persistence |
 | `internal/domain/` | Go API 领域 package，目前包含 agent draft confirmation envelope validation / record data projection / constraint application plan / proposed request helpers、artifacts retention policy/action planner/upload metadata projection/archive metadata projection/compact audit state projection、evidence input/ref/risk parsing/object-scope matching/stored summary risk projection/result explanation refs/record data projection/compact audit state projection/readiness policy、jobs status/create idempotency decision/queued create projection/failed-worker fallback result/worker result completion/claim invariants/claim-heartbeat mutation plan/cancel-timeout state lifecycle、models built-in catalog document / catalog snapshot record data projection / benchmark_run record data projection / default parameter set status transition document mutation projection / compact audit state projection / benchmark case run job document、compute_result model_run extraction、model_run parsing/check、benchmark_run parsing、benchmark workflow gates、benchmark case promotion evidence/readiness、parameter-set status rules、promotion gate 与 production governance gate policy、simulation execution/profile/simulation-check job document/process-graph helpers/record data projection 和 workers domain package |
 | `internal/platform/` | Go API 平台级 helper，目前包含 audit、auth、config、contracts、HTTP 和 metrics helper package |
@@ -129,6 +131,8 @@ Draft confirmation / result explanation metadata persistence 仍由 `internal/co
 
 ```powershell
 cd apps\api; go test ./...
+cd apps\api; go test ./internal/legacyimport ./cmd/migrate-legacy
+cd apps\api; go run ./cmd/migrate-legacy --help
 cd frontend; npm run generate-compute-client
 cd frontend; npx tsc --noEmit
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1

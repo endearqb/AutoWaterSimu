@@ -10625,3 +10625,34 @@
 - `cd apps/api; go test ./...` passed.
 - Worker CLI `--run-job` fixtures passed for Material Balance、ASM1Slim、ASM1、ASM3 and UDM.
 - `cd frontend; npx playwright test tests/standalone-five-model-compute.spec.ts --project=chromium --no-deps --reporter=line` passed.
+
+# 2026-06-21 AutoWaterSimu Next Phase 6 legacy migration and FastAPI read-only TODO
+
+- [x] Re-read standalone requirement/implementation docs and apps/api command/migration/scripts README context.
+- [x] Add `cmd/migrate-legacy` dual-DSN CLI with dry-run/resume/verify-only/only/batch-size/report flags.
+- [x] Add legacy migration mapping package for flowcharts, UDM models/versions/hybrid configs, canonical terminal jobs, and imported legacy history.
+- [x] Add `imported_legacy_history` PostgreSQL migration for non-convertible legacy records.
+- [x] Add standalone migration smoke and Justfile target.
+- [x] Update implementation plan, README context, and README First change log.
+- [x] Run Phase 6 validation.
+- [x] Commit and push `codex/autowatersimu-next-rebuild` for Phase 6.
+
+## Plan
+
+- Treat legacy database as read-only input; the CLI must open legacy reads in a read-only transaction and never write to FastAPI tables.
+- Preserve original source identity and checksum on every migrated target row.
+- Convert only canonical `compute_job.v1` terminal job history into `compute_jobs`; store all other legacy jobs in `imported_legacy_history`.
+
+## Review
+
+- Added `apps/api/internal/legacyimport` with source hash, report, canvas graph normalization, UDM metadata mapping, canonical job conversion, imported history fallback, and no-DB unit coverage.
+- Added `apps/api/cmd/migrate-legacy` with the planned Phase 6 flags and JSON report output.
+- Added migration `0017_imported_legacy_history` for read-only imported legacy records that must not be replayed as live jobs.
+- Added `scripts/ci/standalone-migration-smoke.ps1` and `just standalone-migration-smoke`; live dry-run is skipped unless both legacy and target DSNs are explicitly set.
+- Validation:
+- `cd apps/api; go test ./internal/legacyimport ./cmd/migrate-legacy` passed.
+- `cd apps/api; go test ./...` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-migration-smoke.ps1` passed with live DB dry-run skipped due missing DSNs.
+- `cd apps/api; go run ./cmd/migrate-legacy --help` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+- `just --list` passed.

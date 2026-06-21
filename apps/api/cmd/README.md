@@ -19,6 +19,7 @@
 | 子目录 | 作用 |
 |---|---|
 | `compute-api/` | Compute API server entrypoint |
+| `migrate-legacy/` | Legacy FastAPI PostgreSQL to standalone metadata migration CLI |
 
 ## 3. 维护约定
 
@@ -38,6 +39,7 @@ May depend on `apps/api/internal/*`; should not be imported by internal packages
 
 ```powershell
 cd apps\api; go test ./...
+cd apps\api; go run ./cmd/migrate-legacy --help
 ```
 
 ## 7. AI 操作提示
