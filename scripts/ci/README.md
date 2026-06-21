@@ -9,6 +9,8 @@
 - `pr-fast` 本地/CI 等效验证。
 - standalone no-auth compose/API smoke 验证。
 - standalone legacy migration dry-run/verify smoke 验证。
+- standalone 五模型 worker fixture + 前端 mock-backed smoke 验证。
+- standalone backup/restore artifact checksum 与 opt-in PostgreSQL dump/restore smoke 验证。
 - opt-in integration smoke 验证。
 - opt-in security smoke 验证。
 - opt-in mock-backed browser smoke 验证。
@@ -44,6 +46,8 @@
 | `pr-fast.ps1` | 运行 Next PR fast checks（含 dependency boundary、Compute API boundary audit、simulation_core correctness freeze audit、worker dependency installation audit、README path、ontology registry、contracts drift、Go/frontend/desktop checks）并写出 `tmp/ci-evidence/pr-fast.json`、`tmp/ci-evidence/compute-boundary/compute-api-boundary.json`、`tmp/ci-evidence/simulation-core-correctness-freeze/simulation-core-correctness-freeze.json` 与 `tmp/ci-evidence/worker-dependency-installation/worker-dependency-installation.json` |
 | `standalone-smoke.ps1` | 验证 `docker-compose.standalone.yml` 默认服务不包含 legacy backend，并对已运行 standalone API 执行无 Authorization job create/read，写出 `tmp/ci-evidence/standalone-smoke.json` |
 | `standalone-migration-smoke.ps1` | 运行 legacy migration CLI/package tests；当 `AUTOWATERSIMU_LEGACY_DATABASE_URL` 与 `COMPUTE_API_DATABASE_URL` 均存在时执行 live dry-run 并输出 `tmp/legacy-migration-report.json` |
+| `standalone-five-model-smoke.ps1` | 运行 Material Balance、ASM1Slim、ASM1、ASM3、UDM 五类 `compute_job.v1` worker fixtures，并执行 standalone five-model Playwright mock smoke，写出 `tmp/ci-evidence/standalone-five-model-smoke.json` |
+| `standalone-backup-restore-smoke.ps1` | 默认验证本地 artifact checksum backup/restore fixture；显式 `-RunLive` 且提供 DSN 时执行 PostgreSQL `pg_dump` / `pg_restore --list` / 临时库 restore smoke，写出 `tmp/ci-evidence/standalone-backup-restore-smoke.json` |
 | `integration-smoke.ps1` | 启动隔离 Compose API 栈，运行本地 Python worker API once，验证 job/result/model_run/artifact/evidence/retention dry-run/metrics，并写出 `tmp/ci-evidence/integration-smoke.json` |
 | `security-smoke.ps1` | 聚合 production token guard、file-mounted token config source、static token revocation、scope denial、artifact admin scope、worker mutation POST-only method guard、job collection/job route 与 API-wide declared-method guard、tenant/project/site read-scope（job、process_graph、simulation_input、draft_confirmation、model_catalog、model_run、benchmark_run、artifact）、direct job create/cancel、artifact retention sweep delete/archive candidate filtering 与 archive cross-scope no-write、worker claim/heartbeat/artifact/succeed/fail completion、confirm-draft record persistence、result explanation submit/review/publish、direct simulation-check create、draft promotion job create、benchmark schedule-run job create、model catalog registration/status/promote、benchmark_run registration 与显式 process_graph/simulation_input registry POST mutation data-scope，以及 selected mutation audit envelope（job create/cancel/timeout、worker registration/claim/heartbeat/artifact/succeed/fail completion、artifact retention delete/archive、result explanation、draft_confirmation、draft promotion、direct simulation-check、model governance、simulation registry）的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
 | `browser-smoke.ps1` | 聚合 mock-backed Playwright Compute Jobs/current-flow/result/evidence、contract validation、Model governance 和 lifecycle smokes，并写出 `tmp/ci-evidence/browser-smoke.json` |
@@ -76,6 +80,10 @@
 本目录对 `Justfile` 暴露 `standalone-smoke` 入口；该脚本不启动或清理 compose，只验证 standalone compose 配置和当前 `ApiBaseUrl` 的 no-auth create/read。运行前通常先执行 `just standalone-up`。
 
 本目录对 `Justfile` 暴露 `standalone-migration-smoke` 入口；该脚本先运行 `apps/api/internal/legacyimport` 和 `cmd/migrate-legacy` tests，只有在显式提供 legacy/target DSN 时才执行 live DB dry-run。它不得修改 legacy database，缺少 DSN 时应报告 skipped 而不是失败。
+
+本目录对 `Justfile` 暴露 `standalone-five-model-smoke` 入口；该脚本覆盖五类 worker fixture 与 mock-backed frontend submit/result 适配，不启动真实 compose，也不替代 live browser / live worker evidence。
+
+本目录对 `Justfile` 暴露 `standalone-backup-restore-smoke` 入口；默认只验证本地 artifact checksum backup/restore fixture 和可选 artifact 目录 manifest，不连接数据库。只有传入 `-RunLive` 且提供 `COMPUTE_API_DATABASE_URL` 时才运行 PostgreSQL backup/list；只有额外提供 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 时才向显式临时库 restore。
 
 本目录对 `Justfile` 和 `.github/workflows/next-integration-smoke.yml` 暴露 `integration-smoke` opt-in 入口；hosted green run 仍需实际 GitHub Actions 执行后才能作为 evidence 记录。
 
@@ -134,6 +142,8 @@ Integration smoke 可以调用 `docker compose`、Go source-mounted Compute API�
 
 Standalone smoke 可以调用 `docker compose config` 和已运行的 standalone Compute API；它不应启动 legacy backend，也不替代完整 browser/live/release evidence。
 
+Standalone backup/restore smoke 可以调用 `pg_dump` / `pg_restore`，但必须由 `-RunLive` 和显式 DSN 触发。restore 只能写入 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 指向的临时数据库，不得对生产或 legacy 数据库执行 destructive restore。
+
 Live backend browser smoke 可以调用 `docker compose`、`integration-smoke.ps1`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker API once；它不应替代完整 legacy authenticated session、UI current-flow submit 到 live worker 或 release artifact evidence。
 
 Current-flow live smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker loop；它不应替代完整 legacy authenticated session 或 release artifact evidence。
@@ -148,6 +158,8 @@ Desktop release artifacts smoke 可以调用 Desktop packaging scripts、PyInsta
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-migration-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\browser-smoke.ps1

@@ -8,6 +8,7 @@
 
 - merge gate 编排。
 - release gate 编排。
+- standalone Web RC gate 编排。
 - 生成本地/CI evidence JSON。
 - 校验 GitHub workflow 下载后的 unsigned Desktop release artifact 内容。
 - 用 fixture-backed smoke 验证下载校验器的成功/失败路径。
@@ -24,6 +25,7 @@
 | 文件 | 作用 |
 |---|---|
 | `next-release-gates.ps1` | 编排 Next merge/release gate，并写出 `tmp/release-evidence/next-release-gates.json` |
+| `standalone-release-gate.ps1` | 编排 standalone Web RC gate，聚合 compose service boundary、Go/frontend checks、Compute/frontend boundary audits、migration/five-model/backup-restore/golden evidence，并写出 `tmp/release-evidence/standalone-release-gate.json` |
 | `verify-release-artifact-download.ps1` | 校验下载后的 unsigned Desktop workflow artifact 是否包含 sidecar、installer 和 smoke evidence，并写出 `tmp/release-evidence/downloaded-release-artifacts.json` |
 | `smoke-release-artifact-download.ps1` | 生成临时 release artifact fixtures，覆盖下载校验器通过路径与缺失 installer 的失败路径，并写出 `tmp/release-evidence/release-artifact-download-smoke.json` |
 
@@ -41,10 +43,12 @@
 10. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
 11. `smoke-release-artifact-download.ps1` 只使用 `tmp/` 下的 fixture 文件验证校验器逻辑，不代表真实 GitHub artifact round trip 已通过。
 12. `next-release-gates.ps1` evidence 必须记录 commit SHA、branch、dirty-state、tracked/untracked changes 和每步结果；PostgreSQL migration 只在 `postgres migration up/down smoke` step 实际存在且通过时才可作为 migration evidence。
+13. `standalone-release-gate.ps1` 默认可在缺少外部 DSN、未启动 compose 或未构建镜像时以 `passed_with_skips` 记录本地可验证结果；只有显式运行 live compose、live backup/restore、migration rollback 和 image build 且无 skip 时，才能解释为完整 standalone RC gate 通过。
 
 ## 4. 对外接口
 
 本目录对本地 PowerShell 和 `.github/workflows/next-release-gates.yml` 暴露 release gate 入口。
+`standalone-release-gate.ps1` 是 standalone Web RC gate 入口；默认 `-SkipLong` 适合作为本地快速 RC evidence，`-RunComposeSmoke`、`-RunBackupRestoreLive`、`-RunPostgresMigrationSmoke` 与 `-RunReleaseImageSmoke` 用于显式补齐外部环境验证。
 `verify-release-artifact-download.ps1` 也作为 workflow 下载 artifact 后的内容校验入口。
 `scripts/ci/desktop-release-artifacts-smoke.ps1` 会先构建真实 unsigned Desktop sidecar/installer artifact，再调用本目录 release gate 和下载校验器生成本地 release evidence。
 
@@ -65,6 +69,7 @@
 ```powershell
 .\scripts\release\smoke-release-artifact-download.ps1
 .\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
+.\scripts\release\standalone-release-gate.ps1 -SkipLong
 ```
 
 Focused heavier gates are opt-in so default merge/release checks stay predictable:
@@ -90,6 +95,12 @@ $env:COMPUTE_API_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:
 
 ```powershell
 .\scripts\ci\desktop-release-artifacts-smoke.ps1
+```
+
+Standalone RC 的完整 live gate 需要先准备 standalone compose、临时 PostgreSQL restore 数据库和可构建镜像环境：
+
+```powershell
+.\scripts\release\standalone-release-gate.ps1 -RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke
 ```
 
 ## 7. AI 操作提示

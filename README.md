@@ -165,6 +165,9 @@ just doctor
 just dev-detached
 just standalone-up
 just standalone-smoke
+just standalone-five-model-smoke
+just standalone-backup-restore-smoke
+just standalone-release-gate
 just check-deps
 just check-ontology
 just check
@@ -207,6 +210,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-cor
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-dependency-installation.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-adapter-strict-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1
@@ -226,6 +231,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunLiveBackendBrowserSmoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1 -RefreshLocalEvidence -RunCurrentFlowLiveSmoke
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -SkipLong
 backend\.venv\Scripts\python -m pytest contracts\tests -q
 cd apps\api; go test ./...
 cd frontend; npx tsc --noEmit

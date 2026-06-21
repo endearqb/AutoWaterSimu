@@ -10656,3 +10656,33 @@
 - `cd apps/api; go run ./cmd/migrate-legacy --help` passed.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
 - `just --list` passed.
+
+# 2026-06-21 AutoWaterSimu Next Phase 7 standalone RC gate TODO
+
+- [x] Re-read standalone requirement/implementation docs and scripts/ci/release README context.
+- [x] Add standalone five-model worker/frontend smoke.
+- [x] Add standalone backup/restore smoke with non-destructive default and explicit live DB opt-in.
+- [x] Add standalone release gate that aggregates compose boundary, Go/frontend checks, boundary audits, migration, five-model, backup/restore, migration rollback, live API, and golden evidence.
+- [x] Add Justfile targets for standalone five-model, backup/restore, release gate, browser smoke, and golden summary.
+- [x] Update README context, implementation plan, and README First change log.
+- [x] Run Phase 7 validation.
+- [x] Commit and push `codex/autowatersimu-next-rebuild` for Phase 7.
+
+## Plan
+
+- Treat Phase 7 as the executable standalone RC evidence layer, not a destructive deletion of legacy source directories.
+- Keep default backup/restore and release gate paths non-destructive; require explicit flags and DSNs for live PostgreSQL restore or migration rollback.
+- Record `passed_with_skips` when local evidence is green but live compose, image build, temporary restore DB, or full golden refresh are not supplied.
+
+## Review
+
+- Added `scripts/ci/standalone-five-model-smoke.ps1` for five worker fixtures plus standalone five-model Playwright coverage.
+- Added `scripts/ci/standalone-backup-restore-smoke.ps1` for artifact checksum backup/restore and optional PostgreSQL dump/restore checks.
+- Added `scripts/release/standalone-release-gate.ps1` and `just standalone-release-gate`; the gate fails on hard check failures and records skipped live infrastructure explicitly.
+- Validation:
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1` passed with `status=passed_with_skips` because live DB restore and configured artifact-dir manifest were not supplied.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -SkipLong` passed with `status=passed_with_skips`; hard checks passed, image build / migration rollback / live API smoke were skipped by explicit default.
+- `just --list` passed and shows the new standalone targets.
+- `git diff --check -- README.md Justfile scripts docs\rebuild tasks\todo.md .ai\changes\2026-06-21.md` passed with LF/CRLF warnings only.
+- Commit/push completed for Phase 7.

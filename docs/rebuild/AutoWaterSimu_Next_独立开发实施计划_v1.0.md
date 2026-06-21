@@ -332,6 +332,15 @@ not present:
 - Standalone RC gate 全绿。
 - 发布物不包含 FastAPI。
 - FastAPI 仅作为 archived/oracle code 存在。
+
+### 2026-06-21 实施记录
+
+- 新增 `scripts/release/standalone-release-gate.ps1`，聚合 standalone compose service boundary、Go API tests、frontend typecheck、Compute API boundary audit、frontend standalone compute boundary audit、legacy migration smoke、five-model smoke、backup/restore smoke、migration rollback smoke、standalone live API smoke 和 golden summary/refresh evidence。
+- 新增 `scripts/ci/standalone-five-model-smoke.ps1`，以五类 `compute_job.v1` worker fixture 覆盖 Material Balance、ASM1Slim、ASM1、ASM3 和 UDM，并运行 standalone five-model Playwright mock smoke。
+- 新增 `scripts/ci/standalone-backup-restore-smoke.ps1`，默认执行本地 artifact checksum backup/restore fixture；`-RunLive` 且提供 `COMPUTE_API_DATABASE_URL` 时执行 PostgreSQL dump/list，额外提供 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 时才向显式临时库 restore。
+- 新增 `just standalone-five-model-smoke`、`just standalone-backup-restore-smoke`、`just standalone-release-gate`、`just standalone-browser-smoke` 和 `just standalone-golden`。
+- `standalone-release-gate.ps1 -SkipLong` 在无 live compose、无临时 DB DSN、未显式构建镜像时记录 `passed_with_skips`，不得解释为完整 RC 全绿；完整 RC 需显式补跑 `-RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke`，且所有 evidence 无 skipped/partial。
+- FastAPI 退出仍以运行路径 evidence 为准：当前发布 gate 默认检查 standalone compose 不包含 backend、frontend standalone compute audit 不允许五模型静态 legacy calculation SDK 回流；legacy `backend/` 源码保留为 archived/oracle，不进入 standalone compose。
 # 6. Sprint 计划
 
 | Sprint | 目标 | 主要交付 | 演示 |

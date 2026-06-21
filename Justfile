@@ -41,6 +41,21 @@ standalone-smoke:
 standalone-migration-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-migration-smoke.ps1
 
+standalone-five-model-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1
+
+standalone-backup-restore-smoke:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1
+
+standalone-release-gate:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -SkipLong
+
+standalone-browser-smoke:
+    just current-flow-live-smoke
+
+standalone-golden:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.ps1
+
 dev-api:
     cd apps\api; go run ./cmd/compute-api
 
