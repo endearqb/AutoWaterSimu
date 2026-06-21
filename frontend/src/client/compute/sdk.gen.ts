@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, ListScenariosData, ListScenariosResponse2, CreateScenarioData, CreateScenarioResponse, GetScenarioData, GetScenarioResponse, UpdateScenarioData, UpdateScenarioResponse, ArchiveScenarioByDeleteData, ArchiveScenarioByDeleteResponse, CloneScenarioData, CloneScenarioResponse, ArchiveScenarioData, ArchiveScenarioResponse, RunScenarioSimulationCheckData, RunScenarioSimulationCheckResponse, ListCanvasGraphsData, ListCanvasGraphsResponse2, SaveCanvasGraphData, SaveCanvasGraphResponse, GetCanvasGraphData, GetCanvasGraphResponse, UpdateCanvasGraphData, UpdateCanvasGraphResponse, ArchiveCanvasGraphByDeleteData, ArchiveCanvasGraphByDeleteResponse, PublishCanvasGraphData, PublishCanvasGraphResponse, ListContextSnapshotsData, ListContextSnapshotsResponse2, CreateContextSnapshotData, CreateContextSnapshotResponse, GetContextSnapshotData, GetContextSnapshotResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, GetComputeJobProductionReadinessData, GetComputeJobProductionReadinessResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, GetDefaultParameterSetPromotionPlanData, GetDefaultParameterSetPromotionPlanResponse, PromoteDefaultParameterSetToApprovedData, PromoteDefaultParameterSetToApprovedResponse, ScheduleBenchmarkCaseRunData, ScheduleBenchmarkCaseRunResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
+import type { GetHealthzResponse, GetReadyzResponse, GetMetricsResponse, CreateComputeJobData, CreateComputeJobResponse, ListComputeJobsData, ListComputeJobsResponse, CreateSimulationCheckData, CreateSimulationCheckResponse, RegisterProcessGraphData, RegisterProcessGraphResponse, GetProcessGraphData, GetProcessGraphResponse, RegisterSimulationInputData, RegisterSimulationInputResponse, GetSimulationInputData, GetSimulationInputResponse, ListScenariosData, ListScenariosResponse2, CreateScenarioData, CreateScenarioResponse, GetScenarioData, GetScenarioResponse, UpdateScenarioData, UpdateScenarioResponse, ArchiveScenarioByDeleteData, ArchiveScenarioByDeleteResponse, CloneScenarioData, CloneScenarioResponse, ArchiveScenarioData, ArchiveScenarioResponse, RunScenarioSimulationCheckData, RunScenarioSimulationCheckResponse, ListCanvasGraphsData, ListCanvasGraphsResponse2, SaveCanvasGraphData, SaveCanvasGraphResponse, GetCanvasGraphData, GetCanvasGraphResponse, UpdateCanvasGraphData, UpdateCanvasGraphResponse, ArchiveCanvasGraphByDeleteData, ArchiveCanvasGraphByDeleteResponse, PublishCanvasGraphData, PublishCanvasGraphResponse, ListContextSnapshotsData, ListContextSnapshotsResponse2, CreateContextSnapshotData, CreateContextSnapshotResponse, GetContextSnapshotData, GetContextSnapshotResponse, ListUdmModelTemplatesData, ListUdmModelTemplatesResponse, ValidateUdmModelDefinitionData, ValidateUdmModelDefinitionResponse, ListUdmModelsData, ListUdmModelsResponse, CreateUdmModelData, CreateUdmModelResponse, CreateUdmModelFromTemplateData, CreateUdmModelFromTemplateResponse, GetUdmModelData, GetUdmModelResponse, UpdateUdmModelData, UpdateUdmModelResponse, DeleteUdmModelData, DeleteUdmModelResponse, ListUdmHybridConfigsData, ListUdmHybridConfigsResponse, CreateUdmHybridConfigData, CreateUdmHybridConfigResponse, GetUdmHybridConfigData, GetUdmHybridConfigResponse, UpdateUdmHybridConfigData, UpdateUdmHybridConfigResponse, DeleteUdmHybridConfigData, DeleteUdmHybridConfigResponse, GetComputeJobData, GetComputeJobResponse, CancelComputeJobData, CancelComputeJobResponse, GetComputeJobResultData, GetComputeJobResultResponse, GetComputeJobEventsData, GetComputeJobEventsResponse, GetComputeJobEvidenceData, GetComputeJobEvidenceResponse, GetComputeJobProductionReadinessData, GetComputeJobProductionReadinessResponse, ResolveEvidenceReferenceData, ResolveEvidenceReferenceResponse, SubmitResultExplanationData, SubmitResultExplanationResponse, GetResultExplanationData, GetResultExplanationResponse, ReviewResultExplanationData, ReviewResultExplanationResponse, PublishResultExplanationData, PublishResultExplanationResponse, DownloadArtifactData, DownloadArtifactResponse, SweepArtifactRetentionData, SweepArtifactRetentionResponse, ValidateContractData, ValidateContractResponse, ConfirmDraftData, ConfirmDraftResponse, GetDraftConfirmationData, GetDraftConfirmationResponse, GetConstraintApplicationPlanData, GetConstraintApplicationPlanResponse, PromoteDraftConfirmationToSimulationCheckData, PromoteDraftConfirmationToSimulationCheckResponse, ListModelCatalogResponse, RegisterModelCatalogData, RegisterModelCatalogResponse, ListModelCatalogSnapshotsData, ListModelCatalogSnapshotsResponse2, GetModelCatalogModelData, GetModelCatalogModelResponse, UpdateDefaultParameterSetStatusData, UpdateDefaultParameterSetStatusResponse, GetDefaultParameterSetPromotionPlanData, GetDefaultParameterSetPromotionPlanResponse, PromoteDefaultParameterSetToApprovedData, PromoteDefaultParameterSetToApprovedResponse, ScheduleBenchmarkCaseRunData, ScheduleBenchmarkCaseRunResponse, ListBenchmarkRunsData, ListBenchmarkRunsResponse2, RecordBenchmarkRunData, RecordBenchmarkRunResponse, GetBenchmarkRunData, GetBenchmarkRunResponse, ListModelRunsData, ListModelRunsResponse2, GetModelRunData, GetModelRunResponse, RegisterWorkerData, RegisterWorkerResponse, ClaimWorkerJobData, ClaimWorkerJobResponse, HeartbeatWorkerData, HeartbeatWorkerResponse, UploadWorkerArtifactData, UploadWorkerArtifactResponse, SucceedWorkerJobData, SucceedWorkerJobResponse, FailWorkerJobData, FailWorkerJobResponse } from './types.gen';
 
 export class DefaultService {
     /**
@@ -569,6 +569,278 @@ export class DefaultService {
             url: '/api/v1/context-snapshots/{context_snapshot_id}',
             path: {
                 context_snapshot_id: data.contextSnapshotId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.tags
+     * @param data.excludeTags
+     * @returns UDMSeedTemplateSummary UDM model templates
+     * @throws ApiError
+     */
+    public static listUdmModelTemplates(data: ListUdmModelTemplatesData = {}): CancelablePromise<ListUdmModelTemplatesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/udm-models/templates',
+            query: {
+                tags: data.tags,
+                exclude_tags: data.excludeTags
+            },
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns UDMValidationResponse UDM validation result
+     * @throws ApiError
+     */
+    public static validateUdmModelDefinition(data: ValidateUdmModelDefinitionData): CancelablePromise<ValidateUdmModelDefinitionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/udm-models/validate',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.q
+     * @returns ListUDMModelsResponse UDM models
+     * @throws ApiError
+     */
+    public static listUdmModels(data: ListUdmModelsData = {}): CancelablePromise<ListUdmModelsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/udm-models',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                q: data.q
+            },
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns UDMModelDetailPublic Created UDM model
+     * @throws ApiError
+     */
+    public static createUdmModel(data: CreateUdmModelData): CancelablePromise<CreateUdmModelResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/udm-models',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns UDMModelDetailPublic Created UDM model from template
+     * @throws ApiError
+     */
+    public static createUdmModelFromTemplate(data: CreateUdmModelFromTemplateData): CancelablePromise<CreateUdmModelFromTemplateResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/udm-models/from-template',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelId
+     * @returns UDMModelDetailPublic UDM model
+     * @throws ApiError
+     */
+    public static getUdmModel(data: GetUdmModelData): CancelablePromise<GetUdmModelResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/udm-models/{model_id}',
+            path: {
+                model_id: data.modelId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelId
+     * @param data.requestBody
+     * @returns UDMModelDetailPublic Updated UDM model
+     * @throws ApiError
+     */
+    public static updateUdmModel(data: UpdateUdmModelData): CancelablePromise<UpdateUdmModelResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/udm-models/{model_id}',
+            path: {
+                model_id: data.modelId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.modelId
+     * @returns unknown Archived UDM model
+     * @throws ApiError
+     */
+    public static deleteUdmModel(data: DeleteUdmModelData): CancelablePromise<DeleteUdmModelResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/udm-models/{model_id}',
+            path: {
+                model_id: data.modelId
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns ListUDMHybridConfigsResponse UDM hybrid configs
+     * @throws ApiError
+     */
+    public static listUdmHybridConfigs(data: ListUdmHybridConfigsData = {}): CancelablePromise<ListUdmHybridConfigsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/udm-hybrid-configs',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                403: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns UDMHybridConfigPublic Created UDM hybrid config
+     * @throws ApiError
+     */
+    public static createUdmHybridConfig(data: CreateUdmHybridConfigData): CancelablePromise<CreateUdmHybridConfigResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/udm-hybrid-configs',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                422: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.id
+     * @returns UDMHybridConfigPublic UDM hybrid config
+     * @throws ApiError
+     */
+    public static getUdmHybridConfig(data: GetUdmHybridConfigData): CancelablePromise<GetUdmHybridConfigResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/udm-hybrid-configs/{id}',
+            path: {
+                id: data.id
+            },
+            errors: {
+                403: 'Contract error',
+                404: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.id
+     * @param data.requestBody
+     * @returns UDMHybridConfigPublic Updated UDM hybrid config
+     * @throws ApiError
+     */
+    public static updateUdmHybridConfig(data: UpdateUdmHybridConfigData): CancelablePromise<UpdateUdmHybridConfigResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/udm-hybrid-configs/{id}',
+            path: {
+                id: data.id
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: 'Contract error',
+                403: 'Contract error',
+                404: 'Contract error',
+                422: 'Contract error'
+            }
+        });
+    }
+
+    /**
+     * @param data The data for the request.
+     * @param data.id
+     * @returns unknown Archived UDM hybrid config
+     * @throws ApiError
+     */
+    public static deleteUdmHybridConfig(data: DeleteUdmHybridConfigData): CancelablePromise<DeleteUdmHybridConfigResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/udm-hybrid-configs/{id}',
+            path: {
+                id: data.id
             },
             errors: {
                 403: 'Contract error',

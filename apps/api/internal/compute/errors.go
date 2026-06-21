@@ -28,6 +28,8 @@ const (
 	CodeScenarioNotFound              = "SCENARIO_NOT_FOUND"
 	CodeCanvasGraphNotFound           = "CANVAS_GRAPH_NOT_FOUND"
 	CodeContextSnapshotNotFound       = "CONTEXT_SNAPSHOT_NOT_FOUND"
+	CodeUDMModelNotFound              = "UDM_MODEL_NOT_FOUND"
+	CodeUDMHybridConfigNotFound       = "UDM_HYBRID_CONFIG_NOT_FOUND"
 	CodeDraftConfirmationNotFound     = "DRAFT_CONFIRMATION_NOT_FOUND"
 	CodeDraftConfirmationNotApproved  = "DRAFT_CONFIRMATION_NOT_APPROVED"
 	CodeResultExplanationNotFound     = "RESULT_EXPLANATION_NOT_FOUND"

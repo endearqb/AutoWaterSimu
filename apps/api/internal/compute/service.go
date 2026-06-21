@@ -15,6 +15,7 @@ type Service struct {
 	jobLifecycle       *JobLifecycleService
 	workerLifecycle    *domainworkers.WorkerLifecycleService
 	workspace          *ScenarioWorkspaceService
+	udm                *UDMWorkspaceService
 	simulationInputs   *SimulationInputService
 	draftWorkflows     *DraftWorkflowService
 	resultExplanations *ResultExplanationService
@@ -46,6 +47,7 @@ func NewServiceWithArchive(store Store, artifacts ArtifactStore, archiveArtifact
 	svc.workspace = NewScenarioWorkspaceService(store, store, store, svc.simulationInputs, validator, func() time.Time { return svc.now() }, func(ctx context.Context, bytes []byte, filter ListFilter) (JobSnapshot, int, error) {
 		return svc.CreateSimulationCheckForScope(ctx, bytes, filter)
 	})
+	svc.udm = NewUDMWorkspaceService(store, store, func() time.Time { return svc.now() })
 	svc.draftWorkflows = NewDraftWorkflowService(store, validator, func() time.Time { return svc.now() }, func(ctx context.Context, bytes []byte, filter ListFilter) (JobSnapshot, int, error) {
 		return svc.CreateSimulationCheckForScope(ctx, bytes, filter)
 	})

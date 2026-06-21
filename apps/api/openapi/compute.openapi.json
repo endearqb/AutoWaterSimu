@@ -360,6 +360,169 @@
         }
       }
     },
+    "/api/v1/udm-models/templates": {
+      "get": {
+        "operationId": "listUdmModelTemplates",
+        "parameters": [
+          { "name": "tags", "in": "query", "schema": { "type": "string" } },
+          { "name": "exclude_tags", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "UDM model templates", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/UDMSeedTemplateSummary" } } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/udm-models/validate": {
+      "post": {
+        "operationId": "validateUdmModelDefinition",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelDefinitionDraft" } } }
+        },
+        "responses": {
+          "200": { "description": "UDM validation result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMValidationResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/udm-models": {
+      "get": {
+        "operationId": "listUdmModels",
+        "parameters": [
+          { "name": "skip", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100 } },
+          { "name": "q", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "UDM models", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListUDMModelsResponse" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "post": {
+        "operationId": "createUdmModel",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelCreateRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created UDM model", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelDetailPublic" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/udm-models/from-template": {
+      "post": {
+        "operationId": "createUdmModelFromTemplate",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelCreateFromTemplateRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created UDM model from template", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelDetailPublic" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/udm-models/{model_id}": {
+      "get": {
+        "operationId": "getUdmModel",
+        "parameters": [{ "name": "model_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "UDM model", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelDetailPublic" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "patch": {
+        "operationId": "updateUdmModel",
+        "parameters": [{ "name": "model_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelUpdateRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Updated UDM model", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMModelDetailPublic" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteUdmModel",
+        "parameters": [{ "name": "model_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Archived UDM model", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/udm-hybrid-configs": {
+      "get": {
+        "operationId": "listUdmHybridConfigs",
+        "parameters": [
+          { "name": "skip", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100 } }
+        ],
+        "responses": {
+          "200": { "description": "UDM hybrid configs", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListUDMHybridConfigsResponse" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "post": {
+        "operationId": "createUdmHybridConfig",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMHybridConfigCreateRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created UDM hybrid config", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMHybridConfigPublic" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "422": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
+    "/api/v1/udm-hybrid-configs/{id}": {
+      "get": {
+        "operationId": "getUdmHybridConfig",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "UDM hybrid config", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMHybridConfigPublic" } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "patch": {
+        "operationId": "updateUdmHybridConfig",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMHybridConfigUpdateRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Updated UDM hybrid config", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMHybridConfigPublic" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" },
+          "422": { "$ref": "#/components/responses/ContractError" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteUdmHybridConfig",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Archived UDM hybrid config", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+          "403": { "$ref": "#/components/responses/ContractError" },
+          "404": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/compute/jobs/{job_id}": {
       "get": {
         "operationId": "getComputeJob",
@@ -1101,6 +1264,211 @@
           "metadata": { "type": "object", "additionalProperties": true }
         },
         "additionalProperties": false
+      },
+      "UDMModelDefinitionDraft": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "components": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "parameters": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "processes": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "meta": { "type": "object", "additionalProperties": true },
+          "validation_mode": { "type": "string" }
+        }
+      },
+      "UDMModelCreateRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/UDMModelDefinitionDraft" },
+          {
+            "type": "object",
+            "properties": {
+              "seed_source": { "type": "string" },
+              "source_system": { "type": "string" },
+              "metadata": { "type": "object", "additionalProperties": true }
+            }
+          }
+        ]
+      },
+      "UDMModelUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "components": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "parameters": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "processes": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "meta": { "type": "object", "additionalProperties": true },
+          "is_published": { "type": "boolean" },
+          "source_system": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "UDMModelCreateFromTemplateRequest": {
+        "type": "object",
+        "required": ["template_key"],
+        "properties": {
+          "template_key": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "source_system": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "UDMSeedTemplateSummary": {
+        "type": "object",
+        "required": ["key", "name"],
+        "properties": {
+          "key": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "components_count": { "type": "integer" },
+          "processes_count": { "type": "integer" },
+          "parameters_count": { "type": "integer" }
+        }
+      },
+      "UDMValidationLocation": {
+        "type": "object",
+        "properties": {
+          "section": { "type": "string" },
+          "process_name": { "type": "string" },
+          "component_name": { "type": "string" },
+          "cell_key": { "type": "string" }
+        }
+      },
+      "UDMValidationIssue": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "process": { "type": "string" },
+          "location": { "$ref": "#/components/schemas/UDMValidationLocation" }
+        }
+      },
+      "UDMContinuityCheckItem": {
+        "type": "object",
+        "required": ["process_name", "dimension", "balance_value", "status", "explanation"],
+        "properties": {
+          "process_name": { "type": "string" },
+          "dimension": { "type": "string" },
+          "balance_value": { "type": "number" },
+          "status": { "type": "string" },
+          "explanation": { "type": "string" }
+        }
+      },
+      "UDMValidationResponse": {
+        "type": "object",
+        "required": ["ok", "errors", "warnings", "extracted_parameters", "continuity_checks"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "errors": { "type": "array", "items": { "$ref": "#/components/schemas/UDMValidationIssue" } },
+          "warnings": { "type": "array", "items": { "$ref": "#/components/schemas/UDMValidationIssue" } },
+          "extracted_parameters": { "type": "array", "items": { "type": "string" } },
+          "continuity_checks": { "type": "array", "items": { "$ref": "#/components/schemas/UDMContinuityCheckItem" } }
+        }
+      },
+      "UDMModelPublic": {
+        "type": "object",
+        "required": ["id", "name", "tags", "current_version", "is_published", "owner_id", "created_at", "updated_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "current_version": { "type": "integer" },
+          "is_published": { "type": "boolean" },
+          "owner_id": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UDMModelVersionPublic": {
+        "type": "object",
+        "required": ["id", "model_id", "version", "content_hash", "components", "parameters", "processes", "validation_ok", "validation_errors", "created_at", "updated_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "model_id": { "type": "string" },
+          "version": { "type": "integer" },
+          "content_hash": { "type": "string" },
+          "parameter_hash": { "type": "string" },
+          "components": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "parameters": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "processes": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "meta": { "type": "object", "additionalProperties": true },
+          "validation_ok": { "type": "boolean" },
+          "validation_errors": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "seed_source": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UDMModelDetailPublic": {
+        "allOf": [
+          { "$ref": "#/components/schemas/UDMModelPublic" },
+          {
+            "type": "object",
+            "required": ["versions"],
+            "properties": {
+              "latest_version": { "$ref": "#/components/schemas/UDMModelVersionPublic" },
+              "versions": { "type": "array", "items": { "$ref": "#/components/schemas/UDMModelVersionPublic" } }
+            }
+          }
+        ]
+      },
+      "ListUDMModelsResponse": {
+        "type": "object",
+        "required": ["data", "count"],
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/UDMModelPublic" } },
+          "count": { "type": "integer" }
+        }
+      },
+      "UDMHybridConfigCreateRequest": {
+        "type": "object",
+        "required": ["name", "hybrid_config"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "hybrid_config": { "type": "object", "additionalProperties": true },
+          "source_system": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "UDMHybridConfigUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "hybrid_config": { "type": "object", "additionalProperties": true },
+          "source_system": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "UDMHybridConfigPublic": {
+        "type": "object",
+        "required": ["id", "owner_id", "created_at", "updated_at", "name", "hybrid_config"],
+        "properties": {
+          "id": { "type": "string" },
+          "owner_id": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "hybrid_config": { "type": "object", "additionalProperties": true },
+          "parameter_hash": { "type": "string" }
+        }
+      },
+      "ListUDMHybridConfigsResponse": {
+        "type": "object",
+        "required": ["data", "count"],
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/UDMHybridConfigPublic" } },
+          "count": { "type": "integer" }
+        }
       },
       "ContractError": {
         "type": "object",

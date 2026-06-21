@@ -389,6 +389,16 @@ export type ListScenariosResponse = {
     total_estimate: number;
 };
 
+export type ListUDMHybridConfigsResponse = {
+    data: Array<UDMHybridConfigPublic>;
+    count: number;
+};
+
+export type ListUDMModelsResponse = {
+    data: Array<UDMModelPublic>;
+    count: number;
+};
+
 export type ModelBenchmarkCase = {
     benchmark_case_id: string;
     display_name: string;
@@ -812,6 +822,187 @@ export type schema_version15 = 'simulation_request.v1';
 
 export type job_type = 'simulation.material_balance.v1' | 'simulation.asm1slim.v1' | 'simulation.asm1.v1' | 'simulation.asm3.v1' | 'simulation.udm.v1';
 
+export type UDMContinuityCheckItem = {
+    process_name: string;
+    dimension: string;
+    balance_value: number;
+    status: string;
+    explanation: string;
+};
+
+export type UDMHybridConfigCreateRequest = {
+    name: string;
+    description?: string;
+    hybrid_config: {
+        [key: string]: unknown;
+    };
+    source_system?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type UDMHybridConfigPublic = {
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    name: string;
+    description?: string;
+    hybrid_config: {
+        [key: string]: unknown;
+    };
+    parameter_hash?: string;
+};
+
+export type UDMHybridConfigUpdateRequest = {
+    name?: string;
+    description?: string;
+    hybrid_config?: {
+        [key: string]: unknown;
+    };
+    source_system?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type UDMModelCreateFromTemplateRequest = {
+    template_key: string;
+    name?: string;
+    description?: string;
+    source_system?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type UDMModelCreateRequest = UDMModelDefinitionDraft & {
+    seed_source?: string;
+    source_system?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type UDMModelDefinitionDraft = {
+    name?: string;
+    description?: string;
+    tags?: Array<(string)>;
+    components?: Array<{
+        [key: string]: unknown;
+    }>;
+    parameters?: Array<{
+        [key: string]: unknown;
+    }>;
+    processes?: Array<{
+        [key: string]: unknown;
+    }>;
+    meta?: {
+        [key: string]: unknown;
+    };
+    validation_mode?: string;
+};
+
+export type UDMModelDetailPublic = UDMModelPublic & {
+    latest_version?: UDMModelVersionPublic;
+    versions: Array<UDMModelVersionPublic>;
+};
+
+export type UDMModelPublic = {
+    id: string;
+    name: string;
+    description?: string;
+    tags: Array<(string)>;
+    current_version: number;
+    is_published: boolean;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type UDMModelUpdateRequest = {
+    name?: string;
+    description?: string;
+    tags?: Array<(string)>;
+    components?: Array<{
+        [key: string]: unknown;
+    }>;
+    parameters?: Array<{
+        [key: string]: unknown;
+    }>;
+    processes?: Array<{
+        [key: string]: unknown;
+    }>;
+    meta?: {
+        [key: string]: unknown;
+    };
+    is_published?: boolean;
+    source_system?: string;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type UDMModelVersionPublic = {
+    id: string;
+    model_id: string;
+    version: number;
+    content_hash: string;
+    parameter_hash?: string;
+    components: Array<{
+        [key: string]: unknown;
+    }>;
+    parameters: Array<{
+        [key: string]: unknown;
+    }>;
+    processes: Array<{
+        [key: string]: unknown;
+    }>;
+    meta?: {
+        [key: string]: unknown;
+    };
+    validation_ok: boolean;
+    validation_errors: Array<{
+        [key: string]: unknown;
+    }>;
+    seed_source?: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type UDMSeedTemplateSummary = {
+    key: string;
+    name: string;
+    description?: string;
+    tags?: Array<(string)>;
+    components_count?: number;
+    processes_count?: number;
+    parameters_count?: number;
+};
+
+export type UDMValidationIssue = {
+    code: string;
+    message: string;
+    process?: string;
+    location?: UDMValidationLocation;
+};
+
+export type UDMValidationLocation = {
+    section?: string;
+    process_name?: string;
+    component_name?: string;
+    cell_key?: string;
+};
+
+export type UDMValidationResponse = {
+    ok: boolean;
+    errors: Array<UDMValidationIssue>;
+    warnings: Array<UDMValidationIssue>;
+    extracted_parameters: Array<(string)>;
+    continuity_checks: Array<UDMContinuityCheckItem>;
+};
+
 export type WorkerRecord = {
     [key: string]: unknown;
 };
@@ -994,6 +1185,94 @@ export type GetContextSnapshotData = {
 };
 
 export type GetContextSnapshotResponse = (ContextSnapshotRecord);
+
+export type ListUdmModelTemplatesData = {
+    excludeTags?: string;
+    tags?: string;
+};
+
+export type ListUdmModelTemplatesResponse = (Array<UDMSeedTemplateSummary>);
+
+export type ValidateUdmModelDefinitionData = {
+    requestBody: UDMModelDefinitionDraft;
+};
+
+export type ValidateUdmModelDefinitionResponse = (UDMValidationResponse);
+
+export type ListUdmModelsData = {
+    limit?: number;
+    q?: string;
+    skip?: number;
+};
+
+export type ListUdmModelsResponse = (ListUDMModelsResponse);
+
+export type CreateUdmModelData = {
+    requestBody: UDMModelCreateRequest;
+};
+
+export type CreateUdmModelResponse = (UDMModelDetailPublic);
+
+export type CreateUdmModelFromTemplateData = {
+    requestBody: UDMModelCreateFromTemplateRequest;
+};
+
+export type CreateUdmModelFromTemplateResponse = (UDMModelDetailPublic);
+
+export type GetUdmModelData = {
+    modelId: string;
+};
+
+export type GetUdmModelResponse = (UDMModelDetailPublic);
+
+export type UpdateUdmModelData = {
+    modelId: string;
+    requestBody: UDMModelUpdateRequest;
+};
+
+export type UpdateUdmModelResponse = (UDMModelDetailPublic);
+
+export type DeleteUdmModelData = {
+    modelId: string;
+};
+
+export type DeleteUdmModelResponse = ({
+    [key: string]: unknown;
+});
+
+export type ListUdmHybridConfigsData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type ListUdmHybridConfigsResponse = (ListUDMHybridConfigsResponse);
+
+export type CreateUdmHybridConfigData = {
+    requestBody: UDMHybridConfigCreateRequest;
+};
+
+export type CreateUdmHybridConfigResponse = (UDMHybridConfigPublic);
+
+export type GetUdmHybridConfigData = {
+    id: string;
+};
+
+export type GetUdmHybridConfigResponse = (UDMHybridConfigPublic);
+
+export type UpdateUdmHybridConfigData = {
+    id: string;
+    requestBody: UDMHybridConfigUpdateRequest;
+};
+
+export type UpdateUdmHybridConfigResponse = (UDMHybridConfigPublic);
+
+export type DeleteUdmHybridConfigData = {
+    id: string;
+};
+
+export type DeleteUdmHybridConfigResponse = ({
+    [key: string]: unknown;
+});
 
 export type GetComputeJobData = {
     jobId: string;

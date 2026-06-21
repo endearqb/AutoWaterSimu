@@ -19,6 +19,8 @@ type Store interface {
 	ScenarioStore
 	CanvasGraphStore
 	ContextSnapshotStore
+	UDMModelStore
+	UDMHybridConfigStore
 	ProcessGraphStore
 	SimulationInputStore
 	DraftConfirmationStore
@@ -102,6 +104,23 @@ type ContextSnapshotStore interface {
 	ListContextSnapshots(ctx context.Context, filter ContextSnapshotFilter) ([]ContextSnapshotRecord, string, int, error)
 }
 
+type UDMModelStore interface {
+	InsertUDMModelWithVersion(ctx context.Context, model UDMModelRecord, version UDMModelVersionRecord) error
+	UpdateUDMModel(ctx context.Context, model UDMModelRecord) error
+	InsertUDMModelVersion(ctx context.Context, version UDMModelVersionRecord) error
+	FindUDMModel(ctx context.Context, modelID string) (*UDMModelRecord, error)
+	FindUDMModelVersion(ctx context.Context, modelID string, version int) (*UDMModelVersionRecord, error)
+	ListUDMModelVersions(ctx context.Context, modelID string) ([]UDMModelVersionRecord, error)
+	ListUDMModels(ctx context.Context, filter UDMModelFilter) ([]UDMModelRecord, int, error)
+}
+
+type UDMHybridConfigStore interface {
+	InsertUDMHybridConfig(ctx context.Context, record UDMHybridConfigRecord) error
+	UpdateUDMHybridConfig(ctx context.Context, record UDMHybridConfigRecord) error
+	FindUDMHybridConfig(ctx context.Context, configID string) (*UDMHybridConfigRecord, error)
+	ListUDMHybridConfigs(ctx context.Context, filter UDMHybridConfigFilter) ([]UDMHybridConfigRecord, int, error)
+}
+
 type ProcessGraphStore interface {
 	UpsertProcessGraph(ctx context.Context, record ProcessGraphRecord, audit *MutationAuditRecord) (bool, error)
 	FindProcessGraph(ctx context.Context, processGraphID string, version int) (*ProcessGraphRecord, error)
@@ -165,6 +184,23 @@ type ContextSnapshotFilter struct {
 	TenantID   string
 	ProjectID  string
 	SiteID     string
+}
+
+type UDMModelFilter struct {
+	Skip      int
+	Limit     int
+	Query     string
+	TenantID  string
+	ProjectID string
+	SiteID    string
+}
+
+type UDMHybridConfigFilter struct {
+	Skip      int
+	Limit     int
+	TenantID  string
+	ProjectID string
+	SiteID    string
 }
 
 type ModelRunFilter struct {

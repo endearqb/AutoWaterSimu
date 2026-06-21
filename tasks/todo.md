@@ -10556,3 +10556,40 @@
 - `docker compose -f docker-compose.standalone.yml config --services` passed.
 - `apps/api/openapi/compute.openapi.json` parsed successfully.
 - `git diff --check` for Phase 3 files passed with LF/CRLF warnings only.
+
+# 2026-06-21 AutoWaterSimu Next Phase 4 UDM model library and hybrid config TODO
+
+- [x] Re-read standalone requirement/implementation docs and UDM/Go API/frontend README context.
+- [x] Add UDM model/version/hybrid config Go DTO/store/service/HTTP/OpenAPI/migration wiring.
+- [x] Add UDM definition validation, seed templates, immutable version/hash handling, and publish metadata.
+- [x] Add hybrid config strict validation, selected model/mapping checks, and parameter_hash persistence.
+- [x] Generate frontend Compute client and add UDM feature wrapper.
+- [x] Route standalone `udmService` model library and hybrid config methods through Go wrappers while preserving legacy FastAPI mode.
+- [x] Update README and change records for Phase 4.
+- [x] Run final Phase 4 full validation before commit.
+
+## Plan
+
+- Keep Phase 4 focused on model library/config persistence rather than simulation result cutover.
+- Preserve legacy FastAPI UDM calculation job methods outside standalone model/config runtime branches.
+- Store UDM definition metadata and hashes only; do not store result time series or artifact contents in UDM tables.
+- Treat UDM submit/result and mixed Hybrid live worker smoke as Phase 5 compute/result cutover work.
+
+## Review
+
+- Added `/api/v1/udm-models` templates/validate/create/list/read/update/archive/from-template endpoints and `/api/v1/udm-hybrid-configs` create/list/read/update/archive endpoints.
+- Added `udm_models`, `udm_model_versions`, and `udm_hybrid_configs` migrations plus MemoryStore/PostgresStore implementations.
+- UDM model updates create immutable versions when definition hash changes; hybrid configs validate selected models, pair mappings, variable bindings, and local exemptions.
+- Frontend standalone `udmService` now uses `features/udm/api.ts` and generated Compute client for model library and hybrid config calls; legacy runtime still calls the existing FastAPI client.
+- Verification so far:
+- `cd apps/api; go test ./internal/compute -run UDM -count=1` passed.
+- `cd apps/api; go test ./internal/compute` passed.
+- `cd frontend; npx tsc --noEmit` passed.
+- `apps/api/openapi/compute.openapi.json` parsed successfully.
+- Final validation:
+- `cd apps/api; go test ./...` passed.
+- `cd frontend; npx tsc --noEmit` passed.
+- `docker compose -f docker-compose.dev.yml config --services` passed.
+- `docker compose -f docker-compose.standalone.yml config --services` passed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1` passed.
+- `git diff --check` for Phase 4 files passed with LF/CRLF warnings only.

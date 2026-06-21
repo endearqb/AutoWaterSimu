@@ -247,6 +247,234 @@ type ContextSnapshotCreateRequest struct {
 	Metadata          map[string]any `json:"metadata,omitempty"`
 }
 
+type UDMValidationLocation struct {
+	Section       string `json:"section,omitempty"`
+	ProcessName   string `json:"processName,omitempty"`
+	ComponentName string `json:"componentName,omitempty"`
+	ParameterName string `json:"parameterName,omitempty"`
+	CellKey       string `json:"cellKey,omitempty"`
+}
+
+type UDMValidationIssue struct {
+	Code     string                 `json:"code"`
+	Message  string                 `json:"message"`
+	Process  string                 `json:"process,omitempty"`
+	Location *UDMValidationLocation `json:"location,omitempty"`
+}
+
+type UDMContinuityCheckItem struct {
+	ProcessName  string         `json:"process_name"`
+	Dimension    string         `json:"dimension"`
+	BalanceValue float64        `json:"balance_value"`
+	Status       string         `json:"status"`
+	Explanation  string         `json:"explanation"`
+	Suggestion   string         `json:"suggestion,omitempty"`
+	Details      map[string]any `json:"details,omitempty"`
+}
+
+type UDMValidationResponse struct {
+	OK                  bool                     `json:"ok"`
+	Errors              []UDMValidationIssue     `json:"errors"`
+	Warnings            []UDMValidationIssue     `json:"warnings"`
+	ExtractedParameters []string                 `json:"extracted_parameters"`
+	ContinuityChecks    []UDMContinuityCheckItem `json:"continuity_checks"`
+}
+
+type UDMModelRecord struct {
+	ID             string          `json:"id"`
+	Name           string          `json:"name"`
+	Description    string          `json:"description,omitempty"`
+	Tags           []string        `json:"tags"`
+	CurrentVersion int             `json:"current_version"`
+	IsPublished    bool            `json:"is_published"`
+	OwnerID        string          `json:"owner_id"`
+	SourceSystem   string          `json:"source_system"`
+	RequestedBy    string          `json:"requested_by"`
+	TenantID       string          `json:"tenant_id,omitempty"`
+	ProjectID      string          `json:"project_id,omitempty"`
+	SiteID         string          `json:"site_id,omitempty"`
+	Metadata       json.RawMessage `json:"metadata,omitempty"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	ArchivedAt     *time.Time      `json:"archived_at,omitempty"`
+}
+
+type UDMModelVersionRecord struct {
+	ID               string          `json:"id"`
+	ModelID          string          `json:"model_id"`
+	Version          int             `json:"version"`
+	ContentHash      string          `json:"content_hash"`
+	ParameterHash    string          `json:"parameter_hash,omitempty"`
+	Components       json.RawMessage `json:"components"`
+	Parameters       json.RawMessage `json:"parameters"`
+	Processes        json.RawMessage `json:"processes"`
+	Meta             json.RawMessage `json:"meta,omitempty"`
+	ValidationOK     bool            `json:"validation_ok"`
+	ValidationErrors json.RawMessage `json:"validation_errors"`
+	SeedSource       string          `json:"seed_source,omitempty"`
+	SourceSystem     string          `json:"source_system"`
+	RequestedBy      string          `json:"requested_by"`
+	OwnerID          string          `json:"owner_id"`
+	TenantID         string          `json:"tenant_id,omitempty"`
+	ProjectID        string          `json:"project_id,omitempty"`
+	SiteID           string          `json:"site_id,omitempty"`
+	Metadata         json.RawMessage `json:"metadata,omitempty"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+}
+
+type UDMModelPublic struct {
+	ID             string    `json:"id"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description,omitempty"`
+	Tags           []string  `json:"tags"`
+	CurrentVersion int       `json:"current_version"`
+	IsPublished    bool      `json:"is_published"`
+	OwnerID        string    `json:"owner_id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type UDMModelVersionPublic struct {
+	ID               string           `json:"id"`
+	ModelID          string           `json:"model_id"`
+	Version          int              `json:"version"`
+	ContentHash      string           `json:"content_hash"`
+	ParameterHash    string           `json:"parameter_hash,omitempty"`
+	Components       []map[string]any `json:"components"`
+	Parameters       []map[string]any `json:"parameters"`
+	Processes        []map[string]any `json:"processes"`
+	Meta             map[string]any   `json:"meta,omitempty"`
+	ValidationOK     bool             `json:"validation_ok"`
+	ValidationErrors []map[string]any `json:"validation_errors"`
+	SeedSource       string           `json:"seed_source,omitempty"`
+	CreatedAt        time.Time        `json:"created_at"`
+	UpdatedAt        time.Time        `json:"updated_at"`
+}
+
+type UDMModelDetailPublic struct {
+	UDMModelPublic
+	LatestVersion *UDMModelVersionPublic  `json:"latest_version,omitempty"`
+	Versions      []UDMModelVersionPublic `json:"versions"`
+}
+
+type ListUDMModelsResponse struct {
+	Data  []UDMModelPublic `json:"data"`
+	Count int              `json:"count"`
+}
+
+type UDMModelDefinitionDraft struct {
+	Name        string           `json:"name,omitempty"`
+	Description string           `json:"description,omitempty"`
+	Tags        []string         `json:"tags,omitempty"`
+	Components  []map[string]any `json:"components"`
+	Parameters  []map[string]any `json:"parameters"`
+	Processes   []map[string]any `json:"processes"`
+	Meta        map[string]any   `json:"meta,omitempty"`
+}
+
+type UDMModelCreateRequest struct {
+	UDMModelDefinitionDraft
+	SeedSource   string         `json:"seed_source,omitempty"`
+	SourceSystem string         `json:"source_system,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+}
+
+type UDMModelUpdateRequest struct {
+	Name         *string          `json:"name,omitempty"`
+	Description  *string          `json:"description,omitempty"`
+	Tags         []string         `json:"tags,omitempty"`
+	Components   []map[string]any `json:"components,omitempty"`
+	Parameters   []map[string]any `json:"parameters,omitempty"`
+	Processes    []map[string]any `json:"processes,omitempty"`
+	Meta         map[string]any   `json:"meta,omitempty"`
+	IsPublished  *bool            `json:"is_published,omitempty"`
+	SourceSystem string           `json:"source_system,omitempty"`
+	Metadata     map[string]any   `json:"metadata,omitempty"`
+	replaceTags  bool
+	replaceMeta  bool
+	replaceDef   bool
+}
+
+type UDMModelCreateFromTemplateRequest struct {
+	TemplateKey  string         `json:"template_key"`
+	Name         string         `json:"name,omitempty"`
+	Description  string         `json:"description,omitempty"`
+	SourceSystem string         `json:"source_system,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+}
+
+type UDMSeedTemplateSummary struct {
+	Key             string   `json:"key"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description,omitempty"`
+	Tags            []string `json:"tags,omitempty"`
+	ComponentsCount int      `json:"components_count,omitempty"`
+	ProcessesCount  int      `json:"processes_count,omitempty"`
+	ParametersCount int      `json:"parameters_count,omitempty"`
+}
+
+type UDMHybridValidationResponse struct {
+	IsValid                bool           `json:"is_valid"`
+	Errors                 []string       `json:"errors"`
+	Warnings               []string       `json:"warnings"`
+	Details                map[string]any `json:"details"`
+	NormalizedHybridConfig map[string]any `json:"normalized_hybrid_config,omitempty"`
+	ParameterHash          string         `json:"parameter_hash,omitempty"`
+}
+
+type UDMHybridConfigRecord struct {
+	ID            string          `json:"id"`
+	Name          string          `json:"name"`
+	Description   string          `json:"description,omitempty"`
+	HybridConfig  json.RawMessage `json:"hybrid_config"`
+	ParameterHash string          `json:"parameter_hash"`
+	Validation    json.RawMessage `json:"validation,omitempty"`
+	OwnerID       string          `json:"owner_id"`
+	SourceSystem  string          `json:"source_system"`
+	RequestedBy   string          `json:"requested_by"`
+	TenantID      string          `json:"tenant_id,omitempty"`
+	ProjectID     string          `json:"project_id,omitempty"`
+	SiteID        string          `json:"site_id,omitempty"`
+	Metadata      json.RawMessage `json:"metadata,omitempty"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
+	ArchivedAt    *time.Time      `json:"archived_at,omitempty"`
+}
+
+type UDMHybridConfigPublic struct {
+	ID            string         `json:"id"`
+	OwnerID       string         `json:"owner_id"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	Name          string         `json:"name"`
+	Description   string         `json:"description,omitempty"`
+	HybridConfig  map[string]any `json:"hybrid_config"`
+	ParameterHash string         `json:"parameter_hash,omitempty"`
+}
+
+type ListUDMHybridConfigsResponse struct {
+	Data  []UDMHybridConfigPublic `json:"data"`
+	Count int                     `json:"count"`
+}
+
+type UDMHybridConfigCreateRequest struct {
+	Name         string         `json:"name"`
+	Description  string         `json:"description,omitempty"`
+	HybridConfig map[string]any `json:"hybrid_config"`
+	SourceSystem string         `json:"source_system,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+}
+
+type UDMHybridConfigUpdateRequest struct {
+	Name          *string        `json:"name,omitempty"`
+	Description   *string        `json:"description,omitempty"`
+	HybridConfig  map[string]any `json:"hybrid_config,omitempty"`
+	SourceSystem  string         `json:"source_system,omitempty"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
+	replaceConfig bool
+}
+
 type ArtifactRecord struct {
 	ArtifactID      string          `json:"artifact_id"`
 	JobID           string          `json:"job_id"`

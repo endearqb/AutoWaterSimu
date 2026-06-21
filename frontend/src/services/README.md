@@ -39,6 +39,7 @@
 7. Contract validation and Agent workflow wrappers live in `features/contracts/api.ts` and only call `POST /api/v1/contracts/validate`、`POST /api/v1/contracts/confirm-draft`、只读 confirmation record 查询、只读 `constraint-application-plan` endpoint、后端 result explanation submit/review/publish endpoints，或显式 `promote-simulation-check` endpoint；不得在前端自行把 valid Agent / simulation / constraint draft / draft confirmation / result explanation 自动转换为 compute job、审批或解释发布动作。
 8. `computeJobsService.ts` 只保留兼容 facade，不继续堆新 endpoint 逻辑；新增 Compute API wrapper 应先放入对应 `features/*/api.ts`，route 数据调用应通过 `features/*/queries.ts`。
 9. Scenario、CanvasGraph 和 ContextSnapshot workspace calls live in `features/workspace/api.ts`; stores or legacy compatibility callers may import that wrapper, but should not call the generated Compute client directly。
+10. UDM model library and hybrid config standalone calls live in `features/udm/api.ts`; `udmService.ts` may runtime-switch those library/config methods to Go Compute API while legacy runtime keeps the FastAPI client. UDM calculation job methods remain legacy until the standalone simulation engine phase provides equivalent endpoints.
 
 ## 4. 对外接口
 

@@ -52,4 +52,4 @@ cd backend; .venv\Scripts\python -m pytest app\tests\udm_tutorial_validation_tes
 
 ## 7. AI 操作提示
 
-改 editor save/validate 行为时先检查 `frontend/src/stores/udmStore.ts`、`frontend/src/services/udmService.ts` 和 backend UDM route tests。
+改 editor save/validate 行为时先检查 `frontend/src/stores/udmStore.ts`、`frontend/src/services/udmService.ts`、standalone `frontend/src/features/udm/api.ts` 和 backend/Go UDM route tests。

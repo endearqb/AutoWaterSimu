@@ -259,6 +259,16 @@ not present:
 - 不启动 FastAPI 可创建模型版本和 Hybrid 配置。
 - UDM 与 mixed Hybrid worker tests/live smoke 通过。
 - parameter_hash 正确覆盖 snapshot/bindings。
+
+### Phase 4 实施记录（2026-06-21）
+
+- 新增 Go Compute API UDM workspace：`/api/v1/udm-models/templates`、`/validate`、模型 CRUD、`/from-template`、`/api/v1/udm-hybrid-configs` CRUD。
+- 新增 `udm_models`、`udm_model_versions`、`udm_hybrid_configs` PostgreSQL metadata migrations；模型版本保存 definition metadata/hash，不保存结果时间序列或 artifact 内容。
+- UDM 模型定义验证迁入 Go service，覆盖 component/parameter/process expression、continuity checks、seed templates、immutable version/hash 和 publish 状态。
+- Hybrid config 持久化与 strict validation 迁入 Go service，覆盖 `udm_only` mode、selected models、model pair mappings、variable bindings、local exempt 和 parameter_hash。
+- 前端新增 `features/udm/api.ts` wrapper；`udmService.ts` 在 standalone runtime 下将 UDM model library 与 hybrid config 方法切到 Go Compute API，legacy runtime 继续使用 FastAPI client。
+- 已验证 targeted UDM Go HTTP/service tests、`go test ./internal/compute`、`frontend npx tsc --noEmit` 和 OpenAPI JSON parse / generated compute client。
+- 未纳入本阶段：UDM submit/result、mixed Hybrid worker live smoke、五模型 request builders/result/timeseries 切换；这些仍归入 Phase 5 Compute/Result Cutover。
 ## Phase 5：五模型 Compute 与结果读取完全切换（2–3 周）
 
 ### 工作内容

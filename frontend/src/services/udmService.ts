@@ -1,4 +1,6 @@
 import { t } from "@/utils/i18n"
+import { computeUdmApi } from "@/features/udm/api"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import { OpenAPI } from "../client/core/OpenAPI"
 import { request as clientRequest } from "../client/core/request"
 import {
@@ -402,6 +404,16 @@ class UDMServiceImpl
     skip?: number,
     limit?: number,
   ): Promise<UDMHybridConfigsPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.listHybridConfigs({
+          skip,
+          limit,
+        })) as unknown as UDMHybridConfigsPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to fetch UDM hybrid config list")
+      }
+    }
     try {
       return await clientRequest(OpenAPI, {
         method: "GET",
@@ -417,6 +429,15 @@ class UDMServiceImpl
   }
 
   async getHybridConfig(id: string): Promise<UDMHybridConfigPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.getHybridConfig(
+          id,
+        )) as unknown as UDMHybridConfigPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to fetch UDM hybrid config detail")
+      }
+    }
     try {
       return await clientRequest(OpenAPI, {
         method: "GET",
@@ -433,6 +454,15 @@ class UDMServiceImpl
   async createHybridConfig(
     payload: UDMHybridConfigCreate,
   ): Promise<UDMHybridConfigPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.createHybridConfig(
+          payload,
+        )) as unknown as UDMHybridConfigPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to create UDM hybrid config")
+      }
+    }
     try {
       return await clientRequest(OpenAPI, {
         method: "POST",
@@ -449,6 +479,16 @@ class UDMServiceImpl
     id: string,
     payload: UDMHybridConfigUpdate,
   ): Promise<UDMHybridConfigPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.updateHybridConfig(
+          id,
+          payload,
+        )) as unknown as UDMHybridConfigPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to update UDM hybrid config")
+      }
+    }
     try {
       return await clientRequest(OpenAPI, {
         method: "PUT",
@@ -465,6 +505,14 @@ class UDMServiceImpl
   }
 
   async deleteHybridConfig(id: string): Promise<{ message: string }> {
+    if (isStandaloneRuntime()) {
+      try {
+        await computeUdmApi.deleteHybridConfig(id)
+        return { message: "UDM hybrid config archived" }
+      } catch (error) {
+        throw handleApiError(error, "Failed to delete UDM hybrid config")
+      }
+    }
     try {
       return await clientRequest(OpenAPI, {
         method: "DELETE",
@@ -511,6 +559,14 @@ class UDMServiceImpl
   }
 
   async getModelTemplates(): Promise<UDMSeedTemplateSummary[]> {
+    if (isStandaloneRuntime()) {
+      try {
+        const response = await computeUdmApi.listTemplates()
+        return (response || []).map((item) => this.normalizeTemplate(item))
+      } catch (error) {
+        throw handleApiError(error, "Failed to fetch UDM templates")
+      }
+    }
     try {
       const response = await UdmModelsService.getUdmTemplates()
       return (response || []).map((item) => this.normalizeTemplate(item))
@@ -523,6 +579,16 @@ class UDMServiceImpl
     draft: UDMModelDefinitionDraft,
     validationMode?: string,
   ): Promise<UDMValidationResponse> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.validateModelDefinition({
+          ...(draft as unknown as Record<string, unknown>),
+          validation_mode: validationMode,
+        })) as UDMValidationResponse
+      } catch (error) {
+        throw handleApiError(error, "Failed to validate UDM model definition")
+      }
+    }
     try {
       return await UdmModelsService.validateUdmModelDefinition({
         requestBody: draft,
@@ -534,6 +600,13 @@ class UDMServiceImpl
   }
 
   async createModel(model: UDMModelCreate): Promise<UDMModelDetailPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.createModel(model)) as UDMModelDetailPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to create UDM model")
+      }
+    }
     try {
       return await UdmModelsService.createUdmModel({
         requestBody: model,
@@ -546,6 +619,15 @@ class UDMServiceImpl
   async createModelFromTemplate(
     payload: UDMModelCreateFromTemplate,
   ): Promise<UDMModelDetailPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.createModelFromTemplate(
+          payload,
+        )) as UDMModelDetailPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to create UDM model from template")
+      }
+    }
     try {
       return await UdmModelsService.createUdmModelFromTemplate({
         requestBody: payload,
@@ -560,6 +642,13 @@ class UDMServiceImpl
     limit?: number
     q?: string
   }): Promise<UDMModelsPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.listModels(params)) as UDMModelsPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to fetch UDM model list")
+      }
+    }
     try {
       return await UdmModelsService.readUdmModels(params)
     } catch (error) {
@@ -568,6 +657,13 @@ class UDMServiceImpl
   }
 
   async getModel(modelId: string): Promise<UDMModelDetailPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.getModel(modelId)) as UDMModelDetailPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to fetch UDM model detail")
+      }
+    }
     try {
       return await UdmModelsService.readUdmModel({ modelId })
     } catch (error) {
@@ -579,6 +675,16 @@ class UDMServiceImpl
     modelId: string,
     model: UDMModelUpdate,
   ): Promise<UDMModelDetailPublic> {
+    if (isStandaloneRuntime()) {
+      try {
+        return (await computeUdmApi.updateModel(
+          modelId,
+          model,
+        )) as UDMModelDetailPublic
+      } catch (error) {
+        throw handleApiError(error, "Failed to update UDM model")
+      }
+    }
     try {
       return await UdmModelsService.updateUdmModel({
         modelId,
@@ -590,6 +696,14 @@ class UDMServiceImpl
   }
 
   async deleteModel(modelId: string): Promise<{ message: string }> {
+    if (isStandaloneRuntime()) {
+      try {
+        await computeUdmApi.deleteModel(modelId)
+        return { message: "UDM model archived" }
+      } catch (error) {
+        throw handleApiError(error, "Failed to delete UDM model")
+      }
+    }
     try {
       return await UdmModelsService.deleteUdmModel({ modelId })
     } catch (error) {

@@ -265,6 +265,11 @@ function Get-MissingExpectedStoreEmbeds {
         "SimulationInputStore",
         "DraftConfirmationStore",
         "ResultExplanationStore",
+        "ScenarioStore",
+        "CanvasGraphStore",
+        "ContextSnapshotStore",
+        "UDMModelStore",
+        "UDMHybridConfigStore",
         "MetricsStore"
     )
     return @($expected | Where-Object { $_ -notin $EmbeddedInterfaces })
@@ -316,6 +321,11 @@ function Get-ServiceStoreCalls {
         "jobs",
         "confirmations",
         "explanations",
+        "scenarios",
+        "canvasGraphs",
+        "contextSnapshots",
+        "models",
+        "hybrids",
         "metrics"
     )
     $repositoryFieldPattern = ($repositoryFields | ForEach-Object { [System.Text.RegularExpressions.Regex]::Escape($_) }) -join "|"
@@ -454,6 +464,11 @@ function ConvertTo-Domain {
         '^(UpsertSimulationInput|FindSimulationInput)$' { return "simulation_inputs" }
         '^(UpsertDraftConfirmation|FindDraftConfirmation)$' { return "draft_confirmations" }
         '^(UpsertResultExplanation|FindResultExplanation|UpdateResultExplanationReview|PublishResultExplanation)$' { return "result_explanations" }
+        '^(InsertScenario|UpdateScenario|FindScenario|ListScenarios)$' { return "scenarios" }
+        '^(InsertCanvasGraph|FindCanvasGraph|LatestCanvasGraph|ListCanvasGraphs|ArchiveCanvasGraph)$' { return "canvas_graphs" }
+        '^(InsertContextSnapshot|FindContextSnapshot|ListContextSnapshots)$' { return "context_snapshots" }
+        '^(InsertUDMModelWithVersion|UpdateUDMModel|InsertUDMModelVersion|FindUDMModel|FindUDMModelVersion|ListUDMModelVersions|ListUDMModels)$' { return "udm_models" }
+        '^(InsertUDMHybridConfig|UpdateUDMHybridConfig|FindUDMHybridConfig|ListUDMHybridConfigs)$' { return "udm_hybrid_configs" }
         '^Metrics$' { return "metrics" }
         default { return "unclassified" }
     }
