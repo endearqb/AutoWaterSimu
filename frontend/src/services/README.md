@@ -27,6 +27,7 @@
 | `asm1Service.ts`、`asm1slimService.ts`、`asm3Service.ts` | ASM service wrappers |
 | `udmService.ts` | UDM service wrapper |
 | `standaloneComputeService.ts` | Standalone runtime five-model compute adapter for Material Balance、ASM1Slim、ASM1、ASM3、UDM |
+| `standaloneFlowchartService.ts` | Standalone runtime ASM/UDM Flowchart CRUD adapter backed by Go Workspace CanvasGraph/Scenario API |
 | `websocketService.ts` | WebSocket helper |
 | `computeJobsService.ts` | Compatibility facade that composes `features/*` Compute API wrappers |
 
@@ -42,7 +43,7 @@
 8. `computeJobsService.ts` 只保留兼容 facade，不继续堆新 endpoint 逻辑；新增 Compute API wrapper 应先放入对应 `features/*/api.ts`，route 数据调用应通过 `features/*/queries.ts`。
 9. Scenario、CanvasGraph 和 ContextSnapshot workspace calls live in `features/workspace/api.ts`; stores or legacy compatibility callers may import that wrapper, but should not call the generated Compute client directly。
 10. UDM model library and hybrid config standalone calls live in `features/udm/api.ts`; `udmService.ts` may runtime-switch those library/config methods to Go Compute API while legacy runtime keeps the FastAPI client。
-11. Standalone calculation submit/status/result/timeseries/input-data/delete for Material Balance、ASM1Slim、ASM1、ASM3 and UDM should go through `standaloneComputeService.ts`, which emits schema-versioned `compute_job.v1` / `simulation_input.v1` payloads via `features/compute-jobs/api.ts` and reads result artifacts via `features/lifecycle/api.ts`. Legacy runtime may still dynamically load the FastAPI generated client.
+11. Standalone calculation submit/status/result/timeseries/input-data/delete for Material Balance、ASM1Slim、ASM1、ASM3 and UDM should go through `standaloneComputeService.ts`, which emits schema-versioned `compute_job.v1` / `simulation_input.v1` payloads via `features/compute-jobs/api.ts` and reads result artifacts via `features/lifecycle/api.ts`. Standalone ASM1Slim/ASM1/ASM3/UDM Flowchart CRUD should go through `standaloneFlowchartService.ts`, which stores legacy flow data as Go Workspace CanvasGraph records and best-effort Scenario metadata. Legacy runtime may still dynamically load the FastAPI generated client.
 
 ## 4. 对外接口
 

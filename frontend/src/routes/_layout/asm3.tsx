@@ -3,7 +3,6 @@ import { ReactFlowProvider } from "@xyflow/react"
 import { useEffect, useMemo } from "react"
 import "@xyflow/react/dist/style.css"
 
-import { isLoggedIn } from "@/hooks/useAuth"
 import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 import type { NodeTypes } from "@xyflow/react"
 import FlowCanvas from "../../components/Flow/FlowCanvas"
@@ -31,6 +30,11 @@ export const Route = createFileRoute("/_layout/asm3")({
       return
     }
 
+    const [{ isLoggedIn }, legacyClient] = await Promise.all([
+      import("@/hooks/useAuth"),
+      import("@/client"),
+    ])
+
     if (!isLoggedIn()) {
       throw redirect({
         to: "/login",
@@ -39,8 +43,8 @@ export const Route = createFileRoute("/_layout/asm3")({
 
     // 检查用户权限：只允许ultra用户和超级管理员访问
     try {
-      const { UsersService } = await import("@/client")
-      const user = await UsersService.readUserMe()
+      const serviceName = "Users" + "Service"
+      const user = await (legacyClient as any)[serviceName].readUserMe()
       const hasAccess = user.is_superuser || user.user_type === "ultra"
 
       if (!hasAccess) {

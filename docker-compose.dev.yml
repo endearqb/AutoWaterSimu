@@ -24,8 +24,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_HOST_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_HOST_PORT:-9001}:9001"
     volumes:
       - minio-data:/data
 
@@ -65,7 +65,7 @@ services:
       COMPUTE_API_TOKENS_JSON: >-
         {"tokens":[{"name":"dev-public","token":"dev-public-token","scopes":["job:create","job:read","artifact:read","evidence:read","model:write","explanation:write"]},{"name":"dev-worker","token":"dev-worker-token","scopes":["worker:register","worker:claim","worker:heartbeat","job:write","artifact:write"]},{"name":"dev-admin","token":"dev-admin-token","scopes":["job:create","job:read","artifact:read","artifact:write","artifact:admin","evidence:read","model:write","explanation:write"]}]}
     ports:
-      - "8088:8088"
+      - "${COMPUTE_API_HOST_PORT:-8088}:8088"
     volumes:
       - ./apps/api:/workspace/apps/api
       - ./contracts:/workspace/contracts:ro

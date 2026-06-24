@@ -28,6 +28,7 @@
 | `compute-jobs-live-backend.spec.ts` | Live Compute API browser read smoke for an integration-prepared job/result/evidence/ref |
 | `compute-jobs-current-flow-live.spec.ts` | Live Compute API current-flow submit smoke with a real worker completion, evidence package download, and evidence ref lookup |
 | `standalone-five-model-compute.spec.ts` | Standalone-env mock-backed service-layer smoke that verifies Material Balance、ASM1Slim、ASM1、ASM3、UDM all submit `compute_job.v1` payloads through the Go Compute API boundary |
+| `standalone-five-model-live.spec.ts` | Standalone-env live service-layer smoke that submits all five model job types to a real Compute API/worker stack and verifies result/artifact reads |
 | `contract-validation.spec.ts` | Mock-backed Compute Jobs contract validation panel smoke |
 | `model-governance.spec.ts` | Mock-backed Model governance catalog snapshot history smoke |
 | `compute-lifecycle.spec.ts` | Mock-backed Compute lifecycle metrics and retention sweep smoke |
@@ -40,7 +41,8 @@
 4. Mock-backed Compute Jobs smokes may override `storageState` and use `--no-deps` for local focused runs when they do not require `auth.setup.ts` or a live backend.
 5. Live Compute API browser smoke uses `AUTOWATERSIMU_LIVE_COMPUTE_*` environment variables and should be run through `scripts/ci/live-backend-browser-smoke.ps1`, which prepares the backend job and cleanup.
 6. Current-flow live smoke uses `AUTOWATERSIMU_CURRENT_FLOW_LIVE_*` environment variables and should be run through `scripts/ci/current-flow-live-smoke.ps1`, which prepares the live Compute stack, worker loop, and cleanup.
-7. Focused smokes may set `PLAYWRIGHT_*` environment overrides to use an isolated Vite port instead of reusing an existing local server.
+7. Five-model live smoke uses `AUTOWATERSIMU_FIVE_MODEL_LIVE_*` environment variables and should be run through `scripts/ci/standalone-five-model-live.ps1`, which prepares the live Compute stack, worker loop, and cleanup.
+8. Focused smokes may set `PLAYWRIGHT_*` environment overrides to use an isolated Vite port instead of reusing an existing local server.
 
 ## 4. 对外接口
 
@@ -58,12 +60,14 @@
 cd frontend; npx playwright test
 cd frontend; npx playwright test tests/compute-jobs-current-flow.spec.ts --project=chromium --no-deps
 cd frontend; npx playwright test tests/standalone-five-model-compute.spec.ts --project=chromium --no-deps --reporter=line
+cd frontend; npx playwright test tests/standalone-five-model-live.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/contract-validation.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/model-governance.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\current-flow-live-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\standalone-five-model-live.ps1
 ```
 
 ## 7. AI 操作提示

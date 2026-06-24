@@ -29,6 +29,7 @@ import type { HybridUDMConfig } from "../types/hybridUdm"
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
 import { standaloneComputeService } from "./standaloneComputeService"
+import { standaloneFlowchartService } from "./standaloneFlowchartService"
 
 const legacyUdmService = async () => (await import("../client/sdk.gen")).UdmService
 const legacyUdmFlowchartsService = async () =>
@@ -98,6 +99,40 @@ class UDMServiceImpl
 {
   private readonly modelName = "UDM"
 
+  private async validateStandaloneHybridFlowchart(
+    flowchartData: Record<string, unknown>,
+  ): Promise<HybridUDMValidationResponse> {
+    try {
+      return (await computeUdmApi.validateHybridConfig(
+        flowchartData,
+      )) as unknown as HybridUDMValidationResponse
+    } catch (error) {
+      throw handleApiError(error, "Failed to validate hybrid UDM flowchart")
+    }
+  }
+
+  private async normalizeStandaloneHybridPayload<
+    T extends { hybrid_config?: HybridUDMConfig | null },
+  >(payload: T): Promise<T> {
+    if (!payload.hybrid_config) {
+      return payload
+    }
+    const validation = await this.validateStandaloneHybridFlowchart({
+      hybrid_config: payload.hybrid_config,
+    })
+    if (!validation.is_valid) {
+      throw new Error(
+        validation.errors?.join(" | ") || "UDM hybrid config validation failed",
+      )
+    }
+    return {
+      ...payload,
+      hybrid_config:
+        (validation.normalized_hybrid_config as HybridUDMConfig | undefined) ||
+        payload.hybrid_config,
+    }
+  }
+
   // ========== 计算任务相关方法 ==========
 
   /**
@@ -130,9 +165,23 @@ class UDMServiceImpl
     flowchartData: Record<string, unknown>,
   ): Promise<UDMJobPublic> {
     if (isStandaloneRuntime()) {
+      const validation = await this.validateStandaloneHybridFlowchart(flowchartData)
+      if (!validation.is_valid) {
+        throw new Error(
+          validation.errors?.join(" | ") ||
+            "UDM hybrid flowchart validation failed",
+        )
+      }
+      const normalizedFlowchart = validation.normalized_hybrid_config
+        ? {
+            ...flowchartData,
+            hybrid_config: validation.normalized_hybrid_config,
+            hybridConfig: validation.normalized_hybrid_config,
+          }
+        : flowchartData
       return standaloneComputeService.createCalculationJobFromFlowchart(
         "udm",
-        flowchartData,
+        normalizedFlowchart,
       )
     }
     try {
@@ -154,15 +203,7 @@ class UDMServiceImpl
     flowchartData: Record<string, unknown>,
   ): Promise<HybridUDMValidationResponse> {
     if (isStandaloneRuntime()) {
-      return {
-        is_valid: true,
-        errors: [],
-        warnings: [],
-        details: { validation_mode: "standalone_local" },
-        normalized_hybrid_config:
-          (flowchartData.hybrid_config as Record<string, unknown> | null) ||
-          null,
-      }
+      return this.validateStandaloneHybridFlowchart(flowchartData)
     }
     try {
       const service = await legacyUdmService()
@@ -375,6 +416,12 @@ class UDMServiceImpl
   async createFlowchart(
     flowchartData: UDMFlowChartCreate,
   ): Promise<UDMFlowChartPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.create(
+        "udm",
+        flowchartData,
+      )) as UDMFlowChartPublic
+    }
     try {
       const service = await legacyUdmFlowchartsService()
       const response = await service.createUdmFlowchart({
@@ -396,6 +443,13 @@ class UDMServiceImpl
     skip?: number,
     limit?: number,
   ): Promise<UDMFlowChartsPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.list(
+        "udm",
+        skip,
+        limit,
+      )) as UDMFlowChartsPublic
+    }
     try {
       const service = await legacyUdmFlowchartsService()
       const response = await service.readUdmFlowcharts({
@@ -415,6 +469,12 @@ class UDMServiceImpl
    * 获取单个流程图
    */
   async getFlowchart(id: string): Promise<UDMFlowChartPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.get(
+        "udm",
+        id,
+      )) as UDMFlowChartPublic
+    }
     try {
       const service = await legacyUdmFlowchartsService()
       const response = await service.readUdmFlowchart({
@@ -436,6 +496,13 @@ class UDMServiceImpl
     id: string,
     flowchartData: UDMFlowChartUpdate,
   ): Promise<UDMFlowChartPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.update(
+        "udm",
+        id,
+        flowchartData,
+      )) as UDMFlowChartPublic
+    }
     try {
       const service = await legacyUdmFlowchartsService()
       const response = await service.updateUdmFlowchart({
@@ -455,6 +522,9 @@ class UDMServiceImpl
    * 删除流程图
    */
   async deleteFlowchart(id: string): Promise<{ message: string }> {
+    if (isStandaloneRuntime()) {
+      return standaloneFlowchartService.delete("udm", id)
+    }
     try {
       const service = await legacyUdmFlowchartsService()
       const response = await service.deleteUdmFlowchart({
@@ -529,8 +599,10 @@ class UDMServiceImpl
   ): Promise<UDMHybridConfigPublic> {
     if (isStandaloneRuntime()) {
       try {
+        const normalizedPayload =
+          await this.normalizeStandaloneHybridPayload(payload)
         return (await computeUdmApi.createHybridConfig(
-          payload,
+          normalizedPayload,
         )) as unknown as UDMHybridConfigPublic
       } catch (error) {
         throw handleApiError(error, "Failed to create UDM hybrid config")
@@ -555,9 +627,11 @@ class UDMServiceImpl
   ): Promise<UDMHybridConfigPublic> {
     if (isStandaloneRuntime()) {
       try {
+        const normalizedPayload =
+          await this.normalizeStandaloneHybridPayload(payload)
         return (await computeUdmApi.updateHybridConfig(
           id,
-          payload,
+          normalizedPayload,
         )) as unknown as UDMHybridConfigPublic
       } catch (error) {
         throw handleApiError(error, "Failed to update UDM hybrid config")

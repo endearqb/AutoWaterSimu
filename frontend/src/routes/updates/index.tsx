@@ -3,6 +3,7 @@ import { Box, Container, Text, VStack } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import { z } from "zod"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
+import { isStandaloneRuntime } from "../../shared/runtimeConfig"
 import { Article } from "../../components/Updates/Article"
 import { getBlogPosts } from "../../utils/blog"
 
@@ -11,7 +12,7 @@ const updatesSearchSchema = z.object({
 })
 
 function redirectToAuth() {
-  const target = "/login"
+  const target = isStandaloneRuntime() ? "/dashboard" : "/login"
   try {
     window.top?.location.assign(target)
   } catch {

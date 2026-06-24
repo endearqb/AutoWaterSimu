@@ -47,6 +47,7 @@
 | `standalone-smoke.ps1` | 验证 `docker-compose.standalone.yml` 默认服务不包含 legacy backend，并对已运行 standalone API 执行无 Authorization job create/read，写出 `tmp/ci-evidence/standalone-smoke.json` |
 | `standalone-migration-smoke.ps1` | 运行 legacy migration CLI/package tests；当 `AUTOWATERSIMU_LEGACY_DATABASE_URL` 与 `COMPUTE_API_DATABASE_URL` 均存在时执行 live dry-run 并输出 `tmp/legacy-migration-report.json` |
 | `standalone-five-model-smoke.ps1` | 运行 Material Balance、ASM1Slim、ASM1、ASM3、UDM 五类 `compute_job.v1` worker fixtures，并执行 standalone five-model Playwright mock smoke，写出 `tmp/ci-evidence/standalone-five-model-smoke.json` |
+| `standalone-five-model-live.ps1` | 启动隔离 Compute API/PostgreSQL/MinIO 栈和本地主机 worker loop，运行 Playwright 五模型 UI submit → worker → result/artifact 回读 live smoke，写出 `tmp/ci-evidence/standalone-five-model-live.json` |
 | `standalone-backup-restore-smoke.ps1` | 默认验证本地 artifact checksum backup/restore fixture；显式 `-RunLive` 且提供 DSN 时执行 PostgreSQL `pg_dump` / `pg_restore --list` / 临时库 restore smoke，写出 `tmp/ci-evidence/standalone-backup-restore-smoke.json` |
 | `integration-smoke.ps1` | 启动隔离 Compose API 栈，运行本地 Python worker API once，验证 job/result/model_run/artifact/evidence/retention dry-run/metrics，并写出 `tmp/ci-evidence/integration-smoke.json` |
 | `security-smoke.ps1` | 聚合 production token guard、file-mounted token config source、static token revocation、scope denial、artifact admin scope、worker mutation POST-only method guard、job collection/job route 与 API-wide declared-method guard、tenant/project/site read-scope（job、process_graph、simulation_input、draft_confirmation、model_catalog、model_run、benchmark_run、artifact）、direct job create/cancel、artifact retention sweep delete/archive candidate filtering 与 archive cross-scope no-write、worker claim/heartbeat/artifact/succeed/fail completion、confirm-draft record persistence、result explanation submit/review/publish、direct simulation-check create、draft promotion job create、benchmark schedule-run job create、model catalog registration/status/promote、benchmark_run registration 与显式 process_graph/simulation_input registry POST mutation data-scope，以及 selected mutation audit envelope（job create/cancel/timeout、worker registration/claim/heartbeat/artifact/succeed/fail completion、artifact retention delete/archive、result explanation、draft_confirmation、draft promotion、direct simulation-check、model governance、simulation registry）的 Go checks，并写出 `tmp/ci-evidence/security-smoke.json` |
@@ -82,6 +83,8 @@
 本目录对 `Justfile` 暴露 `standalone-migration-smoke` 入口；该脚本先运行 `apps/api/internal/legacyimport` 和 `cmd/migrate-legacy` tests，只有在显式提供 legacy/target DSN 时才执行 live DB dry-run。它不得修改 legacy database，缺少 DSN 时应报告 skipped 而不是失败。
 
 本目录对 `Justfile` 暴露 `standalone-five-model-smoke` 入口；该脚本覆盖五类 worker fixture 与 mock-backed frontend submit/result 适配，不启动真实 compose，也不替代 live browser / live worker evidence。
+
+本目录对 `Justfile` 暴露 `standalone-five-model-live` 入口；该脚本默认使用隔离 host ports `18088` / `19000` / `19001` 启动 source-mounted Compute API、PostgreSQL、MinIO 和本地主机 worker loop，再运行 `standalone-five-model-live.spec.ts`。它是五模型真实 submit/result evidence，不替代 production legacy DB read-only/full import rehearsal。
 
 本目录对 `Justfile` 暴露 `standalone-backup-restore-smoke` 入口；默认只验证本地 artifact checksum backup/restore fixture 和可选 artifact 目录 manifest，不连接数据库。只有传入 `-RunLive` 且提供 `COMPUTE_API_DATABASE_URL` 时才运行 PostgreSQL backup/list；只有额外提供 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 时才向显式临时库 restore。
 
@@ -142,6 +145,8 @@ Integration smoke 可以调用 `docker compose`、Go source-mounted Compute API�
 
 Standalone smoke 可以调用 `docker compose config` 和已运行的 standalone Compute API；它不应启动 legacy backend，也不替代完整 browser/live/release evidence。
 
+Standalone five-model live smoke 可以调用 `docker compose`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker loop；它使用隔离 compose project 和 host ports，完成五模型真实浏览器提交与 worker 结果回读，但不代表生产 legacy DSN rehearsal 或 hosted CI green run 已完成。
+
 Standalone backup/restore smoke 可以调用 `pg_dump` / `pg_restore`，但必须由 `-RunLive` 和显式 DSN 触发。restore 只能写入 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 指向的临时数据库，不得对生产或 legacy 数据库执行 destructive restore。
 
 Live backend browser smoke 可以调用 `docker compose`、`integration-smoke.ps1`、Go source-mounted Compute API、PostgreSQL、MinIO、Vite/Playwright 和本地 `backend/.venv` Python worker API once；它不应替代完整 legacy authenticated session、UI current-flow submit 到 live worker 或 release artifact evidence。
@@ -159,6 +164,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-migration-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-live.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\security-smoke.ps1

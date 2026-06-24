@@ -23,7 +23,7 @@
 | `Flow/` | React Flow canvas、nodes、edges、toolbar、inspector、legacy analysis |
 | `UDM/` | UDM model editor、hybrid setup、Petersen/tutorial UI |
 | `ui/` | Chakra UI v3 reusable wrappers |
-| `Common/` | app shell common components |
+| `Common/` | app shell common components, including standalone-safe Sidebar shell |
 | `Admin/`、`Items/`、`UserSettings/` | template feature UI |
 
 ## 3. 维护约定
@@ -31,6 +31,7 @@
 1. UI components 不直接拥有 API schema；通过 services/stores/generated clients 取得数据。
 2. Chakra UI v3 component 改动先查本地 `llms-components.txt` 和 `llms-styling.txt`。
 3. 公共 UI wrapper 修改会影响大范围页面，需扩大 typecheck 和 visual review。
+4. Standalone shell components must not statically import `useAuth` or legacy FastAPI clients.
 
 ## 4. 对外接口
 

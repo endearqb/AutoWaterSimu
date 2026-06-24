@@ -34,6 +34,13 @@ function Resolve-NativeCommand {
     return $Name
 }
 
+function Resolve-PowerShellCommand {
+    if (Test-IsWindows) {
+        return "powershell"
+    }
+    return "pwsh"
+}
+
 function Get-GitText {
     param(
         [string]$Root,
@@ -161,20 +168,173 @@ function Invoke-BlockStep {
 function Mark-EvidenceGaps {
     param(
         [string]$Path,
-        [string[]]$PartialStatuses
+        [string[]]$PartialStatuses,
+        [string]$HeadCommit = ""
     )
     if (-not (Test-Path -LiteralPath $Path)) {
+        $script:EvidenceGaps.Add([ordered]@{
+            path = $Path
+            status = "missing"
+            message = "evidence file is missing"
+        }) | Out-Null
         $script:Skipped = $true
         return
     }
     try {
         $evidence = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
-        if ($PartialStatuses -contains [string]$evidence.status) {
+        $status = [string]$evidence.status
+        if ($PartialStatuses -contains $status) {
+            $message = ""
+            if ($evidence.PSObject.Properties.Name -contains "message") {
+                $message = [string]$evidence.message
+            }
+            $script:EvidenceGaps.Add([ordered]@{
+                path = $Path
+                status = $status
+                message = $message
+            }) | Out-Null
             $script:Skipped = $true
+            return
+        }
+        if (-not [string]::IsNullOrWhiteSpace($HeadCommit)) {
+            $evidenceCommit = ""
+            if ($evidence.PSObject.Properties.Name -contains "commit_sha") {
+                $evidenceCommit = [string]$evidence.commit_sha
+            }
+            if ($evidenceCommit -ne $HeadCommit) {
+                $script:EvidenceGaps.Add([ordered]@{
+                    path = $Path
+                    status = "commit_mismatch"
+                    message = "evidence commit_sha '$evidenceCommit' does not match current HEAD '$HeadCommit'"
+                }) | Out-Null
+                $script:Skipped = $true
+            }
         }
     }
     catch {
+        $script:EvidenceGaps.Add([ordered]@{
+            path = $Path
+            status = "invalid"
+            message = $_.Exception.Message
+        }) | Out-Null
         $script:Skipped = $true
+    }
+}
+
+function Mark-RequiredEvidencePassed {
+    param(
+        [string]$Path,
+        [string]$Name,
+        [string]$HeadCommit = "",
+        [string]$SchemaVersion = ""
+    )
+    if (-not (Test-Path -LiteralPath $Path)) {
+        $script:EvidenceGaps.Add([ordered]@{
+            path = $Path
+            status = "missing"
+            message = "$Name evidence file is missing"
+        }) | Out-Null
+        $script:Skipped = $true
+        return
+    }
+    try {
+        $evidence = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+        $message = ""
+        if ($evidence.PSObject.Properties.Name -contains "message") {
+            $message = [string]$evidence.message
+        }
+        $status = [string]$evidence.status
+        if ($status -ne "passed") {
+            $gapMessage = if ([string]::IsNullOrWhiteSpace($message)) { "$Name evidence status must be passed" } else { $message }
+            $script:EvidenceGaps.Add([ordered]@{
+                path = $Path
+                status = $status
+                message = $gapMessage
+            }) | Out-Null
+            $script:Skipped = $true
+            return
+        }
+        if (-not [string]::IsNullOrWhiteSpace($SchemaVersion)) {
+            $evidenceSchemaVersion = ""
+            if ($evidence.PSObject.Properties.Name -contains "schema_version") {
+                $evidenceSchemaVersion = [string]$evidence.schema_version
+            }
+            if ($evidenceSchemaVersion -ne $SchemaVersion) {
+                $script:EvidenceGaps.Add([ordered]@{
+                    path = $Path
+                    status = "schema_mismatch"
+                    message = "$Name evidence schema_version '$evidenceSchemaVersion' does not match expected '$SchemaVersion'"
+                }) | Out-Null
+                $script:Skipped = $true
+            }
+        }
+        if (-not [string]::IsNullOrWhiteSpace($HeadCommit)) {
+            $evidenceCommit = ""
+            if ($evidence.PSObject.Properties.Name -contains "commit_sha") {
+                $evidenceCommit = [string]$evidence.commit_sha
+            }
+            if ($evidenceCommit -ne $HeadCommit) {
+                $script:EvidenceGaps.Add([ordered]@{
+                    path = $Path
+                    status = "commit_mismatch"
+                    message = "$Name evidence commit_sha '$evidenceCommit' does not match current HEAD '$HeadCommit'"
+                }) | Out-Null
+                $script:Skipped = $true
+            }
+        }
+    }
+    catch {
+        $script:EvidenceGaps.Add([ordered]@{
+            path = $Path
+            status = "invalid"
+            message = $_.Exception.Message
+        }) | Out-Null
+        $script:Skipped = $true
+    }
+}
+
+function Assert-SelfCheckItemOk {
+    param(
+        [object]$Report,
+        [string]$Name
+    )
+    $item = $Report.PSObject.Properties[$Name]
+    if ($null -eq $item) {
+        throw "Worker self-check missing required field: $Name"
+    }
+    $ok = $item.Value.PSObject.Properties["ok"]
+    if ($null -eq $ok -or $ok.Value -ne $true) {
+        throw "Worker self-check failed required field: $Name"
+    }
+}
+
+function Assert-WorkerImageSelfCheck {
+    param([string]$Text)
+    try {
+        $report = $Text | ConvertFrom-Json
+    }
+    catch {
+        throw "Worker self-check output is not valid JSON: $Text"
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string]$report.worker_version)) {
+        throw "Worker self-check missing worker_version."
+    }
+
+    foreach ($field in @(
+        "worker_dependency_imports",
+        "artifact_temp_writable",
+        "minimal_job_status",
+        "numpy",
+        "scipy",
+        "torch",
+        "torchdiffeq"
+    )) {
+        Assert-SelfCheckItemOk -Report $report -Name $field
+    }
+
+    if ($report.worker_dependency_imports.deprecated_repo_path_fallback_used -eq $true) {
+        throw "Worker self-check used deprecated repo-path dependency fallback."
     }
 }
 
@@ -187,6 +347,7 @@ New-Item -ItemType Directory -Force -Path $EvidenceDir | Out-Null
 New-Item -ItemType Directory -Force -Path $ciEvidenceDir | Out-Null
 
 $script:Steps = [System.Collections.Generic.List[object]]::new()
+$script:EvidenceGaps = [System.Collections.Generic.List[object]]::new()
 $script:Failed = $false
 $script:Skipped = $false
 $fullRc = [bool]($RunComposeSmoke -and $RunBackupRestoreLive -and $RunPostgresMigrationSmoke -and $RunReleaseImageSmoke -and -not $SkipLong)
@@ -198,7 +359,7 @@ $statusBefore = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
 $statusBeforeLines = @(ConvertTo-GitStatusLines -StatusText $statusBefore)
 $trackedStatusBefore = @(Get-TrackedStatusLines -StatusLines $statusBeforeLines)
 $untrackedStatusBefore = @(Get-UntrackedStatusLines -StatusLines $statusBeforeLines)
-$powershellExe = "powershell"
+$powershellExe = Resolve-PowerShellCommand
 
 Invoke-BlockStep -Name "standalone compose service boundary" -Body {
     Push-Location $Root
@@ -236,7 +397,9 @@ if ($RunReleaseImageSmoke) {
         if ($LASTEXITCODE -ne 0) {
             throw (($check | ForEach-Object { [string]$_ }) -join "`n")
         }
-        (($check | ForEach-Object { [string]$_ }) -join "`n").Trim()
+        $checkText = (($check | ForEach-Object { [string]$_ }) -join "`n").Trim()
+        Assert-WorkerImageSelfCheck -Text $checkText
+        $checkText
     }
 }
 else {
@@ -248,6 +411,7 @@ Invoke-Step -Name "frontend standalone typecheck" -WorkingDirectory (Join-Path $
 Invoke-Step -Name "compute api boundary audit" -WorkingDirectory $Root -Executable $powershellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\audit-compute-api-boundary.ps1"))
 Invoke-Step -Name "frontend standalone compute boundary audit" -WorkingDirectory $Root -Executable $powershellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\audit-frontend-standalone-compute-boundary.ps1"))
 Invoke-Step -Name "standalone migration smoke" -WorkingDirectory $Root -Executable $powershellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\ci\standalone-migration-smoke.ps1"))
+Mark-EvidenceGaps -Path (Join-Path $ciEvidenceDir "standalone-migration-smoke.json") -PartialStatuses @("passed_with_skips") -HeadCommit $commitSha
 Invoke-Step -Name "standalone five-model smoke" -WorkingDirectory $Root -Executable $powershellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\ci\standalone-five-model-smoke.ps1"), "-EvidenceDir", $ciEvidenceDir)
 
 $backupArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\ci\standalone-backup-restore-smoke.ps1"), "-EvidenceDir", $ciEvidenceDir)
@@ -255,7 +419,7 @@ if ($RunBackupRestoreLive) {
     $backupArgs += "-RunLive"
 }
 Invoke-Step -Name "standalone backup/restore smoke" -WorkingDirectory $Root -Executable $powershellExe -Arguments $backupArgs
-Mark-EvidenceGaps -Path (Join-Path $ciEvidenceDir "standalone-backup-restore-smoke.json") -PartialStatuses @("passed_with_skips")
+Mark-EvidenceGaps -Path (Join-Path $ciEvidenceDir "standalone-backup-restore-smoke.json") -PartialStatuses @("passed_with_skips") -HeadCommit $commitSha
 
 if ($RunPostgresMigrationSmoke -or -not [string]::IsNullOrWhiteSpace($env:COMPUTE_API_DATABASE_URL)) {
     if ([string]::IsNullOrWhiteSpace($env:COMPUTE_API_DATABASE_URL)) {
@@ -305,7 +469,22 @@ else {
         -Executable $powershellExe `
         -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\ci\golden-scenarios.ps1"), "-RefreshLocalEvidence")
 }
-Mark-EvidenceGaps -Path (Join-Path $ciEvidenceDir "golden-scenarios.json") -PartialStatuses @("partial", "missing", "blocked")
+Mark-EvidenceGaps -Path (Join-Path $ciEvidenceDir "golden-scenarios.json") -PartialStatuses @("partial", "missing", "blocked") -HeadCommit $commitSha
+Mark-RequiredEvidencePassed `
+    -Path (Join-Path $ciEvidenceDir "standalone-five-model-live.json") `
+    -Name "standalone five-model live UI/API/PostgreSQL/worker/artifact evidence" `
+    -HeadCommit $commitSha `
+    -SchemaVersion "autowatersimu_next_standalone_five_model_live_smoke.v1"
+Mark-RequiredEvidencePassed `
+    -Path (Join-Path $ciEvidenceDir "standalone-legacy-production-rehearsal.json") `
+    -Name "production legacy read-only/full migration rehearsal" `
+    -HeadCommit $commitSha `
+    -SchemaVersion "autowatersimu_next_standalone_legacy_production_rehearsal.v1"
+Mark-RequiredEvidencePassed `
+    -Path (Join-Path $ciEvidenceDir "standalone-s3-artifact-profile-live.json") `
+    -Name "MinIO/S3 full artifact profile live validation" `
+    -HeadCommit $commitSha `
+    -SchemaVersion "autowatersimu_next_standalone_s3_artifact_profile_live.v1"
 
 $statusAfter = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
 $statusAfterLines = @(ConvertTo-GitStatusLines -StatusText $statusAfter)
@@ -326,6 +505,11 @@ $report = [ordered]@{
     run_backup_restore_live = [bool]$RunBackupRestoreLive
     run_postgres_migration_smoke = [bool]$RunPostgresMigrationSmoke
     run_release_image_smoke = [bool]$RunReleaseImageSmoke
+    hosted_workflow_run = if ([string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) { "not_covered" } else { "github_actions_run" }
+    github_run_id = $env:GITHUB_RUN_ID
+    github_repository = $env:GITHUB_REPOSITORY
+    github_ref = $env:GITHUB_REF
+    github_sha = $env:GITHUB_SHA
     ci_evidence_dir = $ciEvidenceDir
     is_dirty_before = -not [string]::IsNullOrWhiteSpace($statusBefore)
     is_dirty_after = -not [string]::IsNullOrWhiteSpace($statusAfter)
@@ -337,6 +521,7 @@ $report = [ordered]@{
     tracked_changes_after = $trackedStatusAfter
     untracked_files_before = $untrackedStatusBefore
     untracked_files_after = $untrackedStatusAfter
+    evidence_gaps = $script:EvidenceGaps
     steps = $script:Steps
 }
 

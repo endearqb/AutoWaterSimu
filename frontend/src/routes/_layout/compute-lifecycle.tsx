@@ -28,10 +28,50 @@ import type {
   ArtifactRetentionAction,
   ArtifactRetentionSweepReport,
 } from "@/shared/api/computeTypes"
+import { useI18n } from "@/i18n"
 
 export const Route = createFileRoute("/_layout/compute-lifecycle")({
   component: ComputeLifecycle,
 })
+
+const zhText: Record<string, string> = {
+  Action: "操作",
+  "API up": "API 在线",
+  Archive: "归档",
+  "Archive blockers": "归档阻塞",
+  Archived: "已归档",
+  Artifact: "产物",
+  Artifacts: "产物",
+  "Artifact retention": "产物保留",
+  "Apply retention": "执行保留策略",
+  Checked: "已检查",
+  "Compute lifecycle": "计算生命周期",
+  Deleted: "已删除",
+  "Dry run": "试运行",
+  Generated: "生成时间",
+  "Health, metrics, and artifact retention controls.":
+    "健康状态、指标和产物保留控制。",
+  Job: "任务",
+  "Latest retention report": "最新保留报告",
+  "No retention candidates in the latest report.":
+    "最新报告中没有保留策略候选项。",
+  Policy: "策略",
+  Queued: "排队中",
+  "Queued jobs": "排队任务",
+  Reason: "原因",
+  Refresh: "刷新",
+  "Retention candidate limit": "保留候选数量上限",
+  "Retention candidates": "保留候选",
+  Running: "运行中",
+  "Running jobs": "运行任务",
+  Skipped: "已跳过",
+  Workers: "Worker",
+  "Would archive": "将归档",
+  "Would delete": "将删除",
+}
+
+const textFor = (language: string, text: string) =>
+  language === "zh" ? (zhText[text] ?? text) : text
 
 interface ComputeMetrics {
   apiUp?: number
@@ -183,13 +223,15 @@ function actionPalette(action: ArtifactRetentionAction["action"]) {
 
 function RetentionReportTable({
   items,
+  t,
 }: {
   items: ArtifactRetentionAction[]
+  t: (text: string) => string
 }) {
   if (items.length === 0) {
     return (
       <Text color="fg.muted" fontSize="sm">
-        No retention candidates in the latest report.
+        {t("No retention candidates in the latest report.")}
       </Text>
     )
   }
@@ -199,12 +241,12 @@ function RetentionReportTable({
       <Table.Root size="sm">
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>Artifact</Table.ColumnHeader>
-            <Table.ColumnHeader>Job</Table.ColumnHeader>
-            <Table.ColumnHeader>Policy</Table.ColumnHeader>
-            <Table.ColumnHeader>Action</Table.ColumnHeader>
-            <Table.ColumnHeader>Archive</Table.ColumnHeader>
-            <Table.ColumnHeader>Reason</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Artifact")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Job")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Policy")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Action")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Archive")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Reason")}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -237,6 +279,8 @@ function RetentionReportTable({
 }
 
 function ComputeLifecycle() {
+  const { language } = useI18n()
+  const t = (text: string) => textFor(language, text)
   const queryClient = useQueryClient()
   const [retentionLimit, setRetentionLimit] = useState("100")
   const [retentionReport, setRetentionReport] =
@@ -304,9 +348,9 @@ function ComputeLifecycle() {
       <Stack gap={6}>
         <Flex justify="space-between" align="center" gap={3} wrap="wrap">
           <Box>
-            <Heading size="lg">Compute lifecycle</Heading>
+            <Heading size="lg">{t("Compute lifecycle")}</Heading>
             <Text color="fg.muted" fontSize="sm">
-              Health, metrics, and artifact retention controls.
+              {t("Health, metrics, and artifact retention controls.")}
             </Text>
           </Box>
           <Button
@@ -316,7 +360,7 @@ function ComputeLifecycle() {
             disabled={healthQuery.isFetching || metricsQuery.isFetching}
           >
             <FiRefreshCw />
-            Refresh
+            {t("Refresh")}
           </Button>
         </Flex>
 
@@ -335,28 +379,28 @@ function ComputeLifecycle() {
           gap={4}
         >
           <MetricTile
-            label="API up"
+            label={t("API up")}
             value={metrics.apiUp}
             tone={metrics.apiUp === 1 ? "green" : "red"}
           />
           <MetricTile
-            label="Queued jobs"
+            label={t("Queued jobs")}
             value={metrics.jobsByStatus.queued}
             tone={(metrics.jobsByStatus.queued ?? 0) > 0 ? "orange" : "gray"}
           />
           <MetricTile
-            label="Running jobs"
+            label={t("Running jobs")}
             value={metrics.jobsByStatus.running}
             tone={(metrics.jobsByStatus.running ?? 0) > 0 ? "blue" : "gray"}
           />
           <MetricTile
-            label="Workers"
+            label={t("Workers")}
             value={metrics.workersRegistered}
             tone={(metrics.workersRegistered ?? 0) > 0 ? "green" : "orange"}
           />
-          <MetricTile label="Artifacts" value={metrics.artifactsTotal} />
+          <MetricTile label={t("Artifacts")} value={metrics.artifactsTotal} />
           <MetricTile
-            label="Retention candidates"
+            label={t("Retention candidates")}
             value={metrics.retentionCandidates}
             tone={(metrics.retentionCandidates ?? 0) > 0 ? "orange" : "gray"}
           />
@@ -364,10 +408,10 @@ function ComputeLifecycle() {
 
         <Box borderWidth="1px" borderRadius="md" p={4}>
           <Flex justify="space-between" align="center" gap={3} wrap="wrap">
-            <Heading size="md">Artifact retention</Heading>
+            <Heading size="md">{t("Artifact retention")}</Heading>
             <HStack wrap="wrap">
               <Input
-                aria-label="Retention candidate limit"
+                aria-label={t("Retention candidate limit")}
                 type="number"
                 min={1}
                 max={1000}
@@ -383,7 +427,7 @@ function ComputeLifecycle() {
                 onClick={() => dryRunMutation.mutate()}
               >
                 <FiSearch />
-                Dry run
+                {t("Dry run")}
               </Button>
               <Button
                 size="sm"
@@ -393,7 +437,7 @@ function ComputeLifecycle() {
                 onClick={() => deleteMutation.mutate()}
               >
                 <FiArchive />
-                Apply retention
+                {t("Apply retention")}
               </Button>
             </HStack>
           </Flex>
@@ -407,25 +451,25 @@ function ComputeLifecycle() {
             gap={3}
             my={4}
           >
-            <MetricTile label="Checked" value={retentionReport?.checked} />
-            <MetricTile label="Deleted" value={retentionReport?.deleted} />
-            <MetricTile label="Archived" value={retentionReport?.archived} />
-            <MetricTile label="Skipped" value={retentionReport?.skipped} />
-            <MetricTile label="Would delete" value={wouldDelete} />
-            <MetricTile label="Would archive" value={wouldArchive} />
-            <MetricTile label="Archive blockers" value={archiveBlocked} />
+            <MetricTile label={t("Checked")} value={retentionReport?.checked} />
+            <MetricTile label={t("Deleted")} value={retentionReport?.deleted} />
+            <MetricTile label={t("Archived")} value={retentionReport?.archived} />
+            <MetricTile label={t("Skipped")} value={retentionReport?.skipped} />
+            <MetricTile label={t("Would delete")} value={wouldDelete} />
+            <MetricTile label={t("Would archive")} value={wouldArchive} />
+            <MetricTile label={t("Archive blockers")} value={archiveBlocked} />
             <MetricTile
-              label="Generated"
+              label={t("Generated")}
               value={formatDateTime(retentionReport?.generated_at)}
             />
           </Grid>
 
-          <RetentionReportTable items={reportItems} />
+          <RetentionReportTable items={reportItems} t={t} />
         </Box>
 
         <Box borderWidth="1px" borderRadius="md" p={4}>
           <Heading size="md" mb={3}>
-            Latest retention report
+            {t("Latest retention report")}
           </Heading>
           <JsonBlock value={retentionReport ?? { status: "not_run" }} />
         </Box>

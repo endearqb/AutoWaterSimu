@@ -23,7 +23,7 @@
 | `__root.tsx` | root route and devtools |
 | `_layout.tsx` | app layout；standalone runtime skips legacy login redirect |
 | `_layout/` | dashboard、Compute Jobs、materialbalance、ASM、UDM、admin/settings pages |
-| `../standaloneRouteTree.tsx` | standalone runtime 手工 route tree；只挂 Go Compute / flow / UDM / evidence 相关页面 |
+| `../standaloneRouteTree.tsx` | standalone runtime 手工 route tree；挂 public landing support routes 和 Go Compute / flow / ASM / UDM / Hybrid / evidence 相关页面 |
 | `updates/` | update article routes |
 | `calculators/` | calculators route |
 
@@ -39,7 +39,7 @@
 8. Compute Jobs 中的 artifact retention 操作必须依赖后端 `artifact:admin` scope；UI retention apply 入口需先有 dry-run report 才能启用。
 9. Compute lifecycle admin page 可展示 `/metrics` 解析结果和 retention sweep 报告；前端只能按后端返回的 `would_delete` / `would_archive` 启用操作，不得把 `archive_executor_not_configured` blocker 解释为可处理。
 10. standalone runtime 的 route guard 通过 `frontend/src/shared/runtimeConfig.ts` 判断；不要在单个 route 中重复读取 `VITE_AUTH_MODE`。
-11. login/signup/reset/users/items/admin/settings 属于 legacy route tree，不得加入 `standaloneRouteTree.tsx`；新增 standalone 页面时同步更新 frontend standalone boundary audit。
+11. login/signup/reset/users/items/admin/settings 属于 legacy route tree，不得加入 `standaloneRouteTree.tsx`；public landing 支撑页可加入 standalone，但所有登录/注册 CTA 必须在 standalone 下进入 `/dashboard`；新增 standalone 页面时同步更新 frontend standalone boundary audit。
 
 ## 4. 对外接口
 

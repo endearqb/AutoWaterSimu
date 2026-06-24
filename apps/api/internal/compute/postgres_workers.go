@@ -4,6 +4,7 @@ import (
 	domainjobs "autowatersimu/apps/api/internal/domain/jobs"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5"
 	"time"
 )
@@ -57,6 +58,38 @@ func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, 
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	now := time.Now().UTC()
+	activeFilter := filter
+	activeFilter.Status = StatusRunning
+	activeWhere, activeArgs := listWhere(activeFilter)
+	activeArgs = append(activeArgs, worker.WorkerID, now)
+	activeWhere += fmt.Sprintf(" AND worker_id=$%d AND lease_expires_at >= $%d", len(activeArgs)-1, len(activeArgs))
+	active, err := scanJob(tx.QueryRow(ctx, jobSelectSQL()+activeWhere+" ORDER BY started_at, id LIMIT 1 FOR UPDATE", activeArgs...))
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, err
+	}
+	if err == nil {
+		before := *active
+		mutation, ok := domainjobs.NewHeartbeatMutation(domainjobs.HeartbeatRecord{
+			JobID:    active.JobID,
+			Status:   active.Status,
+			WorkerID: active.WorkerID,
+		}, worker.WorkerID, now, leaseExpiresAt)
+		if ok {
+			after := *active
+			applyHeartbeatMutationToJobRecord(&after, mutation)
+			if _, err := tx.Exec(ctx, "UPDATE compute_jobs SET lease_expires_at=$3 WHERE id=$1 AND worker_id=$2 AND status=$4", mutation.JobID, mutation.WorkerID, mutation.LeaseExpiresAt, mutation.Status); err != nil {
+				return nil, err
+			}
+			if _, err := tx.Exec(ctx, "INSERT INTO compute_job_events (job_id,event_type,event_json,created_at) VALUES ($1,$2,$3,$4)", mutation.JobID, mutation.EventType, workerHeartbeatEventJSON(ctx, mutation.HeartbeatAt, before, after, mutation.WorkerID), mutation.HeartbeatAt); err != nil {
+				return nil, err
+			}
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return nil, err
+		}
+		return store.FindJobByID(ctx, active.JobID)
+	}
 	claimFilter := filter
 	claimFilter.Status = StatusQueued
 	where, args := listWhere(claimFilter)
@@ -99,7 +132,6 @@ func (store *PostgresStore) ClaimNext(ctx context.Context, worker WorkerRecord, 
 		_ = tx.Commit(ctx)
 		return nil, nil
 	}
-	now := time.Now().UTC()
 	mutation := domainjobs.NewClaimMutation(domainjobs.ClaimRecord{
 		JobID:   selected.JobID,
 		Attempt: selected.Attempt,

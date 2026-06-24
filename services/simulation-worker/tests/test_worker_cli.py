@@ -548,6 +548,115 @@ def test_worker_run_api_once_claims_runs_uploads_and_succeeds(tmp_path: Path) ->
     ]
 
 
+def test_worker_run_api_once_retries_transient_claim_disconnect(tmp_path: Path) -> None:
+    records: list[str] = []
+    completed_jobs: list[str] = []
+    job = _load_json(VALID_JOB)
+    claim_count = 0
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            nonlocal claim_count
+            content_length = int(self.headers.get("Content-Length", "0"))
+            body = self.rfile.read(content_length)
+            path = urlparse(self.path).path
+            records.append(path)
+
+            if path == "/api/v1/workers/register":
+                self._write_json({"worker_id": "worker_retry"})
+                return
+            if path == "/api/v1/workers/worker_retry/claim":
+                claim_count += 1
+                if claim_count == 1:
+                    self.close_connection = True
+                    return
+                self._write_json({"job": job, "attempt": 1})
+                return
+            if path == "/api/v1/workers/worker_retry/heartbeat":
+                payload = json.loads(body.decode("utf-8"))
+                self._write_json(
+                    {
+                        "job_id": payload["job_id"],
+                        "status": "running",
+                        "cancel_requested": False,
+                        "job_terminal": False,
+                    }
+                )
+                return
+            if path.endswith("/artifact"):
+                self._write_json(
+                    {
+                        "schema_version": "artifact.v1",
+                        "artifact_id": "art_retry_time_series",
+                        "job_id": "job_material_balance_minimal",
+                        "artifact_type": "material_balance.time_series",
+                        "storage_provider": "local_fs",
+                        "object_key": "jobs/job_material_balance_minimal/art_retry_time_series.json",
+                        "content_type": "application/json",
+                        "size_bytes": 2,
+                        "checksum": "sha256:" + ("0" * 64),
+                        "created_at": "2026-05-30T00:00:00Z",
+                    }
+                )
+                return
+            if path.endswith("/succeed"):
+                payload = json.loads(body.decode("utf-8"))
+                completed_jobs.append(payload["compute_result"]["job_id"])
+                self._write_json(
+                    {
+                        "job": {
+                            "job_id": payload["compute_result"]["job_id"],
+                            "status": "succeeded",
+                        },
+                        "artifacts": [],
+                        "event_count": 5,
+                    }
+                )
+                return
+            self.send_error(404)
+
+        def log_message(self, format: str, *args: Any) -> None:
+            return
+
+        def _write_json(self, payload: dict[str, Any]) -> None:
+            data = json.dumps(payload).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        completed = _run_worker(
+            [
+                "--run-api-once",
+                "--api-base-url",
+                f"http://127.0.0.1:{server.server_port}",
+                "--worker-id",
+                "worker_retry",
+                "--artifact-dir",
+                str(tmp_path),
+            ]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "succeeded"
+    assert completed_jobs == ["job_material_balance_minimal"]
+    assert records[:3] == [
+        "/api/v1/workers/register",
+        "/api/v1/workers/worker_retry/claim",
+        "/api/v1/workers/worker_retry/claim",
+    ]
+
+
 def test_worker_run_api_once_allows_empty_api_token(tmp_path: Path) -> None:
     records: list[dict[str, Any]] = []
 

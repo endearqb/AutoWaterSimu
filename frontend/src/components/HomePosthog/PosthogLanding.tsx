@@ -22,6 +22,7 @@ import { LSICalculator } from "@/components/calculators/LSICalculator"
 import StandardAO from "@/components/calculators/StandardAO"
 import { POSTHOG_DEMO_CASES } from "@/features/posthogDemo/cases"
 import { useI18n, useLocale } from "@/i18n"
+import { isStandaloneRuntime } from "@/shared/runtimeConfig"
 
 import { Asm1SlimDashboardDemo } from "./Asm1SlimDashboardDemo"
 import {
@@ -403,6 +404,7 @@ export function PosthogLanding() {
   const [windowOpen, setWindowOpen] = useState(true)
   const [view, setView] = useState<WindowView>({ kind: "home" })
   const HEADER_H = 40
+  const authTarget = isStandaloneRuntime() ? "/dashboard" : "/login"
 
   const caseById = useMemo(() => {
     return new Map(POSTHOG_DEMO_CASES.map((c) => [c.id, c] as const))
@@ -439,7 +441,7 @@ export function PosthogLanding() {
 
   const openUrl = (url: string, title: string) => {
     if (url === "/login" || url === "/signup") {
-      window.location.assign(url)
+      window.location.assign(isStandaloneRuntime() ? "/dashboard" : url)
       return
     }
 
@@ -584,7 +586,7 @@ export function PosthogLanding() {
               borderColor="rgba(0,0,0,0.25)"
               _hover={{ bg: "#d99b22" }}
             >
-              <Link to="/login">{t("posthogDemo.header.getStartedFree")}</Link>
+              <Link to={authTarget}>{t("posthogDemo.header.getStartedFree")}</Link>
             </Button>
             <Button
               variant="outline"
@@ -644,7 +646,7 @@ export function PosthogLanding() {
         </VStack>
       </Box>
     )
-  }, [caseById, openCalculator, view])
+  }, [authTarget, caseById, openCalculator, view])
 
   return (
     <Box
@@ -733,7 +735,7 @@ export function PosthogLanding() {
             px={3}
             boxShadow="sm"
           >
-            <Link to="/login">{t("posthogDemo.header.getStartedFree")}</Link>
+            <Link to={authTarget}>{t("posthogDemo.header.getStartedFree")}</Link>
           </Button>
         </HStack>
       </Flex>

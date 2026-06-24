@@ -140,6 +140,7 @@ The web app configures this client separately from the legacy FastAPI client:
 - `VITE_AUTH_MODE=disabled` omits the Compute API bearer token for standalone no-auth runs.
 - In non-disabled auth modes, `VITE_COMPUTE_API_TOKEN` or `localStorage.compute_access_token` supplies the public Compute API bearer token. If unset, local development uses the Go API default `dev-public-token`.
 - `VITE_APP_MODE=standalone` and `VITE_CONTEXT_MODE=standalone` make the shell skip legacy login/session UI while leaving Compute auth controlled by `VITE_AUTH_MODE`.
+- In standalone mode, `/` keeps the legacy public landing page and its CTA enters `/dashboard`; the workbench uses a standalone-safe legacy Sidebar shell without login, user, admin, items, or settings routes.
 
 ## Using a Remote API
 
@@ -329,6 +330,7 @@ Web app 会单独配置 Compute client：
 - `VITE_AUTH_MODE=disabled` 的 standalone no-auth 运行不会发送 Compute API bearer token。
 - 非 disabled auth 模式下，`VITE_COMPUTE_API_TOKEN` 或 `localStorage.compute_access_token` 提供 public Compute API bearer token；未设置时本地开发使用 Go API 默认的 `dev-public-token`。
 - `VITE_APP_MODE=standalone` 与 `VITE_CONTEXT_MODE=standalone` 让 shell 跳过 legacy 登录/session UI；Compute 鉴权是否发送 token 仍由 `VITE_AUTH_MODE` 控制。
+- standalone 模式下 `/` 保留 legacy public landing page，CTA 进入 `/dashboard`；工作台使用 standalone-safe legacy Sidebar shell，不加载登录、用户、admin、items 或 settings route。
 
 ## 使用远程 API
 

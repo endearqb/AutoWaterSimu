@@ -24,6 +24,7 @@
 | `next-browser-smoke.yml` | 手动或 `workflow_call` 运行 mock-backed Playwright browser smoke，上传 `tmp/ci-evidence/browser-smoke.json` |
 | `next-live-backend-browser-smoke.yml` | 手动或 `workflow_call` 运行 live backend browser smoke，上传 `tmp/ci-evidence/live-backend-browser-smoke.json` |
 | `next-current-flow-live-smoke.yml` | 手动或 `workflow_call` 运行 current-flow live smoke，上传 `tmp/ci-evidence/current-flow-live-smoke.json` |
+| `next-standalone-release-gate.yml` | 手动或 `workflow_call` 运行 Standalone full RC gate，上传 `tmp/ci-evidence` 与 `tmp/release-evidence`；缺少当前 commit 的外部验收 JSON 时应失败 |
 | `next-desktop-package-smoke.yml` | 手动或 `workflow_call` 运行 Desktop package/support bundle smoke，上传 `tmp/ci-evidence/desktop-package-smoke.json` |
 | `next-security-smoke.yml` | 手动或 `workflow_call` 运行 production token guard、scope denial、revocation、artifact admin scope 和 selected mutation audit smoke，上传 `tmp/ci-evidence/security-smoke.json` |
 | `next-nightly.yml` | 每日定时或手动编排 pr-fast、integration、browser、live backend browser、current-flow live、security、Desktop package smoke，并上传 nightly summary evidence |
@@ -49,6 +50,7 @@
 12. `next-live-backend-browser-smoke.yml` 是 opt-in/manual live backend browser lane；它在 Ubuntu runner 上安装 backend Python dependencies、frontend Node dependencies、Playwright Chromium 和 Docker Compose 依赖，调用 `scripts/ci/live-backend-browser-smoke.ps1`。它不属于默认 PR fast lane，也不证明完整 legacy authenticated backend session 或 UI current-flow submit 到 live worker。
 13. `next-current-flow-live-smoke.yml` 是 opt-in/manual current-flow live lane；它在 Ubuntu runner 上安装 backend Python dependencies、frontend Node dependencies、Playwright Chromium 和 Docker Compose 依赖，调用 `scripts/ci/current-flow-live-smoke.ps1`。它不属于默认 PR fast lane，也不证明完整 legacy authenticated backend session。
 14. `next-nightly.yml` 是 scheduled/manual orchestrator；它复用已有 workflow_call lanes 并写出 summary evidence，不替代 manual release-evidence artifact build/download run。
+15. `next-standalone-release-gate.yml` 是 opt-in/manual Standalone full RC lane；它会构建 standalone worker image、运行 five-model live evidence、启动 standalone compose，并用临时 PostgreSQL service 和 `tmp/standalone-artifacts` 跑 full gate。`legacy_rehearsal_evidence_json` 与 `s3_profile_evidence_json` 仅作为外部验收记录输入，release gate 会校验 `schema_version`、`status=passed` 和 `commit_sha`；legacy production dry-run DSN 只从 `AUTOWATERSIMU_LEGACY_DATABASE_URL` secret 读取。
 
 ## 4. 对外接口
 
@@ -61,6 +63,8 @@
 `next-live-backend-browser-smoke.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被 Docker/browser live smoke 拖慢；它会先通过 integration smoke 准备真实 PostgreSQL/MinIO/worker-backed succeeded job，再用 Playwright 读取 live Compute API 的 job/result/evidence package/evidence ref，但仍 mock legacy `/api/v1/users/me`。
 
 `next-current-flow-live-smoke.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被 Docker/browser live smoke 拖慢；它使用 live Compute API/PostgreSQL/MinIO/host worker loop 覆盖 UI current-flow submit 到 evidence/ref 的本地真实链路，但仍 mock legacy `/api/v1/users/me`。
+
+`next-standalone-release-gate.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被完整 standalone RC gate 拖慢；缺少 production legacy rehearsal / S3 profile 的当前 commit 外部验收 JSON，或缺少 `AUTOWATERSIMU_LEGACY_DATABASE_URL` secret 时，workflow 应失败并上传 evidence。
 
 `next-desktop-package-smoke.yml` 当前只暴露 `workflow_dispatch` 和 `workflow_call`，避免默认 PR 检查被 Desktop Rust/package smoke 耗时拖慢。
 
@@ -93,6 +97,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke
 涉及 `next-browser-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\browser-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-live-backend-browser-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\live-backend-browser-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-current-flow-live-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\current-flow-live-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
+涉及 `next-standalone-release-gate.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `just --dry-run standalone-release-gate-full` 与 `scripts\release\standalone-release-gate.ps1 -SkipLong -FailOnSkip`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-desktop-package-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\desktop-package-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-security-smoke.yml` 时还需用 YAML parser 确认 workflow syntax，并本地运行 `scripts\ci\security-smoke.ps1`；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。
 涉及 `next-nightly.yml` 时还需用 YAML parser 确认 schedule、called workflow references、needs summary 和 artifact upload；GitHub hosted green run 只有在实际 workflow run 完成后才能记录为 evidence。

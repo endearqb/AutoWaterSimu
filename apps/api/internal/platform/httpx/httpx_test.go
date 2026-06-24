@@ -6,6 +6,25 @@ import (
 	"testing"
 )
 
+func TestWriteJSONSetsContentLength(t *testing.T) {
+	response := httptest.NewRecorder()
+
+	WriteJSON(response, http.StatusAccepted, map[string]any{"status": "ok"})
+
+	if response.Code != http.StatusAccepted {
+		t.Fatalf("expected status 202, got %d", response.Code)
+	}
+	if got := response.Header().Get("Content-Type"); got != "application/json" {
+		t.Fatalf("expected JSON content type, got %q", got)
+	}
+	if got := response.Header().Get("Content-Length"); got != "16" {
+		t.Fatalf("expected stable content length, got %q", got)
+	}
+	if got := response.Body.String(); got != "{\"status\":\"ok\"}\n" {
+		t.Fatalf("unexpected body: %q", got)
+	}
+}
+
 func TestWithLocalCORSAllowsLoopbackOptions(t *testing.T) {
 	handler := WithLocalCORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("next handler should not run for CORS preflight")

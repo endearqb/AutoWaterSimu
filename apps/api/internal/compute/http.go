@@ -37,6 +37,7 @@ func (server *Server) Routes() http.Handler {
 	mux.HandleFunc("/api/v1/udm-models/validate", server.udmModelValidate)
 	mux.HandleFunc("/api/v1/udm-models", server.udmModels)
 	mux.HandleFunc("/api/v1/udm-models/", server.udmModelByID)
+	mux.HandleFunc("/api/v1/udm-hybrid-configs/validate", server.udmHybridConfigValidate)
 	mux.HandleFunc("/api/v1/udm-hybrid-configs", server.udmHybridConfigs)
 	mux.HandleFunc("/api/v1/udm-hybrid-configs/", server.udmHybridConfigByID)
 	mux.HandleFunc("/api/v1/process-graphs", server.processGraphs)

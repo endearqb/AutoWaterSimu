@@ -17,24 +17,25 @@ test("model services submit five standalone compute job types", async ({
   page,
 }) => {
   const submittedJobs: Array<Record<string, unknown>> = []
+  const validatedHybridConfigs: Array<Record<string, unknown>> = []
   const legacyRequests: string[] = []
+  const corsHeaders = {
+    "access-control-allow-headers": "content-type",
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-origin": "*",
+  }
 
   await page.route(`${apiBaseUrl}/api/v1/compute/jobs`, async (route) => {
     const request = route.request()
-    const headers = {
-      "access-control-allow-headers": "content-type",
-      "access-control-allow-methods": "POST, OPTIONS",
-      "access-control-allow-origin": "*",
-    }
     if (request.method() === "OPTIONS") {
-      await route.fulfill({ headers, status: 204 })
+      await route.fulfill({ headers: corsHeaders, status: 204 })
       return
     }
     const job = request.postDataJSON() as Record<string, unknown>
     submittedJobs.push(job)
     await route.fulfill({
       contentType: "application/json",
-      headers,
+      headers: corsHeaders,
       status: 202,
       body: JSON.stringify({
         job: {
@@ -50,6 +51,33 @@ test("model services submit five standalone compute job types", async ({
     })
   })
 
+  await page.route(
+    `${apiBaseUrl}/api/v1/udm-hybrid-configs/validate`,
+    async (route) => {
+      const request = route.request()
+      if (request.method() === "OPTIONS") {
+        await route.fulfill({ headers: corsHeaders, status: 204 })
+        return
+      }
+      const validationRequest = request.postDataJSON() as Record<string, unknown>
+      validatedHybridConfigs.push(validationRequest)
+      await route.fulfill({
+        contentType: "application/json",
+        headers: corsHeaders,
+        status: 200,
+        body: JSON.stringify({
+          details: {},
+          errors: [],
+          is_valid: true,
+          normalized_hybrid_config: validationRequest.hybrid_config,
+          parameter_hash:
+            "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          warnings: [],
+        }),
+      })
+    },
+  )
+
   page.on("request", (request) => {
     const url = new URL(request.url())
     const legacyPrefixes = [
@@ -57,7 +85,7 @@ test("model services submit five standalone compute job types", async ({
       "/api/v1/asm1",
       "/api/v1/asm1slim",
       "/api/v1/asm3",
-      "/api/v1/udm",
+      "/api/v1/udm/",
       "/api/v1/simple-websocket",
     ]
     if (legacyPrefixes.some((prefix) => url.pathname.startsWith(prefix))) {
@@ -258,6 +286,7 @@ test("model services submit five standalone compute job types", async ({
   })
 
   expect(legacyRequests).toEqual([])
+  expect(validatedHybridConfigs).toHaveLength(1)
   expect(submittedJobs.map((job) => job.job_type)).toEqual([
     "simulation.material_balance.v1",
     "simulation.asm1slim.v1",

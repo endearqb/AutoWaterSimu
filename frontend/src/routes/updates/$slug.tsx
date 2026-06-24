@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router"
 import { FaArrowLeft } from "react-icons/fa"
 import { z } from "zod"
 import { Footer, FooterCTA, MiddayHead } from "../../components/Landing"
+import { isStandaloneRuntime } from "../../shared/runtimeConfig"
 import { Prose } from "../../components/ui/prose"
 import { getBlogPosts } from "../../utils/blog"
 
@@ -15,7 +16,7 @@ const updatesDetailSearchSchema = z.object({
 })
 
 function redirectToAuth() {
-  const target = "/login"
+  const target = isStandaloneRuntime() ? "/dashboard" : "/login"
   try {
     window.top?.location.assign(target)
   } catch {

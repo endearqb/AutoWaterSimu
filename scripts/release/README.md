@@ -25,7 +25,7 @@
 | 文件 | 作用 |
 |---|---|
 | `next-release-gates.ps1` | 编排 Next merge/release gate，并写出 `tmp/release-evidence/next-release-gates.json` |
-| `standalone-release-gate.ps1` | 编排 standalone Web RC gate，聚合 compose service boundary、standalone image content smoke、Go/frontend checks、Compute/frontend boundary audits、migration/five-model/backup-restore/golden evidence，并写出 `tmp/release-evidence/standalone-release-gate.json` |
+| `standalone-release-gate.ps1` | 编排 standalone Web RC gate，聚合 compose service boundary、standalone image content smoke、Go/frontend checks、Compute/frontend boundary audits、migration/five-model/five-model-live/backup-restore/golden evidence，并写出 `tmp/release-evidence/standalone-release-gate.json` |
 | `verify-release-artifact-download.ps1` | 校验下载后的 unsigned Desktop workflow artifact 是否包含 sidecar、installer 和 smoke evidence，并写出 `tmp/release-evidence/downloaded-release-artifacts.json` |
 | `smoke-release-artifact-download.ps1` | 生成临时 release artifact fixtures，覆盖下载校验器通过路径与缺失 installer 的失败路径，并写出 `tmp/release-evidence/release-artifact-download-smoke.json` |
 
@@ -43,13 +43,17 @@
 10. Compute client codegen gate 会对 `frontend/src/client/compute/**/*.ts` 做机械尾随空格和末尾换行归一化；不得在本脚本中手写 generated client 内容。
 11. `smoke-release-artifact-download.ps1` 只使用 `tmp/` 下的 fixture 文件验证校验器逻辑，不代表真实 GitHub artifact round trip 已通过。
 12. `next-release-gates.ps1` evidence 必须记录 commit SHA、branch、dirty-state、tracked/untracked changes 和每步结果；PostgreSQL migration 只在 `postgres migration up/down smoke` step 实际存在且通过时才可作为 migration evidence。
-13. `standalone-release-gate.ps1` 默认可在缺少外部 DSN、未启动 compose 或未准备 standalone worker image 时以 `passed_with_skips` 记录本地可验证结果；完整 standalone RC gate 会在同时传入 `-RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke` 且未传 `-SkipLong` 时自动启用 fail-on-skip，任何 skip 都会让 gate 失败。
+13. `standalone-release-gate.ps1` 默认可在缺少外部 DSN、未启动 compose 或未准备 standalone worker image 时以 `passed_with_skips` 记录本地可验证结果；完整 standalone RC gate 会在同时传入 `-RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke` 且未传 `-SkipLong` 时自动启用 fail-on-skip，任何 skip 都会让 gate 失败。缺少 production legacy read-only/full rehearsal DSN、MinIO/S3 full artifact profile live validation 或 current HEAD hosted evidence 时，不得把本地快速 gate 解释为 RC 完成。`just standalone-release-gate-full` 要求调用方预先设置 `COMPUTE_API_DATABASE_URL` 与 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 指向临时 PostgreSQL 数据库。
+14. `standalone-release-gate.ps1 -RunReleaseImageSmoke` 必须解析 worker `--self-check` JSON，并要求 dependency imports、scientific deps、artifact temp dir 与 `minimal_job_status.ok=true`；镜像自检不能只依赖进程退出码。
+15. `standalone-release-gate.ps1` 会把 `tmp/ci-evidence/standalone-legacy-production-rehearsal.json` 与 `tmp/ci-evidence/standalone-s3-artifact-profile-live.json` 作为必需外部验收记录；两者必须是合法 JSON、顶层 `status` 为 `passed`、`commit_sha` 匹配当前 HEAD，且 `schema_version` 分别为 `autowatersimu_next_standalone_legacy_production_rehearsal.v1` / `autowatersimu_next_standalone_s3_artifact_profile_live.v1`，否则进入 `evidence_gaps`。最小记录形态为 `{"schema_version":"...","status":"passed","message":"...","generated_at":"...","commit_sha":"..."}`。
+16. `standalone-release-gate.ps1` 会把 `tmp/ci-evidence/standalone-five-model-live.json` 作为必需本地/hosted live evidence；该文件必须来自当前 HEAD、`status=passed` 且 `schema_version=autowatersimu_next_standalone_five_model_live_smoke.v1`。
+17. `standalone-release-gate.ps1` 对 migration、backup/restore 和 golden summary evidence 也要求 `commit_sha` 匹配当前 HEAD；旧 commit 的 `passed` evidence 不能作为完整 RC 证据。
 
 ## 4. 对外接口
 
 本目录对本地 PowerShell 和 `.github/workflows/next-release-gates.yml` 暴露 release gate 入口。
-`standalone-release-gate.ps1` 是 standalone Web RC gate 入口；默认 `-SkipLong` 适合作为本地快速 RC evidence，完整 RC 必须同时传入 `-RunComposeSmoke`、`-RunBackupRestoreLive`、`-RunPostgresMigrationSmoke` 与 `-RunReleaseImageSmoke`，此时任何 skip 都会失败。
-`-RunReleaseImageSmoke` 检查 `autowatersimu-standalone-simulation-worker:latest` 可运行自检且 image 内没有 backend/FastAPI 源目录；`docker-compose.standalone.yml` 的 root build context 由根 `.dockerignore` 限制到 worker 所需目录。
+`standalone-release-gate.ps1` 是 standalone Web RC gate 入口；默认 `-SkipLong` 适合作为本地快速 RC evidence，完整 RC 必须同时传入 `-RunComposeSmoke`、`-RunBackupRestoreLive`、`-RunPostgresMigrationSmoke` 与 `-RunReleaseImageSmoke`，此时任何 skip 都会失败。`Justfile` 的 `standalone-release-gate-full` 会先构建 standalone worker image、运行 `standalone-five-model-live`、启动 standalone compose，再执行完整 gate。
+`-RunReleaseImageSmoke` 检查 `autowatersimu-standalone-simulation-worker:latest` 可运行自检、JSON 内最小任务成功且 image 内没有 backend/FastAPI 源目录；`docker-compose.standalone.yml` 的 root build context 由根 `.dockerignore` 限制到 worker 所需目录。
 `verify-release-artifact-download.ps1` 也作为 workflow 下载 artifact 后的内容校验入口。
 `scripts/ci/desktop-release-artifacts-smoke.ps1` 会先构建真实 unsigned Desktop sidecar/installer artifact，再调用本目录 release gate 和下载校验器生成本地 release evidence。
 
@@ -98,11 +102,16 @@ $env:COMPUTE_API_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:
 .\scripts\ci\desktop-release-artifacts-smoke.ps1
 ```
 
-Standalone RC 的完整 live gate 需要先准备 standalone compose、临时 PostgreSQL restore 数据库和可构建镜像环境：
+Standalone RC 的完整 live gate 需要先准备 standalone compose、临时 PostgreSQL 数据库和可构建镜像环境；`COMPUTE_API_DATABASE_URL` / `AUTOWATERSIMU_RESTORE_DATABASE_URL` 必须指向临时库，不能指向生产 legacy 库或正在运行的 standalone 元数据库：
 
 ```powershell
+$env:COMPUTE_API_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:55432/compute_rc?sslmode=disable"
+$env:AUTOWATERSIMU_RESTORE_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:55432/restore_rc?sslmode=disable"
+just standalone-release-gate-full
 .\scripts\release\standalone-release-gate.ps1 -RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke
 ```
+
+完整 RC 前还必须提供 `tmp/ci-evidence/standalone-legacy-production-rehearsal.json` 和 `tmp/ci-evidence/standalone-s3-artifact-profile-live.json`，用于记录生产 legacy 只读/完整迁移演练与 MinIO/S3 artifact profile live 验收。这些外部记录必须是合法 JSON、`status=passed`、`commit_sha` 匹配当前 HEAD，并分别声明 `schema_version=autowatersimu_next_standalone_legacy_production_rehearsal.v1` 和 `schema_version=autowatersimu_next_standalone_s3_artifact_profile_live.v1`。
 
 ## 7. AI 操作提示
 

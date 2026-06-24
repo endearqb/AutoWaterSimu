@@ -68,10 +68,113 @@ import type {
   EvidenceDownloadResult,
 } from "@/shared/api/computeTypes"
 import useFlowStore from "@/stores/flowStore"
+import { useI18n } from "@/i18n"
 
 export const Route = createFileRoute("/_layout/compute-jobs")({
   component: ComputeJobs,
 })
+
+const zhText: Record<string, string> = {
+  "Agent draft": "Agent 草稿",
+  Archived: "已归档",
+  Artifacts: "产物",
+  "Artifact retention": "产物保留",
+  Attempt: "尝试次数",
+  "Apply retention": "执行保留策略",
+  "Auto publish": "自动发布",
+  Benchmarks: "基准案例",
+  "Blocking reasons": "阻塞原因",
+  Cancel: "取消",
+  Check: "检查项",
+  "Compute API": "计算 API",
+  "Compute Jobs": "计算任务",
+  "Confirm draft": "确认草稿",
+  "Confirmation ID": "确认 ID",
+  "Constraint draft": "约束草稿",
+  "Contract JSON": "契约 JSON",
+  "Contract schema": "契约 schema",
+  "Contract validation": "契约校验",
+  Created: "创建时间",
+  "Current flow": "当前流程图",
+  "Default set": "默认参数集",
+  Deleted: "已删除",
+  Decision: "决策",
+  "Demo job": "演示任务",
+  Download: "下载",
+  "Document schema": "文档 schema",
+  "Draft confirmation": "草稿确认",
+  "Dry run": "试运行",
+  Events: "事件",
+  "Evidence checksum": "证据校验和",
+  "Evidence file": "证据文件",
+  "Evidence package": "证据包",
+  "Evidence ref lookup": "证据引用查询",
+  "External approval": "外部审批",
+  Finished: "完成时间",
+  Generated: "生成时间",
+  Health: "健康状态",
+  Job: "任务",
+  Jobs: "任务",
+  "Job detail": "任务详情",
+  "Job ID": "任务 ID",
+  "Job type": "任务类型",
+  Loading: "加载中",
+  Message: "消息",
+  Model: "模型",
+  "Model catalog": "模型目录",
+  "Model key": "模型 key",
+  "Model run history": "模型运行历史",
+  "Model runs": "模型运行",
+  "Model version": "模型版本",
+  "No artifacts recorded.": "暂无产物记录。",
+  "No compute jobs found.": "暂无计算任务。",
+  "No events loaded.": "暂无事件。",
+  "No model runs found.": "暂无模型运行记录。",
+  "No models registered.": "暂无已注册模型。",
+  "No validation errors.": "无校验错误。",
+  Path: "路径",
+  "Parameter hash": "参数哈希",
+  "Payload hash": "Payload 哈希",
+  "Production readiness": "生产就绪度",
+  "Production ready": "生产就绪",
+  Ready: "就绪",
+  Reference: "引用",
+  "Reference ID": "引用 ID",
+  Refresh: "刷新",
+  Resolved: "已解析",
+  Resolve: "解析",
+  "Result explanation": "结果解释",
+  "Result hash": "结果哈希",
+  "Result summary": "结果摘要",
+  Run: "运行",
+  Search: "搜索",
+  "Selected job": "所选任务",
+  "Select a job to inspect details.": "选择一个任务查看详情。",
+  "Set status": "参数集状态",
+  Skipped: "已跳过",
+  Started: "开始时间",
+  Status: "状态",
+  "Simulation request": "仿真请求",
+  Type: "类型",
+  Validate: "校验",
+  Version: "版本",
+  Warnings: "警告",
+  "Web control surface for the Go Compute API P0 lifecycle.":
+    "Go Compute API P0 生命周期的 Web 控制台。",
+  Worker: "Worker",
+  "Would archive": "将归档",
+  "Would delete": "将删除",
+  Clear: "清空",
+  "Filter by status": "按状态筛选",
+  "Risk total": "风险总数",
+  Checked: "已检查",
+  "Confirmed by": "确认人",
+  templates: "个模板",
+  versions: "个版本",
+}
+
+const textFor = (language: string, text: string) =>
+  language === "zh" ? (zhText[text] ?? text) : text
 
 const asRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value)
@@ -307,6 +410,7 @@ function ModelRunsHistoryPanel({
   onSearch,
   onUseSelectedJob,
   selectedJobId,
+  t,
   totalEstimate,
 }: {
   filters: ModelRunSearchForm
@@ -317,6 +421,7 @@ function ModelRunsHistoryPanel({
   onSearch: () => void
   onUseSelectedJob: () => void
   selectedJobId: string | null
+  t: (text: string) => string
   totalEstimate: number
 }) {
   const searchOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -328,9 +433,9 @@ function ModelRunsHistoryPanel({
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
       <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
-        <Heading size="md">Model run history</Heading>
+        <Heading size="md">{t("Model run history")}</Heading>
         <Text fontSize="sm" color="fg.muted">
-          {isFetching ? "Loading" : `${modelRuns.length} of ${totalEstimate}`}
+          {isFetching ? t("Loading") : `${modelRuns.length} / ${totalEstimate}`}
         </Text>
       </Flex>
 
@@ -348,7 +453,7 @@ function ModelRunsHistoryPanel({
             onFiltersChange({ ...filters, jobId: event.target.value })
           }
           onKeyDown={searchOnEnter}
-          placeholder="Job ID"
+          placeholder={t("Job ID")}
         />
         <Input
           size="sm"
@@ -357,7 +462,7 @@ function ModelRunsHistoryPanel({
             onFiltersChange({ ...filters, modelKey: event.target.value })
           }
           onKeyDown={searchOnEnter}
-          placeholder="Model key"
+          placeholder={t("Model key")}
         />
         <Input
           size="sm"
@@ -369,14 +474,14 @@ function ModelRunsHistoryPanel({
             })
           }
           onKeyDown={searchOnEnter}
-          placeholder="Model version"
+          placeholder={t("Model version")}
         />
       </Grid>
 
       <HStack mt={3} wrap="wrap">
         <Button size="sm" colorPalette="blue" onClick={onSearch}>
           <FiSearch />
-          Search
+          {t("Search")}
         </Button>
         <Button
           size="sm"
@@ -384,27 +489,27 @@ function ModelRunsHistoryPanel({
           disabled={!selectedJobId}
           onClick={onUseSelectedJob}
         >
-          Selected job
+          {t("Selected job")}
         </Button>
         <Button size="sm" variant="ghost" onClick={onClear}>
-          Clear
+          {t("Clear")}
         </Button>
       </HStack>
 
       <Box mt={4} overflowX="auto">
         {modelRuns.length === 0 ? (
           <Text color="fg.muted" fontSize="sm">
-            No model runs found.
+            {t("No model runs found.")}
           </Text>
         ) : (
           <Table.Root size="sm">
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>Run</Table.ColumnHeader>
-                <Table.ColumnHeader>Job</Table.ColumnHeader>
-                <Table.ColumnHeader>Model</Table.ColumnHeader>
-                <Table.ColumnHeader>Version</Table.ColumnHeader>
-                <Table.ColumnHeader>Parameter hash</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Run")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Job")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Model")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Version")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Parameter hash")}</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -438,9 +543,11 @@ function ModelRunsHistoryPanel({
 function ModelCatalogPanel({
   catalog,
   isFetching,
+  t,
 }: {
   catalog: ModelCatalog | undefined
   isFetching: boolean
+  t: (text: string) => string
 }) {
   const rows =
     catalog?.models.flatMap((model) =>
@@ -460,28 +567,28 @@ function ModelCatalogPanel({
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
       <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
-        <Heading size="md">Model catalog</Heading>
+        <Heading size="md">{t("Model catalog")}</Heading>
         <Text fontSize="sm" color="fg.muted">
-          {isFetching ? "Loading" : `${rows.length} versions`}
+          {isFetching ? t("Loading") : `${rows.length} ${t("versions")}`}
         </Text>
       </Flex>
 
       {rows.length === 0 ? (
         <Text color="fg.muted" fontSize="sm">
-          No models registered.
+          {t("No models registered.")}
         </Text>
       ) : (
         <Box overflowX="auto">
           <Table.Root size="sm">
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>Model</Table.ColumnHeader>
-                <Table.ColumnHeader>Version</Table.ColumnHeader>
-                <Table.ColumnHeader>Status</Table.ColumnHeader>
-                <Table.ColumnHeader>Default set</Table.ColumnHeader>
-                <Table.ColumnHeader>Set status</Table.ColumnHeader>
-                <Table.ColumnHeader>Benchmarks</Table.ColumnHeader>
-                <Table.ColumnHeader>Parameter hash</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Model")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Version")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Status")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Default set")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Set status")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Benchmarks")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Parameter hash")}</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -500,7 +607,7 @@ function ModelCatalogPanel({
                   <Table.Cell maxW="220px" truncate>
                     {row.parameterSet}
                     <Text fontSize="xs" color="fg.muted">
-                      {row.templateCount} templates
+                      {row.templateCount} {t("templates")}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>{row.parameterStatus}</Table.Cell>
@@ -524,12 +631,14 @@ function ArtifactRetentionPanel({
   onDelete,
   onDryRun,
   report,
+  t,
 }: {
   deletePending: boolean
   dryRunPending: boolean
   onDelete: () => void
   onDryRun: () => void
   report: ArtifactRetentionSweepReport | null
+  t: (text: string) => string
 }) {
   const wouldDelete =
     report?.items.filter((item) => item.action === "would_delete").length ?? 0
@@ -542,7 +651,7 @@ function ArtifactRetentionPanel({
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
       <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
-        <Heading size="md">Artifact retention</Heading>
+        <Heading size="md">{t("Artifact retention")}</Heading>
         <HStack wrap="wrap">
           <Button
             size="sm"
@@ -551,7 +660,7 @@ function ArtifactRetentionPanel({
             onClick={onDryRun}
           >
             <FiSearch />
-            Dry run
+            {t("Dry run")}
           </Button>
           <Button
             size="sm"
@@ -561,7 +670,7 @@ function ArtifactRetentionPanel({
             onClick={onDelete}
           >
             <FiArchive />
-            Apply retention
+            {t("Apply retention")}
           </Button>
         </HStack>
       </Flex>
@@ -574,13 +683,13 @@ function ArtifactRetentionPanel({
         gap={3}
         mb={3}
       >
-        <Field label="Checked" value={report?.checked} />
-        <Field label="Deleted" value={report?.deleted} />
-        <Field label="Archived" value={report?.archived} />
-        <Field label="Skipped" value={report?.skipped} />
-        <Field label="Would delete" value={wouldDelete} />
-        <Field label="Would archive" value={wouldArchive} />
-        <Field label="Generated" value={formatDateTime(report?.generated_at)} />
+        <Field label={t("Checked")} value={report?.checked} />
+        <Field label={t("Deleted")} value={report?.deleted} />
+        <Field label={t("Archived")} value={report?.archived} />
+        <Field label={t("Skipped")} value={report?.skipped} />
+        <Field label={t("Would delete")} value={wouldDelete} />
+        <Field label={t("Would archive")} value={wouldArchive} />
+        <Field label={t("Generated")} value={formatDateTime(report?.generated_at)} />
       </Grid>
 
       <JsonBlock value={report ?? { status: "not_run" }} minH="120px" />
@@ -601,6 +710,7 @@ function ContractValidationPanel({
   onConfirmDraft,
   onValidate,
   result,
+  t,
 }: {
   draftText: string
   confirmPending: boolean
@@ -614,13 +724,14 @@ function ContractValidationPanel({
   onConfirmDraft: () => void
   onValidate: () => void
   result: ContractValidationResponse | null
+  t: (text: string) => string
 }) {
   const state = result ? (result.valid ? "valid" : "invalid") : "not checked"
 
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
       <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
-        <Heading size="md">Contract validation</Heading>
+        <Heading size="md">{t("Contract validation")}</Heading>
         <Badge colorPalette={result?.valid ? "green" : result ? "red" : "gray"}>
           {state}
         </Badge>
@@ -628,19 +739,19 @@ function ContractValidationPanel({
 
       <HStack mb={3} wrap="wrap">
         <Button size="sm" variant="outline" onClick={onLoadAgentDraft}>
-          Agent draft
+          {t("Agent draft")}
         </Button>
         <Button size="sm" variant="outline" onClick={onLoadSimulationRequest}>
-          Simulation request
+          {t("Simulation request")}
         </Button>
         <Button size="sm" variant="outline" onClick={onLoadConstraintDraft}>
-          Constraint draft
+          {t("Constraint draft")}
         </Button>
         <Button size="sm" variant="outline" onClick={onLoadResultExplanation}>
-          Result explanation
+          {t("Result explanation")}
         </Button>
         <Button size="sm" variant="outline" onClick={onLoadDraftConfirmation}>
-          Draft confirmation
+          {t("Draft confirmation")}
         </Button>
         <Button
           size="sm"
@@ -648,7 +759,7 @@ function ContractValidationPanel({
           disabled={isPending}
           onClick={onValidate}
         >
-          Validate
+          {t("Validate")}
         </Button>
         <Button
           size="sm"
@@ -657,7 +768,7 @@ function ContractValidationPanel({
           disabled={confirmPending}
           onClick={onConfirmDraft}
         >
-          Confirm draft
+          {t("Confirm draft")}
         </Button>
       </HStack>
 
@@ -668,7 +779,7 @@ function ContractValidationPanel({
         fontFamily="mono"
         fontSize="xs"
         resize="vertical"
-        aria-label="Contract JSON"
+        aria-label={t("Contract JSON")}
       />
 
       {result && (
@@ -682,21 +793,21 @@ function ContractValidationPanel({
             mb={3}
           >
             <Field
-              label="Document schema"
+              label={t("Document schema")}
               value={result.document_schema_version}
             />
-            <Field label="Contract schema" value={result.contract_schema} />
+            <Field label={t("Contract schema")} value={result.contract_schema} />
           </Grid>
           {result.errors.length === 0 ? (
             <Text color="fg.muted" fontSize="sm">
-              No validation errors.
+              {t("No validation errors.")}
             </Text>
           ) : (
             <Table.Root size="sm">
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeader>Path</Table.ColumnHeader>
-                  <Table.ColumnHeader>Message</Table.ColumnHeader>
+                  <Table.ColumnHeader>{t("Path")}</Table.ColumnHeader>
+                  <Table.ColumnHeader>{t("Message")}</Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
@@ -714,7 +825,7 @@ function ContractValidationPanel({
           {result.warnings.length > 0 && (
             <Box mt={3}>
               <Text fontSize="xs" color="fg.muted">
-                Warnings
+                {t("Warnings")}
               </Text>
               <Stack gap={1} mt={1}>
                 {result.warnings.map((warning) => (
@@ -728,7 +839,7 @@ function ContractValidationPanel({
           {result.confirmation_record && (
             <Box mt={3}>
               <Text fontSize="xs" color="fg.muted">
-                Persisted confirmation
+                {t("Draft confirmation")}
               </Text>
               <Grid
                 templateColumns={{
@@ -739,19 +850,19 @@ function ContractValidationPanel({
                 mt={1}
               >
                 <Field
-                  label="Confirmation ID"
+                  label={t("Confirmation ID")}
                   value={result.confirmation_record.confirmation_id}
                 />
                 <Field
-                  label="Decision"
+                  label={t("Decision")}
                   value={result.confirmation_record.decision}
                 />
                 <Field
-                  label="Confirmed by"
+                  label={t("Confirmed by")}
                   value={result.confirmation_record.confirmed_by}
                 />
                 <Field
-                  label="Payload hash"
+                  label={t("Payload hash")}
                   value={result.confirmation_record.payload_hash}
                 />
               </Grid>
@@ -767,15 +878,17 @@ function JobsTable({
   jobs,
   selectedJobId,
   onSelect,
+  t,
 }: {
   jobs: JobSnapshot[]
   selectedJobId: string | null
   onSelect: (jobId: string) => void
+  t: (text: string) => string
 }) {
   if (jobs.length === 0) {
     return (
       <Box borderWidth="1px" borderRadius="md" p={6}>
-        <Text color="fg.muted">No compute jobs found.</Text>
+        <Text color="fg.muted">{t("No compute jobs found.")}</Text>
       </Box>
     )
   }
@@ -785,11 +898,11 @@ function JobsTable({
       <Table.Root size="sm">
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>Job</Table.ColumnHeader>
-            <Table.ColumnHeader>Status</Table.ColumnHeader>
-            <Table.ColumnHeader>Type</Table.ColumnHeader>
-            <Table.ColumnHeader>Events</Table.ColumnHeader>
-            <Table.ColumnHeader>Created</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Job")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Status")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Type")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Events")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Created")}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -838,6 +951,7 @@ function JobDetail({
   onResolveEvidenceRef,
   evidenceDownloading,
   evidenceResolving,
+  t,
 }: {
   snapshot: JobSnapshot | undefined
   result: unknown
@@ -855,11 +969,12 @@ function JobDetail({
   onResolveEvidenceRef: () => void
   evidenceDownloading: boolean
   evidenceResolving: boolean
+  t: (text: string) => string
 }) {
   if (!snapshot) {
     return (
       <Box borderWidth="1px" borderRadius="md" p={4}>
-        <Text color="fg.muted">Select a job to inspect details.</Text>
+        <Text color="fg.muted">{t("Select a job to inspect details.")}</Text>
       </Box>
     )
   }
@@ -884,7 +999,7 @@ function JobDetail({
       <Box borderWidth="1px" borderRadius="md" p={4}>
         <Flex justify="space-between" gap={3} align="flex-start" wrap="wrap">
           <Stack gap={1}>
-            <Heading size="md">Job detail</Heading>
+            <Heading size="md">{t("Job detail")}</Heading>
             <Text fontSize="sm" color="fg.muted" truncate maxW="560px">
               {job.job_id}
             </Text>
@@ -898,7 +1013,7 @@ function JobDetail({
               onClick={onDownloadEvidence}
             >
               <FiDownload />
-              Evidence
+              {t("Evidence package")}
             </Button>
             <Button
               size="sm"
@@ -908,7 +1023,7 @@ function JobDetail({
               onClick={onCancel}
             >
               <FiXCircle />
-              Cancel
+              {t("Cancel")}
             </Button>
           </HStack>
         </Flex>
@@ -921,16 +1036,16 @@ function JobDetail({
           gap={3}
           mt={4}
         >
-          <Field label="Job type" value={job.job_type} />
-          <Field label="Attempt" value={job.attempt} />
-          <Field label="Payload hash" value={job.payload_hash} />
-          <Field label="Result hash" value={job.result_hash} />
-          <Field label="Evidence file" value={evidenceDownload?.filename} />
-          <Field label="Evidence checksum" value={evidenceDownload?.checksum} />
-          <Field label="Worker" value={String(job.worker_id ?? "")} />
-          <Field label="Queued" value={formatDateTime(job.queued_at)} />
-          <Field label="Started" value={formatDateTime(job.started_at)} />
-          <Field label="Finished" value={formatDateTime(job.finished_at)} />
+          <Field label={t("Job type")} value={job.job_type} />
+          <Field label={t("Attempt")} value={job.attempt} />
+          <Field label={t("Payload hash")} value={job.payload_hash} />
+          <Field label={t("Result hash")} value={job.result_hash} />
+          <Field label={t("Evidence file")} value={evidenceDownload?.filename} />
+          <Field label={t("Evidence checksum")} value={evidenceDownload?.checksum} />
+          <Field label={t("Worker")} value={String(job.worker_id ?? "")} />
+          <Field label={t("Queued")} value={formatDateTime(job.queued_at)} />
+          <Field label={t("Started")} value={formatDateTime(job.started_at)} />
+          <Field label={t("Finished")} value={formatDateTime(job.finished_at)} />
         </Grid>
 
         {errorText && (
@@ -942,21 +1057,21 @@ function JobDetail({
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
         <Heading size="sm" mb={3}>
-          Result summary
+          {t("Result summary")}
         </Heading>
         <JsonBlock value={resultSummary} />
       </Box>
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
         <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
-          <Heading size="sm">Production readiness</Heading>
+          <Heading size="sm">{t("Production readiness")}</Heading>
           <Badge
             colorPalette={readinessPalette(
               productionReadiness?.readiness_status ?? "",
             )}
           >
             {productionReadinessLoading
-              ? "Loading"
+              ? t("Loading")
               : (productionReadiness?.readiness_status ?? "N/A")}
           </Badge>
         </Flex>
@@ -970,7 +1085,7 @@ function JobDetail({
           mb={3}
         >
           <Field
-            label="Production ready"
+            label={t("Production ready")}
             value={
               productionReadiness
                 ? productionReadiness.production_ready
@@ -980,7 +1095,7 @@ function JobDetail({
             }
           />
           <Field
-            label="External approval"
+            label={t("External approval")}
             value={
               productionReadiness
                 ? productionReadiness.external_approval_required
@@ -990,7 +1105,7 @@ function JobDetail({
             }
           />
           <Field
-            label="Auto publish"
+            label={t("Auto publish")}
             value={
               productionReadiness
                 ? productionReadiness.auto_publish_allowed
@@ -1000,15 +1115,15 @@ function JobDetail({
             }
           />
           <Field
-            label="Evidence package"
+            label={t("Evidence package")}
             value={productionReadiness?.evidence_package_id}
           />
           <Field
-            label="Blocking reasons"
+            label={t("Blocking reasons")}
             value={productionReadiness?.blocking_reasons.join(", ")}
           />
           <Field
-            label="Warnings"
+            label={t("Warnings")}
             value={productionReadiness?.warnings.join(", ")}
           />
         </Grid>
@@ -1023,7 +1138,7 @@ function JobDetail({
               gap={3}
             >
               <Field
-                label="Risk total"
+                label={t("Risk total")}
                 value={productionReadiness.risk_findings_summary.total}
               />
               {Object.entries(
@@ -1036,9 +1151,9 @@ function JobDetail({
             <Table.Root size="sm">
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeader>Check</Table.ColumnHeader>
-                  <Table.ColumnHeader>Status</Table.ColumnHeader>
-                  <Table.ColumnHeader>Message</Table.ColumnHeader>
+                  <Table.ColumnHeader>{t("Check")}</Table.ColumnHeader>
+                  <Table.ColumnHeader>{t("Status")}</Table.ColumnHeader>
+                  <Table.ColumnHeader>{t("Message")}</Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
@@ -1060,14 +1175,14 @@ function JobDetail({
           </Stack>
         ) : (
           <Text color="fg.muted" fontSize="sm">
-            {job.result_hash ? "Loading readiness report." : "N/A"}
+            {job.result_hash ? t("Loading") : "N/A"}
           </Text>
         )}
       </Box>
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
         <Flex justify="space-between" align="center" mb={3} gap={3} wrap="wrap">
-          <Heading size="sm">Evidence ref lookup</Heading>
+          <Heading size="sm">{t("Evidence ref lookup")}</Heading>
           {evidenceResolution && (
             <Badge colorPalette={evidenceResolution.resolved ? "green" : "red"}>
               {evidenceResolution.ref_type || "ref"}
@@ -1091,7 +1206,7 @@ function JobDetail({
             onClick={onResolveEvidenceRef}
           >
             <FiSearch />
-            Resolve
+            {t("Resolve")}
           </Button>
         </HStack>
         {evidenceResolution && (
@@ -1105,12 +1220,12 @@ function JobDetail({
               mb={3}
             >
               <Field
-                label="Reference"
+                label={t("Reference")}
                 value={evidenceResolution.evidence_ref}
               />
-              <Field label="Reference ID" value={evidenceResolution.ref_id} />
+              <Field label={t("Reference ID")} value={evidenceResolution.ref_id} />
               <Field
-                label="Resolved"
+                label={t("Resolved")}
                 value={evidenceResolution.resolved ? "yes" : "no"}
               />
             </Grid>
@@ -1124,18 +1239,18 @@ function JobDetail({
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
         <Heading size="sm" mb={3}>
-          Model runs
+          {t("Model runs")}
         </Heading>
         <JsonBlock value={modelRuns} minH="96px" />
       </Box>
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
         <Heading size="sm" mb={3}>
-          Artifacts
+          {t("Artifacts")}
         </Heading>
         {artifacts.length === 0 ? (
           <Text color="fg.muted" fontSize="sm">
-            No artifacts recorded.
+            {t("No artifacts recorded.")}
           </Text>
         ) : (
           <Stack gap={3}>
@@ -1162,7 +1277,7 @@ function JobDetail({
                   onClick={() => onDownload(artifact)}
                 >
                   <FiDownload />
-                  Download
+                  {t("Download")}
                 </Button>
               </Flex>
             ))}
@@ -1173,15 +1288,21 @@ function JobDetail({
   )
 }
 
-function EventsPanel({ events }: { events: EventRecord[] }) {
+function EventsPanel({
+  events,
+  t,
+}: {
+  events: EventRecord[]
+  t: (text: string) => string
+}) {
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
       <Heading size="sm" mb={3}>
-        Events
+        {t("Events")}
       </Heading>
       {events.length === 0 ? (
         <Text color="fg.muted" fontSize="sm">
-          No events loaded.
+          {t("No events loaded.")}
         </Text>
       ) : (
         <Stack gap={3}>
@@ -1212,6 +1333,8 @@ function EventsPanel({ events }: { events: EventRecord[] }) {
 }
 
 function ComputeJobs() {
+  const { language } = useI18n()
+  const t = (text: string) => textFor(language, text)
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState("")
   const [transformIssues, setTransformIssues] = useState<
@@ -1388,9 +1511,9 @@ function ComputeJobs() {
       <Stack gap={6}>
         <Flex justify="space-between" align="flex-start" gap={4} wrap="wrap">
           <Stack gap={1}>
-            <Heading size="lg">Compute Jobs</Heading>
+            <Heading size="lg">{t("Compute Jobs")}</Heading>
             <Text color="fg.muted">
-              Web control surface for the Go Compute API P0 lifecycle.
+              {t("Web control surface for the Go Compute API P0 lifecycle.")}
             </Text>
           </Stack>
           <HStack wrap="wrap">
@@ -1401,7 +1524,7 @@ function ComputeJobs() {
               disabled={jobsQuery.isFetching}
             >
               <FiRefreshCw />
-              Refresh
+              {t("Refresh")}
             </Button>
             <Button
               size="sm"
@@ -1410,7 +1533,7 @@ function ComputeJobs() {
               disabled={createDemoMutation.isPending}
             >
               <FiPlus />
-              Demo job
+              {t("Demo job")}
             </Button>
             <Button
               size="sm"
@@ -1423,7 +1546,7 @@ function ComputeJobs() {
               }
             >
               <FiSend />
-              Current flow
+              {t("Current flow")}
             </Button>
           </HStack>
         </Flex>
@@ -1432,12 +1555,12 @@ function ComputeJobs() {
           <Flex justify="space-between" align="center" gap={4} wrap="wrap">
             <HStack gap={3} wrap="wrap">
               <Field
-                label="Compute API"
+                label={t("Compute API")}
                 value={getComputeJobsBaseUrl()}
               />
-              <Field label="Health" value={healthStatus} />
+              <Field label={t("Health")} value={healthStatus} />
               <Field
-                label="Ready"
+                label={t("Ready")}
                 value={healthQuery.isSuccess ? "yes" : "N/A"}
               />
             </HStack>
@@ -1446,7 +1569,7 @@ function ComputeJobs() {
               size="sm"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              placeholder="Filter by status"
+              placeholder={t("Filter by status")}
             />
           </Flex>
           {healthQuery.isError && (
@@ -1511,17 +1634,18 @@ function ComputeJobs() {
         >
           <Box borderWidth="1px" borderRadius="md" p={4}>
             <Flex justify="space-between" align="center" mb={3} gap={3}>
-              <Heading size="md">Jobs</Heading>
+              <Heading size="md">{t("Jobs")}</Heading>
               <Text fontSize="sm" color="fg.muted">
                 {jobsQuery.isFetching
-                  ? "Loading"
-                  : `${jobs.length} of ${jobsQuery.data?.total_estimate ?? 0}`}
+                  ? t("Loading")
+                  : `${jobs.length} / ${jobsQuery.data?.total_estimate ?? 0}`}
               </Text>
             </Flex>
             <JobsTable
               jobs={jobs}
               selectedJobId={selectedJobId}
               onSelect={selectJob}
+              t={t}
             />
           </Box>
 
@@ -1558,14 +1682,16 @@ function ComputeJobs() {
               }}
               evidenceDownloading={downloadEvidenceMutation.isPending}
               evidenceResolving={resolveEvidenceMutation.isPending}
+              t={t}
             />
-            <EventsPanel events={eventsQuery.data?.items ?? []} />
+            <EventsPanel events={eventsQuery.data?.items ?? []} t={t} />
           </Stack>
         </Grid>
 
         <ModelCatalogPanel
           catalog={modelCatalogQuery.data}
           isFetching={modelCatalogQuery.isFetching}
+          t={t}
         />
 
         <ArtifactRetentionPanel
@@ -1574,6 +1700,7 @@ function ComputeJobs() {
           onDelete={() => retentionDeleteMutation.mutate()}
           onDryRun={() => retentionDryRunMutation.mutate()}
           report={retentionSweepReport}
+          t={t}
         />
 
         <ContractValidationPanel
@@ -1608,6 +1735,7 @@ function ComputeJobs() {
             contractValidationMutation.mutate(contractDraftText)
           }
           result={contractValidationResult}
+          t={t}
         />
 
         <ModelRunsHistoryPanel
@@ -1628,6 +1756,7 @@ function ComputeJobs() {
             }
           }}
           selectedJobId={selectedJobId}
+          t={t}
           totalEstimate={modelRunsQuery.data?.total_estimate ?? 0}
         />
       </Stack>

@@ -149,6 +149,11 @@ type execer interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
+type queryExecer interface {
+	queryer
+	execer
+}
+
 type importRunner struct {
 	legacy queryer
 	target *pgxpool.Pool
@@ -728,16 +733,45 @@ func (runner *importRunner) importCanonicalJob(ctx context.Context, record JobRe
 		record.JobID, "legacy.imported", mustJSON(map[string]any{"legacy_source": metadata["legacy_source"], "status": status}), optionNow(runner.opt).UTC()); err != nil {
 		return err
 	}
+	importedHistory, err := runner.importCanonicalJobHistory(ctx, tx, record, sourceHash)
+	if err != nil {
+		return err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
-	runner.inc(resource, func(c *Counters) { c.Imported++ })
+	runner.inc(resource, func(c *Counters) {
+		c.Imported++
+		if importedHistory {
+			c.HistoryImported++
+		}
+	})
 	return nil
+}
+
+func (runner *importRunner) importCanonicalJobHistory(ctx context.Context, target queryExecer, record JobRecord, sourceHash string) (bool, error) {
+	resource := "jobs"
+	existing, err := historyLegacyHash(ctx, target, record.Table, record.ID)
+	if err != nil {
+		return false, err
+	}
+	if existing != "" {
+		if existing != sourceHash {
+			runner.conflict(resource, record.Table, record.ID, "canonical job history exists with different source hash")
+		}
+		return false, nil
+	}
+	if runner.opt.DryRun || runner.opt.VerifyOnly {
+		if runner.opt.VerifyOnly {
+			runner.missing(resource, record.Table, record.ID, "canonical job history missing")
+		}
+		return false, nil
+	}
+	return true, insertJobHistoryRecord(ctx, target, record, sourceHash, "compute_job", record.JobID, "canonical compute_job.v1 imported into compute_jobs", optionNow(runner.opt).UTC())
 }
 
 func (runner *importRunner) importJobHistory(ctx context.Context, record JobRecord, sourceHash, reason string) error {
 	resource := "jobs"
-	historyID := "legacy_history_" + safeID(record.Table) + "_" + safeID(record.ID)
 	existing, err := historyLegacyHash(ctx, runner.target, record.Table, record.ID)
 	if err != nil {
 		return err
@@ -757,11 +791,33 @@ func (runner *importRunner) importJobHistory(ctx context.Context, record JobReco
 		}
 		return nil
 	}
+	err = insertJobHistoryRecord(ctx, runner.target, record, sourceHash, "job_history", record.JobID, reason, optionNow(runner.opt).UTC())
+	if err == nil {
+		runner.inc(resource, func(c *Counters) {
+			c.Imported++
+			c.HistoryImported++
+		})
+	}
+	return err
+}
+
+func insertJobHistoryRecord(ctx context.Context, target execer, record JobRecord, sourceHash, targetKind, targetID, reason string, importedAt time.Time) error {
+	historyID := "legacy_history_" + safeID(record.Table) + "_" + safeID(record.ID)
 	metadata := legacyMetadata(record.Table, record.ID, record.OwnerID, sourceHash, map[string]any{
 		"legacy_job_id":   record.JobID,
 		"legacy_status":   record.Status,
 		"legacy_job_type": record.JobType,
 	})
+	payload, result := legacyJobHistoryPayloads(record)
+	_, err := target.Exec(ctx, `INSERT INTO imported_legacy_history (
+		id, legacy_source_table, legacy_source_id, legacy_source_hash, target_kind, target_id,
+		status, reason, payload_json, result_json, metadata_json, imported_at
+	) VALUES ($1,$2,$3,$4,$5,$6,'imported',$7,$8,$9,$10,$11)`,
+		historyID, record.Table, record.ID, sourceHash, targetKind, targetID, reason, payload, result, mustJSON(metadata), importedAt)
+	return err
+}
+
+func legacyJobHistoryPayloads(record JobRecord) (json.RawMessage, json.RawMessage) {
 	payload := mustJSON(map[string]any{
 		"input_data":   jsonObject(record.InputData),
 		"summary_data": jsonObject(record.SummaryData),
@@ -770,18 +826,7 @@ func (runner *importRunner) importJobHistory(ctx context.Context, record JobReco
 		"result_data":   jsonObject(record.ResultData),
 		"error_message": record.ErrorMessage,
 	})
-	_, err = runner.target.Exec(ctx, `INSERT INTO imported_legacy_history (
-		id, legacy_source_table, legacy_source_id, legacy_source_hash, target_kind, target_id,
-		status, reason, payload_json, result_json, metadata_json, imported_at
-	) VALUES ($1,$2,$3,$4,'job_history',$5,'imported',$6,$7,$8,$9,$10)`,
-		historyID, record.Table, record.ID, sourceHash, record.JobID, reason, payload, result, mustJSON(metadata), optionNow(runner.opt).UTC())
-	if err == nil {
-		runner.inc(resource, func(c *Counters) {
-			c.Imported++
-			c.HistoryImported++
-		})
-	}
-	return err
+	return payload, result
 }
 
 func BuildCanvasGraphPayload(record FlowchartRecord, graphID, sourceHash string) map[string]any {
@@ -978,13 +1023,20 @@ func tableExists(ctx context.Context, q queryer, table string) (bool, error) {
 }
 
 func targetLegacyHash(ctx context.Context, target queryer, table, where string, args ...any) (string, error) {
-	query := fmt.Sprintf("SELECT COALESCE(metadata_json->'legacy_source'->>'checksum','') FROM %s WHERE %s LIMIT 1", table, where)
+	query := fmt.Sprintf("SELECT COALESCE(%s,'') FROM %s WHERE %s LIMIT 1", legacyHashExpression(table), table, where)
 	var hash string
 	err := target.QueryRow(ctx, query, args...).Scan(&hash)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", nil
 	}
 	return hash, err
+}
+
+func legacyHashExpression(table string) string {
+	if table == "compute_jobs" {
+		return "input_json->'metadata'->'legacy_source'->>'checksum'"
+	}
+	return "metadata_json->'legacy_source'->>'checksum'"
 }
 
 func historyLegacyHash(ctx context.Context, target queryer, sourceTable, sourceID string) (string, error) {

@@ -867,6 +867,19 @@ export type UDMHybridConfigUpdateRequest = {
     };
 };
 
+export type UDMHybridValidationResponse = {
+    is_valid: boolean;
+    errors: Array<(string)>;
+    warnings: Array<(string)>;
+    details: {
+        [key: string]: unknown;
+    };
+    normalized_hybrid_config?: {
+        [key: string]: unknown;
+    };
+    parameter_hash?: string;
+};
+
 export type UDMModelCreateFromTemplateRequest = {
     template_key: string;
     name?: string;
@@ -1252,6 +1265,14 @@ export type CreateUdmHybridConfigData = {
 };
 
 export type CreateUdmHybridConfigResponse = (UDMHybridConfigPublic);
+
+export type ValidateUdmHybridConfigData = {
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
+
+export type ValidateUdmHybridConfigResponse = (UDMHybridValidationResponse);
 
 export type GetUdmHybridConfigData = {
     id: string;

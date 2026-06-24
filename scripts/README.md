@@ -70,6 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-packaged-n
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-migration-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-live.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1

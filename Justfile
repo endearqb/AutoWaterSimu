@@ -44,11 +44,23 @@ standalone-migration-smoke:
 standalone-five-model-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1
 
+standalone-five-model-live:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-live.ps1
+
 standalone-backup-restore-smoke:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1
 
+standalone-release-image:
+    docker build -f services\simulation-worker\Dockerfile -t autowatersimu-standalone-simulation-worker:latest .
+
 standalone-release-gate:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -SkipLong
+
+standalone-release-gate-full:
+    just standalone-release-image
+    just standalone-five-model-live
+    just standalone-up
+    if ([string]::IsNullOrWhiteSpace($env:COMPUTE_API_DATABASE_URL) -or [string]::IsNullOrWhiteSpace($env:AUTOWATERSIMU_RESTORE_DATABASE_URL)) { throw 'Set COMPUTE_API_DATABASE_URL and AUTOWATERSIMU_RESTORE_DATABASE_URL to temporary PostgreSQL databases before full RC gate.' }; powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke
 
 standalone-browser-smoke:
     just current-flow-live-smoke

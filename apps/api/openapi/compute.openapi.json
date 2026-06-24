@@ -488,6 +488,20 @@
         }
       }
     },
+    "/api/v1/udm-hybrid-configs/validate": {
+      "post": {
+        "operationId": "validateUdmHybridConfig",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "UDM hybrid validation result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UDMHybridValidationResponse" } } } },
+          "400": { "$ref": "#/components/responses/ContractError" },
+          "403": { "$ref": "#/components/responses/ContractError" }
+        }
+      }
+    },
     "/api/v1/udm-hybrid-configs/{id}": {
       "get": {
         "operationId": "getUdmHybridConfig",
@@ -1446,6 +1460,18 @@
           "hybrid_config": { "type": "object", "additionalProperties": true },
           "source_system": { "type": "string" },
           "metadata": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "UDMHybridValidationResponse": {
+        "type": "object",
+        "required": ["is_valid", "errors", "warnings", "details"],
+        "properties": {
+          "is_valid": { "type": "boolean" },
+          "errors": { "type": "array", "items": { "type": "string" } },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "details": { "type": "object", "additionalProperties": true },
+          "normalized_hybrid_config": { "type": "object", "additionalProperties": true },
+          "parameter_hash": { "type": "string" }
         }
       },
       "UDMHybridConfigPublic": {

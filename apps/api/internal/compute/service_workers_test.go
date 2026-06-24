@@ -96,6 +96,41 @@ func TestWorkerLifecycleArtifactSucceedAndDownload(t *testing.T) {
 	}
 }
 
+func TestWorkerClaimReusesActiveRunningJobForSameWorker(t *testing.T) {
+	svc := testService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, fixtureJobBytes(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	worker, err := svc.RegisterWorker(ctx, compatibleWorkerRegistration("worker_reclaim"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := svc.Claim(ctx, worker.WorkerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := svc.Claim(ctx, worker.WorkerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstJob := mapValue(first, "job")
+	secondJob := mapValue(second, "job")
+	if stringValue(firstJob, "job_id") != "job_material_balance_minimal" || stringValue(secondJob, "job_id") != "job_material_balance_minimal" {
+		t.Fatalf("same worker should reclaim the active running job, got first=%#v second=%#v", firstJob, secondJob)
+	}
+	if first["attempt"] != 1 || second["attempt"] != 1 {
+		t.Fatalf("reclaim must not increment attempt, got first=%#v second=%#v", first["attempt"], second["attempt"])
+	}
+	snapshot, err := svc.GetJob(ctx, "job_material_balance_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Job.Status != StatusRunning || snapshot.Job.WorkerID != worker.WorkerID || snapshot.Job.Attempt != 1 {
+		t.Fatalf("unexpected running job after reclaim: %#v", snapshot.Job)
+	}
+}
+
 func TestValidatedWorkerFailPersistsTerminalResult(t *testing.T) {
 	svc := testValidatedService(t)
 	ctx := context.Background()

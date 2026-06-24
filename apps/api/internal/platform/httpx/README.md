@@ -26,7 +26,8 @@
 
 1. 本 package 不 import `internal/compute`。
 2. CORS 只允许 loopback browser origins；不得扩大到任意 origin。
-3. Metrics snapshot and Prometheus rendering live in `../metrics`。
+3. `WriteJSON` 先完成 JSON marshal 并设置 `Content-Length`，再写 status/body；worker claim 等 mutation 响应不得退回依赖 chunked/连接关闭边界的写法。
+4. Metrics snapshot and Prometheus rendering live in `../metrics`。
 
 ## 4. 对外接口
 

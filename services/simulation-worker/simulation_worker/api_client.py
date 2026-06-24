@@ -101,9 +101,13 @@ class ComputeAPIClient:
                 data = resp.read()
         except error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")[:500]
-            raise ComputeAPIClientError(f"compute api HTTP {exc.code}: {body}") from exc
+            raise ComputeAPIClientError(
+                f"compute api {req.get_method()} {_request_path(req)} HTTP {exc.code}: {body}"
+            ) from exc
         except OSError as exc:
-            raise ComputeAPIClientError(f"compute api request failed: {exc}") from exc
+            raise ComputeAPIClientError(
+                f"compute api {req.get_method()} {_request_path(req)} request failed: {exc}"
+            ) from exc
 
         if not data:
             return {}
@@ -120,10 +124,16 @@ class ComputeAPIClient:
 
     def _headers(self, headers: dict[str, str]) -> dict[str, str]:
         result = dict(headers)
+        result["Connection"] = "close"
         token = self.token.strip()
         if token:
             result["Authorization"] = f"Bearer {token}"
         return result
+
+
+def _request_path(req: request.Request) -> str:
+    parsed = parse.urlsplit(req.full_url)
+    return parsed.path or req.full_url
 
 
 def run_api_once(
@@ -211,7 +221,7 @@ def _claim_and_run_once(
     include_compute_result: bool = True,
     adapter_validation_mode: str | None = None,
 ) -> dict[str, Any]:
-    claim = client.post_json(f"/api/v1/workers/{_quote(worker_id)}/claim", {})
+    claim = _claim_with_retry(client, worker_id)
     job = claim.get("job")
     if job is None:
         return {"status": "idle", "worker_id": worker_id, "claim": claim}
@@ -276,6 +286,28 @@ def _claim_and_run_once(
         "snapshot": snapshot,
         **({"compute_result": compute_result} if include_compute_result else {}),
     }
+
+
+def _claim_with_retry(client: ComputeAPIClient, worker_id: str) -> dict[str, Any]:
+    path = f"/api/v1/workers/{_quote(worker_id)}/claim"
+    last_error: ComputeAPIClientError | None = None
+    for attempt in range(3):
+        try:
+            return client.post_json(path, {})
+        except ComputeAPIClientError as exc:
+            message = str(exc)
+            if (
+                " request failed:" not in message
+                or " /api/v1/workers/" not in message
+                or "/claim request failed:" not in message
+            ):
+                raise
+            last_error = exc
+            if attempt < 2:
+                time.sleep(0.25 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+    raise ComputeAPIClientError("compute api claim request failed")
 
 
 def _loop_result_summary(result: dict[str, Any]) -> dict[str, Any]:

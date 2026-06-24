@@ -14,6 +14,7 @@ import {
   SectionTwo,
   Stories,
 } from "../components/Landing"
+import { isStandaloneRuntime } from "../shared/runtimeConfig"
 
 const landingSearchSchema = z.object({
   embed: z.coerce.string().optional(),
@@ -25,10 +26,11 @@ export const Route = createFileRoute("/midday-style")({
 })
 
 function redirectToAuth(target: "/login" | "/signup" = "/login") {
+  const nextTarget = isStandaloneRuntime() ? "/dashboard" : target
   try {
-    window.top?.location.assign(target)
+    window.top?.location.assign(nextTarget)
   } catch {
-    window.location.assign(target)
+    window.location.assign(nextTarget)
   }
 }
 

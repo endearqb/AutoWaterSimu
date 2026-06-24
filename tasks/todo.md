@@ -1,3 +1,57 @@
+# 2026-06-24 Standalone legacy landing and sidebar TODO
+
+- [x] Re-read README First context for frontend route/component standalone boundaries and current route-tree audit.
+- [x] Restore legacy landing as the standalone root without adding login/signup/user/admin/items/settings routes.
+- [x] Reuse legacy-style Sidebar shell for standalone workbench routes without static `useAuth` or legacy FastAPI client reachability.
+- [x] Route landing CTA and embedded auth redirects to `/dashboard` in standalone while preserving legacy `/login`.
+- [x] Update README First records and run focused frontend validation.
+
+## Plan
+
+- Keep this as a frontend-only visual/navigation slice.
+- Add only the public landing support routes required by the existing landing page.
+- Leave management/user pages excluded from standalone.
+
+## Review
+
+- `frontend/src/standaloneRouteTree.tsx` now uses the legacy landing at `/`, public landing support routes, and a standalone-safe legacy Sidebar workbench shell.
+- `frontend/src/components/Common/StandaloneSidebar.tsx` reuses the legacy Sidebar visual behavior without user menu, logout, `useAuth`, or FastAPI client imports.
+- Landing CTA and embedded auth redirects now go to `/dashboard` in standalone and keep `/login` in legacy mode.
+- Validation passed: frontend typecheck, standalone boundary audit, standalone five-model smoke, and a minimal Playwright visual smoke from `/` to `/dashboard` with no login/users requests.
+
+# 2026-06-23 AutoWaterSimu Next standalone RC blocker closeout TODO
+
+- [x] Re-read README First context for docs/rebuild, frontend route/services/features, Go API compute/legacyimport, release/ci scripts, tasks, and .ai change logs.
+- [x] Complete standalone route tree coverage for ASM3, UDM Models, Hybrid, and five-model navigation without adding legacy login/users/items/admin/settings routes.
+- [x] Move ASM1Slim/ASM1/ASM3/UDM Flowchart CRUD in standalone runtime to Go Workspace CanvasGraph/Scenario API and keep legacy FastAPI client dynamic-only for legacy runtime.
+- [x] Add strict Go UDM Hybrid validation endpoint and reuse it in frontend validation, config create/update, and compute preflight.
+- [x] Fix canonical legacy compute job migration hash lookup and preserve canonical job input/summary/result/artifact/error history.
+- [x] Add five-model live E2E entrypoint for browser submit through live Compute API/PostgreSQL/MinIO/worker and UI result read-back.
+- [x] Tighten standalone release gate skip semantics and worker image self-check parsing so skipped migration/image evidence cannot be mistaken for full RC green.
+- [ ] Run current HEAD hosted/full standalone RC gate with no skip/partial evidence.
+- [ ] Complete production legacy PostgreSQL read-only/full migration rehearsal with external DSN and acceptance record.
+- [ ] Complete MinIO/S3 full artifact profile live validation with external object-store credentials and acceptance record.
+- [ ] Track P1 separately: release compose/images finalization, standalone dist legacy chunk scan, worker independent venv/deps lock, and backup/restore content-level validation.
+
+## Plan
+
+- Close local P0 code blockers first, keeping changes scoped to standalone runtime, Go workspace/UDM/migration services, and release evidence handling.
+- Treat local smoke/gate success as regression evidence only; RC completion requires current HEAD hosted/full no-skip evidence plus external data/artifact rehearsals.
+- Keep FastAPI and legacy client source available as comparison/oracle material until the full RC exit criteria are met.
+
+## Review
+
+- Local code blockers have been addressed in route tree, service adapters, UDM validation, legacy migration, five-model live smoke, worker claim retry/reclaim reliability, and release gate evidence handling.
+- `scripts/ci/standalone-five-model-live.ps1` now passes on current HEAD with five UI-submitted jobs completed by the live Compute API/PostgreSQL/MinIO/worker loop and verified back through the UI job list.
+- `just standalone-release-gate-full` no longer hardcodes `localhost:5434`; callers must provide temporary `COMPUTE_API_DATABASE_URL` and `AUTOWATERSIMU_RESTORE_DATABASE_URL` before destructive migration/restore checks run.
+- `.github/workflows/next-standalone-release-gate.yml` now exists as the hosted/manual full gate entry; it should fail until current-commit legacy rehearsal and S3 profile evidence JSON are supplied.
+- `standalone-release-gate.ps1` now requires current-HEAD `standalone-five-model-live.json`, and the hosted workflow passes `tmp/standalone-artifacts` so backup/restore manifest coverage does not skip just because `COMPUTE_API_ARTIFACT_DIR` is unset.
+- `next-standalone-release-gate.yml` now wires `AUTOWATERSIMU_LEGACY_DATABASE_URL` from GitHub Secrets so the standalone migration smoke can do live dry-run instead of unavoidable skip when the secret exists.
+- `standalone-release-gate.ps1` now rejects stale migration, backup/restore, and golden summary evidence whose `commit_sha` does not match current HEAD.
+- `standalone-release-gate.ps1` now checks `schema_version` for required five-model live, legacy rehearsal, and S3 profile evidence, so a wrong evidence type cannot satisfy the full RC gate.
+- External acceptance records are still open because they require production legacy DB DSN/read-only window and MinIO/S3 credentials.
+- P1 follow-ups remain visible and intentionally separate from this P0 closeout.
+
 # 2026-06-21 AutoWaterSimu Next standalone Phase 0 TODO
 
 - [x] Re-read README First context for docs/rebuild, .ai, tasks, Go API, frontend, worker, scripts, and target standalone docs.

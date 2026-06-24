@@ -16,6 +16,7 @@ import type {
 import type { BaseModelService } from "./baseModelService"
 import { handleApiError } from "./baseModelService"
 import { standaloneComputeService } from "./standaloneComputeService"
+import { standaloneFlowchartService } from "./standaloneFlowchartService"
 
 const legacyAsm1SlimService = async () =>
   (await import("../client/sdk.gen")).Asm1SlimService
@@ -301,6 +302,13 @@ class ASM1SlimServiceImpl
     skip?: number,
     limit?: number,
   ): Promise<ASM1SlimFlowChartsPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.list(
+        "asm1slim",
+        skip,
+        limit,
+      )) as ASM1SlimFlowChartsPublic
+    }
     try {
       const service = await legacyAsm1SlimFlowchartsService()
       return await service.readAsm1SlimFlowcharts({
@@ -323,6 +331,12 @@ class ASM1SlimServiceImpl
   async createFlowchart(
     flowchart: ASM1SlimFlowChartCreate,
   ): Promise<ASM1SlimFlowChartPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.create(
+        "asm1slim",
+        flowchart,
+      )) as ASM1SlimFlowChartPublic
+    }
     try {
       const service = await legacyAsm1SlimFlowchartsService()
       return await service.createAsm1SlimFlowchart({
@@ -342,6 +356,12 @@ class ASM1SlimServiceImpl
    * @returns 流程图数据
    */
   async getFlowchart(id: string): Promise<ASM1SlimFlowChartPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.get(
+        "asm1slim",
+        id,
+      )) as ASM1SlimFlowChartPublic
+    }
     try {
       const service = await legacyAsm1SlimFlowchartsService()
       return await service.readAsm1SlimFlowchart({ id })
@@ -363,6 +383,13 @@ class ASM1SlimServiceImpl
     id: string,
     flowchart: ASM1SlimFlowChartUpdate,
   ): Promise<ASM1SlimFlowChartPublic> {
+    if (isStandaloneRuntime()) {
+      return (await standaloneFlowchartService.update(
+        "asm1slim",
+        id,
+        flowchart,
+      )) as ASM1SlimFlowChartPublic
+    }
     try {
       const service = await legacyAsm1SlimFlowchartsService()
       return await service.updateAsm1SlimFlowchart({
@@ -382,6 +409,9 @@ class ASM1SlimServiceImpl
    * @param id 流程图ID
    */
   async deleteFlowchart(id: string): Promise<any> {
+    if (isStandaloneRuntime()) {
+      return standaloneFlowchartService.delete("asm1slim", id)
+    }
     try {
       const service = await legacyAsm1SlimFlowchartsService()
       return await service.deleteAsm1SlimFlowchart({ id })

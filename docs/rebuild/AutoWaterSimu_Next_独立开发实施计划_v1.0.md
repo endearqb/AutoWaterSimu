@@ -243,7 +243,8 @@ not present:
 - Scenario simulation-check 路径使用最新 published ProcessGraph 运行 Material Balance，并把 scenario/context snapshot refs 写入 job context 与 evidence metadata。
 - 前端新增 `features/workspace/api.ts` wrapper，standalone runtime 下 `flowStore` 的保存、加载、列表、更新和归档改走 Go workspace API；legacy runtime 继续走原 FastAPI `FlowchartsService`。
 - 已验证 `go test ./...`、`cd frontend; npx tsc --noEmit`、dev/standalone compose config、OpenAPI JSON parse 和 Phase 3 diff-check。
-- 未纳入本阶段：ASM/UDM 显式 builders、Context UI、完整 route-tree zero legacy import audit、SQLite/Desktop 本地 store。
+- 2026-06-23 补充：ASM1Slim、ASM1、ASM3 和 UDM legacy Flowchart CRUD 在 standalone runtime 下改走 `standaloneFlowchartService.ts`，以 Go Workspace CanvasGraph/Scenario API 保存和读取，legacy runtime 继续动态使用 FastAPI client。
+- 未纳入本阶段：Context UI、SQLite/Desktop 本地 store。
 ## Phase 4：UDM 模型库与 Hybrid 配置（2–3 周）
 
 ### 工作内容
@@ -268,7 +269,8 @@ not present:
 - Hybrid config 持久化与 strict validation 迁入 Go service，覆盖 `udm_only` mode、selected models、model pair mappings、variable bindings、local exempt 和 parameter_hash。
 - 前端新增 `features/udm/api.ts` wrapper；`udmService.ts` 在 standalone runtime 下将 UDM model library 与 hybrid config 方法切到 Go Compute API，legacy runtime 继续使用 FastAPI client。
 - 已验证 targeted UDM Go HTTP/service tests、`go test ./internal/compute`、`frontend npx tsc --noEmit` 和 OpenAPI JSON parse / generated compute client。
-- 未纳入本阶段：UDM submit/result、mixed Hybrid worker live smoke、五模型 request builders/result/timeseries 切换；这些仍归入 Phase 5 Compute/Result Cutover。
+- 2026-06-23 补充：新增 `POST /api/v1/udm-hybrid-configs/validate`，frontend `validateHybridFlowchart`、hybrid config create/update 和 standalone compute preflight 复用同一 Go strict validation；前端不再用本地 fake pass 覆盖 Hybrid 校验。
+- 未纳入本阶段：mixed Hybrid worker live smoke；该项必须由 live worker evidence 覆盖。
 ## Phase 5：五模型 Compute 与结果读取完全切换（2–3 周）
 
 ### 工作内容
@@ -291,7 +293,9 @@ not present:
 - standalone calculation submit/status/result/timeseries/final-values/input-data/delete 已切到 Go API wrappers；legacy runtime 继续动态加载 FastAPI generated client。
 - 新增 `audit-frontend-standalone-compute-boundary.ps1` 与 `standalone-five-model-compute.spec.ts`，覆盖五类 job type、参数数组、UDM metadata/bindings 和无 legacy endpoint 调用。
 - 已验证 `cd frontend; npx tsc --noEmit`、前端 standalone compute boundary audit、`cd apps/api; go test ./...`、五类 worker fixture `--run-job` 和 mock-backed Playwright five-model smoke。
-- 未纳入本阶段：完整真实浏览器五模型 live stack、UDM hybrid validation parity、服务端 time-series 分页 endpoint；这些归入后续 hardening/release gate。
+- 2026-06-23 补充：新增 `standalone-five-model-live` gate，通过隔离 Compute API/PostgreSQL/MinIO 栈、本地主机 worker loop 与 Playwright 覆盖五模型 UI submit → worker → artifact/result/evidence → UI job list 回读 live 闭环。
+- 2026-06-23 补充：live gate 暴露 worker claim 响应丢失后 job 已进入 running 但 worker 未收到 payload 的可靠性缺口；Go Compute API 已补同一 `worker_id` active running job reclaim，worker client 只对 `/claim` 底层瞬时连接失败做有限重试，避免跳过已领取 job。
+- 未纳入本阶段：服务端 time-series 分页 endpoint；该项不阻断当前最小 RC，但需单独评估大结果读取体验。
 ## Phase 6：遗留数据迁移与 FastAPI 只读（2 周）
 
 ### 工作内容
@@ -315,7 +319,9 @@ not present:
 - 新增 `imported_legacy_history` migration，用于保存不可安全转换为 canonical standalone object 的 legacy job history。
 - 当前迁移覆盖 flowcharts → Scenario/CanvasGraph、UDM models/versions/hybrid configs → standalone UDM metadata、canonical terminal `compute_job.v1` history → `compute_jobs`；非 canonical job history 进入 `imported_legacy_history`。
 - 新增 `scripts/ci/standalone-migration-smoke.ps1` 与 `just standalone-migration-smoke`；无 DSN 时执行 Go package/command tests 并跳过 live DB dry-run。
-- 未纳入本阶段：实际生产 legacy DB 权限切 read-only、全量 old-vs-new golden comparison 和真实 fixture DB 双演练；这些需要外部 DSN/备份窗口并在 Phase 7 release gate 中执行。
+- 2026-06-23 补充：修复 canonical `compute_jobs` legacy hash 查询，改为读取 `input_json.metadata.legacy_source.checksum`；canonical job 导入同时保留 input、summary、result、artifact refs 和 error 到 `imported_legacy_history`，并补充回归测试。
+- 2026-06-23 补充：`standalone-migration-smoke.ps1` 会输出 `tmp/ci-evidence/standalone-migration-smoke.json`；缺少 live legacy/target DSN 时状态为 `passed_with_skips`，完整 release gate 必须在 `-FailOnSkip`/full 模式下把该状态视为失败。
+- 未纳入本阶段：实际生产 legacy DB 权限切 read-only、全量 old-vs-new golden comparison 和真实 fixture DB 双演练；这些需要外部 DSN/备份窗口，当前必须作为 release 外部前置项记录，不得用本地 fixture gate 冒充完成。
 ## Phase 7：Hardening、Standalone RC 与 FastAPI Runtime 退出（2 周）
 
 ### 工作内容
@@ -337,10 +343,20 @@ not present:
 
 - 新增 `scripts/release/standalone-release-gate.ps1`，聚合 standalone compose service boundary、Go API tests、frontend typecheck、Compute API boundary audit、frontend standalone compute boundary audit、legacy migration smoke、five-model smoke、backup/restore smoke、migration rollback smoke、standalone live API smoke 和 golden summary/refresh evidence。
 - 新增 `scripts/ci/standalone-five-model-smoke.ps1`，以五类 `compute_job.v1` worker fixture 覆盖 Material Balance、ASM1Slim、ASM1、ASM3 和 UDM，并运行 standalone five-model Playwright mock smoke。
+- 2026-06-23 补充：新增 `scripts/ci/standalone-five-model-live.ps1` 与 `just standalone-five-model-live`，启动隔离 Compute API/PostgreSQL/MinIO 栈和 worker loop，验证五模型浏览器提交、真实 worker 完成和 result/artifact 回读。
 - 新增 `scripts/ci/standalone-backup-restore-smoke.ps1`，默认执行本地 artifact checksum backup/restore fixture；`-RunLive` 且提供 `COMPUTE_API_DATABASE_URL` 时执行 PostgreSQL dump/list，额外提供 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 时才向显式临时库 restore。
-- 新增 `just standalone-five-model-smoke`、`just standalone-backup-restore-smoke`、`just standalone-release-gate`、`just standalone-browser-smoke` 和 `just standalone-golden`。
-- `standalone-release-gate.ps1 -SkipLong` 在无 live compose、无临时 DB DSN、未显式构建镜像时记录 `passed_with_skips`，不得解释为完整 RC 全绿；完整 RC 需显式补跑 `-RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke`，且所有 evidence 无 skipped/partial。
+- 新增 `just standalone-five-model-smoke`、`just standalone-five-model-live`、`just standalone-backup-restore-smoke`、`just standalone-release-image`、`just standalone-release-gate`、`just standalone-release-gate-full`、`just standalone-browser-smoke` 和 `just standalone-golden`。
+- `standalone-release-gate.ps1 -SkipLong` 在无 live compose、无临时 DB DSN、未显式构建镜像时记录 `passed_with_skips`，不得解释为完整 RC 全绿；完整 RC 使用 `just standalone-release-gate-full` 或显式补跑 `-RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke`，且所有 evidence 无 skipped/partial。
+- `just standalone-release-gate-full` 不再内置默认 PostgreSQL DSN；调用方必须显式设置 `COMPUTE_API_DATABASE_URL` 与 `AUTOWATERSIMU_RESTORE_DATABASE_URL` 指向临时库，避免 migration rollback 或 restore 误打生产 legacy 库、dev 库或正在运行的 standalone 元数据库。
+- `standalone-release-gate.ps1` 会要求 `standalone-five-model-live.json` 是当前 HEAD 的 passed evidence；完整 gate 不再只依赖 mock-backed five-model smoke。
+- `standalone-release-gate.ps1` 会要求 migration、backup/restore 和 golden summary evidence 的 `commit_sha` 匹配当前 HEAD；旧 commit 的本地通过记录不能复用为完整 RC 证据。
+- `-RunReleaseImageSmoke` 必须解析 worker `--self-check` JSON，并要求 dependency imports、scientific deps、artifact temp dir 与 `minimal_job_status.ok=true`；只看进程退出码不足以满足 release image smoke。
 - FastAPI 退出仍以运行路径 evidence 为准：当前发布 gate 默认检查 standalone compose 不包含 backend、frontend standalone compute audit 不允许五模型静态 legacy calculation SDK 回流；legacy `backend/` 源码保留为 archived/oracle，不进入 standalone compose。
+- 2026-06-23 补充：完整 RC 退出条件收紧为“当前 HEAD 的 hosted/full gate 无 skip 通过”。在该证据存在前，不删除 FastAPI 源码或 legacy client，不把本分支视为最终 canonical main merge。
+- 2026-06-23 补充：新增 `.github/workflows/next-standalone-release-gate.yml` 作为 hosted/full gate 入口；该 workflow 只接受当前 commit 的外部验收 JSON 输入，并从 `AUTOWATERSIMU_LEGACY_DATABASE_URL` secret 读取 legacy dry-run DSN，缺失或 commit 不匹配时 release gate 必须失败。
+- 2026-06-23 补充：`standalone-release-gate.ps1` 会校验必需 evidence 的 `schema_version`；five-model live、production legacy rehearsal 和 MinIO/S3 artifact profile live 记录必须分别使用 `autowatersimu_next_standalone_five_model_live_smoke.v1`、`autowatersimu_next_standalone_legacy_production_rehearsal.v1` 和 `autowatersimu_next_standalone_s3_artifact_profile_live.v1`，否则即使 `status=passed` 也按缺口处理。
+- 2026-06-23 外部验收记录：生产 legacy PostgreSQL 只读/全量迁移演练、old-vs-new 对比、MinIO/S3 full artifact profile live validation 仍需要外部 DSN、对象存储凭据和执行窗口；这些是 P0 发布验收缺口，不得以本地 fixture 替代。
+- 2026-06-23 P1 跟踪：release compose/images 精简、standalone dist legacy chunk scan、worker 独立 venv/deps lock、backup/restore 内容级校验继续单列跟踪，不应阻塞当前 P0 修复提交，但必须在 RC 后续清单中保持可见。
 # 6. Sprint 计划
 
 | Sprint | 目标 | 主要交付 | 演示 |
@@ -465,6 +481,8 @@ Allowed findings: migration/oracle/archive-only directories documented in allowl
 - `standalone-five-model-live`：五 job type 最小场景。
 - `standalone-migration-smoke`：空库 up/check/down 与 legacy fixture import。
 - `standalone-release-image-smoke`：构建镜像后断网启动。
+- `standalone-release-gate-full`：完整 RC 入口，必须在当前 HEAD、hosted/full 环境、无 skip/partial evidence 下通过；本地 `-SkipLong` 只能作为快速回归。
+- `next-standalone-release-gate.yml`：hosted/manual 完整 RC 入口，上传 `tmp/ci-evidence` 和 `tmp/release-evidence`。
 ## 10.3 Release Gate 命令目标
 
 ```powershell
@@ -476,6 +494,7 @@ just standalone-migration-smoke
 just standalone-golden
 just standalone-backup-restore-smoke
 just standalone-release-gate
+just standalone-release-gate-full
 ```
 
 # 11. 本地开发与 CI/CD
@@ -527,6 +546,8 @@ just standalone-release-gate
 | Data | legacy migration verify 通过；旧库 read-only。 |
 | Testing | standalone live + five model + golden + backup/restore 全绿。 |
 | Documentation | README/development/deployment 只描述 standalone 主路径。 |
+
+2026-06-23 退出约束：在当前 HEAD 的 hosted/full gate 无 skip 通过、production legacy read-only/full rehearsal 完成、MinIO/S3 full artifact profile live validation 完成之前，不删除 FastAPI/legacy client，也不把 standalone RC 标记为最终 canonical main merge。
 
 # 13. 团队与 RACI
 

@@ -1,0 +1,156 @@
+name: AutoWaterSimu Next Standalone Release Gate
+
+concurrency:
+  group: next-standalone-release-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+'on':
+  workflow_dispatch:
+    inputs:
+      legacy_rehearsal_evidence_json:
+        description: "Optional standalone-legacy-production-rehearsal.json content for this commit"
+        required: false
+        default: ""
+      s3_profile_evidence_json:
+        description: "Optional standalone-s3-artifact-profile-live.json content for this commit"
+        required: false
+        default: ""
+  workflow_call:
+    inputs:
+      legacy_rehearsal_evidence_json:
+        type: string
+        required: false
+        default: ""
+      s3_profile_evidence_json:
+        type: string
+        required: false
+        default: ""
+    secrets:
+      AUTOWATERSIMU_LEGACY_DATABASE_URL:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  standalone-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: autowatersimu
+          POSTGRES_PASSWORD: autowatersimu
+          POSTGRES_DB: compute_rc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U autowatersimu -d compute_rc"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+          enable-cache: true
+
+      - name: Install backend Python dependencies
+        run: uv sync
+        working-directory: backend
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Chromium browser
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Prepare temporary restore database
+        env:
+          PGPASSWORD: autowatersimu
+        run: createdb -h 127.0.0.1 -U autowatersimu restore_rc
+
+      - name: Write external acceptance evidence inputs
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path tmp/ci-evidence | Out-Null
+          $legacyEvidence = @'
+          ${{ inputs.legacy_rehearsal_evidence_json }}
+          '@
+          $s3Evidence = @'
+          ${{ inputs.s3_profile_evidence_json }}
+          '@
+          $legacyEvidence = $legacyEvidence.Trim()
+          $s3Evidence = $s3Evidence.Trim()
+          if (-not [string]::IsNullOrWhiteSpace($legacyEvidence)) {
+            Set-Content -Path tmp/ci-evidence/standalone-legacy-production-rehearsal.json -Value $legacyEvidence -Encoding UTF8
+          }
+          if (-not [string]::IsNullOrWhiteSpace($s3Evidence)) {
+            Set-Content -Path tmp/ci-evidence/standalone-s3-artifact-profile-live.json -Value $s3Evidence -Encoding UTF8
+          }
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Build standalone worker image
+        run: docker build -f services/simulation-worker/Dockerfile -t autowatersimu-standalone-simulation-worker:latest .
+
+      - name: Run standalone five-model live evidence
+        shell: pwsh
+        run: ./scripts/ci/standalone-five-model-live.ps1
+
+      - name: Start standalone compose
+        run: |
+          mkdir -p tmp/standalone-artifacts
+          docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml up -d --build
+
+      - name: Run standalone release gate
+        shell: pwsh
+        env:
+          AUTOWATERSIMU_LEGACY_DATABASE_URL: ${{ secrets.AUTOWATERSIMU_LEGACY_DATABASE_URL }}
+          COMPUTE_API_DATABASE_URL: postgres://autowatersimu:autowatersimu@127.0.0.1:5432/compute_rc?sslmode=disable
+          AUTOWATERSIMU_RESTORE_DATABASE_URL: postgres://autowatersimu:autowatersimu@127.0.0.1:5432/restore_rc?sslmode=disable
+          COMPUTE_API_ARTIFACT_DIR: tmp/standalone-artifacts
+        run: ./scripts/release/standalone-release-gate.ps1 -RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke
+
+      - name: Stop standalone compose
+        if: always()
+        run: docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml down -v --remove-orphans
+
+      - name: Upload standalone release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-standalone-release-gate-evidence
+          path: |
+            tmp/ci-evidence
+            tmp/release-evidence
+          include-hidden-files: true

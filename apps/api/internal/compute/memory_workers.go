@@ -32,6 +32,32 @@ func (store *MemoryStore) FindWorkerByID(_ context.Context, workerID string) (*W
 func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, leaseExpiresAt time.Time, filter ListFilter) (*JobRecord, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	now := time.Now().UTC()
+	for _, job := range store.jobs {
+		if job.Status != StatusRunning || job.WorkerID != worker.WorkerID || job.LeaseExpiresAt == nil || job.LeaseExpiresAt.Before(now) {
+			continue
+		}
+		if !recordMatchesListFilterDataScope(filter, job.TenantID, job.ProjectID, job.SiteID) {
+			continue
+		}
+		before := job
+		mutation, ok := domainjobs.NewHeartbeatMutation(domainjobs.HeartbeatRecord{
+			JobID:    job.JobID,
+			Status:   job.Status,
+			WorkerID: job.WorkerID,
+		}, worker.WorkerID, now, leaseExpiresAt)
+		if ok {
+			applyHeartbeatMutationToJobRecord(&job, mutation)
+			store.jobs[job.JobID] = job
+			store.appendEventLocked(EventRecord{
+				JobID:     job.JobID,
+				EventType: mutation.EventType,
+				EventJSON: workerHeartbeatEventJSON(ctx, mutation.HeartbeatAt, before, job, mutation.WorkerID),
+				CreatedAt: mutation.HeartbeatAt,
+			})
+		}
+		return &job, nil
+	}
 	var selected *JobRecord
 	var selectedClaim *domainjobs.ClaimRecord
 	for _, job := range store.jobs {
@@ -69,7 +95,6 @@ func (store *MemoryStore) ClaimNext(ctx context.Context, worker WorkerRecord, le
 	if selected == nil {
 		return nil, nil
 	}
-	now := time.Now().UTC()
 	mutation := domainjobs.NewClaimMutation(*selectedClaim, worker.WorkerID, now, leaseExpiresAt)
 	applyClaimMutationToJobRecord(selected, mutation)
 	store.jobs[selected.JobID] = *selected

@@ -16,6 +16,7 @@ import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
 import { FaBars, FaTimes } from "react-icons/fa"
 import { useI18n, useLocale } from "../../i18n"
+import { isStandaloneRuntime } from "../../shared/runtimeConfig"
 
 const MotionBox = motion.create(Box)
 const MotionVStack = motion.create(VStack)
@@ -47,6 +48,7 @@ export const MiddayHead = () => {
   const textColor = "gray.700"
   const isZh = language === "zh"
   const isEn = language === "en"
+  const authTarget = isStandaloneRuntime() ? "/dashboard" : "/login"
 
   useEffect(() => {
     const setPixelRatio = () => {
@@ -244,7 +246,7 @@ export const MiddayHead = () => {
               _active={{}}
               _focus={{}}
             >
-              <Link to="/login">{t("landing.nav.getStarted")}</Link>
+              <Link to={authTarget}>{t("landing.nav.getStarted")}</Link>
             </Button>
           </HStack>
         </HStack>
@@ -386,7 +388,7 @@ export const MiddayHead = () => {
                 cursor="pointer"
                 onClick={handleToggleMenu}
               >
-                <Link to="/login">{t("landing.nav.getStarted")}</Link>
+                <Link to={authTarget}>{t("landing.nav.getStarted")}</Link>
               </MotionText>
             </MotionVStack>
           </Box>

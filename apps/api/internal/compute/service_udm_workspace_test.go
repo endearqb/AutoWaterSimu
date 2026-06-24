@@ -94,7 +94,21 @@ func TestUDMHybridConfigWorkspaceCRUDAndValidation(t *testing.T) {
 			},
 		},
 	}
-	rec := serveWithToken(t, server, http.MethodPost, "/api/v1/udm-hybrid-configs", "dev-public-token", encodeMap(t, map[string]any{
+	rec := serveWithToken(t, server, http.MethodPost, "/api/v1/udm-hybrid-configs/validate", "dev-public-token", encodeMap(t, map[string]any{
+		"hybrid_config": hybridConfig,
+	}))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("hybrid config validate failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var validation UDMHybridValidationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &validation); err != nil {
+		t.Fatal(err)
+	}
+	if !validation.IsValid || validation.ParameterHash == "" || validation.NormalizedHybridConfig["mode"] != "udm_only" {
+		t.Fatalf("valid hybrid config should pass strict validation, got %#v", validation)
+	}
+
+	rec = serveWithToken(t, server, http.MethodPost, "/api/v1/udm-hybrid-configs", "dev-public-token", encodeMap(t, map[string]any{
 		"name":          "Phase 4 Hybrid",
 		"hybrid_config": hybridConfig,
 	}))

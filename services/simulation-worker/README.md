@@ -44,6 +44,7 @@ Packaged sidecar build/smoke 由 `apps/desktop/packaging/build-packaged-sidecar.
 7. `simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 是当前独立 model job type；静态合同 fixture 覆盖单 reactor UDM，worker tests 另以生成式用例覆盖 UDM Hybrid 多模型映射和 Petersen 教程 baseline。
 8. `model_run.parameter_hash` 对纯 material balance 继续哈希 `payload.parameters`；对 ASM/UDM model job type 必须同时纳入节点模型参数、UDM snapshot 和 variable bindings。
 9. Standalone worker image 应把 Python dependencies 安装在 build 阶段；compose command 不应在容器启动时 pip install。
+10. HTTP client 只允许对 `/claim` 的底层瞬时连接失败做有限重试；artifact upload、succeed/fail 等有副作用请求不得自动重放。Go Compute API 必须配合同一 `worker_id` 的 active running job reclaim 语义，避免 claim 已提交但响应丢失后跳过该 job。
 
 ## 4. 对外接口
 

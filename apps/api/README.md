@@ -13,7 +13,7 @@
 - benchmark case metadata and queueing for model governance smoke。
 - benchmark run execution history metadata。
 - standalone scenario, canvas graph, and context snapshot workspace metadata for Scenario/Graph persistence。
-- standalone UDM model library and UDM hybrid config metadata for no-auth local runs。
+- standalone UDM model library, UDM hybrid config metadata, and strict hybrid config validation for no-auth local runs。
 - process graph registry and ProcessGraph-to-SimulationInput resolution for simulation checks。
 - simulation input registry for reference-based simulation checks。
 - evidence package export。

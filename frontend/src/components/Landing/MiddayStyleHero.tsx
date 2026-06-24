@@ -13,12 +13,14 @@ import { motion } from "framer-motion"
 import { useState } from "react"
 import { FaArrowRight } from "react-icons/fa"
 import { useI18n } from "../../i18n"
+import { isStandaloneRuntime } from "../../shared/runtimeConfig"
 import { Metrics } from "./Metrics"
 import { WordAnimation } from "./WordAnimation"
 
 export const MiddayStyleHero = () => {
   const { t } = useI18n()
   const [isLoaded, setIsLoaded] = useState(false)
+  const authTarget = isStandaloneRuntime() ? "/dashboard" : "/login"
 
   return (
     <Box
@@ -99,7 +101,7 @@ export const MiddayStyleHero = () => {
                 </Button>
               </Link>
 
-              <Link to="/login">
+              <Link to={authTarget}>
                 <Button
                   colorScheme="blue"
                   h="44px"

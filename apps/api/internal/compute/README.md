@@ -7,13 +7,13 @@
 本目录负责：
 
 - Job create/get/list/cancel/result/events。
-- Worker register/claim/heartbeat/artifact/succeed/fail。
+- Worker register/claim/heartbeat/artifact/succeed/fail；同一 worker 对未过期 running job 再次 claim 时返回该 job 并刷新 lease，用于恢复 claim 响应丢失后的 worker 处理。
 - Model catalog snapshot registration/read/list endpoints with tenant/project/site scoped reads for persisted snapshots, scoped registration/status mutation checks, default parameter set status transitions, read-only default parameter set promotion plans, evidence-backed default parameter set approval promotion, and benchmark case job scheduling。
 - Model benchmark case metadata and queueing for governance smoke。
 - Benchmark run execution history persistence/list/read endpoints。
 - Model run persistence plus read/list lookup。
 - Standalone Scenario、CanvasGraph、ContextSnapshot workspace CRUD, CanvasGraph publish-to-ProcessGraph, and Scenario simulation-check run paths。
-- Standalone UDM model library CRUD、definition validation、seed templates and UDM hybrid config CRUD metadata。
+- Standalone UDM model library CRUD、definition validation、seed templates、UDM hybrid config CRUD metadata and strict hybrid config validation。
 - Process graph registry and ProcessGraph-to-SimulationInput resolution for simulation checks。
 - Simulation input registry used by reference-based simulation checks。
 - Evidence package export from completed job metadata。
@@ -36,6 +36,7 @@
 - Token-scoped tenant/project/site read filtering for job list/get, process_graph get, simulation_input get, draft confirmation get / constraint plan / promotion, persisted model catalog root/model/snapshot reads, model_run get / job-filtered list, benchmark_run get / job-filtered list, artifact download, evidence governance model catalog selection, and evidence-ref process_graph object dereference for scoped jobs; plus direct job create, direct job cancel, artifact retention sweep candidate filtering, worker claim candidate filtering, worker heartbeat/artifact/result completion job mutation, confirm-draft record persistence, result explanation submit/review/publish, direct simulation-check create, draft promotion job create, benchmark schedule-run job create, model catalog registration/status, benchmark_run registration, and explicit process_graph/simulation_input registry POST mutation data-scope checks。
 - Selected mutation audit event envelopes for job create/queue, job cancel/timeout, worker registration and worker claim/heartbeat/artifact upload/result completion, draft confirmation, draft promotion / benchmark schedule-run job create/queue, artifact retention delete/archive, result explanation submit/review/publish, non-job-scoped model governance mutations, and simulation registry registration mutations。
 - Worker claim/heartbeat/artifact upload/succeed/fail mutation subroutes must reject non-POST methods before auth/service calls so method mismatches cannot mutate job, artifact, or audit state。
+- Worker claim must be retry-safe for the same `worker_id`: if the previous claim committed the job to `running` but the client lost the response, a repeated claim with the same worker returns that active job instead of advancing to another queued job.
 - Job get/events/result/evidence/production-readiness/evidence-ref/cancel/result-explanations routes and non-job contract, simulation registry/check, artifact, worker registration, model catalog, model run, benchmark run, UDM model, and UDM hybrid config routes must reject undeclared HTTP methods before auth/service calls so method mismatches cannot trigger auth, lookup, mutation, or audit-adjacent workflow calls。
 - Contract validation、canonical payload hash、idempotency/conflict。
 - Metadata store abstraction and PostgreSQL implementation。

@@ -5,6 +5,7 @@ import type {
   UDMHybridConfigCreateRequest,
   UDMHybridConfigPublic,
   UDMHybridConfigUpdateRequest,
+  UDMHybridValidationResponse,
   UDMModelCreateFromTemplateRequest,
   UDMModelCreateRequest,
   UDMModelDefinitionDraft,
@@ -87,6 +88,12 @@ export const computeUdmApi = {
 
   deleteModel(modelId: string): Promise<unknown> {
     return DefaultService.deleteUdmModel({ modelId })
+  },
+
+  validateHybridConfig(requestBody: object): Promise<UDMHybridValidationResponse> {
+    return DefaultService.validateUdmHybridConfig({
+      requestBody: requestBody as Record<string, unknown>,
+    })
   },
 
   listHybridConfigs(

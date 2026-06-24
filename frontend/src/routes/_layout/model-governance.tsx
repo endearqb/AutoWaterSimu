@@ -28,10 +28,53 @@ import type {
   ModelCatalogRecord,
   ModelParameterSetPromotionPlan,
 } from "@/shared/api/computeTypes"
+import { useI18n } from "@/i18n"
 
 export const Route = createFileRoute("/_layout/model-governance")({
   component: ModelGovernance,
 })
+
+const zhText: Record<string, string> = {
+  Approved: "已批准",
+  Benchmarks: "基准案例",
+  Catalog: "目录",
+  "Catalog snapshots": "目录快照",
+  Created: "创建时间",
+  "Current model catalog": "当前模型目录",
+  "Default set": "默认参数集",
+  "Default status": "默认状态",
+  "First page": "第一页",
+  Loading: "加载中",
+  Model: "模型",
+  "Model governance": "模型治理",
+  Models: "模型",
+  "Next page": "下一页",
+  "No catalog models are available.": "暂无可用模型目录。",
+  "No persisted catalog snapshots are available.": "暂无持久化目录快照。",
+  "Loading persisted catalog snapshots.": "正在加载持久化目录快照。",
+  "Parameter hash": "参数哈希",
+  "Parameter templates": "参数模板",
+  "Payload hash": "Payload 哈希",
+  "Persisted snapshots": "持久化快照",
+  Promotion: "晋级状态",
+  "Promotable sets": "可晋级参数集",
+  Ready: "就绪",
+  "Read-only catalog, parameter set, benchmark case, and persisted snapshot history.":
+    "只读展示模型目录、参数集、基准案例与持久化快照历史。",
+  Refresh: "刷新",
+  "Set status": "参数集状态",
+  Source: "来源",
+  Status: "状态",
+  Version: "版本",
+  Versions: "版本",
+  "Persisted history only; built-in fallback catalogs are not listed as stored snapshots.":
+    "仅显示持久化历史；内置回退目录不会列为已存储快照。",
+  templates: "个模板",
+  versions: "个版本",
+}
+
+const textFor = (language: string, text: string) =>
+  language === "zh" ? (zhText[text] ?? text) : text
 
 const formatDateTime = (value: unknown) => {
   if (!value) {
@@ -167,11 +210,13 @@ function CatalogVersionTable({
   isFetching,
   promotionPlans,
   promotionPlansFetching,
+  t,
 }: {
   catalog: ModelCatalog | undefined
   isFetching: boolean
   promotionPlans: Record<string, ModelParameterSetPromotionPlan>
   promotionPlansFetching: boolean
+  t: (text: string) => string
 }) {
   const rows =
     catalog?.models.flatMap((model) =>
@@ -195,29 +240,29 @@ function CatalogVersionTable({
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
       <Flex justify="space-between" align="center" gap={3} wrap="wrap" mb={3}>
-        <Heading size="md">Current model catalog</Heading>
+        <Heading size="md">{t("Current model catalog")}</Heading>
         <Text fontSize="sm" color="fg.muted">
-          {isFetching ? "Loading" : `${rows.length} versions`}
+          {isFetching ? t("Loading") : `${rows.length} ${t("versions")}`}
         </Text>
       </Flex>
 
       {rows.length === 0 ? (
         <Text color="fg.muted" fontSize="sm">
-          No catalog models are available.
+          {t("No catalog models are available.")}
         </Text>
       ) : (
         <Box overflowX="auto">
           <Table.Root size="sm">
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>Model</Table.ColumnHeader>
-                <Table.ColumnHeader>Version</Table.ColumnHeader>
-                <Table.ColumnHeader>Status</Table.ColumnHeader>
-                <Table.ColumnHeader>Default set</Table.ColumnHeader>
-                <Table.ColumnHeader>Set status</Table.ColumnHeader>
-                <Table.ColumnHeader>Benchmarks</Table.ColumnHeader>
-                <Table.ColumnHeader>Promotion</Table.ColumnHeader>
-                <Table.ColumnHeader>Parameter hash</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Model")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Version")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Status")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Default set")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Set status")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Benchmarks")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Promotion")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("Parameter hash")}</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -238,7 +283,7 @@ function CatalogVersionTable({
                   <Table.Cell maxW="220px" truncate>
                     {row.parameterSet}
                     <Text fontSize="xs" color="fg.muted">
-                      {row.templateCount} templates
+                      {row.templateCount} {t("templates")}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
@@ -297,16 +342,18 @@ function snapshotVersionSummary(snapshot: ModelCatalogRecord) {
 function SnapshotTable({
   items,
   isFetching,
+  t,
 }: {
   items: ModelCatalogRecord[]
   isFetching: boolean
+  t: (text: string) => string
 }) {
   if (items.length === 0) {
     return (
       <Text color="fg.muted" fontSize="sm">
         {isFetching
-          ? "Loading persisted catalog snapshots."
-          : "No persisted catalog snapshots are available."}
+          ? t("Loading persisted catalog snapshots.")
+          : t("No persisted catalog snapshots are available.")}
       </Text>
     )
   }
@@ -316,13 +363,13 @@ function SnapshotTable({
       <Table.Root size="sm">
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>Created</Table.ColumnHeader>
-            <Table.ColumnHeader>Catalog</Table.ColumnHeader>
-            <Table.ColumnHeader>Models</Table.ColumnHeader>
-            <Table.ColumnHeader>Versions</Table.ColumnHeader>
-            <Table.ColumnHeader>Default status</Table.ColumnHeader>
-            <Table.ColumnHeader>Source</Table.ColumnHeader>
-            <Table.ColumnHeader>Payload hash</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Created")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Catalog")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Models")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Versions")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Default status")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Source")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("Payload hash")}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -373,6 +420,8 @@ function SnapshotTable({
 }
 
 function ModelGovernance() {
+  const { language } = useI18n()
+  const t = (text: string) => textFor(language, text)
   const [cursor, setCursor] = useState("")
   const queryClient = useQueryClient()
 
@@ -410,14 +459,15 @@ function ModelGovernance() {
     catalogQuery.error || snapshotQuery.error || promotionPlansQuery.error
 
   return (
-    <Container maxW="7xl" py={8}>
+    <Container maxW="full" py={8}>
       <Stack gap={6}>
         <Flex justify="space-between" align="flex-start" gap={4} wrap="wrap">
           <Box>
-            <Heading size="lg">Model governance</Heading>
+            <Heading size="lg">{t("Model governance")}</Heading>
             <Text mt={1} color="fg.muted">
-              Read-only catalog, parameter set, benchmark case, and persisted
-              snapshot history.
+              {t(
+                "Read-only catalog, parameter set, benchmark case, and persisted snapshot history.",
+              )}
             </Text>
           </Box>
           <Button
@@ -430,7 +480,7 @@ function ModelGovernance() {
             }}
           >
             <FiRefreshCw />
-            Refresh
+            {t("Refresh")}
           </Button>
         </Flex>
 
@@ -450,22 +500,22 @@ function ModelGovernance() {
           }}
           gap={3}
         >
-          <MetricTile label="Catalog" value="default" />
-          <MetricTile label="Models" value={catalogSummary.models} />
-          <MetricTile label="Versions" value={catalogSummary.versions} />
+          <MetricTile label={t("Catalog")} value="default" />
+          <MetricTile label={t("Models")} value={catalogSummary.models} />
+          <MetricTile label={t("Versions")} value={catalogSummary.versions} />
           <MetricTile
-            label="Parameter templates"
+            label={t("Parameter templates")}
             value={catalogSummary.parameterTemplates}
           />
           <MetricTile
-            label="Benchmark cases"
+            label={t("Benchmark cases")}
             value={catalogSummary.benchmarkCases}
           />
           <MetricTile
-            label="Persisted snapshots"
+            label={t("Persisted snapshots")}
             value={snapshotQuery.data?.total_estimate}
           />
-          <MetricTile label="Promotable sets" value={promotableSets} />
+          <MetricTile label={t("Promotable sets")} value={promotableSets} />
         </Grid>
 
         <CatalogVersionTable
@@ -473,6 +523,7 @@ function ModelGovernance() {
           isFetching={catalogQuery.isFetching}
           promotionPlans={promotionPlans}
           promotionPlansFetching={promotionPlansQuery.isFetching}
+          t={t}
         />
 
         <Box borderWidth="1px" borderRadius="md" p={4}>
@@ -484,10 +535,11 @@ function ModelGovernance() {
             mb={3}
           >
             <Box>
-              <Heading size="md">Catalog snapshots</Heading>
+              <Heading size="md">{t("Catalog snapshots")}</Heading>
               <Text fontSize="sm" color="fg.muted">
-                Persisted history only; built-in fallback catalogs are not
-                listed as stored snapshots.
+                {t(
+                  "Persisted history only; built-in fallback catalogs are not listed as stored snapshots.",
+                )}
               </Text>
             </Box>
             <HStack>
@@ -497,7 +549,7 @@ function ModelGovernance() {
                 disabled={!cursor}
                 onClick={() => setCursor("")}
               >
-                First page
+                {t("First page")}
               </Button>
               <Button
                 size="sm"
@@ -507,7 +559,7 @@ function ModelGovernance() {
                   setCursor(snapshotQuery.data?.next_cursor ?? "")
                 }}
               >
-                Next page
+                {t("Next page")}
                 <FiChevronRight />
               </Button>
             </HStack>
@@ -515,6 +567,7 @@ function ModelGovernance() {
           <SnapshotTable
             items={snapshotItems}
             isFetching={snapshotQuery.isFetching}
+            t={t}
           />
         </Box>
       </Stack>

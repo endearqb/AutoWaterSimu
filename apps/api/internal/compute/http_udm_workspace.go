@@ -218,6 +218,22 @@ func (server *Server) udmHybridConfigs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (server *Server) udmHybridConfigValidate(w http.ResponseWriter, r *http.Request) {
+	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodPost) {
+		return
+	}
+	if _, err := server.auth.Principal(r, "job:read"); err != nil {
+		WriteError(w, err)
+		return
+	}
+	var request map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		WriteError(w, ValidationError("UDM hybrid validation JSON is invalid"))
+		return
+	}
+	WriteJSON(w, http.StatusOK, validateUDMHybridConfig(request, true))
+}
+
 func (server *Server) udmHybridConfigByID(w http.ResponseWriter, r *http.Request) {
 	if rejectUndeclaredHTTPMethod(w, r.Method, http.MethodGet, http.MethodPatch, http.MethodDelete) {
 		return

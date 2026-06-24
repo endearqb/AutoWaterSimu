@@ -166,8 +166,10 @@ just dev-detached
 just standalone-up
 just standalone-smoke
 just standalone-five-model-smoke
+just standalone-five-model-live
 just standalone-backup-restore-smoke
 just standalone-release-gate
+just standalone-release-gate-full
 just check-deps
 just check-ontology
 just check
@@ -211,6 +213,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-depende
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\worker-adapter-strict-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-five-model-live.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-backup-restore-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\integration-smoke.ps1 -StartCompose
@@ -237,11 +240,18 @@ cd apps\api; go test ./...
 cd frontend; npx tsc --noEmit
 ```
 
-Standalone RC is only complete when the full gate runs without skips:
+Standalone RC is only complete when the current HEAD full gate runs without skips, including live legacy migration DSNs, backup/restore live checks, release image self-check, and five-model live evidence:
 
 ```powershell
+$env:COMPUTE_API_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:55432/compute_rc?sslmode=disable"
+$env:AUTOWATERSIMU_RESTORE_DATABASE_URL="postgres://autowatersimu:autowatersimu@localhost:55432/restore_rc?sslmode=disable"
+just standalone-release-gate-full
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -RunComposeSmoke -RunBackupRestoreLive -RunPostgresMigrationSmoke -RunReleaseImageSmoke
 ```
+
+Hosted evidence entry: `.github/workflows/next-standalone-release-gate.yml`. It requires current-commit external acceptance JSON for production legacy rehearsal (`schema_version=autowatersimu_next_standalone_legacy_production_rehearsal.v1`) and MinIO/S3 artifact profile validation (`schema_version=autowatersimu_next_standalone_s3_artifact_profile_live.v1`), plus the `AUTOWATERSIMU_LEGACY_DATABASE_URL` GitHub Secret for live migration dry-run; missing records fail the gate.
+
+Until that no-skip evidence exists, keep FastAPI/legacy client code as comparison/oracle material and do not treat the standalone branch as the final canonical main merge.
 
 The long-term architecture entry for Next lives under [docs/architecture](./docs/architecture/README.md).
 The source-mounted Next local stack candidate is [docker-compose.dev.yml](./docker-compose.dev.yml).

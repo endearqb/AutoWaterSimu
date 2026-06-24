@@ -66,3 +66,37 @@ func TestCanonicalComputeJobDetectionRequiresSchemaAndJobType(t *testing.T) {
 		t.Fatal("missing job_type should not be canonical")
 	}
 }
+
+func TestLegacyHashExpressionUsesComputeJobInputMetadata(t *testing.T) {
+	if got := legacyHashExpression("compute_jobs"); got != "input_json->'metadata'->'legacy_source'->>'checksum'" {
+		t.Fatalf("compute_jobs hash expression must read input metadata, got %s", got)
+	}
+	if got := legacyHashExpression("canvas_graphs"); got != "metadata_json->'legacy_source'->>'checksum'" {
+		t.Fatalf("metadata-backed tables should use metadata_json hash, got %s", got)
+	}
+}
+
+func TestLegacyJobHistoryPayloadPreservesResultAndSummary(t *testing.T) {
+	record := JobRecord{
+		InputData:    json.RawMessage(`{"schema_version":"compute_job.v1","job_type":"simulation.udm.v1"}`),
+		SummaryData:  json.RawMessage(`{"status":"legacy-summary"}`),
+		ResultData:   json.RawMessage(`{"artifacts":[{"artifact_id":"legacy-artifact"}],"series":[1,2,3]}`),
+		ErrorMessage: "legacy error",
+	}
+	payload, result := legacyJobHistoryPayloads(record)
+	var payloadObj map[string]any
+	var resultObj map[string]any
+	if err := json.Unmarshal(payload, &payloadObj); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(result, &resultObj); err != nil {
+		t.Fatal(err)
+	}
+	if payloadObj["summary_data"].(map[string]any)["status"] != "legacy-summary" {
+		t.Fatalf("summary_data was not preserved: %#v", payloadObj)
+	}
+	resultData := resultObj["result_data"].(map[string]any)
+	if len(resultData["artifacts"].([]any)) != 1 || resultObj["error_message"] != "legacy error" {
+		t.Fatalf("result/artifact/error data was not preserved: %#v", resultObj)
+	}
+}

@@ -15,6 +15,7 @@
 - Manual dispatch / reusable 下的 current-flow live smoke evidence 编排。
 - Manual dispatch / reusable 下的 security smoke evidence 编排。
 - Scheduled / manual nightly evidence 编排。
+- Manual dispatch / reusable 下的 Standalone full RC gate evidence 编排。
 - Manual dispatch 下的 unsigned Desktop release artifact 构建、workflow artifact 上传与下载校验编排。
 - Release gate workflow 下的 fixture-backed artifact download verifier smoke 编排。
 - Manual dispatch 下的 PostgreSQL migration up/down smoke CI 编排。
@@ -40,6 +41,7 @@
 4. Workflow artifact 可上传 unsigned release artifacts 和 evidence，并在 manual release artifact 构建后下载校验 artifact 内容；不得上传 signing key、证书、更新通道密钥或发布令牌。
 5. GitHub Release publication、installer signing 和 auto update 均为 post-P0 policy-driven work；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
 6. PostgreSQL migration up/down smoke 必须使用临时测试数据库；不得指向生产或共享环境。
+7. Standalone full RC gate workflow 只接受外部验收 JSON 作为输入并写入 evidence 文件；生产 legacy dry-run DSN 必须来自 `AUTOWATERSIMU_LEGACY_DATABASE_URL` secret。缺少外部记录、DSN 或 commit 不匹配时应由 release gate 失败，不得在 workflow 内伪造通过。
 
 ## 4. 对外接口
 
