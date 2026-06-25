@@ -24,7 +24,7 @@ func WriteJSON(w http.ResponseWriter, status int, value any) {
 func WithLocalCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if allowLocalOrigin(w, r.Header.Get("Origin")) {
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key")
 			w.Header().Set("Access-Control-Expose-Headers", "X-Artifact-Checksum, X-Evidence-Checksum")
 			if r.Method == http.MethodOptions {
