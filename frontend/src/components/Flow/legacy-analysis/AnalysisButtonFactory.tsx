@@ -4,6 +4,7 @@ import ASM1AnalysisButton from "./ASM1AnalysisButton"
 import ASM1SlimAnalysisButton from "./ASM1SlimAnalysisButton"
 import ASM3AnalysisButton from "./ASM3AnalysisButton"
 import AnalysisButton from "./AnalysisButton"
+import { AnalysisResultButton } from "./AnalysisResultLoader"
 import UDMAnalysisButton from "./UDMAnalysisButton"
 import type { ASM1ResultData } from "./asm1-analysis"
 import type { ASM1SlimResultData } from "./asm1slim-analysis"
@@ -41,8 +42,12 @@ interface CreateAnalysisButtonProps {
   disabled?: boolean
   /** 是否显示加载状态 */
   loading?: boolean
+  /** standalone 计算任务 ID */
+  jobId?: string
   /** 要分析的数据 */
   resultData?: any
+  /** 获取 artifact-backed analysis result */
+  loadAnalysisResult?: (jobId: string) => Promise<Record<string, unknown>>
   /** 连接线数据 */
   edges?: Edge[]
   /** 当前流程图节点数据 */
@@ -64,12 +69,31 @@ export const createAnalysisButton = ({
   icon,
   disabled = false,
   loading = false,
+  jobId,
   resultData,
+  loadAnalysisResult,
   edges,
   nodes,
   edgeParameterConfigs,
   onCustomAnalyze,
 }: CreateAnalysisButtonProps): React.ComponentType => {
+  if (jobId || loadAnalysisResult) {
+    return () => (
+      <AnalysisResultButton
+        modelType={modelType}
+        label={label}
+        disabled={disabled}
+        loading={loading}
+        jobId={jobId}
+        legacyResultData={resultData}
+        loadAnalysisResult={loadAnalysisResult}
+        edges={edges}
+        nodes={nodes}
+        edgeParameterConfigs={edgeParameterConfigs}
+      />
+    )
+  }
+
   // 根据模型类型返回相应的分析按钮组件
   switch (modelType) {
     case "asm1":

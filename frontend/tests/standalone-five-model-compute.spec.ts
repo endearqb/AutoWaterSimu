@@ -19,11 +19,77 @@ test("model services submit five standalone compute job types", async ({
   const submittedJobs: Array<Record<string, unknown>> = []
   const validatedHybridConfigs: Array<Record<string, unknown>> = []
   const legacyRequests: string[] = []
+  const artifactReads: string[] = []
   const corsHeaders = {
     "access-control-allow-headers": "content-type",
-    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-origin": "*",
   }
+
+  const artifactForJob = (job: Record<string, unknown>) => {
+    const jobId = String(job.job_id)
+    return {
+      artifact_id: `art_${jobId}_time_series`,
+      artifact_type: "material_balance.time_series",
+      checksum: `sha256:${"a".repeat(64)}`,
+      content_type: "application/json",
+      job_id: jobId,
+      object_key: `jobs/${jobId}/time_series.json`,
+    }
+  }
+
+  const timeSeriesPayloadForJob = (
+    job: Record<string, unknown>,
+    overrides: Record<string, unknown> = {},
+  ) => {
+    const payload = job.payload as Record<string, unknown>
+    const components = ((payload.component_schema as Record<string, unknown>)
+      .components || ["COD"]) as string[]
+    const variable = components[0] || "COD"
+    return {
+      schema_version: "material_balance_time_series.v1",
+      job_id: job.job_id,
+      job_type: job.job_type,
+      timestamps: [0, 1, 2],
+      node_data: {
+        n_reactor: {
+          label: "Reactor",
+          [variable]: [1, 2, 3],
+        },
+      },
+      edge_data: {
+        e_in_reactor: {
+          source: "n_in",
+          target: "n_reactor",
+          flow_rate: [10, 10, 10],
+          [variable]: [1, 2, 3],
+        },
+      },
+      segment_markers: [],
+      parameter_change_events: [],
+      summary: { total_steps: 3 },
+      ...overrides,
+    }
+  }
+
+  const specialJobs = new Map<string, Record<string, unknown>>(
+    [
+      "job_missing_artifact",
+      "job_mismatched_artifact",
+      "job_bad_schema",
+      "job_bad_length",
+    ].map((jobId) => [
+      jobId,
+      {
+        job_id: jobId,
+        job_type: "simulation.asm1slim.v1",
+        payload: {
+          component_schema: { components: ["S_O"] },
+          metadata: {},
+        },
+      },
+    ]),
+  )
 
   await page.route(`${apiBaseUrl}/api/v1/compute/jobs`, async (route) => {
     const request = route.request()
@@ -77,6 +143,114 @@ test("model services submit five standalone compute job types", async ({
       })
     },
   )
+
+  await page.route(`${apiBaseUrl}/api/v1/compute/jobs/**`, async (route) => {
+    const request = route.request()
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ headers: corsHeaders, status: 204 })
+      return
+    }
+    const url = new URL(request.url())
+    const parts = url.pathname.split("/")
+    const jobId = parts[5]
+    const job =
+      submittedJobs.find((item) => item.job_id === jobId) ||
+      specialJobs.get(jobId)
+    if (!job) {
+      await route.fulfill({
+        contentType: "application/json",
+        headers: corsHeaders,
+        status: 404,
+        body: JSON.stringify({ detail: "not found" }),
+      })
+      return
+    }
+
+    const artifact =
+      jobId === "job_missing_artifact" ? null : artifactForJob(job)
+    if (parts[6] === "result") {
+      await route.fulfill({
+        contentType: "application/json",
+        headers: corsHeaders,
+        status: 200,
+        body: JSON.stringify({
+          schema_version: "compute_result.v1",
+          job_id: jobId,
+          job_type: job.job_type,
+          status: "succeeded",
+          summary: {
+            convergence_status: "converged",
+            total_steps: 3,
+          },
+          data: {},
+          artifacts: artifact ? [artifact] : [],
+          quality: { data_quality: "ok", warnings: [] },
+          runtime_audit: {
+            fallback_used: false,
+            model_runs: [],
+            timings_ms: {},
+          },
+        }),
+      })
+      return
+    }
+
+    await route.fulfill({
+      contentType: "application/json",
+      headers: corsHeaders,
+      status: 200,
+      body: JSON.stringify({
+        job: {
+          job_id: jobId,
+          job_type: job.job_type,
+          status: "succeeded",
+          created_at: "2026-06-21T00:00:00Z",
+          input_json: job,
+        },
+        artifacts: artifact ? [artifact] : [],
+        event_count: 2,
+      }),
+    })
+  })
+
+  await page.route(`${apiBaseUrl}/api/v1/artifacts/**`, async (route) => {
+    const request = route.request()
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ headers: corsHeaders, status: 204 })
+      return
+    }
+    const artifactId = decodeURIComponent(
+      new URL(request.url()).pathname.split("/").pop() || "",
+    )
+    artifactReads.push(artifactId)
+    const jobId = artifactId.replace(/^art_/, "").replace(/_time_series$/, "")
+    const job =
+      submittedJobs.find((item) => item.job_id === jobId) ||
+      specialJobs.get(jobId)
+    if (!job) {
+      await route.fulfill({ headers: corsHeaders, status: 404 })
+      return
+    }
+
+    const overrides =
+      jobId === "job_mismatched_artifact"
+        ? { job_id: "job_other" }
+        : jobId === "job_bad_schema"
+          ? { schema_version: "material_balance_time_series_artifact.v1" }
+          : jobId === "job_bad_length"
+            ? {
+                node_data: {
+                  n_reactor: { label: "Reactor", S_O: [1] },
+                },
+              }
+            : {}
+    await route.fulfill({
+      contentType: "application/json",
+      headers: corsHeaders,
+      status: 200,
+      body: JSON.stringify(timeSeriesPayloadForJob(job, overrides)),
+    })
+  })
 
   page.on("request", (request) => {
     const url = new URL(request.url())
@@ -331,4 +505,57 @@ test("model services submit five standalone compute job types", async ({
   expect((asm3Node.asm3_parameters as unknown[]).length).toBe(37)
   expect(udmNode.udm_model_id).toBe("udm_test_model")
   expect((udmNode.udm_variable_bindings as unknown[]).length).toBe(2)
+
+  const analysisJobIds = submittedJobs.slice(1).map((job) => job.job_id)
+  const analysisResults = await page.evaluate(async (jobIds) => {
+    const servicePath = "/src/services/standaloneComputeService.ts"
+    const { standaloneComputeService } = await import(servicePath)
+    const results = []
+    for (const jobId of jobIds) {
+      results.push(await standaloneComputeService.getAnalysisResult(String(jobId)))
+    }
+    await standaloneComputeService.getAnalysisResult(String(jobIds[0]))
+    return results
+  }, analysisJobIds)
+
+  for (const result of analysisResults) {
+    expect(result.timestamps.length).toBeGreaterThan(1)
+    const firstNode = Object.values(result.node_data)[0] as Record<
+      string,
+      unknown
+    >
+    expect(typeof firstNode.label).toBe("string")
+    const firstSeries = Object.values(firstNode).find((value) =>
+      Array.isArray(value),
+    ) as unknown[]
+    expect(firstSeries.length).toBe(result.timestamps.length)
+  }
+  expect(artifactReads).toHaveLength(4)
+
+  const errorCodes = await page.evaluate(async () => {
+    const servicePath = "/src/services/standaloneComputeService.ts"
+    const { standaloneComputeService } = await import(servicePath)
+    const jobIds = [
+      "job_missing_artifact",
+      "job_mismatched_artifact",
+      "job_bad_schema",
+      "job_bad_length",
+    ]
+    const codes: string[] = []
+    for (const jobId of jobIds) {
+      try {
+        await standaloneComputeService.getAnalysisResult(jobId)
+        codes.push("ok")
+      } catch (error) {
+        codes.push(String((error as { code?: unknown }).code || "unknown"))
+      }
+    }
+    return codes
+  })
+  expect(errorCodes).toEqual([
+    "MISSING_TIME_SERIES_ARTIFACT",
+    "JOB_ID_MISMATCH",
+    "SCHEMA_VERSION_MISMATCH",
+    "SERIES_LENGTH_MISMATCH",
+  ])
 })

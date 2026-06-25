@@ -36,6 +36,18 @@ export interface BaseModelState<
   /** 最终值数据 */
   finalValues: any | null
 
+  /** 当前分析结果对应的任务 ID */
+  analysisResultJobId: string | null
+
+  /** 分析结果加载状态 */
+  analysisResultStatus: "idle" | "loading" | "ready" | "error"
+
+  /** legacy analyzer 可消费的分析结果 */
+  analysisResultData: Record<string, unknown> | null
+
+  /** 分析结果加载错误 */
+  analysisResultError: string | null
+
   /** 验证结果 */
   validationResult: MaterialBalanceValidationResponse | null
 
@@ -105,6 +117,13 @@ export interface BaseModelState<
    * @returns 最终值数据
    */
   getFinalValues: (jobId: string) => Promise<any>
+
+  /**
+   * 获取分析弹窗使用的结果数据
+   * @param jobId 任务ID
+   * @returns legacy analyzer 可消费的结果数据
+   */
+  getAnalysisResult: (jobId: string) => Promise<Record<string, unknown>>
 
   /**
    * 验证输入数据
@@ -224,6 +243,11 @@ export type BaseModelSelectors<
     state: TState,
   ) => MaterialBalanceTimeSeriesResponse | null
   selectFinalValues: (state: TState) => any | null
+  selectAnalysisResultData: (state: TState) => Record<string, unknown> | null
+  selectAnalysisResultStatus: (
+    state: TState,
+  ) => "idle" | "loading" | "ready" | "error"
+  selectAnalysisResultError: (state: TState) => string | null
   selectValidationResult: (
     state: TState,
   ) => MaterialBalanceValidationResponse | null
@@ -246,6 +270,9 @@ export function createBaseModelSelectors<
     selectResultSummary: (state) => state.resultSummary,
     selectTimeSeriesData: (state) => state.timeSeriesData,
     selectFinalValues: (state) => state.finalValues,
+    selectAnalysisResultData: (state) => state.analysisResultData,
+    selectAnalysisResultStatus: (state) => state.analysisResultStatus,
+    selectAnalysisResultError: (state) => state.analysisResultError,
     selectValidationResult: (state) => state.validationResult,
     selectUserJobs: (state) => state.userJobs,
     selectFlowcharts: (state) => state.flowcharts,

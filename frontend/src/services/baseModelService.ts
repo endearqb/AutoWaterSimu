@@ -112,6 +112,13 @@ export interface BaseModelService<
    */
   getJobInputData(jobId: string): Promise<TJobInputDataResponse>
 
+  /**
+   * 获取 legacy analyzer 可消费的分析结果
+   * @param jobId 任务ID
+   * @returns 顶层 timestamps/node_data/edge_data/summary 结构
+   */
+  getAnalysisResult(jobId: string): Promise<Record<string, unknown>>
+
   // ========== 流程图相关方法 ==========
 
   /**

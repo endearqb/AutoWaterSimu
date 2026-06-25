@@ -49,6 +49,10 @@ export const useASM1SlimStore = create<ASM1SlimState>()(
       resultSummary: null,
       timeSeriesData: null,
       finalValues: null,
+      analysisResultJobId: null,
+      analysisResultStatus: "idle",
+      analysisResultData: null,
+      analysisResultError: null,
       validationResult: null,
       userJobs: [],
       flowcharts: [],
@@ -58,7 +62,14 @@ export const useASM1SlimStore = create<ASM1SlimState>()(
 
       // Actions - 计算任务相关（继承自BaseModelState）
       createCalculationJob: async (input: MaterialBalanceInput) => {
-        set({ isLoading: true, error: null })
+        set({
+          isLoading: true,
+          error: null,
+          analysisResultJobId: null,
+          analysisResultStatus: "idle",
+          analysisResultData: null,
+          analysisResultError: null,
+        })
         try {
           const job = await asm1SlimService.createCalculationJob(input)
           set({ currentJob: job, isLoading: false })
@@ -83,6 +94,10 @@ export const useASM1SlimStore = create<ASM1SlimState>()(
           resultSummary: null,
           timeSeriesData: null,
           finalValues: null,
+          analysisResultJobId: null,
+          analysisResultStatus: "idle",
+          analysisResultData: null,
+          analysisResultError: null,
         })
         try {
           const job =
@@ -182,6 +197,39 @@ export const useASM1SlimStore = create<ASM1SlimState>()(
                   model: MODEL_NAME,
                 })
           set({ error: errorMessage, isLoading: false })
+          throw error
+        }
+      },
+
+      getAnalysisResult: async (jobId: string) => {
+        set({
+          analysisResultJobId: jobId,
+          analysisResultStatus: "loading",
+          analysisResultData: null,
+          analysisResultError: null,
+        })
+        try {
+          const data = await asm1SlimService.getAnalysisResult(jobId)
+          if (get().analysisResultJobId === jobId) {
+            set({
+              analysisResultStatus: "ready",
+              analysisResultData: data,
+              analysisResultError: null,
+            })
+          }
+          return data
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : t("flow.analysis.loadFailed")
+          if (get().analysisResultJobId === jobId) {
+            set({
+              analysisResultStatus: "error",
+              analysisResultData: null,
+              analysisResultError: message,
+            })
+          }
           throw error
         }
       },
@@ -463,6 +511,10 @@ export const useASM1SlimStore = create<ASM1SlimState>()(
           resultSummary: null,
           timeSeriesData: null,
           finalValues: null,
+          analysisResultJobId: null,
+          analysisResultStatus: "idle",
+          analysisResultData: null,
+          analysisResultError: null,
           validationResult: null,
           userJobs: [],
           flowcharts: [],

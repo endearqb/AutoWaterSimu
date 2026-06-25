@@ -284,6 +284,14 @@ class ASM3ServiceImpl
     }
   }
 
+  async getAnalysisResult(jobId: string): Promise<Record<string, unknown>> {
+    if (isStandaloneRuntime()) {
+      return standaloneComputeService.getAnalysisResult(jobId)
+    }
+    const response = await this.getJobInputData(jobId)
+    return response.result_data
+  }
+
   // ========== 流程图相关方法 ==========
 
   /**

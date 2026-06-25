@@ -7,7 +7,7 @@
 - [x] Add ADR for result artifact payload boundary and canonical UDM catalog source of truth.
 - [x] Update docs/rebuild index and README First change log.
 - [x] Implement PR-1 time-series artifact payload contract.
-- [ ] Implement PR-2 frontend analysis result adapter and live analyzer gate.
+- [x] Implement PR-2 frontend analysis result adapter and live analyzer gate.
 - [x] Implement PR-3 canonical UDM seed catalog and parity tests.
 
 ## Plan
@@ -22,6 +22,7 @@
 - Added RC blocker fix PRD and development plan under `docs/rebuild/`.
 - Recorded ADR `0018` for the time-series artifact payload contract boundary and canonical UDM catalog.
 - Runtime implementation remains open as PR-1/PR-2/PR-3.
+- PR-1、PR-2、PR-3 P0 implementation is now complete on `codex/autowatersimu-next-build`; PR-2 live spec was upgraded for real artifact analysis decoding, but full live gate is still blocked locally by a worker claim connection reset before result verification.
 
 # 2026-06-24 Standalone legacy landing and sidebar TODO
 

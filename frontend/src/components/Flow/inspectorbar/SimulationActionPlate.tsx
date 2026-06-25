@@ -35,11 +35,8 @@ import useFlowStore from "../../../stores/flowStore"
 import { useMaterialBalanceStore } from "../../../stores/materialBalanceStore"
 import { useThemePaletteStore } from "../../../stores/themePaletteStore"
 import { confirmDebug } from "../../../utils/confirmDebug"
-import ASM1Analyzer from "../legacy-analysis/ASM1Analyzer"
-import ASM1SlimAnalyzer from "../legacy-analysis/ASM1SlimAnalyzer"
-import ASM3Analyzer from "../legacy-analysis/ASM3Analyzer"
 import AnalysisDialog from "../legacy-analysis/AnalysisDialog"
-import UDMAnalyzer from "../legacy-analysis/UDMAnalyzer"
+import { AnalysisResultLoader } from "../legacy-analysis/AnalysisResultLoader"
 import BaseDialogManager from "../menu/BaseDialogManager"
 import BaseLoadCalculationDataDialog from "../menu/BaseLoadCalculationDataDialog"
 import ConfirmDialog from "../menu/ConfirmDialog"
@@ -239,7 +236,11 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
     color: accentColor,
   }
 
-  const hasResultData = !!finalStore.currentJob?.result_data
+  const currentJobId = (finalStore.currentJob as any)?.job_id as
+    | string
+    | undefined
+  const jobStatus = (finalStore.currentJob as any)?.status as string | undefined
+  const canOpenAnalysis = jobStatus === "success" && Boolean(currentJobId)
 
   const fadeInUp = keyframes`
     from { opacity: 0; transform: translateY(-10px) scale(0.96); }
@@ -327,9 +328,8 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
     : isClassic || isClassicGlass
       ? classicText || accentOutlineColor
       : accentOutlineColor
-  const jobStatus = (finalStore.currentJob as any)?.status as string | undefined
   const isWaitingForResult =
-    !hasResultData &&
+    !canOpenAnalysis &&
     (isJobCurrentlyRunning ||
       jobStatus === "pending" ||
       jobStatus === "running")
@@ -1735,16 +1735,16 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  opacity={hasResultData ? 1 : 0.5}
+                  opacity={canOpenAnalysis ? 1 : 0.5}
                   _hover={
-                    hasResultData
+                    canOpenAnalysis
                       ? { bg: "whiteAlpha.200", color: accentColor }
                       : { bg: "transparent" }
                   }
                   _focusVisible={{ boxShadow: `0 0 0 1px ${accentColor}` }}
-                  cursor={hasResultData ? "pointer" : "not-allowed"}
+                  cursor={canOpenAnalysis ? "pointer" : "not-allowed"}
                   onClick={
-                    hasResultData ? () => setIsAnalysisOpen(true) : undefined
+                    canOpenAnalysis ? () => setIsAnalysisOpen(true) : undefined
                   }
                   onMouseEnter={() => setShowAnalysisLabel(true)}
                   onMouseLeave={() => setShowAnalysisLabel(false)}
@@ -1808,43 +1808,19 @@ function SimulationActionPlate(props: SimulationActionPlateProps) {
           title={t("flow.analysis.dialogTitle")}
           size="cover"
         >
-          {hasResultData && modelType === "asm1" && (
-            <ASM1Analyzer
-              resultData={finalStore.currentJob?.result_data}
-              edges={edges}
-              edgeParameterConfigs={edgeParameterConfigs}
-            />
-          )}
-          {hasResultData && modelType === "asm1slim" && (
-            <ASM1SlimAnalyzer
-              resultData={finalStore.currentJob?.result_data}
-              edges={edges}
-              edgeParameterConfigs={edgeParameterConfigs}
-            />
-          )}
-          {hasResultData && modelType === "asm3" && (
-            <ASM3Analyzer
-              resultData={finalStore.currentJob?.result_data}
-              edges={edges}
-              edgeParameterConfigs={edgeParameterConfigs}
-            />
-          )}
-          {hasResultData && modelType === "udm" && (
-            <UDMAnalyzer
-              resultData={finalStore.currentJob?.result_data}
-              edges={edges}
-              edgeParameterConfigs={edgeParameterConfigs}
-            />
-          )}
-          {hasResultData &&
-            modelType !== "asm1" &&
-            modelType !== "asm1slim" &&
-            modelType !== "asm3" &&
-            modelType !== "udm" && (
-              <Text fontSize="sm" color={accentColor} opacity={0.8}>
-                {t("flow.analysis.unavailable")}
-              </Text>
-            )}
+          <AnalysisResultLoader
+            enabled={isAnalysisOpen}
+            modelType={(modelType as any) || "other"}
+            jobId={currentJobId}
+            legacyResultData={
+              ((finalStore.currentJob as any)?.result_data ??
+                null) as Record<string, unknown> | null
+            }
+            loadAnalysisResult={finalStore.getAnalysisResult}
+            edges={edges}
+            edgeParameterConfigs={edgeParameterConfigs}
+            accentColor={accentColor}
+          />
         </AnalysisDialog>
         {confirmDialog && (
           <ConfirmDialog

@@ -183,6 +183,7 @@ function SimulationPanel({
     resultSummary,
     getResultSummary,
     getFinalValues,
+    getAnalysisResult,
   } = currentModelStore
 
   // 直接使用传入的modelStore，不使用fallback机制
@@ -195,6 +196,7 @@ function SimulationPanel({
     resultSummary,
     getResultSummary,
     getFinalValues,
+    getAnalysisResult,
   }
 
   // 用于存储轮询清理函数的引用
@@ -930,7 +932,7 @@ function SimulationPanel({
                 )}
 
                 {/* 数据分析按钮 */}
-                {finalStore.currentJob?.result_data && (
+                {isCalculationSuccessful && finalStore.currentJob && (
                   <Box
                     mt={3}
                     pt={3}
@@ -941,7 +943,9 @@ function SimulationPanel({
                       const AnalysisButton = createAnalysisButton({
                         modelType: (modelType as ModelType) || "other",
                         label: t("flow.simulation.analysisButton"),
-                        resultData: finalStore.currentJob.result_data,
+                        jobId: (finalStore.currentJob as any).job_id,
+                        resultData: (finalStore.currentJob as any).result_data,
+                        loadAnalysisResult: finalStore.getAnalysisResult,
                         nodes: nodes,
                         edges: edges,
                         edgeParameterConfigs: edgeParameterConfigs,

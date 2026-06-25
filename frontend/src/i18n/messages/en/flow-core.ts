@@ -235,6 +235,9 @@ export const flowCoreMessages: Pick<I18nMessages["flow"], "node" | "tab" | "canv
     timeRange: "Time Range",
     timeSelection: "Time Selection",
     timeTooltipLabel: "Time: {value} h",
+    loading: "Loading analysis result...",
+    loadFailed: "Failed to load analysis result",
+    retry: "Retry",
     segmentDisplay: {
       title: "Segment Display",
       showSegmentLines: "Show Segment Lines",

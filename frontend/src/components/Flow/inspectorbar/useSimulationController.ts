@@ -47,6 +47,7 @@ type SimulationModelStore = Pick<
   | "resultSummary"
   | "getResultSummary"
   | "getFinalValues"
+  | "getAnalysisResult"
 >
 
 export interface SimulationControllerProps {
@@ -178,6 +179,7 @@ export function useSimulationController(
     resultSummary,
     getResultSummary,
     getFinalValues,
+    getAnalysisResult,
   } = currentModelStore as SimulationModelStore
 
   const finalStore: SimulationModelStore = {
@@ -189,6 +191,7 @@ export function useSimulationController(
     resultSummary,
     getResultSummary,
     getFinalValues,
+    getAnalysisResult,
   }
 
   const [validationErrors, setValidationErrors] = useState<string[]>([])
