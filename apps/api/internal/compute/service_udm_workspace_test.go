@@ -3,6 +3,8 @@ package compute
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
+	"strings"
 	"testing"
 )
 
@@ -129,6 +131,88 @@ func TestUDMHybridConfigWorkspaceCRUDAndValidation(t *testing.T) {
 	}))
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("invalid hybrid config should return 422, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUDMSeedTemplatesUseCanonicalCatalog(t *testing.T) {
+	_, server := newSimulationTestServer(t)
+
+	rec := serveWithToken(t, server, http.MethodGet, "/api/v1/udm-models/templates", "dev-public-token", nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("UDM templates list failed: %d %s", rec.Code, rec.Body.String())
+	}
+	var templates []UDMSeedTemplateSummary
+	if err := json.Unmarshal(rec.Body.Bytes(), &templates); err != nil {
+		t.Fatal(err)
+	}
+	keys := make([]string, 0, len(templates))
+	counts := map[string][3]int{}
+	for _, template := range templates {
+		keys = append(keys, template.Key)
+		counts[template.Key] = [3]int{
+			template.ComponentsCount,
+			template.ParametersCount,
+			template.ProcessesCount,
+		}
+	}
+	sort.Strings(keys)
+	expectedKeys := []string{
+		"asm1",
+		"asm1slim",
+		"asm3",
+		"petersen-chapter-1",
+		"petersen-chapter-2",
+		"petersen-chapter-3",
+		"petersen-chapter-7",
+	}
+	if strings.Join(keys, ",") != strings.Join(expectedKeys, ",") {
+		t.Fatalf("unexpected UDM template keys: %#v", keys)
+	}
+	if counts["asm1"] != [3]int{11, 19, 8} {
+		t.Fatalf("unexpected ASM1 template counts: %#v", counts["asm1"])
+	}
+	if counts["asm1slim"] != [3]int{5, 7, 3} {
+		t.Fatalf("unexpected ASM1Slim template counts: %#v", counts["asm1slim"])
+	}
+	if counts["asm3"] != [3]int{13, 22, 7} {
+		t.Fatalf("unexpected ASM3 template counts: %#v", counts["asm3"])
+	}
+}
+
+func TestUDMCreateFromCanonicalTemplates(t *testing.T) {
+	_, server := newSimulationTestServer(t)
+	templateKeys := []string{
+		"asm1",
+		"asm1slim",
+		"asm3",
+		"petersen-chapter-1",
+		"petersen-chapter-2",
+		"petersen-chapter-3",
+		"petersen-chapter-7",
+	}
+	for _, templateKey := range templateKeys {
+		t.Run(templateKey, func(t *testing.T) {
+			rec := serveWithToken(t, server, http.MethodPost, "/api/v1/udm-models/from-template", "dev-public-token", encodeMap(t, map[string]any{
+				"template_key": templateKey,
+				"name":         "From " + templateKey,
+			}))
+			if rec.Code != http.StatusCreated {
+				t.Fatalf("UDM create from template %s failed: %d %s", templateKey, rec.Code, rec.Body.String())
+			}
+			var created UDMModelDetailPublic
+			if err := json.Unmarshal(rec.Body.Bytes(), &created); err != nil {
+				t.Fatal(err)
+			}
+			if created.LatestVersion == nil || !created.LatestVersion.ValidationOK {
+				t.Fatalf("created template should have valid latest version: %#v", created)
+			}
+			if created.LatestVersion.SeedSource != "udm_seed_catalog.v1:"+templateKey {
+				t.Fatalf("unexpected seed source: %s", created.LatestVersion.SeedSource)
+			}
+			if created.LatestVersion.ContentHash == "" || created.LatestVersion.ParameterHash == "" {
+				t.Fatalf("created template should have hashes: %#v", created.LatestVersion)
+			}
+		})
 	}
 }
 

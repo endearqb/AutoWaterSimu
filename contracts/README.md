@@ -34,6 +34,7 @@
 
 | 文件/子目录 | 作用 |
 |---|---|
+| `catalogs/` | 运行时会读取的 canonical 合同数据，例如 UDM seed catalog |
 | `codegen/` | 合同 codegen/validation 策略 manifest，不存放生成产物 |
 | `examples/` | 合同示例，按 valid / invalid 拆分 |
 | `python/` | Python 合同转换 helper，当前支持 material balance 最小链路 |

@@ -23,7 +23,8 @@
     "production_readiness.v1",
     "result_explanation.v1",
     "simulation_input.v1",
-    "simulation_request.v1"
+    "simulation_request.v1",
+    "udm_seed_catalog.v1"
   ],
   "target_decisions": {
     "typescript": {

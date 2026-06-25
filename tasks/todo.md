@@ -8,7 +8,7 @@
 - [x] Update docs/rebuild index and README First change log.
 - [x] Implement PR-1 time-series artifact payload contract.
 - [ ] Implement PR-2 frontend analysis result adapter and live analyzer gate.
-- [ ] Implement PR-3 canonical UDM seed catalog and parity tests.
+- [x] Implement PR-3 canonical UDM seed catalog and parity tests.
 
 ## Plan
 

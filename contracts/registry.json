@@ -65,6 +65,23 @@
       "breaking_change_policy": "p0_additive_only_v1"
     },
     {
+      "schema_version": "udm_seed_catalog.v1",
+      "schema_file": "udm_seed_catalog.v1.json",
+      "consumers": [
+        "legacy FastAPI UDM template service",
+        "Go Compute API standalone UDM template service",
+        "contract parity tests"
+      ],
+      "valid_examples": [
+        "examples/valid/minimal.udm_seed_catalog.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_template_key.udm_seed_catalog.v1.json"
+      ],
+      "compatibility_notes": "This catalog is the canonical seed source for ASM1, ASM1Slim, ASM3, and Petersen tutorial UDM templates. Runtime services must read this catalog instead of maintaining separate production literals.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
       "schema_version": "benchmark_run.v1",
       "schema_file": "benchmark_run.v1.json",
       "consumers": [

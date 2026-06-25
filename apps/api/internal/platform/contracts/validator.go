@@ -32,6 +32,7 @@ var schemaFiles = []string{
 	"process_graph.v1.json",
 	"simulation_input.v1.json",
 	"contract_error.v1.json",
+	"udm_seed_catalog.v1.json",
 }
 
 var schemaByVersion = map[string]string{
@@ -53,6 +54,7 @@ var schemaByVersion = map[string]string{
 	"process_graph.v1":                "process_graph.v1.json",
 	"simulation_input.v1":             "simulation_input.v1.json",
 	"contract_error.v1":               "contract_error.v1.json",
+	"udm_seed_catalog.v1":             "udm_seed_catalog.v1.json",
 }
 
 type Error struct {
