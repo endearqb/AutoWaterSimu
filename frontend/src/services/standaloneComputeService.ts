@@ -244,6 +244,8 @@ const DEFAULT_PARAMETERS = {
 }
 
 const TIME_SERIES_SCHEMA_VERSION = "material_balance_time_series.v1"
+const LEGACY_TIME_SERIES_SCHEMA_VERSION =
+  "material_balance_time_series_artifact.v1"
 
 const uniqueSuffix = (): string => {
   const uuid = globalThis.crypto?.randomUUID?.()
@@ -956,17 +958,75 @@ const normalizeSeriesMapForAnalysis = (
   return result
 }
 
+const displayLabelFromNode = (node: Record<string, unknown>): string => {
+  const data = recordValue(node.data)
+  return stringValue(
+    data.label ??
+      data.name ??
+      data.displayName ??
+      data.display_name ??
+      node.label ??
+      node.name ??
+      node.displayName ??
+      node.display_name,
+  ).trim()
+}
+
+const nodeLabelsFromSnapshot = (
+  snapshot: JobSnapshot,
+): Record<string, string> => {
+  const input = parseInputJSON(snapshot)
+  const payload = recordValue(input.payload)
+  const metadata = recordValue(payload.metadata)
+  const sources = [
+    recordValue(metadata.original_flowchart_data),
+    recordValue(metadata.original_legacy_input),
+    payload,
+    input,
+  ]
+  const labels: Record<string, string> = {}
+
+  sources.forEach((source) => {
+    arrayValue(source.nodes).forEach((rawNode) => {
+      const node = recordValue(rawNode)
+      const nodeId = stringValue(node.id ?? node.node_id ?? node.nodeId).trim()
+      const label = displayLabelFromNode(node)
+      if (nodeId && label) {
+        labels[nodeId] = label
+      }
+    })
+  })
+
+  return labels
+}
+
+const applyNodeLabels = (
+  nodeData: Record<string, Record<string, unknown>>,
+  labels: Record<string, string> = {},
+): Record<string, Record<string, unknown>> =>
+  Object.fromEntries(
+    Object.entries(nodeData).map(([id, entry]) => [
+      id,
+      labels[id] ? { ...entry, label: labels[id] } : entry,
+    ]),
+  )
+
 const normalizeAnalysisPayload = (
   jobId: string,
   payload: unknown,
   result: GetComputeJobResultResponse | null,
-  options: { requireContractMeta: boolean },
+  options: {
+    requireContractMeta: boolean
+    nodeLabels?: Record<string, string>
+  },
 ): StandaloneAnalysisResult => {
   const source = recordValue(payload)
   const schemaVersion = stringValue(source.schema_version)
   if (
     options.requireContractMeta &&
-    schemaVersion !== TIME_SERIES_SCHEMA_VERSION
+    ![TIME_SERIES_SCHEMA_VERSION, LEGACY_TIME_SERIES_SCHEMA_VERSION].includes(
+      schemaVersion,
+    )
   ) {
     throw analysisError(
       `Time-series artifact schema_version must be ${TIME_SERIES_SCHEMA_VERSION}`,
@@ -992,16 +1052,17 @@ const normalizeAnalysisPayload = (
 
   const resultSummary = recordValue(result?.summary)
   const payloadSummary = recordValue(source.summary)
+  const nodeData = normalizeSeriesMapForAnalysis(
+    source.node_data,
+    timestamps.length,
+    "node_data",
+  )
   return {
     schema_version: TIME_SERIES_SCHEMA_VERSION,
     job_id: payloadJobId || jobId,
     job_type: stringValue(source.job_type ?? result?.job_type),
     timestamps,
-    node_data: normalizeSeriesMapForAnalysis(
-      source.node_data,
-      timestamps.length,
-      "node_data",
-    ),
+    node_data: applyNodeLabels(nodeData, options.nodeLabels),
     edge_data: normalizeSeriesMapForAnalysis(
       source.edge_data,
       timestamps.length,
@@ -1337,6 +1398,7 @@ class StandaloneComputeService {
       if (isLegacyAnalysisShape(result)) {
         return normalizeAnalysisPayload(jobId, result, result, {
           requireContractMeta: false,
+          nodeLabels: nodeLabelsFromSnapshot(snapshot),
         })
       }
 
@@ -1345,6 +1407,7 @@ class StandaloneComputeService {
         await computeArtifactsApi.readArtifactJson<TimeSeriesArtifact>(artifact)
       return normalizeAnalysisPayload(jobId, payload, result, {
         requireContractMeta: true,
+        nodeLabels: nodeLabelsFromSnapshot(snapshot),
       })
     })().catch((error) => {
       analysisResultCache.delete(jobId)

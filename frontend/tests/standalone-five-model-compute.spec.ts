@@ -46,25 +46,45 @@ test("model services submit five standalone compute job types", async ({
     const components = ((payload.component_schema as Record<string, unknown>)
       .components || ["COD"]) as string[]
     const variable = components[0] || "COD"
+    const payloadNodes = ((payload.nodes || []) as Array<Record<string, unknown>>)
+      .map((node) => String(node.node_id || ""))
+      .filter(Boolean)
+    const payloadEdges = ((payload.edges || []) as Array<Record<string, unknown>>)
+      .map((edge) => ({
+        id: String(edge.edge_id || ""),
+        source: String(edge.source_node_id || ""),
+        target: String(edge.target_node_id || ""),
+      }))
+      .filter((edge) => edge.id)
+    const nodeIds = payloadNodes.length > 0 ? payloadNodes : ["n_reactor"]
+    const edgeRefs =
+      payloadEdges.length > 0
+        ? payloadEdges
+        : [{ id: "e_in_reactor", source: "n_in", target: "n_reactor" }]
     return {
       schema_version: "material_balance_time_series.v1",
       job_id: job.job_id,
       job_type: job.job_type,
       timestamps: [0, 1, 2],
-      node_data: {
-        n_reactor: {
-          label: "Reactor",
-          [variable]: [1, 2, 3],
-        },
-      },
-      edge_data: {
-        e_in_reactor: {
-          source: "n_in",
-          target: "n_reactor",
-          flow_rate: [10, 10, 10],
-          [variable]: [1, 2, 3],
-        },
-      },
+      node_data: Object.fromEntries(
+        nodeIds.map((nodeId, index) => [
+          nodeId,
+          {
+            [variable]: [index + 1, index + 2, index + 3],
+          },
+        ]),
+      ),
+      edge_data: Object.fromEntries(
+        edgeRefs.map((edge, index) => [
+          edge.id,
+          {
+            source: edge.source,
+            target: edge.target,
+            flow_rate: [10, 10, 10],
+            [variable]: [index + 1, index + 2, index + 3],
+          },
+        ]),
+      ),
       segment_markers: [],
       parameter_change_events: [],
       summary: { total_steps: 3 },
@@ -78,6 +98,7 @@ test("model services submit five standalone compute job types", async ({
       "job_mismatched_artifact",
       "job_bad_schema",
       "job_bad_length",
+      "job_legacy_schema",
     ].map((jobId) => [
       jobId,
       {
@@ -236,7 +257,9 @@ test("model services submit five standalone compute job types", async ({
       jobId === "job_mismatched_artifact"
         ? { job_id: "job_other" }
         : jobId === "job_bad_schema"
-          ? { schema_version: "material_balance_time_series_artifact.v1" }
+          ? { schema_version: "not_time_series.v1" }
+          : jobId === "job_legacy_schema"
+            ? { schema_version: "material_balance_time_series_artifact.v1" }
           : jobId === "job_bad_length"
             ? {
                 node_data: {
@@ -423,7 +446,7 @@ test("model services submit five standalone compute job types", async ({
         name: `${model} standalone smoke`,
         nodes: [
           {
-            data: nodeData(components),
+            data: { ...nodeData(components), label: `${model} Inlet` },
             id: `n_${model}_in`,
             position: { x: 0, y: 0 },
             type: "input",
@@ -432,13 +455,14 @@ test("model services submit five standalone compute job types", async ({
             data: {
               ...nodeData(components, 10),
               ...modelNodeExtra,
+              label: `${model} Reactor`,
             },
             id: `n_${model}_reactor`,
             position: { x: 200, y: 0 },
             type: modelNodeType,
           },
           {
-            data: nodeData(components),
+            data: { ...nodeData(components), label: `${model} Outlet` },
             id: `n_${model}_out`,
             position: { x: 400, y: 0 },
             type: "output",
@@ -518,8 +542,13 @@ test("model services submit five standalone compute job types", async ({
     return results
   }, analysisJobIds)
 
-  for (const result of analysisResults) {
+  const analysisModels = ["asm1slim", "asm1", "asm3", "udm"]
+  for (const [index, result] of analysisResults.entries()) {
     expect(result.timestamps.length).toBeGreaterThan(1)
+    const model = analysisModels[index]
+    expect(result.node_data[`n_${model}_reactor`]?.label).toBe(
+      `${model} Reactor`,
+    )
     const firstNode = Object.values(result.node_data)[0] as Record<
       string,
       unknown
@@ -558,4 +587,11 @@ test("model services submit five standalone compute job types", async ({
     "SCHEMA_VERSION_MISMATCH",
     "SERIES_LENGTH_MISMATCH",
   ])
+
+  const legacySchemaResult = await page.evaluate(async () => {
+    const servicePath = "/src/services/standaloneComputeService.ts"
+    const { standaloneComputeService } = await import(servicePath)
+    return standaloneComputeService.getAnalysisResult("job_legacy_schema")
+  })
+  expect(legacySchemaResult.schema_version).toBe("material_balance_time_series.v1")
 })

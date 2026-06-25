@@ -1,6 +1,6 @@
 import { Box, HStack, Slider, Text, VStack } from "@chakra-ui/react"
 import type React from "react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo } from "react"
 import {
   CartesianGrid,
   Line,
@@ -64,11 +64,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   udmVariableLabels,
 }) => {
   const { t, language } = useI18n()
-  const chartContainerRef = useRef<HTMLDivElement>(null)
-  const [chartContainerSize, setChartContainerSize] = useState({
-    width: 0,
-    height: 0,
-  })
 
   const plotAreaHeight = useMemo(() => {
     if (typeof yAxisHeight === "number") return yAxisHeight
@@ -308,27 +303,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     t,
   ])
 
-  useEffect(() => {
-    const element = chartContainerRef.current
-    if (!element) return
-
-    const syncSize = () => {
-      const { width, height } = element.getBoundingClientRect()
-      setChartContainerSize({
-        width: Math.round(width),
-        height: Math.round(height),
-      })
-    }
-
-    syncSize()
-    const observer = new ResizeObserver(syncSize)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
-
-  const canRenderResponsiveChart =
-    chartContainerSize.width > 0 && chartContainerSize.height > 0
-
   if (selectedNodes.length === 0 || selectedVariables.length === 0) {
     return (
       <Box
@@ -384,7 +358,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       )}
 
       <Box
-        ref={chartContainerRef}
         w="full"
         minW={0}
         h={chartAreaHeight}
@@ -393,7 +366,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         borderColor="gray.200"
         borderRadius="md"
       >
-        {timeSeriesData.length > 0 && canRenderResponsiveChart ? (
+        {timeSeriesData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={timeSeriesData} margin={chartMargin}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -467,12 +440,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               {chartSeries.lines}
             </LineChart>
           </ResponsiveContainer>
-        ) : timeSeriesData.length > 0 ? (
-          <VStack align="center" justify="center" h="full">
-            <Text color="gray.500" textAlign="center">
-              {t("flow.analysis.emptyData")}
-            </Text>
-          </VStack>
         ) : (
           <VStack align="center" justify="center" h="full">
             <Text color="gray.500" textAlign="center">
