@@ -570,7 +570,7 @@ def test_worker_run_api_once_retries_transient_claim_disconnect(tmp_path: Path) 
                 return
             if path == "/api/v1/workers/worker_retry/claim":
                 claim_count += 1
-                if claim_count == 1:
+                if claim_count <= 3:
                     self.close_connection = True
                     return
                 self._write_json({"job": job, "attempt": 1})
@@ -658,6 +658,8 @@ def test_worker_run_api_once_retries_transient_claim_disconnect(tmp_path: Path) 
         "/api/v1/workers/worker_retry/claim",
         "/api/v1/workers/worker_retry/claim",
     ]
+    assert records[3] == "/api/v1/workers/worker_retry/claim"
+    assert records[4] == "/api/v1/workers/worker_retry/claim"
 
 
 def test_worker_run_api_once_allows_empty_api_token(tmp_path: Path) -> None:

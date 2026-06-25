@@ -321,6 +321,7 @@ test("five model services complete against live compute API and worker", async (
     expect(result.artifacts?.length).toBeGreaterThan(0)
   }
 
+  await page.goto("/")
   const analysisSummaries = await page.evaluate(async (ids) => {
     const servicePath = "/src/services/standaloneComputeService.ts"
     const { standaloneComputeService } = await import(servicePath)

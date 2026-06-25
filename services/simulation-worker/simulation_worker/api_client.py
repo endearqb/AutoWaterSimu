@@ -28,6 +28,9 @@ except ImportError:
 DEFAULT_API_BASE_URL = "http://localhost:8088"
 DEFAULT_API_TOKEN = os.getenv("SIMULATION_WORKER_API_TOKEN", "")
 DEFAULT_IDLE_SLEEP_SECONDS = 5.0
+CLAIM_MAX_ATTEMPTS = 8
+CLAIM_RETRY_BASE_SECONDS = 0.25
+CLAIM_RETRY_MAX_SECONDS = 2.0
 
 
 class ComputeAPIClientError(RuntimeError):
@@ -291,7 +294,7 @@ def _claim_and_run_once(
 def _claim_with_retry(client: ComputeAPIClient, worker_id: str) -> dict[str, Any]:
     path = f"/api/v1/workers/{_quote(worker_id)}/claim"
     last_error: ComputeAPIClientError | None = None
-    for attempt in range(3):
+    for attempt in range(CLAIM_MAX_ATTEMPTS):
         try:
             return client.post_json(path, {})
         except ComputeAPIClientError as exc:
@@ -303,8 +306,13 @@ def _claim_with_retry(client: ComputeAPIClient, worker_id: str) -> dict[str, Any
             ):
                 raise
             last_error = exc
-            if attempt < 2:
-                time.sleep(0.25 * (attempt + 1))
+            if attempt < CLAIM_MAX_ATTEMPTS - 1:
+                time.sleep(
+                    min(
+                        CLAIM_RETRY_BASE_SECONDS * (attempt + 1),
+                        CLAIM_RETRY_MAX_SECONDS,
+                    )
+                )
     if last_error is not None:
         raise last_error
     raise ComputeAPIClientError("compute api claim request failed")

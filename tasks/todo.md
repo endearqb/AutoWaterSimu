@@ -21,8 +21,8 @@
 
 - Added RC blocker fix PRD and development plan under `docs/rebuild/`.
 - Recorded ADR `0018` for the time-series artifact payload contract boundary and canonical UDM catalog.
-- Runtime implementation remains open as PR-1/PR-2/PR-3.
-- PR-1、PR-2、PR-3 P0 implementation is now complete on `codex/autowatersimu-next-build`; PR-2 live spec was upgraded for real artifact analysis decoding, but full live gate is still blocked locally by a worker claim connection reset before result verification.
+- PR-1、PR-2、PR-3 P0 implementation is complete on `codex/autowatersimu-next-build`.
+- `scripts/ci/standalone-five-model-live.ps1` now passes on current HEAD after tightening claim retry tolerance and fixing verify-mode Vite navigation for the live analysis adapter check.
 
 # 2026-06-24 Standalone legacy landing and sidebar TODO
 
