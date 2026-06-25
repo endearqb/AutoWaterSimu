@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "material_balance_time_series.v1.json",
+  "title": "material_balance_time_series.v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "job_id",
+    "job_type",
+    "timestamps",
+    "node_data",
+    "edge_data",
+    "segment_markers",
+    "parameter_change_events"
+  ],
+  "properties": {
+    "schema_version": { "const": "material_balance_time_series.v1" },
+    "job_id": { "type": "string", "minLength": 1 },
+    "job_type": {
+      "type": "string",
+      "enum": [
+        "simulation.material_balance.v1",
+        "simulation.asm1slim.v1",
+        "simulation.asm1.v1",
+        "simulation.asm3.v1",
+        "simulation.udm.v1"
+      ]
+    },
+    "timestamps": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 1
+    },
+    "node_data": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/node_series" }
+    },
+    "edge_data": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/edge_series" }
+    },
+    "segment_markers": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "parameter_change_events": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "summary": { "type": "object" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "number_series": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 1
+    },
+    "scalar_metadata": {
+      "type": ["string", "number", "boolean", "null"]
+    },
+    "node_series": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" }
+      },
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/$defs/number_series" },
+          { "$ref": "#/$defs/scalar_metadata" }
+        ]
+      }
+    },
+    "edge_series": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "target": { "type": "string" },
+        "label": { "type": "string" }
+      },
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/$defs/number_series" },
+          { "$ref": "#/$defs/scalar_metadata" }
+        ]
+      }
+    }
+  }
+}

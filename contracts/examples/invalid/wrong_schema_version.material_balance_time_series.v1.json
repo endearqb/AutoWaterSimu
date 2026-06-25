@@ -1,0 +1,15 @@
+{
+  "schema_version": "material_balance_time_series_artifact.v1",
+  "job_id": "job_wrong_schema",
+  "job_type": "simulation.material_balance.v1",
+  "timestamps": [0, 1],
+  "node_data": {
+    "n_reactor": {
+      "label": "Reactor",
+      "COD": [200, 180]
+    }
+  },
+  "edge_data": {},
+  "segment_markers": [],
+  "parameter_change_events": []
+}

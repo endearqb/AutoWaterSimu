@@ -1,3 +1,28 @@
+# 2026-06-25 Standalone RC result/UDM blocker fix docs TODO
+
+- [x] Re-read README First context for docs/rebuild, contracts, frontend result services, Go UDM templates, tasks, and .ai records.
+- [x] Confirm this slice is documentation and planning only, not runtime code changes.
+- [x] Add standalone RC blocker fix PRD with repair goals, requirements, non-goals, assumptions, and release gates.
+- [x] Add standalone RC blocker fix development plan with PR breakdown, tests, and DoD.
+- [x] Add ADR for result artifact payload boundary and canonical UDM catalog source of truth.
+- [x] Update docs/rebuild index and README First change log.
+- [x] Implement PR-1 time-series artifact payload contract.
+- [ ] Implement PR-2 frontend analysis result adapter and live analyzer gate.
+- [ ] Implement PR-3 canonical UDM seed catalog and parity tests.
+
+## Plan
+
+- Keep the existing standalone v1.0 documents as baseline.
+- Add focused blocker fix supplements for the two P0 root causes from review.
+- Do not move full time-series back into `compute_result.v1`.
+- Do not patch Go simple templates in place; replace the production seed source with a canonical catalog.
+
+## Review
+
+- Added RC blocker fix PRD and development plan under `docs/rebuild/`.
+- Recorded ADR `0018` for the time-series artifact payload contract boundary and canonical UDM catalog.
+- Runtime implementation remains open as PR-1/PR-2/PR-3.
+
 # 2026-06-24 Standalone legacy landing and sidebar TODO
 
 - [x] Re-read README First context for frontend route/component standalone boundaries and current route-tree audit.

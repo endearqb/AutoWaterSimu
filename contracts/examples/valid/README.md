@@ -12,6 +12,7 @@
 |---|---|
 | `material_balance_minimal.compute_job.v1.json` | material balance worker 最小 job fixture |
 | `material_balance_minimal.simulation_input.v1.json` | material balance core/backend adapter 最小 input fixture |
+| `material_balance_time_series.material_balance_time_series.v1.json` | analyzer 可消费的 time-series artifact payload fixture |
 | `asm1slim_minimal.compute_job.v1.json` | ASM1Slim model-bound material balance worker fixture |
 | `asm1slim_minimal.simulation_input.v1.json` | ASM1Slim model-bound core/backend adapter fixture |
 | `asm1slim_independent.compute_job.v1.json` | `simulation.asm1slim.v1` worker fixture |

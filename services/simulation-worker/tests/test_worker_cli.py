@@ -101,6 +101,7 @@ def test_worker_self_check_outputs_json() -> None:
     payload = json.loads(completed.stdout)
     assert payload["worker_version"]
     assert "compute_job.v1" in payload["supported_contract_versions"]
+    assert "material_balance_time_series.v1" in payload["supported_contract_versions"]
     assert "simulation.material_balance.v1" in payload["supported_job_types"]
     assert "simulation.asm1slim.v1" in payload["supported_job_types"]
     assert "simulation.asm1.v1" in payload["supported_job_types"]
@@ -173,7 +174,9 @@ def test_worker_run_job_writes_artifact_with_checksum(tmp_path: Path) -> None:
     assert model_run["evidence_refs"] == [artifact["artifact_id"]]
 
     time_series = json.loads(artifact_bytes.decode("utf-8"))
-    assert time_series["schema_version"] == "material_balance_time_series_artifact.v1"
+    _validate("material_balance_time_series.v1.json", time_series)
+    assert time_series["schema_version"] == "material_balance_time_series.v1"
+    assert len(time_series["timestamps"]) > 1
     assert time_series["node_data"]
     assert time_series["edge_data"]
 
