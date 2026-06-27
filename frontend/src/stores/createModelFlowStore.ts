@@ -382,6 +382,12 @@ export function createModelFlowStore<
                   data: {
                     ...edge.data,
                     flow,
+                    flow_spec: edge.data?.flow_spec
+                      ? {
+                          ...edge.data.flow_spec,
+                          value: flow,
+                        }
+                      : edge.data?.flow_spec,
                   },
                 }
               : edge,

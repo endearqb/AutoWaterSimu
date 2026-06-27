@@ -115,20 +115,34 @@ def evaluate_transport(
     if total_tss <= 0:
         return _zero_evaluation(components)
 
-    projection_components = _projection_components(components, source)
-    projection_total = sum(max(source.get(component, 0.0), 0.0) for component in projection_components)
-    if projection_total <= 0:
-        return _zero_evaluation(components)
-
     x_feed = _feed_tss(params, signal_values, total_tss)
     velocity = _takacs_velocity(total_tss, x_feed, params)
-    total_flux = velocity * total_tss * max(params.get("area_m2", 1.0), 0.0)
-    total_flux = _limit_total_flux(total_flux, params)
-
-    component_flux = {
-        component: total_flux * max(source.get(component, 0.0), 0.0) / projection_total
-        for component in projection_components
-    }
+    area = max(params.get("area_m2", 1.0), 0.0)
+    if "X_TSS" in components:
+        total_flux = _limit_total_flux(velocity * total_tss * area, params)
+        component_flux = {
+            component: total_flux if component == "X_TSS" else 0.0
+            for component in components
+        }
+    else:
+        q_settle = velocity * area
+        raw_component_flux = {
+            component: q_settle * max(source.get(component, 0.0), 0.0)
+            for component in components
+        }
+        weights = _tss_weights(params)
+        raw_tss_flux = sum(
+            weights.get(component, 0.0) * raw_component_flux[component]
+            for component in components
+        )
+        if raw_tss_flux <= 0:
+            return _zero_evaluation(components)
+        total_flux = _limit_total_flux(raw_tss_flux, params)
+        scale = total_flux / raw_tss_flux
+        component_flux = {
+            component: raw_component_flux[component] * scale
+            for component in components
+        }
     source_delta = {component: -component_flux.get(component, 0.0) for component in components}
     target_delta = {component: component_flux.get(component, 0.0) for component in components}
 
@@ -196,14 +210,6 @@ def _source_tss(
         weights.get(component, 0.0) * max(source.get(component, 0.0), 0.0)
         for component in components
     )
-
-
-def _projection_components(
-    components: tuple[str, ...],
-    source: Mapping[str, float],
-) -> tuple[str, ...]:
-    return tuple(component for component in components if max(source.get(component, 0.0), 0.0) > 0)
-
 
 def _takacs_velocity(
     x_tss: float,

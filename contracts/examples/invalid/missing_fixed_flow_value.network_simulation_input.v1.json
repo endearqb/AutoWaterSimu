@@ -1,0 +1,57 @@
+{
+  "schema_version": "network_simulation_input.v1",
+  "simulation_input_id": "nsi_missing_fixed_flow_value",
+  "job_type": "simulation.udm_network.v1",
+  "network_graph_id": "ng_missing_fixed_flow_value",
+  "network_graph_version": 1,
+  "component_schemas": [
+    {
+      "component_schema_id": "components.v1",
+      "components": ["A"],
+      "unit": "mg/L"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "source",
+      "node_type": "source",
+      "component_schema_id": "components.v1",
+      "initial_conditions": { "A": 1.0 },
+      "volume": 1.0,
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+    },
+    {
+      "node_id": "sink",
+      "node_type": "sink",
+      "component_schema_id": "components.v1",
+      "initial_conditions": { "A": 0.0 },
+      "volume": 1.0,
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e",
+      "edge_kind": "hydraulic",
+      "source_node_id": "source",
+      "source_port": "out",
+      "target_node_id": "sink",
+      "target_port": "in",
+      "component_policy": { "mode": "all", "include": [], "exclude": [] },
+      "stream_adapter": null,
+      "flow_spec": { "mode": "fixed", "unit": "m3/d" },
+      "transport_model": null
+    }
+  ],
+  "flow_constraints": [],
+  "signal_bindings": [],
+  "parameters": {
+    "duration_days": 1.0,
+    "output_step_days": 0.01,
+    "solver_backend": "scipy",
+    "solver_method": "BDF",
+    "rtol": 0.000001,
+    "atol": 0.000000001
+  },
+  "runtime_options": { "strict_flow_balance": true }
+}

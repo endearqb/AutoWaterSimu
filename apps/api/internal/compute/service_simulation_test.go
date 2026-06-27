@@ -99,6 +99,11 @@ func TestSimulationCheckEndpointCreatesUDMNetworkInlineJob(t *testing.T) {
 		t.Fatalf("UDM Network simulation check should embed network_simulation_input payload, got %#v", jobPayload["payload"])
 	}
 	assertRequiredCapabilities(t, jobPayload, []string{"udm_network", "ode"})
+	execution := mapValue(jobPayload, "execution")
+	if stringValue(execution, "diagnostic_code") != "UDM_NETWORK_NOT_EXECUTABLE_YET" ||
+		stringValue(execution, "execution_status") != "not_executable_yet" {
+		t.Fatalf("UDM Network simulation check should mark job not executable yet, got %#v", execution)
+	}
 }
 
 func TestSimulationCheckEndpointRejectsWorkerToken(t *testing.T) {

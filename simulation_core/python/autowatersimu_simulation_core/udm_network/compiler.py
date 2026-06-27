@@ -24,6 +24,11 @@ PORT_KINDS_BY_EDGE_KIND = {
     EdgeKind.SIGNAL: ("signal_out", "signal_in"),
 }
 
+SUPPORTED_STREAM_ADAPTERS = {
+    "asm1_13_to_bsm1_clarifier_8.v1": ("asm1_13.v1", "bsm1_clarifier_reference_8.v1"),
+    "bsm1_clarifier_8_to_asm1_13.v1": ("bsm1_clarifier_reference_8.v1", "asm1_13.v1"),
+}
+
 
 def compile_network(document: Mapping[str, Any]) -> CompiledNetworkSystem:
     schema_version = str(document.get("schema_version", "")).strip()
@@ -104,6 +109,7 @@ def _nodes(raw_nodes: Any, component_schemas: dict[str, ComponentSchema]) -> dic
             component_schema_id=schema_id,
             component_names=component_names,
             initial_conditions=initial_conditions,
+            volume=_optional_float(raw_node.get("volume"), f"node {node_id} volume"),
             model_binding=model_binding,
             parameter_binding=dict(raw_node.get("parameter_binding") or {}),
             ports=_ports(raw_ports),
@@ -166,7 +172,8 @@ def _edges(
         _validate_port(source, source_port, PORT_KINDS_BY_EDGE_KIND[edge_kind][0], edge_id)
         _validate_port(target, target_port, PORT_KINDS_BY_EDGE_KIND[edge_kind][1], edge_id)
 
-        component_names = _edge_components(edge_kind, raw_edge, source, target, component_schemas)
+        stream_adapter = _stream_adapter(raw_edge, source, target, component_schemas)
+        component_names = _edge_components(edge_kind, raw_edge, source, target, component_schemas, stream_adapter)
         flow_spec = _optional_dict(raw_edge.get("flow_spec"))
         edges.append(
             RuntimeEdge(
@@ -179,7 +186,7 @@ def _edges(
                 component_names=component_names,
                 component_policy=dict(raw_edge.get("component_policy") or {"mode": "all", "include": [], "exclude": []}),
                 flow_spec=flow_spec,
-                stream_adapter=_optional_dict(raw_edge.get("stream_adapter")),
+                stream_adapter=stream_adapter,
                 transport_model=_optional_dict(raw_edge.get("transport_model")),
                 pump=_optional_dict(raw_edge.get("pump")),
                 signal_spec=_optional_dict(raw_edge.get("signal_spec")),
@@ -225,6 +232,7 @@ def _edge_components(
     source: RuntimeNode,
     target: RuntimeNode,
     component_schemas: dict[str, ComponentSchema],
+    stream_adapter: dict[str, Any] | None,
 ) -> tuple[str, ...]:
     if edge_kind is EdgeKind.SIGNAL:
         return ()
@@ -253,10 +261,70 @@ def _edge_components(
         raise UDMNetworkCompileError("NETWORK_COMPONENT_POLICY_INVALID", f"edge {raw_edge.get('edge_id')} has invalid component policy mode: {mode}")
 
     missing_target = set(components) - set(target_schema.components)
-    if missing_target:
+    if missing_target and stream_adapter is None:
         missing = ", ".join(sorted(missing_target))
         raise UDMNetworkCompileError("NETWORK_COMPONENT_POLICY_INVALID", f"edge {raw_edge.get('edge_id')} target schema lacks components: {missing}")
     return components
+
+
+def _stream_adapter(
+    raw_edge: Mapping[str, Any],
+    source: RuntimeNode,
+    target: RuntimeNode,
+    component_schemas: dict[str, ComponentSchema],
+) -> dict[str, Any] | None:
+    adapter = _optional_dict(raw_edge.get("stream_adapter"))
+    if adapter is None:
+        return None
+
+    edge_id = raw_edge.get("edge_id")
+    adapter_id = str(adapter.get("adapter_id", "")).strip()
+    if not adapter_id:
+        raise UDMNetworkCompileError("NETWORK_STREAM_ADAPTER_INVALID", f"edge {edge_id} stream_adapter.adapter_id is required")
+    expected = SUPPORTED_STREAM_ADAPTERS.get(adapter_id)
+    if expected is None:
+        raise UDMNetworkCompileError("NETWORK_STREAM_ADAPTER_UNSUPPORTED", f"edge {edge_id} has unsupported stream adapter: {adapter_id}")
+
+    source_schema_id = str(adapter.get("source_schema_id", "")).strip()
+    target_schema_id = str(adapter.get("target_schema_id", "")).strip()
+    if not source_schema_id or not target_schema_id:
+        raise UDMNetworkCompileError("NETWORK_STREAM_ADAPTER_INVALID", f"edge {edge_id} stream adapter requires source_schema_id and target_schema_id")
+    if source_schema_id != source.component_schema_id or target_schema_id != target.component_schema_id:
+        raise UDMNetworkCompileError(
+            "NETWORK_STREAM_ADAPTER_SCHEMA_MISMATCH",
+            f"edge {edge_id} stream adapter schema ids do not match edge endpoints",
+        )
+    if (source_schema_id, target_schema_id) != expected:
+        raise UDMNetworkCompileError(
+            "NETWORK_STREAM_ADAPTER_SCHEMA_MISMATCH",
+            f"edge {edge_id} stream adapter {adapter_id} expects {expected[0]} -> {expected[1]}",
+        )
+
+    mappings = adapter.get("component_mappings") or {}
+    if not isinstance(mappings, Mapping):
+        raise UDMNetworkCompileError("NETWORK_STREAM_ADAPTER_INVALID", f"edge {edge_id} component_mappings must be an object")
+
+    source_components = set(component_schemas[source_schema_id].components)
+    target_components = set(component_schemas[target_schema_id].components)
+    normalized_mappings: dict[str, str] = {}
+    for source_component, target_component in mappings.items():
+        source_name = str(source_component).strip()
+        target_name = str(target_component).strip()
+        if not source_name or not target_name:
+            raise UDMNetworkCompileError("NETWORK_STREAM_ADAPTER_INVALID", f"edge {edge_id} component mapping names must be non-empty")
+        if source_name not in source_components:
+            raise UDMNetworkCompileError("NETWORK_STREAM_ADAPTER_INVALID", f"edge {edge_id} maps unknown source component: {source_name}")
+        if target_name not in target_components:
+            raise UDMNetworkCompileError("NETWORK_STREAM_ADAPTER_INVALID", f"edge {edge_id} maps unknown target component: {target_name}")
+        normalized_mappings[source_name] = target_name
+
+    return {
+        **adapter,
+        "adapter_id": adapter_id,
+        "source_schema_id": source_schema_id,
+        "target_schema_id": target_schema_id,
+        "component_mappings": normalized_mappings,
+    }
 
 
 def _state_slices(nodes: dict[str, RuntimeNode]) -> dict[str, StateSlice]:
@@ -291,3 +359,12 @@ def _optional_dict(value: Any) -> dict[str, Any] | None:
     if value is None:
         return None
     return dict(value)
+
+
+def _optional_float(value: Any, label: str) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise UDMNetworkCompileError("NETWORK_INVALID_NUMERIC_VALUE", f"{label} must be numeric") from exc

@@ -47,6 +47,13 @@ UDM_INDEPENDENT_JOB = (
     / "valid"
     / "udm_independent.compute_job.v1.json"
 )
+UDM_NETWORK_JOB = (
+    REPO_ROOT
+    / "contracts"
+    / "examples"
+    / "valid"
+    / "udm_network_minimal.compute_job.v1.json"
+)
 
 for import_path in (WORKER_PACKAGE_PATH,):
     import_path_text = str(import_path)
@@ -107,7 +114,9 @@ def test_worker_self_check_outputs_json() -> None:
     assert "simulation.asm1.v1" in payload["supported_job_types"]
     assert "simulation.asm3.v1" in payload["supported_job_types"]
     assert "simulation.udm.v1" in payload["supported_job_types"]
+    assert "simulation.udm_network.v1" not in payload["supported_job_types"]
     assert "asm1slim" in payload["capabilities"]
+    assert "udm_network" not in payload["capabilities"]
     assert payload["git_sha"]
     assert payload["packaging_mode"] in {"source", "frozen"}
     assert payload["adapter_validation_mode"] == {
@@ -370,6 +379,23 @@ def test_worker_run_independent_udm_job_type(tmp_path: Path) -> None:
         ],
     }
     assert model_run["parameter_hash"] == _sha256_json(expected_model_parameter_payload)
+
+
+def test_worker_run_udm_network_job_returns_not_executable_diagnostic(tmp_path: Path) -> None:
+    completed = _run_worker([
+        "--run-job",
+        str(UDM_NETWORK_JOB),
+        "--artifact-dir",
+        str(tmp_path),
+    ])
+
+    assert completed.returncode == 0
+    result = json.loads(completed.stdout)
+    _validate("compute_result.v1.json", result)
+    assert result["status"] == "failed"
+    assert result["job_type"] == "simulation.udm_network.v1"
+    assert "UDM_NETWORK_NOT_EXECUTABLE_YET" in result["summary"]["error_message"]
+    assert "not execute udm_network jobs yet" in result["summary"]["error_message"]
 
 
 def test_worker_invalid_job_returns_failed_result_without_traceback(tmp_path: Path) -> None:

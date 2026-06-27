@@ -40,6 +40,7 @@ class RuntimeNode:
     component_schema_id: str
     component_names: tuple[str, ...]
     initial_conditions: dict[str, float]
+    volume: float | None
     model_binding: dict[str, Any]
     parameter_binding: dict[str, Any]
     ports: dict[str, Port] = field(default_factory=dict)

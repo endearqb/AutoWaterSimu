@@ -277,11 +277,18 @@ const useFlowStore = create<RFState>((set, get) => ({
     const state = get()
     const updatedEdges = state.edges.map((edge) => {
       if (edge.id === edgeId) {
+        const flowSpec = edge.data?.flow_spec
         return {
           ...edge,
           data: {
             ...edge.data,
-            flow: flow,
+            flow,
+            flow_spec: flowSpec
+              ? {
+                  ...flowSpec,
+                  value: flow,
+                }
+              : flowSpec,
           },
         }
       }

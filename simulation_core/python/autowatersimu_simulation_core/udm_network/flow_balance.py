@@ -157,7 +157,10 @@ def _add_constraint_rows(
         elif constraint_type == "residual":
             _add_residual_row(constraint, system, flow_edges, edge_index, rows, rhs, labels, residual_edges)
         elif constraint_type in {"fixed_edge_flow", "controlled_edge_flow", "node_conservation", "pump_bounds"}:
-            continue
+            raise FlowBalanceError(
+                "FLOW_CONSTRAINT_NOT_IMPLEMENTED",
+                f"flow constraint is recognized but not implemented: {constraint_type}",
+            )
         else:
             raise FlowBalanceError("FLOW_CONSTRAINT_UNSUPPORTED", f"unsupported flow constraint: {constraint_type}")
 

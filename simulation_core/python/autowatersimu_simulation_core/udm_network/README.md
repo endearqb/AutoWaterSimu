@@ -16,12 +16,13 @@
 - Hydraulic / pump edge flow balance solver for fixed、balanced、split、ratio and residual constraints。
 - UDM-v2 node reaction/passive evaluator for local component state, parameters, `t` and signals。
 - UDM-v2 `takacs_settling.v1` edge transport evaluator for total-solids settling mass flux。
+- UDM-v2 pure core RHS assembly for hydraulic/pump advection, settling transport and local reaction contributions。
 - UDM Network v2 five-model v1 migration parity gate manifest。
 - SecondaryClarifier10Layer reference profile primitive graph generation。
 
 本目录不负责：
 
-- ODE/time-step integration。
+- ODE solver / time-step integration beyond pure RHS assembly。
 - BSM1 full plant benchmark conformance。
 - Worker job lifecycle。
 
@@ -35,6 +36,7 @@
 | `flow_balance.py` | `Aq=b` flow balance solver and strict diagnostics |
 | `udm_reaction.py` | Passive/reaction-enabled UDM node evaluator and seed model dataclasses |
 | `udm_transport.py` | `takacs_settling.v1` transport evaluator and edge transport dataclasses |
+| `rhs.py` | Pure core RHS assembly over compiled network systems |
 | `parity.py` | Five-model v1/v2 parity migration gate manifest |
 | `composites/` | Composite-to-primitive graph generators |
 
@@ -45,13 +47,14 @@
 3. Compiler errors must carry stable `code` values for API/worker diagnostics.
 4. Flow balance only resolves hydraulic/pump edges; settling/signal edges must not enter `Aq=b`。
 5. Reaction expressions reuse `material_balance.udm_expression.compile_expression`; do not add a second expression language here.
-6. Takacs settling computes one total solids flux first, then projects by source particulate composition; do not apply per-component independent limiters.
+6. Takacs settling direct `X_TSS` mode uses `v_s * X_TSS * area`; 13-state mode computes `X_TSS=sum(w_i X_i)`, then component raw fluxes `q_s * C_i`, and scales them only if weighted raw TSS flux exceeds the total-flux limiter. `X_ND` has TSS weight 0 but still moves with sludge when included.
 7. The v1 migration parity gate must stay closed until every model family has explicit v2 L2 parity evidence.
 8. SecondaryClarifier reference profile must generate 10 layers x 8 states/layer with `reaction_enabled=false`。
+9. Stream adapters are compile-time bridge metadata for supported schema pairs; RHS execution must fail explicitly until adapter math is implemented.
 
 ## 4. 对外接口
 
-本目录暴露 `compile_network()`、`solve_flow_balance()`、`build_reaction_model()`、`build_node_reaction_model()`、`evaluate_reaction()`、`build_transport_model()`、`evaluate_transport()`、`build_v1_migration_gate()`、`build_secondary_clarifier_reference_graph()` and dataclasses under `autowatersimu_simulation_core.udm_network`。
+本目录暴露 `compile_network()`、`solve_flow_balance()`、`assemble_rhs()`、`build_reaction_model()`、`build_node_reaction_model()`、`evaluate_reaction()`、`build_transport_model()`、`evaluate_transport()`、`build_v1_migration_gate()`、`build_secondary_clarifier_reference_graph()` and dataclasses under `autowatersimu_simulation_core.udm_network`。
 
 ## 5. 依赖边界
 
@@ -66,6 +69,7 @@ backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_co
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_flow_balance.py -q
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_reaction.py -q
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_transport.py -q
+backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_rhs.py -q
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_parity_gate.py -q
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_secondary_clarifier.py -q
 ```

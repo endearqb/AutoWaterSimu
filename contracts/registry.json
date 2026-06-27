@@ -147,7 +147,8 @@
         "frontend result detail views"
       ],
       "valid_examples": [
-        "examples/valid/material_balance_success.compute_result.v1.json"
+        "examples/valid/material_balance_success.compute_result.v1.json",
+        "examples/valid/udm_network_not_executable.compute_result.v1.json"
       ],
       "invalid_examples": [
         "examples/invalid/missing_risk_code.compute_result.v1.json"
@@ -301,10 +302,13 @@
         "Go Compute API contract validation"
       ],
       "valid_examples": [
-        "examples/valid/udm_network_minimal.network_process_graph.v1.json"
+        "examples/valid/udm_network_minimal.network_process_graph.v1.json",
+        "examples/valid/udm_network_stream_adapter.network_process_graph.v1.json"
       ],
       "invalid_examples": [
-        "examples/invalid/invalid_edge_kind.network_process_graph.v1.json"
+        "examples/invalid/invalid_edge_kind.network_process_graph.v1.json",
+        "examples/invalid/invalid_flow_constraint.network_process_graph.v1.json",
+        "examples/invalid/invalid_stream_adapter.network_process_graph.v1.json"
       ],
       "compatibility_notes": "This is the UDM-v2 design graph contract. It carries typed edge semantics and may include UI/composite metadata; worker execution must use network_simulation_input.v1.",
       "breaking_change_policy": "p0_additive_only_v1"
@@ -321,7 +325,8 @@
         "examples/valid/udm_network_minimal.network_simulation_input.v1.json"
       ],
       "invalid_examples": [
-        "examples/invalid/missing_network_graph.network_simulation_input.v1.json"
+        "examples/invalid/missing_network_graph.network_simulation_input.v1.json",
+        "examples/invalid/missing_fixed_flow_value.network_simulation_input.v1.json"
       ],
       "compatibility_notes": "This is the worker-executable UDM-v2 input contract for simulation.udm_network.v1. It is parallel to simulation_input.v1 and must not be registered as a legacy simulation_input.v1 record.",
       "breaking_change_policy": "p0_additive_only_v1"

@@ -60,3 +60,17 @@ func TestExecutionProfileUnsupportedJobTypeKeepsEmptyCapabilities(t *testing.T) 
 		t.Fatal("expected unknown job type to be unsupported")
 	}
 }
+
+func TestExecutionProfileUDMNetworkReportsNotExecutableYet(t *testing.T) {
+	profile := ExecutionProfile(JobTypeUDMNetwork)
+
+	if profile["execution_status"] != "not_executable_yet" {
+		t.Fatalf("unexpected UDM Network execution status: %#v", profile["execution_status"])
+	}
+	if profile["diagnostic_code"] != "UDM_NETWORK_NOT_EXECUTABLE_YET" {
+		t.Fatalf("unexpected UDM Network diagnostic code: %#v", profile["diagnostic_code"])
+	}
+	if profile["diagnostic_message"] == "" {
+		t.Fatal("expected UDM Network diagnostic message")
+	}
+}

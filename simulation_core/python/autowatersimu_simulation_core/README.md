@@ -8,7 +8,7 @@
 
 - material balance runtime 的公开 import surface。
 - `simulation_input.v1` 到 core runtime model 的 adapter，包括 `simulation.material_balance.v1`、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1`、`simulation.udm.v1` 和 ASM/UDM 节点 runtime binding 字段。
-- UDM Network v2 `network_process_graph.v1` / `network_simulation_input.v1` graph compiler MVP, automatic flow balance solver, passive/reaction node evaluator, `takacs_settling.v1` edge transport evaluator, five-model v1 migration parity gate and SecondaryClarifier10Layer reference graph generator。
+- UDM Network v2 `network_process_graph.v1` / `network_simulation_input.v1` graph compiler MVP, automatic flow balance solver, passive/reaction node evaluator, `takacs_settling.v1` edge transport evaluator, pure RHS assembly, five-model v1 migration parity gate and SecondaryClarifier10Layer reference graph generator。
 - core-side validation error 到 `contract_error.v1` 风格的映射。
 
 本目录不负责：
@@ -25,7 +25,7 @@
 | `adapters/` | 合同 payload 到 runtime model 的转换层 |
 | `errors.py` | core adapter 错误类型 |
 | `material_balance/` | material balance 计算器、模型和运行时依赖 |
-| `udm_network/` | UDM Network v2 graph compiler MVP, flow balance solver, passive/reaction node evaluator, edge transport evaluator, v1 migration parity gate and composite graph generators |
+| `udm_network/` | UDM Network v2 graph compiler MVP, flow balance solver, passive/reaction node evaluator, edge transport evaluator, pure RHS assembly, v1 migration parity gate and composite graph generators |
 
 ## 3. 维护约定
 
@@ -44,6 +44,7 @@
 - `autowatersimu_simulation_core.adapters.simulation_input_to_material_balance_input`
 - `autowatersimu_simulation_core.udm_network.compile_network`
 - `autowatersimu_simulation_core.udm_network.solve_flow_balance`
+- `autowatersimu_simulation_core.udm_network.assemble_rhs`
 - `autowatersimu_simulation_core.udm_network.build_reaction_model`
 - `autowatersimu_simulation_core.udm_network.evaluate_reaction`
 - `autowatersimu_simulation_core.udm_network.build_transport_model`

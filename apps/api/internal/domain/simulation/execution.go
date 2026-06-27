@@ -18,11 +18,17 @@ func ExecutionProfile(jobType string) map[string]any {
 	for _, capability := range capabilities {
 		requiredCapabilities = append(requiredCapabilities, capability)
 	}
-	return map[string]any{
+	profile := map[string]any{
 		"time_limit_sec":        DefaultTimeLimitSec,
 		"priority":              PriorityNormal,
 		"required_capabilities": requiredCapabilities,
 	}
+	if jobType == JobTypeUDMNetwork {
+		profile["execution_status"] = "not_executable_yet"
+		profile["diagnostic_code"] = "UDM_NETWORK_NOT_EXECUTABLE_YET"
+		profile["diagnostic_message"] = "simulation.udm_network.v1 is registered for wire-path validation, but no worker runner is executable yet"
+	}
+	return profile
 }
 
 func RequiredCapabilities(jobType string) []string {

@@ -37,7 +37,7 @@
 2. Execution profile helper must preserve the existing `compute_job.v1.execution` JSON shape.
 3. Unsupported job types return an execution profile with an empty `required_capabilities` list; callers decide whether that is an error.
 4. Process graph projection remains material-balance-only until ASM/UDM process graph semantics are explicitly defined and tested.
-5. `simulation.udm_network.v1` currently has an execution profile requiring `udm_network` + `ode`; worker execution and process-graph conversion remain later UDM-v2 phases.
+5. `simulation.udm_network.v1` currently has an execution profile requiring `udm_network` + `ode` plus `execution_status=not_executable_yet` / `diagnostic_code=UDM_NETWORK_NOT_EXECUTABLE_YET`; worker execution and process-graph conversion remain later UDM-v2 phases.
 5. Simulation check job document assembly preserves the existing `compute_job.v1` JSON shape, default `job_simcheck_*` / `trace_simcheck_*` ids, `simcheck:<request_id>` idempotency fallback, and external/input ref metadata rules; callers still own schema validation and input resolution.
 6. Simulation registry record data projection must preserve existing payload JSON/hash, metadata JSON/defaults, required identity fields, tenant/project/site metadata projection, and caller-supplied timestamps; callers still own schema validation, idempotent persistence, read-scope enforcement, and compute record mapping.
 

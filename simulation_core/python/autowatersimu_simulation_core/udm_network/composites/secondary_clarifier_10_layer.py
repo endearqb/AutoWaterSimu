@@ -104,6 +104,7 @@ def _layer_nodes(
     schema_id: str,
 ) -> list[dict[str, Any]]:
     initial = {component: float(cfg.initial_conditions.get(component, 0.0)) for component in REFERENCE_COMPONENTS}
+    layer_volume = cfg.area_m2 * cfg.height_m / cfg.layers
     nodes: list[dict[str, Any]] = []
     for index in range(1, cfg.layers + 1):
         ports = [
@@ -130,6 +131,7 @@ def _layer_nodes(
                 "process_unit_type": "settling_layer",
                 "component_schema_id": schema_id,
                 "initial_conditions": dict(initial),
+                "volume": layer_volume,
                 "ports": ports,
                 "model_binding": {
                     "model_kind": "passive_udm",
@@ -312,6 +314,7 @@ def _hydraulic_edge(
     target_port: str,
     flow_spec: dict[str, float | str],
 ) -> dict[str, Any]:
+    flow_spec_with_unit = {"unit": "m3/d", **flow_spec}
     return {
         "edge_id": _edge_id(cfg, suffix),
         "edge_kind": "hydraulic",
@@ -320,7 +323,7 @@ def _hydraulic_edge(
         "target_node_id": target_node_id,
         "target_port": target_port,
         "component_policy": {"mode": "include", "include": list(REFERENCE_COMPONENTS), "exclude": []},
-        "flow_spec": flow_spec,
+        "flow_spec": flow_spec_with_unit,
         "metadata": {"composite_unit_id": cfg.composite_id, "profile": "reference"},
     }
 

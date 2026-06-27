@@ -25,7 +25,7 @@
 | 文件 | 作用 |
 |---|---|
 | `next-release-gates.ps1` | 编排 Next merge/release gate，并写出 `tmp/release-evidence/next-release-gates.json` |
-| `standalone-release-gate.ps1` | 编排 standalone Web RC gate，聚合 compose service boundary、standalone image content smoke、Go/frontend checks、Compute/frontend boundary audits、migration/five-model/five-model-live/backup-restore/golden evidence，并写出 `tmp/release-evidence/standalone-release-gate.json` |
+| `standalone-release-gate.ps1` | 编排 standalone Web RC gate，聚合 compose service boundary、standalone image content smoke、Go/frontend checks、UDM Network closed parity gate、Compute/frontend boundary audits、migration/five-model/five-model-live/backup-restore/golden evidence，并写出 `tmp/release-evidence/standalone-release-gate.json` |
 | `verify-release-artifact-download.ps1` | 校验下载后的 unsigned Desktop workflow artifact 是否包含 sidecar、installer 和 smoke evidence，并写出 `tmp/release-evidence/downloaded-release-artifacts.json` |
 | `smoke-release-artifact-download.ps1` | 生成临时 release artifact fixtures，覆盖下载校验器通过路径与缺失 installer 的失败路径，并写出 `tmp/release-evidence/release-artifact-download-smoke.json` |
 
@@ -48,6 +48,7 @@
 15. `standalone-release-gate.ps1` 会把 `tmp/ci-evidence/standalone-legacy-production-rehearsal.json` 与 `tmp/ci-evidence/standalone-s3-artifact-profile-live.json` 作为必需外部验收记录；两者必须是合法 JSON、顶层 `status` 为 `passed`、`commit_sha` 匹配当前 HEAD，且 `schema_version` 分别为 `autowatersimu_next_standalone_legacy_production_rehearsal.v1` / `autowatersimu_next_standalone_s3_artifact_profile_live.v1`，否则进入 `evidence_gaps`。最小记录形态为 `{"schema_version":"...","status":"passed","message":"...","generated_at":"...","commit_sha":"..."}`。
 16. `standalone-release-gate.ps1` 会把 `tmp/ci-evidence/standalone-five-model-live.json` 作为必需本地/hosted live evidence；该文件必须来自当前 HEAD、`status=passed` 且 `schema_version=autowatersimu_next_standalone_five_model_live_smoke.v1`。
 17. `standalone-release-gate.ps1` 对 migration、backup/restore 和 golden summary evidence 也要求 `commit_sha` 匹配当前 HEAD；旧 commit 的 `passed` evidence 不能作为完整 RC 证据。
+18. `standalone-release-gate.ps1` 的 UDM Network closed parity gate 只执行 `test_udm_network_parity_gate.py`，用于证明 P6 gate 保持 closed；它不是 P8 BSM1 conformance evidence。
 
 ## 4. 对外接口
 

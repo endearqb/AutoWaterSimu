@@ -186,6 +186,31 @@ def test_ratio_to_edge_solves_proportion() -> None:
     assert result == {"in": 10.0, "a": 2.5, "b": 7.5}
 
 
+def test_recognized_but_unimplemented_constraint_fails_explicitly() -> None:
+    payload = _graph(
+        [
+            _node("source", "source", [("out", "hydraulic_out")]),
+            _node("sink", "sink", [("in", "hydraulic_in")]),
+        ],
+        [
+            _edge("e", "source", "out", "sink", "in", {"mode": "fixed", "value": 10.0}),
+        ],
+        [
+            {
+                "constraint_id": "future_fixed",
+                "constraint_type": "fixed_edge_flow",
+                "edge_id": "e",
+                "value": 10.0,
+            }
+        ],
+    )
+
+    with pytest.raises(FlowBalanceError) as error:
+        _solve(payload)
+
+    assert error.value.code == "FLOW_CONSTRAINT_NOT_IMPLEMENTED"
+
+
 def test_residual_solves_remaining_flow() -> None:
     result = _solve(
         _graph(

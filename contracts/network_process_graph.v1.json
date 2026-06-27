@@ -37,14 +37,151 @@
           "type": "string",
           "enum": ["fixed", "balanced", "split_fraction", "ratio_to_edge", "residual", "controlled", "timeseries"]
         },
-        "value": { "type": "number" },
+        "value": { "type": "number", "minimum": 0 },
         "unit": { "type": "string", "minLength": 1 },
         "reference_edge_id": { "type": "string", "minLength": 1 },
-        "ratio": { "type": "number" },
-        "min": { "type": "number" },
-        "max": { "type": "number" },
+        "ratio": { "type": "number", "minimum": 0 },
+        "min": { "type": "number", "minimum": 0 },
+        "max": { "type": "number", "minimum": 0 },
         "timeseries_ref": { "type": "string", "minLength": 1 },
         "control_signal": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "fixed" } }, "required": ["mode"] },
+          "then": { "required": ["value"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "ratio_to_edge" } }, "required": ["mode"] },
+          "then": { "required": ["reference_edge_id", "ratio"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "timeseries" } }, "required": ["mode"] },
+          "then": { "required": ["timeseries_ref"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "controlled" } }, "required": ["mode"] },
+          "then": { "required": ["control_signal"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "flowConstraint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["constraint_type", "edge_fractions"],
+          "properties": {
+            "constraint_id": { "type": "string", "minLength": 1 },
+            "constraint_type": { "const": "split_fraction" },
+            "node_id": { "type": "string", "minLength": 1 },
+            "edge_fractions": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": { "type": "number", "minimum": 0 }
+            },
+            "sum_to_one": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["constraint_type", "edge_id", "reference_edge_id", "ratio"],
+          "properties": {
+            "constraint_id": { "type": "string", "minLength": 1 },
+            "constraint_type": { "const": "ratio_to_edge" },
+            "edge_id": { "type": "string", "minLength": 1 },
+            "reference_edge_id": { "type": "string", "minLength": 1 },
+            "ratio": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["constraint_type", "node_id", "known_outflow_edges", "residual_edge_id"],
+          "properties": {
+            "constraint_id": { "type": "string", "minLength": 1 },
+            "constraint_type": { "const": "residual" },
+            "node_id": { "type": "string", "minLength": 1 },
+            "known_outflow_edges": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "residual_edge_id": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["constraint_type", "edge_id", "value"],
+          "properties": {
+            "constraint_id": { "type": "string", "minLength": 1 },
+            "constraint_type": { "const": "fixed_edge_flow" },
+            "edge_id": { "type": "string", "minLength": 1 },
+            "value": { "type": "number", "minimum": 0 },
+            "unit": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["constraint_type", "edge_id", "control_signal"],
+          "properties": {
+            "constraint_id": { "type": "string", "minLength": 1 },
+            "constraint_type": { "const": "controlled_edge_flow" },
+            "edge_id": { "type": "string", "minLength": 1 },
+            "control_signal": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["constraint_type", "node_id"],
+          "properties": {
+            "constraint_id": { "type": "string", "minLength": 1 },
+            "constraint_type": { "const": "node_conservation" },
+            "node_id": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["constraint_type", "edge_id"],
+          "anyOf": [{ "required": ["min"] }, { "required": ["max"] }],
+          "properties": {
+            "constraint_id": { "type": "string", "minLength": 1 },
+            "constraint_type": { "const": "pump_bounds" },
+            "edge_id": { "type": "string", "minLength": 1 },
+            "min": { "type": "number", "minimum": 0 },
+            "max": { "type": "number", "minimum": 0 },
+            "unit": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "streamAdapter": {
+      "type": "object",
+      "required": ["adapter_id", "source_schema_id", "target_schema_id"],
+      "properties": {
+        "adapter_id": {
+          "type": "string",
+          "enum": [
+            "asm1_13_to_bsm1_clarifier_8.v1",
+            "bsm1_clarifier_8_to_asm1_13.v1"
+          ]
+        },
+        "source_schema_id": { "type": "string", "minLength": 1 },
+        "target_schema_id": { "type": "string", "minLength": 1 },
+        "component_mappings": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "audit_residuals": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "metadata": { "type": "object" }
       },
       "additionalProperties": false
     },
@@ -121,7 +258,9 @@
         "target_node_id": { "type": "string", "minLength": 1 },
         "target_port": { "type": "string", "minLength": 1 },
         "component_policy": { "$ref": "#/$defs/componentPolicy" },
-        "stream_adapter": { "type": ["object", "null"] },
+        "stream_adapter": {
+          "anyOf": [{ "$ref": "#/$defs/streamAdapter" }, { "type": "null" }]
+        },
         "flow_spec": { "$ref": "#/$defs/flowSpec" },
         "transport_model": { "type": ["object", "null"] },
         "pump": {
@@ -195,7 +334,7 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/edge" }
     },
-    "flow_constraints": { "type": "array", "items": { "type": "object" } },
+    "flow_constraints": { "type": "array", "items": { "$ref": "#/$defs/flowConstraint" } },
     "signal_bindings": { "type": "array", "items": { "type": "object" } },
     "composites": { "type": "array", "items": { "type": "object" } },
     "validation": { "$ref": "#/$defs/validation" },
@@ -203,4 +342,3 @@
   },
   "additionalProperties": false
 }
-

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +33,7 @@ def test_secondary_clarifier_reference_profile_has_80_state_registry() -> None:
     assert len(layer_ids) == 10
     assert system.state_size == 80
     assert all(system.state_slices[layer_id].size == 8 for layer_id in layer_ids)
+    assert all(system.node_by_id[layer_id].volume == pytest.approx(600.0) for layer_id in layer_ids)
     assert system.state_slices["clarifier_1_influent"].size == 0
     assert system.component_schemas["bsm1_clarifier_reference_8.v1"].components == REFERENCE_COMPONENTS
 
@@ -70,6 +72,14 @@ def test_secondary_clarifier_reference_has_top_and_bottom_boundary_outputs() -> 
     assert edge_ids["clarifier_1_bottom_was"]["source_node_id"] == "clarifier_1_layer_10"
 
 
+def test_secondary_clarifier_reference_hydraulic_edges_declare_flow_units() -> None:
+    graph = build_secondary_clarifier_reference_graph()
+    hydraulic_edges = [edge for edge in graph["edges"] if edge["edge_kind"] == "hydraulic"]
+
+    assert hydraulic_edges
+    assert all(edge["flow_spec"]["unit"] == "m3/d" for edge in hydraulic_edges)
+
+
 def test_secondary_clarifier_reference_profile_has_no_reaction_contribution() -> None:
     system = _compiled_reference()
     layer = system.node_by_id["clarifier_1_layer_05"]
@@ -87,3 +97,20 @@ def test_secondary_clarifier_reference_profile_rejects_negative_effluent() -> No
         build_secondary_clarifier_reference_graph(
             SecondaryClarifierReferenceConfig(q_in=10.0, q_ras=9.0, q_was=2.0)
         )
+
+
+def test_bsm1_reference_oracle_manifest_is_provenance_only() -> None:
+    manifest_path = (
+        SIMULATION_CORE_PYTHON
+        / "autowatersimu_simulation_core"
+        / "udm_network"
+        / "composites"
+        / "bsm1_reference_oracle_manifest.v1.json"
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert manifest["status"] == "provenance_only"
+    assert manifest["conformance_status"] == "not_claimed"
+    assert manifest["oracle_artifacts"] == []
+    assert manifest["constraints"]["may_be_used_as_conformance_evidence"] is False
+    assert manifest["source_provenance"][0]["required_for_p8"] is True

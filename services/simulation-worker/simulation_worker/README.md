@@ -9,6 +9,7 @@
 - CLI 参数解析。
 - `--self-check`。
 - `--run-job` material balance、ASM1Slim model-bound fixture、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 和 `simulation.udm.v1` 独立 job type 执行链路。
+- `simulation.udm_network.v1` 的明确 not-executable failed result 诊断；该 job type 不进入 supported job types 或 capabilities。
 - `--adapter-validation-mode` opt-in adapter validation mode override（默认仍由 env/default 解析为 `compat`）。
 - stdio JSON-RPC protocol。
 - `--run-api-once` one-shot Go Compute API worker bridge。
@@ -43,6 +44,7 @@
 8. `self_check()` 应报告 `worker_dependency_imports.required_modules`、`module_locations`、`missing_before_fallback`、`missing_after_fallback`、`deprecated_repo_path_fallback_used` 和 `torch_runtime`，用于证明 installed package import 是否成功、runtime 未触发 repo-path fallback，以及性能 baseline 绑定的 torch 线程配置；默认 source-mode gate 与 P-07 packaged sidecar gate 都必须要求 `deprecated_repo_path_fallback_used=false`。
 9. 成功 job 的 `compute_result.runtime_audit.timings_ms` 应保留 `schema_validate`、`dependency_import`、`adapter_convert`、`compute`、`artifact_serialize`、`result_envelope` 与 `total` 分段，供 Phase 0 baseline 读取；新增或删除分段时必须同步 worker tests 和 baseline 脚本。
 10. Worker adapter validation mode 默认是 `compat`；只能通过 CLI `--adapter-validation-mode`、JSON-RPC `params.adapter_validation_mode` 或 env `AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE` 显式 opt in 到 `warn` / `strict`。默认切到 `strict` 前必须保持 `worker-adapter-strict-smoke` 通过，并另行更新迁移统计和前端文案。
+11. `simulation.udm_network.v1` 只允许返回 `UDM_NETWORK_NOT_EXECUTABLE_YET` failed `compute_result.v1`，直到 worker 真实实现 UDM Network runner、artifact 输出和 capability 声明；不要提前把 `udm_network` 加入 self-check capabilities。
 
 ## 4. 对外接口
 

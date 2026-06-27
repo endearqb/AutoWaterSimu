@@ -34,6 +34,7 @@ def test_compile_minimal_network_process_graph() -> None:
     assert system.state_size == 8
     assert system.state_slices["influent"].start == 0
     assert system.state_slices["controller"].size == 0
+    assert system.node_by_id["reactor"].volume == 1000.0
     assert system.edge_by_id["e_influent_reactor"].edge_kind is EdgeKind.HYDRAULIC
     assert [edge.edge_id for edge in system.edge_bundles.static_edges] == [
         "e_influent_reactor",
@@ -64,6 +65,31 @@ def test_compile_network_simulation_input_infers_ports() -> None:
     assert influent.ports["out"].inferred
     assert influent.ports["out"].port_kind == "hydraulic_out"
     assert system.edge_by_id["e_reactor_controller"].component_names == ()
+
+
+def test_compile_stream_adapter_allows_source_side_cross_schema_components() -> None:
+    system = compile_network(
+        _load_fixture("udm_network_stream_adapter.network_process_graph.v1.json")
+    )
+    edge = system.edge_by_id["e_reactor_clarifier"]
+
+    assert edge.component_names == ("S_I", "X_I")
+    assert edge.stream_adapter == {
+        "adapter_id": "asm1_13_to_bsm1_clarifier_8.v1",
+        "source_schema_id": "asm1_13.v1",
+        "target_schema_id": "bsm1_clarifier_reference_8.v1",
+        "component_mappings": {"S_I": "S_I", "X_I": "X_TSS"},
+    }
+
+
+def test_compile_rejects_stream_adapter_schema_mismatch() -> None:
+    payload = deepcopy(_load_fixture("udm_network_stream_adapter.network_process_graph.v1.json"))
+    payload["edges"][0]["stream_adapter"]["target_schema_id"] = "asm1_13.v1"
+
+    with pytest.raises(UDMNetworkCompileError) as error:
+        compile_network(payload)
+
+    assert error.value.code == "NETWORK_STREAM_ADAPTER_SCHEMA_MISMATCH"
 
 
 def test_compile_rejects_invalid_port() -> None:

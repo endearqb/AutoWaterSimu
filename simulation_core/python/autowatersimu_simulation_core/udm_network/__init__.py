@@ -10,6 +10,7 @@ from .flow_balance import FlowBalanceError, FlowBalanceResult, solve_flow_balanc
 from .graph import EdgeKind, UDMNetworkCompileError
 from .parity import V1MigrationGate, V1V2ParityCase, build_v1_migration_gate
 from .results import CompiledNetworkSystem, StateSlice
+from .rhs import RHSAssemblyResult, UDMNetworkRHSError, assemble_rhs
 from .udm_reaction import (
     UDMProcess,
     UDMReactionError,
@@ -34,10 +35,12 @@ __all__ = [
     "FlowBalanceError",
     "FlowBalanceResult",
     "REFERENCE_COMPONENTS",
+    "RHSAssemblyResult",
     "SecondaryClarifierReferenceConfig",
     "StateSlice",
     "TransportEvaluation",
     "UDMNetworkCompileError",
+    "UDMNetworkRHSError",
     "UDMProcess",
     "UDMReactionError",
     "UDMReactionModel",
@@ -51,6 +54,7 @@ __all__ = [
     "build_transport_model",
     "build_v1_migration_gate",
     "compile_network",
+    "assemble_rhs",
     "evaluate_reaction",
     "evaluate_transport",
     "solve_flow_balance",

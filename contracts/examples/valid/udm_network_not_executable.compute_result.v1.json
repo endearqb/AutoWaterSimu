@@ -1,0 +1,25 @@
+{
+  "schema_version": "compute_result.v1",
+  "job_id": "job_udm_network_minimal",
+  "job_type": "simulation.udm_network.v1",
+  "status": "failed",
+  "summary": {
+    "error_code": "UDM_NETWORK_NOT_EXECUTABLE_YET",
+    "error_message": "UDM_NETWORK_NOT_EXECUTABLE_YET: simulation.udm_network.v1 wire path is registered but this worker does not execute udm_network jobs yet"
+  },
+  "data": {},
+  "quality": {
+    "data_quality": "none",
+    "warnings": [
+      "UDM_NETWORK_NOT_EXECUTABLE_YET: simulation.udm_network.v1 wire path is registered but this worker does not execute udm_network jobs yet"
+    ]
+  },
+  "artifacts": [],
+  "runtime_audit": {
+    "model_runs": [],
+    "timings_ms": { "total": 0 },
+    "fallback_used": false,
+    "fallback_reason": "",
+    "worker_version": "0.2.0-phase2b"
+  }
+}

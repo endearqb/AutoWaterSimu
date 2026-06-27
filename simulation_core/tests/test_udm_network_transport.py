@@ -141,11 +141,46 @@ def test_takacs_uses_total_solids_flux_not_per_component_flux() -> None:
         math.exp(-0.000576 * x_tss) - math.exp(-0.00286 * x_tss)
     )
     expected_total_flux = expected_velocity * x_tss
+    expected_component_flux = expected_velocity * 100.0
 
     assert result.total_solids_flux == pytest.approx(expected_total_flux)
-    assert result.target_delta["X_I"] == pytest.approx(expected_total_flux / 2.0)
-    assert result.target_delta["X_S"] == pytest.approx(expected_total_flux / 2.0)
-    assert sum(result.target_delta.values()) == pytest.approx(expected_total_flux)
+    assert result.target_delta["X_I"] == pytest.approx(expected_component_flux)
+    assert result.target_delta["X_S"] == pytest.approx(expected_component_flux)
+    assert 0.75 * sum(result.target_delta.values()) == pytest.approx(expected_total_flux)
+
+
+def test_takacs_moves_zero_weight_xnd_with_sludge_flux() -> None:
+    model = build_transport_model(
+        {
+            "transport_model": {
+                "model_id": "takacs_settling.v1",
+                "parameters": {
+                    "area_m2": 2.0,
+                    "v0_m_per_day": 1.0,
+                    "v0_max_m_per_day": 10.0,
+                    "r_h_m3_per_g": 0.0,
+                    "r_p_m3_per_g": 1.0,
+                    "f_ns": 0.0,
+                },
+            },
+            "component_policy": {
+                "mode": "include",
+                "include": ["X_I", "X_ND"],
+                "exclude": [],
+            },
+        }
+    )
+
+    result = evaluate_transport(
+        model,
+        t=0.0,
+        source_state={"X_I": 100.0, "X_ND": 20.0},
+        target_state={"X_I": 0.0, "X_ND": 0.0},
+    )
+
+    assert result.target_delta["X_I"] == pytest.approx(result.settling_velocity * 2.0 * 100.0)
+    assert result.target_delta["X_ND"] == pytest.approx(result.settling_velocity * 2.0 * 20.0)
+    assert result.total_solids_flux == pytest.approx(0.75 * result.target_delta["X_I"])
 
 
 def test_takacs_rejects_missing_target_component() -> None:

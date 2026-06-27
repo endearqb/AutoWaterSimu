@@ -1,3 +1,31 @@
+# 2026-06-27 UDM Network v2 Review Closeout TODO
+
+- [x] Re-read UDM-v2 docs, review note, README First context, task/change history, and affected directory READMEs.
+- [x] Fix frontend `updateEdgeFlow()` to keep `flow_spec.value` synchronized with legacy `flow`.
+- [x] Add SecondaryClarifier layer `volume` and hydraulic `flow_spec.unit`.
+- [x] Tighten `flow_spec`, `flow_constraints`, and `stream_adapter` contracts with valid/invalid fixture coverage.
+- [x] Make flow balance fail on unimplemented constraint types instead of silently skipping them.
+- [x] Fix Takacs 13-state component-resolved settling flux while preserving direct `X_TSS` reference mode.
+- [x] Add compiler-supported `stream_adapter` validation and minimal adapter contract tests.
+- [x] Add UDM Network RHS assembly with focused core tests.
+- [x] Wire the closed P6 parity gate into CI/release gates without opening v2 cutover.
+- [x] Add explicit worker/API diagnostics that `udm_network` is not executable yet.
+- [x] Add BSM1 reference provenance/oracle manifest without claiming conformance.
+- [x] Run focused validation, update README/change records, and push if clean.
+
+## Plan
+
+- Keep this as a review closeout slice, not P8 BSM1 conformance or B11 worker capability enablement.
+- Preserve the existing v1 runtime and keep P6 `ready_for_v2_cutover=false`.
+- Use existing contracts/core/API/worker patterns and add only the minimal new runtime surface needed for RHS assembly.
+- Treat the ignored UDM-v2 docs package as input only; record durable repo changes in README contracts and `.ai/changes`.
+
+## Review
+
+- Implemented the review closeout as a bounded P6/P7/P0/P1 hardening slice, not P8 conformance and not worker execution enablement.
+- Added contract tightening, stream adapter compile validation, RHS assembly, Takacs 13-state flux correction, SecondaryClarifier volume/unit metadata, closed parity gate wiring, worker/API not-executable diagnostics and BSM1 provenance manifest.
+- Validation passed: contracts tests, check-contracts, full simulation_core tests, worker tests, Go API tests, frontend typecheck, README contract check, PowerShell syntax parse and `git diff --check`.
+
 # 2026-06-27 UDM Network v2 P7 SecondaryClarifier Reference TODO
 
 - [x] Re-read P7 SecondaryClarifier10Layer reference profile requirements.

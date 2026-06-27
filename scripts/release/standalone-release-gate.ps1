@@ -41,6 +41,19 @@ function Resolve-PowerShellCommand {
     return "pwsh"
 }
 
+function Resolve-Python {
+    param([string]$Root)
+    $windowsPython = Join-Path $Root "backend\.venv\Scripts\python.exe"
+    $posixPython = Join-Path $Root "backend/.venv/bin/python"
+    if (Test-Path -LiteralPath $windowsPython) {
+        return $windowsPython
+    }
+    if (Test-Path -LiteralPath $posixPython) {
+        return $posixPython
+    }
+    return "python"
+}
+
 function Get-GitText {
     param(
         [string]$Root,
@@ -353,6 +366,7 @@ $script:Skipped = $false
 $fullRc = [bool]($RunComposeSmoke -and $RunBackupRestoreLive -and $RunPostgresMigrationSmoke -and $RunReleaseImageSmoke -and -not $SkipLong)
 $failOnAnySkip = [bool]($FailOnSkip -or $fullRc)
 $npx = Resolve-NativeCommand -Name "npx"
+$python = Resolve-Python -Root $Root
 $commitSha = Get-GitText -Root $Root -Arguments @("rev-parse", "HEAD")
 $branchName = Get-GitText -Root $Root -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
 $statusBefore = Get-GitText -Root $Root -Arguments @("status", "--porcelain")
@@ -407,6 +421,7 @@ else {
 }
 
 Invoke-Step -Name "go compute api tests" -WorkingDirectory (Join-Path $Root "apps\api") -Executable "go" -Arguments @("test", "./...")
+Invoke-Step -Name "udm network closed parity gate" -WorkingDirectory $Root -Executable $python -Arguments @("-m", "pytest", "simulation_core\tests\test_udm_network_parity_gate.py", "-q")
 Invoke-Step -Name "frontend standalone typecheck" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @("tsc", "--noEmit")
 Invoke-Step -Name "compute api boundary audit" -WorkingDirectory $Root -Executable $powershellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\audit-compute-api-boundary.ps1"))
 Invoke-Step -Name "frontend standalone compute boundary audit" -WorkingDirectory $Root -Executable $powershellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "scripts\audit-frontend-standalone-compute-boundary.ps1"))
