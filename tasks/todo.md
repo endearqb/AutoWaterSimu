@@ -1,3 +1,24 @@
+# 2026-06-27 UDM Network v2 P3 Flow Balance TODO
+
+- [x] Re-read P3 flow balance requirements from UDM-v2 docs.
+- [x] Add `udm_network/flow_balance.py` for hydraulic/pump `Aq=b` solving.
+- [x] Cover fixed、balanced、split_fraction、ratio_to_edge and residual cases.
+- [x] Cover strict failures for negative residual、overdetermined conflict and pump bounds.
+- [x] Update simulation_core README contracts for the new solver interface.
+- [x] Run focused and full simulation_core tests.
+
+## Plan
+
+- Keep P3 limited to flow resolution, not mass transport or ODE execution.
+- Use numpy linear algebra already available in simulation_core dependencies.
+- Ignore settling/signal in `Aq=b`; they enter later transport/control phases.
+
+## Review
+
+- Added `solve_flow_balance()` and `FlowBalanceResult` / `FlowBalanceError`.
+- Solver builds conservation rows plus fixed/ratio/split/residual constraints and checks rank, inconsistency, negative flow/residual and pump bounds.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_flow_balance.py -q` and `backend\.venv\Scripts\python -m pytest simulation_core\tests -q`.
+
 # 2026-06-27 UDM Network v2 P2 Compiler MVP TODO
 
 - [x] Confirm current branch is clean after pushed P-1/P0/P1 baseline.
