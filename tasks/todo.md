@@ -1,3 +1,24 @@
+# 2026-06-27 UDM Network v2 P6 Five-Model Parity Gate TODO
+
+- [x] Re-read P6 five-model parity and v1 migration gate requirements.
+- [x] Confirm existing core f64 committed golden coverage for material_balance, UDM, ASM1Slim, ASM1 and ASM3 v1 fixtures.
+- [x] Add `udm_network/parity.py` as the UDM-v2 five-model migration gate manifest.
+- [x] Cover required five model families, v1 fixture/golden links, closed cutover status and JSON serializable report.
+- [x] Update simulation_core README contracts for the new parity gate import surface.
+- [x] Run focused P6 tests.
+
+## Plan
+
+- Treat P6 as a cutover gate, not as permission to switch standalone job types to UDM-v2.
+- Keep the gate closed until every model family has explicit v1/v2 L2 parity evidence.
+- Reuse existing `CORE_F64_GOLDEN_CASES` as the v1 oracle manifest.
+
+## Review
+
+- Added `build_v1_migration_gate()` with cases for material_balance, UDM, ASM1Slim, ASM1 and ASM3.
+- Gate currently reports `ready_for_v2_cutover=False` because v2 RHS assembly and full seed parity are not complete.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_parity_gate.py -q`.
+
 # 2026-06-27 UDM Network v2 P5 Takacs Transport TODO
 
 - [x] Re-read P5 transport/Takacs requirements from UDM-v2 docs.
