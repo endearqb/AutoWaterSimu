@@ -1,67 +1,37 @@
-# 目录说明：.github
+# AutoWaterSimu Next
 
-## 1. 目录职责
+AutoWaterSimu Next is a contract-first water and wastewater process simulation platform.
 
-本目录保存 GitHub automation 配置。
+Current mainline:
 
-本目录负责：
+- `main`: AutoWaterSimu Next canonical trunk
+- `legacy/fastapi-frozen`: frozen FastAPI + React legacy oracle
+- `codex/udm-network-v2`: first short branch for UDM Network v2 work
 
-- GitHub Actions workflows。
-- Dependabot、labeler 等仓库协作配置。
-- AutoWaterSimu Next merge/release gate CI 入口。
-- Manual dispatch 下的 Desktop project package/support bundle smoke evidence 编排。
-- Manual dispatch 下的 mock-backed browser smoke evidence 编排。
-- Manual dispatch / reusable 下的 live backend browser smoke evidence 编排。
-- Manual dispatch / reusable 下的 current-flow live smoke evidence 编排。
-- Manual dispatch / reusable 下的 security smoke evidence 编排。
-- Scheduled / manual nightly evidence 编排。
-- Manual dispatch / reusable 下的 Standalone full RC gate evidence 编排。
-- Manual dispatch 下的 unsigned Desktop release artifact 构建、workflow artifact 上传与下载校验编排。
-- Release gate workflow 下的 fixture-backed artifact download verifier smoke 编排。
-- Manual dispatch 下的 PostgreSQL migration up/down smoke CI 编排。
+Core surfaces:
 
-本目录不负责：
+- `contracts/`: shared JSON Schema integration contracts
+- `simulation_core/`: Python simulation runtime core
+- `services/simulation-worker/`: Python worker sidecar/runtime
+- `apps/api/`: Go Compute API
+- `apps/desktop/`: Tauri/Rust + React desktop shell
+- `frontend/`: React UI shared by legacy and standalone/Next runtime modes
+- `backend/`: legacy FastAPI oracle and migration reference
 
-- 本地验证脚本实现。
-- 业务测试逻辑。
-- 存放 release artifact。
+Start here:
 
-## 2. 核心文件
+- [Root README](../README.md)
+- [中文 README](../README_zh.md)
+- [Architecture docs](../docs/architecture/README.md)
+- [Mainline decision](../.ai/decisions/0019-mainline-cutover-to-autowatersimu-next.md)
 
-| 文件/子目录 | 作用 |
-|---|---|
-| `workflows/` | GitHub Actions workflow 定义 |
-| `dependabot.yml` | Dependabot 配置 |
+Near-term roadmap:
 
-## 3. 维护约定
+- Freeze UDM-v2 ADRs and network contracts for `simulation.udm_network.v1`.
+- Add typed edges: `hydraulic`, `pump`, `settling`, and `signal`.
+- Build strict flow balance plus UDM Network compiler/solver.
+- Pass v1 five-model parity before switching standalone defaults.
+- Add `SecondaryClarifier10Layer`, Takacs settling, and BSM1 reference evidence.
+- Retire v1/FastAPI compute paths only after parity, migration, BSM1, and release gates pass.
 
-1. Workflow 只编排仓库脚本、缓存、并发取消和标准 setup actions；复杂 gate 逻辑应放在 `scripts/` 或对应 app 目录。
-2. Release artifact 路径必须通过 workflow input、build manifest、artifact download 或环境变量传入，不在 workflow 中猜测。
-3. Next release gate dry run 不等于 release 通过；missing artifact 必须在 evidence 中显式呈现。
-4. Workflow artifact 可上传 unsigned release artifacts 和 evidence，并在 manual release artifact 构建后下载校验 artifact 内容；不得上传 signing key、证书、更新通道密钥或发布令牌。
-5. GitHub Release publication、installer signing 和 auto update 均为 post-P0 policy-driven work；实现前必须先满足 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md`。
-6. PostgreSQL migration up/down smoke 必须使用临时测试数据库；不得指向生产或共享环境。
-7. Standalone full RC gate workflow 只接受外部验收 JSON 作为输入并写入 evidence 文件；生产 legacy dry-run DSN 必须来自 `AUTOWATERSIMU_LEGACY_DATABASE_URL` secret。缺少外部记录、DSN 或 commit 不匹配时应由 release gate 失败，不得在 workflow 内伪造通过。
-
-## 4. 对外接口
-
-GitHub Actions 对 pull request、push 和 manual dispatch 提供 CI gate。
-
-## 5. 依赖边界
-
-可以调用仓库脚本、语言 toolchain setup actions 和 upload/download artifact actions。
-
-不应该内联长 PowerShell 或 Bash 业务逻辑。
-
-## 6. 测试与验证
-
-修改 workflow 后，至少本地运行对应脚本的 syntax/dry run：
-
-```powershell
-.\scripts\release\next-release-gates.ps1 -Mode merge -SkipLong
-.\scripts\release\smoke-release-artifact-download.ps1
-```
-
-## 7. AI 操作提示
-
-新增 workflow 前先确认是否已有同类 workflow；避免重复跑 legacy 和 Next gate。
+GitHub automation in this directory only orchestrates repository scripts and evidence gates. Keep long CI logic in `scripts/`, not inline workflow YAML.

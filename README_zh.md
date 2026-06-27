@@ -5,11 +5,37 @@
 
 
 一个自动化水循环模拟系统，用于模拟和分析水循环和水处理过程。  
-基于 FastAPI + React 的全栈架构，支持工艺流程建模、ASM 动力学模拟和物料平衡分析。
+AutoWaterSimu Next 是当前 canonical 主线：面向 Go Compute API、Python simulation worker、桌面/运行时打包、UDM 网络仿真、ASM/BSM 工作流和 legacy parity evidence 的 contract-first monorepo。
 
 
-> 本项目在 [Full Stack FastAPI Template](https://github.com/fastapi/full-stack-fastapi-template) 的基础上深度定制而来，保留了原有的工程化能力，并加入了水处理领域的专用功能。
+> 原 FastAPI + React 系统仍保留在 `backend/` 和 `frontend/`，作为 legacy 对照、迁移 oracle 和紧急维护材料。冻结分支为 `legacy/fastapi-frozen`。
 
+
+---
+## README First / AI 协作上下文
+
+本仓库采用 README First 协作流程。`AGENTS.md` 是可执行规则，`README_First.md` 解释规则背后的原则和文档分工。
+
+修改文件前建议按以下顺序阅读：
+
+1. `AGENTS.md`
+2. `README_First.md`
+3. 根目录 `README.md` / `README_zh.md`
+4. 目标路径上从上到下的最近目录 `README.md`
+5. 目标文件、直接依赖、调用方和相关测试
+
+长期 AI 协作记录位于 `.ai/`：
+
+- `.ai/changes/`：记录修改原因、验证方式和剩余不确定性
+- `.ai/decisions/`：记录长期架构决策
+- `.ai/plans/`：可选复杂任务计划
+- `.ai/reviews/`：可选 review 记录
+
+AutoWaterSimu Next 在本仓库中以 monorepo 方式演进：
+
+- legacy `frontend/` 和 `backend/` 作为迁移/oracle 材料保留
+- `contracts/`、worker、Go API 和 desktop surface 是当前 Next 主线
+- 迁移通过 adapter、fixture 和 old-vs-new baseline 验证
 
 ---
 ## 赞助支持（Sponsors）
@@ -43,40 +69,34 @@
 
 ## 功能简介
 
-- **工艺流程建模**
-  - 前端基于 React Flow 的流程图编辑器
-  - 支持进水、出水、反应池等多种节点类型
-  - 通过拖拽、连线的方式搭建废水处理/水循环工艺流程
+- **Contract-first 仿真链路**
+  - 拆分 UI 画布、领域流程拓扑、可执行仿真输入、计算任务、结果和 artifact。
+  - 通过 JSON Schema 合同和 fixture，让 Web、Desktop、worker 与 API 共用同一集成边界。
 
-- **ASM 模型模拟**
-  - 后端集成 ASM1 / ASM1slim / ASM3 等活性污泥模型
-  - 支持设置模型参数、进水水质、运行时间等
-  - 返回时间序列仿真结果，用于分析各节点浓度、负荷变化
+- **Standalone 计算运行时**
+  - 通过 `docker-compose.standalone.yml` 启动 Go Compute API、Python simulation worker、standalone React 前端和 Compute PostgreSQL。
+  - 将无登录 standalone 运行方式与 legacy FastAPI 认证路径隔离。
 
-- **物料平衡与体积平衡计算**
-  - 独立的物料平衡计算模块（`backend/app/material_balance`）
-  - 基于张量运算与 ODE 求解进行多组分物料平衡模拟
-  - 提供质量守恒检查与体积变化跟踪
+- **水处理与污水处理模型执行**
+  - 支持物料平衡、ASM1、ASM1Slim、ASM3、UDM catalog/template、Hybrid UDM 校验和 UDM Network v2 路线。
+  - legacy FastAPI 行为保留为迁移 oracle，直到 parity 和退役门通过。
 
-- **任务与结果管理**
-  - 采用数据库记录计算任务与结果
-  - 支持结果摘要（总步数、计算耗时、收敛状态等）
+- **Evidence、artifact 和 release gate**
+  - summary 写入 metadata 记录，大型时间序列结果进入 artifact 文件。
+  - 通过 golden scenarios、standalone smoke、live evidence 和 release gates 约束仿真结果可复现。
 
-- **账号与权限（来自模板能力）**
-  - 基于 JWT 的身份认证
-  - 用户注册、登录、权限控制
-  - 邮件找回密码（需配置 SMTP）
+- **Desktop 与现场交付路线**
+  - 跟踪 Tauri/Rust + React 桌面壳、打包 Python worker sidecar、本地项目状态、本地 artifact 和 support bundle。
 
 ---
 
 ## 技术栈
 
-- **后端**
-  - [FastAPI](https://fastapi.tiangolo.com)：提供 REST API 与后台服务
-  - [SQLModel](https://sqlmodel.tiangolo.com)：数据库 ORM
-  - [PostgreSQL](https://www.postgresql.org)：关系型数据库
-  - [Pytest](https://pytest.org)：后端测试
-
+- **计算与编排**
+  - [Go](https://go.dev)：Compute API、job lifecycle、workspace/model 持久化和 OpenAPI surface
+  - [Python](https://www.python.org)：simulation core 与 simulation-worker runtime
+  - [PostgreSQL](https://www.postgresql.org)：Compute API metadata store
+  - `contracts/` 下的 JSON Schema 合同
 
 - **前端**
   - [React](https://react.dev) + TypeScript + Vite
@@ -84,9 +104,17 @@
   - [Playwright](https://playwright.dev)：端到端测试
   - React Flow / XYFlow：流程图编辑能力（位于 `frontend/src/components/Flow`）
 
+- **桌面端**
+  - [Tauri](https://tauri.app) / Rust 桌面壳
+  - 打包 Python worker sidecar 与本地 artifact/project 存储
+
+- **Legacy oracle**
+  - `backend/` 下的 [FastAPI](https://fastapi.tiangolo.com) + SQLModel legacy 后端
+  - 仅用于迁移、parity 对照和紧急 legacy 维护
+
 - **基础设施**
-  - [Docker Compose](https://www.docker.com)：一键启动开发/部署环境
-  - [Traefik](https://traefik.io)：反向代理 / 负载均衡（可选）
+  - [Docker Compose](https://www.docker.com)：standalone 和开发栈
+  - [Traefik](https://traefik.io)：legacy 反向代理 / 负载均衡（启用时）
   - GitHub Actions：CI / CD 工作流（见 `.github/workflows`）
 
 ---
@@ -95,15 +123,27 @@
 
 仓库根目录即 AutoWaterSimu 工程根目录，核心目录结构如下：
 
-- `backend/`：后端 FastAPI 应用
+- `backend/`：legacy FastAPI 应用和迁移/oracle 对照
   - `app/material_balance/`：物料平衡计算核心模块
   - `app/api/routes/`：API 路由（包含 ASM1/ASM3、物料平衡等接口）
   - `app/services/`：业务服务层
   - `app/core/`：配置、数据库、日志、安全等核心模块
-- `frontend/`：前端 React 单页应用
+- `frontend/`：React 单页应用，同时承载 legacy 与 standalone/Next runtime mode
   - `src/components/Flow/`：流程图编辑器与相关 UI
   - `src/routes/`：页面路由（含物料平衡页面、模型配置页面等）
 - `docs/`：项目使用与开发文档
+- `docs/architecture/`：AutoWaterSimu Next 模块图、依赖图、ontology、本地开发入口和当前状态说明
+- `contracts/`：AutoWaterSimu Next JSON Schema 合同与示例
+- `ontology/`：Water Ontology 对象、动作、连接和策略注册表
+- `simulation_core/`：纯 Python 仿真运行时核心
+- `services/simulation-worker/`：Python worker CLI / sidecar runtime
+- `apps/api/`：Go Compute API 后端
+- `apps/desktop/`：Tauri/Rust + React 桌面壳
+- `Justfile`：monorepo 任务入口，覆盖 doctor、check、依赖检查、生成、开发辅助和 release gate
+- `scripts/`：仓库级自动化脚本，包括 AutoWaterSimu Next release gates
+- `.ai/`：README First 变更、决策、计划和 review 记录
+- `.github/`：GitHub Actions 和仓库自动化
+- `tasks/`：任务记录、工作日志和实现计划
 - `backend/scripts/`：后端辅助脚本（测试、lint、format、数据库初始化、prestart 等）
 - 其他：
   - `docker-compose*.yml`：各种部署/开发用 Docker Compose 配置
@@ -115,6 +155,41 @@
 ## 快速开始
 
 以下命令均在仓库根目录（即本 README 所在目录）执行。
+
+### AutoWaterSimu Next 任务入口
+
+Next monorepo 工作优先使用根目录 `Justfile`：
+
+```powershell
+just doctor
+just standalone-up
+just standalone-status
+just standalone-smoke
+just standalone-five-model-smoke
+just standalone-five-model-live
+just standalone-release-gate
+just standalone-release-gate-full
+just readme-check
+just check
+just pr-fast
+just integration-smoke
+just current-flow-live-smoke
+```
+
+如果没有安装 `just`，可直接运行底层脚本和检查：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\doctor.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\readme-contract-check.ps1 -FailOnWarnings
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\standalone-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\pr-fast.ps1
+Push-Location apps\api; go test ./...; Pop-Location
+Push-Location frontend; npx tsc --noEmit; Pop-Location
+```
+
+Standalone RC 只有在当前 HEAD full gate 无 skip 通过时才算完成；在此之前，FastAPI/legacy client 仍作为 comparison/oracle 材料保留，不提前退役。
+
+Next 长期架构入口见 [docs/architecture](./docs/architecture/README.md)。source-mounted Next 本地栈候选为 [docker-compose.dev.yml](./docker-compose.dev.yml)。standalone no-login 栈入口为 [docker-compose.standalone.yml](./docker-compose.standalone.yml)。
 
 ### 1. 准备环境
 
@@ -136,32 +211,47 @@ cp .env.example .env
 这些敏感信息建议通过环境变量或密钥管理服务注入。
 
 
-### 2. 使用 Docker Compose 一键启动
+### 2. AutoWaterSimu Next Standalone 栈
 
-```bash
-docker compose up -d
+```powershell
+just standalone-up
 ```
 
-默认会启动：
+如果没有安装 `just`：
 
-- 后端 API 服务（FastAPI）
-- 前端 Web 应用（React）
-- 数据库（PostgreSQL）
-- 反向代理 / Traefik（如在 Compose 中启用）
+```powershell
+docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml up -d
+```
 
-启动完成后，你可以：
+standalone 栈会启动：
 
-- 在浏览器中访问前端界面（域名或端口以 `docker-compose.yml` 中为准）
-- 访问后端交互式 API 文档：`/docs` 或 `/redoc`
+- Go Compute API
+- Python simulation worker
+- standalone 前端
+- Compute PostgreSQL
+
+常用辅助命令：
+
+```powershell
+just standalone-status
+just standalone-smoke
+just standalone-reset
+```
 
 更详细的 Docker、本地域名和 HTTPS 设置，请参考：
 
 - [deployment.md](./deployment.md)
 - [development.md](./development.md)
 
-### 3. 本地开发（不使用 Docker）
+### 3. Legacy FastAPI / React 栈
 
-#### 后端
+legacy 栈仅用于迁移/oracle 对照或旧 FastAPI 紧急维护：
+
+```powershell
+docker compose up -d
+```
+
+#### Legacy 后端
 
 ```bash
 cd backend
@@ -207,14 +297,30 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ## 测试
 
-### 后端测试
+Next 主线变更优先运行根目录 gate：
+
+```powershell
+just readme-check
+just pr-fast
+just standalone-smoke
+```
+
+按修改面选择更聚焦的检查：
+
+```powershell
+Push-Location apps\api; go test ./...; Pop-Location
+Push-Location frontend; npx tsc --noEmit; Pop-Location
+backend\.venv\Scripts\python -m pytest contracts\tests -q
+```
+
+legacy FastAPI 检查仅用于 `backend/` oracle 或维护工作：
 
 ```bash
 cd backend
 pytest
 ```
 
-### 前端端到端测试（Playwright）
+前端行为变化仍可运行 Playwright：
 
 ```bash
 cd frontend
@@ -228,23 +334,16 @@ pnpm test:e2e
 
 | 项目 | 规划事项 | 进度 |
 | --- | --- | --- |
-| 1 | Docker Compose 全链路跑通（含 DB） | 完成 |
-| 2 | 清理敏感/多余数据表与中间文件 | 部分完成 |
-| 3 | 最小示例 Case 一键仿真 + 冒烟测试 CI，增加国际化 | 完成 |
-| 4 | 连续进水（时间序列输入） | 进行中，已完成beta版本 |
-| 5 | 核心模块初步拆分（core.py 解耦到可维护结构） | 已完成UDM拆分工作 |
-| 6 | 一维沉淀池模型 | 进行中 |
-| 7 | pH 计算 |  |
-| 8 | 参数的温度校正 |  |
-| 9 | 增加更多开源模型 | 废弃 |
-| 10 | 优化模型添加流程 | 废弃 |
-| 11 | 增加添加自定义模型功能 | 进行中，已完成beta版本 |
-| 12 | 文献数据集 Benchmark Case，与文献曲线对标输出（可复现） |  |
-| 13 | 多节点张量化表示 + 分组异构模型（每节点可跑不同模型） | 进行中 |
-| 14 | 参数扫掠/方案对比（“一张图跑所有选项”） |  |
-| 15 | 性能基准与可选 GPU 加速落地 |  |
-| 16 | 校准/调参工作流（真实项目落地包） |  |
-| 17 | “Vibe Modeling”自然语言建模入口（远期愿景） |  |
+| 1 | 将 AutoWaterSimu Next 提升为 `main`，冻结 FastAPI legacy 线 | 完成 |
+| 2 | 保持共享合同、artifact 边界和 README First 治理稳定 | 进行中 |
+| 3 | 完成 standalone RC 无 skip evidence，包括 live migration 和 object-store 检查 | 等待外部 evidence |
+| 4 | 冻结 UDM-v2 ADR，并新增 `simulation.udm_network.v1` 对应的 `network_process_graph.v1` / `network_simulation_input.v1` 合同 | 下一步 |
+| 5 | 建立 `hydraulic` / `pump` / `settling` / `signal` 四类边建模与运行时校验，并补齐严格流量平衡诊断 | 计划中 |
+| 6 | 构建 UDM Network compiler/solver，覆盖 passive UDM、reaction UDM、transport model 和 v1 五模型 parity gates | 计划中 |
+| 7 | 增加 `SecondaryClarifier10Layer`、Takacs 沉降、BSM1 reference profile 和 benchmark-backed golden evidence | 计划中 |
+| 8 | 将 UDM Network v2 接入 worker/API/catalog/artifact 后，再切换 standalone 默认路径 | 计划中 |
+| 9 | 仅在 parity、migration、BSM1 和 release gates 通过后退役 legacy FastAPI/v1 计算路径 | 门禁控制 |
+| 10 | 加固 Desktop 打包、support bundle、backup/restore 和 release artifacts | 进行中 |
 
 ---
 

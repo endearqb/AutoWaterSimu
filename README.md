@@ -71,40 +71,34 @@ This diagram illustrates the core logic used for multi‑tank simulation computa
 
 ## Features Overview
 
+- **Contract-first simulation pipeline**
+  - Separates UI canvas state, process topology, executable simulation input, compute jobs, results, and artifacts.
+  - Uses JSON Schema contracts and fixtures so Web, Desktop, worker, and API surfaces share the same integration boundary.
 
-- **Process Flow Modeling**
-  - Frontend flowchart editor built with React Flow
-  - Supports multiple node types such as influent, effluent, and reactors
-  - Build wastewater treatment / water cycle process flows via drag‑and‑drop and connection lines
+- **Standalone compute runtime**
+  - Runs a Go Compute API, Python simulation worker, standalone React frontend, and Compute PostgreSQL through `docker-compose.standalone.yml`.
+  - Keeps no-login standalone operation separate from legacy FastAPI authentication paths.
 
-- **ASM Model Simulation**
-  - Backend integrates activated sludge models such as ASM1 / ASM1slim / ASM3
-  - Supports configuration of model parameters, influent quality, simulation time, and more
-  - Returns time‑series simulation results for analyzing concentration and load changes at each node
+- **Water and wastewater model execution**
+  - Supports material balance, ASM1, ASM1Slim, ASM3, UDM catalog/templates, hybrid UDM validation, and the UDM Network v2 path.
+  - Preserves legacy FastAPI behavior as a migration oracle until parity and retirement gates pass.
 
-- **Material and Volume Balance Calculation**
-  - Dedicated material balance computation module (`backend/app/material_balance`)
-  - Multi‑component material balance simulation based on tensor operations and ODE solving
-  - Provides mass conservation checks and volume change tracking
+- **Evidence, artifacts, and release gates**
+  - Stores summaries in metadata records while keeping large time-series payloads in artifact files.
+  - Uses golden scenarios, standalone smoke checks, live evidence, and release gates to keep simulation claims reproducible.
 
-- **Task and Result Management**
-  - Stores computation tasks and results in the database
-  - Supports result summaries (total steps, computation time, convergence status, etc.)
-
-- **Accounts and Permissions (from template capabilities)**
-  - JWT‑based authentication
-  - User registration, login, and access control
-  - Password reset via email (SMTP configuration required)
+- **Desktop and field-delivery path**
+  - Tracks a Tauri/Rust + React desktop shell with packaged Python worker sidecar, local project state, local artifacts, and support bundles.
 
 ---
 
 ## Tech Stack
 
-- **Backend**
-  - [FastAPI](https://fastapi.tiangolo.com): REST API and backend services
-  - [SQLModel](https://sqlmodel.tiangolo.com): database ORM
-  - [PostgreSQL](https://www.postgresql.org): relational database
-  - [Pytest](https://pytest.org): backend testing
+- **Compute and orchestration**
+  - [Go](https://go.dev): Compute API, job lifecycle, workspace/model persistence, and OpenAPI surface
+  - [Python](https://www.python.org): simulation core and simulation-worker runtime
+  - [PostgreSQL](https://www.postgresql.org): Compute API metadata store
+  - JSON Schema contracts under `contracts/`
 
 - **Frontend**
   - [React](https://react.dev) + TypeScript + Vite
@@ -112,9 +106,17 @@ This diagram illustrates the core logic used for multi‑tank simulation computa
   - [Playwright](https://playwright.dev): end‑to‑end testing
   - React Flow / XYFlow: flowchart editing (under `frontend/src/components/Flow`)
 
+- **Desktop**
+  - [Tauri](https://tauri.app) / Rust desktop shell
+  - Packaged Python worker sidecar and local artifact/project storage
+
+- **Legacy oracle**
+  - [FastAPI](https://fastapi.tiangolo.com) + SQLModel legacy backend under `backend/`
+  - Kept for migration, parity checks, and urgent legacy maintenance
+
 - **Infrastructure**
-  - [Docker Compose](https://www.docker.com): one‑command startup for dev/deploy environments
-  - [Traefik](https://traefik.io): reverse proxy / load balancing (optional)
+  - [Docker Compose](https://www.docker.com): standalone and development stacks
+  - [Traefik](https://traefik.io): legacy reverse proxy / load balancing where enabled
   - GitHub Actions: CI / CD workflows (see `.github/workflows`)
 
 ---
@@ -123,22 +125,22 @@ This diagram illustrates the core logic used for multi‑tank simulation computa
 
 The repository root is the AutoWaterSimu project root. The core structure is:
 
-- `backend/`: backend FastAPI application
+- `backend/`: legacy FastAPI application and migration/oracle reference
   - `app/material_balance/`: core material balance computation module
   - `app/api/routes/`: API routes (including ASM1/ASM3 and material balance endpoints)
   - `app/services/`: service layer
   - `app/core/`: configuration, database, logging, security, and other core modules
-- `frontend/`: frontend React single‑page app
+- `frontend/`: React single-page app shared by legacy and standalone/Next runtime modes
   - `src/components/Flow/`: flow editor and related UI
   - `src/routes/`: page routes (material balance pages, model config pages, etc.)
 - `docs/`: usage and development documentation
   - `docs/architecture/`: AutoWaterSimu Next module map, dependency graph, ontology model, local-dev entry, and current-state summary
 - `contracts/`: AutoWaterSimu Next JSON Schema contracts and examples
 - `ontology/`: Water Ontology object/action/link/policy registries and README context
-- `simulation_core/`: pure Python simulation core extraction target
-- `services/simulation-worker/`: Python worker CLI / sidecar target
-- `apps/api/`: Go Compute API target
-- `apps/desktop/`: Tauri/Rust + React Desktop target
+- `simulation_core/`: pure Python simulation runtime core
+- `services/simulation-worker/`: Python worker CLI / sidecar runtime
+- `apps/api/`: Go Compute API backend
+- `apps/desktop/`: Tauri/Rust + React desktop shell
 - `Justfile`: monorepo task entry for doctor, check, dependency checks, generation, dev helpers, and release gates
 - `scripts/`: repository-level automation such as AutoWaterSimu Next release gates
 - `.ai/`: README First change, decision, plan, and review records
@@ -238,8 +240,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\golden-scenarios.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\smoke-release-artifact-download.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-release-gate.ps1 -SkipLong
 backend\.venv\Scripts\python -m pytest contracts\tests -q
-cd apps\api; go test ./...
-cd frontend; npx tsc --noEmit
+Push-Location apps\api; go test ./...; Pop-Location
+Push-Location frontend; npx tsc --noEmit; Pop-Location
 ```
 
 Standalone RC is only complete when the current HEAD full gate runs without skips, including live legacy migration DSNs, backup/restore live checks, release image self-check, and five-model live evidence:
@@ -253,7 +255,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\release\standalone-r
 
 Hosted evidence entry: `.github/workflows/next-standalone-release-gate.yml`. It requires current-commit external acceptance JSON for production legacy rehearsal (`schema_version=autowatersimu_next_standalone_legacy_production_rehearsal.v1`) and MinIO/S3 artifact profile validation (`schema_version=autowatersimu_next_standalone_s3_artifact_profile_live.v1`), plus the `AUTOWATERSIMU_LEGACY_DATABASE_URL` GitHub Secret for live migration dry-run; missing records fail the gate.
 
-Until that no-skip evidence exists, keep FastAPI/legacy client code as comparison/oracle material and do not treat the standalone branch as the final canonical main merge.
+Until that no-skip evidence exists, keep FastAPI/legacy client code as comparison/oracle material and do not retire the legacy oracle or declare standalone RC complete.
 
 The long-term architecture entry for Next lives under [docs/architecture](./docs/architecture/README.md).
 The source-mounted Next local stack candidate is [docker-compose.dev.yml](./docker-compose.dev.yml).
@@ -278,33 +280,41 @@ At minimum, update the following according to your environment:
 
 These sensitive values are best injected via environment variables or a secret management service.
 
-### 2. One‑Click Start with Docker Compose
+### 2. AutoWaterSimu Next Standalone Stack
 
-```bash
-docker compose up -d
+```powershell
+just standalone-up
 ```
 
-By default this starts:
+If `just` is unavailable:
 
-- Backend API service (FastAPI)
-- Frontend web app (React)
-- Database (PostgreSQL)
-- Reverse proxy / Traefik (if enabled in the compose file)
+```powershell
+docker compose -p autowatersimu-standalone -f docker-compose.standalone.yml up -d
+```
 
+The standalone stack starts:
 
-After startup you can:
+- Go Compute API
+- Python simulation worker
+- Standalone frontend
+- Compute PostgreSQL
 
-- Open the frontend in your browser (host/port as defined in `docker-compose.yml`)
-- Access the interactive API docs at `/docs` or `/redoc`
+Use `just standalone-status`, `just standalone-smoke`, and `just standalone-reset` for status, smoke verification, and cleanup.
 
 For Docker details, local domain configuration, and HTTPS setup, see:
 
 - [deployment.md](./deployment.md)
 - [development.md](./development.md)
 
-### 3. Local Development (Without Docker)
+### 3. Legacy FastAPI / React Stack
 
-#### Backend
+Use the legacy stack only for migration/oracle comparison or old FastAPI maintenance:
+
+```powershell
+docker compose up -d
+```
+
+#### Legacy Backend
 
 ```bash
 cd backend
@@ -350,14 +360,30 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ## Testing
 
-### Backend Tests
+For mainline Next changes, prefer the root gates:
+
+```powershell
+just readme-check
+just pr-fast
+just standalone-smoke
+```
+
+Use focused checks when changing a specific surface:
+
+```powershell
+Push-Location apps\api; go test ./...; Pop-Location
+Push-Location frontend; npx tsc --noEmit; Pop-Location
+backend\.venv\Scripts\python -m pytest contracts\tests -q
+```
+
+Legacy FastAPI checks are for `backend/` oracle or maintenance work:
 
 ```bash
 cd backend
 pytest
 ```
 
-### Frontend End‑to‑End Tests (Playwright)
+Frontend E2E checks remain available when UI behavior changes:
 
 ```bash
 cd frontend
@@ -372,23 +398,16 @@ For more details on test commands and configuration, refer to the README or `pac
 
 | Item | Planned Work | Status |
 | --- | --- | --- |
-| 1 | Full Docker Compose pipeline running end‑to‑end (including DB) | Complete |
-| 2 | Clean up sensitive/redundant tables and intermediate files | Almost Complete |
-| 3 | One‑click simulation for a minimal example case + smoke test CI, add i18n | Complete |
-| 4 | Continuous influent (time‑series input) | In progress, beta version completed |
-| 5 | Initial refactor of core module (decouple `core.py` into maintainable structure) | Completed UDM split work |
-| 6 | One‑dimensional settling tank model | In progress |
-| 7 | pH calculation |  |
-| 8 | Temperature correction for parameters |  |
-| 9 | Add more open‑source models | Deprecated |
-| 10 | Improve the model addition workflow | Deprecated |
-| 11 | Support adding custom user‑defined models | In progress, beta version completed |
-| 12 | Benchmark cases based on literature datasets, with reproducible curve‑matching outputs |  |
-| 13 | Tensorized multi‑node representation + grouped heterogeneous models (different model per node) | In progress |
-| 14 | Parameter sweep / scenario comparison (“run all options in one plot”) |  |
-| 15 | Performance benchmarks and optional GPU acceleration |  |
-| 16 | Calibration/tuning workflow for real‑world project deployment |  |
-| 17 | “Vibe Modeling” natural‑language modeling interface (long‑term vision) |  |
+| 1 | Promote AutoWaterSimu Next to `main` and freeze FastAPI legacy line | Complete |
+| 2 | Keep shared contracts, artifact boundaries, and README First governance stable | Active |
+| 3 | Complete no-skip standalone RC evidence, including live migration and object-store checks | Pending external evidence |
+| 4 | Freeze UDM-v2 ADRs and add `network_process_graph.v1` / `network_simulation_input.v1` contracts for `simulation.udm_network.v1` | Next |
+| 5 | Add typed edge modeling and runtime validation for `hydraulic` / `pump` / `settling` / `signal`, with strict flow-balance diagnostics | Planned |
+| 6 | Build the UDM Network compiler/solver with passive UDM, reaction UDM, transport models, and v1 five-model parity gates | Planned |
+| 7 | Add `SecondaryClarifier10Layer`, Takacs settling, BSM1 reference profile, and benchmark-backed golden evidence | Planned |
+| 8 | Wire UDM Network v2 through worker/API/catalog/artifacts before switching standalone defaults | Planned |
+| 9 | Retire legacy FastAPI/v1 compute paths only after parity, migration, BSM1, and release gates pass | Gated |
+| 10 | Harden Desktop packaging, support bundles, backup/restore, and release artifacts | In progress |
 
 ---
 
