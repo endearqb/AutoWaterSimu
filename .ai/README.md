@@ -24,12 +24,14 @@
 | `decisions/` | 长期架构决策 |
 | `plans/` | 可选复杂任务计划 |
 | `reviews/` | 可选 review 记录 |
+| `readme-contracts.json` | README 分类、预算和 P0 漂移检查配置 |
 
 ## 3. 维护约定
 
-1. 每次文件修改后按 `AGENTS.md` 判断是否写入 `.ai/changes/`。
+1. 每次文件修改后按 `AGENTS.md` 判断是否写入 `.ai/changes/`，并按 `README_First.md` 的文档分工避免把流水账写进 README。
 2. 改变架构、目录职责、公共接口或长期维护规则时写入 `.ai/decisions/`。
 3. 记录原因、范围、验证和剩余不确定性，不重复粘贴完整 diff。
+4. README 类型和自动检查规则维护在 `readme-contracts.json`，脚本实现放在 `scripts/readme-contract-check.ps1`。
 
 ## 4. 对外接口
 
@@ -45,6 +47,7 @@
 
 ```powershell
 git diff --check -- .ai
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\readme-contract-check.ps1 -FailOnWarnings
 ```
 
 ## 7. AI 操作提示

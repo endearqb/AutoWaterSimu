@@ -69,6 +69,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-cor
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、根 `README.md`、`backend/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、根 `README_First.md`、根 `README.md`、`backend/README.md` 和本 README。
 2. 修改公共 adapter 时同步检查 contract fixtures 和 worker tests。
 3. 保持 legacy route 行为稳定，迁移期通过 adapter 和测试对齐。

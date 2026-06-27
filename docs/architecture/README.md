@@ -35,7 +35,7 @@
 ## 3. 维护约定
 
 1. 本目录记录长期事实，不记录普通 bugfix 流水账。
-2. 与 `AGENTS.md`、根 README 或目录 README 冲突时，先修正文档冲突再继续实现。
+2. 与 `AGENTS.md`、`README_First.md`、根 README 或目录 README 冲突时，先修正文档冲突再继续实现。
 3. 新增跨端合同、ontology registry、模块边界或 release gate 时，同步检查本目录是否需要更新。
 
 ## 4. 对外接口
@@ -60,6 +60,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1
 
 ## 7. AI 操作提示
 
-1. 先读根 README、`docs/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、`README_First.md`、根 README、`docs/README.md` 和本 README。
 2. 只沉淀稳定架构知识；单次任务细节写入 `.ai/changes/`。
 3. 更新 current-state 时明确区分已落地能力、当前豁免和后续计划。

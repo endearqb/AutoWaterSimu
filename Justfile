@@ -87,6 +87,7 @@ dev-frontend-standalone:
     cd frontend; $env:VITE_APP_MODE='standalone'; $env:VITE_AUTH_MODE='disabled'; $env:VITE_CONTEXT_MODE='standalone'; $env:VITE_COMPUTE_API_TOKEN=''; npm run dev
 
 check:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\readme-contract-check.ps1 -FailOnWarnings
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1
     backend\.venv\Scripts\python -m pytest contracts\tests -q
@@ -165,6 +166,9 @@ release-artifact-download-smoke:
 
 check-deps:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
+
+readme-check:
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts\readme-contract-check.ps1 -FailOnWarnings
 
 check-contracts:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1

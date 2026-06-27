@@ -1,3 +1,28 @@
+# 2026-06-27 README First framework automation TODO
+
+- [x] Read the attached README First optimization framework.
+- [x] Re-read README First root context, task records, and scripts context.
+- [x] Add a machine-readable README contract classification/check config.
+- [x] Add a repository README drift check script with P0 checks and JSON evidence.
+- [x] Update README First/scripts context and record validation.
+- [x] Shorten over-budget active README contracts so `-FailOnWarnings` can be enforced.
+
+## Plan
+
+- Keep this as README First system work only; do not change runtime code.
+- Implement the first useful automation gate: README inventory, type classification, dead-link/core-entry checks, local-path/secret scan, and evidence output.
+- Keep README rewrites limited to documents actually flagged by the new gate.
+- Enforce P0 issue and P1 warning cleanup through `just readme-check`.
+
+## Review
+
+- Added `.ai/readme-contracts.json` and `scripts/readme-contract-check.ps1`.
+- Added `just readme-check` and wired the README contract gate into `just check` with `-FailOnWarnings`.
+- Fixed current P0 README drift found by the new gate: missing `README_First.md` reading-chain references, one Playwright command typo, and optional `tasks/lessons.md` listed as a required core file.
+- Shortened `backend/README.md`, `frontend/README.md`, and `scripts/ci/README.md` into concise active contracts.
+- Validation passed: `scripts\readme-contract-check.ps1 -FailOnWarnings`, `just --list`, `just readme-check`, and `git diff --check` with LF/CRLF warnings only.
+- Remaining scope: no known README contract issues or warnings in the current gate; future work should expand checks only when a new drift class becomes actionable.
+
 # 2026-06-25 Standalone RC result/UDM blocker fix docs TODO
 
 - [x] Re-read README First context for docs/rebuild, contracts, frontend result services, Go UDM templates, tasks, and .ai records.

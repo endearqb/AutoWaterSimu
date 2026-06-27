@@ -9,6 +9,7 @@
 - AutoWaterSimu Next release / verification gate 编排。
 - AutoWaterSimu Next local/CI evidence smoke 编排。
 - Registry-backed ontology / contract consistency检查。
+- README First contract / pointer / archive / release 文档 P0 drift 检查。
 
 本目录不负责：
 
@@ -27,6 +28,7 @@
 | `audit-simulation-core-correctness-freeze.ps1` | simulation_core correctness freeze 只读审计，检查 `_run_hours` unified ASM/UDM reaction dispatcher、default no-reaction branch、反应分支 `clamp_output=True` 与 default 分支 `clamp_output=False` 的 shared solver helper clamp 语义、ASM component contract guard/schema-driven gather-scatter、ASM 氧清零 active compute mask 范围，以及 core-only freeze tests 是否存在，并输出 `tmp/architecture-evidence/simulation-core-correctness-freeze.json`；默认只对硬违规失败，`-FailOnOpenGaps` 可把开放缺口升级为失败 |
 | `audit-worker-dependency-installation.ps1` | worker dependency installation 只读审计，运行 source-mode `simulation-worker --self-check`，检查 backend Python environment 明确安装 `autowatersimu-simulation-core` / `autowatersimu-contracts` editable packages，并要求 no-fallback 兼容字段 `deprecated_repo_path_fallback_used=false`，输出 `tmp/architecture-evidence/worker-dependency-installation.json` |
 | `check-deps.ps1` | 最小依赖边界检查，覆盖 contracts/runtime、legacy/Next、frontend generated client、frontend route-to-feature-query boundary、API platform-to-domain/compute 与 domain-to-compute reverse import 等规则，供 `just check-deps` / `just check` 调用 |
+| `readme-contract-check.ps1` | README First 文档契约检查，读取 `.ai/readme-contracts.json`，枚举维护源 `README*.md`，校验类型分类、断链、核心文件表、`README_First.md` 读取链、本机绝对路径、高置信 secret-like 文本和命令笔误，并输出 `tmp/readme-contract-check.json` |
 | `check-ontology.ps1` | Water Ontology objects/actions/links/policies registry 一致性检查，供 `just check-ontology` / `just check` / `pr-fast` 调用 |
 | `check-contracts.ps1` | Contracts registry、codegen manifest、schema tests、Compute TS client drift gate，供 `just check-contracts` / `pr-fast` 调用 |
 | `ci/` | AutoWaterSimu Next PR fast（含 Compute API boundary audit）、standalone no-auth compose/API smoke、standalone migration smoke、standalone five-model smoke、standalone backup/restore smoke、opt-in integration smoke、opt-in security smoke、mock-backed browser smoke、live backend browser smoke、current-flow live smoke、worker adapter strict-mode opt-in smoke、worker packaged sidecar no-fallback smoke、performance/timings Phase 0 baseline、performance profiling Phase 0 evidence、performance golden Phase 0 evidence、performance hot-path prereview Phase 0 evidence、Go API latency Phase 0 evidence、performance flag matrix Phase 0 evidence、Desktop package smoke、Desktop unsigned release artifacts smoke 与 golden scenario evidence 汇总/刷新脚本 |
@@ -40,6 +42,7 @@
 4. codegen gate 可做机械生成、尾随空格和末尾换行归一化，但不得手写修改 generated client。
 5. 依赖边界检查应先覆盖当前已满足的硬规则；新增规则前先修复现有代码或明确记录豁免。
 6. `audit-compute-api-boundary.ps1` 通过维护一组 aggregate/narrow repository 字段识别 Store method 调用；新增内部窄服务时应同步加入对应字段名，避免审计漏计。Store/interface source 固定在 `apps/api/internal/compute/store_interfaces.go`，MemoryStore implementation coverage 来自同目录 `memory_*.go`，PostgresStore implementation coverage 来自同目录 `postgres*.go`。内部 domain/platform service constructor 不应接收 aggregate `Store`，且 store-like 参数应保持在 3 个以内；公共 `NewService` 兼容 wiring 例外。已拆出的 internal domain/platform package 应继续被 audit 记录，避免 package movement 退回单包；domain package 不能 import compute，platform package 不能 import compute 或 domain。
+7. README drift 检查脚本默认只对 P0 问题失败；`just readme-check` 和 `just check` 传入 `-FailOnWarnings`，把长度预算等 P1/P2 warning 也作为 gate 失败处理。
 
 ## 4. 对外接口
 
@@ -59,6 +62,7 @@
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\doctor.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\readme-contract-check.ps1 -FailOnWarnings
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-compute-api-boundary.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-frontend-standalone-compute-boundary.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-core-boundary.ps1

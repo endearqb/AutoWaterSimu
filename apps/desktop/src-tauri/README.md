@@ -113,6 +113,6 @@ cargo test --manifest-path apps\desktop\src-tauri\Cargo.toml packaged_worker_exe
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、根 `README.md`、`apps/desktop/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、根 `README_First.md`、根 `README.md`、`apps/desktop/README.md` 和本 README。
 2. 不要在未准备真实 packaged artifact 时引入 installer；不要在未完成 `.ai/decisions/0011-desktop-release-signing-auto-update-boundary.md` 要求的 policy/secrets/evidence 前引入 auto update、signing 或自动发布。
 3. sidecar spawn 变更需要同步验证 stdout JSON-RPC、stderr tail 和本地路径 sandbox。

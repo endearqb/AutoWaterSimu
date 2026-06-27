@@ -171,6 +171,7 @@ just standalone-backup-restore-smoke
 just standalone-release-gate
 just standalone-release-gate-full
 just check-deps
+just readme-check
 just check-ontology
 just check
 just pr-fast
@@ -204,6 +205,7 @@ If `just` is not installed, run the underlying scripts and checks directly:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\doctor.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\readme-contract-check.ps1 -FailOnWarnings
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-deps.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-ontology.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-contracts.ps1

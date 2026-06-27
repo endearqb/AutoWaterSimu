@@ -57,6 +57,6 @@ backend\.venv\Scripts\python -m pip install -e contracts\python --no-deps
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、根 `README.md`、`contracts/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、根 `README_First.md`、根 `README.md`、`contracts/README.md` 和本 README。
 2. 不要把 legacy-only UI 字段直接推进 worker payload；需要通过合同字段承载。
 3. 时间分段、组件顺序和 edge transform 规则改动必须同时更新 Python/TypeScript 两侧。

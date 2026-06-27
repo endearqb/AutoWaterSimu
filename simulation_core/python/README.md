@@ -61,6 +61,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-simulation-cor
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、根 `README.md`、`simulation_core/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、根 `README_First.md`、根 `README.md`、`simulation_core/README.md` 和本 README。
 2. 新增核心依赖前确认 worker 打包和 Desktop sidecar 影响。
 3. 不要为了让 core 独立而改 legacy backend 行为。

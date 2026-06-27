@@ -94,6 +94,6 @@ backend\.venv\Scripts\python -m pytest contracts\tests -q
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、`README.md` 与本 README。
+1. 先读根 `AGENTS.md`、`README_First.md`、`README.md` 与本 README。
 2. 新增合同前检查 `docs/rebuild/AutoWaterSimu_Next_Technical_Spec_v1.0.md`。
 3. 不要为单个实现随意扩展合同；先确认是否属于跨边界长期接口。

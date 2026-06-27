@@ -60,6 +60,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\audit-worker-depende
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、根 `README.md`、`services/simulation-worker/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、根 `README_First.md`、根 `README.md`、`services/simulation-worker/README.md` 和本 README。
 2. 修改 worker stdout/stderr 或 artifact shape 后必须运行本目录测试。
 3. 修改 worker dependency import 逻辑后必须同时运行 worker dependency installation audit。

@@ -113,7 +113,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-go-ap
 
 ## 7. AI 操作提示
 
-1. 按 README First 顺序读取本 README 与上级 README。
+1. 按 README First 顺序读取根 `AGENTS.md`、`README_First.md`、根 README、上级 README 与本 README。
 2. 先区分“当前冻结行为”“目标正确行为”和“性能优化行为”，再修改计划。
 3. 热路径实现必须贴合 P-08 evidence 的候选顺序与禁止混入项；baseline、profiling 或 golden evidence 更新后也必须重新审视 P-08，而不是直接扩大改动。
 4. 修改 mixed-model dispatch 时必须同步更新 ADR 0015、`simulation_core/tests` correctness-freeze tests、`scripts/audit-simulation-core-correctness-freeze.ps1` 和 P-03 golden evidence 分类。

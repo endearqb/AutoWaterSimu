@@ -59,6 +59,6 @@ cd frontend; npx tsc --noEmit
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、根 `README.md`、`frontend/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、根 `README_First.md`、根 `README.md`、`frontend/README.md` 和本 README。
 2. 不要在 prototype 中偷偷改变 legacy store 行为。
 3. 与 Python transform 不一致时，先补 fixture 或记录差异再改。

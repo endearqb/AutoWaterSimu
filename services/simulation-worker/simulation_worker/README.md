@@ -109,7 +109,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci\performance-basel
 
 ## 7. AI 操作提示
 
-1. 先读根 `AGENTS.md`、根 `README.md`、`services/simulation-worker/README.md` 和本 README。
+1. 先读根 `AGENTS.md`、根 `README_First.md`、根 `README.md`、`services/simulation-worker/README.md` 和本 README。
 2. 任何 stdout 改动都要验证 JSON parser 可以直接解析。
 3. worker 只编排 job、schema、artifact 和 JSON-RPC，不实现核心算法。
 4. packaged mode 必须能从 PyInstaller bundle resource root 读取 `contracts/` schema 和 fixture。

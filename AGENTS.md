@@ -235,6 +235,12 @@ Agent 不需要向用户暴露完整推理过程，但必须在最终回复中�
 
 README 只记录长期知识（目录职责、模块边界、公共接口、命名与依赖规则、验证方式），不记录流水账、临时调试信息、可从 git diff 看出的细节或未经确认的猜测。
 
+README 修改前应先判断文档类型：`contract`（活跃目录契约）、`pointer`（事实源指针）、`archive`（历史资料）、`artifact`（交付包说明）、`release`（阶段证据）、`changelog` / `governance`（记录或规则）。类型规则维护在 `.ai/readme-contracts.json`，自动检查入口为：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\readme-contract-check.ps1 -FailOnWarnings
+```
+
 ---
 
 ## 7. 禁止行为
@@ -262,6 +268,10 @@ Agent 不得：
 
 ```md
 # 目录说明：<目录名>
+
+> 类型：contract
+> Canonical sources：
+> - <源码路径 / schema / migration / scripts / tests>
 
 ## 1. 目录职责
 本目录负责：
