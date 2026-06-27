@@ -14,10 +14,11 @@
 - 把 network process graph / network simulation input payload 归一化为 runtime system。
 - node、edge、port、component schema 和 state slice registry 校验。
 - Hydraulic / pump edge flow balance solver for fixed、balanced、split、ratio and residual constraints。
+- UDM-v2 node reaction/passive evaluator for local component state, parameters, `t` and signals。
 
 本目录不负责：
 
-- ODE 求解。
+- ODE/time-step integration。
 - Takacs transport runtime。
 - Worker job lifecycle。
 
@@ -29,6 +30,7 @@
 | `compiler.py` | `compile_network()` payload-to-runtime compiler |
 | `results.py` | compiled system, state slices and edge bundles |
 | `flow_balance.py` | `Aq=b` flow balance solver and strict diagnostics |
+| `udm_reaction.py` | Passive/reaction-enabled UDM node evaluator and seed model dataclasses |
 
 ## 3. 维护约定
 
@@ -36,10 +38,11 @@
 2. Explicit node ports are strict; executable inputs without ports may infer ports from edge kind.
 3. Compiler errors must carry stable `code` values for API/worker diagnostics.
 4. Flow balance only resolves hydraulic/pump edges; settling/signal edges must not enter `Aq=b`。
+5. Reaction expressions reuse `material_balance.udm_expression.compile_expression`; do not add a second expression language here.
 
 ## 4. 对外接口
 
-本目录暴露 `compile_network()`、`solve_flow_balance()` and dataclasses under `autowatersimu_simulation_core.udm_network`。
+本目录暴露 `compile_network()`、`solve_flow_balance()`、`build_reaction_model()`、`build_node_reaction_model()`、`evaluate_reaction()` and dataclasses under `autowatersimu_simulation_core.udm_network`。
 
 ## 5. 依赖边界
 
@@ -52,8 +55,9 @@
 ```powershell
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_compiler.py -q
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_flow_balance.py -q
+backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_reaction.py -q
 ```
 
 ## 7. AI 操作提示
 
-新增 runtime execution 前先保持 compiler tests green；不要把 worker artifact/result envelope 写进本目录。
+新增 runtime execution 前先保持 compiler、flow balance and reaction tests green；不要把 worker artifact/result envelope 写进本目录。

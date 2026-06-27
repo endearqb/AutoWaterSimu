@@ -1,3 +1,26 @@
+# 2026-06-27 UDM Network v2 P4 Reaction/Passive TODO
+
+- [x] Re-read P4 reaction/passive requirements from UDM-v2 docs.
+- [x] Reuse existing UDM expression compiler instead of adding another expression engine.
+- [x] Add `udm_network/udm_reaction.py` for passive and reaction-enabled node evaluation.
+- [x] Cover passive nodes, `reaction_enabled=false`, seed rate/stoich, `t`/signals and invalid stoich components.
+- [x] Cover small-case parity with the existing v1 UDM runtime.
+- [x] Update simulation_core README contracts for the new reaction import surface.
+- [x] Run focused P4 tests.
+
+## Plan
+
+- Keep P4 limited to local node reaction evaluation, not ODE integration, transport or worker execution.
+- Keep component/model/process dataclasses in `udm_reaction.py` for now; split `components.py`/`models.py` only when the surface grows.
+- Use `material_balance.udm_expression.compile_expression` as the single expression language implementation.
+
+## Review
+
+- Added `build_reaction_model()`, `build_node_reaction_model()` and `evaluate_reaction()`.
+- Passive nodes return zero reaction while retaining local component state shape.
+- Reaction-enabled seed definitions evaluate rate expressions, numeric `stoich`, `stoich_expr`, parameters, `t` and signals.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_reaction.py -q`.
+
 # 2026-06-27 UDM Network v2 P3 Flow Balance TODO
 
 - [x] Re-read P3 flow balance requirements from UDM-v2 docs.

@@ -10,6 +10,7 @@
 - core adapter 行为测试。
 - UDM Network v2 graph compiler MVP 测试。
 - UDM Network v2 automatic flow balance solver tests。
+- UDM Network v2 passive/reaction node evaluator tests。
 - `_run_hours` unified reaction dispatch、default no-reaction branch、clamp policy、ASM component contract guard 与 schema-driven gather/scatter、ASM oxygen mask scope、`compute_mask` derivative masking、solver matrix policy、deprecated solver limit fields、ASM active reaction runtime precompute、sparse path dense-props lazy behavior、dense/sparse parallel-edge equivalence、`_balance_param` shape guard、segment timestamp CPU construction、precomputed `parameter_names` reuse、UDM component mapping / conflict / stoich mismatch guard 和 UDM expression AST whitelist/corpus 的 correctness-freeze 测试。
 - material balance、ASM1Slim model-bound、`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 和 `simulation.udm.v1` 的 core-only CPU/f64 committed golden 测试。
 
@@ -28,6 +29,7 @@
 | `test_material_balance_core.py` | core-only CPU/f64 committed golden 测试，并通过 `CORE_F64_GOLDEN_CASES` 显式声明 material balance / ASM / UDM golden 覆盖 |
 | `test_udm_network_compiler.py` | UDM Network v2 graph compiler MVP tests |
 | `test_udm_network_flow_balance.py` | UDM Network v2 `Aq=b` flow balance solver tests |
+| `test_udm_network_reaction.py` | UDM Network v2 passive/reaction node evaluator and v1 UDM small-case parity tests |
 
 ## 3. 维护约定
 
