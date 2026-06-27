@@ -3,9 +3,9 @@
 ---
 
 An automated water cycle simulation system for simulating and analyzing water cycles and water treatment processes.  
-Built on a full‑stack FastAPI + React architecture, supporting process flow modeling, ASM kinetic simulation, and material balance analysis.
+AutoWaterSimu Next is the canonical mainline: a contract-first monorepo for Go Compute API, Python simulation worker, desktop/runtime packaging, UDM network simulation, ASM/BSM workflows, and legacy parity evidence.
 
-> This project is deeply customized from the [Full Stack FastAPI Template](https://github.com/fastapi/full-stack-fastapi-template), keeping its engineering capabilities while adding domain‑specific features for water treatment.
+> The original FastAPI + React system remains in `backend/` and `frontend/` as legacy comparison/oracle material. The frozen legacy branch is `legacy/fastapi-frozen`.
 
 ---
 
@@ -29,10 +29,10 @@ Long-term AI collaboration records live under `.ai/`:
 - `.ai/plans/`: optional complex task plans
 - `.ai/reviews/`: optional review records
 
-AutoWaterSimu Next work is developed in this repository as a monorepo-style evolution:
+AutoWaterSimu Next is developed in this repository as a monorepo-style evolution:
 
-- legacy `frontend/` and `backend/` remain as the baseline
-- new contracts, worker, API, and desktop surfaces are added in parallel
+- legacy `frontend/` and `backend/` remain as migration/oracle material
+- contracts, worker, API, and desktop surfaces are the active Next mainline
 - migration happens through tested adapters, fixtures, and old-vs-new baselines
 
 ---

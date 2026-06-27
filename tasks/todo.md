@@ -1,3 +1,28 @@
+# 2026-06-27 Mainline cutover to AutoWaterSimu Next TODO
+
+- [x] Read the attached mainline strategy note before changing refs.
+- [x] Re-read README First root context, task records, `.ai` records, and current git refs.
+- [x] Confirm `origin/main` is an ancestor of `codex/autowatersimu-next-rebuild`, so the promotion can be a fast-forward.
+- [x] Record the durable mainline decision and update the root README top-level project description.
+- [x] Freeze old `main` as `legacy/fastapi-frozen` and `fastapi-legacy-2026-06-27`.
+- [x] Promote `codex/autowatersimu-next-rebuild` to `main`.
+- [x] Create the v2 short branch `codex/udm-network-v2` from the new `main`.
+- [x] Verify local and remote refs after push.
+
+## Plan
+
+- Keep the current AutoWaterSimu repository as the canonical repository.
+- Preserve the old FastAPI `main` before moving `main`.
+- Do not delete the rebuild branch; only move `main` and add the requested v2 working branch.
+- Use fast-forward push for `main` because the old `main` is already an ancestor.
+
+## Review
+
+- Old `main` (`4c7d61e`) is preserved as remote branch `legacy/fastapi-frozen` and tag `fastapi-legacy-2026-06-27`.
+- `main` was fast-forwarded to AutoWaterSimu Next (`243e2ca`) first, then to the cutover record commit.
+- `codex/udm-network-v2` was created from the new `main` cutover record commit as the first v2 short branch.
+- No runtime code was changed; this task changed refs plus root README/README First records only.
+
 # 2026-06-27 README First framework automation TODO
 
 - [x] Read the attached README First optimization framework.
