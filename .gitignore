@@ -10,6 +10,9 @@ my-full-stack.code-workspace
 *.swo
 *~
 
+# GitHub renders .github/README.md before the root README.
+.github/README.md
+
 # Environment files
 .env
 .env.local
