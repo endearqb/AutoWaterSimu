@@ -1,3 +1,24 @@
+# 2026-06-27 UDM Network v2 P5 Takacs Transport TODO
+
+- [x] Re-read P5 transport/Takacs requirements from UDM-v2 docs.
+- [x] Add `udm_network/udm_transport.py` for `takacs_settling.v1`.
+- [x] Build transport model from compiled settling edges and inline definitions.
+- [x] Cover settling-only mass conservation, volume unchanged, zero solids, high-solids limiter, total-solids projection and missing component diagnostics.
+- [x] Update simulation_core README contracts for the new transport import surface.
+- [x] Run focused P5 tests.
+
+## Plan
+
+- Keep P5 limited to edge transport evaluation, not ODE/RHS assembly or SecondaryClarifier composite generation.
+- Compute one Takacs total solids flux first, then project it by source particulate composition.
+- Keep settling volume contribution fixed at zero.
+
+## Review
+
+- Added `build_transport_model()` and `evaluate_transport()` with `UDMTransportModel` and `TransportEvaluation`.
+- `takacs_settling.v1` supports direct `X_TSS` and weighted particulate source state, component policy include/exclude, source/target validation, shared velocity/total-flux limiter and zero-volume deltas.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_transport.py -q`.
+
 # 2026-06-27 UDM Network v2 P4 Reaction/Passive TODO
 
 - [x] Re-read P4 reaction/passive requirements from UDM-v2 docs.

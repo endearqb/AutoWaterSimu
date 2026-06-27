@@ -12,20 +12,34 @@ from .udm_reaction import (
     build_reaction_model,
     evaluate_reaction,
 )
+from .udm_transport import (
+    ComponentPolicy,
+    TransportEvaluation,
+    UDMTransportError,
+    UDMTransportModel,
+    build_transport_model,
+    evaluate_transport,
+)
 
 __all__ = [
+    "ComponentPolicy",
     "CompiledNetworkSystem",
     "EdgeKind",
     "FlowBalanceError",
     "FlowBalanceResult",
     "StateSlice",
+    "TransportEvaluation",
     "UDMNetworkCompileError",
     "UDMProcess",
     "UDMReactionError",
     "UDMReactionModel",
+    "UDMTransportError",
+    "UDMTransportModel",
     "build_node_reaction_model",
     "build_reaction_model",
+    "build_transport_model",
     "compile_network",
     "evaluate_reaction",
+    "evaluate_transport",
     "solve_flow_balance",
 ]
