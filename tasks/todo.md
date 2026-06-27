@@ -1,3 +1,25 @@
+# 2026-06-27 UDM Network v2 P7 SecondaryClarifier Reference TODO
+
+- [x] Re-read P7 SecondaryClarifier10Layer reference profile requirements.
+- [x] Add `udm_network/composites/secondary_clarifier_10_layer.py`.
+- [x] Generate 10 layer nodes with 8 reference states per layer.
+- [x] Generate hydraulic boundary/internal edges, 9 settling edges and flow constraints.
+- [x] Cover 80-state registry, feed layer, Qe/Qr/Qw balance, top/bottom outputs and no reaction contribution.
+- [x] Add composites README and update simulation_core README contracts.
+- [x] Run focused P7 tests.
+
+## Plan
+
+- Keep P7 limited to reference profile primitive graph generation.
+- Use zero-state boundary controller nodes so compiled state registry remains exactly 80 states.
+- Leave BSM1 official conformance, full plant and reactive profile for later phases.
+
+## Review
+
+- Added `SecondaryClarifierReferenceConfig` and `build_secondary_clarifier_reference_graph()`.
+- Generated graph compiles through `compile_network()` and resolves boundary hydraulic flows with `solve_flow_balance()`.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_secondary_clarifier.py -q`.
+
 # 2026-06-27 UDM Network v2 P6 Five-Model Parity Gate TODO
 
 - [x] Re-read P6 five-model parity and v1 migration gate requirements.

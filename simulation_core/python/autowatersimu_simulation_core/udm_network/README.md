@@ -17,11 +17,12 @@
 - UDM-v2 node reaction/passive evaluator for local component state, parameters, `t` and signals。
 - UDM-v2 `takacs_settling.v1` edge transport evaluator for total-solids settling mass flux。
 - UDM Network v2 five-model v1 migration parity gate manifest。
+- SecondaryClarifier10Layer reference profile primitive graph generation。
 
 本目录不负责：
 
 - ODE/time-step integration。
-- SecondaryClarifier composite expansion。
+- BSM1 full plant benchmark conformance。
 - Worker job lifecycle。
 
 ## 2. 核心文件
@@ -35,6 +36,7 @@
 | `udm_reaction.py` | Passive/reaction-enabled UDM node evaluator and seed model dataclasses |
 | `udm_transport.py` | `takacs_settling.v1` transport evaluator and edge transport dataclasses |
 | `parity.py` | Five-model v1/v2 parity migration gate manifest |
+| `composites/` | Composite-to-primitive graph generators |
 
 ## 3. 维护约定
 
@@ -45,10 +47,11 @@
 5. Reaction expressions reuse `material_balance.udm_expression.compile_expression`; do not add a second expression language here.
 6. Takacs settling computes one total solids flux first, then projects by source particulate composition; do not apply per-component independent limiters.
 7. The v1 migration parity gate must stay closed until every model family has explicit v2 L2 parity evidence.
+8. SecondaryClarifier reference profile must generate 10 layers x 8 states/layer with `reaction_enabled=false`。
 
 ## 4. 对外接口
 
-本目录暴露 `compile_network()`、`solve_flow_balance()`、`build_reaction_model()`、`build_node_reaction_model()`、`evaluate_reaction()`、`build_transport_model()`、`evaluate_transport()`、`build_v1_migration_gate()` and dataclasses under `autowatersimu_simulation_core.udm_network`。
+本目录暴露 `compile_network()`、`solve_flow_balance()`、`build_reaction_model()`、`build_node_reaction_model()`、`evaluate_reaction()`、`build_transport_model()`、`evaluate_transport()`、`build_v1_migration_gate()`、`build_secondary_clarifier_reference_graph()` and dataclasses under `autowatersimu_simulation_core.udm_network`。
 
 ## 5. 依赖边界
 
@@ -64,8 +67,9 @@ backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_fl
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_reaction.py -q
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_transport.py -q
 backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_parity_gate.py -q
+backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_secondary_clarifier.py -q
 ```
 
 ## 7. AI 操作提示
 
-新增 runtime execution 前先保持 compiler、flow balance、reaction、transport and parity gate tests green；不要把 worker artifact/result envelope 写进本目录。
+新增 runtime execution 前先保持 compiler、flow balance、reaction、transport、parity gate and secondary clarifier tests green；不要把 worker artifact/result envelope 写进本目录。
