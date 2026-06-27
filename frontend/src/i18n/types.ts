@@ -969,6 +969,9 @@ export interface I18nMessages {
       timeRange: string
       timeSelection: string
       timeTooltipLabel: string
+      loading: string
+      loadFailed: string
+      retry: string
       segmentDisplay: {
         title: string
         showSegmentLines: string

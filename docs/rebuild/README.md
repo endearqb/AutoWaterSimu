@@ -26,6 +26,8 @@
 | `AutoWaterSimu_Next_Development_Plan_v1.0.md` | 分阶段开发计划和验收 |
 | `AutoWaterSimu_Next_独立运行需求规格说明书_v1.0.md` | 无 FastAPI、无登录、可独立运行的 Standalone 需求规格 |
 | `AutoWaterSimu_Next_独立开发实施计划_v1.0.md` | Standalone 0-7 阶段实施路线和验收 |
+| `AutoWaterSimu_Next_Standalone_RC_Blocker_Fix_PRD_2026-06-25.md` | Standalone RC 结果分析与 UDM 模板 P0 阻断项修复需求 |
+| `AutoWaterSimu_Next_Standalone_RC_Blocker_Fix_Development_Plan_2026-06-25.md` | Standalone RC P0 阻断项分 PR 修复计划和验收 |
 | `AutoWaterSimu_Next_Certainty_Elegance_PRD_v1.0.md` | Next 确定性与优雅性补充 PRD，定义 95 分质量目标 |
 | `AutoWaterSimu_Next_Certainty_Elegance_Development_Plan_v1.0.md` | Next 确定性与优雅性补充开发计划，定义分阶段质量提升路线 |
 | `AutoWaterSimu_Next_Legacy_Phase0_Drift_Audit_2026-05-31.md` | Phase 0 legacy print/schema/client drift 精确审计 |
@@ -44,6 +46,7 @@
 4. 重大架构决策同步写入 `.ai/decisions/`。
 5. Certainty/Elegance 补充文档只定义质量目标和后续路线，不直接改变现有 PRD/Spec/Plan 的 P0/P1/P2 承诺。
 6. 修改 `simulation_core/` 前先读该目录 README，并区分当前 correctness freeze、目标正确性和性能优化行为。
+7. Standalone RC blocker fix 文档只补充当前 RC P0 阻断项，不替代独立运行 v1.0 需求与实施计划。
 
 ## 4. 对外接口
 

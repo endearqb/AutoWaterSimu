@@ -406,12 +406,14 @@ const BaseToolbarContainer = ({
             <VStack gap={4} align="stretch">
               {modelType &&
                 modelStoreInstance &&
-                currentJob?.result_data &&
+                currentJob?.status === "success" &&
                 (() => {
                   const AnalysisButton = createAnalysisButton({
                     modelType: modelType as any,
                     label: t("flow.toolbar.analysisLabel"),
-                    resultData: currentJob.result_data,
+                    jobId: (currentJob as any).job_id,
+                    resultData: (currentJob as any).result_data,
+                    loadAnalysisResult: modelStoreInstance.getAnalysisResult,
                     edges: edges,
                     edgeParameterConfigs: edgeParameterConfigs,
                     disabled: false,

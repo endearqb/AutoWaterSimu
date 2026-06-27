@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "udm_seed_catalog.v1.json",
+  "title": "udm_seed_catalog.v1",
+  "type": "object",
+  "required": ["schema_version", "catalog_revision", "seed_source", "templates"],
+  "properties": {
+    "schema_version": { "const": "udm_seed_catalog.v1" },
+    "catalog_revision": { "type": "string", "minLength": 1 },
+    "seed_source": { "type": "string", "minLength": 1 },
+    "templates": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/template" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "template": {
+      "type": "object",
+      "required": [
+        "key",
+        "template_schema_version",
+        "template_revision",
+        "template_content_hash",
+        "seed_source",
+        "name",
+        "description",
+        "tags",
+        "components",
+        "parameters",
+        "processes",
+        "meta"
+      ],
+      "properties": {
+        "key": { "type": "string", "minLength": 1 },
+        "template_schema_version": { "const": "udm_seed_template.v1" },
+        "template_revision": { "type": "string", "minLength": 1 },
+        "template_content_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-fA-F]{64}$"
+        },
+        "seed_source": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "components": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "parameters": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "processes": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "meta": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": false
+    }
+  }
+}

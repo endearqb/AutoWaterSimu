@@ -40,6 +40,10 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
       resultSummary: null,
       timeSeriesData: null,
       finalValues: null,
+      analysisResultJobId: null,
+      analysisResultStatus: "idle",
+      analysisResultData: null,
+      analysisResultError: null,
       validationResult: null,
       userJobs: [],
       flowcharts: [],
@@ -49,7 +53,14 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
 
       // Actions
       createCalculationJob: async (input: MaterialBalanceInput) => {
-        set({ isLoading: true, error: null })
+        set({
+          isLoading: true,
+          error: null,
+          analysisResultJobId: null,
+          analysisResultStatus: "idle",
+          analysisResultData: null,
+          analysisResultError: null,
+        })
         try {
           const job = isStandaloneRuntime()
             ? await standaloneComputeService.createCalculationJob(
@@ -83,6 +94,10 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           resultSummary: null,
           timeSeriesData: null,
           finalValues: null,
+          analysisResultJobId: null,
+          analysisResultStatus: "idle",
+          analysisResultData: null,
+          analysisResultError: null,
         })
         try {
           const job = isStandaloneRuntime()
@@ -194,6 +209,45 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
                   model: MODEL_NAME,
                 })
           set({ error: errorMessage, isLoading: false })
+          throw error
+        }
+      },
+
+      getAnalysisResult: async (jobId: string) => {
+        set({
+          analysisResultJobId: jobId,
+          analysisResultStatus: "loading",
+          analysisResultData: null,
+          analysisResultError: null,
+        })
+        try {
+          const data = isStandaloneRuntime()
+            ? await standaloneComputeService.getAnalysisResult(jobId)
+            : (
+                await (await legacyMaterialBalanceService()).getJobInputData({
+                  jobId,
+                })
+              ).result_data
+          if (get().analysisResultJobId === jobId) {
+            set({
+              analysisResultStatus: "ready",
+              analysisResultData: data,
+              analysisResultError: null,
+            })
+          }
+          return data
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : t("flow.analysis.loadFailed")
+          if (get().analysisResultJobId === jobId) {
+            set({
+              analysisResultStatus: "error",
+              analysisResultData: null,
+              analysisResultError: message,
+            })
+          }
           throw error
         }
       },
@@ -387,6 +441,10 @@ export const useMaterialBalanceStore = create<MaterialBalanceState>()(
           resultSummary: null,
           timeSeriesData: null,
           finalValues: null,
+          analysisResultJobId: null,
+          analysisResultStatus: "idle",
+          analysisResultData: null,
+          analysisResultError: null,
           validationResult: null,
           userJobs: [],
           flowcharts: [],

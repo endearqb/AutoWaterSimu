@@ -1,0 +1,26 @@
+{
+  "schema_version": "udm_seed_catalog.v1",
+  "catalog_revision": "test",
+  "seed_source": "fixture",
+  "templates": [
+    {
+      "template_schema_version": "udm_seed_template.v1",
+      "template_revision": "test",
+      "template_content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "seed_source": "fixture",
+      "name": "Fixture UDM",
+      "description": "Invalid UDM seed catalog fixture",
+      "tags": ["fixture"],
+      "components": [{ "name": "S" }],
+      "parameters": [{ "name": "k", "default_value": 1 }],
+      "processes": [
+        {
+          "name": "decay",
+          "rate_expr": "k*S",
+          "stoich": { "S": -1 }
+        }
+      ],
+      "meta": {}
+    }
+  ]
+}

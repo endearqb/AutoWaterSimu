@@ -1,6 +1,6 @@
 {
   "schema_version": "contracts_codegen_manifest.v1",
-  "updated_on": "2026-06-01",
+  "updated_on": "2026-06-25",
   "description": "Current codegen and validation strategy for AutoWaterSimu Next contracts.",
   "source_of_truth": "contracts/registry.json",
   "covered_schema_versions": [
@@ -16,13 +16,15 @@
     "desktop_project_package.v1",
     "desktop_support_bundle.v1",
     "evidence_package.v1",
+    "material_balance_time_series.v1",
     "model_catalog.v1",
     "model_run.v1",
     "process_graph.v1",
     "production_readiness.v1",
     "result_explanation.v1",
     "simulation_input.v1",
-    "simulation_request.v1"
+    "simulation_request.v1",
+    "udm_seed_catalog.v1"
   ],
   "target_decisions": {
     "typescript": {

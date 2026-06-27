@@ -1,6 +1,6 @@
 {
   "schema_version": "contracts_registry.v1",
-  "updated_on": "2026-06-14",
+  "updated_on": "2026-06-25",
   "description": "Registry for AutoWaterSimu Next JSON Schema contracts, examples, consumers, and compatibility policy.",
   "current_drift_gates": [
     "backend/.venv/Scripts/python -m pytest contracts/tests -q",
@@ -42,6 +42,43 @@
         "examples/invalid/invalid_retention_policy.artifact.v1.json"
       ],
       "compatibility_notes": "Retention metadata is descriptive until the API storage layer proves deletion or archive safety; artifact bytes are not embedded in this contract.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "material_balance_time_series.v1",
+      "schema_file": "material_balance_time_series.v1.json",
+      "consumers": [
+        "Python simulation worker time-series artifact payloads",
+        "frontend analysis result adapter",
+        "standalone live browser result gates"
+      ],
+      "valid_examples": [
+        "examples/valid/material_balance_time_series.material_balance_time_series.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/label_array.material_balance_time_series.v1.json",
+        "examples/invalid/missing_job_id.material_balance_time_series.v1.json",
+        "examples/invalid/series_length_mismatch.material_balance_time_series.v1.json",
+        "examples/invalid/wrong_schema_version.material_balance_time_series.v1.json"
+      ],
+      "compatibility_notes": "This is the artifact payload contract for analyzer time-series bytes. Artifact metadata stays in artifact.v1, and full series must not be inlined into compute_result.v1.",
+      "breaking_change_policy": "p0_additive_only_v1"
+    },
+    {
+      "schema_version": "udm_seed_catalog.v1",
+      "schema_file": "udm_seed_catalog.v1.json",
+      "consumers": [
+        "legacy FastAPI UDM template service",
+        "Go Compute API standalone UDM template service",
+        "contract parity tests"
+      ],
+      "valid_examples": [
+        "examples/valid/minimal.udm_seed_catalog.v1.json"
+      ],
+      "invalid_examples": [
+        "examples/invalid/missing_template_key.udm_seed_catalog.v1.json"
+      ],
+      "compatibility_notes": "This catalog is the canonical seed source for ASM1, ASM1Slim, ASM3, and Petersen tutorial UDM templates. Runtime services must read this catalog instead of maintaining separate production literals.",
       "breaking_change_policy": "p0_additive_only_v1"
     },
     {

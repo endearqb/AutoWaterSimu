@@ -11,10 +11,8 @@ import {
 import { useState } from "react"
 import { FiPlay, FiSettings } from "react-icons/fi"
 import { useI18n } from "../../../i18n"
-import ASM1Analyzer from "../legacy-analysis/ASM1Analyzer"
-import ASM1SlimAnalyzer from "../legacy-analysis/ASM1SlimAnalyzer"
-import ASM3Analyzer from "../legacy-analysis/ASM3Analyzer"
 import AnalysisDialog from "../legacy-analysis/AnalysisDialog"
+import { AnalysisResultLoader } from "../legacy-analysis/AnalysisResultLoader"
 import {
   GLASS_PANEL_RADIUS,
   type GlassTint,
@@ -111,6 +109,11 @@ function SimulationActionPlateMPCII(props: SimulationActionPlateMPCIIProps) {
     ? accentOutlineColor
     : accentColor
   const playIconColor = isStartDisabled ? "rgba(255,255,255,0.65)" : "#f8fafc"
+  const currentJobId = (finalStore.currentJob as any)?.job_id as
+    | string
+    | undefined
+  const jobStatus = (finalStore.currentJob as any)?.status as string | undefined
+  const canOpenAnalysis = jobStatus === "success" && Boolean(currentJobId)
 
   return (
     <Box
@@ -257,7 +260,7 @@ function SimulationActionPlateMPCII(props: SimulationActionPlateMPCIIProps) {
                 overflow="hidden"
                 bg="whiteAlpha.200"
               >
-                {finalStore.currentJob?.result_data ? (
+                {canOpenAnalysis ? (
                   <Image src="" alt="" w="100%" h="100%" objectFit="cover" />
                 ) : (
                   <Box w="100%" h="100%" display="grid" placeItems="center">
@@ -317,13 +320,11 @@ function SimulationActionPlateMPCII(props: SimulationActionPlateMPCIIProps) {
               borderWidth="1px"
               borderColor="whiteAlpha.300"
               cursor={
-                finalStore.currentJob?.result_data ? "pointer" : "not-allowed"
+                canOpenAnalysis ? "pointer" : "not-allowed"
               }
-              opacity={finalStore.currentJob?.result_data ? 1 : 0.5}
+              opacity={canOpenAnalysis ? 1 : 0.5}
               onClick={
-                finalStore.currentJob?.result_data
-                  ? () => setIsAnalysisOpen(true)
-                  : undefined
+                canOpenAnalysis ? () => setIsAnalysisOpen(true) : undefined
               }
             >
               <FiSettings color={accentColor} />
@@ -449,35 +450,19 @@ function SimulationActionPlateMPCII(props: SimulationActionPlateMPCIIProps) {
           title="计算结果分析"
           size="xl"
         >
-          {finalStore.currentJob?.result_data && modelType === "asm1" && (
-            <ASM1Analyzer
-              resultData={finalStore.currentJob?.result_data}
-              edges={edges}
-              edgeParameterConfigs={edgeParameterConfigs}
-            />
-          )}
-          {finalStore.currentJob?.result_data && modelType === "asm1slim" && (
-            <ASM1SlimAnalyzer
-              resultData={finalStore.currentJob?.result_data}
-              edges={edges}
-              edgeParameterConfigs={edgeParameterConfigs}
-            />
-          )}
-          {finalStore.currentJob?.result_data && modelType === "asm3" && (
-            <ASM3Analyzer
-              resultData={finalStore.currentJob?.result_data}
-              edges={edges}
-              edgeParameterConfigs={edgeParameterConfigs}
-            />
-          )}
-          {finalStore.currentJob?.result_data &&
-            modelType !== "asm1" &&
-            modelType !== "asm1slim" &&
-            modelType !== "asm3" && (
-              <Text fontSize="sm" color={accentColor} opacity={0.8}>
-                当前模型暂未配置图形化分析视图。
-              </Text>
-            )}
+          <AnalysisResultLoader
+            enabled={isAnalysisOpen}
+            modelType={(modelType as any) || "other"}
+            jobId={currentJobId}
+            legacyResultData={
+              ((finalStore.currentJob as any)?.result_data ??
+                null) as Record<string, unknown> | null
+            }
+            loadAnalysisResult={finalStore.getAnalysisResult}
+            edges={edges}
+            edgeParameterConfigs={edgeParameterConfigs}
+            accentColor={accentColor}
+          />
         </AnalysisDialog>
       </Box>
     </Box>

@@ -77,11 +77,29 @@ type SimulationInputDocument = {
 }
 
 type TimeSeriesArtifact = {
+  schema_version?: unknown
+  job_id?: unknown
+  job_type?: unknown
   timestamps?: unknown
   node_data?: unknown
   edge_data?: unknown
   segment_markers?: unknown
   parameter_change_events?: unknown
+  summary?: unknown
+  metadata?: unknown
+}
+
+export type StandaloneAnalysisResult = {
+  schema_version: "material_balance_time_series.v1"
+  job_id: string
+  job_type: string
+  timestamps: number[]
+  node_data: Record<string, Record<string, unknown>>
+  edge_data: Record<string, Record<string, unknown>>
+  segment_markers: Record<string, unknown>[]
+  parameter_change_events: Record<string, unknown>[]
+  summary: Record<string, unknown>
+  metadata?: Record<string, unknown>
 }
 
 type BuildContext = {
@@ -224,6 +242,10 @@ const DEFAULT_PARAMETERS = {
   max_iterations: 1000,
   max_memory_mb: 1000,
 }
+
+const TIME_SERIES_SCHEMA_VERSION = "material_balance_time_series.v1"
+const LEGACY_TIME_SERIES_SCHEMA_VERSION =
+  "material_balance_time_series_artifact.v1"
 
 const uniqueSuffix = (): string => {
   const uuid = globalThis.crypto?.randomUUID?.()
@@ -857,8 +879,204 @@ const safeGetResult = async (
 ): Promise<GetComputeJobResultResponse | null> => {
   try {
     return await computeJobApi.getJobResult(jobId)
-  } catch {
-    return null
+  } catch (error) {
+    const status = numberValue(recordValue(error).status, 0)
+    if (status === 404) return null
+    throw error
+  }
+}
+
+const analysisResultCache = new Map<string, Promise<StandaloneAnalysisResult>>()
+
+const isLegacyAnalysisShape = (value: unknown): boolean => {
+  const record = recordValue(value)
+  return Array.isArray(record.timestamps) && isRecord(record.node_data)
+}
+
+const analysisError = (
+  message: string,
+  details: Record<string, unknown> = {},
+): Error => Object.assign(new Error(message), details)
+
+const strictNumberArray = (value: unknown, name: string): number[] => {
+  if (!Array.isArray(value)) {
+    throw analysisError(`${name} must be an array`, { code: "INVALID_SERIES" })
+  }
+  return value.map((item, index) => {
+    const numeric = Number(item)
+    if (!Number.isFinite(numeric)) {
+      throw analysisError(`${name}[${index}] must be a finite number`, {
+        code: "INVALID_SERIES",
+      })
+    }
+    return numeric
+  })
+}
+
+const normalizeSeriesMapForAnalysis = (
+  value: unknown,
+  expectedLength: number,
+  name: "node_data" | "edge_data",
+  allowEmpty = false,
+): Record<string, Record<string, unknown>> => {
+  const source = recordValue(value)
+  if (!allowEmpty && Object.keys(source).length === 0) {
+    throw analysisError(`${name} is missing or empty`, {
+      code: "MISSING_SERIES",
+    })
+  }
+
+  const result: Record<string, Record<string, unknown>> = {}
+  Object.entries(source).forEach(([id, series]) => {
+    const record = recordValue(series)
+    const entry: Record<string, unknown> = {}
+    Object.entries(record).forEach(([key, raw]) => {
+      if (Array.isArray(raw)) {
+        const values = strictNumberArray(raw, `${name}.${id}.${key}`)
+        if (values.length !== expectedLength) {
+          throw analysisError(
+            `${name}.${id}.${key} length ${values.length} does not match timestamps length ${expectedLength}`,
+            { code: "SERIES_LENGTH_MISMATCH" },
+          )
+        }
+        entry[key] = values
+        return
+      }
+      if (
+        raw === null ||
+        ["string", "number", "boolean"].includes(typeof raw)
+      ) {
+        entry[key] = raw
+        return
+      }
+      throw analysisError(`${name}.${id}.${key} must be a scalar or number[]`, {
+        code: "INVALID_SERIES_FIELD",
+      })
+    })
+    result[id] = entry
+  })
+  return result
+}
+
+const displayLabelFromNode = (node: Record<string, unknown>): string => {
+  const data = recordValue(node.data)
+  return stringValue(
+    data.label ??
+      data.name ??
+      data.displayName ??
+      data.display_name ??
+      node.label ??
+      node.name ??
+      node.displayName ??
+      node.display_name,
+  ).trim()
+}
+
+const nodeLabelsFromSnapshot = (
+  snapshot: JobSnapshot,
+): Record<string, string> => {
+  const input = parseInputJSON(snapshot)
+  const payload = recordValue(input.payload)
+  const metadata = recordValue(payload.metadata)
+  const sources = [
+    recordValue(metadata.original_flowchart_data),
+    recordValue(metadata.original_legacy_input),
+    payload,
+    input,
+  ]
+  const labels: Record<string, string> = {}
+
+  sources.forEach((source) => {
+    arrayValue(source.nodes).forEach((rawNode) => {
+      const node = recordValue(rawNode)
+      const nodeId = stringValue(node.id ?? node.node_id ?? node.nodeId).trim()
+      const label = displayLabelFromNode(node)
+      if (nodeId && label) {
+        labels[nodeId] = label
+      }
+    })
+  })
+
+  return labels
+}
+
+const applyNodeLabels = (
+  nodeData: Record<string, Record<string, unknown>>,
+  labels: Record<string, string> = {},
+): Record<string, Record<string, unknown>> =>
+  Object.fromEntries(
+    Object.entries(nodeData).map(([id, entry]) => [
+      id,
+      labels[id] ? { ...entry, label: labels[id] } : entry,
+    ]),
+  )
+
+const normalizeAnalysisPayload = (
+  jobId: string,
+  payload: unknown,
+  result: GetComputeJobResultResponse | null,
+  options: {
+    requireContractMeta: boolean
+    nodeLabels?: Record<string, string>
+  },
+): StandaloneAnalysisResult => {
+  const source = recordValue(payload)
+  const schemaVersion = stringValue(source.schema_version)
+  if (
+    options.requireContractMeta &&
+    ![TIME_SERIES_SCHEMA_VERSION, LEGACY_TIME_SERIES_SCHEMA_VERSION].includes(
+      schemaVersion,
+    )
+  ) {
+    throw analysisError(
+      `Time-series artifact schema_version must be ${TIME_SERIES_SCHEMA_VERSION}`,
+      { code: "SCHEMA_VERSION_MISMATCH", schemaVersion },
+    )
+  }
+
+  const payloadJobId = stringValue(source.job_id)
+  if (options.requireContractMeta && payloadJobId !== jobId) {
+    throw analysisError("Time-series artifact job_id does not match job", {
+      code: "JOB_ID_MISMATCH",
+      artifactJobId: payloadJobId,
+      jobId,
+    })
+  }
+
+  const timestamps = strictNumberArray(source.timestamps, "timestamps")
+  if (timestamps.length === 0) {
+    throw analysisError("timestamps must not be empty", {
+      code: "EMPTY_TIMESTAMPS",
+    })
+  }
+
+  const resultSummary = recordValue(result?.summary)
+  const payloadSummary = recordValue(source.summary)
+  const nodeData = normalizeSeriesMapForAnalysis(
+    source.node_data,
+    timestamps.length,
+    "node_data",
+  )
+  return {
+    schema_version: TIME_SERIES_SCHEMA_VERSION,
+    job_id: payloadJobId || jobId,
+    job_type: stringValue(source.job_type ?? result?.job_type),
+    timestamps,
+    node_data: applyNodeLabels(nodeData, options.nodeLabels),
+    edge_data: normalizeSeriesMapForAnalysis(
+      source.edge_data,
+      timestamps.length,
+      "edge_data",
+      !options.requireContractMeta,
+    ),
+    segment_markers: arrayValue(source.segment_markers).map((item) =>
+      recordValue(item),
+    ),
+    parameter_change_events: arrayValue(source.parameter_change_events).map(
+      (item) => recordValue(item),
+    ),
+    summary: { ...payloadSummary, ...resultSummary },
+    metadata: recordValue(source.metadata),
   }
 }
 
@@ -886,6 +1104,33 @@ const pickTimeSeriesArtifact = (
   )
 }
 
+const pickAnalysisTimeSeriesArtifact = (
+  result: GetComputeJobResultResponse,
+  snapshot: JobSnapshot,
+): ArtifactRecord => {
+  const artifacts = [...artifactsFromResult(result), ...snapshot.artifacts]
+  const canonical = artifacts.find(
+    (artifact) =>
+      stringValue(artifact.artifact_type).toLowerCase() ===
+      "material_balance.time_series",
+  )
+  const legacy = artifacts.find((artifact) =>
+    ["time_series_json", "time_series"].includes(
+      stringValue(artifact.artifact_type).toLowerCase(),
+    ),
+  )
+  const byObjectKey = artifacts.find((artifact) =>
+    stringValue(artifact.object_key).toLowerCase().includes("time_series"),
+  )
+  const artifact = canonical || legacy || byObjectKey
+  if (!artifact) {
+    throw analysisError("Time-series artifact is missing", {
+      code: "MISSING_TIME_SERIES_ARTIFACT",
+    })
+  }
+  return artifact
+}
+
 const arrayOfNumbers = (value: unknown): number[] =>
   arrayValue(value).map((item) => numberValue(item, 0))
 
@@ -894,14 +1139,14 @@ const sliceSeriesMap = (
   from: number,
   to: number,
   ids?: string[],
-): Record<string, Record<string, number[]>> => {
-  const result: Record<string, Record<string, number[]>> = {}
+): Record<string, Record<string, unknown>> => {
+  const result: Record<string, Record<string, unknown>> = {}
   const wanted = ids && ids.length > 0 ? new Set(ids) : null
   Object.entries(recordValue(value)).forEach(([id, series]) => {
     if (wanted && !wanted.has(id)) return
-    const values: Record<string, number[]> = {}
+    const values: Record<string, unknown> = {}
     Object.entries(recordValue(series)).forEach(([name, raw]) => {
-      values[name] = arrayOfNumbers(raw).slice(from, to)
+      values[name] = Array.isArray(raw) ? arrayOfNumbers(raw).slice(from, to) : raw
     })
     result[id] = values
   })
@@ -943,8 +1188,18 @@ const normalizeTimeSeries = (
   return {
     job_id: jobId,
     timestamps: pageTimestamps,
-    node_data: sliceSeriesMap(artifact.node_data, from, to, params.nodeIds),
-    edge_data: sliceSeriesMap(artifact.edge_data, from, to, params.edgeIds),
+    node_data: sliceSeriesMap(
+      artifact.node_data,
+      from,
+      to,
+      params.nodeIds,
+    ) as MaterialBalanceTimeSeriesResponse["node_data"],
+    edge_data: sliceSeriesMap(
+      artifact.edge_data,
+      from,
+      to,
+      params.edgeIds,
+    ) as MaterialBalanceTimeSeriesResponse["edge_data"],
     pagination: {
       page,
       page_size: pageSize,
@@ -957,12 +1212,14 @@ const normalizeTimeSeries = (
 }
 
 const finalSeriesValues = (
-  series: Record<string, Record<string, number[]>>,
+  series: Record<string, Record<string, unknown>>,
 ): Record<string, Record<string, number>> => {
   const result: Record<string, Record<string, number>> = {}
   Object.entries(series).forEach(([id, values]) => {
     const entry: Record<string, number> = {}
-    Object.entries(values).forEach(([name, items]) => {
+    Object.entries(values).forEach(([name, raw]) => {
+      if (!Array.isArray(raw)) return
+      const items = arrayOfNumbers(raw)
       entry[name] = items.length > 0 ? items[items.length - 1] : 0
     })
     result[id] = entry
@@ -1121,6 +1378,46 @@ class StandaloneComputeService {
     }
   }
 
+  async getAnalysisResult(jobId: string): Promise<StandaloneAnalysisResult> {
+    const cached = analysisResultCache.get(jobId)
+    if (cached) return cached
+
+    const load = (async () => {
+      const [snapshot, result] = await Promise.all([
+        computeJobApi.getJob(jobId),
+        computeJobApi.getJobResult(jobId),
+      ])
+      const status = asLegacyStatus(snapshot.job.status)
+      if (status !== "success") {
+        throw analysisError("Compute job is not successful", {
+          code: "JOB_NOT_SUCCESSFUL",
+          status,
+        })
+      }
+
+      if (isLegacyAnalysisShape(result)) {
+        return normalizeAnalysisPayload(jobId, result, result, {
+          requireContractMeta: false,
+          nodeLabels: nodeLabelsFromSnapshot(snapshot),
+        })
+      }
+
+      const artifact = pickAnalysisTimeSeriesArtifact(result, snapshot)
+      const payload =
+        await computeArtifactsApi.readArtifactJson<TimeSeriesArtifact>(artifact)
+      return normalizeAnalysisPayload(jobId, payload, result, {
+        requireContractMeta: true,
+        nodeLabels: nodeLabelsFromSnapshot(snapshot),
+      })
+    })().catch((error) => {
+      analysisResultCache.delete(jobId)
+      throw error
+    })
+
+    analysisResultCache.set(jobId, load)
+    return load
+  }
+
   async validateCalculationInput(
     model: StandaloneComputeModelKey,
     input: MaterialBalanceInput,
@@ -1183,10 +1480,16 @@ class StandaloneComputeService {
       computeJobApi.getJob(jobId),
       safeGetResult(jobId),
     ])
+    const resultData =
+      result && isLegacyAnalysisShape(result)
+        ? normalizeAnalysisPayload(jobId, result, result, {
+            requireContractMeta: false,
+          })
+        : {}
     return {
       job_id: jobId,
       input_data: legacyInputFromSnapshot(snapshot),
-      result_data: result ? recordValue(result) : {},
+      result_data: resultData,
       status: asLegacyStatus(snapshot.job.status),
     }
   }

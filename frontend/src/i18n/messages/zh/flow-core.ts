@@ -228,6 +228,9 @@ export const flowCoreMessages: Pick<I18nMessages["flow"], "node" | "tab" | "canv
     timeRange: "时间范围",
     timeSelection: "时间选择",
     timeTooltipLabel: "时间：{value} h",
+    loading: "正在读取分析结果...",
+    loadFailed: "分析结果读取失败",
+    retry: "重试",
     segmentDisplay: {
       title: "时段标记显示",
       showSegmentLines: "显示时段分割线",

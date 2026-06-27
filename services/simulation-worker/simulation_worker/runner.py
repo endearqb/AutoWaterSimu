@@ -35,6 +35,7 @@ SUPPORTED_CONTRACT_VERSIONS = [
     "simulation_input.v1",
     "compute_result.v1",
     "artifact.v1",
+    "material_balance_time_series.v1",
 ]
 SUPPORTED_CAPABILITIES = ["material_balance", "asm1slim", "asm1", "asm3", "udm", "ode"]
 ADAPTER_VALIDATION_MODE_ENV = "AUTOWATERSIMU_WORKER_ADAPTER_VALIDATION_MODE"
@@ -223,8 +224,8 @@ def _write_time_series_artifact(
     artifact_path = artifact_dir / Path(object_key)
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
 
-    payload = {
-        "schema_version": "material_balance_time_series_artifact.v1",
+    payload = _json_safe({
+        "schema_version": "material_balance_time_series.v1",
         "job_id": job_id,
         "job_type": job_type,
         "timestamps": result.timestamps,
@@ -232,9 +233,11 @@ def _write_time_series_artifact(
         "edge_data": result.edge_data,
         "segment_markers": result.segment_markers or [],
         "parameter_change_events": result.parameter_change_events or [],
-    }
+    })
+    _validate_against_schema("material_balance_time_series.v1.json", payload)
+    _validate_time_series_payload(payload)
     artifact_bytes = json.dumps(
-        _json_safe(payload),
+        payload,
         ensure_ascii=False,
         sort_keys=True,
         separators=(",", ":"),
@@ -258,6 +261,25 @@ def _write_time_series_artifact(
             "worker_version": WORKER_VERSION,
         },
     }
+
+
+def _validate_time_series_payload(payload: dict[str, Any]) -> None:
+    timestamps = payload.get("timestamps")
+    if not isinstance(timestamps, list):
+        raise WorkerRunError("time-series timestamps must be an array")
+    expected_length = len(timestamps)
+    for section in ("node_data", "edge_data"):
+        section_value = payload.get(section)
+        if not isinstance(section_value, dict):
+            raise WorkerRunError(f"time-series {section} must be an object")
+        for item_id, series_map in section_value.items():
+            if not isinstance(series_map, dict):
+                raise WorkerRunError(f"time-series {section}.{item_id} must be an object")
+            for field, value in series_map.items():
+                if isinstance(value, list) and len(value) != expected_length:
+                    raise WorkerRunError(
+                        f"time-series {section}.{item_id}.{field} length {len(value)} does not match timestamps length {expected_length}"
+                    )
 
 
 def _model_run_record(

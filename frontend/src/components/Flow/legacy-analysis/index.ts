@@ -10,6 +10,7 @@ export { default as ASM3AnalysisButton } from "./ASM3AnalysisButton"
 export { default as UDMAnalyzer } from "./UDMAnalyzer"
 export { default as UDMAnalysisButton } from "./UDMAnalysisButton"
 export { default as createAnalysisButton } from "./AnalysisButtonFactory"
+export { AnalysisResultButton, AnalysisResultLoader } from "./AnalysisResultLoader"
 export type { ModelType } from "./AnalysisButtonFactory"
 
 // 导出分析工具函数和类型

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -105,9 +107,9 @@ func (svc *UDMWorkspaceService) CreateModelFromTemplate(ctx context.Context, req
 			Processes:   cloneMapSlice(template.Processes),
 			Meta:        copyStringAnyMap(template.Meta),
 		},
-		SeedSource:   template.Key,
+		SeedSource:   "udm_seed_catalog.v1:" + template.Key,
 		SourceSystem: request.SourceSystem,
-		Metadata:     request.Metadata,
+		Metadata:     metadataWithTemplateAudit(request.Metadata, template),
 	}, requestedBy, filter)
 }
 
@@ -699,14 +701,23 @@ func validateUDMHybridConfig(flowchartData map[string]any, strict bool) UDMHybri
 }
 
 type udmTemplate struct {
-	Key         string
-	Name        string
-	Description string
-	Tags        []string
-	Components  []map[string]any
-	Parameters  []map[string]any
-	Processes   []map[string]any
-	Meta        map[string]any
+	Key                   string           `json:"key"`
+	TemplateSchemaVersion string           `json:"template_schema_version"`
+	TemplateRevision      string           `json:"template_revision"`
+	TemplateContentHash   string           `json:"template_content_hash"`
+	SeedSource            string           `json:"seed_source"`
+	Name                  string           `json:"name"`
+	Description           string           `json:"description"`
+	Tags                  []string         `json:"tags"`
+	Components            []map[string]any `json:"components"`
+	Parameters            []map[string]any `json:"parameters"`
+	Processes             []map[string]any `json:"processes"`
+	Meta                  map[string]any   `json:"meta"`
+}
+
+type udmSeedCatalog struct {
+	SchemaVersion string        `json:"schema_version"`
+	Templates     []udmTemplate `json:"templates"`
 }
 
 func udmSeedTemplate(key string) (udmTemplate, bool) {
@@ -719,39 +730,57 @@ func udmSeedTemplate(key string) (udmTemplate, bool) {
 }
 
 func udmSeedTemplates() []udmTemplate {
-	base := []udmTemplate{
-		simpleUDMTemplate("asm1", "ASM1 (UDM Seed)", []string{"asm1", "petersen", "seed"}, []string{"S_S", "S_O", "X_BH"}, "u_H*S_S*X_BH"),
-		simpleUDMTemplate("asm1slim", "ASM1Slim (UDM Seed)", []string{"asm1slim", "petersen", "seed"}, []string{"S_S", "S_O", "X_BH"}, "mu*S_S*X_BH"),
-		simpleUDMTemplate("asm3", "ASM3 (UDM Seed)", []string{"asm3", "petersen", "seed"}, []string{"S_S", "S_O", "X_H"}, "mu_H*S_S*X_H"),
+	path, err := udmSeedCatalogPath()
+	if err != nil {
+		panic(err)
 	}
-	tutorialKeys := []string{"petersen-chapter-1", "petersen-chapter-2", "petersen-chapter-3", "petersen-chapter-7"}
-	for _, key := range tutorialKeys {
-		t := simpleUDMTemplate(key, strings.Title(strings.ReplaceAll(key, "-", " ")), []string{"tutorial", "petersen-tutorial", "seed"}, []string{"S_S", "S_O", "X_BH"}, "mu*S_S*X_BH")
-		t.Meta = map[string]any{"learning": map[string]any{"continuityProfiles": []any{"COD", "N"}}}
-		base = append(base, t)
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		panic(fmt.Errorf("read UDM seed catalog failed: %w", err))
 	}
-	return base
+	var catalog udmSeedCatalog
+	if err := json.Unmarshal(bytes, &catalog); err != nil {
+		panic(fmt.Errorf("parse UDM seed catalog failed: %w", err))
+	}
+	if catalog.SchemaVersion != "udm_seed_catalog.v1" {
+		panic("UDM seed catalog schema_version must be udm_seed_catalog.v1")
+	}
+	templates := append([]udmTemplate(nil), catalog.Templates...)
+	sort.Slice(templates, func(i, j int) bool { return templates[i].Key < templates[j].Key })
+	return templates
 }
 
-func simpleUDMTemplate(key, name string, tags []string, components []string, rateExpr string) udmTemplate {
-	componentDefs := make([]map[string]any, 0, len(components))
-	for _, component := range components {
-		componentDefs = append(componentDefs, map[string]any{"name": component, "label": component, "unit": "mg/L", "default_value": 0, "conversion_factors": map[string]any{"COD": 1}})
+func udmSeedCatalogPath() (string, error) {
+	for _, envName := range []string{"COMPUTE_API_CONTRACTS_DIR", "AUTOWATERSIMU_CONTRACTS_DIR"} {
+		if configured := strings.TrimSpace(os.Getenv(envName)); configured != "" {
+			return filepath.Join(configured, "catalogs", "udm_seed_catalog.v1.json"), nil
+		}
 	}
-	return udmTemplate{
-		Key:         key,
-		Name:        name,
-		Description: "Standalone UDM seed template",
-		Tags:        tags,
-		Components:  componentDefs,
-		Parameters:  []map[string]any{{"name": "mu", "default_value": 1, "scale": "lin"}},
-		Processes: []map[string]any{{
-			"name":      "growth",
-			"rate_expr": rateExpr,
-			"stoich":    map[string]any{components[0]: -1, components[len(components)-1]: 1},
-		}},
-		Meta: map[string]any{},
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
 	}
+	for {
+		candidate := filepath.Join(wd, "contracts", "catalogs", "udm_seed_catalog.v1.json")
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+		next := filepath.Dir(wd)
+		if next == wd {
+			return "", fmt.Errorf("UDM seed catalog not found")
+		}
+		wd = next
+	}
+}
+
+func metadataWithTemplateAudit(metadata map[string]any, template udmTemplate) map[string]any {
+	result := copyStringAnyMap(metadata)
+	result["template_key"] = template.Key
+	result["template_schema_version"] = template.TemplateSchemaVersion
+	result["template_revision"] = template.TemplateRevision
+	result["template_content_hash"] = template.TemplateContentHash
+	result["template_seed_source"] = template.SeedSource
+	return result
 }
 
 func orderedNames(items []map[string]any) []string {

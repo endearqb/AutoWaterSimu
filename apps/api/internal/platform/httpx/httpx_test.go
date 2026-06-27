@@ -3,6 +3,7 @@ package httpx
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -43,6 +44,12 @@ func TestWithLocalCORSAllowsLoopbackOptions(t *testing.T) {
 	}
 	if got := response.Header().Get("Access-Control-Expose-Headers"); got != "X-Artifact-Checksum, X-Evidence-Checksum" {
 		t.Fatalf("expected checksum expose headers, got %q", got)
+	}
+	allowMethods := response.Header().Get("Access-Control-Allow-Methods")
+	for _, method := range []string{http.MethodPatch, http.MethodDelete} {
+		if !strings.Contains(allowMethods, method) {
+			t.Fatalf("expected %s in allowed methods, got %q", method, allowMethods)
+		}
 	}
 }
 

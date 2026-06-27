@@ -321,6 +321,37 @@ test("five model services complete against live compute API and worker", async (
     expect(result.artifacts?.length).toBeGreaterThan(0)
   }
 
+  await page.goto("/")
+  const analysisSummaries = await page.evaluate(async (ids) => {
+    const servicePath = "/src/services/standaloneComputeService.ts"
+    const { standaloneComputeService } = await import(servicePath)
+    const summaries = []
+    for (const jobId of ids.slice(1)) {
+      const result = await standaloneComputeService.getAnalysisResult(String(jobId))
+      const firstNode = Object.values(result.node_data)[0] as Record<
+        string,
+        unknown
+      >
+      const firstSeries = Object.values(firstNode).find((value) =>
+        Array.isArray(value),
+      ) as unknown[] | undefined
+      summaries.push({
+        job_id: result.job_id,
+        label: firstNode.label,
+        point_count: firstSeries?.length || 0,
+        timestamp_count: result.timestamps.length,
+      })
+    }
+    return summaries
+  }, jobIDs)
+
+  expect(analysisSummaries).toHaveLength(4)
+  for (const summary of analysisSummaries) {
+    expect(summary.timestamp_count).toBeGreaterThan(1)
+    expect(typeof summary.label).toBe("string")
+    expect(summary.point_count).toBe(summary.timestamp_count)
+  }
+
   await page.goto("/compute-jobs")
   for (const jobID of jobIDs) {
     await expect(page.getByRole("cell", { name: jobID }).first()).toBeVisible({
