@@ -1,3 +1,25 @@
+# 2026-06-27 UDM Network v2 P2 Compiler MVP TODO
+
+- [x] Confirm current branch is clean after pushed P-1/P0/P1 baseline.
+- [x] Re-read README First context for UDM-v2 docs, contracts, simulation_core, worker, and core tests.
+- [x] Add `autowatersimu_simulation_core.udm_network` compiler MVP.
+- [x] Add compiler tests for minimal graph success, executable-input port inference, invalid port, and invalid edge kind.
+- [x] Update simulation_core README contracts for the new import surface.
+- [x] Run focused and full simulation_core tests.
+
+## Plan
+
+- Keep P2 compiler-only; do not implement worker execution, flow solver, Takacs runtime, or reaction evaluator in this phase.
+- Reuse contract fixture payloads directly instead of creating another fixture format.
+- Keep compiler errors small and stable through `UDMNetworkCompileError.code`.
+
+## Review
+
+- Added `udm_network/graph.py`, `compiler.py`, and `results.py`.
+- `compile_network()` accepts `network_process_graph.v1` and `network_simulation_input.v1`, builds component schema registry, runtime nodes/edges, state slices, and static/dynamic edge bundles.
+- Explicit process-graph ports are strict; executable inputs without ports infer ports from edge kind.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_compiler.py -q` and `backend\.venv\Scripts\python -m pytest simulation_core\tests -q`.
+
 # 2026-06-27 Mainline cutover to AutoWaterSimu Next TODO
 
 - [x] Read the attached mainline strategy note before changing refs.
