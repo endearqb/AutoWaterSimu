@@ -1,0 +1,52 @@
+{
+  "schema_version": "network_process_graph.v1",
+  "network_graph_id": "ng_invalid_edge_kind",
+  "version": 1,
+  "component_schemas": [
+    {
+      "component_schema_id": "components.v1",
+      "components": ["COD"],
+      "unit": "mg/L"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "a",
+      "node_type": "source",
+      "process_unit_type": "influent",
+      "component_schema_id": "components.v1",
+      "initial_conditions": { "COD": 1.0 },
+      "ports": [{ "port_id": "out", "port_kind": "hydraulic_out" }],
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false },
+      "parameter_binding": {},
+      "unit_metadata": {}
+    },
+    {
+      "node_id": "b",
+      "node_type": "sink",
+      "process_unit_type": "effluent",
+      "component_schema_id": "components.v1",
+      "initial_conditions": { "COD": 0.0 },
+      "ports": [{ "port_id": "in", "port_kind": "hydraulic_in" }],
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false },
+      "parameter_binding": {},
+      "unit_metadata": {}
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "bad_edge",
+      "edge_kind": "split",
+      "source_node_id": "a",
+      "source_port": "out",
+      "target_node_id": "b",
+      "target_port": "in",
+      "component_policy": { "mode": "all", "include": [], "exclude": [] }
+    }
+  ],
+  "flow_constraints": [],
+  "signal_bindings": [],
+  "composites": [],
+  "validation": { "status": "valid", "errors": [], "warnings": [] }
+}
+

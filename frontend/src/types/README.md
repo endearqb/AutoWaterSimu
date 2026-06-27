@@ -20,6 +20,7 @@
 | 文件 | 作用 |
 |---|---|
 | `hybridUdm.ts` | hybrid UDM shared types |
+| `networkEdges.ts` | UDM Network v2 edge kind and edge data helpers |
 | `udmNodeData.ts` | UDM node data types |
 | `plotly.d.ts` | Plotly declaration support |
 

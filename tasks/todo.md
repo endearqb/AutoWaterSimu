@@ -10909,3 +10909,27 @@
 - `flowStore.ts` keeps standalone workspace persistence on Go wrappers and lazy-loads `FlowchartsService` only in non-standalone branches.
 - `audit-frontend-standalone-compute-boundary.ps1` now records reachable standalone files and fails on legacy route/useAuth/static FastAPI client reachability.
 - Verification so far: frontend standalone audit passed; `cd frontend; npx tsc --noEmit` passed; standalone compose service config excludes backend.
+# 2026-06-27 UDM Network v2 P-1/P0/P1 TODO
+
+- [x] Re-read README First context for docs/rebuild UDM-v2 docs, decisions, contracts, Go simulation job profile, worker capability boundary, frontend Flow, and task/change records.
+- [x] Add UDM-v2 ADR drafts without overwriting the existing accepted ADR 0019.
+- [x] Add `network_process_graph.v1` / `network_simulation_input.v1` contracts, fixtures, registry/codegen coverage, and `simulation.udm_network.v1` job type contract wiring.
+- [x] Add frontend four-edge modeling support: edge mode selector, edge factory data, renderer styling, and inspector fields.
+- [x] Run focused contract, Go, frontend, README/change validation and record review.
+
+## Plan
+
+- Preserve existing v1 contracts and worker behavior; this slice is P-1/P0/P1 only.
+- Keep UDM-v2 ADR content as drafts because runtime compiler/solver/parity decisions are not yet implemented.
+- Shift planned UDM ADR numbering from 0019-0026 to 0020-0027 because `.ai/decisions/0019-mainline-cutover-to-autowatersimu-next.md` already exists and is accepted.
+- Do not advertise worker `udm_network` capability until a real runner exists; the Go job profile can require it so jobs remain queued until P11 runtime integration.
+- Reuse the existing Flow store, `EditableEdge`, and inspector panels instead of adding a second canvas system.
+
+## Review
+
+- Added draft ADRs `0020`-`0027`; UDM-v2 numbering was shifted because `0019` already records the accepted mainline cutover decision.
+- Added `network_process_graph.v1` and `network_simulation_input.v1` contracts with valid/invalid fixtures, registry/codegen manifest coverage, and compute job/simulation request examples.
+- Wired `simulation.udm_network.v1` into Go job profiling and simulation-check inline payload resolution without adding worker execution support.
+- Added Flow edge mode selection plus hydraulic/pump/settling/signal rendering and inspector fields while preserving legacy `flow` import/export behavior.
+- Updated README contracts for contracts, API/domain notes, Flow edges, stores, and shared types.
+- Validation passed: contracts pytest, frontend typecheck, Go focused tests, README contract check, and `git diff --check`. `scripts/check-contracts.ps1` schema tests passed but its final drift gate returned non-zero because this task intentionally changed OpenAPI and generated client files before commit.

@@ -6,6 +6,7 @@ const (
 	JobTypeASM1            = "simulation.asm1.v1"
 	JobTypeASM3            = "simulation.asm3.v1"
 	JobTypeUDM             = "simulation.udm.v1"
+	JobTypeUDMNetwork      = "simulation.udm_network.v1"
 
 	DefaultTimeLimitSec = 600
 	PriorityNormal      = "normal"
@@ -36,6 +37,8 @@ func RequiredCapabilities(jobType string) []string {
 		return []string{"asm3", "ode"}
 	case JobTypeUDM:
 		return []string{"udm", "ode"}
+	case JobTypeUDMNetwork:
+		return []string{"udm_network", "ode"}
 	default:
 		return nil
 	}

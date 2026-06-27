@@ -21,6 +21,12 @@ import type {
 } from "../client/types.gen"
 import { getDefaultCalculationParams } from "../config/simulationConfig"
 import { t } from "../i18n"
+import {
+  DEFAULT_NETWORK_EDGE_KIND,
+  createNetworkEdgeData,
+  stripLegacyEdgeConfigFields,
+  type NetworkEdgeKind,
+} from "../types/networkEdges"
 import { useMaterialBalanceStore } from "./materialBalanceStore"
 
 type CustomParameter = {
@@ -62,6 +68,7 @@ type RFState = {
   isEdgeTimeSegmentMode: boolean
   showMiniMap: boolean
   showBubbleMenu: boolean
+  activeEdgeKind: NetworkEdgeKind
 
   // 操作函数
   setNodes: (nodes: Node[]) => void
@@ -83,6 +90,7 @@ type RFState = {
   setSelectedEdge: (edge: Edge | null) => void
   setShowMiniMap: (show: boolean) => void
   setShowBubbleMenu: (show: boolean) => void
+  setActiveEdgeKind: (kind: NetworkEdgeKind) => void
   deleteSelectedEdge: () => void
   deleteSelectedNode: () => void
   addCustomParameter: (paramName: string, description?: string) => void
@@ -209,6 +217,7 @@ const useFlowStore = create<RFState>((set, get) => ({
   isEdgeTimeSegmentMode: false,
   showMiniMap: false,
   showBubbleMenu: true,
+  activeEdgeKind: DEFAULT_NETWORK_EDGE_KIND,
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -243,11 +252,7 @@ const useFlowStore = create<RFState>((set, get) => ({
       ...connection,
       id: `edge-${Date.now()}`,
       type: "editable",
-      data: {
-        flow: 0, // 改为flow表示流量
-        a: 1, // 计算参数a
-        b: 0, // 计算参数b
-      },
+      data: createNetworkEdgeData(state.activeEdgeKind),
     }
 
     // 为新连接线添加参数配置
@@ -380,6 +385,9 @@ const useFlowStore = create<RFState>((set, get) => ({
   },
   setShowBubbleMenu: (show: boolean) => {
     set({ showBubbleMenu: show })
+  },
+  setActiveEdgeKind: (kind: NetworkEdgeKind) => {
+    set({ activeEdgeKind: kind })
   },
 
   // 更新计算参数方法 - 修复类型错误
@@ -682,6 +690,7 @@ const useFlowStore = create<RFState>((set, get) => ({
 
       // 构建新的data对象，包含flow和所有自定义参数的a、b配置
       const newData: any = {
+        ...(edge.data || {}),
         flow: flow || 0,
       }
 
@@ -796,8 +805,10 @@ const useFlowStore = create<RFState>((set, get) => ({
         // 提取flow参数
         const { flow, ...otherData } = edge.data
 
-        // 创建新的边数据对象，只包含flow
-        const newEdgeData: any = { flow: flow || 0 }
+        const newEdgeData: any = {
+          ...stripLegacyEdgeConfigFields(otherData),
+          flow: flow || 0,
+        }
 
         // 为每条边创建参数配置对象
         newEdgeParameterConfigs[edge.id] = {}
@@ -937,6 +948,7 @@ const useFlowStore = create<RFState>((set, get) => ({
 
         // 构建新的data对象，包含flow和所有自定义参数的a、b配置
         const newData: any = {
+          ...(edge.data || {}),
           flow: flow || 0,
         }
 
@@ -1075,8 +1087,10 @@ const useFlowStore = create<RFState>((set, get) => ({
             // 提取flow参数
             const { flow, ...otherData } = edge.data
 
-            // 创建新的边数据对象，只包含flow
-            const newEdgeData: any = { flow: flow || 0 }
+            const newEdgeData: any = {
+              ...stripLegacyEdgeConfigFields(otherData),
+              flow: flow || 0,
+            }
 
             // 为每条边创建参数配置对象
             edgeParameterConfigs[edge.id] = {}
@@ -1248,6 +1262,7 @@ const useFlowStore = create<RFState>((set, get) => ({
 
         // 构建新的data对象，包含flow和所有自定义参数的a、b配置
         const newData: any = {
+          ...(edge.data || {}),
           flow: flow || 0,
         }
 

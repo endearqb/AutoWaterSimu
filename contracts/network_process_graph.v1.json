@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "network_process_graph.v1.json",
+  "title": "network_process_graph.v1",
+  "type": "object",
+  "$defs": {
+    "componentPolicy": {
+      "type": "object",
+      "required": ["mode", "include", "exclude"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["all", "include", "exclude"] },
+        "include": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "exclude": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "additionalProperties": false
+    },
+    "componentSchema": {
+      "type": "object",
+      "required": ["component_schema_id", "components", "unit"],
+      "properties": {
+        "component_schema_id": { "type": "string", "minLength": 1 },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "unit": { "type": "string", "minLength": 1 },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "flowSpec": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["fixed", "balanced", "split_fraction", "ratio_to_edge", "residual", "controlled", "timeseries"]
+        },
+        "value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1 },
+        "reference_edge_id": { "type": "string", "minLength": 1 },
+        "ratio": { "type": "number" },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "timeseries_ref": { "type": "string", "minLength": 1 },
+        "control_signal": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "node_id",
+        "node_type",
+        "process_unit_type",
+        "component_schema_id",
+        "initial_conditions",
+        "ports",
+        "model_binding",
+        "parameter_binding",
+        "unit_metadata"
+      ],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "node_type": { "type": "string", "minLength": 1 },
+        "process_unit_type": { "type": "string", "minLength": 1 },
+        "component_schema_id": { "type": "string", "minLength": 1 },
+        "initial_conditions": { "type": "object", "additionalProperties": { "type": "number" } },
+        "volume": { "type": "number", "minimum": 0 },
+        "ports": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["port_id", "port_kind"],
+            "properties": {
+              "port_id": { "type": "string", "minLength": 1 },
+              "port_kind": {
+                "type": "string",
+                "enum": ["hydraulic_in", "hydraulic_out", "settling_in", "settling_out", "signal_in", "signal_out"]
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "model_binding": {
+          "type": "object",
+          "required": ["model_kind", "reaction_enabled"],
+          "properties": {
+            "model_kind": { "type": "string", "minLength": 1 },
+            "model_id": { "type": "string", "minLength": 1 },
+            "model_version": { "type": "string", "minLength": 1 },
+            "model_hash": { "type": "string", "minLength": 1 },
+            "reaction_enabled": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        },
+        "parameter_binding": { "type": "object" },
+        "unit_metadata": { "type": "object" },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": [
+        "edge_id",
+        "edge_kind",
+        "source_node_id",
+        "source_port",
+        "target_node_id",
+        "target_port",
+        "component_policy"
+      ],
+      "properties": {
+        "edge_id": { "type": "string", "minLength": 1 },
+        "edge_kind": { "type": "string", "enum": ["hydraulic", "pump", "settling", "signal"] },
+        "source_node_id": { "type": "string", "minLength": 1 },
+        "source_port": { "type": "string", "minLength": 1 },
+        "target_node_id": { "type": "string", "minLength": 1 },
+        "target_port": { "type": "string", "minLength": 1 },
+        "component_policy": { "$ref": "#/$defs/componentPolicy" },
+        "stream_adapter": { "type": ["object", "null"] },
+        "flow_spec": { "$ref": "#/$defs/flowSpec" },
+        "transport_model": { "type": ["object", "null"] },
+        "pump": {
+          "type": "object",
+          "properties": {
+            "head_m": { "type": "number", "minimum": 0 },
+            "efficiency": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "energy_enabled": { "type": "boolean" },
+            "min_flow": { "type": "number" },
+            "max_flow": { "type": "number" }
+          },
+          "additionalProperties": true
+        },
+        "signal_spec": {
+          "type": "object",
+          "required": ["signal_name"],
+          "properties": {
+            "signal_name": { "type": "string", "minLength": 1 },
+            "source_expression": { "type": "string" },
+            "sample_period_days": { "type": "number", "exclusiveMinimum": 0 },
+            "hold": { "type": "string", "enum": ["zero_order"] },
+            "delay_days": { "type": "number", "minimum": 0 },
+            "unit": { "type": "string" },
+            "target_binding": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "required": ["status", "errors", "warnings"],
+      "properties": {
+        "status": { "const": "valid" },
+        "errors": { "type": "array", "maxItems": 0 },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "network_graph_id",
+    "version",
+    "component_schemas",
+    "nodes",
+    "edges",
+    "flow_constraints",
+    "signal_bindings",
+    "composites",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "const": "network_process_graph.v1" },
+    "network_graph_id": { "type": "string", "minLength": 1 },
+    "version": { "type": "integer", "minimum": 1 },
+    "source_canvas_graph_id": { "type": "string", "minLength": 1 },
+    "component_schemas": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/componentSchema" }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "flow_constraints": { "type": "array", "items": { "type": "object" } },
+    "signal_bindings": { "type": "array", "items": { "type": "object" } },
+    "composites": { "type": "array", "items": { "type": "object" } },
+    "validation": { "$ref": "#/$defs/validation" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}
+

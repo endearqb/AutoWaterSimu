@@ -75,6 +75,32 @@ func TestSimulationCheckEndpointCreatesComputeJob(t *testing.T) {
 	}
 }
 
+func TestSimulationCheckEndpointCreatesUDMNetworkInlineJob(t *testing.T) {
+	_, server := newSimulationTestServer(t)
+
+	rec := serveWithToken(t, server, http.MethodPost, "/api/v1/simulation-checks", "dev-public-token", validContractFixture(t, "udm_network_inline.simulation_request.v1.json"))
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("UDM Network inline simulation check should create a job, got %d %s", rec.Code, rec.Body.String())
+	}
+	var created JobSnapshot
+	if err := json.Unmarshal(rec.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.Job.JobID != "job_simcheck_sim_req_udm_network_inline" ||
+		created.Job.JobType != "simulation.udm_network.v1" ||
+		created.Job.Status != StatusQueued {
+		t.Fatalf("unexpected UDM Network simulation check job: %#v", created.Job)
+	}
+	var jobPayload map[string]any
+	if err := json.Unmarshal(created.Job.InputJSON, &jobPayload); err != nil {
+		t.Fatal(err)
+	}
+	if payload := mapValue(jobPayload, "payload"); stringValue(payload, "schema_version") != "network_simulation_input.v1" {
+		t.Fatalf("UDM Network simulation check should embed network_simulation_input payload, got %#v", jobPayload["payload"])
+	}
+	assertRequiredCapabilities(t, jobPayload, []string{"udm_network", "ode"})
+}
+
 func TestSimulationCheckEndpointRejectsWorkerToken(t *testing.T) {
 	_, server := newSimulationTestServer(t)
 

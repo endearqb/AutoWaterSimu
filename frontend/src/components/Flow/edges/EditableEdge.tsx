@@ -7,6 +7,7 @@ import {
 } from "@xyflow/react"
 import React, { useState } from "react"
 import { useI18n } from "../../../i18n"
+import { normalizeNetworkEdgeKind } from "../../../types/networkEdges"
 
 interface EditableEdgeProps extends EdgeProps {
   updateEdgeFlow: (id: string, value: number) => void
@@ -28,7 +29,13 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
 }) => {
   const { t } = useI18n()
   const [isEditing, setIsEditing] = useState(false)
-  const [tempFlow, setTempFlow] = useState<string>(String(data?.flow || ""))
+  const edgeData = (data || {}) as Record<string, any>
+  const edgeKind = normalizeNetworkEdgeKind(edgeData.edge_kind)
+  const flowSpec = (edgeData.flow_spec || {}) as Record<string, any>
+  const signalSpec = (edgeData.signal_spec || {}) as Record<string, any>
+  const canEditFlow = edgeKind === "hydraulic" || edgeKind === "pump"
+  const displayFlow = flowSpec.value ?? edgeData.flow
+  const [tempFlow, setTempFlow] = useState<string>(String(displayFlow || ""))
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -41,8 +48,9 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
 
   const handleFlowDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!canEditFlow) return
     setIsEditing(true)
-    setTempFlow(String(data?.flow || ""))
+    setTempFlow(String(displayFlow || ""))
   }
 
   const commit = (v: string) => {
@@ -53,8 +61,35 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
     }
   }
 
-  const flowText = data?.flow ? `${data.flow} ` : ""
+  const flowText =
+    displayFlow !== undefined && displayFlow !== null && displayFlow !== ""
+      ? `${displayFlow}${flowSpec.unit ? ` ${flowSpec.unit}` : ""}`
+      : ""
   const isSelected = !!selected
+  const edgeStyle = (() => {
+    if (edgeKind === "pump") {
+      return { stroke: "#b45309", strokeWidth: 2 }
+    }
+    if (edgeKind === "settling") {
+      return { stroke: "#15803d", strokeWidth: 2, strokeDasharray: "6 4" }
+    }
+    if (edgeKind === "signal") {
+      return { stroke: "#7c3aed", strokeWidth: 2, strokeDasharray: "1 6" }
+    }
+    return { stroke: "#2563eb", strokeWidth: 1.5 }
+  })()
+  const labelText = (() => {
+    if (edgeKind === "signal") {
+      return String(signalSpec.signal_name || "signal")
+    }
+    if (edgeKind === "settling") {
+      return "J_TSS"
+    }
+    if (edgeKind === "pump") {
+      return flowText ? `Pump ${flowText}` : "Pump"
+    }
+    return flowText
+  })()
 
   return (
     <>
@@ -63,8 +98,9 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
         markerEnd={markerEnd}
         style={{
           ...style,
-          strokeWidth: isSelected ? 3 : 1,
-          stroke: isSelected ? "hsl(222.2 47.4% 11.2%)" : style?.stroke,
+          ...edgeStyle,
+          strokeWidth: isSelected ? 3 : edgeStyle.strokeWidth,
+          stroke: isSelected ? "hsl(222.2 47.4% 11.2%)" : edgeStyle.stroke,
         }}
       />
       <EdgeLabelRenderer>
@@ -76,7 +112,7 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
           className="nodrag nopan"
           onClick={(e) => e.stopPropagation()} // 防止点击透传到画布
         >
-          {isEditing ? (
+          {isEditing && canEditFlow ? (
             <Input
               type="number"
               step="0.01"
@@ -88,7 +124,7 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
                 if (e.key === "Enter") commit(tempFlow)
                 if (e.key === "Escape") {
                   setIsEditing(false)
-                  setTempFlow(String(data?.flow || ""))
+                  setTempFlow(String(displayFlow || ""))
                 }
               }}
               size="sm"
@@ -102,11 +138,10 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
               py={1}
               placeholder={t("flow.edge.flowPlaceholder")}
             />
-          ) : // 只有当有流量值时才显示可点击区域
-          flowText ? (
+          ) : labelText ? (
             <Box
-              onDoubleClick={handleFlowDoubleClick}
-              cursor="pointer"
+              onDoubleClick={canEditFlow ? handleFlowDoubleClick : undefined}
+              cursor={canEditFlow ? "pointer" : "default"}
               bg={isSelected ? "blue.50" : "white"}
               border={`1px solid ${isSelected ? "hsl(222.2 47.4% 11.2%)" : "hsl(214.3 31.8% 91.4%)"}`}
               borderRadius="4px"
@@ -122,13 +157,13 @@ const EditableEdge: React.FC<EditableEdgeProps> = ({
                   : "hsl(215.4 16.3% 56.9%)",
               }}
             >
-              {flowText}
+              {labelText}
             </Box>
           ) : (
             // 没有流量值时显示透明的可点击区域
             <Box
               onDoubleClick={handleFlowDoubleClick}
-              cursor="pointer"
+              cursor={canEditFlow ? "pointer" : "default"}
               width="20px"
               height="20px"
               bg={isSelected ? "hsl(222.2 47.4% 11.2% / 0.1)" : "transparent"}

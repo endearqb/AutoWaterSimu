@@ -6,7 +6,7 @@
 
 ## 2. 核心文件
 
-本目录包含各合同的最小失败 fixture。新增 invalid 示例时优先让文件名说明失败原因，例如 missing required field、unsupported enum 或 unsafe redaction flag。
+本目录包含各合同的最小失败 fixture。新增 invalid 示例时优先让文件名说明失败原因，例如 missing required field、unsupported enum、invalid edge kind 或 unsafe redaction flag。
 
 ## 3. 维护约定
 

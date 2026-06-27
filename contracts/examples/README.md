@@ -14,6 +14,7 @@
 - ASM1 independent job type fixture，用于 ASM1 worker/core/backend parity。
 - ASM3 independent job type fixture，用于 ASM3 worker/core/backend parity。
 - UDM independent job type fixture，用于单 UDM model snapshot / binding worker/core/backend parity。
+- UDM Network v2 typed-edge fixture，用于 `network_process_graph.v1` / `network_simulation_input.v1` / `simulation.udm_network.v1` wire path 对齐。
 - mixed ASM1 + UDM current-state Phase 0 baseline fixture，用于记录性能优化前置基线状态，不代表 PR-38 最终混合模型语义。
 - Desktop project package/support bundle fixtures，用于 Desktop 离线项目包与诊断包合同对齐。
 

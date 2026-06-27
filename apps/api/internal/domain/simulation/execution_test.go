@@ -16,6 +16,7 @@ func TestRequiredCapabilities(t *testing.T) {
 		{name: "asm1", jobType: JobTypeASM1, want: []string{"asm1", "ode"}},
 		{name: "asm3", jobType: JobTypeASM3, want: []string{"asm3", "ode"}},
 		{name: "udm", jobType: JobTypeUDM, want: []string{"udm", "ode"}},
+		{name: "udm network", jobType: JobTypeUDMNetwork, want: []string{"udm_network", "ode"}},
 		{name: "unknown", jobType: "simulation.unknown.v1", want: nil},
 	}
 

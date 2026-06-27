@@ -25,7 +25,7 @@
 | `inspectorbar/` | property/calculation/simulation panels |
 | `toolbar/` | node palette and result panels |
 | `nodes/` | model/input/output node components |
-| `edges/` | editable edge component |
+| `edges/` | editable edge renderer, network edge mode selector and edge inspector fields |
 | `menu/` | save/load/import/context dialogs |
 | `legacy-analysis/` | result analysis dialogs, charts and panels |
 
@@ -35,6 +35,7 @@
 2. 画布数据 shape 改动必须同步 stores、services、backend route/tests。
 3. Inspector width、chart container、node handles 等布局变更需要检查窄屏和压缩面板。
 4. UDM 教程专用行为不要破坏 material balance/ASM legacy flows。
+5. UDM Network v2 edge UI uses `edge_kind` with exactly `hydraulic` / `pump` / `settling` / `signal`; renderer and inspector fields must preserve these fields through save/load.
 
 ## 4. 对外接口
 

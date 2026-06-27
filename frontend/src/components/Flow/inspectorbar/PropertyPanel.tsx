@@ -13,6 +13,7 @@ import { useState } from "react"
 import { FiPlus, FiTrash2 } from "react-icons/fi"
 import { useI18n } from "../../../i18n"
 import useFlowStore from "../../../stores/flowStore"
+import NetworkEdgeInspectorFields from "../edges/NetworkEdgeInspectorFields"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -36,6 +37,7 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
     customParameters,
     edgeParameterConfigs,
     updateNodeParameter,
+    updateEdgeParameter,
     updateEdgeFlow,
     updateEdgeParameterConfig,
     addCustomParameter,
@@ -397,26 +399,16 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
         )}
 
         {!isNode && selectedEdge && (
-          <Field.Root invalid={!!flowRateError}>
-            <HStack align="flex-start" gap={4}>
-              <Field.Label minW="80px" pt={2}>
-                {t("flow.propertyPanel.flowLabel")}
-              </Field.Label>
-              <Box flex={1}>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={(selectedEdge.data?.flow as number) || ""}
-                  onChange={(e) => handleEdgeFlowChange(e.target.value)}
-                  placeholder={t("flow.propertyPanel.flowPlaceholder")}
-                />
-                {flowRateError && (
-                  <Field.ErrorText>{flowRateError}</Field.ErrorText>
-                )}
-              </Box>
-            </HStack>
-          </Field.Root>
+          <NetworkEdgeInspectorFields
+            edge={selectedEdge}
+            flowError={flowRateError}
+            flowValue={(selectedEdge.data?.flow as number) || ""}
+            labelWidth="80px"
+            onFlowChange={handleEdgeFlowChange}
+            onPatch={(key, value) =>
+              updateEdgeParameter(selectedEdge.id, key, value)
+            }
+          />
         )}
 
         {renderCustomParameters()}

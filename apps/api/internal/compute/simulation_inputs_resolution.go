@@ -14,6 +14,18 @@ func (svc *SimulationInputService) ResolveSimulationInput(ctx context.Context, i
 
 func (svc *SimulationInputService) ResolveSimulationInputForScope(ctx context.Context, inputRef map[string]any, sourceSystem, requestedBy, jobType string, filter ListFilter) (map[string]any, error) {
 	if simulationInput := mapValue(inputRef, "simulation_input"); simulationInput != nil {
+		if stringValue(simulationInput, "schema_version") == "network_simulation_input.v1" {
+			if svc.validator != nil {
+				if err := svc.validator.Validate("network_simulation_input.v1.json", simulationInput); err != nil {
+					return nil, err
+				}
+			}
+			metadata := mapValue(simulationInput, "metadata")
+			if err := authorizeListFilterDataScope(filter, "network simulation input", stringValue(metadata, "tenant_id"), stringValue(metadata, "project_id"), stringValue(metadata, "site_id")); err != nil {
+				return nil, err
+			}
+			return simulationInput, nil
+		}
 		record, err := svc.simulationInputRecord(simulationInput, sourceSystem, requestedBy)
 		if err != nil {
 			return nil, err

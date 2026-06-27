@@ -23,6 +23,12 @@ import {
 import { t } from "../i18n"
 import type { HybridUDMConfig } from "../types/hybridUdm"
 import {
+  DEFAULT_NETWORK_EDGE_KIND,
+  createNetworkEdgeData,
+  stripLegacyEdgeConfigFields,
+  type NetworkEdgeKind,
+} from "../types/networkEdges"
+import {
   type TimeSegment,
   normalizeTimeSegments,
 } from "../utils/timeSegmentValidation"
@@ -53,6 +59,7 @@ export interface ModelFlowState<
   currentJobId: string | null
   showMiniMap: boolean
   isEdgeTimeSegmentMode: boolean
+  activeEdgeKind: NetworkEdgeKind
 
   // ========== 妯″瀷閰嶇疆 ==========
   modelConfig: ModelConfig
@@ -76,6 +83,7 @@ export interface ModelFlowState<
   setSelectedNode: (node: Node | null) => void
   setSelectedEdge: (edge: Edge | null) => void
   setShowMiniMap: (show: boolean) => void
+  setActiveEdgeKind: (kind: NetworkEdgeKind) => void
   deleteSelectedEdge: () => void
   deleteSelectedNode: () => void
 
@@ -248,6 +256,7 @@ export function createModelFlowStore<
       modelConfig: config,
       showMiniMap: false,
       isEdgeTimeSegmentMode: false,
+      activeEdgeKind: DEFAULT_NETWORK_EDGE_KIND,
 
       // ========== 鍩虹鎿嶄綔 ==========
       setNodes: (nodes) => set({ nodes }),
@@ -283,7 +292,7 @@ export function createModelFlowStore<
           ...connection,
           id: `edge-${Date.now()}`,
           type: "editable",
-          data: { flow: 0 },
+          data: createNetworkEdgeData(state.activeEdgeKind),
         }
 
         // 涓烘柊杩炴帴绾挎坊鍔犲弬鏁伴厤锟?
@@ -424,6 +433,10 @@ export function createModelFlowStore<
 
       setShowMiniMap: (show: boolean) => {
         set({ showMiniMap: show })
+      },
+
+      setActiveEdgeKind: (kind: NetworkEdgeKind) => {
+        set({ activeEdgeKind: kind })
       },
 
       deleteSelectedEdge: () => {
@@ -1053,6 +1066,7 @@ export function createModelFlowStore<
 
           // 鏋勫缓鏂扮殑data瀵硅薄锛屽寘鍚玣low鍜屽浐瀹氬弬鏁扮殑a銆乥閰嶇疆
           const newData: any = {
+            ...(edge.data || {}),
             flow: flow || 0,
           }
 
@@ -1189,8 +1203,10 @@ export function createModelFlowStore<
             // 鎻愬彇flow鍙傛暟
             const { flow, ...otherData } = edge.data
 
-            // 鍒涘缓鏂扮殑杈规暟鎹璞★紝鍙寘鍚玣low
-            const newEdgeData: any = { flow: flow || 0 }
+            const newEdgeData: any = {
+              ...stripLegacyEdgeConfigFields(otherData),
+              flow: flow || 0,
+            }
 
             // 涓烘瘡鏉¤竟鍒涘缓鍙傛暟閰嶇疆瀵硅薄
             newEdgeParameterConfigs[edge.id] = {}
