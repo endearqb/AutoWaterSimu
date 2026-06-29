@@ -231,7 +231,7 @@ jobs:
       - name: Upload unsigned release artifacts
         id: upload_unsigned_release_artifacts
         if: ${{ always() && github.event_name == 'workflow_dispatch' && github.event.inputs.build_release_artifacts == 'true' && steps.build_installer.outputs.installer_path != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: next-desktop-unsigned-release-artifacts
           path: |
@@ -263,7 +263,7 @@ jobs:
 
       - name: Upload release gate evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: next-release-gate-evidence
           path: tmp/release-evidence
