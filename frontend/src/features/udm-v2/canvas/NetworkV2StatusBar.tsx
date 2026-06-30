@@ -9,6 +9,7 @@ export function NetworkV2StatusBar() {
   const graphName = useUdmV2FlowStore((state) => state.currentNetworkGraphName)
   const dirty = useUdmV2FlowStore((state) => state.dirty)
   const runtimeStatus = useUdmV2FlowStore((state) => state.runtimeStatus)
+  const diagnosticCount = useUdmV2FlowStore((state) => state.diagnostics.length)
 
   return (
     <HStack
@@ -28,6 +29,9 @@ export function NetworkV2StatusBar() {
       <HStack gap={3} color="fg.muted">
         <Text>{nodeCount} nodes</Text>
         <Text>{edgeCount} edges</Text>
+        {diagnosticCount > 0 && (
+          <Badge colorPalette="red">{diagnosticCount} diagnostics</Badge>
+        )}
         <Badge colorPalette="blue">{runtimeStatus}</Badge>
       </HStack>
     </HStack>

@@ -1,4 +1,3 @@
-import { Box, Text } from "@chakra-ui/react"
 import { ReactFlowProvider } from "@xyflow/react"
 import { useEffect } from "react"
 
@@ -6,6 +5,7 @@ import { NetworkV2Canvas } from "./canvas/NetworkV2Canvas"
 import { NetworkV2FlowLayout } from "./canvas/NetworkV2FlowLayout"
 import { NetworkV2StatusBar } from "./canvas/NetworkV2StatusBar"
 import { NetworkV2Toolbar } from "./canvas/NetworkV2Toolbar"
+import { NetworkV2PropertyPanel } from "./inspector/NetworkV2PropertyPanel"
 import { useUdmV2FlowStore } from "./state/useUdmV2FlowStore"
 
 type UdmV2PageProps = {
@@ -26,20 +26,9 @@ export default function UdmV2Page({ flowchartId }: UdmV2PageProps) {
       <NetworkV2FlowLayout
         toolbar={<NetworkV2Toolbar />}
         canvas={<NetworkV2Canvas />}
-        inspector={<NetworkV2InspectorSkeleton />}
+        inspector={<NetworkV2PropertyPanel />}
         statusBar={<NetworkV2StatusBar />}
       />
     </ReactFlowProvider>
-  )
-}
-
-function NetworkV2InspectorSkeleton() {
-  return (
-    <Box p={4}>
-      <Text fontWeight="semibold">Inspector</Text>
-      <Text mt={2} color="fg.muted" fontSize="sm">
-        No element selected
-      </Text>
-    </Box>
   )
 }
