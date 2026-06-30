@@ -16,6 +16,7 @@ export type NetworkV2DiagnosticCode =
   | "UNKNOWN_COMPONENT_IN_POLICY"
   | "FLOW_CONSTRAINT_EDGE_NOT_FOUND"
   | "FLOW_CONSTRAINT_INVALID_VALUE"
+  | "CONTRACT_SCHEMA_INVALID"
 
 export type NetworkV2Diagnostic = {
   code: NetworkV2DiagnosticCode

@@ -47,6 +47,7 @@ import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/
 Allowed dependencies:
 
 - React, TypeScript, Vite, TanStack Query/Router, Chakra UI v3
+- AJV for frontend contract validation where feature serializers validate JSON Schema payloads
 - Generated clients in `frontend/src/client`
 - Shared wrappers in `frontend/src/shared` and `frontend/src/features`
 

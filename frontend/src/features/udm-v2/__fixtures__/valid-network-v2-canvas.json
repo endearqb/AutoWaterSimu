@@ -1,0 +1,63 @@
+{
+  "schema_version": "udm_network_canvas.v1",
+  "graph_id": "canvas_valid_network_v2",
+  "nodes": [
+    {
+      "id": "influent",
+      "type": "boundary_v2",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "label": "Influent",
+        "node_kind": "boundary",
+        "process_unit_type": "boundary",
+        "component_schema_id": "udm_network_minimal_components.v1",
+        "initial_conditions": { "COD": 200, "X_TSS": 120 },
+        "model_binding": { "model_kind": "passive", "reaction_enabled": false },
+        "parameter_binding": {},
+        "boundary": {
+          "boundary_kind": "source",
+          "feed_composition": { "COD": 200, "X_TSS": 120 }
+        },
+        "ports": [
+          { "id": "out", "label": "Out", "role": "outlet", "placement": "right" }
+        ]
+      }
+    },
+    {
+      "id": "reactor",
+      "type": "udm_reactor_v2",
+      "position": { "x": 240, "y": 0 },
+      "data": {
+        "label": "Reactor",
+        "node_kind": "udm_reactor",
+        "process_unit_type": "udm_reactor",
+        "component_schema_id": "udm_network_minimal_components.v1",
+        "initial_conditions": { "COD": 50, "X_TSS": 80 },
+        "volume_m3": 1000,
+        "model_binding": { "model_kind": "udm", "reaction_enabled": false },
+        "parameter_binding": {},
+        "ports": [
+          { "id": "in", "label": "In", "role": "inlet", "placement": "left" },
+          { "id": "out", "label": "Out", "role": "outlet", "placement": "right" }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_influent_reactor",
+      "type": "hydraulic_v2",
+      "source": "influent",
+      "sourceHandle": "out",
+      "target": "reactor",
+      "targetHandle": "in",
+      "data": {
+        "edge_kind": "hydraulic",
+        "component_policy": { "mode": "all", "include": [], "exclude": [] },
+        "stream_adapter": null,
+        "flow_spec": { "mode": "fixed", "value": 100, "unit": "m3/d" },
+        "transport_model": null
+      }
+    }
+  ]
+}

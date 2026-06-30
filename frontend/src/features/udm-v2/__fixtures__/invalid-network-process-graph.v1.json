@@ -1,0 +1,11 @@
+{
+  "schema_version": "network_process_graph.v1",
+  "version": 1,
+  "component_schemas": [],
+  "nodes": [],
+  "edges": [],
+  "flow_constraints": [],
+  "signal_bindings": [],
+  "composites": [],
+  "validation": { "status": "valid", "errors": [], "warnings": [] }
+}

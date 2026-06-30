@@ -34,6 +34,7 @@
 | `palette/` | v2 node palette and drag/drop source controls |
 | `inspector/` | v2 property panel 与 field editors |
 | `composite/` | SecondaryClarifier10Layer composite config 与展开 |
+| `contracts/` | `network_process_graph.v1` / `network_simulation_input.v1` 前端类型 |
 | `serialize/` | graph/input serializer、contract validation 与 diagnostics mapping |
 | `services/` | standalone flowchart adapter 与 UDM-v2 compute submit service |
 | `__tests__/` | Vitest 单元测试 |
@@ -60,6 +61,7 @@
 可以依赖：
 
 - React、Chakra UI v3、TanStack Router/Query、Zustand、XYFlow。
+- AJV，用于本 feature 内 JSON Schema contract validation。
 - `frontend/src/shared/api` 与 `frontend/src/client/compute`，但只能在本目录 service wrapper 内使用。
 - `contracts/*.json` 或 schema-derived types。
 

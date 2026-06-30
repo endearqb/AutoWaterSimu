@@ -12,7 +12,8 @@
 
 - UDM Network v2 graph semantic validation.
 - Diagnostics mapping from schema/semantic errors to inspector fields.
-- Later graph/input serializer files for `network_process_graph.v1` and `network_simulation_input.v1`.
+- Canvas graph serialization to `network_process_graph.v1` and `network_simulation_input.v1`.
+- AJV-backed contract validation for root JSON Schemas.
 
 本目录不负责：
 
@@ -25,6 +26,10 @@
 |---|---|
 | `semanticValidation.ts` | Frontend semantic validation rules and diagnostic types |
 | `diagnosticsMapping.ts` | Diagnostic-to-inspector field mapping |
+| `toNetworkProcessGraphV1.ts` | Canvas graph to `network_process_graph.v1` serializer and stable JSON helper |
+| `fromNetworkProcessGraphV1.ts` | `network_process_graph.v1` to canvas loader |
+| `toNetworkSimulationInputV1.ts` | Process graph to executable simulation input payload |
+| `contractValidation.ts` | AJV-backed schema validation and diagnostics |
 
 ## 3. 维护约定
 

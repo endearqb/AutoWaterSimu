@@ -1,50 +1,23 @@
 import type {
   NetworkV2ComponentPolicy,
   NetworkV2FlowSpec,
-  NetworkV2TransportModel,
 } from "../edges/edgeModel"
+import type {
+  NetworkProcessGraphV1Edge,
+  NetworkProcessGraphV1Node,
+  NetworkProcessGraphV1Port,
+} from "../contracts/generated"
 import {
   SECONDARY_CLARIFIER_V2_REFERENCE_COMPONENTS,
   SECONDARY_CLARIFIER_V2_REFERENCE_SCHEMA_ID,
   type SecondaryClarifierV2Config,
 } from "./secondaryClarifierV2Defaults"
 
-type ProcessGraphPort = {
-  port_id: string
-  port_kind: string
-}
+type ProcessGraphPort = NetworkProcessGraphV1Port
 
-export type ExpandedSecondaryClarifierV2Node = {
-  node_id: string
-  node_type: string
-  process_unit_type: string
-  component_schema_id: string
-  initial_conditions: Record<string, number>
-  volume?: number
-  ports: ProcessGraphPort[]
-  model_binding: {
-    model_kind: string
-    model_id?: string
-    model_version?: string
-    reaction_enabled: boolean
-  }
-  parameter_binding: Record<string, number>
-  unit_metadata: Record<string, unknown>
-}
+export type ExpandedSecondaryClarifierV2Node = NetworkProcessGraphV1Node
 
-export type ExpandedSecondaryClarifierV2Edge = {
-  edge_id: string
-  edge_kind: "hydraulic" | "settling"
-  source_node_id: string
-  source_port: string
-  target_node_id: string
-  target_port: string
-  component_policy: NetworkV2ComponentPolicy
-  stream_adapter?: null
-  flow_spec?: NetworkV2FlowSpec
-  transport_model?: NetworkV2TransportModel
-  metadata: Record<string, unknown>
-}
+export type ExpandedSecondaryClarifierV2Edge = NetworkProcessGraphV1Edge
 
 export type ExpandedSecondaryClarifierV2Graph = {
   component_schemas: Array<{
@@ -397,7 +370,6 @@ function hydraulicEdge(
     component_policy: hydraulicPolicy(),
     stream_adapter: null,
     flow_spec: withUnit(flowSpec, flowSpec),
-    transport_model: undefined,
     metadata: { composite_unit_id: compositeId, profile },
   }
 }
