@@ -31,6 +31,7 @@
 | `readme-contract-check.ps1` | README First 文档契约检查，读取 `.ai/readme-contracts.json`，枚举维护源 `README*.md`，校验类型分类、断链、核心文件表、`README_First.md` 读取链、本机绝对路径、高置信 secret-like 文本和命令笔误，并输出 `tmp/readme-contract-check.json` |
 | `check-ontology.ps1` | Water Ontology objects/actions/links/policies registry 一致性检查，供 `just check-ontology` / `just check` / `pr-fast` 调用 |
 | `check-contracts.ps1` | Contracts registry、codegen manifest、schema tests、Compute TS client drift gate，供 `just check-contracts` / `pr-fast` 调用 |
+| `check-udm-v2-import-boundary.mjs` | UDM Network v2 frontend isolation gate，禁止 `/udm-v2` feature import legacy Flow/stores/services，禁止 legacy v1 code import UDM-v2 feature，并防止已删除的全局/legacy v2 edge helper 回流 |
 | `ci/` | AutoWaterSimu Next PR fast（含 Compute API boundary audit）、standalone no-auth compose/API smoke、standalone migration smoke、standalone five-model smoke、standalone backup/restore smoke、opt-in integration smoke、opt-in security smoke、mock-backed browser smoke、live backend browser smoke、current-flow live smoke、worker adapter strict-mode opt-in smoke、worker packaged sidecar no-fallback smoke、performance/timings Phase 0 baseline、performance profiling Phase 0 evidence、performance golden Phase 0 evidence、performance hot-path prereview Phase 0 evidence、Go API latency Phase 0 evidence、performance flag matrix Phase 0 evidence、Desktop package smoke、Desktop unsigned release artifacts smoke 与 golden scenario evidence 汇总/刷新脚本 |
 | `release/` | AutoWaterSimu Next merge/release gate、standalone Web RC gate、release artifact download verifier smoke 脚本 |
 

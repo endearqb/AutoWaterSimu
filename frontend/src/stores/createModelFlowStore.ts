@@ -22,12 +22,20 @@ import {
 } from "../config/simulationConfig"
 import { t } from "../i18n"
 import type { HybridUDMConfig } from "../types/hybridUdm"
-import { stripLegacyEdgeConfigFields } from "../types/networkEdges"
 import {
   type TimeSegment,
   normalizeTimeSegments,
 } from "../utils/timeSegmentValidation"
 // import type { BaseModelService } from '../services/baseModelService' // 鏆傛椂娉ㄩ噴鎺夋湭浣跨敤鐨勫锟?
+
+const stripLegacyEdgeConfigFields = (
+  data: Record<string, unknown>,
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(data).filter(
+      ([key]) => !key.endsWith("_a") && !key.endsWith("_b"),
+    ),
+  )
 
 /**
  * 閫氱敤娴佺▼鍥剧姸鎬佹帴锟?

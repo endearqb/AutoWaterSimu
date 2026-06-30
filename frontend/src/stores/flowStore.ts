@@ -21,7 +21,6 @@ import type {
 } from "../client/types.gen"
 import { getDefaultCalculationParams } from "../config/simulationConfig"
 import { t } from "../i18n"
-import { stripLegacyEdgeConfigFields } from "../types/networkEdges"
 import { useMaterialBalanceStore } from "./materialBalanceStore"
 
 type CustomParameter = {
@@ -35,6 +34,15 @@ type EdgeParameterConfig = {
   a: number // 比例系数
   b: number // 常数项
 }
+
+const stripLegacyEdgeConfigFields = (
+  data: Record<string, unknown>,
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(data).filter(
+      ([key]) => !key.endsWith("_a") && !key.endsWith("_b"),
+    ),
+  )
 
 type CalculationParameters = {
   hours: number

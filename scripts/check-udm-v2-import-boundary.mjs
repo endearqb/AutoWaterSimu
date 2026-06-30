@@ -11,11 +11,30 @@ const scanRoots = [
   path.join(frontendSrc, "components", "Flow"),
   path.join(frontendSrc, "stores"),
   path.join(frontendSrc, "routes", "_layout"),
+  path.join(frontendSrc, "types"),
 ]
 
 const allowedV1Imports = new Set([
   normalizePath(path.join(frontendSrc, "routes", "_layout", "udm-v2.tsx")),
 ])
+
+const allowedV1TokenFiles = new Set([
+  normalizePath(
+    path.join(frontendSrc, "stores", "__tests__", "v1EdgeIsolation.test.ts"),
+  ),
+])
+
+const forbiddenFiles = [
+  path.join(frontendSrc, "types", "networkEdges.ts"),
+  path.join(frontendSrc, "components", "Flow", "edges", "EdgeModeSelector.tsx"),
+  path.join(
+    frontendSrc,
+    "components",
+    "Flow",
+    "edges",
+    "NetworkEdgeInspectorFields.tsx",
+  ),
+]
 
 const forbiddenFromUdmV2 = [
   "@/components/Flow/",
@@ -31,6 +50,14 @@ const forbiddenFromUdmV2 = [
 const forbiddenFromV1 = [
   "@/features/udm-v2/",
   "features/udm-v2/",
+]
+
+const forbiddenV1Tokens = [
+  "edge_kind",
+  "NetworkEdgeKind",
+  "createNetworkEdgeData",
+  "@/types/networkEdges",
+  "../types/networkEdges",
 ]
 
 function normalizePath(value) {
@@ -81,6 +108,14 @@ function resolveRelativeSpecifier(filePath, specifier) {
 
 const violations = []
 
+for (const filePath of forbiddenFiles) {
+  if (existsSync(filePath)) {
+    violations.push(
+      `${normalizePath(path.relative(repoRoot, filePath))}: deleted UDM-v2 legacy/global edge helper must not be recreated`,
+    )
+  }
+}
+
 for (const filePath of scanRoots.flatMap(listSourceFiles)) {
   const normalizedFile = normalizePath(filePath)
   const relativeFile = normalizePath(path.relative(repoRoot, filePath))
@@ -99,6 +134,14 @@ for (const filePath of scanRoots.flatMap(listSourceFiles)) {
 
   if (allowedV1Imports.has(normalizedFile)) {
     continue
+  }
+
+  if (!allowedV1TokenFiles.has(normalizedFile)) {
+    for (const token of forbiddenV1Tokens) {
+      if (source.includes(token)) {
+        violations.push(`${relativeFile}: v1 code must not reference ${token}`)
+      }
+    }
   }
 
   for (const specifier of specs) {

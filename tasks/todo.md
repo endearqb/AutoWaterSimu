@@ -28,8 +28,10 @@
 - [x] PF5: commit and push.
 - [x] PF6: add standalone save/load/submit and runtime-pending banner.
 - [x] PF6: run validation.
-- [ ] PF6: commit and push.
-- [ ] PFC-B: delete/freeze remaining global network edge leftovers.
+- [x] PF6: commit and push.
+- [x] PFC-B: delete/freeze remaining global network edge leftovers.
+- [x] PFC-B: run validation.
+- [ ] PFC-B: commit and push.
 - [ ] PF7: final gate, docs, and evidence.
 
 ## Plan
@@ -59,6 +61,8 @@
 - PF5 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
 - PF6 added standalone UDM-v2 CanvasGraph save/load/list/delete service, compute submit service, route `flowchartId` loading, New/Save/Save As/Load/Export JSON/Import JSON/Validate/Submit toolbar actions, runtime-pending not-executable banner, and service/UI/Playwright tests.
 - PF6 validation passed: `npm run test`, `npx tsc --noEmit`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, save/load Playwright, submit-not-executable Playwright, and `git diff --check`.
+- PFC-B deleted the remaining legacy/global UDM-v2 edge helper files, kept legacy imported edge cleanup local to v1 stores, tightened the UDM-v2 boundary script, and updated README contracts.
+- PFC-B validation passed: `npm run check:udm-v2-boundary`, `npx tsc --noEmit`, `npm run test`, standalone v1 no-v2-selector Playwright regression, and residue grep for `edge_kind` / `NetworkEdgeKind` / `createNetworkEdgeData`. README contract check was attempted but blocked by the pre-existing unstaged `release-notes.md` deletion.
 
 # 2026-06-27 UDM Network v2 Review Closeout TODO
 
