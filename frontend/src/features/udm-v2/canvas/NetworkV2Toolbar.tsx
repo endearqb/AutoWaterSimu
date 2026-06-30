@@ -1,11 +1,22 @@
 import { Button, HStack } from "@chakra-ui/react"
-import { Download, FilePlus, FolderOpen, Play, Save, ShieldCheck, Upload } from "lucide-react"
-import { useRef, type ChangeEvent } from "react"
+import {
+  Download,
+  FilePlus,
+  FolderOpen,
+  Play,
+  Save,
+  ShieldCheck,
+  Upload,
+} from "lucide-react"
+import { type ChangeEvent, useRef } from "react"
 
 import type { NetworkProcessGraphV1 } from "../contracts/generated"
-import { fromNetworkProcessGraphV1 } from "../serialize/fromNetworkProcessGraphV1"
 import { validateNetworkProcessGraphContract } from "../serialize/contractValidation"
-import { stableStringify, toNetworkProcessGraphV1 } from "../serialize/toNetworkProcessGraphV1"
+import { fromNetworkProcessGraphV1 } from "../serialize/fromNetworkProcessGraphV1"
+import {
+  stableStringify,
+  toNetworkProcessGraphV1,
+} from "../serialize/toNetworkProcessGraphV1"
 import {
   graphStateFromStandalonePayload,
   isUdmV2StandalonePayload,
@@ -26,12 +37,16 @@ export function NetworkV2Toolbar() {
     const state = useUdmV2FlowStore.getState()
     setRuntimeStatus("saving")
     try {
-      const summary = state.currentNetworkGraphId && !saveAs
-        ? await udmV2FlowchartService.updateGraph(state.currentNetworkGraphId, {
-            ...state,
-            saveAs,
-          })
-        : await udmV2FlowchartService.saveGraph({ ...state, saveAs })
+      const summary =
+        state.currentNetworkGraphId && !saveAs
+          ? await udmV2FlowchartService.updateGraph(
+              state.currentNetworkGraphId,
+              {
+                ...state,
+                saveAs,
+              },
+            )
+          : await udmV2FlowchartService.saveGraph({ ...state, saveAs })
       setCurrentGraph({
         id: summary.id,
         name: summary.name,
@@ -185,11 +200,21 @@ export function NetworkV2Toolbar() {
         accept="application/json,.json"
         onChange={importJson}
       />
-      <Button size="sm" variant="solid" colorPalette="blue" onClick={validateGraph}>
+      <Button
+        size="sm"
+        variant="solid"
+        colorPalette="blue"
+        onClick={validateGraph}
+      >
         <ShieldCheck size={16} />
         Validate
       </Button>
-      <Button size="sm" variant="solid" colorPalette="green" onClick={submitGraph}>
+      <Button
+        size="sm"
+        variant="solid"
+        colorPalette="green"
+        onClick={submitGraph}
+      >
         <Play size={16} />
         Submit
       </Button>

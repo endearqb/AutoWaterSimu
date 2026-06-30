@@ -52,7 +52,9 @@ describe("network v2 serializer roundtrip", () => {
     })
 
     expect(stableStringify(graph)).toBe(stableStringify(graph))
-    expect(Object.keys(JSON.parse(stableStringify(graph)) as NetworkProcessGraphV1)).toEqual([
+    expect(
+      Object.keys(JSON.parse(stableStringify(graph)) as NetworkProcessGraphV1),
+    ).toEqual([
       "component_schemas",
       "composites",
       "edges",

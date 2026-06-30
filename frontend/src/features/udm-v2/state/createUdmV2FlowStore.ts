@@ -1,7 +1,4 @@
-import {
-  applyEdgeChanges,
-  applyNodeChanges,
-} from "@xyflow/react"
+import { applyEdgeChanges, applyNodeChanges } from "@xyflow/react"
 import type {
   Connection,
   Edge,
@@ -17,17 +14,17 @@ import type { StateCreator } from "zustand"
 
 import {
   DEFAULT_NETWORK_V2_EDGE_KIND,
-  createNetworkV2EdgeData,
-  networkV2EdgeTypeByKind,
   type NetworkV2EdgeData,
   type NetworkV2EdgeKind,
+  createNetworkV2EdgeData,
+  networkV2EdgeTypeByKind,
 } from "../edges/edgeModel"
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 import {
-  validateNetworkV2Graph,
   type NetworkV2Diagnostic,
   type NetworkV2FlowConstraint,
   type NetworkV2ValidationReport,
+  validateNetworkV2Graph,
 } from "../serialize/semanticValidation"
 
 export type UdmV2RuntimeStatus =
@@ -199,8 +196,7 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
     set({
       validationReport,
       diagnostics: validationReport.diagnostics,
-      runtimeStatus:
-        validationReport.status === "valid" ? "idle" : "failed",
+      runtimeStatus: validationReport.status === "valid" ? "idle" : "failed",
     })
     return validationReport
   },

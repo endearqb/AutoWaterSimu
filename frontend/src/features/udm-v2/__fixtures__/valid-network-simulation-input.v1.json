@@ -19,7 +19,10 @@
       "component_schema_id": "udm_network_minimal_components.v1",
       "initial_conditions": { "COD": 200, "X_TSS": 120 },
       "ports": [{ "port_id": "out", "port_kind": "hydraulic_out" }],
-      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false },
+      "model_binding": {
+        "model_kind": "passive_udm",
+        "reaction_enabled": false
+      },
       "parameter_binding": {},
       "unit_metadata": { "volume": "m3", "concentration": "mg/L" }
     },

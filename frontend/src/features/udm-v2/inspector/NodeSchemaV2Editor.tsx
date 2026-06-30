@@ -1,6 +1,13 @@
-import { Field, HStack, Input, NativeSelect, Stack, Textarea } from "@chakra-ui/react"
-import { useEffect, useState } from "react"
+import {
+  Field,
+  HStack,
+  Input,
+  NativeSelect,
+  Stack,
+  Textarea,
+} from "@chakra-ui/react"
 import type { Node } from "@xyflow/react"
+import { useEffect, useState } from "react"
 
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 
@@ -29,7 +36,7 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
     setParameterText(JSON.stringify(node.data.parameter_binding, null, 2))
     setInitialError("")
     setParameterError("")
-  }, [node.id, node.data.initial_conditions, node.data.parameter_binding])
+  }, [node.data.initial_conditions, node.data.parameter_binding])
 
   const commitJson = (
     value: string,

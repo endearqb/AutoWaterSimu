@@ -1,14 +1,21 @@
 import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react"
-import { FlaskConical, GitBranch, Layers3, RadioTower, SquareArrowOutUpRight } from "lucide-react"
-import type { DragEvent } from "react"
+import {
+  FlaskConical,
+  GitBranch,
+  Layers3,
+  RadioTower,
+  SquareArrowOutUpRight,
+} from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import type { DragEvent } from "react"
 
 import {
   NETWORK_V2_NODE_KIND_OPTIONS,
   type NetworkV2NodeKind,
 } from "../nodes/nodeTypes"
 
-export const NETWORK_V2_NODE_DRAG_MIME = "application/x-autowatersimu-udm-v2-node"
+export const NETWORK_V2_NODE_DRAG_MIME =
+  "application/x-autowatersimu-udm-v2-node"
 
 const icons: Record<NetworkV2NodeKind, LucideIcon> = {
   boundary: SquareArrowOutUpRight,
@@ -22,7 +29,9 @@ type NetworkV2NodePaletteProps = {
   onDragStart?: (kind: NetworkV2NodeKind) => void
 }
 
-export function NetworkV2NodePalette({ onDragStart }: NetworkV2NodePaletteProps) {
+export function NetworkV2NodePalette({
+  onDragStart,
+}: NetworkV2NodePaletteProps) {
   const handleDragStart =
     (kind: NetworkV2NodeKind) => (event: DragEvent<HTMLButtonElement>) => {
       event.dataTransfer.setData(NETWORK_V2_NODE_DRAG_MIME, kind)

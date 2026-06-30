@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { type Page, expect, test } from "@playwright/test"
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
@@ -108,14 +108,15 @@ test("saves, lists, loads and reloads only UDM Network v2 canvas graphs", async 
     }
 
     const url = new URL(request.url())
-    if (url.pathname === "/api/v1/canvas-graphs" && request.method() === "POST") {
+    if (
+      url.pathname === "/api/v1/canvas-graphs" &&
+      request.method() === "POST"
+    ) {
       const body = request.postDataJSON() as Record<string, unknown>
       saveRequests.push(body)
       savedPayload = body.canvas_graph as Record<string, unknown>
       await route.fulfill({
-        body: JSON.stringify(
-          graphRecord("graph-1", "Plant A", savedPayload),
-        ),
+        body: JSON.stringify(graphRecord("graph-1", "Plant A", savedPayload)),
         contentType: "application/json",
         headers: corsHeaders,
         status: 200,
@@ -123,7 +124,10 @@ test("saves, lists, loads and reloads only UDM Network v2 canvas graphs", async 
       return
     }
 
-    if (url.pathname === "/api/v1/canvas-graphs" && request.method() === "GET") {
+    if (
+      url.pathname === "/api/v1/canvas-graphs" &&
+      request.method() === "GET"
+    ) {
       await route.fulfill({
         body: JSON.stringify({
           items: [
@@ -160,8 +164,9 @@ test("saves, lists, loads and reloads only UDM Network v2 canvas graphs", async 
   await page.getByRole("button", { exact: true, name: "Save" }).click()
   await expect.poll(() => saveRequests.length).toBe(1)
   expect(saveRequests[0].metadata).toEqual({ graph_family: "udm_network_v2" })
-  expect((saveRequests[0].canvas_graph as Record<string, unknown>).graph_family)
-    .toBe("udm_network_v2")
+  expect(
+    (saveRequests[0].canvas_graph as Record<string, unknown>).graph_family,
+  ).toBe("udm_network_v2")
 
   page.once("dialog", async (dialog) => {
     expect(dialog.message()).toContain("graph-1 - Plant A")
@@ -169,12 +174,14 @@ test("saves, lists, loads and reloads only UDM Network v2 canvas graphs", async 
     await dialog.accept("graph-1")
   })
   await page.getByRole("button", { name: "Load" }).click()
-  await expect(page.locator(".react-flow__node", { hasText: "Reactor" }))
-    .toBeVisible({ timeout: 15_000 })
+  await expect(
+    page.locator(".react-flow__node", { hasText: "Reactor" }),
+  ).toBeVisible({ timeout: 15_000 })
 
   await page.goto("/udm-v2?flowchartId=graph-1")
-  await expect(page.locator(".react-flow__node", { hasText: "Reactor" }))
-    .toBeVisible({ timeout: 15_000 })
+  await expect(
+    page.locator(".react-flow__node", { hasText: "Reactor" }),
+  ).toBeVisible({ timeout: 15_000 })
 })
 
 async function injectCanvasFixture(page: Page) {

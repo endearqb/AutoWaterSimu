@@ -1,12 +1,12 @@
-import type { Edge } from "@xyflow/react"
 import { render, screen } from "@testing-library/react"
+import type { Edge } from "@xyflow/react"
 import type { ReactElement } from "react"
 import { describe, expect, it } from "vitest"
 
 import { CustomProvider } from "@/components/ui/provider"
 import {
-  createNetworkV2EdgeData,
   type NetworkV2EdgeData,
+  createNetworkV2EdgeData,
 } from "../edges/edgeModel"
 import { HydraulicV2Fields } from "../inspector/HydraulicV2Fields"
 import { SettlingV2Fields } from "../inspector/SettlingV2Fields"

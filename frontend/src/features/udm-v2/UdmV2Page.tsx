@@ -25,7 +25,9 @@ export default function UdmV2Page({ flowchartId }: UdmV2PageProps) {
       udmV2FlowchartService
         .loadGraph(flowchartId)
         .then((payload) =>
-          replaceGraph(graphStateFromStandalonePayload(payload, { id: flowchartId })),
+          replaceGraph(
+            graphStateFromStandalonePayload(payload, { id: flowchartId }),
+          ),
         )
         .catch(() => setRuntimeStatus("failed"))
       return

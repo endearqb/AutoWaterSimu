@@ -31,8 +31,10 @@
 - [x] PF6: commit and push.
 - [x] PFC-B: delete/freeze remaining global network edge leftovers.
 - [x] PFC-B: run validation.
-- [ ] PFC-B: commit and push.
-- [ ] PF7: final gate, docs, and evidence.
+- [x] PFC-B: commit and push.
+- [x] PF7: final gate, docs, and evidence.
+- [x] PF7: run validation.
+- [x] PF7: commit and push.
 
 ## Plan
 
@@ -63,6 +65,8 @@
 - PF6 validation passed: `npm run test`, `npx tsc --noEmit`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, save/load Playwright, submit-not-executable Playwright, and `git diff --check`.
 - PFC-B deleted the remaining legacy/global UDM-v2 edge helper files, kept legacy imported edge cleanup local to v1 stores, tightened the UDM-v2 boundary script, and updated README contracts.
 - PFC-B validation passed: `npm run check:udm-v2-boundary`, `npx tsc --noEmit`, `npm run test`, standalone v1 no-v2-selector Playwright regression, and residue grep for `edge_kind` / `NetworkEdgeKind` / `createNetworkEdgeData`. README contract check was attempted but blocked by the pre-existing unstaged `release-notes.md` deletion.
+- PF7 added PR notes/evidence docs, updated the tracked rebuild docs index, generated local screenshot evidence, and scoped Biome cleanup to UDM-v2 feature/tests plus the boundary script.
+- PF7 validation passed: `npm run typecheck`, `npm run test`, `npm run build`, `npm run check:udm-v2-boundary`, scoped `npx biome check`, route/v1 Playwright smoke, and contract fixture tests. Full `npx biome check .` remains blocked by pre-existing generated-client/openapi diagnostics, and README contract check remains blocked by the unrelated unstaged `release-notes.md` deletion.
 
 # 2026-06-27 UDM Network v2 Review Closeout TODO
 

@@ -1,8 +1,6 @@
 import type { Edge, Node } from "@xyflow/react"
 
-import {
-  secondaryClarifierV2Expand,
-} from "../composite/secondaryClarifierV2Expand"
+import { secondaryClarifierV2Expand } from "../composite/secondaryClarifierV2Expand"
 import type {
   NetworkProcessGraphV1,
   NetworkProcessGraphV1ComponentSchema,
@@ -13,9 +11,9 @@ import type {
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
 import {
   DEFAULT_NETWORK_V2_COMPONENT_SCHEMA_ID,
-  createNetworkV2NodeData,
   type NetworkV2NodeData,
   type NetworkV2Port,
+  createNetworkV2NodeData,
 } from "../nodes/nodeTypes"
 import type { NetworkV2FlowConstraint } from "./semanticValidation"
 
@@ -40,7 +38,10 @@ export function toNetworkProcessGraphV1({
   signalBindings = [],
   metadata = {},
 }: ToNetworkProcessGraphV1Input): NetworkProcessGraphV1 {
-  const componentSchemas = new Map<string, NetworkProcessGraphV1ComponentSchema>()
+  const componentSchemas = new Map<
+    string,
+    NetworkProcessGraphV1ComponentSchema
+  >()
   const graphNodes: NetworkProcessGraphV1Node[] = []
   const graphEdges: NetworkProcessGraphV1Edge[] = []
   const graphFlowConstraints: Array<Record<string, unknown>> = []
@@ -63,9 +64,7 @@ export function toNetworkProcessGraphV1({
     }
 
     graphNodes.push(toProcessNode(node))
-    mergeComponentSchemas(componentSchemas, [
-      componentSchemaForNode(node.data),
-    ])
+    mergeComponentSchemas(componentSchemas, [componentSchemaForNode(node.data)])
   }
 
   for (const edge of edges) {
@@ -97,7 +96,9 @@ export function stableStringify(value: unknown) {
   return JSON.stringify(sortJson(value), null, 2)
 }
 
-function toProcessNode(node: Node<NetworkV2NodeData>): NetworkProcessGraphV1Node {
+function toProcessNode(
+  node: Node<NetworkV2NodeData>,
+): NetworkProcessGraphV1Node {
   return withoutUndefined({
     node_id: node.id,
     node_type: node.data.node_kind,
@@ -157,7 +158,10 @@ function toProcessEdge(
 }
 
 function toProcessPort(port: NetworkV2Port): NetworkProcessGraphV1Port {
-  const portKindByRole: Record<NetworkV2Port["role"], NetworkProcessGraphV1Port["port_kind"]> = {
+  const portKindByRole: Record<
+    NetworkV2Port["role"],
+    NetworkProcessGraphV1Port["port_kind"]
+  > = {
     inlet: "hydraulic_in",
     outlet: "hydraulic_out",
     signal_in: "signal_in",

@@ -1,9 +1,17 @@
-import { Field, HStack, Input, NativeSelect, Stack, Text, Textarea } from "@chakra-ui/react"
+import {
+  Field,
+  HStack,
+  Input,
+  NativeSelect,
+  Stack,
+  Text,
+  Textarea,
+} from "@chakra-ui/react"
 import { useEffect, useMemo, useState } from "react"
 
 import {
-  createDefaultSecondaryClarifierV2Config,
   type SecondaryClarifierV2Config,
+  createDefaultSecondaryClarifierV2Config,
 } from "../composite/secondaryClarifierV2Defaults"
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 
@@ -103,7 +111,8 @@ export function SecondaryClarifierV2ConfigPanel({
             onChange={(event) =>
               update({
                 ...current,
-                profile: event.target.value as SecondaryClarifierV2Config["profile"],
+                profile: event.target
+                  .value as SecondaryClarifierV2Config["profile"],
               })
             }
           >

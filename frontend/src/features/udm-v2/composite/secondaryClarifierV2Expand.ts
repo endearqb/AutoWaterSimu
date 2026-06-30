@@ -1,12 +1,12 @@
 import type {
-  NetworkV2ComponentPolicy,
-  NetworkV2FlowSpec,
-} from "../edges/edgeModel"
-import type {
   NetworkProcessGraphV1Edge,
   NetworkProcessGraphV1Node,
   NetworkProcessGraphV1Port,
 } from "../contracts/generated"
+import type {
+  NetworkV2ComponentPolicy,
+  NetworkV2FlowSpec,
+} from "../edges/edgeModel"
 import {
   SECONDARY_CLARIFIER_V2_REFERENCE_COMPONENTS,
   SECONDARY_CLARIFIER_V2_REFERENCE_SCHEMA_ID,
@@ -59,7 +59,11 @@ export function secondaryClarifierV2Expand(
   const componentSchemaId =
     options.componentSchemaId || SECONDARY_CLARIFIER_V2_REFERENCE_SCHEMA_ID
   const layerNodes = createLayerNodes(config, compositeId, componentSchemaId)
-  const boundaryNodes = createBoundaryNodes(config, compositeId, componentSchemaId)
+  const boundaryNodes = createBoundaryNodes(
+    config,
+    compositeId,
+    componentSchemaId,
+  )
 
   return {
     component_schemas: [
@@ -243,7 +247,11 @@ function createBoundaryHydraulicEdges(
       "ras",
       nodeId(compositeId, "ras"),
       "in",
-      withUnit(config.flows.ras_flow, { mode: "fixed", value: 25, unit: "m3/d" }),
+      withUnit(config.flows.ras_flow, {
+        mode: "fixed",
+        value: 25,
+        unit: "m3/d",
+      }),
       config.profile,
     ),
     hydraulicEdge(
@@ -253,7 +261,11 @@ function createBoundaryHydraulicEdges(
       "was",
       nodeId(compositeId, "was"),
       "in",
-      withUnit(config.flows.was_flow, { mode: "fixed", value: 5, unit: "m3/d" }),
+      withUnit(config.flows.was_flow, {
+        mode: "fixed",
+        value: 5,
+        unit: "m3/d",
+      }),
       config.profile,
     ),
   ]

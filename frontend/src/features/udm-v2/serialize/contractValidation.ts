@@ -1,5 +1,5 @@
-import Ajv2020 from "ajv/dist/2020"
 import type { ErrorObject } from "ajv"
+import Ajv2020 from "ajv/dist/2020"
 
 import networkProcessGraphSchema from "../../../../../contracts/network_process_graph.v1.json"
 import networkSimulationInputSchema from "../../../../../contracts/network_simulation_input.v1.json"
@@ -24,7 +24,10 @@ const validateSimulationInputSchema = ajv.compile<NetworkSimulationInputV1>(
 export function validateNetworkProcessGraphContract(
   value: unknown,
 ): NetworkV2ValidationReport {
-  return toReport(validateProcessGraphSchema(value), validateProcessGraphSchema.errors)
+  return toReport(
+    validateProcessGraphSchema(value),
+    validateProcessGraphSchema.errors,
+  )
 }
 
 export function validateNetworkSimulationInputContract(
@@ -63,8 +66,6 @@ function fieldPathForError(error: ErrorObject) {
     "missingProperty" in error.params
       ? String(error.params.missingProperty)
       : ""
-  const instancePath = error.instancePath
-    .replace(/^\//, "")
-    .replace(/\//g, ".")
+  const instancePath = error.instancePath.replace(/^\//, "").replace(/\//g, ".")
   return [instancePath, missingProperty].filter(Boolean).join(".") || "$"
 }

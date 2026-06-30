@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs"
+import { existsSync, readFileSync, readdirSync } from "node:fs"
 import path from "node:path"
 
 const repoRoot = path.resolve(import.meta.dirname, "..")
@@ -47,10 +47,7 @@ const forbiddenFromUdmV2 = [
   "legacyFlowExportToCanvasGraph",
 ]
 
-const forbiddenFromV1 = [
-  "@/features/udm-v2/",
-  "features/udm-v2/",
-]
+const forbiddenFromV1 = ["@/features/udm-v2/", "features/udm-v2/"]
 
 const forbiddenV1Tokens = [
   "edge_kind",
@@ -103,7 +100,9 @@ function resolveRelativeSpecifier(filePath, specifier) {
   if (!specifier.startsWith(".")) {
     return specifier
   }
-  return normalizePath(path.relative(frontendSrc, path.resolve(path.dirname(filePath), specifier)))
+  return normalizePath(
+    path.relative(frontendSrc, path.resolve(path.dirname(filePath), specifier)),
+  )
 }
 
 const violations = []
@@ -126,7 +125,9 @@ for (const filePath of scanRoots.flatMap(listSourceFiles)) {
   if (isUdmV2) {
     for (const forbidden of forbiddenFromUdmV2) {
       if (source.includes(forbidden)) {
-        violations.push(`${relativeFile}: UDM-v2 must not reference ${forbidden}`)
+        violations.push(
+          `${relativeFile}: UDM-v2 must not reference ${forbidden}`,
+        )
       }
     }
     continue
@@ -146,7 +147,12 @@ for (const filePath of scanRoots.flatMap(listSourceFiles)) {
 
   for (const specifier of specs) {
     const resolved = resolveRelativeSpecifier(filePath, specifier)
-    if (forbiddenFromV1.some((forbidden) => specifier.includes(forbidden) || resolved.includes(forbidden))) {
+    if (
+      forbiddenFromV1.some(
+        (forbidden) =>
+          specifier.includes(forbidden) || resolved.includes(forbidden),
+      )
+    ) {
       violations.push(`${relativeFile}: v1 code must not import ${specifier}`)
     }
   }

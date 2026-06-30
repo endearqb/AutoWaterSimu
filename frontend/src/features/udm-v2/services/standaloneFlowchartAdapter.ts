@@ -3,8 +3,8 @@ import type { Edge, Node, Viewport } from "@xyflow/react"
 
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
-import { UDM_V2_GRAPH_FAMILY } from "../state/actions"
 import type { NetworkV2ValidationReport } from "../serialize/semanticValidation"
+import { UDM_V2_GRAPH_FAMILY } from "../state/actions"
 
 export type NetworkV2CanvasSnapshot = {
   schema_version: "udm_network_canvas.v1"
@@ -96,7 +96,11 @@ export function createUdmV2StandalonePayload(args: {
 
 export function graphStateFromStandalonePayload(
   payload: UdmV2StandaloneFlowchartPayload,
-  graph: { id?: string | null; version?: number | null; name?: string | null } = {},
+  graph: {
+    id?: string | null
+    version?: number | null
+    name?: string | null
+  } = {},
 ): UdmV2LoadedGraph {
   return {
     id: graph.id ?? null,

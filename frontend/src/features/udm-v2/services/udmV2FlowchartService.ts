@@ -1,16 +1,16 @@
 import type { CanvasGraph, CanvasGraphRecord } from "@/client/compute"
 import { computeWorkspaceApi } from "@/features/workspace/api"
 
-import { UDM_V2_GRAPH_FAMILY } from "../state/actions"
-import type { UdmV2FlowStore } from "../state/createUdmV2FlowStore"
 import { validateNetworkProcessGraphContract } from "../serialize/contractValidation"
 import { toNetworkProcessGraphV1 } from "../serialize/toNetworkProcessGraphV1"
+import { UDM_V2_GRAPH_FAMILY } from "../state/actions"
+import type { UdmV2FlowStore } from "../state/createUdmV2FlowStore"
 import {
+  type UdmV2GraphSummary,
+  type UdmV2StandaloneFlowchartPayload,
   createUdmV2StandalonePayload,
   filterUdmV2GraphRecords,
   isUdmV2StandalonePayload,
-  type UdmV2GraphSummary,
-  type UdmV2StandaloneFlowchartPayload,
 } from "./standaloneFlowchartAdapter"
 
 export type SaveUdmV2GraphInput = Pick<
@@ -35,7 +35,9 @@ type WorkspaceApi = Pick<
   | "updateCanvasGraph"
 >
 
-export function createUdmV2FlowchartService(api: WorkspaceApi = computeWorkspaceApi) {
+export function createUdmV2FlowchartService(
+  api: WorkspaceApi = computeWorkspaceApi,
+) {
   return {
     async listGraphs(): Promise<UdmV2GraphSummary[]> {
       const response = await api.listCanvasGraphs({ limit: 100 })
@@ -51,7 +53,9 @@ export function createUdmV2FlowchartService(api: WorkspaceApi = computeWorkspace
       const payload = buildPayload(input)
       const record = await api.saveCanvasGraph({
         canvasGraph: payload as CanvasGraph,
-        graphId: input.saveAs ? undefined : input.currentNetworkGraphId ?? undefined,
+        graphId: input.saveAs
+          ? undefined
+          : (input.currentNetworkGraphId ?? undefined),
         name: input.currentNetworkGraphName ?? payload.display_name,
         metadata: { graph_family: UDM_V2_GRAPH_FAMILY },
       })
@@ -92,7 +96,8 @@ export function buildPayload(
     edges: input.edges,
     flowConstraints: input.flowConstraints,
   })
-  const contractReport = validateNetworkProcessGraphContract(networkProcessGraph)
+  const contractReport =
+    validateNetworkProcessGraphContract(networkProcessGraph)
   if (contractReport.status === "invalid") {
     throw new Error("UDM_V2_GRAPH_CONTRACT_INVALID")
   }
@@ -100,7 +105,10 @@ export function buildPayload(
   return createUdmV2StandalonePayload({
     displayName: input.currentNetworkGraphName || "Untitled UDM Network v2",
     graphId,
-    networkProcessGraph: networkProcessGraph as unknown as Record<string, unknown>,
+    networkProcessGraph: networkProcessGraph as unknown as Record<
+      string,
+      unknown
+    >,
     snapshot: {
       nodes: input.nodes,
       edges: input.edges,

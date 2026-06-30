@@ -1,7 +1,7 @@
 import type { EdgeProps } from "@xyflow/react"
 
-import type { NetworkV2EdgeData } from "./edgeModel"
 import { NetworkV2EdgeShell } from "./NetworkV2EdgeShell"
+import type { NetworkV2EdgeData } from "./edgeModel"
 
 export function formatHydraulicV2EdgeLabel(data?: NetworkV2EdgeData) {
   const flow = data?.flow_spec?.value ?? 0

@@ -48,7 +48,9 @@ describe("secondary clarifier v2 composite expansion", () => {
 
     const graph = secondaryClarifierV2Expand(config, { compositeId: "sc" })
     const feedLayer = graph.nodes.find((node) => node.node_id === "sc_layer_06")
-    const settling = graph.edges.find((edge) => edge.edge_id === "sc_settling_01_02")
+    const settling = graph.edges.find(
+      (edge) => edge.edge_id === "sc_settling_01_02",
+    )
 
     expect(feedLayer?.ports).toContainEqual({
       port_id: "influent",

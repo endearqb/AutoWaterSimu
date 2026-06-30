@@ -2,9 +2,9 @@ import type { Edge, Node } from "@xyflow/react"
 import { describe, expect, it } from "vitest"
 
 import invalidGraphFixture from "../__fixtures__/invalid-network-process-graph.v1.json"
-import canvasFixture from "../__fixtures__/valid-network-v2-canvas.json"
 import graphFixture from "../__fixtures__/valid-network-process-graph.v1.json"
 import inputFixture from "../__fixtures__/valid-network-simulation-input.v1.json"
+import canvasFixture from "../__fixtures__/valid-network-v2-canvas.json"
 import type { NetworkProcessGraphV1 } from "../contracts/generated"
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
@@ -17,7 +17,9 @@ import { toNetworkSimulationInputV1 } from "../serialize/toNetworkSimulationInpu
 
 describe("network v2 serializer contract validation", () => {
   it("accepts committed valid graph and simulation input fixtures", () => {
-    expect(validateNetworkProcessGraphContract(graphFixture).status).toBe("valid")
+    expect(validateNetworkProcessGraphContract(graphFixture).status).toBe(
+      "valid",
+    )
     expect(validateNetworkSimulationInputContract(inputFixture).status).toBe(
       "valid",
     )
@@ -33,7 +35,9 @@ describe("network v2 serializer contract validation", () => {
     const input = toNetworkSimulationInputV1(graph)
 
     expect(validateNetworkProcessGraphContract(graph).diagnostics).toEqual([])
-    expect(validateNetworkSimulationInputContract(input).diagnostics).toEqual([])
+    expect(validateNetworkSimulationInputContract(input).diagnostics).toEqual(
+      [],
+    )
   })
 
   it("returns clear diagnostics for invalid graph fixtures", () => {

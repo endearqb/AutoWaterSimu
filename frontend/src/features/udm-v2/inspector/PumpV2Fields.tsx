@@ -2,8 +2,8 @@ import { Field, HStack, Input, Stack } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
 
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
-import { HydraulicV2Fields } from "./HydraulicV2Fields"
 import type { NetworkV2Diagnostic } from "../serialize/semanticValidation"
+import { HydraulicV2Fields } from "./HydraulicV2Fields"
 
 type PumpV2FieldsProps = {
   edge: Edge<NetworkV2EdgeData>
@@ -11,7 +11,11 @@ type PumpV2FieldsProps = {
   onPatch: (patch: Partial<NetworkV2EdgeData>) => void
 }
 
-export function PumpV2Fields({ edge, diagnostics, onPatch }: PumpV2FieldsProps) {
+export function PumpV2Fields({
+  edge,
+  diagnostics,
+  onPatch,
+}: PumpV2FieldsProps) {
   const pump = edge.data?.pump || {
     head_m: 2,
     efficiency: 0.75,
@@ -20,7 +24,11 @@ export function PumpV2Fields({ edge, diagnostics, onPatch }: PumpV2FieldsProps) 
 
   return (
     <Stack gap={3}>
-      <HydraulicV2Fields edge={edge} diagnostics={diagnostics} onPatch={onPatch} />
+      <HydraulicV2Fields
+        edge={edge}
+        diagnostics={diagnostics}
+        onPatch={onPatch}
+      />
       <HStack gap={3}>
         <Field.Root>
           <Field.Label>Pump head m</Field.Label>

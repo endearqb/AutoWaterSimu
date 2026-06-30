@@ -16,7 +16,11 @@ export function HydraulicV2Fields({
   diagnostics,
   onPatch,
 }: HydraulicV2FieldsProps) {
-  const flowSpec = edge.data?.flow_spec || { mode: "fixed", value: 0, unit: "m3/d" }
+  const flowSpec = edge.data?.flow_spec || {
+    mode: "fixed",
+    value: 0,
+    unit: "m3/d",
+  }
   const policy = edge.data?.component_policy || {
     mode: "all",
     include: [],
@@ -36,7 +40,9 @@ export function HydraulicV2Fields({
         <Input
           value={flowSpec.mode}
           onChange={(event) =>
-            onPatch({ flow_spec: { ...flowSpec, mode: event.target.value as any } })
+            onPatch({
+              flow_spec: { ...flowSpec, mode: event.target.value as any },
+            })
           }
         />
         {flowError && <Field.ErrorText>{flowError}</Field.ErrorText>}

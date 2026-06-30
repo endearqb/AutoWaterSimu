@@ -89,12 +89,14 @@ describe("udmV2FlowchartService", () => {
   it("rejects family mismatch on load and delete", async () => {
     const api = {
       archiveCanvasGraph: vi.fn(),
-      getCanvasGraph: vi.fn(async () => canvasGraphRecord({
-        graph_id: "legacy",
-        name: "Legacy",
-        payload: { graph_family: "legacy_flow" },
-        version: 1,
-      })),
+      getCanvasGraph: vi.fn(async () =>
+        canvasGraphRecord({
+          graph_id: "legacy",
+          name: "Legacy",
+          payload: { graph_family: "legacy_flow" },
+          version: 1,
+        }),
+      ),
       listCanvasGraphs: vi.fn(),
       saveCanvasGraph: vi.fn(),
       updateCanvasGraph: vi.fn(),

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 import { createStore } from "zustand/vanilla"
 
+import { createNetworkV2Node } from "../nodes/nodeTypes"
 import {
   UDM_V2_GRAPH_FAMILY,
-  createUdmV2FlowStore,
   type UdmV2FlowStore,
+  createUdmV2FlowStore,
 } from "../state/createUdmV2FlowStore"
-import { createNetworkV2Node } from "../nodes/nodeTypes"
 
 const createTestStore = () =>
   createStore<UdmV2FlowStore>()(createUdmV2FlowStore)

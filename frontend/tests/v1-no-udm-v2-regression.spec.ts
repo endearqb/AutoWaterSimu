@@ -2,10 +2,18 @@ import { expect, test } from "@playwright/test"
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
-const v1CanvasRoutes = ["/materialbalance", "/asm1", "/asm1slim", "/asm3", "/udm"]
+const v1CanvasRoutes = [
+  "/materialbalance",
+  "/asm1",
+  "/asm1slim",
+  "/asm3",
+  "/udm",
+]
 
 for (const route of v1CanvasRoutes) {
-  test(`${route} does not expose the UDM v2 edge selector`, async ({ page }) => {
+  test(`${route} does not expose the UDM v2 edge selector`, async ({
+    page,
+  }) => {
     await page.goto(route)
     await expect(page.locator(".react-flow").first()).toBeVisible({
       timeout: 15_000,

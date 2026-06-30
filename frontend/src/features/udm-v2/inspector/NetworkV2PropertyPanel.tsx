@@ -73,7 +73,9 @@ export function NetworkV2PropertyPanel() {
       <Stack gap={2}>
         <Badge
           alignSelf="flex-start"
-          colorPalette={validationReport?.status === "invalid" ? "red" : "green"}
+          colorPalette={
+            validationReport?.status === "invalid" ? "red" : "green"
+          }
           variant="subtle"
         >
           {validationReport?.status || "not validated"}
@@ -82,7 +84,9 @@ export function NetworkV2PropertyPanel() {
           <Box
             key={`${diagnostic.code}-${diagnostic.element?.id || "graph"}-${diagnostic.fieldPath || ""}`}
             borderWidth="1px"
-            borderColor={diagnostic.severity === "error" ? "red.200" : "yellow.200"}
+            borderColor={
+              diagnostic.severity === "error" ? "red.200" : "yellow.200"
+            }
             bg={diagnostic.severity === "error" ? "red.50" : "yellow.50"}
             p={2}
             borderRadius="4px"

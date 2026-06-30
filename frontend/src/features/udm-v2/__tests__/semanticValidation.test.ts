@@ -2,17 +2,17 @@ import type { Edge, Node } from "@xyflow/react"
 import { describe, expect, it } from "vitest"
 
 import {
-  createNetworkV2EdgeData,
   type NetworkV2EdgeData,
+  createNetworkV2EdgeData,
 } from "../edges/edgeModel"
 import {
-  createNetworkV2NodeData,
   type NetworkV2NodeData,
+  createNetworkV2NodeData,
 } from "../nodes/nodeTypes"
 import { mapDiagnosticToInspectorTarget } from "../serialize/diagnosticsMapping"
 import {
-  validateNetworkV2Graph,
   type NetworkV2FlowConstraint,
+  validateNetworkV2Graph,
 } from "../serialize/semanticValidation"
 
 const nodes: Node<NetworkV2NodeData>[] = [

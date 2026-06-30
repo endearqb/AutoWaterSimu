@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { type Page, expect, test } from "@playwright/test"
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
@@ -8,7 +8,10 @@ const standaloneEnabled =
   process.env.VITE_AUTH_MODE === "disabled" ||
   process.env.VITE_CONTEXT_MODE === "standalone"
 
-test.skip(!standaloneEnabled, "UDM Network v2 submit smoke requires standalone env")
+test.skip(
+  !standaloneEnabled,
+  "UDM Network v2 submit smoke requires standalone env",
+)
 
 const notExecutableMessage =
   "UDM Network v2 wire path 已注册，simulation worker runtime 尚未执行。"

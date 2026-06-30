@@ -1,7 +1,7 @@
 import type { EdgeProps } from "@xyflow/react"
 
-import type { NetworkV2EdgeData } from "./edgeModel"
 import { NetworkV2EdgeShell } from "./NetworkV2EdgeShell"
+import type { NetworkV2EdgeData } from "./edgeModel"
 
 export function formatSignalV2EdgeLabel(data?: NetworkV2EdgeData) {
   return data?.signal_spec?.signal_name || "signal"

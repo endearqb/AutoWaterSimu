@@ -1,7 +1,7 @@
 import { Box, HStack, Text } from "@chakra-ui/react"
 import { Handle, Position } from "@xyflow/react"
-import type { CSSProperties } from "react"
 import type { LucideIcon } from "lucide-react"
+import type { CSSProperties } from "react"
 
 import type {
   NetworkV2NodeData,
@@ -50,7 +50,7 @@ export function NetworkV2NodeShell({
 }: NetworkV2NodeShellProps) {
   return (
     <Box
-      role="group"
+      as="fieldset"
       aria-label={`${data.label} ${data.node_kind} node`}
       minW="168px"
       maxW="220px"

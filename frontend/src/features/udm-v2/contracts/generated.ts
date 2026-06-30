@@ -1,4 +1,7 @@
-import type { NetworkV2ComponentPolicy, NetworkV2FlowSpec } from "../edges/edgeModel"
+import type {
+  NetworkV2ComponentPolicy,
+  NetworkV2FlowSpec,
+} from "../edges/edgeModel"
 
 export type NetworkProcessGraphV1ComponentSchema = {
   component_schema_id: string

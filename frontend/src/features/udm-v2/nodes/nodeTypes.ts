@@ -1,8 +1,8 @@
 import type { Node, NodeTypes, XYPosition } from "@xyflow/react"
 
 import {
-  createDefaultSecondaryClarifierV2Config,
   type SecondaryClarifierV2Config,
+  createDefaultSecondaryClarifierV2Config,
 } from "../composite/secondaryClarifierV2Defaults"
 import { BoundaryV2Node } from "./BoundaryV2Node"
 import { ControllerV2Node } from "./ControllerV2Node"
@@ -24,11 +24,7 @@ export type NetworkV2ReactFlowNodeType =
   | "splitter_v2"
   | "controller_v2"
 
-export type NetworkV2PortRole =
-  | "inlet"
-  | "outlet"
-  | "signal_in"
-  | "signal_out"
+export type NetworkV2PortRole = "inlet" | "outlet" | "signal_in" | "signal_out"
 
 export type NetworkV2PortPlacement = "left" | "right" | "top" | "bottom"
 
@@ -49,13 +45,7 @@ export type NetworkV2NodeData = {
   initial_conditions: Record<string, number>
   volume_m3?: number
   model_binding: {
-    model_kind:
-      | "passive"
-      | "udm"
-      | "asm1"
-      | "asm1slim"
-      | "asm3"
-      | "controller"
+    model_kind: "passive" | "udm" | "asm1" | "asm1slim" | "asm3" | "controller"
     model_id?: string
     model_version?: string | number
     reaction_enabled: boolean
@@ -181,7 +171,12 @@ export function createNetworkV2NodeData(
       composite: createDefaultSecondaryClarifierV2Config(),
       ports: [
         { id: "feed", label: "Feed", role: "inlet", placement: "left" },
-        { id: "effluent", label: "Effluent", role: "outlet", placement: "right" },
+        {
+          id: "effluent",
+          label: "Effluent",
+          role: "outlet",
+          placement: "right",
+        },
         { id: "ras", label: "RAS", role: "outlet", placement: "bottom" },
         { id: "was", label: "WAS", role: "outlet", placement: "bottom" },
       ],
@@ -211,8 +206,18 @@ export function createNetworkV2NodeData(
       process_unit_type: "controller",
       model_binding: { model_kind: "controller", reaction_enabled: false },
       ports: [
-        { id: "signal_in", label: "Signal In", role: "signal_in", placement: "left" },
-        { id: "signal_out", label: "Signal Out", role: "signal_out", placement: "right" },
+        {
+          id: "signal_in",
+          label: "Signal In",
+          role: "signal_in",
+          placement: "left",
+        },
+        {
+          id: "signal_out",
+          label: "Signal Out",
+          role: "signal_out",
+          placement: "right",
+        },
       ],
     }
   }

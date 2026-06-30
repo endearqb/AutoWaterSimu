@@ -1,9 +1,9 @@
 import type { Edge, Node } from "@xyflow/react"
 
 import {
-  isNetworkV2EdgeTypeKindMatch,
   type NetworkV2ComponentPolicy,
   type NetworkV2EdgeData,
+  isNetworkV2EdgeTypeKindMatch,
 } from "../edges/edgeModel"
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 
@@ -67,43 +67,56 @@ export function validateNetworkV2Graph({
     }
 
     if (!isNetworkV2EdgeTypeKindMatch({ edgeKind, edgeType: edge.type })) {
-      diagnostics.push(edgeDiagnostic(edge.id, {
-        code: "EDGE_TYPE_KIND_MISMATCH",
-        fieldPath: "edge_kind",
-        message: "edge.type must match edge.data.edge_kind.",
-      }))
+      diagnostics.push(
+        edgeDiagnostic(edge.id, {
+          code: "EDGE_TYPE_KIND_MISMATCH",
+          fieldPath: "edge_kind",
+          message: "edge.type must match edge.data.edge_kind.",
+        }),
+      )
     }
 
     if (edgeKind === "settling" && edge.data?.flow_spec) {
-      diagnostics.push(edgeDiagnostic(edge.id, {
-        code: "SETTLING_VOLUME_CONTRIBUTION_FORBIDDEN",
-        fieldPath: "flow_spec",
-        message: "Settling edges must not define flow_spec.",
-      }))
+      diagnostics.push(
+        edgeDiagnostic(edge.id, {
+          code: "SETTLING_VOLUME_CONTRIBUTION_FORBIDDEN",
+          fieldPath: "flow_spec",
+          message: "Settling edges must not define flow_spec.",
+        }),
+      )
     }
 
     if (edgeKind === "signal" && edge.data?.flow_spec) {
-      diagnostics.push(edgeDiagnostic(edge.id, {
-        code: "SIGNAL_VOLUME_CONTRIBUTION_FORBIDDEN",
-        fieldPath: "flow_spec",
-        message: "Signal edges must not define flow_spec.",
-      }))
+      diagnostics.push(
+        edgeDiagnostic(edge.id, {
+          code: "SIGNAL_VOLUME_CONTRIBUTION_FORBIDDEN",
+          fieldPath: "flow_spec",
+          message: "Signal edges must not define flow_spec.",
+        }),
+      )
     }
 
     if (edgeKind === "signal" && edge.data?.transport_model) {
-      diagnostics.push(edgeDiagnostic(edge.id, {
-        code: "SIGNAL_MASS_CONTRIBUTION_FORBIDDEN",
-        fieldPath: "transport_model",
-        message: "Signal edges must not define transport_model.",
-      }))
+      diagnostics.push(
+        edgeDiagnostic(edge.id, {
+          code: "SIGNAL_MASS_CONTRIBUTION_FORBIDDEN",
+          fieldPath: "transport_model",
+          message: "Signal edges must not define transport_model.",
+        }),
+      )
     }
 
-    if ((edgeKind === "hydraulic" || edgeKind === "pump") && !edge.data?.flow_spec) {
-      diagnostics.push(edgeDiagnostic(edge.id, {
-        code: "FLOW_SPEC_REQUIRED",
-        fieldPath: "flow_spec",
-        message: "Hydraulic and pump edges require flow_spec.",
-      }))
+    if (
+      (edgeKind === "hydraulic" || edgeKind === "pump") &&
+      !edge.data?.flow_spec
+    ) {
+      diagnostics.push(
+        edgeDiagnostic(edge.id, {
+          code: "FLOW_SPEC_REQUIRED",
+          fieldPath: "flow_spec",
+          message: "Hydraulic and pump edges require flow_spec.",
+        }),
+      )
     }
 
     if (edge.data?.component_policy) {
@@ -162,9 +175,9 @@ export function validateNetworkV2Graph({
 function collectKnownComponents(nodes: Node<NetworkV2NodeData>[]) {
   const components = new Set(["COD", "X_TSS"])
   for (const node of nodes) {
-    Object.keys(node.data.initial_conditions || {}).forEach((component) =>
-      components.add(component),
-    )
+    for (const component of Object.keys(node.data.initial_conditions || {})) {
+      components.add(component)
+    }
   }
   return components
 }
@@ -178,11 +191,13 @@ function validateComponentPolicy(
   for (const field of ["include", "exclude"] as const) {
     for (const component of policy[field]) {
       if (!knownComponents.has(component)) {
-        diagnostics.push(edgeDiagnostic(edgeId, {
-          code: "UNKNOWN_COMPONENT_IN_POLICY",
-          fieldPath: `component_policy.${field}`,
-          message: `Unknown component in policy: ${component}.`,
-        }))
+        diagnostics.push(
+          edgeDiagnostic(edgeId, {
+            code: "UNKNOWN_COMPONENT_IN_POLICY",
+            fieldPath: `component_policy.${field}`,
+            message: `Unknown component in policy: ${component}.`,
+          }),
+        )
       }
     }
   }

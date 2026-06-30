@@ -1,10 +1,16 @@
 import type { ComputeJob, JobSnapshot } from "@/client/compute"
 import { computeJobApi } from "@/features/compute-jobs/api"
 
-import type { UdmV2FlowStore, UdmV2RuntimeStatus } from "../state/createUdmV2FlowStore"
-import { validateNetworkProcessGraphContract, validateNetworkSimulationInputContract } from "../serialize/contractValidation"
+import {
+  validateNetworkProcessGraphContract,
+  validateNetworkSimulationInputContract,
+} from "../serialize/contractValidation"
 import { toNetworkProcessGraphV1 } from "../serialize/toNetworkProcessGraphV1"
 import { toNetworkSimulationInputV1 } from "../serialize/toNetworkSimulationInputV1"
+import type {
+  UdmV2FlowStore,
+  UdmV2RuntimeStatus,
+} from "../state/createUdmV2FlowStore"
 
 export const UDM_NETWORK_NOT_EXECUTABLE_YET = "UDM_NETWORK_NOT_EXECUTABLE_YET"
 export const UDM_V2_NOT_EXECUTABLE_MESSAGE =
@@ -20,14 +26,16 @@ type ComputeApi = Pick<typeof computeJobApi, "createJob">
 
 export function createUdmV2ComputeService(api: ComputeApi = computeJobApi) {
   return {
-    async submitNetwork(state: Pick<
-      UdmV2FlowStore,
-      | "nodes"
-      | "edges"
-      | "flowConstraints"
-      | "currentNetworkGraphId"
-      | "currentNetworkGraphVersion"
-    >): Promise<UdmV2JobSnapshot> {
+    async submitNetwork(
+      state: Pick<
+        UdmV2FlowStore,
+        | "nodes"
+        | "edges"
+        | "flowConstraints"
+        | "currentNetworkGraphId"
+        | "currentNetworkGraphVersion"
+      >,
+    ): Promise<UdmV2JobSnapshot> {
       const graph = toNetworkProcessGraphV1({
         graphId: state.currentNetworkGraphId || "udm_network_v2_canvas",
         version: state.currentNetworkGraphVersion || 1,
@@ -75,10 +83,13 @@ export function buildUdmV2ComputeJob(input: Record<string, unknown>): {
   }
 }
 
-export function normalizeUdmV2JobSnapshot(snapshot: JobSnapshot): UdmV2JobSnapshot {
+export function normalizeUdmV2JobSnapshot(
+  snapshot: JobSnapshot,
+): UdmV2JobSnapshot {
   const errorCode = String(
     snapshot.job.error_code ||
-      (snapshot.job.summary as { error_code?: unknown } | undefined)?.error_code ||
+      (snapshot.job.summary as { error_code?: unknown } | undefined)
+        ?.error_code ||
       "",
   )
   if (errorCode === UDM_NETWORK_NOT_EXECUTABLE_YET) {

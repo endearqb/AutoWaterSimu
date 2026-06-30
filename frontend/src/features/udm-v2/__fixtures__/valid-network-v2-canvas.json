@@ -19,7 +19,12 @@
           "feed_composition": { "COD": 200, "X_TSS": 120 }
         },
         "ports": [
-          { "id": "out", "label": "Out", "role": "outlet", "placement": "right" }
+          {
+            "id": "out",
+            "label": "Out",
+            "role": "outlet",
+            "placement": "right"
+          }
         ]
       }
     },
@@ -38,7 +43,12 @@
         "parameter_binding": {},
         "ports": [
           { "id": "in", "label": "In", "role": "inlet", "placement": "left" },
-          { "id": "out", "label": "Out", "role": "outlet", "placement": "right" }
+          {
+            "id": "out",
+            "label": "Out",
+            "role": "outlet",
+            "placement": "right"
+          }
         ]
       }
     }

@@ -8,18 +8,18 @@ import type {
   NetworkProcessGraphV1Port,
 } from "../contracts/generated"
 import {
-  createNetworkV2EdgeData,
-  networkV2EdgeTypeByKind,
   type NetworkV2EdgeData,
   type NetworkV2EdgeKind,
+  createNetworkV2EdgeData,
+  networkV2EdgeTypeByKind,
 } from "../edges/edgeModel"
 import {
-  createNetworkV2NodeData,
-  networkV2NodeTypeByKind,
-  normalizeNetworkV2NodeKind,
   type NetworkV2NodeData,
   type NetworkV2NodeKind,
   type NetworkV2Port,
+  createNetworkV2NodeData,
+  networkV2NodeTypeByKind,
+  normalizeNetworkV2NodeKind,
 } from "../nodes/nodeTypes"
 
 export type NetworkV2CanvasGraph = {
@@ -81,7 +81,9 @@ function fromSecondaryClarifierComposite(
   data.composite = {
     ...createDefaultSecondaryClarifierV2Config(),
     profile:
-      composite.profile === "reactive_pending" ? "reactive_pending" : "reference",
+      composite.profile === "reactive_pending"
+        ? "reactive_pending"
+        : "reference",
     area_m2: numberOr(geometry?.area_m2, data.composite?.area_m2 ?? 1500),
     height_m: numberOr(geometry?.height_m, data.composite?.height_m ?? 4),
     layer_count: 10,
@@ -135,7 +137,9 @@ function fromProcessNode(
   }
 }
 
-function fromProcessEdge(edge: NetworkProcessGraphV1Edge): Edge<NetworkV2EdgeData> {
+function fromProcessEdge(
+  edge: NetworkProcessGraphV1Edge,
+): Edge<NetworkV2EdgeData> {
   const kind = edge.edge_kind as NetworkV2EdgeKind
   return {
     id: edge.edge_id,
@@ -149,7 +153,8 @@ function fromProcessEdge(edge: NetworkProcessGraphV1Edge): Edge<NetworkV2EdgeDat
       component_policy: edge.component_policy,
       stream_adapter: edge.stream_adapter,
       flow_spec: edge.flow_spec,
-      transport_model: edge.transport_model as NetworkV2EdgeData["transport_model"],
+      transport_model:
+        edge.transport_model as NetworkV2EdgeData["transport_model"],
       pump: edge.pump as NetworkV2EdgeData["pump"],
       signal_spec: edge.signal_spec as NetworkV2EdgeData["signal_spec"],
     },
@@ -157,7 +162,10 @@ function fromProcessEdge(edge: NetworkProcessGraphV1Edge): Edge<NetworkV2EdgeDat
 }
 
 function inferNodeKind(node: NetworkProcessGraphV1Node): NetworkV2NodeKind {
-  if (node.process_unit_type === "controller" || node.node_type === "controller") {
+  if (
+    node.process_unit_type === "controller" ||
+    node.node_type === "controller"
+  ) {
     return "controller"
   }
   if (
@@ -176,7 +184,10 @@ function inferNodeKind(node: NetworkProcessGraphV1Node): NetworkV2NodeKind {
 }
 
 function fromProcessPort(port: NetworkProcessGraphV1Port): NetworkV2Port {
-  const roleByKind: Record<NetworkProcessGraphV1Port["port_kind"], NetworkV2Port["role"]> = {
+  const roleByKind: Record<
+    NetworkProcessGraphV1Port["port_kind"],
+    NetworkV2Port["role"]
+  > = {
     hydraulic_in: "inlet",
     hydraulic_out: "outlet",
     settling_in: "inlet",
