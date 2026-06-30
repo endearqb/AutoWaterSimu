@@ -16,11 +16,6 @@ import "@xyflow/react/dist/style.css"
 import { Box } from "@chakra-ui/react"
 import { useI18n } from "../../i18n"
 import useFlowStore from "../../stores/flowStore"
-import {
-  DEFAULT_NETWORK_EDGE_KIND,
-  type NetworkEdgeKind,
-} from "../../types/networkEdges"
-import EdgeModeSelector from "./edges/EdgeModeSelector"
 import EditableEdge from "./edges/EditableEdge"
 import ASM1Node from "./nodes/ASM1Node"
 import ASMslimNode from "./nodes/ASMslimNode"
@@ -67,8 +62,6 @@ const Canvas = ({ showControls = true }: CanvasProps) => {
     selectedNode,
     addNode,
     showMiniMap,
-    activeEdgeKind,
-    setActiveEdgeKind,
   } = useFlowStore()
 
   const updateEdgeFlowRef = useRef(updateEdgeFlow)
@@ -180,10 +173,6 @@ const Canvas = ({ showControls = true }: CanvasProps) => {
     addNode(newNode)
   }
 
-  const handleEdgeKindChange = (kind: NetworkEdgeKind) => {
-    setActiveEdgeKind(kind)
-  }
-
   // 处理边双击事件
   // const onEdgeDoubleClick = (_: React.MouseEvent, edge: Edge) => {
   //   const currentFlow = (edge.data?.flow as number) || 0;
@@ -225,10 +214,6 @@ const Canvas = ({ showControls = true }: CanvasProps) => {
           }
         `}
       </style>
-      <EdgeModeSelector
-        activeKind={activeEdgeKind || DEFAULT_NETWORK_EDGE_KIND}
-        onChange={handleEdgeKindChange}
-      />
       <ReactFlow
         nodes={nodes.map((node) => {
           const tint = resolveTintFromNodeType(node.type)

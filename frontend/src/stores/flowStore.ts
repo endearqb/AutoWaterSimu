@@ -21,12 +21,7 @@ import type {
 } from "../client/types.gen"
 import { getDefaultCalculationParams } from "../config/simulationConfig"
 import { t } from "../i18n"
-import {
-  DEFAULT_NETWORK_EDGE_KIND,
-  createNetworkEdgeData,
-  stripLegacyEdgeConfigFields,
-  type NetworkEdgeKind,
-} from "../types/networkEdges"
+import { stripLegacyEdgeConfigFields } from "../types/networkEdges"
 import { useMaterialBalanceStore } from "./materialBalanceStore"
 
 type CustomParameter = {
@@ -68,7 +63,6 @@ type RFState = {
   isEdgeTimeSegmentMode: boolean
   showMiniMap: boolean
   showBubbleMenu: boolean
-  activeEdgeKind: NetworkEdgeKind
 
   // 操作函数
   setNodes: (nodes: Node[]) => void
@@ -90,7 +84,6 @@ type RFState = {
   setSelectedEdge: (edge: Edge | null) => void
   setShowMiniMap: (show: boolean) => void
   setShowBubbleMenu: (show: boolean) => void
-  setActiveEdgeKind: (kind: NetworkEdgeKind) => void
   deleteSelectedEdge: () => void
   deleteSelectedNode: () => void
   addCustomParameter: (paramName: string, description?: string) => void
@@ -217,7 +210,6 @@ const useFlowStore = create<RFState>((set, get) => ({
   isEdgeTimeSegmentMode: false,
   showMiniMap: false,
   showBubbleMenu: true,
-  activeEdgeKind: DEFAULT_NETWORK_EDGE_KIND,
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -252,7 +244,7 @@ const useFlowStore = create<RFState>((set, get) => ({
       ...connection,
       id: `edge-${Date.now()}`,
       type: "editable",
-      data: createNetworkEdgeData(state.activeEdgeKind),
+      data: { flow: 0 },
     }
 
     // 为新连接线添加参数配置
@@ -392,9 +384,6 @@ const useFlowStore = create<RFState>((set, get) => ({
   },
   setShowBubbleMenu: (show: boolean) => {
     set({ showBubbleMenu: show })
-  },
-  setActiveEdgeKind: (kind: NetworkEdgeKind) => {
-    set({ activeEdgeKind: kind })
   },
 
   // 更新计算参数方法 - 修复类型错误

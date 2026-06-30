@@ -12,7 +12,6 @@ import type { CustomParameter } from "../../../config/modelConfigs"
 import { useI18n } from "../../../i18n"
 import type { ModelFlowState } from "../../../stores/createModelFlowStore"
 import type { HybridUDMSelectedModel } from "../../../types/hybridUdm"
-import { normalizeNetworkEdgeKind } from "../../../types/networkEdges"
 import type { UDMNodeData } from "../../../types/udmNodeData"
 import {
   extractLessonKeyFromCarrier,
@@ -20,7 +19,6 @@ import {
   resolveTutorialModelDisplayName,
   resolveTutorialVariableLabel,
 } from "../../../utils/udmTutorialLocalization"
-import NetworkEdgeInspectorFields from "../edges/NetworkEdgeInspectorFields"
 import EdgeTimeSegmentEditor from "./EdgeTimeSegmentEditor"
 
 interface UDMPropertyPanelProps {
@@ -208,7 +206,6 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     selectedNode,
     selectedEdge,
     updateNodeParameter,
-    updateEdgeParameter,
     updateEdgeFlow,
     updateEdgeParameterConfig,
     edgeParameterConfigs,
@@ -640,7 +637,6 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
     const activeEdge = currentEdge || selectedEdge
     const sourceNode = nodes.find((node) => node.id === activeEdge.source)
     const edgeConfigs = edgeParameterConfigs[selectedEdge.id] || {}
-    const activeEdgeKind = normalizeNetworkEdgeKind(activeEdge.data?.edge_kind)
 
     const handleConfigChange = (
       paramName: string,
@@ -759,26 +755,30 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
 
     return (
       <Stack gap={4} align="stretch">
-        <NetworkEdgeInspectorFields
-          edge={activeEdge}
-          flowError={flowRateError}
-          flowValue={tempFlowValue}
-          labelWidth="80px"
-          onFlowChange={handleEdgeFlowChange}
-          onPatch={(key, value) =>
-            updateEdgeParameter(activeEdge.id, key, value)
-          }
-        />
+        <Field.Root invalid={!!flowRateError}>
+          <HStack align="flex-start" gap={4}>
+            <Field.Label minW="80px" pt={2}>
+              {t("flow.propertyPanel.flowLabel")}
+            </Field.Label>
+            <Box flex={1}>
+              <Input
+                type="number"
+                min="0"
+                value={tempFlowValue}
+                onChange={(e) => handleEdgeFlowChange(e.target.value)}
+                className="nodrag"
+                placeholder={t("flow.propertyPanel.flowPlaceholder")}
+              />
+              {flowRateError && (
+                <Field.ErrorText>{flowRateError}</Field.ErrorText>
+              )}
+            </Box>
+          </HStack>
+        </Field.Root>
 
         <Box>
           <Stack gap={3}>
-            {activeEdgeKind === "signal" ? (
-              <Text fontSize="sm" color="gray.500">
-                Signal edges do not carry UDM material parameters.
-              </Text>
-            ) : (
-              renderEdgeParameters()
-            )}
+            {renderEdgeParameters()}
           </Stack>
         </Box>
       </Stack>

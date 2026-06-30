@@ -11,7 +11,7 @@
 本目录负责：
 
 - Legacy React Flow edge rendering and inline edge labels.
-- Temporary UDM Network v2 edge helper files from the pre-isolation slice until PFC cleanup removes them.
+- Unused temporary UDM Network v2 edge helper files from the pre-isolation slice until PFC-B removes them.
 - Preserving legacy `flow` behavior while the dedicated `/udm-v2` feature takes over typed edge modeling.
 
 本目录不负责：
@@ -26,14 +26,14 @@
 | 文件 | 作用 |
 |---|---|
 | `EditableEdge.tsx` | Legacy shared edge renderer |
-| `EdgeModeSelector.tsx` | Deprecated temporary v2 selector awaiting PFC cleanup |
-| `NetworkEdgeInspectorFields.tsx` | Deprecated temporary v2 inspector fields awaiting PFC cleanup |
+| `EdgeModeSelector.tsx` | Deprecated unused temporary v2 selector awaiting PFC-B cleanup |
+| `NetworkEdgeInspectorFields.tsx` | Deprecated unused temporary v2 inspector fields awaiting PFC-B cleanup |
 
 ## 3. 维护约定
 
 1. Do not add new UDM-v2 behavior in this directory.
 2. Existing legacy `flow` must remain present for current save/load and calculation paths until v2 retirement gates pass.
-3. Temporary `edge_kind` support here is migration debt and should only be removed or frozen during PFC-A/PFC-B.
+3. Temporary `edge_kind` helper files are residual migration debt after PFC-A and should only be deleted or frozen during PFC-B.
 
 ## 4. 对外接口
 

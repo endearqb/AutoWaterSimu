@@ -36,7 +36,7 @@
 4. `flowStore.exportFlowData()` 仍需保留 legacy `nodes` / `edges` / `customParameters` / `calculationParameters` 字段，同时可携带 `canvas_graph.v1` 元数据供 Next Compute bridge 使用。
 5. `flowStore` 的 standalone persistence branch must keep legacy import/export compatibility by converting through `frontend/src/contracts` before calling `features/workspace/api.ts`; non-standalone mode must continue to use legacy `FlowchartsService`。
 6. `materialBalanceStore` standalone calculation methods should use `services/standaloneComputeService.ts` for submit/status/result/timeseries/input-data/delete and keep legacy FastAPI calls available outside standalone runtime。
-7. `flowStore` and `createModelFlowStore` must preserve UDM Network v2 edge data (`edge_kind`, `flow_spec`, `component_policy`, `pump`, `transport_model`, `signal_spec`) through import/export/save/load while keeping legacy `flow`.
+7. Legacy `flowStore` and `createModelFlowStore` must create and expose legacy `flow` edges only. Dedicated UDM Network v2 edge state belongs under `frontend/src/features/udm-v2/**`.
 
 ## 4. 对外接口
 

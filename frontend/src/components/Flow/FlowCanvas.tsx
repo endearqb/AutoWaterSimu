@@ -15,11 +15,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react"
 import "@xyflow/react/dist/style.css"
 import { Box } from "@chakra-ui/react"
 import useFlowStore from "../../stores/flowStore"
-import {
-  DEFAULT_NETWORK_EDGE_KIND,
-  type NetworkEdgeKind,
-} from "../../types/networkEdges"
-import EdgeModeSelector from "./edges/EdgeModeSelector"
 import EditableEdge from "./edges/EditableEdge"
 import {
   FLOW_GRID_SIZE,
@@ -65,8 +60,6 @@ const FlowCanvas = ({
     addNode,
     updateEdgeFlow,
     showMiniMap,
-    activeEdgeKind = DEFAULT_NETWORK_EDGE_KIND,
-    setActiveEdgeKind,
   } = flowStore()
 
   const updateEdgeFlowRef = useRef(updateEdgeFlow)
@@ -172,12 +165,6 @@ const FlowCanvas = ({
 
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
-  const handleEdgeKindChange = (kind: NetworkEdgeKind) => {
-    if (typeof setActiveEdgeKind === "function") {
-      setActiveEdgeKind(kind)
-    }
-  }
-
   const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
     if (rafLockRef.current) return
     rafLockRef.current = true
@@ -241,12 +228,6 @@ const FlowCanvas = ({
           }
         `}
       </style>
-      {typeof setActiveEdgeKind === "function" && (
-        <EdgeModeSelector
-          activeKind={activeEdgeKind}
-          onChange={handleEdgeKindChange}
-        />
-      )}
       <HoverContext.Provider value={{ hoveredNodeId }}>
         <ReactFlow
           nodes={nodes}

@@ -22,12 +22,7 @@ import {
 } from "../config/simulationConfig"
 import { t } from "../i18n"
 import type { HybridUDMConfig } from "../types/hybridUdm"
-import {
-  DEFAULT_NETWORK_EDGE_KIND,
-  createNetworkEdgeData,
-  stripLegacyEdgeConfigFields,
-  type NetworkEdgeKind,
-} from "../types/networkEdges"
+import { stripLegacyEdgeConfigFields } from "../types/networkEdges"
 import {
   type TimeSegment,
   normalizeTimeSegments,
@@ -59,7 +54,6 @@ export interface ModelFlowState<
   currentJobId: string | null
   showMiniMap: boolean
   isEdgeTimeSegmentMode: boolean
-  activeEdgeKind: NetworkEdgeKind
 
   // ========== 妯″瀷閰嶇疆 ==========
   modelConfig: ModelConfig
@@ -83,7 +77,6 @@ export interface ModelFlowState<
   setSelectedNode: (node: Node | null) => void
   setSelectedEdge: (edge: Edge | null) => void
   setShowMiniMap: (show: boolean) => void
-  setActiveEdgeKind: (kind: NetworkEdgeKind) => void
   deleteSelectedEdge: () => void
   deleteSelectedNode: () => void
 
@@ -256,7 +249,6 @@ export function createModelFlowStore<
       modelConfig: config,
       showMiniMap: false,
       isEdgeTimeSegmentMode: false,
-      activeEdgeKind: DEFAULT_NETWORK_EDGE_KIND,
 
       // ========== 鍩虹鎿嶄綔 ==========
       setNodes: (nodes) => set({ nodes }),
@@ -292,7 +284,7 @@ export function createModelFlowStore<
           ...connection,
           id: `edge-${Date.now()}`,
           type: "editable",
-          data: createNetworkEdgeData(state.activeEdgeKind),
+          data: { flow: 0 },
         }
 
         // 涓烘柊杩炴帴绾挎坊鍔犲弬鏁伴厤锟?
@@ -439,10 +431,6 @@ export function createModelFlowStore<
 
       setShowMiniMap: (show: boolean) => {
         set({ showMiniMap: show })
-      },
-
-      setActiveEdgeKind: (kind: NetworkEdgeKind) => {
-        set({ activeEdgeKind: kind })
       },
 
       deleteSelectedEdge: () => {
