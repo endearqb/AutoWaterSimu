@@ -26,6 +26,7 @@ import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as UpdatesSlugImport } from './routes/updates/$slug'
 import { Route as LayoutUdmModelsImport } from './routes/_layout/udmModels'
 import { Route as LayoutUdmModelEditorImport } from './routes/_layout/udmModelEditor'
+import { Route as LayoutUdmV2Import } from './routes/_layout/udm-v2'
 import { Route as LayoutUdmImport } from './routes/_layout/udm'
 import { Route as LayoutSuperDashboardImport } from './routes/_layout/super-dashboard'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
@@ -117,6 +118,11 @@ const LayoutUdmModelsRoute = LayoutUdmModelsImport.update({
 
 const LayoutUdmModelEditorRoute = LayoutUdmModelEditorImport.update({
   path: '/udmModelEditor',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutUdmV2Route = LayoutUdmV2Import.update({
+  path: '/udm-v2',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -304,6 +310,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutUdmImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/udm-v2': {
+      preLoaderRoute: typeof LayoutUdmV2Import
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/udmModelEditor': {
       preLoaderRoute: typeof LayoutUdmModelEditorImport
       parentRoute: typeof LayoutImport
@@ -352,6 +362,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutSettingsRoute,
     LayoutSuperDashboardRoute,
     LayoutUdmRoute,
+    LayoutUdmV2Route,
     LayoutUdmModelEditorRoute,
     LayoutUdmModelsRoute,
     LayoutIndexRoute,

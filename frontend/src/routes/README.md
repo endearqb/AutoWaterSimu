@@ -7,7 +7,7 @@
 本目录负责：
 
 - App root route、layout route、登录/注册/更新/计算器等页面 route。
-- `_layout/` 下 legacy authenticated pages、Compute Jobs/evidence export/model catalog/model_run history/contract validation page、Model governance snapshot history / promotion readiness page、Compute lifecycle admin page 和 model-specific flow pages。
+- `_layout/` 下 legacy authenticated pages、Compute Jobs/evidence export/model catalog/model_run history/contract validation page、Model governance snapshot history / promotion readiness page、Compute lifecycle admin page、model-specific flow pages 和 UDM Network v2 独立 route。
 - 驱动 generated `routeTree.gen.ts`。
 
 本目录不负责：
@@ -40,6 +40,7 @@
 9. Compute lifecycle admin page 可展示 `/metrics` 解析结果和 retention sweep 报告；前端只能按后端返回的 `would_delete` / `would_archive` 启用操作，不得把 `archive_executor_not_configured` blocker 解释为可处理。
 10. standalone runtime 的 route guard 通过 `frontend/src/shared/runtimeConfig.ts` 判断；不要在单个 route 中重复读取 `VITE_AUTH_MODE`。
 11. login/signup/reset/users/items/admin/settings 属于 legacy route tree，不得加入 `standaloneRouteTree.tsx`；public landing 支撑页可加入 standalone，但所有登录/注册 CTA 必须在 standalone 下进入 `/dashboard`；新增 standalone 页面时同步更新 frontend standalone boundary audit。
+12. `/udm-v2` route 只能作为薄壳 import `frontend/src/features/udm-v2/UdmV2Page`，业务 UI 和状态留在 feature 内。
 
 ## 4. 对外接口
 

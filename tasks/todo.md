@@ -4,8 +4,10 @@
 - [x] Create `codex/udm-v2-frontend-split` from `codex/udm-network-v2`.
 - [x] PF-1: add ADR-0028, feature README, Vitest baseline, boundary script, and Flow README boundary update.
 - [x] PF-1: run validation.
-- [ ] PF-1: commit and push.
-- [ ] PF0: add `/udm-v2` route skeleton, empty layout/canvas/store, standalone adapter skeleton, route smoke, and adapter tests.
+- [x] PF-1: commit and push.
+- [x] PF0: add `/udm-v2` route skeleton, empty layout/canvas/store, standalone adapter skeleton, route smoke, and adapter tests.
+- [x] PF0: run validation.
+- [ ] PF0: commit and push.
 - [ ] PF1: copy edge model into feature, add four v2 renderers and edge mode selector.
 - [ ] PFC-A: remove v2 selector/inspector/store pollution from legacy pages.
 - [ ] PF2: add v2 nodes and palette.
@@ -27,6 +29,8 @@
 
 - PF-1 added ADR-0028, feature README, Vitest/jsdom/testing-library baseline, `scripts/check-udm-v2-import-boundary.mjs`, and Flow README boundary correction.
 - PF-1 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, and `git diff --check`.
+- PF0 added `/udm-v2`, empty v2 layout/canvas/store, standalone payload adapter skeleton, sidebar/standalone route-tree wiring, route smoke and two Vitest tests.
+- PF0 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, and standalone `/udm-v2` Playwright route smoke.
 
 # 2026-06-27 UDM Network v2 Review Closeout TODO
 

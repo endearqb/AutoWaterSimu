@@ -24,6 +24,7 @@ import { Route as LayoutModelGovernanceImport } from "./routes/_layout/model-gov
 import { Route as LayoutOverviewImport } from "./routes/_layout/overview"
 import { Route as LayoutPetersenTutorialImport } from "./routes/_layout/petersen-tutorial"
 import { Route as LayoutUdmImport } from "./routes/_layout/udm"
+import { Route as LayoutUdmV2Import } from "./routes/_layout/udm-v2"
 import { Route as LayoutUdmModelEditorImport } from "./routes/_layout/udmModelEditor"
 import { Route as LayoutUdmModelsImport } from "./routes/_layout/udmModels"
 import { Route as UpdatesSlugImport } from "./routes/updates/$slug"
@@ -150,6 +151,11 @@ const LayoutUdmRoute = LayoutUdmImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutUdmV2Route = LayoutUdmV2Import.update({
+  path: "/udm-v2",
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutUdmModelEditorRoute = LayoutUdmModelEditorImport.update({
   path: "/udmModelEditor",
   getParentRoute: () => LayoutRoute,
@@ -175,6 +181,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutOverviewRoute,
     LayoutPetersenTutorialRoute,
     LayoutUdmRoute,
+    LayoutUdmV2Route,
     LayoutUdmModelEditorRoute,
     LayoutUdmModelsRoute,
   ]),

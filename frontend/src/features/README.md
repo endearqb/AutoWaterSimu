@@ -25,6 +25,7 @@
 | `contracts/` | Contract validation、draft confirmation 和 result explanation workflow wrapper |
 | `workspace/` | Scenario、CanvasGraph 和 ContextSnapshot workspace wrapper |
 | `udm/` | Standalone UDM model library and hybrid config wrapper |
+| `udm-v2/` | UDM Network v2 独立前端 feature，承载 `/udm-v2` 画布、store、serializer、服务和测试 |
 | `evidence/` | 预留 evidence-specific feature 边界；当前 evidence ref/download 仍随 job/lifecycle wrapper 暴露 |
 
 ## 3. 维护约定
@@ -33,6 +34,7 @@
 2. `features/*/queries.ts` 封装 route 使用的 TanStack Query query/mutation options。
 3. UI components 不直接 import generated client。
 4. 新增 endpoint wrapper 时优先放入对应 feature，避免继续扩大 compatibility facade。
+5. `udm-v2/` 是硬隔离 feature，不得 import legacy `components/Flow/**`、legacy stores 或 legacy UDM service。
 
 ## 4. 对外接口
 
