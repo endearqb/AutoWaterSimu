@@ -5,6 +5,7 @@ import { FlowConstraintsV2Editor } from "./FlowConstraintsV2Editor"
 import { HydraulicV2Fields } from "./HydraulicV2Fields"
 import { NodeSchemaV2Editor } from "./NodeSchemaV2Editor"
 import { PumpV2Fields } from "./PumpV2Fields"
+import { SecondaryClarifierV2ConfigPanel } from "./SecondaryClarifierV2ConfigPanel"
 import { SettlingV2Fields } from "./SettlingV2Fields"
 import { SignalV2Fields } from "./SignalV2Fields"
 
@@ -41,10 +42,18 @@ export function NetworkV2PropertyPanel() {
       </Box>
 
       {selectedNode ? (
-        <NodeSchemaV2Editor
-          node={selectedNode}
-          onPatch={(patch) => updateNodeData(selectedNode.id, patch)}
-        />
+        <Stack gap={4}>
+          <NodeSchemaV2Editor
+            node={selectedNode}
+            onPatch={(patch) => updateNodeData(selectedNode.id, patch)}
+          />
+          {selectedNode.data.node_kind === "secondary_clarifier_10_layer" && (
+            <SecondaryClarifierV2ConfigPanel
+              config={selectedNode.data.composite}
+              onPatch={(patch) => updateNodeData(selectedNode.id, patch)}
+            />
+          )}
+        </Stack>
       ) : selectedEdge ? (
         <EdgeFields edgeId={selectedEdge.id} />
       ) : (

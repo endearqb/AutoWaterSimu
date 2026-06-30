@@ -1,5 +1,9 @@
 import type { Node, NodeTypes, XYPosition } from "@xyflow/react"
 
+import {
+  createDefaultSecondaryClarifierV2Config,
+  type SecondaryClarifierV2Config,
+} from "../composite/secondaryClarifierV2Defaults"
 import { BoundaryV2Node } from "./BoundaryV2Node"
 import { ControllerV2Node } from "./ControllerV2Node"
 import { SecondaryClarifier10LayerV2Node } from "./SecondaryClarifier10LayerV2Node"
@@ -35,22 +39,7 @@ export type NetworkV2Port = {
   placement: NetworkV2PortPlacement
 }
 
-export type SecondaryClarifierV2CompositeData = {
-  profile: "reference" | "reactive_pending"
-  area_m2: number
-  height_m: number
-  layer_count: 10
-  feed_layer: number
-  feed_composition: Record<string, number>
-  takacs: {
-    v0_m_per_day: number
-    v0_max_m_per_day?: number
-    r_h?: number
-    r_p?: number
-    f_ns?: number
-    x_tss_threshold?: number
-  }
-}
+export type SecondaryClarifierV2CompositeData = SecondaryClarifierV2Config
 
 export type NetworkV2NodeData = {
   label: string
@@ -189,15 +178,7 @@ export function createNetworkV2NodeData(
       process_unit_type: "secondary_clarifier_10_layer",
       volume_m3: 6000,
       model_binding: passiveBinding(),
-      composite: {
-        profile: "reference",
-        area_m2: 1500,
-        height_m: 4,
-        layer_count: 10,
-        feed_layer: 5,
-        feed_composition: defaultInitialConditions(),
-        takacs: { v0_m_per_day: 250 },
-      },
+      composite: createDefaultSecondaryClarifierV2Config(),
       ports: [
         { id: "feed", label: "Feed", role: "inlet", placement: "left" },
         { id: "effluent", label: "Effluent", role: "outlet", placement: "right" },

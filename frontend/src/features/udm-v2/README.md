@@ -33,6 +33,7 @@
 | `nodes/` | v2 node components 与 node type registry |
 | `palette/` | v2 node palette and drag/drop source controls |
 | `inspector/` | v2 property panel 与 field editors |
+| `composite/` | SecondaryClarifier10Layer composite config 与展开 |
 | `serialize/` | graph/input serializer、contract validation 与 diagnostics mapping |
 | `services/` | standalone flowchart adapter 与 UDM-v2 compute submit service |
 | `__tests__/` | Vitest 单元测试 |

@@ -24,6 +24,7 @@
 |---|---|
 | `NetworkV2PropertyPanel.tsx` | Inspector entrypoint |
 | `NodeSchemaV2Editor.tsx` | Node label/schema/initial condition/binding editor |
+| `SecondaryClarifierV2ConfigPanel.tsx` | SecondaryClarifier10Layer composite config editor |
 | `FlowConstraintsV2Editor.tsx` | Graph-level flow constraints JSON editor |
 | `*V2Fields.tsx` | Edge-kind-specific fields |
 

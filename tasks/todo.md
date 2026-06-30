@@ -19,8 +19,10 @@
 - [x] PF2: commit and push.
 - [x] PF3: add inspector and semantic validation.
 - [x] PF3: run validation.
-- [ ] PF3: commit and push.
-- [ ] PF4: add SecondaryClarifier composite modeling.
+- [x] PF3: commit and push.
+- [x] PF4: add SecondaryClarifier composite modeling.
+- [x] PF4: run validation.
+- [ ] PF4: commit and push.
 - [ ] PF5: add serializers and contract validation.
 - [ ] PF6: add standalone save/load/submit and runtime-pending banner.
 - [ ] PFC-B: delete/freeze remaining global network edge leftovers.
@@ -47,6 +49,8 @@
 - PF2 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke with palette drag/drop, and `git diff --check`.
 - PF3 added node/edge/graph inspectors, semantic validation, diagnostic field mapping, validation status display, and inspector/validation tests.
 - PF3 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
+- PF4 added SecondaryClarifier10Layer config defaults, contract-shaped expand output, clarifier inspector fields, feed composition editing, and expand tests.
+- PF4 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
 
 # 2026-06-27 UDM Network v2 Review Closeout TODO
 
