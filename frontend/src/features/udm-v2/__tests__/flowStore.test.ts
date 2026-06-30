@@ -33,4 +33,21 @@ describe("createUdmV2FlowStore", () => {
     expect(store.getState().currentNetworkGraphName).toBe("Plant network")
     expect(store.getState().currentNetworkGraphVersion).toBe(3)
   })
+
+  it("creates typed v2 edge data on connect", () => {
+    const store = createTestStore()
+
+    store.getState().setActiveEdgeKind("signal")
+    store.getState().onConnect({
+      source: "source",
+      sourceHandle: null,
+      target: "target",
+      targetHandle: null,
+    })
+
+    expect(store.getState().edges).toHaveLength(1)
+    expect(store.getState().edges[0].type).toBe("signal_v2")
+    expect(store.getState().edges[0].data?.edge_kind).toBe("signal")
+    expect(store.getState().edges[0].data?.flow_spec).toBeUndefined()
+  })
 })

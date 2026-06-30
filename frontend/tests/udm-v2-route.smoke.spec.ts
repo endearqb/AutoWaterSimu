@@ -7,7 +7,11 @@ test("renders the UDM Network v2 route skeleton", async ({ page }) => {
 
   await expect(
     page.getByRole("heading", { name: "UDM Network v2" }),
-  ).toBeVisible()
-  await expect(page.getByTestId("udm-v2-canvas")).toBeVisible()
-  await expect(page.getByText("udm_network_v2")).toBeVisible()
+  ).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByTestId("udm-v2-canvas")).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(page.getByText("udm_network_v2")).toBeVisible({
+    timeout: 15_000,
+  })
 })

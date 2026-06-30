@@ -20,7 +20,7 @@
 | 文件 | 作用 |
 |---|---|
 | `hybridUdm.ts` | hybrid UDM shared types |
-| `networkEdges.ts` | UDM Network v2 edge kind and edge data helpers |
+| `networkEdges.ts` | Deprecated temporary UDM Network v2 edge helpers still used by legacy Flow cleanup debt |
 | `udmNodeData.ts` | UDM node data types |
 | `plotly.d.ts` | Plotly declaration support |
 
@@ -29,6 +29,7 @@
 1. Shared type changes require checking all components/stores/services imports.
 2. Generated API types belong under `frontend/src/client`, not here。
 3. Keep wire contract types aligned with `contracts/` when duplicated for UI convenience。
+4. New UDM Network v2 edge types belong under `frontend/src/features/udm-v2/edges/edgeModel.ts`; do not add new imports to `networkEdges.ts`。
 
 ## 4. 对外接口
 

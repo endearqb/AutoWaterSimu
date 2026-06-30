@@ -7,6 +7,9 @@ import {
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 
+import { NetworkV2EdgeModeSelector } from "../edges/NetworkV2EdgeModeSelector"
+import { networkV2EdgeTypeByKind } from "../edges/edgeModel"
+import { networkV2EdgeTypes } from "../edges/edgeTypes"
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
 
 export function NetworkV2Canvas() {
@@ -23,13 +26,25 @@ export function NetworkV2Canvas() {
   )
   const setViewport = useUdmV2FlowStore((state) => state.setViewport)
   const showMiniMap = useUdmV2FlowStore((state) => state.showMiniMap)
+  const activeEdgeKind = useUdmV2FlowStore((state) => state.activeEdgeKind)
+  const setActiveEdgeKind = useUdmV2FlowStore(
+    (state) => state.setActiveEdgeKind,
+  )
 
   return (
     <Box h="full" minH="520px" position="relative" data-testid="udm-v2-canvas">
+      <NetworkV2EdgeModeSelector
+        activeKind={activeEdgeKind}
+        onChange={setActiveEdgeKind}
+      />
       <ReactFlow
         aria-label="UDM Network v2 canvas"
         nodes={nodes}
         edges={edges}
+        edgeTypes={networkV2EdgeTypes}
+        defaultEdgeOptions={{
+          type: networkV2EdgeTypeByKind[activeEdgeKind],
+        }}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

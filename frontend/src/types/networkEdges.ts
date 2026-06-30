@@ -1,3 +1,6 @@
+// Deprecated: UDM-v2 frontend owns its edge model under
+// frontend/src/features/udm-v2/edges/edgeModel.ts. Keep this file only for
+// legacy Flow migration cleanup until PFC-A/PFC-B removes v1 pollution.
 export type NetworkEdgeKind = "hydraulic" | "pump" | "settling" | "signal"
 
 export type NetworkComponentPolicy = {
@@ -234,4 +237,3 @@ export const stripLegacyEdgeConfigFields = (
       ([key]) => !key.endsWith("_a") && !key.endsWith("_b"),
     ),
   )
-

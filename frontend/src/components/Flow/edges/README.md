@@ -2,7 +2,7 @@
 
 > 类型：contract
 > Canonical sources：
-> - `frontend/src/types/networkEdges.ts`
+> - `frontend/src/features/udm-v2/edges/edgeModel.ts`
 > - `contracts/network_process_graph.v1.json`
 > - `contracts/network_simulation_input.v1.json`
 
@@ -10,12 +10,13 @@
 
 本目录负责：
 
-- React Flow edge rendering and inline edge labels.
-- UDM Network v2 edge mode controls and inspector field groups.
-- Preserving legacy `flow` behavior while carrying typed `edge_kind` data.
+- Legacy React Flow edge rendering and inline edge labels.
+- Temporary UDM Network v2 edge helper files from the pre-isolation slice until PFC cleanup removes them.
+- Preserving legacy `flow` behavior while the dedicated `/udm-v2` feature takes over typed edge modeling.
 
 本目录不负责：
 
+- New UDM Network v2 edge modeling; add new v2 edge code under `frontend/src/features/udm-v2/edges/`.
 - Network runtime compilation or solver execution.
 - Generated OpenAPI clients.
 - Node palette or layout shell state.
@@ -24,15 +25,15 @@
 
 | 文件 | 作用 |
 |---|---|
-| `EditableEdge.tsx` | Shared edge renderer; styles and labels by `edge_kind` |
-| `EdgeModeSelector.tsx` | Canvas overlay for selecting the next edge kind |
-| `NetworkEdgeInspectorFields.tsx` | Shared inspector fields for hydraulic/pump/settling/signal edges |
+| `EditableEdge.tsx` | Legacy shared edge renderer |
+| `EdgeModeSelector.tsx` | Deprecated temporary v2 selector awaiting PFC cleanup |
+| `NetworkEdgeInspectorFields.tsx` | Deprecated temporary v2 inspector fields awaiting PFC cleanup |
 
 ## 3. 维护约定
 
-1. Supported edge kinds are exactly `hydraulic`, `pump`, `settling`, and `signal`.
-2. Edge UI fields should use contract names: `edge_kind`, `flow_spec`, `component_policy`, `pump`, `transport_model`, and `signal_spec`.
-3. Existing legacy `flow` must remain present for current save/load and calculation paths until v2 runtime replaces them.
+1. Do not add new UDM-v2 behavior in this directory.
+2. Existing legacy `flow` must remain present for current save/load and calculation paths until v2 retirement gates pass.
+3. Temporary `edge_kind` support here is migration debt and should only be removed or frozen during PFC-A/PFC-B.
 
 ## 4. 对外接口
 
@@ -54,4 +55,3 @@ cd frontend; npx tsc --noEmit
 
 1. 修改 edge data shape 时同步 `frontend/src/stores/flowStore.ts` and `frontend/src/stores/createModelFlowStore.ts`。
 2. 修改 contract-facing field names 时同步 `contracts/` schema and examples。
-

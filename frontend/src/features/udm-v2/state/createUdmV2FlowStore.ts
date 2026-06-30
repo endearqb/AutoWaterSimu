@@ -1,5 +1,4 @@
 import {
-  addEdge,
   applyEdgeChanges,
   applyNodeChanges,
 } from "@xyflow/react"
@@ -16,7 +15,13 @@ import type {
 } from "@xyflow/react"
 import type { StateCreator } from "zustand"
 
-export type NetworkV2EdgeKind = "hydraulic" | "pump" | "settling" | "signal"
+import {
+  DEFAULT_NETWORK_V2_EDGE_KIND,
+  createNetworkV2EdgeData,
+  networkV2EdgeTypeByKind,
+  type NetworkV2EdgeData,
+  type NetworkV2EdgeKind,
+} from "../edges/edgeModel"
 
 export type UdmV2RuntimeStatus =
   | "idle"
@@ -28,7 +33,7 @@ export type UdmV2RuntimeStatus =
 
 export type UdmV2FlowState = {
   nodes: Node<Record<string, unknown>>[]
-  edges: Edge<Record<string, unknown>>[]
+  edges: Edge<NetworkV2EdgeData>[]
   viewport: Viewport | null
   selectedNodeId: string | null
   selectedEdgeId: string | null
@@ -45,9 +50,9 @@ export type UdmV2FlowState = {
 
 export type UdmV2FlowActions = {
   setNodes: (nodes: Node<Record<string, unknown>>[]) => void
-  setEdges: (edges: Edge<Record<string, unknown>>[]) => void
+  setEdges: (edges: Edge<NetworkV2EdgeData>[]) => void
   onNodesChange: OnNodesChange
-  onEdgesChange: OnEdgesChange
+  onEdgesChange: OnEdgesChange<Edge<NetworkV2EdgeData>>
   onConnect: OnConnect
   setSelectedNodeId: (id: string | null) => void
   setSelectedEdgeId: (id: string | null) => void
@@ -72,7 +77,7 @@ const initialState = (): UdmV2FlowState => ({
   viewport: null,
   selectedNodeId: null,
   selectedEdgeId: null,
-  activeEdgeKind: "hydraulic",
+  activeEdgeKind: DEFAULT_NETWORK_V2_EDGE_KIND,
   currentNetworkGraphId: null,
   currentNetworkGraphVersion: null,
   currentNetworkGraphName: "Untitled UDM Network v2",
@@ -94,20 +99,27 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
   onNodesChange: (changes: NodeChange[]) => {
     set({ nodes: applyNodeChanges(changes, get().nodes), dirty: true })
   },
-  onEdgesChange: (changes: EdgeChange[]) => {
-    set({ edges: applyEdgeChanges(changes, get().edges), dirty: true })
+  onEdgesChange: (changes: EdgeChange<Edge<NetworkV2EdgeData>>[]) => {
+    set({
+      edges: applyEdgeChanges<Edge<NetworkV2EdgeData>>(changes, get().edges),
+      dirty: true,
+    })
   },
   onConnect: (connection: Connection) => {
+    if (!connection.source || !connection.target) {
+      return
+    }
     const state = get()
+    const newEdge: Edge<NetworkV2EdgeData> = {
+      ...connection,
+      id: `edge-${Date.now()}`,
+      source: connection.source,
+      target: connection.target,
+      type: networkV2EdgeTypeByKind[state.activeEdgeKind],
+      data: createNetworkV2EdgeData(state.activeEdgeKind),
+    }
     set({
-      edges: addEdge(
-        {
-          ...connection,
-          type: "placeholder_v2",
-          data: { edge_kind: state.activeEdgeKind },
-        },
-        state.edges,
-      ),
+      edges: [...state.edges, newEdge],
       dirty: true,
     })
   },
