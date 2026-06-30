@@ -1,3 +1,33 @@
+# 2026-06-30 UDM-v2 Frontend Hard Isolation TODO
+
+- [x] Read README First context, UDM-v2 frontend requirements/spec/plan, frontend READMEs, task/change records, and current git state.
+- [x] Create `codex/udm-v2-frontend-split` from `codex/udm-network-v2`.
+- [x] PF-1: add ADR-0028, feature README, Vitest baseline, boundary script, and Flow README boundary update.
+- [x] PF-1: run validation.
+- [ ] PF-1: commit and push.
+- [ ] PF0: add `/udm-v2` route skeleton, empty layout/canvas/store, standalone adapter skeleton, route smoke, and adapter tests.
+- [ ] PF1: copy edge model into feature, add four v2 renderers and edge mode selector.
+- [ ] PFC-A: remove v2 selector/inspector/store pollution from legacy pages.
+- [ ] PF2: add v2 nodes and palette.
+- [ ] PF3: add inspector and semantic validation.
+- [ ] PF4: add SecondaryClarifier composite modeling.
+- [ ] PF5: add serializers and contract validation.
+- [ ] PF6: add standalone save/load/submit and runtime-pending banner.
+- [ ] PFC-B: delete/freeze remaining global network edge leftovers.
+- [ ] PF7: final gate, docs, and evidence.
+
+## Plan
+
+- Keep one commit per phase and push `codex/udm-v2-frontend-split` after each phase.
+- Do not stage pre-existing dirty changes unless they are explicitly part of the current phase.
+- Follow copy -> freeze -> clean/delete for edge model isolation.
+- Treat `UDM_NETWORK_NOT_EXECUTABLE_YET` as runtime pending, not a successful simulation.
+
+## Review
+
+- PF-1 added ADR-0028, feature README, Vitest/jsdom/testing-library baseline, `scripts/check-udm-v2-import-boundary.mjs`, and Flow README boundary correction.
+- PF-1 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, and `git diff --check`.
+
 # 2026-06-27 UDM Network v2 Review Closeout TODO
 
 - [x] Re-read UDM-v2 docs, review note, README First context, task/change history, and affected directory READMEs.

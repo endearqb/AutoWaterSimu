@@ -6,6 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run src/features/udm-v2",
+    "test:e2e": "playwright test",
+    "check:udm-v2-boundary": "node ../scripts/check-udm-v2-import-boundary.mjs",
     "lint": "biome check --apply-unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
     "preview": "vite preview",
     "generate-client": "openapi-ts",
@@ -65,17 +71,22 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@hey-api/openapi-ts": "^0.57.0",
+    "@mdx-js/rollup": "^3.1.0",
     "@playwright/test": "^1.52.0",
     "@tanstack/router-devtools": "1.19.1",
     "@tanstack/router-vite-plugin": "1.19.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.15.3",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react-swc": "^3.9.0",
     "dotenv": "^16.4.5",
+    "jsdom": "^25.0.1",
     "postcss": "^8.5.6",
     "typescript": "^5.2.2",
     "vite": "^6.3.4",
-    "@mdx-js/rollup": "^3.1.0"
+    "vitest": "^2.1.9"
   }
 }

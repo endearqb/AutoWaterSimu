@@ -1,0 +1,120 @@
+import { existsSync, readdirSync, readFileSync } from "node:fs"
+import path from "node:path"
+
+const repoRoot = path.resolve(import.meta.dirname, "..")
+const frontendSrc = path.join(repoRoot, "frontend", "src")
+
+const tsExtensions = new Set([".ts", ".tsx"])
+
+const scanRoots = [
+  path.join(frontendSrc, "features", "udm-v2"),
+  path.join(frontendSrc, "components", "Flow"),
+  path.join(frontendSrc, "stores"),
+  path.join(frontendSrc, "routes", "_layout"),
+]
+
+const allowedV1Imports = new Set([
+  normalizePath(path.join(frontendSrc, "routes", "_layout", "udm-v2.tsx")),
+])
+
+const forbiddenFromUdmV2 = [
+  "@/components/Flow/",
+  "components/Flow/",
+  "@/stores/createModelFlowStore",
+  "@/stores/flowStore",
+  "@/stores/udmFlowStore",
+  "@/services/udmService",
+  "@/types/networkEdges",
+  "legacyFlowExportToCanvasGraph",
+]
+
+const forbiddenFromV1 = [
+  "@/features/udm-v2/",
+  "features/udm-v2/",
+]
+
+function normalizePath(value) {
+  return value.replaceAll(path.sep, "/")
+}
+
+function listSourceFiles(root) {
+  if (!existsSync(root)) {
+    return []
+  }
+
+  const entries = readdirSync(root, { withFileTypes: true })
+  const files = []
+  for (const entry of entries) {
+    const fullPath = path.join(root, entry.name)
+    if (entry.isDirectory()) {
+      files.push(...listSourceFiles(fullPath))
+      continue
+    }
+    if (entry.isFile() && tsExtensions.has(path.extname(entry.name))) {
+      files.push(fullPath)
+    }
+  }
+  return files
+}
+
+function importSpecifiers(source) {
+  const specs = []
+  const patterns = [
+    /import\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?["']([^"']+)["']/g,
+    /export\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)["']([^"']+)["']/g,
+    /import\(\s*["']([^"']+)["']\s*\)/g,
+  ]
+  for (const pattern of patterns) {
+    for (const match of source.matchAll(pattern)) {
+      specs.push(match[1])
+    }
+  }
+  return specs
+}
+
+function resolveRelativeSpecifier(filePath, specifier) {
+  if (!specifier.startsWith(".")) {
+    return specifier
+  }
+  return normalizePath(path.relative(frontendSrc, path.resolve(path.dirname(filePath), specifier)))
+}
+
+const violations = []
+
+for (const filePath of scanRoots.flatMap(listSourceFiles)) {
+  const normalizedFile = normalizePath(filePath)
+  const relativeFile = normalizePath(path.relative(repoRoot, filePath))
+  const source = readFileSync(filePath, "utf8")
+  const specs = importSpecifiers(source)
+  const isUdmV2 = normalizedFile.includes("/frontend/src/features/udm-v2/")
+
+  if (isUdmV2) {
+    for (const forbidden of forbiddenFromUdmV2) {
+      if (source.includes(forbidden)) {
+        violations.push(`${relativeFile}: UDM-v2 must not reference ${forbidden}`)
+      }
+    }
+    continue
+  }
+
+  if (allowedV1Imports.has(normalizedFile)) {
+    continue
+  }
+
+  for (const specifier of specs) {
+    const resolved = resolveRelativeSpecifier(filePath, specifier)
+    if (forbiddenFromV1.some((forbidden) => specifier.includes(forbidden) || resolved.includes(forbidden))) {
+      violations.push(`${relativeFile}: v1 code must not import ${specifier}`)
+    }
+  }
+}
+
+if (violations.length > 0) {
+  console.error("UDM-v2 import boundary violations:")
+  for (const violation of violations) {
+    console.error(`- ${violation}`)
+  }
+  process.exit(1)
+}
+
+console.log("UDM-v2 import boundary passed.")

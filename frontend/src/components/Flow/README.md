@@ -15,6 +15,7 @@
 - 后端计算实现。
 - generated API client。
 - Desktop Tauri workbench。
+- UDM Network v2 独立前端；新 v2 代码必须放在 `frontend/src/features/udm-v2/**`。
 
 ## 2. 核心文件
 
@@ -25,7 +26,7 @@
 | `inspectorbar/` | property/calculation/simulation panels |
 | `toolbar/` | node palette and result panels |
 | `nodes/` | model/input/output node components |
-| `edges/` | editable edge renderer, network edge mode selector and edge inspector fields |
+| `edges/` | legacy editable edge renderer；已有临时 UDM-v2 edge helper 属于 PFC 清理债务，不再扩展 |
 | `menu/` | save/load/import/context dialogs |
 | `legacy-analysis/` | result analysis dialogs, charts and panels |
 
@@ -35,7 +36,7 @@
 2. 画布数据 shape 改动必须同步 stores、services、backend route/tests。
 3. Inspector width、chart container、node handles 等布局变更需要检查窄屏和压缩面板。
 4. UDM 教程专用行为不要破坏 material balance/ASM legacy flows。
-5. UDM Network v2 edge UI uses `edge_kind` with exactly `hydraulic` / `pump` / `settling` / `signal`; renderer and inspector fields must preserve these fields through save/load.
+5. UDM Network v2 前端硬隔离后，本目录不得新增 v2 edge/store/inspector 逻辑；已有临时 v2 edge helper 只允许在 PFC-A/PFC-B 清理中被移除或冻结。
 
 ## 4. 对外接口
 
@@ -46,6 +47,7 @@
 可以依赖 frontend stores、services、utils、types、Chakra UI 和 XYFlow。
 
 不应该依赖 backend Python runtime 或 worker sidecar。
+不应该依赖 `frontend/src/features/udm-v2/**`。
 
 ## 6. 测试与验证
 
