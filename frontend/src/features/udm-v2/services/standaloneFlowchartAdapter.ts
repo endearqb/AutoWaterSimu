@@ -1,6 +1,10 @@
 import type { CanvasGraphRecord } from "@/client/compute"
+import type { Edge, Node, Viewport } from "@xyflow/react"
 
+import type { NetworkV2EdgeData } from "../edges/edgeModel"
+import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 import { UDM_V2_GRAPH_FAMILY } from "../state/actions"
+import type { NetworkV2ValidationReport } from "../serialize/semanticValidation"
 
 export type NetworkV2CanvasSnapshot = {
   schema_version: "udm_network_canvas.v1"
@@ -33,6 +37,17 @@ export type UdmV2GraphSummary = {
   graphFamily: typeof UDM_V2_GRAPH_FAMILY
 }
 
+export type UdmV2LoadedGraph = {
+  nodes: Node<NetworkV2NodeData>[]
+  edges: Edge<NetworkV2EdgeData>[]
+  viewport?: Viewport | null
+  flowConstraints?: []
+  id?: string | null
+  version?: number | null
+  name?: string | null
+  validationReport?: NetworkV2ValidationReport | null
+}
+
 type CanvasGraphRecordLike = Pick<
   CanvasGraphRecord,
   "graph_id" | "name" | "payload" | "version"
@@ -43,9 +58,10 @@ export function createUdmV2StandalonePayload(args: {
   graphId: string
   networkProcessGraph?: Record<string, unknown>
   snapshot?: Partial<NetworkV2CanvasSnapshot>
+  validationReport?: Record<string, unknown> | null
   exportedAt?: string
 }): UdmV2StandaloneFlowchartPayload {
-  return {
+  const payload: UdmV2StandaloneFlowchartPayload = {
     schema_version: "udm_network_canvas.v1",
     graph_family: UDM_V2_GRAPH_FAMILY,
     display_name: args.displayName,
@@ -71,6 +87,27 @@ export function createUdmV2StandalonePayload(args: {
       },
       exported_at: args.exportedAt ?? new Date().toISOString(),
     },
+  }
+  if (args.validationReport) {
+    payload.validation_report = args.validationReport
+  }
+  return payload
+}
+
+export function graphStateFromStandalonePayload(
+  payload: UdmV2StandaloneFlowchartPayload,
+  graph: { id?: string | null; version?: number | null; name?: string | null } = {},
+): UdmV2LoadedGraph {
+  return {
+    id: graph.id ?? null,
+    name: graph.name ?? payload.display_name,
+    version: graph.version ?? null,
+    nodes: payload.canvas_snapshot.nodes as Node<NetworkV2NodeData>[],
+    edges: payload.canvas_snapshot.edges as Edge<NetworkV2EdgeData>[],
+    viewport: (payload.canvas_snapshot.viewport ?? null) as Viewport | null,
+    validationReport:
+      (payload.validation_report as NetworkV2ValidationReport | undefined) ??
+      null,
   }
 }
 

@@ -71,6 +71,17 @@ export type UdmV2FlowActions = {
   setActiveEdgeKind: (kind: NetworkV2EdgeKind) => void
   setFlowConstraints: (constraints: NetworkV2FlowConstraint[]) => void
   validateGraph: () => NetworkV2ValidationReport
+  replaceGraph: (graph: {
+    nodes: Node<NetworkV2NodeData>[]
+    edges: Edge<NetworkV2EdgeData>[]
+    viewport?: Viewport | null
+    flowConstraints?: NetworkV2FlowConstraint[]
+    id?: string | null
+    version?: number | null
+    name?: string | null
+    validationReport?: NetworkV2ValidationReport | null
+  }) => void
+  setRuntimeStatus: (status: UdmV2RuntimeStatus) => void
   setViewport: (viewport: Viewport) => void
   setCurrentGraph: (graph: {
     id: string | null
@@ -193,6 +204,21 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
     })
     return validationReport
   },
+  replaceGraph: (graph) =>
+    set({
+      nodes: graph.nodes,
+      edges: graph.edges,
+      viewport: graph.viewport ?? null,
+      flowConstraints: graph.flowConstraints ?? [],
+      currentNetworkGraphId: graph.id ?? null,
+      currentNetworkGraphVersion: graph.version ?? null,
+      currentNetworkGraphName: graph.name ?? "Untitled UDM Network v2",
+      validationReport: graph.validationReport ?? null,
+      diagnostics: graph.validationReport?.diagnostics ?? [],
+      dirty: false,
+      runtimeStatus: "idle",
+    }),
+  setRuntimeStatus: (status) => set({ runtimeStatus: status }),
   setViewport: (viewport) => set({ viewport }),
   setCurrentGraph: (graph) =>
     set({

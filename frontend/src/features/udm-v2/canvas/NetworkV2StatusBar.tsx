@@ -1,4 +1,6 @@
-import { Badge, HStack, Text } from "@chakra-ui/react"
+import { Badge, HStack, Stack, Text } from "@chakra-ui/react"
+
+import { UDM_V2_NOT_EXECUTABLE_MESSAGE } from "../services/udmV2ComputeService"
 
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
 
@@ -12,28 +14,35 @@ export function NetworkV2StatusBar() {
   const diagnosticCount = useUdmV2FlowStore((state) => state.diagnostics.length)
 
   return (
-    <HStack
-      minH="36px"
-      px={3}
-      borderWidth="1px"
-      borderColor="border"
-      bg="bg"
-      fontSize="sm"
-      justify="space-between"
-    >
-      <HStack gap={3}>
-        <Text fontWeight="medium">{graphName}</Text>
-        <Badge variant="subtle">{graphFamily}</Badge>
-        {dirty && <Badge colorPalette="orange">dirty</Badge>}
+    <Stack gap={0}>
+      {runtimeStatus === "runtime_pending" && (
+        <Text px={3} py={2} bg="yellow.50" color="yellow.900" fontSize="sm">
+          {UDM_V2_NOT_EXECUTABLE_MESSAGE}
+        </Text>
+      )}
+      <HStack
+        minH="36px"
+        px={3}
+        borderWidth="1px"
+        borderColor="border"
+        bg="bg"
+        fontSize="sm"
+        justify="space-between"
+      >
+        <HStack gap={3}>
+          <Text fontWeight="medium">{graphName}</Text>
+          <Badge variant="subtle">{graphFamily}</Badge>
+          {dirty && <Badge colorPalette="orange">dirty</Badge>}
+        </HStack>
+        <HStack gap={3} color="fg.muted">
+          <Text>{nodeCount} nodes</Text>
+          <Text>{edgeCount} edges</Text>
+          {diagnosticCount > 0 && (
+            <Badge colorPalette="red">{diagnosticCount} diagnostics</Badge>
+          )}
+          <Badge colorPalette="blue">{runtimeStatus}</Badge>
+        </HStack>
       </HStack>
-      <HStack gap={3} color="fg.muted">
-        <Text>{nodeCount} nodes</Text>
-        <Text>{edgeCount} edges</Text>
-        {diagnosticCount > 0 && (
-          <Badge colorPalette="red">{diagnosticCount} diagnostics</Badge>
-        )}
-        <Badge colorPalette="blue">{runtimeStatus}</Badge>
-      </HStack>
-    </HStack>
+    </Stack>
   )
 }

@@ -25,8 +25,10 @@
 - [x] PF4: commit and push.
 - [x] PF5: add serializers and contract validation.
 - [x] PF5: run validation.
-- [ ] PF5: commit and push.
-- [ ] PF6: add standalone save/load/submit and runtime-pending banner.
+- [x] PF5: commit and push.
+- [x] PF6: add standalone save/load/submit and runtime-pending banner.
+- [x] PF6: run validation.
+- [ ] PF6: commit and push.
 - [ ] PFC-B: delete/freeze remaining global network edge leftovers.
 - [ ] PF7: final gate, docs, and evidence.
 
@@ -55,6 +57,8 @@
 - PF4 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
 - PF5 added schema-facing contract types, canvas graph serializers, simulation input builder, AJV contract validation, fixtures, and roundtrip/contract tests.
 - PF5 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
+- PF6 added standalone UDM-v2 CanvasGraph save/load/list/delete service, compute submit service, route `flowchartId` loading, New/Save/Save As/Load/Export JSON/Import JSON/Validate/Submit toolbar actions, runtime-pending not-executable banner, and service/UI/Playwright tests.
+- PF6 validation passed: `npm run test`, `npx tsc --noEmit`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, save/load Playwright, submit-not-executable Playwright, and `git diff --check`.
 
 # 2026-06-27 UDM Network v2 Review Closeout TODO
 

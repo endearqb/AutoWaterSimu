@@ -52,7 +52,7 @@ describe("network v2 serializer contract validation", () => {
 
   it("builds simulation input from a process graph", () => {
     const input = toNetworkSimulationInputV1(
-      graphFixture as NetworkProcessGraphV1,
+      graphFixture as unknown as NetworkProcessGraphV1,
       { simulationInputId: "custom-input" },
     )
 
