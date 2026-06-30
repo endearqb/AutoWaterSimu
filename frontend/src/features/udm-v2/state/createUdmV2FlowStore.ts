@@ -22,6 +22,7 @@ import {
   type NetworkV2EdgeData,
   type NetworkV2EdgeKind,
 } from "../edges/edgeModel"
+import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 
 export type UdmV2RuntimeStatus =
   | "idle"
@@ -32,7 +33,7 @@ export type UdmV2RuntimeStatus =
   | "failed"
 
 export type UdmV2FlowState = {
-  nodes: Node<Record<string, unknown>>[]
+  nodes: Node<NetworkV2NodeData>[]
   edges: Edge<NetworkV2EdgeData>[]
   viewport: Viewport | null
   selectedNodeId: string | null
@@ -49,11 +50,12 @@ export type UdmV2FlowState = {
 }
 
 export type UdmV2FlowActions = {
-  setNodes: (nodes: Node<Record<string, unknown>>[]) => void
+  setNodes: (nodes: Node<NetworkV2NodeData>[]) => void
   setEdges: (edges: Edge<NetworkV2EdgeData>[]) => void
-  onNodesChange: OnNodesChange
+  onNodesChange: OnNodesChange<Node<NetworkV2NodeData>>
   onEdgesChange: OnEdgesChange<Edge<NetworkV2EdgeData>>
   onConnect: OnConnect
+  addNode: (node: Node<NetworkV2NodeData>) => void
   setSelectedNodeId: (id: string | null) => void
   setSelectedEdgeId: (id: string | null) => void
   setActiveEdgeKind: (kind: NetworkV2EdgeKind) => void
@@ -96,8 +98,11 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
 
   setNodes: (nodes) => set({ nodes, dirty: true }),
   setEdges: (edges) => set({ edges, dirty: true }),
-  onNodesChange: (changes: NodeChange[]) => {
-    set({ nodes: applyNodeChanges(changes, get().nodes), dirty: true })
+  onNodesChange: (changes: NodeChange<Node<NetworkV2NodeData>>[]) => {
+    set({
+      nodes: applyNodeChanges<Node<NetworkV2NodeData>>(changes, get().nodes),
+      dirty: true,
+    })
   },
   onEdgesChange: (changes: EdgeChange<Edge<NetworkV2EdgeData>>[]) => {
     set({
@@ -123,6 +128,11 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
       dirty: true,
     })
   },
+  addNode: (node) =>
+    set({
+      nodes: [...get().nodes, node],
+      dirty: true,
+    }),
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
   setSelectedEdgeId: (id) => set({ selectedEdgeId: id }),
   setActiveEdgeKind: (kind) => set({ activeEdgeKind: kind }),

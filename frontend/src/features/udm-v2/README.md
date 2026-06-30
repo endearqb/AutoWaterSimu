@@ -31,6 +31,7 @@
 | `canvas/` | `NetworkV2Canvas`、layout、toolbar、status bar |
 | `edges/` | 四类 v2 edge model、renderer 与 mode selector |
 | `nodes/` | v2 node components 与 node type registry |
+| `palette/` | v2 node palette and drag/drop source controls |
 | `inspector/` | v2 property panel 与 field editors |
 | `serialize/` | graph/input serializer、contract validation 与 diagnostics mapping |
 | `services/` | standalone flowchart adapter 与 UDM-v2 compute submit service |

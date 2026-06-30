@@ -13,8 +13,10 @@
 - [x] PF1: commit and push.
 - [x] PFC-A: remove v2 selector/inspector/store pollution from legacy pages.
 - [x] PFC-A: run validation.
-- [ ] PFC-A: commit and push.
-- [ ] PF2: add v2 nodes and palette.
+- [x] PFC-A: commit and push.
+- [x] PF2: add v2 nodes and palette.
+- [x] PF2: run validation.
+- [ ] PF2: commit and push.
 - [ ] PF3: add inspector and semantic validation.
 - [ ] PF4: add SecondaryClarifier composite modeling.
 - [ ] PF5: add serializers and contract validation.
@@ -39,6 +41,8 @@
 - PF1 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
 - PFC-A removed v2 edge selector/inspector/store pollution from legacy pages, restored new v1 edges to legacy `flow`, and added v1 no-v2-selector Playwright plus store isolation tests.
 - PFC-A validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone v1 no-v2-selector Playwright regression, and `git diff --check`.
+- PF2 added feature-local v2 node defaults, five node renderers, node type registry, draggable node palette, canvas drop handling, and node factory/route smoke coverage.
+- PF2 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke with palette drag/drop, and `git diff --check`.
 
 # 2026-06-27 UDM Network v2 Review Closeout TODO
 

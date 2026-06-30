@@ -6,6 +6,7 @@ import {
   createUdmV2FlowStore,
   type UdmV2FlowStore,
 } from "../state/createUdmV2FlowStore"
+import { createNetworkV2Node } from "../nodes/nodeTypes"
 
 const createTestStore = () =>
   createStore<UdmV2FlowStore>()(createUdmV2FlowStore)
@@ -49,5 +50,18 @@ describe("createUdmV2FlowStore", () => {
     expect(store.getState().edges[0].type).toBe("signal_v2")
     expect(store.getState().edges[0].data?.edge_kind).toBe("signal")
     expect(store.getState().edges[0].data?.flow_spec).toBeUndefined()
+  })
+
+  it("adds typed v2 nodes", () => {
+    const store = createTestStore()
+
+    store
+      .getState()
+      .addNode(createNetworkV2Node("udm_reactor", { x: 10, y: 20 }))
+
+    expect(store.getState().nodes).toHaveLength(1)
+    expect(store.getState().nodes[0].type).toBe("udm_reactor_v2")
+    expect(store.getState().nodes[0].data.node_kind).toBe("udm_reactor")
+    expect(store.getState().dirty).toBe(true)
   })
 })

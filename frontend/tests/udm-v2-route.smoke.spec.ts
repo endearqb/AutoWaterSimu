@@ -14,4 +14,19 @@ test("renders the UDM Network v2 route skeleton", async ({ page }) => {
   await expect(page.getByText("udm_network_v2")).toBeVisible({
     timeout: 15_000,
   })
+  await expect(
+    page.getByRole("button", { name: "Add Boundary node" }),
+  ).toBeVisible({ timeout: 15_000 })
+})
+
+test("adds a UDM Network v2 node from the palette", async ({ page }) => {
+  await page.goto("/udm-v2")
+
+  await page
+    .getByRole("button", { name: "Add Boundary node" })
+    .dragTo(page.getByTestId("udm-v2-canvas"))
+
+  await expect(
+    page.locator(".react-flow__node", { hasText: "Boundary" }),
+  ).toBeVisible({ timeout: 15_000 })
 })
