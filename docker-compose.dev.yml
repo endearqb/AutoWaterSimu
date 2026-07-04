@@ -75,7 +75,7 @@ services:
     command: sh -c "cd apps/api && go run ./cmd/compute-api"
 
   simulation-worker:
-    image: python:3.11-slim
+    image: python:3.14-slim
     working_dir: /workspace
     restart: unless-stopped
     depends_on:
