@@ -1,3 +1,16 @@
+# 2026-07-11 README First v2.1 架构迁移 TODO
+
+- [x] 阅读现有 README First 上下文、`.ai/` 结构及上游 `endearqb/ReadmeFirst` v2.1 迁移说明。
+- [x] 保留 AutoWaterSimu 专属规则，升级通用协议为 L0/L1/L2 分级执行。
+- [x] 新增最小 `.ai/architecture/` 层与触发式 glossary/handoff/plan 目录。
+- [x] 更新根 README、中文 README、README First 原则和文档门禁分类。
+- [x] 运行 README First 文档门禁并记录由无关工作区删除导致的既有断链。
+
+## Review
+
+- `scripts\readme-contract-check.ps1 -FailOnWarnings` 的新增 `.ai` 链路通过；仅 `README.md` / `README_zh.md` 对工作区既有删除 `release-notes.md` 的链接失败。
+- `git diff --check -- AGENTS.md README.md README_zh.md README_First.md .ai tasks\todo.md` 通过（仅 CRLF 归一化 warning）。
+
 # 2026-06-30 UDM-v2 Frontend Hard Isolation TODO
 
 - [x] Read README First context, UDM-v2 frontend requirements/spec/plan, frontend READMEs, task/change records, and current git state.

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "exclude_dir_names": [
     "node_modules",
     ".venv",
@@ -24,10 +24,12 @@
     { "pattern": "^README(_zh)?\\.md$", "type": "root_contract" },
     { "pattern": "^README_First\\.md$", "type": "governance" },
     { "pattern": "^\\.ai\\\\README\\.md$", "type": "governance" },
+    { "pattern": "^\\.ai\\\\architecture\\\\README\\.md$", "type": "governance" },
     { "pattern": "^\\.ai\\\\changes\\\\README\\.md$", "type": "changelog" },
     { "pattern": "^\\.ai\\\\decisions\\\\README\\.md$", "type": "governance" },
     { "pattern": "^\\.ai\\\\plans\\\\README\\.md$", "type": "governance" },
     { "pattern": "^\\.ai\\\\reviews\\\\README\\.md$", "type": "governance" },
+    { "pattern": "^\\.ai\\\\(glossary|handoff)\\.md$", "type": "governance" },
     { "pattern": "^docs\\\\rebuild(\\\\|$)", "type": "archive" },
     { "pattern": "^updatenote\\\\README\\.md$", "type": "archive" },
     { "pattern": "^docs\\\\operations(\\\\|$)", "type": "release" },

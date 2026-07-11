@@ -1,14 +1,18 @@
 # README First
 
+> 更新于:2026-07-11 · commit be0a736
+
 **面向所有 AI Agent 的项目上下文协作原则**
 
-本文件解释本项目为何采用 README First，以及它如何与 `AGENTS.md` 协同。`README_First.md` 回答“为什么”，`AGENTS.md` 规定“怎么做”——任何 Agent 执行任务前应先读 `AGENTS.md` 中的可执行规则。
+本文件解释本项目为何采用 README First，以及它如何与 `AGENTS.md` 协同。`README_First.md` 回答“为什么”和“从哪里读起”，`AGENTS.md` 规定“怎么做”——每次任务只需先读 `AGENTS.md` 第 0 节的最小闭环，其余规则按风险读取。
 
 ---
 
 ## 一句话定义
 
-> 先读上下文，再执行操作；先收敛不确定性，再修改文件；先验证影响，再记录变化。
+> 先读上下文，再执行操作；先收敛不确定性，再修改文件；协议重量与任务风险成正比。
+
+v2.1 将所有任务统一走完整协议，改为 L0/L1/L2 分级执行：低风险工作不承担高风险流程成本；文档漂移巡检、变更记录压缩和长期知识沉淀由定期维护完成。
 
 README First 适用于本项目中协作的所有 AI Agent，包括但不限于 Claude Code、Cursor、Codex、GitHub Copilot、Devin，以及任何能读写仓库的自动化工具。它不绑定任何特定厂商。
 
@@ -37,14 +41,19 @@ README First 把这些问题转化为工程制度：让每次工作都沿稳定�
 ```txt
 project/
 ├── AGENTS.md                 # AI 全局行为规则（Agent 每次执行前必读）
+├── VERSION                   # README First 协议版本
 ├── README_First.md           # 本文件：协作原则说明
 ├── README.md                 # 项目总览与入口
 ├── .ai/
+│   ├── architecture/          # 当前稳定架构与跨目录边界
 │   ├── readme-contracts.json   # README 类型、预算和 P0 漂移检查配置
 │   ├── changes/              # AI 变更记录
 │   │   └── YYYY-MM-DD.md
 │   └── decisions/            # 架构决策记录
 │       └── 0001-example.md
+│   ├── glossary.md            # 术语表（按需启用）
+│   ├── handoff.md             # 会话交接（按需启用）
+│   └── plans/                 # L2 多阶段计划（按需启用）
 ├── src/
 │   └── README.md             # 目录级上下文说明
 └── tests/
@@ -61,29 +70,39 @@ project/
 - **目录级 `README.md`**：局部上下文契约层。每个关键目录的职责、核心文件、维护约定、依赖边界、验证方式。
 - **`.ai/changes/`**：修改记录层。补足 git diff 不表达的内容——为什么改、如何验证、对未来维护的影响。
 - **`.ai/decisions/`**：架构决策层。为什么选某方案、为什么废弃旧结构、哪些边界需长期遵守。
+- **`.ai/architecture/`**：当前架构层。记录跨目录边界、README First 当前状态和稳定文档契约，不记录单次变更流水账。
+- **`.ai/glossary.md` / `.ai/handoff.md`**：触发式扩展，分别用于共享术语和未完成任务的跨会话交接。
 - **`.ai/readme-contracts.json` + `scripts/readme-contract-check.ps1`**：自动防漂移层。枚举维护源 README，检查类型、断链、核心文件表、本机路径、高置信 secret-like 文本和 README First 读取链。
 
 ---
 
 ## 核心设计原则
 
-### 1. 先读后改
+### 1. 先读后改，够用即停
 
-执行任何查询、新增、修改、删除前，先按 `AGENTS.md` 规定的顺序读取相关 README 与上下文。某级目录缺 README 时，向上读取上级 README 并谨慎推断，关键目录则先补建。
+执行任何查询、新增、修改、删除前，先按 `AGENTS.md` 的 L0/L1/L2 路由读取相关 README 与上下文。某级目录缺 README 时，向上读取上级 README 并谨慎推断，关键目录则先补建；当本次偶然不确定性已消除，就停止扩大阅读。
 
-### 2. 局部契约优先
+### 2. 协议重量与风险成正比
+
+L0 是可一次 revert 的显而易见小修改，L1 是单模块常规工作，L2 包括公共 API、共享类型、配置、路由、架构、删除和跨模块变更。定级不确定时升级；执行中发现 L2 特征时立即升级。
+
+### 3. 局部契约优先
 
 规则具有层级：`AGENTS.md`（全局）→ 根 README（整体）→ 上级目录 README（通用）→ 当前目录 README（局部）→ 代码与测试（事实来源）。目录级冲突时，以更靠近目标文件的 README 为准；README 与代码冲突时，必须指出并判断是文档过时还是代码偏离，不得静默选择。
 
-### 3. 文档只记录长期知识
+### 4. 文档只记录长期知识
 
 README 记录：目录职责、模块边界、公共接口、文件组织方式、命名与依赖规则、测试与验证方式、未来维护者需知道的长期约定。README **不**记录：普通 bug 修复、临时调试信息、无长期价值的改动、可从 git diff 看出的细节、与目录职责无关的备忘。具体修改记入 `.ai/changes/`，架构决策记入 `.ai/decisions/`。
 
-### 4. 记录原因，而不仅是结果
+### 5. 记录原因，而不仅是结果
 
 diff 只说明“改了什么”，不稳定说明“为什么”。因此每次变更应记录目标、涉及目录、内容、原因、影响范围、验证方式、是否更新 README、后续注意事项，让后续 Agent 或人类理解修改意图。
 
-### 5. 轻量、渐进、可维护
+### 6. 平时轻记录，定期重整理
+
+L0 不写 changes，L1 使用短记录，L2 使用完整记录和新鲜验证证据。系统性漂移巡检、changes 压缩归档与知识沉淀不占用日常任务，按 2–4 周、重大重构后或 changes 累积约 15 个日文件时集中进行。
+
+### 7. 轻量、渐进、可维护
 
 不必一开始全目录覆盖。优先覆盖：业务核心目录、高频修改目录、公共组件目录、API/service/store/types/hooks 等共享能力目录、tests/scripts/config 等影响全局的目录。不为 `node_modules/`、`dist/`、`build/`、`coverage/`、`.cache/`、`tmp/`、`logs/` 等构建产物或缓存目录创建 README。
 
@@ -107,17 +126,10 @@ README 不是一种文档。修改或新增 README 前先判断类型：
 每次执行项目任务，Agent 应遵循（详见 `AGENTS.md`）：
 
 ```txt
-1. 识别任务类型，把 prompt 转换为任务契约
-2. 定位影响范围
-3. 阅读 AGENTS.md → README_First.md → 根 README.md → 目标路径上各级目录 README.md
-4. 先消除偶然不确定性，再压缩本质不确定性（按风险等级处理）
-5. 检查 README 与实际代码是否一致
-6. 执行查询、新增、修改或删除（最小、保守、可回滚）
-7. 运行或说明验证方式；README 体系变更应运行 `scripts/readme-contract-check.ps1 -FailOnWarnings`
-8. 按触发条件更新 README
-9. 在 .ai/changes/ 中记录本次变更
-10. 输出最终实施报告（含关键假设、剩余不确定性、验证结果）
+定级（L0 / L1 / L2）→ 按级读取并执行 → 按级记录和报告
 ```
+
+L0 只读最近目录 README、无需 changes；L1 读取目标路径 README 和相关代码测试，写短记录；L2 增加 `.ai/architecture/` 与必要历史记录，使用完整契约和完整记录。README 体系变更应运行 `scripts/readme-contract-check.ps1 -FailOnWarnings`。
 
 当用户没有给出明确目标文件或目录时，不应跳过 README First。Agent 应先用 prompt 线索定位最小影响范围：从根 README、`tasks/todo.md`、`.ai/changes/`、`.ai/decisions/` 和目录 README 查历史背景，再用代码搜索确认实现、调用方和测试。只有定位失败且继续会变成凭空猜测时，才向用户提出阻塞性问题。
 
@@ -152,11 +164,15 @@ README 不是一种文档。修改或新增 README 前先判断类型：
 1. **扫描与识别**：扫描目录，排除构建产物/依赖/缓存目录，识别关键目录与已有文档。
 2. **建立全局规则**：创建或合并 `AGENTS.md`。
 3. **建立项目总览**：补全根 `README.md`，加入 README First 说明并指向关键目录 README。
-4. **建立目录级上下文**：按 P0（src/app/server/api/db/config/tests…）→ P1（hooks/utils/types/store/routes/scripts/docs）→ P2（examples/fixtures/mocks/tools）优先级补全目录 README。
+4. **建立目录级上下文**：只为 P0 关键目录建立 README（通常 3–7 个），其余按实际变更渐进补齐。
 5. **建立记录机制**：创建 `.ai/changes/` 与 `.ai/decisions/`，写入模板并记录本次初始化。
 6. **验证与修正**：检查 README 是否引用不存在的文件、目录职责是否与代码一致、是否误覆盖已有 README，输出实施报告与风险清单。
 
 > 已有 README 或 `AGENTS.md` 时，必须**合并补充，不得直接覆盖**；所有内容必须基于当前代码和目录结构，不得凭空编造。
+
+## 版本与升级
+
+当前协议版本由根 `VERSION` 与 `AGENTS.md` 首行印记共同标识。升级时合并上游通用协议与本项目专属规则，不重写既有 changes、decisions 或业务目录契约；新增长期架构边界时同步更新 `.ai/architecture/`。
 
 ---
 
