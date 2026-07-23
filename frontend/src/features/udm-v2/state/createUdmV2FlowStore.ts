@@ -12,6 +12,7 @@ import type {
 } from "@xyflow/react"
 import type { StateCreator } from "zustand"
 
+import { validateNetworkV2Connection } from "../edges/connectionRules"
 import {
   DEFAULT_NETWORK_V2_EDGE_KIND,
   type NetworkV2EdgeData,
@@ -65,6 +66,7 @@ export type UdmV2FlowActions = {
   updateEdgeData: (edgeId: string, patch: Partial<NetworkV2EdgeData>) => void
   setSelectedNodeId: (id: string | null) => void
   setSelectedEdgeId: (id: string | null) => void
+  clearSelection: () => void
   setActiveEdgeKind: (kind: NetworkV2EdgeKind) => void
   setFlowConstraints: (constraints: NetworkV2FlowConstraint[]) => void
   validateGraph: () => NetworkV2ValidationReport
@@ -112,6 +114,24 @@ const initialState = (): UdmV2FlowState => ({
   showMiniMap: true,
 })
 
+const persistentNodeChange = (change: NodeChange) =>
+  ["add", "remove", "position", "replace"].includes(change.type)
+
+const persistentEdgeChange = (change: EdgeChange) =>
+  ["add", "remove", "replace"].includes(change.type)
+
+function withoutRemovedEdges(
+  constraints: NetworkV2FlowConstraint[],
+  removed: Set<string>,
+) {
+  return constraints.flatMap((constraint) => {
+    if (constraint.edge_id && removed.has(constraint.edge_id)) return []
+    const edge_ids = constraint.edge_ids?.filter((id) => !removed.has(id))
+    if (constraint.edge_ids && !edge_ids?.length) return []
+    return [{ ...constraint, edge_ids }]
+  })
+}
+
 export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
   set,
   get,
@@ -121,27 +141,53 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
   setNodes: (nodes) => set({ nodes, dirty: true }),
   setEdges: (edges) => set({ edges, dirty: true }),
   onNodesChange: (changes: NodeChange<Node<NetworkV2NodeData>>[]) => {
+    const state = get()
+    const removedNodes = new Set(
+      changes.flatMap((change) =>
+        change.type === "remove" ? [change.id] : [],
+      ),
+    )
+    const removedEdges = new Set(
+      state.edges
+        .filter(
+          (edge) =>
+            removedNodes.has(edge.source) || removedNodes.has(edge.target),
+        )
+        .map((edge) => edge.id),
+    )
     set({
-      nodes: applyNodeChanges<Node<NetworkV2NodeData>>(changes, get().nodes),
-      dirty: true,
+      nodes: applyNodeChanges<Node<NetworkV2NodeData>>(changes, state.nodes),
+      edges: state.edges.filter((edge) => !removedEdges.has(edge.id)),
+      flowConstraints: withoutRemovedEdges(state.flowConstraints, removedEdges),
+      dirty: changes.some(persistentNodeChange) ? true : state.dirty,
     })
   },
   onEdgesChange: (changes: EdgeChange<Edge<NetworkV2EdgeData>>[]) => {
+    const state = get()
+    const removedEdges = new Set(
+      changes.flatMap((change) =>
+        change.type === "remove" ? [change.id] : [],
+      ),
+    )
     set({
-      edges: applyEdgeChanges<Edge<NetworkV2EdgeData>>(changes, get().edges),
-      dirty: true,
+      edges: applyEdgeChanges<Edge<NetworkV2EdgeData>>(changes, state.edges),
+      flowConstraints: withoutRemovedEdges(state.flowConstraints, removedEdges),
+      dirty: changes.some(persistentEdgeChange) ? true : state.dirty,
     })
   },
   onConnect: (connection: Connection) => {
-    if (!connection.source || !connection.target) {
-      return
-    }
     const state = get()
+    const validation = validateNetworkV2Connection({
+      connection,
+      nodes: state.nodes,
+      edgeKind: state.activeEdgeKind,
+    })
+    if (!validation.valid) return
     const newEdge: Edge<NetworkV2EdgeData> = {
       ...connection,
-      id: `edge-${Date.now()}`,
-      source: connection.source,
-      target: connection.target,
+      id: `edge-${crypto.randomUUID()}`,
+      source: connection.source!,
+      target: connection.target!,
       type: networkV2EdgeTypeByKind[state.activeEdgeKind],
       data: createNetworkV2EdgeData(state.activeEdgeKind),
     }
@@ -177,12 +223,25 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
           component_policy:
             patch.component_policy ?? edge.data.component_policy,
         }
-        return { ...edge, data }
+        return {
+          ...edge,
+          type: networkV2EdgeTypeByKind[data.edge_kind],
+          data,
+        }
       }),
       dirty: true,
     }),
-  setSelectedNodeId: (id) => set({ selectedNodeId: id }),
-  setSelectedEdgeId: (id) => set({ selectedEdgeId: id }),
+  setSelectedNodeId: (id) =>
+    set({
+      selectedNodeId: id,
+      selectedEdgeId: id ? null : get().selectedEdgeId,
+    }),
+  setSelectedEdgeId: (id) =>
+    set({
+      selectedNodeId: id ? null : get().selectedNodeId,
+      selectedEdgeId: id,
+    }),
+  clearSelection: () => set({ selectedNodeId: null, selectedEdgeId: null }),
   setActiveEdgeKind: (kind) => set({ activeEdgeKind: kind }),
   setFlowConstraints: (constraints) =>
     set({ flowConstraints: constraints, dirty: true }),

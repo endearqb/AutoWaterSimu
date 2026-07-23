@@ -4,11 +4,14 @@ import {
   type SecondaryClarifierV2Config,
   createDefaultSecondaryClarifierV2Config,
 } from "../composite/secondaryClarifierV2Defaults"
+import type { NetworkV2EdgeKind } from "../edges/edgeModel"
 import { BoundaryV2Node } from "./BoundaryV2Node"
+import { ClarifierLayerV2Node } from "./ClarifierLayerV2Node"
 import { ControllerV2Node } from "./ControllerV2Node"
 import { SecondaryClarifier10LayerV2Node } from "./SecondaryClarifier10LayerV2Node"
 import { SplitterV2Node } from "./SplitterV2Node"
 import { UdmReactorV2Node } from "./UdmReactorV2Node"
+import type { NetworkV2PortKind } from "./portKinds"
 
 export type NetworkV2NodeKind =
   | "boundary"
@@ -16,6 +19,7 @@ export type NetworkV2NodeKind =
   | "secondary_clarifier_10_layer"
   | "splitter"
   | "controller"
+  | "clarifier_layer"
 
 export type NetworkV2ReactFlowNodeType =
   | "boundary_v2"
@@ -23,6 +27,7 @@ export type NetworkV2ReactFlowNodeType =
   | "secondary_clarifier_10_layer_v2"
   | "splitter_v2"
   | "controller_v2"
+  | "clarifier_layer_v2"
 
 export type NetworkV2PortRole = "inlet" | "outlet" | "signal_in" | "signal_out"
 
@@ -33,6 +38,8 @@ export type NetworkV2Port = {
   label: string
   role: NetworkV2PortRole
   placement: NetworkV2PortPlacement
+  port_kind?: NetworkV2PortKind
+  edgeKinds?: NetworkV2EdgeKind[]
 }
 
 export type SecondaryClarifierV2CompositeData = SecondaryClarifierV2Config
@@ -85,6 +92,7 @@ export const networkV2NodeTypeByKind: Record<
   secondary_clarifier_10_layer: "secondary_clarifier_10_layer_v2",
   splitter: "splitter_v2",
   controller: "controller_v2",
+  clarifier_layer: "clarifier_layer_v2",
 }
 
 export const NETWORK_V2_NODE_KIND_OPTIONS: Array<{
@@ -154,8 +162,20 @@ export function createNetworkV2NodeData(
       volume_m3: 1000,
       model_binding: { model_kind: "udm", reaction_enabled: false },
       ports: [
-        { id: "in", label: "In", role: "inlet", placement: "left" },
-        { id: "out", label: "Out", role: "outlet", placement: "right" },
+        {
+          id: "in",
+          label: "In",
+          role: "inlet",
+          placement: "left",
+          port_kind: "hydraulic_in",
+        },
+        {
+          id: "out",
+          label: "Out",
+          role: "outlet",
+          placement: "right",
+          port_kind: "hydraulic_out",
+        },
       ],
     }
   }
@@ -170,15 +190,48 @@ export function createNetworkV2NodeData(
       model_binding: passiveBinding(),
       composite: createDefaultSecondaryClarifierV2Config(),
       ports: [
-        { id: "feed", label: "Feed", role: "inlet", placement: "left" },
+        {
+          id: "feed",
+          label: "Feed",
+          role: "inlet",
+          placement: "left",
+          port_kind: "hydraulic_in",
+        },
         {
           id: "effluent",
           label: "Effluent",
           role: "outlet",
           placement: "right",
+          port_kind: "hydraulic_out",
         },
-        { id: "ras", label: "RAS", role: "outlet", placement: "bottom" },
-        { id: "was", label: "WAS", role: "outlet", placement: "bottom" },
+        {
+          id: "ras",
+          label: "RAS",
+          role: "outlet",
+          placement: "bottom",
+          port_kind: "hydraulic_out",
+        },
+        {
+          id: "was",
+          label: "WAS",
+          role: "outlet",
+          placement: "bottom",
+          port_kind: "hydraulic_out",
+        },
+        {
+          id: "settling_in",
+          label: "Settling In",
+          role: "inlet",
+          placement: "top",
+          port_kind: "settling_in",
+        },
+        {
+          id: "settling_out",
+          label: "Settling Out",
+          role: "outlet",
+          placement: "bottom",
+          port_kind: "settling_out",
+        },
       ],
     }
   }
@@ -191,9 +244,27 @@ export function createNetworkV2NodeData(
       process_unit_type: "splitter",
       model_binding: passiveBinding(),
       ports: [
-        { id: "in", label: "In", role: "inlet", placement: "left" },
-        { id: "out_a", label: "Out A", role: "outlet", placement: "right" },
-        { id: "out_b", label: "Out B", role: "outlet", placement: "bottom" },
+        {
+          id: "in",
+          label: "In",
+          role: "inlet",
+          placement: "left",
+          port_kind: "hydraulic_in",
+        },
+        {
+          id: "out_a",
+          label: "Out A",
+          role: "outlet",
+          placement: "right",
+          port_kind: "hydraulic_out",
+        },
+        {
+          id: "out_b",
+          label: "Out B",
+          role: "outlet",
+          placement: "bottom",
+          port_kind: "hydraulic_out",
+        },
       ],
     }
   }
@@ -211,12 +282,14 @@ export function createNetworkV2NodeData(
           label: "Signal In",
           role: "signal_in",
           placement: "left",
+          port_kind: "signal_in",
         },
         {
           id: "signal_out",
           label: "Signal Out",
           role: "signal_out",
           placement: "right",
+          port_kind: "signal_out",
         },
       ],
     }
@@ -232,7 +305,15 @@ export function createNetworkV2NodeData(
       boundary_kind: "source",
       feed_composition: defaultInitialConditions(),
     },
-    ports: [{ id: "out", label: "Out", role: "outlet", placement: "right" }],
+    ports: [
+      {
+        id: "out",
+        label: "Out",
+        role: "outlet",
+        placement: "right",
+        port_kind: "hydraulic_out",
+      },
+    ],
   }
 }
 
@@ -254,4 +335,5 @@ export const networkV2NodeTypes: NodeTypes = {
   secondary_clarifier_10_layer_v2: SecondaryClarifier10LayerV2Node,
   splitter_v2: SplitterV2Node,
   controller_v2: ControllerV2Node,
+  clarifier_layer_v2: ClarifierLayerV2Node,
 }

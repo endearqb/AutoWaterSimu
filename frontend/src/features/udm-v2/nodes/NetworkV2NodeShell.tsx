@@ -1,15 +1,25 @@
-import { Box, HStack, Text } from "@chakra-ui/react"
-import { Handle, Position } from "@xyflow/react"
+import { Box, HStack, Input, Text } from "@chakra-ui/react"
+import { Handle, Position, useUpdateNodeInternals } from "@xyflow/react"
 import type { LucideIcon } from "lucide-react"
-import type { CSSProperties } from "react"
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  useEffect,
+  useState,
+} from "react"
 
+import { useNetworkV2Interaction } from "../interaction/NetworkV2InteractionContext"
+import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
+import { networkV2NodeSurface } from "../theme/networkV2Theme"
 import type {
   NetworkV2NodeData,
   NetworkV2Port,
   NetworkV2PortPlacement,
 } from "./nodeTypes"
+import { edgeKindsForPort, isTargetPort } from "./portKinds"
 
 type NetworkV2NodeShellProps = {
+  id: string
   data: NetworkV2NodeData
   selected?: boolean
   accent: string
@@ -23,9 +33,6 @@ const positionByPlacement: Record<NetworkV2PortPlacement, Position> = {
   top: Position.Top,
   bottom: Position.Bottom,
 }
-
-const isTargetPort = (port: NetworkV2Port) =>
-  port.role === "inlet" || port.role === "signal_in"
 
 function handleStyle(
   port: NetworkV2Port,
@@ -42,49 +49,114 @@ function handleStyle(
 }
 
 export function NetworkV2NodeShell({
+  id,
   data,
   selected,
   accent,
   icon: Icon,
   subtitle,
 }: NetworkV2NodeShellProps) {
+  const { activeEdgeKind, connectionInProgress, hoveredNodeId } =
+    useNetworkV2Interaction()
+  const updateNodeData = useUdmV2FlowStore((state) => state.updateNodeData)
+  const updateNodeInternals = useUpdateNodeInternals()
+  const shouldShow =
+    Boolean(selected) || hoveredNodeId === id || connectionInProgress
+  const [handlesVisible, setHandlesVisible] = useState(shouldShow)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(data.label)
+
+  useEffect(() => {
+    if (shouldShow) {
+      setHandlesVisible(true)
+      return
+    }
+    const timer = window.setTimeout(() => setHandlesVisible(false), 500)
+    return () => window.clearTimeout(timer)
+  }, [shouldShow])
+
+  const commitLabel = () => {
+    const label = draft.trim()
+    if (label && label !== data.label) {
+      updateNodeData(id, { label })
+      updateNodeInternals(id)
+    } else {
+      setDraft(data.label)
+    }
+    setEditing(false)
+  }
+
+  const onLabelKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    event.stopPropagation()
+    if (event.key === "Enter") commitLabel()
+    if (event.key === "Escape") {
+      setDraft(data.label)
+      setEditing(false)
+    }
+  }
+
   return (
     <Box
       as="fieldset"
       aria-label={`${data.label} ${data.node_kind} node`}
-      minW="168px"
-      maxW="220px"
-      bg="white"
-      borderWidth={selected ? "2px" : "1px"}
-      borderColor={selected ? accent : "border"}
-      borderRadius="6px"
-      boxShadow={selected ? "0 10px 24px rgba(15, 23, 42, 0.18)" : "sm"}
+      css={networkV2NodeSurface({
+        accent,
+        selected: Boolean(selected),
+        tint: "rgba(248,250,252,.8)",
+      })}
       px={3}
       py={2}
     >
-      {data.ports.map((port) => (
-        <Handle
-          key={port.id}
-          id={port.id}
-          type={isTargetPort(port) ? "target" : "source"}
-          position={positionByPlacement[port.placement]}
-          aria-label={`${data.label} ${port.label} port`}
-          title={port.label}
-          style={{
-            width: 10,
-            height: 10,
-            border: "2px solid white",
-            background: accent,
-            ...handleStyle(port, data.ports),
-          }}
-        />
-      ))}
+      {data.ports.map((port) => {
+        const compatible = edgeKindsForPort(port).includes(activeEdgeKind)
+        return (
+          <Handle
+            key={port.id}
+            id={port.id}
+            type={isTargetPort(port) ? "target" : "source"}
+            position={positionByPlacement[port.placement]}
+            aria-label={`${data.label} ${port.label} port`}
+            title={port.label}
+            style={{
+              width: 8,
+              height: 8,
+              border: "1px solid rgba(255,255,255,.9)",
+              background: accent,
+              opacity: handlesVisible ? (compatible ? 1 : 0.18) : 0,
+              pointerEvents: handlesVisible && compatible ? "auto" : "none",
+              transition: "opacity .16s ease",
+              ...handleStyle(port, data.ports),
+            }}
+          />
+        )
+      })}
 
       <HStack gap={2} align="center">
         <Icon size={16} color={accent} />
-        <Text fontWeight="700" fontSize="sm" lineHeight="1.2">
-          {data.label}
-        </Text>
+        {editing ? (
+          <Input
+            className="nodrag"
+            aria-label="Rename node"
+            value={draft}
+            size="xs"
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={commitLabel}
+            onKeyDown={onLabelKeyDown}
+            autoFocus
+          />
+        ) : (
+          <Text
+            fontWeight="700"
+            fontSize="sm"
+            lineHeight="1.2"
+            onDoubleClick={(event) => {
+              event.stopPropagation()
+              setEditing(true)
+            }}
+          >
+            {data.label}
+          </Text>
+        )}
       </HStack>
       <Text mt={1} fontSize="xs" color="fg.muted">
         {subtitle}

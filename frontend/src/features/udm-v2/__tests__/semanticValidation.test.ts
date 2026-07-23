@@ -37,7 +37,9 @@ const edge = (
 ): Edge<NetworkV2EdgeData> => ({
   id,
   source: "source",
+  sourceHandle: "out",
   target: "reactor",
+  targetHandle: "in",
   type,
   data,
 })
@@ -56,10 +58,10 @@ describe("network v2 semantic validation", () => {
     })
 
     expect(report.status).toBe("invalid")
-    expect(report.diagnostics[0].code).toBe(
-      "SETTLING_VOLUME_CONTRIBUTION_FORBIDDEN",
-    )
-    expect(mapDiagnosticToInspectorTarget(report.diagnostics[0])).toEqual({
+    const diagnostic = report.diagnostics.find(
+      (item) => item.code === "SETTLING_VOLUME_CONTRIBUTION_FORBIDDEN",
+    )!
+    expect(mapDiagnosticToInspectorTarget(diagnostic)).toEqual({
       tab: "edge",
       elementId: "settling-1",
       fieldPath: "flow_spec",
@@ -79,10 +81,12 @@ describe("network v2 semantic validation", () => {
       flowConstraints: [],
     })
 
-    expect(report.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
-      "SIGNAL_VOLUME_CONTRIBUTION_FORBIDDEN",
-      "SIGNAL_MASS_CONTRIBUTION_FORBIDDEN",
-    ])
+    expect(report.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        "SIGNAL_VOLUME_CONTRIBUTION_FORBIDDEN",
+        "SIGNAL_MASS_CONTRIBUTION_FORBIDDEN",
+      ]),
+    )
   })
 
   it("rejects unknown component policy references", () => {
@@ -101,8 +105,10 @@ describe("network v2 semantic validation", () => {
       flowConstraints: [],
     })
 
-    expect(report.diagnostics[0].code).toBe("UNKNOWN_COMPONENT_IN_POLICY")
-    expect(report.diagnostics[0].fieldPath).toBe("component_policy.include")
+    const diagnostic = report.diagnostics.find(
+      (item) => item.code === "UNKNOWN_COMPONENT_IN_POLICY",
+    )!
+    expect(diagnostic.fieldPath).toBe("component_policy.include")
   })
 
   it("rejects missing edge references and invalid flow constraint values", () => {

@@ -11174,3 +11174,45 @@
 - Added Flow edge mode selection plus hydraulic/pump/settling/signal rendering and inspector fields while preserving legacy `flow` import/export behavior.
 - Updated README contracts for contracts, API/domain notes, Flow edges, stores, and shared types.
 - Validation passed: contracts pytest, frontend typecheck, Go focused tests, README contract check, and `git diff --check`. `scripts/check-contracts.ps1` schema tests passed but its final drift gate returned non-zero because this task intentionally changed OpenAPI and generated client files before commit.
+# 2026-07-11 UDM Network v2 独立前端实时流量平衡
+
+- [x] 对照 overlay 计划与当前独立 UDM-v2 feature。
+- [x] 让 `/udm-v2` 复用原 UDM `FlowCanvas`，保持 v2 store/edge/node/service 独立。
+- [x] 增加 10 层二沉池 14-node / 22-edge 一键展开模板。
+- [x] 增加浏览器侧实时流量方程求解、残差/秩/冲突/泵边界诊断和边标签展示。
+- [x] 补 focused Vitest，并运行 typecheck、unit、boundary gate。
+
+## Review
+
+- `FlowCanvas` 只增加 edge/drop/overlay 注入点，legacy `/udm` 默认行为不变。
+- 默认 `Qin=100, Qras=25, Qwas=5` 得到 `Qeff=70`、下部流量 30、上部流量 70。
+
+# 2026-07-23 UDM v2 画布开发方案 v1.0
+
+- [x] 读取 README First、UDM-v2 隔离文档、画布方案、相关 README、ADR 与历史记录。
+- [x] 审计当前分支、现有 UDM-v2 实现和未提交实时流量平衡改动。
+- [x] 恢复严格 hard isolation，同时保留 feature-local 实时流量平衡与二沉池展开能力。
+- [x] 完成 edge visual、endpoint lanes、连续 fan-out/fan-in path 与 render-only marker。
+- [x] 完成 canonical `port_kind`、共享连接校验、semantic/store/serializer 加固。
+- [x] 完成全屏 editor shell、浮动工作台、侧滑 Inspector、状态 overlay。
+- [x] 完成节点玻璃视觉、Handle 渐进显示、内联重命名、Load Dialog、i18n 与响应式。
+- [x] 补齐 unit、Playwright、截图与 100/300 性能覆盖。
+- [x] 运行 typecheck、unit、boundary、e2e、build、Biome 与 README contract 检查。
+- [x] 更新 README、ADR、`.ai/changes/2026-07-23.md` 与本节 Review。
+
+## Plan
+
+- 以 `.ai/plans/AutoWaterSimu_UDM_v2_Canvas_Development_Plan_v1.0.md` 的冻结决策为准。
+- 保留已有 realtime flow balance 和 clarifier canvas 功能，但迁回 `features/udm-v2/**` 的独立画布。
+- 不引入新依赖，不修改合同版本，不扩展到全局自动布线或物理子 Handle。
+
+## Review
+
+- `/udm-v2` 已改为 feature-local 全屏 editor，工作台整合 toolbar/palette/edge selector，并支持折叠、锁定、拖动；390px 首次默认折叠。
+- 四类边使用确定性 source/target endpoint lane、连续 fan-out/fan-in path、独立线型/marker 与 18px 可点击命中区；视觉状态不进入 store/payload。
+- canonical `port_kind`、共享连接规则、互斥 selection、selection dirty 过滤、edge kind/type 同步与 constraint 删除清理已由 focused tests 覆盖。
+- Inspector 选择后滑入，并分为 Element / Diagnostics / Graph；Load 已替换为 Dialog，新增文案进入 feature-local i18n。
+- 保留 feature-local 14-node / 22-edge 二沉池展开与实时流量平衡，不再复用 legacy `FlowCanvas`。
+- 验证：typecheck、17 files / 50 unit tests、boundary、build、Biome、Chromium 16 E2E、Microsoft Edge 16 E2E 均通过。
+- 截图输出：`tmp/udm-v2-canvas-v1.0/`（1440×900、1280×720、1024×768、390×844）。
+- README contract 检查已运行；仅被根 `README.md` 与 `README_zh.md` 既有的 `./release-notes.md` 断链阻塞，与本次 UDM-v2 修改无关。

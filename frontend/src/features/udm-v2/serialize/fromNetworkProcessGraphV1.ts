@@ -199,7 +199,15 @@ function fromProcessPort(port: NetworkProcessGraphV1Port): NetworkV2Port {
     id: port.port_id,
     label: port.port_id,
     role: roleByKind[port.port_kind],
-    placement: port.port_kind.endsWith("_in") ? "left" : "right",
+    port_kind: port.port_kind,
+    placement:
+      port.port_kind === "settling_in"
+        ? "top"
+        : port.port_kind === "settling_out"
+          ? "bottom"
+          : port.port_kind.endsWith("_in")
+            ? "left"
+            : "right",
   }
 }
 

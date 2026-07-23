@@ -1,5 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2
 
+> 更新于:2026-07-23 · commit 61e2259
 > 类型：contract
 > Canonical sources：
 > - `docs/rebuild/AutoWaterSimu_UDM_v2_Docs/07_udm_v2_frontend_isolation_requirements.md`
@@ -28,9 +29,12 @@
 |---|---|
 | `UdmV2Page.tsx` | `/udm-v2` 页面入口 |
 | `state/` | `useUdmV2FlowStore` 与 selectors/actions |
-| `canvas/` | `NetworkV2Canvas`、layout、toolbar、status bar |
-| `edges/` | 四类 v2 edge model、renderer 与 mode selector |
+| `canvas/` | 全屏画布、浮动工作台、Inspector drawer、Load Dialog 与状态 overlay |
+| `edges/` | 四类边、endpoint lane、连续路由、render-only 视觉与共享连接规则 |
 | `nodes/` | v2 node components 与 node type registry |
+| `interaction/` | 连接态、hover 与端口渐进显示上下文 |
+| `theme/` | feature-local 画布、节点与边视觉 token |
+| `flow/` | feature-local 实时流量平衡求解与诊断 |
 | `palette/` | v2 node palette and drag/drop source controls |
 | `inspector/` | v2 property panel 与 field editors |
 | `composite/` | SecondaryClarifier10Layer composite config 与展开 |
@@ -46,6 +50,9 @@
 3. v2 类型、组件和 helper 使用 `V2` 或 feature-local 命名，避免全局 `NetworkEdge*` 类型。
 4. 持久化 payload 必须带 `graph_family = "udm_network_v2"`。
 5. `UDM_NETWORK_NOT_EXECUTABLE_YET` 是 runtime pending 状态，不是前端错误或数值成功。
+6. `lane`、marker、interaction width 与实时流量展示是 render-only 状态，不得写入 store 或持久化 payload。
+7. 端口使用 canonical `port_kind`；交互连接与 semantic validation 共用 `edges/connectionRules.ts`。
+8. 开发环境仅通过 `window.__UDM_V2_FLOW_STORE__` 为 Playwright 注入 fixture；生产构建不暴露该入口。
 
 ## 4. 对外接口
 
@@ -81,6 +88,7 @@
 cd frontend; npm run typecheck
 cd frontend; npm run test:unit
 cd frontend; npm run check:udm-v2-boundary
+cd frontend; npx playwright test tests/udm-v2-*.spec.ts tests/v1-no-udm-v2-regression.spec.ts --project=chromium --no-deps
 ```
 
 ## 7. AI 操作提示

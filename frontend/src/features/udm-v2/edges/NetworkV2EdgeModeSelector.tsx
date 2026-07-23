@@ -6,6 +6,7 @@ import {
   NETWORK_V2_EDGE_KIND_OPTIONS,
   type NetworkV2EdgeKind,
 } from "./edgeModel"
+import { NETWORK_V2_EDGE_VISUALS } from "./edgeVisuals"
 
 type NetworkV2EdgeModeSelectorProps = {
   activeKind: NetworkV2EdgeKind
@@ -19,32 +20,12 @@ const icons: Record<NetworkV2EdgeKind, LucideIcon> = {
   signal: Radio,
 }
 
-const accentByKind: Record<NetworkV2EdgeKind, string> = {
-  hydraulic: "#2563eb",
-  pump: "#b45309",
-  settling: "#15803d",
-  signal: "#7c3aed",
-}
-
 export function NetworkV2EdgeModeSelector({
   activeKind,
   onChange,
 }: NetworkV2EdgeModeSelectorProps) {
   return (
-    <Box
-      position="absolute"
-      top={3}
-      left={3}
-      zIndex={5}
-      pointerEvents="all"
-      bg="white"
-      borderWidth="1px"
-      borderColor="border"
-      borderRadius="6px"
-      boxShadow="0 8px 20px rgba(15, 23, 42, 0.12)"
-      px={2}
-      py={2}
-    >
+    <Box px={2} py={2}>
       <HStack gap={1} align="center">
         <Text fontSize="xs" fontWeight="600" color="fg.muted" px={1}>
           Edge
@@ -52,7 +33,7 @@ export function NetworkV2EdgeModeSelector({
         {NETWORK_V2_EDGE_KIND_OPTIONS.map((option) => {
           const Icon = icons[option.kind]
           const isActive = option.kind === activeKind
-          const accent = accentByKind[option.kind]
+          const accent = NETWORK_V2_EDGE_VISUALS[option.kind].stroke
           return (
             <Button
               key={option.kind}

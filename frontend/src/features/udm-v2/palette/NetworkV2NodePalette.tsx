@@ -23,14 +23,17 @@ const icons: Record<NetworkV2NodeKind, LucideIcon> = {
   secondary_clarifier_10_layer: Layers3,
   splitter: GitBranch,
   controller: RadioTower,
+  clarifier_layer: Layers3,
 }
 
 type NetworkV2NodePaletteProps = {
   onDragStart?: (kind: NetworkV2NodeKind) => void
+  onInsertClarifier?: () => void
 }
 
 export function NetworkV2NodePalette({
   onDragStart,
+  onInsertClarifier,
 }: NetworkV2NodePaletteProps) {
   const handleDragStart =
     (kind: NetworkV2NodeKind) => (event: DragEvent<HTMLButtonElement>) => {
@@ -40,20 +43,7 @@ export function NetworkV2NodePalette({
     }
 
   return (
-    <Box
-      position="absolute"
-      top="64px"
-      left={3}
-      zIndex={5}
-      pointerEvents="all"
-      bg="white"
-      borderWidth="1px"
-      borderColor="border"
-      borderRadius="6px"
-      boxShadow="0 8px 20px rgba(15, 23, 42, 0.12)"
-      p={2}
-      w="220px"
-    >
+    <Box p={2} minW="180px">
       <Text fontSize="xs" fontWeight="700" color="fg.muted" mb={2}>
         Nodes
       </Text>
@@ -70,6 +60,11 @@ export function NetworkV2NodePalette({
               justifyContent="flex-start"
               title={option.description}
               aria-label={`Add ${option.label} node`}
+              onClick={
+                option.kind === "secondary_clarifier_10_layer"
+                  ? onInsertClarifier
+                  : undefined
+              }
             >
               <HStack gap={2} minW={0}>
                 <Icon size={15} />

@@ -62,6 +62,7 @@ export type NetworkV2EdgeData = {
   transport_model?: NetworkV2TransportModel | null
   pump?: NetworkV2PumpSpec
   signal_spec?: NetworkV2SignalSpec
+  realtime_flow_balance?: { status: string; value?: number; residual?: number }
   ui?: {
     label?: string
     diagnostics?: string[]

@@ -12,6 +12,7 @@ describe("network v2 node factory", () => {
   it("registers one renderer per v2 node type", () => {
     expect(Object.keys(networkV2NodeTypes).sort()).toEqual([
       "boundary_v2",
+      "clarifier_layer_v2",
       "controller_v2",
       "secondary_clarifier_10_layer_v2",
       "splitter_v2",

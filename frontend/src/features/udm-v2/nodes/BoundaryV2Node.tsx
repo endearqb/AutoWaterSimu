@@ -7,6 +7,7 @@ import type { NetworkV2NodeData } from "./nodeTypes"
 export function BoundaryV2Node(props: NodeProps) {
   return (
     <NetworkV2NodeShell
+      id={props.id}
       data={props.data as NetworkV2NodeData}
       selected={props.selected}
       accent="#2563eb"

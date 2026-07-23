@@ -15,6 +15,7 @@ import {
   type NetworkV2Port,
   createNetworkV2NodeData,
 } from "../nodes/nodeTypes"
+import { normalizePortKind } from "../nodes/portKinds"
 import type { NetworkV2FlowConstraint } from "./semanticValidation"
 
 export type ToNetworkProcessGraphV1Input = {
@@ -158,18 +159,9 @@ function toProcessEdge(
 }
 
 function toProcessPort(port: NetworkV2Port): NetworkProcessGraphV1Port {
-  const portKindByRole: Record<
-    NetworkV2Port["role"],
-    NetworkProcessGraphV1Port["port_kind"]
-  > = {
-    inlet: "hydraulic_in",
-    outlet: "hydraulic_out",
-    signal_in: "signal_in",
-    signal_out: "signal_out",
-  }
   return {
     port_id: port.id,
-    port_kind: portKindByRole[port.role],
+    port_kind: normalizePortKind(port),
   }
 }
 

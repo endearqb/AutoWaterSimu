@@ -168,12 +168,12 @@ test("saves, lists, loads and reloads only UDM Network v2 canvas graphs", async 
     (saveRequests[0].canvas_graph as Record<string, unknown>).graph_family,
   ).toBe("udm_network_v2")
 
-  page.once("dialog", async (dialog) => {
-    expect(dialog.message()).toContain("graph-1 - Plant A")
-    expect(dialog.message()).not.toContain("legacy")
-    await dialog.accept("graph-1")
-  })
-  await page.getByRole("button", { name: "Load" }).click()
+  await page.getByRole("button", { name: "More actions" }).click()
+  await page.getByRole("menuitem", { name: "Load graph" }).click()
+  await expect(page.getByRole("dialog")).toBeVisible()
+  await expect(page.getByRole("button", { name: /Plant A/ })).toBeVisible()
+  await expect(page.getByText("Legacy")).toHaveCount(0)
+  await page.getByRole("button", { name: /Plant A/ }).click()
   await expect(
     page.locator(".react-flow__node", { hasText: "Reactor" }),
   ).toBeVisible({ timeout: 15_000 })
@@ -185,10 +185,13 @@ test("saves, lists, loads and reloads only UDM Network v2 canvas graphs", async 
 })
 
 async function injectCanvasFixture(page: Page) {
-  await page.evaluate(async (fixture) => {
-    const storePath = "/src/features/udm-v2/state/useUdmV2FlowStore.ts"
-    const { useUdmV2FlowStore } = await import(storePath)
-    useUdmV2FlowStore.getState().replaceGraph({
+  await expect
+    .poll(() => page.evaluate(() => Boolean(window.__UDM_V2_FLOW_STORE__)))
+    .toBe(true)
+  await page.evaluate((fixture) => {
+    const store = window.__UDM_V2_FLOW_STORE__
+    if (!store) throw new Error("UDM_V2_DEV_STORE_UNAVAILABLE")
+    store.getState().replaceGraph({
       name: "Plant A",
       nodes: fixture.nodes,
       edges: fixture.edges,

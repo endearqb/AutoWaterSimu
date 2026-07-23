@@ -1,16 +1,19 @@
-import { Button, HStack } from "@chakra-ui/react"
+import { Button, HStack, IconButton, Menu, Portal } from "@chakra-ui/react"
 import {
   Download,
   FilePlus,
   FolderOpen,
+  Map as MapIcon,
+  MoreHorizontal,
   Play,
   Save,
   ShieldCheck,
   Upload,
 } from "lucide-react"
-import { type ChangeEvent, useRef } from "react"
+import { type ChangeEvent, useRef, useState } from "react"
 
 import type { NetworkProcessGraphV1 } from "../contracts/generated"
+import { useUdmV2Messages } from "../i18n"
 import { validateNetworkProcessGraphContract } from "../serialize/contractValidation"
 import { fromNetworkProcessGraphV1 } from "../serialize/fromNetworkProcessGraphV1"
 import {
@@ -21,17 +24,26 @@ import {
   graphStateFromStandalonePayload,
   isUdmV2StandalonePayload,
 } from "../services/standaloneFlowchartAdapter"
+import type { UdmV2GraphSummary } from "../services/standaloneFlowchartAdapter"
 import { udmV2ComputeService } from "../services/udmV2ComputeService"
 import { udmV2FlowchartService } from "../services/udmV2FlowchartService"
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
+import { NetworkV2LoadDialog } from "./NetworkV2LoadDialog"
 
 export function NetworkV2Toolbar() {
+  const text = useUdmV2Messages()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [loadOpen, setLoadOpen] = useState(false)
+  const [loadError, setLoadError] = useState(false)
+  const [loadingGraphs, setLoadingGraphs] = useState(false)
+  const [graphs, setGraphs] = useState<UdmV2GraphSummary[]>([])
   const newGraph = useUdmV2FlowStore((state) => state.newGraph)
   const validateGraph = useUdmV2FlowStore((state) => state.validateGraph)
   const replaceGraph = useUdmV2FlowStore((state) => state.replaceGraph)
   const setCurrentGraph = useUdmV2FlowStore((state) => state.setCurrentGraph)
   const setRuntimeStatus = useUdmV2FlowStore((state) => state.setRuntimeStatus)
+  const showMiniMap = useUdmV2FlowStore((state) => state.showMiniMap)
+  const setShowMiniMap = useUdmV2FlowStore((state) => state.setShowMiniMap)
 
   const saveGraph = async (saveAs = false) => {
     const state = useUdmV2FlowStore.getState()
@@ -58,31 +70,32 @@ export function NetworkV2Toolbar() {
     }
   }
 
-  const loadGraph = async () => {
+  const openLoadDialog = async () => {
+    setLoadOpen(true)
+    setLoadError(false)
+    setLoadingGraphs(true)
+    try {
+      setGraphs(await udmV2FlowchartService.listGraphs())
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoadingGraphs(false)
+    }
+  }
+
+  const loadGraph = async (selectedId: string) => {
     setRuntimeStatus("saving")
     try {
-      const graphs = await udmV2FlowchartService.listGraphs()
-      if (graphs.length === 0) {
-        setRuntimeStatus("idle")
-        return
-      }
-      const selectedId = window.prompt(
-        graphs.map((graph) => `${graph.id} - ${graph.name}`).join("\n"),
-        graphs[0].id,
-      )
-      if (!selectedId) {
-        setRuntimeStatus("idle")
-        return
-      }
-      const summary = graphs.find((graph) => graph.id === selectedId.trim())
-      const payload = await udmV2FlowchartService.loadGraph(selectedId.trim())
+      const summary = graphs.find((graph) => graph.id === selectedId)
+      const payload = await udmV2FlowchartService.loadGraph(selectedId)
       replaceGraph(
         graphStateFromStandalonePayload(payload, {
-          id: selectedId.trim(),
+          id: selectedId,
           name: summary?.name,
           version: summary?.version,
         }),
       )
+      setLoadOpen(false)
     } catch {
       setRuntimeStatus("failed")
     }
@@ -163,62 +176,91 @@ export function NetworkV2Toolbar() {
   }
 
   return (
-    <HStack gap={2} flexWrap="wrap">
-      <Button size="sm" variant="outline" onClick={newGraph}>
-        <FilePlus size={16} />
-        New
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => saveGraph(false)}>
-        <Save size={16} />
-        Save
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => saveGraph(true)}>
-        <Save size={16} />
-        Save As
-      </Button>
-      <Button size="sm" variant="outline" onClick={loadGraph}>
-        <FolderOpen size={16} />
-        Load
-      </Button>
-      <Button size="sm" variant="outline" onClick={exportJson}>
-        <Download size={16} />
-        Export JSON
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <Upload size={16} />
-        Import JSON
-      </Button>
-      <input
-        ref={fileInputRef}
-        aria-label="Import UDM Network v2 JSON"
-        hidden
-        type="file"
-        accept="application/json,.json"
-        onChange={importJson}
+    <>
+      <HStack gap={2} flexWrap="wrap">
+        <Button size="sm" variant="outline" onClick={() => saveGraph(false)}>
+          <Save size={16} />
+          {text.save}
+        </Button>
+        <input
+          ref={fileInputRef}
+          aria-label="Import UDM Network v2 JSON"
+          hidden
+          type="file"
+          accept="application/json,.json"
+          onChange={importJson}
+        />
+        <Button
+          size="sm"
+          variant="solid"
+          colorPalette="blue"
+          onClick={validateGraph}
+        >
+          <ShieldCheck size={16} />
+          {text.validate}
+        </Button>
+        <Button
+          size="sm"
+          variant="solid"
+          colorPalette="green"
+          onClick={submitGraph}
+        >
+          <Play size={16} />
+          {text.submit}
+        </Button>
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <IconButton
+              aria-label={text.more}
+              title={text.more}
+              size="sm"
+              variant="outline"
+            >
+              <MoreHorizontal size={16} />
+            </IconButton>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content>
+                <Menu.Item value="new" onClick={newGraph}>
+                  <FilePlus size={15} /> {text.newGraph}
+                </Menu.Item>
+                <Menu.Item value="save-as" onClick={() => saveGraph(true)}>
+                  <Save size={15} /> {text.saveAs}
+                </Menu.Item>
+                <Menu.Item value="load" onClick={openLoadDialog}>
+                  <FolderOpen size={15} /> {text.load}
+                </Menu.Item>
+                <Menu.Item value="export" onClick={exportJson}>
+                  <Download size={15} /> {text.exportJson}
+                </Menu.Item>
+                <Menu.Item
+                  value="import"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={15} /> {text.importJson}
+                </Menu.Item>
+                <Menu.Item
+                  value="minimap"
+                  onClick={() => setShowMiniMap(!showMiniMap)}
+                >
+                  <MapIcon size={15} />
+                  {showMiniMap ? text.hideMiniMap : text.showMiniMap}
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
+      </HStack>
+      <NetworkV2LoadDialog
+        open={loadOpen}
+        loading={loadingGraphs}
+        error={loadError}
+        graphs={graphs}
+        onClose={() => setLoadOpen(false)}
+        onLoad={loadGraph}
       />
-      <Button
-        size="sm"
-        variant="solid"
-        colorPalette="blue"
-        onClick={validateGraph}
-      >
-        <ShieldCheck size={16} />
-        Validate
-      </Button>
-      <Button
-        size="sm"
-        variant="solid"
-        colorPalette="green"
-        onClick={submitGraph}
-      >
-        <Play size={16} />
-        Submit
-      </Button>
-    </HStack>
+    </>
   )
 }
 

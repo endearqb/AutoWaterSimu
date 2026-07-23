@@ -1,5 +1,12 @@
-import { Box, Flex, Heading, Text } from "@chakra-ui/react"
-import type { ReactNode } from "react"
+import { Box } from "@chakra-ui/react"
+import { type ReactNode, useEffect, useState } from "react"
+
+import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
+import { NetworkV2FloatingWorkbench } from "./NetworkV2FloatingWorkbench"
+import { NetworkV2InspectorDrawer } from "./NetworkV2InspectorDrawer"
+import { NetworkV2StatusOverlay } from "./NetworkV2StatusOverlay"
+
+const PIN_KEY = "udm-v2-inspector-pinned"
 
 type NetworkV2FlowLayoutProps = {
   canvas: ReactNode
@@ -14,43 +21,55 @@ export function NetworkV2FlowLayout({
   statusBar,
   toolbar,
 }: NetworkV2FlowLayoutProps) {
+  const selectedNodeId = useUdmV2FlowStore((state) => state.selectedNodeId)
+  const selectedEdgeId = useUdmV2FlowStore((state) => state.selectedEdgeId)
+  const clearSelection = useUdmV2FlowStore((state) => state.clearSelection)
+  const [pinned, setPinned] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.localStorage.getItem(PIN_KEY) === "true",
+  )
+  const open = pinned || Boolean(selectedNodeId || selectedEdgeId)
+
+  useEffect(() => {
+    window.localStorage.setItem(PIN_KEY, String(pinned))
+  }, [pinned])
+
   return (
-    <Flex direction="column" h="calc(100vh - 32px)" minH="640px" gap={3}>
-      <Flex align="center" justify="space-between" gap={4}>
-        <Box>
-          <Heading as="h1" size="lg" letterSpacing="0">
-            UDM Network v2
-          </Heading>
-          <Text color="fg.muted" fontSize="sm">
-            Runtime status is pending until the worker implementation lands.
-          </Text>
-        </Box>
-        {toolbar}
-      </Flex>
-
-      <Flex flex="1" minH={0} gap={3}>
-        <Box
-          flex="1"
-          minW={0}
-          borderWidth="1px"
-          borderColor="border"
-          bg="bg"
-          overflow="hidden"
-        >
-          {canvas}
-        </Box>
-        <Box
-          w={{ base: "280px", xl: "340px" }}
-          borderWidth="1px"
-          borderColor="border"
-          bg="bg"
-          overflow="auto"
-        >
-          {inspector}
-        </Box>
-      </Flex>
-
+    <Box
+      h="100dvh"
+      minH="520px"
+      position="relative"
+      overflow="hidden"
+      bg="bg.subtle"
+      data-udm-v2-editor
+    >
+      <Box
+        position="absolute"
+        insetY={0}
+        left={0}
+        right={{ base: 0, md: open ? "360px" : 0 }}
+        transition="right .18s ease"
+        css={{
+          "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+        }}
+      >
+        {canvas}
+      </Box>
+      <NetworkV2FloatingWorkbench toolbar={toolbar} />
+      <NetworkV2StatusOverlay />
       {statusBar}
-    </Flex>
+      <NetworkV2InspectorDrawer
+        isOpen={open}
+        pinned={pinned}
+        onPinChange={setPinned}
+        onClose={() => {
+          setPinned(false)
+          clearSelection()
+        }}
+      >
+        {inspector}
+      </NetworkV2InspectorDrawer>
+    </Box>
   )
 }

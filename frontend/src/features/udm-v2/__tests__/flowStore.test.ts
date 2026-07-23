@@ -37,13 +37,18 @@ describe("createUdmV2FlowStore", () => {
 
   it("creates typed v2 edge data on connect", () => {
     const store = createTestStore()
+    const source = createNetworkV2Node("controller", { x: 0, y: 0 })
+    const target = createNetworkV2Node("controller", { x: 100, y: 0 })
+    source.id = "source"
+    target.id = "target"
+    store.getState().replaceGraph({ nodes: [source, target], edges: [] })
 
     store.getState().setActiveEdgeKind("signal")
     store.getState().onConnect({
       source: "source",
-      sourceHandle: null,
+      sourceHandle: "signal_out",
       target: "target",
-      targetHandle: null,
+      targetHandle: "signal_in",
     })
 
     expect(store.getState().edges).toHaveLength(1)
@@ -63,5 +68,17 @@ describe("createUdmV2FlowStore", () => {
     expect(store.getState().nodes[0].type).toBe("udm_reactor_v2")
     expect(store.getState().nodes[0].data.node_kind).toBe("udm_reactor")
     expect(store.getState().dirty).toBe(true)
+  })
+
+  it("keeps selection changes clean", () => {
+    const store = createTestStore()
+    const node = createNetworkV2Node("boundary", { x: 0, y: 0 })
+    store.getState().replaceGraph({ nodes: [node], edges: [] })
+
+    store
+      .getState()
+      .onNodesChange([{ id: node.id, type: "select", selected: true }])
+
+    expect(store.getState().dirty).toBe(false)
   })
 })

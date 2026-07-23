@@ -130,10 +130,13 @@ test("submits simulation.udm_network.v1 and shows not-executable banner", async 
 })
 
 async function injectCanvasFixture(page: Page) {
-  await page.evaluate(async (fixture) => {
-    const storePath = "/src/features/udm-v2/state/useUdmV2FlowStore.ts"
-    const { useUdmV2FlowStore } = await import(storePath)
-    useUdmV2FlowStore.getState().replaceGraph({
+  await expect
+    .poll(() => page.evaluate(() => Boolean(window.__UDM_V2_FLOW_STORE__)))
+    .toBe(true)
+  await page.evaluate((fixture) => {
+    const store = window.__UDM_V2_FLOW_STORE__
+    if (!store) throw new Error("UDM_V2_DEV_STORE_UNAVAILABLE")
+    store.getState().replaceGraph({
       name: "Plant A",
       nodes: fixture.nodes,
       edges: fixture.edges,

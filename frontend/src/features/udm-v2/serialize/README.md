@@ -1,5 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2/serialize
 
+> 更新于:2026-07-23 · commit 61e2259
 > 类型：contract
 > Canonical sources：
 > - `../README.md`
@@ -36,6 +37,8 @@
 1. Diagnostics must include stable `code`, `element`, and `fieldPath` when a UI field can own the error.
 2. Serializer files must remain feature-local and must not import legacy Flow stores or components.
 3. Contract-facing field names must match `contracts/network_*.v1.json`.
+4. Connection compatibility delegates to `../edges/connectionRules.ts`, so interactive and semantic validation cannot diverge.
+5. Serializer round trips preserve canonical `port_kind`; render-only lane, marker, hit-width, selection and realtime display fields must not cross the payload boundary.
 
 ## 4. 测试与验证
 

@@ -1,5 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2/nodes
 
+> 更新于:2026-07-23 · commit 61e2259
 > 类型：contract
 > Canonical sources：
 > - `../README.md`
@@ -23,14 +24,18 @@
 | 文件 | 作用 |
 |---|---|
 | `nodeTypes.ts` | Node data types, defaults, factory, and node type registry |
+| `portKinds.ts` | Canonical port kinds、方向与允许边类型 |
 | `NetworkV2NodeShell.tsx` | Shared feature-local node frame and handle rendering |
-| `*V2Node.tsx` | Five UDM-v2 node renderers |
+| `ClarifierLayerV2Node.tsx` | 二沉池展开后的 feature-local 层节点 |
+| `*V2Node.tsx` | UDM-v2 node renderers |
 
 ## 3. 维护约定
 
 1. Keep node defaults feature-local and aligned with `network_process_graph.v1` field names.
 2. Do not import legacy Flow node components or stores.
 3. New node kinds must update factory defaults, registry, palette options, and tests together.
+4. Node selection must not change dimensions; Handle discovery follows hover/selection/connection state and preserves real XYFlow endpoints.
+5. Port serialization must preserve canonical `port_kind`; do not infer a new business rule from label text.
 
 ## 4. 测试与验证
 

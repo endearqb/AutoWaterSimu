@@ -1,6 +1,10 @@
 import type { Edge, Node } from "@xyflow/react"
 
 import {
+  type ConnectionValidationCode,
+  validateNetworkV2Connection,
+} from "../edges/connectionRules"
+import {
   type NetworkV2ComponentPolicy,
   type NetworkV2EdgeData,
   isNetworkV2EdgeTypeKindMatch,
@@ -16,6 +20,14 @@ export type NetworkV2DiagnosticCode =
   | "UNKNOWN_COMPONENT_IN_POLICY"
   | "FLOW_CONSTRAINT_EDGE_NOT_FOUND"
   | "FLOW_CONSTRAINT_INVALID_VALUE"
+  | "EDGE_SOURCE_NODE_NOT_FOUND"
+  | "EDGE_TARGET_NODE_NOT_FOUND"
+  | "EDGE_SOURCE_PORT_NOT_FOUND"
+  | "EDGE_TARGET_PORT_NOT_FOUND"
+  | "EDGE_SOURCE_DIRECTION_INVALID"
+  | "EDGE_TARGET_DIRECTION_INVALID"
+  | "EDGE_PORT_KIND_INCOMPATIBLE"
+  | "SELF_CONNECTION_FORBIDDEN"
   | "CONTRACT_SCHEMA_INVALID"
 
 export type NetworkV2Diagnostic = {
@@ -64,6 +76,17 @@ export function validateNetworkV2Graph({
     const edgeKind = edge.data?.edge_kind
     if (!edgeKind) {
       continue
+    }
+
+    const connection = validateNetworkV2Connection({
+      connection: edge,
+      nodes,
+      edgeKind,
+    })
+    if (!connection.valid) {
+      diagnostics.push(
+        edgeDiagnostic(edge.id, connectionDiagnostic(connection.code, edge)),
+      )
     }
 
     if (!isNetworkV2EdgeTypeKindMatch({ edgeKind, edgeType: edge.type })) {
@@ -169,6 +192,35 @@ export function validateNetworkV2Graph({
       ? "invalid"
       : "valid",
     diagnostics,
+  }
+}
+
+function connectionDiagnostic(
+  code: ConnectionValidationCode,
+  edge: Edge<NetworkV2EdgeData>,
+) {
+  const mapped = {
+    MISSING_ENDPOINT: edge.sourceHandle
+      ? "EDGE_TARGET_PORT_NOT_FOUND"
+      : "EDGE_SOURCE_PORT_NOT_FOUND",
+    SELF_CONNECTION: "SELF_CONNECTION_FORBIDDEN",
+    SOURCE_NODE_NOT_FOUND: "EDGE_SOURCE_NODE_NOT_FOUND",
+    TARGET_NODE_NOT_FOUND: "EDGE_TARGET_NODE_NOT_FOUND",
+    SOURCE_PORT_NOT_FOUND: "EDGE_SOURCE_PORT_NOT_FOUND",
+    TARGET_PORT_NOT_FOUND: "EDGE_TARGET_PORT_NOT_FOUND",
+    SOURCE_DIRECTION_INVALID: "EDGE_SOURCE_DIRECTION_INVALID",
+    TARGET_DIRECTION_INVALID: "EDGE_TARGET_DIRECTION_INVALID",
+    EDGE_KIND_INCOMPATIBLE: "EDGE_PORT_KIND_INCOMPATIBLE",
+  } satisfies Record<ConnectionValidationCode, NetworkV2DiagnosticCode>
+  const fieldPath = code.startsWith("SOURCE")
+    ? "sourceHandle"
+    : code.startsWith("TARGET")
+      ? "targetHandle"
+      : "sourceHandle/targetHandle"
+  return {
+    code: mapped[code],
+    fieldPath,
+    message: `Invalid ${edge.data?.edge_kind ?? "network"} connection: ${code}.`,
   }
 }
 

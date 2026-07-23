@@ -1,5 +1,8 @@
 # 目录说明：frontend/tests
 
+> 更新于:2026-07-23 · commit 61e2259
+> 类型：contract
+
 ## 1. 目录职责
 
 本目录保存 frontend Playwright end-to-end tests。
@@ -8,6 +11,7 @@
 
 - 登录、注册、重置密码、用户设置等浏览器级测试。
 - Petersen workbook 相关前端测试。
+- UDM-v2 route、持久化、并行边、性能、响应式截图与 legacy isolation 回归。
 - Playwright test utilities。
 
 本目录不负责：
@@ -32,6 +36,8 @@
 | `contract-validation.spec.ts` | Mock-backed Compute Jobs contract validation panel smoke |
 | `model-governance.spec.ts` | Mock-backed Model governance catalog snapshot history smoke |
 | `compute-lifecycle.spec.ts` | Mock-backed Compute lifecycle metrics and retention sweep smoke |
+| `udm-v2-*.spec.ts` | UDM-v2 editor、四类边、100/300 fixture 与多视口 screenshot smoke |
+| `v1-no-udm-v2-regression.spec.ts` | Legacy Flow 页面不暴露 UDM-v2 控件 |
 
 ## 3. 维护约定
 
@@ -43,6 +49,8 @@
 6. Current-flow live smoke uses `AUTOWATERSIMU_CURRENT_FLOW_LIVE_*` environment variables and should be run through `scripts/ci/current-flow-live-smoke.ps1`, which prepares the live Compute stack, worker loop, and cleanup.
 7. Five-model live smoke uses `AUTOWATERSIMU_FIVE_MODEL_LIVE_*` environment variables and should be run through `scripts/ci/standalone-five-model-live.ps1`, which prepares the live Compute stack, worker loop, and cleanup.
 8. Focused smokes may set `PLAYWRIGHT_*` environment overrides to use an isolated Vite port instead of reusing an existing local server.
+9. UDM-v2 fixtures use the development-only `window.__UDM_V2_FLOW_STORE__` bridge; production builds must not expose it.
+10. UDM-v2 focused coverage runs on both the bundled Chromium project and the branded Microsoft Edge project when Edge is installed.
 
 ## 4. 对外接口
 
@@ -64,6 +72,8 @@ cd frontend; npx playwright test tests/standalone-five-model-live.spec.ts --proj
 cd frontend; npx playwright test tests/contract-validation.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/model-governance.spec.ts --project=chromium --no-deps --reporter=line
 cd frontend; npx playwright test tests/compute-lifecycle.spec.ts --project=chromium --no-deps --reporter=line
+cd frontend; npx playwright test tests/udm-v2-*.spec.ts tests/v1-no-udm-v2-regression.spec.ts --project=chromium --no-deps --reporter=line
+cd frontend; npx playwright test tests/udm-v2-*.spec.ts tests/v1-no-udm-v2-regression.spec.ts --project="Microsoft Edge" --no-deps --reporter=line
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\live-backend-browser-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\ci\current-flow-live-smoke.ps1

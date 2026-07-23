@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft.
+Accepted on 2026-07-23.
 
 ## Context
 
@@ -22,6 +22,9 @@ UDM Network v2 frontend work uses a hard feature boundary:
 - v2 submit uses `job_type = "simulation.udm_network.v1"`.
 - `UDM_NETWORK_NOT_EXECUTABLE_YET` is displayed as runtime pending.
 - `frontend/src/components/Flow/**` remains the legacy v1 Flow stack and must not receive new v2 logic.
+- Endpoint lanes, route markers, hit widths and realtime flow overlays are derived render state; they do not enter the store or serialized contracts.
+- Canonical `port_kind` and one shared connection rule module govern canvas interaction and semantic validation.
+- The v1.0 editor shell, floating workbench, drawer inspector and feature-local React Flow canvas remain inside the feature boundary.
 
 The only allowed import from route code to the feature is the thin route file `frontend/src/routes/_layout/udm-v2.tsx`.
 
@@ -38,9 +41,9 @@ The only allowed import from route code to the feature is the thin route file `f
 - Move shared Flow primitives into a new abstraction first: rejected for this phase because the isolation problem is urgent and abstraction would widen the diff.
 - Build only JSON import/export without persistence: rejected because the plan requires direct standalone flowchart service integration.
 
-## Follow-up
+## Implementation State
 
-- PF0 creates the `/udm-v2` route skeleton and standalone adapter skeleton.
-- PF1 copies and renames the v2 edge model into the feature.
-- PFC-A removes v2 UI exposure from legacy v1 pages.
-- PFC-B deletes or freezes remaining global network edge leftovers.
+- `/udm-v2` owns its route, store, canvas, nodes, edges, inspector, serializer and services.
+- `scripts/check-udm-v2-import-boundary.mjs` enforces the two-way boundary.
+- Legacy routes have a Playwright regression gate that rejects UDM-v2 controls.
+- The development-only store bridge exists solely for deterministic Playwright fixture injection and is absent from production builds.

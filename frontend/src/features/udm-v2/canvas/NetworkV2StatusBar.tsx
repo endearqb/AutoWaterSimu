@@ -1,48 +1,34 @@
-import { Badge, HStack, Stack, Text } from "@chakra-ui/react"
+import { Box, Text } from "@chakra-ui/react"
 
 import { UDM_V2_NOT_EXECUTABLE_MESSAGE } from "../services/udmV2ComputeService"
-
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
 
 export function NetworkV2StatusBar() {
-  const nodeCount = useUdmV2FlowStore((state) => state.nodes.length)
-  const edgeCount = useUdmV2FlowStore((state) => state.edges.length)
-  const graphFamily = useUdmV2FlowStore((state) => state.graphFamily)
-  const graphName = useUdmV2FlowStore((state) => state.currentNetworkGraphName)
-  const dirty = useUdmV2FlowStore((state) => state.dirty)
   const runtimeStatus = useUdmV2FlowStore((state) => state.runtimeStatus)
-  const diagnosticCount = useUdmV2FlowStore((state) => state.diagnostics.length)
-
+  if (runtimeStatus !== "runtime_pending" && runtimeStatus !== "failed") {
+    return null
+  }
   return (
-    <Stack gap={0}>
-      {runtimeStatus === "runtime_pending" && (
-        <Text px={3} py={2} bg="yellow.50" color="yellow.900" fontSize="sm">
-          {UDM_V2_NOT_EXECUTABLE_MESSAGE}
-        </Text>
-      )}
-      <HStack
-        minH="36px"
-        px={3}
-        borderWidth="1px"
-        borderColor="border"
-        bg="bg"
-        fontSize="sm"
-        justify="space-between"
-      >
-        <HStack gap={3}>
-          <Text fontWeight="medium">{graphName}</Text>
-          <Badge variant="subtle">{graphFamily}</Badge>
-          {dirty && <Badge colorPalette="orange">dirty</Badge>}
-        </HStack>
-        <HStack gap={3} color="fg.muted">
-          <Text>{nodeCount} nodes</Text>
-          <Text>{edgeCount} edges</Text>
-          {diagnosticCount > 0 && (
-            <Badge colorPalette="red">{diagnosticCount} diagnostics</Badge>
-          )}
-          <Badge colorPalette="blue">{runtimeStatus}</Badge>
-        </HStack>
-      </HStack>
-    </Stack>
+    <Box
+      position="absolute"
+      zIndex={7}
+      top={{ base: "64px", md: "12px" }}
+      right={{ base: "12px", md: "24px" }}
+      maxW="420px"
+      px={3}
+      py={2}
+      bg={runtimeStatus === "failed" ? "red.50" : "yellow.50"}
+      color={runtimeStatus === "failed" ? "red.900" : "yellow.900"}
+      borderWidth="1px"
+      borderColor={runtimeStatus === "failed" ? "red.200" : "yellow.200"}
+      borderRadius="6px"
+      boxShadow="sm"
+    >
+      <Text fontSize="sm">
+        {runtimeStatus === "runtime_pending"
+          ? UDM_V2_NOT_EXECUTABLE_MESSAGE
+          : "UDM Network v2 operation failed."}
+      </Text>
+    </Box>
   )
 }

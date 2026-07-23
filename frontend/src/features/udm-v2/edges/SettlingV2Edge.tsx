@@ -10,9 +10,8 @@ export function SettlingV2Edge(props: EdgeProps) {
   return (
     <NetworkV2EdgeShell
       {...props}
-      label={formatSettlingV2EdgeLabel()}
-      stroke="#15803d"
-      strokeDasharray="6 4"
+      kind="settling"
+      generatedLabel={formatSettlingV2EdgeLabel()}
     />
   )
 }
