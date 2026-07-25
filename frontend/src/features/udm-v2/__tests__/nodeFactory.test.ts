@@ -4,8 +4,10 @@ import {
   NETWORK_V2_NODE_KIND_OPTIONS,
   createNetworkV2Node,
   createNetworkV2NodeData,
+  createNetworkV2NodeFromPreset,
   networkV2NodeTypeByKind,
   networkV2NodeTypes,
+  normalizeNetworkV2NodePreset,
 } from "../nodes/nodeTypes"
 
 describe("network v2 node factory", () => {
@@ -44,5 +46,22 @@ describe("network v2 node factory", () => {
       expect(node.position).toEqual({ x: 1, y: 2 })
       expect(node.data.node_kind).toBe(option.kind)
     }
+  })
+
+  it("creates distinct influent and effluent boundary presets", () => {
+    const influent = createNetworkV2NodeFromPreset("boundary_source", {
+      x: 0,
+      y: 0,
+    })
+    const effluent = createNetworkV2NodeFromPreset("boundary_sink", {
+      x: 1,
+      y: 2,
+    })
+
+    expect(influent.data.boundary?.boundary_kind).toBe("source")
+    expect(influent.data.ports[0].port_kind).toBe("hydraulic_out")
+    expect(effluent.data.boundary?.boundary_kind).toBe("effluent")
+    expect(effluent.data.ports[0].port_kind).toBe("hydraulic_in")
+    expect(normalizeNetworkV2NodePreset("unknown")).toBeNull()
   })
 })

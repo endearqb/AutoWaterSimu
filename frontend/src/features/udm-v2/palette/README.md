@@ -1,5 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2/palette
 
+> 更新于:2026-07-24 · commit cc3edcc
 > 类型：contract
 > Canonical sources：
 > - `../README.md`
@@ -9,7 +10,7 @@
 
 本目录负责：
 
-- UDM Network v2 feature-local node palette controls.
+- UDM Network v2 feature-local palette options backed by the shared legacy `NodePalette` presentation primitive.
 - Drag payloads used by `NetworkV2Canvas` to create v2 nodes.
 
 本目录不负责：
@@ -21,13 +22,13 @@
 
 | 文件 | 作用 |
 |---|---|
-| `NetworkV2NodePalette.tsx` | Draggable five-node palette for `/udm-v2` |
+| `NetworkV2NodePalette.tsx` | Draggable inlet、effluent、UDM、clarifier、splitter and controller presets for `/udm-v2` |
 
 ## 3. 维护约定
 
-1. Palette options must come from `NETWORK_V2_NODE_KIND_OPTIONS`.
+1. Inlet and effluent are separate palette presets that both map to the contract-compatible `boundary` node kind.
 2. Drag payloads must use `NETWORK_V2_NODE_DRAG_MIME`; canvas drop handlers should ignore unknown payloads.
-3. Do not import legacy Flow toolbar or node palette code.
+3. Only the shared `NodePalette` presentation primitive is allowed; do not import legacy FlowCanvas or toolbar state.
 
 ## 4. 测试与验证
 

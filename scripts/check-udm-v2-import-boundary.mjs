@@ -37,8 +37,6 @@ const forbiddenFiles = [
 ]
 
 const forbiddenFromUdmV2 = [
-  "@/components/Flow/",
-  "components/Flow/",
   "@/stores/createModelFlowStore",
   "@/stores/flowStore",
   "@/stores/udmFlowStore",
@@ -46,6 +44,12 @@ const forbiddenFromUdmV2 = [
   "@/types/networkEdges",
   "legacyFlowExportToCanvasGraph",
 ]
+
+const allowedSharedFlowImports = new Set([
+  "@/components/Flow/nodes/GlassNodeContainer",
+  "@/components/Flow/nodes/utils/glass",
+  "@/components/Flow/toolbar/NodePalette",
+])
 
 const forbiddenFromV1 = ["@/features/udm-v2/", "features/udm-v2/"]
 
@@ -123,6 +127,16 @@ for (const filePath of scanRoots.flatMap(listSourceFiles)) {
   const isUdmV2 = normalizedFile.includes("/frontend/src/features/udm-v2/")
 
   if (isUdmV2) {
+    for (const specifier of specs) {
+      if (
+        specifier.includes("components/Flow/") &&
+        !allowedSharedFlowImports.has(specifier)
+      ) {
+        violations.push(
+          `${relativeFile}: UDM-v2 may only import allowlisted shared Flow UI primitives, not ${specifier}`,
+        )
+      }
+    }
     for (const forbidden of forbiddenFromUdmV2) {
       if (source.includes(forbidden)) {
         violations.push(

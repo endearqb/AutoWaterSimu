@@ -8,9 +8,13 @@ import {
   useState,
 } from "react"
 
+import GlassNodeContainer from "@/components/Flow/nodes/GlassNodeContainer"
+import {
+  type GlassTint,
+  getAccentColor,
+} from "@/components/Flow/nodes/utils/glass"
 import { useNetworkV2Interaction } from "../interaction/NetworkV2InteractionContext"
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
-import { networkV2NodeSurface } from "../theme/networkV2Theme"
 import type {
   NetworkV2NodeData,
   NetworkV2Port,
@@ -22,7 +26,7 @@ type NetworkV2NodeShellProps = {
   id: string
   data: NetworkV2NodeData
   selected?: boolean
-  accent: string
+  tint: GlassTint
   icon: LucideIcon
   subtitle: string
 }
@@ -52,7 +56,7 @@ export function NetworkV2NodeShell({
   id,
   data,
   selected,
-  accent,
+  tint,
   icon: Icon,
   subtitle,
 }: NetworkV2NodeShellProps) {
@@ -60,6 +64,7 @@ export function NetworkV2NodeShell({
     useNetworkV2Interaction()
   const updateNodeData = useUdmV2FlowStore((state) => state.updateNodeData)
   const updateNodeInternals = useUpdateNodeInternals()
+  const accent = getAccentColor(tint)
   const shouldShow =
     Boolean(selected) || hoveredNodeId === id || connectionInProgress
   const [handlesVisible, setHandlesVisible] = useState(shouldShow)
@@ -96,17 +101,26 @@ export function NetworkV2NodeShell({
   }
 
   return (
-    <Box
+    <GlassNodeContainer
       as="fieldset"
       aria-label={`${data.label} ${data.node_kind} node`}
-      css={networkV2NodeSurface({
-        accent,
-        selected: Boolean(selected),
-        tint: "rgba(248,250,252,.8)",
-      })}
+      tint={tint}
+      selected={selected}
+      hovered={hoveredNodeId === id}
+      minW="168px"
+      maxW="240px"
       px={3}
       py={2}
     >
+      <Box
+        position="absolute"
+        left="6px"
+        top="8px"
+        bottom="8px"
+        width="3px"
+        borderRadius="full"
+        bg={accent}
+      />
       {data.ports.map((port) => {
         const compatible = edgeKindsForPort(port).includes(activeEdgeKind)
         return (
@@ -161,6 +175,6 @@ export function NetworkV2NodeShell({
       <Text mt={1} fontSize="xs" color="fg.muted">
         {subtitle}
       </Text>
-    </Box>
+    </GlassNodeContainer>
   )
 }

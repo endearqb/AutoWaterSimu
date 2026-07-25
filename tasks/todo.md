@@ -11216,3 +11216,25 @@
 - 验证：typecheck、17 files / 50 unit tests、boundary、build、Biome、Chromium 16 E2E、Microsoft Edge 16 E2E 均通过。
 - 截图输出：`tmp/udm-v2-canvas-v1.0/`（1440×900、1280×720、1024×768、390×844）。
 - README contract 检查已运行；仅被根 `README.md` 与 `README_zh.md` 既有的 `./release-notes.md` 断链阻塞，与本次 UDM-v2 修改无关。
+
+# 2026-07-24 UDM Network v2 菜单与节点复用
+
+- [x] 定位 Sidebar、UDM-v2 独立画布、legacy 节点选择器与节点视觉原语。
+- [x] 将 UDM Network v2 提升为一级菜单。
+- [x] 增加独立的出水端预设并保留 source/sink 语义。
+- [x] 复用 legacy 节点选择器、颜色与装饰条容器，不复用 FlowCanvas。
+- [x] 更新边界决策、README 与变更记录。
+- [x] 运行 typecheck、unit、boundary 与 focused Playwright。
+
+## Plan
+
+- 保留 `/udm-v2` 自有 canvas/store/serializer/service。
+- 仅白名单复用 `NodePalette`、`GlassNodeContainer` 与 glass color utilities。
+- 用 boundary source/sink 预设表达进水端和出水端，不扩展合同枚举。
+
+## Review
+
+- Sidebar 中 `/udm-v2` 已从 FlowingFlow 子菜单移到一级菜单。
+- V2 使用原 `NodePalette`、`GlassNodeContainer` 和 glass colors；画布、store、端口与 serializer 仍独立。
+- 出水端生成 `boundary_kind = effluent` 与 `hydraulic_in` 端口，并以 `node_type = sink` 完成合同往返。
+- 验证：typecheck、17 files / 52 unit tests、boundary、Chromium route smoke 2 tests、四视口 UI parity 4 tests 均通过。

@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest"
 import canvasFixture from "../__fixtures__/valid-network-v2-canvas.json"
 import type { NetworkProcessGraphV1 } from "../contracts/generated"
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
-import type { NetworkV2NodeData } from "../nodes/nodeTypes"
+import {
+  type NetworkV2NodeData,
+  createNetworkV2NodeFromPreset,
+} from "../nodes/nodeTypes"
 import { fromNetworkProcessGraphV1 } from "../serialize/fromNetworkProcessGraphV1"
 import {
   stableStringify,
@@ -67,5 +70,21 @@ describe("network v2 serializer roundtrip", () => {
       "validation",
       "version",
     ])
+  })
+
+  it("preserves an effluent boundary through contract serialization", () => {
+    const effluent = createNetworkV2NodeFromPreset("boundary_sink", {
+      x: 1,
+      y: 2,
+    })
+    const graph = toNetworkProcessGraphV1({
+      nodes: [effluent],
+      edges: [],
+    })
+    const canvas = fromNetworkProcessGraphV1(graph)
+
+    expect(graph.nodes[0].node_type).toBe("sink")
+    expect(canvas.nodes[0].data.boundary?.boundary_kind).toBe("effluent")
+    expect(canvas.nodes[0].data.ports[0].port_kind).toBe("hydraulic_in")
   })
 })

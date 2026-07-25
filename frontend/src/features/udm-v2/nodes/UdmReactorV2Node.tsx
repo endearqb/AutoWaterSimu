@@ -10,7 +10,7 @@ export function UdmReactorV2Node(props: NodeProps) {
       id={props.id}
       data={props.data as NetworkV2NodeData}
       selected={props.selected}
-      accent="#7c3aed"
+      tint="udm"
       icon={FlaskConical}
       subtitle="UDM reaction unit"
     />

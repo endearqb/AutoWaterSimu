@@ -10,7 +10,7 @@ export function SplitterV2Node(props: NodeProps) {
       id={props.id}
       data={props.data as NetworkV2NodeData}
       selected={props.selected}
-      accent="#b45309"
+      tint="default"
       icon={GitBranch}
       subtitle="Hydraulic split junction"
     />

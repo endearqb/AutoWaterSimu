@@ -15,7 +15,10 @@ test("renders the UDM Network v2 full-screen editor", async ({ page }) => {
     timeout: 15_000,
   })
   await expect(
-    page.getByRole("button", { name: "Add Boundary node" }),
+    page.getByRole("button", { name: "Add Influent node" }),
+  ).toBeVisible({ timeout: 15_000 })
+  await expect(
+    page.getByRole("button", { name: "Add Effluent node" }),
   ).toBeVisible({ timeout: 15_000 })
   await expect(
     page.getByRole("heading", { name: "UDM Network v2" }),
@@ -26,10 +29,12 @@ test("adds a UDM Network v2 node from the palette", async ({ page }) => {
   await page.goto("/udm-v2")
 
   await page
-    .getByRole("button", { name: "Add Boundary node" })
-    .dragTo(page.getByTestId("udm-v2-canvas"))
+    .getByRole("button", { name: "Add Effluent node" })
+    .dragTo(page.getByTestId("udm-v2-canvas"), {
+      targetPosition: { x: 800, y: 500 },
+    })
 
   await expect(
-    page.locator(".react-flow__node", { hasText: "Boundary" }),
+    page.locator(".react-flow__node", { hasText: "Effluent" }),
   ).toBeVisible({ timeout: 15_000 })
 })

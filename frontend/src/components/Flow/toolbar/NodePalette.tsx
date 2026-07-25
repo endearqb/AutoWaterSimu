@@ -7,38 +7,50 @@ import {
   resolveTintFromNodeType,
 } from "../nodes/utils/glass"
 
-interface NodeOption {
+export interface NodeOption {
   type: string
   label: string
+  ariaLabel?: string
+  dragValue?: string
+  tint?: GlassTint
   helpTitle?: string
   helpBody?: string
 }
 
 interface NodePaletteProps {
   nodeTypes: NodeOption[]
+  dragEffect?: DataTransfer["effectAllowed"]
+  dragMime?: string
   onNodeClick?: (node: NodeOption, event: React.MouseEvent) => void
 }
 
-const NodePalette = ({ nodeTypes, onNodeClick }: NodePaletteProps) => {
-  const handleDragStart = (event: React.DragEvent, nodeType: string) => {
-    event.dataTransfer.setData("application/reactflow/type", nodeType)
-    event.dataTransfer.effectAllowed = "move"
+const NodePalette = ({
+  nodeTypes,
+  dragEffect = "move",
+  dragMime = "application/reactflow/type",
+  onNodeClick,
+}: NodePaletteProps) => {
+  const handleDragStart = (event: React.DragEvent, node: NodeOption) => {
+    event.dataTransfer.setData(dragMime, node.dragValue ?? node.type)
+    event.dataTransfer.effectAllowed = dragEffect
   }
 
   return (
     <VStack gap={3} align="stretch">
       {nodeTypes.map((node) => {
         const { type, label } = node
-        const tint: GlassTint = resolveTintFromNodeType(type)
+        const tint: GlassTint = node.tint ?? resolveTintFromNodeType(type)
         const accentColor = getAccentColor(tint)
         const baseStyles = getGlassNodeStyles({ tint })
         const hoverStyles = getGlassNodeStyles({ tint, hovered: true })
 
         return (
           <Box
+            as="button"
             key={type}
             draggable
-            onDragStart={(event) => handleDragStart(event, type)}
+            aria-label={node.ariaLabel ?? `Add ${label} node`}
+            onDragStart={(event) => handleDragStart(event, node)}
             onClick={(event) => onNodeClick?.(node, event)}
             cursor="grab"
             userSelect="none"

@@ -10,7 +10,7 @@ export function SecondaryClarifier10LayerV2Node(props: NodeProps) {
       id={props.id}
       data={props.data as NetworkV2NodeData}
       selected={props.selected}
-      accent="#15803d"
+      tint="asm1"
       icon={Layers3}
       subtitle="10-layer settling reference"
     />

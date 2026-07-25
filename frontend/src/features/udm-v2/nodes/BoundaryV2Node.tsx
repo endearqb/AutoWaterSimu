@@ -5,14 +5,18 @@ import { NetworkV2NodeShell } from "./NetworkV2NodeShell"
 import type { NetworkV2NodeData } from "./nodeTypes"
 
 export function BoundaryV2Node(props: NodeProps) {
+  const data = props.data as NetworkV2NodeData
+  const isSink =
+    data.boundary?.boundary_kind === "sink" ||
+    data.boundary?.boundary_kind === "effluent"
   return (
     <NetworkV2NodeShell
       id={props.id}
-      data={props.data as NetworkV2NodeData}
+      data={data}
       selected={props.selected}
-      accent="#2563eb"
+      tint={isSink ? "output" : "input"}
       icon={SquareArrowOutUpRight}
-      subtitle="Boundary source or sink"
+      subtitle={isSink ? "Effluent boundary" : "Influent boundary"}
     />
   )
 }

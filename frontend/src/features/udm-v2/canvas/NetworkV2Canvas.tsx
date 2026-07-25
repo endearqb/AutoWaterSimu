@@ -23,9 +23,9 @@ import { solveRealtimeFlowBalance } from "../flow/realtimeFlowBalance"
 import { useUdmV2Messages } from "../i18n"
 import { NetworkV2InteractionProvider } from "../interaction/NetworkV2InteractionContext"
 import {
-  createNetworkV2Node,
+  createNetworkV2NodeFromPreset,
   networkV2NodeTypes,
-  normalizeNetworkV2NodeKind,
+  normalizeNetworkV2NodePreset,
 } from "../nodes/nodeTypes"
 import { NETWORK_V2_NODE_DRAG_MIME } from "../palette/NetworkV2NodePalette"
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
@@ -87,11 +87,13 @@ export function NetworkV2Canvas() {
 
   const onDrop = (event: DragEvent) => {
     event.preventDefault()
-    const kind = event.dataTransfer.getData(NETWORK_V2_NODE_DRAG_MIME)
-    if (!kind) return
+    const preset = normalizeNetworkV2NodePreset(
+      event.dataTransfer.getData(NETWORK_V2_NODE_DRAG_MIME),
+    )
+    if (!preset) return
     addNode(
-      createNetworkV2Node(
-        normalizeNetworkV2NodeKind(kind),
+      createNetworkV2NodeFromPreset(
+        preset,
         screenToFlowPosition({ x: event.clientX, y: event.clientY }),
       ),
     )

@@ -21,6 +21,11 @@ export type NetworkV2NodeKind =
   | "controller"
   | "clarifier_layer"
 
+export type NetworkV2NodePreset =
+  | NetworkV2NodeKind
+  | "boundary_source"
+  | "boundary_sink"
+
 export type NetworkV2ReactFlowNodeType =
   | "boundary_v2"
   | "udm_reactor_v2"
@@ -137,10 +142,24 @@ export const NETWORK_V2_NODE_KINDS = NETWORK_V2_NODE_KIND_OPTIONS.map(
   (option) => option.kind,
 )
 
+const NETWORK_V2_NODE_PRESETS = new Set<NetworkV2NodePreset>([
+  ...NETWORK_V2_NODE_KINDS,
+  "boundary_source",
+  "boundary_sink",
+])
+
 export function normalizeNetworkV2NodeKind(value: unknown): NetworkV2NodeKind {
   return NETWORK_V2_NODE_KINDS.includes(value as NetworkV2NodeKind)
     ? (value as NetworkV2NodeKind)
     : "boundary"
+}
+
+export function normalizeNetworkV2NodePreset(
+  value: unknown,
+): NetworkV2NodePreset | null {
+  return NETWORK_V2_NODE_PRESETS.has(value as NetworkV2NodePreset)
+    ? (value as NetworkV2NodePreset)
+    : null
 }
 
 export function createNetworkV2NodeData(
@@ -327,6 +346,35 @@ export function createNetworkV2Node(
     position,
     data: createNetworkV2NodeData(kind),
   }
+}
+
+export function createNetworkV2NodeFromPreset(
+  preset: NetworkV2NodePreset,
+  position: XYPosition,
+): Node<NetworkV2NodeData> {
+  const node = createNetworkV2Node(
+    preset === "boundary_source" || preset === "boundary_sink"
+      ? "boundary"
+      : preset,
+    position,
+  )
+  if (preset === "boundary_source") {
+    node.data.label = "Influent"
+  }
+  if (preset === "boundary_sink") {
+    node.data.label = "Effluent"
+    node.data.boundary = { boundary_kind: "effluent" }
+    node.data.ports = [
+      {
+        id: "in",
+        label: "In",
+        role: "inlet",
+        placement: "left",
+        port_kind: "hydraulic_in",
+      },
+    ]
+  }
+  return node
 }
 
 export const networkV2NodeTypes: NodeTypes = {

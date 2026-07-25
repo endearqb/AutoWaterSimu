@@ -102,7 +102,13 @@ function toProcessNode(
 ): NetworkProcessGraphV1Node {
   return withoutUndefined({
     node_id: node.id,
-    node_type: node.data.node_kind,
+    node_type:
+      node.data.node_kind === "boundary"
+        ? node.data.boundary?.boundary_kind === "sink" ||
+          node.data.boundary?.boundary_kind === "effluent"
+          ? "sink"
+          : "source"
+        : node.data.node_kind,
     process_unit_type: node.data.process_unit_type,
     component_schema_id: node.data.component_schema_id,
     initial_conditions: node.data.initial_conditions,

@@ -126,6 +126,13 @@ function fromProcessNode(
         ([, value]) => typeof value === "number",
       ),
     ) as Record<string, number>,
+    boundary:
+      kind === "boundary"
+        ? {
+            boundary_kind:
+              node.node_type === "sink" ? ("effluent" as const) : "source",
+          }
+        : undefined,
     ports: node.ports.map(fromProcessPort),
   } satisfies NetworkV2NodeData
 

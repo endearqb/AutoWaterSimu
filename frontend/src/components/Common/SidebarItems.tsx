@@ -14,8 +14,8 @@ import {
   FiGitPullRequest,
   FiHome,
   FiLayers,
-  FiSliders,
   FiShield,
+  FiSliders,
   FiUsers,
 } from "react-icons/fi"
 import type { IconType } from "react-icons/lib"
@@ -39,7 +39,6 @@ const getFlowingFlowItems = (
     { icon: FiGitMerge, title: t("nav.asm1slim"), path: "/asm1slim" },
     { icon: FiGitPullRequest, title: t("nav.asm1"), path: "/asm1" },
     { icon: FiGitPullRequest, title: "UDM", path: "/udm" },
-    { icon: FiLayers, title: "UDM Network v2", path: "/udm-v2" },
   ]
 
   // 只有ultra用户和超级管理员才能看到ASM3
@@ -77,6 +76,7 @@ const getItems = (
   },
   { icon: FiDatabase, title: t("nav.udmModels"), path: "/udmModels" },
   { icon: FiSliders, title: t("nav.hybrid"), path: "/hybrid" },
+  { icon: FiLayers, title: "UDM Network v2", path: "/udm-v2" },
   {
     icon: FiLayers,
     title: t("nav.flowingFlow"),
@@ -116,19 +116,20 @@ const SidebarItems = ({ onClose, collapsed = false }: SidebarItemsProps) => {
   const { t } = useI18n()
 
   const baseItems = getItems(currentUser, t)
-  const finalItems: Item[] = !standaloneRuntime && currentUser?.is_superuser
-    ? [
-        ...baseItems,
+  const finalItems: Item[] =
+    !standaloneRuntime && currentUser?.is_superuser
+      ? [
+          ...baseItems,
 
-        {
-          icon: FiBarChart,
-          title: t("nav.superDashboard"),
-          path: "/super-dashboard",
-        },
-        { icon: FiBriefcase, title: t("nav.items"), path: "/items" },
-        { icon: FiUsers, title: t("nav.userManagement"), path: "/admin" },
-      ]
-    : baseItems
+          {
+            icon: FiBarChart,
+            title: t("nav.superDashboard"),
+            path: "/super-dashboard",
+          },
+          { icon: FiBriefcase, title: t("nav.items"), path: "/items" },
+          { icon: FiUsers, title: t("nav.userManagement"), path: "/admin" },
+        ]
+      : baseItems
 
   const renderMenuItem = (item: Item) => {
     if (item.isSubmenu && item.children) {

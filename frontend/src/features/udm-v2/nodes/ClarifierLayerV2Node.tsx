@@ -10,7 +10,7 @@ export function ClarifierLayerV2Node(props: NodeProps) {
       id={props.id}
       data={props.data as NetworkV2NodeData}
       selected={props.selected}
-      accent="#0f766e"
+      tint="asm1"
       icon={Layers3}
       subtitle="Secondary clarifier layer"
     />

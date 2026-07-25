@@ -1,5 +1,7 @@
 # 目录说明：frontend/src/components/Flow
 
+> 更新于:2026-07-24 · commit cc3edcc
+
 ## 1. 目录职责
 
 本目录负责 legacy React Flow / XYFlow 画布体验。
@@ -36,11 +38,11 @@
 2. 画布数据 shape 改动必须同步 stores、services、backend route/tests。
 3. Inspector width、chart container、node handles 等布局变更需要检查窄屏和压缩面板。
 4. UDM 教程专用行为不要破坏 material balance/ASM legacy flows。
-5. UDM Network v2 前端硬隔离后，本目录不得新增 v2 edge/store/inspector 逻辑；已有临时 v2 edge helper 只允许在 PFC-A/PFC-B 清理中被移除或冻结。
+5. UDM Network v2 不得复用本目录的 canvas、store、edge、inspector 或节点行为；仅允许复用 `toolbar/NodePalette.tsx`、`nodes/GlassNodeContainer.tsx` 和 `nodes/utils/glass.ts` 三个纯展示原语。
 
 ## 4. 对外接口
 
-本目录向 `frontend/src/routes/_layout/*` 和 UDM/tutorial routes 暴露 flow editor UI。
+本目录向 `frontend/src/routes/_layout/*` 和 UDM/tutorial routes 暴露 flow editor UI；三个白名单节点展示原语也供 UDM-v2 使用。
 
 ## 5. 依赖边界
 

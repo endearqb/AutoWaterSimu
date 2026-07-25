@@ -10,7 +10,7 @@ export function ControllerV2Node(props: NodeProps) {
       id={props.id}
       data={props.data as NetworkV2NodeData}
       selected={props.selected}
-      accent="#0f766e"
+      tint="traffic"
       icon={RadioTower}
       subtitle="Signal controller"
     />
