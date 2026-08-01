@@ -98,7 +98,7 @@ services:
       "
 
   frontend:
-    image: node:20
+    image: node:25
     working_dir: /workspace/frontend
     restart: unless-stopped
     depends_on:
