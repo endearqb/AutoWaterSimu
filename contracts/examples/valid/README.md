@@ -29,6 +29,10 @@
 | `udm_independent.compute_job.v1.json` | `simulation.udm.v1` worker fixture |
 | `udm_independent.simulation_input.v1.json` | `simulation.udm.v1` core/backend adapter fixture |
 | `udm_independent.simulation_request.v1.json` | `simulation.udm.v1` reference-only simulation check request fixture |
+| `udm_network_minimal.network_process_graph.v1.json` | UDM Network v2 typed-edge design graph fixture |
+| `udm_network_minimal.network_simulation_input.v1.json` | UDM Network v2 executable input fixture |
+| `udm_network_minimal.compute_job.v1.json` | `simulation.udm_network.v1` compute job wire fixture |
+| `udm_network_inline.simulation_request.v1.json` | `simulation.udm_network.v1` inline simulation-check request fixture |
 | `desktop_smoke.desktop_project_package.v1.json` | Desktop project package fixture covering project metadata, job snapshots, CanvasGraph, artifact file records and support bundle file records |
 | `desktop_job.desktop_support_bundle.v1.json` | Desktop support bundle fixture covering job/event/artifact metadata and model_run refs without artifact contents |
 

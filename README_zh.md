@@ -14,9 +14,11 @@ AutoWaterSimu Next 是当前 canonical 主线：面向 Go Compute API、Python s
 ---
 ## README First / AI 协作上下文
 
-本仓库采用 README First 协作流程。`AGENTS.md` 是可执行规则，`README_First.md` 解释规则背后的原则和文档分工。
+本仓库采用 README First v2.1 协作流程。`AGENTS.md` 是 L0/L1/L2 分级可执行规则，`README_First.md` 解释规则背后的原则和文档分工。
 
-修改文件前建议按以下顺序阅读：
+修改文件前先定级：L0 只读最近目录 README；L1 读取目标路径 README 与代码/测试；L2 额外读取 `.ai/architecture/` 和必要历史。读到消除本次偶然不确定性即可停止。
+
+L1/L2 的建议读取顺序：
 
 1. `AGENTS.md`
 2. `README_First.md`
@@ -28,8 +30,10 @@ AutoWaterSimu Next 是当前 canonical 主线：面向 Go Compute API、Python s
 
 - `.ai/changes/`：记录修改原因、验证方式和剩余不确定性
 - `.ai/decisions/`：记录长期架构决策
+- `.ai/architecture/`：记录当前跨目录架构与文档边界
 - `.ai/plans/`：可选复杂任务计划
 - `.ai/reviews/`：可选 review 记录
+- `.ai/glossary.md` / `.ai/handoff.md`：按需启用的术语表与跨会话交接
 
 AutoWaterSimu Next 在本仓库中以 monorepo 方式演进：
 

@@ -31,6 +31,8 @@ var schemaFiles = []string{
 	"canvas_graph.v1.json",
 	"process_graph.v1.json",
 	"simulation_input.v1.json",
+	"network_process_graph.v1.json",
+	"network_simulation_input.v1.json",
 	"contract_error.v1.json",
 	"udm_seed_catalog.v1.json",
 }
@@ -53,6 +55,8 @@ var schemaByVersion = map[string]string{
 	"canvas_graph.v1":                 "canvas_graph.v1.json",
 	"process_graph.v1":                "process_graph.v1.json",
 	"simulation_input.v1":             "simulation_input.v1.json",
+	"network_process_graph.v1":        "network_process_graph.v1.json",
+	"network_simulation_input.v1":     "network_simulation_input.v1.json",
 	"contract_error.v1":               "contract_error.v1.json",
 	"udm_seed_catalog.v1":             "udm_seed_catalog.v1.json",
 }

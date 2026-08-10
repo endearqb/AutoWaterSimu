@@ -1,0 +1,57 @@
+{
+  "schema_version": "network_process_graph.v1",
+  "network_graph_id": "ng_invalid_stream_adapter",
+  "version": 1,
+  "component_schemas": [
+    {
+      "component_schema_id": "components.v1",
+      "components": ["A"],
+      "unit": "mg/L"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "source",
+      "node_type": "source",
+      "process_unit_type": "source",
+      "component_schema_id": "components.v1",
+      "initial_conditions": { "A": 1.0 },
+      "volume": 1.0,
+      "ports": [{ "port_id": "out", "port_kind": "hydraulic_out" }],
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false },
+      "parameter_binding": {},
+      "unit_metadata": {}
+    },
+    {
+      "node_id": "sink",
+      "node_type": "sink",
+      "process_unit_type": "sink",
+      "component_schema_id": "components.v1",
+      "initial_conditions": { "A": 0.0 },
+      "volume": 1.0,
+      "ports": [{ "port_id": "in", "port_kind": "hydraulic_in" }],
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false },
+      "parameter_binding": {},
+      "unit_metadata": {}
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e",
+      "edge_kind": "hydraulic",
+      "source_node_id": "source",
+      "source_port": "out",
+      "target_node_id": "sink",
+      "target_port": "in",
+      "component_policy": { "mode": "all", "include": [], "exclude": [] },
+      "stream_adapter": { "adapter_id": "asm1_13_to_bsm1_clarifier_8.v1" },
+      "flow_spec": { "mode": "fixed", "value": 1.0, "unit": "m3/d" },
+      "transport_model": null,
+      "metadata": {}
+    }
+  ],
+  "flow_constraints": [],
+  "signal_bindings": [],
+  "composites": [],
+  "validation": { "status": "valid", "errors": [], "warnings": [] }
+}

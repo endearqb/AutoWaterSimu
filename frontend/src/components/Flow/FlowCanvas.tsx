@@ -209,7 +209,7 @@ const FlowCanvas = ({
         // 移动端调整
         width: window.innerWidth <= 768 ? "100vw" : "100%",
         height: window.innerWidth <= 768 ? "100vh" : "100%",
-        position: window.innerWidth <= 768 ? "relative" : "static",
+        position: "relative",
       }}
       onMouseMove={handleMouseMove}
     >

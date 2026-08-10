@@ -1,0 +1,136 @@
+{
+  "schema_version": "network_simulation_input.v1",
+  "simulation_input_id": "nsi_udm_network_minimal",
+  "job_type": "simulation.udm_network.v1",
+  "network_graph_id": "ng_udm_network_minimal",
+  "network_graph_version": 1,
+  "component_schemas": [
+    {
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "components": ["COD", "X_TSS"],
+      "unit": "mg/L"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "influent",
+      "node_type": "source",
+      "process_unit_type": "influent",
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "initial_conditions": { "COD": 200.0, "X_TSS": 120.0 },
+      "volume": 1.0,
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+    },
+    {
+      "node_id": "reactor",
+      "node_type": "udm_reactor",
+      "process_unit_type": "cstr",
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "initial_conditions": { "COD": 50.0, "X_TSS": 80.0 },
+      "volume": 1000.0,
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+    },
+    {
+      "node_id": "clarifier",
+      "node_type": "secondary_clarifier_layer",
+      "process_unit_type": "settling_layer",
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "initial_conditions": { "COD": 40.0, "X_TSS": 100.0 },
+      "volume": 500.0,
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+    },
+    {
+      "node_id": "sludge",
+      "node_type": "sink",
+      "process_unit_type": "waste_sludge",
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "initial_conditions": { "COD": 0.0, "X_TSS": 0.0 },
+      "volume": 1.0,
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+    },
+    {
+      "node_id": "controller",
+      "node_type": "controller",
+      "process_unit_type": "signal_controller",
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "initial_conditions": {},
+      "model_binding": { "model_kind": "controller", "reaction_enabled": false }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e_influent_reactor",
+      "edge_kind": "hydraulic",
+      "source_node_id": "influent",
+      "source_port": "out",
+      "target_node_id": "reactor",
+      "target_port": "in",
+      "component_policy": { "mode": "all", "include": [], "exclude": [] },
+      "stream_adapter": null,
+      "flow_spec": { "mode": "fixed", "value": 1000.0, "unit": "m3/d" },
+      "transport_model": null
+    },
+    {
+      "edge_id": "e_reactor_clarifier",
+      "edge_kind": "pump",
+      "source_node_id": "reactor",
+      "source_port": "pump_out",
+      "target_node_id": "clarifier",
+      "target_port": "feed",
+      "component_policy": { "mode": "all", "include": [], "exclude": [] },
+      "stream_adapter": null,
+      "flow_spec": { "mode": "fixed", "value": 1000.0, "unit": "m3/d" },
+      "pump": { "head_m": 2.0, "efficiency": 0.75, "energy_enabled": true, "min_flow": 0.0, "max_flow": 1200.0 },
+      "transport_model": null
+    },
+    {
+      "edge_id": "e_clarifier_sludge",
+      "edge_kind": "settling",
+      "source_node_id": "clarifier",
+      "source_port": "sludge",
+      "target_node_id": "sludge",
+      "target_port": "in",
+      "component_policy": { "mode": "include", "include": ["X_TSS"], "exclude": [] },
+      "stream_adapter": null,
+      "transport_model": {
+        "model_id": "takacs_settling.v1",
+        "parameters": { "area_m2": 1500.0, "v0_m_per_day": 250.0 }
+      }
+    },
+    {
+      "edge_id": "e_reactor_controller",
+      "edge_kind": "signal",
+      "source_node_id": "reactor",
+      "source_port": "signal_out",
+      "target_node_id": "controller",
+      "target_port": "signal_in",
+      "component_policy": { "mode": "exclude", "include": [], "exclude": ["COD", "X_TSS"] },
+      "stream_adapter": null,
+      "signal_spec": {
+        "signal_name": "reactor_tss",
+        "source_expression": "X_TSS",
+        "sample_period_days": 0.01,
+        "hold": "zero_order",
+        "delay_days": 0.0,
+        "unit": "mg/L"
+      }
+    }
+  ],
+  "flow_constraints": [],
+  "signal_bindings": [],
+  "parameters": {
+    "duration_days": 1.0,
+    "output_step_days": 0.01,
+    "solver_backend": "scipy",
+    "solver_method": "BDF",
+    "rtol": 0.000001,
+    "atol": 0.000000001
+  },
+  "runtime_options": {
+    "strict_flow_balance": true,
+    "strict_mass_balance": true,
+    "profile": "reference"
+  },
+  "metadata": { "source": "contract_fixture" }
+}
+

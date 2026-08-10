@@ -1,0 +1,71 @@
+{
+  "schema_version": "network_process_graph.v1",
+  "network_graph_id": "ng_udm_network_stream_adapter",
+  "version": 1,
+  "component_schemas": [
+    {
+      "component_schema_id": "asm1_13.v1",
+      "components": ["S_I", "X_I"],
+      "unit": "g/m3"
+    },
+    {
+      "component_schema_id": "bsm1_clarifier_reference_8.v1",
+      "components": ["S_I", "X_TSS"],
+      "unit": "g/m3"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "asm1_reactor",
+      "node_type": "udm_reactor",
+      "process_unit_type": "cstr",
+      "component_schema_id": "asm1_13.v1",
+      "initial_conditions": { "S_I": 30.0, "X_I": 100.0 },
+      "volume": 1000.0,
+      "ports": [{ "port_id": "out", "port_kind": "hydraulic_out" }],
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false },
+      "parameter_binding": {},
+      "unit_metadata": { "volume": "m3", "concentration": "g/m3" }
+    },
+    {
+      "node_id": "clarifier_layer",
+      "node_type": "secondary_clarifier_layer",
+      "process_unit_type": "settling_layer",
+      "component_schema_id": "bsm1_clarifier_reference_8.v1",
+      "initial_conditions": { "S_I": 0.0, "X_TSS": 0.0 },
+      "volume": 600.0,
+      "ports": [{ "port_id": "in", "port_kind": "hydraulic_in" }],
+      "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false },
+      "parameter_binding": {},
+      "unit_metadata": { "volume": "m3", "concentration": "g/m3" }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e_reactor_clarifier",
+      "edge_kind": "hydraulic",
+      "source_node_id": "asm1_reactor",
+      "source_port": "out",
+      "target_node_id": "clarifier_layer",
+      "target_port": "in",
+      "component_policy": { "mode": "include", "include": ["S_I", "X_I"], "exclude": [] },
+      "stream_adapter": {
+        "adapter_id": "asm1_13_to_bsm1_clarifier_8.v1",
+        "source_schema_id": "asm1_13.v1",
+        "target_schema_id": "bsm1_clarifier_reference_8.v1",
+        "component_mappings": {
+          "S_I": "S_I",
+          "X_I": "X_TSS"
+        }
+      },
+      "flow_spec": { "mode": "fixed", "value": 1000.0, "unit": "m3/d" },
+      "transport_model": null,
+      "metadata": { "profile": "stream_adapter_contract" }
+    }
+  ],
+  "flow_constraints": [],
+  "signal_bindings": [],
+  "composites": [],
+  "validation": { "status": "valid", "errors": [], "warnings": [] },
+  "metadata": { "profile": "stream_adapter_contract" }
+}

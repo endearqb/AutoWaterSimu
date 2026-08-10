@@ -1,0 +1,31 @@
+{
+  "schema_version": "bsm1_reference_oracle_manifest.v1",
+  "manifest_id": "bsm1_secondary_clarifier_reference_oracle",
+  "status": "provenance_only",
+  "conformance_status": "not_claimed",
+  "profile": "secondary_clarifier_reference",
+  "component_schema_id": "bsm1_clarifier_reference_8.v1",
+  "source_provenance": [
+    {
+      "source_id": "official_bsm1_benchmark",
+      "label": "Official BSM1 benchmark secondary clarifier reference",
+      "required_for_p8": true,
+      "bundled": false,
+      "notes": "Official reference outputs are not bundled in this repository yet."
+    }
+  ],
+  "oracle_artifacts": [],
+  "required_before_conformance_claim": [
+    "Official BSM1 reference output files are available to the verifier.",
+    "Reference output checksums are recorded in this manifest.",
+    "Steady-state and dynamic oracle cases are mapped to generated network fixtures.",
+    "Tolerance policy is documented before any compatibility claim.",
+    "P8 conformance tests compare this implementation against the official oracle."
+  ],
+  "constraints": {
+    "may_be_used_as_conformance_evidence": false,
+    "reactive_profile_is_bsm1_evidence": false,
+    "p6_parity_gate_advances_p8": false
+  },
+  "notes": "This manifest freezes provenance requirements for future P8 conformance. It is not itself BSM1 compatibility evidence."
+}

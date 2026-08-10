@@ -57,3 +57,33 @@ func TestWorkerClaimSkipsContractVersionMismatch(t *testing.T) {
 		t.Fatalf("contract-version-mismatched worker should not claim job: %#v", claim)
 	}
 }
+
+func TestWorkerClaimSkipsUDMNetworkUntilWorkerCapabilityExists(t *testing.T) {
+	svc := testService(t)
+	ctx := context.Background()
+	if _, _, err := svc.CreateJob(ctx, validContractFixture(t, "udm_network_minimal.compute_job.v1.json"), ""); err != nil {
+		t.Fatal(err)
+	}
+	worker, err := svc.RegisterWorker(ctx, map[string]any{
+		"worker_id":                   "worker_legacy",
+		"capabilities":                []any{"material_balance", "ode"},
+		"supported_contract_versions": []any{"compute_job.v1", "network_simulation_input.v1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim, err := svc.Claim(ctx, worker.WorkerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if claim["job"] != nil {
+		t.Fatalf("legacy worker should not claim UDM Network job: %#v", claim)
+	}
+	job, err := svc.GetJob(ctx, "job_udm_network_minimal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Job.Status != StatusQueued {
+		t.Fatalf("incompatible UDM Network claim should leave job queued, got %s", job.Job.Status)
+	}
+}

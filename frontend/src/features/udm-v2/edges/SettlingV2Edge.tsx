@@ -1,0 +1,17 @@
+import type { EdgeProps } from "@xyflow/react"
+
+import { NetworkV2EdgeShell } from "./NetworkV2EdgeShell"
+
+export function formatSettlingV2EdgeLabel() {
+  return "J_TSS"
+}
+
+export function SettlingV2Edge(props: EdgeProps) {
+  return (
+    <NetworkV2EdgeShell
+      {...props}
+      kind="settling"
+      generatedLabel={formatSettlingV2EdgeLabel()}
+    />
+  )
+}

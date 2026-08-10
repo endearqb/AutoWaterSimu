@@ -13,6 +13,9 @@ my-full-stack.code-workspace
 # GitHub renders .github/README.md before the root README.
 .github/README.md
 
+# Local rebuild document drops; tracked rebuild docs stay tracked.
+/docs/rebuild/
+
 # Environment files
 .env
 .env.local

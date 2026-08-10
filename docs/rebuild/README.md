@@ -34,6 +34,7 @@
 | `AutoWaterSimu_Next_COSS_Source_Manifest_2026-05-31.md` | COSS-compatible UI source copy/license manifest |
 | `AutoWaterSimu_Next_Legacy_Migration_Guide_2026-05-31.md` | legacy FastAPI/React baseline 到 Next worker/API/Desktop 的迁移指南 |
 | `AutoWaterSimu_Next_Standalone_Migration_Matrix_v1.0.md` | Standalone Phase 0 route/caller/data 迁移矩阵 |
+| `AutoWaterSimu_UDM_v2_Docs/` | UDM-v2 runtime 与前端隔离需求、规格、计划和 PR notes |
 | `simulation_core/` | simulation_core 性能优化需求、开发计划、前置证据规划和 golden/repro 文档化测试 |
 | `AutoWaterSimu_Final_State_Driven_Plan_v1.2.md` | 原始终态架构输入 |
 | `windows app.md` | Windows Desktop 路线输入 |

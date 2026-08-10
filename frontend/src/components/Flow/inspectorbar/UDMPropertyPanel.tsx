@@ -755,33 +755,31 @@ function UDMPropertyPanel({ isNode, store }: UDMPropertyPanelProps) {
 
     return (
       <Stack gap={4} align="stretch">
-        <Box>
-          <Stack gap={3}>
-            <Field.Root invalid={!!flowRateError}>
-              <HStack align="flex-start" gap={4}>
-                <Field.Label minW="80px" pt={2}>
-                  {t("flow.propertyPanel.flowLabel")}
-                </Field.Label>
-                <Box flex={1}>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={tempFlowValue}
-                    onChange={(e) => handleEdgeFlowChange(e.target.value)}
-                    placeholder={t("flow.propertyPanel.flowPlaceholder")}
-                  />
-                  {flowRateError && (
-                    <Field.ErrorText>{flowRateError}</Field.ErrorText>
-                  )}
-                </Box>
-              </HStack>
-            </Field.Root>
-          </Stack>
-        </Box>
+        <Field.Root invalid={!!flowRateError}>
+          <HStack align="flex-start" gap={4}>
+            <Field.Label minW="80px" pt={2}>
+              {t("flow.propertyPanel.flowLabel")}
+            </Field.Label>
+            <Box flex={1}>
+              <Input
+                type="number"
+                min="0"
+                value={tempFlowValue}
+                onChange={(e) => handleEdgeFlowChange(e.target.value)}
+                className="nodrag"
+                placeholder={t("flow.propertyPanel.flowPlaceholder")}
+              />
+              {flowRateError && (
+                <Field.ErrorText>{flowRateError}</Field.ErrorText>
+              )}
+            </Box>
+          </HStack>
+        </Field.Root>
 
         <Box>
-          <Stack gap={3}>{renderEdgeParameters()}</Stack>
+          <Stack gap={3}>
+            {renderEdgeParameters()}
+          </Stack>
         </Box>
       </Stack>
     )

@@ -11,10 +11,11 @@ AutoWaterSimu Next is the canonical mainline: a contract-first monorepo for Go C
 
 ## README First / AI Context Protocol
 
-This repository uses a README First workflow for human and AI collaboration.
-`AGENTS.md` is the executable rulebook; `README_First.md` explains the principles and document roles behind those rules.
+This repository uses README First v2.1 for human and AI collaboration. `AGENTS.md` is the executable L0/L1/L2 rulebook; `README_First.md` explains its principles and document roles.
 
-Recommended reading order before changing files:
+Before changing files, classify the task first: L0 reads the nearest directory README; L1 reads the target-path README chain plus code/tests; L2 also reads `.ai/architecture/` and relevant history. Read only until the task's accidental uncertainty is resolved.
+
+The L1/L2 reading order is:
 
 1. `AGENTS.md`
 2. `README_First.md`
@@ -26,8 +27,10 @@ Long-term AI collaboration records live under `.ai/`:
 
 - `.ai/changes/`: why a change was made, what was verified, and what remains uncertain
 - `.ai/decisions/`: durable architecture decisions
+- `.ai/architecture/`: current cross-directory architecture and documentation boundaries
 - `.ai/plans/`: optional complex task plans
 - `.ai/reviews/`: optional review records
+- `.ai/glossary.md` and `.ai/handoff.md`: on-demand terminology and unfinished-task handoff
 
 AutoWaterSimu Next is developed in this repository as a monorepo-style evolution:
 

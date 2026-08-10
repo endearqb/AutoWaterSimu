@@ -19,6 +19,8 @@
     "material_balance_time_series.v1",
     "model_catalog.v1",
     "model_run.v1",
+    "network_process_graph.v1",
+    "network_simulation_input.v1",
     "process_graph.v1",
     "production_readiness.v1",
     "result_explanation.v1",

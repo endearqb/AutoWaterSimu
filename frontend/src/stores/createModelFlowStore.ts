@@ -28,6 +28,15 @@ import {
 } from "../utils/timeSegmentValidation"
 // import type { BaseModelService } from '../services/baseModelService' // 鏆傛椂娉ㄩ噴鎺夋湭浣跨敤鐨勫锟?
 
+const stripLegacyEdgeConfigFields = (
+  data: Record<string, unknown>,
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(data).filter(
+      ([key]) => !key.endsWith("_a") && !key.endsWith("_b"),
+    ),
+  )
+
 /**
  * 閫氱敤娴佺▼鍥剧姸鎬佹帴锟?
  * 鍩轰簬RFState浣嗘敮鎸佹硾鍨嬮厤锟?
@@ -373,6 +382,12 @@ export function createModelFlowStore<
                   data: {
                     ...edge.data,
                     flow,
+                    flow_spec: edge.data?.flow_spec
+                      ? {
+                          ...edge.data.flow_spec,
+                          value: flow,
+                        }
+                      : edge.data?.flow_spec,
                   },
                 }
               : edge,
@@ -1053,6 +1068,7 @@ export function createModelFlowStore<
 
           // 鏋勫缓鏂扮殑data瀵硅薄锛屽寘鍚玣low鍜屽浐瀹氬弬鏁扮殑a銆乥閰嶇疆
           const newData: any = {
+            ...(edge.data || {}),
             flow: flow || 0,
           }
 
@@ -1189,8 +1205,10 @@ export function createModelFlowStore<
             // 鎻愬彇flow鍙傛暟
             const { flow, ...otherData } = edge.data
 
-            // 鍒涘缓鏂扮殑杈规暟鎹璞★紝鍙寘鍚玣low
-            const newEdgeData: any = { flow: flow || 0 }
+            const newEdgeData: any = {
+              ...stripLegacyEdgeConfigFields(otherData),
+              flow: flow || 0,
+            }
 
             // 涓烘瘡鏉¤竟鍒涘缓鍙傛暟閰嶇疆瀵硅薄
             newEdgeParameterConfigs[edge.id] = {}

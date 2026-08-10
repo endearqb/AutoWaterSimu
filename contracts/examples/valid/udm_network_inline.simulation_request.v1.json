@@ -1,0 +1,76 @@
+{
+  "schema_version": "simulation_request.v1",
+  "request_id": "sim_req_udm_network_inline",
+  "source_system": "autowatersimu",
+  "requested_by": "user:test",
+  "job_type": "simulation.udm_network.v1",
+  "input_ref": {
+    "simulation_input": {
+      "schema_version": "network_simulation_input.v1",
+      "simulation_input_id": "nsi_udm_network_minimal",
+      "job_type": "simulation.udm_network.v1",
+      "network_graph_id": "ng_udm_network_minimal",
+      "network_graph_version": 1,
+      "component_schemas": [
+        {
+          "component_schema_id": "udm_network_minimal_components.v1",
+          "components": ["COD", "X_TSS"],
+          "unit": "mg/L"
+        }
+      ],
+      "nodes": [
+        {
+          "node_id": "influent",
+          "node_type": "source",
+          "process_unit_type": "influent",
+          "component_schema_id": "udm_network_minimal_components.v1",
+          "initial_conditions": { "COD": 200.0, "X_TSS": 120.0 },
+          "volume": 1.0,
+          "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+        },
+        {
+          "node_id": "reactor",
+          "node_type": "udm_reactor",
+          "process_unit_type": "cstr",
+          "component_schema_id": "udm_network_minimal_components.v1",
+          "initial_conditions": { "COD": 50.0, "X_TSS": 80.0 },
+          "volume": 1000.0,
+          "model_binding": { "model_kind": "passive_udm", "reaction_enabled": false }
+        }
+      ],
+      "edges": [
+        {
+          "edge_id": "e_influent_reactor",
+          "edge_kind": "hydraulic",
+          "source_node_id": "influent",
+          "source_port": "out",
+          "target_node_id": "reactor",
+          "target_port": "in",
+          "component_policy": { "mode": "all", "include": [], "exclude": [] },
+          "stream_adapter": null,
+          "flow_spec": { "mode": "fixed", "value": 1000.0, "unit": "m3/d" },
+          "transport_model": null
+        }
+      ],
+      "flow_constraints": [],
+      "signal_bindings": [],
+      "parameters": {
+        "duration_days": 1.0,
+        "output_step_days": 0.01,
+        "solver_backend": "scipy",
+        "solver_method": "BDF",
+        "rtol": 0.000001,
+        "atol": 0.000000001
+      },
+      "runtime_options": {
+        "strict_flow_balance": true,
+        "strict_mass_balance": true,
+        "profile": "reference"
+      }
+    }
+  },
+  "metadata": {
+    "trace_id": "trace_udm_network_inline"
+  }
+}
+

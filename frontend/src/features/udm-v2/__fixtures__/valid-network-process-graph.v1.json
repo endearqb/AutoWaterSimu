@@ -1,0 +1,76 @@
+{
+  "schema_version": "network_process_graph.v1",
+  "network_graph_id": "graph_valid_network_v2",
+  "version": 1,
+  "source_canvas_graph_id": "canvas_valid_network_v2",
+  "component_schemas": [
+    {
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "components": ["COD", "X_TSS"],
+      "unit": "mg/L"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "influent",
+      "node_type": "boundary",
+      "process_unit_type": "boundary",
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "initial_conditions": { "COD": 200, "X_TSS": 120 },
+      "ports": [{ "port_id": "out", "port_kind": "hydraulic_out" }],
+      "model_binding": {
+        "model_kind": "passive_udm",
+        "reaction_enabled": false
+      },
+      "parameter_binding": {},
+      "unit_metadata": { "volume": "m3", "concentration": "mg/L" },
+      "metadata": {
+        "ui": {
+          "label": "Influent",
+          "position": { "x": 0, "y": 0 }
+        }
+      }
+    },
+    {
+      "node_id": "reactor",
+      "node_type": "udm_reactor",
+      "process_unit_type": "udm_reactor",
+      "component_schema_id": "udm_network_minimal_components.v1",
+      "initial_conditions": { "COD": 50, "X_TSS": 80 },
+      "volume": 1000,
+      "ports": [
+        { "port_id": "in", "port_kind": "hydraulic_in" },
+        { "port_id": "out", "port_kind": "hydraulic_out" }
+      ],
+      "model_binding": { "model_kind": "udm", "reaction_enabled": false },
+      "parameter_binding": {},
+      "unit_metadata": { "volume": "m3", "concentration": "mg/L" },
+      "metadata": {
+        "ui": {
+          "label": "Reactor",
+          "position": { "x": 240, "y": 0 }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e_influent_reactor",
+      "edge_kind": "hydraulic",
+      "source_node_id": "influent",
+      "source_port": "out",
+      "target_node_id": "reactor",
+      "target_port": "in",
+      "component_policy": { "mode": "all", "include": [], "exclude": [] },
+      "stream_adapter": null,
+      "flow_spec": { "mode": "fixed", "value": 100, "unit": "m3/d" },
+      "transport_model": null,
+      "metadata": { "react_flow_type": "hydraulic_v2" }
+    }
+  ],
+  "flow_constraints": [],
+  "signal_bindings": [],
+  "composites": [],
+  "validation": { "status": "valid", "errors": [], "warnings": [] },
+  "metadata": { "created_by_feature": "features/udm-v2" }
+}

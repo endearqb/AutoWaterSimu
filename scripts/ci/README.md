@@ -14,7 +14,7 @@
 
 本目录负责：
 
-- PR fast lane：dependency boundary、Compute API boundary、simulation_core correctness freeze、worker dependency、README path、ontology、contracts、Go/frontend/desktop 快速检查。
+- PR fast lane：dependency boundary、Compute API boundary、simulation_core correctness freeze、worker dependency、README path、ontology、contracts、UDM Network closed parity gate、Go/frontend/desktop 快速检查。
 - Standalone evidence：no-auth compose/API、legacy migration、five-model worker/frontend、five-model live、backup/restore。
 - Opt-in evidence：integration、security、browser、live backend browser、current-flow live、worker adapter strict、worker packaged no-fallback。
 - Performance Phase 0 evidence：baseline、profiling、golden、hot-path prereview、Go API latency、flag matrix。
@@ -35,6 +35,7 @@
 - Evidence must record commit SHA, workflow/local status, dirty worktree state, and per-step results when relevant.
 - Dirty worktree evidence cannot prove a clean HEAD; tracked and untracked changes must be distinguishable.
 - Heavy Docker/browser/release lanes remain opt-in unless explicitly wired into a release gate.
+- UDM Network closed parity gate in `pr-fast.ps1` only verifies the P6 v1/v2 migration gate remains closed; it must not be treated as BSM1/P8 conformance evidence.
 - Codegen drift gates may run generation and mechanical whitespace normalization, but must not hand-edit generated clients.
 - Live or destructive checks require explicit flags, isolated project names, and temporary DSNs or artifact directories.
 

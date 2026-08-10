@@ -1,3 +1,267 @@
+# 2026-08-10 UDM-v2 画布 UI/交互复用与国际化修正 TODO
+
+- [x] 读取 README First、UDM-v2 canvas/edge/inspector/state 上下文、ADR-0028、Chakra v3 本地文档和现有测试。
+- [x] 修订 hard isolation 边界：继续隔离业务状态/合同/服务，允许白名单内无状态 Flow UI/交互原语复用。
+- [x] 压缩 UDM-v2 浮动工作台，节点改为紧凑双列布局，连线类型改为紧凑创建模式。
+- [x] 恢复 hydraulic/pump 流量标签常驻显示，选中边显示快捷类型工具条并继续打开右侧参数抽屉。
+- [x] 补齐 UDM-v2 工作台、连线、状态与属性抽屉的中英文文案及 ARIA 文案。
+- [x] 补充 store、组件与 Playwright 回归测试。
+- [x] 运行 typecheck、unit、UDM-v2 boundary、Playwright 和 README/格式检查。
+
+## Plan
+
+- 数据合同、序列化 payload、solver 与后端接口不变；实时流量继续只存在于 React Flow render copy。
+- 现有边切换类型时重新建立该类型默认数据，只保留用户自定义 UI label；切换前复用端口兼容校验。
+- v1 默认视觉和行为不做破坏性修改；共享组件新增能力必须保留 legacy 默认值。
+
+## Review
+
+- UDM-v2 工作台在 1280x720 浏览器验收中宽约 358px，节点工具改为紧凑双列；中文界面不存在原截图中的 `Nodes`、`Hyd` 等可见混排。
+- hydraulic/pump 流量标签未选中时常驻显示；标签本身可点击选中，选中后连线上方显示类型快捷工具条，右侧属性抽屉继续作为完整参数编辑入口。
+- 边类型切换复用现有端口兼容校验，只保留 `data.ui`，目标类型专有字段使用默认值；业务 store、合同、服务与 v1 页面仍隔离。
+- 验证通过：`npm run typecheck`；UDM-v2 Vitest 17 files / 53 tests；boundary；Playwright 14 passed / 1 backend-dependent skipped；`git diff --check`。README PowerShell 门禁因 macOS 环境无 `pwsh`/`powershell` 未运行，已人工核对本次 README 时效戳与链接。
+
+# 2026-07-11 README First v2.1 架构迁移 TODO
+
+- [x] 阅读现有 README First 上下文、`.ai/` 结构及上游 `endearqb/ReadmeFirst` v2.1 迁移说明。
+- [x] 保留 AutoWaterSimu 专属规则，升级通用协议为 L0/L1/L2 分级执行。
+- [x] 新增最小 `.ai/architecture/` 层与触发式 glossary/handoff/plan 目录。
+- [x] 更新根 README、中文 README、README First 原则和文档门禁分类。
+- [x] 运行 README First 文档门禁并记录由无关工作区删除导致的既有断链。
+
+## Review
+
+- `scripts\readme-contract-check.ps1 -FailOnWarnings` 的新增 `.ai` 链路通过；仅 `README.md` / `README_zh.md` 对工作区既有删除 `release-notes.md` 的链接失败。
+- `git diff --check -- AGENTS.md README.md README_zh.md README_First.md .ai tasks\todo.md` 通过（仅 CRLF 归一化 warning）。
+
+# 2026-06-30 UDM-v2 Frontend Hard Isolation TODO
+
+- [x] Read README First context, UDM-v2 frontend requirements/spec/plan, frontend READMEs, task/change records, and current git state.
+- [x] Create `codex/udm-v2-frontend-split` from `codex/udm-network-v2`.
+- [x] PF-1: add ADR-0028, feature README, Vitest baseline, boundary script, and Flow README boundary update.
+- [x] PF-1: run validation.
+- [x] PF-1: commit and push.
+- [x] PF0: add `/udm-v2` route skeleton, empty layout/canvas/store, standalone adapter skeleton, route smoke, and adapter tests.
+- [x] PF0: run validation.
+- [x] PF0: commit and push.
+- [x] PF1: copy edge model into feature, add four v2 renderers and edge mode selector.
+- [x] PF1: run validation.
+- [x] PF1: commit and push.
+- [x] PFC-A: remove v2 selector/inspector/store pollution from legacy pages.
+- [x] PFC-A: run validation.
+- [x] PFC-A: commit and push.
+- [x] PF2: add v2 nodes and palette.
+- [x] PF2: run validation.
+- [x] PF2: commit and push.
+- [x] PF3: add inspector and semantic validation.
+- [x] PF3: run validation.
+- [x] PF3: commit and push.
+- [x] PF4: add SecondaryClarifier composite modeling.
+- [x] PF4: run validation.
+- [x] PF4: commit and push.
+- [x] PF5: add serializers and contract validation.
+- [x] PF5: run validation.
+- [x] PF5: commit and push.
+- [x] PF6: add standalone save/load/submit and runtime-pending banner.
+- [x] PF6: run validation.
+- [x] PF6: commit and push.
+- [x] PFC-B: delete/freeze remaining global network edge leftovers.
+- [x] PFC-B: run validation.
+- [x] PFC-B: commit and push.
+- [x] PF7: final gate, docs, and evidence.
+- [x] PF7: run validation.
+- [x] PF7: commit and push.
+
+## Plan
+
+- Keep one commit per phase and push `codex/udm-v2-frontend-split` after each phase.
+- Do not stage pre-existing dirty changes unless they are explicitly part of the current phase.
+- Follow copy -> freeze -> clean/delete for edge model isolation.
+- Treat `UDM_NETWORK_NOT_EXECUTABLE_YET` as runtime pending, not a successful simulation.
+
+## Review
+
+- PF-1 added ADR-0028, feature README, Vitest/jsdom/testing-library baseline, `scripts/check-udm-v2-import-boundary.mjs`, and Flow README boundary correction.
+- PF-1 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, and `git diff --check`.
+- PF0 added `/udm-v2`, empty v2 layout/canvas/store, standalone payload adapter skeleton, sidebar/standalone route-tree wiring, route smoke and two Vitest tests.
+- PF0 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, and standalone `/udm-v2` Playwright route smoke.
+- PF1 added feature-local v2 edge model, four renderers, edge mode selector, typed `onConnect`, edge tests, and frozen/deprecated legacy network edge docs.
+- PF1 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
+- PFC-A removed v2 edge selector/inspector/store pollution from legacy pages, restored new v1 edges to legacy `flow`, and added v1 no-v2-selector Playwright plus store isolation tests.
+- PFC-A validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone v1 no-v2-selector Playwright regression, and `git diff --check`.
+- PF2 added feature-local v2 node defaults, five node renderers, node type registry, draggable node palette, canvas drop handling, and node factory/route smoke coverage.
+- PF2 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke with palette drag/drop, and `git diff --check`.
+- PF3 added node/edge/graph inspectors, semantic validation, diagnostic field mapping, validation status display, and inspector/validation tests.
+- PF3 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
+- PF4 added SecondaryClarifier10Layer config defaults, contract-shaped expand output, clarifier inspector fields, feed composition editing, and expand tests.
+- PF4 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
+- PF5 added schema-facing contract types, canvas graph serializers, simulation input builder, AJV contract validation, fixtures, and roundtrip/contract tests.
+- PF5 validation passed: `npm run test`, `npm run typecheck`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, and `git diff --check`.
+- PF6 added standalone UDM-v2 CanvasGraph save/load/list/delete service, compute submit service, route `flowchartId` loading, New/Save/Save As/Load/Export JSON/Import JSON/Validate/Submit toolbar actions, runtime-pending not-executable banner, and service/UI/Playwright tests.
+- PF6 validation passed: `npm run test`, `npx tsc --noEmit`, `npm run check:udm-v2-boundary`, standalone `/udm-v2` route smoke, save/load Playwright, submit-not-executable Playwright, and `git diff --check`.
+- PFC-B deleted the remaining legacy/global UDM-v2 edge helper files, kept legacy imported edge cleanup local to v1 stores, tightened the UDM-v2 boundary script, and updated README contracts.
+- PFC-B validation passed: `npm run check:udm-v2-boundary`, `npx tsc --noEmit`, `npm run test`, standalone v1 no-v2-selector Playwright regression, and residue grep for `edge_kind` / `NetworkEdgeKind` / `createNetworkEdgeData`. README contract check was attempted but blocked by the pre-existing unstaged `release-notes.md` deletion.
+- PF7 added PR notes/evidence docs, updated the tracked rebuild docs index, generated local screenshot evidence, and scoped Biome cleanup to UDM-v2 feature/tests plus the boundary script.
+- PF7 validation passed: `npm run typecheck`, `npm run test`, `npm run build`, `npm run check:udm-v2-boundary`, scoped `npx biome check`, route/v1 Playwright smoke, and contract fixture tests. Full `npx biome check .` remains blocked by pre-existing generated-client/openapi diagnostics, and README contract check remains blocked by the unrelated unstaged `release-notes.md` deletion.
+
+# 2026-06-27 UDM Network v2 Review Closeout TODO
+
+- [x] Re-read UDM-v2 docs, review note, README First context, task/change history, and affected directory READMEs.
+- [x] Fix frontend `updateEdgeFlow()` to keep `flow_spec.value` synchronized with legacy `flow`.
+- [x] Add SecondaryClarifier layer `volume` and hydraulic `flow_spec.unit`.
+- [x] Tighten `flow_spec`, `flow_constraints`, and `stream_adapter` contracts with valid/invalid fixture coverage.
+- [x] Make flow balance fail on unimplemented constraint types instead of silently skipping them.
+- [x] Fix Takacs 13-state component-resolved settling flux while preserving direct `X_TSS` reference mode.
+- [x] Add compiler-supported `stream_adapter` validation and minimal adapter contract tests.
+- [x] Add UDM Network RHS assembly with focused core tests.
+- [x] Wire the closed P6 parity gate into CI/release gates without opening v2 cutover.
+- [x] Add explicit worker/API diagnostics that `udm_network` is not executable yet.
+- [x] Add BSM1 reference provenance/oracle manifest without claiming conformance.
+- [x] Run focused validation, update README/change records, and push if clean.
+
+## Plan
+
+- Keep this as a review closeout slice, not P8 BSM1 conformance or B11 worker capability enablement.
+- Preserve the existing v1 runtime and keep P6 `ready_for_v2_cutover=false`.
+- Use existing contracts/core/API/worker patterns and add only the minimal new runtime surface needed for RHS assembly.
+- Treat the ignored UDM-v2 docs package as input only; record durable repo changes in README contracts and `.ai/changes`.
+
+## Review
+
+- Implemented the review closeout as a bounded P6/P7/P0/P1 hardening slice, not P8 conformance and not worker execution enablement.
+- Added contract tightening, stream adapter compile validation, RHS assembly, Takacs 13-state flux correction, SecondaryClarifier volume/unit metadata, closed parity gate wiring, worker/API not-executable diagnostics and BSM1 provenance manifest.
+- Validation passed: contracts tests, check-contracts, full simulation_core tests, worker tests, Go API tests, frontend typecheck, README contract check, PowerShell syntax parse and `git diff --check`.
+
+# 2026-06-27 UDM Network v2 P7 SecondaryClarifier Reference TODO
+
+- [x] Re-read P7 SecondaryClarifier10Layer reference profile requirements.
+- [x] Add `udm_network/composites/secondary_clarifier_10_layer.py`.
+- [x] Generate 10 layer nodes with 8 reference states per layer.
+- [x] Generate hydraulic boundary/internal edges, 9 settling edges and flow constraints.
+- [x] Cover 80-state registry, feed layer, Qe/Qr/Qw balance, top/bottom outputs and no reaction contribution.
+- [x] Add composites README and update simulation_core README contracts.
+- [x] Run focused P7 tests.
+
+## Plan
+
+- Keep P7 limited to reference profile primitive graph generation.
+- Use zero-state boundary controller nodes so compiled state registry remains exactly 80 states.
+- Leave BSM1 official conformance, full plant and reactive profile for later phases.
+
+## Review
+
+- Added `SecondaryClarifierReferenceConfig` and `build_secondary_clarifier_reference_graph()`.
+- Generated graph compiles through `compile_network()` and resolves boundary hydraulic flows with `solve_flow_balance()`.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_secondary_clarifier.py -q`.
+
+# 2026-06-27 UDM Network v2 P6 Five-Model Parity Gate TODO
+
+- [x] Re-read P6 five-model parity and v1 migration gate requirements.
+- [x] Confirm existing core f64 committed golden coverage for material_balance, UDM, ASM1Slim, ASM1 and ASM3 v1 fixtures.
+- [x] Add `udm_network/parity.py` as the UDM-v2 five-model migration gate manifest.
+- [x] Cover required five model families, v1 fixture/golden links, closed cutover status and JSON serializable report.
+- [x] Update simulation_core README contracts for the new parity gate import surface.
+- [x] Run focused P6 tests.
+
+## Plan
+
+- Treat P6 as a cutover gate, not as permission to switch standalone job types to UDM-v2.
+- Keep the gate closed until every model family has explicit v1/v2 L2 parity evidence.
+- Reuse existing `CORE_F64_GOLDEN_CASES` as the v1 oracle manifest.
+
+## Review
+
+- Added `build_v1_migration_gate()` with cases for material_balance, UDM, ASM1Slim, ASM1 and ASM3.
+- Gate currently reports `ready_for_v2_cutover=False` because v2 RHS assembly and full seed parity are not complete.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_parity_gate.py -q`.
+
+# 2026-06-27 UDM Network v2 P5 Takacs Transport TODO
+
+- [x] Re-read P5 transport/Takacs requirements from UDM-v2 docs.
+- [x] Add `udm_network/udm_transport.py` for `takacs_settling.v1`.
+- [x] Build transport model from compiled settling edges and inline definitions.
+- [x] Cover settling-only mass conservation, volume unchanged, zero solids, high-solids limiter, total-solids projection and missing component diagnostics.
+- [x] Update simulation_core README contracts for the new transport import surface.
+- [x] Run focused P5 tests.
+
+## Plan
+
+- Keep P5 limited to edge transport evaluation, not ODE/RHS assembly or SecondaryClarifier composite generation.
+- Compute one Takacs total solids flux first, then project it by source particulate composition.
+- Keep settling volume contribution fixed at zero.
+
+## Review
+
+- Added `build_transport_model()` and `evaluate_transport()` with `UDMTransportModel` and `TransportEvaluation`.
+- `takacs_settling.v1` supports direct `X_TSS` and weighted particulate source state, component policy include/exclude, source/target validation, shared velocity/total-flux limiter and zero-volume deltas.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_transport.py -q`.
+
+# 2026-06-27 UDM Network v2 P4 Reaction/Passive TODO
+
+- [x] Re-read P4 reaction/passive requirements from UDM-v2 docs.
+- [x] Reuse existing UDM expression compiler instead of adding another expression engine.
+- [x] Add `udm_network/udm_reaction.py` for passive and reaction-enabled node evaluation.
+- [x] Cover passive nodes, `reaction_enabled=false`, seed rate/stoich, `t`/signals and invalid stoich components.
+- [x] Cover small-case parity with the existing v1 UDM runtime.
+- [x] Update simulation_core README contracts for the new reaction import surface.
+- [x] Run focused P4 tests.
+
+## Plan
+
+- Keep P4 limited to local node reaction evaluation, not ODE integration, transport or worker execution.
+- Keep component/model/process dataclasses in `udm_reaction.py` for now; split `components.py`/`models.py` only when the surface grows.
+- Use `material_balance.udm_expression.compile_expression` as the single expression language implementation.
+
+## Review
+
+- Added `build_reaction_model()`, `build_node_reaction_model()` and `evaluate_reaction()`.
+- Passive nodes return zero reaction while retaining local component state shape.
+- Reaction-enabled seed definitions evaluate rate expressions, numeric `stoich`, `stoich_expr`, parameters, `t` and signals.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_reaction.py -q`.
+
+# 2026-06-27 UDM Network v2 P3 Flow Balance TODO
+
+- [x] Re-read P3 flow balance requirements from UDM-v2 docs.
+- [x] Add `udm_network/flow_balance.py` for hydraulic/pump `Aq=b` solving.
+- [x] Cover fixed、balanced、split_fraction、ratio_to_edge and residual cases.
+- [x] Cover strict failures for negative residual、overdetermined conflict and pump bounds.
+- [x] Update simulation_core README contracts for the new solver interface.
+- [x] Run focused and full simulation_core tests.
+
+## Plan
+
+- Keep P3 limited to flow resolution, not mass transport or ODE execution.
+- Use numpy linear algebra already available in simulation_core dependencies.
+- Ignore settling/signal in `Aq=b`; they enter later transport/control phases.
+
+## Review
+
+- Added `solve_flow_balance()` and `FlowBalanceResult` / `FlowBalanceError`.
+- Solver builds conservation rows plus fixed/ratio/split/residual constraints and checks rank, inconsistency, negative flow/residual and pump bounds.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_flow_balance.py -q` and `backend\.venv\Scripts\python -m pytest simulation_core\tests -q`.
+
+# 2026-06-27 UDM Network v2 P2 Compiler MVP TODO
+
+- [x] Confirm current branch is clean after pushed P-1/P0/P1 baseline.
+- [x] Re-read README First context for UDM-v2 docs, contracts, simulation_core, worker, and core tests.
+- [x] Add `autowatersimu_simulation_core.udm_network` compiler MVP.
+- [x] Add compiler tests for minimal graph success, executable-input port inference, invalid port, and invalid edge kind.
+- [x] Update simulation_core README contracts for the new import surface.
+- [x] Run focused and full simulation_core tests.
+
+## Plan
+
+- Keep P2 compiler-only; do not implement worker execution, flow solver, Takacs runtime, or reaction evaluator in this phase.
+- Reuse contract fixture payloads directly instead of creating another fixture format.
+- Keep compiler errors small and stable through `UDMNetworkCompileError.code`.
+
+## Review
+
+- Added `udm_network/graph.py`, `compiler.py`, and `results.py`.
+- `compile_network()` accepts `network_process_graph.v1` and `network_simulation_input.v1`, builds component schema registry, runtime nodes/edges, state slices, and static/dynamic edge bundles.
+- Explicit process-graph ports are strict; executable inputs without ports infer ports from edge kind.
+- Validation passed: `backend\.venv\Scripts\python -m pytest simulation_core\tests\test_udm_network_compiler.py -q` and `backend\.venv\Scripts\python -m pytest simulation_core\tests -q`.
+
 # 2026-06-27 Mainline cutover to AutoWaterSimu Next TODO
 
 - [x] Read the attached mainline strategy note before changing refs.
@@ -10909,3 +11173,91 @@
 - `flowStore.ts` keeps standalone workspace persistence on Go wrappers and lazy-loads `FlowchartsService` only in non-standalone branches.
 - `audit-frontend-standalone-compute-boundary.ps1` now records reachable standalone files and fails on legacy route/useAuth/static FastAPI client reachability.
 - Verification so far: frontend standalone audit passed; `cd frontend; npx tsc --noEmit` passed; standalone compose service config excludes backend.
+# 2026-06-27 UDM Network v2 P-1/P0/P1 TODO
+
+- [x] Re-read README First context for docs/rebuild UDM-v2 docs, decisions, contracts, Go simulation job profile, worker capability boundary, frontend Flow, and task/change records.
+- [x] Add UDM-v2 ADR drafts without overwriting the existing accepted ADR 0019.
+- [x] Add `network_process_graph.v1` / `network_simulation_input.v1` contracts, fixtures, registry/codegen coverage, and `simulation.udm_network.v1` job type contract wiring.
+- [x] Add frontend four-edge modeling support: edge mode selector, edge factory data, renderer styling, and inspector fields.
+- [x] Run focused contract, Go, frontend, README/change validation and record review.
+
+## Plan
+
+- Preserve existing v1 contracts and worker behavior; this slice is P-1/P0/P1 only.
+- Keep UDM-v2 ADR content as drafts because runtime compiler/solver/parity decisions are not yet implemented.
+- Shift planned UDM ADR numbering from 0019-0026 to 0020-0027 because `.ai/decisions/0019-mainline-cutover-to-autowatersimu-next.md` already exists and is accepted.
+- Do not advertise worker `udm_network` capability until a real runner exists; the Go job profile can require it so jobs remain queued until P11 runtime integration.
+- Reuse the existing Flow store, `EditableEdge`, and inspector panels instead of adding a second canvas system.
+
+## Review
+
+- Added draft ADRs `0020`-`0027`; UDM-v2 numbering was shifted because `0019` already records the accepted mainline cutover decision.
+- Added `network_process_graph.v1` and `network_simulation_input.v1` contracts with valid/invalid fixtures, registry/codegen manifest coverage, and compute job/simulation request examples.
+- Wired `simulation.udm_network.v1` into Go job profiling and simulation-check inline payload resolution without adding worker execution support.
+- Added Flow edge mode selection plus hydraulic/pump/settling/signal rendering and inspector fields while preserving legacy `flow` import/export behavior.
+- Updated README contracts for contracts, API/domain notes, Flow edges, stores, and shared types.
+- Validation passed: contracts pytest, frontend typecheck, Go focused tests, README contract check, and `git diff --check`. `scripts/check-contracts.ps1` schema tests passed but its final drift gate returned non-zero because this task intentionally changed OpenAPI and generated client files before commit.
+# 2026-07-11 UDM Network v2 独立前端实时流量平衡
+
+- [x] 对照 overlay 计划与当前独立 UDM-v2 feature。
+- [x] 让 `/udm-v2` 复用原 UDM `FlowCanvas`，保持 v2 store/edge/node/service 独立。
+- [x] 增加 10 层二沉池 14-node / 22-edge 一键展开模板。
+- [x] 增加浏览器侧实时流量方程求解、残差/秩/冲突/泵边界诊断和边标签展示。
+- [x] 补 focused Vitest，并运行 typecheck、unit、boundary gate。
+
+## Review
+
+- `FlowCanvas` 只增加 edge/drop/overlay 注入点，legacy `/udm` 默认行为不变。
+- 默认 `Qin=100, Qras=25, Qwas=5` 得到 `Qeff=70`、下部流量 30、上部流量 70。
+
+# 2026-07-23 UDM v2 画布开发方案 v1.0
+
+- [x] 读取 README First、UDM-v2 隔离文档、画布方案、相关 README、ADR 与历史记录。
+- [x] 审计当前分支、现有 UDM-v2 实现和未提交实时流量平衡改动。
+- [x] 恢复严格 hard isolation，同时保留 feature-local 实时流量平衡与二沉池展开能力。
+- [x] 完成 edge visual、endpoint lanes、连续 fan-out/fan-in path 与 render-only marker。
+- [x] 完成 canonical `port_kind`、共享连接校验、semantic/store/serializer 加固。
+- [x] 完成全屏 editor shell、浮动工作台、侧滑 Inspector、状态 overlay。
+- [x] 完成节点玻璃视觉、Handle 渐进显示、内联重命名、Load Dialog、i18n 与响应式。
+- [x] 补齐 unit、Playwright、截图与 100/300 性能覆盖。
+- [x] 运行 typecheck、unit、boundary、e2e、build、Biome 与 README contract 检查。
+- [x] 更新 README、ADR、`.ai/changes/2026-07-23.md` 与本节 Review。
+
+## Plan
+
+- 以 `.ai/plans/AutoWaterSimu_UDM_v2_Canvas_Development_Plan_v1.0.md` 的冻结决策为准。
+- 保留已有 realtime flow balance 和 clarifier canvas 功能，但迁回 `features/udm-v2/**` 的独立画布。
+- 不引入新依赖，不修改合同版本，不扩展到全局自动布线或物理子 Handle。
+
+## Review
+
+- `/udm-v2` 已改为 feature-local 全屏 editor，工作台整合 toolbar/palette/edge selector，并支持折叠、锁定、拖动；390px 首次默认折叠。
+- 四类边使用确定性 source/target endpoint lane、连续 fan-out/fan-in path、独立线型/marker 与 18px 可点击命中区；视觉状态不进入 store/payload。
+- canonical `port_kind`、共享连接规则、互斥 selection、selection dirty 过滤、edge kind/type 同步与 constraint 删除清理已由 focused tests 覆盖。
+- Inspector 选择后滑入，并分为 Element / Diagnostics / Graph；Load 已替换为 Dialog，新增文案进入 feature-local i18n。
+- 保留 feature-local 14-node / 22-edge 二沉池展开与实时流量平衡，不再复用 legacy `FlowCanvas`。
+- 验证：typecheck、17 files / 50 unit tests、boundary、build、Biome、Chromium 16 E2E、Microsoft Edge 16 E2E 均通过。
+- 截图输出：`tmp/udm-v2-canvas-v1.0/`（1440×900、1280×720、1024×768、390×844）。
+- README contract 检查已运行；仅被根 `README.md` 与 `README_zh.md` 既有的 `./release-notes.md` 断链阻塞，与本次 UDM-v2 修改无关。
+
+# 2026-07-24 UDM Network v2 菜单与节点复用
+
+- [x] 定位 Sidebar、UDM-v2 独立画布、legacy 节点选择器与节点视觉原语。
+- [x] 将 UDM Network v2 提升为一级菜单。
+- [x] 增加独立的出水端预设并保留 source/sink 语义。
+- [x] 复用 legacy 节点选择器、颜色与装饰条容器，不复用 FlowCanvas。
+- [x] 更新边界决策、README 与变更记录。
+- [x] 运行 typecheck、unit、boundary 与 focused Playwright。
+
+## Plan
+
+- 保留 `/udm-v2` 自有 canvas/store/serializer/service。
+- 仅白名单复用 `NodePalette`、`GlassNodeContainer` 与 glass color utilities。
+- 用 boundary source/sink 预设表达进水端和出水端，不扩展合同枚举。
+
+## Review
+
+- Sidebar 中 `/udm-v2` 已从 FlowingFlow 子菜单移到一级菜单。
+- V2 使用原 `NodePalette`、`GlassNodeContainer` 和 glass colors；画布、store、端口与 serializer 仍独立。
+- 出水端生成 `boundary_kind = effluent` 与 `hydraulic_in` 端口，并以 `node_type = sink` 完成合同往返。
+- 验证：typecheck、17 files / 52 unit tests、boundary、Chromium route smoke 2 tests、四视口 UI parity 4 tests 均通过。

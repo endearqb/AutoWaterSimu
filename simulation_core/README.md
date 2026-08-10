@@ -25,7 +25,7 @@
 | `python/` | Phase 2B 纯 Python simulation core 包 |
 | `tests/` | core import boundary、adapter 行为、backend/core drift guard 和数值 parity 测试 |
 
-`python/autowatersimu_simulation_core/` 当前暴露 material balance 运行时，并在该运行时内保留 ASM1Slim / ASM1 / ASM3 / UDM 节点 runtime binding 字段；`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 已作为独立 model job type 复用该运行时。UDM 当前只覆盖单 reactor snapshot / binding fixture，Hybrid 多模型映射和 Petersen 教程 worker baseline 仍在后续 Phase。
+`python/autowatersimu_simulation_core/` 当前暴露 material balance 运行时，并在该运行时内保留 ASM1Slim / ASM1 / ASM3 / UDM 节点 runtime binding 字段；`simulation.asm1slim.v1`、`simulation.asm1.v1`、`simulation.asm3.v1` 与 `simulation.udm.v1` 已作为独立 model job type 复用该运行时。`autowatersimu_simulation_core.udm_network` 暴露 UDM Network v2 graph compiler MVP、flow balance solver、passive/reaction node evaluator、`takacs_settling.v1` edge transport evaluator、five-model v1 migration parity gate 和 SecondaryClarifier10Layer reference graph generator；当前不执行 ODE/RHS assembly 或 BSM1 full plant conformance。UDM 当前只覆盖单 reactor snapshot / binding fixture，Hybrid 多模型映射和 Petersen 教程 worker baseline 仍在后续 Phase。
 
 ## 3. 维护约定
 

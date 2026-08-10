@@ -211,6 +211,7 @@ $script:Steps = [System.Collections.Generic.List[object]]::new()
 $script:Failed = $false
 $npm = Resolve-NativeCommand -Name "npm"
 $npx = Resolve-NativeCommand -Name "npx"
+$python = Resolve-Python -Root $Root
 $powershell = if (Test-IsWindows) { "powershell" } else { "pwsh" }
 $computeBoundaryEvidenceDir = Join-Path $EvidenceDir "compute-boundary"
 $computeBoundaryEvidencePath = Join-Path $computeBoundaryEvidenceDir "compute-api-boundary.json"
@@ -233,6 +234,7 @@ Invoke-Step -Name "worker dependency installation audit" -WorkingDirectory $Root
 Invoke-InternalStep -Name "README path check" -Body { Test-ReadmePaths -Root $Root }
 Invoke-Step -Name "ontology registry check" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-ontology.ps1")
 Invoke-Step -Name "contracts registry and drift gate" -WorkingDirectory $Root -Executable $powershell -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-contracts.ps1")
+Invoke-Step -Name "udm network closed parity gate" -WorkingDirectory $Root -Executable $python -Arguments @("-m", "pytest", "simulation_core\tests\test_udm_network_parity_gate.py", "-q")
 Invoke-Step -Name "go compute api tests" -WorkingDirectory (Join-Path $Root "apps\api") -Executable "go" -Arguments @("test", "./...")
 Invoke-Step -Name "frontend typecheck" -WorkingDirectory (Join-Path $Root "frontend") -Executable $npx -Arguments @("tsc", "--noEmit")
 Invoke-Step -Name "desktop typecheck" -WorkingDirectory (Join-Path $Root "apps\desktop") -Executable $npm -Arguments @("run", "typecheck")

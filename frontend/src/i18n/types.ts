@@ -486,6 +486,68 @@ export interface I18nMessages {
     }
     edge: {
       flowPlaceholder: string
+      title: string
+      createAriaLabel: string
+      signalNoMaterialParameters: string
+      kinds: {
+        hydraulic: {
+          label: string
+          shortLabel: string
+          description: string
+        }
+        pump: {
+          label: string
+          shortLabel: string
+          description: string
+        }
+        settling: {
+          label: string
+          shortLabel: string
+          description: string
+        }
+        signal: {
+          label: string
+          shortLabel: string
+          description: string
+        }
+      }
+      fields: {
+        edgeKind: string
+        flowMode: string
+        flow: string
+        components: string
+        include: string
+        exclude: string
+        headM: string
+        efficiency: string
+        energy: string
+        model: string
+        areaM2: string
+        v0MPerDay: string
+        signal: string
+        source: string
+        target: string
+        sampleDays: string
+        delayDays: string
+      }
+      flowModes: {
+        fixed: string
+        balanced: string
+        split_fraction: string
+        ratio_to_edge: string
+        residual: string
+        controlled: string
+        timeseries: string
+      }
+      componentModes: {
+        all: string
+        include: string
+        exclude: string
+      }
+      toggles: {
+        enabled: string
+        disabled: string
+      }
     }
     propertyPanel: {
       nameLabel: string

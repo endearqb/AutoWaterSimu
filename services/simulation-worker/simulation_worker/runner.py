@@ -22,6 +22,7 @@ ASM1SLIM_JOB_TYPE = "simulation.asm1slim.v1"
 ASM1_JOB_TYPE = "simulation.asm1.v1"
 ASM3_JOB_TYPE = "simulation.asm3.v1"
 UDM_JOB_TYPE = "simulation.udm.v1"
+UDM_NETWORK_JOB_TYPE = "simulation.udm_network.v1"
 SUPPORTED_JOB_TYPES = [MATERIAL_BALANCE_JOB_TYPE, ASM1SLIM_JOB_TYPE, ASM1_JOB_TYPE, ASM3_JOB_TYPE, UDM_JOB_TYPE]
 JOB_TYPE_MODEL_FAMILY = {
     MATERIAL_BALANCE_JOB_TYPE: "material_balance",
@@ -126,10 +127,15 @@ def run_job(
 
         job_id = _string_value(job.get("job_id")) or job_id
         raw_job_type = _string_value(job.get("job_type")) or job_type
-        job_type = raw_job_type if raw_job_type in SUPPORTED_JOB_TYPES else MATERIAL_BALANCE_JOB_TYPE
+        job_type = raw_job_type if raw_job_type in SUPPORTED_JOB_TYPES or raw_job_type == UDM_NETWORK_JOB_TYPE else MATERIAL_BALANCE_JOB_TYPE
 
         phase_started_at = time.perf_counter()
         _validate_against_schema("compute_job.v1.json", job)
+        if raw_job_type == UDM_NETWORK_JOB_TYPE:
+            raise WorkerRunError(
+                "UDM_NETWORK_NOT_EXECUTABLE_YET: simulation.udm_network.v1 wire path is registered "
+                "but this worker does not execute udm_network jobs yet"
+            )
         if raw_job_type not in SUPPORTED_JOB_TYPES:
             raise WorkerRunError(f"unsupported job_type: {raw_job_type}")
         adapter_validation_mode_for_audit = _resolve_adapter_validation_mode(adapter_validation_mode)
@@ -329,7 +335,7 @@ def _failed_result(
     return {
         "schema_version": "compute_result.v1",
         "job_id": job_id or "unknown_job",
-        "job_type": job_type if job_type in SUPPORTED_JOB_TYPES else MATERIAL_BALANCE_JOB_TYPE,
+        "job_type": job_type if job_type in SUPPORTED_JOB_TYPES or job_type == UDM_NETWORK_JOB_TYPE else MATERIAL_BALANCE_JOB_TYPE,
         "status": "failed",
         "summary": {"error_message": message},
         "data": {},

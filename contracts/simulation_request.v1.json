@@ -16,7 +16,8 @@
         "simulation.asm1slim.v1",
         "simulation.asm1.v1",
         "simulation.asm3.v1",
-        "simulation.udm.v1"
+        "simulation.udm.v1",
+        "simulation.udm_network.v1"
       ]
     },
     "input_ref": {

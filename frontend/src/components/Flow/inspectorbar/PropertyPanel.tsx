@@ -405,10 +405,10 @@ function PropertyPanel({ isNode }: PropertyPanelProps) {
               <Box flex={1}>
                 <Input
                   type="number"
-                  step="0.01"
                   min="0"
                   value={(selectedEdge.data?.flow as number) || ""}
                   onChange={(e) => handleEdgeFlowChange(e.target.value)}
+                  className="nodrag"
                   placeholder={t("flow.propertyPanel.flowPlaceholder")}
                 />
                 {flowRateError && (

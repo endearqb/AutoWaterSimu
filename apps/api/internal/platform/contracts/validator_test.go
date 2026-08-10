@@ -15,12 +15,19 @@ func repoRootForTest(t *testing.T) string {
 }
 
 func TestSchemaNameMapsKnownContract(t *testing.T) {
-	schemaName, ok := SchemaName("simulation_request.v1")
-	if !ok {
-		t.Fatalf("expected simulation_request.v1 schema mapping")
+	cases := map[string]string{
+		"simulation_request.v1":       "simulation_request.v1.json",
+		"network_process_graph.v1":    "network_process_graph.v1.json",
+		"network_simulation_input.v1": "network_simulation_input.v1.json",
 	}
-	if schemaName != "simulation_request.v1.json" {
-		t.Fatalf("unexpected schema name: %s", schemaName)
+	for schemaVersion, want := range cases {
+		schemaName, ok := SchemaName(schemaVersion)
+		if !ok {
+			t.Fatalf("expected %s schema mapping", schemaVersion)
+		}
+		if schemaName != want {
+			t.Fatalf("unexpected schema name for %s: got %s want %s", schemaVersion, schemaName, want)
+		}
 	}
 }
 
