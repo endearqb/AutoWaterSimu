@@ -2,6 +2,7 @@ import { Field, HStack, Input, Stack } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
 
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
+import { useUdmV2Messages } from "../i18n"
 import type { NetworkV2Diagnostic } from "../serialize/semanticValidation"
 import { HydraulicV2Fields } from "./HydraulicV2Fields"
 
@@ -16,6 +17,7 @@ export function PumpV2Fields({
   diagnostics,
   onPatch,
 }: PumpV2FieldsProps) {
+  const text = useUdmV2Messages()
   const pump = edge.data?.pump || {
     head_m: 2,
     efficiency: 0.75,
@@ -31,7 +33,7 @@ export function PumpV2Fields({
       />
       <HStack gap={3}>
         <Field.Root>
-          <Field.Label>Pump head m</Field.Label>
+          <Field.Label>{text.fields.pumpHead}</Field.Label>
           <Input
             type="number"
             value={pump.head_m ?? 0}
@@ -46,7 +48,7 @@ export function PumpV2Fields({
           />
         </Field.Root>
         <Field.Root>
-          <Field.Label>Efficiency</Field.Label>
+          <Field.Label>{text.fields.efficiency}</Field.Label>
           <Input
             type="number"
             value={pump.efficiency ?? 0}

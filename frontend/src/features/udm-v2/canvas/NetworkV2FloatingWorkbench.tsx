@@ -120,7 +120,7 @@ export function NetworkV2FloatingWorkbench({
         left={{ base: "12px", md: `${preference.x}px` }}
         top={{ base: "12px", md: `${preference.y}px` }}
         pointerEvents="auto"
-        w={{ base: "calc(100vw - 24px)", md: "min(720px, calc(100vw - 48px))" }}
+        w={{ base: "calc(100vw - 24px)", md: "360px" }}
         maxH="calc(100vh - 24px)"
         overflow="auto"
         bg="rgba(255,255,255,.9)"
@@ -136,7 +136,8 @@ export function NetworkV2FloatingWorkbench({
           borderBottomWidth={preference.collapsed ? 0 : "1px"}
         >
           <IconButton
-            aria-label="Move workbench"
+            aria-label={text.moveWorkbench}
+            title={text.moveWorkbench}
             size="xs"
             variant="ghost"
             cursor={preference.locked ? "default" : "grab"}
@@ -146,9 +147,9 @@ export function NetworkV2FloatingWorkbench({
           </IconButton>
           <Text fontWeight="700">{text.workbench}</Text>
           <Text truncate fontSize="sm" flex="1">
-            {graphName}
+            {graphName || text.untitledGraph}
           </Text>
-          {dirty && <Badge colorPalette="orange">dirty</Badge>}
+          {dirty && <Badge colorPalette="orange">{text.dirty}</Badge>}
           <IconButton
             aria-label={preference.locked ? text.unlock : text.lock}
             title={preference.locked ? text.unlock : text.lock}
@@ -182,15 +183,11 @@ export function NetworkV2FloatingWorkbench({
         {!preference.collapsed && (
           <Stack gap={1} p={1}>
             {toolbar}
-            <HStack align="start" gap={1} flexWrap="wrap">
-              <Box flex="1" minW="280px">
-                <NetworkV2EdgeModeSelector
-                  activeKind={activeEdgeKind}
-                  onChange={setActiveEdgeKind}
-                />
-              </Box>
-              <NetworkV2NodePalette onInsertClarifier={insertClarifier} />
-            </HStack>
+            <NetworkV2EdgeModeSelector
+              activeKind={activeEdgeKind}
+              onChange={setActiveEdgeKind}
+            />
+            <NetworkV2NodePalette onInsertClarifier={insertClarifier} />
           </Stack>
         )}
       </Box>

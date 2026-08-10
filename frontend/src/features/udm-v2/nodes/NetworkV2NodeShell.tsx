@@ -13,6 +13,7 @@ import {
   type GlassTint,
   getAccentColor,
 } from "@/components/Flow/nodes/utils/glass"
+import { formatUdmV2Message, useUdmV2Messages } from "../i18n"
 import { useNetworkV2Interaction } from "../interaction/NetworkV2InteractionContext"
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
 import type {
@@ -60,6 +61,7 @@ export function NetworkV2NodeShell({
   icon: Icon,
   subtitle,
 }: NetworkV2NodeShellProps) {
+  const text = useUdmV2Messages()
   const { activeEdgeKind, connectionInProgress, hoveredNodeId } =
     useNetworkV2Interaction()
   const updateNodeData = useUdmV2FlowStore((state) => state.updateNodeData)
@@ -103,7 +105,10 @@ export function NetworkV2NodeShell({
   return (
     <GlassNodeContainer
       as="fieldset"
-      aria-label={`${data.label} ${data.node_kind} node`}
+      aria-label={formatUdmV2Message(text.nodeAria, {
+        label: data.label,
+        kind: data.node_kind,
+      })}
       tint={tint}
       selected={selected}
       hovered={hoveredNodeId === id}
@@ -129,7 +134,10 @@ export function NetworkV2NodeShell({
             id={port.id}
             type={isTargetPort(port) ? "target" : "source"}
             position={positionByPlacement[port.placement]}
-            aria-label={`${data.label} ${port.label} port`}
+            aria-label={formatUdmV2Message(text.portAria, {
+              label: data.label,
+              port: port.label,
+            })}
             title={port.label}
             style={{
               width: 8,
@@ -150,7 +158,7 @@ export function NetworkV2NodeShell({
         {editing ? (
           <Input
             className="nodrag"
-            aria-label="Rename node"
+            aria-label={text.renameNode}
             value={draft}
             size="xs"
             onChange={(event) => setDraft(event.target.value)}

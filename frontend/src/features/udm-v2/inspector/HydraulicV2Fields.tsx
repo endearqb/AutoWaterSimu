@@ -2,6 +2,7 @@ import { Field, HStack, Input, Stack } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
 
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
+import { useUdmV2Messages } from "../i18n"
 import { diagnosticMatchesField } from "../serialize/diagnosticsMapping"
 import type { NetworkV2Diagnostic } from "../serialize/semanticValidation"
 
@@ -16,6 +17,7 @@ export function HydraulicV2Fields({
   diagnostics,
   onPatch,
 }: HydraulicV2FieldsProps) {
+  const text = useUdmV2Messages()
   const flowSpec = edge.data?.flow_spec || {
     mode: "fixed",
     value: 0,
@@ -36,7 +38,7 @@ export function HydraulicV2Fields({
   return (
     <Stack gap={3}>
       <Field.Root invalid={!!flowError}>
-        <Field.Label>Hydraulic flow mode</Field.Label>
+        <Field.Label>{text.fields.hydraulicFlowMode}</Field.Label>
         <Input
           value={flowSpec.mode}
           onChange={(event) =>
@@ -50,7 +52,7 @@ export function HydraulicV2Fields({
 
       <HStack gap={3}>
         <Field.Root>
-          <Field.Label>Flow value</Field.Label>
+          <Field.Label>{text.fields.flowValue}</Field.Label>
           <Input
             type="number"
             value={flowSpec.value ?? 0}
@@ -65,7 +67,7 @@ export function HydraulicV2Fields({
           />
         </Field.Root>
         <Field.Root>
-          <Field.Label>Unit</Field.Label>
+          <Field.Label>{text.fields.unit}</Field.Label>
           <Input
             value={flowSpec.unit || "m3/d"}
             onChange={(event) =>
@@ -76,7 +78,7 @@ export function HydraulicV2Fields({
       </HStack>
 
       <Field.Root invalid={!!policyError}>
-        <Field.Label>Component include</Field.Label>
+        <Field.Label>{text.fields.componentInclude}</Field.Label>
         <Input
           value={policy.include.join(", ")}
           onChange={(event) =>

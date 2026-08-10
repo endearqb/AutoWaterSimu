@@ -9,6 +9,7 @@ import {
 import type { Node } from "@xyflow/react"
 import { useEffect, useState } from "react"
 
+import { useUdmV2Messages } from "../i18n"
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 
 type NodeSchemaV2EditorProps = {
@@ -26,6 +27,7 @@ const modelKinds: Array<NetworkV2NodeData["model_binding"]["model_kind"]> = [
 ]
 
 export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
+  const text = useUdmV2Messages()
   const [initialText, setInitialText] = useState("")
   const [parameterText, setParameterText] = useState("")
   const [initialError, setInitialError] = useState("")
@@ -46,19 +48,19 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
     try {
       const parsed = JSON.parse(value)
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        throw new Error("Expected an object")
+        throw new Error(text.expectedObject)
       }
       onPatch({ [key]: parsed as Record<string, number> })
       setError("")
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Invalid JSON")
+      setError(error instanceof Error ? error.message : text.invalidJson)
     }
   }
 
   return (
     <Stack gap={3}>
       <Field.Root>
-        <Field.Label>Label</Field.Label>
+        <Field.Label>{text.fields.label}</Field.Label>
         <Input
           value={node.data.label}
           onChange={(event) => onPatch({ label: event.target.value })}
@@ -66,7 +68,7 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
       </Field.Root>
 
       <Field.Root>
-        <Field.Label>Component schema</Field.Label>
+        <Field.Label>{text.fields.componentSchema}</Field.Label>
         <Input
           value={node.data.component_schema_id}
           onChange={(event) =>
@@ -77,7 +79,7 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
 
       <HStack gap={3} align="flex-start">
         <Field.Root>
-          <Field.Label>Model kind</Field.Label>
+          <Field.Label>{text.fields.modelKind}</Field.Label>
           <NativeSelect.Root>
             <NativeSelect.Field
               value={node.data.model_binding.model_kind}
@@ -102,7 +104,7 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
         </Field.Root>
 
         <Field.Root>
-          <Field.Label>Reaction</Field.Label>
+          <Field.Label>{text.fields.reaction}</Field.Label>
           <NativeSelect.Root>
             <NativeSelect.Field
               value={String(node.data.model_binding.reaction_enabled)}
@@ -115,8 +117,8 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
                 })
               }
             >
-              <option value="false">disabled</option>
-              <option value="true">enabled</option>
+              <option value="false">{text.fields.disabled}</option>
+              <option value="true">{text.fields.enabled}</option>
             </NativeSelect.Field>
             <NativeSelect.Indicator />
           </NativeSelect.Root>
@@ -124,7 +126,7 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
       </HStack>
 
       <Field.Root invalid={!!initialError}>
-        <Field.Label>Initial conditions</Field.Label>
+        <Field.Label>{text.fields.initialConditions}</Field.Label>
         <Textarea
           value={initialText}
           onChange={(event) => setInitialText(event.target.value)}
@@ -138,7 +140,7 @@ export function NodeSchemaV2Editor({ node, onPatch }: NodeSchemaV2EditorProps) {
       </Field.Root>
 
       <Field.Root invalid={!!parameterError}>
-        <Field.Label>Parameter binding</Field.Label>
+        <Field.Label>{text.fields.parameterBinding}</Field.Label>
         <Textarea
           value={parameterText}
           onChange={(event) => setParameterText(event.target.value)}

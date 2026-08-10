@@ -1,9 +1,10 @@
 import { Box, Text } from "@chakra-ui/react"
 
-import { UDM_V2_NOT_EXECUTABLE_MESSAGE } from "../services/udmV2ComputeService"
+import { useUdmV2Messages } from "../i18n"
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
 
 export function NetworkV2StatusBar() {
+  const text = useUdmV2Messages()
   const runtimeStatus = useUdmV2FlowStore((state) => state.runtimeStatus)
   if (runtimeStatus !== "runtime_pending" && runtimeStatus !== "failed") {
     return null
@@ -26,8 +27,8 @@ export function NetworkV2StatusBar() {
     >
       <Text fontSize="sm">
         {runtimeStatus === "runtime_pending"
-          ? UDM_V2_NOT_EXECUTABLE_MESSAGE
-          : "UDM Network v2 operation failed."}
+          ? text.runtimePending
+          : text.operationFailed}
       </Text>
     </Box>
   )

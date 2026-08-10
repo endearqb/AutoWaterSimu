@@ -48,6 +48,7 @@ const forbiddenFromUdmV2 = [
 const allowedSharedFlowImports = new Set([
   "@/components/Flow/nodes/GlassNodeContainer",
   "@/components/Flow/nodes/utils/glass",
+  "@/components/Flow/shared/EdgeQuickToolbar",
   "@/components/Flow/toolbar/NodePalette",
 ])
 

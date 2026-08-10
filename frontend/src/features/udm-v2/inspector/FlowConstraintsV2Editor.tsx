@@ -1,6 +1,7 @@
 import { Button, Field, HStack, Stack, Textarea } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 
+import { useUdmV2Messages } from "../i18n"
 import type { NetworkV2FlowConstraint } from "../serialize/semanticValidation"
 
 type FlowConstraintsV2EditorProps = {
@@ -14,6 +15,7 @@ export function FlowConstraintsV2Editor({
   onChange,
   onValidate,
 }: FlowConstraintsV2EditorProps) {
+  const messages = useUdmV2Messages()
   const [text, setText] = useState("")
   const [error, setError] = useState("")
 
@@ -26,19 +28,19 @@ export function FlowConstraintsV2Editor({
     try {
       const parsed = JSON.parse(text)
       if (!Array.isArray(parsed)) {
-        throw new Error("Expected an array")
+        throw new Error(messages.expectedArray)
       }
       onChange(parsed as NetworkV2FlowConstraint[])
       setError("")
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Invalid JSON")
+      setError(error instanceof Error ? error.message : messages.invalidJson)
     }
   }
 
   return (
     <Stack gap={3}>
       <Field.Root invalid={!!error}>
-        <Field.Label>Flow constraints</Field.Label>
+        <Field.Label>{messages.fields.flowConstraints}</Field.Label>
         <Textarea
           value={text}
           onChange={(event) => setText(event.target.value)}
@@ -50,10 +52,10 @@ export function FlowConstraintsV2Editor({
       </Field.Root>
       <HStack justify="flex-end">
         <Button size="sm" variant="outline" onClick={commit}>
-          Apply
+          {messages.fields.apply}
         </Button>
         <Button size="sm" colorPalette="blue" onClick={onValidate}>
-          Validate
+          {messages.validate}
         </Button>
       </HStack>
     </Stack>

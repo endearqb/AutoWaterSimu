@@ -70,6 +70,35 @@ describe("createUdmV2FlowStore", () => {
     expect(store.getState().dirty).toBe(true)
   })
 
+  it("changes an existing edge kind only when its ports are compatible", () => {
+    const store = createTestStore()
+    const source = createNetworkV2Node("udm_reactor", { x: 0, y: 0 })
+    const target = createNetworkV2Node("udm_reactor", { x: 100, y: 0 })
+    source.id = "source"
+    target.id = "target"
+    store.getState().replaceGraph({ nodes: [source, target], edges: [] })
+    store.getState().onConnect({
+      source: "source",
+      sourceHandle: "out",
+      target: "target",
+      targetHandle: "in",
+    })
+    const edgeId = store.getState().edges[0].id
+    store.getState().updateEdgeData(edgeId, { ui: { label: "Recycle" } })
+
+    expect(store.getState().changeEdgeKind(edgeId, "pump")).toBe(true)
+    expect(store.getState().edges[0]).toMatchObject({
+      type: "pump_v2",
+      data: {
+        edge_kind: "pump",
+        ui: { label: "Recycle" },
+      },
+    })
+    expect(store.getState().edges[0].data?.pump).toBeDefined()
+    expect(store.getState().changeEdgeKind(edgeId, "signal")).toBe(false)
+    expect(store.getState().edges[0].data?.edge_kind).toBe("pump")
+  })
+
   it("keeps selection changes clean", () => {
     const store = createTestStore()
     const node = createNetworkV2Node("boundary", { x: 0, y: 0 })

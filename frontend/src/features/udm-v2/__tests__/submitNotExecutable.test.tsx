@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { CustomProvider } from "@/components/ui/provider"
+import { I18nProvider } from "@/i18n"
 
 import { NetworkV2StatusBar } from "../canvas/NetworkV2StatusBar"
 import {
@@ -49,11 +50,17 @@ describe("UDM v2 submit not executable handling", () => {
     useUdmV2FlowStore.getState().setRuntimeStatus("runtime_pending")
 
     render(
-      <CustomProvider>
-        <NetworkV2StatusBar />
-      </CustomProvider>,
+      <I18nProvider>
+        <CustomProvider>
+          <NetworkV2StatusBar />
+        </CustomProvider>
+      </I18nProvider>,
     )
 
-    expect(screen.getByText(UDM_V2_NOT_EXECUTABLE_MESSAGE)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "UDM Network v2 execution is not available in the current runtime.",
+      ),
+    ).toBeInTheDocument()
   })
 })

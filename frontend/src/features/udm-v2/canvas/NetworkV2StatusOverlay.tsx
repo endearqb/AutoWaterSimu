@@ -2,9 +2,11 @@ import { Badge, Box, HStack, Text } from "@chakra-ui/react"
 import { useMemo } from "react"
 
 import { solveRealtimeFlowBalance } from "../flow/realtimeFlowBalance"
+import { formatUdmV2Message, useUdmV2Messages } from "../i18n"
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
 
 export function NetworkV2StatusOverlay() {
+  const text = useUdmV2Messages()
   const nodes = useUdmV2FlowStore((state) => state.nodes)
   const edges = useUdmV2FlowStore((state) => state.edges)
   const runtime = useUdmV2FlowStore((state) => state.runtimeStatus)
@@ -37,20 +39,24 @@ export function NetworkV2StatusOverlay() {
         whiteSpace="nowrap"
       >
         <Text>
-          {nodes.length}N / {edges.length}E
+          {nodes.length}
+          {text.nodeCountShort} / {edges.length}
+          {text.edgeCountShort}
         </Text>
         <Badge variant="subtle" colorPalette="blue">
-          {runtime}
+          {text.runtimeStatuses[runtime]}
         </Badge>
         <Badge
           variant="subtle"
           colorPalette={balance.status === "balanced" ? "green" : "orange"}
         >
-          flow {balance.status}
+          {text.flowPrefix} {text.flowStatuses[balance.status]}
         </Badge>
         {diagnostics > 0 && (
           <Badge variant="subtle" colorPalette="red">
-            {diagnostics} diagnostics
+            {formatUdmV2Message(text.diagnosticsCount, {
+              count: diagnostics,
+            })}
           </Badge>
         )}
       </HStack>

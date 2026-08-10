@@ -1,13 +1,12 @@
 import type { EdgeProps } from "@xyflow/react"
 
 import { useUdmV2FlowStore } from "../state/useUdmV2FlowStore"
+import { formatHydraulicV2EdgeLabel } from "./HydraulicV2Edge"
 import { NetworkV2EdgeShell } from "./NetworkV2EdgeShell"
 import type { NetworkV2EdgeData } from "./edgeModel"
 
 export function formatPumpV2EdgeLabel(data?: NetworkV2EdgeData) {
-  const flow = data?.realtime_flow_balance?.value ?? data?.flow_spec?.value ?? 0
-  const unit = data?.flow_spec?.unit ?? "m3/d"
-  return `Pump Q ${flow} ${unit}`
+  return formatHydraulicV2EdgeLabel(data)
 }
 
 export function PumpV2Edge(props: EdgeProps) {

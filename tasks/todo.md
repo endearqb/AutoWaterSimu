@@ -1,3 +1,26 @@
+# 2026-08-10 UDM-v2 画布 UI/交互复用与国际化修正 TODO
+
+- [x] 读取 README First、UDM-v2 canvas/edge/inspector/state 上下文、ADR-0028、Chakra v3 本地文档和现有测试。
+- [x] 修订 hard isolation 边界：继续隔离业务状态/合同/服务，允许白名单内无状态 Flow UI/交互原语复用。
+- [x] 压缩 UDM-v2 浮动工作台，节点改为紧凑双列布局，连线类型改为紧凑创建模式。
+- [x] 恢复 hydraulic/pump 流量标签常驻显示，选中边显示快捷类型工具条并继续打开右侧参数抽屉。
+- [x] 补齐 UDM-v2 工作台、连线、状态与属性抽屉的中英文文案及 ARIA 文案。
+- [x] 补充 store、组件与 Playwright 回归测试。
+- [x] 运行 typecheck、unit、UDM-v2 boundary、Playwright 和 README/格式检查。
+
+## Plan
+
+- 数据合同、序列化 payload、solver 与后端接口不变；实时流量继续只存在于 React Flow render copy。
+- 现有边切换类型时重新建立该类型默认数据，只保留用户自定义 UI label；切换前复用端口兼容校验。
+- v1 默认视觉和行为不做破坏性修改；共享组件新增能力必须保留 legacy 默认值。
+
+## Review
+
+- UDM-v2 工作台在 1280x720 浏览器验收中宽约 358px，节点工具改为紧凑双列；中文界面不存在原截图中的 `Nodes`、`Hyd` 等可见混排。
+- hydraulic/pump 流量标签未选中时常驻显示；标签本身可点击选中，选中后连线上方显示类型快捷工具条，右侧属性抽屉继续作为完整参数编辑入口。
+- 边类型切换复用现有端口兼容校验，只保留 `data.ui`，目标类型专有字段使用默认值；业务 store、合同、服务与 v1 页面仍隔离。
+- 验证通过：`npm run typecheck`；UDM-v2 Vitest 17 files / 53 tests；boundary；Playwright 14 passed / 1 backend-dependent skipped；`git diff --check`。README PowerShell 门禁因 macOS 环境无 `pwsh`/`powershell` 未运行，已人工核对本次 README 时效戳与链接。
+
 # 2026-07-11 README First v2.1 架构迁移 TODO
 
 - [x] 阅读现有 README First 上下文、`.ai/` 结构及上游 `endearqb/ReadmeFirst` v2.1 迁移说明。

@@ -4,6 +4,7 @@ import type { ReactElement } from "react"
 import { describe, expect, it } from "vitest"
 
 import { CustomProvider } from "@/components/ui/provider"
+import { I18nProvider } from "@/i18n"
 import {
   type NetworkV2EdgeData,
   createNetworkV2EdgeData,
@@ -13,7 +14,11 @@ import { SettlingV2Fields } from "../inspector/SettlingV2Fields"
 import { SignalV2Fields } from "../inspector/SignalV2Fields"
 
 const renderField = (ui: ReactElement) =>
-  render(<CustomProvider>{ui}</CustomProvider>)
+  render(
+    <I18nProvider>
+      <CustomProvider>{ui}</CustomProvider>
+    </I18nProvider>,
+  )
 
 const edge = (
   type: string,

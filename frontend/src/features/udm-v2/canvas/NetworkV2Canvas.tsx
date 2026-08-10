@@ -91,12 +91,22 @@ export function NetworkV2Canvas() {
       event.dataTransfer.getData(NETWORK_V2_NODE_DRAG_MIME),
     )
     if (!preset) return
-    addNode(
-      createNetworkV2NodeFromPreset(
-        preset,
-        screenToFlowPosition({ x: event.clientX, y: event.clientY }),
-      ),
+    const node = createNetworkV2NodeFromPreset(
+      preset,
+      screenToFlowPosition({ x: event.clientX, y: event.clientY }),
     )
+    const labelByPreset = {
+      boundary_source: text.labels.influent,
+      boundary_sink: text.labels.effluent,
+      boundary: text.labels.influent,
+      udm_reactor: text.labels.udmNode,
+      secondary_clarifier_10_layer: text.labels.secondaryClarifier,
+      splitter: text.labels.splitter,
+      controller: text.labels.controller,
+      clarifier_layer: text.labels.secondaryClarifier,
+    }
+    node.data.label = labelByPreset[preset]
+    addNode(node)
   }
   const activeVisual = NETWORK_V2_EDGE_VISUALS[activeEdgeKind]
   const mobile =
@@ -121,7 +131,7 @@ export function NetworkV2Canvas() {
       >
         <EdgeLaneProvider value={lanes}>
           <ReactFlow
-            aria-label="UDM Network v2 canvas"
+            aria-label={text.canvasAria}
             nodes={nodes}
             edges={renderedEdges}
             nodeTypes={networkV2NodeTypes}

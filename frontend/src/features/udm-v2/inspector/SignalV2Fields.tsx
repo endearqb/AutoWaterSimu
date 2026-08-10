@@ -2,6 +2,7 @@ import { Field, Input, Stack } from "@chakra-ui/react"
 import type { Edge } from "@xyflow/react"
 
 import type { NetworkV2EdgeData } from "../edges/edgeModel"
+import { useUdmV2Messages } from "../i18n"
 import { diagnosticMatchesField } from "../serialize/diagnosticsMapping"
 import type { NetworkV2Diagnostic } from "../serialize/semanticValidation"
 
@@ -16,6 +17,7 @@ export function SignalV2Fields({
   diagnostics,
   onPatch,
 }: SignalV2FieldsProps) {
+  const text = useUdmV2Messages()
   const signalSpec = edge.data?.signal_spec || {
     signal_name: "signal",
     source_expression: "",
@@ -31,7 +33,7 @@ export function SignalV2Fields({
   return (
     <Stack gap={3}>
       <Field.Root invalid={!!flowError || !!transportError}>
-        <Field.Label>Signal name</Field.Label>
+        <Field.Label>{text.fields.signalName}</Field.Label>
         <Input
           value={signalSpec.signal_name}
           onChange={(event) =>
@@ -45,7 +47,7 @@ export function SignalV2Fields({
       </Field.Root>
 
       <Field.Root>
-        <Field.Label>Source expression</Field.Label>
+        <Field.Label>{text.fields.sourceExpression}</Field.Label>
         <Input
           value={signalSpec.source_expression || ""}
           onChange={(event) =>
@@ -60,7 +62,7 @@ export function SignalV2Fields({
       </Field.Root>
 
       <Field.Root>
-        <Field.Label>Target binding</Field.Label>
+        <Field.Label>{text.fields.targetBinding}</Field.Label>
         <Input
           value={signalSpec.target_binding || ""}
           onChange={(event) =>

@@ -160,6 +160,7 @@ test("saves, lists, loads and reloads only UDM Network v2 canvas graphs", async 
 
   await page.goto("/udm-v2")
   await injectCanvasFixture(page)
+  await expect(page.getByText("Q 100 m³/d")).toBeVisible()
 
   await page.getByRole("button", { exact: true, name: "Save" }).click()
   await expect.poll(() => saveRequests.length).toBe(1)

@@ -1,6 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2/edges
 
-> 更新于:2026-07-23 · commit 61e2259
+> 更新于:2026-08-10 · commit 3ef7936
 > 类型：contract
 > Canonical sources：
 > - `../README.md`
@@ -38,6 +38,8 @@
 3. 四类边同时使用颜色、线型与 marker 区分，不只依赖颜色。
 4. `interactionWidth` 基线为 18px；透明命中路径必须可接收 pointer event。
 5. 所有 render-only 字段必须在 serializer 边界前被丢弃。
+6. hydraulic/pump 的生成流量标签默认常驻；selection 只增强视觉并显示快捷类型工具条，不控制主值是否可见。
+7. 边类型切换必须调用 feature store action，并在 mutation 前复用 `connectionRules.ts` 校验端口兼容性。
 
 ## 4. 对外接口
 
@@ -45,7 +47,7 @@
 
 ## 5. 依赖边界
 
-可以依赖 XYFlow 类型与 feature-local nodes；不得依赖 canvas store 或 legacy Flow。
+可以依赖 XYFlow、feature-local nodes/state，以及 boundary allowlist 内的无状态 Flow UI/交互原语；不得依赖 legacy Flow 业务状态或服务。
 
 ## 6. 测试与验证
 

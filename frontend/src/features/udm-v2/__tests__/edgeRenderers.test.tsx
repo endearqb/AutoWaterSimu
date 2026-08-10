@@ -17,8 +17,8 @@ describe("edge renderers", () => {
   })
 
   it("formats edge labels without cross-kind field leakage", () => {
-    expect(formatHydraulicV2EdgeLabel()).toBe("Q 0 m3/d")
-    expect(formatPumpV2EdgeLabel()).toBe("Pump Q 0 m3/d")
+    expect(formatHydraulicV2EdgeLabel()).toBe("Q 0 m³/d")
+    expect(formatPumpV2EdgeLabel()).toBe("Q 0 m³/d")
     expect(formatSettlingV2EdgeLabel()).toBe("J_TSS")
     expect(formatSignalV2EdgeLabel()).toBe("signal")
   })

@@ -1,10 +1,12 @@
 import type { NodeProps } from "@xyflow/react"
 import { Layers3 } from "lucide-react"
 
+import { useUdmV2Messages } from "../i18n"
 import { NetworkV2NodeShell } from "./NetworkV2NodeShell"
 import type { NetworkV2NodeData } from "./nodeTypes"
 
 export function SecondaryClarifier10LayerV2Node(props: NodeProps) {
+  const text = useUdmV2Messages()
   return (
     <NetworkV2NodeShell
       id={props.id}
@@ -12,7 +14,7 @@ export function SecondaryClarifier10LayerV2Node(props: NodeProps) {
       selected={props.selected}
       tint="asm1"
       icon={Layers3}
-      subtitle="10-layer settling reference"
+      subtitle={text.nodeSubtitles.clarifier}
     />
   )
 }

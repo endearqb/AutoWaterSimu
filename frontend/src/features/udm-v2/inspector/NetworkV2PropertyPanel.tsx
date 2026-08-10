@@ -54,9 +54,9 @@ export function NetworkV2PropertyPanel() {
         </Heading>
         <Text mt={1} fontSize="xs" color="fg.muted">
           {selectedNode
-            ? "Node schema"
+            ? text.nodeSchema
             : selectedEdge
-              ? "Edge fields"
+              ? text.edgeFields
               : text.graphSettings}
         </Text>
       </Box>

@@ -13,6 +13,7 @@ import {
   type SecondaryClarifierV2Config,
   createDefaultSecondaryClarifierV2Config,
 } from "../composite/secondaryClarifierV2Defaults"
+import { formatUdmV2Message, useUdmV2Messages } from "../i18n"
 import type { NetworkV2NodeData } from "../nodes/nodeTypes"
 
 type SecondaryClarifierV2ConfigPanelProps = {
@@ -33,6 +34,7 @@ export function SecondaryClarifierV2ConfigPanel({
   config,
   onPatch,
 }: SecondaryClarifierV2ConfigPanelProps) {
+  const text = useUdmV2Messages()
   const fallbackConfig = useMemo(createDefaultSecondaryClarifierV2Config, [])
   const current = config || fallbackConfig
   const [feedText, setFeedText] = useState("")
@@ -76,13 +78,13 @@ export function SecondaryClarifierV2ConfigPanel({
     try {
       const parsed = JSON.parse(feedText)
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        throw new Error("Expected an object")
+        throw new Error(text.expectedObject)
       }
       const feedComposition = Object.fromEntries(
         Object.entries(parsed).map(([key, value]) => {
           const numberValue = Number(value)
           if (!Number.isFinite(numberValue)) {
-            throw new Error(`Expected numeric value for ${key}`)
+            throw new Error(formatUdmV2Message(text.expectedNumeric, { key }))
           }
           return [key, numberValue]
         }),
@@ -90,21 +92,21 @@ export function SecondaryClarifierV2ConfigPanel({
       update({ ...current, feed_composition: feedComposition })
       setFeedError("")
     } catch (error) {
-      setFeedError(error instanceof Error ? error.message : "Invalid JSON")
+      setFeedError(error instanceof Error ? error.message : text.invalidJson)
     }
   }
 
   return (
     <Stack gap={3} borderTopWidth="1px" borderColor="border" pt={4}>
       <Text fontSize="sm" fontWeight="700">
-        Secondary clarifier composite
+        {text.fields.clarifierComposite}
       </Text>
       <Text fontSize="xs" color="fg.muted">
-        Reference structure only; not BSM1 parity evidence.
+        {text.fields.clarifierReferenceNotice}
       </Text>
 
       <Field.Root>
-        <Field.Label>Profile</Field.Label>
+        <Field.Label>{text.fields.profile}</Field.Label>
         <NativeSelect.Root>
           <NativeSelect.Field
             value={current.profile}
@@ -125,7 +127,7 @@ export function SecondaryClarifierV2ConfigPanel({
 
       <HStack gap={3} align="flex-start">
         <Field.Root>
-          <Field.Label>Area m2</Field.Label>
+          <Field.Label>{text.fields.area}</Field.Label>
           <Input
             type="number"
             value={current.area_m2}
@@ -133,7 +135,7 @@ export function SecondaryClarifierV2ConfigPanel({
           />
         </Field.Root>
         <Field.Root>
-          <Field.Label>Height m</Field.Label>
+          <Field.Label>{text.fields.height}</Field.Label>
           <Input
             type="number"
             value={current.height_m}
@@ -141,7 +143,7 @@ export function SecondaryClarifierV2ConfigPanel({
           />
         </Field.Root>
         <Field.Root>
-          <Field.Label>Feed layer</Field.Label>
+          <Field.Label>{text.fields.feedLayer}</Field.Label>
           <Input
             type="number"
             min={2}
@@ -169,7 +171,7 @@ export function SecondaryClarifierV2ConfigPanel({
       </Stack>
 
       <Field.Root invalid={!!feedError}>
-        <Field.Label>Feed composition</Field.Label>
+        <Field.Label>{text.fields.feedComposition}</Field.Label>
         <Textarea
           value={feedText}
           onChange={(event) => setFeedText(event.target.value)}

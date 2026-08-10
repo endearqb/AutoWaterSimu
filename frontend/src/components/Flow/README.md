@@ -1,6 +1,6 @@
 # 目录说明：frontend/src/components/Flow
 
-> 更新于:2026-07-24 · commit cc3edcc
+> 更新于:2026-08-10 · commit 3ef7936
 
 ## 1. 目录职责
 
@@ -31,6 +31,7 @@
 | `edges/` | legacy editable edge renderer；已有临时 UDM-v2 edge helper 属于 PFC 清理债务，不再扩展 |
 | `menu/` | save/load/import/context dialogs |
 | `legacy-analysis/` | result analysis dialogs, charts and panels |
+| `shared/` | v1/v2 可共同使用、通过 props 驱动的无状态 UI/交互原语 |
 
 ## 3. 维护约定
 
@@ -38,11 +39,11 @@
 2. 画布数据 shape 改动必须同步 stores、services、backend route/tests。
 3. Inspector width、chart container、node handles 等布局变更需要检查窄屏和压缩面板。
 4. UDM 教程专用行为不要破坏 material balance/ASM legacy flows。
-5. UDM Network v2 不得复用本目录的 canvas、store、edge、inspector 或节点行为；仅允许复用 `toolbar/NodePalette.tsx`、`nodes/GlassNodeContainer.tsx` 和 `nodes/utils/glass.ts` 三个纯展示原语。
+5. UDM Network v2 不得复用本目录的 canvas、store、业务 edge/inspector 或节点行为；允许复用 boundary allowlist 中通过 props 驱动的无状态 UI/交互原语。
 
 ## 4. 对外接口
 
-本目录向 `frontend/src/routes/_layout/*` 和 UDM/tutorial routes 暴露 flow editor UI；三个白名单节点展示原语也供 UDM-v2 使用。
+本目录向 `frontend/src/routes/_layout/*` 和 UDM/tutorial routes 暴露 flow editor UI；白名单内共享原语也可供 UDM-v2 使用。
 
 ## 5. 依赖边界
 

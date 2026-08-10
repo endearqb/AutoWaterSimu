@@ -1,6 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2/state
 
-> 更新于:2026-07-23 · commit 61e2259
+> 更新于:2026-08-10 · commit 3ef7936
 > 类型：contract
 > Canonical sources：
 > - `../README.md`
@@ -27,6 +27,7 @@
 3. 删除 edge/node 时同步清理引用它们的 flow constraints。
 4. `onConnect` 必须调用共享 connection validator；edge kind 与 React Flow type 原子同步。
 5. `window.__UDM_V2_FLOW_STORE__` 仅在 `import.meta.env.DEV` 暴露。
+6. `changeEdgeKind` 先验证当前端点与目标 kind 兼容；成功后以目标 kind 默认数据替换类型专有字段，只保留 `data.ui`。
 
 ## 4. 对外接口
 

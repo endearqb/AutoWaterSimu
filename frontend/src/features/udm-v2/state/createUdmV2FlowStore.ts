@@ -64,6 +64,7 @@ export type UdmV2FlowActions = {
   addNode: (node: Node<NetworkV2NodeData>) => void
   updateNodeData: (nodeId: string, patch: Partial<NetworkV2NodeData>) => void
   updateEdgeData: (edgeId: string, patch: Partial<NetworkV2EdgeData>) => void
+  changeEdgeKind: (edgeId: string, kind: NetworkV2EdgeKind) => boolean
   setSelectedNodeId: (id: string | null) => void
   setSelectedEdgeId: (id: string | null) => void
   clearSelection: () => void
@@ -104,7 +105,7 @@ const initialState = (): UdmV2FlowState => ({
   activeEdgeKind: DEFAULT_NETWORK_V2_EDGE_KIND,
   currentNetworkGraphId: null,
   currentNetworkGraphVersion: null,
-  currentNetworkGraphName: "Untitled UDM Network v2",
+  currentNetworkGraphName: null,
   graphFamily: UDM_V2_GRAPH_FAMILY,
   dirty: false,
   flowConstraints: [],
@@ -231,6 +232,36 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
       }),
       dirty: true,
     }),
+  changeEdgeKind: (edgeId, kind) => {
+    const state = get()
+    const edge = state.edges.find((item) => item.id === edgeId)
+    if (!edge?.data || edge.data.edge_kind === kind) return true
+
+    const validation = validateNetworkV2Connection({
+      connection: edge,
+      nodes: state.nodes,
+      edgeKind: kind,
+    })
+    if (!validation.valid) return false
+
+    const nextData = createNetworkV2EdgeData(kind)
+    if (edge.data.ui) {
+      nextData.ui = edge.data.ui
+    }
+    set({
+      edges: state.edges.map((item) =>
+        item.id === edgeId
+          ? {
+              ...item,
+              type: networkV2EdgeTypeByKind[kind],
+              data: nextData,
+            }
+          : item,
+      ),
+      dirty: true,
+    })
+    return true
+  },
   setSelectedNodeId: (id) =>
     set({
       selectedNodeId: id,
@@ -267,7 +298,7 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
       flowConstraints: graph.flowConstraints ?? [],
       currentNetworkGraphId: graph.id ?? null,
       currentNetworkGraphVersion: graph.version ?? null,
-      currentNetworkGraphName: graph.name ?? "Untitled UDM Network v2",
+      currentNetworkGraphName: graph.name ?? null,
       validationReport: graph.validationReport ?? null,
       diagnostics: graph.validationReport?.diagnostics ?? [],
       dirty: false,
@@ -279,7 +310,7 @@ export const createUdmV2FlowStore: StateCreator<UdmV2FlowStore> = (
     set({
       currentNetworkGraphId: graph.id,
       currentNetworkGraphVersion: graph.version ?? null,
-      currentNetworkGraphName: graph.name ?? "Untitled UDM Network v2",
+      currentNetworkGraphName: graph.name ?? null,
       dirty: false,
     }),
   setShowMiniMap: (show) => set({ showMiniMap: show }),

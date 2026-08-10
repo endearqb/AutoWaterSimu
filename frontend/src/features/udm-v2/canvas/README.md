@@ -1,6 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2/canvas
 
-> 更新于:2026-07-23 · commit 61e2259
+> 更新于:2026-08-10 · commit 3ef7936
 > 类型：contract
 > Canonical sources：
 > - `../README.md`
@@ -34,6 +34,8 @@
 2. 480px 以下首次默认折叠工作台；移动端关闭框选和双击缩放。
 3. 画布只消费 render-decorated edge 副本，不把视觉字段写回 store。
 4. Load 必须使用 Dialog，不使用 `window.prompt`。
+5. 桌面工作台宽度不超过 360px；节点 palette 使用紧凑双列布局，创建连线类型使用紧凑模式条。
+6. 选中边继续打开右侧完整参数抽屉；连线附近只承载快捷类型操作和内联主值编辑。
 
 ## 4. 对外接口
 
@@ -41,7 +43,7 @@
 
 ## 5. 依赖边界
 
-可以依赖 feature-local state、nodes、edges、interaction、inspector 与 services；不得依赖 legacy Flow。
+可以依赖 feature-local state、nodes、edges、interaction、inspector 与 services，也可依赖 boundary allowlist 内的无状态 Flow UI/交互原语；不得依赖 legacy Flow 业务组件。
 
 ## 6. 测试与验证
 

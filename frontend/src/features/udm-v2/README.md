@@ -1,6 +1,6 @@
 # 目录说明：frontend/src/features/udm-v2
 
-> 更新于:2026-07-24 · commit cc3edcc
+> 更新于:2026-08-10 · commit 3ef7936
 > 类型：contract
 > Canonical sources：
 > - `docs/rebuild/AutoWaterSimu_UDM_v2_Docs/07_udm_v2_frontend_isolation_requirements.md`
@@ -45,7 +45,7 @@
 
 ## 3. 维护约定
 
-1. 本目录不得 import legacy FlowCanvas、节点行为、stores 或 UDM service；仅可复用 boundary check 白名单内的 `NodePalette`、`GlassNodeContainer` 和 glass color utilities。
+1. 本目录不得 import legacy FlowCanvas、业务节点/边行为、stores 或 UDM service；可以复用 boundary check 白名单内的无状态 UI/交互原语，例如 `NodePalette`、`GlassNodeContainer`、glass color utilities 和 `EdgeQuickToolbar`。
 2. v1 代码不得 import 本目录；唯一允许入口是 route 薄壳 `frontend/src/routes/_layout/udm-v2.tsx`。
 3. v2 类型、组件和 helper 使用 `V2` 或 feature-local 命名，避免全局 `NetworkEdge*` 类型。
 4. 持久化 payload 必须带 `graph_family = "udm_network_v2"`。
@@ -53,6 +53,7 @@
 6. `lane`、marker、interaction width 与实时流量展示是 render-only 状态，不得写入 store 或持久化 payload。
 7. 端口使用 canonical `port_kind`；交互连接与 semantic validation 共用 `edges/connectionRules.ts`。
 8. 开发环境仅通过 `window.__UDM_V2_FLOW_STORE__` 为 Playwright 注入 fixture；生产构建不暴露该入口。
+9. v1/v2 对等能力应保持一致的编辑器交互语言；共享原语只通过 props 接收状态和动作，业务校验与 mutation 继续留在 feature 内。
 
 ## 4. 对外接口
 
@@ -94,5 +95,5 @@ cd frontend; npx playwright test tests/udm-v2-*.spec.ts tests/v1-no-udm-v2-regre
 ## 7. AI 操作提示
 
 1. 先读本 README 与三份 UDM-v2 前端隔离文档。
-2. 仅复用 boundary check 白名单内的纯展示原语；其他 v1 Flow 逻辑先 copy/fork 到本目录再清理。
+2. 仅复用 boundary check 白名单内的无状态 UI/交互原语；业务状态、校验、序列化和服务不得跨边界。
 3. 不要把 worker runtime pending 文案写成仿真成功。

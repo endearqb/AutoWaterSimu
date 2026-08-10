@@ -36,6 +36,9 @@ test("routes same-endpoint edges into distinct selectable lanes", async ({
     "aria-hidden",
     "false",
   )
+  await expect(
+    page.getByRole("toolbar", { name: "Change selected edge type" }),
+  ).toBeVisible()
   await expect(page.getByText("Signal name")).toBeVisible()
   await page.getByRole("button", { exact: true, name: "Graph" }).click()
   await expect(page.getByText("Flow constraints")).toBeVisible()

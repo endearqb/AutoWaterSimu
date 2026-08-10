@@ -47,6 +47,11 @@ export function NetworkV2Toolbar() {
 
   const saveGraph = async (saveAs = false) => {
     const state = useUdmV2FlowStore.getState()
+    const namedState = {
+      ...state,
+      currentNetworkGraphName:
+        state.currentNetworkGraphName || text.untitledGraph,
+    }
     setRuntimeStatus("saving")
     try {
       const summary =
@@ -54,11 +59,11 @@ export function NetworkV2Toolbar() {
           ? await udmV2FlowchartService.updateGraph(
               state.currentNetworkGraphId,
               {
-                ...state,
+                ...namedState,
                 saveAs,
               },
             )
-          : await udmV2FlowchartService.saveGraph({ ...state, saveAs })
+          : await udmV2FlowchartService.saveGraph({ ...namedState, saveAs })
       setCurrentGraph({
         id: summary.id,
         name: summary.name,
@@ -177,21 +182,21 @@ export function NetworkV2Toolbar() {
 
   return (
     <>
-      <HStack gap={2} flexWrap="wrap">
-        <Button size="sm" variant="outline" onClick={() => saveGraph(false)}>
+      <HStack gap={1} flexWrap="wrap" px={1} py={0.5}>
+        <Button size="xs" variant="outline" onClick={() => saveGraph(false)}>
           <Save size={16} />
           {text.save}
         </Button>
         <input
           ref={fileInputRef}
-          aria-label="Import UDM Network v2 JSON"
+          aria-label={text.importAria}
           hidden
           type="file"
           accept="application/json,.json"
           onChange={importJson}
         />
         <Button
-          size="sm"
+          size="xs"
           variant="solid"
           colorPalette="blue"
           onClick={validateGraph}
@@ -200,7 +205,7 @@ export function NetworkV2Toolbar() {
           {text.validate}
         </Button>
         <Button
-          size="sm"
+          size="xs"
           variant="solid"
           colorPalette="green"
           onClick={submitGraph}
@@ -213,7 +218,7 @@ export function NetworkV2Toolbar() {
             <IconButton
               aria-label={text.more}
               title={text.more}
-              size="sm"
+              size="xs"
               variant="outline"
             >
               <MoreHorizontal size={16} />
