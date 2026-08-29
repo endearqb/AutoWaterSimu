@@ -15,7 +15,7 @@ services:
       retries: 20
 
   compute-api:
-    image: golang:1.26
+    image: golang:1.27
     working_dir: /workspace
     restart: unless-stopped
     depends_on:
